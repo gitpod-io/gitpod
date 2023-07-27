@@ -4,7 +4,10 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { v1 } from "@authzed/authzed-node";
+
 export const InstallationID = "1";
+
 export type ResourceType = UserResourceType | InstallationResourceType | OrganizationResourceType | ProjectResourceType;
 
 export type Relation = UserRelation | InstallationRelation | OrganizationRelation | ProjectRelation;
@@ -50,3 +53,267 @@ export type ProjectResourceType = "project";
 export type ProjectRelation = "org" | "editor" | "viewer";
 
 export type ProjectPermission = "read_info" | "write_info" | "delete";
+
+export const rel = {
+    user(id: string) {
+        const result: Partial<v1.Relationship> = {
+            resource: {
+                objectType: "user",
+                objectId: id,
+            },
+        };
+        return {
+            get self() {
+                const result2 = {
+                    ...result,
+                    relation: "self",
+                };
+                return {
+                    user(objectId: string) {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "user",
+                                    objectId: objectId,
+                                },
+                            },
+                        } as v1.Relationship;
+                    },
+                };
+            },
+
+            get container() {
+                const result2 = {
+                    ...result,
+                    relation: "container",
+                };
+                return {
+                    organization(objectId: string) {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "organization",
+                                    objectId: objectId,
+                                },
+                            },
+                        } as v1.Relationship;
+                    },
+                    get installation() {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "installation",
+                                    objectId: "1",
+                                },
+                            },
+                        } as v1.Relationship;
+                    },
+                };
+            },
+        };
+    },
+
+    get installation() {
+        const result: Partial<v1.Relationship> = {
+            resource: {
+                objectType: "installation",
+                objectId: "1",
+            },
+        };
+        return {
+            get member() {
+                const result2 = {
+                    ...result,
+                    relation: "member",
+                };
+                return {
+                    user(objectId: string) {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "user",
+                                    objectId: objectId,
+                                },
+                            },
+                        } as v1.Relationship;
+                    },
+                };
+            },
+
+            get admin() {
+                const result2 = {
+                    ...result,
+                    relation: "admin",
+                };
+                return {
+                    user(objectId: string) {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "user",
+                                    objectId: objectId,
+                                },
+                            },
+                        } as v1.Relationship;
+                    },
+                };
+            },
+        };
+    },
+
+    organization(id: string) {
+        const result: Partial<v1.Relationship> = {
+            resource: {
+                objectType: "organization",
+                objectId: id,
+            },
+        };
+        return {
+            get installation() {
+                const result2 = {
+                    ...result,
+                    relation: "installation",
+                };
+                return {
+                    get installation() {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "installation",
+                                    objectId: "1",
+                                },
+                            },
+                        } as v1.Relationship;
+                    },
+                };
+            },
+
+            get member() {
+                const result2 = {
+                    ...result,
+                    relation: "member",
+                };
+                return {
+                    user(objectId: string) {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "user",
+                                    objectId: objectId,
+                                },
+                            },
+                        } as v1.Relationship;
+                    },
+                };
+            },
+
+            get owner() {
+                const result2 = {
+                    ...result,
+                    relation: "owner",
+                };
+                return {
+                    user(objectId: string) {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "user",
+                                    objectId: objectId,
+                                },
+                            },
+                        } as v1.Relationship;
+                    },
+                };
+            },
+        };
+    },
+
+    project(id: string) {
+        const result: Partial<v1.Relationship> = {
+            resource: {
+                objectType: "project",
+                objectId: id,
+            },
+        };
+        return {
+            get org() {
+                const result2 = {
+                    ...result,
+                    relation: "org",
+                };
+                return {
+                    organization(objectId: string) {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "organization",
+                                    objectId: objectId,
+                                },
+                            },
+                        } as v1.Relationship;
+                    },
+                };
+            },
+
+            get editor() {
+                const result2 = {
+                    ...result,
+                    relation: "editor",
+                };
+                return {
+                    user(objectId: string) {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "user",
+                                    objectId: objectId,
+                                },
+                            },
+                        } as v1.Relationship;
+                    },
+                };
+            },
+
+            get viewer() {
+                const result2 = {
+                    ...result,
+                    relation: "viewer",
+                };
+                return {
+                    user(objectId: string) {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "user",
+                                    objectId: objectId,
+                                },
+                            },
+                        } as v1.Relationship;
+                    },
+                    organization(objectId: string) {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "organization",
+                                    objectId: objectId,
+                                },
+                            },
+                        } as v1.Relationship;
+                    },
+                };
+            },
+        };
+    },
+};

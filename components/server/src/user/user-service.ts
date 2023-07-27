@@ -45,7 +45,7 @@ export class UserService {
                 const result = await userDb.storeUser(newUser);
                 await this.authorizer.addUser(result.id, organizationId);
                 if (organizationId) {
-                    await this.authorizer.addOrganizationMemberRole(organizationId, result.id);
+                    await this.authorizer.addOrganizationRole(organizationId, result.id, "member");
                 } else {
                     await this.authorizer.addInstallationMemberRole(result.id);
                 }
@@ -56,7 +56,7 @@ export class UserService {
             });
         } catch (error) {
             if (organizationId) {
-                await this.authorizer.removeUserFromOrg(organizationId, newUser.id);
+                await this.authorizer.removeOrganizationRole(organizationId, newUser.id, "member");
             } else {
                 await this.authorizer.removeInstallationMemberRole(newUser.id);
             }
@@ -77,7 +77,7 @@ export class UserService {
     }
 
     public async findUserById(userId: string, id: string): Promise<User> {
-        await this.authorizer.checkUserPermissionAndThrow(userId, "read_info", id);
+        await this.authorizer.checkPermissionOnUser(userId, "read_info", id);
         const result = await this.userDb.findUserById(id);
         if (!result) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
@@ -87,7 +87,7 @@ export class UserService {
 
     async updateUser(userId: string, update: Partial<User> & { id: string }): Promise<User> {
         const user = await this.findUserById(userId, update.id);
-        await this.authorizer.checkUserPermissionAndThrow(userId, "write_info", user.id);
+        await this.authorizer.checkPermissionOnUser(userId, "write_info", user.id);
 
         //hang on to user profile before it's overwritten for analytics below
         const oldProfile = User.getProfile(user);
@@ -118,7 +118,7 @@ export class UserService {
     }
 
     async setAdminRole(userId: string, targetUserId: string, admin: boolean): Promise<User> {
-        await this.authorizer.checkUserPermissionAndThrow(userId, "make_admin", targetUserId);
+        await this.authorizer.checkPermissionOnUser(userId, "make_admin", targetUserId);
         const target = await this.findUserById(userId, targetUserId);
         const rolesAndPermissions = target.rolesOrPermissions || [];
         const newRoles = [...rolesAndPermissions.filter((r) => r !== "admin")];

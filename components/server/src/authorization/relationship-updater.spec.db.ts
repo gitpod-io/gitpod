@@ -3,7 +3,7 @@
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
-
+import { v1 } from "@authzed/authzed-node";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID, ProjectDB, TeamDB, TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import { AdditionalUserData, User } from "@gitpod/gitpod-protocol";
@@ -11,11 +11,11 @@ import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-s
 import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
-import { createTestContainer } from "../test/service-testing-container-module";
-import { Authorizer, Relationship, Resource, installation } from "./authorizer";
-import { Relation } from "./definitions";
-import { RelationshipUpdater } from "./relationship-updater";
 import { v4 } from "uuid";
+import { createTestContainer } from "../test/service-testing-container-module";
+import { Authorizer } from "./authorizer";
+import { rel } from "./definitions";
+import { RelationshipUpdater } from "./relationship-updater";
 
 const expect = chai.expect;
 
@@ -49,10 +49,10 @@ describe("RelationshipUpdater", async () => {
         let user = await userDB.newUser();
         user = await migrate(user);
 
-        await expected(user, "container", installation);
-        await expected(user, "self", user);
-        await notExpected(installation, "admin", user);
-        await expected(installation, "member", user);
+        await expected(rel.user(user.id).container.installation);
+        await expected(rel.user(user.id).self.user(user.id));
+        await notExpected(rel.installation.admin.user(user.id));
+        await expected(rel.installation.member.user(user.id));
         await authorizer.removeAllRelationships("user", user.id);
     });
 
@@ -61,10 +61,10 @@ describe("RelationshipUpdater", async () => {
         user.rolesOrPermissions = ["admin"];
         user = await migrate(user);
 
-        await expected(user, "container", installation);
-        await expected(user, "self", user);
-        await expected(installation, "admin", user);
-        await expected(installation, "member", user);
+        await expected(rel.user(user.id).container.installation);
+        await expected(rel.user(user.id).self.user(user.id));
+        await expected(rel.installation.admin.user(user.id));
+        await expected(rel.installation.member.user(user.id));
 
         // remove admin role
         user.rolesOrPermissions = [];
@@ -72,10 +72,10 @@ describe("RelationshipUpdater", async () => {
         AdditionalUserData.set(user, { fgaRelationshipsVersion: undefined });
         user = await userDB.storeUser(user);
         user = await migrate(user);
-        await expected(user, "container", installation);
-        await expected(user, "self", user);
-        await notExpected(installation, "admin", user);
-        await expected(installation, "member", user);
+        await expected(rel.user(user.id).container.installation);
+        await expected(rel.user(user.id).self.user(user.id));
+        await notExpected(rel.installation.admin.user(user.id));
+        await expected(rel.installation.member.user(user.id));
     });
 
     it("should update a simple user organization owned", async () => {
@@ -86,11 +86,11 @@ describe("RelationshipUpdater", async () => {
 
         user = await migrate(user);
 
-        await expected(user, "container", org);
-        await expected(user, "self", user);
-        await expected(org, "installation", installation);
-        await expected(org, "member", user);
-        await expected(org, "owner", user);
+        await expected(rel.user(user.id).self.user(user.id));
+        await expected(rel.user(user.id).container.organization(org.id));
+        await expected(rel.organization(org.id).installation.installation);
+        await expected(rel.organization(org.id).member.user(user.id));
+        await expected(rel.organization(org.id).owner.user(user.id));
     });
 
     it("should update additional members on organization", async () => {
@@ -103,19 +103,19 @@ describe("RelationshipUpdater", async () => {
 
         user = await migrate(user);
 
-        await expected(user, "container", org);
-        await expected(user, "self", user);
+        await expected(rel.user(user.id).self.user(user.id));
+        await expected(rel.user(user.id).container.organization(org.id));
 
         // we haven't called migrate on user2, so we don't expect any relationships
-        await notExpected(user2, "container", installation);
-        await notExpected(user2, "self", user2);
+        await notExpected(rel.user(user2.id).container.installation);
+        await notExpected(rel.user(user2.id).self.user(user2.id));
 
         // but on the org user2 is a member
-        await expected(org, "installation", installation);
-        await expected(org, "member", user2);
-        await notExpected(org, "owner", user2);
-        await expected(org, "member", user);
-        await expected(org, "owner", user);
+        await expected(rel.organization(org.id).installation.installation);
+        await expected(rel.organization(org.id).member.user(user.id));
+        await expected(rel.organization(org.id).member.user(user2.id));
+        await notExpected(rel.organization(org.id).owner.user(user2.id));
+        await expected(rel.organization(org.id).owner.user(user.id));
     });
 
     it("should update orgs with projects", async () => {
@@ -134,41 +134,25 @@ describe("RelationshipUpdater", async () => {
 
         user = await migrate(user);
 
-        await expected(user, "container", org);
-        await expected(user, "self", user);
-
         // but on the org user2 is a member
-        await expected(org, "installation", installation);
-        await expected(org, "member", user);
-        await expected(org, "owner", user);
-
-        await expected(project, "org", org);
+        await expected(rel.project(project.id).org.organization(org.id));
     });
 
-    async function expected(res: Resource, relation: Relation, target: Resource): Promise<void> {
-        const expected = new Relationship(
-            Resource.getType(res),
-            res.id,
-            relation,
-            Resource.getType(target),
-            target.id,
-        ).toString();
-        const rs = await authorizer.readRelationships(res, relation, target);
-        const all = await authorizer.readRelationships(res, relation);
-        expect(
-            rs.length,
-            `Expected ${expected} but got ${JSON.stringify(rs)} (all rs of this kind ${JSON.stringify(all)})`,
-        ).to.equal(1);
-        expect(rs[0].toString()).to.equal(expected);
+    async function expected(relation: v1.Relationship): Promise<void> {
+        const rs = await authorizer.find(relation);
+        const message = async () => {
+            relation.subject = undefined;
+            const result = await authorizer.find(relation);
+            return `Expected ${JSON.stringify(relation)} to be present, but it was not. Found ${JSON.stringify(
+                result,
+            )}`;
+        };
+        expect(rs, await message()).to.not.be.undefined;
     }
 
-    async function notExpected(res: Resource, relation: Relation, target: Resource): Promise<void> {
-        const rs = await authorizer.readRelationships(res, relation, target);
-        const all = await authorizer.readRelationships(res, relation);
-        expect(
-            rs.length,
-            `Expected nothing but got ${JSON.stringify(rs)} (all rs of this kind ${JSON.stringify(all)})`,
-        ).to.equal(0);
+    async function notExpected(relation: v1.Relationship): Promise<void> {
+        const rs = await authorizer.find(relation);
+        expect(rs).to.be.undefined;
     }
 
     async function migrate(user: User): Promise<User> {

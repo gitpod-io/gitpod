@@ -57,7 +57,7 @@ export class SpiceDBAuthorizer {
         }
     }
 
-    async writeRelationships(req: v1.WriteRelationshipsRequest): Promise<v1.WriteRelationshipsResponse | undefined> {
+    async writeRelationships(...updates: v1.RelationshipUpdate[]): Promise<v1.WriteRelationshipsResponse | undefined> {
         if (!this.client) {
             return undefined;
         }
@@ -65,13 +65,17 @@ export class SpiceDBAuthorizer {
         const timer = spicedbClientLatency.startTimer();
         let error: Error | undefined;
         try {
-            const response = await this.client.writeRelationships(req);
-            log.info("[spicedb] Successfully wrote relationships.", { response, request: req });
+            const response = await this.client.writeRelationships(
+                v1.WriteRelationshipsRequest.create({
+                    updates,
+                }),
+            );
+            log.info("[spicedb] Successfully wrote relationships.", { response, updates });
 
             return response;
         } catch (err) {
             error = err;
-            log.error("[spicedb] Failed to write relationships.", err, { req });
+            log.error("[spicedb] Failed to write relationships.", err, { updates });
         } finally {
             observeSpicedbClientLatency("write", error, timer());
         }

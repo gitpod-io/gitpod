@@ -39,8 +39,16 @@ export class RelationshipUpdater {
                     fromVersion: user?.additionalData?.fgaRelationshipsVersion,
                     toVersion: this.version,
                 });
-                await this.updateUser(user);
                 const orgs = await this.orgDB.findTeamsByUser(user.id);
+
+                // clean up relationships
+                await this.authorizer.removeAllRelationships("user", user.id);
+                for (const org of orgs) {
+                    await this.authorizer.removeAllRelationships("organization", org.id);
+                }
+
+                // Add relationships
+                await this.updateUser(user);
                 for (const org of orgs) {
                     await this.updateOrganization(org);
                 }
@@ -58,7 +66,6 @@ export class RelationshipUpdater {
     }
 
     private async updateUser(user: User): Promise<void> {
-        await this.authorizer.removeAllRelationships("user", user.id);
         await this.authorizer.addUser(user.id, user.organizationId);
         if (!user.organizationId) {
             await this.authorizer.addInstallationMemberRole(user.id);
@@ -69,7 +76,6 @@ export class RelationshipUpdater {
     }
 
     private async updateOrganization(org: Organization): Promise<void> {
-        await this.authorizer.removeAllRelationships("organization", org.id);
         const members = await this.orgDB.findMembersByTeam(org.id);
         const projects = await this.projectDB.findProjects(org.id);
         await this.authorizer.addOrganization(org, members, projects);
