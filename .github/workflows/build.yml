@@ -115,26 +115,24 @@ jobs:
   infrastructure:
     needs: [configuration, build-previewctl, create-runner]
     if: |
-      ((needs.configuration.outputs.pr_no_diff_skip != 'true') && (needs.configuration.outputs.preview_enable == 'true')) ||
-      (needs.configuration.outputs.is_main_branch == 'true')
+      (needs.configuration.outputs.pr_no_diff_skip != 'true') &&
+      (needs.configuration.outputs.preview_enable == 'true') &&
+      (needs.configuration.outputs.is_main_branch != 'true')
     runs-on: ${{ needs.create-runner.outputs.label }}
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-infrastructure
-      cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
-    outputs:
-      preview_name: ${{ (needs.configuration.outputs.is_main_branch == 'true' && github.run_id) || github.head_ref || github.ref_name }}
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
       - name: Create preview environment infrastructure
         id: create
         uses: ./.github/actions/preview-create
         with:
-          name: ${{ (needs.configuration.outputs.is_main_branch == 'true' && github.run_id) || github.head_ref || github.ref_name }}
+          name: ${{ github.head_ref || github.ref_name }}
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
           infrastructure_provider: ${{ needs.configuration.outputs.preview_infra_provider }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
-          # Enable large vm on main to run the integration tests.
-          large_vm: ${{ needs.configuration.outputs.with_large_vm || github.ref == 'refs/heads/main' }}
+          large_vm: ${{ needs.configuration.outputs.with_large_vm }}
           recreate_vm: ${{ inputs.recreate_vm }}
 
   build-gitpod:
@@ -325,7 +323,7 @@ jobs:
         id: deploy-gitpod
         uses: ./.github/actions/deploy-gitpod
         with:
-          name: ${{ needs.infrastructure.outputs.preview_name }}
+          name: ${{ github.head_ref || github.ref_name }}
           version: ${{needs.configuration.outputs.version}}
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
@@ -401,7 +399,7 @@ jobs:
           ROBOQUAT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           INTEGRATION_TEST_USERNAME: ${{ secrets.IDE_INTEGRATION_TEST_USERNAME }}
           INTEGRATION_TEST_USER_TOKEN: ${{ secrets.IDE_INTEGRATION_TEST_USER_TOKEN }}
-          PREVIEW_NAME: ${{ needs.infrastructure.outputs.preview_name }}
+          PREVIEW_NAME: ${{ github.head_ref || github.ref_name }}
           TEST_SUITS: ${{ needs.configuration.outputs.with_integration_tests }}
           TEST_USE_LATEST_VERSION: ${{ needs.configuration.outputs.latest_ide_version }}
           TEST_BUILD_ID: ${{ github.run_id }}
@@ -417,50 +415,6 @@ jobs:
           previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 1m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
 
           $GITHUB_WORKSPACE/test/run.sh -s ${TEST_SUITS}
-
-  workspace-integration-tests-gate:
-    name: "Run workspace integration tests"
-    needs:
-      - configuration
-      - build-previewctl
-      - build-gitpod
-      - infrastructure
-      - install
-      - create-runner
-    if: ${{ needs.configuration.outputs.is_main_branch == 'true' }}
-    runs-on: ${{ needs.create-runner.outputs.label }}
-    concurrency:
-      group: gate-workspace-integration-tests
-      cancel-in-progress: false
-    steps:
-      - uses: actions/checkout@v3
-      - id: auth
-        uses: google-github-actions/auth@v1
-        with:
-          token_format: access_token
-          credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-      - name: Get Secrets from GCP
-        id: "secrets"
-        uses: "google-github-actions/get-secretmanager-secrets@v1"
-        with:
-          secrets: |-
-            WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
-      - name: Set release gate to evaluating
-        shell: bash
-        run: |
-          echo "todo"
-      - uses: ./.github/actions/integration-tests
-        with:
-          test_suite: workspace
-          notify_slack_webhook: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
-          preview_name: ${{ needs.infrastructure.outputs.preview_name }}
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Update release gate
-        shell: bash
-        if: failure() || success() || cancelled()
-        run: |
-          echo "todo"
 
   delete-runner:
     if: always()
