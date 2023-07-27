@@ -17,7 +17,6 @@ import (
 type ConfigSerialized struct {
 	Version                           string      `json:"version"`
 	HostURL                           string      `json:"hostUrl"`
-	PublicServicesURL                 string      `json:"publicServicesUrl"`
 	InstallationShortname             string      `json:"installationShortname"`
 	DevBranch                         string      `json:"devBranch"`
 	InsecureNoDomain                  bool        `json:"insecureNoDomain"`

@@ -198,6 +198,14 @@ export class GitpodHostUrl {
         return this.with((url) => ({ host: "ide." + url.host }));
     }
 
+    asPublicServices(): GitpodHostUrl {
+        const hostSegments = this.url.host.split(".");
+        if (hostSegments[0] === "services") {
+            return this;
+        }
+        return this.with((url) => ({ host: "services." + url.host }));
+    }
+
     asIDEMetrics(): GitpodHostUrl {
         let newUrl: GitpodHostUrl = this;
         const hostSegments = this.url.host.split(".");
