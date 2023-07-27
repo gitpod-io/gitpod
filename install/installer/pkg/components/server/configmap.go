@@ -192,10 +192,19 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	_, _, authCfg := auth.GetConfig(ctx)
 
+	publicServicesURL := fmt.Sprintf("https://services.%s", ctx.Config.Domain)
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.PublicURL != "" {
+			publicServicesURL = cfg.WebApp.PublicURL
+		}
+		return nil
+	})
+
 	// todo(sje): all these values are configurable
 	scfg := ConfigSerialized{
 		Version:               ctx.VersionManifest.Version,
 		HostURL:               fmt.Sprintf("https://%s", ctx.Config.Domain),
+		PublicServicesURL:     publicServicesURL,
 		InstallationShortname: ctx.Config.Metadata.InstallationShortname,
 		WorkspaceHeartbeat: WorkspaceHeartbeat{
 			IntervalSeconds: 60,

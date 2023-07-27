@@ -103,6 +103,7 @@ export interface WorkspaceGarbageCollection {
 export interface ConfigSerialized {
     version: string;
     hostUrl: string;
+    publicServicesUrl: string;
     installationShortname: string;
     devBranch?: string;
     insecureNoDomain: boolean;
@@ -304,6 +305,9 @@ export namespace ConfigFile {
 
     function loadAndCompleteConfig(config: ConfigSerialized): Config {
         const hostUrl = new GitpodHostUrl(config.hostUrl);
+        const publicServicesUrl = config.publicServicesUrl.endsWith("/")
+            ? config.publicServicesUrl.slice(0, -1)
+            : config.publicServicesUrl;
         let authProviderConfigs: AuthProviderParams[] = [];
         const rawProviderConfigs = config.authProviderConfigs;
         if (rawProviderConfigs) {
@@ -397,6 +401,7 @@ export namespace ConfigFile {
 
         return {
             ...config,
+            publicServicesUrl,
             hostUrl,
             authProviderConfigs,
             builtinAuthProvidersConfigured,

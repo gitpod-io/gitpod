@@ -80,10 +80,6 @@ export class BitbucketService extends RepositoryService {
     }
 
     protected getHookUrl() {
-        return this.config.hostUrl
-            .with({
-                pathname: BitbucketApp.path,
-            })
-            .toString();
+        return `${this.config.publicServicesUrl}/${BitbucketApp.path}`;
     }
 }

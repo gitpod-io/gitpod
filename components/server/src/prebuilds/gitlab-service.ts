@@ -70,10 +70,6 @@ export class GitlabService extends RepositoryService {
     }
 
     protected getHookUrl() {
-        return this.config.hostUrl
-            .with({
-                pathname: GitLabApp.path,
-            })
-            .toString();
+        return `${this.config.publicServicesUrl}/${GitLabApp.path}`;
     }
 }

@@ -100,10 +100,6 @@ export class GitHubService extends RepositoryService {
     }
 
     protected getHookUrl() {
-        return this.config.hostUrl
-            .with({
-                pathname: GitHubEnterpriseApp.path,
-            })
-            .toString();
+        return `${this.config.publicServicesUrl}/${GitHubEnterpriseApp.path}`;
     }
 }
