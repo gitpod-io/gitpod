@@ -27,7 +27,6 @@ import { TokenProvider } from "../user/token-provider";
 import { UserAuthentication } from "../user/user-authentication";
 import { AuthProviderService } from "./auth-provider-service";
 import { LoginCompletionHandler } from "./login-completion-handler";
-import { increaseLoginCounter } from "../prometheus-metrics";
 import { OutgoingHttpHeaders } from "http2";
 import { trackSignup } from "../analytics";
 import { daysBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/timeutil";
@@ -35,6 +34,7 @@ import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { VerificationService } from "../auth/verification-service";
 import { SignInJWT } from "./jwt";
 import { UserService } from "../user/user-service";
+import { reportLoginCompleted } from "../prometheus-metrics";
 
 /**
  * This is a generic implementation of OAuth2-based AuthProvider.
@@ -284,7 +284,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
         if (!authFlow) {
             log.error(`(${strategyName}) Auth flow state is missing.`);
 
-            increaseLoginCounter("failed", this.host);
+            reportLoginCompleted("failed", "git");
             response.redirect(this.getSorryUrl(`Auth flow state is missing.`));
             return;
         }
@@ -304,7 +304,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
         // assert additional infomation is attached to current session
         if (!authFlow) {
             // The auth flow state info is missing in the session: count as client error
-            increaseLoginCounter("failed_client", this.host);
+            reportLoginCompleted("failed_client", "git");
 
             log.error(cxt, `(${strategyName}) No session found during auth callback.`, { clientInfo });
             response.redirect(this.getSorryUrl(`Please allow Cookies in your browser and try to log in again.`));
@@ -312,7 +312,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
         }
 
         if (authFlow.host !== this.host) {
-            increaseLoginCounter("failed", this.host);
+            reportLoginCompleted("failed", "git");
 
             log.error(cxt, `(${strategyName}) Host does not match.`, { clientInfo });
             response.redirect(this.getSorryUrl(`Host does not match.`));
@@ -328,8 +328,8 @@ export abstract class GenericAuthProvider implements AuthProvider {
 
         if (callbackError) {
             // e.g. "access_denied"
+            reportLoginCompleted("failed", "git");
 
-            increaseLoginCounter("failed", this.host);
             return this.sendCompletionRedirectWithError(response, {
                 error: callbackError,
                 description: callbackErrorDescription,
@@ -398,7 +398,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
                 return this.sendCompletionRedirectWithError(response, { error: err.message });
             }
 
-            increaseLoginCounter("failed", this.host);
+            reportLoginCompleted("failed", "git");
             log.error(context, `(${strategyName}) Redirect to /sorry from verify callback`, err, {
                 ...defaultLogPayload,
                 err,
