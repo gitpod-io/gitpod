@@ -445,13 +445,20 @@ jobs:
         with:
           secrets: |-
             WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
+      - name: Set release gate to evaluating
+        shell: bash
+        run: |
+          echo "todo"
       - uses: ./.github/actions/integration-tests
         with:
           test_suite: workspace
           notify_slack_webhook: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
           preview_name: ${{ needs.infrastructure.outputs.preview_name }}
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Update release gate
         shell: bash
+        if: failure() || success() || cancelled()
         run: |
           echo "todo"
 

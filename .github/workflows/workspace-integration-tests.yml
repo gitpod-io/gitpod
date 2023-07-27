@@ -141,6 +141,8 @@ jobs:
           preview_name: ${{ needs.configuration.outputs.name }}
           test_suite: workspace
           notify_slack_webhook: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
   delete:
     name: Delete preview environment

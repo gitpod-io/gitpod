@@ -11,6 +11,12 @@ inputs:
   preview_name:
     description: "Name of the preview environment to run the tests against"
     required: true
+  sa_key:
+    description: "The service account key to use when authenticating with GCP"
+    required: true
+  github_token:
+    description: "The GitHub token to use when authenticating with GitHub"
+    required: true
 
 runs:
   using: "composite"
@@ -19,7 +25,7 @@ runs:
       uses: google-github-actions/auth@v1
       with:
         token_format: access_token
-        credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+        credentials_json: "${{ inputs.sa_key }}"
     - name: Get Secrets from GCP
       id: "secrets"
       uses: "google-github-actions/get-secretmanager-secrets@v1"
@@ -48,10 +54,10 @@ runs:
       id: integration-test
       shell: bash
       env:
-        ROBOQUAT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        ROBOQUAT_TOKEN: ${{ inputs.github_token }}
         INTEGRATION_TEST_USERNAME: ${{ steps.secrets.outputs.WORKSPACE_INTEGRATION_TEST_USERNAME }}
         INTEGRATION_TEST_USER_TOKEN: ${{ steps.secrets.outputs.WORKSPACE_INTEGRATION_TEST_USER_TOKEN }}
-        PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
+        PREVIEW_ENV_DEV_SA_KEY: ${{ inputs.sa_key }}
         PREVIEW_NAME: ${{ inputs.preview_name }}
       run: |
         set -euo pipefail
