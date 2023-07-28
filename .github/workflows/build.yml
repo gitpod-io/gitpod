@@ -433,6 +433,7 @@ jobs:
       - install
       - monitoring
       - integration-test
+      - workspace-integration-tests-main
     uses: gitpod-io/gce-github-runner/.github/workflows/delete-vm.yml@secrets
     secrets:
       gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
