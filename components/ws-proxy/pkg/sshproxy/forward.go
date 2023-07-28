@@ -53,27 +53,42 @@ func (s *Server) ChannelForward(ctx context.Context, session *Session, targetCon
 		close(maskedReqs)
 	}()
 
+	originChannelWg := sync.WaitGroup{}
+	originChannelWg.Add(3)
+	targetChannelWg := sync.WaitGroup{}
+	targetChannelWg.Add(3)
+
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+
 	go func() {
+		defer wg.Done()
 		_, _ = io.Copy(targetChan, originChan)
+		targetChannelWg.Done()
+		targetChannelWg.Wait()
 		_ = targetChan.Close()
 	}()
 
 	go func() {
+		defer wg.Done()
 		_, _ = io.Copy(originChan, targetChan)
+		originChannelWg.Done()
+		originChannelWg.Wait()
 		_ = originChan.Close()
 	}()
 
 	go func() {
 		_, _ = io.Copy(targetChan.Stderr(), originChan.Stderr())
+		targetChannelWg.Done()
 	}()
 
 	go func() {
 		_, _ = io.Copy(originChan.Stderr(), targetChan.Stderr())
+		originChannelWg.Done()
 	}()
 
-	wg := sync.WaitGroup{}
-	forward := func(sourceReqs <-chan *ssh.Request, targetChan ssh.Channel) {
-		defer wg.Done()
+	forward := func(sourceReqs <-chan *ssh.Request, targetChan ssh.Channel, channelWg *sync.WaitGroup) {
+		defer channelWg.Done()
 		for ctx.Err() == nil {
 			select {
 			case req, ok := <-sourceReqs:
@@ -91,9 +106,8 @@ func (s *Server) ChannelForward(ctx context.Context, session *Session, targetCon
 		}
 	}
 
-	wg.Add(2)
-	go forward(maskedReqs, targetChan)
-	go forward(targetReqs, originChan)
+	go forward(maskedReqs, targetChan, &targetChannelWg)
+	go forward(targetReqs, originChan, &originChannelWg)
 
 	wg.Wait()
 	log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).Debug("session forward stop")
