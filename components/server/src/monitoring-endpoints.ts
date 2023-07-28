@@ -22,10 +22,7 @@ export class MonitoringEndpointsApp {
         // Append redis metrics to default registry
         redisMetricsRegistry()
             .getMetricsAsArray()
-            .then((metrics) => {
-                metrics.forEach((metric) => registry.registerMetric(metric as any));
-            })
-            .catch(console.error);
+            .forEach((metric) => registry.registerMetric(metric as any));
 
         const monApp = express();
         monApp.get("/metrics", async (req, res) => {
