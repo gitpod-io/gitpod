@@ -409,6 +409,18 @@ jobs:
           test_build_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           test_build_ref: ${{ github.head_ref || github.ref }}
 
+  workspace-integration-tests-main:
+    name: "Run workspace integration tests on main branch"
+    needs:
+      - configuration
+      - build-gitpod
+      - create-runner
+    if: needs.configuration.outputs.is_main_branch == 'true'
+    uses: ./.github/workflows/workspace-integration-tests.yml
+    with:
+      version: ${{ needs.configuration.outputs.version }}
+    secrets: inherit
+
   delete-runner:
     if: always()
     needs:
