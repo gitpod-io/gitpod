@@ -161,8 +161,8 @@ export class Authorizer {
             set(rel.user(userId).self.user(userId)), //
             set(
                 owningOrgId
-                    ? rel.user(userId).container.organization(owningOrgId)
-                    : rel.user(userId).container.installation,
+                    ? rel.user(userId).organization.organization(owningOrgId)
+                    : rel.user(userId).installation.installation,
             ),
         );
     }

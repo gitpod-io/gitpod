@@ -47,13 +47,13 @@ describe("RelationshipUpdater", async () => {
 
     it("should update a simple user", async () => {
         let user = await userDB.newUser();
-        await notExpected(rel.user(user.id).container.installation);
+        await notExpected(rel.user(user.id).installation.installation);
         await notExpected(rel.user(user.id).self.user(user.id));
         await notExpected(rel.installation.member.user(user.id));
 
         user = await migrate(user);
 
-        await expected(rel.user(user.id).container.installation);
+        await expected(rel.user(user.id).installation.installation);
         await expected(rel.user(user.id).self.user(user.id));
         await notExpected(rel.installation.admin.user(user.id));
         await expected(rel.installation.member.user(user.id));
@@ -65,7 +65,7 @@ describe("RelationshipUpdater", async () => {
         user = await userDB.storeUser(user);
         user = await migrate(user);
 
-        await expected(rel.user(user.id).container.installation);
+        await expected(rel.user(user.id).installation.installation);
         await expected(rel.user(user.id).self.user(user.id));
         await expected(rel.installation.admin.user(user.id));
         await expected(rel.installation.member.user(user.id));
@@ -77,7 +77,7 @@ describe("RelationshipUpdater", async () => {
         user = await userDB.storeUser(user);
         user = await migrate(user);
 
-        await expected(rel.user(user.id).container.installation);
+        await expected(rel.user(user.id).installation.installation);
         await expected(rel.user(user.id).self.user(user.id));
         await notExpected(rel.installation.admin.user(user.id));
         await expected(rel.installation.member.user(user.id));
@@ -92,7 +92,7 @@ describe("RelationshipUpdater", async () => {
         user = await migrate(user);
 
         await expected(rel.user(user.id).self.user(user.id));
-        await expected(rel.user(user.id).container.organization(org.id));
+        await expected(rel.user(user.id).organization.organization(org.id));
         await expected(rel.organization(org.id).installation.installation);
         await expected(rel.organization(org.id).member.user(user.id));
         await expected(rel.organization(org.id).owner.user(user.id));
@@ -109,10 +109,10 @@ describe("RelationshipUpdater", async () => {
         user = await migrate(user);
 
         await expected(rel.user(user.id).self.user(user.id));
-        await expected(rel.user(user.id).container.organization(org.id));
+        await expected(rel.user(user.id).organization.organization(org.id));
 
         // we haven't called migrate on user2, so we don't expect any relationships
-        await notExpected(rel.user(user2.id).container.installation);
+        await notExpected(rel.user(user2.id).installation.installation);
         await notExpected(rel.user(user2.id).self.user(user2.id));
 
         // but on the org user2 is a member
@@ -124,7 +124,7 @@ describe("RelationshipUpdater", async () => {
 
         user2 = await migrate(user2);
 
-        await expected(rel.user(user2.id).container.installation);
+        await expected(rel.user(user2.id).installation.installation);
         await expected(rel.user(user2.id).self.user(user2.id));
 
         // rest should be the same
