@@ -32,6 +32,7 @@ jobs:
       is_main_branch: ${{ (github.head_ref || github.ref) == 'refs/heads/main' }}
       version: ${{ steps.branches.outputs.sanitized-branch-name }}-gha.${{github.run_number}}
       preview_enable: ${{ contains( steps.pr-details.outputs.pr_body, '[x] /werft with-preview') || (steps.output.outputs.with_integration_tests != '') }}
+      preview_name: ${{ github.head_ref || github.ref_name }}
       preview_infra_provider: ${{ contains( steps.pr-details.outputs.pr_body, '[x] /werft with-gce-vm') && 'gce' || 'harvester' }}
       build_no_cache: ${{ contains( steps.pr-details.outputs.pr_body, '[x] leeway-no-cache') }}
       build_no_test: ${{ contains( steps.pr-details.outputs.pr_body, '[x] /werft no-test') }}
@@ -128,7 +129,7 @@ jobs:
         id: create
         uses: ./.github/actions/preview-create
         with:
-          name: ${{ github.head_ref || github.ref_name }}
+          name: ${{ needs.configuration.outputs.preview_name }}
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
           infrastructure_provider: ${{ needs.configuration.outputs.preview_infra_provider }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
@@ -323,7 +324,7 @@ jobs:
         id: deploy-gitpod
         uses: ./.github/actions/deploy-gitpod
         with:
-          name: ${{ github.head_ref || github.ref_name }}
+          name: ${{ needs.configuration.outputs.preview_name }}
           version: ${{needs.configuration.outputs.version}}
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
@@ -393,28 +394,20 @@ jobs:
         with:
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
           leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
+
       - name: Run integration test
-        shell: bash
-        env:
-          ROBOQUAT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          INTEGRATION_TEST_USERNAME: ${{ secrets.IDE_INTEGRATION_TEST_USERNAME }}
-          INTEGRATION_TEST_USER_TOKEN: ${{ secrets.IDE_INTEGRATION_TEST_USER_TOKEN }}
-          PREVIEW_NAME: ${{ github.head_ref || github.ref_name }}
-          TEST_SUITS: ${{ needs.configuration.outputs.with_integration_tests }}
-          TEST_USE_LATEST_VERSION: ${{ needs.configuration.outputs.latest_ide_version }}
-          TEST_BUILD_ID: ${{ github.run_id }}
-          TEST_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          TEST_BUILD_REF: ${{ github.head_ref || github.ref }}
-        run: |
-          export HOME="/home/gitpod"
-          leeway run dev/preview/previewctl:install
-
-          echo "Setting up access to core-dev and harvester"
-          previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-
-          previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 1m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-
-          $GITHUB_WORKSPACE/test/run.sh -s ${TEST_SUITS}
+        id: integration-test
+        uses: ./.github/actions/integration-tests
+        with:
+          preview_name: ${{ needs.configuration.outputs.preview_name }}
+          test_suite: ${{ needs.configuration.outputs.with_integration_tests }}
+          notify_slack_webhook: ''
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          latest_ide_version: ${{ needs.configuration.outputs.latest_ide_version }}
+          test_build_id: ${{ github.run_id }}
+          test_build_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          test_build_ref: ${{ github.head_ref || github.ref }}
 
   delete-runner:
     if: always()
