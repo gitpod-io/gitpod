@@ -430,7 +430,7 @@ jobs:
       - integration-test
     uses: gitpod-io/gce-github-runner/.github/workflows/delete-vm.yml@secrets
     secrets:
-      gcp_credentials: ${{ secrets.GCP_CREDENTIALS }}
+      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
     with:
       runner-label: ${{ needs.create-runner.outputs.label }}
       machine-zone: ${{ needs.create-runner.outputs.machine-zone }}
