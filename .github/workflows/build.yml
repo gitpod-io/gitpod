@@ -419,6 +419,7 @@ jobs:
     uses: ./.github/workflows/workspace-integration-tests.yml
     with:
       version: ${{ needs.configuration.outputs.version }}
+    secrets: inherit
 
   delete-runner:
     if: always()
