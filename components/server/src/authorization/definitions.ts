@@ -18,9 +18,9 @@ export type Permission = UserPermission | InstallationPermission | OrganizationP
 
 export type UserResourceType = "user";
 
-export type UserRelation = "self" | "container";
+export type UserRelation = "self" | "organization" | "installation";
 
-export type UserPermission = "read_info" | "write_info" | "suspend" | "make_admin";
+export type UserPermission = "read_info" | "write_info" | "make_admin";
 
 export type InstallationResourceType = "installation";
 
@@ -85,10 +85,10 @@ export const rel = {
                 };
             },
 
-            get container() {
+            get organization() {
                 const result2 = {
                     ...result,
-                    relation: "container",
+                    relation: "organization",
                 };
                 return {
                     organization(objectId: string) {
@@ -102,6 +102,15 @@ export const rel = {
                             },
                         } as v1.Relationship;
                     },
+                };
+            },
+
+            get installation() {
+                const result2 = {
+                    ...result,
+                    relation: "installation",
+                };
+                return {
                     get installation() {
                         return {
                             ...result2,

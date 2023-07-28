@@ -5,13 +5,15 @@
 schema: |-
   definition user {
     relation self: user
-    relation container: organization | installation
+
+    // Only ONE of the following relations is ever present for a given user (XOR)
+    relation organization: organization
+    relation installation: installation
 
     // permissions
-    permission read_info = self + container->member + container->owner + container->admin
-    permission write_info = self + container->owner + container->admin
-    permission suspend = self + container->owner + container->admin
-    permission make_admin = container->admin
+    permission read_info = self + organization->member + organization->owner + installation->admin
+    permission write_info = self
+    permission make_admin = installation->admin
   }
 
   // There's only one global installation
@@ -81,7 +83,7 @@ schema: |-
 relationships: |-
   // we have one installation
   installation:installation_0#member@user:user_0
-  user:user_0#container@installation:installation_0
+  user:user_0#installation@installation:installation_0
 
   installation:installation_0#admin@user:user_admin
 
