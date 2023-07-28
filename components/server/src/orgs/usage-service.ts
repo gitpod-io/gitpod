@@ -26,7 +26,7 @@ export class UsageService {
     ) {}
 
     async getCostCenter(userId: string, organizationId: string): Promise<CostCenterJSON> {
-        await this.authorizer.checkOrgPermissionAndThrow(userId, "read_info", organizationId);
+        await this.authorizer.checkPermissionOnOrganization(userId, "read_info", organizationId);
 
         const { costCenter } = await this.usageService.getCostCenter({
             attributionId: AttributionId.render(AttributionId.createFromOrganizationId(organizationId)),
@@ -46,11 +46,11 @@ export class UsageService {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Unexpected usageLimit value: ${usageLimit}`);
         }
 
-        await this.authorizer.checkOrgPermissionAndThrow(userId, "write_billing", organizationId);
+        await this.authorizer.checkPermissionOnOrganization(userId, "write_billing", organizationId);
 
         const costCenter = await this.getCostCenter(userId, organizationId);
         if (costCenter?.billingStrategy !== CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
-            await this.authorizer.checkOrgPermissionAndThrow(userId, "write_billing_admin", organizationId);
+            await this.authorizer.checkPermissionOnOrganization(userId, "write_billing_admin", organizationId);
         }
         await this.usageService.setCostCenter({
             costCenter: {
@@ -70,7 +70,7 @@ export class UsageService {
             });
         }
         const orgId = attributionId.teamId;
-        await this.authorizer.checkOrgPermissionAndThrow(userId, "read_billing", orgId);
+        await this.authorizer.checkPermissionOnOrganization(userId, "read_billing", orgId);
 
         const response = await this.usageService.listUsage({
             attributionId: AttributionId.render(attributionId),
@@ -112,7 +112,7 @@ export class UsageService {
         userId: string,
         organizationId: string,
     ): Promise<{ usedCredits: number; usageLimit: number }> {
-        await this.authorizer.checkOrgPermissionAndThrow(userId, "read_billing", organizationId);
+        await this.authorizer.checkPermissionOnOrganization(userId, "read_billing", organizationId);
 
         const attributionId = AttributionId.createFromOrganizationId(organizationId);
         const costCenter = this.getCostCenter(userId, organizationId);
@@ -162,7 +162,7 @@ export class UsageService {
     }
 
     async addCreditNote(userId: string, organizationId: string, credits: number, description: string): Promise<void> {
-        await this.authorizer.checkOrgPermissionAndThrow(userId, "write_billing_admin", organizationId);
+        await this.authorizer.checkPermissionOnOrganization(userId, "write_billing_admin", organizationId);
         await this.usageService.addUsageCreditNote({
             attributionId: AttributionId.render(AttributionId.createFromOrganizationId(organizationId)),
             credits,

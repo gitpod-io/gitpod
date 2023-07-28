@@ -128,6 +128,7 @@ import { RedisSubscriber } from "./messaging/redis-subscriber";
 import { Redis } from "ioredis";
 import { RedisPublisher, newRedisClient } from "@gitpod/gitpod-db/lib";
 import { UserService } from "./user/user-service";
+import { RelationshipUpdater } from "./authorization/relationship-updater";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -311,6 +312,7 @@ export const productionContainerModule = new ContainerModule(
                 return createInitializingAuthorizer(authorizer);
             })
             .inSingletonScope();
+        bind(RelationshipUpdater).toSelf().inSingletonScope();
 
         // grpc / Connect API
         bind(APIUserService).toSelf().inSingletonScope();

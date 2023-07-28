@@ -268,7 +268,8 @@ export interface AdditionalUserData extends Partial<WorkspaceTimeoutSetting> {
     // additional user profile data
     profile?: ProfileDetails;
     shouldSeeMigrationMessage?: boolean;
-
+    // fgaRelationshipsVersion is the version of the spicedb relationships
+    fgaRelationshipsVersion?: number;
     // remembered workspace auto start options
     workspaceAutostartOptions?: WorkspaceAutostartOption[];
 }
