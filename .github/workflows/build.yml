@@ -415,7 +415,7 @@ jobs:
       - configuration
       - build-gitpod
       - create-runner
-    # if: needs.configuration.outputs.is_main_branch == 'true'
+    if: needs.configuration.outputs.is_main_branch == 'true'
     uses: ./.github/workflows/workspace-integration-tests.yml
     with:
       version: ${{ needs.configuration.outputs.version }}
