@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
+import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TypeORM } from "@gitpod/gitpod-db/lib";
 import { Organization, User } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
@@ -47,21 +47,42 @@ describe("UsageService", async () => {
             centralizedPermissions: true,
         });
         os = container.get(OrganizationService);
-        const userDB = container.get<UserDB>(UserDB);
-        owner = await userDB.newUser();
+        const userService = container.get<UserService>(UserService);
+        owner = await userService.createUser({
+            identity: {
+                authName: "github",
+                authProviderId: "github",
+                authId: "1234",
+            },
+        });
         org = await os.createOrganization(owner.id, "myorg");
         const invite = await os.getOrCreateInvite(owner.id, org.id);
 
-        member = await userDB.newUser();
+        member = await userService.createUser({
+            identity: {
+                authName: "github",
+                authProviderId: "github",
+                authId: "1234",
+            },
+        });
         await os.joinOrganization(member.id, invite.id);
 
-        stranger = await userDB.newUser();
+        stranger = await userService.createUser({
+            identity: {
+                authName: "github",
+                authProviderId: "github",
+                authId: "1234",
+            },
+        });
 
-        const userService = container.get<UserService>(UserService);
-        admin = await userDB.newUser();
-        admin.rolesOrPermissions = ["admin"];
-        await userDB.storeUser(admin);
-        await userService.setAdminRole(admin.id, admin.id, true);
+        admin = await userService.createUser({
+            identity: {
+                authName: "github",
+                authProviderId: "github",
+                authId: "1234",
+            },
+        });
+        await userService.setAdminRole(BUILTIN_INSTLLATION_ADMIN_USER_ID, admin.id, true);
 
         us = container.get<UsageService>(UsageService);
         await us.getCostCenter(owner.id, org.id);

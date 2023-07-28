@@ -42,7 +42,7 @@ export class OrganizationService {
     }
 
     async getOrganization(userId: string, orgId: string): Promise<Organization> {
-        await this.auth.checkOrgPermissionAndThrow(userId, "read_info", orgId);
+        await this.auth.checkPermissionOnOrganization(userId, "read_info", orgId);
         const result = await this.teamDB.findTeamById(orgId);
         if (!result) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found`);
@@ -55,7 +55,7 @@ export class OrganizationService {
         orgId: string,
         changes: Pick<Organization, "name">,
     ): Promise<Organization> {
-        await this.auth.checkOrgPermissionAndThrow(userId, "write_info", orgId);
+        await this.auth.checkPermissionOnOrganization(userId, "write_info", orgId);
         return this.teamDB.updateTeam(orgId, changes);
     }
 
@@ -70,7 +70,7 @@ export class OrganizationService {
             });
         } catch (err) {
             if (result! && result.id) {
-                await this.auth.removeUserFromOrg(result.id, userId);
+                await this.auth.removeOrganizationRole(result.id, userId, "member");
             }
 
             throw err;
@@ -94,7 +94,7 @@ export class OrganizationService {
     }
 
     public async deleteOrganization(userId: string, orgId: string): Promise<void> {
-        await this.auth.checkOrgPermissionAndThrow(userId, "delete", orgId);
+        await this.auth.checkPermissionOnOrganization(userId, "delete", orgId);
         const projects = await this.projectsService.getProjects(userId, orgId);
 
         const members = await this.teamDB.findMembersByTeam(orgId);
@@ -109,7 +109,7 @@ export class OrganizationService {
 
                 await db.deleteTeam(orgId);
 
-                await this.auth.deleteOrganization(orgId);
+                await this.auth.removeAllRelationships("organization", orgId);
             });
             return this.analytics.track({
                 userId: userId,
@@ -125,12 +125,12 @@ export class OrganizationService {
     }
 
     public async listMembers(userId: string, orgId: string): Promise<OrgMemberInfo[]> {
-        await this.auth.checkOrgPermissionAndThrow(userId, "read_members", orgId);
+        await this.auth.checkPermissionOnOrganization(userId, "read_members", orgId);
         return this.teamDB.findMembersByTeam(orgId);
     }
 
     public async getOrCreateInvite(userId: string, orgId: string): Promise<TeamMembershipInvite> {
-        await this.auth.checkOrgPermissionAndThrow(userId, "invite_members", orgId);
+        await this.auth.checkPermissionOnOrganization(userId, "invite_members", orgId);
         const invite = await this.teamDB.findGenericInviteByTeamId(orgId);
         if (invite) {
             if (await this.teamDB.hasActiveSSO(orgId)) {
@@ -142,7 +142,7 @@ export class OrganizationService {
     }
 
     public async resetInvite(userId: string, orgId: string): Promise<TeamMembershipInvite> {
-        await this.auth.checkOrgPermissionAndThrow(userId, "invite_members", orgId);
+        await this.auth.checkPermissionOnOrganization(userId, "invite_members", orgId);
         if (await this.teamDB.hasActiveSSO(orgId)) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
         }
@@ -173,7 +173,7 @@ export class OrganizationService {
                 return invite.teamId;
             });
         } catch (err) {
-            await this.auth.removeUserFromOrg(invite.teamId, userId);
+            await this.auth.removeOrganizationRole(invite.teamId, userId, "member");
             throw err;
         }
     }
@@ -184,7 +184,7 @@ export class OrganizationService {
         memberId: string,
         role: OrgMemberRole,
     ): Promise<void> {
-        await this.auth.checkOrgPermissionAndThrow(userId, "write_members", orgId);
+        await this.auth.checkPermissionOnOrganization(userId, "write_members", orgId);
         if (role !== "owner") {
             const members = await this.teamDB.findMembersByTeam(orgId);
             if (!members.some((m) => m.userId !== memberId && m.role === "owner")) {
@@ -204,13 +204,10 @@ export class OrganizationService {
                 await db.addMemberToTeam(memberId, orgId);
                 await db.setTeamMemberRole(memberId, orgId, role);
                 await this.auth.addOrganizationRole(orgId, memberId, role);
-                if (role === "member") {
-                    await this.auth.removeOrganizationOwnerRole(orgId, memberId);
-                }
             });
         } catch (err) {
             //TODO simply removing the user is not necessarily the right thing to do here, as the user might have been a member before
-            await this.auth.removeUserFromOrg(orgId, memberId);
+            await this.auth.removeOrganizationRole(orgId, memberId, "member");
             throw err;
         }
         // we can remove the built-in installation admin now
@@ -226,9 +223,9 @@ export class OrganizationService {
     public async removeOrganizationMember(userId: string, orgId: string, memberId: string): Promise<void> {
         // The user is leaving a team, if they are removing themselves from the team.
         if (userId === memberId) {
-            await this.auth.checkOrgPermissionAndThrow(userId, "read_info", orgId);
+            await this.auth.checkPermissionOnOrganization(userId, "read_info", orgId);
         } else {
-            await this.auth.checkOrgPermissionAndThrow(userId, "write_members", orgId);
+            await this.auth.checkPermissionOnOrganization(userId, "write_members", orgId);
         }
 
         // Check for existing membership.
@@ -262,7 +259,7 @@ export class OrganizationService {
         try {
             await this.teamDB.transaction(async (db) => {
                 await db.removeMemberFromTeam(userToBeRemoved.id, orgId);
-                await this.auth.removeUserFromOrg(orgId, memberId);
+                await this.auth.removeOrganizationRole(orgId, memberId, "member");
             });
         } catch (err) {
             // Rollback to the original role the user had
@@ -280,12 +277,12 @@ export class OrganizationService {
     }
 
     async getSettings(userId: string, orgId: string): Promise<OrganizationSettings> {
-        await this.auth.checkOrgPermissionAndThrow(userId, "read_settings", orgId);
+        await this.auth.checkPermissionOnOrganization(userId, "read_settings", orgId);
         return (await this.teamDB.findOrgSettings(orgId)) || {};
     }
 
     async updateSettings(userId: string, orgId: string, settings: OrganizationSettings): Promise<OrganizationSettings> {
-        await this.auth.checkOrgPermissionAndThrow(userId, "write_settings", orgId);
+        await this.auth.checkPermissionOnOrganization(userId, "write_settings", orgId);
         await this.teamDB.setOrgSettings(orgId, settings);
         return settings;
     }
