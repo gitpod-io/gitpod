@@ -13,12 +13,19 @@ import { registerServerMetrics } from "./prometheus-metrics";
 @injectable()
 export class MonitoringEndpointsApp {
     public create(): express.Application {
-        let registry = prometheusClient.register;
+        const registry = prometheusClient.register;
 
         prometheusClient.collectDefaultMetrics({ register: registry });
         registerDBMetrics(registry);
         registerServerMetrics(registry);
-        registry = prometheusClient.Registry.merge([registry, redisMetricsRegistry()]);
+
+        // Append redis metrics to default registry
+        redisMetricsRegistry()
+            .getMetricsAsArray()
+            .then((metrics) => {
+                metrics.forEach((metric) => registry.registerMetric(metric as any));
+            })
+            .catch(console.error);
 
         const monApp = express();
         monApp.get("/metrics", async (req, res) => {
