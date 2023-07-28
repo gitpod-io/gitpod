@@ -67,9 +67,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [[ '${{ github.event.inputs.name }}' != '' ]]; then
+          if [[ '${{ inputs.name }}' != '' ]]; then
               {
-                  echo "name=${{ github.event.inputs.name }}"
+                  echo "name=${{ inputs.name }}"
               } >> $GITHUB_OUTPUT
           else
               {
@@ -77,9 +77,9 @@ jobs:
               } >> $GITHUB_OUTPUT
           fi
 
-          if [[ '${{ github.event.inputs.version }}' != '' ]]; then
+          if [[ '${{ inputs.version }}' != '' ]]; then
               {
-                  echo "version=${{ github.event.inputs.version }}"
+                  echo "version=${{ inputs.version }}"
               } >> $GITHUB_OUTPUT
           else
               # Find the most recent successful build on main. Look back up to 10 builds.
@@ -118,7 +118,7 @@ jobs:
           infrastructure_provider: gce
           large_vm: true
       - name: Deploy Gitpod to the preview environment
-        if: github.event.inputs.skip_deploy != 'true'
+        if: inputs.skip_deploy != 'true'
         id: deploy-gitpod
         uses: ./.github/actions/deploy-gitpod
         with:
@@ -159,7 +159,7 @@ jobs:
   delete:
     name: Delete preview environment
     needs: [configuration, infrastructure, check, create-runner]
-    if: github.event.inputs.skip_delete != 'true' && always()
+    if: inputs.skip_delete != 'true' && always()
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-oci-tool-gha.14121
