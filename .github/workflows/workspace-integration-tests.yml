@@ -1,15 +1,14 @@
 name: "Workspace integration tests"
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       name:
         required: false
+        type: string
         description: "The name of the preview environment, or leave empty to use a default name"
       version:
         required: false
+        type: string
         description: "The version of Gitpod to install (leave empty to target the latest successful build on main)"
       skip_deploy:
         required: false
@@ -19,6 +18,16 @@ on:
         required: false
         type: boolean
         description: "Skip delete preview environment (debug only)"
+  workflow_call:
+    inputs:
+      name:
+        required: false
+        type: string
+        description: "The name of the preview environment, or leave empty to use a default name"
+      version:
+        required: false
+        type: string
+        description: "The version of Gitpod to install (leave empty to target the latest successful build on main)"
   schedule:
     - cron: "0 3,12 * * *"
 
