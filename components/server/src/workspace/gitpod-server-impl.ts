@@ -11,7 +11,6 @@ import {
     DBWithTracing,
     TracedWorkspaceDB,
     DBGitpodToken,
-    UserStorageResourcesDB,
     EmailDomainFilterDB,
     TeamDB,
 } from "@gitpod/gitpod-db/lib";
@@ -235,7 +234,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(TokenProvider) private readonly tokenProvider: TokenProvider,
         @inject(UserAuthentication) private readonly userAuthentication: UserAuthentication,
         @inject(UserService) private readonly userService: UserService,
-        @inject(UserStorageResourcesDB) private readonly userStorageResourcesDB: UserStorageResourcesDB,
         @inject(UserDeletionService) private readonly userDeletionService: UserDeletionService,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(AuthorizationService) private readonly authorizationService: AuthorizationService,
@@ -2247,34 +2245,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const instance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
         return { instance, workspace };
-    }
-
-    async getUserStorageResource(
-        ctx: TraceContext,
-        options: GitpodServer.GetUserStorageResourceOptions,
-    ): Promise<string> {
-        traceAPIParams(ctx, { options });
-
-        const uri = options.uri;
-        const userId = (await this.checkUser("getUserStorageResource", { uri: options.uri })).id;
-
-        await this.guardAccess({ kind: "userStorage", uri, userID: userId }, "get");
-
-        return await this.userStorageResourcesDB.get(userId, uri);
-    }
-
-    async updateUserStorageResource(
-        ctx: TraceContext,
-        options: GitpodServer.UpdateUserStorageResourceOptions,
-    ): Promise<void> {
-        traceAPIParams(ctx, { options: censor(options, "content") }); // because may contain PII, and size (arbitrary files are stored here)
-
-        const { uri, content } = options;
-        const user = await this.checkAndBlockUser("updateUserStorageResource", { uri: options.uri });
-
-        await this.guardAccess({ kind: "userStorage", uri, userID: user.id }, "update");
-
-        await this.userStorageResourcesDB.update(user.id, uri, content);
     }
 
     async isGitHubAppEnabled(ctx: TraceContext): Promise<boolean> {
