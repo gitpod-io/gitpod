@@ -18,7 +18,7 @@ inputs:
     description: "The GitHub token to use when authenticating with GitHub"
     required: true
   latest_ide_version:
-    description: "The latest IDE version to use"
+    description: "Use the latest IDE version"
     required: false
     default: ""
   test_build_id:
@@ -116,6 +116,6 @@ runs:
       if: ${{ (success() || failure()) && inputs.notify_slack_webhook != '' }}
       env:
         SLACK_WEBHOOK: ${{ inputs.notify_slack_webhook }}
-        SLACK_COLOR: ${{ (success() && 'success') || (failure() && 'failure') || (cancelled() && 'cancelled') }}
+        SLACK_COLOR: ${{ steps.integration-test.outcome }}
         SLACK_MESSAGE: "${{ steps.test_summary.outputs.passed }} tests passed, ${{ steps.test_summary.outputs.failed }} tests failed, ${{ steps.test_summary.outputs.skipped }} tests skipped (took ${{ steps.integration-test.outputs.duration }})"
         SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
