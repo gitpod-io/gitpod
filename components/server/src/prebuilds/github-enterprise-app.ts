@@ -8,7 +8,7 @@ import * as express from "express";
 import { createHmac, timingSafeEqual } from "crypto";
 import { Buffer } from "buffer";
 import { postConstruct, injectable, inject } from "inversify";
-import { ProjectDB, TeamDB, UserDB, WebhookEventDB } from "@gitpod/gitpod-db/lib";
+import { ProjectDB, TeamDB, WebhookEventDB } from "@gitpod/gitpod-db/lib";
 import { PrebuildManager } from "./prebuild-manager";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { TokenService } from "../user/token-service";
@@ -20,10 +20,12 @@ import { URL } from "url";
 import { ContextParser } from "../workspace/context-parser-service";
 import { RepoURL } from "../repohost";
 import { GithubAppRules } from "./github-app-rules";
+import { UserService } from "../user/user-service";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 @injectable()
 export class GitHubEnterpriseApp {
-    @inject(UserDB) protected readonly userDB: UserDB;
+    @inject(UserService) protected readonly userService: UserService;
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
     @inject(TokenService) protected readonly tokenService: TokenService;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
@@ -112,9 +114,11 @@ export class GitHubEnterpriseApp {
                 // Verify the webhook signature
                 const signature = req.header("X-Hub-Signature-256");
                 const body = (req as any).rawBody;
-                const tokenEntries = (await this.userDB.findTokensForIdentity(gitpodIdentity)).filter((tokenEntry) => {
-                    return tokenEntry.token.scopes.includes(GitHubService.PREBUILD_TOKEN_SCOPE);
-                });
+                const tokenEntries = (await this.userService.findTokensForIdentity(user.id, gitpodIdentity)).filter(
+                    (tokenEntry) => {
+                        return tokenEntry.token.scopes.includes(GitHubService.PREBUILD_TOKEN_SCOPE);
+                    },
+                );
                 const signatureMatched = tokenEntries.some((tokenEntry) => {
                     const sig =
                         "sha256=" +
@@ -240,13 +244,11 @@ export class GitHubEnterpriseApp {
         webhookInstaller: User,
     ): Promise<{ user: User; project?: Project }> {
         const project = await this.projectDB.findProjectByCloneUrl(cloneURL);
-        if (project) {
-            if (project.userId) {
-                const user = await this.userDB.findUserById(project.userId);
-                if (user) {
-                    return { user, project };
+        try {
+            if (project) {
+                if (!project.teamId) {
+                    throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "Project has no teamId.");
                 }
-            } else if (project.teamId) {
                 const teamMembers = await this.teamDB.findMembersByTeam(project.teamId || "");
                 if (teamMembers.some((t) => t.userId === webhookInstaller.id)) {
                     return { user: webhookInstaller, project };
@@ -254,25 +256,22 @@ export class GitHubEnterpriseApp {
                 const hostContext = this.hostContextProvider.get(new URL(cloneURL).host);
                 const authProviderId = hostContext?.authProvider.authProviderId;
                 for (const teamMember of teamMembers) {
-                    const user = await this.userDB.findUserById(teamMember.userId);
+                    const user = await this.userService.findUserById(webhookInstaller.id, teamMember.userId);
                     if (user && user.identities.some((i) => i.authProviderId === authProviderId)) {
                         return { user, project };
                     }
                 }
             }
+        } catch (err) {
+            log.info({ userId: webhookInstaller.id }, "Failed to find project and owner", err);
         }
         return { user: webhookInstaller };
     }
 
     protected async findProjectOwners(cloneURL: string): Promise<{ users: User[]; project: Project } | undefined> {
-        const project = await this.projectDB.findProjectByCloneUrl(cloneURL);
-        if (project) {
-            if (project.userId) {
-                const user = await this.userDB.findUserById(project.userId);
-                if (user) {
-                    return { users: [user], project };
-                }
-            } else if (project.teamId) {
+        try {
+            const project = await this.projectDB.findProjectByCloneUrl(cloneURL);
+            if (project) {
                 const users = [];
                 const owners = (await this.teamDB.findMembersByTeam(project.teamId || "")).filter(
                     (m) => m.role === "owner",
@@ -280,13 +279,15 @@ export class GitHubEnterpriseApp {
                 const hostContext = this.hostContextProvider.get(new URL(cloneURL).host);
                 const authProviderId = hostContext?.authProvider.authProviderId;
                 for (const teamMember of owners) {
-                    const user = await this.userDB.findUserById(teamMember.userId);
+                    const user = await this.userService.findUserById(teamMember.userId, teamMember.userId);
                     if (user && user.identities.some((i) => i.authProviderId === authProviderId)) {
                         users.push(user);
                     }
                 }
                 return { users, project };
             }
+        } catch (err) {
+            log.info("Failed to find project and owner", err);
         }
         return undefined;
     }

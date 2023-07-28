@@ -590,11 +590,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, "User is not authenticated. Please login.");
         }
 
-        const user = await this.userDB.findUserById(this.userID);
-        if (!user) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "User does not exist.");
-        }
-
+        const user = await this.userService.findUserById(this.userID, this.userID);
         if (user.markedDeleted === true) {
             throw new ApplicationError(ErrorCodes.USER_DELETED, "User has been deleted.");
         }
@@ -1222,13 +1218,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const workspace = await this.internalGetWorkspace(user, workspaceId, this.workspaceDb.trace(ctx));
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
 
-        const owner = await this.userDB.findUserById(workspace.ownerId);
-        if (!owner) {
-            return undefined;
+        try {
+            const owner = await this.userService.findUserById(user.id, workspace.ownerId);
+            await this.guardAccess({ kind: "user", subject: owner }, "get");
+            return { name: owner.name };
+        } catch (e) {
+            if (e.code === ErrorCodes.NOT_FOUND) {
+                return undefined;
+            }
+            throw e;
         }
-
-        await this.guardAccess({ kind: "user", subject: owner }, "get");
-        return { name: owner.name };
     }
 
     public async getWorkspaceUsers(ctx: TraceContext, workspaceId: string): Promise<WorkspaceInstanceUser[]> {
@@ -1578,22 +1577,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         for (const repo of repositories) {
             const p = cloneUrlToProject.get(repo.cloneUrl);
-            const repoProvider = new URL(repo.cloneUrl).host.split(".")[0];
 
             if (p) {
-                if (p.userId) {
-                    const owner = await this.userDB.findUserById(p.userId);
-                    if (owner) {
-                        const ownerProviderMatchingRepoProvider = owner.identities.find((identity, index) =>
-                            identity.authProviderId.toLowerCase().includes(repoProvider),
-                        );
-                        if (ownerProviderMatchingRepoProvider) {
-                            repo.inUse = {
-                                userName: ownerProviderMatchingRepoProvider?.authName,
-                            };
-                        }
-                    }
-                } else if (p.teamOwners && p.teamOwners[0]) {
+                if (p.teamOwners && p.teamOwners[0]) {
                     repo.inUse = {
                         userName: p.teamOwners[0] || "somebody",
                     };
@@ -3151,19 +3137,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async adminGetUser(ctx: TraceContext, userId: string): Promise<User> {
         traceAPIParams(ctx, { userId });
 
-        await this.guardAdminAccess("adminGetUser", { id: userId }, Permission.ADMIN_USERS);
+        const admin = await this.guardAdminAccess("adminGetUser", { id: userId }, Permission.ADMIN_USERS);
 
-        let result: User | undefined;
-        try {
-            result = await this.userDB.findUserById(userId);
-        } catch (e) {
-            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
-        }
-
-        if (!result) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
-        }
-        return result;
+        return await this.userService.findUserById(admin.id, userId);
     }
 
     async adminGetUsers(ctx: TraceContext, req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>> {
@@ -3262,30 +3238,20 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async adminVerifyUser(ctx: TraceContext, userId: string): Promise<User> {
-        await this.guardAdminAccess("adminVerifyUser", { id: userId }, Permission.ADMIN_USERS);
-        try {
-            const user = await this.userDB.findUserById(userId);
-            if (!user) {
-                throw new ApplicationError(ErrorCodes.NOT_FOUND, `No user with id ${userId} found.`);
-            }
-            this.verificationService.markVerified(user);
-            await this.userDB.updateUserPartial(user);
-            return user;
-        } catch (e) {
-            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
-        }
+        const admin = await this.guardAdminAccess("adminVerifyUser", { id: userId }, Permission.ADMIN_USERS);
+        const user = await this.userService.findUserById(admin.id, userId);
+
+        this.verificationService.markVerified(user);
+        await this.userDB.updateUserPartial(user);
+        return user;
     }
 
     async adminModifyRoleOrPermission(ctx: TraceContext, req: AdminModifyRoleOrPermissionRequest): Promise<User> {
         traceAPIParams(ctx, { req });
 
-        await this.guardAdminAccess("adminModifyRoleOrPermission", { req }, Permission.ADMIN_PERMISSIONS);
+        const admin = await this.guardAdminAccess("adminModifyRoleOrPermission", { req }, Permission.ADMIN_PERMISSIONS);
 
-        const target = await this.userDB.findUserById(req.id);
-        if (!target) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
-        }
-
+        const target = await this.userService.findUserById(admin.id, req.id);
         const rolesOrPermissions = new Set((target.rolesOrPermissions || []) as string[]);
         req.rpp.forEach((e) => {
             if (e.add) {
@@ -3305,11 +3271,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<User> {
         traceAPIParams(ctx, { req });
 
-        await this.guardAdminAccess("adminModifyPermanentWorkspaceFeatureFlag", { req }, Permission.ADMIN_USERS);
-        const target = await this.userDB.findUserById(req.id);
-        if (!target) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
-        }
+        const admin = await this.guardAdminAccess(
+            "adminModifyPermanentWorkspaceFeatureFlag",
+            { req },
+            Permission.ADMIN_USERS,
+        );
+        const target = await this.userService.findUserById(admin.id, req.id);
 
         const featureSettings: UserFeatureSettings = target.featureFlags || {};
         const featureFlags = new Set(featureSettings.permanentWSFeatureFlags || []);
