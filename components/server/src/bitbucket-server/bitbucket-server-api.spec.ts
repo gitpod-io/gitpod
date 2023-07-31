@@ -74,6 +74,7 @@ class TestBitbucketServerApi {
                     authProviderId: "MyBitbucketServer",
                 },
             ],
+            emails: [],
         };
     }
 

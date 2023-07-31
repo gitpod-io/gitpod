@@ -29,6 +29,7 @@ export namespace DevData {
                     primaryEmail: "somefox@gitpod.io",
                 },
             ],
+            emails: [],
             additionalData: {
                 emailNotificationSettings: {
                     allowsChangelogMail: true,

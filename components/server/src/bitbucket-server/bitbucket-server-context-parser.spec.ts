@@ -75,6 +75,7 @@ class TestBitbucketServerContextParser {
                     authProviderId: "MyBitbucketServer",
                 },
             ],
+            emails: [],
         };
     }
 

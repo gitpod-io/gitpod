@@ -79,6 +79,7 @@ class TestBitbucketServerRepositoryProvider {
                     authProviderId: "MyBitbucketServer",
                 },
             ],
+            emails: [],
         };
     }
 

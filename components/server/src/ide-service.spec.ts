@@ -18,6 +18,7 @@ describe("ide-service", function () {
 
                 creationDate: "string",
                 identities: [],
+                emails: [],
                 additionalData: {},
             };
             const result = ideService.migrateSettings(user);
@@ -29,6 +30,7 @@ describe("ide-service", function () {
                 id: "string",
                 creationDate: "string",
                 identities: [],
+                emails: [],
                 additionalData: {
                     ideSettings: {
                         settingVersion: "2.0",
@@ -46,6 +48,7 @@ describe("ide-service", function () {
                 id: "string",
                 creationDate: "string",
                 identities: [],
+                emails: [],
                 additionalData: {
                     ideSettings: {
                         defaultIde: "code-latest",
@@ -63,6 +66,7 @@ describe("ide-service", function () {
                 id: "string",
                 creationDate: "string",
                 identities: [],
+                emails: [],
                 additionalData: {
                     ideSettings: {
                         defaultIde: "code",
@@ -81,6 +85,7 @@ describe("ide-service", function () {
                 id: "string",
                 creationDate: "string",
                 identities: [],
+                emails: [],
                 additionalData: {
                     ideSettings: {
                         defaultIde: "code",
@@ -99,6 +104,7 @@ describe("ide-service", function () {
                 id: "string",
                 creationDate: "string",
                 identities: [],
+                emails: [],
                 additionalData: {
                     ideSettings: {
                         defaultIde: "code",
@@ -118,6 +124,7 @@ describe("ide-service", function () {
                 id: "string",
                 creationDate: "string",
                 identities: [],
+                emails: [],
                 additionalData: {
                     ideSettings: {
                         defaultIde: "code",
@@ -137,6 +144,7 @@ describe("ide-service", function () {
                 id: "string",
                 creationDate: "string",
                 identities: [],
+                emails: [],
                 additionalData: {
                     ideSettings: {
                         defaultIde: "code-latest",

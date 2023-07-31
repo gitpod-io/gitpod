@@ -257,6 +257,7 @@ class TestResourceAccess {
                         authProviderId: "github.com",
                     },
                 ],
+                emails: [],
             };
         };
 
@@ -395,6 +396,7 @@ class TestResourceAccess {
                     authProviderId: "github.com",
                 },
             ],
+            emails: [],
         };
 
         const org: Organization = {
@@ -819,6 +821,7 @@ class TestResourceAccess {
                         authProviderId: "github.com",
                     },
                 ],
+                emails: [],
             };
         };
         const otherUserId = "456";

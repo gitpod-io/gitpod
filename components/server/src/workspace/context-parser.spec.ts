@@ -16,6 +16,7 @@ const baseUserInfo: User = {
     id: "1",
     creationDate: "today :)",
     identities: [],
+    emails: [],
     name: "John Doe",
 };
 

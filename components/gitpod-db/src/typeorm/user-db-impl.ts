@@ -97,6 +97,7 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
             id: uuidv4(),
             creationDate: new Date().toISOString(),
             identities: [],
+            emails: [],
             additionalData: {
                 // Please DO NOT add ideSettings prop, it'll broke onboarding of JetBrains Gateway
                 // If you want to do it, ping IDE team

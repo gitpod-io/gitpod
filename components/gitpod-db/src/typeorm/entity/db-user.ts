@@ -50,6 +50,9 @@ export class DBUser implements User {
         transformer: (() => {
             return {
                 to(value: any): any {
+                    if (!Array.isArray(value)) {
+                        return "[]";
+                    }
                     return JSON.stringify(value);
                 },
                 from(value: any): any {
