@@ -2843,16 +2843,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (!project) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Project not found");
         }
-        // TODO(janx): This if/else block should probably become a GuardedProject.
-        if (project.userId) {
-            if (user.id !== project.userId) {
-                // Projects owned by a single user can only be accessed by that user
-                throw new ApplicationError(ErrorCodes.PERMISSION_DENIED, "Not allowed to access this project");
-            }
-        } else {
-            // Anyone who can read a team's information (i.e. any team member) can manage team projects
-            await this.guardTeamOperation(project.teamId || "", "get", "not_implemented");
-        }
+        // Anyone who can read a team's information (i.e. any team member) can manage team projects
+        await this.guardTeamOperation(project.teamId, "get", "not_implemented");
     }
 
     public async deleteProject(ctx: TraceContext, projectId: string): Promise<void> {

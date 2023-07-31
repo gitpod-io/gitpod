@@ -240,14 +240,10 @@ export class WorkspaceFactory {
             };
 
             let projectId: string | undefined;
-            // associate with a project, if it's the personal project of the current user
-            if (project?.userId && project?.userId === user.id) {
-                projectId = project.id;
-            }
             // associate with a project, if the current user is a team member
-            if (project?.teamId) {
+            if (project) {
                 const teams = await this.teamDB.findTeamsByUser(user.id);
-                if (teams.some((t) => t.id === project?.teamId)) {
+                if (teams.some((t) => t.id === project.teamId)) {
                     projectId = project.id;
                 }
             }
@@ -380,14 +376,10 @@ export class WorkspaceFactory {
             }
 
             let projectId: string | undefined;
-            // associate with a project, if it's the personal project of the current user
-            if (project?.userId && project?.userId === user.id) {
-                projectId = project.id;
-            }
             // associate with a project, if the current user is a team member
-            if (project?.teamId) {
+            if (project) {
                 const teams = await this.teamDB.findTeamsByUser(user.id);
-                if (teams.some((t) => t.id === project?.teamId)) {
+                if (teams.some((t) => t.id === project.teamId)) {
                     projectId = project.id;
                 }
             }
