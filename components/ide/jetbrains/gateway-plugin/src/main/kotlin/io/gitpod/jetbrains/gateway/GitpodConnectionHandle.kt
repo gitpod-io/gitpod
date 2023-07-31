@@ -2,8 +2,9 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
-package io.gitpod.jetbrains.gateway.stable
+package io.gitpod.jetbrains.gateway
 
+import com.intellij.openapi.components.Service
 import com.jetbrains.gateway.api.CustomConnectionFrameComponentProvider
 import com.jetbrains.gateway.api.CustomConnectionFrameContext
 import com.jetbrains.gateway.api.GatewayConnectionHandle
@@ -12,7 +13,6 @@ import com.jetbrains.gateway.ssh.HostTunnelConnector
 import com.jetbrains.gateway.thinClientLink.ThinClientHandle
 import com.jetbrains.rd.util.lifetime.Lifetime
 import io.gitpod.jetbrains.gateway.GitpodConnectionProvider.ConnectParams
-import io.gitpod.jetbrains.gateway.common.GitpodConnectionHandleFactory
 import java.net.URI
 import javax.swing.JComponent
 
@@ -21,7 +21,7 @@ class GitpodConnectionHandle(
         private val component: JComponent,
         private val params: ConnectParams
 ) : GatewayConnectionHandle(lifetime) {
-    override fun customComponentProvider() = object : CustomConnectionFrameComponentProvider {
+    override fun customComponentProvider(lifetime: Lifetime) = object : CustomConnectionFrameComponentProvider {
         override val closeConfirmationText = "Disconnect from ${getTitle()}?"
         override fun createComponent(context: CustomConnectionFrameContext) = component
     }
@@ -34,10 +34,10 @@ class GitpodConnectionHandle(
         return false
     }
 }
-
 @Suppress("UnstableApiUsage")
-class StableGitpodConnectionHandleFactory : GitpodConnectionHandleFactory {
-    override fun createGitpodConnectionHandle(
+@Service
+class GitpodConnectionHandleFactory {
+    fun createGitpodConnectionHandle(
             lifetime: Lifetime,
             component: JComponent,
             params: ConnectParams
@@ -45,11 +45,10 @@ class StableGitpodConnectionHandleFactory : GitpodConnectionHandleFactory {
         return GitpodConnectionHandle(lifetime, component, params)
     }
 
-    override suspend fun connect(lifetime: Lifetime, connector: HostTunnelConnector, tcpJoinLink: URI): ThinClientHandle {
+    suspend fun connect(lifetime: Lifetime, connector: HostTunnelConnector, tcpJoinLink: URI): ThinClientHandle {
         return ClientOverSshTunnelConnector(
             lifetime,
-            connector,
-            tcpJoinLink
-        ).connect()
+            connector
+        ).connect(tcpJoinLink)
     }
 }
