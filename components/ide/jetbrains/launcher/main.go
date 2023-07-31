@@ -618,6 +618,9 @@ func updateVMOptions(
 	// Gitpod's default customization
 	var gitpodVMOptions []string
 	gitpodVMOptions = append(gitpodVMOptions, "-Dgtw.disable.exit.dialog=true")
+	// temporary disable auto-attach of the async-profiler to prevent JVM crash
+	// see https://youtrack.jetbrains.com/issue/IDEA-326201/SIGSEGV-on-startup-2023.2-IDE-backend-on-gitpod.io?s=SIGSEGV-on-startup-2023.2-IDE-backend-on-gitpod.io
+	gitpodVMOptions = append(gitpodVMOptions, "-Dfreeze.reporter.profiling=false")
 	if alias == "intellij" {
 		gitpodVMOptions = append(gitpodVMOptions, "-Djdk.configure.existing=true")
 	}
