@@ -26,7 +26,7 @@ spec:
         # dedicated: included
       for: 10m
       annotations:
-        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceTooManyRegularNotActive.md
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceRegularNotActive.md
         summary: too many running but inactive workspaces
         description: too many running but inactive workspaces.
       expr: |
@@ -41,7 +41,7 @@ spec:
         # dedicated: included
       for: 10m
       annotations:
-        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceNotStarting.md
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceRegularNotActive.md
         summary: workspaces are not starting.
         description: inactive regular workspaces exists but workspaces are not being started.
       expr: |
