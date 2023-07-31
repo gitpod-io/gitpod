@@ -39,6 +39,7 @@ import { ContextParser } from "../workspace/context-parser-service";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
 import { ApplicationError, ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { UserService } from "../user/user-service";
 
 /**
  * GitHub app urls:
@@ -54,8 +55,9 @@ import { ApplicationError, ErrorCode } from "@gitpod/gitpod-protocol/lib/messagi
 export class GithubApp {
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
-    @inject(AppInstallationDB) protected readonly appInstallationDB: AppInstallationDB;
     @inject(UserDB) protected readonly userDB: UserDB;
+    @inject(AppInstallationDB) protected readonly appInstallationDB: AppInstallationDB;
+    @inject(UserService) protected readonly userService: UserService;
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
     @inject(GithubAppRules) protected readonly appRules: GithubAppRules;
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
@@ -646,7 +648,7 @@ export class GithubApp {
             return installationOwner;
         }
         for (const teamMember of teamMembers) {
-            const user = await this.userDB.findUserById(teamMember.userId);
+            const user = await this.userService.findUserById(teamMember.userId, teamMember.userId);
             if (user && user.identities.some((i) => i.authProviderId === "Public-GitHub")) {
                 return user;
             }
@@ -667,7 +669,7 @@ export class GithubApp {
         }
 
         const ownerID = installation.ownerUserID || "this-should-never-happen";
-        const user = await this.userDB.findUserById(ownerID);
+        const user = await this.userService.findUserById(ownerID, ownerID);
         if (!user) {
             return;
         }

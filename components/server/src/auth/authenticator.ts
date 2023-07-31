@@ -4,32 +4,33 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import * as express from "express";
-import * as passport from "passport";
-import { injectable, postConstruct, inject } from "inversify";
+import { TeamDB } from "@gitpod/gitpod-db/lib";
 import { User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
+import * as express from "express";
+import { inject, injectable, postConstruct } from "inversify";
+import * as passport from "passport";
 import { Config } from "../config";
-import { HostContextProvider } from "./host-context-provider";
-import { AuthFlow, AuthProvider } from "./auth-provider";
-import { TokenProvider } from "../user/token-provider";
-import { AuthProviderService } from "./auth-provider-service";
-import { UserAuthentication } from "../user/user-authentication";
-import { SignInJWT } from "./jwt";
 import { reportLoginCompleted } from "../prometheus-metrics";
+import { TokenProvider } from "../user/token-provider";
+import { UserAuthentication } from "../user/user-authentication";
+import { UserService } from "../user/user-service";
+import { AuthFlow, AuthProvider } from "./auth-provider";
+import { AuthProviderService } from "./auth-provider-service";
+import { HostContextProvider } from "./host-context-provider";
+import { SignInJWT } from "./jwt";
 
 @injectable()
 export class Authenticator {
     protected passportInitialize: express.Handler;
 
     @inject(Config) protected readonly config: Config;
-    @inject(UserDB) protected userDb: UserDB;
+    @inject(UserService) protected userService: UserService;
     @inject(TeamDB) protected teamDb: TeamDB;
     @inject(HostContextProvider) protected hostContextProvider: HostContextProvider;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
-    @inject(UserAuthentication) protected readonly userService: UserAuthentication;
+    @inject(UserAuthentication) protected readonly userAuthentication: UserAuthentication;
     @inject(SignInJWT) protected readonly signInJWT: SignInJWT;
 
     @postConstruct()
@@ -45,12 +46,9 @@ export class Authenticator {
         });
         passport.deserializeUser(async (id, done) => {
             try {
-                const user = await this.userDb.findUserById(id as string);
-                if (user) {
-                    done(null, user);
-                } else {
-                    done(new Error("User not found."));
-                }
+                const userId = id as string;
+                const user = await this.userService.findUserById(userId, userId);
+                done(null, user);
             } catch (err) {
                 done(err);
             }
@@ -202,7 +200,7 @@ export class Authenticator {
         }
 
         try {
-            await this.userService.deauthorize(user, authProvider.authProviderId);
+            await this.userAuthentication.deauthorize(user, authProvider.authProviderId);
             res.redirect(returnTo);
         } catch (error) {
             next(error);

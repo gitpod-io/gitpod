@@ -8,7 +8,7 @@ import { inject, injectable } from "inversify";
 import { Config } from "../config";
 import { UserDB } from "@gitpod/gitpod-db/lib";
 import { Authorizer } from "../authorization/authorizer";
-import { AdditionalUserData, User } from "@gitpod/gitpod-protocol";
+import { AdditionalUserData, Identity, TokenEntry, User } from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { CreateUserParams } from "./user-authentication";
@@ -76,11 +76,21 @@ export class UserService {
         }
     }
 
-    public async findUserById(userId: string, id: string): Promise<User> {
+    async findUserById(userId: string, id: string): Promise<User> {
         await this.authorizer.checkPermissionOnUser(userId, "read_info", id);
         const result = await this.userDb.findUserById(id);
         if (!result) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
+        }
+        return result;
+    }
+
+    async findTokensForIdentity(userId: string, identity: Identity): Promise<TokenEntry[]> {
+        const result = await this.userDb.findTokensForIdentity(identity);
+        for (const token of result) {
+            if (!(await this.authorizer.hasPermissionOnUser(userId, "read_info", token.uid))) {
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
+            }
         }
         return result;
     }

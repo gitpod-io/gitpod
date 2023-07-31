@@ -6,7 +6,7 @@
 
 import * as express from "express";
 import { postConstruct, injectable, inject } from "inversify";
-import { ProjectDB, TeamDB, UserDB, WebhookEventDB } from "@gitpod/gitpod-db/lib";
+import { ProjectDB, TeamDB, WebhookEventDB } from "@gitpod/gitpod-db/lib";
 import { PrebuildManager } from "./prebuild-manager";
 import { TokenService } from "../user/token-service";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
@@ -15,10 +15,12 @@ import { RepoURL } from "../repohost";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { ContextParser } from "../workspace/context-parser-service";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { UserService } from "../user/user-service";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 @injectable()
 export class BitbucketServerApp {
-    @inject(UserDB) protected readonly userDB: UserDB;
+    @inject(UserService) protected readonly userService: UserService;
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
     @inject(TokenService) protected readonly tokenService: TokenService;
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
@@ -81,7 +83,7 @@ export class BitbucketServerApp {
         try {
             span.setTag("secret-token", secretToken);
             const [userid, tokenValue] = secretToken.split("|");
-            const user = await this.userDB.findUserById(userid);
+            const user = await this.userService.findUserById(userid, userid);
             if (!user) {
                 throw new Error("No user found for " + secretToken + " found.");
             } else if (!!user.blocked) {
@@ -91,7 +93,7 @@ export class BitbucketServerApp {
             if (!identity) {
                 throw new Error(`User ${user.id} has no identity for '${TokenService.GITPOD_AUTH_PROVIDER_ID}'.`);
             }
-            const tokens = await this.userDB.findTokensForIdentity(identity);
+            const tokens = await this.userService.findTokensForIdentity(userid, identity);
             const token = tokens.find((t) => t.token.value === tokenValue);
             if (!token) {
                 throw new Error(`User ${user.id} has no token with given value.`);
@@ -205,25 +207,25 @@ export class BitbucketServerApp {
         cloneURL: string,
         webhookInstaller: User,
     ): Promise<{ user: User; project?: Project }> {
-        const project = await this.projectDB.findProjectByCloneUrl(cloneURL);
-        if (project) {
-            if (project.userId) {
-                const user = await this.userDB.findUserById(project.userId);
-                if (user) {
-                    return { user, project };
+        try {
+            const project = await this.projectDB.findProjectByCloneUrl(cloneURL);
+            if (project) {
+                if (!project.teamId) {
+                    throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "Project has no teamId.");
                 }
-            } else if (project.teamId) {
-                const teamMembers = await this.teamDB.findMembersByTeam(project.teamId || "");
+                const teamMembers = await this.teamDB.findMembersByTeam(project.teamId);
                 if (teamMembers.some((t) => t.userId === webhookInstaller.id)) {
                     return { user: webhookInstaller, project };
                 }
                 for (const teamMember of teamMembers) {
-                    const user = await this.userDB.findUserById(teamMember.userId);
+                    const user = await this.userService.findUserById(webhookInstaller.id, teamMember.userId);
                     if (user && user.identities.some((i) => i.authProviderId === "Public-Bitbucket")) {
                         return { user, project };
                     }
                 }
             }
+        } catch (err) {
+            log.info({ userId: webhookInstaller.id }, "Failed to find project and owner", err);
         }
         return { user: webhookInstaller };
     }
