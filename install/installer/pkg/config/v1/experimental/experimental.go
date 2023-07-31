@@ -29,15 +29,7 @@ type Config struct {
 	IDE        *IDEConfig         `json:"ide,omitempty"`    // @deprecated
 	Common     *CommonConfig      `json:"common,omitempty"` // @deprecated
 	Overrides  *[]Overrides       `json:"overrides,omitempty"`
-	Telemetry  *TelemetryConfig   `json:"telemetry,omitempty"`  // @deprecated
 	AgentSmith *agentSmith.Config `json:"agentSmith,omitempty"` // @deprecated
-}
-
-// @deprecated
-type TelemetryConfig struct {
-	Data struct {
-		Platform string `json:"platform"`
-	} `json:"data"`
 }
 
 type CommonConfig struct {
@@ -192,7 +184,12 @@ type SpiceDBConfig struct {
 }
 
 type WebAppConfig struct {
-	PublicAPI                    *PublicAPIConfig       `json:"publicApi,omitempty"`
+	PublicAPI *PublicAPIConfig `json:"publicApi,omitempty"`
+
+	// PublicURL lets you override the publically reachable endpoints of gitpod (currently only public api endpoint)
+	// If not set, default will be api.${Domain}
+	PublicURL string `json:"publicUrl,omitempty"`
+
 	Server                       *ServerConfig          `json:"server,omitempty"`
 	ProxyConfig                  *ProxyConfig           `json:"proxy,omitempty"`
 	WorkspaceManagerBridge       *WsManagerBridgeConfig `json:"wsManagerBridge,omitempty"`

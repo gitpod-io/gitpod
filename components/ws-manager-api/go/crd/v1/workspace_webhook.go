@@ -9,6 +9,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // log is for logging in this package.
@@ -39,27 +40,27 @@ func (r *Workspace) Default() {
 var _ webhook.Validator = &Workspace{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *Workspace) ValidateCreate() error {
+func (r *Workspace) ValidateCreate() (admission.Warnings, error) {
 	workspacelog.Info("validate create", "name", r.Name)
 
 	return r.validateWorkspace()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *Workspace) ValidateUpdate(old runtime.Object) error {
+func (r *Workspace) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	workspacelog.Info("validate update", "name", r.Name)
 
 	return r.validateWorkspace()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *Workspace) ValidateDelete() error {
+func (r *Workspace) ValidateDelete() (admission.Warnings, error) {
 	workspacelog.Info("validate delete", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
-	return nil
+	return nil, nil
 }
 
-func (r *Workspace) validateWorkspace() error {
-	return nil
+func (r *Workspace) validateWorkspace() (admission.Warnings, error) {
+	return nil, nil
 }

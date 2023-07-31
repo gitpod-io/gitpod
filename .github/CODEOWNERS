@@ -25,7 +25,6 @@
 /components/image-builder-api @gitpod-io/team-engine
 /components/image-builder-bob @gitpod-io/team-engine
 /components/image-builder-mk3 @gitpod-io/team-engine
-/components/installation-telemetry @gitpod-io/team-engine
 /install @gitpod-io/team-engine
 # By default anything in in /install/installer is shared.
 /install/installer
@@ -98,16 +97,6 @@
 /operations/observability/mixins/workspace @gitpod-io/team-engine
 # a single review should be enough
 /operations/observability/mixins/cross-teams
-
-# werft is shared between all teams
-/.werft
-/.werft/ide-* @gitpod-io/team-experience
-/.werft/platform-* @gitpod-io/team-engine
-/.werft/webapp-* @gitpod-io/team-experience
-/.werft/workspace-* @gitpod-io/team-engine
-/.werft/self-hosted-* @gitpod-io/team-engine
-/.werft/*installer-tests* @gitpod-io/team-engine
-/.werft/jobs/build/self-hosted-* @gitpod-io/team-engine
 
 .github/workflows/ide-*.yml @gitpod-io/team-experience
 .github/workflows/jetbrains-*.yml @gitpod-io/team-experience

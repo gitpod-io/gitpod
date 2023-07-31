@@ -7,27 +7,23 @@
 import { suite, test } from "@testdeck/mocha";
 import * as chai from "chai";
 import { RedisPublisher } from "./publisher";
-import { Metrics } from "../metrics";
-import { RedisClient } from "./client";
 import { Container, ContainerModule } from "inversify";
+import { Redis } from "ioredis";
 
 const expect = chai.expect;
-const Redis = require("ioredis-mock");
+const RedisMock = require("ioredis-mock");
 
 @suite
 class TestRedisPublisher {
     protected container: Container;
 
     public before() {
-        const client = {
-            get: () => new Redis(),
-        } as RedisClient;
+        const client = new RedisMock() as Redis;
 
         this.container = new Container();
         this.container.load(
             new ContainerModule((bind) => {
-                bind(Metrics).toSelf().inSingletonScope();
-                bind(RedisClient).toConstantValue(client);
+                bind(Redis).toConstantValue(client);
                 bind(RedisPublisher).toSelf().inSingletonScope();
             }),
         );

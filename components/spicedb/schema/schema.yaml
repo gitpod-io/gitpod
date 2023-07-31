@@ -3,7 +3,18 @@
 # See License.AGPL.txt in the project root for license information.
 
 schema: |-
-  definition user {}
+  definition user {
+    relation self: user
+
+    // Only ONE of the following relations is ever present for a given user (XOR)
+    relation organization: organization
+    relation installation: installation
+
+    // permissions
+    permission read_info = self + organization->member + organization->owner + installation->admin
+    permission write_info = self
+    permission make_admin = installation->admin
+  }
 
   // There's only one global installation
   definition installation {
@@ -72,6 +83,8 @@ schema: |-
 relationships: |-
   // we have one installation
   installation:installation_0#member@user:user_0
+  user:user_0#installation@installation:installation_0
+
   installation:installation_0#admin@user:user_admin
 
   // We have an organization org_1, which has some members & owners

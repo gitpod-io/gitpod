@@ -1702,6 +1702,7 @@ type WorkspaceConfig struct {
 	// Where the config object originates from.
 	//
 	// repo - from the repository
+	// definitely-gp - from github.com/gitpod-io/definitely-gp
 	// derived - computed based on analyzing the repository
 	// default - our static catch-all default config
 	Origin            string        `json:"_origin,omitempty"`

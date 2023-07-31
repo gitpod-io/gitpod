@@ -21,15 +21,17 @@ on:
 
 jobs:
   create-runner:
-    uses: ./.github/workflows/create_runner.yml
-    secrets: inherit
+    uses: gitpod-io/gce-github-runner/.github/workflows/create-vm.yml@secrets
+    secrets:
+      runner_token: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_TOKEN }}
+      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
 
   configuration:
     name: Configuration
     runs-on: ${{ needs.create-runner.outputs.label }}
     needs: [create-runner]
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-new-dev-image-gha.13182
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-oci-tool-gha.14121
     outputs:
       name: ${{ steps.configuration.outputs.name }}
       version: ${{ steps.configuration.outputs.version }}
@@ -98,7 +100,7 @@ jobs:
     needs: [configuration, infrastructure, create-runner]
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-new-dev-image-gha.13182
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-oci-tool-gha.14121
       volumes:
         - /var/tmp:/var/tmp
         - /tmp:/tmp
@@ -202,7 +204,9 @@ jobs:
       - infrastructure
       - check
       - delete
-    uses: ./.github/workflows/remove_runner.yml
-    secrets: inherit
+    uses: gitpod-io/gce-github-runner/.github/workflows/delete-vm.yml@secrets
+    secrets:
+      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
     with:
       runner-label: ${{ needs.create-runner.outputs.label }}
+      machine-zone: ${{ needs.create-runner.outputs.machine-zone }}

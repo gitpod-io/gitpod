@@ -24,7 +24,7 @@ import {
     BlockUserResponse,
 } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_pb";
 import { WorkspaceStarter } from "../workspace/workspace-starter";
-import { UserService } from "../user/user-service";
+import { UserAuthentication } from "../user/user-authentication";
 import { validate } from "uuid";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -32,7 +32,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 @injectable()
 export class APIUserService implements ServiceImpl<typeof UserServiceInterface> {
     @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
-    @inject(UserService) protected readonly userService: UserService;
+    @inject(UserAuthentication) protected readonly userService: UserAuthentication;
 
     public async getAuthenticatedUser(req: GetAuthenticatedUserRequest): Promise<GetAuthenticatedUserResponse> {
         throw new ConnectError("unimplemented", Code.Unimplemented);

@@ -5,21 +5,21 @@
  */
 
 import * as express from "express";
+import { inject, injectable } from "inversify";
 import * as websocket from "ws";
-import { injectable, inject } from "inversify";
 
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { Config } from "./config";
-import { reportJWTCookieIssued } from "./prometheus-metrics";
 import { AuthJWT } from "./auth/jwt";
-import { UserDB } from "@gitpod/gitpod-db/lib";
+import { Config } from "./config";
 import { WsNextFunction, WsRequestHandler } from "./express/ws-handler";
+import { reportJWTCookieIssued } from "./prometheus-metrics";
+import { UserService } from "./user/user-service";
 
 @injectable()
 export class SessionHandler {
     @inject(Config) protected readonly config: Config;
     @inject(AuthJWT) protected readonly authJWT: AuthJWT;
-    @inject(UserDB) protected userDb: UserDB;
+    @inject(UserService) protected userService: UserService;
 
     public jwtSessionConvertor(): express.Handler {
         return async (req, res) => {
@@ -109,10 +109,7 @@ export class SessionHandler {
                 throw new Error("Subject is missing from JWT session claims");
             }
 
-            const user = await this.userDb.findUserById(subject);
-            if (!user) {
-                throw new Error("No user exists.");
-            }
+            const user = await this.userService.findUserById(subject, subject);
 
             // We set the user object on the request to signal the user is authenticated.
             // Passport uses the `user` property on the request to determine if the session

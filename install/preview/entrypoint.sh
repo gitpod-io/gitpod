@@ -210,7 +210,6 @@ rm /var/lib/rancher/k3s/server/manifests/gitpod/*Issuer*
 # update PersistentVolumeClaim's to use k3s's `local-path` storage class
 for f in /var/lib/rancher/k3s/server/manifests/gitpod/*PersistentVolumeClaim*.yaml; do yq e -i '.spec.storageClassName="local-path"' "$f"; done
 # Set `volumeClassTemplate` so that each replica creates its own PVC
-yq eval-all -i ". as \$item ireduce ({}; . *+ \$item)" /var/lib/rancher/k3s/server/manifests/gitpod/*_StatefulSet_messagebus.yaml /app/manifests/messagebus.yaml
 # update Statefulset's to use k3s's `local-path` storage class
 for f in /var/lib/rancher/k3s/server/manifests/gitpod/*StatefulSet*.yaml; do yq e -i '.spec.volumeClaimTemplates[0].spec.storageClassName="local-path"' "$f"; done
 

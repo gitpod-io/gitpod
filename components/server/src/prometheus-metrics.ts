@@ -7,14 +7,13 @@
 import * as prometheusClient from "prom-client";
 
 export function registerServerMetrics(registry: prometheusClient.Registry) {
-    registry.registerMetric(loginCounter);
+    registry.registerMetric(loginCompletedTotal);
     registry.registerMetric(apiConnectionCounter);
     registry.registerMetric(apiConnectionClosedCounter);
     registry.registerMetric(apiCallCounter);
     registry.registerMetric(apiCallDurationHistogram);
     registry.registerMetric(httpRequestTotal);
     registry.registerMetric(httpRequestDuration);
-    registry.registerMetric(messagebusTopicReads);
     registry.registerMetric(gitpodVersionInfo);
     registry.registerMetric(instanceStartsSuccessTotal);
     registry.registerMetric(instanceStartsFailedTotal);
@@ -34,14 +33,17 @@ export function registerServerMetrics(registry: prometheusClient.Registry) {
     registry.registerMetric(redisUpdatesReceived);
     registry.registerMetric(redisUpdatesCompletedTotal);
     registry.registerMetric(updateSubscribersRegistered);
-    registry.registerMetric(updatesPublishedTotal);
 }
 
-const loginCounter = new prometheusClient.Counter({
-    name: "gitpod_server_login_requests_total",
-    help: "Total amount of login requests",
-    labelNames: ["status", "auth_host"],
+const loginCompletedTotal = new prometheusClient.Counter({
+    name: "gitpod_login_completed_total",
+    help: "Total number of logins completed into gitpod, by status",
+    labelNames: ["status", "type"],
 });
+
+export function reportLoginCompleted(status: LoginCounterStatus, type: "git" | "sso") {
+    loginCompletedTotal.labels(status, type).inc();
+}
 
 type LoginCounterStatus =
     // The login attempt failed due to a system error (picked up by alerts)
@@ -50,13 +52,6 @@ type LoginCounterStatus =
     | "succeeded"
     // The login attempt failed, because the client failed to provide complete session information, for instance.
     | "failed_client";
-
-export function increaseLoginCounter(status: LoginCounterStatus, auth_host: string) {
-    loginCounter.inc({
-        status,
-        auth_host,
-    });
-}
 
 const apiConnectionCounter = new prometheusClient.Counter({
     name: "gitpod_server_api_connections_total",
@@ -140,18 +135,6 @@ export function observeHttpRequestDuration(
     durationInSeconds: number,
 ) {
     httpRequestDuration.observe({ method, route, statusCode }, durationInSeconds);
-}
-
-const messagebusTopicReads = new prometheusClient.Counter({
-    name: "gitpod_server_topic_reads_total",
-    help: "The amount of reads from messagebus topics.",
-    labelNames: ["topic"],
-});
-
-export function increaseMessagebusTopicReads(topic: string) {
-    messagebusTopicReads.inc({
-        topic,
-    });
 }
 
 const gitpodVersionInfo = new prometheusClient.Gauge({
@@ -338,13 +321,3 @@ export const updateSubscribersRegistered = new prometheusClient.Gauge({
     help: "Gauge of subscribers registered",
     labelNames: ["type"],
 });
-
-export const updatesPublishedTotal = new prometheusClient.Counter({
-    name: "gitpod_server_updates_published_total",
-    help: "Counter of events published to Redis by type and error",
-    labelNames: ["type", "error"],
-});
-
-export function reportUpdatePublished(type: "workspace-instance" | "prebuild" | "headless", err?: Error): void {
-    updatesPublishedTotal.labels(type, err ? "true" : "false").inc();
-}

@@ -282,7 +282,7 @@ func (s *TeamService) toTeamAPIResponse(ctx context.Context, conn protocol.APIIn
 	if err != nil {
 		convertedError := proxy.ConvertError(err)
 		// code not found is expected if the organization is SSO-enabled
-		if connectError, ok := convertedError.(*connect.Error); !ok || connectError.Code() != connect.CodeNotFound {
+		if connectError, ok := convertedError.(*connect.Error); !ok || !(connectError.Code() == connect.CodeNotFound || connectError.Code() == connect.CodePermissionDenied) {
 			logger.WithError(err).Error("Failed to get generic invite")
 			return nil, convertedError
 		}

@@ -5,17 +5,17 @@
  */
 
 import { TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
+import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import { Organization, User } from "@gitpod/gitpod-protocol";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
 import { OrganizationService } from "../orgs/organization-service";
+import { expectError } from "../test/expect-utils";
 import { createTestContainer } from "../test/service-testing-container-module";
 import { ProjectsService } from "./projects-service";
-import { ApplicationError, ErrorCode, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { SpiceDBAuthorizer } from "../authorization/spicedb-authorizer";
-import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 
 const expect = chai.expect;
 
@@ -40,8 +40,6 @@ describe("ProjectsService", async () => {
         const orgService = container.get(OrganizationService);
         org = await orgService.createOrganization(owner.id, "my-org");
 
-        const a = container.get(SpiceDBAuthorizer);
-        await a.logRelationships();
         // create and add a member
         member = await userDB.newUser();
         const invite = await orgService.getOrCreateInvite(owner.id, org.id);
@@ -201,18 +199,6 @@ describe("ProjectsService", async () => {
         await expectError(ErrorCodes.NOT_FOUND, () => ps.getProjects(stranger.id, org.id));
     });
 });
-
-export async function expectError(errorCode: ErrorCode, code: () => Promise<any>) {
-    try {
-        await code();
-        expect.fail("expected error: " + errorCode);
-    } catch (err) {
-        if (!ApplicationError.hasErrorCode(err)) {
-            throw err;
-        }
-        expect(err && ApplicationError.hasErrorCode(err) && err.code).to.equal(errorCode);
-    }
-}
 
 async function createTestProject(
     ps: ProjectsService,

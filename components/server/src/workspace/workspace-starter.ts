@@ -15,7 +15,15 @@ import {
     WorkspaceInitializer,
 } from "@gitpod/content-service/lib";
 import { CompositeInitializer, FromBackupInitializer } from "@gitpod/content-service/lib/initializer_pb";
-import { DBWithTracing, ProjectDB, TracedUserDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import {
+    DBWithTracing,
+    ProjectDB,
+    RedisPublisher,
+    TracedUserDB,
+    TracedWorkspaceDB,
+    UserDB,
+    WorkspaceDB,
+} from "@gitpod/gitpod-db/lib";
 import { BlockedRepositoryDB } from "@gitpod/gitpod-db/lib/blocked-repository-db";
 import {
     AdditionalContentContext,
@@ -114,11 +122,10 @@ import {
 import { RedisMutex } from "../redis/mutex";
 import { AuthorizationService } from "../user/authorization-service";
 import { TokenProvider } from "../user/token-provider";
-import { UserService } from "../user/user-service";
+import { UserAuthentication } from "../user/user-authentication";
 import { ResolvedEnvVars } from "./env-var-service";
 import { ImageSourceProvider } from "./image-source-provider";
 import { WorkspaceClassesConfig } from "./workspace-classes";
-import { RedisPublisher } from "../redis/publisher";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     rethrow?: boolean;
@@ -201,7 +208,7 @@ export class WorkspaceStarter {
         @inject(AuthorizationService) private readonly authService: AuthorizationService,
         @inject(ImageBuilderClientProvider) private readonly imagebuilderClientProvider: ImageBuilderClientProvider,
         @inject(ImageSourceProvider) private readonly imageSourceProvider: ImageSourceProvider,
-        @inject(UserService) private readonly userService: UserService,
+        @inject(UserAuthentication) private readonly userService: UserAuthentication,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(OneTimeSecretServer) private readonly otsServer: OneTimeSecretServer,
         @inject(ProjectDB) private readonly projectDB: ProjectDB,

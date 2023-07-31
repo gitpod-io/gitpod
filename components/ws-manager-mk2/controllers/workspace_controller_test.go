@@ -8,9 +8,6 @@ import (
 	"fmt"
 
 	"github.com/aws/smithy-go/ptr"
-	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
-	csapi "github.com/gitpod-io/gitpod/content-service/api"
-	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -18,17 +15,17 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	dto "github.com/prometheus/client_model/go"
 	"google.golang.org/protobuf/proto"
-
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	// . "github.com/onsi/ginkgo/extensions/table"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
 
 var _ = Describe("WorkspaceController", func() {
@@ -514,18 +511,22 @@ func createHeadlessWorkspace(typ workspacev1.WorkspaceType) (ws *workspacev1.Wor
 func updateObjWithRetries[O client.Object](c client.Client, obj O, updateStatus bool, update func(obj O)) {
 	GinkgoHelper()
 	Eventually(func() error {
-		var err error
-		if err = c.Get(ctx, types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}, obj); err != nil {
+		err := c.Get(ctx, types.NamespacedName{
+			Name:      obj.GetName(),
+			Namespace: obj.GetNamespace(),
+		}, obj)
+		if err != nil {
 			return err
 		}
+
 		// Apply update.
 		update(obj)
+
 		if updateStatus {
-			err = c.Status().Update(ctx, obj)
-		} else {
-			err = c.Update(ctx, obj)
+			return c.Status().Update(ctx, obj)
 		}
-		return err
+
+		return c.Update(ctx, obj)
 	}, timeout, interval).Should(Succeed())
 }
 

@@ -145,17 +145,23 @@ message WorkspaceStatus {
 message WorkspaceContext {
     // GitProvider describes the git provider
     message GitProvider {
-        // type is the git provider type, e.g. 'github', 'gitlab', 'bitbucked'
+        // type is the git provider type, e.g. 'github', 'gitlab', 'bitbucket'
         string type = 1;
 
         // hostname is the git provider hostname
         string hostname = 2;
     }
 
+    // Repository describes the originating repository
+    message Repository {
+        string name = 1;
+        string owner = 2;
+    }
+
     // Explicit Git context
     message Git {
         string normalized_context_url = 1;
-        string commit = 2;
+        Repository repository = 2;
 
         // provider is the git provider
         GitProvider provider = 3;
@@ -192,7 +198,7 @@ message WorkspaceInstance {
     // Instance ID is the unique identifier of the workspace instance
     string instance_id = 1;
 
-    // Worksapce ID is the unique identifier of the workspace this instance belongs to
+    // Workspace ID is the unique identifier of the workspace this instance belongs to
     string workspace_id = 2;
 
     google.protobuf.Timestamp created_at = 3;

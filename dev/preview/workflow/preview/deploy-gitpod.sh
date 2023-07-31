@@ -132,7 +132,7 @@ EOF
 }
 
 function installRookCeph {
-  diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" "$ROOT/.werft/vm/manifests/rook-ceph/crds.yaml"
+  diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" "$SCRIPT_PATH/../vm/manifests/rook-ceph/crds.yaml"
 
   kubectl \
     --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
@@ -140,7 +140,7 @@ function installRookCeph {
     wait --for condition=established --timeout=120s crd/cephclusters.ceph.rook.io
 
   for file in common operator cluster-test storageclass-test snapshotclass;do
-      diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" "$ROOT/.werft/vm/manifests/rook-ceph/$file.yaml"
+      diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" "$SCRIPT_PATH/../vm/manifests/rook-ceph/$file.yaml"
   done
 }
 
@@ -175,7 +175,7 @@ function installFluentBit {
     helm3 \
       --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
       --kube-context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-      upgrade --install fluent-bit fluent/fluent-bit --version 0.21.6 -n "${PREVIEW_NAMESPACE}" -f "$ROOT/.werft/vm/charts/fluentbit/values.yaml"
+      upgrade --install fluent-bit fluent/fluent-bit --version 0.21.6 -n "${PREVIEW_NAMESPACE}" -f "$SCRIPT_PATH/../vm/charts/fluentbit/values.yaml"
 }
 
 # ====================================
@@ -553,7 +553,7 @@ done
 # Run post-process script
 #
 
-WITH_VM=true "$ROOT/.werft/jobs/build/installer/post-process.sh" "${PREVIEW_NAME}" "${GITPOD_AGENT_SMITH_TOKEN}"
+WITH_VM=true "$SCRIPT_PATH/post-process.sh" "${PREVIEW_NAME}" "${GITPOD_AGENT_SMITH_TOKEN}"
 
 #
 # Cleanup from post-processing

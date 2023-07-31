@@ -34,8 +34,8 @@ import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/expe
 import { WorkspaceInstanceController, WorkspaceInstanceControllerImpl } from "./workspace-instance-controller";
 import { AppClusterWorkspaceInstancesController } from "./app-cluster-instance-controller";
 import { PrebuildUpdater } from "./prebuild-updater";
-import { RedisClient } from "./redis/client";
-import { RedisPublisher } from "./redis/publisher";
+import { Redis } from "ioredis";
+import { RedisPublisher, newRedisClient } from "@gitpod/gitpod-db/lib";
 
 export const containerModule = new ContainerModule((bind) => {
     bind(BridgeController).toSelf().inSingletonScope();
@@ -85,6 +85,10 @@ export const containerModule = new ContainerModule((bind) => {
 
     bind(AppClusterWorkspaceInstancesController).toSelf().inSingletonScope();
 
-    bind(RedisClient).toSelf().inSingletonScope();
+    bind(Redis).toDynamicValue((ctx) => {
+        const config = ctx.container.get<Configuration>(Configuration);
+        const [host, port] = config.redis.address.split(":");
+        return newRedisClient({ host, port: Number(port), connectionName: "server" });
+    });
     bind(RedisPublisher).toSelf().inSingletonScope();
 });

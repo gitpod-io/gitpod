@@ -70,7 +70,6 @@ packages:
       - components/server:docker
       - components/service-waiter:docker
       - components/supervisor:docker
-      - components/installation-telemetry:docker
       - components/workspacekit:docker
       - components/ws-daemon:docker
       - components/ws-daemon/seccomp-profile-installer:docker
@@ -117,7 +116,6 @@ packages:
       - components/service-waiter:app
       - components/supervisor:app
       - components/supervisor/frontend:app
-      - components/installation-telemetry:app
       - components/workspacekit:app
       - components/ws-daemon:app
       - components/ws-manager-bridge:app
@@ -174,7 +172,7 @@ scripts:
       - test/**/*
       - dev/**/*
     script: |
-      leeway exec --filter-type go -v -- go mod tidy -compat=1.19
+      leeway exec --filter-type go -v -- go mod tidy -compat=1.20
 
       # not all the code is present in leeway.
       # ensure we update everything containing a go.mod file
@@ -182,7 +180,7 @@ scripts:
         DIRECTORY=$(dirname $COMPONENT)
         echo "$DIRECTORY"
         pushd $DIRECTORY > /dev/null
-        go mod tidy -compat=1.19 -v
+        go mod tidy -compat=1.20 -v
         popd > /dev/null
       done
 

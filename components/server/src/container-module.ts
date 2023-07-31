@@ -49,7 +49,7 @@ import { HostContextProviderImpl } from "./auth/host-context-provider-impl";
 import { AuthJWT, SignInJWT } from "./auth/jwt";
 import { LoginCompletionHandler } from "./auth/login-completion-handler";
 import { VerificationService } from "./auth/verification-service";
-import { Authorizer } from "./authorization/authorizer";
+import { Authorizer, createInitializingAuthorizer } from "./authorization/authorizer";
 import { SpiceDBClient, spicedbClientFromEnv } from "./authorization/spicedb";
 import { BillingModes } from "./billing/billing-mode";
 import { EntitlementService, EntitlementServiceImpl } from "./billing/entitlement-service";
@@ -85,7 +85,6 @@ import { PrebuildManager } from "./prebuilds/prebuild-manager";
 import { PrebuildStatusMaintainer } from "./prebuilds/prebuilt-status-maintainer";
 import { StartPrebuildContextParser } from "./prebuilds/start-prebuild-context-parser";
 import { ProjectsService } from "./projects/projects-service";
-import { newRedisClient } from "./redis/client";
 import { RedisMutex } from "./redis/mutex";
 import { Server } from "./server";
 import { SessionHandler } from "./session-handler";
@@ -99,7 +98,7 @@ import { TokenService } from "./user/token-service";
 import { UsageService } from "./orgs/usage-service";
 import { ServerFactory, UserController } from "./user/user-controller";
 import { UserDeletionService } from "./user/user-deletion-service";
-import { UserService } from "./user/user-service";
+import { UserAuthentication } from "./user/user-authentication";
 import { contentServiceBinder } from "./util/content-service-sugar";
 import { WebsocketConnectionManager } from "./websocket/websocket-connection-manager";
 import { ConfigProvider } from "./workspace/config-provider";
@@ -127,7 +126,9 @@ import { SpiceDBAuthorizer } from "./authorization/spicedb-authorizer";
 import { OrganizationService } from "./orgs/organization-service";
 import { RedisSubscriber } from "./messaging/redis-subscriber";
 import { Redis } from "ioredis";
-import { RedisPublisher } from "./redis/publisher";
+import { RedisPublisher, newRedisClient } from "@gitpod/gitpod-db/lib";
+import { UserService } from "./user/user-service";
+import { RelationshipUpdater } from "./authorization/relationship-updater";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -137,6 +138,7 @@ export const productionContainerModule = new ContainerModule(
             .inSingletonScope();
         bind(IDEService).toSelf().inSingletonScope();
 
+        bind(UserAuthentication).toSelf().inSingletonScope();
         bind(UserService).toSelf().inSingletonScope();
         bind(UserDeletionService).toSelf().inSingletonScope();
         bind(AuthorizationService).to(AuthorizationServiceImpl).inSingletonScope();
@@ -304,7 +306,13 @@ export const productionContainerModule = new ContainerModule(
             .toDynamicValue(() => spicedbClientFromEnv())
             .inSingletonScope();
         bind(SpiceDBAuthorizer).toSelf().inSingletonScope();
-        bind(Authorizer).toSelf().inSingletonScope();
+        bind(Authorizer)
+            .toDynamicValue((ctx) => {
+                const authorizer = ctx.container.get<SpiceDBAuthorizer>(SpiceDBAuthorizer);
+                return createInitializingAuthorizer(authorizer);
+            })
+            .inSingletonScope();
+        bind(RelationshipUpdater).toSelf().inSingletonScope();
 
         // grpc / Connect API
         bind(APIUserService).toSelf().inSingletonScope();
@@ -351,7 +359,7 @@ export const productionContainerModule = new ContainerModule(
         bind(Redis).toDynamicValue((ctx) => {
             const config = ctx.container.get<Config>(Config);
             const [host, port] = config.redis.address.split(":");
-            return newRedisClient(host, Number(port));
+            return newRedisClient({ host, port: Number(port), connectionName: "server" });
         });
 
         bind(RedisMutex).toSelf().inSingletonScope();

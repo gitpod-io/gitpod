@@ -5,6 +5,7 @@
  */
 
 export * from "./test-container";
+export * from "./test/reset-db";
 export * from "./typeorm/entity/db-user";
 export * from "./typeorm/entity/db-identity";
 export * from "./typeorm/entity/db-workspace-instance";
@@ -32,3 +33,6 @@ export * from "./typeorm/metrics";
 export * from "./personal-access-token-db";
 export * from "./typeorm/entity/db-personal-access-token";
 export * from "./linked-in-profile-db";
+export * from "./redis/client";
+export * from "./redis/publisher";
+export * from "./redis/metrics";

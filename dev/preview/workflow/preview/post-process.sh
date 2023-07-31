@@ -365,12 +365,6 @@ while [ "$documentIndex" -le "$DOCS" ]; do
    #          echo "---" >> /tmp/"$NAME"-"$KIND"-overrides.yaml
    #       fi
 
-   #       # Update the apiVersion to match what we installed, so we can uninstall at a later time w/o error
-   #       # if [[ "messagebus" == "$CONFIG_NAME" ]] && [[ "$CONFIG_KIND" == "PodDisruptionBudget" ]]; then
-   #       #    echo "Update new $CONFIG_NAME $CONFIG_KIND in the gitpod-app ConfigMap"
-   #       #    yq w -i /tmp/gitpod-app_config_"$ci" apiVersion $PDB_POLICY_VERSION
-   #       # fi
-
    #       cat /tmp/gitpod-app_config_"$ci" >> /tmp/"$NAME"-"$KIND"-overrides.yaml
    #       ci=$((ci + 1))
    #       new_ci=$((new_ci + 1))
