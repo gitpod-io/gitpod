@@ -52,10 +52,6 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
 export function getGitpodService(): GitpodService {
     const w = window as any;
     const _gp = w._gp || (w._gp = {});
-    if (window.location.search.includes("service=mock")) {
-        const service = _gp.gitpodService || (_gp.gitpodService = require("./service-mock").gitpodServiceMock);
-        return service;
-    }
     const service = _gp.gitpodService || (_gp.gitpodService = createGitpodService());
     return service;
 }
