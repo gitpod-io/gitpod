@@ -126,7 +126,7 @@ require (
 	github.com/gitpod-io/gitpod/components/scrubber v0.0.0-00010101000000-000000000000 // indirect
 	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000 // indirect
 	github.com/gitpod-io/gitpod/usage-api v0.0.0-00010101000000-000000000000 // indirect
-	github.com/gitpod-io/golang-crypto v0.0.0-20230727160410-9e6db794c73d // indirect
+	github.com/gitpod-io/golang-crypto v0.0.0-20230731181530-3ce7221eee49 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-gorp/gorp/v3 v3.0.5 // indirect
 	github.com/go-logr/logr v1.2.4 // indirect

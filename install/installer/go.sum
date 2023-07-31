@@ -514,8 +514,8 @@ github.com/fvbommel/sortorder v1.0.1/go.mod h1:uk88iVf1ovNn1iLfgUVU2F9o5eO30ui72
 github.com/garyburd/redigo v0.0.0-20150301180006-535138d7bcd7/go.mod h1:NR3MbYisc3/PwhQ00EMzDiPmrwpPxAn5GI05/YaO1SY=
 github.com/getsentry/raven-go v0.2.0/go.mod h1:KungGk8q33+aIAZUIVWZDr2OfAEBsO49PX4NzFV5kcQ=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
-github.com/gitpod-io/golang-crypto v0.0.0-20230727160410-9e6db794c73d h1:3TGYKxzXq4Nl5GXuf1G5bTp7Ym6uYUGybelOq0JRfmI=
-github.com/gitpod-io/golang-crypto v0.0.0-20230727160410-9e6db794c73d/go.mod h1:4NOlH4vW4GpYaYqOv3RPQan5WNiXSsZNfEB3d4gddj0=
+github.com/gitpod-io/golang-crypto v0.0.0-20230731181530-3ce7221eee49 h1:lUIxfgpFks3keB6LyZUCJzisiImaYsejP58y+9Mp7QU=
+github.com/gitpod-io/golang-crypto v0.0.0-20230731181530-3ce7221eee49/go.mod h1:4NOlH4vW4GpYaYqOv3RPQan5WNiXSsZNfEB3d4gddj0=
 github.com/go-asn1-ber/asn1-ber v1.3.1/go.mod h1:hEBeB/ic+5LoWskz+yKT7vGhhPYkProFKoKdwZRWMe0=
 github.com/go-errors/errors v1.4.2 h1:J6MZopCL4uSllY1OfXM374weqZFFItUbrImctkmUxIA=
 github.com/go-errors/errors v1.4.2/go.mod h1:sIVyrIiJhuEF+Pj9Ebtd6P/rEYROXFi3BopGUQ5a5Og=

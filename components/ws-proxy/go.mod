@@ -7,7 +7,7 @@ require (
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/golang-crypto v0.0.0-20230727160410-9e6db794c73d
+	github.com/gitpod-io/golang-crypto v0.0.0-20230731181530-3ce7221eee49
 	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
 	github.com/google/go-cmp v0.5.9
 	github.com/gorilla/handlers v1.5.1
