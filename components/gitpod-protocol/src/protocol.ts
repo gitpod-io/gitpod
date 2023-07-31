@@ -74,10 +74,10 @@ export namespace User {
         value: string;
         primary: boolean;
         verified: boolean;
-        verifiedVia?: string;
         updatedAt: string;
-        provider: string; // github.com, idp.comp.org
-        organizationId?: string;
+        gitProviderId?: string; // if sourced from a Git Auth
+        ssoClientId?: string; // if sourced from SSO client
+        organizationId?: string; // if sourced from any connection to an Organization
         personal: boolean;
     }
 
