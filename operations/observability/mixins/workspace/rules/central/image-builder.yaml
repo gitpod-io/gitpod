@@ -18,7 +18,7 @@ spec:
           severity: critical
           dedicated: included
         annotations:
-          runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodImageBuildDurationAnomaly.md
+          runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodImagebuildDurationAnomaly.md
           summary: image-builder duration is unusually high in cluster {{ $labels.cluster }}
           description: Users are waiting too long for image builds
         expr: |
