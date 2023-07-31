@@ -338,7 +338,9 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
             null,
             ProgressManager.getGlobalProgressIndicator(),
             false
-        ).withSshConnectionConfig {
+        )
+            .withParsingOpenSSHConfig(true)
+            .withSshConnectionConfig {
             val hostKeyVerifier = it.hostKeyVerifier
             if (hostKeyVerifier is OpenSshLikeHostKeyVerifier) {
                 val acceptHostKey = acceptHostKey(ideUrl, hostKeys)
