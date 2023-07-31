@@ -5,11 +5,13 @@
 package registry
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	stdlog "log"
 	"net"
 	"net/http"
 	"os"
@@ -349,8 +351,9 @@ func (reg *Registry) Serve() error {
 	}
 
 	reg.srv = &http.Server{
-		Addr:    addr,
-		Handler: mux,
+		Addr:     addr,
+		Handler:  mux,
+		ErrorLog: stdlog.New(logrusErrorWriter{}, "", 0),
 	}
 
 	if reg.Config.TLS != nil {
@@ -533,4 +536,17 @@ func getDigest(ctx context.Context) string {
 	}
 
 	return sval
+}
+
+var tlsHandshakeErrorPrefix = []byte("http: TLS handshake error")
+
+type logrusErrorWriter struct{}
+
+func (w logrusErrorWriter) Write(p []byte) (int, error) {
+	if bytes.Contains(p, tlsHandshakeErrorPrefix) {
+		return len(p), nil
+	}
+
+	log.Errorf("%s", string(p))
+	return len(p), nil
 }
