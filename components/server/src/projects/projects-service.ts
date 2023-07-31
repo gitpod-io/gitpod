@@ -269,7 +269,7 @@ export class ProjectsService {
         });
 
         // Install the prebuilds webhook if possible
-        const { userId, teamId, cloneUrl } = project;
+        const { teamId, cloneUrl } = project;
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
         const authProvider = hostContext && hostContext.authProvider.info;
@@ -286,11 +286,10 @@ export class ProjectsService {
                 // in the project creation flow, we only propose repositories where the user is actually allowed to
                 // install a webhook.
                 if (await repositoryService.canInstallAutomatedPrebuilds(installer, cloneUrl)) {
-                    log.info("Update prebuild installation for project.", {
-                        teamId,
-                        userId,
-                        installerId: installer.id,
-                    });
+                    log.info(
+                        { organizationId: teamId, userId: installer.id },
+                        "Update prebuild installation for project.",
+                    );
                     await repositoryService.installAutomatedPrebuilds(installer, cloneUrl);
                 }
             }
