@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:4716f9ef0546a73275a1c49992e080432005544b95f74d4d60deb4e675725e55 as base_builder
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:b795369ce4150f0a038af4b9b20a37d2ae70337d45530d45de96b28d9b17a530 as base_builder
 ARG JETBRAINS_DOWNLOAD_QUALIFIER
 ARG SUPERVISOR_IDE_CONFIG
 ARG JETBRAINS_BACKEND_VERSION
@@ -19,7 +19,7 @@ RUN mkdir /ide-desktop \
     && cp /tmp/supervisor-ide-config.json /ide-desktop/${JETBRAINS_DOWNLOAD_QUALIFIER}/supervisor-ide-config.json
 
 # for debugging
-# FROM cgr.dev/chainguard/wolfi-base:latest@sha256:4716f9ef0546a73275a1c49992e080432005544b95f74d4d60deb4e675725e55
+# FROM cgr.dev/chainguard/wolfi-base:latest@sha256:b795369ce4150f0a038af4b9b20a37d2ae70337d45530d45de96b28d9b17a530
 FROM scratch
 ARG JETBRAINS_BACKEND_VERSION
 ARG JETBRAINS_DOWNLOAD_QUALIFIER
