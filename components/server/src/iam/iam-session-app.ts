@@ -12,7 +12,6 @@ import { UserAuthentication } from "../user/user-authentication";
 import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Identity, User } from "@gitpod/gitpod-protocol";
-import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib";
 import { reportJWTCookieIssued } from "../prometheus-metrics";
 import { ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { OrganizationService } from "../orgs/organization-service";
@@ -98,17 +97,31 @@ export class IamSessionApp {
         let existingUser = await this.userAuthentication.findUserForLogin({
             candidate: this.mapOIDCProfileToIdentity(payload),
         });
-        if (existingUser) {
-            return existingUser;
+        if (!existingUser) {
+            // Organizational account lookup by email address
+            existingUser = await this.userAuthentication.findOrgOwnedUser({
+                organizationId: payload.organizationId,
+                email: payload.claims.email,
+            });
+            if (existingUser) {
+                log.info("Found Org-owned user by email.", { email: payload?.claims?.email });
+            }
         }
 
-        // Organizational account lookup by email address
-        existingUser = await this.userAuthentication.findOrgOwnedUser({
-            organizationId: payload.organizationId,
-            email: payload.claims.email,
-        });
-        if (existingUser) {
-            log.info("Found Org-owned user by email.", { email: payload?.claims?.email });
+        if (existingUser?.organizationId) {
+            const members = await this.orgService.listMembers(existingUser.id, existingUser.organizationId);
+            if (!members.some((m) => m.userId === existingUser?.id)) {
+                // In case `createNewOIDCUser` failed to create a membership for this user,
+                // let's try to fix the situation on the fly.
+                // Also, if that step repeatedly fails, it would fail the login process earlier but
+                // in a more consistent state.
+                await this.orgService.addOrUpdateMember(
+                    undefined,
+                    existingUser.organizationId,
+                    existingUser.id,
+                    "member",
+                );
+            }
         }
 
         return existingUser;
@@ -144,7 +157,7 @@ export class IamSessionApp {
             },
         });
 
-        await this.orgService.addOrUpdateMember(BUILTIN_INSTLLATION_ADMIN_USER_ID, organizationId, user.id, "member");
+        await this.orgService.addOrUpdateMember(undefined, organizationId, user.id, "member");
         return user;
     }
 }
