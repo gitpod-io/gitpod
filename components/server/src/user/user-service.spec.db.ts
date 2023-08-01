@@ -6,6 +6,7 @@
 
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import * as chai from "chai";
+import "mocha";
 import { Container } from "inversify";
 import { createTestContainer } from "../test/service-testing-container-module";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TypeORM } from "@gitpod/gitpod-db/lib";
@@ -78,19 +79,15 @@ describe("UserService", async () => {
     it("createUser", async () => {
         expect(await auth.hasPermissionOnUser(user.id, "read_info", user.id)).to.be.true;
         expect(await auth.hasPermissionOnUser(user.id, "write_info", user.id)).to.be.true;
-        expect(await auth.hasPermissionOnUser(user.id, "suspend", user.id)).to.be.true;
 
         expect(await auth.hasPermissionOnUser(user2.id, "read_info", user.id)).to.be.true;
         expect(await auth.hasPermissionOnUser(user2.id, "write_info", user.id)).to.be.false;
-        expect(await auth.hasPermissionOnUser(user2.id, "suspend", user.id)).to.be.false;
 
         expect(await auth.hasPermissionOnUser(nonOrgUser.id, "read_info", user.id)).to.be.false;
         expect(await auth.hasPermissionOnUser(nonOrgUser.id, "write_info", user.id)).to.be.false;
-        expect(await auth.hasPermissionOnUser(nonOrgUser.id, "suspend", user.id)).to.be.false;
 
         expect(await auth.hasPermissionOnUser(admin.id, "read_info", user.id)).to.be.true;
-        expect(await auth.hasPermissionOnUser(admin.id, "write_info", user.id)).to.be.true;
-        expect(await auth.hasPermissionOnUser(admin.id, "suspend", user.id)).to.be.true;
+        expect(await auth.hasPermissionOnUser(admin.id, "write_info", user.id)).to.be.false;
     });
 
     it("updateLoggedInUser_avatarUrlNotUpdatable", async () => {

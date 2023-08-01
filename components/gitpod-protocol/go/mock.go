@@ -611,21 +611,6 @@ func (mr *MockAPIInterfaceMockRecorder) GetUserProjects(ctx interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserProjects", reflect.TypeOf((*MockAPIInterface)(nil).GetUserProjects), ctx)
 }
 
-// GetUserStorageResource mocks base method.
-func (m *MockAPIInterface) GetUserStorageResource(ctx context.Context, options *GetUserStorageResourceOptions) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserStorageResource", ctx, options)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetUserStorageResource indicates an expected call of GetUserStorageResource.
-func (mr *MockAPIInterfaceMockRecorder) GetUserStorageResource(ctx, options interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserStorageResource", reflect.TypeOf((*MockAPIInterface)(nil).GetUserStorageResource), ctx, options)
-}
-
 // GetWorkspace mocks base method.
 func (m *MockAPIInterface) GetWorkspace(ctx context.Context, id string) (*WorkspaceInfo, error) {
 	m.ctrl.T.Helper()
@@ -1020,20 +1005,6 @@ func (m *MockAPIInterface) UpdateOwnAuthProvider(ctx context.Context, params *Up
 func (mr *MockAPIInterfaceMockRecorder) UpdateOwnAuthProvider(ctx, params interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOwnAuthProvider", reflect.TypeOf((*MockAPIInterface)(nil).UpdateOwnAuthProvider), ctx, params)
-}
-
-// UpdateUserStorageResource mocks base method.
-func (m *MockAPIInterface) UpdateUserStorageResource(ctx context.Context, options *UpdateUserStorageResourceOptions) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateUserStorageResource", ctx, options)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateUserStorageResource indicates an expected call of UpdateUserStorageResource.
-func (mr *MockAPIInterfaceMockRecorder) UpdateUserStorageResource(ctx, options interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserStorageResource", reflect.TypeOf((*MockAPIInterface)(nil).UpdateUserStorageResource), ctx, options)
 }
 
 // UpdateWorkspaceUserPin mocks base method.

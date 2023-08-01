@@ -57,15 +57,9 @@ export function ProjectsSearch() {
     useEffect(() => {
         (async () => {
             if (currentProject) {
-                if (currentProject.userId) {
-                    const owner = await getGitpodService().server.adminGetUser(currentProject.userId);
+                const owner = await getGitpodService().server.adminGetTeamById(currentProject.teamId);
+                if (owner) {
                     setCurrentProjectOwner(owner.name);
-                }
-                if (currentProject.teamId) {
-                    const owner = await getGitpodService().server.adminGetTeamById(currentProject.teamId);
-                    if (owner) {
-                        setCurrentProjectOwner(owner.name);
-                    }
                 }
             }
         })();

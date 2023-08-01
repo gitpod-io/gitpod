@@ -49,7 +49,7 @@ import { HostContextProviderImpl } from "./auth/host-context-provider-impl";
 import { AuthJWT, SignInJWT } from "./auth/jwt";
 import { LoginCompletionHandler } from "./auth/login-completion-handler";
 import { VerificationService } from "./auth/verification-service";
-import { Authorizer } from "./authorization/authorizer";
+import { Authorizer, createInitializingAuthorizer } from "./authorization/authorizer";
 import { SpiceDBClient, spicedbClientFromEnv } from "./authorization/spicedb";
 import { BillingModes } from "./billing/billing-mode";
 import { EntitlementService, EntitlementServiceImpl } from "./billing/entitlement-service";
@@ -128,6 +128,7 @@ import { RedisSubscriber } from "./messaging/redis-subscriber";
 import { Redis } from "ioredis";
 import { RedisPublisher, newRedisClient } from "@gitpod/gitpod-db/lib";
 import { UserService } from "./user/user-service";
+import { RelationshipUpdater } from "./authorization/relationship-updater";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -305,7 +306,13 @@ export const productionContainerModule = new ContainerModule(
             .toDynamicValue(() => spicedbClientFromEnv())
             .inSingletonScope();
         bind(SpiceDBAuthorizer).toSelf().inSingletonScope();
-        bind(Authorizer).toSelf().inSingletonScope();
+        bind(Authorizer)
+            .toDynamicValue((ctx) => {
+                const authorizer = ctx.container.get<SpiceDBAuthorizer>(SpiceDBAuthorizer);
+                return createInitializingAuthorizer(authorizer);
+            })
+            .inSingletonScope();
+        bind(RelationshipUpdater).toSelf().inSingletonScope();
 
         // grpc / Connect API
         bind(APIUserService).toSelf().inSingletonScope();

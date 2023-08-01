@@ -101,6 +101,7 @@ export class GitHubService extends RepositoryService {
 
     protected getHookUrl() {
         return this.config.hostUrl
+            .asPublicServices()
             .with({
                 pathname: GitHubEnterpriseApp.path,
             })

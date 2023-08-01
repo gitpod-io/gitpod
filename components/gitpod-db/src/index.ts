@@ -21,7 +21,6 @@ export * from "./user-db";
 export * from "./workspace-db";
 export * from "./traced-db";
 export * from "./app-installation-db";
-export * from "./user-storage-resources-db";
 export * from "./one-time-secret-db";
 export * from "./auth-provider-entry-db";
 export * from "./typeorm/typeorm";

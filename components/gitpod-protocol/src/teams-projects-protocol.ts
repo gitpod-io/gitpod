@@ -30,7 +30,6 @@ export interface Project {
     slug?: string;
     cloneUrl: string;
     teamId: string;
-    userId?: string;
     appInstallationId: string;
     settings?: ProjectSettings;
     creationTime: string;
@@ -40,6 +39,10 @@ export interface Project {
 }
 
 export namespace Project {
+    export function is(data?: any): data is Project {
+        return typeof data === "object" && ["id", "name", "cloneUrl", "teamId"].every((p) => p in data);
+    }
+
     export const create = (project: Omit<Project, "id" | "creationTime">): Project => {
         return {
             ...project,

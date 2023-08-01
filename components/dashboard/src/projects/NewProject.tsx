@@ -204,7 +204,7 @@ export default function NewProject() {
                 });
 
                 // TODO: After converting this to a mutation, we can handle invalidating/updating the query in a side effect
-                refreshProjects(project.teamId ? { teamId: project.teamId } : { userId: project.userId || "" });
+                refreshProjects(project.teamId);
 
                 setProject(project);
             } catch (error) {

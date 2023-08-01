@@ -32,13 +32,6 @@ export class DBProject {
     @Index("ind_teamId")
     teamId: string;
 
-    @Column({
-        default: "",
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
-    })
-    @Index("ind_userId")
-    userId?: string;
-
     @Column()
     appInstallationId: string;
 

@@ -35,7 +35,7 @@ var _ = Describe("TimeoutController", func() {
 			var err error
 			// Use a fake client instead of the envtest's k8s client, such that we can add objects
 			// with custom CreationTimestamps and check timeout logic.
-			fakeClient = fake.NewClientBuilder().WithScheme(k8sClient.Scheme()).Build()
+			fakeClient = fake.NewClientBuilder().WithStatusSubresource(&workspacev1.Workspace{}).WithScheme(k8sClient.Scheme()).Build()
 			r, err = NewTimeoutReconciler(fakeClient, record.NewFakeRecorder(100), conf, activity.NewWorkspaceActivity(), &fakeMaintenance{enabled: false})
 			Expect(err).ToNot(HaveOccurred())
 		})

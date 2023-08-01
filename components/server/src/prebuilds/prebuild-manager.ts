@@ -398,14 +398,14 @@ export class PrebuildManager {
         commit: CommitInfo,
     ) {
         const span = TraceContext.startSpan("storePrebuildInfo", ctx);
-        const { userId, teamId, name: projectName, id: projectId } = project;
+        const { teamId, name: projectName, id: projectId } = project;
         try {
             await this.workspaceDB.trace({ span }).storePrebuildInfo({
                 id: pws.id,
                 buildWorkspaceId: pws.buildWorkspaceId,
                 basedOnPrebuildId: ws.basedOnPrebuildId,
                 teamId,
-                userId,
+                userId: user.id,
                 projectName,
                 projectId,
                 startedAt: pws.creationTime,

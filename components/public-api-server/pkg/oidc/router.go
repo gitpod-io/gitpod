@@ -111,11 +111,13 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 		useHttpErrors := state.UseHttpErrors
 		if err != nil {
 			log.WithError(err).Warn("Client SSO config not found")
+			reportLoginCompleted("failed_client", "sso")
 			respondeWithError(rw, r, "We were unable to find the SSO configuration you've requested. Please verify SSO is configured with your Organization owner.", http.StatusNotFound, useHttpErrors)
 			return
 		}
 		oauth2Result := GetOAuth2ResultFromContext(r.Context())
 		if oauth2Result == nil {
+			reportLoginCompleted("failed_client", "sso")
 			respondeWithError(rw, r, "OIDC precondition failure", http.StatusInternalServerError, useHttpErrors)
 			return
 		}
@@ -123,6 +125,7 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 		// nonce = number used once
 		nonceCookie, err := r.Cookie(nonceCookieName)
 		if err != nil {
+			reportLoginCompleted("failed_client", "sso")
 			respondeWithError(rw, r, "There was no nonce present on the request. Please try to sign-in in again.", http.StatusBadRequest, useHttpErrors)
 			return
 		}
@@ -133,6 +136,7 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 		})
 		if err != nil {
 			log.WithError(err).Warn("OIDC authentication failed")
+			reportLoginCompleted("failed_client", "sso")
 			respondeWithError(rw, r, "We've not been able to authenticate you with the OIDC Provider.", http.StatusInternalServerError, useHttpErrors)
 			return
 		}
@@ -143,34 +147,35 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 			err = s.activateAndVerifyClientConfig(r.Context(), config)
 			if err != nil {
 				log.WithError(err).Warn("Failed to mark OIDC Client Config as active")
+				reportLoginCompleted("failed", "sso")
 				respondeWithError(rw, r, "We've been unable to mark the selected OIDC config as active. Please try again.", http.StatusInternalServerError, useHttpErrors)
 				return
 			}
 		}
 
 		if state.Verify {
+			// Skip the sign-in on verify-only requests.
 			err = s.markClientConfigAsVerified(r.Context(), config)
 			if err != nil {
 				log.Warn("Failed to mark config as verified: " + err.Error())
+				reportLoginCompleted("failed", "sso")
 				respondeWithError(rw, r, "Failed to mark config as verified", http.StatusInternalServerError, useHttpErrors)
 				return
 			}
-		}
-
-		// Skip the sign-in on verify-only requests.
-		if !state.Verify {
+		} else {
 			cookies, _, err := s.createSession(r.Context(), result, config)
 			if err != nil {
 				log.WithError(err).Warn("Failed to create session from downstream session provider.")
+				reportLoginCompleted("failed", "sso")
 				respondeWithError(rw, r, "We were unable to create a user session.", http.StatusInternalServerError, useHttpErrors)
 				return
 			}
 			for _, cookie := range cookies {
 				http.SetCookie(rw, cookie)
 			}
-
 		}
 
+		reportLoginCompleted("succeeded", "sso")
 		http.Redirect(rw, r, oauth2Result.ReturnToURL, http.StatusTemporaryRedirect)
 	}
 }

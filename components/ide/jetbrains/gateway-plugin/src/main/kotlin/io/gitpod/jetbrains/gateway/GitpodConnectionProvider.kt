@@ -37,7 +37,6 @@ import com.jetbrains.rd.util.URI
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import io.gitpod.gitpodprotocol.api.entities.WorkspaceInstance
-import io.gitpod.jetbrains.gateway.common.GitpodConnectionHandleFactory
 import io.gitpod.jetbrains.icons.GitpodIcons
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
@@ -338,7 +337,9 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
             null,
             ProgressManager.getGlobalProgressIndicator(),
             false
-        ).withSshConnectionConfig {
+        )
+            .withParsingOpenSSHConfig(true)
+            .withSshConnectionConfig {
             val hostKeyVerifier = it.hostKeyVerifier
             if (hostKeyVerifier is OpenSshLikeHostKeyVerifier) {
                 val acceptHostKey = acceptHostKey(ideUrl, hostKeys)

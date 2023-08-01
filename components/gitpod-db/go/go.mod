@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/components/gitpod-db/go
 
-go 1.19
+go 1.20
 
 replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway
 
@@ -9,7 +9,7 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/google/uuid v1.3.0
 	github.com/relvacode/iso8601 v1.1.0
-	github.com/sirupsen/logrus v1.9.2
+	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.3
 	google.golang.org/grpc v1.55.0
 	google.golang.org/protobuf v1.30.0

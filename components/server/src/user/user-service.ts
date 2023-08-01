@@ -8,7 +8,7 @@ import { inject, injectable } from "inversify";
 import { Config } from "../config";
 import { UserDB } from "@gitpod/gitpod-db/lib";
 import { Authorizer } from "../authorization/authorizer";
-import { AdditionalUserData, User } from "@gitpod/gitpod-protocol";
+import { AdditionalUserData, Identity, TokenEntry, User } from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { CreateUserParams } from "./user-authentication";
@@ -43,9 +43,9 @@ export class UserService {
         try {
             newUser = await this.userDb.transaction(async (userDb) => {
                 const result = await userDb.storeUser(newUser);
-                await this.authorizer.addUser(result.id);
+                await this.authorizer.addUser(result.id, organizationId);
                 if (organizationId) {
-                    await this.authorizer.addOrganizationMemberRole(organizationId, result.id);
+                    await this.authorizer.addOrganizationRole(organizationId, result.id, "member");
                 } else {
                     await this.authorizer.addInstallationMemberRole(result.id);
                 }
@@ -56,7 +56,7 @@ export class UserService {
             });
         } catch (error) {
             if (organizationId) {
-                await this.authorizer.removeUserFromOrg(organizationId, newUser.id);
+                await this.authorizer.removeOrganizationRole(organizationId, newUser.id, "member");
             } else {
                 await this.authorizer.removeInstallationMemberRole(newUser.id);
             }
@@ -76,8 +76,8 @@ export class UserService {
         }
     }
 
-    public async findUserById(userId: string, id: string): Promise<User> {
-        await this.authorizer.checkUserPermissionAndThrow(userId, "read_info", id);
+    async findUserById(userId: string, id: string): Promise<User> {
+        await this.authorizer.checkPermissionOnUser(userId, "read_info", id);
         const result = await this.userDb.findUserById(id);
         if (!result) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
@@ -85,9 +85,19 @@ export class UserService {
         return result;
     }
 
+    async findTokensForIdentity(userId: string, identity: Identity): Promise<TokenEntry[]> {
+        const result = await this.userDb.findTokensForIdentity(identity);
+        for (const token of result) {
+            if (!(await this.authorizer.hasPermissionOnUser(userId, "read_info", token.uid))) {
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
+            }
+        }
+        return result;
+    }
+
     async updateUser(userId: string, update: Partial<User> & { id: string }): Promise<User> {
         const user = await this.findUserById(userId, update.id);
-        await this.authorizer.checkUserPermissionAndThrow(userId, "write_info", user.id);
+        await this.authorizer.checkPermissionOnUser(userId, "write_info", user.id);
 
         //hang on to user profile before it's overwritten for analytics below
         const oldProfile = User.getProfile(user);
@@ -118,16 +128,8 @@ export class UserService {
     }
 
     async setAdminRole(userId: string, targetUserId: string, admin: boolean): Promise<User> {
-        //TODO check if user has permission on targetUser to change admin role using auth system
-        const user = await this.userDb.findUserById(userId);
-        if (!user?.rolesOrPermissions || !user?.rolesOrPermissions.includes("admin")) {
-            throw new ApplicationError(ErrorCodes.PERMISSION_DENIED, "permission denied");
-        }
-
-        const target = await this.userDb.findUserById(targetUserId);
-        if (!target) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
-        }
+        await this.authorizer.checkPermissionOnUser(userId, "make_admin", targetUserId);
+        const target = await this.findUserById(userId, targetUserId);
         const rolesAndPermissions = target.rolesOrPermissions || [];
         const newRoles = [...rolesAndPermissions.filter((r) => r !== "admin")];
         if (admin) {
@@ -140,17 +142,17 @@ export class UserService {
                 target.rolesOrPermissions = newRoles;
                 const updatedUser = await userDb.storeUser(target);
                 if (admin) {
-                    await this.authorizer.addAdminRole(target.id);
+                    await this.authorizer.addInstallationAdminRole(target.id);
                 } else {
-                    await this.authorizer.removeAdminRole(target.id);
+                    await this.authorizer.removeInstallationAdminRole(target.id);
                 }
                 return updatedUser;
             });
         } catch (err) {
             if (admin) {
-                await this.authorizer.removeAdminRole(target.id);
+                await this.authorizer.removeInstallationAdminRole(target.id);
             } else {
-                await this.authorizer.addAdminRole(target.id);
+                await this.authorizer.addInstallationAdminRole(target.id);
             }
             throw err;
         }

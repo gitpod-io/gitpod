@@ -40,7 +40,7 @@ export class ProjectsService {
     ) {}
 
     async getProject(userId: string, projectId: string): Promise<Project> {
-        await this.auth.checkProjectPermissionAndThrow(userId, "read_info", projectId);
+        await this.auth.checkPermissionOnProject(userId, "read_info", projectId);
         const project = await this.projectDB.findProjectById(projectId);
         if (!project) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
@@ -49,7 +49,7 @@ export class ProjectsService {
     }
 
     async getProjects(userId: string, orgId: string): Promise<Project[]> {
-        await this.auth.checkOrgPermissionAndThrow(userId, "read_info", orgId);
+        await this.auth.checkPermissionOnOrganization(userId, "read_info", orgId);
         const projects = await this.projectDB.findProjects(orgId);
         return await this.filterByReadAccess(userId, projects);
     }
@@ -107,7 +107,7 @@ export class ProjectsService {
     }
 
     async markActive(userId: string, projectId: string): Promise<void> {
-        await this.auth.checkProjectPermissionAndThrow(userId, "read_info", projectId);
+        await this.auth.checkPermissionOnProject(userId, "read_info", projectId);
         await this.projectDB.updateProjectUsage(projectId, {
             lastWorkspaceStart: new Date().toISOString(),
         });
@@ -127,7 +127,7 @@ export class ProjectsService {
 
     async getProjectOverview(user: User, projectId: string): Promise<Project.Overview> {
         const project = await this.getProject(user.id, projectId);
-        await this.auth.checkProjectPermissionAndThrow(user.id, "read_info", project.id);
+        await this.auth.checkPermissionOnProject(user.id, "read_info", project.id);
         // Check for a cached project overview (fast!)
         const cachedPromise = this.projectDB.findCachedProjectOverview(project.id);
 
@@ -156,7 +156,7 @@ export class ProjectsService {
     }
 
     async getBranchDetails(user: User, project: Project, branchName?: string): Promise<Project.BranchDetails[]> {
-        await this.auth.checkProjectPermissionAndThrow(user.id, "read_info", project.id);
+        await this.auth.checkPermissionOnProject(user.id, "read_info", project.id);
 
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         if (!parsedUrl) {
@@ -198,7 +198,7 @@ export class ProjectsService {
         { name, slug, cloneUrl, teamId, appInstallationId }: CreateProjectParams,
         installer: User,
     ): Promise<Project> {
-        await this.auth.checkOrgPermissionAndThrow(installer.id, "create_project", teamId);
+        await this.auth.checkPermissionOnOrganization(installer.id, "create_project", teamId);
 
         if (cloneUrl.length >= 1000) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Clone URL must be less than 1k characters.");
@@ -269,7 +269,7 @@ export class ProjectsService {
         });
 
         // Install the prebuilds webhook if possible
-        const { userId, teamId, cloneUrl } = project;
+        const { teamId, cloneUrl } = project;
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
         const authProvider = hostContext && hostContext.authProvider.info;
@@ -286,11 +286,10 @@ export class ProjectsService {
                 // in the project creation flow, we only propose repositories where the user is actually allowed to
                 // install a webhook.
                 if (await repositoryService.canInstallAutomatedPrebuilds(installer, cloneUrl)) {
-                    log.info("Update prebuild installation for project.", {
-                        teamId,
-                        userId,
-                        installerId: installer.id,
-                    });
+                    log.info(
+                        { organizationId: teamId, userId: installer.id },
+                        "Update prebuild installation for project.",
+                    );
                     await repositoryService.installAutomatedPrebuilds(installer, cloneUrl);
                 }
             }
@@ -298,7 +297,7 @@ export class ProjectsService {
     }
 
     async deleteProject(userId: string, projectId: string, transactionCtx?: TransactionalContext): Promise<void> {
-        await this.auth.checkProjectPermissionAndThrow(userId, "delete", projectId);
+        await this.auth.checkPermissionOnProject(userId, "delete", projectId);
 
         let orgId: string | undefined = undefined;
         try {
@@ -329,7 +328,7 @@ export class ProjectsService {
 
     async findPrebuilds(userId: string, params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
         const { projectId, prebuildId } = params;
-        await this.auth.checkProjectPermissionAndThrow(userId, "read_info", projectId);
+        await this.auth.checkPermissionOnProject(userId, "read_info", projectId);
         const project = await this.projectDB.findProjectById(projectId);
         if (!project) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
@@ -375,7 +374,7 @@ export class ProjectsService {
     }
 
     async updateProject(userId: string, partialProject: PartialProject): Promise<void> {
-        await this.auth.checkProjectPermissionAndThrow(userId, "write_info", partialProject.id);
+        await this.auth.checkPermissionOnProject(userId, "write_info", partialProject.id);
 
         const partial: PartialProject = { id: partialProject.id };
         const allowedFields: (keyof Project)[] = ["settings"];
@@ -394,12 +393,12 @@ export class ProjectsService {
         value: string,
         censored: boolean,
     ): Promise<void> {
-        await this.auth.checkProjectPermissionAndThrow(userId, "write_info", projectId);
+        await this.auth.checkPermissionOnProject(userId, "write_info", projectId);
         return this.projectDB.setProjectEnvironmentVariable(projectId, name, value, censored);
     }
 
     async getProjectEnvironmentVariables(userId: string, projectId: string): Promise<ProjectEnvVar[]> {
-        await this.auth.checkProjectPermissionAndThrow(userId, "read_info", projectId);
+        await this.auth.checkPermissionOnProject(userId, "read_info", projectId);
         return this.projectDB.getProjectEnvironmentVariables(projectId);
     }
 
@@ -409,7 +408,7 @@ export class ProjectsService {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Environment Variable ${variableId} not found.`);
         }
         try {
-            await this.auth.checkProjectPermissionAndThrow(userId, "read_info", result.projectId);
+            await this.auth.checkPermissionOnProject(userId, "read_info", result.projectId);
         } catch (err) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Environment Variable ${variableId} not found.`);
         }
@@ -418,12 +417,12 @@ export class ProjectsService {
 
     async deleteProjectEnvironmentVariable(userId: string, variableId: string): Promise<void> {
         const variable = await this.getProjectEnvironmentVariableById(userId, variableId);
-        await this.auth.checkProjectPermissionAndThrow(userId, "write_info", variable.projectId);
+        await this.auth.checkPermissionOnProject(userId, "write_info", variable.projectId);
         return this.projectDB.deleteProjectEnvironmentVariable(variableId);
     }
 
     async isProjectConsideredInactive(userId: string, projectId: string): Promise<boolean> {
-        await this.auth.checkProjectPermissionAndThrow(userId, "read_info", projectId);
+        await this.auth.checkPermissionOnProject(userId, "read_info", projectId);
         const usage = await this.projectDB.getProjectUsage(projectId);
         if (!usage?.lastWorkspaceStart) {
             return false;
@@ -440,7 +439,7 @@ export class ProjectsService {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project with ${cloneUrl} not found.`);
         }
         try {
-            await this.auth.checkProjectPermissionAndThrow(userId, "read_info", project.id);
+            await this.auth.checkPermissionOnProject(userId, "read_info", project.id);
         } catch (err) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project with ${cloneUrl} not found.`);
         }

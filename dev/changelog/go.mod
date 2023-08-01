@@ -1,10 +1,10 @@
 module github.com/gitpod-io/gitpod/changelog
 
-go 1.19
+go 1.20
 
 require (
 	github.com/google/go-github/v38 v38.1.0
-	github.com/sirupsen/logrus v1.9.0
+	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.4.0
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
 )

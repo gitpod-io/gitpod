@@ -3,6 +3,9 @@ packages:
     type: generic
     srcs:
       - "schema/*.yaml"
+    config:
+      test:
+      - ["zed", "validate", "./schema/schema.yaml"]
 
   - name: lib
     type: go

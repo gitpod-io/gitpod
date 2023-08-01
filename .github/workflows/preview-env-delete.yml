@@ -9,8 +9,10 @@ on:
 
 jobs:
   create-runner:
-    uses: ./.github/workflows/create_runner.yml
-    secrets: inherit
+    uses: gitpod-io/gce-github-runner/.github/workflows/create-vm.yml@secrets
+    secrets:
+      runner_token: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_TOKEN }}
+      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
 
   delete:
     if: github.event.ref_type == 'branch' || github.event.inputs.name != ''
@@ -29,7 +31,9 @@ jobs:
     needs:
       - create-runner
       - delete
-    uses: ./.github/workflows/remove_runner.yml
-    secrets: inherit
+    uses: gitpod-io/gce-github-runner/.github/workflows/delete-vm.yml@secrets
+    secrets:
+      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
     with:
       runner-label: ${{ needs.create-runner.outputs.label }}
+      machine-zone: ${{ needs.create-runner.outputs.machine-zone }}

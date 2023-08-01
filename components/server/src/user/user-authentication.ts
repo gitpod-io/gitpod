@@ -15,6 +15,7 @@ import { TokenService } from "./token-service";
 import { EmailAddressAlreadyTakenException, SelectAccountException } from "../auth/errors";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { UserService } from "./user-service";
 
 export interface CreateUserParams {
     organizationId?: string;
@@ -34,11 +35,12 @@ export class UserAuthentication {
         @inject(Config) private readonly config: Config,
         @inject(EmailDomainFilterDB) private readonly domainFilterDb: EmailDomainFilterDB,
         @inject(UserDB) private readonly userDb: UserDB,
+        @inject(UserService) private readonly userService: UserService,
         @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
     ) {}
 
     async blockUser(targetUserId: string, block: boolean): Promise<User> {
-        const target = await this.userDb.findUserById(targetUserId);
+        const target = await this.userService.findUserById(targetUserId, targetUserId);
         if (!target) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
         }
@@ -49,12 +51,20 @@ export class UserAuthentication {
 
     async findUserForLogin(params: { candidate: IdentityLookup }) {
         const user = await this.userDb.findUserByIdentity(params.candidate);
-        return user;
+        return this.loadClean(user);
+    }
+
+    // make sure we load through user service to ensure any sideffects (e.g. spicedb migrations) are applied
+    private async loadClean(user?: User): Promise<User | undefined> {
+        if (!user) {
+            return undefined;
+        }
+        return await this.userService.findUserById(user.id, user.id);
     }
 
     async findOrgOwnedUser(params: { organizationId: string; email: string }): Promise<MaybeUser> {
         const user = await this.userDb.findOrgOwnedUser(params.organizationId, params.email);
-        return user;
+        return this.loadClean(user);
     }
 
     async updateUserOnLogin(user: User, authUser: AuthUser, candidate: Identity, token: Token): Promise<User> {
@@ -64,11 +74,7 @@ export class UserAuthentication {
         await this.updateUserIdentity(user, candidate);
         await this.userDb.storeSingleToken(candidate, token);
 
-        const updated = await this.userDb.findUserById(user.id);
-        if (!updated) {
-            throw new Error("User does not exist");
-        }
-        return updated;
+        return await this.userService.findUserById(user.id, user.id);
     }
 
     async updateUserIdentity(user: User, candidate: Identity) {

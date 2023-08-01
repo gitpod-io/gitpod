@@ -5,35 +5,45 @@
  */
 
 import { v1 } from "@authzed/authzed-node";
-import { inject, injectable } from "inversify";
 
+import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib";
+import { Organization, Project, TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import {
-    InstallationID,
     OrganizationPermission,
     Permission,
     ProjectPermission,
     Relation,
     ResourceType,
     UserPermission,
+    rel,
 } from "./definitions";
 import { SpiceDBAuthorizer } from "./spicedb-authorizer";
-import { Organization, TeamMemberInfo, Project, TeamMemberRole } from "@gitpod/gitpod-protocol";
-import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
-@injectable()
+export function createInitializingAuthorizer(spiceDbAuthorizer: SpiceDBAuthorizer): Authorizer {
+    const target = new Authorizer(spiceDbAuthorizer);
+    const initialized = (async () => {
+        await target.addInstallationAdminRole(BUILTIN_INSTLLATION_ADMIN_USER_ID);
+        await target.addUser(BUILTIN_INSTLLATION_ADMIN_USER_ID);
+    })();
+    return new Proxy(target, {
+        get(target, propKey, receiver) {
+            const originalMethod = target[propKey as keyof typeof target];
+
+            if (typeof originalMethod === "function") {
+                return async function (...args: any[]) {
+                    await initialized;
+                    return (originalMethod as any).apply(target, args);
+                };
+            } else {
+                return originalMethod;
+            }
+        },
+    });
+}
+
 export class Authorizer {
-    constructor(
-        @inject(SpiceDBAuthorizer)
-        private authorizer: SpiceDBAuthorizer,
-    ) {
-        this.initialize().catch((err) => log.error("Failed to add installation admin", err));
-    }
-
-    private async initialize(): Promise<void> {
-        await this.addAdminRole(BUILTIN_INSTLLATION_ADMIN_USER_ID);
-    }
+    constructor(private authorizer: SpiceDBAuthorizer) {}
 
     async hasPermissionOnOrganization(
         userId: string,
@@ -43,14 +53,14 @@ export class Authorizer {
         const req = v1.CheckPermissionRequest.create({
             subject: subject("user", userId),
             permission,
-            resource: objectRef("organization", orgId),
+            resource: object("organization", orgId),
             consistency,
         });
 
         return this.authorizer.check(req, { userId });
     }
 
-    async checkOrgPermissionAndThrow(userId: string, permission: OrganizationPermission, orgId: string) {
+    async checkPermissionOnOrganization(userId: string, permission: OrganizationPermission, orgId: string) {
         if (await this.hasPermissionOnOrganization(userId, permission, orgId)) {
             return;
         }
@@ -69,14 +79,14 @@ export class Authorizer {
         const req = v1.CheckPermissionRequest.create({
             subject: subject("user", userId),
             permission,
-            resource: objectRef("project", projectId),
+            resource: object("project", projectId),
             consistency,
         });
 
         return this.authorizer.check(req, { userId });
     }
 
-    async checkProjectPermissionAndThrow(userId: string, permission: ProjectPermission, projectId: string) {
+    async checkPermissionOnProject(userId: string, permission: ProjectPermission, projectId: string) {
         if (await this.hasPermissionOnProject(userId, permission, projectId)) {
             return;
         }
@@ -95,14 +105,14 @@ export class Authorizer {
         const req = v1.CheckPermissionRequest.create({
             subject: subject("user", userId),
             permission,
-            resource: objectRef("user", userResourceId),
+            resource: object("user", userResourceId),
             consistency,
         });
 
         return this.authorizer.check(req, { userId });
     }
 
-    async checkUserPermissionAndThrow(userId: string, permission: UserPermission, resourceUserId: string) {
+    async checkPermissionOnUser(userId: string, permission: UserPermission, resourceUserId: string) {
         if (await this.hasPermissionOnUser(userId, permission, resourceUserId)) {
             return;
         }
@@ -118,276 +128,162 @@ export class Authorizer {
 
     // write operations below
 
-    async addUser(userId: string) {
-        await this.authorizer.writeRelationships(
-            v1.WriteRelationshipsRequest.create({
-                updates: [
-                    v1.RelationshipUpdate.create({
-                        operation: v1.RelationshipUpdate_Operation.TOUCH,
-                        relationship: relationship(objectRef("user", userId), "self", subject("user", userId)),
-                    }),
-                ],
+    public async removeAllRelationships(type: ResourceType, id: string) {
+        await this.authorizer.deleteRelationships(
+            v1.DeleteRelationshipsRequest.create({
+                relationshipFilter: {
+                    resourceType: type,
+                    optionalResourceId: id,
+                },
             }),
+        );
+
+        // iterate over all resource types and remove by subject
+        for (const resourcetype of ["installation", "user", "organization", "project"] as ResourceType[]) {
+            await this.authorizer.deleteRelationships(
+                v1.DeleteRelationshipsRequest.create({
+                    relationshipFilter: {
+                        resourceType: resourcetype,
+                        optionalResourceId: "",
+                        optionalRelation: "",
+                        optionalSubjectFilter: {
+                            subjectType: type,
+                            optionalSubjectId: id,
+                        },
+                    },
+                }),
+            );
+        }
+    }
+
+    async addUser(userId: string, owningOrgId?: string) {
+        await this.authorizer.writeRelationships(
+            set(rel.user(userId).self.user(userId)), //
+            set(
+                owningOrgId
+                    ? rel.user(userId).organization.organization(owningOrgId)
+                    : rel.user(userId).installation.installation,
+            ),
         );
     }
 
     async addOrganizationRole(orgID: string, userID: string, role: TeamMemberRole): Promise<void> {
+        const updates = [set(rel.organization(orgID).member.user(userID))];
         if (role === "owner") {
-            await this.addOrganizationOwnerRole(orgID, userID);
+            updates.push(set(rel.organization(orgID).owner.user(userID)));
         } else {
-            await this.addOrganizationMemberRole(orgID, userID);
+            updates.push(remove(rel.organization(orgID).owner.user(userID)));
         }
+        await this.authorizer.writeRelationships(...updates);
     }
 
-    async addOrganizationOwnerRole(orgID: string, userID: string): Promise<void> {
-        await this.authorizer.writeRelationships(
-            v1.WriteRelationshipsRequest.create({
-                updates: this.addOrganizationOwnerRoleUpdates(orgID, userID),
-            }),
-        );
-    }
-
-    async addOrganizationMemberRole(orgID: string, userID: string): Promise<void> {
-        await this.authorizer.writeRelationships(
-            v1.WriteRelationshipsRequest.create({
-                updates: this.addOrganizationMemberRoleUpdates(orgID, userID),
-            }),
-        );
-    }
-
-    async removeOrganizationOwnerRole(orgID: string, userID: string): Promise<void> {
-        await this.authorizer.writeRelationships(
-            v1.WriteRelationshipsRequest.create({
-                updates: this.removeOrganizationOwnerRoleUpdates(orgID, userID),
-            }),
-        );
-    }
-
-    async removeUserFromOrg(orgID: string, userID: string): Promise<void> {
-        await this.authorizer.writeRelationships(
-            v1.WriteRelationshipsRequest.create({
-                updates: [
-                    ...this.removeOrganizationMemberRoleUpdates(orgID, userID),
-                    ...this.removeOrganizationOwnerRoleUpdates(orgID, userID),
-                ],
-            }),
-        );
+    async removeOrganizationRole(orgID: string, userID: string, role: TeamMemberRole): Promise<void> {
+        const updates = [remove(rel.organization(orgID).owner.user(userID))];
+        if (role === "member") {
+            updates.push(remove(rel.organization(orgID).member.user(userID)));
+        }
+        await this.authorizer.writeRelationships(...updates);
     }
 
     async addProjectToOrg(orgID: string, projectID: string): Promise<void> {
         await this.authorizer.writeRelationships(
-            v1.WriteRelationshipsRequest.create({
-                updates: this.addProjectToOrgUpdates(orgID, projectID),
-            }),
+            set(rel.project(projectID).org.organization(orgID)), //
         );
     }
 
     async removeProjectFromOrg(orgID: string, projectID: string): Promise<void> {
         await this.authorizer.writeRelationships(
-            v1.WriteRelationshipsRequest.create({
-                updates: this.removeProjectFromOrgUpdates(orgID, projectID),
-            }),
-        );
-    }
-
-    async deleteOrganization(orgID: string): Promise<void> {
-        await this.authorizer.deleteRelationships(
-            v1.DeleteRelationshipsRequest.create({
-                relationshipFilter: v1.RelationshipFilter.create({
-                    resourceType: "organization",
-                    optionalResourceId: orgID,
-                }),
-            }),
+            remove(rel.project(projectID).org.organization(orgID)), //
         );
     }
 
     async addOrganization(org: Organization, members: TeamMemberInfo[], projects: Project[]): Promise<void> {
-        const updates: v1.RelationshipUpdate[] = [];
-
-        // every org belongs to the installation
-        updates.push(
-            v1.RelationshipUpdate.create({
-                operation: v1.RelationshipUpdate_Operation.TOUCH,
-                relationship: relationship(
-                    objectRef("organization", org.id),
-                    "installation",
-                    subject("installation", InstallationID),
-                ),
-            }),
-        );
-
         for (const member of members) {
-            updates.push(...this.addOrganizationRoleUpdates(org.id, member.userId, member.role));
+            await this.addOrganizationRole(org.id, member.userId, member.role);
         }
 
         for (const project of projects) {
-            updates.push(...this.addProjectToOrgUpdates(org.id, project.id));
+            await this.addProjectToOrg(org.id, project.id);
         }
 
         await this.authorizer.writeRelationships(
-            v1.WriteRelationshipsRequest.create({
-                updates: updates,
-            }),
+            set(rel.organization(org.id).installation.installation), //
         );
     }
 
     async addInstallationMemberRole(userID: string) {
         await this.authorizer.writeRelationships(
-            v1.WriteRelationshipsRequest.create({
-                updates: [
-                    v1.RelationshipUpdate.create({
-                        operation: v1.RelationshipUpdate_Operation.TOUCH,
-                        relationship: relationship(
-                            objectRef("installation", InstallationID),
-                            "member",
-                            subject("user", userID),
-                        ),
-                    }),
-                ],
-            }),
+            set(rel.installation.member.user(userID)), //
         );
     }
 
     async removeInstallationMemberRole(userID: string) {
         await this.authorizer.writeRelationships(
-            v1.WriteRelationshipsRequest.create({
-                updates: [
-                    v1.RelationshipUpdate.create({
-                        operation: v1.RelationshipUpdate_Operation.DELETE,
-                        relationship: relationship(
-                            objectRef("installation", InstallationID),
-                            "member",
-                            subject("user", userID),
-                        ),
-                    }),
-                ],
-            }),
+            remove(rel.installation.member.user(userID)), //
         );
     }
 
-    async addAdminRole(userID: string) {
+    async addInstallationAdminRole(userID: string) {
         await this.authorizer.writeRelationships(
-            v1.WriteRelationshipsRequest.create({
-                updates: [
-                    v1.RelationshipUpdate.create({
-                        operation: v1.RelationshipUpdate_Operation.TOUCH,
-                        relationship: relationship(
-                            objectRef("installation", InstallationID),
-                            "admin",
-                            subject("user", userID),
-                        ),
-                    }),
-                ],
-            }),
+            set(rel.installation.admin.user(userID)), //
         );
     }
 
-    async removeAdminRole(userID: string) {
+    async removeInstallationAdminRole(userID: string) {
         await this.authorizer.writeRelationships(
-            v1.WriteRelationshipsRequest.create({
-                updates: [
-                    v1.RelationshipUpdate.create({
-                        operation: v1.RelationshipUpdate_Operation.DELETE,
-                        relationship: relationship(
-                            objectRef("installation", InstallationID),
-                            "admin",
-                            subject("user", userID),
-                        ),
-                    }),
-                ],
-            }),
+            remove(rel.installation.admin.user(userID)), //
         );
     }
 
-    private addOrganizationRoleUpdates(orgID: string, userID: string, role: TeamMemberRole): v1.RelationshipUpdate[] {
-        if (role === "owner") {
-            return this.addOrganizationOwnerRoleUpdates(orgID, userID);
+    public async find(relation: v1.Relationship): Promise<v1.Relationship | undefined> {
+        const relationships = await this.authorizer.readRelationships({
+            consistency: v1.Consistency.create({
+                requirement: {
+                    oneofKind: "fullyConsistent",
+                    fullyConsistent: true,
+                },
+            }),
+            relationshipFilter: {
+                resourceType: relation.resource?.objectType || "",
+                optionalResourceId: relation.resource?.objectId || "",
+                optionalRelation: relation.relation,
+                optionalSubjectFilter: relation.subject?.object && {
+                    subjectType: relation.subject.object.objectType,
+                    optionalSubjectId: relation.subject.object.objectId,
+                },
+            },
+        });
+        if (relationships.length === 0) {
+            return undefined;
         }
-        return this.addOrganizationMemberRoleUpdates(orgID, userID);
-    }
-
-    private addOrganizationMemberRoleUpdates(orgID: string, userID: string): v1.RelationshipUpdate[] {
-        return [
-            v1.RelationshipUpdate.create({
-                operation: v1.RelationshipUpdate_Operation.TOUCH,
-                relationship: relationship(objectRef("organization", orgID), "member", subject("user", userID)),
-            }),
-            v1.RelationshipUpdate.create({
-                operation: v1.RelationshipUpdate_Operation.TOUCH,
-                relationship: relationship(objectRef("user", userID), "container", subject("organization", orgID)),
-            }),
-        ];
-    }
-
-    private addOrganizationOwnerRoleUpdates(orgID: string, userID: string): v1.RelationshipUpdate[] {
-        return [
-            ...this.addOrganizationMemberRoleUpdates(orgID, userID),
-            v1.RelationshipUpdate.create({
-                operation: v1.RelationshipUpdate_Operation.TOUCH,
-                relationship: relationship(objectRef("organization", orgID), "owner", subject("user", userID)),
-            }),
-        ];
-    }
-
-    private removeOrganizationOwnerRoleUpdates(orgID: string, userID: string): v1.RelationshipUpdate[] {
-        return [
-            v1.RelationshipUpdate.create({
-                operation: v1.RelationshipUpdate_Operation.DELETE,
-                relationship: relationship(objectRef("organization", orgID), "owner", subject("user", userID)),
-            }),
-        ];
-    }
-
-    private removeOrganizationMemberRoleUpdates(orgID: string, userID: string): v1.RelationshipUpdate[] {
-        return [
-            v1.RelationshipUpdate.create({
-                operation: v1.RelationshipUpdate_Operation.DELETE,
-                relationship: relationship(objectRef("organization", orgID), "member", subject("user", userID)),
-            }),
-            v1.RelationshipUpdate.create({
-                operation: v1.RelationshipUpdate_Operation.DELETE,
-                relationship: relationship(objectRef("user", userID), "container", subject("organization", orgID)),
-            }),
-        ];
-    }
-
-    private removeProjectFromOrgUpdates(orgID: string, projectID: string): v1.RelationshipUpdate[] {
-        return [
-            v1.RelationshipUpdate.create({
-                operation: v1.RelationshipUpdate_Operation.DELETE,
-                relationship: relationship(objectRef("project", projectID), "org", subject("organization", orgID)),
-            }),
-        ];
-    }
-
-    private addProjectToOrgUpdates(orgID: string, projectID: string): v1.RelationshipUpdate[] {
-        return [
-            v1.RelationshipUpdate.create({
-                operation: v1.RelationshipUpdate_Operation.TOUCH,
-                relationship: relationship(objectRef("project", projectID), "org", subject("organization", orgID)),
-            }),
-        ];
+        return relationships[0].relationship;
     }
 }
 
-function objectRef(type: ResourceType, id: string): v1.ObjectReference {
+function set(rs: v1.Relationship): v1.RelationshipUpdate {
+    return v1.RelationshipUpdate.create({
+        operation: v1.RelationshipUpdate_Operation.TOUCH,
+        relationship: rs,
+    });
+}
+
+function remove(rs: v1.Relationship): v1.RelationshipUpdate {
+    return v1.RelationshipUpdate.create({
+        operation: v1.RelationshipUpdate_Operation.DELETE,
+        relationship: rs,
+    });
+}
+
+function object(type: ResourceType, id: string): v1.ObjectReference {
     return v1.ObjectReference.create({
         objectId: id,
         objectType: type,
     });
 }
 
-function relationship(res: v1.ObjectReference, relation: Relation, subject: v1.SubjectReference): v1.Relationship {
-    return v1.Relationship.create({
-        relation: relation,
-        resource: res,
-        subject: subject,
-    });
-}
-
 function subject(type: ResourceType, id: string, relation?: Relation | Permission): v1.SubjectReference {
     return v1.SubjectReference.create({
-        object: objectRef(type, id),
+        object: object(type, id),
         optionalRelation: relation,
     });
 }

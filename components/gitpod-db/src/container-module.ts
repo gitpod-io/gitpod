@@ -11,8 +11,6 @@ import { TypeORMWorkspaceDBImpl } from "./typeorm/workspace-db-impl";
 import { TypeORMUserDBImpl } from "./typeorm/user-db-impl";
 import { UserDB } from "./user-db";
 import { Config } from "./config";
-import { UserStorageResourcesDB } from "./user-storage-resources-db";
-import { TypeORMUserStorageResourcesDBImpl } from "./typeorm/user-storage-resources-db-impl";
 import { TypeORM } from "./typeorm/typeorm";
 import { encryptionModule } from "@gitpod/gitpod-protocol/lib/encryption/container-module";
 import { KeyProviderImpl, KeyProviderConfig } from "@gitpod/gitpod-protocol/lib/encryption/key-provider";
@@ -76,9 +74,6 @@ export const dbContainerModule = (cacheClass = DataCacheNoop) =>
         bind(TypeORMWorkspaceDBImpl).toSelf().inSingletonScope();
         bind(WorkspaceDB).toService(TypeORMWorkspaceDBImpl);
         bindDbWithTracing(TracedWorkspaceDB, bind, WorkspaceDB).inSingletonScope();
-
-        bind(TypeORMUserStorageResourcesDBImpl).toSelf().inSingletonScope();
-        bind(UserStorageResourcesDB).toService(TypeORMUserStorageResourcesDBImpl);
 
         bind(TypeORMAppInstallationDBImpl).toSelf().inSingletonScope();
         bind(AppInstallationDB).toService(TypeORMAppInstallationDBImpl);

@@ -71,12 +71,10 @@ export function useCurrentProject(): { project: Project | undefined; loading: bo
             return;
         }
         (async () => {
-            let projects: Project[];
-            if (!!org.data) {
-                projects = await listAllProjects({ teamId: org.data?.id });
-            } else {
-                projects = await listAllProjects({ userId: user?.id });
+            if (!org.data) {
+                return;
             }
+            let projects = await listAllProjects({ orgId: org.data.id });
 
             // Find project matching with slug, otherwise with name
             const project = projects.find((p) => Project.slug(p) === slugs.projectSlug);
@@ -86,20 +84,12 @@ export function useCurrentProject(): { project: Project | undefined; loading: bo
                     if (t.id === org.data?.id) {
                         continue;
                     }
-                    const projects = await listAllProjects({ teamId: t.id });
+                    const projects = await listAllProjects({ orgId: t.id });
                     const project = projects.find((p) => Project.slug(p) === slugs.projectSlug);
                     if (project) {
                         // redirect to the other org
                         history.push(location.pathname + "?org=" + t.id);
                     }
-                }
-
-                // check personal projects
-                const projects = await listAllProjects({ userId: user.id });
-                const project = projects.find((p) => Project.slug(p) === slugs.projectSlug);
-                if (project) {
-                    // redirect to the other org
-                    history.push(location.pathname + "?org=0");
                 }
             }
             setProject(project);

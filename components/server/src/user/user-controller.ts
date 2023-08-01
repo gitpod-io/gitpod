@@ -29,6 +29,7 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 import { GitpodServerImpl } from "../workspace/gitpod-server-impl";
 import { WorkspaceStarter } from "../workspace/workspace-starter";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
+import { UserService } from "./user-service";
 
 export const ServerFactory = Symbol("ServerFactory");
 export type ServerFactory = () => GitpodServerImpl;
@@ -36,6 +37,7 @@ export type ServerFactory = () => GitpodServerImpl;
 @injectable()
 export class UserController {
     @inject(WorkspaceDB) protected readonly workspaceDB: WorkspaceDB;
+    @inject(UserService) protected readonly userService: UserService;
     @inject(UserDB) protected readonly userDb: UserDB;
     @inject(TeamDB) protected readonly teamDb: TeamDB;
     @inject(Authenticator) protected readonly authenticator: Authenticator;
@@ -97,7 +99,7 @@ export class UserController {
                         throw new ApplicationError(401, "Invalid OTS key");
                     }
 
-                    const user = await this.userDb.findUserById(userId);
+                    const user = await this.userService.findUserById(userId, userId);
                     if (!user) {
                         throw new ApplicationError(404, "User not found");
                     }
@@ -136,7 +138,10 @@ export class UserController {
 
                 // The user has supplied a valid token, we need to sign them in.
                 // Login this user (sets cookie as side-effect)
-                const user = await this.userDb.findUserById(BUILTIN_INSTLLATION_ADMIN_USER_ID);
+                const user = await this.userService.findUserById(
+                    BUILTIN_INSTLLATION_ADMIN_USER_ID,
+                    BUILTIN_INSTLLATION_ADMIN_USER_ID,
+                );
                 if (!user) {
                     // We respond with NOT_AUTHENTICATED to prevent gleaning whether the user, or token are invalid.
                     throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, "Admin user not found");

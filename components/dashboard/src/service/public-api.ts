@@ -66,14 +66,14 @@ export function publicApiTeamRoleToProtocol(role: TeamRole): TeamMemberRole {
     }
 }
 
-export async function listAllProjects(opts: { userId?: string; teamId?: string }): Promise<ProtocolProject[]> {
+export async function listAllProjects(opts: { orgId: string }): Promise<ProtocolProject[]> {
     let pagination = {
         page: 1,
         pageSize: 100,
     };
 
     const response = await projectsService.listProjects({
-        teamId: opts.teamId,
+        teamId: opts.orgId,
         pagination,
     });
     const results = response.projects;
@@ -84,7 +84,7 @@ export async function listAllProjects(opts: { userId?: string; teamId?: string }
             page: 1 + pagination.page,
         };
         const response = await projectsService.listProjects({
-            teamId: opts.teamId,
+            teamId: opts.orgId,
             pagination,
         });
         results.push(...response.projects);
