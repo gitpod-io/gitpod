@@ -179,12 +179,14 @@ export class OrganizationService {
     }
 
     public async addOrUpdateMember(
-        userId: string,
+        userId: string | undefined, // undefined means it is a system call, not a user call
         orgId: string,
         memberId: string,
         role: OrgMemberRole,
     ): Promise<void> {
-        await this.auth.checkPermissionOnOrganization(userId, "write_members", orgId);
+        if (userId) {
+            await this.auth.checkPermissionOnOrganization(userId, "write_members", orgId);
+        }
         if (role !== "owner") {
             const members = await this.teamDB.findMembersByTeam(orgId);
             if (!members.some((m) => m.userId !== memberId && m.role === "owner")) {

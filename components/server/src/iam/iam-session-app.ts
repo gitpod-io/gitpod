@@ -12,7 +12,6 @@ import { UserAuthentication } from "../user/user-authentication";
 import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Identity, User } from "@gitpod/gitpod-protocol";
-import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib";
 import { reportJWTCookieIssued } from "../prometheus-metrics";
 import { ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { OrganizationService } from "../orgs/organization-service";
@@ -117,7 +116,7 @@ export class IamSessionApp {
                 // Also, if that step repeatedly fails, it would fail the login process earlier but
                 // in a more consistent state.
                 await this.orgService.addOrUpdateMember(
-                    existingUser.id,
+                    undefined,
                     existingUser.organizationId,
                     existingUser.id,
                     "member",
@@ -158,7 +157,7 @@ export class IamSessionApp {
             },
         });
 
-        await this.orgService.addOrUpdateMember(BUILTIN_INSTLLATION_ADMIN_USER_ID, organizationId, user.id, "member");
+        await this.orgService.addOrUpdateMember(undefined, organizationId, user.id, "member");
         return user;
     }
 }
