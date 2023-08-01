@@ -140,7 +140,8 @@ func (s *WorkspaceService) ListWorkspaces(ctx context.Context, req *connect.Requ
 		return nil, err
 	}
 	serverResp, err := conn.GetWorkspaces(ctx, &protocol.GetWorkspacesOptions{
-		Limit: float64(limit),
+		Limit:          float64(limit),
+		OrganizationId: req.Msg.GetOrganizationId(),
 	})
 	if err != nil {
 		return nil, proxy.ConvertError(err)

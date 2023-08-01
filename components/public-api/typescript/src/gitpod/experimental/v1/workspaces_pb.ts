@@ -123,6 +123,11 @@ export class ListWorkspacesRequest extends Message<ListWorkspacesRequest> {
    */
   fieldMask?: FieldMask;
 
+  /**
+   * @generated from field: string organization_id = 3;
+   */
+  organizationId = "";
+
   constructor(data?: PartialMessage<ListWorkspacesRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -133,6 +138,7 @@ export class ListWorkspacesRequest extends Message<ListWorkspacesRequest> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "pagination", kind: "message", T: Pagination },
     { no: 2, name: "field_mask", kind: "message", T: FieldMask },
+    { no: 3, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListWorkspacesRequest {
