@@ -15,6 +15,7 @@ import {
 } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { ProjectsService } from "../projects/projects-service";
+import { ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 export interface ResolvedEnvVars {
     // all project env vars, censored included always
@@ -43,8 +44,11 @@ export class EnvVarService {
         };
 
         const projectEnvVars = workspace.projectId
-            ? await this.projectsService.getProjectEnvironmentVariables(workspace.ownerId, workspace.projectId)
+            ? (await ApplicationError.notFoundToUndefined(
+                  this.projectsService.getProjectEnvironmentVariables(workspace.ownerId, workspace.projectId),
+              )) || []
             : [];
+
         if (workspace.type === "prebuild") {
             // prebuild does not have access to user env vars and cannot be started via prewfix URL
             const withValues = await this.projectDB.getProjectEnvironmentVariableValues(projectEnvVars);

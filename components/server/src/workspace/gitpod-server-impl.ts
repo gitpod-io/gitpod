@@ -844,17 +844,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.userDeletionService.deleteUser(user.id);
     }
 
-    private async getTeamMembersByProject(projectId: string | undefined): Promise<TeamMemberInfo[]> {
-        const user = await this.checkUser("getTeamMembersByProject");
-        if (projectId) {
-            const project = await this.projectsService.getProject(user.id, projectId);
-            if (project && project.teamId) {
-                return await this.organizationService.listMembers(user.id, project.teamId);
-            }
-        }
-        return [];
-    }
-
     public async getWorkspace(ctx: TraceContext, workspaceId: string): Promise<WorkspaceInfo> {
         traceAPIParams(ctx, { workspaceId });
         traceWI(ctx, { workspaceId });
@@ -863,8 +852,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const workspace = await this.internalGetWorkspace(user, workspaceId, this.workspaceDb.trace(ctx));
         const latestInstancePromise = this.workspaceDb.trace(ctx).findCurrentInstance(workspaceId);
-        const teamMembers = await this.getTeamMembersByProject(workspace.projectId);
-        await this.guardAccess({ kind: "workspace", subject: workspace, teamMembers }, "get");
+        const teamMembers = await this.organizationService.listMembers(user.id, workspace.organizationId);
+        await this.guardAccess({ kind: "workspace", subject: workspace, teamMembers: teamMembers }, "get");
         const latestInstance = await latestInstancePromise;
         if (!!latestInstance) {
             await this.guardAccess(
@@ -978,7 +967,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
         const envVarsPromise = this.envVarService.resolve(workspace);
         const projectPromise = workspace.projectId
-            ? this.projectsService.getProject(user.id, workspace.projectId)
+            ? ApplicationError.notFoundToUndefined(this.projectsService.getProject(user.id, workspace.projectId))
             : Promise.resolve(undefined);
 
         await mayStartPromise;
@@ -1008,7 +997,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const workspace = await this.internalGetWorkspace(user, workspaceId, this.workspaceDb.trace(ctx));
         if (workspace.type === "prebuild") {
             // If this is a team prebuild, any team member can stop it.
-            const teamMembers = await this.getTeamMembersByProject(workspace.projectId);
+            const teamMembers = await this.organizationService.listMembers(user.id, workspace.organizationId);
             await this.guardAccess({ kind: "workspace", subject: workspace, teamMembers }, "get");
         } else {
             // If this is not a prebuild, or it's a personal prebuild, only the workspace owner can stop it.
@@ -1016,7 +1005,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         try {
-            await this.internalStopWorkspace(ctx, workspace, "stopped via API");
+            await this.internalStopWorkspace(ctx, user.id, workspace, "stopped via API");
         } catch (err) {
             log.error(logCtx, "stopWorkspace error: ", err);
             if (isClusterMaintenanceError(err)) {
@@ -1031,6 +1020,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     private async internalStopWorkspace(
         ctx: TraceContext,
+        requestorId: string,
         workspace: Workspace,
         reason: string,
         policy?: StopWorkspacePolicy,
@@ -1049,7 +1039,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (!admin) {
             if (workspace.type === "prebuild") {
                 // If this is a team prebuild, any team member can stop it.
-                const teamMembers = await this.getTeamMembersByProject(workspace.projectId);
+                const teamMembers = await this.organizationService.listMembers(requestorId, workspace.organizationId);
                 await this.guardAccess(
                     { kind: "workspaceInstance", subject: instance, workspace, teamMembers },
                     "update",
@@ -1113,7 +1103,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardAccess({ kind: "workspace", subject: ws }, "delete");
 
         // for good measure, try and stop running instances
-        await this.internalStopWorkspace(ctx, ws, "deleted via API");
+        await this.internalStopWorkspace(ctx, user.id, ws, "deleted via API");
 
         // actually delete the workspace
         await this.workspaceDeletionService.softDeleteWorkspace(ctx, ws, "user");
@@ -1593,9 +1583,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("getPrebuildEvents");
 
         const project = await this.projectsService.getProject(user.id, projectId);
-        if (!project) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Project not found");
-        }
         await this.guardProjectOperation(user, projectId, "get");
 
         const events = await this.projectsService.getPrebuildEvents(user.id, project.cloneUrl);
@@ -1612,9 +1599,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("triggerPrebuild");
 
         const project = await this.projectsService.getProject(user.id, projectId);
-        if (!project) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Project not found");
-        }
         await this.guardProjectOperation(user, projectId, "update");
 
         const branchDetails = !!branchName
@@ -2120,7 +2104,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             return;
         }
         traceWI(ctx, { instanceId: instance.id });
-        const teamMembers = await this.getTeamMembersByProject(workspace.projectId);
+        const teamMembers = await this.organizationService.listMembers(user.id, workspace.organizationId);
         await this.guardAccess({ kind: "workspaceLog", subject: workspace, teamMembers }, "get");
 
         // wait for up to 20s for imageBuildLogInfo to appear due to:
@@ -2197,7 +2181,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getHeadlessLog(ctx: TraceContext, instanceId: string): Promise<HeadlessLogUrls> {
         traceAPIParams(ctx, { instanceId });
 
-        await this.checkAndBlockUser("getHeadlessLog", { instanceId });
+        const user = await this.checkAndBlockUser("getHeadlessLog", { instanceId });
         const logCtx: LogContext = { instanceId };
 
         const ws = await this.workspaceDb.trace(ctx).findByInstanceId(instanceId);
@@ -2206,7 +2190,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         const wsiPromise = this.workspaceDb.trace(ctx).findInstanceById(instanceId);
-        const teamMembers = await this.getTeamMembersByProject(ws.projectId);
+        const teamMembers = await this.organizationService.listMembers(user.id, ws.organizationId);
 
         await this.guardAccess({ kind: "workspaceLog", subject: ws, teamMembers }, "get");
 
@@ -2810,9 +2794,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     private async guardProjectOperation(user: User, projectId: string, op: ResourceAccessOp): Promise<void> {
         const project = await this.projectsService.getProject(user.id, projectId);
-        if (!project) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Project not found");
-        }
         // Anyone who can read a team's information (i.e. any team member) can manage team projects
         await this.guardTeamOperation(project.teamId, "get", "not_implemented");
     }
@@ -2870,7 +2851,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     public async getPrebuild(ctx: TraceContext, prebuildId: string): Promise<PrebuildWithStatus | undefined> {
         traceAPIParams(ctx, { prebuildId });
-        await this.checkAndBlockUser("getPrebuild");
+        const user = await this.checkAndBlockUser("getPrebuild");
 
         const pbws = await this.workspaceDb.trace(ctx).findPrebuiltWorkspaceById(prebuildId);
         if (!pbws) {
@@ -2887,9 +2868,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             return undefined;
         }
 
-        // TODO(gpl) Ideally, we should not need to query the project-team hierarchy here, but decide on a per-prebuild basis.
-        // For that we need to fix Prebuild-access semantics, which is out-of-scope for now.
-        const teamMembers = await this.getTeamMembersByProject(workspace.projectId);
+        const teamMembers = await this.organizationService.listMembers(user.id, workspace.organizationId);
         await this.guardAccess({ kind: "prebuild", subject: pbws, workspace, teamMembers }, "get");
         const result: PrebuildWithStatus = { info, status: pbws.state };
         if (pbws.error) {
@@ -2903,7 +2882,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         workspaceId: string,
     ): Promise<PrebuiltWorkspace | undefined> {
         traceAPIParams(ctx, { workspaceId });
-        await this.checkAndBlockUser("findPrebuildByWorkspaceID");
+        const user = await this.checkAndBlockUser("findPrebuildByWorkspaceID");
 
         const [pbws, workspace] = await Promise.all([
             this.workspaceDb.trace(ctx).findPrebuildByWorkspaceID(workspaceId),
@@ -2913,9 +2892,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             return undefined;
         }
 
-        // TODO(gpl) Ideally, we should not need to query the project-team hierarchy here, but decide on a per-prebuild basis.
-        // For that we need to fix Prebuild-access semantics, which is out-of-scope for now.
-        const teamMembers = await this.getTeamMembersByProject(workspace.projectId);
+        const teamMembers = await this.organizationService.listMembers(user.id, workspace.organizationId);
         await this.guardAccess({ kind: "prebuild", subject: pbws, workspace, teamMembers }, "get");
         return pbws;
     }
@@ -2954,10 +2931,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("cancelPrebuild");
 
-        const project = await this.projectsService.getProject(user.id, projectId);
-        if (!project) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Project not found");
-        }
+        await this.projectsService.getProject(user.id, projectId);
         await this.guardProjectOperation(user, projectId, "update");
 
         const prebuild = await this.workspaceDb.trace(ctx).findPrebuildByID(prebuildId);
@@ -3299,11 +3273,22 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async adminForceStopWorkspace(ctx: TraceContext, workspaceId: string): Promise<void> {
         traceAPIParams(ctx, { workspaceId });
 
-        await this.guardAdminAccess("adminForceStopWorkspace", { id: workspaceId }, Permission.ADMIN_WORKSPACES);
+        const admin = await this.guardAdminAccess(
+            "adminForceStopWorkspace",
+            { id: workspaceId },
+            Permission.ADMIN_WORKSPACES,
+        );
 
         const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
         if (workspace) {
-            await this.internalStopWorkspace(ctx, workspace, "stopped by admin", StopWorkspacePolicy.IMMEDIATELY, true);
+            await this.internalStopWorkspace(
+                ctx,
+                admin.id,
+                workspace,
+                "stopped by admin",
+                StopWorkspacePolicy.IMMEDIATELY,
+                true,
+            );
         }
     }
 
