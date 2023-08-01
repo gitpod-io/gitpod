@@ -1490,9 +1490,10 @@ type UserInfo struct {
 
 // GetWorkspacesOptions is the GetWorkspacesOptions message type
 type GetWorkspacesOptions struct {
-	Limit        float64 `json:"limit,omitempty"`
-	PinnedOnly   bool    `json:"pinnedOnly,omitempty"`
-	SearchString string  `json:"searchString,omitempty"`
+	Limit          float64 `json:"limit,omitempty"`
+	SearchString   string  `json:"searchString,omitempty"`
+	PinnedOnly     bool    `json:"pinnedOnly,omitempty"`
+	OrganizationId string  `json:"organizationId,omitempty"`
 }
 
 // StartWorkspaceResult is the StartWorkspaceResult message type

@@ -45,6 +45,7 @@ service WorkspacesService {
 message ListWorkspacesRequest {
     Pagination pagination = 1;
     google.protobuf.FieldMask field_mask = 2;
+    string organization_id = 3;
 }
 message ListWorkspacesResponse {
     string next_page_token = 1;
