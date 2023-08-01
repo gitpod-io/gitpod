@@ -293,10 +293,9 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 			WorkspaceID: ws.Spec.Ownership.WorkspaceID,
 			InstanceID:  ws.Name,
 		},
-		WorkspaceLocation: ws.Spec.WorkspaceLocation,
-		SnapshotName:      snapshotName,
-		BackupLogs:        ws.Spec.Type == workspacev1.WorkspaceTypePrebuild,
-		UpdateGitStatus:   ws.Spec.Type == workspacev1.WorkspaceTypeRegular,
+		SnapshotName:    snapshotName,
+		BackupLogs:      ws.Spec.Type == workspacev1.WorkspaceTypePrebuild,
+		UpdateGitStatus: ws.Spec.Type == workspacev1.WorkspaceTypeRegular,
 	})
 
 	err = retry.RetryOnConflict(retryParams, func() error {
