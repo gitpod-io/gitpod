@@ -98,17 +98,31 @@ export class IamSessionApp {
         let existingUser = await this.userAuthentication.findUserForLogin({
             candidate: this.mapOIDCProfileToIdentity(payload),
         });
-        if (existingUser) {
-            return existingUser;
+        if (!existingUser) {
+            // Organizational account lookup by email address
+            existingUser = await this.userAuthentication.findOrgOwnedUser({
+                organizationId: payload.organizationId,
+                email: payload.claims.email,
+            });
+            if (existingUser) {
+                log.info("Found Org-owned user by email.", { email: payload?.claims?.email });
+            }
         }
 
-        // Organizational account lookup by email address
-        existingUser = await this.userAuthentication.findOrgOwnedUser({
-            organizationId: payload.organizationId,
-            email: payload.claims.email,
-        });
-        if (existingUser) {
-            log.info("Found Org-owned user by email.", { email: payload?.claims?.email });
+        if (existingUser?.organizationId) {
+            const members = await this.orgService.listMembers(existingUser.id, existingUser.organizationId);
+            if (!members.some((m) => m.userId === existingUser?.id)) {
+                // In case `createNewOIDCUser` failed to create a membership for this user,
+                // let's try to fix the situation on the fly.
+                // Also, if that step repeatedly fails, it would fail the login process earlier but
+                // in a more consistent state.
+                await this.orgService.addOrUpdateMember(
+                    existingUser.id,
+                    existingUser.organizationId,
+                    existingUser.id,
+                    "member",
+                );
+            }
         }
 
         return existingUser;
