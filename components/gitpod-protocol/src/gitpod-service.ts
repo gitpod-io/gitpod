@@ -131,10 +131,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     openPort(workspaceId: string, port: WorkspaceInstancePort): Promise<WorkspaceInstancePort | undefined>;
     closePort(workspaceId: string, port: number): Promise<void>;
 
-    // User storage
-    getUserStorageResource(options: GitpodServer.GetUserStorageResourceOptions): Promise<string>;
-    updateUserStorageResource(options: GitpodServer.UpdateUserStorageResourceOptions): Promise<void>;
-
     // Workspace env vars
     getWorkspaceEnvVars(workspaceId: string): Promise<EnvVarWithValue[]>;
 
@@ -411,13 +407,6 @@ export namespace GitpodServer {
         workspaceId: string;
         /* this is here to enable backwards-compatibility and untangling rollout between workspace, IDE and meta */
         dontWait?: boolean;
-    }
-    export interface GetUserStorageResourceOptions {
-        readonly uri: string;
-    }
-    export interface UpdateUserStorageResourceOptions {
-        readonly uri: string;
-        readonly content: string;
     }
     export interface GetTokenSearchOptions {
         readonly host: string;

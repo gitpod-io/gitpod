@@ -5,7 +5,7 @@
  */
 
 import { injectable, inject } from "inversify";
-import { UserDB, WorkspaceDB, UserStorageResourcesDB, TeamDB, ProjectDB } from "@gitpod/gitpod-db/lib";
+import { UserDB, WorkspaceDB, TeamDB, ProjectDB } from "@gitpod/gitpod-db/lib";
 import { User, Workspace } from "@gitpod/gitpod-protocol";
 import { StorageClient } from "../storage/storage-client";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -19,7 +19,6 @@ export class UserDeletionService {
     constructor(
         @inject(UserDB) private readonly db: UserDB,
         @inject(WorkspaceDB) private readonly workspaceDb: WorkspaceDB,
-        @inject(UserStorageResourcesDB) private readonly userStorageResourcesDb: UserStorageResourcesDB,
         @inject(TeamDB) private readonly teamDb: TeamDB,
         @inject(ProjectDB) private readonly projectDb: ProjectDB,
         @inject(StorageClient) private readonly storageClient: StorageClient,
@@ -75,8 +74,6 @@ export class UserDeletionService {
         await Promise.all([
             // Workspace
             this.anonymizeAllWorkspaces(id),
-            // UserStorageResourcesDB
-            this.userStorageResourcesDb.deleteAllForUser(user.id),
             // Bucket
             this.deleteUserBucket(id),
             // Teams owned only by this user
