@@ -12,6 +12,7 @@ import {
     WorkspaceInstancePhase,
     WorkspaceInstanceConfiguration,
     ImageBuildInfo,
+    WorkspaceInstanceRepoStatus,
 } from "@gitpod/gitpod-protocol";
 import { TypeORM } from "../typeorm";
 import { Transformer } from "../transformer";
@@ -75,6 +76,9 @@ export class DBWorkspaceInstance implements WorkspaceInstance {
 
     @Column("json")
     status: WorkspaceInstanceStatus;
+
+    @Column("simple-json", { nullable: true })
+    gitStatus?: WorkspaceInstanceRepoStatus;
 
     /**
      * This field is a databse-only copy of status.phase for the sole purpose of creating indexes on it.

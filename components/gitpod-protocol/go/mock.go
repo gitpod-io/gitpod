@@ -96,6 +96,20 @@ func (mr *MockAPIInterfaceMockRecorder) ClosePort(ctx, workspaceID, port interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClosePort", reflect.TypeOf((*MockAPIInterface)(nil).ClosePort), ctx, workspaceID, port)
 }
 
+// UpdateGitStatus mocks base method.
+func (m *MockAPIInterface) UpdateGitStatus(ctx context.Context, workspaceID string, status *WorkspaceInstanceRepoStatus) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateGitStatus", ctx, workspaceID, status)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateGitStatus indicates an expected call of UpdateGitStatus.
+func (mr *MockAPIInterfaceMockRecorder) UpdateGitStatus(ctx, workspaceID, status interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGitStatus", reflect.TypeOf((*MockAPIInterface)(nil).UpdateGitStatus), ctx, workspaceID, status)
+}
+
 // ControlAdmission mocks base method.
 func (m *MockAPIInterface) ControlAdmission(ctx context.Context, id string, level *AdmissionLevel) error {
 	m.ctrl.T.Helper()

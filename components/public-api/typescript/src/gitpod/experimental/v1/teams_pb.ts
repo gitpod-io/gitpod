@@ -849,3 +849,4 @@ export class DeleteTeamMemberResponse extends Message<DeleteTeamMemberResponse> 
     return proto3.util.equals(DeleteTeamMemberResponse, a, b);
   }
 }
+

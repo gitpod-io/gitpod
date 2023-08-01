@@ -46,7 +46,12 @@ import {
 import { JsonRpcProxy, JsonRpcServer } from "./messaging/proxy-factory";
 import { Disposable, CancellationTokenSource } from "vscode-jsonrpc";
 import { HeadlessLogUrls } from "./headless-workspace-log";
-import { WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstancePhase } from "./workspace-instance";
+import {
+    WorkspaceInstance,
+    WorkspaceInstancePort,
+    WorkspaceInstancePhase,
+    WorkspaceInstanceRepoStatus,
+} from "./workspace-instance";
 import { AdminServer } from "./admin-protocol";
 import { GitpodHostUrl } from "./util/gitpod-host-url";
 import { WebSocketConnectionProvider } from "./messaging/browser/connection";
@@ -130,6 +135,8 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getOpenPorts(workspaceId: string): Promise<WorkspaceInstancePort[]>;
     openPort(workspaceId: string, port: WorkspaceInstancePort): Promise<WorkspaceInstancePort | undefined>;
     closePort(workspaceId: string, port: number): Promise<void>;
+
+    updateGitStatus(workspaceId: string, status: Required<WorkspaceInstanceRepoStatus> | undefined): Promise<void>;
 
     // Workspace env vars
     getWorkspaceEnvVars(workspaceId: string): Promise<EnvVarWithValue[]>;
