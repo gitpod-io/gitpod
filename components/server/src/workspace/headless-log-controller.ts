@@ -34,6 +34,7 @@ import { BearerAuth } from "../auth/bearer-authenticator";
 import { ProjectsService } from "../projects/projects-service";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 export const HEADLESS_LOGS_PATH_PREFIX = "/headless-logs";
 export const HEADLESS_LOG_DOWNLOAD_PATH_PREFIX = "/headless-log-download";
@@ -214,7 +215,9 @@ export class HeadlessLogController {
 
         let teamMembers: TeamMemberInfo[] = [];
         if (workspace?.projectId) {
-            const p = await this.projectService.getProject(user.id, workspace.projectId);
+            const p = await ApplicationError.notFoundToUndefined(
+                this.projectService.getProject(user.id, workspace.projectId),
+            );
             if (p?.teamId) {
                 teamMembers = await this.teamDb.findMembersByTeam(p.teamId);
             }

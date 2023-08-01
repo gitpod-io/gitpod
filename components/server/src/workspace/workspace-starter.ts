@@ -696,10 +696,7 @@ export class WorkspaceStarter {
         metadata.setMetaId(workspace.id);
         if (workspace.projectId) {
             metadata.setProject(workspace.projectId);
-            const project = await this.projectDB.findProjectById(workspace.projectId);
-            if (project && project.teamId) {
-                metadata.setTeam(project.teamId);
-            }
+            metadata.setTeam(workspace.organizationId);
         }
 
         return metadata;

@@ -25,6 +25,17 @@ export namespace ApplicationError {
     export function hasErrorCode(e: any): e is Error & { code: ErrorCode; data?: any } {
         return e && e.code !== undefined;
     }
+
+    export async function notFoundToUndefined<T>(p: Promise<T>): Promise<T | undefined> {
+        try {
+            return await p;
+        } catch (e) {
+            if (hasErrorCode(e) && e.code === ErrorCodes.NOT_FOUND) {
+                return undefined;
+            }
+            throw e;
+        }
+    }
 }
 
 export namespace ErrorCode {
