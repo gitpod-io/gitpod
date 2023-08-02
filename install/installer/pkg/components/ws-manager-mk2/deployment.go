@@ -59,7 +59,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Name: Component,
 			Args: []string{
 				"--config", "/config/config.json",
-				"--leader-elect",
 			},
 			Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.WSManagerMk2.Version),
 			ImagePullPolicy: corev1.PullIfNotPresent,
