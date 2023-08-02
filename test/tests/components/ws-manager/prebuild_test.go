@@ -264,6 +264,9 @@ func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 						}
 
 						t.Logf("prebuild snapshot: %s", prebuildSnapshot)
+
+						// check the prebuild logs have been uploaded
+						checkPrebuildLogUploaded(t, ctx, api, ws)
 					}()
 
 					// launch the workspace from prebuild
@@ -690,6 +693,25 @@ func checkGitFolderPermission(t *testing.T, rsa *integration.RpcClient, workspac
 	if err != nil || findGroupResp.ExitCode != 0 || strings.Trim(findGroupResp.Stdout, " \t\n") != "" {
 		t.Fatalf("incorrect GID under %s folder, err:%v, exitCode:%d, stdout:%s", gitDir, err, findGroupResp.ExitCode, findGroupResp.Stdout)
 	}
+}
+
+func checkPrebuildLogUploaded(t *testing.T, ctx context.Context, api *integration.ComponentAPI, ws *integration.LaunchWorkspaceDirectlyResult) {
+	cs, err := api.ContentService()
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := cs.ListLogs(ctx, &csapi.ListLogsRequest{
+		WorkspaceId: ws.LastStatus.Metadata.MetaId,
+		InstanceId:  ws.Req.Id,
+		OwnerId:     ws.LastStatus.Metadata.Owner,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(resp.TaskId) == 0 {
+		t.Fatal("no logs found")
+	}
+	t.Logf("found logs (task ids: %v)", resp.TaskId)
 }
 
 func findSnapshotFromStoppedWs(t *testing.T, ctx context.Context, lastStatus *wsmanapi.WorkspaceStatus) (string, *wsmanapi.VolumeSnapshotInfo, error) {
