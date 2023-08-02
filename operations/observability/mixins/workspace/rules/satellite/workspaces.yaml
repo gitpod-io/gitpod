@@ -32,7 +32,7 @@ spec:
       expr: |
         sum(gitpod_workspace_regular_not_active_percentage_mk2) by(cluster) > 0.08
         AND
-        sum(gitpod_ws_manager_mk2_workspace_activity_total) by(cluster) > 25
+        sum(gitpod_ws_manager_mk2_workspace_activity_total) by(cluster) > 50
 
     - alert: GitpodWorkspacesNotStartingMk2
       labels:
