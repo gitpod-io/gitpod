@@ -49,6 +49,14 @@ export class PrometheusClientCallMetrics implements IClientCallMetrics {
         });
     }
 
+    dispose(): void {
+        prometheusClient.register.removeSingleMetric("grpc_client_started_total");
+        prometheusClient.register.removeSingleMetric("grpc_client_msg_sent_total");
+        prometheusClient.register.removeSingleMetric("grpc_client_msg_received_total");
+        prometheusClient.register.removeSingleMetric("grpc_client_handled_total");
+        prometheusClient.register.removeSingleMetric("grpc_client_handling_seconds");
+    }
+
     started(labels: IGrpcCallMetricsLabels): void {
         this.startedCounter.inc({
             grpc_service: labels.service,
