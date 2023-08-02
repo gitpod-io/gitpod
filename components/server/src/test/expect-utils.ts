@@ -11,11 +11,12 @@ export async function expectError(errorCode: ErrorCode, code: Promise<any> | (()
     const msg = "expected error: " + errorCode + (message ? " - " + message : "");
     try {
         await (code instanceof Function ? code() : code);
-        expect.fail(msg);
+        expect.fail(msg + " - succeeded");
     } catch (err) {
         if (!ApplicationError.hasErrorCode(err)) {
             throw err;
         }
-        expect(err && ApplicationError.hasErrorCode(err) && err.code, msg).to.equal(errorCode);
+        const actual = err && ApplicationError.hasErrorCode(err) && err.code;
+        expect(actual, msg + " - got: " + actual).to.equal(errorCode);
     }
 }

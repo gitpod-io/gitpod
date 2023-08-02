@@ -104,13 +104,13 @@ describe("WorkspaceService", async () => {
 
         await expectError(
             ErrorCodes.NOT_FOUND,
-            () => svc.getWorkspace(owner.id, ws.id),
+            () => svc.getOwnerToken(owner.id, ws.id),
             "NOT_FOUND for non-running workspace",
         );
 
         await expectError(
             ErrorCodes.NOT_FOUND,
-            () => svc.getWorkspace(stranger.id, ws.id),
+            () => svc.getOwnerToken(stranger.id, ws.id),
             "NOT_FOUND if stranger asks for the owner token",
         );
     });
@@ -124,7 +124,7 @@ describe("WorkspaceService", async () => {
 
         await expectError(
             ErrorCodes.NOT_FOUND,
-            () => svc.getWorkspace(stranger.id, ws.id),
+            () => svc.getIDECredentials(stranger.id, ws.id),
             "NOT_FOUND if stranger asks for the IDE credentials",
         );
     });
