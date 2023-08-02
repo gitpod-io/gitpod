@@ -1374,7 +1374,7 @@ public final class Control {
 
     /**
      * <pre>
-     * Return privateKey for ws-proxy
+     * Return privateKey for ws-proxy or web socket tunnels
      * </pre>
      *
      * <code>string private_key = 1;</code>
@@ -1383,7 +1383,7 @@ public final class Control {
     java.lang.String getPrivateKey();
     /**
      * <pre>
-     * Return privateKey for ws-proxy
+     * Return privateKey for ws-proxy or web socket tunnels
      * </pre>
      *
      * <code>string private_key = 1;</code>
@@ -1391,6 +1391,33 @@ public final class Control {
      */
     com.google.protobuf.ByteString
         getPrivateKeyBytes();
+
+    /**
+     * <pre>
+     * Return hostKey used by client to verify fingerprint
+     * </pre>
+     *
+     * <code>.supervisor.SSHPublicKey host_key = 2;</code>
+     * @return Whether the hostKey field is set.
+     */
+    boolean hasHostKey();
+    /**
+     * <pre>
+     * Return hostKey used by client to verify fingerprint
+     * </pre>
+     *
+     * <code>.supervisor.SSHPublicKey host_key = 2;</code>
+     * @return The hostKey.
+     */
+    io.gitpod.supervisor.api.Control.SSHPublicKey getHostKey();
+    /**
+     * <pre>
+     * Return hostKey used by client to verify fingerprint
+     * </pre>
+     *
+     * <code>.supervisor.SSHPublicKey host_key = 2;</code>
+     */
+    io.gitpod.supervisor.api.Control.SSHPublicKeyOrBuilder getHostKeyOrBuilder();
   }
   /**
    * Protobuf type {@code supervisor.CreateSSHKeyPairResponse}
@@ -1444,6 +1471,19 @@ public final class Control {
               privateKey_ = s;
               break;
             }
+            case 18: {
+              io.gitpod.supervisor.api.Control.SSHPublicKey.Builder subBuilder = null;
+              if (hostKey_ != null) {
+                subBuilder = hostKey_.toBuilder();
+              }
+              hostKey_ = input.readMessage(io.gitpod.supervisor.api.Control.SSHPublicKey.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(hostKey_);
+                hostKey_ = subBuilder.buildPartial();
+              }
+
+              break;
+            }
             default: {
               if (!parseUnknownField(
                   input, unknownFields, extensionRegistry, tag)) {
@@ -1482,7 +1522,7 @@ public final class Control {
     private volatile java.lang.Object privateKey_;
     /**
      * <pre>
-     * Return privateKey for ws-proxy
+     * Return privateKey for ws-proxy or web socket tunnels
      * </pre>
      *
      * <code>string private_key = 1;</code>
@@ -1503,7 +1543,7 @@ public final class Control {
     }
     /**
      * <pre>
-     * Return privateKey for ws-proxy
+     * Return privateKey for ws-proxy or web socket tunnels
      * </pre>
      *
      * <code>string private_key = 1;</code>
@@ -1524,6 +1564,44 @@ public final class Control {
       }
     }
 
+    public static final int HOST_KEY_FIELD_NUMBER = 2;
+    private io.gitpod.supervisor.api.Control.SSHPublicKey hostKey_;
+    /**
+     * <pre>
+     * Return hostKey used by client to verify fingerprint
+     * </pre>
+     *
+     * <code>.supervisor.SSHPublicKey host_key = 2;</code>
+     * @return Whether the hostKey field is set.
+     */
+    @java.lang.Override
+    public boolean hasHostKey() {
+      return hostKey_ != null;
+    }
+    /**
+     * <pre>
+     * Return hostKey used by client to verify fingerprint
+     * </pre>
+     *
+     * <code>.supervisor.SSHPublicKey host_key = 2;</code>
+     * @return The hostKey.
+     */
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Control.SSHPublicKey getHostKey() {
+      return hostKey_ == null ? io.gitpod.supervisor.api.Control.SSHPublicKey.getDefaultInstance() : hostKey_;
+    }
+    /**
+     * <pre>
+     * Return hostKey used by client to verify fingerprint
+     * </pre>
+     *
+     * <code>.supervisor.SSHPublicKey host_key = 2;</code>
+     */
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Control.SSHPublicKeyOrBuilder getHostKeyOrBuilder() {
+      return getHostKey();
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -1541,6 +1619,9 @@ public final class Control {
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(privateKey_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, privateKey_);
       }
+      if (hostKey_ != null) {
+        output.writeMessage(2, getHostKey());
+      }
       unknownFields.writeTo(output);
     }
 
@@ -1552,6 +1633,10 @@ public final class Control {
       size = 0;
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(privateKey_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, privateKey_);
+      }
+      if (hostKey_ != null) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(2, getHostKey());
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -1570,6 +1655,11 @@ public final class Control {
 
       if (!getPrivateKey()
           .equals(other.getPrivateKey())) return false;
+      if (hasHostKey() != other.hasHostKey()) return false;
+      if (hasHostKey()) {
+        if (!getHostKey()
+            .equals(other.getHostKey())) return false;
+      }
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -1583,6 +1673,10 @@ public final class Control {
       hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + PRIVATE_KEY_FIELD_NUMBER;
       hash = (53 * hash) + getPrivateKey().hashCode();
+      if (hasHostKey()) {
+        hash = (37 * hash) + HOST_KEY_FIELD_NUMBER;
+        hash = (53 * hash) + getHostKey().hashCode();
+      }
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -1718,6 +1812,12 @@ public final class Control {
         super.clear();
         privateKey_ = "";
 
+        if (hostKeyBuilder_ == null) {
+          hostKey_ = null;
+        } else {
+          hostKey_ = null;
+          hostKeyBuilder_ = null;
+        }
         return this;
       }
 
@@ -1745,6 +1845,11 @@ public final class Control {
       public io.gitpod.supervisor.api.Control.CreateSSHKeyPairResponse buildPartial() {
         io.gitpod.supervisor.api.Control.CreateSSHKeyPairResponse result = new io.gitpod.supervisor.api.Control.CreateSSHKeyPairResponse(this);
         result.privateKey_ = privateKey_;
+        if (hostKeyBuilder_ == null) {
+          result.hostKey_ = hostKey_;
+        } else {
+          result.hostKey_ = hostKeyBuilder_.build();
+        }
         onBuilt();
         return result;
       }
@@ -1797,6 +1902,9 @@ public final class Control {
           privateKey_ = other.privateKey_;
           onChanged();
         }
+        if (other.hasHostKey()) {
+          mergeHostKey(other.getHostKey());
+        }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
@@ -1829,7 +1937,7 @@ public final class Control {
       private java.lang.Object privateKey_ = "";
       /**
        * <pre>
-       * Return privateKey for ws-proxy
+       * Return privateKey for ws-proxy or web socket tunnels
        * </pre>
        *
        * <code>string private_key = 1;</code>
@@ -1849,7 +1957,7 @@ public final class Control {
       }
       /**
        * <pre>
-       * Return privateKey for ws-proxy
+       * Return privateKey for ws-proxy or web socket tunnels
        * </pre>
        *
        * <code>string private_key = 1;</code>
@@ -1870,7 +1978,7 @@ public final class Control {
       }
       /**
        * <pre>
-       * Return privateKey for ws-proxy
+       * Return privateKey for ws-proxy or web socket tunnels
        * </pre>
        *
        * <code>string private_key = 1;</code>
@@ -1889,7 +1997,7 @@ public final class Control {
       }
       /**
        * <pre>
-       * Return privateKey for ws-proxy
+       * Return privateKey for ws-proxy or web socket tunnels
        * </pre>
        *
        * <code>string private_key = 1;</code>
@@ -1903,7 +2011,7 @@ public final class Control {
       }
       /**
        * <pre>
-       * Return privateKey for ws-proxy
+       * Return privateKey for ws-proxy or web socket tunnels
        * </pre>
        *
        * <code>string private_key = 1;</code>
@@ -1920,6 +2028,161 @@ public final class Control {
         privateKey_ = value;
         onChanged();
         return this;
+      }
+
+      private io.gitpod.supervisor.api.Control.SSHPublicKey hostKey_;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.gitpod.supervisor.api.Control.SSHPublicKey, io.gitpod.supervisor.api.Control.SSHPublicKey.Builder, io.gitpod.supervisor.api.Control.SSHPublicKeyOrBuilder> hostKeyBuilder_;
+      /**
+       * <pre>
+       * Return hostKey used by client to verify fingerprint
+       * </pre>
+       *
+       * <code>.supervisor.SSHPublicKey host_key = 2;</code>
+       * @return Whether the hostKey field is set.
+       */
+      public boolean hasHostKey() {
+        return hostKeyBuilder_ != null || hostKey_ != null;
+      }
+      /**
+       * <pre>
+       * Return hostKey used by client to verify fingerprint
+       * </pre>
+       *
+       * <code>.supervisor.SSHPublicKey host_key = 2;</code>
+       * @return The hostKey.
+       */
+      public io.gitpod.supervisor.api.Control.SSHPublicKey getHostKey() {
+        if (hostKeyBuilder_ == null) {
+          return hostKey_ == null ? io.gitpod.supervisor.api.Control.SSHPublicKey.getDefaultInstance() : hostKey_;
+        } else {
+          return hostKeyBuilder_.getMessage();
+        }
+      }
+      /**
+       * <pre>
+       * Return hostKey used by client to verify fingerprint
+       * </pre>
+       *
+       * <code>.supervisor.SSHPublicKey host_key = 2;</code>
+       */
+      public Builder setHostKey(io.gitpod.supervisor.api.Control.SSHPublicKey value) {
+        if (hostKeyBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          hostKey_ = value;
+          onChanged();
+        } else {
+          hostKeyBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * Return hostKey used by client to verify fingerprint
+       * </pre>
+       *
+       * <code>.supervisor.SSHPublicKey host_key = 2;</code>
+       */
+      public Builder setHostKey(
+          io.gitpod.supervisor.api.Control.SSHPublicKey.Builder builderForValue) {
+        if (hostKeyBuilder_ == null) {
+          hostKey_ = builderForValue.build();
+          onChanged();
+        } else {
+          hostKeyBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * Return hostKey used by client to verify fingerprint
+       * </pre>
+       *
+       * <code>.supervisor.SSHPublicKey host_key = 2;</code>
+       */
+      public Builder mergeHostKey(io.gitpod.supervisor.api.Control.SSHPublicKey value) {
+        if (hostKeyBuilder_ == null) {
+          if (hostKey_ != null) {
+            hostKey_ =
+              io.gitpod.supervisor.api.Control.SSHPublicKey.newBuilder(hostKey_).mergeFrom(value).buildPartial();
+          } else {
+            hostKey_ = value;
+          }
+          onChanged();
+        } else {
+          hostKeyBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * Return hostKey used by client to verify fingerprint
+       * </pre>
+       *
+       * <code>.supervisor.SSHPublicKey host_key = 2;</code>
+       */
+      public Builder clearHostKey() {
+        if (hostKeyBuilder_ == null) {
+          hostKey_ = null;
+          onChanged();
+        } else {
+          hostKey_ = null;
+          hostKeyBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <pre>
+       * Return hostKey used by client to verify fingerprint
+       * </pre>
+       *
+       * <code>.supervisor.SSHPublicKey host_key = 2;</code>
+       */
+      public io.gitpod.supervisor.api.Control.SSHPublicKey.Builder getHostKeyBuilder() {
+
+        onChanged();
+        return getHostKeyFieldBuilder().getBuilder();
+      }
+      /**
+       * <pre>
+       * Return hostKey used by client to verify fingerprint
+       * </pre>
+       *
+       * <code>.supervisor.SSHPublicKey host_key = 2;</code>
+       */
+      public io.gitpod.supervisor.api.Control.SSHPublicKeyOrBuilder getHostKeyOrBuilder() {
+        if (hostKeyBuilder_ != null) {
+          return hostKeyBuilder_.getMessageOrBuilder();
+        } else {
+          return hostKey_ == null ?
+              io.gitpod.supervisor.api.Control.SSHPublicKey.getDefaultInstance() : hostKey_;
+        }
+      }
+      /**
+       * <pre>
+       * Return hostKey used by client to verify fingerprint
+       * </pre>
+       *
+       * <code>.supervisor.SSHPublicKey host_key = 2;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.gitpod.supervisor.api.Control.SSHPublicKey, io.gitpod.supervisor.api.Control.SSHPublicKey.Builder, io.gitpod.supervisor.api.Control.SSHPublicKeyOrBuilder>
+          getHostKeyFieldBuilder() {
+        if (hostKeyBuilder_ == null) {
+          hostKeyBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              io.gitpod.supervisor.api.Control.SSHPublicKey, io.gitpod.supervisor.api.Control.SSHPublicKey.Builder, io.gitpod.supervisor.api.Control.SSHPublicKeyOrBuilder>(
+                  getHostKey(),
+                  getParentForChildren(),
+                  isClean());
+          hostKey_ = null;
+        }
+        return hostKeyBuilder_;
       }
       @java.lang.Override
       public final Builder setUnknownFields(
@@ -1969,6 +2232,726 @@ public final class Control {
 
     @java.lang.Override
     public io.gitpod.supervisor.api.Control.CreateSSHKeyPairResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface SSHPublicKeyOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:supervisor.SSHPublicKey)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string type = 1;</code>
+     * @return The type.
+     */
+    java.lang.String getType();
+    /**
+     * <code>string type = 1;</code>
+     * @return The bytes for type.
+     */
+    com.google.protobuf.ByteString
+        getTypeBytes();
+
+    /**
+     * <code>string value = 2;</code>
+     * @return The value.
+     */
+    java.lang.String getValue();
+    /**
+     * <code>string value = 2;</code>
+     * @return The bytes for value.
+     */
+    com.google.protobuf.ByteString
+        getValueBytes();
+  }
+  /**
+   * Protobuf type {@code supervisor.SSHPublicKey}
+   */
+  public static final class SSHPublicKey extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:supervisor.SSHPublicKey)
+      SSHPublicKeyOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use SSHPublicKey.newBuilder() to construct.
+    private SSHPublicKey(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private SSHPublicKey() {
+      type_ = "";
+      value_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new SSHPublicKey();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private SSHPublicKey(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              type_ = s;
+              break;
+            }
+            case 18: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              value_ = s;
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (com.google.protobuf.UninitializedMessageException e) {
+        throw e.asInvalidProtocolBufferException().setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.supervisor.api.Control.internal_static_supervisor_SSHPublicKey_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.supervisor.api.Control.internal_static_supervisor_SSHPublicKey_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.supervisor.api.Control.SSHPublicKey.class, io.gitpod.supervisor.api.Control.SSHPublicKey.Builder.class);
+    }
+
+    public static final int TYPE_FIELD_NUMBER = 1;
+    private volatile java.lang.Object type_;
+    /**
+     * <code>string type = 1;</code>
+     * @return The type.
+     */
+    @java.lang.Override
+    public java.lang.String getType() {
+      java.lang.Object ref = type_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        type_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string type = 1;</code>
+     * @return The bytes for type.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTypeBytes() {
+      java.lang.Object ref = type_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        type_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int VALUE_FIELD_NUMBER = 2;
+    private volatile java.lang.Object value_;
+    /**
+     * <code>string value = 2;</code>
+     * @return The value.
+     */
+    @java.lang.Override
+    public java.lang.String getValue() {
+      java.lang.Object ref = value_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        value_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string value = 2;</code>
+     * @return The bytes for value.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getValueBytes() {
+      java.lang.Object ref = value_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        value_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(type_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, type_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(value_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, value_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(type_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, type_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(value_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, value_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.supervisor.api.Control.SSHPublicKey)) {
+        return super.equals(obj);
+      }
+      io.gitpod.supervisor.api.Control.SSHPublicKey other = (io.gitpod.supervisor.api.Control.SSHPublicKey) obj;
+
+      if (!getType()
+          .equals(other.getType())) return false;
+      if (!getValue()
+          .equals(other.getValue())) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + TYPE_FIELD_NUMBER;
+      hash = (53 * hash) + getType().hashCode();
+      hash = (37 * hash) + VALUE_FIELD_NUMBER;
+      hash = (53 * hash) + getValue().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.supervisor.api.Control.SSHPublicKey parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Control.SSHPublicKey parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Control.SSHPublicKey parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Control.SSHPublicKey parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Control.SSHPublicKey parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.supervisor.api.Control.SSHPublicKey parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Control.SSHPublicKey parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Control.SSHPublicKey parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Control.SSHPublicKey parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Control.SSHPublicKey parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.supervisor.api.Control.SSHPublicKey parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.supervisor.api.Control.SSHPublicKey parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.supervisor.api.Control.SSHPublicKey prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code supervisor.SSHPublicKey}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:supervisor.SSHPublicKey)
+        io.gitpod.supervisor.api.Control.SSHPublicKeyOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.supervisor.api.Control.internal_static_supervisor_SSHPublicKey_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.supervisor.api.Control.internal_static_supervisor_SSHPublicKey_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.supervisor.api.Control.SSHPublicKey.class, io.gitpod.supervisor.api.Control.SSHPublicKey.Builder.class);
+      }
+
+      // Construct using io.gitpod.supervisor.api.Control.SSHPublicKey.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        type_ = "";
+
+        value_ = "";
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.supervisor.api.Control.internal_static_supervisor_SSHPublicKey_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Control.SSHPublicKey getDefaultInstanceForType() {
+        return io.gitpod.supervisor.api.Control.SSHPublicKey.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Control.SSHPublicKey build() {
+        io.gitpod.supervisor.api.Control.SSHPublicKey result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Control.SSHPublicKey buildPartial() {
+        io.gitpod.supervisor.api.Control.SSHPublicKey result = new io.gitpod.supervisor.api.Control.SSHPublicKey(this);
+        result.type_ = type_;
+        result.value_ = value_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.supervisor.api.Control.SSHPublicKey) {
+          return mergeFrom((io.gitpod.supervisor.api.Control.SSHPublicKey)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.supervisor.api.Control.SSHPublicKey other) {
+        if (other == io.gitpod.supervisor.api.Control.SSHPublicKey.getDefaultInstance()) return this;
+        if (!other.getType().isEmpty()) {
+          type_ = other.type_;
+          onChanged();
+        }
+        if (!other.getValue().isEmpty()) {
+          value_ = other.value_;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        io.gitpod.supervisor.api.Control.SSHPublicKey parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.gitpod.supervisor.api.Control.SSHPublicKey) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private java.lang.Object type_ = "";
+      /**
+       * <code>string type = 1;</code>
+       * @return The type.
+       */
+      public java.lang.String getType() {
+        java.lang.Object ref = type_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          type_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string type = 1;</code>
+       * @return The bytes for type.
+       */
+      public com.google.protobuf.ByteString
+          getTypeBytes() {
+        java.lang.Object ref = type_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          type_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string type = 1;</code>
+       * @param value The type to set.
+       * @return This builder for chaining.
+       */
+      public Builder setType(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+
+        type_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string type = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearType() {
+
+        type_ = getDefaultInstance().getType();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string type = 1;</code>
+       * @param value The bytes for type to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTypeBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+
+        type_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object value_ = "";
+      /**
+       * <code>string value = 2;</code>
+       * @return The value.
+       */
+      public java.lang.String getValue() {
+        java.lang.Object ref = value_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          value_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string value = 2;</code>
+       * @return The bytes for value.
+       */
+      public com.google.protobuf.ByteString
+          getValueBytes() {
+        java.lang.Object ref = value_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          value_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string value = 2;</code>
+       * @param value The value to set.
+       * @return This builder for chaining.
+       */
+      public Builder setValue(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+
+        value_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string value = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearValue() {
+
+        value_ = getDefaultInstance().getValue();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string value = 2;</code>
+       * @param value The bytes for value to set.
+       * @return This builder for chaining.
+       */
+      public Builder setValueBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+
+        value_ = value;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:supervisor.SSHPublicKey)
+    }
+
+    // @@protoc_insertion_point(class_scope:supervisor.SSHPublicKey)
+    private static final io.gitpod.supervisor.api.Control.SSHPublicKey DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.supervisor.api.Control.SSHPublicKey();
+    }
+
+    public static io.gitpod.supervisor.api.Control.SSHPublicKey getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<SSHPublicKey>
+        PARSER = new com.google.protobuf.AbstractParser<SSHPublicKey>() {
+      @java.lang.Override
+      public SSHPublicKey parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new SSHPublicKey(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<SSHPublicKey> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<SSHPublicKey> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.supervisor.api.Control.SSHPublicKey getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -4271,6 +5254,11 @@ public final class Control {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_supervisor_CreateSSHKeyPairResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_supervisor_SSHPublicKey_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_supervisor_SSHPublicKey_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_supervisor_CreateDebugEnvRequest_descriptor;
   private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -4293,25 +5281,27 @@ public final class Control {
       "annotations.proto\032\014status.proto\032\ninfo.pr" +
       "oto\"\'\n\021ExposePortRequest\022\014\n\004port\030\001 \001(\rJ\004" +
       "\010\002\020\003\"\024\n\022ExposePortResponse\"\031\n\027CreateSSHK" +
-      "eyPairRequest\"/\n\030CreateSSHKeyPairRespons" +
-      "e\022\023\n\013private_key\030\001 \001(\t\"\361\001\n\025CreateDebugEn" +
-      "vRequest\0226\n\016workspace_type\030\001 \001(\0162\036.super" +
-      "visor.DebugWorkspaceType\0221\n\016content_sour" +
-      "ce\030\002 \001(\0162\031.supervisor.ContentSource\022\025\n\rw" +
-      "orkspace_url\030\003 \001(\t\022\r\n\005tasks\030\004 \001(\t\022\031\n\021che" +
-      "ckout_location\030\005 \001(\t\022\032\n\022workspace_locati" +
-      "on\030\006 \001(\t\022\020\n\010logLevel\030\007 \001(\t\"&\n\026CreateDebu" +
-      "gEnvResponse\022\014\n\004envs\030\001 \003(\t2\266\002\n\016ControlSe" +
-      "rvice\022M\n\nExposePort\022\035.supervisor.ExposeP" +
-      "ortRequest\032\036.supervisor.ExposePortRespon" +
-      "se\"\000\022z\n\020CreateSSHKeyPair\022#.supervisor.Cr" +
-      "eateSSHKeyPairRequest\032$.supervisor.Creat" +
-      "eSSHKeyPairResponse\"\033\202\323\344\223\002\025\022\023/v1/ssh_key" +
-      "s/create\022Y\n\016CreateDebugEnv\022!.supervisor." +
-      "CreateDebugEnvRequest\032\".supervisor.Creat" +
-      "eDebugEnvResponse\"\000BF\n\030io.gitpod.supervi" +
-      "sor.apiZ*github.com/gitpod-io/gitpod/sup" +
-      "ervisor/apib\006proto3"
+      "eyPairRequest\"[\n\030CreateSSHKeyPairRespons" +
+      "e\022\023\n\013private_key\030\001 \001(\t\022*\n\010host_key\030\002 \001(\013" +
+      "2\030.supervisor.SSHPublicKey\"+\n\014SSHPublicK" +
+      "ey\022\014\n\004type\030\001 \001(\t\022\r\n\005value\030\002 \001(\t\"\361\001\n\025Crea" +
+      "teDebugEnvRequest\0226\n\016workspace_type\030\001 \001(" +
+      "\0162\036.supervisor.DebugWorkspaceType\0221\n\016con" +
+      "tent_source\030\002 \001(\0162\031.supervisor.ContentSo" +
+      "urce\022\025\n\rworkspace_url\030\003 \001(\t\022\r\n\005tasks\030\004 \001" +
+      "(\t\022\031\n\021checkout_location\030\005 \001(\t\022\032\n\022workspa" +
+      "ce_location\030\006 \001(\t\022\020\n\010logLevel\030\007 \001(\t\"&\n\026C" +
+      "reateDebugEnvResponse\022\014\n\004envs\030\001 \003(\t2\266\002\n\016" +
+      "ControlService\022M\n\nExposePort\022\035.superviso" +
+      "r.ExposePortRequest\032\036.supervisor.ExposeP" +
+      "ortResponse\"\000\022z\n\020CreateSSHKeyPair\022#.supe" +
+      "rvisor.CreateSSHKeyPairRequest\032$.supervi" +
+      "sor.CreateSSHKeyPairResponse\"\033\202\323\344\223\002\025\022\023/v" +
+      "1/ssh_keys/create\022Y\n\016CreateDebugEnv\022!.su" +
+      "pervisor.CreateDebugEnvRequest\032\".supervi" +
+      "sor.CreateDebugEnvResponse\"\000BF\n\030io.gitpo" +
+      "d.supervisor.apiZ*github.com/gitpod-io/g" +
+      "itpod/supervisor/apib\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -4343,15 +5333,21 @@ public final class Control {
     internal_static_supervisor_CreateSSHKeyPairResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_CreateSSHKeyPairResponse_descriptor,
-        new java.lang.String[] { "PrivateKey", });
-    internal_static_supervisor_CreateDebugEnvRequest_descriptor =
+        new java.lang.String[] { "PrivateKey", "HostKey", });
+    internal_static_supervisor_SSHPublicKey_descriptor =
       getDescriptor().getMessageTypes().get(4);
+    internal_static_supervisor_SSHPublicKey_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_supervisor_SSHPublicKey_descriptor,
+        new java.lang.String[] { "Type", "Value", });
+    internal_static_supervisor_CreateDebugEnvRequest_descriptor =
+      getDescriptor().getMessageTypes().get(5);
     internal_static_supervisor_CreateDebugEnvRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_CreateDebugEnvRequest_descriptor,
         new java.lang.String[] { "WorkspaceType", "ContentSource", "WorkspaceUrl", "Tasks", "CheckoutLocation", "WorkspaceLocation", "LogLevel", });
     internal_static_supervisor_CreateDebugEnvResponse_descriptor =
-      getDescriptor().getMessageTypes().get(5);
+      getDescriptor().getMessageTypes().get(6);
     internal_static_supervisor_CreateDebugEnvResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_CreateDebugEnvResponse_descriptor,

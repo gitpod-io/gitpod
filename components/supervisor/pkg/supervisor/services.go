@@ -721,6 +721,7 @@ type ControlService struct {
 
 	privateKey string
 	publicKey  string
+	hostKey    *api.SSHPublicKey
 
 	api.UnimplementedControlServiceServer
 }
@@ -759,6 +760,7 @@ func (ss *ControlService) CreateSSHKeyPair(ctx context.Context, req *api.CreateS
 		if err == nil {
 			return &api.CreateSSHKeyPairResponse{
 				PrivateKey: ss.privateKey,
+				HostKey:    ss.hostKey,
 			}, nil
 		}
 		log.WithError(err).Error("check authorized_keys failed, will recreate")
@@ -805,8 +807,23 @@ func (ss *ControlService) CreateSSHKeyPair(ctx context.Context, req *api.CreateS
 	}
 	ss.privateKey = string(generated.PrivateKey)
 	ss.publicKey = string(generated.PublicKey)
+
+	hostKey, err := os.ReadFile("/.supervisor/ssh/sshkey.pub")
+	if err != nil {
+		log.WithError(err).Error("faled to read host key")
+	} else {
+		hostKeyParts := strings.Split(string(hostKey), " ")
+		if len(hostKeyParts) >= 2 {
+			ss.hostKey = &api.SSHPublicKey{
+				Type:  hostKeyParts[0],
+				Value: hostKeyParts[1],
+			}
+		}
+	}
+
 	return &api.CreateSSHKeyPairResponse{
 		PrivateKey: ss.privateKey,
+		HostKey:    ss.hostKey,
 	}, err
 }
 

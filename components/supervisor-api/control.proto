@@ -40,8 +40,15 @@ message ExposePortResponse {}
 
 message CreateSSHKeyPairRequest {}
 message CreateSSHKeyPairResponse {
-    // Return privateKey for ws-proxy
+    // Return privateKey for ws-proxy or web socket tunnels
     string private_key = 1;
+    // Return hostKey used by client to verify fingerprint
+    SSHPublicKey host_key = 2;
+}
+
+message SSHPublicKey {
+  string type = 1;
+  string value = 2;
 }
 
 message CreateDebugEnvRequest {
