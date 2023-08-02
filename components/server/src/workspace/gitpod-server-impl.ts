@@ -875,7 +875,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { workspaceId });
         traceWI(ctx, { workspaceId });
 
-        await this.checkAndBlockUser("getOwnerToken");
+        const user = await this.checkAndBlockUser("getOwnerToken");
 
         const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
         if (!workspace) {
@@ -886,11 +886,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const latestInstance = await this.workspaceDb.trace(ctx).findCurrentInstance(workspaceId);
         await this.guardAccess({ kind: "workspaceInstance", subject: latestInstance, workspace }, "get");
 
-        const ownerToken = latestInstance?.status.ownerToken;
-        if (!ownerToken) {
-            throw new Error("owner token not found");
-        }
-        return ownerToken;
+        return await this.workspaceService.getOwnerToken(user.id, workspaceId);
     }
 
     public async getIDECredentials(ctx: TraceContext, workspaceId: string): Promise<string> {
@@ -3261,7 +3257,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     async adminForceStopWorkspace(ctx: TraceContext, workspaceId: string): Promise<void> {
         traceAPIParams(ctx, { workspaceId });
-        
+
         const admin = await this.guardAdminAccess(
             "adminForceStopWorkspace",
             { id: workspaceId },

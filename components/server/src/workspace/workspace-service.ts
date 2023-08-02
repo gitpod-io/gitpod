@@ -61,11 +61,21 @@ export class WorkspaceService {
     async getWorkspace(userId: string, workspaceId: string): Promise<Workspace> {
         await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
 
-        const workspace = await this.db.findById(workspaceId);
-        if (!workspace || !!workspace.softDeleted || workspace.deleted) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Workspace not found.");
+        return this.doGetWorkspace(workspaceId);
+    }
+
+    async getOwnerToken(userId: string, workspaceId: string): Promise<string> {
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+
+        // Check: is deleted?
+        await this.doGetWorkspace(workspaceId);
+
+        const latestInstance = await this.db.findCurrentInstance(workspaceId);
+        const ownerToken = latestInstance?.status.ownerToken;
+        if (!ownerToken) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "owner token not found");
         }
-        return workspace;
+        return ownerToken;
     }
 
     async stopWorkspace(
@@ -76,7 +86,7 @@ export class WorkspaceService {
     ): Promise<void> {
         await this.auth.checkPermissionOnWorkspace(userId, "stop", workspaceId);
 
-        const workspace = await this.getWorkspace(userId, workspaceId);
+        const workspace = await this.doGetWorkspace(workspaceId);
         const instance = await this.db.findRunningInstance(workspace.id);
         if (!instance) {
             // there's no instance running - we're done
@@ -138,5 +148,13 @@ export class WorkspaceService {
             throw err;
         }
         log.info(`Purged Workspace ${workspaceId} and all WorkspaceInstances for this workspace`, { workspaceId });
+    }
+
+    private async doGetWorkspace(workspaceId: string): Promise<Workspace> {
+        const workspace = await this.db.findById(workspaceId);
+        if (!workspace || !!workspace.softDeleted || workspace.deleted) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Workspace not found.");
+        }
+        return workspace;
     }
 }

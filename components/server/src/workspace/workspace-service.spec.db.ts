@@ -98,6 +98,23 @@ describe("WorkspaceService", async () => {
         await expectError(ErrorCodes.NOT_FOUND, () => svc.getWorkspace(stranger.id, ws.id));
     });
 
+    it("should getOwnerToken", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        await expectError(
+            ErrorCodes.NOT_FOUND,
+            () => svc.getWorkspace(owner.id, ws.id),
+            "NOT_FOUND for non-running workspace",
+        );
+
+        await expectError(
+            ErrorCodes.NOT_FOUND,
+            () => svc.getWorkspace(stranger.id, ws.id),
+            "NOT_FOUND if stranger asks for the owner token",
+        );
+    });
+
     it("should stopWorkspace", async () => {
         const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
@@ -144,7 +161,7 @@ describe("WorkspaceService", async () => {
         );
     });
 
-    it("should dhardDeleteWorkspace", async () => {
+    it("should hardDeleteWorkspace", async () => {
         const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
