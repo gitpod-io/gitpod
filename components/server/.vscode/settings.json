@@ -1,0 +1,16 @@
+{
+    "mochaExplorer.files": [
+        "dist/**/*.spec.js",
+        "dist/**/*.spec.db.js"
+    ],
+    "mochaExplorer.require": [
+        "source-map-support/register",
+        "reflect-metadata/Reflect"
+    ],
+    "mochaExplorer.watch": [
+        "dist/**/*.spec.js",
+        "dist/**/*.spec.db.js"
+    ],
+    "mochaExplorer.exit": true,
+    "mochaExplorer.timeout": 60000
+}

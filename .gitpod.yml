@@ -82,3 +82,4 @@ vscode:
         - dbaeumer.vscode-eslint
         - esbenp.prettier-vscode
         - akosyakov.gitpod-monitor
+        - hbenl.vscode-mocha-test-adapter
