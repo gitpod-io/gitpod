@@ -13,6 +13,8 @@ import { log, LogContext } from "./logging";
 
 export interface TraceContext {
     span?: opentracing.Span;
+    // TODO(gpl) We are missing this method, but won't add right now because of different focus, and it's unclear how we want to use tracing going forward
+    isDebugIDContainerOnly?: () => boolean;
 }
 export type TraceContextWithSpan = TraceContext & {
     span: opentracing.Span;

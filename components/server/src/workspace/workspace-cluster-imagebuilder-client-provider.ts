@@ -5,11 +5,10 @@
  */
 
 import { User, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
-import { defaultGRPCOptions, IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
+import { defaultGRPCOptions } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { WorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import {
     ImageBuilderClient,
-    ImageBuilderClientCallMetrics,
     ImageBuilderClientProvider,
     PromisifiedImageBuilderClient,
 } from "@gitpod/image-builder/lib";
@@ -18,14 +17,13 @@ import {
     WorkspaceManagerClientProviderCompositeSource,
     WorkspaceManagerClientProviderSource,
 } from "@gitpod/ws-manager/lib/client-provider-source";
-import { inject, injectable, optional } from "inversify";
+import { inject, injectable } from "inversify";
 
 @injectable()
 export class WorkspaceClusterImagebuilderClientProvider implements ImageBuilderClientProvider {
     @inject(WorkspaceManagerClientProviderCompositeSource)
     protected readonly source: WorkspaceManagerClientProviderSource;
     @inject(WorkspaceManagerClientProvider) protected readonly clientProvider: WorkspaceManagerClientProvider;
-    @inject(ImageBuilderClientCallMetrics) @optional() protected readonly clientCallMetrics: IClientCallMetrics;
 
     // gRPC connections can be used concurrently, even across services.
     // Thus it makes sense to cache them rather than create a new connection for each request.

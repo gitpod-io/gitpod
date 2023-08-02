@@ -177,8 +177,11 @@ export const productionContainerModule = new ContainerModule(
             })
             .inSingletonScope();
 
-        bind(PrometheusClientCallMetrics).toSelf().inSingletonScope();
-        bind(IClientCallMetrics).to(PrometheusClientCallMetrics).inSingletonScope();
+        bind(PrometheusClientCallMetrics)
+            .toSelf()
+            .inSingletonScope()
+            .onDeactivation((metrics) => metrics.dispose());
+        bind(IClientCallMetrics).toService(PrometheusClientCallMetrics);
 
         bind(WorkspaceClusterImagebuilderClientProvider).toSelf().inSingletonScope();
         bind(ImageBuilderClientProvider).toService(WorkspaceClusterImagebuilderClientProvider);
