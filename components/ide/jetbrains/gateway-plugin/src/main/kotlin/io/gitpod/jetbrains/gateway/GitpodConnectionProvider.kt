@@ -13,7 +13,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.Messages
+import com.intellij.remote.AuthType
 import com.intellij.remote.RemoteCredentialsHolder
+import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.ssh.AskAboutHostKey
 import com.intellij.ssh.OpenSshLikeHostKeyVerifier
 import com.intellij.ssh.connectionBuilder
@@ -24,6 +26,10 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.application
 import com.intellij.util.io.DigestUtil
+import com.intellij.util.io.await
+import com.intellij.util.io.delete
+import com.intellij.util.net.ssl.CertificateManager
+import com.intellij.util.proxy.CommonProxy
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -39,7 +45,6 @@ import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import io.gitpod.gitpodprotocol.api.entities.WorkspaceInstance
 import io.gitpod.jetbrains.icons.GitpodIcons
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.await
 import java.net.URL
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -48,12 +53,16 @@ import java.time.Duration
 import java.util.*
 import javax.swing.JLabel
 import kotlin.coroutines.coroutineContext
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.writeText
+
 
 @Suppress("UnstableApiUsage", "OPT_IN_USAGE")
 class GitpodConnectionProvider : GatewayConnectionProvider {
     private val activeConnections = ConcurrentHashMap<String, LifetimeDefinition>()
     private val gitpod = service<GitpodConnectionService>()
     private val connectionHandleFactory = service<GitpodConnectionHandleFactory>()
+    private val settings = service<GitpodSettingsState>()
 
     private val httpClient = HttpClient.newBuilder()
         .followRedirects(HttpClient.Redirect.ALWAYS)
@@ -79,7 +88,8 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
             parameters["debugWorkspace"] == "true"
         )
 
-        var connectionKeyId = "${connectParams.gitpodHost}-${connectParams.resolvedWorkspaceId}-${connectParams.backendPort}"
+        var connectionKeyId =
+            "${connectParams.gitpodHost}-${connectParams.resolvedWorkspaceId}-${connectParams.backendPort}"
 
         var found = true
         val connectionLifetime = activeConnections.computeIfAbsent(connectionKeyId) {
@@ -185,7 +195,8 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                         if (WorkspaceInstance.isUpToDate(lastUpdate, update)) {
                             continue
                         }
-                        resolvedIdeUrl = update.ideUrl.replace(connectParams.actualWorkspaceId, connectParams.resolvedWorkspaceId)
+                        resolvedIdeUrl =
+                            update.ideUrl.replace(connectParams.actualWorkspaceId, connectParams.resolvedWorkspaceId)
                         lastUpdate = update
                         if (!update.status.conditions.failed.isNullOrBlank()) {
                             setErrorMessage(update.status.conditions.failed)
@@ -195,34 +206,42 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                 phaseMessage.text = "Preparing"
                                 statusMessage.text = "Preparing workspace..."
                             }
+
                             "building" -> {
                                 phaseMessage.text = "Building"
                                 statusMessage.text = "Building workspace image..."
                             }
+
                             "pending" -> {
                                 phaseMessage.text = "Preparing"
                                 statusMessage.text = "Allocating resources …"
                             }
+
                             "creating" -> {
                                 phaseMessage.text = "Creating"
                                 statusMessage.text = "Pulling workspace image …"
                             }
+
                             "initializing" -> {
                                 phaseMessage.text = "Starting"
                                 statusMessage.text = "Initializing workspace content …"
                             }
+
                             "running" -> {
                                 phaseMessage.text = "Running"
                                 statusMessage.text = "Connecting..."
                             }
+
                             "interrupted" -> {
                                 phaseMessage.text = "Starting"
                                 statusMessage.text = "Checking workspace …"
                             }
+
                             "stopping" -> {
                                 phaseMessage.text = "Stopping"
                                 statusMessage.text = ""
                             }
+
                             "stopped" -> {
                                 if (update.status.conditions.timeout.isNullOrBlank()) {
                                     phaseMessage.text = "Stopped"
@@ -231,6 +250,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                 }
                                 statusMessage.text = ""
                             }
+
                             else -> {
                                 phaseMessage.text = ""
                                 statusMessage.text = ""
@@ -245,17 +265,28 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                         if (thinClientJob == null && update.status.phase == "running") {
                             thinClientJob = launch {
                                 try {
-                                    val hostKeys = resolveHostKeys(URL(update.ideUrl), connectParams)
-                                    if (hostKeys.isNullOrEmpty()) {
-                                        setErrorMessage("${connectParams.gitpodHost} installation does not allow SSH access, public keys cannot be found")
+                                    val ideUrl = URL(resolvedIdeUrl)
+                                    val ownerToken = client.server.getOwnerToken(update.workspaceId).await()
+
+                                    var credentials = resolveCredentialsWithDirectSSH(
+                                        ideUrl,
+                                        ownerToken,
+                                        connectParams,
+                                    )
+                                    if (credentials == null) {
+                                        credentials = resolveCredentialsWithWebSocketTunnel(
+                                            ideUrl,
+                                            ownerToken,
+                                            connectParams,
+                                            connectionLifetime
+                                        )
+                                    }
+                                    if (credentials == null) {
+                                        setErrorMessage("${connectParams.gitpodHost} installation does not allow SSH access")
                                         return@launch
                                     }
-                                    val ownerToken = client.server.getOwnerToken(update.workspaceId).await()
-                                    val sshHostUrl =
-                                        URL(resolvedIdeUrl.replace(connectParams.resolvedWorkspaceId, "${connectParams.resolvedWorkspaceId}.ssh"))
-                                    val credentials =
-                                        resolveCredentials(sshHostUrl, connectParams.resolvedWorkspaceId, ownerToken, hostKeys)
-                                    val joinLink = resolveJoinLink(URL(resolvedIdeUrl), ownerToken, connectParams)
+
+                                    val joinLink = resolveJoinLink(ideUrl, ownerToken, connectParams)
                                     if (joinLink.isNullOrEmpty()) {
                                         setErrorMessage("failed to fetch JetBrains Gateway Join Link.")
                                         return@launch
@@ -310,6 +341,95 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         return connectionHandleFactory.createGitpodConnectionHandle(connectionLifetime, connectionPanel, connectParams)
     }
 
+    private suspend fun resolveCredentialsWithWebSocketTunnel(
+        ideUrl: URL,
+        ownerToken: String,
+        connectParams: ConnectParams,
+        connectionLifetime: Lifetime,
+    ): RemoteCredentialsHolder? {
+        val keyPair = createSSHKeyPair(ideUrl, connectParams, ownerToken)
+        if (keyPair == null || keyPair.privateKey.isNullOrEmpty()) {
+            return null
+        }
+
+        try {
+            val privateKeyFile = kotlin.io.path.createTempFile()
+            privateKeyFile.writeText(keyPair.privateKey)
+            connectionLifetime.onTerminationOrNow {
+                privateKeyFile.delete()
+            }
+
+            val proxies = CommonProxy.getInstance().select(ideUrl)
+            val sslContext = CertificateManager.getInstance().sslContext
+            val sshWebSocketServer = GitpodWebSocketTunnelServer(
+                "wss://${ideUrl.host}/_supervisor/tunnel/ssh",
+                ownerToken,
+                proxies,
+                sslContext
+            )
+            sshWebSocketServer.start(connectionLifetime)
+
+            var hostKeys = emptyList<SSHHostKey>()
+            if (keyPair.hostKey != null) {
+                hostKeys = listOf(SSHHostKey(keyPair.hostKey.type, keyPair.hostKey.value))
+            }
+
+            return resolveCredentials(
+                "localhost",
+                sshWebSocketServer.port,
+                "gitpod",
+                null,
+                privateKeyFile.absolutePathString(),
+                hostKeys
+            )
+        } catch (t: Throwable) {
+            thisLogger().error(
+                "${connectParams.gitpodHost}: web socket tunnelÏ: failed to connect:",
+                t
+            )
+            return null
+        }
+    }
+
+    private suspend fun resolveCredentialsWithDirectSSH(
+        ideUrl: URL,
+        ownerToken: String,
+        connectParams: ConnectParams
+    ): RemoteCredentialsHolder? {
+        if (settings.forceHttpTunnel) {
+            return null
+        }
+        val hostKeys = resolveHostKeys(ideUrl, connectParams)
+        if (hostKeys.isNullOrEmpty()) {
+            thisLogger().error("${connectParams.gitpodHost}: direct SSH: failed to resolve host keys for")
+            return null
+        }
+
+        try {
+            val sshHostUrl =
+                URL(
+                    ideUrl.toString().replace(
+                        connectParams.resolvedWorkspaceId,
+                        "${connectParams.resolvedWorkspaceId}.ssh"
+                    )
+                )
+            return resolveCredentials(
+                sshHostUrl.host,
+                22,
+                connectParams.resolvedWorkspaceId,
+                ownerToken,
+                null,
+                hostKeys
+            )
+        } catch (t: Throwable) {
+            thisLogger().error(
+                "${connectParams.gitpodHost}: direct SSH: failed to resolve credentials",
+                t
+            )
+            return null
+        }
+    }
+
     private suspend fun resolveJoinLink(
         ideUrl: URL,
         ownerToken: String,
@@ -323,37 +443,64 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
     }
 
     private fun resolveCredentials(
-        ideUrl: URL,
-        userName: String,
-        password: String,
+        host: String,
+        port: Int,
+        userName: String?,
+        password: String?,
+        privateKeyFile: String?,
         hostKeys: List<SSHHostKey>
     ): RemoteCredentialsHolder {
         val credentials = RemoteCredentialsHolder()
-        credentials.setHost(ideUrl.host)
-        credentials.port = 22
-        credentials.userName = userName
-        credentials.password = password
-        credentials.connectionBuilder(
+        credentials.setHost(host)
+        credentials.port = port
+        if (userName != null) {
+            credentials.userName = userName
+        }
+        if (password != null) {
+            credentials.password = password
+        } else if (privateKeyFile != null) {
+            credentials.setPrivateKeyFile(privateKeyFile)
+            credentials.authType = AuthType.KEY_PAIR
+        }
+        var builder = credentials.connectionBuilder(
             null,
             ProgressManager.getGlobalProgressIndicator(),
             false
-        )
-            .withParsingOpenSSHConfig(true)
-            .withSshConnectionConfig {
-            val hostKeyVerifier = it.hostKeyVerifier
-            if (hostKeyVerifier is OpenSshLikeHostKeyVerifier) {
-                val acceptHostKey = acceptHostKey(ideUrl, hostKeys)
-                it.copy(
-                    hostKeyVerifier = hostKeyVerifier.copy(
-                        acceptChangedHostKey = acceptHostKey,
-                        acceptUnknownHostKey = acceptHostKey
+        ).withParsingOpenSSHConfig(true)
+        if (hostKeys.isNotEmpty()) {
+            builder = builder.withSshConnectionConfig {
+                val hostKeyVerifier = it.hostKeyVerifier
+                if (hostKeyVerifier is OpenSshLikeHostKeyVerifier) {
+                    val acceptHostKey = acceptHostKey(host, hostKeys)
+                    it.copy(
+                        hostKeyVerifier = hostKeyVerifier.copy(
+                            acceptChangedHostKey = acceptHostKey,
+                            acceptUnknownHostKey = acceptHostKey
+                        )
                     )
-                )
-            } else {
-                it
+                } else {
+                    it
+                }
             }
-        }.connect()
+        }
+        builder.connect()
         return credentials
+    }
+
+    private suspend fun createSSHKeyPair(
+        ideUrl: URL,
+        connectParams: ConnectParams,
+        ownerToken: String
+    ): CreateSSHKeyPairResponse? {
+        val value =
+            fetchWS("https://${ideUrl.host}/_supervisor/v1/ssh_keys/create", connectParams, ownerToken)
+        if (value.isNullOrBlank()) {
+            return null
+        }
+        return with(jacksonMapper) {
+            propertyNamingStrategy = PropertyNamingStrategies.LowerCamelCaseStrategy()
+            readValue(value, object : TypeReference<CreateSSHKeyPairResponse>() {})
+        }
     }
 
     private suspend fun resolveHostKeys(
@@ -395,12 +542,12 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
     }
 
     private fun acceptHostKey(
-        ideUrl: URL,
+        host: String,
         hostKeys: List<SSHHostKey>
     ): AskAboutHostKey {
         val hostKeysByType = hostKeys.groupBy({ it.type.lowercase() }) { it.hostKey }
         val acceptHostKey: AskAboutHostKey = { hostName, keyType, fingerprint, _ ->
-            if (hostName != ideUrl.host) {
+            if (hostName != host) {
                 false
             }
             val matchedHostKeys = hostKeysByType[keyType.lowercase()]
@@ -487,4 +634,8 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
     }
 
     private data class SSHHostKey(val type: String, val hostKey: String)
+
+    private data class SSHPublicKey(val type: String, val value: String)
+
+    private data class CreateSSHKeyPairResponse(val privateKey: String, val hostKey: SSHPublicKey?)
 }

@@ -60,6 +60,7 @@ dependencies {
     compileOnly("org.eclipse.jetty.websocket:websocket-api:9.4.44.v20210927")
     testImplementation(kotlin("test"))
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.18.1")
+    implementation("org.eclipse.jetty.websocket:javax-websocket-client-impl:9.4.44.v20210927")
 }
 
 // Configure gradle-intellij-plugin plugin.
