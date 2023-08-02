@@ -5,7 +5,6 @@
  */
 
 import { inject, injectable } from "inversify";
-import { WorkspaceSoftDeletion } from "@gitpod/gitpod-protocol";
 import {
     WorkspaceDB,
     WorkspaceAndOwner,
@@ -17,7 +16,6 @@ import { StorageClient } from "../storage/storage-client";
 import { Config } from "../config";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class WorkspaceDeletionService {
@@ -26,36 +24,6 @@ export class WorkspaceDeletionService {
     @inject(Config) protected readonly config: Config;
     @inject(WorkspaceManagerClientProvider)
     protected readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider;
-
-    /**
-     * This method does nothing beyond marking the given workspace as 'softDeleted' with the given cause and sets the 'softDeletedTime' to now.
-     * The actual deletion happens as part of the regular workspace garbage collection.
-     * @param ctx
-     * @param ws
-     * @param softDeleted
-     */
-    public async softDeleteWorkspace(
-        ctx: TraceContext,
-        ws: WorkspaceAndOwner,
-        softDeleted: WorkspaceSoftDeletion,
-    ): Promise<void> {
-        await this.db.trace(ctx).updatePartial(ws.id, {
-            softDeleted,
-            softDeletedTime: new Date().toISOString(),
-        });
-    }
-
-    /**
-     * This *hard deletes* the workspace entry and all corresponding workspace-instances, by triggering a periodic deleter mechanism that purges it from the DB.
-     * Note: when this function returns that doesn't mean that the entries are actually gone yet, that might still take a short while until periodic deleter comes
-     *       around to deleting them.
-     * @param ctx
-     * @param workspaceId
-     */
-    public async hardDeleteWorkspace(ctx: TraceContext, workspaceId: string): Promise<void> {
-        await this.db.trace(ctx).hardDeleteWorkspace(workspaceId);
-        log.info(`Purged Workspace ${workspaceId} and all WorkspaceInstances for this workspace`, { workspaceId });
-    }
 
     /**
      * This method garbageCollects a workspace. It deletes its contents and sets the workspaces 'contentDeletedTime'

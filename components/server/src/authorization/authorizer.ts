@@ -16,6 +16,7 @@ import {
     Relation,
     ResourceType,
     UserPermission,
+    WorkspacePermission,
     rel,
 } from "./definitions";
 import { SpiceDBAuthorizer } from "./spicedb-authorizer";
@@ -102,11 +103,11 @@ export class Authorizer {
         );
     }
 
-    async hasPermissionOnUser(userId: string, permission: UserPermission, userResourceId: string): Promise<boolean> {
+    async hasPermissionOnUser(userId: string, permission: UserPermission, resourceUserId: string): Promise<boolean> {
         const req = v1.CheckPermissionRequest.create({
             subject: subject("user", userId),
             permission,
-            resource: object("user", userResourceId),
+            resource: object("user", resourceUserId),
             consistency,
         });
 
@@ -124,6 +125,35 @@ export class Authorizer {
         throw new ApplicationError(
             ErrorCodes.PERMISSION_DENIED,
             `You do not have ${permission} on user ${resourceUserId}`,
+        );
+    }
+
+    async hasPermissionOnWorkspace(
+        userId: string,
+        permission: WorkspacePermission,
+        workspaceId: string,
+    ): Promise<boolean> {
+        const req = v1.CheckPermissionRequest.create({
+            subject: subject("user", userId),
+            permission,
+            resource: object("workspace", workspaceId),
+            consistency,
+        });
+
+        return this.authorizer.check(req, { userId });
+    }
+
+    async checkPermissionOnWorkspace(userId: string, permission: WorkspacePermission, workspaceId: string) {
+        if (await this.hasPermissionOnWorkspace(userId, permission, workspaceId)) {
+            return;
+        }
+        if ("read_info" === permission || !(await this.hasPermissionOnWorkspace(userId, "read_info", workspaceId))) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} not found.`);
+        }
+
+        throw new ApplicationError(
+            ErrorCodes.PERMISSION_DENIED,
+            `You do not have ${permission} on workspace ${workspaceId}`,
         );
     }
 
@@ -306,6 +336,26 @@ export class Authorizer {
         }
         await this.authorizer.writeRelationships(
             remove(rel.installation.admin.user(userId)), //
+        );
+    }
+
+    async createWorkspaceInOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {
+        if (await this.isDisabled(userID)) {
+            return;
+        }
+        await this.authorizer.writeRelationships(
+            set(rel.workspace(workspaceID).org.organization(orgID)),
+            set(rel.workspace(workspaceID).owner.user(userID)),
+        );
+    }
+
+    async deleteWorkspaceFromOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {
+        if (await this.isDisabled(userID)) {
+            return;
+        }
+        await this.authorizer.writeRelationships(
+            remove(rel.workspace(workspaceID).org.organization(orgID)),
+            remove(rel.workspace(workspaceID).owner.user(userID)),
         );
     }
 

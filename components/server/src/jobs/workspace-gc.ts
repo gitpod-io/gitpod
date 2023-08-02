@@ -12,6 +12,7 @@ import { TracedWorkspaceDB, DBWithTracing, WorkspaceDB } from "@gitpod/gitpod-db
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { Config } from "../config";
 import { Job } from "./runner";
+import { WorkspaceService } from "../workspace/workspace-service";
 
 /**
  * The WorkspaceGarbageCollector has two tasks:
@@ -20,6 +21,7 @@ import { Job } from "./runner";
  */
 @injectable()
 export class WorkspaceGarbageCollector implements Job {
+    @inject(WorkspaceService) protected readonly workspaceService: WorkspaceService;
     @inject(WorkspaceDeletionService) protected readonly deletionService: WorkspaceDeletionService;
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
     @inject(Config) protected readonly config: Config;
@@ -70,7 +72,7 @@ export class WorkspaceGarbageCollector implements Job {
                 );
             const afterSelect = new Date();
             const deletes = await Promise.all(
-                workspaces.map((ws) => this.deletionService.softDeleteWorkspace({ span }, ws, "gc")),
+                workspaces.map((ws) => this.workspaceService.deleteWorkspace(ws.ownerId, ws.id, "gc")), // TODO(gpl) This should be a system user/service account instead of ws owner
             );
             const afterDelete = new Date();
 
@@ -125,7 +127,11 @@ export class WorkspaceGarbageCollector implements Job {
                     now,
                 );
             const deletes = await Promise.all(
-                workspaces.map((ws) => this.deletionService.hardDeleteWorkspace({ span }, ws.id)),
+                workspaces.map((ws) =>
+                    this.workspaceService
+                        .hardDeleteWorkspace(ws.ownerId, ws.id)
+                        .catch((err) => log.error("failed to hard-delete workspace", err)),
+                ), // TODO(gpl) This should be a system user/service account instead of ws owner
             );
 
             log.info(`workspace-gc: successfully purged ${deletes.length} workspaces`);
