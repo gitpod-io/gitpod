@@ -16,6 +16,7 @@ import {
     Relation,
     ResourceType,
     UserPermission,
+    WorkspacePermission,
     rel,
 } from "./definitions";
 import { SpiceDBAuthorizer } from "./spicedb-authorizer";
@@ -101,11 +102,11 @@ export class Authorizer {
         );
     }
 
-    async hasPermissionOnUser(userId: string, permission: UserPermission, userResourceId: string): Promise<boolean> {
+    async hasPermissionOnUser(userId: string, permission: UserPermission, resourceUserId: string): Promise<boolean> {
         const req = v1.CheckPermissionRequest.create({
             subject: subject("user", userId),
             permission,
-            resource: object("user", userResourceId),
+            resource: object("user", resourceUserId),
             consistency,
         });
 
@@ -123,6 +124,35 @@ export class Authorizer {
         throw new ApplicationError(
             ErrorCodes.PERMISSION_DENIED,
             `You do not have ${permission} on user ${resourceUserId}`,
+        );
+    }
+
+    async hasPermissionOnWorkspace(
+        userId: string,
+        permission: WorkspacePermission,
+        workspaceId: string,
+    ): Promise<boolean> {
+        const req = v1.CheckPermissionRequest.create({
+            subject: subject("user", userId),
+            permission,
+            resource: object("workspace", workspaceId),
+            consistency,
+        });
+
+        return this.authorizer.check(req, { userId });
+    }
+
+    async checkPermissionOnWorkspace(userId: string, permission: WorkspacePermission, workspaceId: string) {
+        if (await this.hasPermissionOnWorkspace(userId, permission, workspaceId)) {
+            return;
+        }
+        if ("read_info" === permission || !(await this.hasPermissionOnWorkspace(userId, "read_info", workspaceId))) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} not found.`);
+        }
+
+        throw new ApplicationError(
+            ErrorCodes.PERMISSION_DENIED,
+            `You do not have ${permission} on workspace ${workspaceId}`,
         );
     }
 
@@ -158,7 +188,7 @@ export class Authorizer {
 
     async addUser(userId: string, owningOrgId?: string) {
         await this.authorizer.writeRelationships(
-            set(rel.user(userId).self.user(userId)), //
+            set(rel.user(userId).self.user(userId)),
             set(
                 owningOrgId
                     ? rel.user(userId).organization.organization(owningOrgId)
@@ -186,15 +216,11 @@ export class Authorizer {
     }
 
     async addProjectToOrg(orgID: string, projectID: string): Promise<void> {
-        await this.authorizer.writeRelationships(
-            set(rel.project(projectID).org.organization(orgID)), //
-        );
+        await this.authorizer.writeRelationships(set(rel.project(projectID).org.organization(orgID)));
     }
 
     async removeProjectFromOrg(orgID: string, projectID: string): Promise<void> {
-        await this.authorizer.writeRelationships(
-            remove(rel.project(projectID).org.organization(orgID)), //
-        );
+        await this.authorizer.writeRelationships(remove(rel.project(projectID).org.organization(orgID)));
     }
 
     async addOrganization(org: Organization, members: TeamMemberInfo[], projects: Project[]): Promise<void> {
@@ -206,32 +232,36 @@ export class Authorizer {
             await this.addProjectToOrg(org.id, project.id);
         }
 
-        await this.authorizer.writeRelationships(
-            set(rel.organization(org.id).installation.installation), //
-        );
+        await this.authorizer.writeRelationships(set(rel.organization(org.id).installation.installation));
     }
 
     async addInstallationMemberRole(userID: string) {
-        await this.authorizer.writeRelationships(
-            set(rel.installation.member.user(userID)), //
-        );
+        await this.authorizer.writeRelationships(set(rel.installation.member.user(userID)));
     }
 
     async removeInstallationMemberRole(userID: string) {
-        await this.authorizer.writeRelationships(
-            remove(rel.installation.member.user(userID)), //
-        );
+        await this.authorizer.writeRelationships(remove(rel.installation.member.user(userID)));
     }
 
     async addInstallationAdminRole(userID: string) {
-        await this.authorizer.writeRelationships(
-            set(rel.installation.admin.user(userID)), //
-        );
+        await this.authorizer.writeRelationships(set(rel.installation.admin.user(userID)));
     }
 
     async removeInstallationAdminRole(userID: string) {
+        await this.authorizer.writeRelationships(remove(rel.installation.admin.user(userID)));
+    }
+
+    async createWorkspaceInOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {
         await this.authorizer.writeRelationships(
-            remove(rel.installation.admin.user(userID)), //
+            set(rel.workspace(workspaceID).org.organization(orgID)),
+            set(rel.workspace(workspaceID).owner.user(userID)),
+        );
+    }
+
+    async deleteWorkspaceFromOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {
+        await this.authorizer.writeRelationships(
+            remove(rel.workspace(workspaceID).org.organization(orgID)),
+            remove(rel.workspace(workspaceID).owner.user(userID)),
         );
     }
 
