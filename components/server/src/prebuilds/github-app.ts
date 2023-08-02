@@ -111,7 +111,7 @@ export class GithubApp {
                     res.redirect(301, this.getBadgeImageURL());
                 });
 
-        app.on("installation.created", (ctx) => {
+        app.on("installation.created", (ctx: Context<"installation.created">) => {
             catchError(
                 (async () => {
                     const targetAccountName = `${ctx.payload.installation.account.login}`;
@@ -136,7 +136,7 @@ export class GithubApp {
                 })(),
             );
         });
-        app.on("installation.deleted", (ctx) => {
+        app.on("installation.deleted", (ctx: Context<"installation.deleted">) => {
             catchError(
                 (async () => {
                     const installationId = `${ctx.payload.installation.id}`;
@@ -145,7 +145,7 @@ export class GithubApp {
             );
         });
 
-        app.on("repository.renamed", (ctx) => {
+        app.on("repository.renamed", (ctx: Context<"repository.renamed">) => {
             catchError(
                 (async () => {
                     const { action, repository, installation } = ctx.payload;
@@ -172,7 +172,7 @@ export class GithubApp {
             // TODO(at): handle deleted as well
         });
 
-        app.on("push", (ctx) => {
+        app.on("push", (ctx: Context<"push">) => {
             catchError(this.handlePushEvent(ctx));
         });
 
