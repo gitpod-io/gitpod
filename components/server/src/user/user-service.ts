@@ -13,6 +13,7 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { CreateUserParams } from "./user-authentication";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
+import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
 
 @injectable()
 export class UserService {
@@ -23,46 +24,38 @@ export class UserService {
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
     ) {}
 
-    public async createUser({ organizationId, identity, token, userUpdate }: CreateUserParams): Promise<User> {
+    public async createUser(
+        { organizationId, identity, token, userUpdate }: CreateUserParams,
+        transactionCtx?: TransactionalContext,
+    ): Promise<User> {
         log.debug("Creating new user.", { identity, "login-flow": true });
-
-        let newUser = await this.userDb.newUser();
-        newUser.organizationId = organizationId;
-        if (userUpdate) {
-            userUpdate(newUser);
-        }
-        // HINT: we need to specify `deleted: false` here, so that any attempt to reuse the same
-        // entry would converge to a valid state. The identities are identified by the external
-        // `authId`, and if accounts are deleted, such entries are soft-deleted until the periodic
-        // deleter will take care of them. Reuse of soft-deleted entries would lead to an invalid
-        // state. This measure of prevention is considered in the period deleter as well.
-        newUser.identities.push({ ...identity, deleted: false });
-        this.handleNewUser(newUser);
-        // new users should not see the migration message
-        AdditionalUserData.set(newUser, { shouldSeeMigrationMessage: false });
-        try {
-            newUser = await this.userDb.transaction(async (userDb) => {
-                const result = await userDb.storeUser(newUser);
-                await this.authorizer.addUser(result.id, organizationId);
-                if (organizationId) {
-                    await this.authorizer.addOrganizationRole(organizationId, result.id, "member");
-                } else {
-                    await this.authorizer.addInstallationMemberRole(result.id);
-                }
-                if (token) {
-                    await this.userDb.storeSingleToken(identity, token);
-                }
-                return result;
-            });
-        } catch (error) {
-            if (organizationId) {
-                await this.authorizer.removeOrganizationRole(organizationId, newUser.id, "member");
-            } else {
-                await this.authorizer.removeInstallationMemberRole(newUser.id);
+        return await this.userDb.transaction(transactionCtx, async (userDb) => {
+            const newUser = await userDb.newUser();
+            newUser.organizationId = organizationId;
+            if (userUpdate) {
+                userUpdate(newUser);
             }
-            throw error;
-        }
-        return newUser;
+            // HINT: we need to specify `deleted: false` here, so that any attempt to reuse the same
+            // entry would converge to a valid state. The identities are identified by the external
+            // `authId`, and if accounts are deleted, such entries are soft-deleted until the periodic
+            // deleter will take care of them. Reuse of soft-deleted entries would lead to an invalid
+            // state. This measure of prevention is considered in the period deleter as well.
+            newUser.identities.push({ ...identity, deleted: false });
+            this.handleNewUser(newUser);
+            // new users should not see the migration message
+            AdditionalUserData.set(newUser, { shouldSeeMigrationMessage: false });
+            const result = await userDb.storeUser(newUser);
+            await this.authorizer.addUser(result.id, organizationId);
+            if (organizationId) {
+                await this.authorizer.addOrganizationRole(organizationId, result.id, "member");
+            } else {
+                await this.authorizer.addInstallationMemberRole(result.id);
+            }
+            if (token) {
+                await userDb.storeSingleToken(identity, token);
+            }
+            return result;
+        });
     }
 
     private handleNewUser(newUser: User) {

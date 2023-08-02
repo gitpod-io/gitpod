@@ -18,6 +18,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
 import { Authorizer } from "../authorization/authorizer";
 import { ProjectsService } from "../projects/projects-service";
+import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
 
 @injectable()
 export class OrganizationService {
@@ -183,90 +184,103 @@ export class OrganizationService {
         orgId: string,
         memberId: string,
         role: OrgMemberRole,
+        txCtx?: TransactionalContext,
     ): Promise<void> {
         if (userId) {
             await this.auth.checkPermissionOnOrganization(userId, "write_members", orgId);
         }
-        if (role !== "owner") {
-            const members = await this.teamDB.findMembersByTeam(orgId);
-            if (!members.some((m) => m.userId !== memberId && m.role === "owner")) {
-                throw new ApplicationError(ErrorCodes.CONFLICT, "Cannot remove the last owner of an organization.");
-            }
-        }
-        const members = await this.teamDB.findMembersByTeam(orgId);
-        const firstMember = members.filter((m) => m.userId !== BUILTIN_INSTLLATION_ADMIN_USER_ID).length === 0;
-        if (firstMember) {
-            // first member (that is not an admin) is going to be an owner
-            role = "owner";
-            log.info({ userId: memberId }, "First member of organization, setting role to owner.");
-        }
-
+        let members: OrgMemberInfo[] = [];
         try {
-            await this.teamDB.transaction(async (db) => {
-                await db.addMemberToTeam(memberId, orgId);
-                await db.setTeamMemberRole(memberId, orgId, role);
+            await this.teamDB.transaction(txCtx, async (teamDB, txCtx) => {
+                members = await teamDB.findMembersByTeam(orgId);
+                const hasOtherRegularOwners =
+                    members.filter(
+                        (m) =>
+                            m.userId !== BUILTIN_INSTLLATION_ADMIN_USER_ID && //
+                            m.userId !== memberId && //
+                            m.role === "owner",
+                    ).length > 0;
+                if (!hasOtherRegularOwners) {
+                    // first regular member is going to be an owner
+                    role = "owner";
+                    log.info({ userId: memberId }, "First member of organization, setting role to owner.");
+                }
+
+                await teamDB.addMemberToTeam(memberId, orgId);
+                await teamDB.setTeamMemberRole(memberId, orgId, role);
                 await this.auth.addOrganizationRole(orgId, memberId, role);
+                // we can remove the built-in installation admin if we have added an owner
+                if (!hasOtherRegularOwners) {
+                    try {
+                        await this.removeOrganizationMember(memberId, orgId, BUILTIN_INSTLLATION_ADMIN_USER_ID, txCtx);
+                    } catch (error) {
+                        log.warn("Failed to remove built-in installation admin from organization.", error);
+                    }
+                }
             });
         } catch (err) {
-            //TODO simply removing the user is not necessarily the right thing to do here, as the user might have been a member before
-            await this.auth.removeOrganizationRole(orgId, memberId, "member");
+            await this.auth.removeOrganizationRole(
+                orgId,
+                memberId,
+                members.find((m) => m.userId === memberId)?.role || "member",
+            );
             throw err;
-        }
-        // we can remove the built-in installation admin now
-        if (firstMember) {
-            try {
-                await this.removeOrganizationMember(memberId, orgId, BUILTIN_INSTLLATION_ADMIN_USER_ID);
-            } catch (error) {
-                log.warn("Failed to remove built-in installation admin from organization.", error);
-            }
         }
     }
 
-    public async removeOrganizationMember(userId: string, orgId: string, memberId: string): Promise<void> {
+    public async removeOrganizationMember(
+        userId: string,
+        orgId: string,
+        memberId: string,
+        txCtx?: TransactionalContext,
+    ): Promise<void> {
         // The user is leaving a team, if they are removing themselves from the team.
         if (userId === memberId) {
             await this.auth.checkPermissionOnOrganization(userId, "read_info", orgId);
         } else {
             await this.auth.checkPermissionOnOrganization(userId, "write_members", orgId);
         }
-
-        // Check for existing membership.
-        const members = await this.teamDB.findMembersByTeam(orgId);
-        // cannot remove last owner
-        if (!members.some((m) => m.userId !== memberId && m.role === "owner")) {
-            throw new ApplicationError(ErrorCodes.CONFLICT, "Cannot remove the last owner of an organization.");
-        }
-
-        const membership = members.find((m) => m.userId === memberId);
-        if (!membership) {
-            throw new ApplicationError(
-                ErrorCodes.NOT_FOUND,
-                `Could not find membership for user '${memberId}' in organization '${orgId}'`,
-            );
-        }
-
-        // Check if user's account belongs to the Org.
-        const userToBeRemoved = await this.userDB.findUserById(memberId);
-        if (!userToBeRemoved) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Could not find user '${memberId}'`);
-        }
-        // Only invited members can be removed from the Org, but organizational accounts cannot.
-        if (userToBeRemoved.organizationId && orgId === userToBeRemoved.organizationId) {
-            throw new ApplicationError(
-                ErrorCodes.PERMISSION_DENIED,
-                `User's account '${memberId}' belongs to the organization '${orgId}'`,
-            );
-        }
-
+        let membership: OrgMemberInfo | undefined;
         try {
-            await this.teamDB.transaction(async (db) => {
+            await this.teamDB.transaction(txCtx, async (db) => {
+                // Check for existing membership.
+                const members = await db.findMembersByTeam(orgId);
+                // cannot remove last owner
+                if (!members.some((m) => m.userId !== memberId && m.role === "owner")) {
+                    throw new ApplicationError(ErrorCodes.CONFLICT, "Cannot remove the last owner of an organization.");
+                }
+
+                membership = members.find((m) => m.userId === memberId);
+                if (!membership) {
+                    throw new ApplicationError(
+                        ErrorCodes.NOT_FOUND,
+                        `Could not find membership for user '${memberId}' in organization '${orgId}'`,
+                    );
+                }
+
+                // Check if user's account belongs to the Org.
+                const userToBeRemoved = await this.userDB.findUserById(memberId);
+                if (!userToBeRemoved) {
+                    throw new ApplicationError(ErrorCodes.NOT_FOUND, `Could not find user '${memberId}'`);
+                }
+                // Only invited members can be removed from the Org, but organizational accounts cannot.
+                if (userToBeRemoved.organizationId && orgId === userToBeRemoved.organizationId) {
+                    throw new ApplicationError(
+                        ErrorCodes.PERMISSION_DENIED,
+                        `User's account '${memberId}' belongs to the organization '${orgId}'`,
+                    );
+                }
+
                 await db.removeMemberFromTeam(userToBeRemoved.id, orgId);
                 await this.auth.removeOrganizationRole(orgId, memberId, "member");
             });
         } catch (err) {
-            // Rollback to the original role the user had
-            await this.auth.addOrganizationRole(orgId, memberId, membership.role);
-            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, err);
+            if (membership) {
+                // Rollback to the original role the user had
+                await this.auth.addOrganizationRole(orgId, memberId, membership.role);
+            }
+            const code = ApplicationError.hasErrorCode(err) ? err.code : ErrorCodes.INTERNAL_SERVER_ERROR;
+            throw new ApplicationError(code, err);
         }
         this.analytics.track({
             userId,

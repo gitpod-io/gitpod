@@ -16,6 +16,7 @@ import { reportJWTCookieIssued } from "../prometheus-metrics";
 import { ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { OrganizationService } from "../orgs/organization-service";
 import { UserService } from "../user/user-service";
+import { UserDB } from "@gitpod/gitpod-db/lib";
 
 @injectable()
 export class IamSessionApp {
@@ -26,6 +27,7 @@ export class IamSessionApp {
         @inject(UserService) private readonly userService: UserService,
         @inject(OrganizationService) private readonly orgService: OrganizationService,
         @inject(SessionHandler) private readonly session: SessionHandler,
+        @inject(UserDB) private readonly userDb: UserDB,
     ) {}
 
     public getMiddlewares() {
@@ -147,17 +149,22 @@ export class IamSessionApp {
     private async createNewOIDCUser(payload: OIDCCreateSessionPayload): Promise<User> {
         const { claims, organizationId } = payload;
 
-        // Until we support SKIM (or any other means to sync accounts) we create new users here as a side-effect of the login
-        const user = await this.userService.createUser({
-            organizationId,
-            identity: { ...this.mapOIDCProfileToIdentity(payload), lastSigninTime: new Date().toISOString() },
-            userUpdate: (user) => {
-                user.name = claims.name;
-                user.avatarUrl = claims.picture;
-            },
-        });
+        return this.userDb.transaction(async (_, ctx) => {
+            // Until we support SKIM (or any other means to sync accounts) we create new users here as a side-effect of the login
+            const user = await this.userService.createUser(
+                {
+                    organizationId,
+                    identity: { ...this.mapOIDCProfileToIdentity(payload), lastSigninTime: new Date().toISOString() },
+                    userUpdate: (user) => {
+                        user.name = claims.name;
+                        user.avatarUrl = claims.picture;
+                    },
+                },
+                ctx,
+            );
 
-        await this.orgService.addOrUpdateMember(undefined, organizationId, user.id, "member");
-        return user;
+            await this.orgService.addOrUpdateMember(undefined, organizationId, user.id, "member", ctx);
+            return user;
+        });
     }
 }
