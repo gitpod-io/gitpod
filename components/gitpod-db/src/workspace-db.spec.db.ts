@@ -308,13 +308,6 @@ class WorkspaceDBSpec {
     }
 
     @test(timeout(10000))
-    public async testFindAllWorkspaces_contextUrl() {
-        await Promise.all([this.db.store(this.ws)]);
-        const dbResult = await this.db.findAllWorkspaces(0, 10, "contextURL", "DESC", undefined, this.ws.contextURL);
-        expect(dbResult.total).to.eq(1);
-    }
-
-    @test(timeout(10000))
     public async testFindAllWorkspaceAndInstances_workspaceId() {
         await Promise.all([
             this.db.store(this.ws),

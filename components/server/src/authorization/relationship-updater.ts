@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { ProjectDB, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
+import { ProjectDB, TeamDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { AdditionalUserData, Organization, User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
@@ -23,6 +23,7 @@ export class RelationshipUpdater {
         @inject(UserDB) private readonly userDB: UserDB,
         @inject(TeamDB) private readonly orgDB: TeamDB,
         @inject(ProjectDB) private readonly projectDB: ProjectDB,
+        @inject(WorkspaceDB) private readonly workspaceDB: WorkspaceDB,
         @inject(Authorizer) private readonly authorizer: Authorizer,
         @inject(RedisMutex) private readonly mutex: RedisMutex,
     ) {}
@@ -83,6 +84,7 @@ export class RelationshipUpdater {
                 for (const org of orgs) {
                     await this.updateOrganization(user.id, org);
                 }
+                await this.updateWorkspaces(user);
                 AdditionalUserData.set(user, {
                     fgaRelationshipsVersion: this.version,
                 });
@@ -128,6 +130,41 @@ export class RelationshipUpdater {
             }
         }
         return orgs;
+    }
+
+    // max number of relationships that can be created per request by SpiceDB
+    static maxRelationshipUpdates = 1000;
+    // how many relationships are created per workspace
+    static relationshipsPerWorkspace = 2;
+    static workspacesPageSize =
+        RelationshipUpdater.maxRelationshipUpdates / RelationshipUpdater.relationshipsPerWorkspace;
+
+    private async updateWorkspaces(user: User): Promise<void> {
+        let offset = 0;
+        let currentPageSize = 0;
+
+        do {
+            // Because the total amount of workspaces per user can be very large, we want to paginate through them.
+            const workspaces = await this.workspaceDB.findAllWorkspaces(
+                offset,
+                RelationshipUpdater.workspacesPageSize,
+                "creationTime",
+                "ASC",
+                {
+                    ownerId: user.id,
+                    type: "regular",
+                },
+            );
+
+            currentPageSize = workspaces.rows.length;
+
+            if (currentPageSize) {
+                await this.authorizer.bulkCreateWorkspaceInOrg(
+                    workspaces.rows.map((ws) => ({ orgID: ws.organizationId, userID: ws.ownerId, workspaceID: ws.id })),
+                );
+                offset += currentPageSize;
+            }
+        } while (currentPageSize === RelationshipUpdater.workspacesPageSize);
     }
 
     private async updateUser(user: User): Promise<void> {

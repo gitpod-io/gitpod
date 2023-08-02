@@ -117,11 +117,10 @@ export interface WorkspaceDB {
         limit: number,
         orderBy: keyof Workspace,
         orderDir: "ASC" | "DESC",
-        ownerId?: string,
-        searchTerm?: string,
-        minCreationTime?: Date,
-        maxCreationDateTime?: Date,
-        type?: WorkspaceType,
+        opts: {
+            ownerId?: string;
+            type?: WorkspaceType;
+        },
     ): Promise<{ total: number; rows: Workspace[] }>;
     findAllWorkspaceAndInstances(
         offset: number,

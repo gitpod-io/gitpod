@@ -4,9 +4,16 @@
  * See License.AGPL.txt in the project root for license information.
  */
 import { v1 } from "@authzed/authzed-node";
-import { BUILTIN_INSTLLATION_ADMIN_USER_ID, ProjectDB, TeamDB, TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
+import {
+    BUILTIN_INSTLLATION_ADMIN_USER_ID,
+    ProjectDB,
+    TeamDB,
+    TypeORM,
+    UserDB,
+    WorkspaceDB,
+} from "@gitpod/gitpod-db/lib";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
-import { AdditionalUserData, User } from "@gitpod/gitpod-protocol";
+import { AdditionalUserData, User, Workspace } from "@gitpod/gitpod-protocol";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import * as chai from "chai";
 import { Container } from "inversify";
@@ -24,6 +31,7 @@ describe("RelationshipUpdater", async () => {
     let userDB: UserDB;
     let orgDB: TeamDB;
     let projectDB: ProjectDB;
+    let workspaceDB: WorkspaceDB;
     let migrator: RelationshipUpdater;
     let authorizer: Authorizer;
 
@@ -36,6 +44,7 @@ describe("RelationshipUpdater", async () => {
         userDB = container.get<UserDB>(UserDB);
         orgDB = container.get<TeamDB>(TeamDB);
         projectDB = container.get<ProjectDB>(ProjectDB);
+        workspaceDB = container.get<WorkspaceDB>(WorkspaceDB);
         migrator = container.get<RelationshipUpdater>(RelationshipUpdater);
         authorizer = container.get<Authorizer>(Authorizer);
     });
@@ -272,6 +281,37 @@ describe("RelationshipUpdater", async () => {
 
         // but on the org user2 is a member
         await expected(rel.project(project.id).org.organization(org.id));
+    });
+
+    it("should create relationships for all user workspaces", async function () {
+        this.timeout(20000);
+
+        const user = await userDB.newUser();
+        const org = await orgDB.createTeam(user.id, "MyOrg");
+        const totalWorkspaces = RelationshipUpdater.workspacesPageSize * 2.5;
+        const expectedWorkspaces: Workspace[] = [];
+        for (let i = 0; i < totalWorkspaces; i++) {
+            const workspace = await workspaceDB.store({
+                id: v4(),
+                creationTime: new Date().toISOString(),
+                organizationId: org.id,
+                ownerId: user.id,
+                contextURL: "myContext",
+                type: "regular",
+                description: "myDescription",
+                context: {
+                    title: "myTitle",
+                },
+                config: {},
+            });
+            expectedWorkspaces.push(workspace);
+        }
+
+        await migrate(user);
+        for (const workspace of expectedWorkspaces) {
+            await expected(rel.workspace(workspace.id).org.organization(org.id));
+            await expected(rel.workspace(workspace.id).owner.user(user.id));
+        }
     });
 
     async function expected(relation: v1.Relationship): Promise<void> {
