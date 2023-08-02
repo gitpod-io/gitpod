@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { ProjectDB, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
+import { ProjectDB, TeamDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { AdditionalUserData, Organization, User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
@@ -19,6 +19,7 @@ export class RelationshipUpdater {
         @inject(UserDB) private readonly userDB: UserDB,
         @inject(TeamDB) private readonly orgDB: TeamDB,
         @inject(ProjectDB) private readonly projectDB: ProjectDB,
+        @inject(WorkspaceDB) private readonly workspaceDB: WorkspaceDB,
         @inject(Authorizer) private readonly authorizer: Authorizer,
     ) {}
 
@@ -65,6 +66,9 @@ export class RelationshipUpdater {
         for (const org of orgs) {
             await this.updateOrganization(org);
         }
+
+        await this.createRelationsToWorkspaces(user);
+
         AdditionalUserData.set(user, {
             fgaRelationshipsVersion: this.version,
         });
@@ -77,6 +81,32 @@ export class RelationshipUpdater {
         });
         return user;
         // });
+    }
+
+    private async createRelationsToWorkspaces(user: User): Promise<void> {
+        // Because the total amount of workspaces per user can be very large, we want to paginate through them.
+        const CHUNK_SIZE = 1000;
+        let minCreationTime = undefined;
+        while (true) {
+            const workspaces = await this.workspaceDB.findAllWorkspaces(0, CHUNK_SIZE, "creationTime", "ASC", {
+                ownerId: user.id,
+                minCreationTime,
+            });
+            if (workspaces.rows.length === 0) {
+                // We are done here
+                break;
+            }
+
+            await this.authorizer.bulkCreateWorkspaceInOrg(
+                workspaces.rows.map((ws) => ({ orgID: ws.organizationId, userID: ws.ownerId, workspaceID: ws.id })),
+            );
+            minCreationTime = workspaces.rows[workspaces.rows.length - 1].creationTime;
+
+            if (workspaces.rows.length < CHUNK_SIZE) {
+                // We are done here as well, no need to ask the DB again
+                break;
+            }
+        }
     }
 
     private async updateUser(user: User): Promise<void> {

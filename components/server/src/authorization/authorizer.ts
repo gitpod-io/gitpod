@@ -258,6 +258,16 @@ export class Authorizer {
         );
     }
 
+    async bulkCreateWorkspaceInOrg(ids: { orgID: string; userID: string; workspaceID: string }[]): Promise<void> {
+        const rels = ids
+            .map(({ orgID, userID, workspaceID }) => [
+                set(rel.workspace(workspaceID).org.organization(orgID)),
+                set(rel.workspace(workspaceID).owner.user(userID)),
+            ])
+            .flat();
+        await this.authorizer.writeRelationships(...rels);
+    }
+
     async deleteWorkspaceFromOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {
         await this.authorizer.writeRelationships(
             remove(rel.workspace(workspaceID).org.organization(orgID)),
