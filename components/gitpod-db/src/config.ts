@@ -15,7 +15,7 @@ export class Config {
         // defaults to be used only in tests
         const dbSetup: DatabaseConfig = {
             host: process.env.DB_HOST || "localhost",
-            port: getEnvVarParsed("DB_PORT", Number.parseInt, "3306"),
+            port: getEnvVarParsed("DB_PORT", Number.parseInt, "23306"),
             username: process.env.DB_USERNAME || "gitpod",
             password: process.env.DB_PASSWORD || "test",
             database: process.env.DB_NAME || "gitpod",
@@ -50,7 +50,10 @@ export class Config {
     }
 
     get dbEncryptionKeys(): string {
-        return getEnvVar("DB_ENCRYPTION_KEYS");
+        return getEnvVar(
+            "DB_ENCRYPTION_KEYS",
+            `[{"name":"general","version":1,"primary":true,"material":"5vRrp0H4oRgdkPnX1qQcS54Q0xggr6iyho42IQ1rO+c="}]`,
+        );
     }
 }
 
