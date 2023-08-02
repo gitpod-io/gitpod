@@ -82,12 +82,11 @@ export class WorkspaceService {
     async getIDECredentials(userId: string, workspaceId: string): Promise<string> {
         await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
 
-        const workspace = await this.doGetWorkspace(workspaceId);
-        if (workspace.config.ideCredentials) {
-            return workspace.config.ideCredentials;
-        }
         return this.db.transaction(async (db) => {
             const ws = await this.doGetWorkspace(workspaceId, db);
+            if (ws.config.ideCredentials) {
+                return ws.config.ideCredentials;
+            }
             ws.config.ideCredentials = crypto.randomBytes(32).toString("base64");
             await db.store(ws);
             return ws.config.ideCredentials;
