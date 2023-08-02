@@ -312,8 +312,8 @@ jobs:
               ref: 'main',
               inputs: {
                 "version": '${{ needs.configuration.outputs.version }}',
-                "installation_repo": "https://github.com/gitpod-io/gitpod",
-                "installation_commit": "${{github.sha}}",
+                "repo": "https://github.com/gitpod-io/gitpod",
+                "commit": "${{github.sha}}",
                 "env": ${{ matrix.env }}
               }
             })
