@@ -308,11 +308,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         log.debug({ userId: this.userID }, "initializeClient");
 
         this.listenForWorkspaceInstanceUpdates();
-
         this.listenForPrebuildUpdates().catch((err) => log.error("error registering for prebuild updates", err));
     }
 
     private async listenForPrebuildUpdates() {
+        if (!this.client) {
+            return;
+        }
         // 'registering for prebuild updates for all projects this user has access to
         const projects = await this.getAccessibleProjects();
 
@@ -328,8 +330,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 ctx,
             );
 
-        for (const projectId of projects) {
-            this.disposables.pushAll([this.subscriber.listenForPrebuildUpdates(projectId, handler)]);
+        if (!this.disposables.disposed) {
+            for (const projectId of projects) {
+                this.disposables.push(this.subscriber.listenForPrebuildUpdates(projectId, handler));
+            }
         }
 
         // TODO(at) we need to keep the list of accessible project up to date
@@ -451,7 +455,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 // Once we have those, we should remove this.
                 //
                 const ws = await this.workspaceDb.trace(ctx).findById(workspaceID);
-                if (!!ws && !!wsi && ws.ownerId !== this.userID) {
+                const relatedPrebuildFound = !!ws && !!wsi && ws.ownerId !== this.userID;
+                if (relatedPrebuildFound && !this.disposables.disposed) {
                     const resetListenerFromRedis = this.subscriber.listenForWorkspaceInstanceUpdates(
                         ws.ownerId,
                         (ctx, instance) => {
@@ -2968,19 +2973,23 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         const project = await this.projectsService.createProject(params, user);
-        // update client registration for the logged in user
-        const prebuildUpdateHandler = (ctx: TraceContext, update: PrebuildWithStatus) =>
-            TraceContext.withSpan(
-                "forwardPrebuildUpdateToClient",
-                (ctx) => {
-                    traceClientMetadata(ctx, this.clientMetadata);
-                    TraceContext.setJsonRPCMetadata(ctx, "onPrebuildUpdate");
 
-                    this.client?.onPrebuildUpdate(update);
-                },
-                ctx,
-            );
-        this.disposables.pushAll([this.subscriber.listenForPrebuildUpdates(project.id, prebuildUpdateHandler)]);
+        // update client registration for the logged in user
+        if (this.client && !this.disposables.disposed) {
+            const prebuildUpdateHandler = (ctx: TraceContext, update: PrebuildWithStatus) =>
+                TraceContext.withSpan(
+                    "forwardPrebuildUpdateToClient",
+                    (ctx) => {
+                        traceClientMetadata(ctx, this.clientMetadata);
+                        TraceContext.setJsonRPCMetadata(ctx, "onPrebuildUpdate");
+
+                        this.client?.onPrebuildUpdate(update);
+                    },
+                    ctx,
+                );
+
+            this.disposables.pushAll([this.subscriber.listenForPrebuildUpdates(project.id, prebuildUpdateHandler)]);
+        }
 
         return project;
     }

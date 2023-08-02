@@ -83,7 +83,7 @@
     "passport-gitlab2": "5.0.0",
     "passport-http": "^0.3.0",
     "probot": "12.1.1",
-    "prom-client": "^13.2.0",
+    "prom-client": "^14.2.0",
     "rate-limiter-flexible": "^2.3.6",
     "redlock": "^5.0.0-beta.2",
     "reflect-metadata": "^0.1.10",
