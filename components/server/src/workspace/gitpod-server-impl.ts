@@ -897,15 +897,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
-        if (workspace.config.ideCredentials) {
-            return workspace.config.ideCredentials;
-        }
-        return this.workspaceDb.trace(ctx).transaction(async (db) => {
-            const ws = await this.workspaceService.getWorkspace(user.id, workspaceId);
-            ws.config.ideCredentials = crypto.randomBytes(32).toString("base64");
-            await db.store(ws);
-            return ws.config.ideCredentials;
-        });
+
+        return await this.workspaceService.getIDECredentials(user.id, workspaceId);
     }
 
     public async startWorkspace(

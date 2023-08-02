@@ -14,6 +14,7 @@ import { WorkspaceFactory } from "./workspace-factory";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
 import { WorkspaceStarter } from "./workspace-starter";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import * as crypto from "crypto";
 
 @injectable()
 export class WorkspaceService {
@@ -76,6 +77,21 @@ export class WorkspaceService {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "owner token not found");
         }
         return ownerToken;
+    }
+
+    async getIDECredentials(userId: string, workspaceId: string): Promise<string> {
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+
+        const workspace = await this.doGetWorkspace(workspaceId);
+        if (workspace.config.ideCredentials) {
+            return workspace.config.ideCredentials;
+        }
+        return this.db.transaction(async (db) => {
+            const ws = await this.doGetWorkspace(workspaceId, db);
+            ws.config.ideCredentials = crypto.randomBytes(32).toString("base64");
+            await db.store(ws);
+            return ws.config.ideCredentials;
+        });
     }
 
     async stopWorkspace(
@@ -150,8 +166,8 @@ export class WorkspaceService {
         log.info(`Purged Workspace ${workspaceId} and all WorkspaceInstances for this workspace`, { workspaceId });
     }
 
-    private async doGetWorkspace(workspaceId: string): Promise<Workspace> {
-        const workspace = await this.db.findById(workspaceId);
+    private async doGetWorkspace(workspaceId: string, workspaceDB?: WorkspaceDB): Promise<Workspace> {
+        const workspace = await (workspaceDB || this.db).findById(workspaceId);
         if (!workspace || !!workspace.softDeleted || workspace.deleted) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Workspace not found.");
         }
