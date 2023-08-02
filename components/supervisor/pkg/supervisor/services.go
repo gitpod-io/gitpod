@@ -730,6 +730,11 @@ func (c *ControlService) RegisterGRPC(srv *grpc.Server) {
 	api.RegisterControlServiceServer(srv, c)
 }
 
+// RegisterREST registers the REST info service.
+func (is *ControlService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
+	return api.RegisterControlServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
+}
+
 // ExposePort exposes a port.
 func (c *ControlService) ExposePort(ctx context.Context, req *api.ExposePortRequest) (*api.ExposePortResponse, error) {
 	err := c.portsManager.Expose(ctx, req.Port)
