@@ -4289,32 +4289,34 @@ public final class Control {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\rcontrol.proto\022\nsupervisor\032\014status.prot" +
-      "o\032\ninfo.proto\"\'\n\021ExposePortRequest\022\014\n\004po" +
-      "rt\030\001 \001(\rJ\004\010\002\020\003\"\024\n\022ExposePortResponse\"\031\n\027" +
-      "CreateSSHKeyPairRequest\"/\n\030CreateSSHKeyP" +
-      "airResponse\022\023\n\013private_key\030\001 \001(\t\"\361\001\n\025Cre" +
-      "ateDebugEnvRequest\0226\n\016workspace_type\030\001 \001" +
-      "(\0162\036.supervisor.DebugWorkspaceType\0221\n\016co" +
-      "ntent_source\030\002 \001(\0162\031.supervisor.ContentS" +
-      "ource\022\025\n\rworkspace_url\030\003 \001(\t\022\r\n\005tasks\030\004 " +
-      "\001(\t\022\031\n\021checkout_location\030\005 \001(\t\022\032\n\022worksp" +
-      "ace_location\030\006 \001(\t\022\020\n\010logLevel\030\007 \001(\t\"&\n\026" +
-      "CreateDebugEnvResponse\022\014\n\004envs\030\001 \003(\t2\233\002\n" +
-      "\016ControlService\022M\n\nExposePort\022\035.supervis" +
-      "or.ExposePortRequest\032\036.supervisor.Expose" +
-      "PortResponse\"\000\022_\n\020CreateSSHKeyPair\022#.sup" +
-      "ervisor.CreateSSHKeyPairRequest\032$.superv" +
-      "isor.CreateSSHKeyPairResponse\"\000\022Y\n\016Creat" +
-      "eDebugEnv\022!.supervisor.CreateDebugEnvReq" +
-      "uest\032\".supervisor.CreateDebugEnvResponse" +
-      "\"\000BF\n\030io.gitpod.supervisor.apiZ*github.c" +
-      "om/gitpod-io/gitpod/supervisor/apib\006prot" +
-      "o3"
+      "\n\rcontrol.proto\022\nsupervisor\032\034google/api/" +
+      "annotations.proto\032\014status.proto\032\ninfo.pr" +
+      "oto\"\'\n\021ExposePortRequest\022\014\n\004port\030\001 \001(\rJ\004" +
+      "\010\002\020\003\"\024\n\022ExposePortResponse\"\031\n\027CreateSSHK" +
+      "eyPairRequest\"/\n\030CreateSSHKeyPairRespons" +
+      "e\022\023\n\013private_key\030\001 \001(\t\"\361\001\n\025CreateDebugEn" +
+      "vRequest\0226\n\016workspace_type\030\001 \001(\0162\036.super" +
+      "visor.DebugWorkspaceType\0221\n\016content_sour" +
+      "ce\030\002 \001(\0162\031.supervisor.ContentSource\022\025\n\rw" +
+      "orkspace_url\030\003 \001(\t\022\r\n\005tasks\030\004 \001(\t\022\031\n\021che" +
+      "ckout_location\030\005 \001(\t\022\032\n\022workspace_locati" +
+      "on\030\006 \001(\t\022\020\n\010logLevel\030\007 \001(\t\"&\n\026CreateDebu" +
+      "gEnvResponse\022\014\n\004envs\030\001 \003(\t2\266\002\n\016ControlSe" +
+      "rvice\022M\n\nExposePort\022\035.supervisor.ExposeP" +
+      "ortRequest\032\036.supervisor.ExposePortRespon" +
+      "se\"\000\022z\n\020CreateSSHKeyPair\022#.supervisor.Cr" +
+      "eateSSHKeyPairRequest\032$.supervisor.Creat" +
+      "eSSHKeyPairResponse\"\033\202\323\344\223\002\025\022\023/v1/ssh_key" +
+      "s/create\022Y\n\016CreateDebugEnv\022!.supervisor." +
+      "CreateDebugEnvRequest\032\".supervisor.Creat" +
+      "eDebugEnvResponse\"\000BF\n\030io.gitpod.supervi" +
+      "sor.apiZ*github.com/gitpod-io/gitpod/sup" +
+      "ervisor/apib\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
+          com.google.api.AnnotationsProto.getDescriptor(),
           io.gitpod.supervisor.api.Status.getDescriptor(),
           io.gitpod.supervisor.api.Info.getDescriptor(),
         });
@@ -4354,6 +4356,12 @@ public final class Control {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_CreateDebugEnvResponse_descriptor,
         new java.lang.String[] { "Envs", });
+    com.google.protobuf.ExtensionRegistry registry =
+        com.google.protobuf.ExtensionRegistry.newInstance();
+    registry.add(com.google.api.AnnotationsProto.http);
+    com.google.protobuf.Descriptors.FileDescriptor
+        .internalUpdateFileDescriptor(descriptor, registry);
+    com.google.api.AnnotationsProto.getDescriptor();
     io.gitpod.supervisor.api.Status.getDescriptor();
     io.gitpod.supervisor.api.Info.getDescriptor();
   }
