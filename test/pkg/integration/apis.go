@@ -1106,6 +1106,7 @@ func (c *ComponentAPI) ClearImageBuilderClientCache() {
 type ContentService interface {
 	csapi.ContentServiceClient
 	csapi.WorkspaceServiceClient
+	csapi.HeadlessLogServiceClient
 }
 
 func (c *ComponentAPI) ContentService() (ContentService, error) {
@@ -1141,11 +1142,13 @@ func (c *ComponentAPI) ContentService() (ContentService, error) {
 	type cs struct {
 		csapi.ContentServiceClient
 		csapi.WorkspaceServiceClient
+		csapi.HeadlessLogServiceClient
 	}
 
 	c.contentServiceStatus.ContentService = cs{
-		ContentServiceClient:   csapi.NewContentServiceClient(conn),
-		WorkspaceServiceClient: csapi.NewWorkspaceServiceClient(conn),
+		ContentServiceClient:     csapi.NewContentServiceClient(conn),
+		WorkspaceServiceClient:   csapi.NewWorkspaceServiceClient(conn),
+		HeadlessLogServiceClient: csapi.NewHeadlessLogServiceClient(conn),
 	}
 
 	return c.contentServiceStatus.ContentService, nil
