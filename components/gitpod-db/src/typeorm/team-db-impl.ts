@@ -291,12 +291,13 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
         const membershipRepo = await this.getMembershipRepo();
 
         if (role != "owner") {
-            const ownerCount = await membershipRepo.count({
+            const allOwners = await membershipRepo.find({
                 teamId,
                 role: "owner",
                 deleted: false,
             });
-            if (ownerCount <= 1) {
+            const otherOwnerCount = allOwners.filter((m) => m.userId != userId).length;
+            if (otherOwnerCount === 0) {
                 throw new ApplicationError(ErrorCodes.CONFLICT, "An organization must retain at least one owner");
             }
         }

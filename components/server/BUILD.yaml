@@ -24,9 +24,8 @@ packages:
       yarnLock: ${coreYarnLockBase}/yarn.lock
       tsconfig: tsconfig.json
       commands:
-        # leeway executes the build and test step in the wrong order, so we have to switch them here
-        test: ["yarn", "build"]
-        build: ["yarn", "test"]
+        # leeway executes the build and test step in the wrong order, so we need to call a special script that builds before testing
+        test: ["yarn", "test:leeway"]
   - name: docker
     type: docker
     deps:

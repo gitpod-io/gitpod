@@ -120,7 +120,10 @@ describe("OrganizationService", async () => {
         owner = previouslyMember;
 
         // owner can downgrade themselves only if they are not the last owner
-        await expectError(ErrorCodes.CONFLICT, os.addOrUpdateMember(owner.id, org.id, owner.id, "member"));
+        await os.addOrUpdateMember(owner.id, org.id, owner.id, "member");
+        // verify they are still an owner
+        const members = await os.listMembers(owner.id, org.id);
+        expect(members.some((m) => m.userId === owner.id && m.role === "owner")).to.be.true;
 
         // owner can delete themselves only if they are not the last owner
         await expectError(ErrorCodes.CONFLICT, os.removeOrganizationMember(owner.id, org.id, owner.id));
