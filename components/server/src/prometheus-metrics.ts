@@ -222,13 +222,18 @@ export function reportCentralizedPermsValidation(operation: string, matches: boo
     centralizedPermissionsValidationsTotal.inc({ operation, matches_expectation: String(matches) });
 }
 
+export const fgaRelationsUpdateClientLatency = new prometheusClient.Histogram({
+    name: "gitpod_fga_relationship_update_seconds",
+    help: "Histogram of completed relationship updates",
+});
+
 export const spicedbClientLatency = new prometheusClient.Histogram({
     name: "gitpod_spicedb_client_requests_completed_seconds",
     help: "Histogram of completed spicedb client requests",
     labelNames: ["operation", "outcome"],
 });
 
-export function observespicedbClientLatency(operation: string, outcome: Error | undefined, durationInSeconds: number) {
+export function observeSpicedbClientLatency(operation: string, outcome: Error | undefined, durationInSeconds: number) {
     spicedbClientLatency.observe(
         { operation, outcome: outcome === undefined ? "success" : "error" },
         durationInSeconds,
