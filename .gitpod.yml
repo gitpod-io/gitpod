@@ -52,7 +52,6 @@ tasks:
           (cd install/installer && make deps)
           exit 0
     - name: Java
-      init: leeway run components/supervisor-api:generate-java
       command: |
           if [ -z "$RUN_GRADLE_TASK" ]; then
             read -r -p "Press enter to continue Java gradle task"

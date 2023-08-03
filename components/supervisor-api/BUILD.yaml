@@ -7,16 +7,3 @@ packages:
     config:
       commands:
         - ["echo"]
-  - name: java
-    type: generic
-    srcs:
-      - "*.proto"
-      - "third_party/**/*.proto"
-      - "generate-java.sh"
-    config:
-      commands:
-        - ["./generate-java.sh"]
-scripts:
-  - name: generate-java
-    description: Generate Java files from Surpervisor API proto files
-    script: ./generate-java.sh
