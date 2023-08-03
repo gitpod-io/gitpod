@@ -138,10 +138,7 @@ export class UserController {
 
                 // The user has supplied a valid token, we need to sign them in.
                 // Login this user (sets cookie as side-effect)
-                const user = await this.userService.findUserById(
-                    BUILTIN_INSTLLATION_ADMIN_USER_ID,
-                    BUILTIN_INSTLLATION_ADMIN_USER_ID,
-                );
+                const user = await this.userDb.findUserById(BUILTIN_INSTLLATION_ADMIN_USER_ID);
                 if (!user) {
                     // We respond with NOT_AUTHENTICATED to prevent gleaning whether the user, or token are invalid.
                     throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, "Admin user not found");

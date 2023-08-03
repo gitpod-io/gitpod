@@ -21,6 +21,7 @@ import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
 import { TeamMemberInfo, TeamMemberRole, User } from "@gitpod/gitpod-protocol";
 import { OrganizationService } from "../orgs/organization-service";
 import { UserService } from "../user/user-service";
+import { UserDB } from "@gitpod/gitpod-db/lib";
 const expect = chai.expect;
 
 @suite(timeout(10000))
@@ -113,6 +114,11 @@ class TestIamSessionApp {
                 bind(UserAuthentication).toConstantValue(this.userAuthenticationMock as any);
                 bind(UserService).toConstantValue(this.userServiceMock as any);
                 bind(OrganizationService).toConstantValue(this.orgServiceMock as any);
+                bind(UserDB).toConstantValue(<any>{
+                    transaction: async (run: () => void) => {
+                        return run();
+                    },
+                }); // unused
             }),
         );
         this.app = container.get(IamSessionApp);
