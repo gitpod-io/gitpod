@@ -26,7 +26,6 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.application
 import com.intellij.util.io.DigestUtil
-import com.intellij.util.io.await
 import com.intellij.util.io.delete
 import com.intellij.util.net.ssl.CertificateManager
 import com.intellij.util.proxy.CommonProxy
@@ -46,6 +45,7 @@ import io.gitpod.gitpodprotocol.api.entities.WorkspaceInstance
 import io.gitpod.jetbrains.gateway.common.GitpodConnectionHandleFactory
 import io.gitpod.jetbrains.icons.GitpodIcons
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.await
 import java.net.URL
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
