@@ -4117,7 +4117,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             });
         }
         const user = await this.checkAndBlockUser("listUsage");
-        await this.guardCostCenterAccess(ctx, attributionId, "get", "not_implemented");
+        await this.guardCostCenterAccess(ctx, attributionId, "update", "not_implemented");
         return this.usageService.listUsage(user.id, req);
     }
 
@@ -4129,7 +4129,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 attributionId,
             });
         }
-        await this.guardCostCenterAccess(ctx, parsedAttributionId, "get", "read_billing");
+        await this.guardCostCenterAccess(ctx, parsedAttributionId, "update", "read_billing");
         const result = await this.usageService.getCurrentBalance(user.id, parsedAttributionId.teamId);
         return result.usedCredits;
     }
