@@ -7,7 +7,7 @@
 import { v1 } from "@authzed/authzed-node";
 
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib";
-import { Organization, Project, TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
+import { TeamMemberRole } from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import {
     OrganizationPermission,
@@ -157,14 +157,34 @@ export class Authorizer {
     }
 
     async addUser(userId: string, owningOrgId?: string) {
-        await this.authorizer.writeRelationships(
-            set(rel.user(userId).self.user(userId)), //
-            set(
-                owningOrgId
-                    ? rel.user(userId).organization.organization(owningOrgId)
-                    : rel.user(userId).installation.installation,
-            ),
+        const oldOrgs = await this.findAll(rel.user(userId).organization.organization(""));
+        const updates = [set(rel.user(userId).self.user(userId))];
+        updates.push(
+            ...oldOrgs
+                .map((r) => r.subject?.object?.objectId)
+                .filter((orgId) => !!orgId && orgId !== owningOrgId)
+                .map((orgId) => remove(rel.user(userId).organization.organization(orgId!))),
         );
+
+        if (owningOrgId) {
+            updates.push(
+                set(rel.user(userId).organization.organization(owningOrgId)), //
+                remove(rel.user(userId).installation.installation),
+                remove(rel.installation.member.user(userId)),
+                remove(rel.installation.admin.user(userId)),
+            );
+        } else {
+            updates.push(
+                set(rel.user(userId).installation.installation), //
+                set(rel.installation.member.user(userId)),
+            );
+        }
+
+        await this.authorizer.writeRelationships(...updates);
+    }
+
+    async removeUser(userId: string) {
+        await this.removeAllRelationships("user", userId);
     }
 
     async addOrganizationRole(orgID: string, userID: string, role: TeamMemberRole): Promise<void> {
@@ -197,30 +217,45 @@ export class Authorizer {
         );
     }
 
-    async addOrganization(org: Organization, members: TeamMemberInfo[], projects: Project[]): Promise<void> {
+    async addOrganization(
+        orgId: string,
+        members: { userId: string; role: TeamMemberRole }[],
+        projectIds: string[],
+    ): Promise<void> {
+        await this.addOrganizationMembers(orgId, members);
+
+        await this.addOrganizationProjects(orgId, projectIds);
+
+        await this.authorizer.writeRelationships(
+            set(rel.organization(orgId).installation.installation), //
+        );
+    }
+
+    private async addOrganizationProjects(orgID: string, projectIds: string[]): Promise<void> {
+        const existing = await this.findAll(rel.project("").org.organization(orgID));
+        const toBeRemoved = asSet(existing.map((r) => r.resource?.objectId));
+        for (const projectId of projectIds) {
+            await this.addProjectToOrg(orgID, projectId);
+            toBeRemoved.delete(projectId);
+        }
+        for (const projectId of toBeRemoved) {
+            await this.removeProjectFromOrg(orgID, projectId);
+        }
+    }
+
+    private async addOrganizationMembers(
+        orgID: string,
+        members: { userId: string; role: TeamMemberRole }[],
+    ): Promise<void> {
+        const existing = await this.findAll(rel.organization(orgID).member.user(""));
+        const toBeRemoved = asSet(existing.map((r) => r.subject?.object?.objectId));
         for (const member of members) {
-            await this.addOrganizationRole(org.id, member.userId, member.role);
+            await this.addOrganizationRole(orgID, member.userId, member.role);
+            toBeRemoved.delete(member.userId);
         }
-
-        for (const project of projects) {
-            await this.addProjectToOrg(org.id, project.id);
+        for (const userId of toBeRemoved) {
+            await this.removeOrganizationRole(orgID, userId, "member");
         }
-
-        await this.authorizer.writeRelationships(
-            set(rel.organization(org.id).installation.installation), //
-        );
-    }
-
-    async addInstallationMemberRole(userID: string) {
-        await this.authorizer.writeRelationships(
-            set(rel.installation.member.user(userID)), //
-        );
-    }
-
-    async removeInstallationMemberRole(userID: string) {
-        await this.authorizer.writeRelationships(
-            remove(rel.installation.member.user(userID)), //
-        );
     }
 
     async addInstallationAdminRole(userID: string) {
@@ -258,6 +293,27 @@ export class Authorizer {
         }
         return relationships[0].relationship;
     }
+
+    async findAll(relation: v1.Relationship): Promise<v1.Relationship[]> {
+        const relationships = await this.authorizer.readRelationships({
+            consistency: v1.Consistency.create({
+                requirement: {
+                    oneofKind: "fullyConsistent",
+                    fullyConsistent: true,
+                },
+            }),
+            relationshipFilter: {
+                resourceType: relation.resource?.objectType || "",
+                optionalResourceId: relation.resource?.objectId || "",
+                optionalRelation: relation.relation,
+                optionalSubjectFilter: relation.subject?.object && {
+                    subjectType: relation.subject.object.objectType,
+                    optionalSubjectId: relation.subject.object.objectId,
+                },
+            },
+        });
+        return relationships.map((r) => r.relationship!);
+    }
 }
 
 function set(rs: v1.Relationship): v1.RelationshipUpdate {
@@ -274,14 +330,14 @@ function remove(rs: v1.Relationship): v1.RelationshipUpdate {
     });
 }
 
-function object(type: ResourceType, id: string): v1.ObjectReference {
+function object(type: ResourceType, id?: string): v1.ObjectReference {
     return v1.ObjectReference.create({
         objectId: id,
         objectType: type,
     });
 }
 
-function subject(type: ResourceType, id: string, relation?: Relation | Permission): v1.SubjectReference {
+function subject(type: ResourceType, id?: string, relation?: Relation | Permission): v1.SubjectReference {
     return v1.SubjectReference.create({
         object: object(type, id),
         optionalRelation: relation,
@@ -294,3 +350,13 @@ const consistency = v1.Consistency.create({
         fullyConsistent: true,
     },
 });
+
+function asSet<T>(array: (T | undefined)[]): Set<T> {
+    const result = new Set<T>();
+    for (const r of array) {
+        if (r) {
+            result.add(r);
+        }
+    }
+    return result;
+}

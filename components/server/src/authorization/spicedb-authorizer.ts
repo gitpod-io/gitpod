@@ -9,10 +9,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { inject, injectable } from "inversify";
-import {
-    observespicedbClientLatency as observeSpicedbClientLatency,
-    spicedbClientLatency,
-} from "../prometheus-metrics";
+import { observeSpicedbClientLatency, spicedbClientLatency } from "../prometheus-metrics";
 import { SpiceDBClient } from "./spicedb";
 
 @injectable()

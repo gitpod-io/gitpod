@@ -28,7 +28,6 @@ describe("UserService", async () => {
     let user: User;
     let user2: User;
     let nonOrgUser: User;
-    let admin: User;
 
     beforeEach(async () => {
         container = createTestContainer();
@@ -39,6 +38,7 @@ describe("UserService", async () => {
         auth = container.get(Authorizer);
         const orgService = container.get<OrganizationService>(OrganizationService);
         org = await orgService.createOrganization(BUILTIN_INSTLLATION_ADMIN_USER_ID, "myOrg");
+        const invite = await orgService.getOrCreateInvite(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id);
         user = await userService.createUser({
             organizationId: org.id,
             identity: {
@@ -48,6 +48,7 @@ describe("UserService", async () => {
                 primaryEmail: "yolo@yolo.com",
             },
         });
+        await orgService.joinOrganization(user.id, invite.id);
 
         user2 = await userService.createUser({
             organizationId: org.id,
@@ -58,6 +59,7 @@ describe("UserService", async () => {
                 primaryEmail: "yolo@yolo.com",
             },
         });
+        await orgService.joinOrganization(user2.id, invite.id);
 
         nonOrgUser = await userService.createUser({
             identity: {
@@ -67,8 +69,6 @@ describe("UserService", async () => {
                 primaryEmail: "yolo@yolo.com",
             },
         });
-
-        admin = await userService.findUserById(BUILTIN_INSTLLATION_ADMIN_USER_ID, BUILTIN_INSTLLATION_ADMIN_USER_ID);
     });
 
     afterEach(async () => {
@@ -86,8 +86,8 @@ describe("UserService", async () => {
         expect(await auth.hasPermissionOnUser(nonOrgUser.id, "read_info", user.id)).to.be.false;
         expect(await auth.hasPermissionOnUser(nonOrgUser.id, "write_info", user.id)).to.be.false;
 
-        expect(await auth.hasPermissionOnUser(admin.id, "read_info", user.id)).to.be.true;
-        expect(await auth.hasPermissionOnUser(admin.id, "write_info", user.id)).to.be.false;
+        expect(await auth.hasPermissionOnUser(BUILTIN_INSTLLATION_ADMIN_USER_ID, "read_info", user.id)).to.be.true;
+        expect(await auth.hasPermissionOnUser(BUILTIN_INSTLLATION_ADMIN_USER_ID, "write_info", user.id)).to.be.false;
     });
 
     it("updateLoggedInUser_avatarUrlNotUpdatable", async () => {

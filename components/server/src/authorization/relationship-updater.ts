@@ -10,6 +10,9 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
 import { Authorizer } from "./authorizer";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { v1 } from "@authzed/authzed-node";
+import { fgaRelationsUpdateClientLatency } from "../prometheus-metrics";
 
 @injectable()
 export class RelationshipUpdater {
@@ -33,65 +36,113 @@ export class RelationshipUpdater {
      * @returns
      */
     public async migrate(user: User): Promise<User> {
+        const fgaEnabled = await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
+            user: {
+                id: user.id,
+            },
+        });
+        if (!fgaEnabled) {
+            return user;
+        }
         if (user.additionalData?.fgaRelationshipsVersion === this.version) {
             return user;
         }
-        // TODO run in distributed lock
-        // return this.mutex.using([`fga-migration-${user.id}`], 2000, async () => {
-        const before = new Date().getTime();
+        const stopTimer = fgaRelationsUpdateClientLatency.startTimer();
+        try {
+            log.info({ userId: user.id }, `Updating FGA relationships for user.`, {
+                fromVersion: user?.additionalData?.fgaRelationshipsVersion,
+                toVersion: this.version,
+            });
+            // TODO run in distributed lock
+            // return this.mutex.using([`fga-migration-${user.id}`], 2000, async () => {
+            const before = new Date().getTime();
 
-        const updatedUser = await this.userDB.findUserById(user.id);
-        if (!updatedUser) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "User not found");
-        }
-        user = updatedUser;
-        if (user.additionalData?.fgaRelationshipsVersion === this.version) {
+            const updatedUser = await this.userDB.findUserById(user.id);
+            if (!updatedUser) {
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, "User not found");
+            }
+            user = updatedUser;
+            if (user.additionalData?.fgaRelationshipsVersion === this.version) {
+                return user;
+            }
+            log.info({ userId: user.id }, `Updating FGA relationships for user.`, {
+                fromVersion: user?.additionalData?.fgaRelationshipsVersion,
+                toVersion: this.version,
+            });
+            const orgs = await this.findAffectedOrganizations(user.id);
+
+            // Add relationships
+            await this.updateUser(user);
+            for (const org of orgs) {
+                await this.updateOrganization(org);
+            }
+            AdditionalUserData.set(user, {
+                fgaRelationshipsVersion: this.version,
+            });
+            await this.userDB.updateUserPartial({
+                id: user.id,
+                additionalData: user.additionalData,
+            });
+            log.info({ userId: user.id }, `Finished updating relationships.`, {
+                duration: new Date().getTime() - before,
+            });
             return user;
+            // });
+        } catch (error) {
+            log.error({ userId: user.id }, `Error updating relationships.`, error);
+            return user;
+        } finally {
+            fgaRelationsUpdateClientLatency.observe(stopTimer());
         }
-        log.info({ userId: user.id }, `Updating FGA relationships for user.`, {
-            fromVersion: user?.additionalData?.fgaRelationshipsVersion,
-            toVersion: this.version,
-        });
-        const orgs = await this.orgDB.findTeamsByUser(user.id);
+    }
 
-        //TODO only remove relations that should no longer be there. Removing everything will break concurrent access.
-        await this.authorizer.removeAllRelationships("user", user.id);
-        for (const org of orgs) {
-            await this.authorizer.removeAllRelationships("organization", org.id);
+    private async findAffectedOrganizations(userId: string): Promise<Organization[]> {
+        const orgs = await this.orgDB.findTeamsByUser(userId);
+        const orgRelations = await this.authorizer.findAll(
+            v1.Relationship.create({
+                subject: {
+                    object: {
+                        objectType: "user",
+                        objectId: userId,
+                    },
+                },
+                resource: {
+                    objectType: "organization",
+                },
+            }),
+        );
+        for (const rel of orgRelations) {
+            const orgId = rel.resource?.objectId;
+            if (orgId && !orgs.find((o) => o.id === orgId)) {
+                const org = await this.orgDB.findTeamById(orgId);
+                if (org) {
+                    orgs.push(org);
+                }
+            }
         }
-
-        // Add relationships
-        await this.updateUser(user);
-        for (const org of orgs) {
-            await this.updateOrganization(org);
-        }
-        AdditionalUserData.set(user, {
-            fgaRelationshipsVersion: this.version,
-        });
-        await this.userDB.updateUserPartial({
-            id: user.id,
-            additionalData: user.additionalData,
-        });
-        log.info({ userId: user.id }, `Finished updating relationships.`, {
-            duration: new Date().getTime() - before,
-        });
-        return user;
-        // });
+        return orgs;
     }
 
     private async updateUser(user: User): Promise<void> {
         await this.authorizer.addUser(user.id, user.organizationId);
         if (!user.organizationId) {
-            await this.authorizer.addInstallationMemberRole(user.id);
             if ((user.rolesOrPermissions || []).includes("admin")) {
                 await this.authorizer.addInstallationAdminRole(user.id);
+            } else {
+                await this.authorizer.removeInstallationAdminRole(user.id);
             }
+        } else {
+            await this.authorizer.removeInstallationAdminRole(user.id);
         }
     }
 
     private async updateOrganization(org: Organization): Promise<void> {
         const members = await this.orgDB.findMembersByTeam(org.id);
         const projects = await this.projectDB.findProjects(org.id);
-        await this.authorizer.addOrganization(org, members, projects);
+        await this.authorizer.addOrganization(
+            org.id,
+            members,
+            projects.map((p) => p.id),
+        );
     }
 }

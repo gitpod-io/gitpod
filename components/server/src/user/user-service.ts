@@ -14,6 +14,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { CreateUserParams } from "./user-authentication";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
+import { RelationshipUpdater } from "../authorization/relationship-updater";
 
 @injectable()
 export class UserService {
@@ -22,6 +23,7 @@ export class UserService {
         @inject(UserDB) private readonly userDb: UserDB,
         @inject(Authorizer) private readonly authorizer: Authorizer,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
+        @inject(RelationshipUpdater) private readonly relationshipUpdater: RelationshipUpdater,
     ) {}
 
     public async createUser(
@@ -46,11 +48,6 @@ export class UserService {
             AdditionalUserData.set(newUser, { shouldSeeMigrationMessage: false });
             const result = await userDb.storeUser(newUser);
             await this.authorizer.addUser(result.id, organizationId);
-            if (organizationId) {
-                await this.authorizer.addOrganizationRole(organizationId, result.id, "member");
-            } else {
-                await this.authorizer.addInstallationMemberRole(result.id);
-            }
             if (token) {
                 await userDb.storeSingleToken(identity, token);
             }
@@ -70,12 +67,19 @@ export class UserService {
     }
 
     async findUserById(userId: string, id: string): Promise<User> {
-        await this.authorizer.checkPermissionOnUser(userId, "read_info", id);
+        if (userId !== id) {
+            await this.authorizer.checkPermissionOnUser(userId, "read_info", id);
+        }
         const result = await this.userDb.findUserById(id);
         if (!result) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
         }
-        return result;
+        try {
+            return await this.relationshipUpdater.migrate(result);
+        } catch (error) {
+            log.error({ userId: id }, "Failed to migrate user", error);
+            return result;
+        }
     }
 
     async findTokensForIdentity(userId: string, identity: Identity): Promise<TokenEntry[]> {
