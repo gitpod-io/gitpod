@@ -130,7 +130,13 @@ export class WorkspaceGarbageCollector implements Job {
                 workspaces.map((ws) =>
                     this.workspaceService
                         .hardDeleteWorkspace(ws.ownerId, ws.id)
-                        .catch((err) => log.error("failed to hard-delete workspace", err)),
+                        .catch((err) =>
+                            log.error(
+                                { userId: ws.ownerId, workspaceId: ws.id },
+                                "failed to hard-delete workspace",
+                                err,
+                            ),
+                        ),
                 ), // TODO(gpl) This should be a system user/service account instead of ws owner
             );
 
