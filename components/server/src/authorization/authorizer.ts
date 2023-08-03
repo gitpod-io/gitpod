@@ -19,6 +19,7 @@ import {
     rel,
 } from "./definitions";
 import { SpiceDBAuthorizer } from "./spicedb-authorizer";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 export function createInitializingAuthorizer(spiceDbAuthorizer: SpiceDBAuthorizer): Authorizer {
     const target = new Authorizer(spiceDbAuthorizer);
@@ -127,8 +128,10 @@ export class Authorizer {
     }
 
     // write operations below
-
-    public async removeAllRelationships(type: ResourceType, id: string) {
+    public async removeAllRelationships(userId: string, type: ResourceType, id: string) {
+        if (await this.isDisabled(userId)) {
+            return;
+        }
         await this.authorizer.deleteRelationships(
             v1.DeleteRelationshipsRequest.create({
                 relationshipFilter: {
@@ -156,7 +159,18 @@ export class Authorizer {
         }
     }
 
+    private async isDisabled(userId: string): Promise<boolean> {
+        return !(await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
+            user: {
+                id: userId,
+            },
+        }));
+    }
+
     async addUser(userId: string, owningOrgId?: string) {
+        if (await this.isDisabled(userId)) {
+            return;
+        }
         const oldOrgs = await this.findAll(rel.user(userId).organization.organization(""));
         const updates = [set(rel.user(userId).self.user(userId))];
         updates.push(
@@ -184,10 +198,16 @@ export class Authorizer {
     }
 
     async removeUser(userId: string) {
-        await this.removeAllRelationships("user", userId);
+        if (await this.isDisabled(userId)) {
+            return;
+        }
+        await this.removeAllRelationships(userId, "user", userId);
     }
 
     async addOrganizationRole(orgID: string, userID: string, role: TeamMemberRole): Promise<void> {
+        if (await this.isDisabled(userID)) {
+            return;
+        }
         const updates = [set(rel.organization(orgID).member.user(userID))];
         if (role === "owner") {
             updates.push(set(rel.organization(orgID).owner.user(userID)));
@@ -198,6 +218,9 @@ export class Authorizer {
     }
 
     async removeOrganizationRole(orgID: string, userID: string, role: TeamMemberRole): Promise<void> {
+        if (await this.isDisabled(userID)) {
+            return;
+        }
         const updates = [remove(rel.organization(orgID).owner.user(userID))];
         if (role === "member") {
             updates.push(remove(rel.organization(orgID).member.user(userID)));
@@ -205,41 +228,51 @@ export class Authorizer {
         await this.authorizer.writeRelationships(...updates);
     }
 
-    async addProjectToOrg(orgID: string, projectID: string): Promise<void> {
+    async addProjectToOrg(userId: string, orgID: string, projectID: string): Promise<void> {
+        if (await this.isDisabled(userId)) {
+            return;
+        }
         await this.authorizer.writeRelationships(
             set(rel.project(projectID).org.organization(orgID)), //
         );
     }
 
-    async removeProjectFromOrg(orgID: string, projectID: string): Promise<void> {
+    async removeProjectFromOrg(userId: string, orgID: string, projectID: string): Promise<void> {
+        if (await this.isDisabled(userId)) {
+            return;
+        }
         await this.authorizer.writeRelationships(
             remove(rel.project(projectID).org.organization(orgID)), //
         );
     }
 
     async addOrganization(
+        userId: string,
         orgId: string,
         members: { userId: string; role: TeamMemberRole }[],
         projectIds: string[],
     ): Promise<void> {
+        if (await this.isDisabled(userId)) {
+            return;
+        }
         await this.addOrganizationMembers(orgId, members);
 
-        await this.addOrganizationProjects(orgId, projectIds);
+        await this.addOrganizationProjects(userId, orgId, projectIds);
 
         await this.authorizer.writeRelationships(
             set(rel.organization(orgId).installation.installation), //
         );
     }
 
-    private async addOrganizationProjects(orgID: string, projectIds: string[]): Promise<void> {
+    private async addOrganizationProjects(userId: string, orgID: string, projectIds: string[]): Promise<void> {
         const existing = await this.findAll(rel.project("").org.organization(orgID));
         const toBeRemoved = asSet(existing.map((r) => r.resource?.objectId));
         for (const projectId of projectIds) {
-            await this.addProjectToOrg(orgID, projectId);
+            await this.addProjectToOrg(userId, orgID, projectId);
             toBeRemoved.delete(projectId);
         }
         for (const projectId of toBeRemoved) {
-            await this.removeProjectFromOrg(orgID, projectId);
+            await this.removeProjectFromOrg(userId, orgID, projectId);
         }
     }
 
@@ -258,15 +291,21 @@ export class Authorizer {
         }
     }
 
-    async addInstallationAdminRole(userID: string) {
+    async addInstallationAdminRole(userId: string) {
+        if (await this.isDisabled(userId)) {
+            return;
+        }
         await this.authorizer.writeRelationships(
-            set(rel.installation.admin.user(userID)), //
+            set(rel.installation.admin.user(userId)), //
         );
     }
 
-    async removeInstallationAdminRole(userID: string) {
+    async removeInstallationAdminRole(userId: string) {
+        if (await this.isDisabled(userId)) {
+            return;
+        }
         await this.authorizer.writeRelationships(
-            remove(rel.installation.admin.user(userID)), //
+            remove(rel.installation.admin.user(userId)), //
         );
     }
 

@@ -66,7 +66,7 @@ export class OrganizationService {
             result = await this.teamDB.transaction(async (db) => {
                 result = await db.createTeam(userId, name);
                 const members = await db.findMembersByTeam(result.id);
-                await this.auth.addOrganization(result.id, members, []);
+                await this.auth.addOrganization(userId, result.id, members, []);
                 return result;
             });
         } catch (err) {
@@ -110,7 +110,7 @@ export class OrganizationService {
 
                 await db.deleteTeam(orgId);
 
-                await this.auth.removeAllRelationships("organization", orgId);
+                await this.auth.removeAllRelationships(userId, "organization", orgId);
             });
             return this.analytics.track({
                 userId: userId,
@@ -121,6 +121,7 @@ export class OrganizationService {
             });
         } catch (err) {
             await this.auth.addOrganization(
+                userId,
                 orgId,
                 members,
                 projects.map((p) => p.id),
