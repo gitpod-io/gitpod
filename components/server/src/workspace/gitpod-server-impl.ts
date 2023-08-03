@@ -644,7 +644,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkUser("maySetTimeout");
         await this.guardAccess({ kind: "user", subject: user }, "get");
 
-        return await this.entitlementService.maySetTimeout(user, new Date());
+        return await this.entitlementService.maySetTimeout(user.id);
     }
 
     public async updateWorkspaceTimeoutSetting(
@@ -659,7 +659,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("updateWorkspaceTimeoutSetting");
         await this.guardAccess({ kind: "user", subject: user }, "update");
 
-        if (!(await this.entitlementService.maySetTimeout(user, new Date()))) {
+        if (!(await this.entitlementService.maySetTimeout(user.id))) {
             throw new Error("configure workspace timeout only available for paid user.");
         }
 
@@ -1663,12 +1663,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<void> {
         let result: MayStartWorkspaceResult = {};
         try {
-            result = await this.entitlementService.mayStartWorkspace(
-                user,
-                organizationId,
-                new Date(),
-                runningInstances,
-            );
+            result = await this.entitlementService.mayStartWorkspace(user, organizationId, runningInstances);
             TraceContext.addNestedTags(ctx, { mayStartWorkspace: { result } });
         } catch (err) {
             log.error({ userId: user.id }, "EntitlementSerivce.mayStartWorkspace error", err);
@@ -1858,10 +1853,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkUser("setWorkspaceTimeout");
 
-        if (!(await this.entitlementService.maySetTimeout(user, new Date()))) {
-            throw new ApplicationError(ErrorCodes.PLAN_PROFESSIONAL_REQUIRED, "Plan upgrade is required");
-        }
-
         let validatedDuration;
         try {
             validatedDuration = WorkspaceTimeoutDuration.validate(duration);
@@ -1870,6 +1861,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
+        if (!(await this.entitlementService.maySetTimeout(user.id, workspace.organizationId))) {
+            throw new ApplicationError(ErrorCodes.PLAN_PROFESSIONAL_REQUIRED, "Plan upgrade is required");
+        }
+
         const runningInstances = await this.workspaceDb.trace(ctx).findRegularRunningInstances(user.id);
         const runningInstance = runningInstances.find((i) => i.workspaceId === workspaceId);
         if (!runningInstance) {
@@ -1896,9 +1891,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkUser("getWorkspaceTimeout");
 
-        const canChange = await this.entitlementService.maySetTimeout(user, new Date());
-
         const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
+        const canChange = await this.entitlementService.maySetTimeout(user.id, workspace.organizationId);
+
         const runningInstance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
         if (!runningInstance) {
             log.warn({ userId: user.id, workspaceId }, "Can only get keep-alive for running workspaces");
@@ -4119,8 +4114,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getBillingModeForUser(ctx: TraceContextWithSpan): Promise<BillingMode> {
         traceAPIParams(ctx, {});
 
-        const user = await this.checkUser("getBillingModeForUser");
-        return this.billingModes.getBillingModeForUser(user, new Date());
+        await this.checkUser("getBillingModeForUser");
+        return this.billingModes.getBillingModeForUser();
     }
 
     async getBillingModeForTeam(ctx: TraceContextWithSpan, teamId: string): Promise<BillingMode> {
@@ -4129,7 +4124,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("getBillingModeForTeam");
         await this.guardTeamOperation(teamId, "get", "not_implemented");
 
-        return this.billingModes.getBillingMode(user.id, teamId, new Date());
+        return this.billingModes.getBillingMode(user.id, teamId);
     }
 
     // (SaaS) – admin
@@ -4145,7 +4140,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (!parsedAttributionId) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Unable to parse attributionId");
         }
-        return this.billingModes.getBillingMode(user.id, parsedAttributionId.teamId, new Date());
+        return this.billingModes.getBillingMode(user.id, parsedAttributionId.teamId);
     }
 
     async adminGetCostCenter(ctx: TraceContext, attributionId: string): Promise<CostCenterJSON | undefined> {
