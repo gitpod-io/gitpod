@@ -63,9 +63,12 @@ func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Reques
 }
 
 func (s *WorkspaceService) StreamWorkspaceStatus(ctx context.Context, req *connect.Request[v1.StreamWorkspaceStatusRequest], stream *connect.ServerStream[v1.StreamWorkspaceStatusResponse]) error {
-	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
-	if err != nil {
-		return err
+	workspaceID := req.Msg.GetWorkspaceId()
+	if workspaceID != "" {
+		_, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
+		if err != nil {
+			return err
+		}
 	}
 
 	conn, err := getConnection(ctx, s.connectionPool)
