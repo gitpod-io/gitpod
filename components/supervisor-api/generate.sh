@@ -47,3 +47,6 @@ local_go_protoc "$COMPONENTS_DIR"
 go_protoc_gateway "$COMPONENTS_DIR"
 ./generate-java.sh
 update_license
+
+# remove trailing whitespace
+find "$COMPONENTS_DIR/supervisor-api/java" -name "*.java" -type f -print0 | xargs -0 pre-commit run trailing-whitespace --files
