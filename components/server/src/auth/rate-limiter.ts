@@ -85,6 +85,7 @@ const defaultFunctions: FunctionsConfig = {
     getOpenPorts: { group: "default", points: 1 },
     openPort: { group: "default", points: 1 },
     closePort: { group: "default", points: 1 },
+    updateGitStatus: { group: "default", points: 1 },
     getWorkspaceEnvVars: { group: "default", points: 1 },
     getAllEnvVars: { group: "default", points: 1 },
     setEnvVar: { group: "default", points: 1 },

@@ -13,6 +13,7 @@ import {
     DBGitpodToken,
     EmailDomainFilterDB,
     TeamDB,
+    RedisPublisher,
 } from "@gitpod/gitpod-db/lib";
 import { BlockedRepositoryDB } from "@gitpod/gitpod-db/lib/blocked-repository-db";
 import {
@@ -70,6 +71,7 @@ import {
     RoleOrPermission,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
     PortProtocol,
+    WorkspaceInstanceRepoStatus,
 } from "@gitpod/gitpod-protocol";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import {
@@ -270,6 +272,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         @inject(EnvVarService) private readonly envVarService: EnvVarService,
         @inject(RedisSubscriber) private readonly subscriber: RedisSubscriber,
+        @inject(RedisPublisher) private readonly publisher: RedisPublisher,
+        @inject(TracedWorkspaceDB) private readonly workspaceDB: DBWithTracing<WorkspaceDB>,
     ) {}
 
     /** Id the uniquely identifies this server instance */
@@ -1982,6 +1986,36 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             );
 
         return ports;
+    }
+
+    public async updateGitStatus(
+        ctx: TraceContext,
+        workspaceId: string,
+        gitStatus: Required<WorkspaceInstanceRepoStatus> | undefined,
+    ): Promise<void> {
+        traceAPIParams(ctx, { workspaceId, repo: gitStatus });
+        traceWI(ctx, { workspaceId });
+
+        const user = await this.checkAndBlockUser("updateGitStatus");
+
+        const workspace = await this.internalGetWorkspace(user, workspaceId, this.workspaceDb.trace(ctx));
+        let instance = await this.workspaceDb.trace(ctx).findCurrentInstance(workspaceId);
+        if (!instance) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `workspace ${workspaceId} has no instance`);
+        }
+        traceWI(ctx, { instanceId: instance.id });
+        await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "update");
+
+        if (WorkspaceInstanceRepoStatus.equals(instance.gitStatus, gitStatus)) {
+            return;
+        }
+
+        instance = await this.workspaceDB.trace(ctx).updateInstancePartial(instance.id, { gitStatus });
+        await this.publisher.publishInstanceUpdate({
+            instanceID: instance.id,
+            ownerID: workspace.ownerId,
+            workspaceID: workspace.id,
+        });
     }
 
     public async openPort(

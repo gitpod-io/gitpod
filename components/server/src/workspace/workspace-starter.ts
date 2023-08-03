@@ -1599,6 +1599,7 @@ export class WorkspaceStarter {
             "function:getGitpodTokenScopes",
             "function:accessCodeSyncStorage",
             "function:guessGitTokenScopes",
+            "function:updateGitStatus",
             "function:getWorkspaceEnvVars",
             "function:getEnvVars", // TODO remove this after new gitpod-cli is deployed
             "function:setEnvVar",

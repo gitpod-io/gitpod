@@ -4,12 +4,17 @@ package gitpod.experimental.v1;
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1";
 
+import "gitpod/experimental/v1/workspaces.proto";
+
 service IDEClientService {
     // SendHeartbeat sends a clientheartbeat signal for a running workspace.
     rpc SendHeartbeat(SendHeartbeatRequest) returns (SendHeartbeatResponse) {}
 
     // SendDidClose sends a client close signal for a running workspace.
     rpc SendDidClose(SendDidCloseRequest) returns (SendDidCloseResponse) {}
+
+    // UpdateGitStatus updates the status of a repository in a workspace.
+    rpc UpdateGitStatus(UpdateGitStatusRequest) returns (UpdateGitStatusResponse) {}
 }
 
 message SendHeartbeatRequest {
@@ -21,3 +26,9 @@ message SendDidCloseRequest {
     string workspace_id = 1;
 }
 message SendDidCloseResponse {}
+
+message UpdateGitStatusRequest {
+    string workspace_id = 1;
+    GitStatus status = 2;
+}
+message UpdateGitStatusResponse {}

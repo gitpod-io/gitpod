@@ -544,7 +544,7 @@ func TestClientServerStreamInterceptor(t *testing.T) {
 
 	svc := NewWorkspaceService(&FakeServerConnPool{
 		api: serverMock,
-	})
+	}, nil)
 
 	keyset := jwstest.GenerateKeySet(t)
 	rsa256, err := jws.NewRSA256(keyset)
@@ -731,7 +731,7 @@ func TestConvertWorkspaceInfo(t *testing.T) {
 				act Expectation
 				err error
 			)
-			act.Result, err = convertWorkspaceInfo(&test.Input)
+			act.Result, err = convertWorkspaceInfo(&test.Input, false)
 			if err != nil {
 				act.Error = err.Error()
 			}
@@ -752,7 +752,7 @@ func FuzzConvertWorkspaceInfo(f *testing.F) {
 		}
 
 		// we really just care for panics
-		_, _ = convertWorkspaceInfo(&nfo)
+		_, _ = convertWorkspaceInfo(&nfo, false)
 	})
 }
 
@@ -773,7 +773,7 @@ func setupWorkspacesService(t *testing.T) (*protocol.MockAPIInterface, v1connect
 
 	svc := NewWorkspaceService(&FakeServerConnPool{
 		api: serverMock,
-	})
+	}, nil)
 
 	keyset := jwstest.GenerateKeySet(t)
 	rsa256, err := jws.NewRSA256(keyset)

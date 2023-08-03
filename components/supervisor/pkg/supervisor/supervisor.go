@@ -48,6 +48,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/gitpod-io/gitpod/common-go/analytics"
+	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
@@ -248,6 +249,13 @@ func Run(options ...RunOption) {
 	if err != nil {
 		log.WithError(err).Fatal("cannot find Gitpod API endpoint")
 	}
+
+	experimentsClientOpts := []experiments.ClientOpt{}
+	if cfg.ConfigcatEnabled {
+		experimentsClientOpts = append(experimentsClientOpts, experiments.WithGitpodProxy(host))
+	}
+	exps := experiments.NewClient(experimentsClientOpts...)
+
 	var (
 		ideReady                       = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
 		desktopIdeReady *ideReadyState = nil
@@ -267,7 +275,7 @@ func Run(options ...RunOption) {
 			OwnerID:           cfg.OwnerId,
 			SupervisorVersion: Version,
 			ConfigcatEnabled:  cfg.ConfigcatEnabled,
-		}, tokenService)
+		}, tokenService, exps)
 	}
 
 	if cfg.GetDesktopIDE() != nil {
@@ -346,6 +354,20 @@ func Run(options ...RunOption) {
 	}
 
 	taskManager := newTasksManager(cfg, termMuxSrv, cstate, nil, ideReady, desktopIdeReady)
+
+	gitStatusWg := &sync.WaitGroup{}
+	gitStatusCtx, stopGitStatus := context.WithCancel(ctx)
+	if !cfg.isPrebuild() && !cfg.isHeadless() && !opts.RunGP && !cfg.isDebugWorkspace() {
+		gitStatusWg.Add(1)
+		gitStatusService := &GitStatusService{
+			cfg:           cfg,
+			experiments:   exps,
+			content:       cstate,
+			git:           &git.Client{Location: cfg.RepoRoot},
+			gitpodService: gitpodService,
+		}
+		go gitStatusService.Run(gitStatusCtx, gitStatusWg)
+	}
 
 	willShutdownCtx, fireWillShutdown := context.WithCancel(ctx)
 	apiServices := []RegisterableService{
@@ -466,6 +488,11 @@ func Run(options ...RunOption) {
 
 	log.Info("received SIGTERM (or shutdown) - tearing down")
 	fireWillShutdown()
+
+	// wait for last git status to persist
+	stopGitStatus()
+	gitStatusWg.Wait()
+
 	terminalShutdownCtx, cancelTermination := context.WithTimeout(context.Background(), cfg.GetTerminationGracePeriod())
 	defer cancelTermination()
 	cancel()

@@ -85,3 +85,39 @@ func (this *IDEClientService) SendDidClose(ctx context.Context, req *connect.Req
 
 	return connect.NewResponse(&v1.SendDidCloseResponse{}), nil
 }
+
+func (s *IDEClientService) UpdateGitStatus(ctx context.Context, req *connect.Request[v1.UpdateGitStatusRequest]) (*connect.Response[v1.UpdateGitStatusResponse], error) {
+	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+
+	var status *protocol.WorkspaceInstanceRepoStatus
+	if req.Msg.GetStatus() != nil {
+		status = &protocol.WorkspaceInstanceRepoStatus{
+			Branch:               req.Msg.GetStatus().GetBranch(),
+			LatestCommit:         req.Msg.GetStatus().GetLatestCommit(),
+			TotalUncommitedFiles: float64(req.Msg.GetStatus().GetTotalUncommitedFiles()),
+			TotalUntrackedFiles:  float64(req.Msg.GetStatus().GetTotalUntrackedFiles()),
+			TotalUnpushedCommits: float64(req.Msg.GetStatus().GetTotalUnpushedCommits()),
+			UncommitedFiles:      req.Msg.GetStatus().GetUncommitedFiles(),
+			UntrackedFiles:       req.Msg.GetStatus().GetUntrackedFiles(),
+			UnpushedCommits:      req.Msg.GetStatus().GetUnpushedCommits(),
+		}
+	}
+
+	err = conn.UpdateGitStatus(ctx, workspaceID, status)
+	if err != nil {
+		log.Extract(ctx).Error("Failed to update repo status")
+		return nil, proxy.ConvertError(err)
+	}
+
+	return connect.NewResponse(
+		&v1.UpdateGitStatusResponse{},
+	), nil
+}
