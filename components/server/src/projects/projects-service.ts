@@ -239,10 +239,10 @@ export class ProjectsService {
             await this.projectDB.transaction(async (db) => {
                 await db.storeProject(project);
 
-                await this.auth.addProjectToOrg(teamId, project.id);
+                await this.auth.addProjectToOrg(installer.id, teamId, project.id);
             });
         } catch (err) {
-            await this.auth.removeProjectFromOrg(teamId, project.id);
+            await this.auth.removeProjectFromOrg(installer.id, teamId, project.id);
             throw err;
         }
         await this.onDidCreateProject(project, installer);
@@ -309,7 +309,7 @@ export class ProjectsService {
                 orgId = project.teamId;
                 await db.markDeleted(projectId);
 
-                await this.auth.removeProjectFromOrg(orgId, projectId);
+                await this.auth.removeProjectFromOrg(userId, orgId, projectId);
             });
             this.analytics.track({
                 userId,
@@ -320,7 +320,7 @@ export class ProjectsService {
             });
         } catch (err) {
             if (orgId) {
-                await this.auth.addProjectToOrg(orgId, projectId);
+                await this.auth.addProjectToOrg(userId, orgId, projectId);
             }
             throw err;
         }

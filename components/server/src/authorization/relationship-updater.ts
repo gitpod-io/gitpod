@@ -74,7 +74,7 @@ export class RelationshipUpdater {
             // Add relationships
             await this.updateUser(user);
             for (const org of orgs) {
-                await this.updateOrganization(org);
+                await this.updateOrganization(user.id, org);
             }
             AdditionalUserData.set(user, {
                 fgaRelationshipsVersion: this.version,
@@ -136,10 +136,11 @@ export class RelationshipUpdater {
         }
     }
 
-    private async updateOrganization(org: Organization): Promise<void> {
+    private async updateOrganization(userId: string, org: Organization): Promise<void> {
         const members = await this.orgDB.findMembersByTeam(org.id);
         const projects = await this.projectDB.findProjects(org.id);
         await this.authorizer.addOrganization(
+            userId,
             org.id,
             members,
             projects.map((p) => p.id),
