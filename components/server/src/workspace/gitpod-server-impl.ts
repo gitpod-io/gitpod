@@ -1987,7 +1987,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("updateGitStatus");
 
-        const workspace = await this.internalGetWorkspace(user, workspaceId, this.workspaceDb.trace(ctx));
+        const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
         let instance = await this.workspaceDb.trace(ctx).findCurrentInstance(workspaceId);
         if (!instance) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `workspace ${workspaceId} has no instance`);
@@ -3304,7 +3304,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     async adminForceStopWorkspace(ctx: TraceContext, workspaceId: string): Promise<void> {
         traceAPIParams(ctx, { workspaceId });
-        
+
         const admin = await this.guardAdminAccess(
             "adminForceStopWorkspace",
             { id: workspaceId },
