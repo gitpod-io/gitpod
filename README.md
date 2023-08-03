@@ -2,7 +2,7 @@
   <a href="https://www.gitpod.io">
     <img src="https://raw.githubusercontent.com/gitpod-io/gitpod/master/components/dashboard/src/icons/gitpod.svg" alt="Gitpod Logo" height="60" />
     <br />
-    <strong>Gitpod</strong>
+    <strong>Gitpod Test</strong>
   </a>
   <br />
   <span>Always ready-to-code.</span>
