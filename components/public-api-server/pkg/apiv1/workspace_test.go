@@ -566,7 +566,7 @@ func TestClientServerStreamInterceptor(t *testing.T) {
 	))
 
 	resp, _ := client.StreamWorkspaceStatus(context.Background(), connect.NewRequest(&v1.StreamWorkspaceStatusRequest{
-		WorkspaceId: "",
+		WorkspaceId: "invalid",
 	}))
 
 	resp.Close()
