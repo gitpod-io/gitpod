@@ -21,7 +21,6 @@ import {
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { getCommitInfo, HostContextProvider } from "../auth/host-context-provider";
-import { WorkspaceFactory } from "../workspace/workspace-factory";
 import { ConfigProvider } from "../workspace/config-provider";
 import { WorkspaceStarter } from "../workspace/workspace-starter";
 import { Config } from "../config";
@@ -38,6 +37,7 @@ import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messag
 import { UserAuthentication } from "../user/user-authentication";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
 import { EnvVarService } from "../workspace/env-var-service";
+import { WorkspaceService } from "../workspace/workspace-service";
 
 export class WorkspaceRunningError extends Error {
     constructor(msg: string, public instance: WorkspaceInstance) {
@@ -56,7 +56,7 @@ export interface StartPrebuildParams {
 @injectable()
 export class PrebuildManager {
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
-    @inject(WorkspaceFactory) protected readonly workspaceFactory: WorkspaceFactory;
+    @inject(WorkspaceService) protected readonly workspaceService: WorkspaceService;
     @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(ConfigProvider) protected readonly configProvider: ConfigProvider;
@@ -77,21 +77,18 @@ export class PrebuildManager {
             const results: Promise<any>[] = [];
             for (const prebuild of prebuilds) {
                 try {
-                    for (const instance of prebuild.instances) {
-                        log.info(
-                            { userId: user.id, instanceId: instance.id, workspaceId: instance.workspaceId },
-                            "Cancelling Prebuild workspace because a newer commit was pushed to the same branch.",
-                        );
-                        results.push(
-                            this.workspaceStarter.stopWorkspaceInstance(
-                                { span },
-                                instance.id,
-                                instance.region,
-                                "prebuild cancelled because a newer commit was pushed to the same branch",
-                                StopWorkspacePolicy.ABORT,
-                            ),
-                        );
-                    }
+                    log.info(
+                        { userId: user.id, workspaceId: prebuild.workspace.id },
+                        "Cancelling Prebuild workspace because a newer commit was pushed to the same branch.",
+                    );
+                    results.push(
+                        this.workspaceService.stopWorkspace(
+                            user.id,
+                            prebuild.workspace.id,
+                            "prebuild cancelled because a newer commit was pushed to the same branch",
+                            StopWorkspacePolicy.ABORT,
+                        ),
+                    );
                     prebuild.prebuild.state = "aborted";
                     prebuild.prebuild.error = "A newer commit was pushed to the same branch.";
                     results.push(this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild.prebuild));
@@ -224,7 +221,7 @@ export class PrebuildManager {
                 }
             }
 
-            const workspace = await this.workspaceFactory.createForContext(
+            const workspace = await this.workspaceService.createWorkspace(
                 { span },
                 user,
                 project.teamId,

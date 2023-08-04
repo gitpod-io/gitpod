@@ -17,6 +17,7 @@ import { ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { OrganizationService } from "../orgs/organization-service";
 import { UserService } from "../user/user-service";
 import { UserDB } from "@gitpod/gitpod-db/lib";
+import { SYSTEM_USER } from "../authorization/authorizer";
 
 @injectable()
 export class IamSessionApp {
@@ -147,7 +148,7 @@ export class IamSessionApp {
                 ctx,
             );
 
-            await this.orgService.addOrUpdateMember(undefined, organizationId, user.id, "member", ctx);
+            await this.orgService.addOrUpdateMember(SYSTEM_USER, organizationId, user.id, "member", ctx);
             return user;
         });
     }

@@ -184,15 +184,13 @@ export class OrganizationService {
     }
 
     public async addOrUpdateMember(
-        userId: string | undefined, // undefined means it is a system call, not a user call
+        userId: string,
         orgId: string,
         memberId: string,
         role: OrgMemberRole,
         txCtx?: TransactionalContext,
     ): Promise<void> {
-        if (userId) {
-            await this.auth.checkPermissionOnOrganization(userId, "write_members", orgId);
-        }
+        await this.auth.checkPermissionOnOrganization(userId, "write_members", orgId);
         let members: OrgMemberInfo[] = [];
         try {
             await this.teamDB.transaction(txCtx, async (teamDB, txCtx) => {

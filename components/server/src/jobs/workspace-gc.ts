@@ -12,6 +12,8 @@ import { TracedWorkspaceDB, DBWithTracing, WorkspaceDB } from "@gitpod/gitpod-db
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { Config } from "../config";
 import { Job } from "./runner";
+import { WorkspaceService } from "../workspace/workspace-service";
+import { SYSTEM_USER } from "../authorization/authorizer";
 
 /**
  * The WorkspaceGarbageCollector has two tasks:
@@ -20,6 +22,7 @@ import { Job } from "./runner";
  */
 @injectable()
 export class WorkspaceGarbageCollector implements Job {
+    @inject(WorkspaceService) protected readonly workspaceService: WorkspaceService;
     @inject(WorkspaceDeletionService) protected readonly deletionService: WorkspaceDeletionService;
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
     @inject(Config) protected readonly config: Config;
@@ -70,7 +73,7 @@ export class WorkspaceGarbageCollector implements Job {
                 );
             const afterSelect = new Date();
             const deletes = await Promise.all(
-                workspaces.map((ws) => this.deletionService.softDeleteWorkspace({ span }, ws, "gc")),
+                workspaces.map((ws) => this.workspaceService.deleteWorkspace(SYSTEM_USER, ws.id, "gc")),
             );
             const afterDelete = new Date();
 
@@ -125,7 +128,17 @@ export class WorkspaceGarbageCollector implements Job {
                     now,
                 );
             const deletes = await Promise.all(
-                workspaces.map((ws) => this.deletionService.hardDeleteWorkspace({ span }, ws.id)),
+                workspaces.map((ws) =>
+                    this.workspaceService
+                        .hardDeleteWorkspace(SYSTEM_USER, ws.id)
+                        .catch((err) =>
+                            log.error(
+                                { userId: ws.ownerId, workspaceId: ws.id },
+                                "failed to hard-delete workspace",
+                                err,
+                            ),
+                        ),
+                ),
             );
 
             log.info(`workspace-gc: successfully purged ${deletes.length} workspaces`);

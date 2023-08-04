@@ -10,12 +10,14 @@ import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib";
 import { TeamMemberRole } from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import {
+    AllResourceTypes,
     OrganizationPermission,
     Permission,
     ProjectPermission,
     Relation,
     ResourceType,
     UserPermission,
+    WorkspacePermission,
     rel,
 } from "./definitions";
 import { SpiceDBAuthorizer } from "./spicedb-authorizer";
@@ -43,6 +45,12 @@ export function createInitializingAuthorizer(spiceDbAuthorizer: SpiceDBAuthorize
     });
 }
 
+/**
+ * We need to call our internal API with system permissions in some cases.
+ * As we don't have other ways to represent that (e.g. ServiceAccounts), we use this magic constant to designated it.
+ */
+export const SYSTEM_USER = "SYSTEM_USER";
+
 export class Authorizer {
     constructor(private authorizer: SpiceDBAuthorizer) {}
 
@@ -51,6 +59,10 @@ export class Authorizer {
         permission: OrganizationPermission,
         orgId: string,
     ): Promise<boolean> {
+        if (userId === "SYSTEM_USER") {
+            return true;
+        }
+
         const req = v1.CheckPermissionRequest.create({
             subject: subject("user", userId),
             permission,
@@ -77,6 +89,10 @@ export class Authorizer {
     }
 
     async hasPermissionOnProject(userId: string, permission: ProjectPermission, projectId: string): Promise<boolean> {
+        if (userId === "SYSTEM_USER") {
+            return true;
+        }
+
         const req = v1.CheckPermissionRequest.create({
             subject: subject("user", userId),
             permission,
@@ -102,11 +118,15 @@ export class Authorizer {
         );
     }
 
-    async hasPermissionOnUser(userId: string, permission: UserPermission, userResourceId: string): Promise<boolean> {
+    async hasPermissionOnUser(userId: string, permission: UserPermission, resourceUserId: string): Promise<boolean> {
+        if (userId === "SYSTEM_USER") {
+            return true;
+        }
+
         const req = v1.CheckPermissionRequest.create({
             subject: subject("user", userId),
             permission,
-            resource: object("user", userResourceId),
+            resource: object("user", resourceUserId),
             consistency,
         });
 
@@ -127,6 +147,39 @@ export class Authorizer {
         );
     }
 
+    async hasPermissionOnWorkspace(
+        userId: string,
+        permission: WorkspacePermission,
+        workspaceId: string,
+    ): Promise<boolean> {
+        if (userId === "SYSTEM_USER") {
+            return true;
+        }
+
+        const req = v1.CheckPermissionRequest.create({
+            subject: subject("user", userId),
+            permission,
+            resource: object("workspace", workspaceId),
+            consistency,
+        });
+
+        return this.authorizer.check(req, { userId });
+    }
+
+    async checkPermissionOnWorkspace(userId: string, permission: WorkspacePermission, workspaceId: string) {
+        if (await this.hasPermissionOnWorkspace(userId, permission, workspaceId)) {
+            return;
+        }
+        if ("read_info" === permission || !(await this.hasPermissionOnWorkspace(userId, "read_info", workspaceId))) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} not found.`);
+        }
+
+        throw new ApplicationError(
+            ErrorCodes.PERMISSION_DENIED,
+            `You do not have ${permission} on workspace ${workspaceId}`,
+        );
+    }
+
     // write operations below
     public async removeAllRelationships(userId: string, type: ResourceType, id: string) {
         if (await this.isDisabled(userId)) {
@@ -142,7 +195,7 @@ export class Authorizer {
         );
 
         // iterate over all resource types and remove by subject
-        for (const resourcetype of ["installation", "user", "organization", "project"] as ResourceType[]) {
+        for (const resourcetype of AllResourceTypes as ResourceType[]) {
             await this.authorizer.deleteRelationships(
                 v1.DeleteRelationshipsRequest.create({
                     relationshipFilter: {
@@ -306,6 +359,26 @@ export class Authorizer {
         }
         await this.authorizer.writeRelationships(
             remove(rel.installation.admin.user(userId)), //
+        );
+    }
+
+    async addWorkspaceToOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {
+        if (await this.isDisabled(userID)) {
+            return;
+        }
+        await this.authorizer.writeRelationships(
+            set(rel.workspace(workspaceID).org.organization(orgID)),
+            set(rel.workspace(workspaceID).owner.user(userID)),
+        );
+    }
+
+    async removeWorkspaceFromOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {
+        if (await this.isDisabled(userID)) {
+            return;
+        }
+        await this.authorizer.writeRelationships(
+            remove(rel.workspace(workspaceID).org.organization(orgID)),
+            remove(rel.workspace(workspaceID).owner.user(userID)),
         );
     }
 

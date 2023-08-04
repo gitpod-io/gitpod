@@ -58,6 +58,7 @@ func GetCompiledSchema() *compiler.CompiledSchema {
 func GenerateDefinition(schema *compiler.CompiledSchema) string {
 
 	resource := "export type ResourceType ="
+	resourceTypes := "export const AllResourceTypes: ResourceType[] = ["
 	relation := "export type Relation ="
 	permission := "export type Permission ="
 	other := ""
@@ -69,6 +70,7 @@ func GenerateDefinition(schema *compiler.CompiledSchema) string {
 		simpleName := strings.ToUpper(string(def.Name[0])) + def.Name[1:]
 		resourceTypeName := simpleName + "ResourceType"
 		resource += "\n  | " + resourceTypeName + ""
+		resourceTypes += "\n  \"" + def.Name + "\","
 		other += "\nexport type " + resourceTypeName + " = \"" + def.Name + "\";\n"
 		fluentApi += "\n" + generateFluentAPI(def)
 		// check if relations exists
@@ -124,6 +126,9 @@ func GenerateDefinition(schema *compiler.CompiledSchema) string {
 		const InstallationID = "1";
 
 		` + resource + `;
+
+		` + resourceTypes + `
+		];
 
 		` + relation + `;
 

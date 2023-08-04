@@ -129,6 +129,7 @@ import { Redis } from "ioredis";
 import { RedisPublisher, newRedisClient } from "@gitpod/gitpod-db/lib";
 import { UserService } from "./user/user-service";
 import { RelationshipUpdater } from "./authorization/relationship-updater";
+import { WorkspaceService } from "./workspace/workspace-service";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -159,6 +160,7 @@ export const productionContainerModule = new ContainerModule(
         bind(ConfigurationService).toSelf().inSingletonScope();
 
         bind(SnapshotService).toSelf().inSingletonScope();
+        bind(WorkspaceService).toSelf().inSingletonScope();
         bind(WorkspaceFactory).toSelf().inSingletonScope();
         bind(WorkspaceDeletionService).toSelf().inSingletonScope();
         bind(WorkspaceStarter).toSelf().inSingletonScope();
@@ -177,8 +179,11 @@ export const productionContainerModule = new ContainerModule(
             })
             .inSingletonScope();
 
-        bind(PrometheusClientCallMetrics).toSelf().inSingletonScope();
-        bind(IClientCallMetrics).to(PrometheusClientCallMetrics).inSingletonScope();
+        bind(PrometheusClientCallMetrics)
+            .toSelf()
+            .inSingletonScope()
+            .onDeactivation((metrics) => metrics.dispose());
+        bind(IClientCallMetrics).toService(PrometheusClientCallMetrics);
 
         bind(WorkspaceClusterImagebuilderClientProvider).toSelf().inSingletonScope();
         bind(ImageBuilderClientProvider).toService(WorkspaceClusterImagebuilderClientProvider);
