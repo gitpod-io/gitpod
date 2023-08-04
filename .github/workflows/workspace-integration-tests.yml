@@ -37,6 +37,8 @@ jobs:
     secrets:
       runner_token: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_TOKEN }}
       gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
+    with:
+      task: workspace-integration-tests
 
   configuration:
     name: Configuration
