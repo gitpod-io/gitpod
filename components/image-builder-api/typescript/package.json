@@ -4,7 +4,7 @@
   "version": "0.1.5",
   "license": "UNLICENSED",
   "scripts": {
-    "build": "tsc && cp -f src/*.js src/*d.ts lib"
+    "build": "mkdir -p lib && cp -f src/*.js src/*d.ts lib && tsc"
   },
   "files": [
     "src",
