@@ -6,15 +6,15 @@
 
 import { TeamDB } from "@gitpod/gitpod-db/lib";
 import {
-    BillingTier,
-    Team,
-    User,
     WorkspaceInstance,
     WorkspaceTimeoutDuration,
     WORKSPACE_TIMEOUT_DEFAULT_LONG,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
     WORKSPACE_LIFETIME_LONG,
     WORKSPACE_LIFETIME_SHORT,
+    User,
+    BillingTier,
+    Team,
 } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { inject, injectable } from "inversify";
@@ -38,11 +38,10 @@ export class EntitlementServiceUBP implements EntitlementService {
     async mayStartWorkspace(
         user: User,
         organizationId: string,
-        date: Date,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult> {
         const hasHitParallelWorkspaceLimit = async (): Promise<HitParallelWorkspaceLimit | undefined> => {
-            const max = await this.getMaxParallelWorkspaces(user, date);
+            const max = await this.getMaxParallelWorkspaces(user.id, organizationId);
             const current = (await runningInstances).filter((i) => i.status.phase !== "preparing").length;
             if (current >= max) {
                 return {
@@ -54,7 +53,7 @@ export class EntitlementServiceUBP implements EntitlementService {
             }
         };
         const [usageLimitReachedOnCostCenter, hitParallelWorkspaceLimit] = await Promise.all([
-            this.checkUsageLimitReached(user, organizationId, date),
+            this.checkUsageLimitReached(user.id, organizationId),
             hasHitParallelWorkspaceLimit(),
         ]);
         return {
@@ -63,40 +62,36 @@ export class EntitlementServiceUBP implements EntitlementService {
         };
     }
 
-    private async checkUsageLimitReached(
-        user: User,
-        organizationId: string,
-        date: Date,
-    ): Promise<AttributionId | undefined> {
-        const result = await this.usageService.checkUsageLimitReached(user.id, organizationId);
+    private async checkUsageLimitReached(userId: string, organizationId: string): Promise<AttributionId | undefined> {
+        const result = await this.usageService.checkUsageLimitReached(userId, organizationId);
         if (result.reached) {
             return result.attributionId;
         }
         return undefined;
     }
 
-    private async getMaxParallelWorkspaces(user: User, date: Date): Promise<number> {
-        if (await this.hasPaidSubscription(user, date)) {
+    private async getMaxParallelWorkspaces(userId: string, organizationId: string): Promise<number> {
+        if (await this.hasPaidSubscription(userId, organizationId)) {
             return MAX_PARALLEL_WORKSPACES_PAID;
         } else {
             return MAX_PARALLEL_WORKSPACES_FREE;
         }
     }
 
-    async maySetTimeout(user: User, date: Date): Promise<boolean> {
-        return this.hasPaidSubscription(user, date);
+    async maySetTimeout(userId: string, organizationId?: string): Promise<boolean> {
+        return this.hasPaidSubscription(userId, organizationId);
     }
 
-    async getDefaultWorkspaceTimeout(user: User, date: Date): Promise<WorkspaceTimeoutDuration> {
-        if (await this.hasPaidSubscription(user, date)) {
+    async getDefaultWorkspaceTimeout(userId: string, organizationId: string): Promise<WorkspaceTimeoutDuration> {
+        if (await this.hasPaidSubscription(userId, organizationId)) {
             return WORKSPACE_TIMEOUT_DEFAULT_LONG;
         } else {
             return WORKSPACE_TIMEOUT_DEFAULT_SHORT;
         }
     }
 
-    async getDefaultWorkspaceLifetime(user: User, date: Date): Promise<WorkspaceTimeoutDuration> {
-        if (await this.hasPaidSubscription(user, date)) {
+    async getDefaultWorkspaceLifetime(userId: string, organizationId: string): Promise<WorkspaceTimeoutDuration> {
+        if (await this.hasPaidSubscription(userId, organizationId)) {
             return WORKSPACE_LIFETIME_LONG;
         } else {
             return WORKSPACE_LIFETIME_SHORT;
@@ -104,28 +99,26 @@ export class EntitlementServiceUBP implements EntitlementService {
     }
 
     /**
-     * DEPRECATED: With usage-based billing, users can choose exactly how many resources they want to get.
-     * Thus, we no longer need to "force" extra resources via the `userGetsMoreResources` mechanism.
-     */
-    async userGetsMoreResources(user: User, date: Date = new Date()): Promise<boolean> {
-        return false;
-    }
-
-    /**
      * Returns true if network connections should be limited
      * @param user
      */
-    async limitNetworkConnections(user: User, date: Date): Promise<boolean> {
+    async limitNetworkConnections(userId: string, organizationId: string): Promise<boolean> {
         // gpl: Because with the current payment handling (pay-after-use) having a "paid" plan is not a good enough classifier for trushworthyness atm.
         // We're looking into improving this, but for the meantime we limit network connections for everybody to reduce the impact of abuse.
         return true;
     }
 
-    private async hasPaidSubscription(user: User, date: Date): Promise<boolean> {
+    private async hasPaidSubscription(userId: string, organizationId?: string): Promise<boolean> {
+        if (organizationId) {
+            // This is the "stricter", more correct version: We only allow privileges on the Organization that is paying for it
+            const { billingStrategy } = await this.usageService.getCostCenter(userId, organizationId);
+            return billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
+        }
+        // This is the old behavior, stemming from our transition to PAYF, where our API did-/doesn't pass organizationId, yet
         // Member of paid team?
-        const teams = await this.teamDB.findTeamsByUser(user.id);
+        const teams = await this.teamDB.findTeamsByUser(userId);
         const isTeamSubscribedPromises = teams.map(async (team: Team) => {
-            const { billingStrategy } = await this.usageService.getCostCenter(user.id, team.id);
+            const { billingStrategy } = await this.usageService.getCostCenter(userId, team.id);
             return billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
         });
         // Return the first truthy promise, or false if all the promises were falsy.
@@ -147,8 +140,8 @@ export class EntitlementServiceUBP implements EntitlementService {
         });
     }
 
-    async getBillingTier(user: User): Promise<BillingTier> {
-        const hasPaidPlan = await this.hasPaidSubscription(user, new Date());
+    async getBillingTier(userId: string, organizationId: string): Promise<BillingTier> {
+        const hasPaidPlan = await this.hasPaidSubscription(userId, organizationId);
         return hasPaidPlan ? "paid" : "free";
     }
 }
