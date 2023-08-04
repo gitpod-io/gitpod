@@ -460,7 +460,9 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             // Preparing means that we haven't actually started the workspace instance just yet, but rather
             // are still preparing for launch.
             case "preparing":
-            // falls through
+                phase = StartPhase.Preparing;
+                statusMessage = <p className="text-base text-gray-400">Allocating resources …</p>;
+                break;
             case "building":
                 // Building means we're building the Docker image for the workspace.
                 return <ImageBuildView workspaceId={this.state.workspaceInstance.workspaceId} />;
