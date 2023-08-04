@@ -177,7 +177,6 @@ const defaultFunctions: FunctionsConfig = {
     getPriceInformation: { group: "default", points: 1 },
     listUsage: { group: "default", points: 1 },
     getBillingModeForTeam: { group: "default", points: 1 },
-    getBillingModeForUser: { group: "default", points: 1 },
     getLinkedInClientId: { group: "default", points: 1 },
     connectWithLinkedIn: { group: "default", points: 1 },
 
