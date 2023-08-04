@@ -98,6 +98,37 @@ describe("WorkspaceService", async () => {
         await expectError(ErrorCodes.NOT_FOUND, () => svc.getWorkspace(stranger.id, ws.id));
     });
 
+    it("should getOwnerToken", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        await expectError(
+            ErrorCodes.NOT_FOUND,
+            () => svc.getOwnerToken(owner.id, ws.id),
+            "NOT_FOUND for non-running workspace",
+        );
+
+        await expectError(
+            ErrorCodes.NOT_FOUND,
+            () => svc.getOwnerToken(stranger.id, ws.id),
+            "NOT_FOUND if stranger asks for the owner token",
+        );
+    });
+
+    it("should getIDECredentials", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        const ideCredentials = await svc.getIDECredentials(owner.id, ws.id);
+        expect(ideCredentials, "IDE credentials should be present").to.not.be.undefined;
+
+        await expectError(
+            ErrorCodes.NOT_FOUND,
+            () => svc.getIDECredentials(stranger.id, ws.id),
+            "NOT_FOUND if stranger asks for the IDE credentials",
+        );
+    });
+
     it("should stopWorkspace", async () => {
         const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
