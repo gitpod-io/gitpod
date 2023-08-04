@@ -5,7 +5,6 @@
  */
 
 import { createServiceMock, Event, Project, Team, User } from "@gitpod/gitpod-protocol";
-import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 
 const u1: User = {
     id: "1234",
@@ -253,9 +252,6 @@ const gitpodServiceMock = createServiceMock({
                 },
             },
         };
-    },
-    getBillingModeForUser: async () => {
-        return BillingMode.NONE;
     },
 });
 
