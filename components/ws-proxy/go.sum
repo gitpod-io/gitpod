@@ -32,8 +32,6 @@ github.com/felixge/httpsnoop v1.0.3 h1:s/nj+GCswXYzN5v2DpNMuMQYe+0DDwt5WVCU6CWBd
 github.com/felixge/httpsnoop v1.0.3/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
 github.com/fsnotify/fsnotify v1.6.0 h1:n+5WquG0fcWoWp6xPWfHdbskMCQaFnG6PfBrh1Ky4HY=
 github.com/fsnotify/fsnotify v1.6.0/go.mod h1:sl3t1tCWJFWoRz9R8WJCbQihKKwmorjAbSClcnxKAGw=
-github.com/gitpod-io/golang-crypto v0.0.0-20230727160410-9e6db794c73d h1:3TGYKxzXq4Nl5GXuf1G5bTp7Ym6uYUGybelOq0JRfmI=
-github.com/gitpod-io/golang-crypto v0.0.0-20230727160410-9e6db794c73d/go.mod h1:4NOlH4vW4GpYaYqOv3RPQan5WNiXSsZNfEB3d4gddj0=
 github.com/gitpod-io/golang-crypto v0.0.0-20230731181530-3ce7221eee49 h1:lUIxfgpFks3keB6LyZUCJzisiImaYsejP58y+9Mp7QU=
 github.com/gitpod-io/golang-crypto v0.0.0-20230731181530-3ce7221eee49/go.mod h1:4NOlH4vW4GpYaYqOv3RPQan5WNiXSsZNfEB3d4gddj0=
 github.com/go-kit/kit v0.9.0/go.mod h1:xBxKIO96dXMWWy0MnWVtmwkA9/13aqxPnvrjFYMA2as=
