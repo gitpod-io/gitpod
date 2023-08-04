@@ -19,6 +19,15 @@ import { redisMetricsRegistry } from "@gitpod/gitpod-db/lib";
 log.enableJSONLogging("ws-manager-bridge", undefined, LogrusLogLevel.getFromEnv());
 
 export const start = async (container: Container) => {
+    process.on("uncaughtException", function (err) {
+        // fix for https://github.com/grpc/grpc-node/blob/master/packages/grpc-js/src/load-balancer-pick-first.ts#L309
+        if (err && err.message && err.message.includes("reading 'startConnecting'")) {
+            log.error("uncaughtException", err);
+        } else {
+            throw err;
+        }
+    });
+
     try {
         const db = container.get(TypeORM);
         await db.connect();
