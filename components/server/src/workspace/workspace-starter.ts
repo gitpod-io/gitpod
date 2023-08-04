@@ -95,11 +95,11 @@ import {
     PortSpec,
     PortVisibility,
     StartWorkspaceRequest,
-    StopWorkspacePolicy,
-    StopWorkspaceRequest,
     WorkspaceMetadata,
     WorkspaceType,
     PortProtocol,
+    StopWorkspacePolicy,
+    StopWorkspaceRequest,
 } from "@gitpod/ws-manager/lib/core_pb";
 import * as grpc from "@grpc/grpc-js";
 import * as crypto from "crypto";
@@ -464,28 +464,6 @@ export class WorkspaceStarter {
             return;
         }
         await client.stopWorkspace(ctx, req);
-    }
-
-    public async stopRunningWorkspacesForUser(
-        ctx: TraceContext,
-        userID: string,
-        reason: string,
-        policy?: StopWorkspacePolicy,
-    ): Promise<Workspace[]> {
-        const workspaceDb = this.workspaceDb.trace(ctx);
-        const instances = await workspaceDb.findRunningInstancesWithWorkspaces(undefined, userID);
-        await Promise.all(
-            instances.map((instance) =>
-                this.stopWorkspaceInstance(
-                    ctx,
-                    instance.latestInstance.id,
-                    instance.latestInstance.region,
-                    reason,
-                    policy,
-                ),
-            ),
-        );
-        return instances.map((instance) => instance.workspace);
     }
 
     private async checkBlockedRepository(user: User, contextURL: string) {

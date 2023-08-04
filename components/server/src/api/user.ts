@@ -25,13 +25,11 @@ import {
 } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_pb";
 import { WorkspaceStarter } from "../workspace/workspace-starter";
 import { UserAuthentication } from "../user/user-authentication";
-import { validate } from "uuid";
-import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { WorkspaceService } from "../workspace/workspace-service";
 
 @injectable()
 export class APIUserService implements ServiceImpl<typeof UserServiceInterface> {
-    @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
+    @inject(WorkspaceStarter) protected readonly workspaceService: WorkspaceService;
     @inject(UserAuthentication) protected readonly userService: UserAuthentication;
 
     public async getAuthenticatedUser(req: GetAuthenticatedUserRequest): Promise<GetAuthenticatedUserResponse> {
@@ -59,39 +57,41 @@ export class APIUserService implements ServiceImpl<typeof UserServiceInterface> 
     }
 
     public async blockUser(req: BlockUserRequest): Promise<BlockUserResponse> {
-        const { userId, reason } = req;
+        throw new ConnectError("unimplemented", Code.Unimplemented);
+        // TODO(gpl) Had to comment this out because of missing authentication info: Who is executing this?
+        // const { userId, reason } = req;
 
-        if (!userId) {
-            throw new ConnectError("userId is a required parameter", Code.InvalidArgument);
-        }
-        if (!validate(userId)) {
-            throw new ConnectError("userId must be a valid uuid", Code.InvalidArgument);
-        }
-        if (!reason) {
-            throw new ConnectError("reason is a required parameter", Code.InvalidArgument);
-        }
+        // if (!userId) {
+        //     throw new ConnectError("userId is a required parameter", Code.InvalidArgument);
+        // }
+        // if (!validate(userId)) {
+        //     throw new ConnectError("userId must be a valid uuid", Code.InvalidArgument);
+        // }
+        // if (!reason) {
+        //     throw new ConnectError("reason is a required parameter", Code.InvalidArgument);
+        // }
 
-        // TODO: Once connect-node supports middlewares, lift the tracing into the middleware.
-        const trace = {};
-        await this.userService.blockUser(userId, true);
-        log.info(`Blocked user ${userId}.`, {
-            userId,
-            reason,
-        });
+        // // TODO: Once connect-node supports middlewares, lift the tracing into the middleware.
+        // const trace = {};
+        // await this.userService.blockUser(userId, true);
+        // log.info(`Blocked user ${userId}.`, {
+        //     userId,
+        //     reason,
+        // });
 
-        const stoppedWorkspaces = await this.workspaceStarter.stopRunningWorkspacesForUser(
-            trace,
-            userId,
-            reason,
-            StopWorkspacePolicy.IMMEDIATELY,
-        );
+        // const stoppedWorkspaces = await this.workspaceService.stopRunningWorkspacesForUser(
+        //     trace,
+        //     userId,
+        //     reason,
+        //     StopWorkspacePolicy.IMMEDIATELY,
+        // );
 
-        log.info(`Stopped ${stoppedWorkspaces.length} workspaces in response to BlockUser.`, {
-            userId,
-            reason,
-            workspaceIds: stoppedWorkspaces.map((w) => w.id),
-        });
+        // log.info(`Stopped ${stoppedWorkspaces.length} workspaces in response to BlockUser.`, {
+        //     userId,
+        //     reason,
+        //     workspaceIds: stoppedWorkspaces.map((w) => w.id),
+        // });
 
-        return new BlockUserResponse();
+        // return new BlockUserResponse();
     }
 }

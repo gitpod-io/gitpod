@@ -87,6 +87,14 @@ export class WorkspaceService {
         return this.doGetWorkspace(workspaceId);
     }
 
+    private async doGetWorkspace(workspaceId: string, workspaceDB?: WorkspaceDB): Promise<Workspace> {
+        const workspace = await (workspaceDB || this.db).findById(workspaceId);
+        if (!workspace || !!workspace.softDeleted || workspace.deleted) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Workspace not found.");
+        }
+        return workspace;
+    }
+
     async getOwnerToken(userId: string, workspaceId: string): Promise<string> {
         await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
 
@@ -115,6 +123,7 @@ export class WorkspaceService {
         });
     }
 
+    // stopWorkspace and related methods below
     async stopWorkspace(
         userId: string,
         workspaceId: string,
@@ -130,6 +139,29 @@ export class WorkspaceService {
             return;
         }
         await this.workspaceStarter.stopWorkspaceInstance({}, instance.id, instance.region, reason, policy);
+    }
+
+    public async stopRunningWorkspacesForUser(
+        ctx: TraceContext,
+        userId: string,
+        userIdToStop: string,
+        reason: string,
+        policy?: StopWorkspacePolicy,
+    ): Promise<Workspace[]> {
+        const infos = await this.db.findRunningInstancesWithWorkspaces(undefined, userIdToStop);
+        await Promise.all(
+            infos.map(async (info) => {
+                await this.auth.checkPermissionOnWorkspace(userId, "stop", info.workspace.id);
+                await this.workspaceStarter.stopWorkspaceInstance(
+                    ctx,
+                    info.latestInstance.id,
+                    info.latestInstance.region,
+                    reason,
+                    policy,
+                );
+            }),
+        );
+        return infos.map((instance) => instance.workspace);
     }
 
     /**
@@ -185,14 +217,6 @@ export class WorkspaceService {
             throw err;
         }
         log.info(`Purged Workspace ${workspaceId} and all WorkspaceInstances for this workspace`, { workspaceId });
-    }
-
-    private async doGetWorkspace(workspaceId: string, workspaceDB?: WorkspaceDB): Promise<Workspace> {
-        const workspace = await (workspaceDB || this.db).findById(workspaceId);
-        if (!workspace || !!workspace.softDeleted || workspace.deleted) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Workspace not found.");
-        }
-        return workspace;
     }
 
     // startWorkspace and related methods below
