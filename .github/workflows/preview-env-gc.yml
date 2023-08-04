@@ -5,7 +5,7 @@ on:
     - cron: "0 */4 * * *"
 jobs:
   create-runner:
-    uses: gitpod-io/gce-github-runner/.github/workflows/create-vm.yml@secrets
+    uses: gitpod-io/gce-github-runner/.github/workflows/create-vm.yml@main
     secrets:
       runner_token: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_TOKEN }}
       gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
@@ -70,7 +70,7 @@ jobs:
       - create-runner
       - stale
       - delete
-    uses: gitpod-io/gce-github-runner/.github/workflows/delete-vm.yml@secrets
+    uses: gitpod-io/gce-github-runner/.github/workflows/delete-vm.yml@main
     secrets:
       gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
     with:
