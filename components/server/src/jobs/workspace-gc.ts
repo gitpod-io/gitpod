@@ -13,6 +13,7 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { Config } from "../config";
 import { Job } from "./runner";
 import { WorkspaceService } from "../workspace/workspace-service";
+import { SYSTEM_USER } from "../authorization/authorizer";
 
 /**
  * The WorkspaceGarbageCollector has two tasks:
@@ -72,7 +73,7 @@ export class WorkspaceGarbageCollector implements Job {
                 );
             const afterSelect = new Date();
             const deletes = await Promise.all(
-                workspaces.map((ws) => this.workspaceService.deleteWorkspace(ws.ownerId, ws.id, "gc")), // TODO(gpl) This should be a system user/service account instead of ws owner
+                workspaces.map((ws) => this.workspaceService.deleteWorkspace(SYSTEM_USER, ws.id, "gc")),
             );
             const afterDelete = new Date();
 
@@ -129,7 +130,7 @@ export class WorkspaceGarbageCollector implements Job {
             const deletes = await Promise.all(
                 workspaces.map((ws) =>
                     this.workspaceService
-                        .hardDeleteWorkspace(ws.ownerId, ws.id)
+                        .hardDeleteWorkspace(SYSTEM_USER, ws.id)
                         .catch((err) =>
                             log.error(
                                 { userId: ws.ownerId, workspaceId: ws.id },
@@ -137,7 +138,7 @@ export class WorkspaceGarbageCollector implements Job {
                                 err,
                             ),
                         ),
-                ), // TODO(gpl) This should be a system user/service account instead of ws owner
+                ),
             );
 
             log.info(`workspace-gc: successfully purged ${deletes.length} workspaces`);

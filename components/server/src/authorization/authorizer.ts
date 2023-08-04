@@ -45,6 +45,12 @@ export function createInitializingAuthorizer(spiceDbAuthorizer: SpiceDBAuthorize
     });
 }
 
+/**
+ * We need to call our internal API with system permissions in some cases.
+ * As we don't have other ways to represent that (e.g. ServiceAccounts), we use this magic constant to designated it.
+ */
+export const SYSTEM_USER = "SYSTEM_USER";
+
 export class Authorizer {
     constructor(private authorizer: SpiceDBAuthorizer) {}
 
@@ -53,6 +59,10 @@ export class Authorizer {
         permission: OrganizationPermission,
         orgId: string,
     ): Promise<boolean> {
+        if (userId === "SYSTEM_USER") {
+            return true;
+        }
+
         const req = v1.CheckPermissionRequest.create({
             subject: subject("user", userId),
             permission,
@@ -79,6 +89,10 @@ export class Authorizer {
     }
 
     async hasPermissionOnProject(userId: string, permission: ProjectPermission, projectId: string): Promise<boolean> {
+        if (userId === "SYSTEM_USER") {
+            return true;
+        }
+
         const req = v1.CheckPermissionRequest.create({
             subject: subject("user", userId),
             permission,
@@ -105,6 +119,10 @@ export class Authorizer {
     }
 
     async hasPermissionOnUser(userId: string, permission: UserPermission, resourceUserId: string): Promise<boolean> {
+        if (userId === "SYSTEM_USER") {
+            return true;
+        }
+
         const req = v1.CheckPermissionRequest.create({
             subject: subject("user", userId),
             permission,
@@ -134,6 +152,10 @@ export class Authorizer {
         permission: WorkspacePermission,
         workspaceId: string,
     ): Promise<boolean> {
+        if (userId === "SYSTEM_USER") {
+            return true;
+        }
+
         const req = v1.CheckPermissionRequest.create({
             subject: subject("user", userId),
             permission,
