@@ -10,6 +10,7 @@ import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib";
 import { TeamMemberRole } from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import {
+    AllResourceTypes,
     OrganizationPermission,
     Permission,
     ProjectPermission,
@@ -172,7 +173,7 @@ export class Authorizer {
         );
 
         // iterate over all resource types and remove by subject
-        for (const resourcetype of ["installation", "user", "organization", "project"] as ResourceType[]) {
+        for (const resourcetype of AllResourceTypes as ResourceType[]) {
             await this.authorizer.deleteRelationships(
                 v1.DeleteRelationshipsRequest.create({
                     relationshipFilter: {
@@ -339,7 +340,7 @@ export class Authorizer {
         );
     }
 
-    async createWorkspaceInOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {
+    async addWorkspaceToOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {
         if (await this.isDisabled(userID)) {
             return;
         }
@@ -349,7 +350,7 @@ export class Authorizer {
         );
     }
 
-    async deleteWorkspaceFromOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {
+    async removeWorkspaceFromOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {
         if (await this.isDisabled(userID)) {
             return;
         }

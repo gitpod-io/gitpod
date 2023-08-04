@@ -47,7 +47,7 @@ export class WorkspaceService {
 
         // Instead, we fall back to removing access in case something goes wrong.
         try {
-            await this.auth.createWorkspaceInOrg(organizationId, user.id, workspace.id);
+            await this.auth.addWorkspaceToOrg(organizationId, user.id, workspace.id);
         } catch (err) {
             await this.hardDeleteWorkspace(user.id, workspace.id).catch((err) =>
                 log.error("failed to hard-delete workspace", err),
@@ -62,7 +62,9 @@ export class WorkspaceService {
         await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
 
         const workspace = await this.db.findById(workspaceId);
-        if (!workspace || !!workspace.softDeleted || workspace.deleted) {
+        // TODO(gpl) We might want to add || !!workspace.softDeleted here in the future, but we were unsure how that would affect existing clients
+        // In order to reduce risk, we leave it for a future changeset.
+        if (!workspace || workspace.deleted) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Workspace not found.");
         }
         return workspace;
@@ -129,11 +131,11 @@ export class WorkspaceService {
                 ownerId = workspace.ownerId;
                 await this.db.hardDeleteWorkspace(workspaceId);
 
-                await this.auth.deleteWorkspaceFromOrg(orgId, ownerId, workspaceId);
+                await this.auth.removeWorkspaceFromOrg(orgId, ownerId, workspaceId);
             });
         } catch (err) {
             if (orgId && ownerId) {
-                await this.auth.createWorkspaceInOrg(orgId, ownerId, workspaceId);
+                await this.auth.addWorkspaceToOrg(orgId, ownerId, workspaceId);
             }
             throw err;
         }

@@ -119,32 +119,17 @@ describe("WorkspaceService", async () => {
         );
 
         await svc.deleteWorkspace(owner.id, ws.id);
-        await expectError(
-            ErrorCodes.NOT_FOUND,
-            () => svc.getWorkspace(owner.id, ws.id),
-            "getWorkspace should return NOT_FOUND after deletion",
-        );
+        // TODO(gpl) For now, we keep the old behavior which will return a workspace, even if it's marked as "softDeleted"
+        // await expectError(
+        //     ErrorCodes.NOT_FOUND,
+        //     () => svc.getWorkspace(owner.id, ws.id),
+        //     "getWorkspace should return NOT_FOUND after deletion",
+        // );
+        const ws2 = await svc.getWorkspace(owner.id, ws.id);
+        expect(ws2.softDeleted, "workspace should be marked as 'softDeleted'").to.equal("user");
     });
 
-    it("should deleteWorkspace", async () => {
-        const svc = container.get(WorkspaceService);
-        const ws = await createTestWorkspace(svc, org, owner, project);
-
-        await expectError(
-            ErrorCodes.NOT_FOUND,
-            () => svc.deleteWorkspace(stranger.id, ws.id),
-            "stranger can't delete workspace",
-        );
-
-        await svc.deleteWorkspace(owner.id, ws.id);
-        await expectError(
-            ErrorCodes.NOT_FOUND,
-            () => svc.getWorkspace(owner.id, ws.id),
-            "getWorkspace should return NOT_FOUND after deletion",
-        );
-    });
-
-    it("should dhardDeleteWorkspace", async () => {
+    it("should hardDeleteWorkspace", async () => {
         const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
