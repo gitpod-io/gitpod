@@ -315,6 +315,14 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 				},
 			},
 		},
+		{
+			Name: "ca-certificates",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{Name: "gitpod-ca-bundle"},
+				},
+			},
+		},
 	}
 
 	workloadType := "regular"
@@ -486,6 +494,12 @@ func createWorkspaceContainer(sctx *startWorkspaceContext) (*corev1.Container, e
 				MountPath:        "/.workspace",
 				Name:             "daemon-mount",
 				MountPropagation: &mountPropagation,
+			},
+			{
+				Name:      "ca-certificates",
+				MountPath: "/etc/ssl/certs/ca-certificates.crt",
+				SubPath:   "ca-certificates.crt",
+				ReadOnly:  true,
 			},
 		},
 		ReadinessProbe:           readinessProbe,
