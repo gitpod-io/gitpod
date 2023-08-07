@@ -16,10 +16,12 @@ declare global {
 
 export const useOrbital = (spaceId: string) => {
     const [isLoaded, setIsLoaded] = useState<boolean>(false);
-    const [discoveryIds, setDiscoveryIds] = useState<string[]>([]);
+    const [discoveryIds, setDiscoveryIds] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         if (document.getElementById("orbital-client")) return;
+        if (discoveryIds.size === 0) return;
+
         const body = document.getElementsByTagName("body")[0];
 
         const installationScript = document.createElement("script");
@@ -32,7 +34,7 @@ export const useOrbital = (spaceId: string) => {
         orbitalScript.setAttribute("async", "");
         body.appendChild(orbitalScript);
         orbitalScript.addEventListener("load", () => setIsLoaded(true), { once: true, capture: false });
-    }, [spaceId]);
+    }, [discoveryIds.size, spaceId]);
 
     useEffect(() => {
         const client = getExperimentsClient();
@@ -41,7 +43,7 @@ export const useOrbital = (spaceId: string) => {
             const featureFlagValue = await client.getValueAsync("enabledOrbitalDiscoveries", "", {
                 gitpodHost: window.location.host,
             });
-            setDiscoveryIds(featureFlagValue.split(",").filter((value) => !!value));
+            setDiscoveryIds(new Set(featureFlagValue.split(",").filter((value) => !!value)));
         })();
 
         return client.dispose;
