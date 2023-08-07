@@ -279,10 +279,16 @@ export class BitbucketServerApi {
         );
     }
 
+    /**
+     * https://developer.atlassian.com/server/bitbucket/rest/v811/api-group-repository/#api-api-latest-repos-get
+     */
     async getRepos(
         user: User,
         query: {
             permission?: "REPO_READ" | "REPO_WRITE" | "REPO_ADMIN";
+            /**
+             * defaults to 25
+             */
             limit: number;
         },
     ) {
