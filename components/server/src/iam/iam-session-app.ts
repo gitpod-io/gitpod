@@ -128,6 +128,10 @@ export class IamSessionApp {
                 primaryEmail: recent.primaryEmail,
                 lastSigninTime: new Date().toISOString(),
             });
+            await this.userService.updateUser(user.id, {
+                id: user.id,
+                fullName: payload.claims.name,
+            });
         }
     }
 
@@ -141,6 +145,7 @@ export class IamSessionApp {
                     organizationId,
                     identity: { ...this.mapOIDCProfileToIdentity(payload), lastSigninTime: new Date().toISOString() },
                     userUpdate: (user) => {
+                        user.fullName = claims.name;
                         user.name = claims.name;
                         user.avatarUrl = claims.picture;
                     },

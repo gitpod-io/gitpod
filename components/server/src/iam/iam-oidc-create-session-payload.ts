@@ -71,6 +71,9 @@ export interface OIDCCreateSessionPayload {
         Expiry: string; // "2023-01-10T12:00:00Z",
         IssuedAt: string; // "2023-01-01T12:00:00Z",
     };
+    /**
+     * https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
+     */
     claims: {
         aud: string;
         email: string;
@@ -80,10 +83,16 @@ export interface OIDCCreateSessionPayload {
         hd?: string; // accepted domain, e.g. "gitpod.io"
         iss: string; // "https://accounts.google.com"
         locale: string; // e.g. "de"
+        /**
+         * End-User's full name in displayable form including all name parts, possibly including titles and suffixes, ordered according to the End-User's locale and preferences.
+         */
         name: string;
         picture: string; // URL of avatar
+        /**
+         * Subject - Identifier for the End-User at the Issuer.
+         */
         sub: string; // "1234567890"
     };
-    organizationId: string; // TODO(gpl) Remove once we implemented either SKIM, or a proper UserService
+    organizationId: string;
     oidcClientConfigId: string;
 }
