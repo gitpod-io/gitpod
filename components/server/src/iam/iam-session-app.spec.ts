@@ -42,6 +42,9 @@ class TestIamSessionApp {
         createUser: (params) => {
             return { id: "id-new-user" } as any;
         },
+        updateUser: (userId, update) => {
+            return {} as any;
+        },
     };
     protected userAuthenticationMock: Partial<UserAuthentication> = {
         findUserForLogin: async (params) => {
