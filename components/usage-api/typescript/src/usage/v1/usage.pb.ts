@@ -38,6 +38,8 @@ export interface PaginatedResponse {
 
 export interface ListUsageRequest {
   attributionId: string;
+  /** optional user_id can be used to filter the results to only include instances created by the given user */
+  userId: string;
   /**
    * from specifies the starting time range for this request.
    * All instances which existed starting at from will be returned.
@@ -496,6 +498,7 @@ export const PaginatedResponse = {
 function createBaseListUsageRequest(): ListUsageRequest {
   return {
     attributionId: "",
+    userId: "",
     from: undefined,
     to: undefined,
     order: ListUsageRequest_Ordering.ORDERING_DESCENDING,
@@ -507,6 +510,9 @@ export const ListUsageRequest = {
   encode(message: ListUsageRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.attributionId !== "") {
       writer.uint32(10).string(message.attributionId);
+    }
+    if (message.userId !== "") {
+      writer.uint32(50).string(message.userId);
     }
     if (message.from !== undefined) {
       Timestamp.encode(toTimestamp(message.from), writer.uint32(18).fork()).ldelim();
@@ -533,6 +539,9 @@ export const ListUsageRequest = {
         case 1:
           message.attributionId = reader.string();
           break;
+        case 6:
+          message.userId = reader.string();
+          break;
         case 2:
           message.from = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
           break;
@@ -556,6 +565,7 @@ export const ListUsageRequest = {
   fromJSON(object: any): ListUsageRequest {
     return {
       attributionId: isSet(object.attributionId) ? String(object.attributionId) : "",
+      userId: isSet(object.userId) ? String(object.userId) : "",
       from: isSet(object.from) ? fromJsonTimestamp(object.from) : undefined,
       to: isSet(object.to) ? fromJsonTimestamp(object.to) : undefined,
       order: isSet(object.order)
@@ -568,6 +578,7 @@ export const ListUsageRequest = {
   toJSON(message: ListUsageRequest): unknown {
     const obj: any = {};
     message.attributionId !== undefined && (obj.attributionId = message.attributionId);
+    message.userId !== undefined && (obj.userId = message.userId);
     message.from !== undefined && (obj.from = message.from.toISOString());
     message.to !== undefined && (obj.to = message.to.toISOString());
     message.order !== undefined && (obj.order = listUsageRequest_OrderingToJSON(message.order));
@@ -579,6 +590,7 @@ export const ListUsageRequest = {
   fromPartial(object: DeepPartial<ListUsageRequest>): ListUsageRequest {
     const message = createBaseListUsageRequest();
     message.attributionId = object.attributionId ?? "";
+    message.userId = object.userId ?? "";
     message.from = object.from ?? undefined;
     message.to = object.to ?? undefined;
     message.order = object.order ?? ListUsageRequest_Ordering.ORDERING_DESCENDING;

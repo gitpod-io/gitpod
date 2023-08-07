@@ -4124,7 +4124,20 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             });
         }
         const user = await this.checkAndBlockUser("listUsage");
-        await this.guardCostCenterAccess(ctx, attributionId, "get", "not_implemented");
+
+        // we are adding this check here inline because we are moving to the new fine-grained permissions model but are not quite ready yet.
+        const members = await this.teamDB.findMembersByTeam(attributionId.teamId);
+        const member = members.find((m) => m.userId === user.id);
+        if (!member) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Organization not found.");
+        }
+        const isMemberUsageEnabled = await getExperimentsClientForBackend().getValueAsync("member_usage", false, {
+            user: user,
+            teamId: attributionId.teamId,
+        });
+        if (isMemberUsageEnabled && member.role !== "owner") {
+            req.userId = user.id;
+        }
         return this.usageService.listUsage(user.id, req);
     }
 
