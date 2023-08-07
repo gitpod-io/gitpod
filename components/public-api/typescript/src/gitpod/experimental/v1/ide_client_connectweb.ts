@@ -9,7 +9,7 @@
 /* eslint-disable */
 /* @ts-nocheck */
 
-import {SendDidCloseRequest, SendDidCloseResponse, SendHeartbeatRequest, SendHeartbeatResponse} from "./ide_client_pb.js";
+import {SendDidCloseRequest, SendDidCloseResponse, SendHeartbeatRequest, SendHeartbeatResponse, UpdateGitStatusRequest, UpdateGitStatusResponse} from "./ide_client_pb.js";
 import {MethodKind} from "@bufbuild/protobuf";
 
 /**
@@ -38,6 +38,17 @@ export const IDEClientService = {
       name: "SendDidClose",
       I: SendDidCloseRequest,
       O: SendDidCloseResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * UpdateGitStatus updates the status of a repository in a workspace.
+     *
+     * @generated from rpc gitpod.experimental.v1.IDEClientService.UpdateGitStatus
+     */
+    updateGitStatus: {
+      name: "UpdateGitStatus",
+      I: UpdateGitStatusRequest,
+      O: UpdateGitStatusResponse,
       kind: MethodKind.Unary,
     },
   }

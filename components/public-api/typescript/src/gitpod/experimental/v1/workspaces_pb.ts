@@ -123,6 +123,11 @@ export class ListWorkspacesRequest extends Message<ListWorkspacesRequest> {
    */
   fieldMask?: FieldMask;
 
+  /**
+   * @generated from field: string organization_id = 3;
+   */
+  organizationId = "";
+
   constructor(data?: PartialMessage<ListWorkspacesRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -133,6 +138,7 @@ export class ListWorkspacesRequest extends Message<ListWorkspacesRequest> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "pagination", kind: "message", T: Pagination },
     { no: 2, name: "field_mask", kind: "message", T: FieldMask },
+    { no: 3, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListWorkspacesRequest {
@@ -1285,6 +1291,15 @@ export class WorkspaceInstanceStatus extends Message<WorkspaceInstanceStatus> {
    */
   recentFolders: string[] = [];
 
+  /**
+   * gitStatus details the Git working copy status of the workspace.
+   * Note: this is a best-effort field and more often than not will not be present. Its absence does not
+   * indicate the absence of a working copy.
+   *
+   * @generated from field: gitpod.experimental.v1.GitStatus git_status = 9;
+   */
+  gitStatus?: GitStatus;
+
   constructor(data?: PartialMessage<WorkspaceInstanceStatus>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1301,6 +1316,7 @@ export class WorkspaceInstanceStatus extends Message<WorkspaceInstanceStatus> {
     { no: 6, name: "admission", kind: "enum", T: proto3.getEnumType(AdmissionLevel) },
     { no: 7, name: "ports", kind: "message", T: Port, repeated: true },
     { no: 8, name: "recent_folders", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 9, name: "git_status", kind: "message", T: GitStatus },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceInstanceStatus {
@@ -1715,3 +1731,101 @@ export class UpdatePortResponse extends Message<UpdatePortResponse> {
     return proto3.util.equals(UpdatePortResponse, a, b);
   }
 }
+
+/**
+ * GitStatus describes the current working copy status, akin to a combination of "git status" and "git branch"
+ *
+ * @generated from message gitpod.experimental.v1.GitStatus
+ */
+export class GitStatus extends Message<GitStatus> {
+  /**
+   * branch is branch we're currently on
+   *
+   * @generated from field: string branch = 1;
+   */
+  branch = "";
+
+  /**
+   * latest_commit is the most recent commit on the current branch
+   *
+   * @generated from field: string latest_commit = 2;
+   */
+  latestCommit = "";
+
+  /**
+   * uncommited_files is an array of uncommitted files, possibly truncated
+   *
+   * @generated from field: repeated string uncommited_files = 3;
+   */
+  uncommitedFiles: string[] = [];
+
+  /**
+   * the total number of uncommited files
+   *
+   * @generated from field: int32 total_uncommited_files = 6;
+   */
+  totalUncommitedFiles = 0;
+
+  /**
+   * untracked_files is an array of untracked files in the workspace, possibly truncated
+   *
+   * @generated from field: repeated string untracked_files = 4;
+   */
+  untrackedFiles: string[] = [];
+
+  /**
+   * the total number of untracked files
+   *
+   * @generated from field: int32 total_untracked_files = 7;
+   */
+  totalUntrackedFiles = 0;
+
+  /**
+   * unpushed_commits is an array of unpushed changes in the workspace, possibly truncated
+   *
+   * @generated from field: repeated string unpushed_commits = 5;
+   */
+  unpushedCommits: string[] = [];
+
+  /**
+   * the total number of unpushed changes
+   *
+   * @generated from field: int32 total_unpushed_commits = 8;
+   */
+  totalUnpushedCommits = 0;
+
+  constructor(data?: PartialMessage<GitStatus>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.GitStatus";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "branch", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "latest_commit", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "uncommited_files", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 6, name: "total_uncommited_files", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 4, name: "untracked_files", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 7, name: "total_untracked_files", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 5, name: "unpushed_commits", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 8, name: "total_unpushed_commits", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GitStatus {
+    return new GitStatus().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GitStatus {
+    return new GitStatus().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GitStatus {
+    return new GitStatus().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GitStatus | PlainMessage<GitStatus> | undefined, b: GitStatus | PlainMessage<GitStatus> | undefined): boolean {
+    return proto3.util.equals(GitStatus, a, b);
+  }
+}
+

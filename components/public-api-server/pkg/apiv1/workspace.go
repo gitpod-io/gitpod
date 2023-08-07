@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 
 	connect "github.com/bufbuild/connect-go"
+	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
@@ -19,14 +20,16 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func NewWorkspaceService(serverConnPool proxy.ServerConnectionPool) *WorkspaceService {
+func NewWorkspaceService(serverConnPool proxy.ServerConnectionPool, expClient experiments.Client) *WorkspaceService {
 	return &WorkspaceService{
 		connectionPool: serverConnPool,
+		expClient:      expClient,
 	}
 }
 
 type WorkspaceService struct {
 	connectionPool proxy.ServerConnectionPool
+	expClient      experiments.Client
 
 	v1connect.UnimplementedWorkspacesServiceHandler
 }
@@ -48,7 +51,7 @@ func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Reques
 		return nil, proxy.ConvertError(err)
 	}
 
-	workspace, err := convertWorkspaceInfo(ws)
+	workspace, err := s.convertWorkspaceInfo(ctx, ws)
 	if err != nil {
 		log.Extract(ctx).WithError(err).Error("Failed to convert workspace.")
 		return nil, err
@@ -88,7 +91,10 @@ func (s *WorkspaceService) StreamWorkspaceStatus(ctx context.Context, req *conne
 	}
 
 	for update := range ch {
-		instance, err := convertWorkspaceInstance(update, workspace.Workspace.Context, workspace.Workspace.Config, workspace.Workspace.Shareable)
+		liveGitStatus := experiments.SupervisorLiveGitStatus(ctx, s.expClient, experiments.Attributes{
+			UserID: workspace.Workspace.OwnerID,
+		})
+		instance, err := convertWorkspaceInstance(update, workspace.Workspace.Context, workspace.Workspace.Config, workspace.Workspace.Shareable, liveGitStatus)
 		if err != nil {
 			log.Extract(ctx).WithError(err).Error("Failed to convert workspace instance.")
 			return proxy.ConvertError(err)
@@ -140,7 +146,8 @@ func (s *WorkspaceService) ListWorkspaces(ctx context.Context, req *connect.Requ
 		return nil, err
 	}
 	serverResp, err := conn.GetWorkspaces(ctx, &protocol.GetWorkspacesOptions{
-		Limit: float64(limit),
+		Limit:          float64(limit),
+		OrganizationId: req.Msg.GetOrganizationId(),
 	})
 	if err != nil {
 		return nil, proxy.ConvertError(err)
@@ -148,7 +155,7 @@ func (s *WorkspaceService) ListWorkspaces(ctx context.Context, req *connect.Requ
 
 	res := make([]*v1.Workspace, 0, len(serverResp))
 	for _, ws := range serverResp {
-		workspace, err := convertWorkspaceInfo(ws)
+		workspace, err := s.convertWorkspaceInfo(ctx, ws)
 		if err != nil {
 			// convertWorkspaceInfo returns gRPC errors
 			return nil, err
@@ -231,7 +238,7 @@ func (s *WorkspaceService) StartWorkspace(ctx context.Context, req *connect.Requ
 		return nil, proxy.ConvertError(err)
 	}
 
-	workspace, err := convertWorkspaceInfo(ws)
+	workspace, err := s.convertWorkspaceInfo(ctx, ws)
 	if err != nil {
 		log.Extract(ctx).WithError(err).Error("Failed to convert workspace.")
 		return nil, err
@@ -263,7 +270,7 @@ func (s *WorkspaceService) StopWorkspace(ctx context.Context, req *connect.Reque
 		return nil, proxy.ConvertError(err)
 	}
 
-	workspace, err := convertWorkspaceInfo(ws)
+	workspace, err := s.convertWorkspaceInfo(ctx, ws)
 	if err != nil {
 		log.Extract(ctx).WithError(err).Error("Failed to convert workspace.")
 		return nil, err
@@ -311,9 +318,16 @@ func getLimitFromPagination(pagination *v1.Pagination) (int, error) {
 	return int(pagination.PageSize), nil
 }
 
+func (s *WorkspaceService) convertWorkspaceInfo(ctx context.Context, input *protocol.WorkspaceInfo) (*v1.Workspace, error) {
+	liveGitStatus := experiments.SupervisorLiveGitStatus(ctx, s.expClient, experiments.Attributes{
+		UserID: input.Workspace.OwnerID,
+	})
+	return convertWorkspaceInfo(input, liveGitStatus)
+}
+
 // convertWorkspaceInfo converts a "protocol workspace" to a "public API workspace". Returns gRPC errors if things go wrong.
-func convertWorkspaceInfo(input *protocol.WorkspaceInfo) (*v1.Workspace, error) {
-	instance, err := convertWorkspaceInstance(input.LatestInstance, input.Workspace.Context, input.Workspace.Config, input.Workspace.Shareable)
+func convertWorkspaceInfo(input *protocol.WorkspaceInfo, liveGitStatus bool) (*v1.Workspace, error) {
+	instance, err := convertWorkspaceInstance(input.LatestInstance, input.Workspace.Context, input.Workspace.Config, input.Workspace.Shareable, liveGitStatus)
 	if err != nil {
 		return nil, err
 	}
@@ -338,7 +352,7 @@ func convertWorkspaceInfo(input *protocol.WorkspaceInfo) (*v1.Workspace, error) 
 	}, nil
 }
 
-func convertWorkspaceInstance(wsi *protocol.WorkspaceInstance, wsCtx *protocol.WorkspaceContext, config *protocol.WorkspaceConfig, shareable bool) (*v1.WorkspaceInstance, error) {
+func convertWorkspaceInstance(wsi *protocol.WorkspaceInstance, wsCtx *protocol.WorkspaceContext, config *protocol.WorkspaceConfig, shareable bool, liveGitStatus bool) (*v1.WorkspaceInstance, error) {
 	if wsi == nil {
 		return nil, nil
 	}
@@ -423,6 +437,13 @@ func convertWorkspaceInstance(wsi *protocol.WorkspaceInstance, wsCtx *protocol.W
 	}
 	recentFolders = append(recentFolders, filepath.Join("/workspace", location))
 
+	var gitStatus *v1.GitStatus
+	if liveGitStatus {
+		gitStatus = convertGitStatus(wsi.GitStatus)
+	} else {
+		gitStatus = convertGitStatus(wsi.Status.Repo)
+	}
+
 	return &v1.WorkspaceInstance{
 		InstanceId:  wsi.ID,
 		WorkspaceId: wsi.WorkspaceID,
@@ -440,6 +461,23 @@ func convertWorkspaceInstance(wsi *protocol.WorkspaceInstance, wsCtx *protocol.W
 			},
 			Ports:         ports,
 			RecentFolders: recentFolders,
+			GitStatus:     gitStatus,
 		},
 	}, nil
+}
+
+func convertGitStatus(repo *protocol.WorkspaceInstanceRepoStatus) *v1.GitStatus {
+	if repo == nil {
+		return nil
+	}
+	return &v1.GitStatus{
+		Branch:               repo.Branch,
+		LatestCommit:         repo.LatestCommit,
+		TotalUncommitedFiles: int32(repo.TotalUncommitedFiles),
+		TotalUntrackedFiles:  int32(repo.TotalUntrackedFiles),
+		TotalUnpushedCommits: int32(repo.TotalUnpushedCommits),
+		UncommitedFiles:      repo.UncommitedFiles,
+		UntrackedFiles:       repo.UntrackedFiles,
+		UnpushedCommits:      repo.UnpushedCommits,
+	}
 }

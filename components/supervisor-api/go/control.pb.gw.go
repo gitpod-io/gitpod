@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -59,26 +59,28 @@ func local_request_ControlService_CreateSSHKeyPair_0(ctx context.Context, marsha
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterControlServiceHandlerFromEndpoint instead.
 func RegisterControlServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server ControlServiceServer) error {
 
-	mux.Handle("POST", pattern_ControlService_CreateSSHKeyPair_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ControlService_CreateSSHKeyPair_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.ControlService/CreateSSHKeyPair", runtime.WithHTTPPathPattern("/v1/sshkey/create"))
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.ControlService/CreateSSHKeyPair", runtime.WithHTTPPathPattern("/v1/ssh_keys/create"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_ControlService_CreateSSHKeyPair_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ControlService_CreateSSHKeyPair_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
-		ctx = runtime.NewServerMetadataContext(ctx, md)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_ControlService_CreateSSHKeyPair_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ControlService_CreateSSHKeyPair_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -123,23 +125,25 @@ func RegisterControlServiceHandler(ctx context.Context, mux *runtime.ServeMux, c
 // "ControlServiceClient" to call the correct interceptors.
 func RegisterControlServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client ControlServiceClient) error {
 
-	mux.Handle("POST", pattern_ControlService_CreateSSHKeyPair_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ControlService_CreateSSHKeyPair_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.ControlService/CreateSSHKeyPair", runtime.WithHTTPPathPattern("/v1/sshkey/create"))
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/supervisor.ControlService/CreateSSHKeyPair", runtime.WithHTTPPathPattern("/v1/ssh_keys/create"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_ControlService_CreateSSHKeyPair_0(rctx, inboundMarshaler, client, req, pathParams)
-		ctx = runtime.NewServerMetadataContext(ctx, md)
+		resp, md, err := request_ControlService_CreateSSHKeyPair_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_ControlService_CreateSSHKeyPair_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ControlService_CreateSSHKeyPair_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -147,7 +151,7 @@ func RegisterControlServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 }
 
 var (
-	pattern_ControlService_CreateSSHKeyPair_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "sshkey", "create"}, ""))
+	pattern_ControlService_CreateSSHKeyPair_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "ssh_keys", "create"}, ""))
 )
 
 var (

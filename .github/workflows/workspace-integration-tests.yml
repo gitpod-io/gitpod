@@ -33,10 +33,12 @@ on:
 
 jobs:
   create-runner:
-    uses: gitpod-io/gce-github-runner/.github/workflows/create-vm.yml@secrets
+    uses: gitpod-io/gce-github-runner/.github/workflows/create-vm.yml@main
     secrets:
       runner_token: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_TOKEN }}
       gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
+    with:
+      task: workspace-integration-tests
 
   configuration:
     name: Configuration
@@ -98,8 +100,10 @@ jobs:
         if: failure()
         env:
           SLACK_WEBHOOK: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
+          SLACK_ICON_EMOJI: ":test_tube:"
+          SLACK_USERNAME: "Integration Tests: workspace"
           SLACK_COLOR: ${{ job.status }}
-          SLACK_MESSAGE: "Workspace Integration Tests failed"
+          SLACK_MESSAGE: "Workspace Integration Tests failed during configuration, is main build green?"
           SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
 
   infrastructure:
@@ -179,7 +183,7 @@ jobs:
       - infrastructure
       - check
       - delete
-    uses: gitpod-io/gce-github-runner/.github/workflows/delete-vm.yml@secrets
+    uses: gitpod-io/gce-github-runner/.github/workflows/delete-vm.yml@main
     secrets:
       gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
     with:

@@ -721,6 +721,7 @@ type ControlService struct {
 
 	privateKey string
 	publicKey  string
+	hostKey    *api.SSHPublicKey
 
 	api.UnimplementedControlServiceServer
 }
@@ -728,6 +729,11 @@ type ControlService struct {
 // RegisterGRPC registers the gRPC info service.
 func (c *ControlService) RegisterGRPC(srv *grpc.Server) {
 	api.RegisterControlServiceServer(srv, c)
+}
+
+// RegisterREST registers the REST info service.
+func (is *ControlService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
+	return api.RegisterControlServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 }
 
 // ExposePort exposes a port.
@@ -754,6 +760,7 @@ func (ss *ControlService) CreateSSHKeyPair(ctx context.Context, req *api.CreateS
 		if err == nil {
 			return &api.CreateSSHKeyPairResponse{
 				PrivateKey: ss.privateKey,
+				HostKey:    ss.hostKey,
 			}, nil
 		}
 		log.WithError(err).Error("check authorized_keys failed, will recreate")
@@ -800,8 +807,23 @@ func (ss *ControlService) CreateSSHKeyPair(ctx context.Context, req *api.CreateS
 	}
 	ss.privateKey = string(generated.PrivateKey)
 	ss.publicKey = string(generated.PublicKey)
+
+	hostKey, err := os.ReadFile("/.supervisor/ssh/sshkey.pub")
+	if err != nil {
+		log.WithError(err).Error("faled to read host key")
+	} else {
+		hostKeyParts := strings.Split(string(hostKey), " ")
+		if len(hostKeyParts) >= 2 {
+			ss.hostKey = &api.SSHPublicKey{
+				Type:  hostKeyParts[0],
+				Value: hostKeyParts[1],
+			}
+		}
+	}
+
 	return &api.CreateSSHKeyPairResponse{
 		PrivateKey: ss.privateKey,
+		HostKey:    ss.hostKey,
 	}, err
 }
 

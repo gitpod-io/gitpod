@@ -164,9 +164,6 @@ export async function getWorkspaceClassForInstance(
                     break;
             }
         }
-        if (!workspaceClass && (await entitlementService.userGetsMoreResources(user))) {
-            workspaceClass = config.find((c) => !!c.marker?.moreResources)?.id;
-        }
         if (!workspaceClass) {
             workspaceClass = config.find((c) => !!c.isDefault)?.id;
         }
@@ -696,10 +693,7 @@ export class WorkspaceStarter {
         metadata.setMetaId(workspace.id);
         if (workspace.projectId) {
             metadata.setProject(workspace.projectId);
-            const project = await this.projectDB.findProjectById(workspace.projectId);
-            if (project && project.teamId) {
-                metadata.setTeam(project.teamId);
-            }
+            metadata.setTeam(workspace.organizationId);
         }
 
         return metadata;
@@ -896,7 +890,7 @@ export class WorkspaceStarter {
                 }
             }
 
-            const billingTier = await this.entitlementService.getBillingTier(user);
+            const billingTier = await this.entitlementService.getBillingTier(user.id, workspace.organizationId);
 
             let featureFlags: NamedWorkspaceFeatureFlag[] = workspace.config._featureFlags || [];
             featureFlags = featureFlags.concat(this.config.workspaceDefaults.defaultFeatureFlags);
@@ -919,7 +913,7 @@ export class WorkspaceStarter {
 
             featureFlags = featureFlags.filter((f) => !excludeFeatureFlags.includes(f));
 
-            if (await this.shouldEnableConnectionLimiting(user)) {
+            if (await this.shouldEnableConnectionLimiting(user.id, workspace.organizationId)) {
                 featureFlags.push("workspace_connection_limiting");
             }
 
@@ -983,8 +977,8 @@ export class WorkspaceStarter {
         }
     }
 
-    private async shouldEnableConnectionLimiting(user: User): Promise<boolean> {
-        return this.entitlementService.limitNetworkConnections(user, new Date());
+    private async shouldEnableConnectionLimiting(userId: string, organizationId: string): Promise<boolean> {
+        return this.entitlementService.limitNetworkConnections(userId, organizationId);
     }
 
     private shouldEnablePSI(billingTier: BillingTier): boolean {
@@ -1522,9 +1516,15 @@ export class WorkspaceStarter {
             user,
             lastValidWorkspaceInstanceId,
         );
-        const userTimeoutPromise = this.entitlementService.getDefaultWorkspaceTimeout(user, new Date());
-        const allowSetTimeoutPromise = this.entitlementService.maySetTimeout(user, new Date());
-        const workspaceLifetimePromise = this.entitlementService.getDefaultWorkspaceLifetime(user, new Date());
+        const userTimeoutPromise = this.entitlementService.getDefaultWorkspaceTimeout(
+            user.id,
+            workspace.organizationId,
+        );
+        const allowSetTimeoutPromise = this.entitlementService.maySetTimeout(user.id, workspace.organizationId);
+        const workspaceLifetimePromise = this.entitlementService.getDefaultWorkspaceLifetime(
+            user.id,
+            workspace.organizationId,
+        );
 
         const featureFlags = instance.configuration!.featureFlags || [];
 
@@ -1602,6 +1602,7 @@ export class WorkspaceStarter {
             "function:getGitpodTokenScopes",
             "function:accessCodeSyncStorage",
             "function:guessGitTokenScopes",
+            "function:updateGitStatus",
             "function:getWorkspaceEnvVars",
             "function:getEnvVars", // TODO remove this after new gitpod-cli is deployed
             "function:setEnvVar",

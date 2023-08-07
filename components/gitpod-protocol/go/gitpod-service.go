@@ -59,6 +59,7 @@ type APIInterface interface {
 	GetOpenPorts(ctx context.Context, workspaceID string) (res []*WorkspaceInstancePort, err error)
 	OpenPort(ctx context.Context, workspaceID string, port *WorkspaceInstancePort) (res *WorkspaceInstancePort, err error)
 	ClosePort(ctx context.Context, workspaceID string, port float32) (err error)
+	UpdateGitStatus(ctx context.Context, workspaceID string, status *WorkspaceInstanceRepoStatus) (err error)
 	GetWorkspaceEnvVars(ctx context.Context, workspaceID string) (res []*EnvVar, err error)
 	GetEnvVars(ctx context.Context) (res []*EnvVar, err error)
 	SetEnvVar(ctx context.Context, variable *UserEnvVarValue) (err error)
@@ -1019,6 +1020,24 @@ func (gp *APIoverJSONRPC) ClosePort(ctx context.Context, workspaceID string, por
 	return
 }
 
+// UpdateGitStatus calls UpdateGitStatus on the server
+func (gp *APIoverJSONRPC) UpdateGitStatus(ctx context.Context, workspaceID string, status *WorkspaceInstanceRepoStatus) (err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	var _params []interface{}
+	_params = append(_params, workspaceID)
+	_params = append(_params, status)
+
+	err = gp.C.Call(ctx, "updateGitStatus", _params, nil)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 // GetWorkspaceEnvVars calls GetWorkspaceEnvVars on the server
 func (gp *APIoverJSONRPC) GetWorkspaceEnvVars(ctx context.Context, workspaceID string) (res []*EnvVar, err error) {
 	if gp == nil {
@@ -1490,9 +1509,10 @@ type UserInfo struct {
 
 // GetWorkspacesOptions is the GetWorkspacesOptions message type
 type GetWorkspacesOptions struct {
-	Limit        float64 `json:"limit,omitempty"`
-	PinnedOnly   bool    `json:"pinnedOnly,omitempty"`
-	SearchString string  `json:"searchString,omitempty"`
+	Limit          float64 `json:"limit,omitempty"`
+	SearchString   string  `json:"searchString,omitempty"`
+	PinnedOnly     bool    `json:"pinnedOnly,omitempty"`
+	OrganizationId string  `json:"organizationId,omitempty"`
 }
 
 // StartWorkspaceResult is the StartWorkspaceResult message type
@@ -1706,6 +1726,7 @@ type WorkspaceInstance struct {
 	Region         string                          `json:"region,omitempty"`
 	StartedTime    string                          `json:"startedTime,omitempty"`
 	Status         *WorkspaceInstanceStatus        `json:"status,omitempty"`
+	GitStatus      *WorkspaceInstanceRepoStatus    `json:"gitStatus,omitempty"`
 	StoppedTime    string                          `json:"stoppedTime,omitempty"`
 	WorkspaceID    string                          `json:"workspaceId,omitempty"`
 	WorkspaceImage string                          `json:"workspaceImage,omitempty"`

@@ -195,7 +195,7 @@ func register(srv *baseserver.Server, deps *registerDependencies) error {
 		),
 	}
 
-	rootHandler.Mount(v1connect.NewWorkspacesServiceHandler(apiv1.NewWorkspaceService(deps.connPool), handlerOptions...))
+	rootHandler.Mount(v1connect.NewWorkspacesServiceHandler(apiv1.NewWorkspaceService(deps.connPool, deps.expClient), handlerOptions...))
 	rootHandler.Mount(v1connect.NewTeamsServiceHandler(apiv1.NewTeamsService(deps.connPool), handlerOptions...))
 	rootHandler.Mount(v1connect.NewUserServiceHandler(apiv1.NewUserService(deps.connPool), handlerOptions...))
 	rootHandler.Mount(v1connect.NewIDEClientServiceHandler(apiv1.NewIDEClientService(deps.connPool), handlerOptions...))

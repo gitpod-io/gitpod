@@ -97,11 +97,10 @@ type InitOptions struct {
 }
 
 type BackupOptions struct {
-	Meta              WorkspaceMeta
-	WorkspaceLocation string
-	BackupLogs        bool
-	UpdateGitStatus   bool
-	SnapshotName      string
+	Meta            WorkspaceMeta
+	BackupLogs      bool
+	UpdateGitStatus bool
+	SnapshotName    string
 }
 
 func NewWorkspaceOperations(config content.Config, provider *WorkspaceProvider, reg prometheus.Registerer) (WorkspaceOperations, error) {
@@ -231,7 +230,7 @@ func (wso *DefaultWorkspaceOperations) BackupWorkspace(ctx context.Context, opts
 	}
 
 	if opts.BackupLogs {
-		err := wso.uploadWorkspaceLogs(ctx, opts)
+		err := wso.uploadWorkspaceLogs(ctx, opts, ws.Location)
 		if err != nil {
 			// we do not fail the workspace yet because we still might succeed with its content!
 			glog.WithError(err).WithFields(ws.OWI()).Error("log backup failed")
@@ -345,9 +344,9 @@ func ensureCleanSlate(location string) error {
 	return nil
 }
 
-func (wso *DefaultWorkspaceOperations) uploadWorkspaceLogs(ctx context.Context, opts BackupOptions) (err error) {
+func (wso *DefaultWorkspaceOperations) uploadWorkspaceLogs(ctx context.Context, opts BackupOptions, location string) (err error) {
 	// currently we're only uploading prebuild log files
-	logFiles, err := logs.ListPrebuildLogFiles(ctx, opts.WorkspaceLocation)
+	logFiles, err := logs.ListPrebuildLogFiles(ctx, location)
 	if err != nil {
 		return err
 	}

@@ -59,6 +59,42 @@ describe("RelationshipUpdater", async () => {
         await expected(rel.installation.member.user(user.id));
     });
 
+    it("should correctly update a simple user after it moves between org and installation level", async () => {
+        let user = await userDB.newUser();
+        user = await migrate(user);
+
+        await expected(rel.user(user.id).installation.installation);
+        await expected(rel.user(user.id).self.user(user.id));
+        await notExpected(rel.installation.admin.user(user.id));
+        await expected(rel.installation.member.user(user.id));
+
+        // lets move the user to an org
+        const org = await orgDB.createTeam(user.id, "MyOrg");
+        user.organizationId = org.id;
+        user = await userDB.storeUser(user);
+        user = await migrate(user);
+
+        await notExpected(rel.user(user.id).installation.installation);
+        await expected(rel.user(user.id).self.user(user.id));
+        await notExpected(rel.installation.member.user(user.id));
+        await expected(rel.user(user.id).organization.organization(org.id));
+        await expected(rel.organization(org.id).member.user(user.id));
+        await expected(rel.organization(org.id).owner.user(user.id));
+
+        // and back to no org
+        user.organizationId = "";
+        user = await userDB.storeUser(user);
+        user = await migrate(user);
+
+        await expected(rel.user(user.id).installation.installation);
+        await expected(rel.user(user.id).self.user(user.id));
+        await expected(rel.installation.member.user(user.id));
+        await notExpected(rel.user(user.id).organization.organization(org.id));
+        // user is still an owner of the org
+        await expected(rel.organization(org.id).member.user(user.id));
+        await expected(rel.organization(org.id).owner.user(user.id));
+    });
+
     it("should update an admin user", async () => {
         let user = await userDB.newUser();
         user.rolesOrPermissions = ["admin"];
@@ -72,8 +108,6 @@ describe("RelationshipUpdater", async () => {
 
         // remove admin role
         user.rolesOrPermissions = [];
-        // reset fgaRelationshipsVersion to force update
-        AdditionalUserData.set(user, { fgaRelationshipsVersion: undefined });
         user = await userDB.storeUser(user);
         user = await migrate(user);
 
@@ -135,6 +169,70 @@ describe("RelationshipUpdater", async () => {
         await expected(rel.organization(org.id).owner.user(user.id));
     });
 
+    it("should remove members when rerunning migrate", async () => {
+        let user = await userDB.newUser();
+        let user2 = await userDB.newUser();
+        const org = await orgDB.createTeam(user.id, "MyOrg");
+        await orgDB.addMemberToTeam(user2.id, org.id);
+        await orgDB.setTeamMemberRole(user2.id, org.id, "owner");
+        user.organizationId = org.id;
+        user = await userDB.storeUser(user);
+
+        user = await migrate(user);
+
+        await expected(rel.organization(org.id).member.user(user2.id));
+        await expected(rel.organization(org.id).owner.user(user2.id));
+
+        // downgrade to member
+        await orgDB.setTeamMemberRole(user2.id, org.id, "member");
+
+        user2 = await migrate(user2);
+
+        await expected(rel.organization(org.id).member.user(user2.id));
+        await notExpected(rel.organization(org.id).owner.user(user2.id));
+
+        // remove user2 from org
+        await orgDB.removeMemberFromTeam(user2.id, org.id);
+
+        user2 = await migrate(user2);
+        await notExpected(rel.organization(org.id).member.user(user2.id));
+        await notExpected(rel.organization(org.id).owner.user(user2.id));
+    });
+
+    it("should remove projects when rerunning migrate", async () => {
+        let user = await userDB.newUser();
+        const org = await orgDB.createTeam(user.id, "MyOrg");
+        const project1 = await projectDB.storeProject({
+            id: v4(),
+            name: "MyProject",
+            appInstallationId: "123",
+            cloneUrl: "https://github.com/gitpod-io/gitpod.git",
+            teamId: org.id,
+            creationTime: new Date().toISOString(),
+        });
+        const project2 = await projectDB.storeProject({
+            id: v4(),
+            name: "MyProject",
+            appInstallationId: "123",
+            cloneUrl: "https://github.com/gitpod-io/gitpod.git",
+            teamId: org.id,
+            creationTime: new Date().toISOString(),
+        });
+
+        user = await migrate(user);
+
+        await expected(rel.project(project1.id).org.organization(org.id));
+        await expected(rel.project(project2.id).org.organization(org.id));
+
+        // remove project2
+        await projectDB.markDeleted(project2.id);
+
+        user = await migrate(user);
+
+        await expected(rel.project(project1.id).org.organization(org.id));
+        await notExpected(rel.project(project2.id).org.organization(org.id));
+    });
+
     it("should update orgs with projects", async () => {
         let user = await userDB.newUser();
         const org = await orgDB.createTeam(user.id, "MyOrg");
@@ -172,6 +270,9 @@ describe("RelationshipUpdater", async () => {
     }
 
     async function migrate(user: User): Promise<User> {
+        // reset fgaRelationshipsVersion to force update
+        AdditionalUserData.set(user, { fgaRelationshipsVersion: undefined });
+        user = await userDB.storeUser(user);
         user = await migrator.migrate(user);
         expect(user.additionalData?.fgaRelationshipsVersion).to.equal(migrator.version);
         return user;

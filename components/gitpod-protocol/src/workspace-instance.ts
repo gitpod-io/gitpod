@@ -44,6 +44,9 @@ export interface WorkspaceInstance {
     // status is the latest status of the instance that we're aware of
     status: WorkspaceInstanceStatus;
 
+    // repo contains information about the Git working copy inside the workspace
+    gitStatus?: WorkspaceInstanceRepoStatus;
+
     // configuration captures the per-instance configuration variance of a workspace
     // Beware: this field was added retroactively and not all instances have valid
     //         values here.
@@ -89,7 +92,12 @@ export interface WorkspaceInstanceStatus {
     // exposedPorts is the list of currently exposed ports
     exposedPorts?: WorkspaceInstancePort[];
 
-    // repo contains information about the Git working copy inside the workspace
+    /**
+     * repo contains information about the Git working copy inside the workspace
+     * @deprecated use WorkspaceInstance.gitStatus instead if supervisor_live_git_status feature flag is enabled
+     *
+     * TODO(ak) remove after migration to live git status
+     */
     repo?: WorkspaceInstanceRepoStatus;
 
     // timeout is a non-default timeout value configured for a workspace
@@ -228,6 +236,42 @@ export interface WorkspaceInstanceRepoStatus {
 
     // the total number of unpushed changes
     totalUnpushedCommits?: number;
+}
+export namespace WorkspaceInstanceRepoStatus {
+    export function equals(
+        a: WorkspaceInstanceRepoStatus | undefined,
+        b: WorkspaceInstanceRepoStatus | undefined,
+    ): boolean {
+        if (!a && !b) {
+            return true;
+        }
+        if (!a || !b) {
+            return false;
+        }
+        return (
+            a.branch === b.branch &&
+            a.latestCommit === b.latestCommit &&
+            a.totalUncommitedFiles === b.totalUncommitedFiles &&
+            a.totalUnpushedCommits === b.totalUnpushedCommits &&
+            a.totalUntrackedFiles === b.totalUntrackedFiles &&
+            stringArrayEquals(a.uncommitedFiles, b.uncommitedFiles) &&
+            stringArrayEquals(a.untrackedFiles, b.untrackedFiles) &&
+            stringArrayEquals(a.unpushedCommits, b.unpushedCommits)
+        );
+    }
+    function stringArrayEquals(a: string[] | undefined, b: string[] | undefined): boolean {
+        if (a === undefined && b === undefined) return true;
+
+        if (a === undefined || b === undefined) return false;
+
+        if (a.length !== b.length) return false;
+
+        for (let i = 0; i < a.length; i++) {
+            if (a[i] !== b[i]) return false;
+        }
+
+        return true;
+    }
 }
 
 // ConfigurationIdeConfig ide config of WorkspaceInstanceConfiguration

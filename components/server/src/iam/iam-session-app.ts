@@ -12,11 +12,12 @@ import { UserAuthentication } from "../user/user-authentication";
 import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Identity, User } from "@gitpod/gitpod-protocol";
-import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib";
 import { reportJWTCookieIssued } from "../prometheus-metrics";
 import { ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { OrganizationService } from "../orgs/organization-service";
 import { UserService } from "../user/user-service";
+import { UserDB } from "@gitpod/gitpod-db/lib";
+import { SYSTEM_USER } from "../authorization/authorizer";
 
 @injectable()
 export class IamSessionApp {
@@ -27,6 +28,7 @@ export class IamSessionApp {
         @inject(UserService) private readonly userService: UserService,
         @inject(OrganizationService) private readonly orgService: OrganizationService,
         @inject(SessionHandler) private readonly session: SessionHandler,
+        @inject(UserDB) private readonly userDb: UserDB,
     ) {}
 
     public getMiddlewares() {
@@ -98,17 +100,15 @@ export class IamSessionApp {
         let existingUser = await this.userAuthentication.findUserForLogin({
             candidate: this.mapOIDCProfileToIdentity(payload),
         });
-        if (existingUser) {
-            return existingUser;
-        }
-
-        // Organizational account lookup by email address
-        existingUser = await this.userAuthentication.findOrgOwnedUser({
-            organizationId: payload.organizationId,
-            email: payload.claims.email,
-        });
-        if (existingUser) {
-            log.info("Found Org-owned user by email.", { email: payload?.claims?.email });
+        if (!existingUser) {
+            // Organizational account lookup by email address
+            existingUser = await this.userAuthentication.findOrgOwnedUser({
+                organizationId: payload.organizationId,
+                email: payload.claims.email,
+            });
+            if (existingUser) {
+                log.info("Found Org-owned user by email.", { email: payload?.claims?.email });
+            }
         }
 
         return existingUser;
@@ -134,17 +134,22 @@ export class IamSessionApp {
     private async createNewOIDCUser(payload: OIDCCreateSessionPayload): Promise<User> {
         const { claims, organizationId } = payload;
 
-        // Until we support SKIM (or any other means to sync accounts) we create new users here as a side-effect of the login
-        const user = await this.userService.createUser({
-            organizationId,
-            identity: { ...this.mapOIDCProfileToIdentity(payload), lastSigninTime: new Date().toISOString() },
-            userUpdate: (user) => {
-                user.name = claims.name;
-                user.avatarUrl = claims.picture;
-            },
-        });
+        return this.userDb.transaction(async (_, ctx) => {
+            // Until we support SKIM (or any other means to sync accounts) we create new users here as a side-effect of the login
+            const user = await this.userService.createUser(
+                {
+                    organizationId,
+                    identity: { ...this.mapOIDCProfileToIdentity(payload), lastSigninTime: new Date().toISOString() },
+                    userUpdate: (user) => {
+                        user.name = claims.name;
+                        user.avatarUrl = claims.picture;
+                    },
+                },
+                ctx,
+            );
 
-        await this.orgService.addOrUpdateMember(BUILTIN_INSTLLATION_ADMIN_USER_ID, organizationId, user.id, "member");
-        return user;
+            await this.orgService.addOrUpdateMember(SYSTEM_USER, organizationId, user.id, "member", ctx);
+            return user;
+        });
     }
 }

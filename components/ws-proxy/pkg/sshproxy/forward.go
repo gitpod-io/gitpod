@@ -64,6 +64,7 @@ func (s *Server) ChannelForward(ctx context.Context, session *Session, targetCon
 	go func() {
 		defer wg.Done()
 		_, _ = io.Copy(targetChan, originChan)
+		_ = targetChan.CloseWrite()
 		targetChannelWg.Done()
 		targetChannelWg.Wait()
 		_ = targetChan.Close()
@@ -72,6 +73,7 @@ func (s *Server) ChannelForward(ctx context.Context, session *Session, targetCon
 	go func() {
 		defer wg.Done()
 		_, _ = io.Copy(originChan, targetChan)
+		_ = originChan.CloseWrite()
 		originChannelWg.Done()
 		originChannelWg.Wait()
 		_ = originChan.Close()

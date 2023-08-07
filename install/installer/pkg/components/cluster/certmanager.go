@@ -23,6 +23,27 @@ func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
 	issuerName := "gitpod-self-signed-issuer"
 	secretCAName := "gitpod-identity-trust-root"
 
+	gitpodCaBundleSources := []trust.BundleSource{
+		{
+			UseDefaultCAs: pointer.Bool(true),
+		},
+		{
+			Secret: &trust.SourceObjectKeySelector{
+				Name:        secretCAName,
+				KeySelector: trust.KeySelector{Key: "ca.crt"},
+			},
+		},
+	}
+
+	if ctx.Config.CustomCACert != nil {
+		gitpodCaBundleSources = append(gitpodCaBundleSources, trust.BundleSource{
+			Secret: &trust.SourceObjectKeySelector{
+				Name:        ctx.Config.CustomCACert.Name,
+				KeySelector: trust.KeySelector{Key: "ca.crt"},
+			},
+		})
+	}
+
 	// TODO (gpl): This is a workaround to untangle the refactoring of existing infrastructure from
 	// moving forward with this change
 	caCertificateNamespace := "cert-manager" // this is the default we want to converge on, eventually
@@ -129,17 +150,7 @@ func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Name: "gitpod-ca-bundle",
 			},
 			Spec: trust.BundleSpec{
-				Sources: []trust.BundleSource{
-					{
-						UseDefaultCAs: pointer.Bool(true),
-					},
-					{
-						Secret: &trust.SourceObjectKeySelector{
-							Name:        secretCAName,
-							KeySelector: trust.KeySelector{Key: "ca.crt"},
-						},
-					},
-				},
+				Sources: gitpodCaBundleSources,
 				Target: trust.BundleTarget{
 					ConfigMap: &trust.KeySelector{
 						Key: "ca-certificates.crt",

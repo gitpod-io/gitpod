@@ -63,6 +63,24 @@ if (process.env.NODE_ENV === "development") {
 log.enableJSONLogging("server", process.env.VERSION, LogrusLogLevel.getFromEnv());
 
 export async function start(container: Container) {
+    const server = container.get(Server);
+    const port = 3000;
+    const app = express();
+
+    process.on("uncaughtException", function (err) {
+        // fix for https://github.com/grpc/grpc-node/blob/master/packages/grpc-js/src/load-balancer-pick-first.ts#L309
+        if (err && err.message && err.message.includes("reading 'startConnecting'")) {
+            log.error("uncaughtException", err);
+        } else {
+            throw err;
+        }
+    });
+
+    process.on("SIGTERM", async () => {
+        log.info("SIGTERM received, stopping");
+        await server.stop();
+    });
+
     const tracing = container.get(TracingManager);
     tracing.setup(process.env.JAEGER_SERVICE_NAME ?? "server", {
         perOpSampling: {
@@ -72,15 +90,6 @@ export async function start(container: Container) {
         },
     });
 
-    const server = container.get(Server);
-    const port = 3000;
-    const app = express();
-
     await server.init(app);
     await server.start(port);
-
-    process.on("SIGTERM", async () => {
-        log.info("SIGTERM received, stopping");
-        await server.stop();
-    });
 }

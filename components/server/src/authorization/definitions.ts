@@ -10,11 +10,23 @@ import { v1 } from "@authzed/authzed-node";
 
 const InstallationID = "1";
 
-export type ResourceType = UserResourceType | InstallationResourceType | OrganizationResourceType | ProjectResourceType;
+export type ResourceType =
+    | UserResourceType
+    | InstallationResourceType
+    | OrganizationResourceType
+    | ProjectResourceType
+    | WorkspaceResourceType;
 
-export type Relation = UserRelation | InstallationRelation | OrganizationRelation | ProjectRelation;
+export const AllResourceTypes: ResourceType[] = ["user", "installation", "organization", "project", "workspace"];
 
-export type Permission = UserPermission | InstallationPermission | OrganizationPermission | ProjectPermission;
+export type Relation = UserRelation | InstallationRelation | OrganizationRelation | ProjectRelation | WorkspaceRelation;
+
+export type Permission =
+    | UserPermission
+    | InstallationPermission
+    | OrganizationPermission
+    | ProjectPermission
+    | WorkspacePermission;
 
 export type UserResourceType = "user";
 
@@ -48,6 +60,7 @@ export type OrganizationPermission =
     | "write_git_provider"
     | "read_billing"
     | "write_billing"
+    | "create_workspace"
     | "write_billing_admin";
 
 export type ProjectResourceType = "project";
@@ -55,6 +68,12 @@ export type ProjectResourceType = "project";
 export type ProjectRelation = "org" | "editor" | "viewer";
 
 export type ProjectPermission = "read_info" | "write_info" | "delete";
+
+export type WorkspaceResourceType = "workspace";
+
+export type WorkspaceRelation = "org" | "owner";
+
+export type WorkspacePermission = "access" | "stop" | "delete" | "read_info";
 
 export const rel = {
     user(id: string) {
@@ -318,6 +337,56 @@ export const rel = {
                             subject: {
                                 object: {
                                     objectType: "organization",
+                                    objectId: objectId,
+                                },
+                            },
+                        } as v1.Relationship;
+                    },
+                };
+            },
+        };
+    },
+
+    workspace(id: string) {
+        const result: Partial<v1.Relationship> = {
+            resource: {
+                objectType: "workspace",
+                objectId: id,
+            },
+        };
+        return {
+            get org() {
+                const result2 = {
+                    ...result,
+                    relation: "org",
+                };
+                return {
+                    organization(objectId: string) {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "organization",
+                                    objectId: objectId,
+                                },
+                            },
+                        } as v1.Relationship;
+                    },
+                };
+            },
+
+            get owner() {
+                const result2 = {
+                    ...result,
+                    relation: "owner",
+                };
+                return {
+                    user(objectId: string) {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "user",
                                     objectId: objectId,
                                 },
                             },

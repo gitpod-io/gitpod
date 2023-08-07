@@ -85,6 +85,7 @@ const defaultFunctions: FunctionsConfig = {
     getOpenPorts: { group: "default", points: 1 },
     openPort: { group: "default", points: 1 },
     closePort: { group: "default", points: 1 },
+    updateGitStatus: { group: "default", points: 1 },
     getWorkspaceEnvVars: { group: "default", points: 1 },
     getAllEnvVars: { group: "default", points: 1 },
     setEnvVar: { group: "default", points: 1 },
@@ -176,7 +177,6 @@ const defaultFunctions: FunctionsConfig = {
     getPriceInformation: { group: "default", points: 1 },
     listUsage: { group: "default", points: 1 },
     getBillingModeForTeam: { group: "default", points: 1 },
-    getBillingModeForUser: { group: "default", points: 1 },
     getLinkedInClientId: { group: "default", points: 1 },
     connectWithLinkedIn: { group: "default", points: 1 },
 

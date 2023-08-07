@@ -25,7 +25,11 @@ export class DBWithTracing<T> {
                 return async (...args: any[]) => {
                     // do not try and trace calls with an empty trace context - the callers intention most likely was to omit the trace
                     // so as to not spam the trace logs
-                    if (!ctx.span) {
+                    // Also, opentracing makes some assumptions about the Span object, so this might fail under some circumstances
+                    function isEmptyObject(obj: object): boolean {
+                        return Object.keys(obj).length === 0;
+                    }
+                    if (!ctx.span || isEmptyObject(ctx.span)) {
                         return await f.bind(_target)(...args);
                     }
 
