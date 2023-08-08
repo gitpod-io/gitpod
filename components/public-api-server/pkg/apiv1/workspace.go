@@ -7,6 +7,7 @@ package apiv1
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"path/filepath"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
+	"github.com/patrickmn/go-cache"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -24,10 +26,12 @@ func NewWorkspaceService(serverConnPool proxy.ServerConnectionPool, expClient ex
 	return &WorkspaceService{
 		connectionPool: serverConnPool,
 		expClient:      expClient,
+		workspaceCache: cache.New(5*time.Minute, 10*time.Minute),
 	}
 }
 
 type WorkspaceService struct {
+	workspaceCache *cache.Cache
 	connectionPool proxy.ServerConnectionPool
 	expClient      experiments.Client
 
@@ -76,27 +80,41 @@ func (s *WorkspaceService) StreamWorkspaceStatus(ctx context.Context, req *conne
 		return err
 	}
 
-	workspace, err := conn.GetWorkspace(ctx, workspaceID)
-	if err != nil {
-		log.Extract(ctx).WithError(err).Error("Failed to get workspace.")
-		return proxy.ConvertError(err)
-	}
-
-	if workspace.LatestInstance == nil {
-		log.Extract(ctx).WithError(err).Error("Failed to get latest instance.")
-		return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("instance not found"))
-	}
-
 	ch, err := conn.WorkspaceUpdates(ctx, workspaceID)
 	if err != nil {
 		log.Extract(ctx).WithError(err).Error("Failed to get workspace instance updates.")
 		return proxy.ConvertError(err)
 	}
 
+	authenticatedUser, err := conn.GetLoggedInUser(ctx)
+	if err != nil {
+		log.Extract(ctx).WithError(err).Error("Failed to get logged in user.")
+		return proxy.ConvertError(err)
+	}
+
 	for update := range ch {
 		liveGitStatus := experiments.SupervisorLiveGitStatus(ctx, s.expClient, experiments.Attributes{
-			UserID: workspace.Workspace.OwnerID,
+			UserID: authenticatedUser.ID,
 		})
+
+		cachedWorkspace, found := s.workspaceCache.Get(workspaceID)
+		var workspace *protocol.WorkspaceInfo
+		if found {
+			workspace = cachedWorkspace.(*protocol.WorkspaceInfo)
+		} else {
+			workspace, err = conn.GetWorkspace(ctx, update.WorkspaceID)
+			if err != nil {
+				log.Extract(ctx).WithError(err).Error("Failed to get workspace.")
+				return proxy.ConvertError(err)
+			}
+			s.workspaceCache.Set(workspaceID, workspace, cache.DefaultExpiration)
+		}
+
+		if workspace.LatestInstance == nil {
+			log.Extract(ctx).WithError(err).Error("Failed to get latest instance.")
+			return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("instance not found"))
+		}
+
 		instance, err := convertWorkspaceInstance(update, workspace.Workspace.Context, workspace.Workspace.Config, workspace.Workspace.Shareable, liveGitStatus)
 		if err != nil {
 			log.Extract(ctx).WithError(err).Error("Failed to convert workspace instance.")
