@@ -49,16 +49,26 @@ export class WorkspaceGarbageCollector implements Job {
             return;
         }
 
-        await Promise.all([
-            this.softDeleteOldWorkspaces().catch((err) => log.error("workspace-gc: error during soft-deletion", err)),
-            this.deleteWorkspaceContentAfterRetentionPeriod().catch((err) =>
-                log.error("workspace-gc: error during content deletion", err),
-            ),
-            this.purgeWorkspacesAfterPurgeRetentionPeriod().catch((err) =>
-                log.error("workspace-gc: error during hard deletion of workspaces", err),
-            ),
-            this.deleteOldPrebuilds().catch((err) => log.error("workspace-gc: error during prebuild deletion", err)),
-        ]);
+        try {
+            await this.softDeleteOldWorkspaces();
+        } catch (error) {
+            log.error("workspace-gc: error during garbage collection", error);
+        }
+        try {
+            await this.deleteWorkspaceContentAfterRetentionPeriod();
+        } catch (error) {
+            log.error("workspace-gc: error during content deletion", error);
+        }
+        try {
+            await this.purgeWorkspacesAfterPurgeRetentionPeriod();
+        } catch (err) {
+            log.error("workspace-gc: error during hard deletion of workspaces", err);
+        }
+        try {
+            await this.deleteOldPrebuilds();
+        } catch (err) {
+            log.error("workspace-gc: error during prebuild deletion", err);
+        }
     }
 
     /**
@@ -80,16 +90,21 @@ export class WorkspaceGarbageCollector implements Job {
                     this.config.workspaceGarbageCollection.chunkLimit,
                 );
             const afterSelect = new Date();
-            const deletes = await Promise.all(
-                workspaces.map((ws) => this.workspaceService.deleteWorkspace(SYSTEM_USER, ws.id, "gc")),
-            );
+            log.info(`workspace-gc: about to soft-delete ${workspaces.length} workspaces`);
+            for (const ws of workspaces) {
+                try {
+                    await this.workspaceService.deleteWorkspace(SYSTEM_USER, ws.id, "gc");
+                } catch (err) {
+                    log.error({ workspaceId: ws.id }, "workspace-gc: error during workspace soft-deletion", err);
+                }
+            }
             const afterDelete = new Date();
 
-            log.info(`workspace-gc: successfully soft-deleted ${deletes.length} workspaces`, {
+            log.info(`workspace-gc: successfully soft-deleted ${workspaces.length} workspaces`, {
                 selectionTimeMs: afterSelect.getTime() - now.getTime(),
                 deletionTimeMs: afterDelete.getTime() - afterSelect.getTime(),
             });
-            span.addTags({ nrOfCollectedWorkspaces: deletes.length });
+            span.addTags({ nrOfCollectedWorkspaces: workspaces.length });
         } catch (err) {
             TraceContext.setError({ span }, err);
             throw err;
@@ -101,16 +116,29 @@ export class WorkspaceGarbageCollector implements Job {
     private async deleteWorkspaceContentAfterRetentionPeriod() {
         const span = opentracing.globalTracer().startSpan("deleteWorkspaceContentAfterRetentionPeriod");
         try {
+            const now = new Date();
             const workspaces = await this.workspaceDB
                 .trace({ span })
                 .findWorkspacesForContentDeletion(
                     this.config.workspaceGarbageCollection.contentRetentionPeriodDays,
                     this.config.workspaceGarbageCollection.contentChunkLimit,
                 );
-            const deletes = await Promise.all(workspaces.map((ws) => this.garbageCollectWorkspace({ span }, ws)));
+            const afterSelect = new Date();
+            log.info(`workspace-gc: about to delete the content of ${workspaces.length} workspaces`);
+            for (const ws of workspaces) {
+                try {
+                    await this.garbageCollectWorkspace({ span }, ws);
+                } catch (err) {
+                    log.error({ workspaceId: ws.id }, "workspace-gc: error during workspace content deletion", err);
+                }
+            }
+            const afterDelete = new Date();
 
-            log.info(`workspace-gc: successfully deleted the content of ${deletes.length} workspaces`);
-            span.addTags({ nrOfCollectedWorkspaces: deletes.length });
+            log.info(`workspace-gc: successfully deleted the content of ${workspaces.length} workspaces`, {
+                selectionTimeMs: afterSelect.getTime() - now.getTime(),
+                deletionTimeMs: afterDelete.getTime() - afterSelect.getTime(),
+            });
+            span.addTags({ nrOfCollectedWorkspaces: workspaces.length });
         } catch (err) {
             TraceContext.setError({ span }, err);
             throw err;
@@ -133,22 +161,22 @@ export class WorkspaceGarbageCollector implements Job {
                     this.config.workspaceGarbageCollection.purgeChunkLimit,
                     now,
                 );
-            const deletes = await Promise.all(
-                workspaces.map((ws) =>
-                    this.workspaceService
-                        .hardDeleteWorkspace(SYSTEM_USER, ws.id)
-                        .catch((err) =>
-                            log.error(
-                                { userId: ws.ownerId, workspaceId: ws.id },
-                                "failed to hard-delete workspace",
-                                err,
-                            ),
-                        ),
-                ),
-            );
+            const afterSelect = new Date();
+            log.info(`workspace-gc: about to purge ${workspaces.length} workspaces`);
+            for (const ws of workspaces) {
+                try {
+                    await this.workspaceService.hardDeleteWorkspace(SYSTEM_USER, ws.id);
+                } catch (err) {
+                    log.error({ workspaceId: ws.id }, "workspace-gc: failed to purge workspace", err);
+                }
+            }
+            const afterDelete = new Date();
 
-            log.info(`workspace-gc: successfully purged ${deletes.length} workspaces`);
-            span.addTags({ nrOfCollectedWorkspaces: deletes.length });
+            log.info(`workspace-gc: successfully purged ${workspaces.length} workspaces`, {
+                selectionTimeMs: afterSelect.getTime() - now.getTime(),
+                deletionTimeMs: afterDelete.getTime() - afterSelect.getTime(),
+            });
+            span.addTags({ nrOfCollectedWorkspaces: workspaces.length });
         } catch (err) {
             TraceContext.setError({ span }, err);
             throw err;
@@ -160,16 +188,29 @@ export class WorkspaceGarbageCollector implements Job {
     private async deleteOldPrebuilds() {
         const span = opentracing.globalTracer().startSpan("deleteOldPrebuilds");
         try {
+            const now = new Date();
             const workspaces = await this.workspaceDB
                 .trace({ span })
                 .findPrebuiltWorkspacesForGC(
                     this.config.workspaceGarbageCollection.minAgePrebuildDays,
                     this.config.workspaceGarbageCollection.chunkLimit,
                 );
-            const deletes = await Promise.all(workspaces.map((ws) => this.garbageCollectPrebuild({ span }, ws)));
+            const afterSelect = new Date();
+            log.info(`workspace-gc: about to delete ${workspaces.length} prebuilds`);
+            for (const ws of workspaces) {
+                try {
+                    await this.garbageCollectPrebuild({ span }, ws);
+                } catch (err) {
+                    log.error({ workspaceId: ws.id }, "workspace-gc: failed to delete prebuild", err);
+                }
+            }
+            const afterDelete = new Date();
 
-            log.info(`workspace-gc: successfully deleted ${deletes.length} prebuilds`);
-            span.addTags({ nrOfCollectedPrebuilds: deletes.length });
+            log.info(`workspace-gc: successfully deleted ${workspaces.length} prebuilds`, {
+                selectionTimeMs: afterSelect.getTime() - now.getTime(),
+                deletionTimeMs: afterDelete.getTime() - afterSelect.getTime(),
+            });
+            span.addTags({ nrOfCollectedPrebuilds: workspaces.length });
         } catch (err) {
             TraceContext.setError({ span }, err);
             throw err;
