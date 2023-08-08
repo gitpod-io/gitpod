@@ -39,12 +39,6 @@ func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
 		{
 			UseDefaultCAs: pointer.Bool(true),
 		},
-		{
-			Secret: &trust.SourceObjectKeySelector{
-				Name:        secretCAName,
-				KeySelector: trust.KeySelector{Key: "ca.crt"},
-			},
-		},
 	}
 
 	if ctx.Config.CustomCACert != nil {
