@@ -46,27 +46,30 @@ export class DBUser implements User {
     fullName?: string;
 
     @Column({
-        type: "simple-json",
-        transformer: (() => {
-            return {
-                to(value: any): any {
-                    if (!Array.isArray(value)) {
-                        return "[]";
-                    }
-                    return JSON.stringify(value);
-                },
-                from(value: any): any {
-                    try {
+        type: "simple-array",
+        array: true,
+        transformer: {
+            to(value: any): any {
+                if (!Array.isArray(value)) {
+                    return "[]";
+                }
+                return JSON.stringify(value);
+            },
+            from(value: any): any {
+                try {
+                    if (typeof value === "string") {
                         const obj = JSON.parse(value);
                         if (Array.isArray(obj)) {
                             return obj;
                         }
-                    } catch (error) {}
-                    // empty by default
-                    return [];
-                },
-            };
-        })(),
+                    }
+                } catch (error) {
+                    console.error(error);
+                }
+                // empty by default
+                return [];
+            },
+        },
     })
     emails: User.Email[];
 
