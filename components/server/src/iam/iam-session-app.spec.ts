@@ -21,7 +21,7 @@ import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
 import { TeamMemberInfo, TeamMemberRole, User } from "@gitpod/gitpod-protocol";
 import { OrganizationService } from "../orgs/organization-service";
 import { UserService } from "../user/user-service";
-import { UserDB } from "@gitpod/gitpod-db/lib";
+import { TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
 const expect = chai.expect;
 
 @suite(timeout(10000))
@@ -122,6 +122,7 @@ class TestIamSessionApp {
                         return run();
                     },
                 }); // unused
+                bind(TeamDB).toConstantValue(<any>{}); // unused
             }),
         );
         this.app = container.get(IamSessionApp);
