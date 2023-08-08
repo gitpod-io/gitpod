@@ -133,6 +133,8 @@ type Configuration struct {
 	TimeoutMaxConcurrentReconciles int `json:"timeoutMaxConcurrentReconciles,omitempty"`
 	// ExperimentalMode controls if experimental features are enabled
 	ExperimentalMode bool `json:"experimentalMode"`
+	// EnableCustomSSLCertificate controls if we need to support custom SSL certificates for git operations
+	EnableCustomSSLCertificate bool `json:"enableCustomSSLCertificate"`
 }
 
 type WorkspaceClass struct {

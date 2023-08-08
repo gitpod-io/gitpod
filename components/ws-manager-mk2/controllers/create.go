@@ -315,14 +315,17 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 				},
 			},
 		},
-		{
+	}
+
+	if sctx.Config.EnableCustomSSLCertificate {
+		volumes = append(volumes, corev1.Volume{
 			Name: "gitpod-ca-crt",
 			VolumeSource: corev1.VolumeSource{
 				ConfigMap: &corev1.ConfigMapVolumeSource{
 					LocalObjectReference: corev1.LocalObjectReference{Name: "gitpod-customer-certificate-bundle"},
 				},
 			},
-		},
+		})
 	}
 
 	workloadType := "regular"
@@ -471,6 +474,29 @@ func createWorkspaceContainer(sctx *startWorkspaceContext) (*corev1.Container, e
 
 	image := fmt.Sprintf("%s/%s/%s", sctx.Config.RegistryFacadeHost, regapi.ProviderPrefixRemote, sctx.Workspace.Name)
 
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:             workspaceVolumeName,
+			MountPath:        workspaceDir,
+			ReadOnly:         false,
+			MountPropagation: &mountPropagation,
+		},
+		{
+			MountPath:        "/.workspace",
+			Name:             "daemon-mount",
+			MountPropagation: &mountPropagation,
+		},
+	}
+
+	if sctx.Config.EnableCustomSSLCertificate {
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "gitpod-ca-crt",
+			MountPath: "/etc/ssl/certs/gitpod-ca.crt",
+			SubPath:   "ca-certificates.crt",
+			ReadOnly:  true,
+		})
+	}
+
 	return &corev1.Container{
 		Name:            "workspace",
 		Image:           image,
@@ -483,25 +509,7 @@ func createWorkspaceContainer(sctx *startWorkspaceContext) (*corev1.Container, e
 			Limits:   limits,
 			Requests: requests,
 		},
-		VolumeMounts: []corev1.VolumeMount{
-			{
-				Name:             workspaceVolumeName,
-				MountPath:        workspaceDir,
-				ReadOnly:         false,
-				MountPropagation: &mountPropagation,
-			},
-			{
-				MountPath:        "/.workspace",
-				Name:             "daemon-mount",
-				MountPropagation: &mountPropagation,
-			},
-			{
-				Name:      "gitpod-ca-crt",
-				MountPath: "/etc/ssl/certs/gitpod-ca.crt",
-				SubPath:   "ca-certificates.crt",
-				ReadOnly:  true,
-			},
-		},
+		VolumeMounts:             volumeMounts,
 		ReadinessProbe:           readinessProbe,
 		Env:                      env,
 		Command:                  command,
@@ -561,19 +569,21 @@ func createWorkspaceEnvironment(sctx *startWorkspaceContext) ([]corev1.EnvVar, e
 	result = append(result, corev1.EnvVar{Name: "THEIA_WEBVIEW_EXTERNAL_ENDPOINT", Value: "webview-{{hostname}}"})
 	result = append(result, corev1.EnvVar{Name: "THEIA_MINI_BROWSER_HOST_PATTERN", Value: "browser-{{hostname}}"})
 
-	const (
-		customCAMountPath = "/etc/ssl/certs/gitpod-ca.crt"
-		certsMountPath    = "/etc/ssl/certs/"
-	)
+	if sctx.Config.EnableCustomSSLCertificate {
+		const (
+			customCAMountPath = "/etc/ssl/certs/gitpod-ca.crt"
+			certsMountPath    = "/etc/ssl/certs/"
+		)
 
-	result = append(result, corev1.EnvVar{Name: "NODE_EXTRA_CA_CERTS", Value: customCAMountPath})
-	result = append(result, corev1.EnvVar{Name: "GIT_SSL_CAPATH", Value: certsMountPath})
-	result = append(result, corev1.EnvVar{Name: "GIT_SSL_CAINFO", Value: customCAMountPath})
+		result = append(result, corev1.EnvVar{Name: "NODE_EXTRA_CA_CERTS", Value: customCAMountPath})
+		result = append(result, corev1.EnvVar{Name: "GIT_SSL_CAPATH", Value: certsMountPath})
+		result = append(result, corev1.EnvVar{Name: "GIT_SSL_CAINFO", Value: customCAMountPath})
 
-	// We don't require that Git be configured for workspaces
-	if sctx.Workspace.Spec.Git != nil {
-		result = append(result, corev1.EnvVar{Name: "GITPOD_GIT_USER_NAME", Value: sctx.Workspace.Spec.Git.Username})
-		result = append(result, corev1.EnvVar{Name: "GITPOD_GIT_USER_EMAIL", Value: sctx.Workspace.Spec.Git.Email})
+		// We don't require that Git be configured for workspaces
+		if sctx.Workspace.Spec.Git != nil {
+			result = append(result, corev1.EnvVar{Name: "GITPOD_GIT_USER_NAME", Value: sctx.Workspace.Spec.Git.Username})
+			result = append(result, corev1.EnvVar{Name: "GITPOD_GIT_USER_EMAIL", Value: sctx.Workspace.Spec.Git.Email})
+		}
 	}
 
 	// System level env vars
