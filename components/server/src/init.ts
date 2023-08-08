@@ -56,6 +56,8 @@ import { Container } from "inversify";
 import { Server } from "./server";
 import { log, LogrusLogLevel } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { TypeORM } from "@gitpod/gitpod-db/lib";
+import { dbConnectionsFree, dbConnectionsTotal } from "./prometheus-metrics";
 if (process.env.NODE_ENV === "development") {
     require("longjohn");
 }
@@ -76,9 +78,24 @@ export async function start(container: Container) {
         }
     });
 
+    const interval = setInterval(async () => {
+        try {
+            const connection = await container.get(TypeORM).getConnection();
+            const pool: any = (connection.driver as any).pool;
+            const activeConnections = pool._allConnections.length;
+            const freeConnections = pool._freeConnections.length;
+
+            dbConnectionsTotal.set(activeConnections);
+            dbConnectionsFree.set(freeConnections);
+        } catch (error) {
+            log.error("Error updating TypeORM metrics", error);
+        }
+    }, 5000);
+
     process.on("SIGTERM", async () => {
         log.info("SIGTERM received, stopping");
         await server.stop();
+        clearInterval(interval);
     });
 
     const tracing = container.get(TracingManager);
