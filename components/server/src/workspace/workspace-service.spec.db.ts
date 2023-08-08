@@ -85,7 +85,7 @@ describe("WorkspaceService", async () => {
         await createTestWorkspace(svc, org, owner, project);
 
         // Stranger can't create a workspace in our org
-        await expectError(ErrorCodes.NOT_FOUND, createTestWorkspace(svc, org, stranger, project));
+        await expectError(ErrorCodes.NOT_FOUND, () => createTestWorkspace(svc, org, stranger, project));
     });
 
     it("should getWorkspace", async () => {
@@ -95,38 +95,7 @@ describe("WorkspaceService", async () => {
         const foundWorkspace = await svc.getWorkspace(owner.id, ws.id);
         expect(foundWorkspace?.id).to.equal(ws.id);
 
-        await expectError(ErrorCodes.NOT_FOUND, svc.getWorkspace(stranger.id, ws.id));
-    });
-
-    it("should getOwnerToken", async () => {
-        const svc = container.get(WorkspaceService);
-        const ws = await createTestWorkspace(svc, org, owner, project);
-
-        await expectError(
-            ErrorCodes.NOT_FOUND,
-            svc.getOwnerToken(owner.id, ws.id),
-            "NOT_FOUND for non-running workspace",
-        );
-
-        await expectError(
-            ErrorCodes.NOT_FOUND,
-            svc.getOwnerToken(stranger.id, ws.id),
-            "NOT_FOUND if stranger asks for the owner token",
-        );
-    });
-
-    it("should getIDECredentials", async () => {
-        const svc = container.get(WorkspaceService);
-        const ws = await createTestWorkspace(svc, org, owner, project);
-
-        const ideCredentials = await svc.getIDECredentials(owner.id, ws.id);
-        expect(ideCredentials, "IDE credentials should be present").to.not.be.undefined;
-
-        await expectError(
-            ErrorCodes.NOT_FOUND,
-            svc.getIDECredentials(stranger.id, ws.id),
-            "NOT_FOUND if stranger asks for the IDE credentials",
-        );
+        await expectError(ErrorCodes.NOT_FOUND, () => svc.getWorkspace(stranger.id, ws.id));
     });
 
     it("should stopWorkspace", async () => {
@@ -134,8 +103,7 @@ describe("WorkspaceService", async () => {
         const ws = await createTestWorkspace(svc, org, owner, project);
 
         await svc.stopWorkspace(owner.id, ws.id, "test stopping stopped workspace");
-        await expectError(
-            ErrorCodes.NOT_FOUND,
+        await expectError(ErrorCodes.NOT_FOUND, () =>
             svc.stopWorkspace(stranger.id, ws.id, "test stranger stopping stopped workspace"),
         );
     });
@@ -146,7 +114,7 @@ describe("WorkspaceService", async () => {
 
         await expectError(
             ErrorCodes.NOT_FOUND,
-            svc.deleteWorkspace(stranger.id, ws.id),
+            () => svc.deleteWorkspace(stranger.id, ws.id),
             "stranger can't delete workspace",
         );
 
@@ -154,7 +122,7 @@ describe("WorkspaceService", async () => {
         // TODO(gpl) For now, we keep the old behavior which will return a workspace, even if it's marked as "softDeleted"
         // await expectError(
         //     ErrorCodes.NOT_FOUND,
-        //     svc.getWorkspace(owner.id, ws.id),
+        //     () => svc.getWorkspace(owner.id, ws.id),
         //     "getWorkspace should return NOT_FOUND after deletion",
         // );
         const ws2 = await svc.getWorkspace(owner.id, ws.id);
@@ -167,14 +135,14 @@ describe("WorkspaceService", async () => {
 
         await expectError(
             ErrorCodes.NOT_FOUND,
-            svc.hardDeleteWorkspace(stranger.id, ws.id),
+            () => svc.hardDeleteWorkspace(stranger.id, ws.id),
             "stranger can't hard-delete workspace",
         );
 
         await svc.hardDeleteWorkspace(owner.id, ws.id);
         await expectError(
             ErrorCodes.NOT_FOUND,
-            svc.getWorkspace(owner.id, ws.id),
+            () => svc.getWorkspace(owner.id, ws.id),
             "getWorkspace should return NOT_FOUND after hard-deletion",
         );
     });

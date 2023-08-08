@@ -293,7 +293,12 @@ export class PrebuildManager {
     protected async checkUsageLimitReached(user: User, organizationId: string): Promise<void> {
         let result: MayStartWorkspaceResult = {};
         try {
-            result = await this.entitlementService.mayStartWorkspace(user, organizationId, Promise.resolve([]));
+            result = await this.entitlementService.mayStartWorkspace(
+                user,
+                organizationId,
+                new Date(),
+                Promise.resolve([]),
+            );
         } catch (err) {
             log.error({ userId: user.id }, "EntitlementService.mayStartWorkspace error", err);
             return; // we don't want to block workspace starts because of internal errors

@@ -14,7 +14,6 @@ import { WorkspaceFactory } from "./workspace-factory";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
 import { WorkspaceStarter } from "./workspace-starter";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import * as crypto from "crypto";
 
 @injectable()
 export class WorkspaceService {
@@ -60,53 +59,15 @@ export class WorkspaceService {
     }
 
     async getWorkspace(userId: string, workspaceId: string): Promise<Workspace> {
-        return this.doGetWorkspace(userId, workspaceId);
-    }
-
-    // Internal method for allowing for additional DBs to be passed in
-    private async doGetWorkspace(userId: string, workspaceId: string, db: WorkspaceDB = this.db): Promise<Workspace> {
         await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
 
-        const workspace = await db.findById(workspaceId);
+        const workspace = await this.db.findById(workspaceId);
         // TODO(gpl) We might want to add || !!workspace.softDeleted here in the future, but we were unsure how that would affect existing clients
         // In order to reduce risk, we leave it for a future changeset.
         if (!workspace || workspace.deleted) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Workspace not found.");
         }
         return workspace;
-    }
-
-    async getOwnerToken(userId: string, workspaceId: string): Promise<string> {
-        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
-
-        // Check: is deleted?
-        await this.getWorkspace(userId, workspaceId);
-
-        const latestInstance = await this.db.findCurrentInstance(workspaceId);
-        const ownerToken = latestInstance?.status.ownerToken;
-        if (!ownerToken) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "owner token not found");
-        }
-        return ownerToken;
-    }
-
-    async getIDECredentials(userId: string, workspaceId: string): Promise<string> {
-        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
-
-        const ws = await this.getWorkspace(userId, workspaceId);
-        if (ws.config.ideCredentials) {
-            return ws.config.ideCredentials;
-        }
-
-        return this.db.transaction(async (db) => {
-            const ws = await this.doGetWorkspace(userId, workspaceId, db);
-            if (ws.config.ideCredentials) {
-                return ws.config.ideCredentials;
-            }
-            ws.config.ideCredentials = crypto.randomBytes(32).toString("base64");
-            await db.store(ws);
-            return ws.config.ideCredentials;
-        });
     }
 
     async stopWorkspace(

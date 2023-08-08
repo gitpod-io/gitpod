@@ -118,6 +118,7 @@ import { ReferrerPrefixParser } from "./workspace/referrer-prefix-context-parser
 import { SnapshotContextParser } from "./workspace/snapshot-context-parser";
 import { SnapshotService } from "./workspace/snapshot-service";
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace/workspace-cluster-imagebuilder-client-provider";
+import { WorkspaceDeletionService } from "./workspace/workspace-deletion-service";
 import { WorkspaceDownloadService } from "./workspace/workspace-download-service";
 import { WorkspaceFactory } from "./workspace/workspace-factory";
 import { WorkspaceStarter } from "./workspace/workspace-starter";
@@ -161,6 +162,7 @@ export const productionContainerModule = new ContainerModule(
         bind(SnapshotService).toSelf().inSingletonScope();
         bind(WorkspaceService).toSelf().inSingletonScope();
         bind(WorkspaceFactory).toSelf().inSingletonScope();
+        bind(WorkspaceDeletionService).toSelf().inSingletonScope();
         bind(WorkspaceStarter).toSelf().inSingletonScope();
         bind(ImageSourceProvider).toSelf().inSingletonScope();
 

@@ -47,44 +47,49 @@ export interface EntitlementService {
     mayStartWorkspace(
         user: User,
         organizationId: string,
+        date: Date,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult>;
 
     /**
      * A user may set the workspace timeout if they have a professional subscription
-     * @param userId
-     * @param organizationId
+     * @param user
+     * @param date The date for which we want to know whether the user is allowed to set a timeout (depends on active subscription)
      */
-    maySetTimeout(userId: string, organizationId?: string): Promise<boolean>;
+    maySetTimeout(user: User, date: Date): Promise<boolean>;
 
     /**
      * Returns the default workspace timeout for the given user at a given point in time
-     * @param userId
-     * @param organizationId
+     * @param user
+     * @param date The date for which we want to know the default workspace timeout (depends on active subscription)
      */
-    getDefaultWorkspaceTimeout(userId: string, organizationId: string): Promise<WorkspaceTimeoutDuration>;
+    getDefaultWorkspaceTimeout(user: User, date: Date): Promise<WorkspaceTimeoutDuration>;
 
     /**
      * Returns the default workspace lifetime for the given user at a given point in time
-     * @param userId
-     * @param organizationId
+     * @param user
+     * @param date The date for which we want to know the default workspace timeout (depends on active subscription)
      */
-    getDefaultWorkspaceLifetime(userId: string, organizationId: string): Promise<WorkspaceTimeoutDuration>;
+    getDefaultWorkspaceLifetime(user: User, date: Date): Promise<WorkspaceTimeoutDuration>;
+
+    /**
+     * Returns true if the user ought to land on a workspace cluster that provides more resources
+     * compared to the default case.
+     */
+    userGetsMoreResources(user: User): Promise<boolean>;
 
     /**
      * Returns true if network connections should be limited
-     * @param userId
-     * @param organizationId
+     * @param user
      */
-    limitNetworkConnections(userId: string, organizationId: string): Promise<boolean>;
+    limitNetworkConnections(user: User, date: Date): Promise<boolean>;
 
     /**
-     * Returns BillingTier of this organization
+     * Returns BillingTier of this particular user
      *
-     * @param userId
-     * @param organizationId
+     * @param user
      */
-    getBillingTier(userId: string, organizationId: string): Promise<BillingTier>;
+    getBillingTier(user: User): Promise<BillingTier>;
 }
 
 /**
@@ -102,6 +107,7 @@ export class EntitlementServiceImpl implements EntitlementService {
     async mayStartWorkspace(
         user: User,
         organizationId: string,
+        date: Date = new Date(),
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult> {
         try {
@@ -111,13 +117,13 @@ export class EntitlementServiceImpl implements EntitlementService {
                     needsVerification: true,
                 };
             }
-            const billingMode = await this.billingModes.getBillingMode(user.id, organizationId);
+            const billingMode = await this.billingModes.getBillingModeForUser(user, date);
             switch (billingMode.mode) {
                 case "none":
                     // if payment is not enabled users can start as many parallel workspaces as they want
                     return {};
                 case "usage-based":
-                    return this.ubp.mayStartWorkspace(user, organizationId, runningInstances);
+                    return this.ubp.mayStartWorkspace(user, organizationId, date, runningInstances);
                 default:
                     throw new Error("Unsupported billing mode: " + (billingMode as any).mode); // safety net
             }
@@ -127,50 +133,65 @@ export class EntitlementServiceImpl implements EntitlementService {
         }
     }
 
-    async maySetTimeout(userId: string, organizationId?: string): Promise<boolean> {
+    async maySetTimeout(user: User, date: Date = new Date()): Promise<boolean> {
         try {
-            // TODO(gpl): We need to replace this with ".getBillingMode(user.id, organizationId);" once all callers forward organizationId
-            const billingMode = await this.billingModes.getBillingModeForUser();
+            const billingMode = await this.billingModes.getBillingModeForUser(user, date);
             switch (billingMode.mode) {
                 case "none":
                     // when payment is disabled users can do everything
                     return true;
                 case "usage-based":
-                    return this.ubp.maySetTimeout(userId, organizationId);
+                    return this.ubp.maySetTimeout(user, date);
             }
         } catch (err) {
-            log.error({ userId }, "EntitlementService error: maySetTimeout", err);
+            log.error({ userId: user.id }, "EntitlementService error: maySetTimeout", err);
             return true;
         }
     }
 
-    async getDefaultWorkspaceTimeout(userId: string, organizationId: string): Promise<WorkspaceTimeoutDuration> {
+    async getDefaultWorkspaceTimeout(user: User, date: Date = new Date()): Promise<WorkspaceTimeoutDuration> {
         try {
-            const billingMode = await this.billingModes.getBillingMode(userId, organizationId);
+            const billingMode = await this.billingModes.getBillingModeForUser(user, date);
             switch (billingMode.mode) {
                 case "none":
                     return WORKSPACE_TIMEOUT_DEFAULT_LONG;
                 case "usage-based":
-                    return this.ubp.getDefaultWorkspaceTimeout(userId, organizationId);
+                    return this.ubp.getDefaultWorkspaceTimeout(user, date);
             }
         } catch (err) {
-            log.error({ userId }, "EntitlementService error: getDefaultWorkspaceTimeout", err);
+            log.error({ userId: user.id }, "EntitlementService error: getDefaultWorkspaceTimeout", err);
             return WORKSPACE_TIMEOUT_DEFAULT_LONG;
         }
     }
 
-    async getDefaultWorkspaceLifetime(userId: string, organizationId: string): Promise<WorkspaceTimeoutDuration> {
+    async getDefaultWorkspaceLifetime(user: User, date: Date = new Date()): Promise<WorkspaceTimeoutDuration> {
         try {
-            const billingMode = await this.billingModes.getBillingMode(userId, organizationId);
+            const billingMode = await this.billingModes.getBillingModeForUser(user, date);
             switch (billingMode.mode) {
                 case "none":
                     return WORKSPACE_LIFETIME_LONG;
                 case "usage-based":
-                    return this.ubp.getDefaultWorkspaceLifetime(userId, organizationId);
+                    return this.ubp.getDefaultWorkspaceLifetime(user, date);
             }
         } catch (err) {
-            log.error({ userId }, "EntitlementService error: getDefaultWorkspaceLifetime", err);
+            log.error({ userId: user.id }, "EntitlementService error: getDefaultWorkspaceLifetime", err);
             return WORKSPACE_LIFETIME_LONG;
+        }
+    }
+
+    async userGetsMoreResources(user: User, date: Date = new Date()): Promise<boolean> {
+        try {
+            const billingMode = await this.billingModes.getBillingModeForUser(user, date);
+            switch (billingMode.mode) {
+                case "none":
+                    // TODO(gpl) Not sure this makes sense, but it's the way it was before
+                    return false;
+                case "usage-based":
+                    return this.ubp.userGetsMoreResources(user);
+            }
+        } catch (err) {
+            log.error({ userId: user.id }, "EntitlementService error: userGetsMoreResources", err);
+            return true;
         }
     }
 
@@ -178,37 +199,38 @@ export class EntitlementServiceImpl implements EntitlementService {
      * Returns true if network connections should be limited
      * @param user
      */
-    async limitNetworkConnections(userId: string, organizationId: string): Promise<boolean> {
+    async limitNetworkConnections(user: User, date: Date): Promise<boolean> {
         try {
-            const billingMode = await this.billingModes.getBillingMode(userId, organizationId);
+            const billingMode = await this.billingModes.getBillingModeForUser(user, date);
             switch (billingMode.mode) {
                 case "none":
                     return false;
                 case "usage-based":
-                    return this.ubp.limitNetworkConnections(userId, organizationId);
+                    return this.ubp.limitNetworkConnections(user, date);
             }
         } catch (err) {
-            log.error({ userId }, "EntitlementService error: limitNetworkConnections", err);
+            log.error({ userId: user.id }, "EntitlementService error: limitNetworkConnections", err);
             return false;
         }
     }
 
     /**
      * Returns true if network connections should be limited
-     * @param userId
-     * @param organizationId
+     * @param user
      */
-    async getBillingTier(userId: string, organizationId: string): Promise<BillingTier> {
+    async getBillingTier(user: User): Promise<BillingTier> {
         try {
-            const billingMode = await this.billingModes.getBillingMode(userId, organizationId);
+            const now = new Date();
+            const billingMode = await this.billingModes.getBillingModeForUser(user, now);
             switch (billingMode.mode) {
                 case "none":
+                    // TODO(gpl) Is this true? Cross-check this whole interface with Self-Hosted before next release!
                     return "paid";
                 case "usage-based":
-                    return billingMode.paid ? "paid" : "free";
+                    return this.ubp.getBillingTier(user);
             }
         } catch (err) {
-            log.error({ userId }, "EntitlementService error: getBillingTier", err);
+            log.error({ userId: user.id }, "EntitlementService error: getBillingTier", err);
             return "paid";
         }
     }

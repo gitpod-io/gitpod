@@ -6,6 +6,7 @@
 
 import { inject, injectable } from "inversify";
 
+import { User } from "@gitpod/gitpod-protocol";
 import { Config } from "../config";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { CostCenter_BillingStrategy } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
@@ -21,7 +22,7 @@ export class BillingModes {
         @inject(UsageService) private readonly usageService: UsageService,
     ) {}
 
-    public async getBillingMode(userId: string, organizationId: string): Promise<BillingMode> {
+    public async getBillingMode(userId: string, organizationId: string, now: Date): Promise<BillingMode> {
         if (!this.config.enablePayment) {
             // Payment is not enabled. E.g. Dedicated
             return { mode: "none" };
@@ -32,11 +33,7 @@ export class BillingModes {
         return { mode: "usage-based", paid };
     }
 
-    /**
-     * @deprecated use getBillingMode(userId, organizationId) instead
-     * @returns
-     */
-    async getBillingModeForUser(): Promise<BillingMode> {
+    async getBillingModeForUser(user: User, now: Date): Promise<BillingMode> {
         if (!this.config.enablePayment) {
             // Payment is not enabled. E.g. Self-Hosted.
             return { mode: "none" };
