@@ -82,10 +82,11 @@ DB_CA_CERT and DB_USER(=gitpod)`,
 		}
 
 		migrationName := GetLatestMigrationName()
-		log.WithField("timeout", timeout.String()).WithField("dsn", censoredDSN).WithField("migration", migrationName).Info("waiting for database")
+		migrationCheck := viper.GetBool("migration-check")
+		log.WithField("timeout", timeout.String()).WithField("dsn", censoredDSN).WithField("migration", migrationName).WithField("migrationCheck", migrationCheck).Info("waiting for database")
 		for ctx.Err() == nil {
 			log.Info("attempting to check if database is available")
-			if err := checkDbAvailable(ctx, cfg, migrationName); err != nil {
+			if err := checkDbAvailable(ctx, cfg, migrationName, migrationCheck); err != nil {
 				log.WithError(err).Debug("retry")
 				<-time.After(time.Second)
 			} else {
@@ -106,7 +107,7 @@ func GetLatestMigrationName() string {
 }
 
 // checkDbAvailable will connect and check if migrations table contains the latest migration
-func checkDbAvailable(ctx context.Context, cfg *mysql.Config, migration string) error {
+func checkDbAvailable(ctx context.Context, cfg *mysql.Config, migration string, migrationCheck bool) error {
 	db, err := sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
 		return err
@@ -115,7 +116,7 @@ func checkDbAvailable(ctx context.Context, cfg *mysql.Config, migration string) 
 	defer db.Close()
 
 	// if migration name is not set, just ping the database
-	if migration == "" {
+	if migration == "" || !migrationCheck {
 		return db.PingContext(ctx)
 	}
 
@@ -142,4 +143,6 @@ func init() {
 	databaseCmd.Flags().StringP("password", "P", os.Getenv("DB_PASSWORD"), "Password to use when connecting")
 	databaseCmd.Flags().StringP("username", "u", envOrDefault("DB_USERNAME", "gitpod"), "Username to use when connected")
 	databaseCmd.Flags().StringP("caCert", "", os.Getenv("DB_CA_CERT"), "Custom CA cert (chain) to use when connected")
+
+	databaseCmd.Flags().BoolP("migration-check", "", false, "Enable to check if the latest migration has been applied")
 }

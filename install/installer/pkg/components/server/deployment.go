@@ -308,7 +308,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							volumes...,
 						),
 						InitContainers: []corev1.Container{
-							*common.DatabaseWaiterContainer(ctx),
+							*common.DatabaseMigrationWaiterContainer(ctx),
 							*common.RedisWaiterContainer(ctx),
 						},
 						Containers: []corev1.Container{{
