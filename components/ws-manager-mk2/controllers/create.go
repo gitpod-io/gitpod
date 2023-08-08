@@ -315,6 +315,14 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 				},
 			},
 		},
+		{
+			Name: "ca-certificates",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{Name: "gitpod-customer-certificate-bundle"},
+				},
+			},
+		},
 	}
 
 	workloadType := "regular"
@@ -487,6 +495,12 @@ func createWorkspaceContainer(sctx *startWorkspaceContext) (*corev1.Container, e
 				Name:             "daemon-mount",
 				MountPropagation: &mountPropagation,
 			},
+			{
+				Name:      "ca-certificates",
+				MountPath: "/etc/ssl/certs/ca-certificates.crt",
+				SubPath:   "ca-certificates.crt",
+				ReadOnly:  true,
+			},
 		},
 		ReadinessProbe:           readinessProbe,
 		Env:                      env,
@@ -496,6 +510,11 @@ func createWorkspaceContainer(sctx *startWorkspaceContext) (*corev1.Container, e
 }
 
 func createWorkspaceEnvironment(sctx *startWorkspaceContext) ([]corev1.EnvVar, error) {
+	var (
+		customCAMountPath = "/etc/ssl/certs/custom-ca.crt"
+		certsMountPath    = "/etc/ssl/certs/"
+	)
+
 	class, ok := sctx.Config.WorkspaceClasses[sctx.Workspace.Spec.Class]
 	if !ok {
 		return nil, xerrors.Errorf("unknown workspace class: %s", sctx.Workspace.Spec.Class)
@@ -546,6 +565,11 @@ func createWorkspaceEnvironment(sctx *startWorkspaceContext) ([]corev1.EnvVar, e
 	// TODO(ak) remove THEIA_WEBVIEW_EXTERNAL_ENDPOINT and THEIA_MINI_BROWSER_HOST_PATTERN when Theia is removed
 	result = append(result, corev1.EnvVar{Name: "THEIA_WEBVIEW_EXTERNAL_ENDPOINT", Value: "webview-{{hostname}}"})
 	result = append(result, corev1.EnvVar{Name: "THEIA_MINI_BROWSER_HOST_PATTERN", Value: "browser-{{hostname}}"})
+	result = append(result, []corev1.EnvVar{
+		{Name: "NODE_EXTRA_CA_CERTS", Value: customCAMountPath},
+		{Name: "GIT_SSL_CAPATH", Value: certsMountPath},
+		{Name: "GIT_SSL_CAINFO", Value: customCAMountPath},
+	}...)
 
 	// We don't require that Git be configured for workspaces
 	if sctx.Workspace.Spec.Git != nil {

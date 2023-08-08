@@ -35,7 +35,21 @@ func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 	}
 
+	gitpodCustomCertificateBundleSource := []trust.BundleSource{
+		{
+			UseDefaultCAs: pointer.Bool(true),
+		},
+	}
+
 	if ctx.Config.CustomCACert != nil {
+		gitpodCustomCertificateBundleSource = append(gitpodCustomCertificateBundleSource, trust.BundleSource{
+			Secret: &trust.SourceObjectKeySelector{
+				Name:        ctx.Config.CustomCACert.Name,
+				KeySelector: trust.KeySelector{Key: "ca.crt"},
+			},
+		})
+
+		// We add it to the gitpod CA bundle as well so the components gets it
 		gitpodCaBundleSources = append(gitpodCaBundleSources, trust.BundleSource{
 			Secret: &trust.SourceObjectKeySelector{
 				Name:        ctx.Config.CustomCACert.Name,
@@ -176,6 +190,21 @@ func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Target: trust.BundleTarget{
 					ConfigMap: &trust.KeySelector{
 						Key: "gitpod-ca.crt",
+					},
+				},
+			},
+		},
+		// trust Bundle for custom SSL certificates
+		&trust.Bundle{
+			TypeMeta: common.TypeMetaBundle,
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "gitpod-customer-certificate-bundle",
+			},
+			Spec: trust.BundleSpec{
+				Sources: gitpodCustomCertificateBundleSource,
+				Target: trust.BundleTarget{
+					ConfigMap: &trust.KeySelector{
+						Key: "ca-certificates.crt",
 					},
 				},
 			},
