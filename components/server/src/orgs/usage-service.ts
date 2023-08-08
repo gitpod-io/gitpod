@@ -70,10 +70,26 @@ export class UsageService {
             });
         }
         const orgId = attributionId.teamId;
-        await this.authorizer.checkPermissionOnOrganization(userId, "read_billing", orgId);
+        // check if the user has access to why they requested
+        let requestedUserId = req.userId;
+        if (requestedUserId !== userId) {
+            try {
+                // asking for everybody's usage
+                await this.authorizer.checkPermissionOnOrganization(userId, "read_billing", orgId);
+            } catch (err) {
+                if (ApplicationError.hasErrorCode(err) && err.code === ErrorCodes.PERMISSION_DENIED) {
+                    // downgrade to user's usage only
+                    requestedUserId = userId;
+                } else {
+                    throw err;
+                }
+            }
+        }
+        await this.authorizer.checkPermissionOnOrganization(userId, "read_info", orgId);
 
         const response = await this.usageService.listUsage({
             attributionId: AttributionId.render(attributionId),
+            userId: requestedUserId,
             from: from ? new Date(from) : undefined,
             to: to ? new Date(to) : undefined,
             order: ListUsageRequest_Ordering.ORDERING_DESCENDING,

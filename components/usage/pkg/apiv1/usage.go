@@ -85,9 +85,18 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 	}
 	var offset = perPage * (page - 1)
 
+	var userID uuid.UUID
+	if in.UserId != "" {
+		userID, err = uuid.Parse(in.UserId)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "UserID '%s' couldn't be parsed (error: %s).", in.UserId, err)
+		}
+	}
+
 	excludeDrafts := false
 	listUsageResult, err := db.FindUsage(ctx, s.conn, &db.FindUsageParams{
 		AttributionId: db.AttributionID(in.GetAttributionId()),
+		UserID:        userID,
 		From:          from,
 		To:            to,
 		Order:         order,
@@ -97,6 +106,7 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 	})
 	logger := log.Log.
 		WithField("attribution_id", in.AttributionId).
+		WithField("userID", userID).
 		WithField("perPage", perPage).
 		WithField("page", page).
 		WithField("from", from).
@@ -136,6 +146,7 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 	usageSummary, err := db.GetUsageSummary(ctx, s.conn,
 		db.GetUsageSummaryParams{
 			AttributionId: attributionId,
+			UserID:        userID,
 			From:          from,
 			To:            to,
 			ExcludeDrafts: excludeDrafts,
@@ -496,7 +507,7 @@ func (s *UsageService) AddUsageCreditNote(ctx context.Context, req *v1.AddUsageC
 		if err != nil {
 			return nil, fmt.Errorf("The user id is not a valid UUID. %w", err)
 		}
-		err = usage.SetCreditNoteMetaData(db.CreditNoteMetaData{UserId: userId.String()})
+		err = usage.SetCreditNoteMetaData(db.CreditNoteMetaData{UserID: userId.String()})
 		if err != nil {
 			return nil, err
 		}

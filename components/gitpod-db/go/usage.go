@@ -93,7 +93,7 @@ type WorkspaceInstanceUsageData struct {
 }
 
 type CreditNoteMetaData struct {
-	UserId string `json:userId`
+	UserID string `json:"userId"`
 }
 
 type FindUsageResult struct {
@@ -141,6 +141,7 @@ func FindAllDraftUsage(ctx context.Context, conn *gorm.DB) ([]Usage, error) {
 
 type FindUsageParams struct {
 	AttributionId AttributionID
+	UserID        uuid.UUID
 	From, To      time.Time
 	ExcludeDrafts bool
 	Order         Order
@@ -152,8 +153,11 @@ func FindUsage(ctx context.Context, conn *gorm.DB, params *FindUsageParams) ([]U
 	var usageRecordsBatch []Usage
 
 	db := conn.WithContext(ctx).
-		Where("attributionId = ?", params.AttributionId).
-		Where("effectiveTime >= ? AND effectiveTime < ?", TimeToISO8601(params.From), TimeToISO8601(params.To)).
+		Where("attributionId = ?", params.AttributionId)
+	if params.UserID != uuid.Nil {
+		db = db.Where("metadata->>'$.userId' = ?", params.UserID.String())
+	}
+	db = db.Where("effectiveTime >= ? AND effectiveTime < ?", TimeToISO8601(params.From), TimeToISO8601(params.To)).
 		Where("kind = ?", WorkspaceInstanceUsageKind)
 	if params.ExcludeDrafts {
 		db = db.Where("draft = ?", false)
@@ -179,6 +183,7 @@ func FindUsage(ctx context.Context, conn *gorm.DB, params *FindUsageParams) ([]U
 
 type GetUsageSummaryParams struct {
 	AttributionId AttributionID
+	UserID        uuid.UUID
 	From, To      time.Time
 	ExcludeDrafts bool
 }
@@ -192,8 +197,11 @@ func GetUsageSummary(ctx context.Context, conn *gorm.DB, params GetUsageSummaryP
 	db := conn.WithContext(ctx)
 	query1 := db.Table((&Usage{}).TableName()).
 		Select("sum(creditCents) as CreditCentsUsed, count(*) as NumberOfRecords").
-		Where("attributionId = ?", params.AttributionId).
-		Where("effectiveTime >= ? AND effectiveTime < ?", TimeToISO8601(params.From), TimeToISO8601(params.To)).
+		Where("attributionId = ?", params.AttributionId)
+	if params.UserID != uuid.Nil {
+		query1 = query1.Where("metadata->>'$.userId' = ?", params.UserID.String())
+	}
+	query1 = query1.Where("effectiveTime >= ? AND effectiveTime < ?", TimeToISO8601(params.From), TimeToISO8601(params.To)).
 		Where("kind = ?", WorkspaceInstanceUsageKind)
 	if params.ExcludeDrafts {
 		query1 = query1.Where("draft = ?", false)
