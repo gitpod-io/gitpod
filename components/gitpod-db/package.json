@@ -3,7 +3,7 @@
   "license": "AGPL-3.0",
   "version": "0.1.5",
   "scripts": {
-    "build": "yarn lint && npx tsc",
+    "build": "yarn lint && npx tsc && yarn generate-latest-migration",
     "build:clean": "yarn clean && yarn build",
     "lint": "yarn eslint src/*.ts src/**/*.ts",
     "lint:fix": "yarn eslint src/*.ts src/**/*.ts --fix",
@@ -18,7 +18,8 @@
     "migrate-migrations": "node ./lib/migrate-migrations.js",
     "clean": "yarn run rimraf lib",
     "clean:node": "yarn run rimraf node_modules",
-    "purge": "yarn clean && yarn clean:node && yarn run rimraf yarn.lock"
+    "purge": "yarn clean && yarn clean:node && yarn run rimraf yarn.lock",
+    "generate-latest-migration": "node lib/typeorm/generate-latest-migration.js"
   },
   "files": [
     "/lib"

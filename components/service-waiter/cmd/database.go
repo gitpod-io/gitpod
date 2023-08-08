@@ -5,9 +5,12 @@
 package cmd
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"database/sql"
+	_ "embed"
+	"errors"
 	"net"
 	"os"
 	"strings"
@@ -19,6 +22,11 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
+
+const migrationTableName = "migrations"
+
+//go:embed resources/latest-migration.txt
+var latestMigrationName string
 
 // databaseCmd represents the database command
 var databaseCmd = &cobra.Command{
@@ -34,11 +42,19 @@ DB_CA_CERT and DB_USER(=gitpod)`,
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		timeout := getTimeout()
+		ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
+		defer cancel()
+
 		cfg := mysql.NewConfig()
 		cfg.Addr = net.JoinHostPort(viper.GetString("host"), viper.GetString("port"))
 		cfg.Net = "tcp"
 		cfg.User = viper.GetString("username")
 		cfg.Passwd = viper.GetString("password")
+
+		// Must be "gitpod"
+		// Align to https://github.com/gitpod-io/gitpod/blob/884d922e8e33d8b936ec18d7fe3c8dcffde42b5a/components/gitpod-db/go/conn.go#L37
+		cfg.DBName = "gitpod"
 		cfg.Timeout = 1 * time.Second
 
 		dsn := cfg.FormatDSN()
@@ -65,44 +81,57 @@ DB_CA_CERT and DB_USER(=gitpod)`,
 			cfg.TLSConfig = tlsConfigName
 		}
 
-		timeout := getTimeout()
-		done := make(chan bool)
-		go func() {
-			log.WithField("timeout", timeout.String()).WithField("dsn", censoredDSN).Info("attempting to connect to DB")
-			for {
-				db, err := sql.Open("mysql", cfg.FormatDSN())
-				if err != nil {
-					continue
-				}
-				err = db.Ping()
-				if err != nil {
-					if strings.Contains(err.Error(), "Access denied") {
-						fail("Invalid credentials for the database. Check DB_USERNAME and DB_PASSWORD.")
-					}
-
-					log.WithError(err).Debug("retry")
-					<-time.After(time.Second)
-					continue
-				}
-
-				err = db.Close()
-				if err != nil {
-					log.WithError(err).Warn("cannot close DB connection used for probing")
-				}
+		migrationName := GetLatestMigrationName()
+		log.WithField("timeout", timeout.String()).WithField("dsn", censoredDSN).WithField("migration", migrationName).Info("waiting for database")
+		for ctx.Err() == nil {
+			log.Info("attempting to check if database is available")
+			if err := checkDbAvailable(ctx, cfg, migrationName); err != nil {
+				log.WithError(err).Debug("retry")
+				<-time.After(time.Second)
+			} else {
 				break
 			}
+		}
 
-			done <- true
-		}()
-
-		select {
-		case <-done:
+		if ctx.Err() != nil {
+			log.WithField("timeout", timeout.String()).WithError(ctx.Err()).Fatal("database did not become available in time")
+		} else {
 			log.Info("database became available")
-			return
-		case <-time.After(timeout):
-			log.WithField("timeout", timeout.String()).Fatal("database did not become available in time")
 		}
 	},
+}
+
+func GetLatestMigrationName() string {
+	return strings.TrimSpace(latestMigrationName)
+}
+
+// checkDbAvailable will connect and check if migrations table contains the latest migration
+func checkDbAvailable(ctx context.Context, cfg *mysql.Config, migration string) error {
+	db, err := sql.Open("mysql", cfg.FormatDSN())
+	if err != nil {
+		return err
+	}
+	// ignore error
+	defer db.Close()
+
+	// if migration name is not set, just ping the database
+	if migration == "" {
+		return db.PingContext(ctx)
+	}
+
+	log.Info("checking if database is migrated")
+	row := db.QueryRowContext(ctx, "SELECT name FROM "+migrationTableName+" WHERE name = ?", migration)
+	var name string
+	if err := row.Scan(&name); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Error("not yet migrated")
+			return err
+		}
+		log.WithError(err).Error("failed to query migrations")
+		return err
+	}
+
+	return nil
 }
 
 func init() {
