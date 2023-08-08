@@ -51,10 +51,6 @@ runs:
       env:
         PREVIEW_ENV_DEV_SA_KEY: ${{ inputs.sa_key }}
         PREVIEW_NAME: ${{ inputs.preview_name }}
-        TEST_USE_LATEST_VERSION: ${{ inputs.latest_ide_version }}
-        TEST_BUILD_ID: ${{ inputs.test_build_id }}
-        TEST_BUILD_URL: ${{ inputs.test_build_url }}
-        TEST_BUILD_REF: ${{ inputs.test_build_ref }}
       run: |
         export LEEWAY_WORKSPACE_ROOT="$(pwd)"
         export HOME="/home/gitpod"
@@ -79,6 +75,10 @@ runs:
         INTEGRATION_TEST_USER_TOKEN: ${{ steps.secrets.outputs.WORKSPACE_INTEGRATION_TEST_USER_TOKEN }}
         PREVIEW_ENV_DEV_SA_KEY: ${{ inputs.sa_key }}
         PREVIEW_NAME: ${{ inputs.preview_name }}
+        TEST_USE_LATEST_VERSION: ${{ inputs.latest_ide_version }}
+        TEST_BUILD_ID: ${{ inputs.test_build_id }}
+        TEST_BUILD_URL: ${{ inputs.test_build_url }}
+        TEST_BUILD_REF: ${{ inputs.test_build_ref }}
       run: |
         set -euo pipefail
 
