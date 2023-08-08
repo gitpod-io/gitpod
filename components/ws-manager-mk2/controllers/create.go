@@ -316,7 +316,7 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 			},
 		},
 		{
-			Name: "ca-certificates",
+			Name: "custom-ca-crt",
 			VolumeSource: corev1.VolumeSource{
 				ConfigMap: &corev1.ConfigMapVolumeSource{
 					LocalObjectReference: corev1.LocalObjectReference{Name: "gitpod-customer-certificate-bundle"},
@@ -496,8 +496,8 @@ func createWorkspaceContainer(sctx *startWorkspaceContext) (*corev1.Container, e
 				MountPropagation: &mountPropagation,
 			},
 			{
-				Name:      "ca-certificates",
-				MountPath: "/etc/ssl/certs/ca-certificates.crt",
+				Name:      "custom-ca-crt",
+				MountPath: "/etc/ssl/certs/custom-ca.crt",
 				SubPath:   "ca-certificates.crt",
 				ReadOnly:  true,
 			},
@@ -560,6 +560,15 @@ func createWorkspaceEnvironment(sctx *startWorkspaceContext) ([]corev1.EnvVar, e
 	// TODO(ak) remove THEIA_WEBVIEW_EXTERNAL_ENDPOINT and THEIA_MINI_BROWSER_HOST_PATTERN when Theia is removed
 	result = append(result, corev1.EnvVar{Name: "THEIA_WEBVIEW_EXTERNAL_ENDPOINT", Value: "webview-{{hostname}}"})
 	result = append(result, corev1.EnvVar{Name: "THEIA_MINI_BROWSER_HOST_PATTERN", Value: "browser-{{hostname}}"})
+
+	const (
+		customCAMountPath = "/etc/ssl/certs/custom-ca.crt"
+		certsMountPath    = "/etc/ssl/certs/"
+	)
+
+	result = append(result, corev1.EnvVar{Name: "NODE_EXTRA_CA_CERTS", Value: customCAMountPath})
+	result = append(result, corev1.EnvVar{Name: "GIT_SSL_CAPATH", Value: certsMountPath})
+	result = append(result, corev1.EnvVar{Name: "GIT_SSL_CAINFO", Value: customCAMountPath})
 
 	// We don't require that Git be configured for workspaces
 	if sctx.Workspace.Spec.Git != nil {
