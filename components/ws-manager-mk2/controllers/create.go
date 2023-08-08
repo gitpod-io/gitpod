@@ -562,7 +562,7 @@ func createWorkspaceEnvironment(sctx *startWorkspaceContext) ([]corev1.EnvVar, e
 	result = append(result, corev1.EnvVar{Name: "THEIA_MINI_BROWSER_HOST_PATTERN", Value: "browser-{{hostname}}"})
 
 	const (
-		customCAMountPath = "/etc/ssl/certs/custom-ca.crt"
+		customCAMountPath = "/etc/ssl/certs/gitpod-ca.crt"
 		certsMountPath    = "/etc/ssl/certs/"
 	)
 
