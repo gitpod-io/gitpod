@@ -46,7 +46,7 @@ export class TypeORM {
             namingStrategy: new DefaultNamingStrategy(),
             extra: {
                 // default is 10 (see https://github.com/mysqljs/mysql#pool-options), which is too low for our use case
-                connectionLimit: 20,
+                connectionLimit: 40,
             },
         };
     }

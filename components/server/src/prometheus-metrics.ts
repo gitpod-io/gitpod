@@ -33,7 +33,19 @@ export function registerServerMetrics(registry: prometheusClient.Registry) {
     registry.registerMetric(redisUpdatesReceived);
     registry.registerMetric(redisUpdatesCompletedTotal);
     registry.registerMetric(updateSubscribersRegistered);
+    registry.registerMetric(dbConnectionsTotal);
+    registry.registerMetric(dbConnectionsFree);
 }
+
+export const dbConnectionsTotal = new prometheusClient.Gauge({
+    name: "gitpod_typeorm_total_connections",
+    help: "Total number of connections in TypeORM pool",
+});
+
+export const dbConnectionsFree = new prometheusClient.Gauge({
+    name: "gitpod_typeorm_free_connections",
+    help: "Number of free connections in TypeORM pool",
+});
 
 const loginCompletedTotal = new prometheusClient.Counter({
     name: "gitpod_login_completed_total",
