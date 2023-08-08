@@ -333,8 +333,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             );
 
         if (!this.disposables.disposed) {
-            for (const projectId of projects) {
-                this.disposables.push(this.subscriber.listenForPrebuildUpdates(projectId, handler));
+            for (const project of projects) {
+                this.disposables.push(this.subscriber.listenForPrebuildUpdates(project.id, handler));
             }
         }
 
@@ -347,10 +347,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         // update all project this user has access to
-        const allProjects: string[] = [];
+        const allProjects: Project[] = [];
         const teams = await this.organizationService.listOrganizationsByMember(this.userID, this.userID);
         for (const team of teams) {
-            allProjects.push(...(await this.projectsService.getProjects(this.userID, team.id)).map((p) => p.id));
+            allProjects.push(...(await this.projectsService.getProjects(this.userID, team.id)));
         }
         return allProjects;
     }
@@ -1753,26 +1753,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 }),
         );
 
-        // User repositories (from Apps)
+        // Repositories of all accessible projects
         promises.push(
-            this.getAuthProviders(ctx)
-                .then((authProviders) =>
-                    Promise.all(
-                        authProviders.map(async (p) => {
-                            try {
-                                const userRepos = await this.getProviderRepositoriesForUser(ctx, { provider: p.host });
-                                userRepos.forEach((r) =>
-                                    suggestions.push({ url: r.cloneUrl.replace(/\.git$/, ""), priority: 5 }),
-                                );
-                            } catch (error) {
-                                log.debug(logCtx, "Could not get user repositories from App for " + p.host, error);
-                            }
-                        }),
-                    ),
-                )
-                .catch((error) => {
-                    log.error(logCtx, "Could not get auth providers", error);
-                }),
+            this.getAccessibleProjects().then((projects) => {
+                projects.forEach((project) =>
+                    suggestions.push({ url: project.cloneUrl.replace(/\.git$/, ""), priority: 1 }),
+                );
+            }),
         );
 
         // User repositories (from Git hosts directly)

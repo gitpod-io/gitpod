@@ -9,6 +9,7 @@ import { inject, injectable } from "inversify";
 import { RepoURL } from "../repohost";
 import { RepositoryProvider } from "../repohost/repository-provider";
 import { BitbucketServerApi } from "./bitbucket-server-api";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class BitbucketServerRepositoryProvider implements RepositoryProvider {
@@ -144,8 +145,19 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
     }
 
     async getUserRepos(user: User): Promise<string[]> {
-        // TODO(janx): Not implemented yet
-        return [];
+        try {
+            const repos = await this.api.getRepos(user, { limit: 1000, permission: "REPO_READ" });
+
+            return (repos.values || [])
+                .map((r) => {
+                    const cloneUrl = r.links.clone.find((u) => u.name === "http")?.href!;
+                    return cloneUrl;
+                })
+                .filter((u) => !!u);
+        } catch (error) {
+            log.error("BitbucketServerRepositoryProvider.getUserRepos", error);
+            return [];
+        }
     }
 
     async hasReadAccess(user: User, owner: string, repo: string): Promise<boolean> {
