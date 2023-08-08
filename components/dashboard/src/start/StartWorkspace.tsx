@@ -344,7 +344,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             return;
         }
 
-        if (workspaceInstance.status.phase === "building" || workspaceInstance.status.phase === "preparing") {
+        if (workspaceInstance.status.phase === "building") {
             this.setState({ hasImageBuildLogs: true });
         }
 
@@ -460,7 +460,10 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             // Preparing means that we haven't actually started the workspace instance just yet, but rather
             // are still preparing for launch.
             case "preparing":
-            // falls through
+                phase = StartPhase.Preparing;
+                statusMessage = <p className="text-base text-gray-400">Starting workspace …</p>;
+                break;
+
             case "building":
                 // Building means we're building the Docker image for the workspace.
                 return <ImageBuildView workspaceId={this.state.workspaceInstance.workspaceId} />;
