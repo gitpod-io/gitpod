@@ -14,6 +14,23 @@ packages:
       yarnLock: ${coreYarnLockBase}/yarn.lock
       tsconfig: tsconfig.json
       dontTest: true
+  - name: latest-migrations
+    type: yarn
+    srcs:
+      - "src/**/*.ts"
+      - .eslintrc
+      - package.json
+      - mocha.opts
+    deps:
+      - :dbtest
+      - components/gitpod-protocol:lib
+    config:
+      packaging: library
+      yarnLock: ${coreYarnLockBase}/yarn.lock
+      tsconfig: tsconfig.json
+      dontTest: true
+      commands:
+        build: ["yarn", "build:latest-migration"]
   - name: migrations
     type: yarn
     srcs:
