@@ -100,6 +100,7 @@ const desktopClient: OAuthClient = {
         { name: "function:deleteWorkspace" },
         { name: "function:getTeams" },
         { name: "function:getTeamMembers" },
+        { name: "function:getTeamProjects" },
         { name: "resource:default" },
     ],
 };
