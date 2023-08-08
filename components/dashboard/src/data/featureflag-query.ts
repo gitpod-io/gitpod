@@ -12,7 +12,6 @@ import { useCurrentUser } from "../user-context";
 import { useCurrentOrg } from "./organizations/orgs-query";
 
 const featureFlags = {
-    start_with_options: false,
     showUseLastSuccessfulPrebuild: false,
     publicApiExperimentalWorkspaceService: false,
     personalAccessTokensEnabled: false,

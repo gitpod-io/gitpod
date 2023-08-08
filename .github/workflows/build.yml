@@ -151,11 +151,16 @@ jobs:
           MYSQL_TCP_PORT: 23306
         ports:
           - 23306:23306
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-oci-tool-gha.14121
       env:
         DB_HOST: "mysql"
         DB_PORT: "23306"
+        REDIS_HOST: "redis"
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-environment

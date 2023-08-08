@@ -13,6 +13,7 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { v1 } from "@authzed/authzed-node";
 import { fgaRelationsUpdateClientLatency } from "../prometheus-metrics";
+import { RedisMutex } from "../redis/mutex";
 
 @injectable()
 export class RelationshipUpdater {
@@ -23,6 +24,7 @@ export class RelationshipUpdater {
         @inject(TeamDB) private readonly orgDB: TeamDB,
         @inject(ProjectDB) private readonly projectDB: ProjectDB,
         @inject(Authorizer) private readonly authorizer: Authorizer,
+        @inject(RedisMutex) private readonly mutex: RedisMutex,
     ) {}
 
     /**
@@ -42,6 +44,12 @@ export class RelationshipUpdater {
             },
         });
         if (!fgaEnabled) {
+            if (user.additionalData?.fgaRelationshipsVersion !== undefined) {
+                log.info({ userId: user.id }, `User has been removed from FGA.`);
+                // reset the fgaRelationshipsVersion to undefined, so the migration is triggered again when the feature is enabled
+                AdditionalUserData.set(user, { fgaRelationshipsVersion: undefined });
+                return await this.userDB.storeUser(user);
+            }
             return user;
         }
         if (user.additionalData?.fgaRelationshipsVersion === this.version) {
@@ -53,41 +61,40 @@ export class RelationshipUpdater {
                 fromVersion: user?.additionalData?.fgaRelationshipsVersion,
                 toVersion: this.version,
             });
-            // TODO run in distributed lock
-            // return this.mutex.using([`fga-migration-${user.id}`], 2000, async () => {
-            const before = new Date().getTime();
+            return this.mutex.using([`fga-migration-${user.id}`], 2000, async () => {
+                const before = new Date().getTime();
 
-            const updatedUser = await this.userDB.findUserById(user.id);
-            if (!updatedUser) {
-                throw new ApplicationError(ErrorCodes.NOT_FOUND, "User not found");
-            }
-            user = updatedUser;
-            if (user.additionalData?.fgaRelationshipsVersion === this.version) {
+                const updatedUser = await this.userDB.findUserById(user.id);
+                if (!updatedUser) {
+                    throw new ApplicationError(ErrorCodes.NOT_FOUND, "User not found");
+                }
+                user = updatedUser;
+                if (user.additionalData?.fgaRelationshipsVersion === this.version) {
+                    return user;
+                }
+                log.info({ userId: user.id }, `Updating FGA relationships for user.`, {
+                    fromVersion: user?.additionalData?.fgaRelationshipsVersion,
+                    toVersion: this.version,
+                });
+                const orgs = await this.findAffectedOrganizations(user.id);
+
+                // Add relationships
+                await this.updateUser(user);
+                for (const org of orgs) {
+                    await this.updateOrganization(user.id, org);
+                }
+                AdditionalUserData.set(user, {
+                    fgaRelationshipsVersion: this.version,
+                });
+                await this.userDB.updateUserPartial({
+                    id: user.id,
+                    additionalData: user.additionalData,
+                });
+                log.info({ userId: user.id }, `Finished updating relationships.`, {
+                    duration: new Date().getTime() - before,
+                });
                 return user;
-            }
-            log.info({ userId: user.id }, `Updating FGA relationships for user.`, {
-                fromVersion: user?.additionalData?.fgaRelationshipsVersion,
-                toVersion: this.version,
             });
-            const orgs = await this.findAffectedOrganizations(user.id);
-
-            // Add relationships
-            await this.updateUser(user);
-            for (const org of orgs) {
-                await this.updateOrganization(user.id, org);
-            }
-            AdditionalUserData.set(user, {
-                fgaRelationshipsVersion: this.version,
-            });
-            await this.userDB.updateUserPartial({
-                id: user.id,
-                additionalData: user.additionalData,
-            });
-            log.info({ userId: user.id }, `Finished updating relationships.`, {
-                duration: new Date().getTime() - before,
-            });
-            return user;
-            // });
         } catch (error) {
             log.error({ userId: user.id }, `Error updating relationships.`, error);
             return user;

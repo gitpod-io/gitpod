@@ -21,6 +21,7 @@ import { testContainer } from "@gitpod/gitpod-db/lib";
 import { productionContainerModule } from "../container-module";
 import { createMock } from "./mocks/mock";
 import { UsageServiceClientMock } from "./mocks/usage-service-client-mock";
+import { env } from "process";
 
 /**
  * Expects a fully configured production container and
@@ -40,7 +41,7 @@ const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound,
             passlist: [],
         },
         redis: {
-            address: "localhost:6379",
+            address: (env.REDIS_HOST || "127.0.0.1") + ":" + (env.REDIS_PORT || "6379"),
         },
     });
     rebind(IAnalyticsWriter).toConstantValue(NullAnalyticsWriter);
