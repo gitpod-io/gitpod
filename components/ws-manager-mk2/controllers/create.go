@@ -316,7 +316,7 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 			},
 		},
 		{
-			Name: "custom-ca-crt",
+			Name: "gitpod-ca-crt",
 			VolumeSource: corev1.VolumeSource{
 				ConfigMap: &corev1.ConfigMapVolumeSource{
 					LocalObjectReference: corev1.LocalObjectReference{Name: "gitpod-customer-certificate-bundle"},
@@ -496,8 +496,8 @@ func createWorkspaceContainer(sctx *startWorkspaceContext) (*corev1.Container, e
 				MountPropagation: &mountPropagation,
 			},
 			{
-				Name:      "custom-ca-crt",
-				MountPath: "/etc/ssl/certs/custom-ca.crt",
+				Name:      "gitpod-ca-crt",
+				MountPath: "/etc/ssl/certs/gitpod-ca.crt",
 				SubPath:   "ca-certificates.crt",
 				ReadOnly:  true,
 			},
