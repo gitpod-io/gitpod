@@ -172,28 +172,57 @@ export class GithubRepositoryProvider implements RepositoryProvider {
     }
 
     async getUserRepos(user: User): Promise<string[]> {
-        // Hint: Use this to get richer results:
-        //   node {
-        //       nameWithOwner
-        //       shortDescriptionHTML(limit: 120)
-        //       url
-        //   }
         const result: any = await this.githubQueryApi.runQuery(
             user,
             `
-            query {
-                viewer {
-                    repositoriesContributedTo(includeUserRepositories: true, first: 100) {
-                        edges {
-                            node {
-                                url
-                            }
-                        }
-                    }
+            fragment Repos on RepositoryConnection {
+                nodes {
+                  url
                 }
-            }`,
+              }
+
+              query topRepositories {
+                viewer {
+                  contributedTo: repositoriesContributedTo(
+                    first: 100
+                    orderBy: {field: PUSHED_AT, direction: DESC}
+                    includeUserRepositories: true
+                    contributionTypes: [COMMIT]
+                  ) {
+                    ...Repos
+                  }
+                  original: repositories(
+                    first: 100
+                    ownerAffiliations: OWNER
+                    privacy: PUBLIC
+                    isFork: false
+                    isLocked: false
+                    orderBy: {field: UPDATED_AT, direction: DESC}
+                  ) {
+                    ...Repos
+                  }
+                  forked: repositories(
+                    first: 100
+                    ownerAffiliations: OWNER
+                    privacy: PUBLIC
+                    isFork: true
+                    isLocked: false
+                    orderBy: {field: UPDATED_AT, direction: DESC}
+                  ) {
+                    ...Repos
+                  }
+                }
+              }`,
         );
-        return (result.data.viewer?.repositoriesContributedTo?.edges || []).map((edge: any) => edge.node.url);
+
+        const urls = [];
+        for (const type of ["contributedTo", "original", "forked"]) {
+            const nodes = result.data.viewer[type]?.nodes;
+            if (nodes) {
+                urls.push(nodes.map((n: any) => n?.url).filter((u: any) => typeof u === "string"));
+            }
+        }
+        return urls;
     }
 
     async hasReadAccess(user: User, owner: string, repo: string): Promise<boolean> {
