@@ -6,7 +6,6 @@
 
 import { WorkspaceInstance, WorkspaceInstanceRepoStatus } from "@gitpod/gitpod-protocol";
 import ContextMenu, { ContextMenuEntry } from "./ContextMenu";
-import CaretDown from "../icons/CaretDown.svg";
 import { useFeatureFlag } from "../data/featureflag-query";
 
 export default function PendingChangesDropdown(props: { workspaceInstance?: WorkspaceInstance }) {
@@ -45,16 +44,15 @@ export default function PendingChangesDropdown(props: { workspaceInstance?: Work
         }
     }
     if (totalChanges <= 0) {
-        return <div className="text-sm text-gray-400 dark:text-gray-500">No Changes</div>;
+        return <></>;
     }
     return (
         <ContextMenu menuEntries={menuEntries} customClasses="w-64 max-h-48 overflow-scroll mx-auto left-0 right-0">
-            <p className="flex justify-center text-gitpod-red">
-                <span>
-                    {totalChanges} Change{totalChanges === 1 ? "" : "s"}
+            <span className="inline" title="Pending Changes">
+                <span className="bg-gitpod-red text-gray-50 rounded-xl px-1.5 py-0.5 text-xs ml-2 font-medium">
+                    {totalChanges}
                 </span>
-                <img className="m-2" src={CaretDown} alt="caret icon pointing down" />
-            </p>
+            </span>
         </ContextMenu>
     );
 }

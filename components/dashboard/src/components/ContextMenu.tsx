@@ -93,7 +93,7 @@ function ContextMenu(props: ContextMenuProps) {
     );
 
     return (
-        <div className="relative">
+        <div className="relative inline-block">
             <div
                 className="cursor-pointer"
                 onClick={(e) => {

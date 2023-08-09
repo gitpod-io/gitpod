@@ -29,7 +29,7 @@ module.exports = {
                 rose: colors.rose,
                 "gitpod-black": "#161616",
                 "gitpod-gray": "#8E8787",
-                "gitpod-red": "#CE4A3E",
+                "gitpod-red": "#E05634",
                 "gitpod-kumquat-light": "#FFE4BC",
                 "gitpod-kumquat": "#FFB45B",
                 "gitpod-kumquat-dark": "#FF8A00",

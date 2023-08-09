@@ -99,7 +99,7 @@ export default function Menu() {
                             </ul>
                         </nav>
                         {/* Hide normal user menu on small screens */}
-                        <UserMenu user={user} className="hidden md:block" />
+                        <UserMenu user={user} className="hidden md:block h-10" />
                         {/* Show a user menu w/ admin & feedback links on small screens */}
                         <UserMenu
                             user={user}

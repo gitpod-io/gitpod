@@ -4,18 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import {
-    CommitContext,
-    Workspace,
-    WorkspaceInfo,
-    ContextURL,
-    WorkspaceInstanceRepoStatus,
-} from "@gitpod/gitpod-protocol";
+import { CommitContext, Workspace, WorkspaceInfo, WorkspaceInstanceRepoStatus } from "@gitpod/gitpod-protocol";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { FunctionComponent, useMemo, useState } from "react";
 import { Item, ItemField, ItemFieldIcon } from "../components/ItemsList";
 import PendingChangesDropdown from "../components/PendingChangesDropdown";
-import Tooltip from "../components/Tooltip";
 import dayjs from "dayjs";
 import { WorkspaceEntryOverflowMenu } from "./WorkspaceOverflowMenu";
 import { WorkspaceStatusIndicator } from "./WorkspaceStatusIndicator";
@@ -40,8 +33,6 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
     const workspace = info.workspace;
     const currentBranch = repo?.branch || Workspace.getBranchName(info.workspace) || "<unknown>";
     const project = getProjectPath(workspace);
-    const normalizedContextUrl = ContextURL.getNormalizedURL(workspace)?.toString();
-    const normalizedContextUrlDescription = normalizedContextUrl || workspace.contextURL; // Instead of showing nothing, we prefer to show the raw content instead
 
     const changeMenuState = (state: boolean) => {
         setMenuActive(state);
@@ -64,50 +55,25 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
             <ItemFieldIcon>
                 <WorkspaceStatusIndicator instance={info?.latestInstance} />
             </ItemFieldIcon>
-            <ItemField className="w-3/12 flex flex-col my-auto">
+            <ItemField className="w-3/12 my-auto">
                 <a href={startUrl}>
-                    <div className="font-medium text-gray-800 dark:text-gray-200 truncate hover:text-blue-600 dark:hover:text-blue-400">
-                        {workspace.id}
+                    <span className="font-medium text-gray-800 dark:text-gray-200 truncate hover:text-blue-600 dark:hover:text-blue-400 max-w-xs overflow-hidden whitespace-nowrap truncate">
+                        {true ? currentBranch : "Custom description (branch)"}
+                    </span>
+                </a>
+                <span className="text-gray-300 font-normal inline-block px-1">&middot;</span>
+                <span className="text-sm w-full text-gray-400 overflow-ellipsis font-normal truncate">
+                    {dayjs(WorkspaceInfo.lastActiveISODate(info)).fromNow()}
+                </span>
+                <PendingChangesDropdown workspaceInstance={info.latestInstance} />
+
+                <a href={project ? "https://" + project : undefined}>
+                    <div className="text-sm overflow-ellipsis truncate text-gray-500 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 max-w-32">
+                        {project || "Unknown"}
                     </div>
                 </a>
-                <Tooltip content={project ? "https://" + project : ""} allowWrap={true}>
-                    <a href={project ? "https://" + project : undefined}>
-                        <div className="text-sm overflow-ellipsis truncate text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400">
-                            {project || "Unknown"}
-                        </div>
-                    </a>
-                </Tooltip>
             </ItemField>
-            {!shortVersion && (
-                <>
-                    <ItemField className="w-4/12 flex flex-col my-auto">
-                        <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate">
-                            {workspace.description}
-                        </div>
-                        <a href={normalizedContextUrl}>
-                            <div className="text-sm text-gray-400 dark:text-gray-500 overflow-ellipsis truncate hover:text-blue-600 dark:hover:text-blue-400">
-                                {normalizedContextUrlDescription}
-                            </div>
-                        </a>
-                    </ItemField>
-                    <ItemField className="w-2/12 flex flex-col my-auto">
-                        <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate">
-                            <Tooltip content={currentBranch}>{currentBranch}</Tooltip>
-                        </div>
-                        <div className="mr-auto">
-                            <PendingChangesDropdown workspaceInstance={info.latestInstance} />
-                        </div>
-                    </ItemField>
-                    <ItemField className="w-2/12 flex my-auto">
-                        <Tooltip content={`Created ${dayjs(info.workspace.creationTime).fromNow()}`}>
-                            <div className="text-sm w-full text-gray-400 overflow-ellipsis truncate">
-                                {dayjs(WorkspaceInfo.lastActiveISODate(info)).fromNow()}
-                            </div>
-                        </Tooltip>
-                    </ItemField>
-                    <WorkspaceEntryOverflowMenu changeMenuState={changeMenuState} info={info} />
-                </>
-            )}
+            <WorkspaceEntryOverflowMenu changeMenuState={changeMenuState} info={info} />
         </Item>
     );
 };
