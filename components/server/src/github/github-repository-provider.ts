@@ -217,7 +217,7 @@ export class GithubRepositoryProvider implements RepositoryProvider {
         for (const type of ["contributedTo", "original", "forked"]) {
             const nodes = result.data.viewer[type]?.nodes;
             if (nodes) {
-                urls.push(nodes.map((n: any) => n?.url).filter((u: any) => typeof u === "string"));
+                urls.push(...nodes.map((n: any) => n?.url).filter((u: any) => typeof u === "string"));
             }
         }
         return urls;

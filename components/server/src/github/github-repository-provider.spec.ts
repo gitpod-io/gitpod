@@ -78,5 +78,10 @@ class TestGithubContextRepositoryProvider {
             "f5b041513bfab914b5fbf7ae55788d9835004d76",
         ]);
     }
+
+    @test public async testGetUserRepos() {
+        const result = await this.provider.getUserRepos(this.user);
+        expect(result).to.include("https://github.com/gitpod-io/gitpod");
+    }
 }
 module.exports = new TestGithubContextRepositoryProvider(); // Only to circumvent no usage warning :-/
