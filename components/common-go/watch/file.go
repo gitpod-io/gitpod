@@ -60,7 +60,7 @@ func File(ctx context.Context, path string, onChange func()) error {
 
 	go func() {
 		defer func() {
-			log.WithError(err).Error("Stopping file watch")
+			log.WithError(err).Info("Stopping file watch")
 
 			err = watcher.Close()
 			if err != nil {
