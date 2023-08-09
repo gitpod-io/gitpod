@@ -194,7 +194,6 @@ export class GithubRepositoryProvider implements RepositoryProvider {
                   original: repositories(
                     first: 100
                     ownerAffiliations: OWNER
-                    privacy: PUBLIC
                     isFork: false
                     isLocked: false
                     orderBy: {field: UPDATED_AT, direction: DESC}
@@ -204,7 +203,6 @@ export class GithubRepositoryProvider implements RepositoryProvider {
                   forked: repositories(
                     first: 100
                     ownerAffiliations: OWNER
-                    privacy: PUBLIC
                     isFork: true
                     isLocked: false
                     orderBy: {field: UPDATED_AT, direction: DESC}
