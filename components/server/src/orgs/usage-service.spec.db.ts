@@ -82,7 +82,12 @@ describe("UsageService", async () => {
                 authId: "1234",
             },
         });
-        await userService.setAdminRole(BUILTIN_INSTLLATION_ADMIN_USER_ID, admin.id, true);
+        await userService.updateRoleOrPermission(BUILTIN_INSTLLATION_ADMIN_USER_ID, admin.id, [
+            {
+                role: "admin",
+                add: true,
+            },
+        ]);
 
         us = container.get<UsageService>(UsageService);
         await us.getCostCenter(owner.id, org.id);

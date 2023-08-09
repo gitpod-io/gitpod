@@ -144,7 +144,6 @@ import {
 } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { ClientMetadata, traceClientMetadata } from "../websocket/websocket-connection-manager";
 import {
-    AdditionalUserData,
     EmailDomainFilterEntry,
     EnvVarWithValue,
     LinkedInProfile,
@@ -661,19 +660,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         setting: Partial<WorkspaceTimeoutSetting>,
     ): Promise<void> {
         traceAPIParams(ctx, { setting });
-        if (setting.workspaceTimeout) {
-            WorkspaceTimeoutDuration.validate(setting.workspaceTimeout);
-        }
-
         const user = await this.checkAndBlockUser("updateWorkspaceTimeoutSetting");
         await this.guardAccess({ kind: "user", subject: user }, "update");
 
-        if (!(await this.entitlementService.maySetTimeout(user.id))) {
-            throw new Error("configure workspace timeout only available for paid user.");
-        }
-
-        AdditionalUserData.set(user, setting);
-        await this.userDB.updateUserPartial(user);
+        await this.userService.updateWorkspaceTimeoutSetting(user.id, user.id, setting);
     }
 
     public async sendPhoneNumberVerificationToken(
@@ -3084,20 +3074,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async adminGetUsers(ctx: TraceContext, req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>> {
         traceAPIParams(ctx, { req: censor(req, "searchTerm") }); // searchTerm may contain PII
 
-        await this.guardAdminAccess("adminGetUsers", { req }, Permission.ADMIN_USERS);
+        const admin = await this.guardAdminAccess("adminGetUsers", { req }, Permission.ADMIN_USERS);
 
-        try {
-            const res = await this.userDB.findAllUsers(
-                req.offset,
-                req.limit,
-                req.orderBy,
-                req.orderDir === "asc" ? "ASC" : "DESC",
-                req.searchTerm,
-            );
-            return res;
-        } catch (e) {
-            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
-        }
+        return this.userService.listUsers(admin.id, {
+            ...req,
+            orderDir: req.orderDir === "asc" ? "ASC" : "DESC",
+        });
     }
 
     async adminGetBlockedRepositories(
@@ -3201,7 +3183,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         });
         target.rolesOrPermissions = Array.from(rolesOrPermissions.values()) as RoleOrPermission[];
 
-        return await this.userDB.storeUser(target);
+        await this.userService.updateRoleOrPermission(admin.id, target.id, [
+            ...req.rpp.map((e) => ({ role: e.r, add: e.add })),
+        ]);
+        return this.userService.findUserById(admin.id, req.id);
     }
 
     async adminModifyPermanentWorkspaceFeatureFlag(

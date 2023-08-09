@@ -13,7 +13,7 @@ schema: |-
     // permissions
     permission read_info = self + organization->member + organization->owner + installation->admin
     permission write_info = self
-    permission make_admin = installation->admin
+    permission make_admin = installation->admin + organization->installation_admin
   }
 
   // There's only one global installation
