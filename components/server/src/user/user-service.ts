@@ -8,13 +8,22 @@ import { inject, injectable } from "inversify";
 import { Config } from "../config";
 import { UserDB } from "@gitpod/gitpod-db/lib";
 import { Authorizer } from "../authorization/authorizer";
-import { AdditionalUserData, Identity, TokenEntry, User } from "@gitpod/gitpod-protocol";
+import {
+    AdditionalUserData,
+    Identity,
+    RoleOrPermission,
+    TokenEntry,
+    User,
+    WorkspaceTimeoutDuration,
+    WorkspaceTimeoutSetting,
+} from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { CreateUserParams } from "./user-authentication";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
 import { RelationshipUpdater } from "../authorization/relationship-updater";
+import { EntitlementService } from "../billing/entitlement-service";
 
 @injectable()
 export class UserService {
@@ -24,6 +33,7 @@ export class UserService {
         @inject(Authorizer) private readonly authorizer: Authorizer,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(RelationshipUpdater) private readonly relationshipUpdater: RelationshipUpdater,
+        @inject(EntitlementService) private readonly entitlementService: EntitlementService,
     ) {}
 
     public async createUser(
@@ -124,34 +134,104 @@ export class UserService {
         return user;
     }
 
-    async setAdminRole(userId: string, targetUserId: string, admin: boolean): Promise<User> {
-        await this.authorizer.checkPermissionOnUser(userId, "make_admin", targetUserId);
-        const target = await this.findUserById(userId, targetUserId);
-        const rolesAndPermissions = target.rolesOrPermissions || [];
-        const newRoles = [...rolesAndPermissions.filter((r) => r !== "admin")];
-        if (admin) {
-            // add admin role
-            newRoles.push("admin");
+    async updateWorkspaceTimeoutSetting(
+        userId: string,
+        targetUserId: string,
+        setting: Partial<WorkspaceTimeoutSetting>,
+    ): Promise<void> {
+        await this.authorizer.checkPermissionOnUser(userId, "write_info", targetUserId);
+
+        if (setting.workspaceTimeout) {
+            try {
+                WorkspaceTimeoutDuration.validate(setting.workspaceTimeout);
+            } catch (err) {
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, err.message);
+            }
         }
 
+        if (!(await this.entitlementService.maySetTimeout(targetUserId))) {
+            throw new ApplicationError(
+                ErrorCodes.PERMISSION_DENIED,
+                "Configure workspace timeout only available for paid user.",
+            );
+        }
+
+        const user = await this.findUserById(userId, targetUserId);
+        AdditionalUserData.set(user, setting);
+        await this.userDb.updateUserPartial(user);
+    }
+
+    async listUsers(
+        userId: string,
+        req: {
+            //
+            offset?: number;
+            limit?: number;
+            orderBy?: keyof User;
+            orderDir?: "ASC" | "DESC";
+            searchTerm?: string;
+        },
+    ): Promise<{ total: number; rows: User[] }> {
         try {
-            return await this.userDb.transaction(async (userDb) => {
-                target.rolesOrPermissions = newRoles;
-                const updatedUser = await userDb.storeUser(target);
-                if (admin) {
-                    await this.authorizer.addInstallationAdminRole(target.id);
+            const res = await this.userDb.findAllUsers(
+                req.offset || 0,
+                req.limit || 100,
+                req.orderBy || "creationDate",
+                req.orderDir || "DESC",
+                req.searchTerm,
+            );
+            const result = { total: res.total, rows: [] as User[] };
+            for (const user of res.rows) {
+                if (await this.authorizer.hasPermissionOnUser(userId, "read_info", user.id)) {
+                    result.rows.push(user);
                 } else {
-                    await this.authorizer.removeInstallationAdminRole(target.id);
+                    result.total--;
                 }
-                return updatedUser;
-            });
-        } catch (err) {
-            if (admin) {
-                await this.authorizer.removeInstallationAdminRole(target.id);
-            } else {
-                await this.authorizer.addInstallationAdminRole(target.id);
             }
-            throw err;
+            return result;
+        } catch (e) {
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+        }
+    }
+
+    async updateRoleOrPermission(
+        userId: string,
+        targetUserId: string,
+        modifications: { role: RoleOrPermission; add?: boolean }[],
+    ): Promise<void> {
+        await this.authorizer.checkPermissionOnUser(userId, "make_admin", targetUserId);
+        const target = await this.findUserById(userId, targetUserId);
+        const rolesOrPermissions = new Set((target.rolesOrPermissions || []) as string[]);
+        const adminBefore = rolesOrPermissions.has("admin");
+        modifications.forEach((e) => {
+            if (e.add) {
+                rolesOrPermissions.add(e.role as string);
+            } else {
+                rolesOrPermissions.delete(e.role as string);
+            }
+        });
+        target.rolesOrPermissions = Array.from(rolesOrPermissions.values()) as RoleOrPermission[];
+        const adminAfter = new Set(target.rolesOrPermissions).has("admin");
+        try {
+            await this.userDb.transaction(async (userDb) => {
+                await userDb.storeUser(target);
+                if (adminBefore !== adminAfter) {
+                    if (adminAfter) {
+                        await this.authorizer.addInstallationAdminRole(target.id);
+                    } else {
+                        await this.authorizer.removeInstallationAdminRole(target.id);
+                    }
+                }
+            });
+        } catch (error) {
+            if (adminBefore !== adminAfter) {
+                if (adminAfter) {
+                    await this.authorizer.removeInstallationAdminRole(target.id);
+                } else {
+                    await this.authorizer.addInstallationAdminRole(target.id);
+                }
+            }
+            throw error;
         }
     }
 }
