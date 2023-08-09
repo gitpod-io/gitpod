@@ -112,7 +112,7 @@ func (c *MarkUnmountFallback) WorkspaceUpdated(ctx context.Context, ws *dispatch
 
 		err := unmountMark(ws.InstanceID)
 		if err != nil {
-			log.WithFields(ws.OWI()).WithError(err).Error("cannot unmount mark mount from within ws-daemon")
+			log.WithFields(ws.OWI()).WithError(err).Warn("cannot unmount mark mount from within ws-daemon")
 			c.activityCounter.WithLabelValues("false").Inc()
 		} else {
 			c.activityCounter.WithLabelValues("true").Inc()
