@@ -100,6 +100,22 @@ func getTimeout() time.Duration {
 	return timeout
 }
 
+// fail ends the waiting process propagating the message on its way out
+func fail(message string) {
+	terminationLog := "/dev/termination-log"
+
+	log.WithField("message", message).Warn("failed to wait for a service")
+
+	if _, err := os.Stat(terminationLog); !os.IsNotExist(err) {
+		err := os.WriteFile(terminationLog, []byte(message), 0600)
+		if err != nil {
+			log.WithError(err).Error("cannot write termination log")
+		}
+	}
+
+	os.Exit(1)
+}
+
 func envOrDefault(env, def string) (res string) {
 	res = os.Getenv(env)
 	if res == "" {

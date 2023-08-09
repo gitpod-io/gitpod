@@ -11,6 +11,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"errors"
+	"fmt"
 	"net"
 	"os"
 	"strings"
@@ -67,7 +68,7 @@ DB_CA_CERT and DB_USER(=gitpod)`,
 		if caCert != "" {
 			rootCertPool := x509.NewCertPool()
 			if ok := rootCertPool.AppendCertsFromPEM([]byte(caCert)); !ok {
-				log.Fatal("Failed to append DB CA cert.")
+				fail("Failed to append DB CA cert.")
 			}
 
 			tlsConfigName := "custom"
@@ -76,7 +77,7 @@ DB_CA_CERT and DB_USER(=gitpod)`,
 				MinVersion: tls.VersionTLS12, // semgrep finding: set lower boundary to exclude insecure TLS1.0
 			})
 			if err != nil {
-				log.WithError(err).Fatal("Failed to register DB CA cert")
+				fail(fmt.Sprintf("Failed to register DB CA cert: %+v", err))
 			}
 			cfg.TLSConfig = tlsConfigName
 		}
@@ -84,10 +85,18 @@ DB_CA_CERT and DB_USER(=gitpod)`,
 		migrationName := GetLatestMigrationName()
 		migrationCheck := viper.GetBool("migration-check")
 		log.WithField("timeout", timeout.String()).WithField("dsn", censoredDSN).WithField("migration", migrationName).WithField("migrationCheck", migrationCheck).Info("waiting for database")
+		var lastErr error
+		log.Info("attempting to check if database is available")
 		for ctx.Err() == nil {
-			log.Info("attempting to check if database is available")
 			if err := checkDbAvailable(ctx, cfg, migrationName, migrationCheck); err != nil {
-				log.WithError(err).Debug("retry")
+				if lastErr == nil || (lastErr != nil && err.Error() != lastErr.Error()) {
+					// log if error is new or changed
+					log.WithError(err).Error("database not available")
+					log.Info("attempting to check if database is available")
+				} else {
+					log.WithError(err).Debug("database not available, attempting to check again")
+				}
+				lastErr = err
 				<-time.After(time.Second)
 			} else {
 				break
@@ -95,7 +104,8 @@ DB_CA_CERT and DB_USER(=gitpod)`,
 		}
 
 		if ctx.Err() != nil {
-			log.WithField("timeout", timeout.String()).WithError(ctx.Err()).Fatal("database did not become available in time")
+			log.WithError(ctx.Err()).WithError(lastErr).Error("database did not become available in time")
+			fail(fmt.Sprintf("database did not become available in time(%s): %+v", timeout.String(), lastErr))
 		} else {
 			log.Info("database became available")
 		}
@@ -106,8 +116,9 @@ func GetLatestMigrationName() string {
 	return strings.TrimSpace(latestMigrationName)
 }
 
-// checkDbAvailable will connect and check if migrations table contains the latest migration
-func checkDbAvailable(ctx context.Context, cfg *mysql.Config, migration string, migrationCheck bool) error {
+// checkDbAvailable will connect and check if database is connectable
+// with migrations and migrationCheck set, it will also check if the latest migration has been applied
+func checkDbAvailable(ctx context.Context, cfg *mysql.Config, migration string, migrationCheck bool) (err error) {
 	db, err := sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
 		return err
@@ -120,16 +131,16 @@ func checkDbAvailable(ctx context.Context, cfg *mysql.Config, migration string, 
 		return db.PingContext(ctx)
 	}
 
-	log.Info("checking if database is migrated")
-	row := db.QueryRowContext(ctx, "SELECT name FROM "+migrationTableName+" WHERE name = ?", migration)
-	var name string
-	if err := row.Scan(&name); err != nil {
+	row := db.QueryRowContext(ctx, "SELECT name FROM "+migrationTableName+" ORDER BY `timestamp` DESC LIMIT 1")
+	var dbLatest string
+	if err := row.Scan(&dbLatest); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Error("not yet migrated")
-			return err
+			return fmt.Errorf("failed to check migrations: no row found")
 		}
-		log.WithError(err).Error("failed to query migrations")
-		return err
+		return fmt.Errorf("failed to check migrations: %w", err)
+	}
+	if dbLatest != migration {
+		return fmt.Errorf("expected migration %s, but found %s", migration, dbLatest)
 	}
 
 	return nil
