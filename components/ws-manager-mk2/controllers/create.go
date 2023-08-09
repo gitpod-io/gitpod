@@ -569,6 +569,12 @@ func createWorkspaceEnvironment(sctx *startWorkspaceContext) ([]corev1.EnvVar, e
 	result = append(result, corev1.EnvVar{Name: "THEIA_WEBVIEW_EXTERNAL_ENDPOINT", Value: "webview-{{hostname}}"})
 	result = append(result, corev1.EnvVar{Name: "THEIA_MINI_BROWSER_HOST_PATTERN", Value: "browser-{{hostname}}"})
 
+	// We don't require that Git be configured for workspaces
+	if sctx.Workspace.Spec.Git != nil {
+		result = append(result, corev1.EnvVar{Name: "GITPOD_GIT_USER_NAME", Value: sctx.Workspace.Spec.Git.Username})
+		result = append(result, corev1.EnvVar{Name: "GITPOD_GIT_USER_EMAIL", Value: sctx.Workspace.Spec.Git.Email})
+	}
+
 	if sctx.Config.EnableCustomSSLCertificate {
 		const (
 			customCAMountPath = "/etc/ssl/certs/gitpod-ca.crt"
@@ -578,12 +584,6 @@ func createWorkspaceEnvironment(sctx *startWorkspaceContext) ([]corev1.EnvVar, e
 		result = append(result, corev1.EnvVar{Name: "NODE_EXTRA_CA_CERTS", Value: customCAMountPath})
 		result = append(result, corev1.EnvVar{Name: "GIT_SSL_CAPATH", Value: certsMountPath})
 		result = append(result, corev1.EnvVar{Name: "GIT_SSL_CAINFO", Value: customCAMountPath})
-
-		// We don't require that Git be configured for workspaces
-		if sctx.Workspace.Spec.Git != nil {
-			result = append(result, corev1.EnvVar{Name: "GITPOD_GIT_USER_NAME", Value: sctx.Workspace.Spec.Git.Username})
-			result = append(result, corev1.EnvVar{Name: "GITPOD_GIT_USER_EMAIL", Value: sctx.Workspace.Spec.Git.Email})
-		}
 	}
 
 	// System level env vars
