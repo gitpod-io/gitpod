@@ -382,6 +382,16 @@ export class Authorizer {
         );
     }
 
+    async bulkCreateWorkspaceInOrg(ids: { orgID: string; userID: string; workspaceID: string }[]): Promise<void> {
+        const rels = ids
+            .map(({ orgID, userID, workspaceID }) => [
+                set(rel.workspace(workspaceID).org.organization(orgID)),
+                set(rel.workspace(workspaceID).owner.user(userID)),
+            ])
+            .flat();
+        await this.authorizer.writeRelationships(...rels);
+    }
+
     public async find(relation: v1.Relationship): Promise<v1.Relationship | undefined> {
         const relationships = await this.authorizer.readRelationships({
             consistency: v1.Consistency.create({

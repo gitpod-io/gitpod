@@ -934,34 +934,19 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         limit: number,
         orderBy: keyof Workspace,
         orderDir: "ASC" | "DESC",
-        ownerId?: string,
-        searchTerm?: string,
-        minCreationTime?: Date,
-        maxCreationTime?: Date,
-        type?: WorkspaceType,
+        opts: {
+            ownerId?: string;
+            type?: WorkspaceType;
+        },
     ): Promise<{ total: number; rows: Workspace[] }> {
         const workspaceRepo = await this.getWorkspaceRepo();
-        const queryBuilder = workspaceRepo
-            .createQueryBuilder("ws")
-            .skip(offset)
-            .take(limit)
-            .orderBy(orderBy, orderDir)
-            .where("ws.type = :type", { type: type ? type.toString() : "regular" }); // only regular workspaces by default
-        if (ownerId) {
-            queryBuilder.andWhere("ownerId = :ownerId", { ownerId });
+        const queryBuilder = workspaceRepo.createQueryBuilder("ws").skip(offset).take(limit).orderBy(orderBy, orderDir);
+        if (opts.type) {
+            queryBuilder.andWhere("ws.type = :type", { type: opts.type.toString() });
         }
-        if (searchTerm) {
-            queryBuilder.andWhere("(contextURL LIKE :searchTerm OR description LIKE :searchTerm)", { searchTerm });
-        }
-        if (minCreationTime) {
-            queryBuilder.andWhere("creationTime >= :minCreationTime", {
-                minCreationTime: minCreationTime.toISOString(),
-            });
-        }
-        if (maxCreationTime) {
-            queryBuilder.andWhere("creationTime < :maxCreationTime", {
-                maxCreationTime: maxCreationTime.toISOString(),
-            });
+
+        if (opts.ownerId) {
+            queryBuilder.andWhere("ownerId = :ownerId", { ownerId: opts.ownerId });
         }
         const [rows, total] = await queryBuilder.getManyAndCount();
         return { total, rows };
