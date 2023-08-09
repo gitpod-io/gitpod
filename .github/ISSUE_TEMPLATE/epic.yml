@@ -7,7 +7,7 @@ body:
   id: press-release
   attributes:
     label: Press release (and FAQ's)
-    description: What would the future feature announcement look like from a customer/user point of view? Think about questions both Gitpodders, and users/customers might ask about this feature. 
+    description: What would the future feature announcement look like from a customer/user point of view? Think about questions both Gitpodders, and users/customers might ask about this feature.
   validations:
     required: false
 - type: textarea
@@ -35,14 +35,14 @@ body:
   id: measurement
   attributes:
     label: Measurement
-    description: What will we measure to know whether we've been successful? 
+    description: What will we measure to know whether we've been successful?
   validations:
     required: false
 - type: textarea
   id: personas
   attributes:
     label: Persona(s)
-    description: Optionally specifiy which user will be impacted by this change? 
+    description: Optionally specifiy which user will be impacted by this change?
     placeholder: Developer/Installer/Project Configurer/Customer/Security Reviewer - optionally the ecosystem persona e.g. Python Developers
   validations:
     required: false
@@ -64,6 +64,6 @@ body:
   id: complexities
   attributes:
     label: Complexities
-    description: Optionally make explicit any complexities, e.g. dependencies on other teams, technical challenges, unknowns. 
+    description: Optionally make explicit any complexities, e.g. dependencies on other teams, technical challenges, unknowns.
   validations:
     required: false
