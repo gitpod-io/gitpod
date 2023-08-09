@@ -18,7 +18,7 @@ RUN yarn --cwd remote --frozen-lockfile --network-timeout 180000
 
 FROM gitpod/openvscode-server-linux-build-agent:focal-x64 as code_builder
 
-ARG NODE_VERSION=16.19.0
+ARG NODE_VERSION=16.20.1
 ARG NVM_DIR="/root/.nvm"
 RUN mkdir -p $NVM_DIR \
     && curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | sh \
