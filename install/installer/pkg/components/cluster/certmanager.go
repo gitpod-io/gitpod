@@ -35,11 +35,7 @@ func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 	}
 
-	gitpodCustomCertificateBundleSource := []trust.BundleSource{
-		{
-			UseDefaultCAs: pointer.Bool(false),
-		},
-	}
+	gitpodCustomCertificateBundleSource := []trust.BundleSource{}
 
 	if ctx.Config.CustomCACert != nil {
 		gitpodCaBundleSources = append(gitpodCaBundleSources, trust.BundleSource{
