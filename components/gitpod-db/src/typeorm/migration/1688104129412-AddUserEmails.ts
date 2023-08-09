@@ -14,7 +14,7 @@ export class AddUserEmails1688104129412 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         if (!(await columnExists(queryRunner, table, column))) {
             await queryRunner.query(
-                `ALTER TABLE ${table} ADD COLUMN ${column} text NOT NULL, ALGORITHM=INPLACE, LOCK=NONE`,
+                `ALTER TABLE ${table} ADD COLUMN ${column} text NULL, ALGORITHM=INPLACE, LOCK=NONE`,
             );
         }
     }
