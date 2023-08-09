@@ -795,7 +795,7 @@ var (
 	// cachedDBs caches DB connections per database name, so we don't have to re-establish connections all the time,
 	// saving us a lot of time in integration tests.
 	// The cache gets cleaned up when the component is closed.
-	cachedDBs = make(map[string]*sql.DB)
+	cachedDBs = sync.Map{}
 )
 
 // DB provides access to the Gitpod database.
@@ -808,8 +808,9 @@ func (c *ComponentAPI) DB(options ...DBOpt) (*sql.DB, error) {
 		o(&opts)
 	}
 
-	if db, ok := cachedDBs[opts.Database]; ok {
-		return db, nil
+	if db, ok := cachedDBs.Load(opts.Database); ok {
+		actualDb := db.(*sql.DB)
+		return actualDb, nil
 	}
 
 	config, err := c.findDBConfig()
@@ -836,9 +837,9 @@ func (c *ComponentAPI) DB(options ...DBOpt) (*sql.DB, error) {
 	// to getting an idle connection from the pool which has for some reason been closed.
 	db.SetMaxIdleConns(0)
 
-	cachedDBs[opts.Database] = db
+	cachedDBs.Store(opts.Database, db)
 	c.appendCloser(func() error {
-		delete(cachedDBs, opts.Database)
+		cachedDBs.Delete(opts.Database)
 		return db.Close()
 	})
 	return db, nil
