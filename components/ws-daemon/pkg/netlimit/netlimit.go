@@ -157,7 +157,7 @@ func (c *ConnLimiter) limitWorkspace(ctx context.Context, ws *dispatch.Workspace
 			case <-ticker.C:
 				counter, err := c.GetConnectionDropCounter(pid)
 				if err != nil {
-					log.WithFields(ws.OWI()).WithError(err).Errorf("could not get connection drop stats for %s", ws.WorkspaceID)
+					log.WithFields(ws.OWI()).WithError(err).Warnf("could not get connection drop stats")
 					continue
 				}
 
