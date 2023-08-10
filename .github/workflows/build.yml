@@ -314,7 +314,7 @@ jobs:
                 "version": '${{ needs.configuration.outputs.version }}',
                 "repo": "https://github.com/gitpod-io/gitpod",
                 "commit": "${{github.sha}}",
-                "env": ${{ matrix.env }}
+                "env": "${{ matrix.env }}"
               }
             })
 
