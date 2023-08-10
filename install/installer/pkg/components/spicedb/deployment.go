@@ -177,7 +177,7 @@ func dbEnvVars(ctx *common.RenderContext) []corev1.EnvVar {
 }
 
 func dbWaiter(ctx *common.RenderContext) v1.Container {
-	databaseWaiter := common.DatabaseWaiterContainer(ctx)
+	databaseWaiter := common.DatabaseMigrationWaiterContainer(ctx)
 	// Use updated env-vars, which in the case cloud-sql-proxy override default db conf
 
 	databaseWaiter.Env = dbEnvVars(ctx)

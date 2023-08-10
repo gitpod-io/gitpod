@@ -447,13 +447,25 @@ func ConfigcatProxyEnv(ctx *RenderContext) []corev1.EnvVar {
 }
 
 func DatabaseWaiterContainer(ctx *RenderContext) *corev1.Container {
+	return databaseWaiterContainer(ctx, false)
+}
+
+func DatabaseMigrationWaiterContainer(ctx *RenderContext) *corev1.Container {
+	return databaseWaiterContainer(ctx, true)
+}
+
+func databaseWaiterContainer(ctx *RenderContext, doMigrationCheck bool) *corev1.Container {
+	args := []string{
+		"-v",
+		"database",
+	}
+	if doMigrationCheck {
+		args = append(args, "--migration-check", "true")
+	}
 	return &corev1.Container{
 		Name:  "database-waiter",
 		Image: ctx.ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
-		Args: []string{
-			"-v",
-			"database",
-		},
+		Args:  args,
 		SecurityContext: &corev1.SecurityContext{
 			Privileged:               pointer.Bool(false),
 			AllowPrivilegeEscalation: pointer.Bool(false),
