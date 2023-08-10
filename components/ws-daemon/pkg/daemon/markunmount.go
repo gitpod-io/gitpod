@@ -139,11 +139,15 @@ func unmountMark(instanceID string) error {
 	path := fromPartialMount(filepath.Join(dir, "mark"), mounts)
 	// empty path means no mount found
 	if len(path) == 0 {
+		log.WithFields(log.OWI("", "", instanceID)).Info("no mount found")
 		return nil
 	}
 
 	// in some scenarios we need to wait for the unmount
-	var errorFn = func(err error) bool {
+	var canRetryFn = func(err error) bool {
+		if !strings.Contains(err.Error(), "device or resource busy") {
+			log.WithError(err).WithFields(log.OWI("", "", instanceID)).Info("Will not retry unmount mark")
+		}
 		return strings.Contains(err.Error(), "device or resource busy")
 	}
 
@@ -157,7 +161,7 @@ func unmountMark(instanceID string) error {
 				Duration: 1 * time.Second,
 				Factor:   5.0,
 				Jitter:   0.1,
-			}, errorFn, func() error {
+			}, canRetryFn, func() error {
 				return unix.Unmount(p, 0)
 			})
 		})
