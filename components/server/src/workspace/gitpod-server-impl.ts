@@ -111,7 +111,6 @@ import {
     PortProtocol as ProtoPortProtocol,
     StopWorkspacePolicy,
     TakeSnapshotRequest,
-    UpdateSSHKeyRequest,
 } from "@gitpod/ws-manager/lib/core_pb";
 import * as crypto from "crypto";
 import { inject, injectable } from "inversify";
@@ -194,6 +193,7 @@ import { RedisSubscriber } from "../messaging/redis-subscriber";
 import { UsageService } from "../orgs/usage-service";
 import { UserService } from "../user/user-service";
 import { WorkspaceService } from "./workspace-service";
+import { SSHKeyService } from "../user/sshkey-service";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -236,6 +236,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(UserDeletionService) private readonly userDeletionService: UserDeletionService,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(AuthorizationService) private readonly authorizationService: AuthorizationService,
+        @inject(SSHKeyService) private readonly sshKeyservice: SSHKeyService,
 
         @inject(TeamDB) private readonly teamDB: TeamDB,
         @inject(OrganizationService) private readonly organizationService: OrganizationService,
@@ -2445,59 +2446,22 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     async hasSSHPublicKey(ctx: TraceContext): Promise<boolean> {
         const user = await this.checkUser("hasSSHPublicKey");
-        return this.userDB.hasSSHPublicKey(user.id);
+        return this.sshKeyservice.hasSSHPublicKey(user.id);
     }
 
     async getSSHPublicKeys(ctx: TraceContext): Promise<UserSSHPublicKeyValue[]> {
         const user = await this.checkUser("getSSHPublicKeys");
-        const list = await this.userDB.getSSHPublicKeys(user.id);
-        return list.map((e) => ({
-            id: e.id,
-            name: e.name,
-            key: e.key,
-            fingerprint: e.fingerprint,
-            creationTime: e.creationTime,
-            lastUsedTime: e.lastUsedTime,
-        }));
+        return this.sshKeyservice.getSSHPublicKeys(user.id);
     }
 
     async addSSHPublicKey(ctx: TraceContext, value: SSHPublicKeyValue): Promise<UserSSHPublicKeyValue> {
         const user = await this.checkUser("addSSHPublicKey");
-        const data = await this.userDB.addSSHPublicKey(user.id, value);
-        this.updateSSHKeysForRegularRunningInstances(ctx, user.id).catch(console.error);
-        return {
-            id: data.id,
-            name: data.name,
-            key: data.key,
-            fingerprint: data.fingerprint,
-            creationTime: data.creationTime,
-            lastUsedTime: data.lastUsedTime,
-        };
+        return this.sshKeyservice.addSSHPublicKey(user.id, value);
     }
 
     async deleteSSHPublicKey(ctx: TraceContext, id: string): Promise<void> {
         const user = await this.checkUser("deleteSSHPublicKey");
-        await this.userDB.deleteSSHPublicKey(user.id, id);
-        this.updateSSHKeysForRegularRunningInstances(ctx, user.id).catch(console.error);
-        return;
-    }
-
-    private async updateSSHKeysForRegularRunningInstances(ctx: TraceContext, userId: string) {
-        const keys = (await this.userDB.getSSHPublicKeys(userId)).map((e) => e.key);
-        const instances = await this.workspaceDb.trace(ctx).findRegularRunningInstances(userId);
-        const updateKeyOfInstance = async (instance: WorkspaceInstance) => {
-            try {
-                const req = new UpdateSSHKeyRequest();
-                req.setId(instance.id);
-                req.setKeysList(keys);
-                const cli = await this.workspaceManagerClientProvider.get(instance.region);
-                await cli.updateSSHPublicKey(ctx, req);
-            } catch (err) {
-                const logCtx = { userId, instanceId: instance.id };
-                log.error(logCtx, "Could not update ssh public key for instance", err);
-            }
-        };
-        return Promise.allSettled(instances.map((e) => updateKeyOfInstance(e)));
+        return this.sshKeyservice.deleteSSHPublicKey(user.id, id);
     }
 
     async setProjectEnvironmentVariable(
