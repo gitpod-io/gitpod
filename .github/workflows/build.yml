@@ -1,7 +1,7 @@
 name: Build
 on:
   pull_request:
-    types: [opened, edited]
+    types: [ opened, edited ]
   push:
   workflow_dispatch:
     inputs:
@@ -24,7 +24,7 @@ jobs:
   configuration:
     name: Configure job parameters
     runs-on: ${{ needs.create-runner.outputs.label }}
-    needs: [create-runner]
+    needs: [ create-runner ]
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-configuration
       cancel-in-progress: true
@@ -91,7 +91,7 @@ jobs:
     if: |
       (needs.configuration.outputs.pr_no_diff_skip != 'true') &&
       (needs.configuration.outputs.preview_enable == 'true')
-    needs: [configuration, create-runner]
+    needs: [ configuration, create-runner ]
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-build-previewctl
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
@@ -114,7 +114,7 @@ jobs:
           echo "previewctl_hash=$(leeway describe dev/preview/previewctl:docker -Dversion="${{needs.configuration.outputs.version}}" -t '{{ .Metadata.Version }}')" >> $GITHUB_OUTPUT
 
   infrastructure:
-    needs: [configuration, build-previewctl, create-runner]
+    needs: [ configuration, build-previewctl, create-runner ]
     if: |
       (needs.configuration.outputs.pr_no_diff_skip != 'true') &&
       (needs.configuration.outputs.preview_enable == 'true') &&
@@ -138,7 +138,7 @@ jobs:
 
   build-gitpod:
     name: Build Gitpod
-    needs: [configuration, create-runner]
+    needs: [ configuration, create-runner ]
     runs-on: ${{ needs.create-runner.outputs.label }}
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-build-gitpod
@@ -287,8 +287,12 @@ jobs:
 
   install-app:
     runs-on: ${{ needs.create-runner.outputs.label }}
-    needs: [configuration, build-gitpod, create-runner]
+    needs: [ configuration, build-gitpod, create-runner ]
     if: ${{ needs.configuration.outputs.is_main_branch == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [ staging, production ]
     steps:
       - uses: gitpod-io/gh-app-auth@v0.1
         id: auth
@@ -307,7 +311,10 @@ jobs:
               workflow_id: 'install-app.yaml',
               ref: 'main',
               inputs: {
-                "version": '${{ needs.configuration.outputs.version }}'
+                "version": '${{ needs.configuration.outputs.version }}',
+                "repo": "https://github.com/gitpod-io/gitpod",
+                "commit": "${{github.sha}}",
+                "env": "${{ matrix.env }}"
               }
             })
 
@@ -362,7 +369,7 @@ jobs:
 
   monitoring:
     name: "Install Monitoring Satellite"
-    needs: [infrastructure, build-previewctl, create-runner]
+    needs: [ infrastructure, build-previewctl, create-runner ]
     runs-on: ${{ needs.create-runner.outputs.label }}
     if: needs.configuration.outputs.with_monitoring == 'true'
     concurrency:
