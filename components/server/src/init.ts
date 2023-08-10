@@ -78,23 +78,33 @@ export async function start(container: Container) {
         }
     });
 
-    const interval = setInterval(async () => {
-        try {
-            const connection = await container.get(TypeORM).getConnection();
-            const pool: any = (connection.driver as any).pool;
-            const activeConnections = pool._allConnections.length;
-            const freeConnections = pool._freeConnections.length;
+    let interval: NodeJS.Timeout;
 
-            pool.on("enqueue", function () {
+    try {
+        const connection = await container.get(TypeORM).getConnection();
+        const pool: any = (connection.driver as any).pool;
+        interval = setInterval(async () => {
+            try {
+                const activeConnections = pool._allConnections.length;
+                const freeConnections = pool._freeConnections.length;
+
+                dbConnectionsTotal.set(activeConnections);
+                dbConnectionsFree.set(freeConnections);
+            } catch (error) {
+                log.error("Error updating TypeORM metrics", error);
+            }
+        }, 5000);
+
+        pool.on("enqueue", function () {
+            try {
                 dbConnectionsEnqueued.inc();
-            });
-
-            dbConnectionsTotal.set(activeConnections);
-            dbConnectionsFree.set(freeConnections);
-        } catch (error) {
-            log.error("Error updating TypeORM metrics", error);
-        }
-    }, 5000);
+            } catch (error) {
+                log.error("Error updating TypeOrm metrics", error);
+            }
+        });
+    } catch (error) {
+        log.error("Error registering pool listener", error);
+    }
 
     process.on("SIGTERM", async () => {
         log.info("SIGTERM received, stopping");
