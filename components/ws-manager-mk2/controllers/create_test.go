@@ -57,6 +57,34 @@ func TestCreateWorkspaceEnvironment(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "without Git config",
+			Context: &startWorkspaceContext{
+				Config: &config.Configuration{
+					WorkspaceClasses: map[string]*config.WorkspaceClass{
+						"default": {Name: "default"},
+					},
+				},
+				Workspace: &v1.Workspace{
+					Spec: v1.WorkspaceSpec{
+						Class: "default",
+					},
+				},
+			},
+			Expectation: Expectation{
+				Vars: []corev1.EnvVar{
+					{Name: "GITPOD_REPO_ROOT", Value: "/workspace"},
+					{Name: "GITPOD_REPO_ROOTS", Value: "/workspace"},
+					{Name: "GITPOD_THEIA_PORT", Value: "0"},
+					{Name: "THEIA_WORKSPACE_ROOT", Value: "/workspace"},
+					{Name: "GITPOD_WORKSPACE_CLASS", Value: "default"},
+					{Name: "THEIA_SUPERVISOR_ENDPOINT", Value: ":0"},
+					{Name: "THEIA_WEBVIEW_EXTERNAL_ENDPOINT", Value: "webview-{{hostname}}"},
+					{Name: "THEIA_MINI_BROWSER_HOST_PATTERN", Value: "browser-{{hostname}}"},
+					{Name: "GITPOD_INTERVAL", Value: "0"}, {Name: "GITPOD_MEMORY", Value: "0"},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
