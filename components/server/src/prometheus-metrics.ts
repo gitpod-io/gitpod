@@ -47,6 +47,11 @@ export const dbConnectionsFree = new prometheusClient.Gauge({
     help: "Number of free connections in TypeORM pool",
 });
 
+export const dbConnectionsEnqueued = new prometheusClient.Counter({
+    name: "gitpod_typeorm_enqueued_connections",
+    help: "Number of times requests put on the queue, because the pool was maxed out.",
+});
+
 const loginCompletedTotal = new prometheusClient.Counter({
     name: "gitpod_login_completed_total",
     help: "Total number of logins completed into gitpod, by status",
