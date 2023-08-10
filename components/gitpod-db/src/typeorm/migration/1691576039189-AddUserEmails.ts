@@ -10,7 +10,7 @@ import { columnExists } from "./helper/helper";
 const table = "d_b_user";
 const column = "emails";
 
-export class AddUserEmails1688104129412 implements MigrationInterface {
+export class AddUserEmails1691576039189 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         if (!(await columnExists(queryRunner, table, column))) {
             await queryRunner.query(
