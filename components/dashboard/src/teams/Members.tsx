@@ -88,7 +88,7 @@ export default function MembersPage() {
 
     return (
         <>
-            <Header title="Members" subtitle="Manage organization members." />
+            <Header title="Members" subtitle="Manage organization members and their permissions." />
             <div className="app-container">
                 <div className="flex mb-3 mt-3">
                     <div className="flex relative h-10 my-auto">
@@ -105,28 +105,29 @@ export default function MembersPage() {
                             onChange={(e) => setSearchText(e.target.value)}
                         />
                     </div>
-                    <div className="flex-1" />
-                    <div className="py-2 pl-3">
+                    <div className="py-2 pl-3 pr-1 border border-gray-100 ml-2 rounded-md">
                         <DropDown
-                            prefix="Role: "
                             customClasses="w-32"
-                            activeEntry={roleFilter === "owner" ? "Owner" : roleFilter === "member" ? "Member" : "All"}
+                            activeEntry={
+                                roleFilter === "owner" ? "Owners" : roleFilter === "member" ? "Members" : "All"
+                            }
                             entries={[
                                 {
                                     title: "All",
                                     onClick: () => setRoleFilter(undefined),
                                 },
                                 {
-                                    title: "Owner",
+                                    title: "Owners",
                                     onClick: () => setRoleFilter("owner"),
                                 },
                                 {
-                                    title: "Member",
+                                    title: "Members",
                                     onClick: () => setRoleFilter("member"),
                                 },
                             ]}
                         />
                     </div>
+                    <div className="flex-1" />
                     {isOwner && (
                         <button
                             onClick={() => {
