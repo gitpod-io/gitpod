@@ -14,6 +14,19 @@ packages:
       yarnLock: ${coreYarnLockBase}/yarn.lock
       tsconfig: tsconfig.json
       dontTest: true
+  - name: latest-migration
+    type: generic
+    srcs:
+      - "src/typeorm/migration/*.ts"
+      - "scripts/generate-latest-migration.sh"
+    config:
+      dontTest: false
+      commands:
+        - ["sh", "-c", "scripts/generate-latest-migration.sh > latest-migration.txt"]
+      test:
+        - ["scripts/generate-latest-migration.sh", "test"]
+        - ["sh", "-c", "rm -rf src"]
+        - ["sh", "-c", "rm -rf scripts"]
   - name: migrations
     type: yarn
     srcs:

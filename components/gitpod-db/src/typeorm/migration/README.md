@@ -5,7 +5,6 @@ To create a new migration file, run this command in the `gitpod-db` component di
 ```
 yarn typeorm migration:create -n NameOfYourMigration
 leeway run components:update-license-header
-yarn gen-latest-migration
 ```
 
 Then, simply populate the `up` and `down` methods in the generated migration file.
