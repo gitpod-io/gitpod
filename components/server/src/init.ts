@@ -57,7 +57,7 @@ import { Server } from "./server";
 import { log, LogrusLogLevel } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { TypeORM } from "@gitpod/gitpod-db/lib";
-import { dbConnectionsFree, dbConnectionsTotal } from "./prometheus-metrics";
+import { dbConnectionsEnqueued, dbConnectionsFree, dbConnectionsTotal } from "./prometheus-metrics";
 if (process.env.NODE_ENV === "development") {
     require("longjohn");
 }
@@ -84,6 +84,10 @@ export async function start(container: Container) {
             const pool: any = (connection.driver as any).pool;
             const activeConnections = pool._allConnections.length;
             const freeConnections = pool._freeConnections.length;
+
+            pool.on("enqueue", function () {
+                dbConnectionsEnqueued.inc();
+            });
 
             dbConnectionsTotal.set(activeConnections);
             dbConnectionsFree.set(freeConnections);
