@@ -289,6 +289,10 @@ jobs:
     runs-on: ${{ needs.create-runner.outputs.label }}
     needs: [ configuration, build-gitpod, create-runner ]
     if: ${{ needs.configuration.outputs.is_main_branch == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [ staging, production ]
     steps:
       - uses: gitpod-io/gh-app-auth@v0.1
         id: auth
@@ -297,10 +301,6 @@ jobs:
           app-id: 308947
           installation-id: 35574470
       - name: trigger installation
-        strategy:
-          fail-fast: false
-          matrix:
-            env: [ staging, production ]
         uses: actions/github-script@v6
         with:
           github-token: ${{ steps.auth.outputs.token }}
