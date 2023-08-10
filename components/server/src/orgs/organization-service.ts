@@ -5,6 +5,7 @@
  */
 
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
+import { WithSpan } from "@gitpod/gitpod-protocol/lib/util/open-telemetry-tracing";
 import {
     OrgMemberInfo,
     OrgMemberRole,
@@ -30,6 +31,7 @@ export class OrganizationService {
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
     ) {}
 
+    @WithSpan()
     async listOrganizationsByMember(userId: string, memberId: string): Promise<Organization[]> {
         //TODO check if user has access to member
         const orgs = await this.teamDB.findTeamsByUser(memberId);

@@ -46,6 +46,10 @@
         "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput"
     },
     "dependencies": {
+        "@opentelemetry/api": "^1.4.1",
+        "@opentelemetry/node": "^0.24.0",
+        "@opentelemetry/sdk-trace-base": "^1.15.2",
+        "@opentelemetry/tracing": "^0.24.0",
         "@types/react": "17.0.32",
         "abort-controller-x": "^0.4.0",
         "ajv": "^6.5.4",
