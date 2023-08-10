@@ -383,6 +383,7 @@ func TestCLion(t *testing.T) {
 	}
 	integration.SkipWithoutUsername(t, username)
 	integration.SkipWithoutUserToken(t, userToken)
+	t.Skip("See EXP-414")
 	f := features.New("Start a workspace using CLion").
 		WithLabel("component", "IDE").
 		WithLabel("ide", "CLion").
