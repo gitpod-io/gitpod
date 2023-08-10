@@ -18,7 +18,8 @@
     "migrate-migrations": "node ./lib/migrate-migrations.js",
     "clean": "yarn run rimraf lib",
     "clean:node": "yarn run rimraf node_modules",
-    "purge": "yarn clean && yarn clean:node && yarn run rimraf yarn.lock"
+    "purge": "yarn clean && yarn clean:node && yarn run rimraf yarn.lock",
+    "gen-latest-migration": "./scripts/generate-latest-migration.sh"
   },
   "files": [
     "/lib"

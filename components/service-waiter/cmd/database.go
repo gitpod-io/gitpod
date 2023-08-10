@@ -142,6 +142,7 @@ func checkDbAvailable(ctx context.Context, cfg *mysql.Config, migration string, 
 	if dbLatest != migration {
 		return fmt.Errorf("expected migration %s, but found %s", migration, dbLatest)
 	}
+	log.WithField("want", migration).WithField("got", dbLatest).Info("migrated")
 
 	return nil
 }

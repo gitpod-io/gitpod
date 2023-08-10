@@ -7,10 +7,6 @@ packages:
       - "go.sum"
     deps:
       - components/common-go:lib
-      - components/gitpod-db:latest-migration
-    prep:
-      - ["sh", "-c", "mkdir -p cmd/resources"]
-      - ["sh", "-c", "cat _deps/components-gitpod-db--latest-migration/latest-migration.txt > cmd/resources/latest-migration.txt"]
     env:
       - CGO_ENABLED=0
       - GOOS=linux
