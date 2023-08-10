@@ -73,11 +73,11 @@ export const SSOLoginForm: FC<Props> = ({ singleOrgMode, onSuccess }) => {
 
     return (
         <form onSubmit={openLoginWithSSO}>
-            <div className="mt-10 space-y-2">
+            <div className="mt-10 space-y-2 w-56">
                 {!singleOrgMode && (
                     <TextInputField
                         label="Organization Slug"
-                        placeholder="my-company"
+                        placeholder="my-organization"
                         value={orgSlug}
                         onChange={setOrgSlug}
                         error={slugError.message}
