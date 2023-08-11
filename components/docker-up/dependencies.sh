@@ -5,7 +5,7 @@
 
 set -euo pipefail
 
-RUNC_VERSION=v1.1.7
+RUNC_VERSION=v1.1.9
 
 # DOCKER_VERSION and DOCKER_COMPOSE_VERSION are defined in WORKSPACE.yaml
 curl -o docker.tgz      -fsSL "https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz"
