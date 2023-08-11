@@ -129,6 +129,7 @@ import { RedisPublisher, newRedisClient } from "@gitpod/gitpod-db/lib";
 import { UserService } from "./user/user-service";
 import { RelationshipUpdater } from "./authorization/relationship-updater";
 import { WorkspaceService } from "./workspace/workspace-service";
+import { SSHKeyService } from "./user/sshkey-service";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -142,6 +143,8 @@ export const productionContainerModule = new ContainerModule(
         bind(UserService).toSelf().inSingletonScope();
         bind(UserDeletionService).toSelf().inSingletonScope();
         bind(AuthorizationService).to(AuthorizationServiceImpl).inSingletonScope();
+
+        bind(SSHKeyService).toSelf().inSingletonScope();
 
         bind(TokenService).toSelf().inSingletonScope();
         bind(TokenProvider).toService(TokenService);
