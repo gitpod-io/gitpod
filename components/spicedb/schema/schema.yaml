@@ -14,6 +14,9 @@ schema: |-
     permission read_info = self + organization->member + organization->owner + installation->admin
     permission write_info = self
     permission make_admin = installation->admin + organization->installation_admin
+
+    permission read_ssh = self
+    permission write_ssh = self
   }
 
   // There's only one global installation

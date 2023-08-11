@@ -32,7 +32,7 @@ export type UserResourceType = "user";
 
 export type UserRelation = "self" | "organization" | "installation";
 
-export type UserPermission = "read_info" | "write_info" | "make_admin";
+export type UserPermission = "read_info" | "write_info" | "make_admin" | "read_ssh" | "write_ssh";
 
 export type InstallationResourceType = "installation";
 
