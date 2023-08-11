@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { DBWithTracing, TracedWorkspaceDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { SSHPublicKeyValue, UserSSHPublicKeyValue, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
@@ -15,20 +15,20 @@ import { Authorizer } from "../authorization/authorizer";
 @injectable()
 export class SSHKeyService {
     constructor(
-        @inject(TracedWorkspaceDB) private readonly workspaceDb: DBWithTracing<WorkspaceDB>,
+        @inject(WorkspaceDB) private readonly workspaceDb: WorkspaceDB,
         @inject(UserDB) private readonly userDB: UserDB,
         @inject(WorkspaceManagerClientProvider)
         private readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider,
         @inject(Authorizer) private readonly auth: Authorizer,
     ) {}
 
-    async hasSSHPublicKey(userId: string): Promise<boolean> {
-        await this.auth.checkPermissionOnUser(userId, "read_ssh", userId);
+    async hasSSHPublicKey(requestorId: string, userId: string): Promise<boolean> {
+        await this.auth.checkPermissionOnUser(requestorId, "read_ssh", userId);
         return this.userDB.hasSSHPublicKey(userId);
     }
 
-    async getSSHPublicKeys(userId: string): Promise<UserSSHPublicKeyValue[]> {
-        await this.auth.checkPermissionOnUser(userId, "read_ssh", userId);
+    async getSSHPublicKeys(requestorId: string, userId: string): Promise<UserSSHPublicKeyValue[]> {
+        await this.auth.checkPermissionOnUser(requestorId, "read_ssh", userId);
         const list = await this.userDB.getSSHPublicKeys(userId);
         return list.map((e) => ({
             id: e.id,
@@ -40,11 +40,15 @@ export class SSHKeyService {
         }));
     }
 
-    async addSSHPublicKey(userId: string, value: SSHPublicKeyValue): Promise<UserSSHPublicKeyValue> {
-        await this.auth.checkPermissionOnUser(userId, "write_ssh", userId);
+    async addSSHPublicKey(
+        requestorId: string,
+        userId: string,
+        value: SSHPublicKeyValue,
+    ): Promise<UserSSHPublicKeyValue> {
+        await this.auth.checkPermissionOnUser(requestorId, "write_ssh", userId);
         const data = await this.userDB.addSSHPublicKey(userId, value);
-        this.updateSSHKeysForRegularRunningInstances(userId).catch(() => {
-            /* noop */
+        this.updateSSHKeysForRegularRunningInstances(userId).catch((err) => {
+            log.error("Failed to update ssh keys on running instances.", err);
         });
         return {
             id: data.id,
@@ -56,11 +60,11 @@ export class SSHKeyService {
         };
     }
 
-    async deleteSSHPublicKey(userId: string, id: string): Promise<void> {
-        await this.auth.checkPermissionOnUser(userId, "write_ssh", userId);
+    async deleteSSHPublicKey(requestorId: string, userId: string, id: string): Promise<void> {
+        await this.auth.checkPermissionOnUser(requestorId, "write_ssh", userId);
         await this.userDB.deleteSSHPublicKey(userId, id);
-        this.updateSSHKeysForRegularRunningInstances(userId).catch(() => {
-            /* noop */
+        this.updateSSHKeysForRegularRunningInstances(userId).catch((err) => {
+            log.error("Failed to update ssh keys on running instances.", err);
         });
     }
 
@@ -77,12 +81,8 @@ export class SSHKeyService {
                 log.error(logCtx, "Could not update ssh public key for instance", err);
             }
         };
-        try {
-            const sshKeys = (await this.userDB.getSSHPublicKeys(userId)).map((e) => e.key);
-            const instances = await this.workspaceDb.trace({}).findRegularRunningInstances(userId);
-            return Promise.allSettled(instances.map((instance) => updateSSHKeysOfInstance(instance, sshKeys)));
-        } catch (err) {
-            log.error("Failed to update ssh keys on running instances.", err);
-        }
+        const sshKeys = (await this.userDB.getSSHPublicKeys(userId)).map((e) => e.key);
+        const instances = await this.workspaceDb.findRegularRunningInstances(userId);
+        return Promise.allSettled(instances.map((instance) => updateSSHKeysOfInstance(instance, sshKeys)));
     }
 }

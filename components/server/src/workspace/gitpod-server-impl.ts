@@ -2446,22 +2446,22 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     async hasSSHPublicKey(ctx: TraceContext): Promise<boolean> {
         const user = await this.checkUser("hasSSHPublicKey");
-        return this.sshKeyservice.hasSSHPublicKey(user.id);
+        return this.sshKeyservice.hasSSHPublicKey(user.id, user.id);
     }
 
     async getSSHPublicKeys(ctx: TraceContext): Promise<UserSSHPublicKeyValue[]> {
         const user = await this.checkUser("getSSHPublicKeys");
-        return this.sshKeyservice.getSSHPublicKeys(user.id);
+        return this.sshKeyservice.getSSHPublicKeys(user.id, user.id);
     }
 
     async addSSHPublicKey(ctx: TraceContext, value: SSHPublicKeyValue): Promise<UserSSHPublicKeyValue> {
         const user = await this.checkUser("addSSHPublicKey");
-        return this.sshKeyservice.addSSHPublicKey(user.id, value);
+        return this.sshKeyservice.addSSHPublicKey(user.id, user.id, value);
     }
 
     async deleteSSHPublicKey(ctx: TraceContext, id: string): Promise<void> {
         const user = await this.checkUser("deleteSSHPublicKey");
-        return this.sshKeyservice.deleteSSHPublicKey(user.id, id);
+        return this.sshKeyservice.deleteSSHPublicKey(user.id, user.id, id);
     }
 
     async setProjectEnvironmentVariable(

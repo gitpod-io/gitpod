@@ -15,6 +15,8 @@ import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import { SSHKeyService } from "./sshkey-service";
 import { OrganizationService } from "../orgs/organization-service";
 import { UserService } from "./user-service";
+import { expectError } from "../test/expect-utils";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 const expect = chai.expect;
 
@@ -23,6 +25,7 @@ describe("SSHKeyService", async () => {
     let ss: SSHKeyService;
 
     let member: User;
+    let stranger: User;
     let org: Organization;
 
     const testSSHkeys: SSHPublicKeyValue[] = [
@@ -57,6 +60,13 @@ describe("SSHKeyService", async () => {
             },
         });
         await orgService.joinOrganization(member.id, invite.id);
+        stranger = await userService.createUser({
+            identity: {
+                authId: "foo2",
+                authName: "bar2",
+                authProviderId: "github",
+            },
+        });
 
         ss = container.get(SSHKeyService);
     });
@@ -67,35 +77,42 @@ describe("SSHKeyService", async () => {
     });
 
     it("should add ssh key", async () => {
-        const resp1 = await ss.hasSSHPublicKey(member.id);
+        const resp1 = await ss.hasSSHPublicKey(member.id, member.id);
         expect(resp1).to.be.false;
 
-        await ss.addSSHPublicKey(member.id, testSSHkeys[0]);
+        await ss.addSSHPublicKey(member.id, member.id, testSSHkeys[0]);
 
-        const resp2 = await ss.hasSSHPublicKey(member.id);
+        const resp2 = await ss.hasSSHPublicKey(member.id, member.id);
         expect(resp2).to.be.true;
+
+        await expectError(ErrorCodes.NOT_FOUND, ss.hasSSHPublicKey(stranger.id, member.id));
+        await expectError(ErrorCodes.NOT_FOUND, ss.addSSHPublicKey(stranger.id, member.id, testSSHkeys[0]));
     });
 
     it("should list ssh keys", async () => {
-        await ss.addSSHPublicKey(member.id, testSSHkeys[0]);
-        await ss.addSSHPublicKey(member.id, testSSHkeys[1]);
+        await ss.addSSHPublicKey(member.id, member.id, testSSHkeys[0]);
+        await ss.addSSHPublicKey(member.id, member.id, testSSHkeys[1]);
 
-        const keys = await ss.getSSHPublicKeys(member.id);
+        const keys = await ss.getSSHPublicKeys(member.id, member.id);
         expect(keys.length).to.equal(2);
         expect(testSSHkeys.some((k) => k.name === keys[0].name && k.key === keys[0].key)).to.be.true;
         expect(testSSHkeys.some((k) => k.name === keys[1].name && k.key === keys[1].key)).to.be.true;
+
+        await expectError(ErrorCodes.NOT_FOUND, ss.getSSHPublicKeys(stranger.id, member.id));
     });
 
     it("should delete ssh keys", async () => {
-        await ss.addSSHPublicKey(member.id, testSSHkeys[0]);
-        await ss.addSSHPublicKey(member.id, testSSHkeys[1]);
+        await ss.addSSHPublicKey(member.id, member.id, testSSHkeys[0]);
+        await ss.addSSHPublicKey(member.id, member.id, testSSHkeys[1]);
 
-        const keys = await ss.getSSHPublicKeys(member.id);
+        const keys = await ss.getSSHPublicKeys(member.id, member.id);
         expect(keys.length).to.equal(2);
 
-        await ss.deleteSSHPublicKey(member.id, keys[0].id);
+        await ss.deleteSSHPublicKey(member.id, member.id, keys[0].id);
 
-        const keys2 = await ss.getSSHPublicKeys(member.id);
+        const keys2 = await ss.getSSHPublicKeys(member.id, member.id);
         expect(keys2.length).to.equal(1);
+
+        await expectError(ErrorCodes.NOT_FOUND, ss.deleteSSHPublicKey(stranger.id, member.id, keys[0].id));
     });
 });
