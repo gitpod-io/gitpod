@@ -122,6 +122,13 @@ class TestBitbucketServerRepositoryProvider {
             author: "Alex Tugarev",
         });
     }
+
+    @test async test_getUserRepos_ok() {
+        const result = await this.service.getUserRepos(this.user);
+        expect(result).to.contain(
+            "http://7990-alextugarev-bbs-6v0gqcpgvj7.ws-eu102.gitpod.io/scm/~alex.tugarev/user.repo.git",
+        );
+    }
 }
 
 module.exports = new TestBitbucketServerRepositoryProvider();
