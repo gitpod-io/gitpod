@@ -10,6 +10,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
 import { UpdateSSHKeyRequest } from "@gitpod/ws-manager/lib";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
+import { Authorizer } from "../authorization/authorizer";
 
 @injectable()
 export class SSHKeyService {
@@ -18,13 +19,16 @@ export class SSHKeyService {
         @inject(UserDB) private readonly userDB: UserDB,
         @inject(WorkspaceManagerClientProvider)
         private readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider,
+        @inject(Authorizer) private readonly auth: Authorizer,
     ) {}
 
     async hasSSHPublicKey(userId: string): Promise<boolean> {
+        await this.auth.checkPermissionOnUser(userId, "read_ssh", userId);
         return this.userDB.hasSSHPublicKey(userId);
     }
 
     async getSSHPublicKeys(userId: string): Promise<UserSSHPublicKeyValue[]> {
+        await this.auth.checkPermissionOnUser(userId, "read_ssh", userId);
         const list = await this.userDB.getSSHPublicKeys(userId);
         return list.map((e) => ({
             id: e.id,
@@ -37,6 +41,7 @@ export class SSHKeyService {
     }
 
     async addSSHPublicKey(userId: string, value: SSHPublicKeyValue): Promise<UserSSHPublicKeyValue> {
+        await this.auth.checkPermissionOnUser(userId, "write_ssh", userId);
         const data = await this.userDB.addSSHPublicKey(userId, value);
         this.updateSSHKeysForRegularRunningInstances(userId).catch(() => {
             /* noop */
@@ -52,6 +57,7 @@ export class SSHKeyService {
     }
 
     async deleteSSHPublicKey(userId: string, id: string): Promise<void> {
+        await this.auth.checkPermissionOnUser(userId, "write_ssh", userId);
         await this.userDB.deleteSSHPublicKey(userId, id);
         this.updateSSHKeysForRegularRunningInstances(userId).catch(() => {
             /* noop */

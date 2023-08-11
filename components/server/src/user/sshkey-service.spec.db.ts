@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
+import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TypeORM } from "@gitpod/gitpod-db/lib";
 import { Organization, SSHPublicKeyValue, User } from "@gitpod/gitpod-protocol";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import * as chai from "chai";
@@ -14,6 +14,7 @@ import { createTestContainer } from "../test/service-testing-container-module";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import { SSHKeyService } from "./sshkey-service";
 import { OrganizationService } from "../orgs/organization-service";
+import { UserService } from "./user-service";
 
 const expect = chai.expect;
 
@@ -21,7 +22,6 @@ describe("SSHKeyService", async () => {
     let container: Container;
     let ss: SSHKeyService;
 
-    let owner: User;
     let member: User;
     let org: Organization;
 
@@ -42,20 +42,21 @@ describe("SSHKeyService", async () => {
             centralizedPermissions: true,
         });
 
-        const userDB = container.get<UserDB>(UserDB);
-        owner = await userDB.newUser();
+        const orgService = container.get<OrganizationService>(OrganizationService);
+        org = await orgService.createOrganization(BUILTIN_INSTLLATION_ADMIN_USER_ID, "myOrg");
+        const invite = await orgService.getOrCreateInvite(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id);
 
-        const os = container.get(OrganizationService);
-        org = await os.createOrganization(owner.id, "myorg");
-
-        member = await userDB.newUser();
-        const invite = await os.getOrCreateInvite(owner.id, org.id);
-        await os.joinOrganization(member.id, invite.id);
-
-        const adminUser = await userDB.findUserById(BUILTIN_INSTLLATION_ADMIN_USER_ID)!;
-        if (!adminUser) {
-            throw new Error("admin user not found");
-        }
+        const userService = container.get<UserService>(UserService);
+        member = await userService.createUser({
+            organizationId: org.id,
+            identity: {
+                authId: "foo",
+                authName: "bar",
+                authProviderId: "github",
+                primaryEmail: "yolo@yolo.com",
+            },
+        });
+        await orgService.joinOrganization(member.id, invite.id);
 
         ss = container.get(SSHKeyService);
     });
