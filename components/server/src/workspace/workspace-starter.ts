@@ -126,6 +126,7 @@ import { UserAuthentication } from "../user/user-authentication";
 import { ResolvedEnvVars } from "./env-var-service";
 import { ImageSourceProvider } from "./image-source-provider";
 import { WorkspaceClassesConfig } from "./workspace-classes";
+import { CancellationToken } from "vscode-ws-jsonrpc";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     rethrow?: boolean;
@@ -216,6 +217,7 @@ export class WorkspaceStarter {
     ) {}
     public async startWorkspace(
         ctx: TraceContext,
+        shutdownToken: CancellationToken,
         workspace: Workspace,
         user: User,
         project: Project | undefined,
@@ -309,13 +311,20 @@ export class WorkspaceStarter {
                 ideConfig,
                 options.workspaceClass,
             );
+
             // we run the actual creation of a new instance in a distributed lock, to make sure we always only start one instance per workspace.
             await this.redisMutex.using(["workspace-start-" + workspace.id], 2000, async () => {
+                this.ensureShutdown(ctx, shutdownToken, workspace, undefined);
+
                 const runningInstance = await this.workspaceDb.trace({ span }).findRunningInstance(workspace.id);
+                this.ensureShutdown(ctx, shutdownToken, workspace, undefined);
                 if (runningInstance) {
                     throw new Error(`Workspace ${workspace.id} is already running`);
                 }
+
                 instance = await this.workspaceDb.trace({ span }).storeInstance(instance);
+                this.ensureShutdown(ctx, shutdownToken, workspace, instance);
+                shutdownToken.onCancellationRequested(() => this.failOnShutdown(ctx, workspace, instance));
             });
             span.log({ newInstance: instance.id });
             instanceId = instance.id;
@@ -341,7 +350,7 @@ export class WorkspaceStarter {
                 // we must properly fail the workspace instance, i.e. set its status to stopped, deal with prebuilds etc.
                 //
                 // Once we've reached actuallyStartWorkspace that function will take care of failing the instance.
-                await this.failInstanceStart({ span }, err, workspace, instance);
+                await this.failInstanceStart({ span }, shutdownToken, err, workspace, instance);
                 throw err;
             }
 
@@ -350,6 +359,7 @@ export class WorkspaceStarter {
             if (needsImageBuild && !options.rethrow) {
                 this.actuallyStartWorkspace(
                     { span },
+                    shutdownToken,
                     instance,
                     workspace,
                     user,
@@ -365,6 +375,7 @@ export class WorkspaceStarter {
 
             return await this.actuallyStartWorkspace(
                 { span },
+                shutdownToken,
                 instance,
                 workspace,
                 user,
@@ -381,6 +392,28 @@ export class WorkspaceStarter {
         } finally {
             span.finish();
         }
+    }
+
+    private ensureShutdown(
+        ctx: TraceContext,
+        shutdownToken: CancellationToken,
+        workspace: Workspace,
+        instance?: WorkspaceInstance,
+    ) {
+        if (!shutdownToken.isCancellationRequested) {
+            return;
+        }
+        const shutdownError = this.failOnShutdown(ctx, workspace, instance);
+        throw new StartInstanceError("serverShuttingDown", shutdownError);
+    }
+    private failOnShutdown(ctx: TraceContext, workspace: Workspace, instance?: WorkspaceInstance) {
+        const shutdownError = new Error("Service temporarily unavailable. Please retry in a few seconds.");
+        if (instance) {
+            this.doFailInstanceStart(ctx, shutdownError, workspace, instance).catch(() => {
+                // cannot happen
+            });
+        }
+        return shutdownError;
     }
 
     private async resolveIDEConfiguration(
@@ -506,6 +539,7 @@ export class WorkspaceStarter {
     // Note: this function does not expect to be awaited for by its caller. This means that it takes care of error handling itself.
     private async actuallyStartWorkspace(
         ctx: TraceContext,
+        shutdownToken: CancellationToken,
         instance: WorkspaceInstance,
         workspace: Workspace,
         user: User,
@@ -524,6 +558,7 @@ export class WorkspaceStarter {
             const additionalAuth = await this.getAdditionalImageAuth(envVars);
             instance = await this.buildWorkspaceImage(
                 { span },
+                shutdownToken,
                 user,
                 workspace,
                 instance,
@@ -582,7 +617,16 @@ export class WorkspaceStarter {
                 let retries = 0;
                 try {
                     for (; retries < MAX_INSTANCE_START_RETRIES; retries++) {
-                        resp = await this.tryStartOnCluster({ span }, startRequest, user, workspace, instance, region);
+                        this.ensureShutdown(ctx, shutdownToken, workspace, instance);
+                        resp = await this.tryStartOnCluster(
+                            { span },
+                            shutdownToken,
+                            startRequest,
+                            user,
+                            workspace,
+                            instance,
+                            region,
+                        );
                         if (resp) {
                             break;
                         }
@@ -601,13 +645,13 @@ export class WorkspaceStarter {
                             "Cannot start a workspace because the workspace cluster is temporarily unavailable due to maintenance. Please try again in a few minutes",
                         );
                     }
-                    await this.failInstanceStart({ span }, err, workspace, instance);
+                    await this.failInstanceStart({ span }, shutdownToken, err, workspace, instance);
                     throw new StartInstanceError(reason, err);
                 }
 
                 if (!resp) {
                     const err = new Error("cannot start a workspace because no workspace clusters are available");
-                    await this.failInstanceStart({ span }, err, workspace, instance);
+                    await this.failInstanceStart({ span }, shutdownToken, err, workspace, instance);
                     throw new StartInstanceError("clusterSelectionFailed", err);
                 }
                 increaseSuccessfulInstanceStartCounter(retries);
@@ -701,6 +745,7 @@ export class WorkspaceStarter {
 
     private async tryStartOnCluster(
         ctx: TraceContext,
+        shutdownToken: CancellationToken,
         startRequest: StartWorkspaceRequest,
         user: User,
         workspace: Workspace,
@@ -710,6 +755,7 @@ export class WorkspaceStarter {
         let lastInstallation = "";
         const clusters = await this.clientProvider.getStartClusterSets(user, workspace, instance, region);
         for await (const cluster of clusters) {
+            this.ensureShutdown(ctx, shutdownToken, workspace, instance);
             try {
                 // getStartManager will throw an exception if there's no cluster available and hence exit the loop
                 const { manager, installation } = cluster;
@@ -796,7 +842,22 @@ export class WorkspaceStarter {
      * failInstanceStart properly fails a workspace instance if something goes wrong before the instance ever reaches
      * workspace manager. In this case we need to make sure we also fulfil the tasks of the bridge (e.g. for prebulds).
      */
-    private async failInstanceStart(ctx: TraceContext, err: Error, workspace: Workspace, instance: WorkspaceInstance) {
+    private async failInstanceStart(
+        ctx: TraceContext,
+        shutdownToken: CancellationToken,
+        err: Error,
+        workspace: Workspace,
+        instance: WorkspaceInstance,
+    ) {
+        this.ensureShutdown(ctx, shutdownToken, workspace, instance);
+        return this.doFailInstanceStart(ctx, err, workspace, instance);
+    }
+    private async doFailInstanceStart(
+        ctx: TraceContext,
+        err: Error,
+        workspace: Workspace,
+        instance: WorkspaceInstance,
+    ) {
         const span = TraceContext.startSpan("failInstanceStart", ctx);
 
         try {
@@ -1166,6 +1227,7 @@ export class WorkspaceStarter {
 
     private async buildWorkspaceImage(
         ctx: TraceContext,
+        shutdownToken: CancellationToken,
         user: User,
         workspace: Workspace,
         instance: WorkspaceInstance,
@@ -1238,6 +1300,7 @@ export class WorkspaceStarter {
             const status: WorkspaceInstanceStatus = result.actuallyNeedsBuild
                 ? { ...instance.status, phase: "building" }
                 : instance.status;
+            this.ensureShutdown(ctx, shutdownToken, workspace, instance);
             instance = await this.workspaceDb
                 .trace({ span })
                 .updateInstancePartial(instance.id, { workspaceImage, status });
@@ -1265,6 +1328,7 @@ export class WorkspaceStarter {
                     // Ignore the previously built (now missing) base image and force a rebuild.
                     return this.buildWorkspaceImage(
                         ctx,
+                        shutdownToken,
                         user,
                         workspace,
                         instance,

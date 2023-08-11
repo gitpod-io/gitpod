@@ -8,6 +8,7 @@ import { DBWithTracing, TeamDB, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/g
 import {
     CommitContext,
     CommitInfo,
+    DisposableCollection,
     PrebuiltWorkspace,
     Project,
     StartPrebuildContext,
@@ -38,6 +39,7 @@ import { UserAuthentication } from "../user/user-authentication";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
 import { EnvVarService } from "../workspace/env-var-service";
 import { WorkspaceService } from "../workspace/workspace-service";
+import { CancellationTokenSource, Disposable } from "vscode-ws-jsonrpc";
 
 export class WorkspaceRunningError extends Error {
     constructor(msg: string, public instance: WorkspaceInstance) {
@@ -54,7 +56,7 @@ export interface StartPrebuildParams {
 }
 
 @injectable()
-export class PrebuildManager {
+export class PrebuildManager implements Disposable {
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
     @inject(WorkspaceService) protected readonly workspaceService: WorkspaceService;
     @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
@@ -67,6 +69,13 @@ export class PrebuildManager {
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
     @inject(EnvVarService) private readonly envVarService: EnvVarService;
+
+    private readonly shutdownTokenSource = new CancellationTokenSource();
+    private readonly disposables = new DisposableCollection();
+
+    constructor() {
+        this.disposables.push(this.shutdownTokenSource);
+    }
 
     async abortPrebuildsForBranch(ctx: TraceContext, project: Project, user: User, branch: string): Promise<void> {
         const span = TraceContext.startSpan("abortPrebuildsForBranch", ctx);
@@ -276,9 +285,17 @@ export class PrebuildManager {
             } else {
                 span.setTag("starting", true);
                 const envVars = await envVarsPromise;
-                await this.workspaceStarter.startWorkspace({ span }, workspace, user, project, envVars, {
-                    excludeFeatureFlags: ["full_workspace_backup"],
-                });
+                await this.workspaceStarter.startWorkspace(
+                    { span },
+                    this.shutdownTokenSource.token,
+                    workspace,
+                    user,
+                    project,
+                    envVars,
+                    {
+                        excludeFeatureFlags: ["full_workspace_backup"],
+                    },
+                );
             }
 
             return { prebuildId: prebuild.id, wsid: workspace.id, done: false };
@@ -306,42 +323,6 @@ export class PrebuildManager {
                     organizationId,
                 },
             );
-        }
-    }
-
-    async retriggerPrebuild(
-        ctx: TraceContext,
-        user: User,
-        project: Project | undefined,
-        workspaceId: string,
-    ): Promise<StartPrebuildResult> {
-        const span = TraceContext.startSpan("retriggerPrebuild", ctx);
-        span.setTag("workspaceId", workspaceId);
-        try {
-            const workspacePromise = this.workspaceDB.trace({ span }).findById(workspaceId);
-            const prebuildPromise = this.workspaceDB.trace({ span }).findPrebuildByWorkspaceID(workspaceId);
-            const runningInstance = await this.workspaceDB.trace({ span }).findRunningInstance(workspaceId);
-            if (runningInstance !== undefined) {
-                throw new WorkspaceRunningError("Workspace is still runnning", runningInstance);
-            }
-            span.setTag("starting", true);
-            const workspace = await workspacePromise;
-            if (!workspace) {
-                console.error("Unknown workspace id.", { workspaceId });
-                throw new Error("Unknown workspace " + workspaceId);
-            }
-            const prebuild = await prebuildPromise;
-            if (!prebuild) {
-                throw new Error("No prebuild found for workspace " + workspaceId);
-            }
-            const envVars = await this.envVarService.resolve(workspace);
-            await this.workspaceStarter.startWorkspace({ span }, workspace, user, project, envVars);
-            return { prebuildId: prebuild.id, wsid: workspace.id, done: false };
-        } catch (err) {
-            TraceContext.setError({ span }, err);
-            throw err;
-        } finally {
-            span.finish();
         }
     }
 
@@ -466,5 +447,9 @@ export class PrebuildManager {
         } finally {
             span.finish();
         }
+    }
+
+    dispose(): void {
+        this.disposables.dispose();
     }
 }

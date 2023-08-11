@@ -194,6 +194,7 @@ import { UsageService } from "../orgs/usage-service";
 import { UserService } from "../user/user-service";
 import { WorkspaceService } from "./workspace-service";
 import { SSHKeyService } from "../user/sshkey-service";
+import { CancellationTokenSource } from "vscode-ws-jsonrpc";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -283,6 +284,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     private userID: string | undefined;
 
+    private readonly shutdownTokenSource = new CancellationTokenSource();
     private readonly disposables = new DisposableCollection();
 
     dispose(): void {
@@ -300,6 +302,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (client) {
             this.disposables.push(Disposable.create(() => (this.client = undefined)));
         }
+        this.disposables.push(this.shutdownTokenSource);
         this.client = client;
         this.userID = userID;
         this.resourceAccessGuard = accessGuard;
@@ -961,6 +964,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         // at this point we're about to actually start a new workspace
         const result = await this.workspaceStarter.startWorkspace(
             ctx,
+            this.shutdownTokenSource.token,
             workspace,
             user,
             await projectPromise,
@@ -1446,6 +1450,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             traceWI(ctx, { workspaceId: workspace.id });
             const startWorkspaceResult = await this.workspaceStarter.startWorkspace(
                 ctx,
+                this.shutdownTokenSource.token,
                 workspace,
                 user,
                 project,

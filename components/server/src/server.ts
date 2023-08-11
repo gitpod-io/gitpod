@@ -51,6 +51,7 @@ import { BitbucketServerApp } from "./prebuilds/bitbucket-server-app";
 import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
 import { JobRunner } from "./jobs/runner";
 import { RedisSubscriber } from "./messaging/redis-subscriber";
+import { PrebuildManager } from "./prebuilds/prebuild-manager";
 
 @injectable()
 export class Server {
@@ -96,7 +97,10 @@ export class Server {
         @inject(IamSessionApp) private readonly iamSessionAppCreator: IamSessionApp,
         @inject(API) private readonly api: API,
         @inject(RedisSubscriber) private readonly redisSubscriber: RedisSubscriber,
-    ) {}
+        @inject(PrebuildManager) prebuildManager: PrebuildManager,
+    ) {
+        this.disposables.push(prebuildManager);
+    }
 
     public async init(app: express.Application) {
         log.setVersion(this.config.version);
