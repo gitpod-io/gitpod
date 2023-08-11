@@ -52,7 +52,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                     "rounded-xl focus:outline-none focus:ring transition ease-in-out",
                     spacing === "compact" ? ["px-1 py-1"] : null,
                     spacing === "default" ? ["px-4 py-2"] : null,
-                    type === "primary" ? ["bg-gitpod-kumquat", "text-gray-800 dark:text-gray-900"] : null,
+                    type === "primary" ? ["bg-blue-500", "text-gray-50 dark:text-gray-50"] : null,
                     type === "secondary"
                         ? [
                               "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600",
