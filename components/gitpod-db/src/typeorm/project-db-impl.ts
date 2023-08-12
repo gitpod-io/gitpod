@@ -17,7 +17,7 @@ import { DBProjectUsage } from "./entity/db-project-usage";
 import { TransactionalDBImpl } from "./transactional-db-impl";
 import { TypeORM } from "./typeorm";
 
-function toProjectEnvVar(envVarWithValue: ProjectEnvVarWithValue): ProjectEnvVar {
+function toProjectEnvVar(envVarWithValue: DBProjectEnvVar): ProjectEnvVar {
     const envVar = { ...envVarWithValue };
     delete (envVar as any)["value"];
     return envVar;
@@ -160,38 +160,33 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
         }
     }
 
-    public async setProjectEnvironmentVariable(
+    public async findProjectEnvironmentVariable(
         projectId: string,
-        name: string,
-        value: string,
-        censored: boolean,
-    ): Promise<void> {
-        if (!name) {
-            throw new Error("Variable name cannot be empty");
-        }
-        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
-            throw new Error(
-                "Please choose a variable name containing only letters, numbers, or _, and which doesn't start with a number",
-            );
-        }
+        envVar: ProjectEnvVarWithValue,
+    ): Promise<ProjectEnvVar | undefined> {
         const envVarRepo = await this.getProjectEnvVarRepo();
-        const envVarWithValue = await envVarRepo.findOne({ projectId, name, deleted: false });
-        if (envVarWithValue) {
-            await envVarRepo.update(
-                { id: envVarWithValue.id, projectId: envVarWithValue.projectId },
-                { value, censored },
-            );
-            return;
-        }
+        return envVarRepo.findOne({ projectId, name: envVar.name, deleted: false });
+    }
+
+    public async addProjectEnvironmentVariable(projectId: string, envVar: ProjectEnvVarWithValue): Promise<void> {
+        const envVarRepo = await this.getProjectEnvVarRepo();
         await envVarRepo.save({
             id: uuidv4(),
             projectId,
-            name,
-            value,
-            censored,
+            name: envVar.name,
+            value: envVar.value,
+            censored: envVar.censored,
             creationTime: new Date().toISOString(),
             deleted: false,
         });
+    }
+
+    public async updateProjectEnvironmentVariable(
+        projectId: string,
+        envVar: Required<ProjectEnvVarWithValue>,
+    ): Promise<void> {
+        const envVarRepo = await this.getProjectEnvVarRepo();
+        await envVarRepo.update({ id: envVar.id, projectId }, { value: envVar.value, censored: envVar.censored });
     }
 
     public async getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]> {

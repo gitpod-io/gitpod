@@ -21,6 +21,9 @@ schema: |-
 
     permission read_tokens = self
     permission write_tokens = self
+    
+    permission read_env_var = self
+    permission write_env_var = self
   }
 
   // There's only one global installation
@@ -88,6 +91,9 @@ schema: |-
     permission read_info = viewer + org->member + editor + org->owner + org->installation_admin
     permission write_info = editor + org->owner + org->installation_admin
     permission delete = editor + org->owner + org->installation_admin
+
+    permission read_env_var = viewer + org->member + editor + org->owner + org->installation_admin
+    permission write_env_var = editor + org->owner + org->installation_admin
   }
 
   definition workspace {

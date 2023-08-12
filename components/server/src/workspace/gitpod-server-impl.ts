@@ -36,7 +36,6 @@ import {
     StartWorkspaceResult,
     Token,
     User,
-    UserEnvVar,
     UserEnvVarValue,
     UserInfo,
     WhitelistedRepository,
@@ -147,6 +146,7 @@ import {
     LinkedInProfile,
     OpenPrebuildContext,
     ProjectEnvVar,
+    UserEnvVar,
     UserFeatureSettings,
     WorkspaceTimeoutSetting,
 } from "@gitpod/gitpod-protocol/lib/protocol";
@@ -166,7 +166,6 @@ import {
     getExperimentsClientForBackend,
 } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { increaseDashboardErrorBoundaryCounter } from "../prometheus-metrics";
-import { EnvVarService } from "./env-var-service";
 import { LinkedInService } from "../linkedin-service";
 import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
 import { IncrementalPrebuildsService } from "../prebuilds/incremental-prebuilds-service";
@@ -191,6 +190,7 @@ import { UserService } from "../user/user-service";
 import { SSHKeyService } from "../user/sshkey-service";
 import { StartWorkspaceOptions, WorkspaceService } from "./workspace-service";
 import { GitpodTokenService } from "../user/gitpod-token-service";
+import { EnvVarService } from "../user/env-var-service";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -234,6 +234,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(AuthorizationService) private readonly authorizationService: AuthorizationService,
         @inject(SSHKeyService) private readonly sshKeyservice: SSHKeyService,
         @inject(GitpodTokenService) private readonly gitpodTokenService: GitpodTokenService,
+        @inject(EnvVarService) private readonly envVarService: EnvVarService,
 
         @inject(TeamDB) private readonly teamDB: TeamDB,
         @inject(OrganizationService) private readonly organizationService: OrganizationService,
@@ -265,7 +266,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(BillingServiceDefinition.name) private readonly billingService: BillingServiceClient,
         @inject(EmailDomainFilterDB) private emailDomainFilterdb: EmailDomainFilterDB,
 
-        @inject(EnvVarService) private readonly envVarService: EnvVarService,
         @inject(RedisSubscriber) private readonly subscriber: RedisSubscriber,
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
         @inject(TracedWorkspaceDB) private readonly workspaceDB: DBWithTracing<WorkspaceDB>,
@@ -2260,7 +2260,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkUser("getWorkspaceEnvVars");
         const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
-        const envVars = await this.envVarService.resolve(workspace);
+        const envVars = await this.envVarService.resolveEnvVariables(
+            workspace.ownerId,
+            workspace.projectId,
+            workspace.type,
+            workspace.context,
+        );
 
         const result: EnvVarWithValue[] = [];
         for (const value of envVars.workspace) {
@@ -2278,19 +2283,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     // Get all environment variables (unfiltered)
     async getAllEnvVars(ctx: TraceContext): Promise<UserEnvVarValue[]> {
         const user = await this.checkUser("getAllEnvVars");
-        const result: UserEnvVarValue[] = [];
-        for (const value of await this.userDB.getEnvVars(user.id)) {
-            if (!(await this.resourceAccessGuard.canAccess({ kind: "envVar", subject: value }, "get"))) {
-                continue;
-            }
-            result.push({
-                id: value.id,
-                name: value.name,
-                value: value.value,
-                repositoryPattern: value.repositoryPattern,
-            });
-        }
-        return result;
+        return this.envVarService.listUserEnvVars(user.id, user.id, (envvar: UserEnvVar) => {
+            return this.resourceAccessGuard.canAccess({ kind: "envVar", subject: envvar }, "get");
+        });
     }
 
     async setEnvVar(ctx: TraceContext, variable: UserEnvVarValue): Promise<void> {
@@ -2298,50 +2293,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         // Note: this operation is per-user only, hence needs no resource guard
         const user = await this.checkAndBlockUser("setEnvVar");
-        const userId = user.id;
-
-        // validate input
-        const validationError = UserEnvVar.validate(variable);
-        if (validationError) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, validationError);
+        const userEnvVars = await this.envVarService.listUserEnvVars(user.id, user.id);
+        if (userEnvVars.find((v) => v.name == variable.name && v.repositoryPattern == variable.repositoryPattern)) {
+            return this.envVarService.updateUserEnvVar(user.id, user.id, variable, (envvar: UserEnvVar) => {
+                return this.guardAccess({ kind: "envVar", subject: envvar }, "update");
+            });
+        } else {
+            return this.envVarService.addUserEnvVar(user.id, user.id, variable, (envvar: UserEnvVar) => {
+                return this.guardAccess({ kind: "envVar", subject: envvar }, "create");
+            });
         }
-
-        variable.repositoryPattern = UserEnvVar.normalizeRepoPattern(variable.repositoryPattern);
-        const existingVars = (await this.userDB.getEnvVars(user.id)).filter((v) => !v.deleted);
-
-        const existingVar = existingVars.find(
-            (v) => v.name == variable.name && v.repositoryPattern == variable.repositoryPattern,
-        );
-        if (!!existingVar) {
-            // overwrite existing variable rather than introduce a duplicate
-            variable.id = existingVar.id;
-        }
-
-        if (!variable.id) {
-            // this is a new variable - make sure the user does not have too many (don't DOS our database using gp env)
-            const varCount = existingVars.length;
-            if (varCount > this.config.maxEnvvarPerUserCount) {
-                throw new ApplicationError(
-                    ErrorCodes.PERMISSION_DENIED,
-                    `cannot have more than ${this.config.maxEnvvarPerUserCount} environment variables`,
-                );
-            }
-        }
-
-        const envvar: UserEnvVar = {
-            id: variable.id || uuidv4(),
-            name: variable.name,
-            repositoryPattern: variable.repositoryPattern,
-            value: variable.value,
-            userId,
-        };
-        await this.guardAccess(
-            { kind: "envVar", subject: envvar },
-            typeof variable.id === "string" ? "update" : "create",
-        );
-        this.analytics.track({ event: "envvar-set", userId });
-
-        await this.userDB.setEnvVar(envvar);
     }
 
     async deleteEnvVar(ctx: TraceContext, variable: UserEnvVarValue): Promise<void> {
@@ -2349,33 +2310,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         // Note: this operation is per-user only, hence needs no resource guard
         const user = await this.checkAndBlockUser("deleteEnvVar");
-        const userId = user.id;
-
-        if (!variable.id && variable.name && variable.repositoryPattern) {
-            variable.repositoryPattern = UserEnvVar.normalizeRepoPattern(variable.repositoryPattern);
-            const existingVars = (await this.userDB.getEnvVars(user.id)).filter((v) => !v.deleted);
-            const existingVar = existingVars.find(
-                (v) => v.name == variable.name && v.repositoryPattern == variable.repositoryPattern,
-            );
-            variable.id = existingVar?.id;
-        }
-
-        if (!variable.id) {
-            throw new ApplicationError(
-                ErrorCodes.NOT_FOUND,
-                `cannot delete '${variable.name}' in scope '${variable.repositoryPattern}'`,
-            );
-        }
-
-        const envvar: UserEnvVar = {
-            ...variable,
-            id: variable.id!,
-            userId,
-        };
-        await this.guardAccess({ kind: "envVar", subject: envvar }, "delete");
-        this.analytics.track({ event: "envvar-deleted", userId });
-
-        await this.userDB.deleteEnvVar(envvar);
+        return this.envVarService.deleteUserEnvVar(user.id, user.id, variable, (envvar: UserEnvVar) => {
+            return this.guardAccess({ kind: "envVar", subject: envvar }, "delete");
+        });
     }
 
     async hasSSHPublicKey(ctx: TraceContext): Promise<boolean> {
@@ -2408,25 +2345,30 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { projectId, name }); // value may contain secrets
         const user = await this.checkAndBlockUser("setProjectEnvironmentVariable");
         await this.guardProjectOperation(user, projectId, "update");
-        return this.projectsService.setProjectEnvironmentVariable(user.id, projectId, name, value, censored);
+        const envVars = await this.envVarService.listProjectEnvVars(user.id, projectId);
+        if (envVars.find((v) => v.name === name)) {
+            return this.envVarService.updateProjectEnvVar(user.id, projectId, { name, value, censored });
+        } else {
+            return this.envVarService.addProjectEnvVar(user.id, projectId, { name, value, censored });
+        }
     }
 
     async getProjectEnvironmentVariables(ctx: TraceContext, projectId: string): Promise<ProjectEnvVar[]> {
         traceAPIParams(ctx, { projectId });
         const user = await this.checkAndBlockUser("getProjectEnvironmentVariables");
         await this.guardProjectOperation(user, projectId, "get");
-        return await this.projectsService.getProjectEnvironmentVariables(user.id, projectId);
+        return this.envVarService.listProjectEnvVars(user.id, projectId);
     }
 
     async deleteProjectEnvironmentVariable(ctx: TraceContext, variableId: string): Promise<void> {
         traceAPIParams(ctx, { variableId });
         const user = await this.checkAndBlockUser("deleteProjectEnvironmentVariable");
-        const envVar = await this.projectsService.getProjectEnvironmentVariableById(user.id, variableId);
+        const envVar = await this.envVarService.getProjectEnvVarById(user.id, variableId);
         if (!envVar) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Project environment variable not found");
         }
         await this.guardProjectOperation(user, envVar.projectId, "update");
-        return this.projectsService.deleteProjectEnvironmentVariable(user.id, envVar.id);
+        return this.envVarService.deleteProjectEnvVar(user.id, envVar.id);
     }
 
     private async guardSnaphotAccess(ctx: TraceContext, userId: string, workspaceId: string): Promise<Workspace> {

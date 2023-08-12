@@ -12,7 +12,6 @@ import {
     CreateProjectParams,
     FindPrebuildsParams,
     Project,
-    ProjectEnvVar,
     User,
     PrebuildEvent,
 } from "@gitpod/gitpod-protocol";
@@ -384,41 +383,6 @@ export class ProjectsService {
             }
         }
         return this.projectDB.updateProject(partialProject);
-    }
-
-    async setProjectEnvironmentVariable(
-        userId: string,
-        projectId: string,
-        name: string,
-        value: string,
-        censored: boolean,
-    ): Promise<void> {
-        await this.auth.checkPermissionOnProject(userId, "write_info", projectId);
-        return this.projectDB.setProjectEnvironmentVariable(projectId, name, value, censored);
-    }
-
-    async getProjectEnvironmentVariables(userId: string, projectId: string): Promise<ProjectEnvVar[]> {
-        await this.auth.checkPermissionOnProject(userId, "read_info", projectId);
-        return this.projectDB.getProjectEnvironmentVariables(projectId);
-    }
-
-    async getProjectEnvironmentVariableById(userId: string, variableId: string): Promise<ProjectEnvVar> {
-        const result = await this.projectDB.getProjectEnvironmentVariableById(variableId);
-        if (!result) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Environment Variable ${variableId} not found.`);
-        }
-        try {
-            await this.auth.checkPermissionOnProject(userId, "read_info", result.projectId);
-        } catch (err) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Environment Variable ${variableId} not found.`);
-        }
-        return result;
-    }
-
-    async deleteProjectEnvironmentVariable(userId: string, variableId: string): Promise<void> {
-        const variable = await this.getProjectEnvironmentVariableById(userId, variableId);
-        await this.auth.checkPermissionOnProject(userId, "write_info", variable.projectId);
-        return this.projectDB.deleteProjectEnvironmentVariable(variableId);
     }
 
     async isProjectConsideredInactive(userId: string, projectId: string): Promise<boolean> {
