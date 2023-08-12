@@ -41,6 +41,11 @@ type Configuration struct {
 
 	// BuilderImage is an image ref to the workspace builder image
 	BuilderImage string `json:"builderImage"`
+
+	// EnableAdditionalECRAuth adds additional ECR auth using IRSA.
+	// This will attempt to add ECR auth for any ECR repo a user is
+	// trying to access.
+	EnableAdditionalECRAuth bool
 }
 
 type TLS struct {

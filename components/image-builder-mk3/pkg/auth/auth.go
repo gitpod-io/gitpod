@@ -211,12 +211,15 @@ func (a AllowedAuthFor) GetAuthFor(auth RegistryAuthenticator, refstr string) (r
 	// If we haven't found authentication using the built-in way, we'll resort to additional auth
 	// the user sent us.
 	defer func() {
-		if err == nil && res == nil {
-			res = a.additionalAuth(reg)
+		if err != nil || (res != nil && (res.Auth != "" || res.Password != "")) {
+			return
+		}
 
-			if res != nil {
-				log.WithField("reg", reg).Debug("found additional auth")
-			}
+		log.WithField("reg", reg).Debug("checking for additional auth")
+		res = a.additionalAuth(reg)
+
+		if res != nil {
+			log.WithField("reg", reg).Debug("found additional auth")
 		}
 	}()
 
