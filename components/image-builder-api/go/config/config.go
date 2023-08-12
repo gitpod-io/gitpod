@@ -45,7 +45,7 @@ type Configuration struct {
 	// EnableAdditionalECRAuth adds additional ECR auth using IRSA.
 	// This will attempt to add ECR auth for any ECR repo a user is
 	// trying to access.
-	EnableAdditionalECRAuth bool
+	EnableAdditionalECRAuth bool `json:"enableAdditionalECRAuth"`
 }
 
 type TLS struct {
