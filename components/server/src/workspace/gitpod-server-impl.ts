@@ -10,10 +10,10 @@ import {
     WorkspaceDB,
     DBWithTracing,
     TracedWorkspaceDB,
-    DBGitpodToken,
     EmailDomainFilterDB,
     TeamDB,
     RedisPublisher,
+    DBGitpodToken,
 } from "@gitpod/gitpod-db/lib";
 import { BlockedRepositoryDB } from "@gitpod/gitpod-db/lib/blocked-repository-db";
 import {
@@ -112,7 +112,6 @@ import {
     StopWorkspacePolicy,
     TakeSnapshotRequest,
 } from "@gitpod/ws-manager/lib/core_pb";
-import * as crypto from "crypto";
 import { inject, injectable } from "inversify";
 import { URL } from "url";
 import { v4 as uuidv4, validate as uuidValidate } from "uuid";
@@ -192,6 +191,7 @@ import { UsageService } from "../orgs/usage-service";
 import { UserService } from "../user/user-service";
 import { SSHKeyService } from "../user/sshkey-service";
 import { StartWorkspaceOptions, WorkspaceService } from "./workspace-service";
+import { GitpodTokenService } from "../user/gitpod-token-service";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -234,6 +234,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(AuthorizationService) private readonly authorizationService: AuthorizationService,
         @inject(SSHKeyService) private readonly sshKeyservice: SSHKeyService,
+        @inject(GitpodTokenService) private readonly gitpodTokenService: GitpodTokenService,
 
         @inject(TeamDB) private readonly teamDB: TeamDB,
         @inject(OrganizationService) private readonly organizationService: OrganizationService,
@@ -2892,9 +2893,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     public async getGitpodTokens(ctx: TraceContext): Promise<GitpodToken[]> {
         const user = await this.checkAndBlockUser("getGitpodTokens");
-        const res = (await this.userDB.findAllGitpodTokensOfUser(user.id)).filter((v) => !v.deleted);
-        await Promise.all(res.map((tkn) => this.guardAccess({ kind: "gitpodToken", subject: tkn }, "get")));
-        return res;
+        const gitpodTokens = await this.gitpodTokenService.getGitpodTokens(user.id, user.id);
+        await Promise.all(gitpodTokens.map((tkn) => this.guardAccess({ kind: "gitpodToken", subject: tkn }, "get")));
+        return gitpodTokens;
     }
 
     public async generateNewGitpodToken(
@@ -2904,51 +2905,29 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { options });
 
         const user = await this.checkAndBlockUser("generateNewGitpodToken");
-        const token = crypto.randomBytes(30).toString("hex");
-        const tokenHash = crypto.createHash("sha256").update(token, "utf8").digest("hex");
-        const dbToken: DBGitpodToken = {
-            tokenHash,
-            name: options.name,
-            type: options.type,
-            userId: user.id,
-            scopes: options.scopes || [],
-            created: new Date().toISOString(),
-        };
-        await this.guardAccess({ kind: "gitpodToken", subject: dbToken }, "create");
-
-        await this.userDB.storeGitpodToken(dbToken);
-        return token;
+        return this.gitpodTokenService.generateNewGitpodToken(user.id, user.id, options, (dbToken: DBGitpodToken) => {
+            return this.guardAccess({ kind: "gitpodToken", subject: dbToken }, "create");
+        });
     }
 
     public async getGitpodTokenScopes(ctx: TraceContext, tokenHash: string): Promise<string[]> {
         traceAPIParams(ctx, {}); // do not trace tokenHash
 
         const user = await this.checkAndBlockUser("getGitpodTokenScopes");
-        let token: GitpodToken | undefined;
-        try {
-            token = await this.userDB.findGitpodTokensOfUser(user.id, tokenHash);
-        } catch (error) {
-            log.error({ userId: user.id }, "failed to resolve gitpod token: ", error);
-            return [];
+        const gitpodToken = await this.gitpodTokenService.findGitpodToken(user.id, user.id, tokenHash);
+        if (gitpodToken) {
+            await this.guardAccess({ kind: "gitpodToken", subject: gitpodToken }, "get");
         }
-        if (!token || token.deleted) {
-            return [];
-        }
-        await this.guardAccess({ kind: "gitpodToken", subject: token }, "get");
-        return token.scopes;
+        return gitpodToken?.scopes ?? [];
     }
 
     public async deleteGitpodToken(ctx: TraceContext, tokenHash: string): Promise<void> {
         traceAPIParams(ctx, {}); // do not trace tokenHash
 
         const user = await this.checkAndBlockUser("deleteGitpodToken");
-        const existingTokens = await this.getGitpodTokens(ctx); // all tokens for logged in user
-        const tkn = existingTokens.find((token) => token.tokenHash === tokenHash);
-        if (!tkn) {
-            throw new Error(`User ${user.id} tries to delete a token ${tokenHash} that does not exist.`);
-        }
-        await this.guardAccess({ kind: "gitpodToken", subject: tkn }, "delete");
-        return this.userDB.deleteGitpodToken(tokenHash);
+        return this.gitpodTokenService.deleteGitpodToken(user.id, user.id, tokenHash, (token: GitpodToken) => {
+            return this.guardAccess({ kind: "gitpodToken", subject: token }, "delete");
+        });
     }
 
     async guessGitTokenScopes(ctx: TraceContext, params: GuessGitTokenScopesParams): Promise<GuessedGitTokenScopes> {

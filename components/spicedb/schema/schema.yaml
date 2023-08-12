@@ -18,6 +18,9 @@ schema: |-
 
     permission read_ssh = self
     permission write_ssh = self
+
+    permission read_tokens = self
+    permission write_tokens = self
   }
 
   // There's only one global installation
