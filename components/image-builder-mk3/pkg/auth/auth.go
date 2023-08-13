@@ -13,7 +13,10 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ecr"
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
@@ -27,7 +30,7 @@ import (
 // RegistryAuthenticator can provide authentication for some registries
 type RegistryAuthenticator interface {
 	// Authenticate attempts to provide authentication for Docker registry access
-	Authenticate(registry string) (auth *Authentication, err error)
+	Authenticate(ctx context.Context, registry string) (auth *Authentication, err error)
 }
 
 // NewDockerConfigFileAuth reads a docker config file to provide authentication
@@ -91,7 +94,7 @@ func (a *DockerConfigFileAuth) loadFromFile(fn string) (err error) {
 }
 
 // Authenticate attempts to provide an encoded authentication string for Docker registry access
-func (a *DockerConfigFileAuth) Authenticate(registry string) (auth *Authentication, err error) {
+func (a *DockerConfigFileAuth) Authenticate(ctx context.Context, registry string) (auth *Authentication, err error) {
 	ac, err := a.C.GetAuthConfig(registry)
 	if err != nil {
 		return nil, err
@@ -108,8 +111,87 @@ func (a *DockerConfigFileAuth) Authenticate(registry string) (auth *Authenticati
 	}, nil
 }
 
+// CompositeAuth returns the first non-empty authentication of any of its consitutents
+type CompositeAuth []RegistryAuthenticator
+
+func (ca CompositeAuth) Authenticate(ctx context.Context, registry string) (auth *Authentication, err error) {
+	for _, ath := range ca {
+		res, err := ath.Authenticate(ctx, registry)
+		if err != nil {
+			return nil, err
+		}
+		if !res.Empty() {
+			return res, nil
+		}
+	}
+	return &Authentication{}, nil
+}
+
+func NewECRAuthenticator(ecrc *ecr.Client) *ECRAuthenticator {
+	return &ECRAuthenticator{
+		ecrc: ecrc,
+	}
+}
+
+type ECRAuthenticator struct {
+	ecrc *ecr.Client
+
+	ecrAuth                string
+	ecrAuthLastRefreshTime time.Time
+	ecrAuthLock            sync.Mutex
+}
+
+func (ath *ECRAuthenticator) Authenticate(ctx context.Context, registry string) (auth *Authentication, err error) {
+	// TODO(cw): find better way to detect if ref is an ECR repo
+	if !strings.Contains(registry, ".dkr.") || !strings.Contains(registry, ".amazonaws.com") {
+		return nil, nil
+	}
+
+	ath.ecrAuthLock.Lock()
+	defer ath.ecrAuthLock.Unlock()
+	// ECR tokens are valid for 12h: https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_GetAuthorizationToken.html
+	if time.Since(ath.ecrAuthLastRefreshTime) > 10*time.Hour {
+		tknout, err := ath.ecrc.GetAuthorizationToken(ctx, &ecr.GetAuthorizationTokenInput{})
+		if err != nil {
+			return nil, err
+		}
+		if len(tknout.AuthorizationData) == 0 {
+			return nil, fmt.Errorf("no ECR authorization data received")
+		}
+
+		pwd, err := base64.StdEncoding.DecodeString(aws.ToString(tknout.AuthorizationData[0].AuthorizationToken))
+		if err != nil {
+			return nil, err
+		}
+
+		ath.ecrAuth = string(pwd)
+		ath.ecrAuthLastRefreshTime = time.Now()
+		log.Debug("refreshed ECR token")
+	}
+
+	segs := strings.Split(ath.ecrAuth, ":")
+	if len(segs) != 2 {
+		return nil, fmt.Errorf("cannot understand ECR token. Expected 2 segments, got %d", len(segs))
+	}
+	return &Authentication{
+		Username: segs[0],
+		Password: segs[1],
+		Auth:     base64.StdEncoding.EncodeToString([]byte(ath.ecrAuth)),
+	}, nil
+}
+
 // Authentication represents docker usable authentication
 type Authentication types.AuthConfig
+
+func (a *Authentication) Empty() bool {
+	if a == nil {
+		return true
+	}
+	if a.Auth == "" && a.Password == "" {
+		return true
+	}
+	return false
+}
 
 // AllowedAuthFor describes for which repositories authentication may be provided for
 type AllowedAuthFor struct {
@@ -197,7 +279,7 @@ func (r Resolver) ResolveRequestAuth(auth *api.BuildRegistryAuth) (authFor Allow
 }
 
 // GetAuthFor computes the base64 encoded auth format for a Docker image pull/push
-func (a AllowedAuthFor) GetAuthFor(auth RegistryAuthenticator, refstr string) (res *Authentication, err error) {
+func (a AllowedAuthFor) GetAuthFor(ctx context.Context, auth RegistryAuthenticator, refstr string) (res *Authentication, err error) {
 	if auth == nil {
 		return
 	}
@@ -240,7 +322,7 @@ func (a AllowedAuthFor) GetAuthFor(auth RegistryAuthenticator, refstr string) (r
 		return nil, nil
 	}
 
-	return auth.Authenticate(reg)
+	return auth.Authenticate(ctx, reg)
 }
 
 func (a AllowedAuthFor) additionalAuth(domain string) *Authentication {

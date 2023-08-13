@@ -7,7 +7,6 @@ package orchestrator
 import (
 	"context"
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,6 +18,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/service/ecr"
 	"github.com/docker/distribution/reference"
 	"github.com/google/uuid"
 	"github.com/opentracing/opentracing-go"
@@ -30,6 +30,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -40,10 +41,6 @@ import (
 	"github.com/gitpod-io/gitpod/image-builder/pkg/auth"
 	"github.com/gitpod-io/gitpod/image-builder/pkg/resolve"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
-	awsconfig "github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/ecr"
 )
 
 const (
@@ -60,17 +57,26 @@ const (
 
 // NewOrchestratingBuilder creates a new orchestrating image builder
 func NewOrchestratingBuilder(cfg config.Configuration) (res *Orchestrator, err error) {
-	var authentication auth.RegistryAuthenticator
+	var authentication auth.CompositeAuth
 	if cfg.PullSecretFile != "" {
 		fn := cfg.PullSecretFile
 		if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
 			fn = filepath.Join(tproot, fn)
 		}
 
-		authentication, err = auth.NewDockerConfigFileAuth(fn)
+		ath, err := auth.NewDockerConfigFileAuth(fn)
 		if err != nil {
-			return
+			return nil, err
 		}
+		authentication = append(authentication, ath)
+	}
+	if cfg.EnableAdditionalECRAuth {
+		awsCfg, err := awsconfig.LoadDefaultConfig(context.Background())
+		if err != nil {
+			return nil, err
+		}
+		ecrc := ecr.NewFromConfig(awsCfg)
+		authentication = append(authentication, auth.NewECRAuthenticator(ecrc))
 	}
 
 	var wsman wsmanapi.WorkspaceManagerClient
@@ -138,10 +144,6 @@ type Orchestrator struct {
 
 	metrics *metrics
 
-	ecrAuth                string
-	ecrAuthLastRefreshTime time.Time
-	ecrAuthLock            sync.Mutex
-
 	protocol.UnimplementedImageBuilderServer
 }
 
@@ -176,15 +178,6 @@ func (o *Orchestrator) ResolveWorkspaceImage(ctx context.Context, req *protocol.
 	tracing.LogRequestSafe(span, req)
 
 	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
-	// The user might want to pull from ECR in a Dockerfile. Use the explicitely listed repos
-	// to get the auth for that operation.
-	for _, explicitRef := range reqauth.Explicit {
-		err := o.addAdditionalECRAuth(ctx, &reqauth, explicitRef)
-		if err != nil {
-			log.WithError(err).WithField("ref", explicitRef).Warn("cannot add additional ECR auth")
-		}
-	}
-
 	baseref, err := o.getBaseImageRef(ctx, req.Source, reqauth)
 	if _, ok := status.FromError(err); err != nil && ok {
 		return nil, err
@@ -200,7 +193,7 @@ func (o *Orchestrator) ResolveWorkspaceImage(ctx context.Context, req *protocol.
 
 	// to check if the image exists we must have access to the image caching registry and the refstr we check here does not come
 	// from the user. Thus we can safely use auth.AllowedAuthForAll here.
-	auth, err := auth.AllowedAuthForAll().GetAuthFor(o.Auth, refstr)
+	auth, err := auth.AllowedAuthForAll().GetAuthFor(ctx, o.Auth, refstr)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get workspace image authentication: %v", err)
 	}
@@ -235,16 +228,6 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 
 	// resolve build request authentication
 	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
-
-	// The user might want to pull from ECR in a Dockerfile. Use the explicitely listed repos
-	// to get the auth for that operation.
-	for _, explicitRef := range reqauth.Explicit {
-		err := o.addAdditionalECRAuth(ctx, &reqauth, explicitRef)
-		if err != nil {
-			log.WithError(err).WithField("ref", explicitRef).Warn("cannot add additional ECR auth")
-		}
-	}
-
 	baseref, err := o.getBaseImageRef(ctx, req.Source, reqauth)
 	if _, ok := status.FromError(err); err != nil && ok {
 		return err
@@ -256,7 +239,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 	if err != nil {
 		return status.Errorf(codes.Internal, "cannot produce workspace image ref: %q", err)
 	}
-	wsrefAuth, err := auth.AllowedAuthForAll().GetAuthFor(o.Auth, wsrefstr)
+	wsrefAuth, err := auth.AllowedAuthForAll().GetAuthFor(ctx, o.Auth, wsrefstr)
 	if err != nil {
 		return status.Errorf(codes.Internal, "cannot get workspace image authentication: %q", err)
 	}
@@ -576,12 +559,7 @@ func (o *Orchestrator) checkImageExists(ctx context.Context, ref string, authent
 
 // getAbsoluteImageRef returns the "digest" form of an image, i.e. contains no mutable image tags
 func (o *Orchestrator) getAbsoluteImageRef(ctx context.Context, ref string, allowedAuth auth.AllowedAuthFor) (res string, err error) {
-	err = o.addAdditionalECRAuth(ctx, &allowedAuth, ref)
-	if err != nil {
-		return "", err
-	}
-
-	auth, err := allowedAuth.GetAuthFor(o.Auth, ref)
+	auth, err := allowedAuth.GetAuthFor(ctx, o.Auth, ref)
 	if err != nil {
 		return "", status.Errorf(codes.InvalidArgument, "cannt resolve base image ref: %v", err)
 	}
@@ -605,10 +583,6 @@ func (o *Orchestrator) getBaseImageRef(ctx context.Context, bs *protocol.BuildSo
 
 	switch src := bs.From.(type) {
 	case *protocol.BuildSource_Ref:
-		err := o.addAdditionalECRAuth(ctx, &allowedAuth, src.Ref.Ref)
-		if err != nil {
-			return "", err
-		}
 		return o.getAbsoluteImageRef(ctx, src.Ref.Ref, allowedAuth)
 
 	case *protocol.BuildSource_File:
@@ -677,70 +651,6 @@ func (o *Orchestrator) getWorkspaceImageRef(ctx context.Context, baseref string)
 
 	dst := hash.Sum([]byte{})
 	return fmt.Sprintf("%s:%x", o.Config.WorkspaceImageRepository, dst), nil
-}
-
-func (o *Orchestrator) addAdditionalECRAuth(ctx context.Context, allowedAuth *auth.AllowedAuthFor, ref string) (err error) {
-	if !o.Config.EnableAdditionalECRAuth {
-		return nil
-	}
-	defer func() {
-		if err == nil {
-			return
-		}
-		err = fmt.Errorf("cannot add additional ECR credentials: %w", err)
-	}()
-
-	// Total hack because the explicit auth entries (defaultBaseImageRegistryWhitelist) lists domains, not
-	// repositories or references.
-	domain := ref
-	if strings.Contains(ref, "/") {
-		refp, err := reference.ParseNamed(ref)
-		if err != nil {
-			return fmt.Errorf("cannot parse %s: %w", ref, err)
-		}
-		domain = reference.Domain(refp)
-	}
-
-	log.WithField("domain", domain).Debug("checking if additional ECR auth needs to be added")
-
-	// TODO(cw): find better way to detect if ref is an ECR repo
-	if !strings.Contains(domain, ".dkr.") || !strings.Contains(domain, ".amazonaws.com") {
-		return nil
-	}
-
-	o.ecrAuthLock.Lock()
-	defer o.ecrAuthLock.Unlock()
-	// ECR tokens are valid for 12h: https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_GetAuthorizationToken.html
-	if time.Since(o.ecrAuthLastRefreshTime) > 10*time.Hour {
-		awsCfg, err := awsconfig.LoadDefaultConfig(context.Background())
-		if err != nil {
-			return err
-		}
-		ecrc := ecr.NewFromConfig(awsCfg)
-		tknout, err := ecrc.GetAuthorizationToken(ctx, &ecr.GetAuthorizationTokenInput{})
-		if err != nil {
-			return err
-		}
-		if len(tknout.AuthorizationData) == 0 {
-			return fmt.Errorf("no ECR authorization data received")
-		}
-
-		pwd, err := base64.StdEncoding.DecodeString(aws.ToString(tknout.AuthorizationData[0].AuthorizationToken))
-		if err != nil {
-			return err
-		}
-
-		o.ecrAuth = string(pwd)
-		o.ecrAuthLastRefreshTime = time.Now()
-		log.Debug("refreshed ECR token")
-	}
-
-	if allowedAuth.Additional == nil {
-		allowedAuth.Additional = make(map[string]string)
-	}
-	allowedAuth.Additional[domain] = base64.StdEncoding.EncodeToString([]byte(o.ecrAuth))
-	log.WithField("domain", domain).Debug("added additional auth")
-	return nil
 }
 
 // parentCantCancelContext is a bit of a hack. We have some operations which we want to keep alive even after clients
