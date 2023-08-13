@@ -12,7 +12,7 @@ require (
 	github.com/rootless-containers/rootlesskit v1.0.0
 	github.com/seccomp/libseccomp-golang v0.9.1
 	github.com/spf13/cobra v1.4.0
-	golang.org/x/sys v0.8.0
+	golang.org/x/sys v0.11.0
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	google.golang.org/grpc v1.52.3
 )

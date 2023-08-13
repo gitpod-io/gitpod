@@ -38,7 +38,7 @@ require (
 	go.uber.org/atomic v1.4.0 // indirect
 	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/sync v0.2.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af // indirect
 	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6 // indirect

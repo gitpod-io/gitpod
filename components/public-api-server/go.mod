@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20220708163326-82d177caec6e
-	github.com/bufbuild/connect-go v1.5.2
+	github.com/bufbuild/connect-go v1.10.0
 	github.com/coreos/go-oidc/v3 v3.5.0
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/components/gitpod-db/go v0.0.0-00010101000000-000000000000
@@ -30,7 +30,7 @@ require (
 	github.com/zitadel/oidc v1.13.0
 	golang.org/x/oauth2 v0.6.0
 	google.golang.org/grpc v1.55.0
-	google.golang.org/protobuf v1.30.0
+	google.golang.org/protobuf v1.31.0
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gorm.io/gorm v1.25.1
 )
@@ -90,7 +90,7 @@ require (
 	github.com/zitadel/logging v0.3.4 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af // indirect
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
