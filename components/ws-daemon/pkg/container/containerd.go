@@ -20,7 +20,7 @@ import (
 	"github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/typeurl"
+	"github.com/containerd/typeurl/v2"
 	ocispecs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
@@ -499,7 +499,7 @@ var kubepodsRegexp = regexp.MustCompile(`([^/]+)-pod`)
 // in a container's OCI spec.
 func ExtractCGroupPathFromContainer(container containers.Container) (cgroupPath string, err error) {
 	var spec ocispecs.Spec
-	err = json.Unmarshal(container.Spec.Value, &spec)
+	err = json.Unmarshal(container.Spec.GetValue(), &spec)
 	if err != nil {
 		return
 	}
