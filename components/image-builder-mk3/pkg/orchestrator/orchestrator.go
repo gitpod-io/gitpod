@@ -336,9 +336,10 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 	wsref, err := reference.ParseNamed(wsrefstr)
 	var additionalAuth []byte
 	if err == nil {
-		additionalAuth, err = json.Marshal(reqauth.GetImageBuildAuthFor([]string{
+		imgbldAuth := reqauth.GetImageBuildAuthFor(ctx, o.Auth, []string{
 			reference.Domain(wsref),
-		}))
+		})
+		additionalAuth, err = json.Marshal(imgbldAuth)
 		if err != nil {
 			return xerrors.Errorf("cannot marshal additional auth: %w", err)
 		}

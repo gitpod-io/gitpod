@@ -18,7 +18,9 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-const authKey = "authKey"
+const authKey authKeyType = "authKey"
+
+type authKeyType string
 
 func NewProxy(host *url.URL, aliases map[string]Repo) (*Proxy, error) {
 	if host.Host == "" || host.Scheme == "" {

@@ -20,6 +20,7 @@ import (
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -349,7 +350,7 @@ func (a AllowedAuthFor) additionalAuth(domain string) *Authentication {
 type ImageBuildAuth map[string]types.AuthConfig
 
 // GetImageBuildAuthFor produces authentication in the format an image builds needs
-func (a AllowedAuthFor) GetImageBuildAuthFor(blocklist []string) (res ImageBuildAuth) {
+func (a AllowedAuthFor) GetImageBuildAuthFor(ctx context.Context, auth RegistryAuthenticator, blocklist []string) (res ImageBuildAuth) {
 	res = make(ImageBuildAuth)
 	for reg := range a.Additional {
 		var blocked bool
@@ -363,8 +364,36 @@ func (a AllowedAuthFor) GetImageBuildAuthFor(blocklist []string) (res ImageBuild
 			continue
 		}
 		ath := a.additionalAuth(reg)
+		if ath.Empty() {
+			continue
+		}
+		res[reg] = types.AuthConfig(*ath)
+	}
+	for _, reg := range a.Explicit {
+		ath, err := auth.Authenticate(ctx, reg)
+		if err != nil {
+			// TODO(cw): swalloing this error is not the obvious choice. We have to weigh failing all workspace image builds because of
+			// a single misconfiguration, vs essentially silently ignoring that misconfig.
+			log.WithError(err).WithField("registry", reg).Warn("cannot add image build auth for explicit registry - image build might fail")
+			continue
+		}
+		if ath.Empty() {
+			continue
+		}
 		res[reg] = types.AuthConfig(*ath)
 	}
 
-	return
+	if log.Log.Logger.IsLevelEnabled(logrus.DebugLevel) {
+		keys := make([]string, 0, len(res))
+		for k := range res {
+			keys = append(keys, k)
+		}
+		log.WithField("registries", trustedStrings(keys)).Debug("providing additional auth for image build")
+	}
+
+	return res
 }
+
+type trustedStrings []string
+
+func (trustedStrings) IsTrustedValue() {}
