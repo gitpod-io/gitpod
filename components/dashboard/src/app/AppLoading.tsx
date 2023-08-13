@@ -5,7 +5,6 @@
  */
 
 import { FunctionComponent, useEffect, useState } from "react";
-import { Heading3, Subheading } from "../components/typography/headings";
 import gitpodIcon from "../icons/gitpod.svg";
 import { Delayed } from "../components/Delayed";
 
@@ -24,22 +23,37 @@ export const AppLoading: FunctionComponent = () => {
     const connectionProblems = useDelay(25000);
     return (
         <Delayed wait={3000}>
-            <div className="flex flex-col justify-center items-center w-full h-screen space-y-4">
-                <img src={gitpodIcon} alt="Gitpod's logo" className={"h-16 flex-shrink-0 animate-fade-in"} />
+            <div className="flex flex-col justify-center items-center w-full h-screen space-y-4 bg-gray-100 dark:bg-gray-900">
+                <img
+                    src={gitpodIcon}
+                    alt="Gitpod's logo"
+                    className={"h-8 flex-shrink-0 animate-fade-in filter-grayscale"}
+                />
                 {connectionProblems ? (
-                    <Heading3 className={done ? "" : "invisible"}>This is taking longer than it should</Heading3>
+                    <p className={done ? "" : "invisible"}>
+                        <span className="text-gray-600 dark:text-gray-300 font-semibold text-md">
+                            <span className="text-gitpod-red">[ERROR]</span> Could not load dashboard
+                        </span>
+                    </p>
                 ) : (
-                    <Heading3 className={done ? "animate-fade-in" : "invisible"}>
-                        Just getting a few more things ready
-                    </Heading3>
+                    <p className={done ? "animate-fade-in" : "invisible"}>
+                        <span className="text-gray-500 dark:text-gray-300 font-semibold text-md">
+                            Loading dashboard...
+                        </span>
+                    </p>
                 )}
                 {connectionProblems ? (
-                    <Subheading className={done ? "max-w-xl text-center" : "invisible"}>
-                        It seems like you are having connection issues. Please check your network connection. Sometimes
-                        this problem can also be caused by a slow browser with too many tabs and/or extensions.
-                    </Subheading>
+                    <p className={done ? "max-w-xl text-center" : "invisible"}>
+                        <span className="text-gray-400 dark:text-gray-500">
+                            Check your network connection or try restarting your browser.
+                        </span>
+                    </p>
                 ) : (
-                    <Subheading className={done ? "animate-fade-in" : "invisible"}>hang in there...</Subheading>
+                    <p className={done ? "animate-fade-in" : "invisible"}>
+                        <span className="text-gray-400 dark:text-gray-500">
+                            This is taking longer than it expected.
+                        </span>
+                    </p>
                 )}
             </div>
         </Delayed>
