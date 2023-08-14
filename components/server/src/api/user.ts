@@ -40,7 +40,7 @@ export class APIUserService implements ServiceImpl<typeof UserServiceInterface> 
         throw new ConnectError("unimplemented", Code.Unimplemented);
     }
 
-    public async getSuggestedRepos(_: GetSuggestedRepoURLsRequest): Promise<GetSuggestedRepoURLsResponse> {
+    public async getSuggestedRepos(req: GetSuggestedRepoURLsRequest): Promise<GetSuggestedRepoURLsResponse> {
         throw new ConnectError("unimplemented", Code.Unimplemented);
     }
 
