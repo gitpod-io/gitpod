@@ -5,8 +5,8 @@
  */
 
 import { useEffect, useState } from "react";
-import { getExperimentsClient } from "../experiments/client";
 import type { orbital } from "@useorbital/client-types/types";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 declare global {
     interface Window {
@@ -17,6 +17,8 @@ declare global {
 export const useOrbital = (spaceId: string) => {
     const [isLoaded, setIsLoaded] = useState<boolean>(false);
     const [discoveryIds, setDiscoveryIds] = useState<Set<string>>(new Set());
+
+    const enabledOrbitalDiscoveries = useFeatureFlag("enabledOrbitalDiscoveries");
 
     useEffect(() => {
         if (document.getElementById("orbital-client")) return;
@@ -37,17 +39,9 @@ export const useOrbital = (spaceId: string) => {
     }, [discoveryIds.size, spaceId]);
 
     useEffect(() => {
-        const client = getExperimentsClient();
-
-        (async () => {
-            const featureFlagValue = await client.getValueAsync("enabledOrbitalDiscoveries", "", {
-                gitpodHost: window.location.host,
-            });
-            setDiscoveryIds(new Set(featureFlagValue.split(",").filter((value) => !!value)));
-        })();
-
-        return client.dispose;
-    }, []);
+        if (!enabledOrbitalDiscoveries || enabledOrbitalDiscoveries === true) return;
+        setDiscoveryIds(new Set(enabledOrbitalDiscoveries.split(",").filter((value) => !!value)));
+    }, [enabledOrbitalDiscoveries]);
 
     return {
         isLoaded,
