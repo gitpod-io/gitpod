@@ -348,12 +348,14 @@ export class Server {
     }
 
     public async stop() {
-        await this.debugApp.stop();
-        await this.stopServer(this.iamSessionAppServer);
-        await this.stopServer(this.monitoringHttpServer);
-        await this.stopServer(this.httpServer);
-        await this.stopServer(this.apiServer);
-        this.disposables.dispose();
+        await Promise.allSettled([
+            this.debugApp.stop(),
+            this.stopServer(this.iamSessionAppServer),
+            this.stopServer(this.monitoringHttpServer),
+            this.stopServer(this.httpServer),
+            this.stopServer(this.apiServer),
+            new Promise(() => this.disposables.dispose()),
+        ]).catch((err) => log.error("error while stopping server", { err }));
         log.info("server stopped.");
     }
 
