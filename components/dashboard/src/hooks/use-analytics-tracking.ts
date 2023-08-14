@@ -7,13 +7,13 @@
 import { useEffect } from "react";
 import { useHistory } from "react-router";
 import { trackButtonOrAnchor, trackPathChange } from "../Analytics";
-import { useUserLoader } from "./use-user-loader";
 import { useTheme } from "../theme-context";
 import { useOrbital } from "./use-orbital";
+import { useCurrentUser } from "../user-context";
 
 export const useAnalyticsTracking = () => {
     const history = useHistory();
-    const { user, loading } = useUserLoader();
+    const user = useCurrentUser();
     const { isDark } = useTheme();
 
     // Todo(ft): only enable on gitpod.io
@@ -60,7 +60,7 @@ export const useAnalyticsTracking = () => {
     }, []);
 
     useEffect(() => {
-        if (loading || !user || !user.additionalData?.profile?.onboardedTimestamp || !isOrbitalLoaded) {
+        if (!user || !user.additionalData?.profile?.onboardedTimestamp || !isOrbitalLoaded) {
             return;
         }
 
@@ -86,5 +86,5 @@ export const useAnalyticsTracking = () => {
         }
 
         return orbital("reset");
-    }, [discoveryIds, isDark, isOrbitalLoaded, loading, orbital, user]);
+    }, [discoveryIds, isDark, isOrbitalLoaded, orbital, user]);
 };
