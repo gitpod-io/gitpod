@@ -35,7 +35,17 @@ export const useOrbital = (spaceId: string) => {
         orbitalScript.setAttribute("src", `https://client.useorbital.com/api/account/${spaceId}/client.js`);
         orbitalScript.setAttribute("async", "");
         body.appendChild(orbitalScript);
-        orbitalScript.addEventListener("load", () => setIsLoaded(true), { once: true, capture: false });
+        orbitalScript.addEventListener(
+            "load",
+            () => {
+                if (typeof window["orbital"] === "undefined") {
+                    console.error("Orbital script failed to load.");
+                    return;
+                }
+                setIsLoaded(true);
+            },
+            { once: true, capture: false },
+        );
     }, [discoveryIds.size, spaceId]);
 
     useEffect(() => {
