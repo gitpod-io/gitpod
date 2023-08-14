@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Organization, Project, User } from "@gitpod/gitpod-protocol";
 import { useQuery } from "@tanstack/react-query";
 import { getExperimentsClient } from "../experiments/client";
 import { useCurrentProject } from "../projects/project-context";
@@ -37,22 +36,18 @@ export const useFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): Fe
     const org = useCurrentOrg().data;
     const project = useCurrentProject().project;
 
-    const query = useQuery<boolean>({
-        queryKey: queryKey(featureFlag, user, org, project),
-        queryFn: async () => {
-            const flagValue = await getExperimentsClient().getValueAsync(featureFlag, featureFlags[featureFlag], {
-                user,
-                projectId: project?.id,
-                teamId: org?.id,
-                teamName: org?.name,
-                gitpodHost: window.location.host,
-            });
-            return !!flagValue;
-        },
+    const queryKey = ["featureFlag", featureFlag, user?.id || "", org?.id || "", project?.id || ""];
+
+    const query = useQuery(queryKey, async () => {
+        const flagValue = await getExperimentsClient().getValueAsync(featureFlag, featureFlags[featureFlag], {
+            user,
+            projectId: project?.id,
+            teamId: org?.id,
+            teamName: org?.name,
+            gitpodHost: window.location.host,
+        });
+        return flagValue;
     });
+
     return query.data !== undefined ? query.data : featureFlags[featureFlag];
 };
-
-function queryKey(featureFlag: keyof typeof featureFlags, user?: User, org?: Organization, project?: Project) {
-    return ["featureFlag", featureFlag, user?.id || "", org?.id || "", project?.id || ""];
-}
