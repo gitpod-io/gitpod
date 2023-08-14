@@ -407,7 +407,9 @@ export class WorkspaceStarter {
         throw new StartInstanceError("serverShuttingDown", shutdownError);
     }
     private failOnShutdown(ctx: TraceContext, workspace: Workspace, instance?: WorkspaceInstance) {
-        const shutdownError = new Error("Service temporarily unavailable. Please retry in a few seconds.");
+        const shutdownError = new Error(
+            "Service temporarily unavailable. Please retry to start in a few seconds again.",
+        );
         if (instance) {
             this.doFailInstanceStart(ctx, shutdownError, workspace, instance).catch(() => {
                 // cannot happen

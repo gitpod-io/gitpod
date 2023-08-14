@@ -107,4 +107,16 @@ export class WsExpressHandler {
         }
         return pathname === matcher;
     }
+
+    dispose(): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.wss.close((err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
 }

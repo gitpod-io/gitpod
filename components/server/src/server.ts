@@ -214,6 +214,7 @@ export class Server {
 
             const wsPingPongHandler = new WsConnectionHandler();
             const wsHandler = new WsExpressHandler(httpServer, verifyClient);
+            this.disposables.push(wsHandler);
             wsHandler.ws(
                 websocketConnectionHandler.path,
                 (ws, request) => {
