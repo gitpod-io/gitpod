@@ -22,10 +22,10 @@
     "test:db": "cleanup() { echo 'Cleanup started'; yarn stop-services; }; trap cleanup EXIT; . $(leeway run components/gitpod-db:db-test-env) && yarn start-services && mocha --opts mocha.opts './**/*.spec.db.js'  --exclude './node_modules/**'",
     "start-services": "yarn start-testdb && yarn start-redis && yarn start-spicedb",
     "stop-services": "yarn stop-redis && yarn stop-spicedb",
-    "start-testdb": "if netstat -tuln | grep ':23306 '; then echo 'Mysql is already running.'; else leeway run components/gitpod-db:init-testdb; fi",
+    "start-testdb": "leeway run components/gitpod-db:init-testdb",
     "start-spicedb": "leeway run components/spicedb:start-spicedb",
     "stop-spicedb": "leeway run components/spicedb:stop-spicedb",
-    "start-redis": "if netstat -tuln | grep ':6379 '; then echo 'Redis is already running.'; else docker run --rm --name test-redis -p 6379:6379 -d redis; fi",
+    "start-redis": "if redis-cli -h ${REDIS_HOST:-0.0.0.0} -e ping; then echo 'Redis is already running.'; else docker run --rm --name test-redis -p 6379:6379 -d redis; fi",
     "stop-redis": "docker stop test-redis || true",
     "telepresence": "telepresence --swap-deployment server --method inject-tcp --run yarn start-inspect"
   },
