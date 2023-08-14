@@ -110,6 +110,7 @@ export class WsExpressHandler {
 
     dispose(): Promise<void> {
         return new Promise((resolve, reject) => {
+            // stop accepting new connections and emit when all connections are closed
             this.wss.close((err) => {
                 if (err) {
                     reject(err);
@@ -117,6 +118,10 @@ export class WsExpressHandler {
                     resolve();
                 }
             });
+            // terminate all existing connections
+            for (const client of this.wss.clients) {
+                client.terminate();
+            }
         });
     }
 }
