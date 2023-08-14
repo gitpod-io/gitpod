@@ -91,6 +91,19 @@ class TestBitbucketServerApi {
             displayName: "Alex Tugarev",
         });
     }
+
+    @test async test_getRepos_ok() {
+        const result = await this.api.getRepos(process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"]!, {
+            permission: "REPO_READ",
+        });
+        expect(result.length).to.be.equal(28);
+
+        // TestBitbucketServerApi
+        // BBS: GET https://7990-alextugarev-bbs-6v0gqcpgvj7.ws-eu102.gitpod.io/rest/api/1.0/repos?permission=REPO_READ&start=0 - OK
+        // BBS: GET https://7990-alextugarev-bbs-6v0gqcpgvj7.ws-eu102.gitpod.io/rest/api/1.0/repos?permission=REPO_READ&start=27 - OK
+        //     ✓ test_getRepos_ok (87ms)
+        //   1 passing (93ms)
+    }
 }
 
 module.exports = new TestBitbucketServerApi();

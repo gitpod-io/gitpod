@@ -283,29 +283,31 @@ export class BitbucketServerApi {
      * https://developer.atlassian.com/server/bitbucket/rest/v811/api-group-repository/#api-api-latest-repos-get
      */
     async getRepos(
-        user: User,
+        userOrToken: User | string,
         query: {
             permission?: "REPO_READ" | "REPO_WRITE" | "REPO_ADMIN";
-            /**
-             * defaults to 25
-             */
-            limit: number;
         },
     ) {
-        let q = "";
-        if (query) {
-            const segments = [];
-            if (query.permission) {
-                segments.push(`permission=${query.permission}`);
+        const result: BitbucketServer.Repository[] = [];
+        const permission = query.permission ? `permission=${query.permission}&` : "";
+        let isLastPage = false;
+        let start = 0;
+        while (!isLastPage) {
+            const pageResult = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.Repository>>(
+                userOrToken,
+                `/repos?${permission}start=${start}`,
+            );
+            if (pageResult.values) {
+                result.push(...pageResult.values);
             }
-            if (query.limit) {
-                segments.push(`limit=${query.limit}`);
-            }
-            if (segments.length > 0) {
-                q = `?${segments.join("&")}`;
+            isLastPage =
+                typeof pageResult.isLastPage === "undefined" || // a fuse to prevent infinite loop
+                !!pageResult.isLastPage;
+            if (pageResult.nextPageStart) {
+                start = pageResult.nextPageStart;
             }
         }
-        return this.runQuery<BitbucketServer.Paginated<BitbucketServer.Repository>>(user, `/repos${q}`);
+        return result;
     }
 
     async getPullRequest(
@@ -434,6 +436,7 @@ export namespace BitbucketServer {
 
     export interface Paginated<T> {
         isLastPage?: boolean;
+        nextPageStart?: number;
         limit?: number;
         size?: number;
         start?: number;
