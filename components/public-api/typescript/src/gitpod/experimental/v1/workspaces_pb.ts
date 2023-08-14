@@ -454,6 +454,11 @@ export class CreateAndStartWorkspaceRequest extends Message<CreateAndStartWorksp
    */
   startSpec?: StartWorkspaceSpec;
 
+  /**
+   * @generated from field: string organization_id = 6;
+   */
+  organizationId = "";
+
   constructor(data?: PartialMessage<CreateAndStartWorkspaceRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -466,6 +471,7 @@ export class CreateAndStartWorkspaceRequest extends Message<CreateAndStartWorksp
     { no: 2, name: "context_url", kind: "scalar", T: 9 /* ScalarType.STRING */, oneof: "source" },
     { no: 3, name: "prebuild_id", kind: "scalar", T: 9 /* ScalarType.STRING */, oneof: "source" },
     { no: 5, name: "start_spec", kind: "message", T: StartWorkspaceSpec },
+    { no: 6, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateAndStartWorkspaceRequest {
@@ -1571,11 +1577,21 @@ export class Port extends Message<Port> {
 /**
  * StartWorkspaceSpec influences the workspace start
  *
- * future per-workspace-start fields, e.g. region
+ * future per-workspace-start fields, e.g.
  *
  * @generated from message gitpod.experimental.v1.StartWorkspaceSpec
  */
 export class StartWorkspaceSpec extends Message<StartWorkspaceSpec> {
+  /**
+   * @generated from field: string workspace_class = 1;
+   */
+  workspaceClass = "";
+
+  /**
+   * @generated from field: gitpod.experimental.v1.IDESettings ide_settings = 2;
+   */
+  ideSettings?: IDESettings;
+
   constructor(data?: PartialMessage<StartWorkspaceSpec>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1584,6 +1600,8 @@ export class StartWorkspaceSpec extends Message<StartWorkspaceSpec> {
   static readonly runtime = proto3;
   static readonly typeName = "gitpod.experimental.v1.StartWorkspaceSpec";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "ide_settings", kind: "message", T: IDESettings },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StartWorkspaceSpec {
@@ -1600,6 +1618,61 @@ export class StartWorkspaceSpec extends Message<StartWorkspaceSpec> {
 
   static equals(a: StartWorkspaceSpec | PlainMessage<StartWorkspaceSpec> | undefined, b: StartWorkspaceSpec | PlainMessage<StartWorkspaceSpec> | undefined): boolean {
     return proto3.util.equals(StartWorkspaceSpec, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.IDESettings
+ */
+export class IDESettings extends Message<IDESettings> {
+  /**
+   * @generated from field: string default_ide = 1;
+   */
+  defaultIde = "";
+
+  /**
+   * @generated from field: bool use_desktop_ide = 2;
+   */
+  useDesktopIde = false;
+
+  /**
+   * @generated from field: string default_desktop_ide = 3;
+   */
+  defaultDesktopIde = "";
+
+  /**
+   * @generated from field: bool use_latest_version = 4;
+   */
+  useLatestVersion = false;
+
+  constructor(data?: PartialMessage<IDESettings>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.IDESettings";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "default_ide", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "use_desktop_ide", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 3, name: "default_desktop_ide", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "use_latest_version", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): IDESettings {
+    return new IDESettings().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): IDESettings {
+    return new IDESettings().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): IDESettings {
+    return new IDESettings().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: IDESettings | PlainMessage<IDESettings> | undefined, b: IDESettings | PlainMessage<IDESettings> | undefined): boolean {
+    return proto3.util.equals(IDESettings, a, b);
   }
 }
 
@@ -1828,4 +1901,3 @@ export class GitStatus extends Message<GitStatus> {
     return proto3.util.equals(GitStatus, a, b);
   }
 }
-

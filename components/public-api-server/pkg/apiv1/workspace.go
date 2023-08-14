@@ -34,6 +34,36 @@ type WorkspaceService struct {
 	v1connect.UnimplementedWorkspacesServiceHandler
 }
 
+func (s *WorkspaceService) CreateAndStartWorkspace(ctx context.Context, req *connect.Request[v1.CreateAndStartWorkspaceRequest]) (*connect.Response[v1.CreateAndStartWorkspaceResponse], error) {
+
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+
+	ws, err := conn.CreateWorkspace(ctx, &protocol.CreateWorkspaceOptions{
+		StartWorkspaceOptions: protocol.StartWorkspaceOptions{
+			WorkspaceClass: req.Msg.GetStartSpec().GetWorkspaceClass(),
+			IdeSettings: &protocol.IDESettings{
+				DefaultIde:        req.Msg.StartSpec.IdeSettings.GetDefaultDesktopIde(),
+				UseDesktopIde:     req.Msg.StartSpec.IdeSettings.GetUseDesktopIde(),
+				DefaultDesktopIde: req.Msg.StartSpec.IdeSettings.GetDefaultDesktopIde(),
+				UseLatestVersion:  req.Msg.StartSpec.IdeSettings.GetUseLatestVersion(),
+			},
+		},
+		ContextURL:     req.Msg.GetContextUrl(),
+		OrganizationId: req.Msg.GetOrganizationId(),
+	})
+	if err != nil {
+		log.Extract(ctx).WithError(err).Error("Failed to create workspace.")
+		return nil, proxy.ConvertError(err)
+	}
+
+	return connect.NewResponse(&v1.CreateAndStartWorkspaceResponse{
+		WorkspaceId: ws.CreatedWorkspaceID,
+	}), nil
+}
+
 func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Request[v1.GetWorkspaceRequest]) (*connect.Response[v1.GetWorkspaceResponse], error) {
 	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
 	if err != nil {

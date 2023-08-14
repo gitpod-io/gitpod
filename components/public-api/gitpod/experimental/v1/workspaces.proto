@@ -84,6 +84,8 @@ message CreateAndStartWorkspaceRequest {
     }
 
     StartWorkspaceSpec start_spec = 5;
+
+    string organization_id = 6;
 }
 message CreateAndStartWorkspaceResponse {
     string workspace_id = 1;
@@ -354,7 +356,17 @@ enum AdmissionLevel {
 
 // StartWorkspaceSpec influences the workspace start
 message StartWorkspaceSpec {
-    // future per-workspace-start fields, e.g. region
+    // future per-workspace-start fields, e.g.
+
+    string workspace_class = 1;
+    IDESettings ide_settings = 2;
+}
+
+message IDESettings {
+    string default_ide = 1;
+    bool use_desktop_ide = 2;
+    string default_desktop_ide = 3;
+    bool use_latest_version = 4;
 }
 
 message PortSpec {
