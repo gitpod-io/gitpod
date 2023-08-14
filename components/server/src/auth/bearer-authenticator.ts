@@ -13,7 +13,6 @@ import { IncomingHttpHeaders } from "http";
 import { inject, injectable } from "inversify";
 import { Config } from "../config";
 import { AllAccessFunctionGuard, ExplicitFunctionAccessGuard, WithFunctionAccessGuard } from "./function-access";
-import { TokenResourceGuard, WithResourceAccessGuard } from "./resource-access";
 import { UserService } from "../user/user-service";
 
 export function getBearerToken(headers: IncomingHttpHeaders): string | undefined {
@@ -86,9 +85,6 @@ export class BearerAuth {
         }
 
         const { user, scopes } = await this.userAndScopesFromToken(token);
-
-        const resourceGuard = new TokenResourceGuard(user.id, scopes);
-        (req as WithResourceAccessGuard).resourceGuard = resourceGuard;
 
         const functionScopes = scopes
             .filter((s) => s.startsWith("function:"))
