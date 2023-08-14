@@ -1,5 +1,31 @@
 {
+    "inputs": [{
+        "type": "promptString",
+        "id": "testToken",
+        "password": true,
+        "description": "Test Token"
+    }],
     "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "[server] run test file from editor",
+            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+            "cwd": "${workspaceFolder}/components/server",
+            "args": [
+                "--opts",
+                "mocha.opts",
+                "--no-timeouts",
+                "--colors",
+                "**/${fileBasenameNoExtension}.js"
+            ],
+            "sourceMaps": true,
+            "outFiles": [
+              "${workspaceFolder}/components/server/dist/**/*.js"
+            ],
+            "internalConsoleOptions": "openOnSessionStart",
+            "env": {"GITPOD_TEST_TOKEN_BITBUCKET_SERVER":  "${input:testToken}"}
+        },
         {
             "name": "Attach to Kubernetes Node",
             "type": "node",
