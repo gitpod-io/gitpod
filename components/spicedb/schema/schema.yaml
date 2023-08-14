@@ -97,6 +97,7 @@ schema: |-
 
     // Note: All of this is modelled after current behavior.
     // There are a lot of improvements we can make here in the light of Organizations, but we explicitly do that as a separate step
+    permission start = owner
     permission stop = owner + org->installation_admin
     permission delete = owner
 

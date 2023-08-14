@@ -95,11 +95,11 @@ import {
     PortSpec,
     PortVisibility,
     StartWorkspaceRequest,
-    StopWorkspacePolicy,
-    StopWorkspaceRequest,
     WorkspaceMetadata,
     WorkspaceType,
     PortProtocol,
+    StopWorkspacePolicy,
+    StopWorkspaceRequest,
 } from "@gitpod/ws-manager/lib/core_pb";
 import * as grpc from "@grpc/grpc-js";
 import * as crypto from "crypto";
@@ -126,6 +126,7 @@ import { UserAuthentication } from "../user/user-authentication";
 import { ResolvedEnvVars } from "./env-var-service";
 import { ImageSourceProvider } from "./image-source-provider";
 import { WorkspaceClassesConfig } from "./workspace-classes";
+import { SYSTEM_USER } from "../authorization/authorizer";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     rethrow?: boolean;
@@ -466,35 +467,13 @@ export class WorkspaceStarter {
         await client.stopWorkspace(ctx, req);
     }
 
-    public async stopRunningWorkspacesForUser(
-        ctx: TraceContext,
-        userID: string,
-        reason: string,
-        policy?: StopWorkspacePolicy,
-    ): Promise<Workspace[]> {
-        const workspaceDb = this.workspaceDb.trace(ctx);
-        const instances = await workspaceDb.findRunningInstancesWithWorkspaces(undefined, userID);
-        await Promise.all(
-            instances.map((instance) =>
-                this.stopWorkspaceInstance(
-                    ctx,
-                    instance.latestInstance.id,
-                    instance.latestInstance.region,
-                    reason,
-                    policy,
-                ),
-            ),
-        );
-        return instances.map((instance) => instance.workspace);
-    }
-
     private async checkBlockedRepository(user: User, contextURL: string) {
         const blockedRepository = await this.blockedRepositoryDB.findBlockedRepositoryByURL(contextURL);
         if (!blockedRepository) return;
 
         if (blockedRepository.blockUser) {
             try {
-                await this.userService.blockUser(user.id, true);
+                await this.userService.blockUser(SYSTEM_USER, user.id, true);
                 log.info({ userId: user.id }, "Blocked user.", { contextURL });
             } catch (error) {
                 log.error({ userId: user.id }, "Failed to block user.", error, { contextURL });
