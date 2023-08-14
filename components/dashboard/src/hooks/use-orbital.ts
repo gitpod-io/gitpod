@@ -49,6 +49,7 @@ export const useOrbital = (spaceId: string) => {
     }, [discoveryIds.size, spaceId]);
 
     useEffect(() => {
+        console.debug(enabledOrbitalDiscoveries);
         if (!enabledOrbitalDiscoveries || enabledOrbitalDiscoveries === true) return;
         setDiscoveryIds(new Set(enabledOrbitalDiscoveries.split(",").filter((value) => !!value)));
     }, [enabledOrbitalDiscoveries]);
