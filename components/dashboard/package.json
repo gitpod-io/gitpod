@@ -14,7 +14,6 @@
     "@tanstack/react-query-devtools": "^4.29.19",
     "@tanstack/react-query-persist-client": "^4.29.19",
     "@types/react-datepicker": "^4.8.0",
-    "@useorbital/client-types": "^1.5.0",
     "classnames": "^2.3.1",
     "configcat-js": "^6.0.0",
     "countries-list": "^2.6.1",
