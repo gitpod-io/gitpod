@@ -92,7 +92,7 @@ class TestBitbucketServerApi {
         });
     }
 
-    @test.only async test_getRepos_ok() {
+    @test async test_getRepos_ok() {
         const result = await this.api.getRepos(process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"]!, {
             permission: "REPO_READ",
         });
