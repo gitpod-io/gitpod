@@ -68,9 +68,13 @@ func init() {
 }
 
 func main() {
+	var enableLeaderElection bool
 	var configFN string
 	var jsonLog bool
 	var verbose bool
+	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
+		"Enable leader election for controller manager. "+
+			"Enabling this will ensure there is only one active controller manager.")
 	flag.StringVar(&configFN, "config", "", "Path to the config file")
 	flag.BoolVar(&jsonLog, "json-log", true, "produce JSON log output on verbose level")
 	flag.BoolVar(&verbose, "verbose", false, "Enable verbose logging")
@@ -121,7 +125,7 @@ func main() {
 		MetricsBindAddress:     cfg.Prometheus.Addr,
 		Port:                   9443,
 		HealthProbeBindAddress: cfg.Health.Addr,
-		LeaderElection:         true,
+		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "ws-manager-mk2-leader.gitpod.io",
 		NewCache:               cache.MultiNamespacedCacheBuilder([]string{cfg.Manager.Namespace, cfg.Manager.SecretsNamespace}),
 	})
