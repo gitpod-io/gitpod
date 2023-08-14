@@ -826,14 +826,14 @@ func (x *GitToken) GetValue() string {
 	return ""
 }
 
-type GetSuggestedReposRequest struct {
+type GetSuggestedRepoURLsRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 }
 
-func (x *GetSuggestedReposRequest) Reset() {
-	*x = GetSuggestedReposRequest{}
+func (x *GetSuggestedRepoURLsRequest) Reset() {
+	*x = GetSuggestedRepoURLsRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_gitpod_experimental_v1_user_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -841,13 +841,13 @@ func (x *GetSuggestedReposRequest) Reset() {
 	}
 }
 
-func (x *GetSuggestedReposRequest) String() string {
+func (x *GetSuggestedRepoURLsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetSuggestedReposRequest) ProtoMessage() {}
+func (*GetSuggestedRepoURLsRequest) ProtoMessage() {}
 
-func (x *GetSuggestedReposRequest) ProtoReflect() protoreflect.Message {
+func (x *GetSuggestedRepoURLsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_gitpod_experimental_v1_user_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -859,12 +859,12 @@ func (x *GetSuggestedReposRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetSuggestedReposRequest.ProtoReflect.Descriptor instead.
-func (*GetSuggestedReposRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetSuggestedRepoURLsRequest.ProtoReflect.Descriptor instead.
+func (*GetSuggestedRepoURLsRequest) Descriptor() ([]byte, []int) {
 	return file_gitpod_experimental_v1_user_proto_rawDescGZIP(), []int{15}
 }
 
-type GetSuggestedReposResponse struct {
+type GetSuggestedRepoURLsResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -872,8 +872,8 @@ type GetSuggestedReposResponse struct {
 	Repos []string `protobuf:"bytes,1,rep,name=repos,proto3" json:"repos,omitempty"`
 }
 
-func (x *GetSuggestedReposResponse) Reset() {
-	*x = GetSuggestedReposResponse{}
+func (x *GetSuggestedRepoURLsResponse) Reset() {
+	*x = GetSuggestedRepoURLsResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_gitpod_experimental_v1_user_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -881,13 +881,13 @@ func (x *GetSuggestedReposResponse) Reset() {
 	}
 }
 
-func (x *GetSuggestedReposResponse) String() string {
+func (x *GetSuggestedRepoURLsResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetSuggestedReposResponse) ProtoMessage() {}
+func (*GetSuggestedRepoURLsResponse) ProtoMessage() {}
 
-func (x *GetSuggestedReposResponse) ProtoReflect() protoreflect.Message {
+func (x *GetSuggestedRepoURLsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_gitpod_experimental_v1_user_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -899,12 +899,12 @@ func (x *GetSuggestedReposResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetSuggestedReposResponse.ProtoReflect.Descriptor instead.
-func (*GetSuggestedReposResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetSuggestedRepoURLsResponse.ProtoReflect.Descriptor instead.
+func (*GetSuggestedRepoURLsResponse) Descriptor() ([]byte, []int) {
 	return file_gitpod_experimental_v1_user_proto_rawDescGZIP(), []int{16}
 }
 
-func (x *GetSuggestedReposResponse) GetRepos() []string {
+func (x *GetSuggestedRepoURLsResponse) GetRepos() []string {
 	if x != nil {
 		return x.Repos
 	}
@@ -1189,8 +1189,8 @@ var file_gitpod_experimental_v1_user_proto_goTypes = []interface{}{
 	(*GetGitTokenRequest)(nil),           // 12: gitpod.experimental.v1.GetGitTokenRequest
 	(*GetGitTokenResponse)(nil),          // 13: gitpod.experimental.v1.GetGitTokenResponse
 	(*GitToken)(nil),                     // 14: gitpod.experimental.v1.GitToken
-	(*GetSuggestedReposRequest)(nil),     // 15: gitpod.experimental.v1.GetSuggestedReposRequest
-	(*GetSuggestedReposResponse)(nil),    // 16: gitpod.experimental.v1.GetSuggestedReposResponse
+	(*GetSuggestedRepoURLsRequest)(nil),  // 15: gitpod.experimental.v1.GetSuggestedRepoURLsRequest
+	(*GetSuggestedRepoURLsResponse)(nil), // 16: gitpod.experimental.v1.GetSuggestedRepoURLsResponse
 	(*BlockUserRequest)(nil),             // 17: gitpod.experimental.v1.BlockUserRequest
 	(*BlockUserResponse)(nil),            // 18: gitpod.experimental.v1.BlockUserResponse
 	(*timestamppb.Timestamp)(nil),        // 19: google.protobuf.Timestamp
@@ -1209,7 +1209,7 @@ var file_gitpod_experimental_v1_user_proto_depIdxs = []int32{
 	8,  // 10: gitpod.experimental.v1.UserService.GetSSHKey:input_type -> gitpod.experimental.v1.GetSSHKeyRequest
 	10, // 11: gitpod.experimental.v1.UserService.DeleteSSHKey:input_type -> gitpod.experimental.v1.DeleteSSHKeyRequest
 	12, // 12: gitpod.experimental.v1.UserService.GetGitToken:input_type -> gitpod.experimental.v1.GetGitTokenRequest
-	15, // 13: gitpod.experimental.v1.UserService.GetSuggestedRepos:input_type -> gitpod.experimental.v1.GetSuggestedReposRequest
+	15, // 13: gitpod.experimental.v1.UserService.GetSuggestedRepoURLs:input_type -> gitpod.experimental.v1.GetSuggestedRepoURLsRequest
 	17, // 14: gitpod.experimental.v1.UserService.BlockUser:input_type -> gitpod.experimental.v1.BlockUserRequest
 	3,  // 15: gitpod.experimental.v1.UserService.GetAuthenticatedUser:output_type -> gitpod.experimental.v1.GetAuthenticatedUserResponse
 	5,  // 16: gitpod.experimental.v1.UserService.ListSSHKeys:output_type -> gitpod.experimental.v1.ListSSHKeysResponse
@@ -1217,7 +1217,7 @@ var file_gitpod_experimental_v1_user_proto_depIdxs = []int32{
 	9,  // 18: gitpod.experimental.v1.UserService.GetSSHKey:output_type -> gitpod.experimental.v1.GetSSHKeyResponse
 	11, // 19: gitpod.experimental.v1.UserService.DeleteSSHKey:output_type -> gitpod.experimental.v1.DeleteSSHKeyResponse
 	13, // 20: gitpod.experimental.v1.UserService.GetGitToken:output_type -> gitpod.experimental.v1.GetGitTokenResponse
-	16, // 21: gitpod.experimental.v1.UserService.GetSuggestedRepos:output_type -> gitpod.experimental.v1.GetSuggestedReposResponse
+	16, // 21: gitpod.experimental.v1.UserService.GetSuggestedRepoURLs:output_type -> gitpod.experimental.v1.GetSuggestedRepoURLsResponse
 	18, // 22: gitpod.experimental.v1.UserService.BlockUser:output_type -> gitpod.experimental.v1.BlockUserResponse
 	15, // [15:23] is the sub-list for method output_type
 	7,  // [7:15] is the sub-list for method input_type
@@ -1413,7 +1413,7 @@ func file_gitpod_experimental_v1_user_proto_init() {
 			}
 		}
 		file_gitpod_experimental_v1_user_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetSuggestedReposRequest); i {
+			switch v := v.(*GetSuggestedRepoURLsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1425,7 +1425,7 @@ func file_gitpod_experimental_v1_user_proto_init() {
 			}
 		}
 		file_gitpod_experimental_v1_user_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetSuggestedReposResponse); i {
+			switch v := v.(*GetSuggestedRepoURLsResponse); i {
 			case 0:
 				return &v.state
 			case 1:

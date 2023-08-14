@@ -151,7 +151,7 @@ func (s *StubUserService) GetGitToken(context.Context, *connect.Request[experime
 	return nil, nil
 }
 
-func (s *StubUserService) GetSuggestedRepos(context.Context, *connect.Request[experimental_v1.GetSuggestedReposRequest]) (*connect.Response[experimental_v1.GetSuggestedReposResponse], error) {
+func (s *StubUserService) GetSuggestedRepoURLs(context.Context, *connect.Request[experimental_v1.GetSuggestedRepoURLsRequest]) (*connect.Response[experimental_v1.GetSuggestedRepoURLsResponse], error) {
 	return nil, nil
 }
 

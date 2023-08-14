@@ -87,7 +87,7 @@ func (s *UserService) GetGitToken(ctx context.Context, req *connect.Request[v1.G
 	}), nil
 }
 
-func (s *UserService) GetSuggestedRepos(ctx context.Context, req *connect.Request[v1.GetSuggestedReposRequest]) (*connect.Response[v1.GetSuggestedReposResponse], error) {
+func (s *UserService) GetSuggestedRepoURLs(ctx context.Context, req *connect.Request[v1.GetSuggestedRepoURLsRequest]) (*connect.Response[v1.GetSuggestedRepoURLsResponse], error) {
 	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
 		return nil, err
@@ -105,7 +105,7 @@ func (s *UserService) GetSuggestedRepos(ctx context.Context, req *connect.Reques
 		}
 	}
 
-	return connect.NewResponse(&v1.GetSuggestedReposResponse{
+	return connect.NewResponse(&v1.GetSuggestedRepoURLsResponse{
 		Repos: repos,
 	}), nil
 }

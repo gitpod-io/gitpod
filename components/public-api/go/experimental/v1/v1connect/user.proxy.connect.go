@@ -79,8 +79,8 @@ func (s *ProxyUserServiceHandler) GetGitToken(ctx context.Context, req *connect_
 	return connect_go.NewResponse(resp), nil
 }
 
-func (s *ProxyUserServiceHandler) GetSuggestedRepos(ctx context.Context, req *connect_go.Request[v1.GetSuggestedReposRequest]) (*connect_go.Response[v1.GetSuggestedReposResponse], error) {
-	resp, err := s.Client.GetSuggestedRepos(ctx, req.Msg)
+func (s *ProxyUserServiceHandler) GetSuggestedRepoURLs(ctx context.Context, req *connect_go.Request[v1.GetSuggestedRepoURLsRequest]) (*connect_go.Response[v1.GetSuggestedRepoURLsResponse], error) {
+	resp, err := s.Client.GetSuggestedRepoURLs(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
