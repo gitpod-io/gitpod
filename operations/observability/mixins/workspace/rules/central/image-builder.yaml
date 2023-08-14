@@ -15,9 +15,10 @@ spec:
       rules:
       - alert: GitpodImageBuildDurationAnomaly
         labels:
-          severity: critical
+          severity: warning
+          team: workspace
         annotations:
-          runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodImagebuildDurationAnomaly.md
+          runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodImageBuildDurationAnomaly.md
           summary: image builds are happening too frequently in cluster {{ $labels.cluster }}
           description: Users are waiting more often for image builds
         expr: |
