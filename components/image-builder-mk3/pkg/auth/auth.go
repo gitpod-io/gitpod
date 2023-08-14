@@ -11,6 +11,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -141,16 +142,21 @@ type ECRAuthenticator struct {
 	ecrAuthLock            sync.Mutex
 }
 
+const (
+	// ECR tokens are valid for 12h [1], and we want to ensure we refresh at least twice a day before full expiry.
+	//
+	// [1] https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_GetAuthorizationToken.html
+	ecrTokenRefreshTime = 4 * time.Hour
+)
+
 func (ath *ECRAuthenticator) Authenticate(ctx context.Context, registry string) (auth *Authentication, err error) {
-	// TODO(cw): find better way to detect if ref is an ECR repo
-	if !strings.Contains(registry, ".dkr.") || !strings.Contains(registry, ".amazonaws.com") {
+	if !isECRRegistry(registry) {
 		return nil, nil
 	}
 
 	ath.ecrAuthLock.Lock()
 	defer ath.ecrAuthLock.Unlock()
-	// ECR tokens are valid for 12h: https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_GetAuthorizationToken.html
-	if time.Since(ath.ecrAuthLastRefreshTime) > 10*time.Hour {
+	if time.Since(ath.ecrAuthLastRefreshTime) > ecrTokenRefreshTime {
 		tknout, err := ath.ecrc.GetAuthorizationToken(ctx, &ecr.GetAuthorizationTokenInput{})
 		if err != nil {
 			return nil, err
@@ -191,6 +197,13 @@ func (a *Authentication) Empty() bool {
 		return true
 	}
 	return false
+}
+
+var ecrRegistryRegexp = regexp.MustCompile(`\d{12}.dkr.ecr.\w+-\w+-\w+.amazonaws.com`)
+
+// isECRRegistry returns true if the registry domain is an ECR registry
+func isECRRegistry(domain string) bool {
+	return ecrRegistryRegexp.MatchString(domain)
 }
 
 // AllowedAuthFor describes for which repositories authentication may be provided for
@@ -293,7 +306,7 @@ func (a AllowedAuthFor) GetAuthFor(ctx context.Context, auth RegistryAuthenticat
 	// If we haven't found authentication using the built-in way, we'll resort to additional auth
 	// the user sent us.
 	defer func() {
-		if err != nil || (res != nil && (res.Auth != "" || res.Password != "")) {
+		if err != nil || !res.Empty() {
 			return
 		}
 
@@ -306,10 +319,15 @@ func (a AllowedAuthFor) GetAuthFor(ctx context.Context, auth RegistryAuthenticat
 	}()
 
 	var regAllowed bool
-	if a.IsAllowAll() {
+	switch {
+	case a.IsAllowAll():
 		// free for all
 		regAllowed = true
-	} else {
+	case isECRRegistry(reg):
+		// We allow ECR registries by default to support private ECR registries OOTB.
+		// The AWS IAM permissions dictate what users actually have access to.
+		regAllowed = true
+	default:
 		for _, a := range a.Explicit {
 			if a == reg {
 				regAllowed = true
