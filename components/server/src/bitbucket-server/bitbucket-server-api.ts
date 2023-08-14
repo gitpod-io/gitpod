@@ -300,7 +300,9 @@ export class BitbucketServerApi {
             if (pageResult.values) {
                 result.push(...pageResult.values);
             }
-            isLastPage = !!pageResult.isLastPage;
+            isLastPage =
+                typeof pageResult.isLastPage === "undefined" || // a fuse to prevent infinite loop
+                !!pageResult.isLastPage;
             if (pageResult.nextPageStart) {
                 start = pageResult.nextPageStart;
             }
