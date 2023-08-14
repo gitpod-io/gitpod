@@ -87,6 +87,29 @@ func (s *UserService) GetGitToken(ctx context.Context, req *connect.Request[v1.G
 	}), nil
 }
 
+func (s *UserService) GetSuggestedRepos(ctx context.Context, req *connect.Request[v1.GetSuggestedReposRequest]) (*connect.Response[v1.GetSuggestedReposResponse], error) {
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+
+	reposPtrs, err := conn.GetSuggestedContextURLs(ctx)
+	if err != nil {
+		return nil, proxy.ConvertError(err)
+	}
+
+	repos := make([]string, len(reposPtrs))
+	for i, repoPtr := range reposPtrs {
+		if repoPtr != nil {
+			repos[i] = *repoPtr
+		}
+	}
+
+	return connect.NewResponse(&v1.GetSuggestedReposResponse{
+		Repos: repos,
+	}), nil
+}
+
 func userToAPIResponse(user *protocol.User) *v1.User {
 	name := user.Name
 	if name == "" {

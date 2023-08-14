@@ -42,6 +42,8 @@ type UserServiceClient interface {
 	// DeleteSSHKey removes a public SSH key.
 	DeleteSSHKey(context.Context, *connect_go.Request[v1.DeleteSSHKeyRequest]) (*connect_go.Response[v1.DeleteSSHKeyResponse], error)
 	GetGitToken(context.Context, *connect_go.Request[v1.GetGitTokenRequest]) (*connect_go.Response[v1.GetGitTokenResponse], error)
+	// GetSuggestedRepos returns a list of suggested repositories to open for the user.
+	GetSuggestedRepos(context.Context, *connect_go.Request[v1.GetSuggestedReposRequest]) (*connect_go.Response[v1.GetSuggestedReposResponse], error)
 	BlockUser(context.Context, *connect_go.Request[v1.BlockUserRequest]) (*connect_go.Response[v1.BlockUserResponse], error)
 }
 
@@ -85,6 +87,11 @@ func NewUserServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts
 			baseURL+"/gitpod.experimental.v1.UserService/GetGitToken",
 			opts...,
 		),
+		getSuggestedRepos: connect_go.NewClient[v1.GetSuggestedReposRequest, v1.GetSuggestedReposResponse](
+			httpClient,
+			baseURL+"/gitpod.experimental.v1.UserService/GetSuggestedRepos",
+			opts...,
+		),
 		blockUser: connect_go.NewClient[v1.BlockUserRequest, v1.BlockUserResponse](
 			httpClient,
 			baseURL+"/gitpod.experimental.v1.UserService/BlockUser",
@@ -101,6 +108,7 @@ type userServiceClient struct {
 	getSSHKey            *connect_go.Client[v1.GetSSHKeyRequest, v1.GetSSHKeyResponse]
 	deleteSSHKey         *connect_go.Client[v1.DeleteSSHKeyRequest, v1.DeleteSSHKeyResponse]
 	getGitToken          *connect_go.Client[v1.GetGitTokenRequest, v1.GetGitTokenResponse]
+	getSuggestedRepos    *connect_go.Client[v1.GetSuggestedReposRequest, v1.GetSuggestedReposResponse]
 	blockUser            *connect_go.Client[v1.BlockUserRequest, v1.BlockUserResponse]
 }
 
@@ -134,6 +142,11 @@ func (c *userServiceClient) GetGitToken(ctx context.Context, req *connect_go.Req
 	return c.getGitToken.CallUnary(ctx, req)
 }
 
+// GetSuggestedRepos calls gitpod.experimental.v1.UserService.GetSuggestedRepos.
+func (c *userServiceClient) GetSuggestedRepos(ctx context.Context, req *connect_go.Request[v1.GetSuggestedReposRequest]) (*connect_go.Response[v1.GetSuggestedReposResponse], error) {
+	return c.getSuggestedRepos.CallUnary(ctx, req)
+}
+
 // BlockUser calls gitpod.experimental.v1.UserService.BlockUser.
 func (c *userServiceClient) BlockUser(ctx context.Context, req *connect_go.Request[v1.BlockUserRequest]) (*connect_go.Response[v1.BlockUserResponse], error) {
 	return c.blockUser.CallUnary(ctx, req)
@@ -152,6 +165,8 @@ type UserServiceHandler interface {
 	// DeleteSSHKey removes a public SSH key.
 	DeleteSSHKey(context.Context, *connect_go.Request[v1.DeleteSSHKeyRequest]) (*connect_go.Response[v1.DeleteSSHKeyResponse], error)
 	GetGitToken(context.Context, *connect_go.Request[v1.GetGitTokenRequest]) (*connect_go.Response[v1.GetGitTokenResponse], error)
+	// GetSuggestedRepos returns a list of suggested repositories to open for the user.
+	GetSuggestedRepos(context.Context, *connect_go.Request[v1.GetSuggestedReposRequest]) (*connect_go.Response[v1.GetSuggestedReposResponse], error)
 	BlockUser(context.Context, *connect_go.Request[v1.BlockUserRequest]) (*connect_go.Response[v1.BlockUserResponse], error)
 }
 
@@ -192,6 +207,11 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect_go.HandlerOpt
 		svc.GetGitToken,
 		opts...,
 	))
+	mux.Handle("/gitpod.experimental.v1.UserService/GetSuggestedRepos", connect_go.NewUnaryHandler(
+		"/gitpod.experimental.v1.UserService/GetSuggestedRepos",
+		svc.GetSuggestedRepos,
+		opts...,
+	))
 	mux.Handle("/gitpod.experimental.v1.UserService/BlockUser", connect_go.NewUnaryHandler(
 		"/gitpod.experimental.v1.UserService/BlockUser",
 		svc.BlockUser,
@@ -225,6 +245,10 @@ func (UnimplementedUserServiceHandler) DeleteSSHKey(context.Context, *connect_go
 
 func (UnimplementedUserServiceHandler) GetGitToken(context.Context, *connect_go.Request[v1.GetGitTokenRequest]) (*connect_go.Response[v1.GetGitTokenResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.UserService.GetGitToken is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) GetSuggestedRepos(context.Context, *connect_go.Request[v1.GetSuggestedReposRequest]) (*connect_go.Response[v1.GetSuggestedReposResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.UserService.GetSuggestedRepos is not implemented"))
 }
 
 func (UnimplementedUserServiceHandler) BlockUser(context.Context, *connect_go.Request[v1.BlockUserRequest]) (*connect_go.Response[v1.BlockUserResponse], error) {

@@ -9,7 +9,7 @@
 /* eslint-disable */
 /* @ts-nocheck */
 
-import {BlockUserRequest, BlockUserResponse, CreateSSHKeyRequest, CreateSSHKeyResponse, DeleteSSHKeyRequest, DeleteSSHKeyResponse, GetAuthenticatedUserRequest, GetAuthenticatedUserResponse, GetGitTokenRequest, GetGitTokenResponse, GetSSHKeyRequest, GetSSHKeyResponse, ListSSHKeysRequest, ListSSHKeysResponse} from "./user_pb.js";
+import {BlockUserRequest, BlockUserResponse, CreateSSHKeyRequest, CreateSSHKeyResponse, DeleteSSHKeyRequest, DeleteSSHKeyResponse, GetAuthenticatedUserRequest, GetAuthenticatedUserResponse, GetGitTokenRequest, GetGitTokenResponse, GetSSHKeyRequest, GetSSHKeyResponse, GetSuggestedReposRequest, GetSuggestedReposResponse, ListSSHKeysRequest, ListSSHKeysResponse} from "./user_pb.js";
 import {MethodKind} from "@bufbuild/protobuf";
 
 /**
@@ -83,6 +83,17 @@ export const UserService = {
       kind: MethodKind.Unary,
     },
     /**
+     * GetSuggestedRepos returns a list of suggested repositories to open for the user.
+     *
+     * @generated from rpc gitpod.experimental.v1.UserService.GetSuggestedRepos
+     */
+    getSuggestedRepos: {
+      name: "GetSuggestedRepos",
+      I: GetSuggestedReposRequest,
+      O: GetSuggestedReposResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
      * @generated from rpc gitpod.experimental.v1.UserService.BlockUser
      */
     blockUser: {
@@ -93,4 +104,3 @@ export const UserService = {
     },
   }
 } as const;
-

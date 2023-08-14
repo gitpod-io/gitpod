@@ -150,6 +150,11 @@ func (s *StubUserService) DeleteSSHKey(context.Context, *connect.Request[experim
 func (s *StubUserService) GetGitToken(context.Context, *connect.Request[experimental_v1.GetGitTokenRequest]) (*connect.Response[experimental_v1.GetGitTokenResponse], error) {
 	return nil, nil
 }
+
+func (s *StubUserService) GetSuggestedRepos(context.Context, *connect.Request[experimental_v1.GetSuggestedReposRequest]) (*connect.Response[experimental_v1.GetSuggestedReposResponse], error) {
+	return nil, nil
+}
+
 func (s *StubUserService) BlockUser(ctx context.Context, req *connect.Request[experimental_v1.BlockUserRequest]) (*connect.Response[experimental_v1.BlockUserResponse], error) {
 	s.blockedUsers = append(s.blockedUsers, req.Msg.GetUserId())
 	return connect.NewResponse(&experimental_v1.BlockUserResponse{}), nil

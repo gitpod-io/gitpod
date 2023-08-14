@@ -52,6 +52,9 @@ service UserService {
 
     rpc GetGitToken(GetGitTokenRequest) returns (GetGitTokenResponse) {}
 
+    // GetSuggestedRepos returns a list of suggested repositories to open for the user.
+    rpc GetSuggestedRepos(GetSuggestedReposRequest) returns (GetSuggestedReposResponse) {}
+
     rpc BlockUser(BlockUserRequest) returns (BlockUserResponse) {}
 }
 
@@ -129,6 +132,13 @@ message GitToken {
 
     // value is the actual token value for the token
     string value = 7;
+}
+
+message GetSuggestedReposRequest {
+}
+
+message GetSuggestedReposResponse {
+    repeated string repos = 1;
 }
 
 message BlockUserRequest {

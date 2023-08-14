@@ -22,6 +22,8 @@ import {
     DeleteSSHKeyResponse,
     GetGitTokenResponse,
     BlockUserResponse,
+    GetSuggestedReposRequest,
+    GetSuggestedReposResponse,
 } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_pb";
 import { WorkspaceStarter } from "../workspace/workspace-starter";
 import { UserAuthentication } from "../user/user-authentication";
@@ -35,6 +37,10 @@ export class APIUserService implements ServiceImpl<typeof UserServiceInterface> 
     @inject(UserAuthentication) protected readonly userService: UserAuthentication;
 
     public async getAuthenticatedUser(req: GetAuthenticatedUserRequest): Promise<GetAuthenticatedUserResponse> {
+        throw new ConnectError("unimplemented", Code.Unimplemented);
+    }
+
+    public async getSuggestedRepos(_: GetSuggestedReposRequest): Promise<GetSuggestedReposResponse> {
         throw new ConnectError("unimplemented", Code.Unimplemented);
     }
 

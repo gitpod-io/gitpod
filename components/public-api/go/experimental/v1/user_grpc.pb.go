@@ -37,6 +37,8 @@ type UserServiceClient interface {
 	// DeleteSSHKey removes a public SSH key.
 	DeleteSSHKey(ctx context.Context, in *DeleteSSHKeyRequest, opts ...grpc.CallOption) (*DeleteSSHKeyResponse, error)
 	GetGitToken(ctx context.Context, in *GetGitTokenRequest, opts ...grpc.CallOption) (*GetGitTokenResponse, error)
+	// GetSuggestedRepos returns a list of suggested repositories to open for the user.
+	GetSuggestedRepos(ctx context.Context, in *GetSuggestedReposRequest, opts ...grpc.CallOption) (*GetSuggestedReposResponse, error)
 	BlockUser(ctx context.Context, in *BlockUserRequest, opts ...grpc.CallOption) (*BlockUserResponse, error)
 }
 
@@ -102,6 +104,15 @@ func (c *userServiceClient) GetGitToken(ctx context.Context, in *GetGitTokenRequ
 	return out, nil
 }
 
+func (c *userServiceClient) GetSuggestedRepos(ctx context.Context, in *GetSuggestedReposRequest, opts ...grpc.CallOption) (*GetSuggestedReposResponse, error) {
+	out := new(GetSuggestedReposResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.UserService/GetSuggestedRepos", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *userServiceClient) BlockUser(ctx context.Context, in *BlockUserRequest, opts ...grpc.CallOption) (*BlockUserResponse, error) {
 	out := new(BlockUserResponse)
 	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.UserService/BlockUser", in, out, opts...)
@@ -126,6 +137,8 @@ type UserServiceServer interface {
 	// DeleteSSHKey removes a public SSH key.
 	DeleteSSHKey(context.Context, *DeleteSSHKeyRequest) (*DeleteSSHKeyResponse, error)
 	GetGitToken(context.Context, *GetGitTokenRequest) (*GetGitTokenResponse, error)
+	// GetSuggestedRepos returns a list of suggested repositories to open for the user.
+	GetSuggestedRepos(context.Context, *GetSuggestedReposRequest) (*GetSuggestedReposResponse, error)
 	BlockUser(context.Context, *BlockUserRequest) (*BlockUserResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
@@ -151,6 +164,9 @@ func (UnimplementedUserServiceServer) DeleteSSHKey(context.Context, *DeleteSSHKe
 }
 func (UnimplementedUserServiceServer) GetGitToken(context.Context, *GetGitTokenRequest) (*GetGitTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetGitToken not implemented")
+}
+func (UnimplementedUserServiceServer) GetSuggestedRepos(context.Context, *GetSuggestedReposRequest) (*GetSuggestedReposResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSuggestedRepos not implemented")
 }
 func (UnimplementedUserServiceServer) BlockUser(context.Context, *BlockUserRequest) (*BlockUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BlockUser not implemented")
@@ -276,6 +292,24 @@ func _UserService_GetGitToken_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_GetSuggestedRepos_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSuggestedReposRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetSuggestedRepos(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.experimental.v1.UserService/GetSuggestedRepos",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetSuggestedRepos(ctx, req.(*GetSuggestedReposRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UserService_BlockUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(BlockUserRequest)
 	if err := dec(in); err != nil {
@@ -324,6 +358,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetGitToken",
 			Handler:    _UserService_GetGitToken_Handler,
+		},
+		{
+			MethodName: "GetSuggestedRepos",
+			Handler:    _UserService_GetSuggestedRepos_Handler,
 		},
 		{
 			MethodName: "BlockUser",

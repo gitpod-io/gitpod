@@ -668,6 +668,74 @@ export class GitToken extends Message<GitToken> {
 }
 
 /**
+ * @generated from message gitpod.experimental.v1.GetSuggestedReposRequest
+ */
+export class GetSuggestedReposRequest extends Message<GetSuggestedReposRequest> {
+  constructor(data?: PartialMessage<GetSuggestedReposRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.GetSuggestedReposRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetSuggestedReposRequest {
+    return new GetSuggestedReposRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetSuggestedReposRequest {
+    return new GetSuggestedReposRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetSuggestedReposRequest {
+    return new GetSuggestedReposRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetSuggestedReposRequest | PlainMessage<GetSuggestedReposRequest> | undefined, b: GetSuggestedReposRequest | PlainMessage<GetSuggestedReposRequest> | undefined): boolean {
+    return proto3.util.equals(GetSuggestedReposRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.GetSuggestedReposResponse
+ */
+export class GetSuggestedReposResponse extends Message<GetSuggestedReposResponse> {
+  /**
+   * @generated from field: repeated string repos = 1;
+   */
+  repos: string[] = [];
+
+  constructor(data?: PartialMessage<GetSuggestedReposResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.GetSuggestedReposResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "repos", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetSuggestedReposResponse {
+    return new GetSuggestedReposResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetSuggestedReposResponse {
+    return new GetSuggestedReposResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetSuggestedReposResponse {
+    return new GetSuggestedReposResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetSuggestedReposResponse | PlainMessage<GetSuggestedReposResponse> | undefined, b: GetSuggestedReposResponse | PlainMessage<GetSuggestedReposResponse> | undefined): boolean {
+    return proto3.util.equals(GetSuggestedReposResponse, a, b);
+  }
+}
+
+/**
  * @generated from message gitpod.experimental.v1.BlockUserRequest
  */
 export class BlockUserRequest extends Message<BlockUserRequest> {
@@ -744,4 +812,3 @@ export class BlockUserResponse extends Message<BlockUserResponse> {
     return proto3.util.equals(BlockUserResponse, a, b);
   }
 }
-
