@@ -323,7 +323,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		return false
 	}
 
-	pbaseref, err := reference.Parse(baseref)
+	pbaseref, err := reference.ParseNormalizedNamed(baseref)
 	if err != nil {
 		return xerrors.Errorf("cannot parse baseref: %v", err)
 	}
@@ -336,9 +336,10 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 	wsref, err := reference.ParseNamed(wsrefstr)
 	var additionalAuth []byte
 	if err == nil {
-		additionalAuth, err = json.Marshal(reqauth.GetImageBuildAuthFor([]string{
+		ath := reqauth.GetImageBuildAuthFor(ctx, o.Auth, []string{reference.Domain(pbaseref)}, []string{
 			reference.Domain(wsref),
-		}))
+		})
+		additionalAuth, err = json.Marshal(ath)
 		if err != nil {
 			return xerrors.Errorf("cannot marshal additional auth: %w", err)
 		}

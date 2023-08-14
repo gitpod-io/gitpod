@@ -367,7 +367,7 @@ func (a AllowedAuthFor) additionalAuth(domain string) *Authentication {
 type ImageBuildAuth map[string]types.AuthConfig
 
 // GetImageBuildAuthFor produces authentication in the format an image builds needs
-func (a AllowedAuthFor) GetImageBuildAuthFor(blocklist []string) (res ImageBuildAuth) {
+func (a AllowedAuthFor) GetImageBuildAuthFor(ctx context.Context, auth RegistryAuthenticator, additionalRegistries []string, blocklist []string) (res ImageBuildAuth) {
 	res = make(ImageBuildAuth)
 	for reg := range a.Additional {
 		var blocked bool
@@ -381,6 +381,17 @@ func (a AllowedAuthFor) GetImageBuildAuthFor(blocklist []string) (res ImageBuild
 			continue
 		}
 		ath := a.additionalAuth(reg)
+		res[reg] = types.AuthConfig(*ath)
+	}
+	for _, reg := range additionalRegistries {
+		ath, err := auth.Authenticate(ctx, reg)
+		if err != nil {
+			log.WithError(err).WithField("registry", reg).Warn("cannot get authentication for additioanl registry for image build")
+			continue
+		}
+		if ath.Empty() {
+			continue
+		}
 		res[reg] = types.AuthConfig(*ath)
 	}
 
