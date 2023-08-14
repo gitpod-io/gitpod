@@ -37,7 +37,6 @@ export type GuardedResource =
     | GuardedContentBlob
     | GuardEnvVar
     | GuardedTeam
-    | GuardedCostCenter
     | GuardedWorkspaceLog
     | GuardedPrebuild;
 
@@ -52,7 +51,6 @@ const ALL_GUARDED_RESOURCE_KINDS = new Set<GuardedResourceKind>([
     "contentBlob",
     "envVar",
     "team",
-    "costCenter",
     "workspaceLog",
 ]);
 export function isGuardedResourceKind(kind: any): kind is GuardedResourceKind {
@@ -105,24 +103,6 @@ export interface GuardedTeam {
     subject: Team;
     members: TeamMemberInfo[];
 }
-
-export interface GuardedCostCenter {
-    kind: "costCenter";
-    //subject: CostCenter;
-    owner: CostCenterOwner;
-    // team: Team;
-    // members: TeamMemberInfo[];
-}
-type CostCenterOwner =
-    | {
-          kind: "user";
-          userId: string;
-      }
-    | {
-          kind: "team";
-          team: Team;
-          members: TeamMemberInfo[];
-      };
 
 export interface GuardedGitpodToken {
     kind: "gitpodToken";
@@ -185,18 +165,6 @@ export class TeamMemberResourceGuard implements ResourceAccessGuard {
                 return await this.hasAccessToWorkspace(resource.subject, resource.teamMembers);
             case "prebuild":
                 return !!resource.teamMembers?.some((m) => m.userId === this.userId);
-            case "costCenter":
-                const owner = resource.owner;
-                if (owner.kind === "user") {
-                    // This is handled in the "OwnerResourceGuard"
-                    return false;
-                }
-                if (operation === "get") {
-                    return owner.members.some((m) => m.userId === this.userId);
-                }
-                // TODO(gpl) We should check whether we're looking at the right team for the right CostCenter here!
-                // Only team "owners" are allowed to write CostCenters
-                return owner.members.filter((m) => m.role === "owner").some((m) => m.userId === this.userId);
         }
         return false;
     }
@@ -254,13 +222,6 @@ export class OwnerResourceGuard implements ResourceAccessGuard {
                             (m) => m.userId === this.userId && m.role === "owner" && !m.ownedByOrganization,
                         );
                 }
-            case "costCenter":
-                const owner = resource.owner;
-                if (owner.kind === "team") {
-                    // This is handled in the "TeamMemberResourceGuard"
-                    return false;
-                }
-                return owner.userId === this.userId;
             case "workspaceLog":
                 return resource.subject.ownerId === this.userId;
             case "prebuild":
