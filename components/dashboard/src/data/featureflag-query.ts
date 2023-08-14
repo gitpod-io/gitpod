@@ -30,7 +30,9 @@ const featureFlags = {
     enabledOrbitalDiscoveries: "",
 };
 
-export const useFeatureFlag = (featureFlag: keyof typeof featureFlags) => {
+type FeatureFlags = typeof featureFlags;
+
+export const useFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): FeatureFlags[K] | boolean => {
     const user = useCurrentUser();
     const org = useCurrentOrg().data;
     const project = useCurrentProject().project;

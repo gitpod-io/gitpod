@@ -40,7 +40,7 @@ const useOnboardingState = () => {
         },
         {
             // Only query if feature flag is enabled
-            enabled: !!enableDedicatedOnboardingFlow,
+            enabled: enableDedicatedOnboardingFlow,
         },
     );
 };
