@@ -80,6 +80,7 @@ export const useAnalyticsTracking = () => {
             },
         });
 
+        // Initiate every discovery we have inside of Configcat. This does not show the modals right away, but rather lets Orbital's cleverness take over and decide when to show them.
         for (const id of discoveryIds) {
             console.debug("Triggering modal", id);
             orbital("trigger", id, { force: true, position: "bottom_left" });
