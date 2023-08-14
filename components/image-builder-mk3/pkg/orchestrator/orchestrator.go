@@ -18,6 +18,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/service/ecr"
 	"github.com/docker/distribution/reference"
 	"github.com/google/uuid"
 	"github.com/opentracing/opentracing-go"
@@ -29,6 +30,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -55,17 +57,26 @@ const (
 
 // NewOrchestratingBuilder creates a new orchestrating image builder
 func NewOrchestratingBuilder(cfg config.Configuration) (res *Orchestrator, err error) {
-	var authentication auth.RegistryAuthenticator
+	var authentication auth.CompositeAuth
 	if cfg.PullSecretFile != "" {
 		fn := cfg.PullSecretFile
 		if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
 			fn = filepath.Join(tproot, fn)
 		}
 
-		authentication, err = auth.NewDockerConfigFileAuth(fn)
+		ath, err := auth.NewDockerConfigFileAuth(fn)
 		if err != nil {
-			return
+			return nil, err
 		}
+		authentication = append(authentication, ath)
+	}
+	if cfg.EnableAdditionalECRAuth {
+		awsCfg, err := awsconfig.LoadDefaultConfig(context.Background())
+		if err != nil {
+			return nil, err
+		}
+		ecrc := ecr.NewFromConfig(awsCfg)
+		authentication = append(authentication, auth.NewECRAuthenticator(ecrc))
 	}
 
 	var wsman wsmanapi.WorkspaceManagerClient
@@ -182,7 +193,7 @@ func (o *Orchestrator) ResolveWorkspaceImage(ctx context.Context, req *protocol.
 
 	// to check if the image exists we must have access to the image caching registry and the refstr we check here does not come
 	// from the user. Thus we can safely use auth.AllowedAuthForAll here.
-	auth, err := auth.AllowedAuthForAll().GetAuthFor(o.Auth, refstr)
+	auth, err := auth.AllowedAuthForAll().GetAuthFor(ctx, o.Auth, refstr)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get workspace image authentication: %v", err)
 	}
@@ -217,7 +228,6 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 
 	// resolve build request authentication
 	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
-
 	baseref, err := o.getBaseImageRef(ctx, req.Source, reqauth)
 	if _, ok := status.FromError(err); err != nil && ok {
 		return err
@@ -229,7 +239,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 	if err != nil {
 		return status.Errorf(codes.Internal, "cannot produce workspace image ref: %q", err)
 	}
-	wsrefAuth, err := auth.AllowedAuthForAll().GetAuthFor(o.Auth, wsrefstr)
+	wsrefAuth, err := auth.AllowedAuthForAll().GetAuthFor(ctx, o.Auth, wsrefstr)
 	if err != nil {
 		return status.Errorf(codes.Internal, "cannot get workspace image authentication: %q", err)
 	}
@@ -549,16 +559,16 @@ func (o *Orchestrator) checkImageExists(ctx context.Context, ref string, authent
 
 // getAbsoluteImageRef returns the "digest" form of an image, i.e. contains no mutable image tags
 func (o *Orchestrator) getAbsoluteImageRef(ctx context.Context, ref string, allowedAuth auth.AllowedAuthFor) (res string, err error) {
-	auth, err := allowedAuth.GetAuthFor(o.Auth, ref)
+	auth, err := allowedAuth.GetAuthFor(ctx, o.Auth, ref)
 	if err != nil {
 		return "", status.Errorf(codes.InvalidArgument, "cannt resolve base image ref: %v", err)
 	}
 
 	ref, err = o.RefResolver.Resolve(ctx, ref, resolve.WithAuthentication(auth))
-	if xerrors.Is(err, resolve.ErrNotFound) {
+	if errors.Is(err, resolve.ErrNotFound) {
 		return "", status.Error(codes.NotFound, "cannot resolve image")
 	}
-	if xerrors.Is(err, resolve.ErrUnauthorized) {
+	if errors.Is(err, resolve.ErrUnauthorized) {
 		return "", status.Error(codes.Unauthenticated, "cannot resolve image")
 	}
 	if err != nil {

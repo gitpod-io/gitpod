@@ -258,10 +258,12 @@ const (
 )
 
 type ContainerRegistry struct {
-	InCluster                 *bool                      `json:"inCluster,omitempty" validate:"required"`
-	External                  *ContainerRegistryExternal `json:"external,omitempty" validate:"required_if=InCluster false"`
-	S3Storage                 *S3Storage                 `json:"s3storage,omitempty"`
-	PrivateBaseImageAllowList []string                   `json:"privateBaseImageAllowList"`
+	InCluster *bool                      `json:"inCluster,omitempty" validate:"required"`
+	External  *ContainerRegistryExternal `json:"external,omitempty" validate:"required_if=InCluster false"`
+	S3Storage *S3Storage                 `json:"s3storage,omitempty"`
+
+	PrivateBaseImageAllowList []string `json:"privateBaseImageAllowList"`
+	EnableAdditionalECRAuth   bool     `json:"enableAdditionalECRAuth"`
 }
 
 type ContainerRegistryExternal struct {

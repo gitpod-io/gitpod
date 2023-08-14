@@ -227,7 +227,7 @@ func (pr *PrecachingRefResolver) StartCaching(ctx context.Context, interval time
 					continue
 				}
 
-				auth, err := pr.Auth.Authenticate(reference.Domain(ref))
+				auth, err := pr.Auth.Authenticate(ctx, reference.Domain(ref))
 				if err != nil {
 					log.WithError(err).WithField("ref", c).Warn("unable to precache reference: cannot authenticate")
 					continue
