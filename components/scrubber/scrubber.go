@@ -45,7 +45,7 @@ Example:
 	}
 */
 type TrustedValue interface {
-	isTrustedValue()
+	IsTrustedValue()
 }
 
 // Scrubber defines the interface for a scrubber, which can sanitise various types of data.

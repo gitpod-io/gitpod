@@ -67,7 +67,7 @@ type TrustedStructToTest struct {
 	StructToTest
 }
 
-func (TrustedStructToTest) isTrustedValue() {}
+func (TrustedStructToTest) IsTrustedValue() {}
 
 func scrubStructToTestAsTrustedValue(v *StructToTest) TrustedValue {
 	return scrubStructToTest(v)
