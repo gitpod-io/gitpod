@@ -1788,7 +1788,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             })
                 .then((workspaces) => {
                     workspaces.forEach((ws) => {
-                        const repoUrl = Workspace.getFullRepositoryUrl(ws.workspace);
+                        let repoUrl;
+                        if (CommitContext.is(ws.workspace.context)) {
+                            repoUrl = ws.workspace.context?.repository?.cloneUrl?.replace(/\.git$/, "");
+                        }
+                        if (!repoUrl) {
+                            repoUrl = ws.workspace.contextURL;
+                        }
                         if (repoUrl) {
                             const lastUse = WorkspaceInfo.lastActiveISODate(ws);
                             suggestions.push({ url: repoUrl, lastUse, priority: 10 });

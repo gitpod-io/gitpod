@@ -855,20 +855,6 @@ export type WorkspaceSoftDeletion = "user" | "gc";
 export type WorkspaceType = "regular" | "prebuild";
 
 export namespace Workspace {
-    export function getFullRepositoryName(ws: Workspace): string | undefined {
-        if (CommitContext.is(ws.context)) {
-            return ws.context.repository.owner + "/" + ws.context.repository.name;
-        }
-        return undefined;
-    }
-
-    export function getFullRepositoryUrl(ws: Workspace): string | undefined {
-        if (CommitContext.is(ws.context)) {
-            return `https://${ws.context.repository.host}/${getFullRepositoryName(ws)}`;
-        }
-        return undefined;
-    }
-
     export function getPullRequestNumber(ws: Workspace): number | undefined {
         if (PullRequestContext.is(ws.context)) {
             return ws.context.nr;
