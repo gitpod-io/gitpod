@@ -85,6 +85,6 @@ export const useAnalyticsTracking = () => {
             orbital("trigger", id, { force: true, position: "bottom_left" });
         }
 
-        return orbital("reset");
+        return () => orbital("reset");
     }, [discoveryIds, isDark, isOrbitalLoaded, orbital, user]);
 };
