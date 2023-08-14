@@ -302,7 +302,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (client) {
             this.disposables.push(Disposable.create(() => (this.client = undefined)));
         }
-        this.disposables.push(this.shutdownTokenSource);
+        this.disposables.push(Disposable.create(() => this.shutdownTokenSource.cancel()));
         this.client = client;
         this.userID = userID;
         this.resourceAccessGuard = accessGuard;

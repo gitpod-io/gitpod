@@ -74,7 +74,7 @@ export class PrebuildManager implements Disposable {
     private readonly disposables = new DisposableCollection();
 
     constructor() {
-        this.disposables.push(this.shutdownTokenSource);
+        this.disposables.push(Disposable.create(() => this.shutdownTokenSource.cancel()));
     }
 
     async abortPrebuildsForBranch(ctx: TraceContext, project: Project, user: User, branch: string): Promise<void> {
