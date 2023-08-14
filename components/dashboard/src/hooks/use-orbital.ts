@@ -7,6 +7,7 @@
 import { useEffect, useState } from "react";
 import type { orbital } from "@useorbital/client-types/types";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { isGitpodIo } from "../utils";
 
 declare global {
     interface Window {
@@ -21,6 +22,7 @@ export const useOrbital = (spaceId: string) => {
     const enabledOrbitalDiscoveries = useFeatureFlag("enabledOrbitalDiscoveries");
 
     useEffect(() => {
+        if (!isGitpodIo()) return;
         if (document.getElementById("orbital-client")) return;
         if (discoveryIds.size === 0) return;
 
@@ -49,7 +51,6 @@ export const useOrbital = (spaceId: string) => {
     }, [discoveryIds.size, spaceId]);
 
     useEffect(() => {
-        console.debug(enabledOrbitalDiscoveries);
         if (!enabledOrbitalDiscoveries || enabledOrbitalDiscoveries === true) return;
         setDiscoveryIds(new Set(enabledOrbitalDiscoveries.split(",").filter((value) => !!value)));
     }, [enabledOrbitalDiscoveries]);

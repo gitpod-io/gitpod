@@ -16,7 +16,6 @@ export const useAnalyticsTracking = () => {
     const user = useCurrentUser();
     const { isDark } = useTheme();
 
-    // Todo(ft): only enable on gitpod.io
     const { orbital, isLoaded: isOrbitalLoaded, discoveryIds } = useOrbital("4aErj3uvRbye");
 
     // listen and notify Segment of client-side path updates
@@ -64,10 +63,8 @@ export const useAnalyticsTracking = () => {
             return;
         }
 
-        console.debug("IDing user");
         orbital("identify", user.id);
 
-        console.log(`Changing theme to ${isDark ? "dark" : "light"}`);
         orbital("customConfig", {
             theme: {
                 colorScheme: isDark ? "dark" : "light",
@@ -82,8 +79,7 @@ export const useAnalyticsTracking = () => {
 
         // Initiate every discovery we have inside of Configcat. This does not show the modals right away, but rather lets Orbital's cleverness take over and decide when to show them.
         for (const id of discoveryIds) {
-            console.debug("Triggering modal", id);
-            orbital("trigger", id, { force: true, position: "bottom_left" });
+            orbital("trigger", id, { position: "bottom_left" });
         }
 
         return () => orbital("reset");
