@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package gitpod.experimental.v1;
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1";
+
+service SCMService {
+    // GetSuggestedRepoURLs returns a list of suggested repositories to open for
+    // the user.
+    rpc GetSuggestedRepoURLs(GetSuggestedRepoURLsRequest)
+        returns (GetSuggestedRepoURLsResponse) {}
+}
+
+message GetSuggestedRepoURLsRequest {}
+
+message GetSuggestedRepoURLsResponse { repeated string repos = 1; }
