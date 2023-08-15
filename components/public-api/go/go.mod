@@ -3,11 +3,11 @@ module github.com/gitpod-io/gitpod/components/public-api/go
 go 1.20
 
 require (
-	github.com/bufbuild/connect-go v1.5.2
+	github.com/bufbuild/connect-go v1.10.0
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/stretchr/testify v1.8.1
 	google.golang.org/grpc v1.52.3
-	google.golang.org/protobuf v1.30.0
+	google.golang.org/protobuf v1.31.0
 )
 
 require (
@@ -38,7 +38,7 @@ require (
 	go.uber.org/atomic v1.4.0 // indirect
 	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/sync v0.2.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect

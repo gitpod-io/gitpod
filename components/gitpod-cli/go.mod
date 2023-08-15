@@ -3,7 +3,7 @@ module github.com/gitpod-io/gitpod/gitpod-cli
 go 1.20
 
 require (
-	github.com/bufbuild/connect-go v1.5.2
+	github.com/bufbuild/connect-go v1.10.0
 	github.com/creack/pty v1.1.17
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-20230220133850-852f5cd5b180
@@ -39,7 +39,7 @@ require (
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/onsi/gomega v1.24.2 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 // indirect
-	golang.org/x/sys v0.8.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
 	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6 // indirect
 )
 
@@ -58,7 +58,7 @@ require (
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
-	google.golang.org/protobuf v1.30.0 // indirect
+	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0 // indirect
 )
 
