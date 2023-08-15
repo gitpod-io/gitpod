@@ -237,6 +237,28 @@ describe("WorkspaceService", async () => {
             "getWorkspace should return NOT_FOUND after hard-deletion",
         );
     });
+
+    it("should setPinned", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        await expectError(ErrorCodes.NOT_FOUND, svc.setPinned(stranger.id, ws.id, true));
+        await svc.setPinned(owner.id, ws.id, true);
+        const ws2 = await svc.getWorkspace(owner.id, ws.id);
+        expect(ws2.pinned, "workspace should be pinned").to.equal(true);
+    });
+
+    it("should setDescription", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+        const desc = "Some description";
+
+        await svc.setDescription(owner.id, ws.id, desc);
+        const ws2 = await svc.getWorkspace(owner.id, ws.id);
+        expect(ws2.description).to.equal(desc);
+
+        await expectError(ErrorCodes.NOT_FOUND, svc.setDescription(stranger.id, ws.id, desc));
+    });
 });
 
 async function createTestWorkspace(svc: WorkspaceService, org: Organization, owner: User, project: Project) {
