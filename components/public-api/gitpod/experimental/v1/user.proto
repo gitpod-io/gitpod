@@ -36,8 +36,7 @@ message SSHKey {
 
 service UserService {
     // GetAuthenticatedUser gets the user info.
-    rpc GetAuthenticatedUser(GetAuthenticatedUserRequest)
-        returns (GetAuthenticatedUserResponse) {};
+    rpc GetAuthenticatedUser(GetAuthenticatedUserRequest) returns (GetAuthenticatedUserResponse) {};
 
     // ListSSHKeys lists the public SSH keys.
     rpc ListSSHKeys(ListSSHKeysRequest) returns (ListSSHKeysResponse) {};
@@ -56,15 +55,21 @@ service UserService {
     rpc BlockUser(BlockUserRequest) returns (BlockUserResponse) {}
 }
 
-message GetAuthenticatedUserRequest {}
-
-message GetAuthenticatedUserResponse { User user = 1; }
-
-message ListSSHKeysRequest {
-  // TODO: pagination options
+message GetAuthenticatedUserRequest {
 }
 
-message ListSSHKeysResponse { repeated SSHKey keys = 1; }
+message GetAuthenticatedUserResponse {
+    User user = 1;
+}
+
+
+message ListSSHKeysRequest {
+    // TODO: pagination options
+}
+
+message ListSSHKeysResponse {
+    repeated SSHKey keys = 1;
+}
 
 message CreateSSHKeyRequest {
     // name is the SSH key name
@@ -74,25 +79,34 @@ message CreateSSHKeyRequest {
     string key = 2;
 }
 
-message CreateSSHKeyResponse { SSHKey key = 1; }
+message CreateSSHKeyResponse {
+    SSHKey key = 1;
+}
 
 message GetSSHKeyRequest {
     // id is the unique identifier of the SSH key to retreive.
     string key_id = 1;
 }
 
-message GetSSHKeyResponse { SSHKey key = 1; }
+message GetSSHKeyResponse {
+    SSHKey key = 1;
+}
 
 message DeleteSSHKeyRequest {
     // id is the unique identifier of the SSH key to retreive.
     string key_id = 1;
 }
 
-message DeleteSSHKeyResponse {}
+message DeleteSSHKeyResponse {
+}
 
-message GetGitTokenRequest { string host = 1; }
+message GetGitTokenRequest {
+    string host = 1;
+}
 
-message GetGitTokenResponse { GitToken token = 1; }
+message GetGitTokenResponse {
+    GitToken token = 1;
+}
 
 message GitToken {
     // expiry_date is the date when the token will expire
