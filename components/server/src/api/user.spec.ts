@@ -8,7 +8,6 @@ import { suite, test } from "@testdeck/mocha";
 import { APIUserService } from "./user";
 import { Container } from "inversify";
 import { testContainer } from "@gitpod/gitpod-db/lib";
-import { WorkspaceStarter } from "../workspace/workspace-starter";
 import { UserAuthentication } from "../user/user-authentication";
 import { BlockUserRequest, BlockUserResponse } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_pb";
 import { User } from "@gitpod/gitpod-protocol";
@@ -18,24 +17,26 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { v4 as uuidv4 } from "uuid";
 import { ConnectError, Code } from "@bufbuild/connect";
 import * as chai from "chai";
+import { WorkspaceService } from "../workspace/workspace-service";
 
 const expect = chai.expect;
 
 @suite()
 export class APIUserServiceSpec {
     private container: Container;
-    private workspaceStarterMock: WorkspaceStarter = {
+    private workspaceStarterMock: WorkspaceService = {
         stopRunningWorkspacesForUser: async (
             ctx: TraceContext,
-            userID: string,
+            userId: string,
+            userIdToStop: string,
             reason: string,
             policy?: StopWorkspacePolicy,
         ): Promise<Workspace[]> => {
             return [];
         },
-    } as WorkspaceStarter;
+    } as WorkspaceService;
     private userServiceMock: UserAuthentication = {
-        blockUser: async (targetUserId: string, block: boolean): Promise<User> => {
+        blockUser: async (userId: string, targetUserId: string, block: boolean): Promise<User> => {
             return {
                 id: targetUserId,
             } as User;
@@ -45,7 +46,7 @@ export class APIUserServiceSpec {
     async before() {
         this.container = testContainer.createChild();
 
-        this.container.bind(WorkspaceStarter).toConstantValue(this.workspaceStarterMock);
+        this.container.bind(WorkspaceService).toConstantValue(this.workspaceStarterMock);
         this.container.bind(UserAuthentication).toConstantValue(this.userServiceMock);
         this.container.bind(APIUserService).toSelf().inSingletonScope();
     }

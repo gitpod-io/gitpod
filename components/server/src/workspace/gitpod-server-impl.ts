@@ -130,7 +130,7 @@ import { UserDeletionService } from "../user/user-deletion-service";
 import { UserAuthentication } from "../user/user-authentication";
 import { ContextParser } from "./context-parser-service";
 import { GitTokenScopeGuesser } from "./git-token-scope-guesser";
-import { WorkspaceStarter, isClusterMaintenanceError } from "./workspace-starter";
+import { isClusterMaintenanceError } from "./workspace-starter";
 import { HeadlessLogUrls } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { HeadlessLogService, HeadlessLogEndpoint } from "./headless-log-service";
 import { ConfigProvider, InvalidGitpodYMLError } from "./config-provider";
@@ -155,7 +155,7 @@ import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
 import { VerificationService } from "../auth/verification-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
+import { EntitlementService } from "../billing/entitlement-service";
 import { formatPhoneNumber } from "../user/phone-numbers";
 import { IDEService } from "../ide-service";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
@@ -167,8 +167,6 @@ import {
     getExperimentsClientForBackend,
 } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { increaseDashboardErrorBoundaryCounter, reportCentralizedPermsValidation } from "../prometheus-metrics";
-import { RegionService } from "./region-service";
-import { isWorkspaceRegion, WorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { EnvVarService } from "./env-var-service";
 import { LinkedInService } from "../linkedin-service";
 import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
@@ -192,8 +190,8 @@ import { OrganizationService } from "../orgs/organization-service";
 import { RedisSubscriber } from "../messaging/redis-subscriber";
 import { UsageService } from "../orgs/usage-service";
 import { UserService } from "../user/user-service";
-import { WorkspaceService } from "./workspace-service";
 import { SSHKeyService } from "../user/sshkey-service";
+import { StartWorkspaceOptions, WorkspaceService } from "./workspace-service";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -223,7 +221,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(IncrementalPrebuildsService) private readonly incrementalPrebuildsService: IncrementalPrebuildsService,
         @inject(ConfigProvider) private readonly configProvider: ConfigProvider,
         @inject(WorkspaceService) private readonly workspaceService: WorkspaceService,
-        @inject(WorkspaceStarter) private readonly workspaceStarter: WorkspaceStarter,
         @inject(SnapshotService) private readonly snapshotService: SnapshotService,
         @inject(WorkspaceManagerClientProvider)
         private readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider,
@@ -839,7 +836,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("deleteAccount");
         await this.guardAccess({ kind: "user", subject: user! }, "delete");
 
-        await this.userDeletionService.deleteUser(user.id);
+        await this.userDeletionService.deleteUser(user.id, user.id);
     }
 
     public async getWorkspace(ctx: TraceContext, workspaceId: string): Promise<WorkspaceInfo> {
@@ -911,15 +908,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("startWorkspace", undefined, { workspaceId });
 
+        // (gpl) We keep this check here for backwards compatibility, it should be superfluous in the future
         const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
-        const mayStartPromise = this.mayStartWorkspace(
-            ctx,
-            user,
-            workspace.organizationId,
-            this.workspaceDb.trace(ctx).findRegularRunningInstances(user.id),
-        );
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
 
+        // (gpl) We keep this check here for backwards compatibility, it should be superfluous in the future
         const runningInstance = await this.workspaceDb.trace(ctx).findRunningInstance(workspace.id);
         if (runningInstance) {
             traceWI(ctx, { instanceId: runningInstance.id });
@@ -935,38 +928,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             };
         }
 
-        if (!!workspace.softDeleted) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Workspace not found!");
-        }
-
+        // (gpl) We keep this check here for backwards compatibility, it should be superfluous in the future
         // no matter if the workspace is shared or not, you cannot create a new instance
         await this.guardAccess({ kind: "workspaceInstance", subject: undefined, workspace }, "create");
 
-        if (workspace.type !== "regular") {
-            throw new ApplicationError(ErrorCodes.PERMISSION_DENIED, "Cannot (re-)start irregular workspace.");
-        }
-
-        if (workspace.deleted) {
-            throw new ApplicationError(ErrorCodes.PERMISSION_DENIED, "Cannot (re-)start a deleted workspace.");
-        }
-        const envVarsPromise = this.envVarService.resolve(workspace);
-        const projectPromise = workspace.projectId
-            ? ApplicationError.notFoundToUndefined(this.projectsService.getProject(user.id, workspace.projectId))
-            : Promise.resolve(undefined);
-
-        await mayStartPromise;
-
-        options.region = await this.determineWorkspaceRegion(workspace, options.region || "");
-
-        // at this point we're about to actually start a new workspace
-        const result = await this.workspaceStarter.startWorkspace(
-            ctx,
-            workspace,
-            user,
-            await projectPromise,
-            await envVarsPromise,
-            options,
-        );
+        const opts: StartWorkspaceOptions = {
+            ...options,
+            clientRegionCode: this.clientHeaderFields?.clientRegion,
+        };
+        const result = await this.workspaceService.startWorkspace(ctx, user, workspaceId, opts);
         traceWI(ctx, { instanceId: result.instanceID });
         return result;
     }
@@ -1396,7 +1366,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 ? (await this.projectsService.findProjectsByCloneUrl(user.id, context.repository.cloneUrl))[0]
                 : undefined;
 
-            const mayStartWorkspacePromise = this.mayStartWorkspace(
+            const mayStartWorkspacePromise = this.workspaceService.mayStartWorkspace(
                 ctx,
                 user,
                 options.organizationId,
@@ -1439,19 +1409,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 throw err;
             }
 
-            const envVarsPromise = this.envVarService.resolve(workspace);
-            options.region = await this.determineWorkspaceRegion(workspace, options.region || "");
-
             logContext.workspaceId = workspace.id;
             traceWI(ctx, { workspaceId: workspace.id });
-            const startWorkspaceResult = await this.workspaceStarter.startWorkspace(
-                ctx,
-                workspace,
-                user,
-                project,
-                await envVarsPromise,
-                options,
-            );
+
+            const opts: StartWorkspaceOptions = {
+                ...options,
+                clientRegionCode: this.clientHeaderFields?.clientRegion,
+            };
+            const startWorkspaceResult = await this.workspaceService.startWorkspace(ctx, user, workspace.id, opts);
             ctx.span?.log({ event: "startWorkspaceComplete", ...startWorkspaceResult });
 
             return {
@@ -1653,41 +1618,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         pollPrebuildAvailable.cancel();
 
         return result;
-    }
-
-    private async mayStartWorkspace(
-        ctx: TraceContext,
-        user: User,
-        organizationId: string,
-        runningInstances: Promise<WorkspaceInstance[]>,
-    ): Promise<void> {
-        let result: MayStartWorkspaceResult = {};
-        try {
-            result = await this.entitlementService.mayStartWorkspace(user, organizationId, runningInstances);
-            TraceContext.addNestedTags(ctx, { mayStartWorkspace: { result } });
-        } catch (err) {
-            log.error({ userId: user.id }, "EntitlementSerivce.mayStartWorkspace error", err);
-            TraceContext.setError(ctx, err);
-            return; // we don't want to block workspace starts because of internal errors
-        }
-        if (!!result.needsVerification) {
-            throw new ApplicationError(ErrorCodes.NEEDS_VERIFICATION, `Please verify your account.`);
-        }
-        if (!!result.usageLimitReachedOnCostCenter) {
-            throw new ApplicationError(
-                ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED,
-                "Increase usage limit and try again.",
-                {
-                    attributionId: result.usageLimitReachedOnCostCenter,
-                },
-            );
-        }
-        if (!!result.hitParallelWorkspaceLimit) {
-            throw new ApplicationError(
-                ErrorCodes.TOO_MANY_RUNNING_WORKSPACES,
-                `You cannot run more than ${result.hitParallelWorkspaceLimit.max} workspaces at the same time. Please stop a workspace before starting another one.`,
-            );
-        }
     }
 
     public async getFeaturedRepositories(ctx: TraceContext): Promise<WhitelistedRepository[]> {
@@ -3097,12 +3027,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async adminBlockUser(ctx: TraceContext, req: AdminBlockUserRequest): Promise<User> {
         traceAPIParams(ctx, { req });
 
-        await this.guardAdminAccess("adminBlockUser", { req }, Permission.ADMIN_USERS);
+        const admin = await this.guardAdminAccess("adminBlockUser", { req }, Permission.ADMIN_USERS);
 
-        const targetUser = await this.userAuthentication.blockUser(req.id, req.blocked);
+        const targetUser = await this.userAuthentication.blockUser(admin.id, req.id, req.blocked);
 
-        const stoppedWorkspaces = await this.workspaceStarter.stopRunningWorkspacesForUser(
+        const stoppedWorkspaces = await this.workspaceService.stopRunningWorkspacesForUser(
             ctx,
+            admin.id,
             req.id,
             "user blocked by admin",
             StopWorkspacePolicy.IMMEDIATELY,
@@ -3119,10 +3050,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async adminDeleteUser(ctx: TraceContext, userId: string): Promise<void> {
         traceAPIParams(ctx, { userId });
 
-        await this.guardAdminAccess("adminDeleteUser", { id: userId }, Permission.ADMIN_PERMISSIONS);
+        const admin = await this.guardAdminAccess("adminDeleteUser", { id: userId }, Permission.ADMIN_PERMISSIONS);
 
         try {
-            await this.userDeletionService.deleteUser(userId);
+            await this.userDeletionService.deleteUser(admin.id, userId);
         } catch (e) {
             throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
         }
@@ -3735,50 +3666,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             default:
                 return new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, err.details);
         }
-    }
-
-    private async determineWorkspaceRegion(ws: Workspace, preference: WorkspaceRegion): Promise<WorkspaceRegion> {
-        const guessWorkspaceRegionEnabled = await getExperimentsClientForBackend().getValueAsync(
-            "guessWorkspaceRegion",
-            false,
-            {
-                user: { id: this.userID || "" },
-            },
-        );
-
-        const regionLogContext = {
-            requested_region: preference,
-            client_region_from_header: this.clientHeaderFields.clientRegion,
-            experiment_enabled: false,
-            guessed_region: "",
-        };
-
-        let targetRegion = preference;
-        if (!isWorkspaceRegion(preference)) {
-            targetRegion = "";
-        } else {
-            targetRegion = preference;
-        }
-
-        if (guessWorkspaceRegionEnabled) {
-            regionLogContext.experiment_enabled = true;
-
-            if (!preference) {
-                // Attempt to identify the region based on LoadBalancer headers, if there was no explicit choice on the request.
-                // The Client region contains the two letter country code.
-                if (this.clientHeaderFields.clientRegion) {
-                    const countryCode = this.clientHeaderFields.clientRegion;
-
-                    targetRegion = RegionService.countryCodeToNearestWorkspaceRegion(countryCode);
-                    regionLogContext.guessed_region = targetRegion;
-                }
-            }
-        }
-
-        const logCtx = { userId: this.userID, workspaceId: ws.id };
-        log.info(logCtx, "[guessWorkspaceRegion] Workspace with region selection", regionLogContext);
-
-        return targetRegion;
     }
 
     async getIDToken(): Promise<void> {}

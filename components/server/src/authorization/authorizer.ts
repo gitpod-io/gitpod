@@ -59,7 +59,7 @@ export class Authorizer {
         permission: OrganizationPermission,
         orgId: string,
     ): Promise<boolean> {
-        if (userId === "SYSTEM_USER") {
+        if (userId === SYSTEM_USER) {
             return true;
         }
 
@@ -89,7 +89,7 @@ export class Authorizer {
     }
 
     async hasPermissionOnProject(userId: string, permission: ProjectPermission, projectId: string): Promise<boolean> {
-        if (userId === "SYSTEM_USER") {
+        if (userId === SYSTEM_USER) {
             return true;
         }
 
@@ -119,7 +119,7 @@ export class Authorizer {
     }
 
     async hasPermissionOnUser(userId: string, permission: UserPermission, resourceUserId: string): Promise<boolean> {
-        if (userId === "SYSTEM_USER") {
+        if (userId === SYSTEM_USER) {
             return true;
         }
 
@@ -152,7 +152,7 @@ export class Authorizer {
         permission: WorkspacePermission,
         workspaceId: string,
     ): Promise<boolean> {
-        if (userId === "SYSTEM_USER") {
+        if (userId === SYSTEM_USER) {
             return true;
         }
 

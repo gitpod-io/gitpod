@@ -74,6 +74,7 @@ describe("SSHKeyService", async () => {
     afterEach(async () => {
         // Clean-up database
         await resetDB(container.get(TypeORM));
+        container.unbindAll();
     });
 
     it("should add ssh key", async () => {

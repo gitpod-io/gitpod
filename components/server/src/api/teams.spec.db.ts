@@ -13,7 +13,6 @@ import { createConnectTransport } from "@bufbuild/connect-node";
 import { Code, ConnectError, PromiseClient, createPromiseClient } from "@bufbuild/connect";
 import { AddressInfo } from "net";
 import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
-import { WorkspaceStarter } from "../workspace/workspace-starter";
 import { UserAuthentication } from "../user/user-authentication";
 import { APITeamsService } from "./teams";
 import { v4 as uuidv4 } from "uuid";
@@ -24,6 +23,7 @@ import { Connection } from "typeorm";
 import { Timestamp } from "@bufbuild/protobuf";
 import { APIWorkspacesService } from "./workspaces";
 import { APIStatsService } from "./stats";
+import { WorkspaceService } from "../workspace/workspace-service";
 
 const expect = chai.expect;
 
@@ -43,7 +43,7 @@ export class APITeamsServiceSpec {
         this.container.bind(APIWorkspacesService).toSelf().inSingletonScope();
         this.container.bind(APIStatsService).toSelf().inSingletonScope();
 
-        this.container.bind(WorkspaceStarter).toConstantValue({} as WorkspaceStarter);
+        this.container.bind(WorkspaceService).toConstantValue({} as WorkspaceService);
         this.container.bind(UserAuthentication).toConstantValue({} as UserAuthentication);
 
         // Clean-up database

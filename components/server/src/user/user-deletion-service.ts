@@ -12,7 +12,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
 import { AuthProviderService } from "../auth/auth-provider-service";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
-import { WorkspaceStarter } from "../workspace/workspace-starter";
+import { WorkspaceService } from "../workspace/workspace-service";
 
 @injectable()
 export class UserDeletionService {
@@ -22,7 +22,7 @@ export class UserDeletionService {
         @inject(TeamDB) private readonly teamDb: TeamDB,
         @inject(ProjectDB) private readonly projectDb: ProjectDB,
         @inject(StorageClient) private readonly storageClient: StorageClient,
-        @inject(WorkspaceStarter) private readonly workspaceStarter: WorkspaceStarter,
+        @inject(WorkspaceService) private readonly workspaceService: WorkspaceService,
         @inject(AuthProviderService) private readonly authProviderService: AuthProviderService,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
     ) {}
@@ -33,19 +33,20 @@ export class UserDeletionService {
      * To guarantee that, but also maintain traceability
      * we anonymize data that might contain user related/relatable data and keep the entities itself (incl. ids).
      */
-    async deleteUser(id: string): Promise<void> {
-        const user = await this.db.findUserById(id);
+    async deleteUser(userId: string, targetUserId: string): Promise<void> {
+        const user = await this.db.findUserById(targetUserId);
         if (!user) {
-            throw new Error(`No user with id ${id} found!`);
+            throw new Error(`No user with id ${targetUserId} found!`);
         }
 
         if (user.markedDeleted === true) {
-            log.debug({ userId: id }, "Is deleted but markDeleted already set. Continuing.");
+            log.debug({ userId: targetUserId }, "Is deleted but markDeleted already set. Continuing.");
         }
 
         // Stop all workspaces
-        await this.workspaceStarter.stopRunningWorkspacesForUser(
+        await this.workspaceService.stopRunningWorkspacesForUser(
             {},
+            userId,
             user.id,
             "user deleted",
             StopWorkspacePolicy.IMMEDIATELY,
@@ -57,7 +58,7 @@ export class UserDeletionService {
             try {
                 await this.authProviderService.deleteAuthProvider(provider);
             } catch (error) {
-                log.error({ userId: id }, "Failed to delete user's auth provider.", error);
+                log.error({ userId: targetUserId }, "Failed to delete user's auth provider.", error);
             }
         }
 
@@ -73,13 +74,13 @@ export class UserDeletionService {
 
         await Promise.all([
             // Workspace
-            this.anonymizeAllWorkspaces(id),
+            this.anonymizeAllWorkspaces(targetUserId),
             // Bucket
-            this.deleteUserBucket(id),
+            this.deleteUserBucket(targetUserId),
             // Teams owned only by this user
-            this.deleteSoleOwnedTeams(id),
+            this.deleteSoleOwnedTeams(targetUserId),
             // Team memberships
-            this.deleteTeamMemberships(id),
+            this.deleteTeamMemberships(targetUserId),
         ]);
 
         // Track the deletion Event for Analytics Purposes

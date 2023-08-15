@@ -39,8 +39,8 @@ export class UserAuthentication {
         @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
     ) {}
 
-    async blockUser(targetUserId: string, block: boolean): Promise<User> {
-        const target = await this.userService.findUserById(targetUserId, targetUserId);
+    async blockUser(userId: string, targetUserId: string, block: boolean): Promise<User> {
+        const target = await this.userService.findUserById(userId, targetUserId);
         if (!target) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
         }

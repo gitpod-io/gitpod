@@ -27,9 +27,9 @@ import { ClientMetadata } from "../websocket/websocket-connection-manager";
 import * as fs from "fs/promises";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { GitpodServerImpl } from "../workspace/gitpod-server-impl";
-import { WorkspaceStarter } from "../workspace/workspace-starter";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
 import { UserService } from "./user-service";
+import { WorkspaceService } from "../workspace/workspace-service";
 
 export const ServerFactory = Symbol("ServerFactory");
 export type ServerFactory = () => GitpodServerImpl;
@@ -47,7 +47,7 @@ export class UserController {
     @inject(SessionHandler) protected readonly sessionHandler: SessionHandler;
     @inject(OneTimeSecretServer) protected readonly otsServer: OneTimeSecretServer;
     @inject(OneTimeSecretDB) protected readonly otsDb: OneTimeSecretDB;
-    @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
+    @inject(WorkspaceService) protected readonly workspaceService: WorkspaceService;
     @inject(ServerFactory) private readonly serverFactory: ServerFactory;
 
     get apiRouter(): express.Router {
@@ -241,8 +241,8 @@ export class UserController {
             // stop all running workspaces
             const user = req.user as User;
             if (user) {
-                this.workspaceStarter
-                    .stopRunningWorkspacesForUser({}, user.id, "logout", StopWorkspacePolicy.NORMALLY)
+                this.workspaceService
+                    .stopRunningWorkspacesForUser({}, user.id, user.id, "logout", StopWorkspacePolicy.NORMALLY)
                     .catch((error) =>
                         log.error(logContext, "cannot stop workspaces on logout", { error, ...logPayload }),
                     );

@@ -6,7 +6,16 @@
 
 import { inject, injectable } from "inversify";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { Project, User, Workspace, WorkspaceContext, WorkspaceSoftDeletion } from "@gitpod/gitpod-protocol";
+import {
+    GitpodServer,
+    Project,
+    StartWorkspaceResult,
+    User,
+    Workspace,
+    WorkspaceContext,
+    WorkspaceInstance,
+    WorkspaceSoftDeletion,
+} from "@gitpod/gitpod-protocol";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Authorizer } from "../authorization/authorizer";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
@@ -14,7 +23,20 @@ import { WorkspaceFactory } from "./workspace-factory";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
 import { WorkspaceStarter } from "./workspace-starter";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
 import * as crypto from "crypto";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { WorkspaceRegion, isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import { RegionService } from "./region-service";
+import { ProjectsService } from "../projects/projects-service";
+import { EnvVarService } from "./env-var-service";
+
+export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
+    /**
+     * This field is used to guess the workspace location using the RegionService
+     */
+    clientRegionCode?: string;
+}
 
 @injectable()
 export class WorkspaceService {
@@ -22,6 +44,9 @@ export class WorkspaceService {
         @inject(WorkspaceFactory) private readonly factory: WorkspaceFactory,
         @inject(WorkspaceStarter) private readonly workspaceStarter: WorkspaceStarter,
         @inject(WorkspaceDB) private readonly db: WorkspaceDB,
+        @inject(EntitlementService) private readonly entitlementService: EntitlementService,
+        @inject(EnvVarService) private readonly envVarService: EnvVarService,
+        @inject(ProjectsService) private readonly projectsService: ProjectsService,
         @inject(Authorizer) private readonly auth: Authorizer,
     ) {}
 
@@ -109,6 +134,7 @@ export class WorkspaceService {
         });
     }
 
+    // stopWorkspace and related methods below
     async stopWorkspace(
         userId: string,
         workspaceId: string,
@@ -124,6 +150,29 @@ export class WorkspaceService {
             return;
         }
         await this.workspaceStarter.stopWorkspaceInstance({}, instance.id, instance.region, reason, policy);
+    }
+
+    public async stopRunningWorkspacesForUser(
+        ctx: TraceContext,
+        userId: string,
+        targetUserId: string,
+        reason: string,
+        policy?: StopWorkspacePolicy,
+    ): Promise<Workspace[]> {
+        const infos = await this.db.findRunningInstancesWithWorkspaces(undefined, targetUserId);
+        await Promise.all(
+            infos.map(async (info) => {
+                await this.auth.checkPermissionOnWorkspace(userId, "stop", info.workspace.id);
+                await this.workspaceStarter.stopWorkspaceInstance(
+                    ctx,
+                    info.latestInstance.id,
+                    info.latestInstance.region,
+                    reason,
+                    policy,
+                );
+            }),
+        );
+        return infos.map((instance) => instance.workspace);
     }
 
     /**
@@ -179,5 +228,154 @@ export class WorkspaceService {
             throw err;
         }
         log.info(`Purged Workspace ${workspaceId} and all WorkspaceInstances for this workspace`, { workspaceId });
+    }
+
+    // startWorkspace and related methods below
+    async startWorkspace(
+        ctx: TraceContext,
+        user: User,
+        workspaceId: string,
+        options: StartWorkspaceOptions = {},
+    ): Promise<StartWorkspaceResult> {
+        await this.auth.checkPermissionOnWorkspace(user.id, "start", workspaceId);
+
+        const workspace = await this.doGetWorkspace(user.id, workspaceId);
+        const mayStartPromise = this.mayStartWorkspace(
+            ctx,
+            user,
+            workspace.organizationId,
+            this.db.findRegularRunningInstances(user.id),
+        );
+
+        const runningInstance = await this.db.findRunningInstance(workspace.id);
+        if (runningInstance) {
+            return {
+                instanceID: runningInstance.id,
+                workspaceURL: runningInstance.ideUrl,
+            };
+        }
+
+        if (workspace.type !== "regular") {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Cannot (re-)start irregular workspace.");
+        }
+
+        if (!!workspace.softDeleted) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Workspace not found!");
+        }
+
+        const envVarsPromise = this.envVarService.resolve(workspace);
+        const projectPromise = workspace.projectId
+            ? ApplicationError.notFoundToUndefined(this.projectsService.getProject(user.id, workspace.projectId))
+            : Promise.resolve(undefined);
+
+        await mayStartPromise;
+
+        options.region = await this.determineWorkspaceRegion(
+            user.id,
+            workspaceId,
+            options.region || "",
+            options.clientRegionCode,
+        );
+
+        // at this point we're about to actually start a new workspace
+        const result = await this.workspaceStarter.startWorkspace(
+            ctx,
+            workspace,
+            user,
+            await projectPromise,
+            await envVarsPromise,
+            options,
+        );
+        return result;
+    }
+
+    /**
+     * @deprecated TODO (gpl) This should be private, but in favor of smaller PRs, will be public for now.
+     * @param ctx
+     * @param user
+     * @param organizationId
+     * @param runningInstances
+     * @returns
+     */
+    public async mayStartWorkspace(
+        ctx: TraceContext,
+        user: User,
+        organizationId: string,
+        runningInstances: Promise<WorkspaceInstance[]>,
+    ): Promise<void> {
+        let result: MayStartWorkspaceResult = {};
+        try {
+            result = await this.entitlementService.mayStartWorkspace(user, organizationId, runningInstances);
+            TraceContext.addNestedTags(ctx, { mayStartWorkspace: { result } });
+        } catch (err) {
+            log.error({ userId: user.id }, "EntitlementSerivce.mayStartWorkspace error", err);
+            TraceContext.setError(ctx, err);
+            return; // we don't want to block workspace starts because of internal errors
+        }
+        if (!!result.needsVerification) {
+            throw new ApplicationError(ErrorCodes.NEEDS_VERIFICATION, `Please verify your account.`);
+        }
+        if (!!result.usageLimitReachedOnCostCenter) {
+            throw new ApplicationError(
+                ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED,
+                "Increase usage limit and try again.",
+                {
+                    attributionId: result.usageLimitReachedOnCostCenter,
+                },
+            );
+        }
+        if (!!result.hitParallelWorkspaceLimit) {
+            throw new ApplicationError(
+                ErrorCodes.TOO_MANY_RUNNING_WORKSPACES,
+                `You cannot run more than ${result.hitParallelWorkspaceLimit.max} workspaces at the same time. Please stop a workspace before starting another one.`,
+            );
+        }
+    }
+
+    private async determineWorkspaceRegion(
+        userId: string,
+        workspaceId: string,
+        preference: WorkspaceRegion,
+        clientCountryCode: string | undefined,
+    ): Promise<WorkspaceRegion> {
+        const guessWorkspaceRegionEnabled = await getExperimentsClientForBackend().getValueAsync(
+            "guessWorkspaceRegion",
+            false,
+            {
+                user: { id: userId || "" },
+            },
+        );
+
+        const regionLogContext = {
+            requested_region: preference,
+            client_region_from_header: clientCountryCode,
+            experiment_enabled: false,
+            guessed_region: "",
+        };
+
+        let targetRegion = preference;
+        if (!isWorkspaceRegion(preference)) {
+            targetRegion = "";
+        } else {
+            targetRegion = preference;
+        }
+
+        if (guessWorkspaceRegionEnabled) {
+            regionLogContext.experiment_enabled = true;
+
+            if (!preference) {
+                // Attempt to identify the region based on LoadBalancer headers, if there was no explicit choice on the request.
+                // The Client region contains the two letter country code.
+                if (clientCountryCode) {
+                    targetRegion = RegionService.countryCodeToNearestWorkspaceRegion(clientCountryCode);
+                    regionLogContext.guessed_region = targetRegion;
+                }
+            }
+        }
+
+        const logCtx = { userId, workspaceId };
+        log.info(logCtx, "[guessWorkspaceRegion] Workspace with region selection", regionLogContext);
+
+        return targetRegion;
     }
 }

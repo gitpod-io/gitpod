@@ -73,7 +73,7 @@ export type WorkspaceResourceType = "workspace";
 
 export type WorkspaceRelation = "org" | "owner";
 
-export type WorkspacePermission = "access" | "stop" | "delete" | "read_info";
+export type WorkspacePermission = "access" | "start" | "stop" | "delete" | "read_info";
 
 export const rel = {
     user(id: string) {

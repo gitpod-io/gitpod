@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
+import { TypeORM } from "@gitpod/gitpod-db/lib";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import { CommitContext, Organization, Project, User, WorkspaceConfig } from "@gitpod/gitpod-protocol";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
@@ -18,6 +18,7 @@ import { createTestContainer } from "../test/service-testing-container-module";
 import { WorkspaceService } from "./workspace-service";
 import { ProjectsService } from "../projects/projects-service";
 import { ConfigProvider } from "./config-provider";
+import { UserService } from "../user/user-service";
 
 const expect = chai.expect;
 
@@ -42,17 +43,29 @@ describe("WorkspaceService", async () => {
         Experiments.configureTestingClient({
             centralizedPermissions: true,
         });
-        const userDB = container.get<UserDB>(UserDB);
+        const userService = container.get(UserService);
 
         // create the owner
-        owner = await userDB.newUser();
+        owner = await userService.createUser({
+            identity: {
+                authId: "33891423",
+                authName: "owner",
+                authProviderId: "Public-GitHub",
+            },
+        });
 
         // create the org
         const orgService = container.get(OrganizationService);
         org = await orgService.createOrganization(owner.id, "my-org");
 
         // create and add a member
-        member = await userDB.newUser();
+        member = await userService.createUser({
+            identity: {
+                authId: "33891424",
+                authName: "member",
+                authProviderId: "Public-GitHub",
+            },
+        });
         const invite = await orgService.getOrCreateInvite(owner.id, org.id);
         await orgService.joinOrganization(member.id, invite.id);
 
@@ -70,12 +83,20 @@ describe("WorkspaceService", async () => {
         );
 
         // create a stranger
-        stranger = await userDB.newUser();
+        stranger = await userService.createUser({
+            identity: {
+                authId: "33891425",
+                authName: "stranger",
+                authProviderId: "Public-GitHub",
+            },
+        });
     });
 
     afterEach(async () => {
         // Clean-up database
         await resetDB(container.get(TypeORM));
+        // Deactivate all services
+        container.unbindAll();
     });
 
     it("should createWorkspace", async () => {
@@ -86,6 +107,44 @@ describe("WorkspaceService", async () => {
 
         // Stranger can't create a workspace in our org
         await expectError(ErrorCodes.NOT_FOUND, createTestWorkspace(svc, org, stranger, project));
+    });
+
+    it("owner can start own workspace", async () => {
+        const workspaceService = container.get(WorkspaceService);
+        const workspace = await createTestWorkspace(workspaceService, org, owner, project);
+        const result = await workspaceService.startWorkspace({}, owner, workspace.id);
+        expect(result.workspaceURL).to.equal(`https://${workspace.id}.ws.gitpod.io`);
+    });
+
+    it("stanger cannot start owner workspace", async () => {
+        const workspaceService = container.get(WorkspaceService);
+        const workspace = await createTestWorkspace(workspaceService, org, owner, project);
+        await expectError(ErrorCodes.NOT_FOUND, workspaceService.startWorkspace({}, stranger, workspace.id));
+    });
+
+    it("org member cannot start owner workspace", async () => {
+        const workspaceService = container.get(WorkspaceService);
+        const workspace = await createTestWorkspace(workspaceService, org, owner, project);
+        await expectError(ErrorCodes.PERMISSION_DENIED, workspaceService.startWorkspace({}, member, workspace.id));
+    });
+
+    it("org member can start own workspace", async () => {
+        const workspaceService = container.get(WorkspaceService);
+        const workspace = await createTestWorkspace(workspaceService, org, member, project);
+        const result = await workspaceService.startWorkspace({}, member, workspace.id);
+        expect(result.workspaceURL).to.equal(`https://${workspace.id}.ws.gitpod.io`);
+    });
+
+    it("stanger cannot start org member workspace", async () => {
+        const workspaceService = container.get(WorkspaceService);
+        const workspace = await createTestWorkspace(workspaceService, org, member, project);
+        await expectError(ErrorCodes.NOT_FOUND, workspaceService.startWorkspace({}, stranger, workspace.id));
+    });
+
+    it("owner cannot start org member workspace", async () => {
+        const workspaceService = container.get(WorkspaceService);
+        const workspace = await createTestWorkspace(workspaceService, org, member, project);
+        await expectError(ErrorCodes.PERMISSION_DENIED, workspaceService.startWorkspace({}, owner, workspace.id));
     });
 
     it("should getWorkspace", async () => {
