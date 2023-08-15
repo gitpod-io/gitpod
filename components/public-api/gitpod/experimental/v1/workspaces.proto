@@ -364,9 +364,7 @@ message StartWorkspaceSpec {
 
 message IDESettings {
     string default_ide = 1;
-    bool use_desktop_ide = 2;
-    string default_desktop_ide = 3;
-    bool use_latest_version = 4;
+    bool use_latest_version = 2;
 }
 
 message PortSpec {

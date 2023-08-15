@@ -45,10 +45,8 @@ func (s *WorkspaceService) CreateAndStartWorkspace(ctx context.Context, req *con
 		StartWorkspaceOptions: protocol.StartWorkspaceOptions{
 			WorkspaceClass: req.Msg.GetStartSpec().GetWorkspaceClass(),
 			IdeSettings: &protocol.IDESettings{
-				DefaultIde:        req.Msg.StartSpec.IdeSettings.GetDefaultDesktopIde(),
-				UseDesktopIde:     req.Msg.StartSpec.IdeSettings.GetUseDesktopIde(),
-				DefaultDesktopIde: req.Msg.StartSpec.IdeSettings.GetDefaultDesktopIde(),
-				UseLatestVersion:  req.Msg.StartSpec.IdeSettings.GetUseLatestVersion(),
+				DefaultIde:       req.Msg.StartSpec.IdeSettings.GetDefaultIde(),
+				UseLatestVersion: req.Msg.StartSpec.IdeSettings.GetUseLatestVersion(),
 			},
 		},
 		ContextURL:     req.Msg.GetContextUrl(),

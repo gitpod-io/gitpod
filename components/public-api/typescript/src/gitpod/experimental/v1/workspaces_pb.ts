@@ -1631,17 +1631,7 @@ export class IDESettings extends Message<IDESettings> {
   defaultIde = "";
 
   /**
-   * @generated from field: bool use_desktop_ide = 2;
-   */
-  useDesktopIde = false;
-
-  /**
-   * @generated from field: string default_desktop_ide = 3;
-   */
-  defaultDesktopIde = "";
-
-  /**
-   * @generated from field: bool use_latest_version = 4;
+   * @generated from field: bool use_latest_version = 2;
    */
   useLatestVersion = false;
 
@@ -1654,9 +1644,7 @@ export class IDESettings extends Message<IDESettings> {
   static readonly typeName = "gitpod.experimental.v1.IDESettings";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "default_ide", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "use_desktop_ide", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 3, name: "default_desktop_ide", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 4, name: "use_latest_version", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "use_latest_version", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): IDESettings {
