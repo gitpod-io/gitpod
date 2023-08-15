@@ -125,7 +125,6 @@ type WorkspaceConfig struct {
 	} `json:"contentService"`
 
 	EnableProtectedSecrets *bool `json:"enableProtectedSecrets"`
-	UseMk2ExperimentalMode bool  `json:"useMk2ExperimentalMode,omitempty"`
 }
 
 type WorkspaceClass struct {
