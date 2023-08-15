@@ -76,9 +76,9 @@ export class UserService {
         }
     }
 
-    async findUserById(userId: string, id: string): Promise<User> {
-        if (userId !== id) {
-            await this.authorizer.checkPermissionOnUser(userId, "read_info", id);
+    async findUserById(requestorId: string, id: string): Promise<User> {
+        if (requestorId !== id) {
+            await this.authorizer.checkPermissionOnUser(requestorId, "read_info", id);
         }
         const result = await this.userDb.findUserById(id);
         if (!result) {

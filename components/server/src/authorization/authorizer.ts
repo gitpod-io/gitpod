@@ -212,7 +212,8 @@ export class Authorizer {
         }
     }
 
-    private async isDisabled(userId: string): Promise<boolean> {
+    // TODO(gpl) Make private after FGA rollout
+    public async isDisabled(userId: string): Promise<boolean> {
         return !(await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
             user: {
                 id: userId,
