@@ -906,10 +906,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (!workspace) {
             throw new Error("owner token not found");
         }
-        await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
+        await this.guardAccessSkipIfCentralized({ kind: "workspace", subject: workspace }, "get");
 
         const latestInstance = await this.workspaceDb.trace(ctx).findCurrentInstance(workspaceId);
-        await this.guardAccess({ kind: "workspaceInstance", subject: latestInstance, workspace }, "get");
+        await this.guardAccessSkipIfCentralized(
+            { kind: "workspaceInstance", subject: latestInstance, workspace },
+            "get",
+        );
 
         return await this.workspaceService.getOwnerToken(user.id, workspaceId);
     }
@@ -2304,7 +2307,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getWorkspaceEnvVars(ctx: TraceContext, workspaceId: string): Promise<EnvVarWithValue[]> {
         const user = await this.checkUser("getWorkspaceEnvVars");
         const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
-        await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
+        await this.guardAccessSkipIfCentralized({ kind: "workspace", subject: workspace }, "get");
         const envVars = await this.envVarService.resolve(workspace);
 
         const result: EnvVarWithValue[] = [];
