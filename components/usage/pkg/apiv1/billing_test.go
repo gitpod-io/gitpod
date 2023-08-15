@@ -151,10 +151,6 @@ func (s *StubUserService) GetGitToken(context.Context, *connect.Request[experime
 	return nil, nil
 }
 
-func (s *StubUserService) GetSuggestedRepoURLs(context.Context, *connect.Request[experimental_v1.GetSuggestedRepoURLsRequest]) (*connect.Response[experimental_v1.GetSuggestedRepoURLsResponse], error) {
-	return nil, nil
-}
-
 func (s *StubUserService) BlockUser(ctx context.Context, req *connect.Request[experimental_v1.BlockUserRequest]) (*connect.Response[experimental_v1.BlockUserResponse], error) {
 	s.blockedUsers = append(s.blockedUsers, req.Msg.GetUserId())
 	return connect.NewResponse(&experimental_v1.BlockUserResponse{}), nil
