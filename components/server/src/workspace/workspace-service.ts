@@ -31,6 +31,13 @@ import { RegionService } from "./region-service";
 import { ProjectsService } from "../projects/projects-service";
 import { EnvVarService } from "./env-var-service";
 
+export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
+    /**
+     * This field is used to guess the workspace location using the RegionService
+     */
+    clientRegionCode?: string;
+}
+
 @injectable()
 export class WorkspaceService {
     constructor(
@@ -228,7 +235,7 @@ export class WorkspaceService {
         ctx: TraceContext,
         user: User,
         workspaceId: string,
-        options?: GitpodServer.StartWorkspaceOptions,
+        options: StartWorkspaceOptions = {},
     ): Promise<StartWorkspaceResult> {
         await this.auth.checkPermissionOnWorkspace(user.id, "start", workspaceId);
 
@@ -258,6 +265,13 @@ export class WorkspaceService {
             : Promise.resolve(undefined);
 
         await mayStartPromise;
+
+        options.region = await this.determineWorkspaceRegion(
+            user.id,
+            workspaceId,
+            options.region || "",
+            options.clientRegionCode,
+        );
 
         // at this point we're about to actually start a new workspace
         const result = await this.workspaceStarter.startWorkspace(
@@ -314,7 +328,7 @@ export class WorkspaceService {
         }
     }
 
-    async determineWorkspaceRegion(
+    private async determineWorkspaceRegion(
         userId: string,
         workspaceId: string,
         preference: WorkspaceRegion,

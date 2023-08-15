@@ -190,8 +190,8 @@ import { OrganizationService } from "../orgs/organization-service";
 import { RedisSubscriber } from "../messaging/redis-subscriber";
 import { UsageService } from "../orgs/usage-service";
 import { UserService } from "../user/user-service";
-import { WorkspaceService } from "./workspace-service";
 import { SSHKeyService } from "../user/sshkey-service";
+import { StartWorkspaceOptions, WorkspaceService } from "./workspace-service";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -935,13 +935,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         // no matter if the workspace is shared or not, you cannot create a new instance
         await this.guardAccess({ kind: "workspaceInstance", subject: undefined, workspace }, "create");
 
-        options.region = await this.workspaceService.determineWorkspaceRegion(
-            user.id,
-            workspaceId,
-            options.region || "",
-            this.clientHeaderFields.clientRegion,
-        );
-        const result = await this.workspaceService.startWorkspace(ctx, user, workspaceId, options);
+        const opts: StartWorkspaceOptions = {
+            ...options,
+            clientRegionCode: this.clientHeaderFields?.clientRegion,
+        };
+        const result = await this.workspaceService.startWorkspace(ctx, user, workspaceId, opts);
         traceWI(ctx, { instanceId: result.instanceID });
         return result;
     }
@@ -1417,13 +1415,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             logContext.workspaceId = workspace.id;
             traceWI(ctx, { workspaceId: workspace.id });
 
-            options.region = await this.workspaceService.determineWorkspaceRegion(
-                user.id,
-                workspace.id,
-                options.region || "",
-                this.clientHeaderFields.clientRegion,
-            );
-            const startWorkspaceResult = await this.workspaceService.startWorkspace(ctx, user, workspace.id, options);
+            const opts: StartWorkspaceOptions = {
+                ...options,
+                clientRegionCode: this.clientHeaderFields?.clientRegion,
+            };
+            const startWorkspaceResult = await this.workspaceService.startWorkspace(ctx, user, workspace.id, opts);
             ctx.span?.log({ event: "startWorkspaceComplete", ...startWorkspaceResult });
 
             return {
