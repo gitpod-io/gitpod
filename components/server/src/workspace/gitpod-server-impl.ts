@@ -928,9 +928,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             };
         }
 
-        if (!!workspace.softDeleted) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Workspace not found!");
-        }
         // (gpl) We keep this check here for backwards compatibility, it should be superfluous in the future
         // no matter if the workspace is shared or not, you cannot create a new instance
         await this.guardAccess({ kind: "workspaceInstance", subject: undefined, workspace }, "create");

@@ -259,6 +259,10 @@ export class WorkspaceService {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Cannot (re-)start irregular workspace.");
         }
 
+        if (!!workspace.softDeleted) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Workspace not found!");
+        }
+
         const envVarsPromise = this.envVarService.resolve(workspace);
         const projectPromise = workspace.projectId
             ? ApplicationError.notFoundToUndefined(this.projectsService.getProject(user.id, workspace.projectId))
