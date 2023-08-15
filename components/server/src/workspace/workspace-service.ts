@@ -88,6 +88,15 @@ export class WorkspaceService {
         return this.doGetWorkspace(userId, workspaceId);
     }
 
+    async getCurrentInstance(userId: string, workspaceId: string): Promise<WorkspaceInstance | undefined> {
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+        const result = await this.db.findCurrentInstance(workspaceId);
+        if (!result) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "No workspace instance found.", { workspaceId });
+        }
+        return result;
+    }
+
     // Internal method for allowing for additional DBs to be passed in
     private async doGetWorkspace(userId: string, workspaceId: string, db: WorkspaceDB = this.db): Promise<Workspace> {
         await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
@@ -377,5 +386,15 @@ export class WorkspaceService {
         log.info(logCtx, "[guessWorkspaceRegion] Workspace with region selection", regionLogContext);
 
         return targetRegion;
+    }
+
+    public async setPinned(userId: string, workspaceId: string, pinned: boolean): Promise<void> {
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+        await this.db.updatePartial(workspaceId, { pinned });
+    }
+
+    public async setDescription(userId: string, workspaceId: string, description: string) {
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+        await this.db.updatePartial(workspaceId, { description });
     }
 }

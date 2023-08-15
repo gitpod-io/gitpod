@@ -14,7 +14,6 @@ import {
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { BillingTier } from "@gitpod/gitpod-protocol/lib/protocol";
 import { inject, injectable } from "inversify";
-import { Config } from "../config";
 import { BillingModes } from "./billing-mode";
 import { EntitlementServiceUBP } from "./entitlement-service-ubp";
 import { VerificationService } from "../auth/verification-service";
@@ -94,10 +93,11 @@ export interface EntitlementService {
  */
 @injectable()
 export class EntitlementServiceImpl implements EntitlementService {
-    @inject(Config) protected readonly config: Config;
-    @inject(BillingModes) protected readonly billingModes: BillingModes;
-    @inject(EntitlementServiceUBP) protected readonly ubp: EntitlementServiceUBP;
-    @inject(VerificationService) protected readonly verificationService: VerificationService;
+    constructor(
+        @inject(BillingModes) private readonly billingModes: BillingModes,
+        @inject(EntitlementServiceUBP) private readonly ubp: EntitlementServiceUBP,
+        @inject(VerificationService) private readonly verificationService: VerificationService,
+    ) {}
 
     async mayStartWorkspace(
         user: User,

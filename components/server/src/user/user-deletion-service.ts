@@ -13,6 +13,7 @@ import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
 import { AuthProviderService } from "../auth/auth-provider-service";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { WorkspaceService } from "../workspace/workspace-service";
+import { Authorizer } from "../authorization/authorizer";
 
 @injectable()
 export class UserDeletionService {
@@ -25,6 +26,7 @@ export class UserDeletionService {
         @inject(WorkspaceService) private readonly workspaceService: WorkspaceService,
         @inject(AuthProviderService) private readonly authProviderService: AuthProviderService,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
+        @inject(Authorizer) private readonly authorizer: Authorizer,
     ) {}
 
     /**
@@ -34,6 +36,7 @@ export class UserDeletionService {
      * we anonymize data that might contain user related/relatable data and keep the entities itself (incl. ids).
      */
     async deleteUser(userId: string, targetUserId: string): Promise<void> {
+        await this.authorizer.checkPermissionOnUser(userId, "delete", targetUserId);
         const user = await this.db.findUserById(targetUserId);
         if (!user) {
             throw new Error(`No user with id ${targetUserId} found!`);
@@ -159,7 +162,7 @@ export class UserDeletionService {
         await Promise.all(ownedTeams.map((t) => this.teamDb.deleteTeam(t.id)));
     }
 
-    anonymizeWorkspace(ws: Workspace) {
+    private anonymizeWorkspace(ws: Workspace) {
         ws.context.title = "deleted-title";
         ws.context.normalizedContextURL = "deleted-normalizedContextURL";
         ws.contextURL = "deleted-contextURL";

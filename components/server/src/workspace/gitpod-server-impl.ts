@@ -649,6 +649,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async maySetTimeout(ctx: TraceContext): Promise<boolean> {
         const user = await this.checkUser("maySetTimeout");
         await this.guardAccess({ kind: "user", subject: user }, "get");
+        await this.auth.checkPermissionOnUser(user.id, "read_info", user.id);
 
         return await this.entitlementService.maySetTimeout(user.id);
     }
@@ -874,13 +875,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("getOwnerToken");
 
-        const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
+        //TODO this requests are only here to populate the resource guard check
+        const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
         if (!workspace) {
             throw new Error("owner token not found");
         }
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
 
-        const latestInstance = await this.workspaceDb.trace(ctx).findCurrentInstance(workspaceId);
+        const latestInstance = await this.workspaceService.getCurrentInstance(user.id, workspaceId);
         await this.guardAccess({ kind: "workspaceInstance", subject: latestInstance, workspace }, "get");
 
         return await this.workspaceService.getOwnerToken(user.id, workspaceId);
@@ -892,6 +894,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("getIDECredentials");
 
+        //TODO this requests are only here to populate the resource guard check
         const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
 
@@ -913,18 +916,18 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
 
         // (gpl) We keep this check here for backwards compatibility, it should be superfluous in the future
-        const runningInstance = await this.workspaceDb.trace(ctx).findRunningInstance(workspace.id);
-        if (runningInstance) {
-            traceWI(ctx, { instanceId: runningInstance.id });
+        const instance = await this.workspaceService.getCurrentInstance(user.id, workspace.id);
+        if (instance && instance.status.phase !== "stopped") {
+            traceWI(ctx, { instanceId: instance.id });
 
             // We already have a running workspace.
             // Note: ownership doesn't matter here as this is basically a noop. It's not StartWorkspace's concern
             //       to guard workspace access - just to prevent non-owners from starting workspaces.
 
-            await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace }, "get");
+            await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "get");
             return {
-                instanceID: runningInstance.id,
-                workspaceURL: runningInstance.ideUrl,
+                instanceID: instance.id,
+                workspaceURL: instance.ideUrl,
             };
         }
 
@@ -1028,24 +1031,22 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("updateWorkspaceUserPin");
 
-        await this.workspaceDb.trace(ctx).transaction(async (db) => {
-            const ws = await this.workspaceService.getWorkspace(user.id, workspaceId);
-            await this.guardAccess({ kind: "workspace", subject: ws }, "update");
+        const ws = await this.workspaceService.getWorkspace(user.id, workspaceId);
+        await this.guardAccess({ kind: "workspace", subject: ws }, "update");
 
-            switch (action) {
-                case "pin":
-                    ws.pinned = true;
-                    break;
-                case "unpin":
-                    ws.pinned = false;
-                    break;
-                case "toggle":
-                    ws.pinned = !ws.pinned;
-                    break;
-            }
+        switch (action) {
+            case "pin":
+                ws.pinned = true;
+                break;
+            case "unpin":
+                ws.pinned = false;
+                break;
+            case "toggle":
+                ws.pinned = !ws.pinned;
+                break;
+        }
 
-            await db.store(ws);
-        });
+        await this.workspaceService.setPinned(user.id, ws.id, ws.pinned);
     }
 
     public async deleteWorkspace(ctx: TraceContext, workspaceId: string): Promise<void> {
@@ -1057,9 +1058,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const ws = await this.workspaceService.getWorkspace(user.id, workspaceId);
         await this.guardAccess({ kind: "workspace", subject: ws }, "delete");
 
-        // for good measure, try and stop running instances
-        await this.internalStopWorkspace(ctx, user.id, ws, "deleted via API");
-
         await this.workspaceService.deleteWorkspace(user.id, workspaceId, "user");
     }
 
@@ -1070,9 +1068,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("setWorkspaceDescription");
 
         const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
-
         await this.guardAccess({ kind: "workspace", subject: workspace }, "update");
-        await this.workspaceDb.trace(ctx).updatePartial(workspaceId, { description });
+
+        await this.workspaceService.setDescription(user.id, workspaceId, description);
     }
 
     public async getWorkspaces(
