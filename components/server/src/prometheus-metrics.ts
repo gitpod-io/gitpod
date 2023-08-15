@@ -21,7 +21,6 @@ export function registerServerMetrics(registry: prometheusClient.Registry) {
     registry.registerMetric(stripeClientRequestsCompletedDurationSeconds);
     registry.registerMetric(imageBuildsStartedTotal);
     registry.registerMetric(imageBuildsCompletedTotal);
-    registry.registerMetric(centralizedPermissionsValidationsTotal);
     registry.registerMetric(spicedbClientLatency);
     registry.registerMetric(dashboardErrorBoundary);
     registry.registerMetric(jwtCookieIssued);
@@ -227,16 +226,6 @@ export const imageBuildsCompletedTotal = new prometheusClient.Counter({
 
 export function increaseImageBuildsCompletedTotal(outcome: "succeeded" | "failed") {
     imageBuildsCompletedTotal.inc({ outcome });
-}
-
-const centralizedPermissionsValidationsTotal = new prometheusClient.Counter({
-    name: "gitpod_perms_centralized_validations_total",
-    help: "counter of centralized permission checks validations against existing system",
-    labelNames: ["operation", "matches_expectation"],
-});
-
-export function reportCentralizedPermsValidation(operation: string, matches: boolean) {
-    centralizedPermissionsValidationsTotal.inc({ operation, matches_expectation: String(matches) });
 }
 
 export const fgaRelationsUpdateClientLatency = new prometheusClient.Histogram({
