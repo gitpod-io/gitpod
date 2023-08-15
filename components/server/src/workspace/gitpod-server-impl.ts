@@ -563,6 +563,29 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     /**
+     * This method disables resource-based access controls if "centralizedPermissions" is enabled.
+     * To be remove after FGA rollout
+     * @param resource
+     * @param op
+     */
+    private async guardAccessSkipIfCentralized(resource: GuardedResource, op: ResourceAccessOp) {
+        if (this.userID) {
+            const authorizerDisabled = await this.auth.isDisabled(this.userID);
+            if (!authorizerDisabled) {
+                // Authorizer takes over, so we should not check.
+                return;
+            }
+        }
+
+        if (!(await this.resourceAccessGuard.canAccess(resource, op))) {
+            throw new ApplicationError(
+                ErrorCodes.PERMISSION_DENIED,
+                `operation not permitted: missing ${op} permission on ${resource.kind}`,
+            );
+        }
+    }
+
+    /**
      * We don't need to/want to publish all internal details we maintain about a workspace instance.
      * This function removes instance details we do not want to share with the dashboard/Theia/potential attackers.
      *
@@ -848,10 +871,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
         const latestInstancePromise = this.workspaceDb.trace(ctx).findCurrentInstance(workspaceId);
         const teamMembers = await this.organizationService.listMembers(user.id, workspace.organizationId);
-        await this.guardAccess({ kind: "workspace", subject: workspace, teamMembers: teamMembers }, "get");
+        await this.guardAccessSkipIfCentralized(
+            { kind: "workspace", subject: workspace, teamMembers: teamMembers },
+            "get",
+        );
         const latestInstance = await latestInstancePromise;
         if (!!latestInstance) {
-            await this.guardAccess(
+            await this.guardAccessSkipIfCentralized(
                 {
                     kind: "workspaceInstance",
                     subject: latestInstance,
@@ -893,7 +919,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("getIDECredentials");
 
         const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
-        await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
+        await this.guardAccessSkipIfCentralized({ kind: "workspace", subject: workspace }, "get");
 
         return await this.workspaceService.getIDECredentials(user.id, workspaceId);
     }
@@ -910,7 +936,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         // (gpl) We keep this check here for backwards compatibility, it should be superfluous in the future
         const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
-        await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
+        await this.guardAccessSkipIfCentralized({ kind: "workspace", subject: workspace }, "get");
 
         // (gpl) We keep this check here for backwards compatibility, it should be superfluous in the future
         const runningInstance = await this.workspaceDb.trace(ctx).findRunningInstance(workspace.id);
@@ -921,7 +947,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             // Note: ownership doesn't matter here as this is basically a noop. It's not StartWorkspace's concern
             //       to guard workspace access - just to prevent non-owners from starting workspaces.
 
-            await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace }, "get");
+            await this.guardAccessSkipIfCentralized(
+                { kind: "workspaceInstance", subject: runningInstance, workspace },
+                "get",
+            );
             return {
                 instanceID: runningInstance.id,
                 workspaceURL: runningInstance.ideUrl,
@@ -930,7 +959,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         // (gpl) We keep this check here for backwards compatibility, it should be superfluous in the future
         // no matter if the workspace is shared or not, you cannot create a new instance
-        await this.guardAccess({ kind: "workspaceInstance", subject: undefined, workspace }, "create");
+        await this.guardAccessSkipIfCentralized({ kind: "workspaceInstance", subject: undefined, workspace }, "create");
 
         const opts: StartWorkspaceOptions = {
             ...options,
@@ -952,10 +981,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (workspace.type === "prebuild") {
             // If this is a team prebuild, any team member can stop it.
             const teamMembers = await this.organizationService.listMembers(user.id, workspace.organizationId);
-            await this.guardAccess({ kind: "workspace", subject: workspace, teamMembers }, "get");
+            await this.guardAccessSkipIfCentralized({ kind: "workspace", subject: workspace, teamMembers }, "get");
         } else {
             // If this is not a prebuild, or it's a personal prebuild, only the workspace owner can stop it.
-            await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
+            await this.guardAccessSkipIfCentralized({ kind: "workspace", subject: workspace }, "get");
         }
 
         try {
@@ -995,13 +1024,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             if (workspace.type === "prebuild") {
                 // If this is a team prebuild, any team member can stop it.
                 const teamMembers = await this.organizationService.listMembers(userId, workspace.organizationId);
-                await this.guardAccess(
+                await this.guardAccessSkipIfCentralized(
                     { kind: "workspaceInstance", subject: instance, workspace, teamMembers },
                     "update",
                 );
             } else {
                 // If this is not a prebuild, or it's a personal prebuild, only the workspace owner can stop it.
-                await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "update");
+                await this.guardAccessSkipIfCentralized(
+                    { kind: "workspaceInstance", subject: instance, workspace },
+                    "update",
+                );
             }
         }
 
@@ -1030,7 +1062,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         await this.workspaceDb.trace(ctx).transaction(async (db) => {
             const ws = await this.workspaceService.getWorkspace(user.id, workspaceId);
-            await this.guardAccess({ kind: "workspace", subject: ws }, "update");
+            await this.guardAccessSkipIfCentralized({ kind: "workspace", subject: ws }, "update");
 
             switch (action) {
                 case "pin":
@@ -1055,7 +1087,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("deleteWorkspace");
 
         const ws = await this.workspaceService.getWorkspace(user.id, workspaceId);
-        await this.guardAccess({ kind: "workspace", subject: ws }, "delete");
+        await this.guardAccessSkipIfCentralized({ kind: "workspace", subject: ws }, "delete");
 
         // for good measure, try and stop running instances
         await this.internalStopWorkspace(ctx, user.id, ws, "deleted via API");
@@ -1071,7 +1103,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
 
-        await this.guardAccess({ kind: "workspace", subject: workspace }, "update");
+        await this.guardAccessSkipIfCentralized({ kind: "workspace", subject: workspace }, "update");
         await this.workspaceDb.trace(ctx).updatePartial(workspaceId, { description });
     }
 
@@ -1108,7 +1140,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkUser("isWorkspaceOwner", undefined, { workspaceId });
 
         const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
-        await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
+        await this.guardAccessSkipIfCentralized({ kind: "workspace", subject: workspace }, "get");
         return user.id == workspace.ownerId;
     }
 
@@ -1158,7 +1190,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkUser("getWorkspaceOwner");
 
         const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
-        await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
+        await this.guardAccessSkipIfCentralized({ kind: "workspace", subject: workspace }, "get");
 
         try {
             const owner = await this.userService.findUserById(user.id, workspace.ownerId);
@@ -1179,7 +1211,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("getWorkspaceUsers", undefined, { workspaceId });
 
         const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
-        await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
+        await this.guardAccessSkipIfCentralized({ kind: "workspace", subject: workspace }, "get");
 
         // Note: there's no need to try and guard the users below, they're not complete users but just enough to
         //       to support the workspace sharing. The access guard above is enough.
@@ -1401,7 +1433,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 normalizedContextUrl,
             );
             try {
-                await this.guardAccess({ kind: "workspace", subject: workspace }, "create");
+                await this.guardAccessSkipIfCentralized({ kind: "workspace", subject: workspace }, "create");
             } catch (err) {
                 await this.workspaceService
                     .hardDeleteWorkspace(user.id, workspace.id)
@@ -1793,7 +1825,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (!runningInstance) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Can only set keep-alive for running workspaces");
         }
-        await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "update");
+        await this.guardAccessSkipIfCentralized(
+            { kind: "workspaceInstance", subject: runningInstance, workspace: workspace },
+            "update",
+        );
 
         const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
 
@@ -1823,7 +1858,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             const duration = WORKSPACE_TIMEOUT_DEFAULT_SHORT;
             return { duration, canChange, humanReadableDuration: goDurationToHumanReadable(duration) };
         }
-        await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "get");
+        await this.guardAccessSkipIfCentralized(
+            { kind: "workspaceInstance", subject: runningInstance, workspace: workspace },
+            "get",
+        );
 
         const req = new DescribeWorkspaceRequest();
         req.setId(runningInstance.id);
@@ -1924,7 +1962,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             return;
         }
         traceWI(ctx, { instanceId: runningInstance.id });
-        await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace }, "update");
+        await this.guardAccessSkipIfCentralized(
+            { kind: "workspaceInstance", subject: runningInstance, workspace },
+            "update",
+        );
 
         const req = new ControlPortRequest();
         req.setId(runningInstance.id);
@@ -3684,7 +3725,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
-        await this.guardAccess({ kind: "workspace", subject: workspace }, "update");
+        await this.guardAccessSkipIfCentralized({ kind: "workspace", subject: workspace }, "update");
 
         if (level != "owner" && workspace.organizationId) {
             const settings = await this.organizationService.getSettings(user.id, workspace.organizationId);
@@ -3698,7 +3739,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const instance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
         if (instance) {
-            await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace: workspace }, "update");
+            await this.guardAccessSkipIfCentralized(
+                { kind: "workspaceInstance", subject: instance, workspace: workspace },
+                "update",
+            );
 
             const req = new ControlAdmissionRequest();
             req.setId(instance.id);
