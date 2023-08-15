@@ -123,7 +123,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 
 		signer = auth.NewHS256Signer([]byte(personalACcessTokenSigningKey))
 	} else {
-		log.Info("No Personal Access Token signign key specified, PersonalAccessToken service will be disabled.")
+		log.Info("No Personal Access Token signing key specified, PersonalAccessToken service will be disabled.")
 	}
 
 	srv.HTTPMux().Handle("/stripe/invoices/webhook", handlers.ContentTypeHandler(stripeWebhookHandler, "application/json"))
@@ -131,7 +131,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	oidcService := oidc.NewService(cfg.SessionServiceAddress, dbConn, cipherSet, hs256, 5*time.Minute)
 
 	if redisClient == nil {
-		return fmt.Errorf("no Redis configiured")
+		return fmt.Errorf("no Redis configured")
 	}
 	idpService, err := identityprovider.NewService(strings.TrimSuffix(cfg.PublicURL, "/")+"/idp", identityprovider.NewRedisCache(context.Background(), redisClient))
 	if err != nil {
@@ -198,6 +198,7 @@ func register(srv *baseserver.Server, deps *registerDependencies) error {
 	rootHandler.Mount(v1connect.NewWorkspacesServiceHandler(apiv1.NewWorkspaceService(deps.connPool, deps.expClient), handlerOptions...))
 	rootHandler.Mount(v1connect.NewTeamsServiceHandler(apiv1.NewTeamsService(deps.connPool), handlerOptions...))
 	rootHandler.Mount(v1connect.NewUserServiceHandler(apiv1.NewUserService(deps.connPool), handlerOptions...))
+	rootHandler.Mount(v1connect.NewSCMServiceHandler(apiv1.NewSCMService(deps.connPool), handlerOptions...))
 	rootHandler.Mount(v1connect.NewIDEClientServiceHandler(apiv1.NewIDEClientService(deps.connPool), handlerOptions...))
 	rootHandler.Mount(v1connect.NewProjectsServiceHandler(apiv1.NewProjectsService(deps.connPool), handlerOptions...))
 	rootHandler.Mount(v1connect.NewOIDCServiceHandler(apiv1.NewOIDCService(deps.connPool, deps.expClient, deps.dbConn, deps.cipher), handlerOptions...))
