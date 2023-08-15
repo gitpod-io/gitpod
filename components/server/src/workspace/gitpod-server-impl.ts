@@ -185,7 +185,7 @@ import { ClientError } from "nice-grpc-common";
 import { BillingModes } from "../billing/billing-mode";
 import { goDurationToHumanReadable } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { OrganizationPermission } from "../authorization/definitions";
-import { Authorizer } from "../authorization/authorizer";
+import { Authorizer, SYSTEM_USER } from "../authorization/authorizer";
 import { OrganizationService } from "../orgs/organization-service";
 import { RedisSubscriber } from "../messaging/redis-subscriber";
 import { UsageService } from "../orgs/usage-service";
@@ -615,7 +615,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, "User is not authenticated. Please login.");
         }
 
-        const user = await this.userService.findUserById(this.userID, this.userID);
+        const user = await this.userService.findUserById(SYSTEM_USER, this.userID);
         if (user.markedDeleted === true) {
             throw new ApplicationError(ErrorCodes.USER_DELETED, "User has been deleted.");
         }
@@ -659,7 +659,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, {}); // partialUser contains PII
 
         const user = await this.checkUser("updateLoggedInUser");
-        await this.guardAccess({ kind: "user", subject: user }, "update");
+        await this.guardAccessSkipIfCentralized({ kind: "user", subject: user }, "update");
 
         const updatedUser = await this.userService.updateUser(user.id, {
             ...update,
@@ -682,7 +682,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<void> {
         traceAPIParams(ctx, { setting });
         const user = await this.checkAndBlockUser("updateWorkspaceTimeoutSetting");
-        await this.guardAccess({ kind: "user", subject: user }, "update");
+        await this.guardAccessSkipIfCentralized({ kind: "user", subject: user }, "update");
 
         await this.userService.updateWorkspaceTimeoutSetting(user.id, user.id, setting);
     }
@@ -1194,7 +1194,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         try {
             const owner = await this.userService.findUserById(user.id, workspace.ownerId);
-            await this.guardAccess({ kind: "user", subject: owner }, "get");
+            await this.guardAccessSkipIfCentralized({ kind: "user", subject: owner }, "get");
             return { name: owner.name };
         } catch (e) {
             if (e.code === ErrorCodes.NOT_FOUND) {
