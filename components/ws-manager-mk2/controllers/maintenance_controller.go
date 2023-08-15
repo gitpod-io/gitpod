@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -17,7 +18,12 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 var (
@@ -106,9 +112,46 @@ func (r *MaintenanceReconciler) setEnabledUntil(ctx context.Context, enabledUnti
 	log.FromContext(ctx).Info("maintenance mode state change", "enabledUntil", enabledUntil)
 }
 
-func (r *MaintenanceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		Named("maintenance").
-		For(&corev1.ConfigMap{}).
-		Complete(r)
+func (r *MaintenanceReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
+	// We need to use an unmanaged controller to avoid issues when the pod is in standby mode.
+	// In that scenario, the controllers are not started and don't watch changes and only
+	// observe the maintenance mode during the initialization.
+	c, err := controller.NewUnmanaged("maintenance-controller", mgr, controller.Options{Reconciler: r})
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		err = c.Start(ctx)
+		if err != nil {
+			log.FromContext(ctx).Error(err, "cannot start maintenance reconciler")
+			os.Exit(1)
+		}
+	}()
+
+	return c.Watch(source.Kind(mgr.GetCache(), &corev1.ConfigMap{}), &handler.EnqueueRequestForObject{}, &filterConfigMap{})
+}
+
+type filterConfigMap struct {
+	predicate.Funcs
+}
+
+func (f filterConfigMap) Create(e event.CreateEvent) bool {
+	return f.filter(e.Object)
+}
+
+func (f filterConfigMap) Update(e event.UpdateEvent) bool {
+	return f.filter(e.ObjectNew)
+}
+
+func (f filterConfigMap) Generic(e event.GenericEvent) bool {
+	return f.filter(e.Object)
+}
+
+func (f filterConfigMap) filter(obj client.Object) bool {
+	if obj == nil {
+		return false
+	}
+
+	return obj.GetName() == configMapKey.Name && obj.GetNamespace() == configMapKey.Namespace
 }

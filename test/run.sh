@@ -114,13 +114,16 @@ if [ "$TEST_SUITE" == "workspace" ]; then
 
   set +e
   # shellcheck disable=SC2086
-  go test -p 10 -v $TEST_LIST "${args[@]}" -parallel-features=true 2>&1  | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "${RESULTS_DIR}/TEST-${TEST_NAME}.xml" -iocopy
+  go test -p 6 -v $TEST_LIST "${args[@]}" -parallel-features=true -skip-labels="type=maintenance" 2>&1  | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "${RESULTS_DIR}/TEST-${TEST_NAME}.xml" -iocopy
   RC=${PIPESTATUS[0]}
   set -e
 
   if [ "${RC}" -ne "0" ]; then
     FAILURE_COUNT=$((FAILURE_COUNT+1))
   fi
+
+  # shellcheck disable=SC2086
+  go test -v $TEST_LIST "${args[@]}" -labels="type=maintenance" 2>&1
 
   cd -
   if [ "${REPORT}" != "" ]; then
