@@ -166,7 +166,7 @@ import {
     ConfigCatClientFactory,
     getExperimentsClientForBackend,
 } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { increaseDashboardErrorBoundaryCounter } from "../prometheus-metrics";
+import { increaseDashboardErrorBoundaryCounter, reportGuardAccessCheck } from "../prometheus-metrics";
 import { EnvVarService } from "./env-var-service";
 import { LinkedInService } from "../linkedin-service";
 import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
@@ -275,6 +275,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public readonly clientMetadata: ClientMetadata;
     private clientHeaderFields: ClientHeaderFields;
     private resourceAccessGuard: ResourceAccessGuard;
+    private withExplicitAccessGuard: boolean;
     private client: GitpodApiClient | undefined;
 
     private userID: string | undefined;
@@ -289,6 +290,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         client: GitpodApiClient | undefined,
         userID: string | undefined,
         accessGuard: ResourceAccessGuard,
+        withExplicitAccessGuard: boolean,
         clientMetadata: ClientMetadata,
         connectionCtx: TraceContext | undefined,
         clientHeaderFields: ClientHeaderFields,
@@ -299,6 +301,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         this.client = client;
         this.userID = userID;
         this.resourceAccessGuard = accessGuard;
+        this.withExplicitAccessGuard = withExplicitAccessGuard;
         this.clientHeaderFields = clientHeaderFields;
         (this.clientMetadata as any) = clientMetadata;
 
@@ -553,6 +556,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     private async guardAccess(resource: GuardedResource, op: ResourceAccessOp) {
+        reportGuardAccessCheck("resource-access");
+
         if (!(await this.resourceAccessGuard.canAccess(resource, op))) {
             throw new ApplicationError(
                 ErrorCodes.PERMISSION_DENIED,
@@ -573,10 +578,18 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, "User is not authenticated. Please login.");
         }
 
-        const authorizerDisabled = await this.auth.isDisabled(userId);
-        if (!authorizerDisabled) {
-            // Authorizer takes over, so we should not check.
-            return;
+        if (!this.withExplicitAccessGuard) {
+            // By it's nature, FGA does not support the explicit access guards we used in the past.
+            // Before the can remove the resource guards, we can check HERE whether we still hit that path or not.
+            const authorizerDisabled = await this.auth.isDisabled(userId);
+            if (!authorizerDisabled) {
+                // Authorizer takes over, so we should not check.
+                reportGuardAccessCheck("fga");
+                return;
+            }
+            reportGuardAccessCheck("resource-access");
+        } else {
+            reportGuardAccessCheck("resource-access-explicit-guard");
         }
 
         if (!(await this.resourceAccessGuard.canAccess(resource, op))) {

@@ -332,3 +332,14 @@ export const updateSubscribersRegistered = new prometheusClient.Gauge({
     help: "Gauge of subscribers registered",
     labelNames: ["type"],
 });
+
+export const guardAccessChecksTotal = new prometheusClient.Counter({
+    name: "gitpod_guard_access_checks_total",
+    help: "Counter for the number of guard access checks we do by type",
+    labelNames: ["type"],
+});
+
+export type GuardAccessCheckType = "fga" | "resource-access" | "resource-access-explicit-guard";
+export function reportGuardAccessCheck(type: GuardAccessCheckType) {
+    guardAccessChecksTotal.labels(type).inc();
+}

@@ -230,6 +230,11 @@ export class WebsocketConnectionManager implements ConnectionHandler {
             resourceGuard = { canAccess: async () => false };
         }
 
+        // Is this a request that requires explicit access guard?
+        const withExplicitAccessGuard =
+            !!(expressReq as WithResourceAccessGuard).resourceGuard ||
+            !!(expressReq as WithFunctionAccessGuard).functionGuard;
+
         const clientHeaderFields: ClientHeaderFields = {
             ip: clientIp(expressReq),
             userAgent: expressReq.headers["user-agent"],
@@ -245,6 +250,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
             client,
             user?.id,
             resourceGuard,
+            withExplicitAccessGuard,
             clientContext.clientMetadata,
             connectionCtx,
             clientHeaderFields,
