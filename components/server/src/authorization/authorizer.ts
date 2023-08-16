@@ -213,11 +213,7 @@ export class Authorizer {
     }
 
     private async isDisabled(userId: string): Promise<boolean> {
-        return !(await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
-            user: {
-                id: userId,
-            },
-        }));
+        return !(await isFgaAuthorizerEnabled(userId));
     }
 
     async addUser(userId: string, owningOrgId?: string) {
@@ -436,6 +432,15 @@ export class Authorizer {
         });
         return relationships.map((r) => r.relationship!);
     }
+}
+
+// TODO(gpl) remove after FGA rollout
+export async function isFgaAuthorizerEnabled(userId: string): Promise<boolean> {
+    return getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
+        user: {
+            id: userId,
+        },
+    });
 }
 
 function set(rs: v1.Relationship): v1.RelationshipUpdate {

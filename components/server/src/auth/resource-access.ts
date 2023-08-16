@@ -22,6 +22,8 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { UnauthorizedError } from "../errors";
 import { RepoURL } from "../repohost";
 import { HostContextProvider } from "./host-context-provider";
+import { isFgaAuthorizerEnabled } from "../authorization/authorizer";
+import { reportGuardAccessCheck } from "../prometheus-metrics";
 
 declare let resourceInstance: GuardedResource;
 export type GuardedResourceKind = typeof resourceInstance.kind;
@@ -149,6 +151,26 @@ export class CompositeResourceAccessGuard implements ResourceAccessGuard {
     async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
         // if a single guard permitts access, we're good to go
         return (await Promise.all(this.children.map((c) => c.canAccess(resource, operation)))).some((x) => x);
+    }
+}
+
+/**
+ * FGAResourceAccessGuard can disable the delegate if FGA is enabled.
+ */
+export class FGAResourceAccessGuard implements ResourceAccessGuard {
+    constructor(private readonly userId: string, private readonly delegate: ResourceAccessGuard) {}
+
+    async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
+        const authorizerEnabled = await isFgaAuthorizerEnabled(this.userId);
+        if (authorizerEnabled) {
+            // Authorizer takes over, so we should not check.
+            reportGuardAccessCheck("fga");
+            return true;
+        }
+        reportGuardAccessCheck("resource-access");
+
+        // FGA can't take over yet, so we delegate
+        return await this.delegate.canAccess(resource, operation);
     }
 }
 

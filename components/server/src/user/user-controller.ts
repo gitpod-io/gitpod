@@ -21,7 +21,12 @@ import { getRequestingClientInfo } from "../express-util";
 import { GitpodToken, GitpodTokenType, User } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { reportJWTCookieIssued } from "../prometheus-metrics";
-import { OwnerResourceGuard, ResourceAccessGuard, ScopedResourceGuard } from "../auth/resource-access";
+import {
+    FGAResourceAccessGuard,
+    OwnerResourceGuard,
+    ResourceAccessGuard,
+    ScopedResourceGuard,
+} from "../auth/resource-access";
 import { OneTimeSecretServer } from "../one-time-secret-server";
 import { ClientMetadata } from "../websocket/websocket-connection-manager";
 import * as fs from "fs/promises";
@@ -387,7 +392,8 @@ export class UserController {
                     return;
                 }
                 const sessionId = req.body.sessionId;
-                const server = this.createGitpodServer(user, new OwnerResourceGuard(user.id));
+                const resourceGuard = new FGAResourceAccessGuard(user.id, new OwnerResourceGuard(user.id));
+                const server = this.createGitpodServer(user, resourceGuard);
                 try {
                     await server.sendHeartBeat({}, { wasClosed: true, instanceId: instanceID });
                     /** no await */ server
