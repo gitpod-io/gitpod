@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package gitpod.experimental.v1;
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1";
+
+service EditorService {
+    rpc ListEditorOptions(ListEditorOptionsRequest) returns (ListEditorOptionsResponse) {}
+}
+
+message ListEditorOptionsRequest {}
+
+message ListEditorOptionsResponse {
+    repeated EditorOption options = 1;
+}
+
+message EditorOption {
+    // To ensure a stable order one can set an `order_key`.
+    string order_key = 1;
+
+    // Human readable title text of the IDE (plain text only).
+    string title = 2;
+
+    // The type of the IDE, currently 'browser' or 'desktop'.
+    enum EditorType {
+      EDITOR_TYPE_UNSPECIFIED = 0;
+      EDITOR_TYPE_BROWSER = 1;
+      EDITOR_TYPE_DESKTOP = 2;
+    }
+    EditorType type = 3;
+
+    // The logo for the IDE
+    string logo = 4;
+
+    // Text of an optional label next to the IDE option like “Insiders” (plain
+    // text only).
+    string label = 5;
+
+    message Version {
+        // The semantic version of the stable IDE image.
+        string stable = 1;
+
+        // The semantic version of the latest IDE image.
+        string latest = 2;
+    }
+
+    Version version = 6;
+}

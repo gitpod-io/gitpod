@@ -49,7 +49,6 @@ type WorkspacesServiceClient interface {
 	// Deleted workspaces cannot be started again.
 	DeleteWorkspace(ctx context.Context, in *DeleteWorkspaceRequest, opts ...grpc.CallOption) (*DeleteWorkspaceResponse, error)
 	UpdatePort(ctx context.Context, in *UpdatePortRequest, opts ...grpc.CallOption) (*UpdatePortResponse, error)
-	ListEditorOptions(ctx context.Context, in *ListEditorOptionsRequest, opts ...grpc.CallOption) (*ListEditorOptionsResponse, error)
 }
 
 type workspacesServiceClient struct {
@@ -164,15 +163,6 @@ func (c *workspacesServiceClient) UpdatePort(ctx context.Context, in *UpdatePort
 	return out, nil
 }
 
-func (c *workspacesServiceClient) ListEditorOptions(ctx context.Context, in *ListEditorOptionsRequest, opts ...grpc.CallOption) (*ListEditorOptionsResponse, error) {
-	out := new(ListEditorOptionsResponse)
-	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.WorkspacesService/ListEditorOptions", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // WorkspacesServiceServer is the server API for WorkspacesService service.
 // All implementations must embed UnimplementedWorkspacesServiceServer
 // for forward compatibility
@@ -200,7 +190,6 @@ type WorkspacesServiceServer interface {
 	// Deleted workspaces cannot be started again.
 	DeleteWorkspace(context.Context, *DeleteWorkspaceRequest) (*DeleteWorkspaceResponse, error)
 	UpdatePort(context.Context, *UpdatePortRequest) (*UpdatePortResponse, error)
-	ListEditorOptions(context.Context, *ListEditorOptionsRequest) (*ListEditorOptionsResponse, error)
 	mustEmbedUnimplementedWorkspacesServiceServer()
 }
 
@@ -234,9 +223,6 @@ func (UnimplementedWorkspacesServiceServer) DeleteWorkspace(context.Context, *De
 }
 func (UnimplementedWorkspacesServiceServer) UpdatePort(context.Context, *UpdatePortRequest) (*UpdatePortResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdatePort not implemented")
-}
-func (UnimplementedWorkspacesServiceServer) ListEditorOptions(context.Context, *ListEditorOptionsRequest) (*ListEditorOptionsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListEditorOptions not implemented")
 }
 func (UnimplementedWorkspacesServiceServer) mustEmbedUnimplementedWorkspacesServiceServer() {}
 
@@ -416,24 +402,6 @@ func _WorkspacesService_UpdatePort_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _WorkspacesService_ListEditorOptions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListEditorOptionsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(WorkspacesServiceServer).ListEditorOptions(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/gitpod.experimental.v1.WorkspacesService/ListEditorOptions",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WorkspacesServiceServer).ListEditorOptions(ctx, req.(*ListEditorOptionsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // WorkspacesService_ServiceDesc is the grpc.ServiceDesc for WorkspacesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -472,10 +440,6 @@ var WorkspacesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdatePort",
 			Handler:    _WorkspacesService_UpdatePort_Handler,
-		},
-		{
-			MethodName: "ListEditorOptions",
-			Handler:    _WorkspacesService_ListEditorOptions_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

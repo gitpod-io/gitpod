@@ -199,6 +199,7 @@ func register(srv *baseserver.Server, deps *registerDependencies) error {
 	rootHandler.Mount(v1connect.NewTeamsServiceHandler(apiv1.NewTeamsService(deps.connPool), handlerOptions...))
 	rootHandler.Mount(v1connect.NewUserServiceHandler(apiv1.NewUserService(deps.connPool), handlerOptions...))
 	rootHandler.Mount(v1connect.NewSCMServiceHandler(apiv1.NewSCMService(deps.connPool), handlerOptions...))
+	rootHandler.Mount(v1connect.NewEditorServiceHandler(apiv1.NewEditorService(deps.connPool), handlerOptions...))
 	rootHandler.Mount(v1connect.NewIDEClientServiceHandler(apiv1.NewIDEClientService(deps.connPool), handlerOptions...))
 	rootHandler.Mount(v1connect.NewProjectsServiceHandler(apiv1.NewProjectsService(deps.connPool), handlerOptions...))
 	rootHandler.Mount(v1connect.NewOIDCServiceHandler(apiv1.NewOIDCService(deps.connPool, deps.expClient, deps.dbConn, deps.cipher), handlerOptions...))

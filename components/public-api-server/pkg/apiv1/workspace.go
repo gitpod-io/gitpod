@@ -299,28 +299,6 @@ func (s *WorkspaceService) DeleteWorkspace(ctx context.Context, req *connect.Req
 	return connect.NewResponse(&v1.DeleteWorkspaceResponse{}), nil
 }
 
-func (s *WorkspaceService) ListEditorOptions(ctx context.Context, req *connect.Request[v1.ListEditorOptionsRequest]) (*connect.Response[v1.ListEditorOptionsResponse], error) {
-	conn, err := getConnection(ctx, s.connectionPool)
-	if err != nil {
-		return nil, err
-	}
-
-	options, err := conn.GetIDEOptions(ctx)
-	if err != nil {
-		log.Extract(ctx).WithError(err).Error("Failed to list editor options.")
-		return nil, proxy.ConvertError(err)
-	}
-
-	convertedOptions := make([]*v1.EditorOption, 0, len(options.Options))
-	for _, option := range options.Options {
-		convertedOptions = append(convertedOptions, convertEditorOption(&option))
-	}
-
-	return connect.NewResponse(&v1.ListEditorOptionsResponse{
-		Options: convertedOptions,
-	}), nil
-}
-
 func getLimitFromPagination(pagination *v1.Pagination) (int, error) {
 	const (
 		defaultLimit = 20
@@ -501,29 +479,5 @@ func convertGitStatus(repo *protocol.WorkspaceInstanceRepoStatus) *v1.GitStatus 
 		UncommitedFiles:      repo.UncommitedFiles,
 		UntrackedFiles:       repo.UntrackedFiles,
 		UnpushedCommits:      repo.UnpushedCommits,
-	}
-}
-
-func convertEditorOption(ideOption *protocol.IDEOption) *v1.EditorOption {
-	var editorType *v1.EditorOption_EditorType
-	switch ideOption.Type {
-	case "browser":
-		editorType = v1.EditorOption_EDITOR_TYPE_BROWSER.Enum()
-	case "desktop":
-		editorType = v1.EditorOption_EDITOR_TYPE_DESKTOP.Enum()
-	default:
-		editorType = v1.EditorOption_EDITOR_TYPE_UNSPECIFIED.Enum()
-	}
-
-	return &v1.EditorOption{
-		OrderKey: ideOption.OrderKey,
-		Title:    ideOption.Title,
-		Type:     *editorType,
-		Logo:     ideOption.Logo,
-		Label:    ideOption.Label,
-		Version: &v1.EditorOption_Version{
-			Stable: ideOption.ImageVersion,
-			Latest: ideOption.LatestImageVersion,
-		},
 	}
 }
