@@ -9,7 +9,7 @@ import { injectable } from "inversify";
 
 @injectable()
 export class RepositoryService {
-    async getRepositoriesForAutomatedPrebuilds(user: User): Promise<ProviderRepository[]> {
+    async getRepositoriesForAutomatedPrebuilds(user: User, searchString?: string): Promise<ProviderRepository[]> {
         return [];
     }
 

@@ -24,8 +24,8 @@ export class BitbucketServerService extends RepositoryService {
     @inject(TokenService) protected tokenService: TokenService;
     @inject(BitbucketServerContextParser) protected contextParser: BitbucketServerContextParser;
 
-    async getRepositoriesForAutomatedPrebuilds(user: User): Promise<ProviderRepository[]> {
-        const repos = await this.api.getRepos(user, { permission: "REPO_ADMIN" });
+    async getRepositoriesForAutomatedPrebuilds(user: User, searchString?: string): Promise<ProviderRepository[]> {
+        const repos = await this.api.getRepos(user, { permission: "REPO_ADMIN", searchString });
         return repos.map((r) => {
             const cloneUrl = r.links.clone.find((u) => u.name === "http")?.href!;
             // const webUrl = r.links?.self[0]?.href?.replace("/browse", "");

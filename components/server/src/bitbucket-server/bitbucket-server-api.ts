@@ -280,34 +280,43 @@ export class BitbucketServerApi {
     }
 
     /**
+     * If `searchString` is provided, this tries to match projects and repositorys by name,
+     *  otherwise it returns the first n repositories.
+     *
+     * Based on:
      * https://developer.atlassian.com/server/bitbucket/rest/v811/api-group-repository/#api-api-latest-repos-get
      */
     async getRepos(
         userOrToken: User | string,
         query: {
             permission?: "REPO_READ" | "REPO_WRITE" | "REPO_ADMIN";
+            searchString?: string;
         },
     ) {
-        const result: BitbucketServer.Repository[] = [];
         const permission = query.permission ? `permission=${query.permission}&` : "";
-        let isLastPage = false;
-        let start = 0;
-        while (!isLastPage) {
-            const pageResult = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.Repository>>(
+        const runQuery = async (params: string) =>
+            this.runQuery<BitbucketServer.Paginated<BitbucketServer.Repository>>(
                 userOrToken,
-                `/repos?${permission}start=${start}`,
+                `/repos?${permission}${params}`,
             );
-            if (pageResult.values) {
-                result.push(...pageResult.values);
+
+        if (query.searchString?.trim()) {
+            const result: BitbucketServer.Repository[] = [];
+            const ids = new Set<number>(); // used to deduplicate
+            for (const param of ["name", "projectname", "projectkey"]) {
+                const pageResult = await runQuery(`limit=1000&${param}=${query.searchString}`);
+                for (const repo of pageResult.values || []) {
+                    if (!ids.has(repo.id)) {
+                        ids.add(repo.id);
+                        result.push(repo);
+                    }
+                }
             }
-            isLastPage =
-                typeof pageResult.isLastPage === "undefined" || // a fuse to prevent infinite loop
-                !!pageResult.isLastPage;
-            if (pageResult.nextPageStart) {
-                start = pageResult.nextPageStart;
-            }
+            return result;
+        } else {
+            const pageResult = await runQuery(`limit=1000`);
+            return pageResult.values || [];
         }
-        return result;
     }
 
     async getPullRequest(

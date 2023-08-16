@@ -1464,7 +1464,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     // Projects
     async getProviderRepositoriesForUser(
         ctx: TraceContext,
-        params: { provider: string; hints?: object },
+        params: { provider: string; hints?: object; searchString?: string },
     ): Promise<ProviderRepository[]> {
         traceAPIParams(ctx, { params });
 
@@ -1489,7 +1489,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             const hostContext = this.hostContextProvider.get(providerHost);
             if (hostContext?.services) {
                 repositories.push(
-                    ...(await hostContext.services.repositoryService.getRepositoriesForAutomatedPrebuilds(user)),
+                    ...(await hostContext.services.repositoryService.getRepositoriesForAutomatedPrebuilds(
+                        user,
+                        params.searchString,
+                    )),
                 );
             }
         } else if (provider?.authProviderType === "GitLab") {
