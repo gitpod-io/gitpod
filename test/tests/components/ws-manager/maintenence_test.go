@@ -96,6 +96,13 @@ func TestMaintenance(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			defer func() {
+				err := configureMaintenanceMode(testCtx, nil, kubeClient)
+				if err != nil {
+					t.Error(err)
+				}
+			}()
+
 			untilTime := time.Now().Add(1 * time.Hour)
 			err = configureMaintenanceMode(testCtx, &untilTime, kubeClient)
 			if err != nil {
@@ -135,6 +142,8 @@ func TestMaintenance(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+
+			time.Sleep(1 * time.Second)
 
 			_, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(swr *wsmanapi.StartWorkspaceRequest) error {
 				swr.Spec.Initializer = &csapi.WorkspaceInitializer{
