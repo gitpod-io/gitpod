@@ -311,8 +311,13 @@ func (s *WorkspaceService) ListEditorOptions(ctx context.Context, req *connect.R
 		return nil, proxy.ConvertError(err)
 	}
 
+	convertedOptions := make([]*v1.EditorOption, 0, len(options.Options))
+	for _, option := range options.Options {
+		convertedOptions = append(convertedOptions, convertEditorOption(&option))
+	}
+
 	return connect.NewResponse(&v1.ListEditorOptionsResponse{
-		EditorOptions: options,
+		Options: convertedOptions,
 	}), nil
 }
 
@@ -499,4 +504,26 @@ func convertGitStatus(repo *protocol.WorkspaceInstanceRepoStatus) *v1.GitStatus 
 	}
 }
 
-func convertEditorOption(*protocol.IDE)
+func convertEditorOption(ideOption *protocol.IDEOption) *v1.EditorOption {
+	var editorType *v1.EditorOption_EditorType
+	switch ideOption.Type {
+	case "browser":
+		editorType = v1.EditorOption_EDITOR_TYPE_BROWSER.Enum()
+	case "desktop":
+		editorType = v1.EditorOption_EDITOR_TYPE_DESKTOP.Enum()
+	default:
+		editorType = v1.EditorOption_EDITOR_TYPE_UNSPECIFIED.Enum()
+	}
+
+	return &v1.EditorOption{
+		OrderKey: ideOption.OrderKey,
+		Title:    ideOption.Title,
+		Type:     *editorType,
+		Logo:     ideOption.Logo,
+		Label:    ideOption.Label,
+		Version: &v1.EditorOption_Version{
+			Stable: ideOption.ImageVersion,
+			Latest: ideOption.LatestImageVersion,
+		},
+	}
+}

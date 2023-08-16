@@ -9,7 +9,6 @@ packages:
       - "*.sh"
     deps:
       - components/gitpod-protocol:gitpod-schema
-      - components/ide-service-api/go:lib
       - dev/addlicense:app
     env:
       - CGO_ENABLED=0
