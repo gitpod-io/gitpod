@@ -299,6 +299,23 @@ func (s *WorkspaceService) DeleteWorkspace(ctx context.Context, req *connect.Req
 	return connect.NewResponse(&v1.DeleteWorkspaceResponse{}), nil
 }
 
+func (s *WorkspaceService) ListEditorOptions(ctx context.Context, req *connect.Request[v1.ListEditorOptionsRequest]) (*connect.Response[v1.ListEditorOptionsResponse], error) {
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+
+	options, err := conn.GetIDEOptions(ctx)
+	if err != nil {
+		log.Extract(ctx).WithError(err).Error("Failed to list editor options.")
+		return nil, proxy.ConvertError(err)
+	}
+
+	return connect.NewResponse(&v1.ListEditorOptionsResponse{
+		EditorOptions: options,
+	}), nil
+}
+
 func getLimitFromPagination(pagination *v1.Pagination) (int, error) {
 	const (
 		defaultLimit = 20
@@ -481,3 +498,5 @@ func convertGitStatus(repo *protocol.WorkspaceInstanceRepoStatus) *v1.GitStatus 
 		UnpushedCommits:      repo.UnpushedCommits,
 	}
 }
+
+func convertEditorOption(*protocol.IDE)

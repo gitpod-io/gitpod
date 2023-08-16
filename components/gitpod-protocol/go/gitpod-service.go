@@ -16,6 +16,8 @@ import (
 	"sync"
 	"time"
 
+	ideconfig "github.com/gitpod-io/gitpod/ide-service-api/config"
+
 	"github.com/sourcegraph/jsonrpc2"
 
 	"github.com/sirupsen/logrus"
@@ -44,6 +46,7 @@ type APIInterface interface {
 	GetFeaturedRepositories(ctx context.Context) (res []*WhitelistedRepository, err error)
 	GetSuggestedContextURLs(ctx context.Context) (res []*string, err error)
 	GetWorkspace(ctx context.Context, id string) (res *WorkspaceInfo, err error)
+	GetIDEOptions(ctx context.Context) (res *IDEOptions, err error)
 	IsWorkspaceOwner(ctx context.Context, workspaceID string) (res bool, err error)
 	CreateWorkspace(ctx context.Context, options *CreateWorkspaceOptions) (res *WorkspaceCreationResult, err error)
 	StartWorkspace(ctx context.Context, id string, options *StartWorkspaceOptions) (res *StartWorkspaceResult, err error)
@@ -145,6 +148,8 @@ const (
 	FunctionGetSuggestedContextURLs FunctionName = "getSuggestedContextURLs"
 	// FunctionGetWorkspace is the name of the getWorkspace function
 	FunctionGetWorkspace FunctionName = "getWorkspace"
+	// FunctionGetIDEOptions is the name of the getIDEOptions function
+	FunctionGetIDEOptions FunctionName = "getIDEOptions"
 	// FunctionIsWorkspaceOwner is the name of the isWorkspaceOwner function
 	FunctionIsWorkspaceOwner FunctionName = "isWorkspaceOwner"
 	// FunctionCreateWorkspace is the name of the createWorkspace function
@@ -707,6 +712,25 @@ func (gp *APIoverJSONRPC) GetWorkspace(ctx context.Context, id string) (res *Wor
 	if err != nil {
 		return
 	}
+	res = &result
+
+	return
+}
+
+// GetIDEOptions calls getIDEOptions on the server
+func (gp *APIoverJSONRPC) GetIDEOptions(ctx context.Context) (res *IDEOptions, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	var _params []interface{}
+
+	var result IDEOptions
+	err = gp.C.Call(ctx, "getIDEOptions", _params, &result)
+	if err != nil {
+		return
+	}
+
 	res = &result
 
 	return
@@ -2249,3 +2273,5 @@ type CreateProjectOptions struct {
 	CloneURL          string `json:"cloneUrl,omitempty"`
 	AppInstallationID string `json:"appInstallationId,omitempty"`
 }
+
+type IDEOptions = ideconfig.IDEOptions

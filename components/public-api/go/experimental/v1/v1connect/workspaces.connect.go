@@ -54,6 +54,7 @@ type WorkspacesServiceClient interface {
 	// Deleted workspaces cannot be started again.
 	DeleteWorkspace(context.Context, *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error)
 	UpdatePort(context.Context, *connect_go.Request[v1.UpdatePortRequest]) (*connect_go.Response[v1.UpdatePortResponse], error)
+	ListEditorOptions(context.Context, *connect_go.Request[v1.ListEditorOptionsRequest]) (*connect_go.Response[v1.ListEditorOptionsResponse], error)
 }
 
 // NewWorkspacesServiceClient constructs a client for the gitpod.experimental.v1.WorkspacesService
@@ -111,6 +112,11 @@ func NewWorkspacesServiceClient(httpClient connect_go.HTTPClient, baseURL string
 			baseURL+"/gitpod.experimental.v1.WorkspacesService/UpdatePort",
 			opts...,
 		),
+		listEditorOptions: connect_go.NewClient[v1.ListEditorOptionsRequest, v1.ListEditorOptionsResponse](
+			httpClient,
+			baseURL+"/gitpod.experimental.v1.WorkspacesService/ListEditorOptions",
+			opts...,
+		),
 	}
 }
 
@@ -125,6 +131,7 @@ type workspacesServiceClient struct {
 	stopWorkspace           *connect_go.Client[v1.StopWorkspaceRequest, v1.StopWorkspaceResponse]
 	deleteWorkspace         *connect_go.Client[v1.DeleteWorkspaceRequest, v1.DeleteWorkspaceResponse]
 	updatePort              *connect_go.Client[v1.UpdatePortRequest, v1.UpdatePortResponse]
+	listEditorOptions       *connect_go.Client[v1.ListEditorOptionsRequest, v1.ListEditorOptionsResponse]
 }
 
 // ListWorkspaces calls gitpod.experimental.v1.WorkspacesService.ListWorkspaces.
@@ -172,6 +179,11 @@ func (c *workspacesServiceClient) UpdatePort(ctx context.Context, req *connect_g
 	return c.updatePort.CallUnary(ctx, req)
 }
 
+// ListEditorOptions calls gitpod.experimental.v1.WorkspacesService.ListEditorOptions.
+func (c *workspacesServiceClient) ListEditorOptions(ctx context.Context, req *connect_go.Request[v1.ListEditorOptionsRequest]) (*connect_go.Response[v1.ListEditorOptionsResponse], error) {
+	return c.listEditorOptions.CallUnary(ctx, req)
+}
+
 // WorkspacesServiceHandler is an implementation of the gitpod.experimental.v1.WorkspacesService
 // service.
 type WorkspacesServiceHandler interface {
@@ -198,6 +210,7 @@ type WorkspacesServiceHandler interface {
 	// Deleted workspaces cannot be started again.
 	DeleteWorkspace(context.Context, *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error)
 	UpdatePort(context.Context, *connect_go.Request[v1.UpdatePortRequest]) (*connect_go.Response[v1.UpdatePortResponse], error)
+	ListEditorOptions(context.Context, *connect_go.Request[v1.ListEditorOptionsRequest]) (*connect_go.Response[v1.ListEditorOptionsResponse], error)
 }
 
 // NewWorkspacesServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -252,6 +265,11 @@ func NewWorkspacesServiceHandler(svc WorkspacesServiceHandler, opts ...connect_g
 		svc.UpdatePort,
 		opts...,
 	))
+	mux.Handle("/gitpod.experimental.v1.WorkspacesService/ListEditorOptions", connect_go.NewUnaryHandler(
+		"/gitpod.experimental.v1.WorkspacesService/ListEditorOptions",
+		svc.ListEditorOptions,
+		opts...,
+	))
 	return "/gitpod.experimental.v1.WorkspacesService/", mux
 }
 
@@ -292,4 +310,8 @@ func (UnimplementedWorkspacesServiceHandler) DeleteWorkspace(context.Context, *c
 
 func (UnimplementedWorkspacesServiceHandler) UpdatePort(context.Context, *connect_go.Request[v1.UpdatePortRequest]) (*connect_go.Response[v1.UpdatePortResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.WorkspacesService.UpdatePort is not implemented"))
+}
+
+func (UnimplementedWorkspacesServiceHandler) ListEditorOptions(context.Context, *connect_go.Request[v1.ListEditorOptionsRequest]) (*connect_go.Response[v1.ListEditorOptionsResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.WorkspacesService.ListEditorOptions is not implemented"))
 }

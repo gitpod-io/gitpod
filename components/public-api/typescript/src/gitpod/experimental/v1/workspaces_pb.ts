@@ -739,6 +739,74 @@ export class DeleteWorkspaceResponse extends Message<DeleteWorkspaceResponse> {
 }
 
 /**
+ * @generated from message gitpod.experimental.v1.ListEditorOptionsRequest
+ */
+export class ListEditorOptionsRequest extends Message<ListEditorOptionsRequest> {
+  constructor(data?: PartialMessage<ListEditorOptionsRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.ListEditorOptionsRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListEditorOptionsRequest {
+    return new ListEditorOptionsRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListEditorOptionsRequest {
+    return new ListEditorOptionsRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListEditorOptionsRequest {
+    return new ListEditorOptionsRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListEditorOptionsRequest | PlainMessage<ListEditorOptionsRequest> | undefined, b: ListEditorOptionsRequest | PlainMessage<ListEditorOptionsRequest> | undefined): boolean {
+    return proto3.util.equals(ListEditorOptionsRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.ListEditorOptionsResponse
+ */
+export class ListEditorOptionsResponse extends Message<ListEditorOptionsResponse> {
+  /**
+   * @generated from field: repeated gitpod.experimental.v1.EditorOption options = 1;
+   */
+  options: EditorOption[] = [];
+
+  constructor(data?: PartialMessage<ListEditorOptionsResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.ListEditorOptionsResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "options", kind: "message", T: EditorOption, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListEditorOptionsResponse {
+    return new ListEditorOptionsResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListEditorOptionsResponse {
+    return new ListEditorOptionsResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListEditorOptionsResponse {
+    return new ListEditorOptionsResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListEditorOptionsResponse | PlainMessage<ListEditorOptionsResponse> | undefined, b: ListEditorOptionsResponse | PlainMessage<ListEditorOptionsResponse> | undefined): boolean {
+    return proto3.util.equals(ListEditorOptionsResponse, a, b);
+  }
+}
+
+/**
  * Workspace describes a single workspace
  *
  * @generated from message gitpod.experimental.v1.Workspace
@@ -1829,3 +1897,153 @@ export class GitStatus extends Message<GitStatus> {
   }
 }
 
+/**
+ * @generated from message gitpod.experimental.v1.EditorOption
+ */
+export class EditorOption extends Message<EditorOption> {
+  /**
+   * To ensure a stable order one can set an `order_key`.
+   *
+   * @generated from field: string order_key = 1;
+   */
+  orderKey = "";
+
+  /**
+   * Human readable title text of the IDE (plain text only).
+   *
+   * @generated from field: string title = 2;
+   */
+  title = "";
+
+  /**
+   * @generated from field: gitpod.experimental.v1.EditorOption.EditorType type = 3;
+   */
+  type = EditorOption_EditorType.UNSPECIFIED;
+
+  /**
+   * The logo for the IDE
+   *
+   * @generated from field: string logo = 4;
+   */
+  logo = "";
+
+  /**
+   * Text of an optional label next to the IDE option like “Insiders” (plain
+   * text only).
+   *
+   * @generated from field: string label = 5;
+   */
+  label = "";
+
+  /**
+   * @generated from field: gitpod.experimental.v1.EditorOption.Version version = 6;
+   */
+  version?: EditorOption_Version;
+
+  constructor(data?: PartialMessage<EditorOption>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.EditorOption";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "order_key", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "title", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "type", kind: "enum", T: proto3.getEnumType(EditorOption_EditorType) },
+    { no: 4, name: "logo", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "label", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "version", kind: "message", T: EditorOption_Version },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): EditorOption {
+    return new EditorOption().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): EditorOption {
+    return new EditorOption().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): EditorOption {
+    return new EditorOption().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: EditorOption | PlainMessage<EditorOption> | undefined, b: EditorOption | PlainMessage<EditorOption> | undefined): boolean {
+    return proto3.util.equals(EditorOption, a, b);
+  }
+}
+
+/**
+ * The type of the IDE, currently 'browser' or 'desktop'.
+ *
+ * @generated from enum gitpod.experimental.v1.EditorOption.EditorType
+ */
+export enum EditorOption_EditorType {
+  /**
+   * @generated from enum value: EDITOR_TYPE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: EDITOR_TYPE_BROWSER = 1;
+   */
+  BROWSER = 1,
+
+  /**
+   * @generated from enum value: EDITOR_TYPE_DESKTOP = 2;
+   */
+  DESKTOP = 2,
+}
+// Retrieve enum metadata with: proto3.getEnumType(EditorOption_EditorType)
+proto3.util.setEnumType(EditorOption_EditorType, "gitpod.experimental.v1.EditorOption.EditorType", [
+  { no: 0, name: "EDITOR_TYPE_UNSPECIFIED" },
+  { no: 1, name: "EDITOR_TYPE_BROWSER" },
+  { no: 2, name: "EDITOR_TYPE_DESKTOP" },
+]);
+
+/**
+ * @generated from message gitpod.experimental.v1.EditorOption.Version
+ */
+export class EditorOption_Version extends Message<EditorOption_Version> {
+  /**
+   * The semantic version of the stable IDE image.
+   *
+   * @generated from field: string stable = 1;
+   */
+  stable = "";
+
+  /**
+   * The semantic version of the latest IDE image.
+   *
+   * @generated from field: string latest = 2;
+   */
+  latest = "";
+
+  constructor(data?: PartialMessage<EditorOption_Version>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.EditorOption.Version";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "stable", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "latest", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): EditorOption_Version {
+    return new EditorOption_Version().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): EditorOption_Version {
+    return new EditorOption_Version().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): EditorOption_Version {
+    return new EditorOption_Version().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: EditorOption_Version | PlainMessage<EditorOption_Version> | undefined, b: EditorOption_Version | PlainMessage<EditorOption_Version> | undefined): boolean {
+    return proto3.util.equals(EditorOption_Version, a, b);
+  }
+}
