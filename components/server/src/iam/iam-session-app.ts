@@ -32,6 +32,7 @@ export class IamSessionApp {
         @inject(TeamDB) private readonly teamDb: TeamDB,
     ) {}
 
+    // tests
     public getMiddlewares() {
         return [express.json(), this.sessionHandler.http(), ...this.authenticator.initHandlers];
     }
