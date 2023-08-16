@@ -1592,6 +1592,11 @@ export class StartWorkspaceSpec extends Message<StartWorkspaceSpec> {
    */
   ideSettings?: IDESettings;
 
+  /**
+   * @generated from field: string region = 3;
+   */
+  region = "";
+
   constructor(data?: PartialMessage<StartWorkspaceSpec>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1602,6 +1607,7 @@ export class StartWorkspaceSpec extends Message<StartWorkspaceSpec> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "ide_settings", kind: "message", T: IDESettings },
+    { no: 3, name: "region", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StartWorkspaceSpec {

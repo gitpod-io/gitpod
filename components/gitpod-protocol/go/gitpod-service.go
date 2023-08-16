@@ -1778,6 +1778,7 @@ type StartWorkspaceOptions struct {
 	ForceDefaultImage bool         `json:"forceDefaultImage,omitempty"`
 	WorkspaceClass    string       `json:"workspaceClass,omitempty"`
 	IdeSettings       *IDESettings `json:"ideSettings,omitempty"`
+	Region            string       `json:"region,omitempty"`
 }
 
 // GetWorkspaceTimeoutResult is the GetWorkspaceTimeoutResult message type

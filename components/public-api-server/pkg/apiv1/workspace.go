@@ -42,15 +42,16 @@ func (s *WorkspaceService) CreateAndStartWorkspace(ctx context.Context, req *con
 	}
 
 	ws, err := conn.CreateWorkspace(ctx, &protocol.CreateWorkspaceOptions{
+		ContextURL:     req.Msg.GetContextUrl(),
+		OrganizationId: req.Msg.GetOrganizationId(),
 		StartWorkspaceOptions: protocol.StartWorkspaceOptions{
 			WorkspaceClass: req.Msg.GetStartSpec().GetWorkspaceClass(),
+			Region:         req.Msg.GetStartSpec().GetRegion(),
 			IdeSettings: &protocol.IDESettings{
 				DefaultIde:       req.Msg.StartSpec.IdeSettings.GetDefaultIde(),
 				UseLatestVersion: req.Msg.StartSpec.IdeSettings.GetUseLatestVersion(),
 			},
 		},
-		ContextURL:     req.Msg.GetContextUrl(),
-		OrganizationId: req.Msg.GetOrganizationId(),
 	})
 	if err != nil {
 		log.Extract(ctx).WithError(err).Error("Failed to create workspace.")

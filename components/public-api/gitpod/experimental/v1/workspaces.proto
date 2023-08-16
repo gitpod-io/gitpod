@@ -356,10 +356,9 @@ enum AdmissionLevel {
 
 // StartWorkspaceSpec influences the workspace start
 message StartWorkspaceSpec {
-    // future per-workspace-start fields, e.g.
-
     string workspace_class = 1;
     IDESettings ide_settings = 2;
+    string region = 3;
 }
 
 message IDESettings {
