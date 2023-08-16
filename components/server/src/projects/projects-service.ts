@@ -25,7 +25,6 @@ import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messag
 import { URL } from "url";
 import { Authorizer } from "../authorization/authorizer";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
-import { GitHubAppSupport } from "../github/github-app-support";
 
 @injectable()
 export class ProjectsService {
@@ -37,7 +36,6 @@ export class ProjectsService {
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(WebhookEventDB) private readonly webhookEventDB: WebhookEventDB,
         @inject(Authorizer) private readonly auth: Authorizer,
-        @inject(GitHubAppSupport) private readonly githubAppSupport: GitHubAppSupport,
     ) {}
 
     async getProject(userId: string, projectId: string): Promise<Project> {
@@ -216,13 +214,7 @@ export class ProjectsService {
                     return await repositoryService.canInstallAutomatedPrebuilds(currentUser, cloneURL);
                 }
             }
-            if (host === "github.com" && this.config.githubApp?.enabled) {
-                const availableRepositories = await this.githubAppSupport.getProviderRepositoriesForUser({
-                    user: currentUser,
-                    provider: "github.com",
-                });
-                return availableRepositories.some((r) => r.cloneUrl === cloneURL);
-            }
+            // The GitHub App case isn't handled here due to a circular dependency problem.
         } catch (error) {
             log.error("Failed to check precondition for creating a project.");
         }

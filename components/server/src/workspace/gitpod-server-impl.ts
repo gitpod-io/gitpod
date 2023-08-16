@@ -2643,7 +2643,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         } catch (err) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Clone URL must be a valid URL.");
         }
-        const canCreateProject = await this.projectsService.canCreateProject(user, params.cloneUrl);
+        const canCreateProject = await this.canCreateProject(user, params.cloneUrl);
         if (!canCreateProject) {
             throw new ApplicationError(
                 ErrorCodes.BAD_REQUEST,
@@ -2671,6 +2671,35 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         return project;
+    }
+
+    /**
+     * Checks if a project can be created, i.e. the current user has the required permissions
+     * at the given git provider.
+     */
+    private async canCreateProject(currentUser: User, cloneURL: string) {
+        try {
+            const parsedUrl = RepoURL.parseRepoUrl(cloneURL);
+            const host = parsedUrl?.host;
+            if (!host) {
+                throw Error("Unknown host: " + parsedUrl?.host);
+            }
+            if (host === "github.com" && this.config.githubApp?.enabled) {
+                const availableRepositories = await this.githubAppSupport.getProviderRepositoriesForUser({
+                    user: currentUser,
+                    provider: "github.com",
+                });
+                return availableRepositories.some((r) => r.cloneUrl === cloneURL);
+            } else {
+                return await this.projectsService.canCreateProject(currentUser, cloneURL);
+
+                // note: the GitHub App based check is not included in the ProjectService due
+                // to a circular dependency problem which would otherwise occur.
+            }
+        } catch (error) {
+            log.error("Failed to check precondition for creating a project.");
+        }
+        return false;
     }
 
     public async updateProjectPartial(ctx: TraceContext, partialProject: PartialProject): Promise<void> {
