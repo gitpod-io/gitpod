@@ -2446,16 +2446,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organization ID must be a valid UUID");
         }
 
-        const team = await this.teamDB.findTeamById(teamId);
-        if (!team) {
+        const org = await this.teamDB.findTeamById(teamId);
+        if (!org) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ID: ${teamId} not found.`);
         }
 
-        const members = await this.teamDB.findMembersByTeam(team.id);
+        const members = await this.teamDB.findMembersByTeam(org.id);
 
-        if (!(await this.hasOrgOperationPermission(team, members, op))) {
+        if (!(await this.resourceAccessGuard.canAccess({ kind: "team", subject: org, members }, op))) {
             // if user has read permission, throw 403, otherwise 404
-            if (await this.hasOrgOperationPermission(team, members, "get")) {
+            if (await this.resourceAccessGuard.canAccess({ kind: "team", subject: org, members }, "get")) {
                 throw new ApplicationError(ErrorCodes.PERMISSION_DENIED, `No access to Organization ID: ${teamId}`);
             } else {
                 throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ID: ${teamId} not found.`);
@@ -2464,27 +2464,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return;
     }
 
-    // TODO(gpl) Remove after FGA rollout
-    private async hasOrgOperationPermission(org: Organization, members: TeamMemberInfo[], op: ResourceAccessOp) {
-        try {
-            await this.guardAccess({ kind: "team", subject: org, members }, op);
-            return true;
-        } catch (error) {
-            if (error.code === ErrorCodes.PERMISSION_DENIED) {
-                return false;
-            } else {
-                throw error;
-            }
-        }
-    }
-
     public async getTeams(ctx: TraceContext): Promise<Organization[]> {
         const user = await this.checkUser("getOrganizations");
         const orgs = await this.organizationService.listOrganizationsByMember(user.id, user.id);
 
         const filterOrg = async (org: Organization): Promise<Organization | undefined> => {
             const members = await this.organizationService.listMembers(user.id, org.id);
-            if (!(await this.hasOrgOperationPermission(org, members, "get"))) {
+            if (!(await this.resourceAccessGuard.canAccess({ kind: "team", subject: org, members }, "get"))) {
                 return undefined;
             }
             return org;
