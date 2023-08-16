@@ -123,10 +123,10 @@ import { RedisMutex } from "../redis/mutex";
 import { AuthorizationService } from "../user/authorization-service";
 import { TokenProvider } from "../user/token-provider";
 import { UserAuthentication } from "../user/user-authentication";
-import { ResolvedEnvVars } from "./env-var-service";
 import { ImageSourceProvider } from "./image-source-provider";
 import { WorkspaceClassesConfig } from "./workspace-classes";
 import { SYSTEM_USER } from "../authorization/authorizer";
+import { ResolvedEnvVars } from "../user/env-var-service";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     rethrow?: boolean;

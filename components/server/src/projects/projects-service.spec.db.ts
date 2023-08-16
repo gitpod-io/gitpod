@@ -120,64 +120,6 @@ describe("ProjectsService", async () => {
         );
     });
 
-    it("should let owners create, delete and get project env vars", async () => {
-        const ps = container.get(ProjectsService);
-        const project = await createTestProject(ps, org, owner);
-        await ps.setProjectEnvironmentVariable(owner.id, project.id, "FOO", "BAR", false);
-
-        const envVars = await ps.getProjectEnvironmentVariables(owner.id, project.id);
-        expect(envVars[0].name).to.equal("FOO");
-
-        const envVarById = await ps.getProjectEnvironmentVariableById(owner.id, envVars[0].id);
-        expect(envVarById?.name).to.equal("FOO");
-
-        await ps.deleteProjectEnvironmentVariable(owner.id, envVars[0].id);
-
-        await expectError(ErrorCodes.NOT_FOUND, () => ps.getProjectEnvironmentVariableById(owner.id, envVars[0].id));
-
-        const emptyEnvVars = await ps.getProjectEnvironmentVariables(owner.id, project.id);
-        expect(emptyEnvVars.length).to.equal(0);
-    });
-
-    it("should not let members create, delete but allow get project env vars", async () => {
-        const ps = container.get(ProjectsService);
-        const project = await createTestProject(ps, org, owner);
-        await ps.setProjectEnvironmentVariable(owner.id, project.id, "FOO", "BAR", false);
-
-        const envVars = await ps.getProjectEnvironmentVariables(member.id, project.id);
-        expect(envVars[0].name).to.equal("FOO");
-
-        const envVarById = await ps.getProjectEnvironmentVariableById(member.id, envVars[0].id);
-        expect(envVarById?.name).to.equal("FOO");
-
-        await expectError(ErrorCodes.PERMISSION_DENIED, () =>
-            ps.deleteProjectEnvironmentVariable(member.id, envVars[0].id),
-        );
-
-        await expectError(ErrorCodes.PERMISSION_DENIED, () =>
-            ps.setProjectEnvironmentVariable(member.id, project.id, "FOO", "BAR", false),
-        );
-    });
-
-    it("should not let strangers create, delete and get project env vars", async () => {
-        const ps = container.get(ProjectsService);
-        const project = await createTestProject(ps, org, owner);
-
-        await ps.setProjectEnvironmentVariable(owner.id, project.id, "FOO", "BAR", false);
-
-        const envVars = await ps.getProjectEnvironmentVariables(owner.id, project.id);
-        expect(envVars[0].name).to.equal("FOO");
-
-        // let's try to get the env var as a stranger
-        await expectError(ErrorCodes.NOT_FOUND, () => ps.getProjectEnvironmentVariableById(stranger.id, envVars[0].id));
-
-        // let's try to delete the env var as a stranger
-        await expectError(ErrorCodes.NOT_FOUND, () => ps.deleteProjectEnvironmentVariable(stranger.id, envVars[0].id));
-
-        // let's try to get the env vars as a stranger
-        await expectError(ErrorCodes.NOT_FOUND, () => ps.getProjectEnvironmentVariables(stranger.id, project.id));
-    });
-
     it("should findProjects", async () => {
         const ps = container.get(ProjectsService);
         const project = await createTestProject(ps, org, owner);

@@ -14,6 +14,7 @@ import {
     TokenEntry,
     User,
     UserEnvVar,
+    UserEnvVarValue,
     UserSSHPublicKey,
 } from "@gitpod/gitpod-protocol";
 import { OAuthTokenRepository, OAuthUserRepository } from "@jmondi/oauth2-server";
@@ -112,7 +113,9 @@ export interface UserDB extends OAuthUserRepository, OAuthTokenRepository, Trans
      */
     findUsersByEmail(email: string): Promise<User[]>;
 
-    setEnvVar(envVar: UserEnvVar): Promise<void>;
+    findEnvVar(userId: string, envVar: UserEnvVarValue): Promise<UserEnvVar | undefined>;
+    addEnvVar(userId: string, envVar: UserEnvVarValue): Promise<void>;
+    updateEnvVar(userId: string, envVar: UserEnvVarValue): Promise<void>;
     deleteEnvVar(envVar: UserEnvVar): Promise<void>;
     getEnvVars(userId: string): Promise<UserEnvVar[]>;
 

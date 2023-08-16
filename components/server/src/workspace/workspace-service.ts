@@ -29,7 +29,7 @@ import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/expe
 import { WorkspaceRegion, isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { RegionService } from "./region-service";
 import { ProjectsService } from "../projects/projects-service";
-import { EnvVarService } from "./env-var-service";
+import { EnvVarService } from "../user/env-var-service";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     /**
@@ -272,7 +272,12 @@ export class WorkspaceService {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Workspace not found!");
         }
 
-        const envVarsPromise = this.envVarService.resolve(workspace);
+        const envVarsPromise = this.envVarService.resolveEnvVariables(
+            user.id,
+            workspace.projectId,
+            workspace.type,
+            workspace.context,
+        );
         const projectPromise = workspace.projectId
             ? ApplicationError.notFoundToUndefined(this.projectsService.getProject(user.id, workspace.projectId))
             : Promise.resolve(undefined);

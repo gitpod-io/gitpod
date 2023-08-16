@@ -15,6 +15,7 @@ import {
     TokenEntry,
     User,
     UserEnvVar,
+    UserEnvVarValue,
     UserSSHPublicKey,
 } from "@gitpod/gitpod-protocol";
 import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
@@ -28,7 +29,7 @@ import {
     OAuthUser,
 } from "@jmondi/oauth2-server";
 import { inject, injectable, optional } from "inversify";
-import { EntityManager, Repository } from "typeorm";
+import { EntityManager, Equal, Not, Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
 import {
     BUILTIN_WORKSPACE_PROBE_USER_ID,
@@ -396,9 +397,38 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
         return Number.parseInt(count);
     }
 
-    public async setEnvVar(envVar: UserEnvVar): Promise<void> {
+    public async findEnvVar(userId: string, envVar: UserEnvVarValue): Promise<UserEnvVar | undefined> {
         const repo = await this.getUserEnvVarRepo();
-        await repo.save(envVar);
+        return repo.findOne({
+            where: {
+                userId,
+                name: envVar.name,
+                repositoryPattern: envVar.repositoryPattern,
+                deleted: Not(Equal(true)),
+            },
+        });
+    }
+
+    public async addEnvVar(userId: string, envVar: UserEnvVarValue): Promise<void> {
+        const repo = await this.getUserEnvVarRepo();
+        await repo.save({
+            id: uuidv4(),
+            userId,
+            name: envVar.name,
+            repositoryPattern: envVar.repositoryPattern,
+            value: envVar.value,
+        });
+    }
+
+    public async updateEnvVar(userId: string, envVar: Required<UserEnvVarValue>): Promise<void> {
+        const repo = await this.getUserEnvVarRepo();
+        await repo.update(
+            {
+                id: envVar.id,
+                userId: userId,
+            },
+            { name: envVar.name, repositoryPattern: envVar.repositoryPattern, value: envVar.value },
+        );
     }
 
     public async getEnvVars(userId: string): Promise<UserEnvVar[]> {
@@ -408,9 +438,8 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
     }
 
     public async deleteEnvVar(envVar: UserEnvVar): Promise<void> {
-        envVar.deleted = true;
         const repo = await this.getUserEnvVarRepo();
-        await repo.save(envVar);
+        await repo.update({ userId: envVar.userId, id: envVar.id }, { deleted: true });
     }
 
     public async hasSSHPublicKey(userId: string): Promise<boolean> {

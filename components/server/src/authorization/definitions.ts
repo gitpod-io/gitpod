@@ -40,7 +40,9 @@ export type UserPermission =
     | "read_ssh"
     | "write_ssh"
     | "read_tokens"
-    | "write_tokens";
+    | "write_tokens"
+    | "read_env_var"
+    | "write_env_var";
 
 export type InstallationResourceType = "installation";
 
@@ -75,7 +77,7 @@ export type ProjectResourceType = "project";
 
 export type ProjectRelation = "org" | "editor" | "viewer";
 
-export type ProjectPermission = "read_info" | "write_info" | "delete";
+export type ProjectPermission = "read_info" | "write_info" | "delete" | "read_env_var" | "write_env_var";
 
 export type WorkspaceResourceType = "workspace";
 

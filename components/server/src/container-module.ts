@@ -104,7 +104,6 @@ import { WebsocketConnectionManager } from "./websocket/websocket-connection-man
 import { ConfigProvider } from "./workspace/config-provider";
 import { IContextParser, IPrefixContextParser } from "./workspace/context-parser";
 import { ContextParser } from "./workspace/context-parser-service";
-import { EnvVarService } from "./workspace/env-var-service";
 import { EnvvarPrefixParser } from "./workspace/envvar-prefix-context-parser";
 import { GitTokenScopeGuesser } from "./workspace/git-token-scope-guesser";
 import { GitTokenValidator } from "./workspace/git-token-validator";
@@ -131,6 +130,7 @@ import { RelationshipUpdater } from "./authorization/relationship-updater";
 import { WorkspaceService } from "./workspace/workspace-service";
 import { SSHKeyService } from "./user/sshkey-service";
 import { GitpodTokenService } from "./user/gitpod-token-service";
+import { EnvVarService } from "./user/env-var-service";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -147,6 +147,7 @@ export const productionContainerModule = new ContainerModule(
 
         bind(SSHKeyService).toSelf().inSingletonScope();
         bind(GitpodTokenService).toSelf().inSingletonScope();
+        bind(EnvVarService).toSelf().inSingletonScope();
 
         bind(TokenService).toSelf().inSingletonScope();
         bind(TokenProvider).toService(TokenService);
@@ -257,7 +258,6 @@ export const productionContainerModule = new ContainerModule(
 
         bind(OrganizationService).toSelf().inSingletonScope();
         bind(ProjectsService).toSelf().inSingletonScope();
-        bind(EnvVarService).toSelf().inSingletonScope();
 
         bind(NewsletterSubscriptionController).toSelf().inSingletonScope();
 
