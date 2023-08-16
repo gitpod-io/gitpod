@@ -130,6 +130,7 @@ import { UserService } from "./user/user-service";
 import { RelationshipUpdater } from "./authorization/relationship-updater";
 import { WorkspaceService } from "./workspace/workspace-service";
 import { SSHKeyService } from "./user/sshkey-service";
+import { GitpodTokenService } from "./user/gitpod-token-service";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -145,6 +146,7 @@ export const productionContainerModule = new ContainerModule(
         bind(AuthorizationService).to(AuthorizationServiceImpl).inSingletonScope();
 
         bind(SSHKeyService).toSelf().inSingletonScope();
+        bind(GitpodTokenService).toSelf().inSingletonScope();
 
         bind(TokenService).toSelf().inSingletonScope();
         bind(TokenProvider).toService(TokenService);
