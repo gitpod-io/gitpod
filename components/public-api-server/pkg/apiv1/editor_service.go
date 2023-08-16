@@ -6,18 +6,13 @@ package apiv1
 
 import (
 	"context"
-	"fmt"
-
-	"path/filepath"
 
 	connect "github.com/bufbuild/connect-go"
-	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func NewEditorService(pool proxy.ServerConnectionPool) *EditorService {
