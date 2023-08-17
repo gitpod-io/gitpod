@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -19,7 +18,6 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/client-go/rest"
 
 	"github.com/bombsimon/logrusr/v2"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
@@ -70,9 +68,13 @@ func init() {
 }
 
 func main() {
+	var enableLeaderElection bool
 	var configFN string
 	var jsonLog bool
 	var verbose bool
+	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
+		"Enable leader election for controller manager. "+
+			"Enabling this will ensure there is only one active controller manager.")
 	flag.StringVar(&configFN, "config", "", "Path to the config file")
 	flag.BoolVar(&jsonLog, "json-log", true, "produce JSON log output on verbose level")
 	flag.BoolVar(&verbose, "verbose", false, "Enable verbose logging")
@@ -113,31 +115,24 @@ func main() {
 		setupLog.Error(nil, "namespace cannot be empty")
 		os.Exit(1)
 	}
-
 	if cfg.Manager.SecretsNamespace == "" {
 		setupLog.Error(nil, "secretsNamespace cannot be empty")
 		os.Exit(1)
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                        scheme,
-		MetricsBindAddress:            cfg.Prometheus.Addr,
-		Port:                          9443,
-		HealthProbeBindAddress:        cfg.Health.Addr,
-		LeaderElection:                true,
-		LeaderElectionID:              "ws-manager-mk2-leader.gitpod.io",
-		LeaderElectionReleaseOnCancel: true,
-		NewCache: func(config *rest.Config, opts cache.Options) (cache.Cache, error) {
-			opts.Namespaces = []string{cfg.Manager.Namespace, cfg.Manager.SecretsNamespace}
-			return cache.New(config, opts)
-		},
+		Scheme:                 scheme,
+		MetricsBindAddress:     cfg.Prometheus.Addr,
+		Port:                   9443,
+		HealthProbeBindAddress: cfg.Health.Addr,
+		LeaderElection:         enableLeaderElection,
+		LeaderElectionID:       "ws-manager-mk2-leader.gitpod.io",
+		NewCache:               cache.MultiNamespacedCacheBuilder([]string{cfg.Manager.Namespace, cfg.Manager.SecretsNamespace}),
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
-
-	mgrCtx := ctrl.SetupSignalHandler()
 
 	maintenanceReconciler, err := controllers.NewMaintenanceReconciler(mgr.GetClient())
 	if err != nil {
@@ -153,21 +148,6 @@ func main() {
 	}
 
 	activity := activity.NewWorkspaceActivity()
-
-	go func() {
-		for {
-			select {
-			case <-mgrCtx.Done():
-				return
-			case <-mgr.Elected():
-				now := time.Now()
-				setupLog.Info("updating activity started time", "now", now)
-				activity.ManagerStartedAt = now
-				return
-			}
-		}
-	}()
-
 	timeoutReconciler, err := controllers.NewTimeoutReconciler(mgr.GetClient(), mgr.GetEventRecorderFor("workspace"), cfg.Manager, activity, maintenanceReconciler)
 	if err != nil {
 		setupLog.Error(err, "unable to create timeout controller", "controller", "Timeout")
@@ -185,13 +165,11 @@ func main() {
 		setupLog.Error(err, "unable to setup workspace controller with manager", "controller", "Workspace")
 		os.Exit(1)
 	}
-
 	if err = timeoutReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to setup timeout controller with manager", "controller", "Timeout")
 		os.Exit(1)
 	}
-
-	if err = maintenanceReconciler.SetupWithManager(mgrCtx, mgr); err != nil {
+	if err = maintenanceReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to setup maintenance controller with manager", "controller", "Maintenance")
 		os.Exit(1)
 	}
@@ -213,7 +191,7 @@ func main() {
 	}
 
 	setupLog.Info("starting manager")
-	if err := mgr.Start(mgrCtx); err != nil {
+	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}

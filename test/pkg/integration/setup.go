@@ -79,8 +79,7 @@ func Setup(ctx context.Context) (string, string, env.Environment, bool, string, 
 		assess     string
 		parallel   bool
 
-		labels     = make(flags.LabelsMap)
-		skipLabels = make(flags.LabelsMap)
+		labels = make(flags.LabelsMap)
 	)
 
 	flagset := flag.CommandLine
@@ -100,8 +99,6 @@ func Setup(ctx context.Context) (string, string, env.Environment, bool, string, 
 	flagset.StringVar(&feature, "feature", "", "Regular expression that targets features to test")
 	flagset.StringVar(&assess, "assess", "", "Regular expression that targets assertive steps to run")
 	flagset.Var(&labels, "labels", "Comma-separated key/value pairs to filter tests by labels")
-	flagset.Var(&skipLabels, "skip-labels", "Comma-separated key/value pairs to skip tests by labels")
-
 	if err := flagset.Parse(os.Args[1:]); err != nil {
 		klog.Fatalf("cannot parse flags: %v", err)
 	}
@@ -124,7 +121,6 @@ func Setup(ctx context.Context) (string, string, env.Environment, bool, string, 
 
 	e.WithClient(client)
 	e.WithLabels(labels)
-	e.WithSkipLabels(skipLabels)
 	e.WithNamespace(namespace)
 
 	// use the namespace from the CurrentContext

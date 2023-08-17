@@ -5,6 +5,10 @@
 package wsmanagermk2
 
 import (
+	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/ws-daemon"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -12,11 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
-
-	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
-	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/ws-daemon"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 )
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
@@ -59,6 +58,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Name: Component,
 			Args: []string{
 				"--config", "/config/config.json",
+				"--leader-elect",
 			},
 			Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.WSManagerMk2.Version),
 			ImagePullPolicy: corev1.PullIfNotPresent,
@@ -176,7 +176,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Spec: appsv1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{MatchLabels: labels},
-				Replicas: pointer.Int32(2),
+				Replicas: common.Replicas(ctx, Component),
 				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
