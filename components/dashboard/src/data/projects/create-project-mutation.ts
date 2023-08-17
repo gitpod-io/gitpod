@@ -10,7 +10,7 @@ import { useCurrentOrg } from "../organizations/orgs-query";
 import { useRefreshProjects } from "./list-projects-query";
 import { CreateProjectParams, Project } from "@gitpod/gitpod-protocol";
 
-type CreateProjectArgs = Omit<CreateProjectParams, "teamId">;
+export type CreateProjectArgs = Omit<CreateProjectParams, "teamId">;
 
 export const useCreateProject = () => {
     const refreshProjects = useRefreshProjects();

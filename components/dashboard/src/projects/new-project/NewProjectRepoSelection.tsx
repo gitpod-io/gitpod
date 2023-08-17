@@ -13,12 +13,13 @@ import { trackEvent } from "../../Analytics";
 import { NewProjectSearchInput } from "./NewProjectSearchInput";
 import { NewProjectAccountSelector } from "./NewProjectAccountSelector";
 import { NewProjectRepoList } from "./NewProjectRepoList";
-import { useCreateProject } from "../../data/projects/create-project-mutation";
+import { CreateProjectArgs, useCreateProject } from "../../data/projects/create-project-mutation";
 import { NewProjectAuthRequired } from "./NewProjectAuthRequired";
 import { useToast } from "../../components/toasts/Toasts";
 import { useProviderRepositoriesForUser } from "../../data/git-providers/provider-repositories-query";
 import { NewProjectSubheading } from "./NewProjectSubheading";
 import { openReconfigureWindow } from "./reconfigure-github";
+import { NewProjectCreateFromURL } from "./NewProjectCreateFromURL";
 
 type Props = {
     selectedProviderHost?: string;
@@ -90,27 +91,31 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProviderHost, onPro
         });
     }, [selectedAccount]);
 
+    const onCreateProject = useCallback(
+        (args: CreateProjectArgs) => {
+            createProject.mutate(args, {
+                onSuccess: (project) => {
+                    onProjectCreated(project);
+                },
+                onError: (error) => {
+                    toast(error?.message ?? "Failed to create new project.");
+                },
+            });
+        },
+        [createProject, onProjectCreated, toast],
+    );
+
     // Creates the project
     const handleRepoSelected = useCallback(
         (repo) => {
-            createProject.mutate(
-                {
-                    name: repo.name,
-                    cloneUrl: repo.cloneUrl,
-                    slug: repo.path || repo.name,
-                    appInstallationId: String(repo.installationId),
-                },
-                {
-                    onSuccess: (project) => {
-                        onProjectCreated(project);
-                    },
-                    onError: (error) => {
-                        toast(error?.message ?? "Failed to create new project.");
-                    },
-                },
-            );
+            onCreateProject({
+                name: repo.name,
+                cloneUrl: repo.cloneUrl,
+                slug: repo.path || repo.name,
+                appInstallationId: String(repo.installationId),
+            });
         },
-        [createProject, onProjectCreated, toast],
+        [onCreateProject],
     );
 
     // Adjusts selectedAccount when repos change
@@ -179,6 +184,13 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProviderHost, onPro
                         </button>
                     </div>
                 </div>
+            )}
+            {(filteredRepos?.length ?? 0) === 0 && repoSearchFilter.length > 0 && (
+                <NewProjectCreateFromURL
+                    repoSearchFilter={repoSearchFilter}
+                    isCreating={createProject.isLoading}
+                    onCreateProject={onCreateProject}
+                />
             )}
         </>
     );

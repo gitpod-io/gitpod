@@ -15,7 +15,7 @@ type Props = {
 };
 export const NewProjectRepoList: FC<Props> = ({ filteredRepos, noReposAvailable, onRepoSelected }) => {
     return (
-        <div className="p-6 flex-col">
+        <>
             {filteredRepos.length > 0 && (
                 <div className="overscroll-contain max-h-80 overflow-y-auto pr-2">
                     {filteredRepos.map((r, index) => (
@@ -58,7 +58,7 @@ export const NewProjectRepoList: FC<Props> = ({ filteredRepos, noReposAvailable,
                 </div>
             )}
             {!noReposAvailable && filteredRepos.length === 0 && <p className="text-center">No Results</p>}
-        </div>
+        </>
     );
 };
 
