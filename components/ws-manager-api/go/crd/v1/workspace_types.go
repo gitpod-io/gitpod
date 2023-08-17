@@ -171,6 +171,8 @@ type WorkspaceStatus struct {
 
 	// +kubebuilder:validation:Optional
 	Runtime *WorkspaceRuntimeStatus `json:"runtime,omitempty"`
+
+	LastActivity *metav1.Time `json:"lastActivity,omitempty"`
 }
 
 func (s *WorkspaceStatus) SetCondition(cond metav1.Condition) {

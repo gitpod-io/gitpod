@@ -152,7 +152,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	activity := activity.NewWorkspaceActivity()
+	activity := activity.NewWorkspaceActivity(cfg.Manager.Namespace, mgr.GetClient())
 
 	go func() {
 		for {
