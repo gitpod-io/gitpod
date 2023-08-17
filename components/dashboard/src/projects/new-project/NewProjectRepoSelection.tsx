@@ -158,6 +158,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProviderHost, onPro
                 </div>
                 <div className="p-6 flex-col">
                     <NewProjectRepoList
+                        isCreating={createProject.isLoading}
                         filteredRepos={filteredRepos}
                         noReposAvailable={noReposAvailable}
                         onRepoSelected={handleRepoSelected}

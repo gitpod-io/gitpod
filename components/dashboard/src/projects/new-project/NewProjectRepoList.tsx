@@ -7,13 +7,15 @@
 import { ProviderRepository } from "@gitpod/gitpod-protocol";
 import dayjs from "dayjs";
 import { FC } from "react";
+import { Button } from "../../components/Button";
 
 type Props = {
     filteredRepos: ProviderRepository[];
     noReposAvailable: boolean;
+    isCreating: boolean;
     onRepoSelected: (repo: ProviderRepository) => void;
 };
-export const NewProjectRepoList: FC<Props> = ({ filteredRepos, noReposAvailable, onRepoSelected }) => {
+export const NewProjectRepoList: FC<Props> = ({ filteredRepos, noReposAvailable, isCreating, onRepoSelected }) => {
     return (
         <>
             {filteredRepos.length > 0 && (
@@ -38,9 +40,9 @@ export const NewProjectRepoList: FC<Props> = ({ filteredRepos, noReposAvailable,
                             <div className="flex justify-end">
                                 <div className="h-full my-auto flex self-center opacity-0 group-hover:opacity-100 items-center mr-2 text-right">
                                     {!r.inUse ? (
-                                        <button className="primary" onClick={() => onRepoSelected(r)}>
+                                        <Button onClick={() => onRepoSelected(r)} loading={isCreating}>
                                             Select
-                                        </button>
+                                        </Button>
                                     ) : (
                                         <p className="text-gray-500 font-medium">
                                             <a rel="noopener" className="gp-link" href={userLink(r)}>
