@@ -20,6 +20,8 @@ import {
     OwnerResourceGuard,
     TeamMemberResourceGuard,
     RepositoryResourceGuard,
+    FGAResourceAccessGuard,
+    ResourceAccessGuard,
 } from "../auth/resource-access";
 import { DBWithTracing, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-db";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
@@ -224,11 +226,12 @@ export class HeadlessLogController {
         }
 
         // [gpl] It's a bit sad that we have to duplicate this access check... but that's due to the way our API code is written
-        const resourceGuard = new CompositeResourceAccessGuard([
+        let resourceGuard: ResourceAccessGuard = new CompositeResourceAccessGuard([
             new OwnerResourceGuard(user.id),
             new TeamMemberResourceGuard(user.id),
             new RepositoryResourceGuard(user, this.hostContextProvider),
         ]);
+        resourceGuard = new FGAResourceAccessGuard(user.id, resourceGuard);
         if (!(await resourceGuard.canAccess({ kind: "workspaceLog", subject: workspace, teamMembers }, "get"))) {
             res.sendStatus(403);
             log.warn(logCtx, "unauthenticated headless log access");

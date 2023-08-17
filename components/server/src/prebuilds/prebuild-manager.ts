@@ -36,8 +36,8 @@ import { PrebuildRateLimiterConfig } from "../workspace/prebuild-rate-limiter";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UserAuthentication } from "../user/user-authentication";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
-import { EnvVarService } from "../workspace/env-var-service";
 import { WorkspaceService } from "../workspace/workspace-service";
+import { EnvVarService } from "../user/env-var-service";
 
 export class WorkspaceRunningError extends Error {
     constructor(msg: string, public instance: WorkspaceInstance) {
@@ -230,7 +230,12 @@ export class PrebuildManager {
                 context.normalizedContextURL!,
             );
 
-            const envVarsPromise = this.envVarService.resolve(workspace);
+            const envVarsPromise = this.envVarService.resolveEnvVariables(
+                workspace.ownerId,
+                workspace.projectId,
+                workspace.type,
+                workspace.context,
+            );
 
             const prebuild = await this.workspaceDB.trace({ span }).findPrebuildByWorkspaceID(workspace.id)!;
             if (!prebuild) {
@@ -334,7 +339,12 @@ export class PrebuildManager {
             if (!prebuild) {
                 throw new Error("No prebuild found for workspace " + workspaceId);
             }
-            const envVars = await this.envVarService.resolve(workspace);
+            const envVars = await this.envVarService.resolveEnvVariables(
+                workspace.ownerId,
+                workspace.projectId,
+                workspace.type,
+                workspace.context,
+            );
             await this.workspaceStarter.startWorkspace({ span }, workspace, user, project, envVars);
             return { prebuildId: prebuild.id, wsid: workspace.id, done: false };
         } catch (err) {

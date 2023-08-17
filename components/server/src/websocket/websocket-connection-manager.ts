@@ -34,6 +34,7 @@ import {
     TeamMemberResourceGuard,
     WithResourceAccessGuard,
     RepositoryResourceGuard,
+    FGAResourceAccessGuard,
 } from "../auth/resource-access";
 import { clientIp, takeFirst } from "../express-util";
 import {
@@ -226,6 +227,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
                 new SharedWorkspaceAccessGuard(),
                 new RepositoryResourceGuard(user, this.hostContextProvider),
             ]);
+            resourceGuard = new FGAResourceAccessGuard(user.id, resourceGuard);
         } else {
             resourceGuard = { canAccess: async () => false };
         }
