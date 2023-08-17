@@ -7,9 +7,10 @@
 import { FC, useCallback, useMemo } from "react";
 import isURL from "validator/lib/isURL";
 import { CreateProjectArgs } from "../../data/projects/create-project-mutation";
-import { Subheading } from "../../components/typography/headings";
+import { Heading3 } from "../../components/typography/headings";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/toasts/Toasts";
+import Alert from "../../components/Alert";
 
 type Props = {
     repoSearchFilter: string;
@@ -19,19 +20,19 @@ type Props = {
 export const NewProjectCreateFromURL: FC<Props> = ({ repoSearchFilter, isCreating, onCreateProject }) => {
     const { toast } = useToast();
 
-    const normalizedURL = useMemo(() => {
+    const [normalizedURL, repoSearchIsURL] = useMemo(() => {
+        let repoSearchIsURL = false;
         let url = repoSearchFilter.toLocaleLowerCase().trim();
 
         // Just parse out the origin/pathname to remove any query params or hash
         try {
             const parsedURL = new URL(url);
+            repoSearchIsURL = true;
             const { origin, pathname } = parsedURL;
             url = `${origin}${pathname}`;
-        } catch (e) {
-            return url;
-        }
+        } catch (e) {}
 
-        return url;
+        return [url, repoSearchIsURL];
     }, [repoSearchFilter]);
 
     const showCreateFromURL = useMemo(() => {
@@ -66,7 +67,7 @@ export const NewProjectCreateFromURL: FC<Props> = ({ repoSearchFilter, isCreatin
             }
 
             name = repo;
-            slug = [repo, owner].filter(Boolean).join("-").toLowerCase();
+            slug = [owner, repo].filter(Boolean).join("-").toLowerCase();
         } catch (e) {
             toast("Sorry, it looks like we can't handle that URL. Is it a valid git clone URL?");
             return;
@@ -80,19 +81,36 @@ export const NewProjectCreateFromURL: FC<Props> = ({ repoSearchFilter, isCreatin
         });
     }, [normalizedURL, onCreateProject, toast]);
 
-    if (!showCreateFromURL) {
+    if (!repoSearchIsURL && !showCreateFromURL) {
         return null;
     }
 
     return (
         <div className="flex flex-col items-center">
-            <Subheading>Create project from Git clone URL?</Subheading>
+            {showCreateFromURL ? (
+                <>
+                    <Heading3>Create project from Git clone URL?</Heading3>
 
-            <pre className="my-2 font-mono text-sm">{normalizedURL}</pre>
+                    <div className="my-2 rounded-lg px-2 py-1 bg-gray-100 dark:bg-gray-900 text-gray-500 dark:text-gray-200 font-mono text-xs">
+                        {normalizedURL}
+                    </div>
 
-            <Button onClick={handleCreate} loading={isCreating}>
-                Create Project
-            </Button>
+                    <Button onClick={handleCreate} loading={isCreating}>
+                        Create Project
+                    </Button>
+                </>
+            ) : (
+                // We show this if the user has entered a URL but is not a valid git clone URL
+                <>
+                    <Alert type="info">
+                        You may provide a Git clone URL for creating a Project.
+                        <div>
+                            {"i.e: "}
+                            <em className="text-sm">https://github.com/gitpod-io/gitpod.git</em>
+                        </div>
+                    </Alert>
+                </>
+            )}
         </div>
     );
 };
