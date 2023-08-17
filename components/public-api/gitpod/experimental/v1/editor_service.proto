@@ -36,13 +36,11 @@ message EditorOption {
     // text only).
     string label = 5;
 
-    message Version {
-        // The semantic version of the stable editor image.
-        string stable = 1;
-
-        // The semantic version of the latest editor image.
-        string latest = 2;
+    message Kind {
+        // The semantic version of the editor.
+        string version = 1;
     }
 
-    Version version = 6;
+    Kind stable = 6;
+    Kind latest = 7;
 }

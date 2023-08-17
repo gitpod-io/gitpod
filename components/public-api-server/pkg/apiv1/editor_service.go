@@ -79,9 +79,11 @@ func convertEditorOption(ideOption *protocol.IDEOption, id string) *v1.EditorOpt
 		Type:  *editorType,
 		Logo:  ideOption.Logo,
 		Label: ideOption.Label,
-		Version: &v1.EditorOption_Version{
-			Stable: ideOption.ImageVersion,
-			Latest: ideOption.LatestImageVersion,
+		Stable: &v1.EditorOption_Kind{
+			Version: ideOption.ImageVersion,
+		},
+		Latest: &v1.EditorOption_Kind{
+			Version: ideOption.LatestImageVersion,
 		},
 	}
 }

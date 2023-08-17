@@ -119,9 +119,14 @@ export class EditorOption extends Message<EditorOption> {
   label = "";
 
   /**
-   * @generated from field: gitpod.experimental.v1.EditorOption.Version version = 6;
+   * @generated from field: gitpod.experimental.v1.EditorOption.Kind stable = 6;
    */
-  version?: EditorOption_Version;
+  stable?: EditorOption_Kind;
+
+  /**
+   * @generated from field: gitpod.experimental.v1.EditorOption.Kind latest = 7;
+   */
+  latest?: EditorOption_Kind;
 
   constructor(data?: PartialMessage<EditorOption>) {
     super();
@@ -136,7 +141,8 @@ export class EditorOption extends Message<EditorOption> {
     { no: 3, name: "type", kind: "enum", T: proto3.getEnumType(EditorOption_Type) },
     { no: 4, name: "logo", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "label", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 6, name: "version", kind: "message", T: EditorOption_Version },
+    { no: 6, name: "stable", kind: "message", T: EditorOption_Kind },
+    { no: 7, name: "latest", kind: "message", T: EditorOption_Kind },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): EditorOption {
@@ -185,48 +191,40 @@ proto3.util.setEnumType(EditorOption_Type, "gitpod.experimental.v1.EditorOption.
 ]);
 
 /**
- * @generated from message gitpod.experimental.v1.EditorOption.Version
+ * @generated from message gitpod.experimental.v1.EditorOption.Kind
  */
-export class EditorOption_Version extends Message<EditorOption_Version> {
+export class EditorOption_Kind extends Message<EditorOption_Kind> {
   /**
-   * The semantic version of the stable editor image.
+   * The semantic version of the editor.
    *
-   * @generated from field: string stable = 1;
+   * @generated from field: string version = 1;
    */
-  stable = "";
+  version = "";
 
-  /**
-   * The semantic version of the latest editor image.
-   *
-   * @generated from field: string latest = 2;
-   */
-  latest = "";
-
-  constructor(data?: PartialMessage<EditorOption_Version>) {
+  constructor(data?: PartialMessage<EditorOption_Kind>) {
     super();
     proto3.util.initPartial(data, this);
   }
 
   static readonly runtime = proto3;
-  static readonly typeName = "gitpod.experimental.v1.EditorOption.Version";
+  static readonly typeName = "gitpod.experimental.v1.EditorOption.Kind";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "stable", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "latest", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 1, name: "version", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): EditorOption_Version {
-    return new EditorOption_Version().fromBinary(bytes, options);
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): EditorOption_Kind {
+    return new EditorOption_Kind().fromBinary(bytes, options);
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): EditorOption_Version {
-    return new EditorOption_Version().fromJson(jsonValue, options);
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): EditorOption_Kind {
+    return new EditorOption_Kind().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): EditorOption_Version {
-    return new EditorOption_Version().fromJsonString(jsonString, options);
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): EditorOption_Kind {
+    return new EditorOption_Kind().fromJsonString(jsonString, options);
   }
 
-  static equals(a: EditorOption_Version | PlainMessage<EditorOption_Version> | undefined, b: EditorOption_Version | PlainMessage<EditorOption_Version> | undefined): boolean {
-    return proto3.util.equals(EditorOption_Version, a, b);
+  static equals(a: EditorOption_Kind | PlainMessage<EditorOption_Kind> | undefined, b: EditorOption_Kind | PlainMessage<EditorOption_Kind> | undefined): boolean {
+    return proto3.util.equals(EditorOption_Kind, a, b);
   }
 }
