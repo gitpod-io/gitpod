@@ -108,7 +108,7 @@ import {
 import { inject, injectable } from "inversify";
 import { URL } from "url";
 import { v4 as uuidv4, validate as uuidValidate } from "uuid";
-import { Disposable } from "vscode-jsonrpc";
+import { Disposable, CancellationToken } from "vscode-jsonrpc";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { AuthProviderService } from "../auth/auth-provider-service";
 import { HostContextProvider } from "../auth/host-context-provider";
@@ -1457,7 +1457,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     // Projects
     async getProviderRepositoriesForUser(
         ctx: TraceContext,
-        params: { provider: string; hints?: object },
+        params: { provider: string; hints?: object; searchString?: string },
+        cancellationToken?: CancellationToken,
     ): Promise<ProviderRepository[]> {
         traceAPIParams(ctx, { params });
 
@@ -1473,7 +1474,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             const hostContext = this.hostContextProvider.get(providerHost);
             if (hostContext?.services) {
                 repositories.push(
-                    ...(await hostContext.services.repositoryService.getRepositoriesForAutomatedPrebuilds(user)),
+                    ...(await hostContext.services.repositoryService.getRepositoriesForAutomatedPrebuilds(user, {})),
                 );
             }
         } else if (providerHost === "bitbucket.org" && provider) {
@@ -1482,7 +1483,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             const hostContext = this.hostContextProvider.get(providerHost);
             if (hostContext?.services) {
                 repositories.push(
-                    ...(await hostContext.services.repositoryService.getRepositoriesForAutomatedPrebuilds(user)),
+                    ...(await hostContext.services.repositoryService.getRepositoriesForAutomatedPrebuilds(user, {
+                        searchString: params.searchString,
+                        cancellationToken,
+                    })),
                 );
             }
         } else if (provider?.authProviderType === "GitLab") {
