@@ -12,7 +12,6 @@ import {
     TracedWorkspaceDB,
     EmailDomainFilterDB,
     TeamDB,
-    RedisPublisher,
     DBGitpodToken,
 } from "@gitpod/gitpod-db/lib";
 import { BlockedRepositoryDB } from "@gitpod/gitpod-db/lib/blocked-repository-db";
@@ -260,8 +259,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(EmailDomainFilterDB) private emailDomainFilterdb: EmailDomainFilterDB,
 
         @inject(RedisSubscriber) private readonly subscriber: RedisSubscriber,
-        @inject(RedisPublisher) private readonly publisher: RedisPublisher,
-        @inject(TracedWorkspaceDB) private readonly workspaceDB: DBWithTracing<WorkspaceDB>,
     ) {}
 
     /** Id the uniquely identifies this server instance */
@@ -1854,23 +1851,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("updateGitStatus");
 
         const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
-        let instance = await this.workspaceDb.trace(ctx).findCurrentInstance(workspaceId);
-        if (!instance) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `workspace ${workspaceId} has no instance`);
-        }
+        const instance = await this.workspaceService.getCurrentInstance(user.id, workspaceId);
         traceWI(ctx, { instanceId: instance.id });
         await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "update");
 
-        if (WorkspaceInstanceRepoStatus.equals(instance.gitStatus, gitStatus)) {
-            return;
-        }
-
-        instance = await this.workspaceDB.trace(ctx).updateInstancePartial(instance.id, { gitStatus });
-        await this.publisher.publishInstanceUpdate({
-            instanceID: instance.id,
-            ownerID: workspace.ownerId,
-            workspaceID: workspace.id,
-        });
+        await this.workspaceService.updateGitStatus(user.id, workspaceId, gitStatus);
     }
 
     public async openPort(
@@ -3385,16 +3370,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async getSupportedWorkspaceClasses(ctx: TraceContext): Promise<SupportedWorkspaceClass[]> {
-        await this.checkAndBlockUser("getSupportedWorkspaceClasses");
-        const classes = this.config.workspaceClasses.map((c) => ({
-            id: c.id,
-            category: c.category,
-            displayName: c.displayName,
-            description: c.description,
-            powerups: c.powerups,
-            isDefault: c.isDefault,
-        }));
-        return classes;
+        const user = await this.checkAndBlockUser("getSupportedWorkspaceClasses");
+        return this.workspaceService.getSupportedWorkspaceClasses(user.id);
     }
 
     //#region gitpod.io concerns

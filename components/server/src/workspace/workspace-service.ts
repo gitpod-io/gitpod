@@ -6,7 +6,7 @@
 
 import { inject, injectable } from "inversify";
 import * as grpc from "@grpc/grpc-js";
-import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { RedisPublisher, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
     GitpodServer,
     PortProtocol,
@@ -18,6 +18,7 @@ import {
     WorkspaceContext,
     WorkspaceInstance,
     WorkspaceInstancePort,
+    WorkspaceInstanceRepoStatus,
     WorkspaceSoftDeletion,
 } from "@gitpod/gitpod-protocol";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -42,6 +43,8 @@ import { RegionService } from "./region-service";
 import { ProjectsService } from "../projects/projects-service";
 import { EnvVarService } from "../user/env-var-service";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
+import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
+import { Config } from "../config";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     /**
@@ -53,6 +56,7 @@ export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOption
 @injectable()
 export class WorkspaceService {
     constructor(
+        @inject(Config) private readonly config: Config,
         @inject(WorkspaceFactory) private readonly factory: WorkspaceFactory,
         @inject(WorkspaceStarter) private readonly workspaceStarter: WorkspaceStarter,
         @inject(WorkspaceManagerClientProvider) private readonly clientProvider: WorkspaceManagerClientProvider,
@@ -60,6 +64,7 @@ export class WorkspaceService {
         @inject(EntitlementService) private readonly entitlementService: EntitlementService,
         @inject(EnvVarService) private readonly envVarService: EnvVarService,
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
+        @inject(RedisPublisher) private readonly publisher: RedisPublisher,
         @inject(Authorizer) private readonly auth: Authorizer,
     ) {}
 
@@ -538,6 +543,40 @@ export class WorkspaceService {
     public async setDescription(userId: string, workspaceId: string, description: string) {
         await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
         await this.db.updatePartial(workspaceId, { description });
+    }
+
+    public async updateGitStatus(
+        userId: string,
+        workspaceId: string,
+        gitStatus: Required<WorkspaceInstanceRepoStatus> | undefined,
+    ) {
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+
+        let instance = await this.getCurrentInstance(userId, workspaceId);
+        if (WorkspaceInstanceRepoStatus.equals(instance.gitStatus, gitStatus)) {
+            return;
+        }
+
+        const workspace = await this.getWorkspace(userId, workspaceId);
+        instance = await this.db.updateInstancePartial(instance.id, { gitStatus });
+        await this.publisher.publishInstanceUpdate({
+            instanceID: instance.id,
+            ownerID: workspace.ownerId,
+            workspaceID: workspace.id,
+        });
+    }
+
+    public async getSupportedWorkspaceClasses(userId: string): Promise<SupportedWorkspaceClass[]> {
+        // No access check required, valid session/user is enough
+        const classes = this.config.workspaceClasses.map((c) => ({
+            id: c.id,
+            category: c.category,
+            displayName: c.displayName,
+            description: c.description,
+            powerups: c.powerups,
+            isDefault: c.isDefault,
+        }));
+        return classes;
     }
 }
 

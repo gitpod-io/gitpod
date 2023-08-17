@@ -302,6 +302,26 @@ describe("WorkspaceService", async () => {
             "should fail on non-running workspace",
         );
     });
+
+    it("should updateGitStatus", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        await expectError(
+            ErrorCodes.NOT_FOUND,
+            svc.updateGitStatus(owner.id, ws.id, {
+                branch: "main",
+                uncommitedFiles: ["new-unit.ts"],
+                latestCommit: "asdf",
+                totalUncommitedFiles: 1,
+                totalUntrackedFiles: 1,
+                unpushedCommits: [],
+                untrackedFiles: ["new-unit.ts"],
+                totalUnpushedCommits: 0,
+            }),
+            "should fail on non-running workspace",
+        );
+    });
 });
 
 async function createTestWorkspace(svc: WorkspaceService, org: Organization, owner: User, project: Project) {
