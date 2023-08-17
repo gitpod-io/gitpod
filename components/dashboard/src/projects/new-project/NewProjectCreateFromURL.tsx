@@ -68,7 +68,7 @@ export const NewProjectCreateFromURL: FC<Props> = ({ repoSearchFilter, isCreatin
 
     return (
         <div className="flex flex-col items-center">
-            <Subheading>Create project from Git clone url?</Subheading>
+            <Subheading>Create project from Git clone URL?</Subheading>
 
             <pre className="my-2 font-mono text-sm">{normalizedURL}</pre>
 
