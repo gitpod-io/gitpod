@@ -17,7 +17,6 @@ import { CreateProjectArgs, useCreateProject } from "../../data/projects/create-
 import { NewProjectAuthRequired } from "./NewProjectAuthRequired";
 import { useToast } from "../../components/toasts/Toasts";
 import { useProviderRepositoriesForUser } from "../../data/git-providers/provider-repositories-query";
-import { NewProjectSubheading } from "./NewProjectSubheading";
 import { openReconfigureWindow } from "./reconfigure-github";
 import { NewProjectCreateFromURL } from "./NewProjectCreateFromURL";
 
@@ -197,15 +196,12 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProviderHost, onPro
 };
 
 const ReposLoading: FC = () => (
-    <div>
-        <NewProjectSubheading />
-        <div className="mt-8 border rounded-xl border-gray-100 dark:border-gray-700 flex-col">
-            <div>
-                <div className="px-12 py-16 text-center text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl w-96 h-h96 flex items-center justify-center">
-                    <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm">
-                        <img className="h-4 w-4 animate-spin" src={Spinner} alt="loading spinner" />
-                        <span>Fetching repositories...</span>
-                    </div>
+    <div className="mt-8 border rounded-xl border-gray-100 dark:border-gray-700 flex-col">
+        <div>
+            <div className="px-12 py-16 text-center text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl w-96 h-h96 flex items-center justify-center">
+                <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm">
+                    <img className="h-4 w-4 animate-spin" src={Spinner} alt="loading spinner" />
+                    <span>Fetching repositories...</span>
                 </div>
             </div>
         </div>
