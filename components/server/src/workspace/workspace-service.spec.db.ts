@@ -378,6 +378,64 @@ describe("WorkspaceService", async () => {
             "should fail on non-running workspace",
         );
     });
+
+    it("should controlAdmission - owner", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        // owner can share workspace
+        await svc.controlAdmission(owner.id, ws.id, "everyone");
+        const wsActual = await svc.getWorkspace(owner.id, ws.id);
+        expect(wsActual.shareable, "owner should be able to share by default").to.equal(true);
+    });
+
+    it("should controlAdmission negative", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        await expectError(
+            ErrorCodes.PERMISSION_DENIED,
+            svc.controlAdmission(member.id, ws.id, "everyone"),
+            "member can't share workspace",
+        );
+        await expectError(
+            ErrorCodes.NOT_FOUND,
+            svc.controlAdmission(stranger.id, ws.id, "everyone"),
+            "stranger does not see the workspace",
+        );
+        await expectError(
+            ErrorCodes.BAD_REQUEST,
+            svc.controlAdmission(owner.id, ws.id, "asd" as "everyone"),
+            "invalid admission level should fail",
+        );
+
+        const wsActual = await svc.getWorkspace(owner.id, ws.id);
+        expect(!!wsActual.shareable, "shareable should still be false").to.equal(false);
+    });
+
+    it("should controlAdmission - sharing disabled on org", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        const orgService = container.get(OrganizationService);
+        await orgService.updateSettings(owner.id, org.id, { workspaceSharingDisabled: true });
+
+        await expectError(
+            ErrorCodes.PERMISSION_DENIED,
+            svc.controlAdmission(owner.id, ws.id, "everyone"),
+            "owner can't share workspace with setting disabled",
+        );
+        await expectError(
+            ErrorCodes.PERMISSION_DENIED,
+            svc.controlAdmission(member.id, ws.id, "everyone"),
+            "member can't share workspace with setting disabled",
+        );
+        await expectError(
+            ErrorCodes.NOT_FOUND,
+            svc.controlAdmission(stranger.id, ws.id, "everyone"),
+            "stranger does not see the workspace with setting disabled",
+        );
+    });
 });
 
 async function createTestWorkspace(svc: WorkspaceService, org: Organization, owner: User, project: Project) {

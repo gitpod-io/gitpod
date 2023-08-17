@@ -41,6 +41,8 @@ import {
     ControlPortRequest,
     SetTimeoutRequest,
     MarkActiveRequest,
+    AdmissionLevel,
+    ControlAdmissionRequest,
 } from "@gitpod/ws-manager/lib";
 import { WorkspaceStarter } from "./workspace-starter";
 import { LogContext, log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -57,6 +59,7 @@ import { Config } from "../config";
 import { goDurationToHumanReadable } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { HeadlessLogEndpoint, HeadlessLogService } from "./headless-log-service";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
+import { OrganizationService } from "../orgs/organization-service";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     /**
@@ -76,6 +79,7 @@ export class WorkspaceService {
         @inject(EntitlementService) private readonly entitlementService: EntitlementService,
         @inject(EnvVarService) private readonly envVarService: EnvVarService,
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
+        @inject(OrganizationService) private readonly orgService: OrganizationService,
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
         @inject(HeadlessLogService) private readonly headlessLogService: HeadlessLogService,
         @inject(Authorizer) private readonly auth: Authorizer,
@@ -812,6 +816,51 @@ export class WorkspaceService {
                 throw e;
             }
         }
+    }
+
+    public async controlAdmission(
+        userId: string,
+        workspaceId: string,
+        level: "owner" | "everyone",
+        check: (workspace: Workspace, instance?: WorkspaceInstance) => Promise<void> = async () => {},
+    ): Promise<void> {
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+
+        const lvlmap = new Map<string, AdmissionLevel>();
+        lvlmap.set("owner", AdmissionLevel.ADMIT_OWNER_ONLY);
+        lvlmap.set("everyone", AdmissionLevel.ADMIT_EVERYONE);
+        if (!lvlmap.has(level)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid admission level.");
+        }
+
+        const workspace = await this.getWorkspace(userId, workspaceId);
+        await check(workspace);
+
+        if (level !== "owner" && workspace.organizationId) {
+            const settings = await this.orgService.getSettings(userId, workspace.organizationId);
+            if (settings?.workspaceSharingDisabled) {
+                throw new ApplicationError(
+                    ErrorCodes.PERMISSION_DENIED,
+                    "An Organization Owner has disabled workspace sharing for workspaces in this Organization. ",
+                );
+            }
+        }
+
+        const instance = await this.db.findCurrentInstance(workspaceId);
+        if (instance && instance.status.phase === "running") {
+            await check(workspace, instance);
+
+            const req = new ControlAdmissionRequest();
+            req.setId(instance.id);
+            req.setLevel(lvlmap.get(level)!);
+
+            const client = await this.clientProvider.get(instance.region);
+            await client.controlAdmission({}, req);
+        }
+
+        await this.db.transaction(async (db) => {
+            await db.updatePartial(workspaceId, { shareable: level === "everyone" });
+        });
     }
 }
 
