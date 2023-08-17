@@ -45,7 +45,6 @@ import (
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/controllers"
-	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	imgproxy "github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/proxy"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/service"
@@ -152,8 +151,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	activity := activity.NewWorkspaceActivity(cfg.Manager.Namespace, mgr.GetClient())
-
 	go func() {
 		for {
 			select {
@@ -162,7 +159,6 @@ func main() {
 			case <-mgr.Elected():
 				now := time.Now()
 				setupLog.Info("updating activity started time", "now", now)
-				activity.ManagerStartedAt = now
 				return
 			}
 		}
