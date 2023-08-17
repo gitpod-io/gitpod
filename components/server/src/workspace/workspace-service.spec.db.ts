@@ -322,6 +322,25 @@ describe("WorkspaceService", async () => {
             "should fail on non-running workspace",
         );
     });
+
+    it("should getWorkspaceTimeout", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        const actual = await svc.getWorkspaceTimeout(owner.id, ws.id);
+        expect(actual, "even stopped workspace get a default response").to.not.be.undefined;
+    });
+
+    it("should setWorkspaceTimeout", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        await expectError(
+            ErrorCodes.NOT_FOUND,
+            svc.setWorkspaceTimeout(owner.id, ws.id, "180m"),
+            "should fail on non-running workspace",
+        );
+    });
 });
 
 async function createTestWorkspace(svc: WorkspaceService, org: Organization, owner: User, project: Project) {

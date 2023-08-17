@@ -66,7 +66,6 @@ import {
     UserSSHPublicKeyValue,
     PrebuildEvent,
     RoleOrPermission,
-    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
     WorkspaceInstanceRepoStatus,
 } from "@gitpod/gitpod-protocol";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
@@ -98,9 +97,7 @@ import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-pr
 import {
     AdmissionLevel,
     ControlAdmissionRequest,
-    DescribeWorkspaceRequest,
     MarkActiveRequest,
-    SetTimeoutRequest,
     StopWorkspacePolicy,
     TakeSnapshotRequest,
 } from "@gitpod/ws-manager/lib/core_pb";
@@ -173,7 +170,6 @@ import {
 } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 import { ClientError } from "nice-grpc-common";
 import { BillingModes } from "../billing/billing-mode";
-import { goDurationToHumanReadable } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { Authorizer, SYSTEM_USER } from "../authorization/authorizer";
 import { OrganizationService } from "../orgs/organization-service";
 import { RedisSubscriber } from "../messaging/redis-subscriber";
@@ -1764,36 +1760,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkUser("setWorkspaceTimeout");
 
-        let validatedDuration;
-        try {
-            validatedDuration = WorkspaceTimeoutDuration.validate(duration);
-        } catch (err) {
-            throw new ApplicationError(ErrorCodes.INVALID_VALUE, "Invalid duration : " + err.message);
-        }
-
-        const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
-        if (!(await this.entitlementService.maySetTimeout(user.id, workspace.organizationId))) {
-            throw new ApplicationError(ErrorCodes.PLAN_PROFESSIONAL_REQUIRED, "Plan upgrade is required");
-        }
-
-        const runningInstances = await this.workspaceDb.trace(ctx).findRegularRunningInstances(user.id);
-        const runningInstance = runningInstances.find((i) => i.workspaceId === workspaceId);
-        if (!runningInstance) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Can only set keep-alive for running workspaces");
-        }
-        await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "update");
-
-        const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
-
-        const req = new SetTimeoutRequest();
-        req.setId(runningInstance.id);
-        req.setDuration(validatedDuration);
-        await client.setTimeout(ctx, req);
-
-        return {
-            resetTimeoutOnWorkspaces: [workspace.id],
-            humanReadableDuration: goDurationToHumanReadable(validatedDuration),
-        };
+        return this.workspaceService.setWorkspaceTimeout(user.id, workspaceId, duration, (instance, workspace) =>
+            this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace: workspace }, "update"),
+        );
     }
 
     public async getWorkspaceTimeout(ctx: TraceContext, workspaceId: string): Promise<GetWorkspaceTimeoutResult> {
@@ -1802,25 +1771,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkUser("getWorkspaceTimeout");
 
-        const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
-        const canChange = await this.entitlementService.maySetTimeout(user.id, workspace.organizationId);
-
-        const runningInstance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
-        if (!runningInstance) {
-            log.warn({ userId: user.id, workspaceId }, "Can only get keep-alive for running workspaces");
-            const duration = WORKSPACE_TIMEOUT_DEFAULT_SHORT;
-            return { duration, canChange, humanReadableDuration: goDurationToHumanReadable(duration) };
-        }
-        await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "get");
-
-        const req = new DescribeWorkspaceRequest();
-        req.setId(runningInstance.id);
-
-        const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
-        const desc = await client.describeWorkspace(ctx, req);
-        const duration = desc.getStatus()!.getSpec()!.getTimeout();
-
-        return { duration, canChange, humanReadableDuration: goDurationToHumanReadable(duration) };
+        return this.workspaceService.getWorkspaceTimeout(user.id, workspaceId, (instance, workspace) =>
+            this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "get"),
+        );
     }
 
     public async getOpenPorts(ctx: TraceContext, workspaceId: string): Promise<WorkspaceInstancePort[]> {

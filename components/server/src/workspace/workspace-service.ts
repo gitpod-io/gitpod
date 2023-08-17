@@ -8,18 +8,22 @@ import { inject, injectable } from "inversify";
 import * as grpc from "@grpc/grpc-js";
 import { RedisPublisher, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
+    GetWorkspaceTimeoutResult,
     GitpodServer,
     PortProtocol,
     PortVisibility,
     Project,
+    SetWorkspaceTimeoutResult,
     StartWorkspaceResult,
     User,
+    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
     Workspace,
     WorkspaceContext,
     WorkspaceInstance,
     WorkspaceInstancePort,
     WorkspaceInstanceRepoStatus,
     WorkspaceSoftDeletion,
+    WorkspaceTimeoutDuration,
 } from "@gitpod/gitpod-protocol";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Authorizer } from "../authorization/authorizer";
@@ -32,6 +36,7 @@ import {
     PortProtocol as ProtoPortProtocol,
     PortSpec,
     ControlPortRequest,
+    SetTimeoutRequest,
 } from "@gitpod/ws-manager/lib";
 import { WorkspaceStarter } from "./workspace-starter";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -45,6 +50,7 @@ import { EnvVarService } from "../user/env-var-service";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 import { Config } from "../config";
+import { goDurationToHumanReadable } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     /**
@@ -577,6 +583,78 @@ export class WorkspaceService {
             isDefault: c.isDefault,
         }));
         return classes;
+    }
+
+    /**
+     *
+     * @param userId
+     * @param workspaceId
+     * @param check TODO(gpl) Remove after FGA rollout
+     * @returns
+     */
+    public async getWorkspaceTimeout(
+        userId: string,
+        workspaceId: string,
+        check: (instance: WorkspaceInstance, workspace: Workspace) => Promise<void> = async () => {},
+    ): Promise<GetWorkspaceTimeoutResult> {
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+
+        const workspace = await this.getWorkspace(userId, workspaceId);
+        const canChange = await this.entitlementService.maySetTimeout(userId, workspace.organizationId);
+
+        const instance = await this.db.findCurrentInstance(workspaceId);
+        if (!instance || instance.status.phase !== "running") {
+            log.warn({ userId, workspaceId }, "Can only get keep-alive for running workspaces");
+            const duration = WORKSPACE_TIMEOUT_DEFAULT_SHORT;
+            return { duration, canChange, humanReadableDuration: goDurationToHumanReadable(duration) };
+        }
+        await check(instance, workspace);
+
+        const req = new DescribeWorkspaceRequest();
+        req.setId(instance.id);
+        const client = await this.clientProvider.get(instance.region);
+        const desc = await client.describeWorkspace({}, req);
+        const duration = desc.getStatus()!.getSpec()!.getTimeout();
+
+        return { duration, canChange, humanReadableDuration: goDurationToHumanReadable(duration) };
+    }
+
+    public async setWorkspaceTimeout(
+        userId: string,
+        workspaceId: string,
+        duration: WorkspaceTimeoutDuration,
+        check: (instance: WorkspaceInstance, workspace: Workspace) => Promise<void> = async () => {},
+    ): Promise<SetWorkspaceTimeoutResult> {
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+
+        let validatedDuration;
+        try {
+            validatedDuration = WorkspaceTimeoutDuration.validate(duration);
+        } catch (err) {
+            throw new ApplicationError(ErrorCodes.INVALID_VALUE, "Invalid duration : " + err.message);
+        }
+
+        const workspace = await this.getWorkspace(userId, workspaceId);
+        if (!(await this.entitlementService.maySetTimeout(userId, workspace.organizationId))) {
+            throw new ApplicationError(ErrorCodes.PLAN_PROFESSIONAL_REQUIRED, "Plan upgrade is required");
+        }
+
+        const instance = await this.getCurrentInstance(userId, workspaceId);
+        if (instance.status.phase !== "running" || workspace.type !== "regular") {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Can only set keep-alive for regular, running workspaces");
+        }
+        await check(instance, workspace);
+
+        const client = await this.clientProvider.get(instance.region);
+        const req = new SetTimeoutRequest();
+        req.setId(instance.id);
+        req.setDuration(validatedDuration);
+        await client.setTimeout({}, req);
+
+        return {
+            resetTimeoutOnWorkspaces: [workspace.id],
+            humanReadableDuration: goDurationToHumanReadable(validatedDuration),
+        };
     }
 }
 
