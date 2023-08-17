@@ -36,6 +36,7 @@ export const useAreGithubWebhooksUnauthorized = (providerHost: string) => {
         return false;
     }
 
+    // Finally, check token for the right scopes - if missing, then uanuthorized
     if (!token || !token.scopes.includes("repo")) {
         return true;
     }

@@ -21,12 +21,12 @@ export const NewProjectSearchInput: FC<Props> = ({ searchFilter, onSearchFilterC
                 alt="search icon"
             />
             <input
-                className="w-96 pl-10 border-0"
+                className="w-96 pl-10 border-0 max-w-full"
                 type="search"
                 placeholder="Search Repositories"
                 value={searchFilter}
                 onChange={(e) => onSearchFilterChange(e.target.value)}
-            ></input>
+            />
         </div>
     );
 };

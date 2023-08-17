@@ -58,7 +58,7 @@ export default function NewProject() {
         redirectToNewWorkspace();
     }, [project?.cloneUrl]);
 
-    // Show that project was created
+    // Show that the project was created
     if (project) {
         return (
             <div className="flex flex-col w-96 mt-24 mx-auto items-center">
