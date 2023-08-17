@@ -11,6 +11,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
@@ -20,13 +21,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/gitpod-io/gitpod/common-go/util"
-	wsactivity "github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
 
-func NewTimeoutReconciler(c client.Client, recorder record.EventRecorder, cfg config.Configuration, activity *wsactivity.WorkspaceActivity, maintenance maintenance.Maintenance) (*TimeoutReconciler, error) {
+func NewTimeoutReconciler(c client.Client, recorder record.EventRecorder, cfg config.Configuration, maintenance maintenance.Maintenance) (*TimeoutReconciler, error) {
 	if cfg.HeartbeatInterval == 0 {
 		return nil, fmt.Errorf("invalid heartbeat interval, must not be 0")
 	}
@@ -38,7 +38,6 @@ func NewTimeoutReconciler(c client.Client, recorder record.EventRecorder, cfg co
 	return &TimeoutReconciler{
 		Client:            c,
 		Config:            cfg,
-		activity:          activity,
 		reconcileInterval: reconcileInterval,
 		recorder:          recorder,
 		maintenance:       maintenance,
@@ -53,7 +52,6 @@ type TimeoutReconciler struct {
 	client.Client
 
 	Config            config.Configuration
-	activity          *wsactivity.WorkspaceActivity
 	reconcileInterval time.Duration
 	recorder          record.EventRecorder
 	maintenance       maintenance.Maintenance
@@ -157,7 +155,7 @@ func (r *TimeoutReconciler) isWorkspaceTimedOut(ws *workspacev1.Workspace) (reas
 	}
 
 	start := ws.ObjectMeta.CreationTimestamp.Time
-	lastActivity := r.activity.GetLastActivity(ws)
+	lastActivity := ws.Status.LastActivity
 	isClosed := ws.IsConditionTrue(workspacev1.WorkspaceConditionClosed)
 
 	switch phase {
@@ -189,7 +187,8 @@ func (r *TimeoutReconciler) isWorkspaceTimedOut(ws *workspacev1.Workspace) (reas
 		activity := activityNone
 		if ws.IsHeadless() {
 			timeout = timeouts.HeadlessWorkspace
-			lastActivity = &start
+			nt := metav1.NewTime(start)
+			lastActivity = &nt
 			activity = activityRunningHeadless
 		} else if lastActivity == nil {
 			// The workspace is up and running, but the user has never produced any activity
@@ -203,13 +202,13 @@ func (r *TimeoutReconciler) isWorkspaceTimedOut(ws *workspacev1.Workspace) (reas
 						return ""
 					}
 				}
-				return decide(*lastActivity, afterClosed, activityClosed)
+				return decide(lastActivity.Time, afterClosed, activityClosed)
 			}()
 			if reason != "" {
 				return reason
 			}
 		}
-		return decide(*lastActivity, timeout, activity)
+		return decide(lastActivity.Time, timeout, activity)
 
 	case workspacev1.WorkspacePhaseStopping:
 		if isWorkspaceBeingDeleted(ws) && !ws.IsConditionTrue(workspacev1.WorkspaceConditionBackupComplete) {

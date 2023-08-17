@@ -23,7 +23,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	"github.com/gitpod-io/gitpod/common-go/util"
-	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
 	"github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	//+kubebuilder:scaffold:imports
@@ -50,10 +49,10 @@ func TestAPIs(t *testing.T) {
 }
 
 var (
-	ctx        context.Context
-	cancel     context.CancelFunc
-	wsActivity *activity.WorkspaceActivity
-	wsMetrics  *controllerMetrics
+	ctx    context.Context
+	cancel context.CancelFunc
+	//wsActivity *activity.WorkspaceActivity
+	wsMetrics *controllerMetrics
 )
 
 var _ = BeforeSuite(func() {
@@ -111,8 +110,8 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(wsReconciler.SetupWithManager(k8sManager)).To(Succeed())
 
-	wsActivity = activity.NewWorkspaceActivity(conf.Namespace, k8sManager.GetClient())
-	timeoutReconciler, err := NewTimeoutReconciler(k8sManager.GetClient(), k8sManager.GetEventRecorderFor("workspace"), conf, wsActivity, maintenance)
+	//wsActivity = activity.NewWorkspaceActivity(conf.Namespace, k8sManager.GetClient())
+	timeoutReconciler, err := NewTimeoutReconciler(k8sManager.GetClient(), k8sManager.GetEventRecorderFor("workspace"), conf, maintenance)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(timeoutReconciler.SetupWithManager(k8sManager)).To(Succeed())
 

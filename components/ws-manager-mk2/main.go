@@ -168,13 +168,13 @@ func main() {
 		}
 	}()
 
-	timeoutReconciler, err := controllers.NewTimeoutReconciler(mgr.GetClient(), mgr.GetEventRecorderFor("workspace"), cfg.Manager, activity, maintenanceReconciler)
+	timeoutReconciler, err := controllers.NewTimeoutReconciler(mgr.GetClient(), mgr.GetEventRecorderFor("workspace"), cfg.Manager, maintenanceReconciler)
 	if err != nil {
 		setupLog.Error(err, "unable to create timeout controller", "controller", "Timeout")
 		os.Exit(1)
 	}
 
-	wsmanService, err := setupGRPCService(cfg, mgr.GetClient(), activity, maintenanceReconciler)
+	wsmanService, err := setupGRPCService(cfg, mgr.GetClient(), maintenanceReconciler)
 	if err != nil {
 		setupLog.Error(err, "unable to start manager service")
 		os.Exit(1)
@@ -219,7 +219,7 @@ func main() {
 	}
 }
 
-func setupGRPCService(cfg *config.ServiceConfiguration, k8s client.Client, activity *activity.WorkspaceActivity, maintenance maintenance.Maintenance) (*service.WorkspaceManagerServer, error) {
+func setupGRPCService(cfg *config.ServiceConfiguration, k8s client.Client, maintenance maintenance.Maintenance) (*service.WorkspaceManagerServer, error) {
 	// TODO(cw): remove use of common-go/log
 
 	if len(cfg.RPCServer.RateLimits) > 0 {
@@ -275,7 +275,7 @@ func setupGRPCService(cfg *config.ServiceConfiguration, k8s client.Client, activ
 		imgbldr.RegisterImageBuilderServer(grpcServer, imgproxy.ImageBuilder{D: imgbldr.NewImageBuilderClient(conn)})
 	}
 
-	srv := service.NewWorkspaceManagerServer(k8s, &cfg.Manager, metrics.Registry, activity, maintenance)
+	srv := service.NewWorkspaceManagerServer(k8s, &cfg.Manager, metrics.Registry, maintenance)
 
 	grpc_prometheus.Register(grpcServer)
 	wsmanapi.RegisterWorkspaceManagerServer(grpcServer, srv)

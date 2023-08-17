@@ -40,7 +40,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
-	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api/config"
@@ -65,15 +64,14 @@ var (
 	}
 )
 
-func NewWorkspaceManagerServer(clnt client.Client, cfg *config.Configuration, reg prometheus.Registerer, activity *activity.WorkspaceActivity, maintenance maintenance.Maintenance) *WorkspaceManagerServer {
-	metrics := newWorkspaceMetrics(cfg.Namespace, clnt, activity)
+func NewWorkspaceManagerServer(clnt client.Client, cfg *config.Configuration, reg prometheus.Registerer, maintenance maintenance.Maintenance) *WorkspaceManagerServer {
+	metrics := newWorkspaceMetrics(cfg.Namespace, clnt)
 	reg.MustRegister(metrics)
 
 	return &WorkspaceManagerServer{
 		Client:      clnt,
 		Config:      cfg,
 		metrics:     metrics,
-		activity:    activity,
 		maintenance: maintenance,
 		subs: subscriptions{
 			subscribers: make(map[string]chan *wsmanapi.SubscribeResponse),
@@ -85,7 +83,6 @@ type WorkspaceManagerServer struct {
 	Client      client.Client
 	Config      *config.Configuration
 	metrics     *workspaceMetrics
-	activity    *activity.WorkspaceActivity
 	maintenance maintenance.Maintenance
 
 	subs subscriptions
@@ -467,7 +464,7 @@ func (wsm *WorkspaceManagerServer) DescribeWorkspace(ctx context.Context, req *w
 		Status: wsm.extractWorkspaceStatus(&ws),
 	}
 
-	lastActivity := wsm.activity.GetLastActivity(&ws)
+	lastActivity := ws.Status.LastActivity
 	if lastActivity != nil {
 		result.LastActivity = lastActivity.UTC().Format(time.RFC3339Nano)
 	}
@@ -512,10 +509,22 @@ func (wsm *WorkspaceManagerServer) MarkActive(ctx context.Context, req *wsmanapi
 		return &wsmanapi.MarkActiveResponse{}, nil
 	}
 
-	// We do not keep the last activity in the workspace resource to limit the load we're placing
-	// on the K8S master in check. Thus, this state lives locally in a map.
-	now := time.Now().UTC()
-	wsm.activity.Store(req.Id, now)
+	err = wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
+		now := time.Now().UTC()
+		lastActivityStatus := metav1.NewTime(now)
+		ws.Status.LastActivity = &lastActivityStatus
+		return nil
+	})
+	if err != nil {
+		log.WithError(err).WithFields(log.OWI("", "", workspaceID)).Warn("was unable to update status")
+	}
+
+	err = retry.RetryOnConflict(retryParams, func() error {
+		return wsm.Client.Status().Update(ctx, &ws)
+	})
+	if err != nil {
+		log.Error(err, "cannot update workspace status")
+	}
 
 	// We do however maintain the the "closed" flag as condition on the workspace. This flag should not change
 	// very often and provides a better UX if it persists across ws-manager restarts.
@@ -1389,7 +1398,7 @@ type workspaceMetrics struct {
 	workspaceActivityVec  *workspaceActivityVec
 }
 
-func newWorkspaceMetrics(namespace string, k8s client.Client, activity *activity.WorkspaceActivity) *workspaceMetrics {
+func newWorkspaceMetrics(namespace string, k8s client.Client) *workspaceMetrics {
 	return &workspaceMetrics{
 		totalStartsCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "gitpod",
@@ -1397,7 +1406,7 @@ func newWorkspaceMetrics(namespace string, k8s client.Client, activity *activity
 			Name:      "workspace_starts_total",
 			Help:      "total number of workspaces started",
 		}, []string{"type", "class"}),
-		workspaceActivityVec: newWorkspaceActivityVec(namespace, k8s, activity),
+		workspaceActivityVec: newWorkspaceActivityVec(namespace, k8s),
 	}
 }
 
@@ -1429,10 +1438,9 @@ type workspaceActivityVec struct {
 	name               string
 	workspaceNamespace string
 	k8s                client.Client
-	activity           *activity.WorkspaceActivity
 }
 
-func newWorkspaceActivityVec(workspaceNamespace string, k8s client.Client, activity *activity.WorkspaceActivity) *workspaceActivityVec {
+func newWorkspaceActivityVec(workspaceNamespace string, k8s client.Client) *workspaceActivityVec {
 	opts := prometheus.GaugeOpts{
 		Namespace: "gitpod",
 		Subsystem: "ws_manager_mk2",
@@ -1444,7 +1452,6 @@ func newWorkspaceActivityVec(workspaceNamespace string, k8s client.Client, activ
 		name:               prometheus.BuildFQName(opts.Namespace, opts.Subsystem, opts.Name),
 		workspaceNamespace: workspaceNamespace,
 		k8s:                k8s,
-		activity:           activity,
 	}
 }
 
@@ -1483,7 +1490,7 @@ func (wav *workspaceActivityVec) getWorkspaceActivityCounts() (active, notActive
 			continue
 		}
 
-		hasActivity := wav.activity.GetLastActivity(&ws) != nil
+		hasActivity := ws.Status.LastActivity != nil
 		if hasActivity {
 			active++
 		} else {
