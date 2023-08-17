@@ -52,7 +52,7 @@ Config defines the v1 version structure of the gitpod config file
 |`httpProxy.name`|string|Y|  ||
 |`imagePullSecrets[ ].kind`|string|N| `secret` ||
 |`imagePullSecrets[ ].name`|string|Y|  ||
-|`workspace.runtime.fsShiftMethod`|string|N| `fuse`, `shiftfs` ||
+|`workspace.runtime.fsShiftMethod`|string|N| `shiftfs` ||
 |`workspace.runtime.containerdRuntimeDir`|string|Y|  |  The location of containerd socket on the host machine|
 |`workspace.runtime.containerdSocket`|string|Y|  |  The location of containerd socket on the host machine|
 |`workspace.resources.requests`||Y|  |  todo(sje): add custom validation to corev1.ResourceList|
