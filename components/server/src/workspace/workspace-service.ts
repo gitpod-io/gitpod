@@ -5,22 +5,33 @@
  */
 
 import { inject, injectable } from "inversify";
+import * as grpc from "@grpc/grpc-js";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
     GitpodServer,
+    PortProtocol,
+    PortVisibility,
     Project,
     StartWorkspaceResult,
     User,
     Workspace,
     WorkspaceContext,
     WorkspaceInstance,
+    WorkspaceInstancePort,
     WorkspaceSoftDeletion,
 } from "@gitpod/gitpod-protocol";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Authorizer } from "../authorization/authorizer";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { WorkspaceFactory } from "./workspace-factory";
-import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
+import {
+    DescribeWorkspaceRequest,
+    StopWorkspacePolicy,
+    PortVisibility as ProtoPortVisibility,
+    PortProtocol as ProtoPortProtocol,
+    PortSpec,
+    ControlPortRequest,
+} from "@gitpod/ws-manager/lib";
 import { WorkspaceStarter } from "./workspace-starter";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
@@ -30,6 +41,7 @@ import { WorkspaceRegion, isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/
 import { RegionService } from "./region-service";
 import { ProjectsService } from "../projects/projects-service";
 import { EnvVarService } from "../user/env-var-service";
+import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     /**
@@ -43,6 +55,7 @@ export class WorkspaceService {
     constructor(
         @inject(WorkspaceFactory) private readonly factory: WorkspaceFactory,
         @inject(WorkspaceStarter) private readonly workspaceStarter: WorkspaceStarter,
+        @inject(WorkspaceManagerClientProvider) private readonly clientProvider: WorkspaceManagerClientProvider,
         @inject(WorkspaceDB) private readonly db: WorkspaceDB,
         @inject(EntitlementService) private readonly entitlementService: EntitlementService,
         @inject(EnvVarService) private readonly envVarService: EnvVarService,
@@ -88,7 +101,7 @@ export class WorkspaceService {
         return this.doGetWorkspace(userId, workspaceId);
     }
 
-    async getCurrentInstance(userId: string, workspaceId: string): Promise<WorkspaceInstance | undefined> {
+    async getCurrentInstance(userId: string, workspaceId: string): Promise<WorkspaceInstance> {
         await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
         const result = await this.db.findCurrentInstance(workspaceId);
         if (!result) {
@@ -237,6 +250,130 @@ export class WorkspaceService {
             throw err;
         }
         log.info(`Purged Workspace ${workspaceId} and all WorkspaceInstances for this workspace`, { workspaceId });
+    }
+
+    public async getOpenPorts(userId: string, workspaceId: string): Promise<WorkspaceInstancePort[]> {
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+
+        const instance = await this.getCurrentInstance(userId, workspaceId);
+        const req = new DescribeWorkspaceRequest();
+        req.setId(instance.id);
+        const client = await this.clientProvider.get(instance.region);
+        const desc = await client.describeWorkspace({}, req);
+
+        if (!desc.hasStatus()) {
+            // This may happen if the instance is not "runing"
+            throw new ApplicationError(ErrorCodes.CONFLICT, "describeWorkspace returned no status");
+        }
+
+        const status = desc.getStatus()!;
+        const ports = status
+            .getSpec()!
+            .getExposedPortsList()
+            .map(
+                (p) =>
+                    <WorkspaceInstancePort>{
+                        port: p.getPort(),
+                        url: p.getUrl(),
+                        visibility: this.portVisibilityFromProto(p.getVisibility()),
+                        protocol: this.portProtocolFromProto(p.getProtocol()),
+                    },
+            );
+
+        return ports;
+    }
+
+    public async openPort(
+        userId: string,
+        workspaceId: string,
+        port: WorkspaceInstancePort,
+    ): Promise<WorkspaceInstancePort | undefined> {
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+
+        const instance = await this.getCurrentInstance(userId, workspaceId);
+        if (instance.status.phase !== "running") {
+            log.debug({ userId, workspaceId }, "Cannot open port for workspace with no running instance", {
+                port,
+            });
+            return;
+        }
+
+        const req = new ControlPortRequest();
+        req.setId(instance.id);
+        const spec = new PortSpec();
+        spec.setPort(port.port);
+        spec.setVisibility(this.portVisibilityToProto(port.visibility));
+        spec.setProtocol(this.portProtocolToProto(port.protocol));
+        req.setSpec(spec);
+        req.setExpose(true);
+
+        try {
+            const client = await this.clientProvider.get(instance.region);
+            await client.controlPort({}, req);
+        } catch (e) {
+            throw mapGrpcError(e);
+        }
+    }
+
+    public async closePort(userId: string, workspaceId: string, port: number) {
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+
+        const instance = await this.getCurrentInstance(userId, workspaceId);
+        if (instance.status.phase !== "running") {
+            log.debug({ userId, workspaceId }, "Cannot close a port for workspace with no running instance", {
+                port,
+            });
+            return;
+        }
+        const req = new ControlPortRequest();
+        req.setId(instance.id);
+        const spec = new PortSpec();
+        spec.setPort(port);
+        req.setSpec(spec);
+        req.setExpose(false);
+
+        const client = await this.clientProvider.get(instance.region);
+        await client.controlPort({}, req);
+    }
+
+    private portVisibilityFromProto(visibility: ProtoPortVisibility): PortVisibility {
+        switch (visibility) {
+            default: // the default in the protobuf def is: private
+            case ProtoPortVisibility.PORT_VISIBILITY_PRIVATE:
+                return "private";
+            case ProtoPortVisibility.PORT_VISIBILITY_PUBLIC:
+                return "public";
+        }
+    }
+
+    private portVisibilityToProto(visibility: PortVisibility | undefined): ProtoPortVisibility {
+        switch (visibility) {
+            default: // the default for requests is: private
+            case "private":
+                return ProtoPortVisibility.PORT_VISIBILITY_PRIVATE;
+            case "public":
+                return ProtoPortVisibility.PORT_VISIBILITY_PUBLIC;
+        }
+    }
+
+    private portProtocolFromProto(protocol: ProtoPortProtocol): PortProtocol {
+        switch (protocol) {
+            default: // the default in the protobuf def is: http
+            case ProtoPortProtocol.PORT_PROTOCOL_HTTP:
+                return "http";
+            case ProtoPortProtocol.PORT_PROTOCOL_HTTPS:
+                return "https";
+        }
+    }
+
+    private portProtocolToProto(protocol: PortProtocol | undefined): ProtoPortProtocol {
+        switch (protocol) {
+            default: // the default for requests is: http
+            case "http":
+                return ProtoPortProtocol.PORT_PROTOCOL_HTTP;
+            case "https":
+                return ProtoPortProtocol.PORT_PROTOCOL_HTTPS;
+        }
     }
 
     // startWorkspace and related methods below
@@ -401,5 +538,23 @@ export class WorkspaceService {
     public async setDescription(userId: string, workspaceId: string, description: string) {
         await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
         await this.db.updatePartial(workspaceId, { description });
+    }
+}
+
+// TODO(gpl) Make private after FGA rollout
+export function mapGrpcError(err: Error): Error {
+    function isGrpcError(err: any): err is grpc.StatusObject {
+        return err.code && err.details;
+    }
+
+    if (!isGrpcError(err)) {
+        return err;
+    }
+
+    switch (err.code) {
+        case grpc.status.RESOURCE_EXHAUSTED:
+            return new ApplicationError(ErrorCodes.TOO_MANY_REQUESTS, err.details);
+        default:
+            return new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, err.details);
     }
 }

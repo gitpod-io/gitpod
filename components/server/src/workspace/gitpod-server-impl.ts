@@ -28,7 +28,6 @@ import {
     GitpodToken,
     GitpodTokenType,
     PermissionName,
-    PortVisibility,
     PrebuiltWorkspace,
     PrebuiltWorkspaceContext,
     SetWorkspaceTimeoutResult,
@@ -69,7 +68,6 @@ import {
     PrebuildEvent,
     RoleOrPermission,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
-    PortProtocol,
     WorkspaceInstanceRepoStatus,
 } from "@gitpod/gitpod-protocol";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
@@ -101,13 +99,9 @@ import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-pr
 import {
     AdmissionLevel,
     ControlAdmissionRequest,
-    ControlPortRequest,
     DescribeWorkspaceRequest,
     MarkActiveRequest,
-    PortSpec,
-    PortVisibility as ProtoPortVisibility,
     SetTimeoutRequest,
-    PortProtocol as ProtoPortProtocol,
     StopWorkspacePolicy,
     TakeSnapshotRequest,
 } from "@gitpod/ws-manager/lib/core_pb";
@@ -158,7 +152,6 @@ import { EntitlementService } from "../billing/entitlement-service";
 import { formatPhoneNumber } from "../user/phone-numbers";
 import { IDEService } from "../ide-service";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import * as grpc from "@grpc/grpc-js";
 import { CostCenterJSON } from "@gitpod/gitpod-protocol/lib/usage";
 import { createCookielessId, maskIp } from "../analytics";
 import {
@@ -188,7 +181,7 @@ import { RedisSubscriber } from "../messaging/redis-subscriber";
 import { UsageService } from "../orgs/usage-service";
 import { UserService } from "../user/user-service";
 import { SSHKeyService } from "../user/sshkey-service";
-import { StartWorkspaceOptions, WorkspaceService } from "./workspace-service";
+import { StartWorkspaceOptions, WorkspaceService, mapGrpcError } from "./workspace-service";
 import { GitpodTokenService } from "../user/gitpod-token-service";
 import { EnvVarService } from "../user/env-var-service";
 
@@ -1143,7 +1136,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 // This is an old tab with open workspace: drop silently
                 return;
             } else {
-                e = this.mapGrpcError(e);
+                e = mapGrpcError(e);
                 throw e;
             }
         }
@@ -1837,7 +1830,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { workspaceId });
         traceWI(ctx, { workspaceId });
 
-        await this.checkAndBlockUser("getOpenPorts");
+        const user = await this.checkAndBlockUser("getOpenPorts");
 
         const instance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
         const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
@@ -1847,30 +1840,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "get");
 
-        const req = new DescribeWorkspaceRequest();
-        req.setId(instance.id);
-        const client = await this.workspaceManagerClientProvider.get(instance.region);
-        const desc = await client.describeWorkspace(ctx, req);
-
-        if (!desc.hasStatus()) {
-            throw new Error("describeWorkspace returned no status");
-        }
-
-        const status = desc.getStatus()!;
-        const ports = status
-            .getSpec()!
-            .getExposedPortsList()
-            .map(
-                (p) =>
-                    <WorkspaceInstancePort>{
-                        port: p.getPort(),
-                        url: p.getUrl(),
-                        visibility: this.portVisibilityFromProto(p.getVisibility()),
-                        protocol: this.portProtocolFromProto(p.getProtocol()),
-                    },
-            );
-
-        return ports;
+        return await this.workspaceService.getOpenPorts(user.id, workspaceId);
     }
 
     public async updateGitStatus(
@@ -1924,61 +1894,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceWI(ctx, { instanceId: runningInstance.id });
         await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace }, "update");
 
-        const req = new ControlPortRequest();
-        req.setId(runningInstance.id);
-        const spec = new PortSpec();
-        spec.setPort(port.port);
-        spec.setVisibility(this.portVisibilityToProto(port.visibility));
-        spec.setProtocol(this.portProtocolToProto(port.protocol));
-        req.setSpec(spec);
-        req.setExpose(true);
-
-        try {
-            const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
-            await client.controlPort(ctx, req);
-        } catch (e) {
-            throw this.mapGrpcError(e);
-        }
-    }
-
-    private portVisibilityFromProto(visibility: ProtoPortVisibility): PortVisibility {
-        switch (visibility) {
-            default: // the default in the protobuf def is: private
-            case ProtoPortVisibility.PORT_VISIBILITY_PRIVATE:
-                return "private";
-            case ProtoPortVisibility.PORT_VISIBILITY_PUBLIC:
-                return "public";
-        }
-    }
-
-    private portVisibilityToProto(visibility: PortVisibility | undefined): ProtoPortVisibility {
-        switch (visibility) {
-            default: // the default for requests is: private
-            case "private":
-                return ProtoPortVisibility.PORT_VISIBILITY_PRIVATE;
-            case "public":
-                return ProtoPortVisibility.PORT_VISIBILITY_PUBLIC;
-        }
-    }
-
-    private portProtocolFromProto(protocol: ProtoPortProtocol): PortProtocol {
-        switch (protocol) {
-            default: // the default in the protobuf def is: http
-            case ProtoPortProtocol.PORT_PROTOCOL_HTTP:
-                return "http";
-            case ProtoPortProtocol.PORT_PROTOCOL_HTTPS:
-                return "https";
-        }
-    }
-
-    private portProtocolToProto(protocol: PortProtocol | undefined): ProtoPortProtocol {
-        switch (protocol) {
-            default: // the default for requests is: http
-            case "http":
-                return ProtoPortProtocol.PORT_PROTOCOL_HTTP;
-            case "https":
-                return ProtoPortProtocol.PORT_PROTOCOL_HTTPS;
-        }
+        return await this.workspaceService.openPort(user.id, workspaceId, port);
     }
 
     public async closePort(ctx: TraceContext, workspaceId: string, port: number) {
@@ -1999,15 +1915,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceWI(ctx, { instanceId: instance.id });
         await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "update");
 
-        const req = new ControlPortRequest();
-        req.setId(instance.id);
-        const spec = new PortSpec();
-        spec.setPort(port);
-        req.setSpec(spec);
-        req.setExpose(false);
-
-        const client = await this.workspaceManagerClientProvider.get(instance.region);
-        await client.controlPort(ctx, req);
+        await this.workspaceService.closePort(user.id, workspaceId, port);
     }
 
     async watchWorkspaceImageBuildLogs(ctx: TraceContext, workspaceId: string): Promise<void> {
@@ -3521,23 +3429,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             userId: this.userID,
         });
         increaseDashboardErrorBoundaryCounter();
-    }
-
-    private mapGrpcError(err: Error): Error {
-        function isGrpcError(err: any): err is grpc.StatusObject {
-            return err.code && err.details;
-        }
-
-        if (!isGrpcError(err)) {
-            return err;
-        }
-
-        switch (err.code) {
-            case grpc.status.RESOURCE_EXHAUSTED:
-                return new ApplicationError(ErrorCodes.TOO_MANY_REQUESTS, err.details);
-            default:
-                return new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, err.details);
-        }
     }
 
     async getIDToken(): Promise<void> {}
