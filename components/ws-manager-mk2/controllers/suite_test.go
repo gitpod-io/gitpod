@@ -49,9 +49,8 @@ func TestAPIs(t *testing.T) {
 }
 
 var (
-	ctx    context.Context
-	cancel context.CancelFunc
-	//wsActivity *activity.WorkspaceActivity
+	ctx       context.Context
+	cancel    context.CancelFunc
 	wsMetrics *controllerMetrics
 )
 
@@ -110,7 +109,6 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(wsReconciler.SetupWithManager(k8sManager)).To(Succeed())
 
-	//wsActivity = activity.NewWorkspaceActivity(conf.Namespace, k8sManager.GetClient())
 	timeoutReconciler, err := NewTimeoutReconciler(k8sManager.GetClient(), k8sManager.GetEventRecorderFor("workspace"), conf, maintenance)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(timeoutReconciler.SetupWithManager(k8sManager)).To(Succeed())
