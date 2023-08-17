@@ -20,7 +20,6 @@ func TestFSShiftMethodUnmarshalJSON(t *testing.T) {
 		Expectation content.FSShiftMethod
 	}{
 		{"shiftfs", content.FSShiftMethod(api.FSShiftMethod_SHIFTFS)},
-		{"fuse", content.FSShiftMethod(api.FSShiftMethod_FUSE)},
 	}
 
 	for _, test := range tests {
