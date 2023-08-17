@@ -123,8 +123,15 @@ if [ "$TEST_SUITE" == "workspace" ]; then
     FAILURE_COUNT=$((FAILURE_COUNT+1))
   fi
 
+  set +e
   # shellcheck disable=SC2086
   go test -v $TEST_LIST "${args[@]}" -labels="type=maintenance" 2>&1
+  RC=${PIPESTATUS[0]}
+  set -e
+
+  if [ "${RC}" -ne "0" ]; then
+    FAILURE_COUNT=$((FAILURE_COUNT+1))
+  fi
 
   cd -
   if [ "${REPORT}" != "" ]; then
