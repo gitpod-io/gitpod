@@ -156,8 +156,15 @@ func main() {
 
 	go func() {
 		for {
-			<-mgr.Elected()
-			activity.ManagerStartedAt = time.Now()
+			select {
+			case <-mgrCtx.Done():
+				return
+			case <-mgr.Elected():
+				now := time.Now()
+				setupLog.Info("updating activity started time", "now", now)
+				activity.ManagerStartedAt = now
+				return
+			}
 		}
 	}()
 
@@ -210,9 +217,6 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
-
-	setupLog.Info("new leader elected")
-	os.Exit(1)
 }
 
 func setupGRPCService(cfg *config.ServiceConfiguration, k8s client.Client, activity *activity.WorkspaceActivity, maintenance maintenance.Maintenance) (*service.WorkspaceManagerServer, error) {
