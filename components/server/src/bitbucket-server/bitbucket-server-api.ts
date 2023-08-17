@@ -9,6 +9,7 @@ import { User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { AuthProviderParams } from "../auth/auth-provider";
 import { BitbucketServerTokenHelper } from "./bitbucket-server-token-handler";
+import { CancellationToken } from "vscode-jsonrpc";
 
 @injectable()
 export class BitbucketServerApi {
@@ -302,17 +303,29 @@ export class BitbucketServerApi {
              * Limit or results per pagination request. Defaults to 1000
              */
             limit?: number;
+
+            cancellationToken?: CancellationToken;
         },
     ) {
+        const isCancelled = () => query.cancellationToken?.isCancellationRequested;
+        if (isCancelled()) {
+            return [];
+        }
         const cap = (query?.cap || 0) > 0 ? query.cap! : 10;
+        let requestsLeft = cap;
         const limit = `limit=${(query?.limit || 0) > 0 ? query.limit! : 1000}&`;
         const permission = query.permission ? `permission=${query.permission}&` : "";
         const runQuery = async (params: string) => {
+            if (isCancelled()) {
+                return [];
+            }
             const result: BitbucketServer.Repository[] = [];
             let isLastPage = false;
             let start = 0;
-            let requestsLeft = cap;
             while (!isLastPage && requestsLeft > 0) {
+                if (isCancelled()) {
+                    return [];
+                }
                 const pageResult = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.Repository>>(
                     userOrToken,
                     `/repos?${permission}${limit}start=${start}&${params}`,

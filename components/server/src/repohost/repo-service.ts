@@ -6,10 +6,14 @@
 
 import { ProviderRepository, User } from "@gitpod/gitpod-protocol";
 import { injectable } from "inversify";
+import { CancellationToken } from "vscode-jsonrpc";
 
 @injectable()
 export class RepositoryService {
-    async getRepositoriesForAutomatedPrebuilds(user: User, searchString?: string): Promise<ProviderRepository[]> {
+    async getRepositoriesForAutomatedPrebuilds(
+        user: User,
+        params: { searchString?: string; cancellationToken?: CancellationToken },
+    ): Promise<ProviderRepository[]> {
         return [];
     }
 

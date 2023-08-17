@@ -44,7 +44,7 @@ import {
     OrganizationSettings,
 } from "./teams-projects-protocol";
 import { JsonRpcProxy, JsonRpcServer } from "./messaging/proxy-factory";
-import { Disposable, CancellationTokenSource } from "vscode-jsonrpc";
+import { Disposable, CancellationTokenSource, CancellationToken } from "vscode-jsonrpc";
 import { HeadlessLogUrls } from "./headless-workspace-log";
 import {
     WorkspaceInstance,
@@ -175,7 +175,10 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getOnboardingState(): Promise<GitpodServer.OnboardingState>;
 
     // Projects
-    getProviderRepositoriesForUser(params: GetProviderRepositoriesParams): Promise<ProviderRepository[]>;
+    getProviderRepositoriesForUser(
+        params: GetProviderRepositoriesParams,
+        cancellationToken?: CancellationToken,
+    ): Promise<ProviderRepository[]>;
     createProject(params: CreateProjectParams): Promise<Project>;
     deleteProject(projectId: string): Promise<void>;
     getTeamProjects(teamId: string): Promise<Project[]>;
@@ -291,6 +294,7 @@ export interface FindPrebuildsParams {
 export interface GetProviderRepositoriesParams {
     provider: string;
     hints?: { installationId: string } | object;
+    searchString?: string;
 }
 export interface ProviderRepository {
     name: string;

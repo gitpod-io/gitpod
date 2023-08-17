@@ -4,9 +4,16 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AuthProviderInfo, Project, ProviderRepository, Team } from "@gitpod/gitpod-protocol";
+import {
+    AuthProviderInfo,
+    Disposable,
+    DisposableCollection,
+    Project,
+    ProviderRepository,
+    Team,
+} from "@gitpod/gitpod-protocol";
 import dayjs from "dayjs";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { trackEvent } from "../Analytics";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
 import ErrorMessage from "../components/ErrorMessage";
@@ -25,6 +32,8 @@ import { projectsPathNew } from "./projects.routes";
 import { Heading1, Subheading } from "../components/typography/headings";
 import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
 import { AuthorizeGit, useNeedsGitAuthorization } from "../components/AuthorizeGit";
+import { useToast } from "../components/toasts/Toasts";
+import { CancellationTokenSource, CancellationToken } from "vscode-jsonrpc";
 
 export default function NewProject() {
     const currentTeam = useCurrentOrg()?.data;
@@ -45,12 +54,20 @@ export default function NewProject() {
     const authProviders = useAuthProviders();
     const [isGitHubAppEnabled, setIsGitHubAppEnabled] = useState<boolean>();
     const [isGitHubWebhooksUnauthorized, setIsGitHubWebhooksUnauthorized] = useState<boolean>();
+    const { toast } = useToast();
+    const toDispose = useMemo(() => new DisposableCollection(), []);
 
     useEffect(() => {
         const { server } = getGitpodService();
         Promise.all([server.isGitHubAppEnabled().then((v) => () => setIsGitHubAppEnabled(v))]).then((setters) =>
             setters.forEach((s) => s()),
         );
+        return () => {
+            if (!toDispose.disposed) {
+                toDispose.dispose();
+            }
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -116,15 +133,43 @@ export default function NewProject() {
         setRepoSearchFilter("");
     }, [selectedAccount]);
 
+    const updateReposInAccounts = useCallback(
+        async (cancellationToken: CancellationToken, installationId?: string) => {
+            setLoaded(false);
+            setReposInAccounts([]);
+            if (!selectedProviderHost) {
+                return [];
+            }
+            try {
+                const repos = await getGitpodService().server.getProviderRepositoriesForUser(
+                    {
+                        provider: selectedProviderHost,
+                        hints: { installationId },
+                    },
+                    cancellationToken,
+                );
+                setReposInAccounts(repos);
+                setLoaded(true);
+            } catch (error) {
+                console.log(error);
+                setLoaded(true);
+                toast(error?.message || "Oh no, there was a problem with fetching repositories.");
+            }
+        },
+        [selectedProviderHost, toast],
+    );
+
     useEffect(() => {
         if (!selectedProviderHost) {
             return;
         }
+        const cancellation = new CancellationTokenSource();
+        toDispose.push(Disposable.create(() => cancellation.cancel()));
         (async () => {
-            await updateReposInAccounts();
+            await updateReposInAccounts(cancellation.token);
         })();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedProviderHost]);
+        return () => cancellation.cancel();
+    }, [selectedProviderHost, updateReposInAccounts, toDispose]);
 
     useEffect(() => {
         if (project) {
@@ -134,31 +179,11 @@ export default function NewProject() {
 
     const isGitHub = () => selectedProviderHost === "github.com";
 
-    const updateReposInAccounts = async (installationId?: string) => {
-        setLoaded(false);
-        setReposInAccounts([]);
-        if (!selectedProviderHost) {
-            return [];
-        }
-        try {
-            const repos = await getGitpodService().server.getProviderRepositoriesForUser({
-                provider: selectedProviderHost,
-                hints: { installationId },
-            });
-            setReposInAccounts(repos);
-            setLoaded(true);
-            return repos;
-        } catch (error) {
-            console.log(error);
-        }
-        return [];
-    };
-
     const reconfigure = () => {
         openReconfigureWindow({
             account: selectedAccount,
             onSuccess: (p: { installationId: string; setupAction?: string }) => {
-                updateReposInAccounts(p.installationId);
+                updateReposInAccounts(CancellationToken.None, p.installationId);
                 trackEvent("organisation_authorised", {
                     installation_id: p.installationId,
                     setup_action: p.setupAction,
