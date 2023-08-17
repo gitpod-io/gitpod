@@ -290,22 +290,53 @@ export class BitbucketServerApi {
         userOrToken: User | string,
         query: {
             permission?: "REPO_READ" | "REPO_WRITE" | "REPO_ADMIN";
+            /**
+             * If projects and repositorys are matched by by name, otherwise it returns the first n repositories.
+             */
             searchString?: string;
+            /**
+             * Maximum number of pagination request. Defaults to 10
+             */
+            cap?: number;
+            /**
+             * Limit or results per pagination request. Defaults to 1000
+             */
+            limit?: number;
         },
     ) {
+        const cap = (query?.cap || 0) > 0 ? query.cap! : 10;
+        const limit = `limit=${(query?.limit || 0) > 0 ? query.limit! : 1000}&`;
         const permission = query.permission ? `permission=${query.permission}&` : "";
-        const runQuery = async (params: string) =>
-            this.runQuery<BitbucketServer.Paginated<BitbucketServer.Repository>>(
-                userOrToken,
-                `/repos?${permission}${params}`,
-            );
+        const runQuery = async (params: string) => {
+            const result: BitbucketServer.Repository[] = [];
+            let isLastPage = false;
+            let start = 0;
+            let requestsLeft = cap;
+            while (!isLastPage && requestsLeft > 0) {
+                const pageResult = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.Repository>>(
+                    userOrToken,
+                    `/repos?${permission}${limit}start=${start}&${params}`,
+                );
+                requestsLeft = requestsLeft - 1;
+                if (pageResult.values) {
+                    result.push(...pageResult.values);
+                }
+                isLastPage =
+                    typeof pageResult.isLastPage === "undefined" || // a fuse to prevent infinite loop
+                    !!pageResult.isLastPage;
+                if (pageResult.nextPageStart) {
+                    start = pageResult.nextPageStart;
+                }
+            }
+            return result;
+        };
 
         if (query.searchString?.trim()) {
             const result: BitbucketServer.Repository[] = [];
             const ids = new Set<number>(); // used to deduplicate
-            for (const param of ["name", "projectname", "projectkey"]) {
-                const pageResult = await runQuery(`limit=1000&${param}=${query.searchString}`);
-                for (const repo of pageResult.values || []) {
+            for (const param of ["name", "projectname"]) {
+                const pageResult = await runQuery(`${param}=${query.searchString}`);
+                for (const repo of pageResult) {
                     if (!ids.has(repo.id)) {
                         ids.add(repo.id);
                         result.push(repo);
@@ -314,8 +345,7 @@ export class BitbucketServerApi {
             }
             return result;
         } else {
-            const pageResult = await runQuery(`limit=1000`);
-            return pageResult.values || [];
+            return await runQuery(`limit=1000`);
         }
     }
 
