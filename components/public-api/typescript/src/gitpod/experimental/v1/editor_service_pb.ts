@@ -85,14 +85,14 @@ export class ListEditorOptionsResponse extends Message<ListEditorOptionsResponse
  */
 export class EditorOption extends Message<EditorOption> {
   /**
-   * To ensure a stable order one can set an `order_key`.
+   * The unique identifier for an editor.
    *
-   * @generated from field: string order_key = 1;
+   * @generated from field: string id = 1;
    */
-  orderKey = "";
+  id = "";
 
   /**
-   * Human readable title text of the IDE (plain text only).
+   * Human readable title text of the editor (plain text only).
    *
    * @generated from field: string title = 2;
    */
@@ -104,14 +104,14 @@ export class EditorOption extends Message<EditorOption> {
   type = EditorOption_EditorType.UNSPECIFIED;
 
   /**
-   * The logo for the IDE
+   * The logo for the editor
    *
    * @generated from field: string logo = 4;
    */
   logo = "";
 
   /**
-   * Text of an optional label next to the IDE option like “Insiders” (plain
+   * Text of an optional label next to the editor option like “Insiders” (plain
    * text only).
    *
    * @generated from field: string label = 5;
@@ -131,7 +131,7 @@ export class EditorOption extends Message<EditorOption> {
   static readonly runtime = proto3;
   static readonly typeName = "gitpod.experimental.v1.EditorOption";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "order_key", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "title", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "type", kind: "enum", T: proto3.getEnumType(EditorOption_EditorType) },
     { no: 4, name: "logo", kind: "scalar", T: 9 /* ScalarType.STRING */ },
@@ -157,7 +157,7 @@ export class EditorOption extends Message<EditorOption> {
 }
 
 /**
- * The type of the IDE, currently 'browser' or 'desktop'.
+ * The type of the editor, currently browser or desktop.
  *
  * @generated from enum gitpod.experimental.v1.EditorOption.EditorType
  */
@@ -189,14 +189,14 @@ proto3.util.setEnumType(EditorOption_EditorType, "gitpod.experimental.v1.EditorO
  */
 export class EditorOption_Version extends Message<EditorOption_Version> {
   /**
-   * The semantic version of the stable IDE image.
+   * The semantic version of the stable editor image.
    *
    * @generated from field: string stable = 1;
    */
   stable = "";
 
   /**
-   * The semantic version of the latest IDE image.
+   * The semantic version of the latest editor image.
    *
    * @generated from field: string latest = 2;
    */
@@ -230,3 +230,4 @@ export class EditorOption_Version extends Message<EditorOption_Version> {
     return proto3.util.equals(EditorOption_Version, a, b);
   }
 }
+

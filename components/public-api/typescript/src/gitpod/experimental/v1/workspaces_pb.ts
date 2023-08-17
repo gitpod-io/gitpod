@@ -1828,3 +1828,4 @@ export class GitStatus extends Message<GitStatus> {
     return proto3.util.equals(GitStatus, a, b);
   }
 }
+

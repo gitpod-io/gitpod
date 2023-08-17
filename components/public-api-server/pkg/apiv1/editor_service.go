@@ -6,6 +6,7 @@ package apiv1
 
 import (
 	"context"
+	"sort"
 
 	connect "github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -41,9 +42,19 @@ func (s *EditorService) ListEditorOptions(ctx context.Context, req *connect.Requ
 		return nil, proxy.ConvertError(err)
 	}
 
+	// Sort the response by OrderKey
+	var keys []string
+	for key := range options.Options {
+		keys = append(keys, key)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return options.Options[keys[i]].OrderKey < options.Options[keys[j]].OrderKey
+	})
+
 	convertedOptions := make([]*v1.EditorOption, 0, len(options.Options))
-	for _, option := range options.Options {
-		convertedOptions = append(convertedOptions, convertEditorOption(&option))
+	for _, key := range keys {
+		option := options.Options[key]
+		convertedOptions = append(convertedOptions, convertEditorOption(&option, key))
 	}
 
 	return connect.NewResponse(&v1.ListEditorOptionsResponse{
@@ -51,7 +62,7 @@ func (s *EditorService) ListEditorOptions(ctx context.Context, req *connect.Requ
 	}), nil
 }
 
-func convertEditorOption(ideOption *protocol.IDEOption) *v1.EditorOption {
+func convertEditorOption(ideOption *protocol.IDEOption, id string) *v1.EditorOption {
 	var editorType *v1.EditorOption_EditorType
 	switch ideOption.Type {
 	case "browser":
@@ -63,11 +74,11 @@ func convertEditorOption(ideOption *protocol.IDEOption) *v1.EditorOption {
 	}
 
 	return &v1.EditorOption{
-		OrderKey: ideOption.OrderKey,
-		Title:    ideOption.Title,
-		Type:     *editorType,
-		Logo:     ideOption.Logo,
-		Label:    ideOption.Label,
+		Id:    id,
+		Title: ideOption.Title,
+		Type:  *editorType,
+		Logo:  ideOption.Logo,
+		Label: ideOption.Label,
 		Version: &v1.EditorOption_Version{
 			Stable: ideOption.ImageVersion,
 			Latest: ideOption.LatestImageVersion,
