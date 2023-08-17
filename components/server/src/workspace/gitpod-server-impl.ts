@@ -40,7 +40,6 @@ import {
     Workspace,
     WorkspaceContext,
     WorkspaceCreationResult,
-    WorkspaceImageBuild,
     WorkspaceInfo,
     WorkspaceInstance,
     WorkspaceInstancePort,
@@ -120,7 +119,6 @@ import { ContextParser } from "./context-parser-service";
 import { GitTokenScopeGuesser } from "./git-token-scope-guesser";
 import { isClusterMaintenanceError } from "./workspace-starter";
 import { HeadlessLogUrls } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
-import { HeadlessLogService, HeadlessLogEndpoint } from "./headless-log-service";
 import { ConfigProvider, InvalidGitpodYMLError } from "./config-provider";
 import { ProjectsService } from "../projects/projects-service";
 import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
@@ -140,7 +138,6 @@ import {
     UserFeatureSettings,
     WorkspaceTimeoutSetting,
 } from "@gitpod/gitpod-protocol/lib/protocol";
-import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
 import { VerificationService } from "../auth/verification-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
@@ -235,8 +232,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(AuthProviderService) private readonly authProviderService: AuthProviderService,
 
         @inject(GitTokenScopeGuesser) private readonly gitTokenScopeGuesser: GitTokenScopeGuesser,
-
-        @inject(HeadlessLogService) private readonly headlessLogService: HeadlessLogService,
 
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
         @inject(ScmService) private readonly scmService: ScmService,
@@ -1872,6 +1867,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             return;
         }
 
+        // TODO(gpl) Remove entirely after FGA rollout
         const logCtx: LogContext = { userId: user.id, workspaceId };
         // eslint-disable-next-line prefer-const
         let { instance, workspace } = await this.internGetCurrentWorkspaceInstance(ctx, user, workspaceId);
@@ -1883,103 +1879,18 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const teamMembers = await this.organizationService.listMembers(user.id, workspace.organizationId);
         await this.guardAccess({ kind: "workspaceLog", subject: workspace, teamMembers }, "get");
 
-        // wait for up to 20s for imageBuildLogInfo to appear due to:
-        //  - db-sync round-trip times
-        //  - but also: wait until the image build actually started (image pull!), and log info is available!
-        for (let i = 0; i < 10; i++) {
-            if (instance.imageBuildInfo?.log) {
-                break;
-            }
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-
-            const wsi = await this.workspaceDb.trace(ctx).findInstanceById(instance.id);
-            if (!wsi || !["preparing", "building"].includes(wsi.status.phase)) {
-                log.debug(logCtx, `imagebuild logs: instance is not/no longer in 'building' state`, {
-                    phase: wsi?.status.phase,
-                });
-                return;
-            }
-            instance = wsi as WorkspaceInstance; // help the compiler a bit
-        }
-
-        const logInfo = instance.imageBuildInfo?.log;
-        if (!logInfo) {
-            log.error(logCtx, "cannot watch imagebuild logs for workspaceId: no image build info available");
-            throw new ApplicationError(
-                ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE,
-                "cannot watch imagebuild logs for workspaceId",
-            );
-        }
-
-        const aborted = new Deferred<boolean>();
-        try {
-            const logEndpoint: HeadlessLogEndpoint = {
-                url: logInfo.url,
-                headers: logInfo.headers,
-            };
-            let lineCount = 0;
-            await this.headlessLogService.streamImageBuildLog(
-                logCtx,
-                logEndpoint,
-                async (chunk) => {
-                    if (aborted.isResolved) {
-                        return;
-                    }
-
-                    try {
-                        chunk = chunk.replace("\n", WorkspaceImageBuild.LogLine.DELIMITER);
-                        lineCount += chunk.split(WorkspaceImageBuild.LogLine.DELIMITER_REGEX).length;
-
-                        client.onWorkspaceImageBuildLogs(undefined as any, {
-                            text: chunk,
-                            isDiff: true,
-                            upToLine: lineCount,
-                        });
-                    } catch (err) {
-                        log.error("error while streaming imagebuild logs", err);
-                        aborted.resolve(true);
-                    }
-                },
-                aborted,
-            );
-        } catch (err) {
-            // This error is most likely a temporary one (too early). We defer to the client whether they want to keep on trying or not.
-            log.debug(logCtx, "cannot watch imagebuild logs for workspaceId", err);
-            throw new ApplicationError(
-                ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE,
-                "cannot watch imagebuild logs for workspaceId",
-            );
-        } finally {
-            aborted.resolve(false);
-        }
+        await this.workspaceService.watchWorkspaceImageBuildLogs(user.id, workspaceId, client);
     }
 
     async getHeadlessLog(ctx: TraceContext, instanceId: string): Promise<HeadlessLogUrls> {
         traceAPIParams(ctx, { instanceId });
 
         const user = await this.checkAndBlockUser("getHeadlessLog", { instanceId });
-        const logCtx: LogContext = { instanceId };
 
-        const ws = await this.workspaceDb.trace(ctx).findByInstanceId(instanceId);
-        if (!ws) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${instanceId} not found`);
-        }
-
-        const wsiPromise = this.workspaceDb.trace(ctx).findInstanceById(instanceId);
-        const teamMembers = await this.organizationService.listMembers(user.id, ws.organizationId);
-
-        await this.guardAccess({ kind: "workspaceLog", subject: ws, teamMembers }, "get");
-
-        const wsi = await wsiPromise;
-        if (!wsi) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace instance for ${instanceId} not found`);
-        }
-
-        const urls = await this.headlessLogService.getHeadlessLogURLs(logCtx, wsi, ws.ownerId);
-        if (!urls || (typeof urls.streams === "object" && Object.keys(urls.streams).length === 0)) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Headless logs for ${instanceId} not found`);
-        }
-        return urls;
+        return this.workspaceService.getHeadlessLog(user.id, instanceId, async (workspace) => {
+            const teamMembers = await this.organizationService.listMembers(user.id, workspace.organizationId);
+            await this.guardAccess({ kind: "workspaceLog", subject: workspace, teamMembers }, "get");
+        });
     }
 
     private async internGetCurrentWorkspaceInstance(

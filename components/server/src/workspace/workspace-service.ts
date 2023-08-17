@@ -9,7 +9,9 @@ import * as grpc from "@grpc/grpc-js";
 import { RedisPublisher, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
     GetWorkspaceTimeoutResult,
+    GitpodClient,
     GitpodServer,
+    HeadlessLogUrls,
     PortProtocol,
     PortVisibility,
     Project,
@@ -19,6 +21,7 @@ import {
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
     Workspace,
     WorkspaceContext,
+    WorkspaceImageBuild,
     WorkspaceInstance,
     WorkspaceInstancePort,
     WorkspaceInstanceRepoStatus,
@@ -39,7 +42,7 @@ import {
     SetTimeoutRequest,
 } from "@gitpod/ws-manager/lib";
 import { WorkspaceStarter } from "./workspace-starter";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { LogContext, log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
 import * as crypto from "crypto";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
@@ -51,6 +54,8 @@ import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-pr
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 import { Config } from "../config";
 import { goDurationToHumanReadable } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { HeadlessLogEndpoint, HeadlessLogService } from "./headless-log-service";
+import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     /**
@@ -71,6 +76,7 @@ export class WorkspaceService {
         @inject(EnvVarService) private readonly envVarService: EnvVarService,
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
+        @inject(HeadlessLogService) private readonly headlessLogService: HeadlessLogService,
         @inject(Authorizer) private readonly auth: Authorizer,
     ) {}
 
@@ -655,6 +661,119 @@ export class WorkspaceService {
             resetTimeoutOnWorkspaces: [workspace.id],
             humanReadableDuration: goDurationToHumanReadable(validatedDuration),
         };
+    }
+
+    // TODO(gpl) We probably want to change this method to take a workspaceId instead once we migrate the API
+    public async getHeadlessLog(
+        userId: string,
+        instanceId: string,
+        check: (workspace: Workspace) => Promise<void> = async () => {},
+    ): Promise<HeadlessLogUrls> {
+        const workspace = await this.db.findByInstanceId(instanceId);
+        if (!workspace) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace for instanceId ${instanceId} not found`);
+        }
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspace.id);
+
+        const wsiPromise = this.db.findInstanceById(instanceId);
+        await check(workspace);
+
+        const instance = await wsiPromise;
+        if (!instance) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace instance ${instanceId} not found`);
+        }
+
+        const logCtx: LogContext = { instanceId };
+        const urls = await this.headlessLogService.getHeadlessLogURLs(logCtx, instance, workspace.ownerId);
+        if (!urls || (typeof urls.streams === "object" && Object.keys(urls.streams).length === 0)) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Headless logs for ${instanceId} not found`);
+        }
+        return urls;
+    }
+
+    public async watchWorkspaceImageBuildLogs(
+        userId: string,
+        workspaceId: string,
+        client: Pick<GitpodClient, "onWorkspaceImageBuildLogs">,
+    ): Promise<void> {
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+
+        const logCtx: LogContext = { userId, workspaceId };
+        let instance = await this.db.findCurrentInstance(workspaceId);
+        if (!instance || instance.status.phase === "stopped") {
+            log.debug(logCtx, `No running instance for workspaceId.`);
+            return;
+        }
+
+        // wait for up to 20s for imageBuildLogInfo to appear due to:
+        //  - db-sync round-trip times
+        //  - but also: wait until the image build actually started (image pull!), and log info is available!
+        for (let i = 0; i < 10; i++) {
+            if (instance.imageBuildInfo?.log) {
+                break;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+
+            const wsi = await this.db.findInstanceById(instance.id);
+            if (!wsi || !["preparing", "building"].includes(wsi.status.phase)) {
+                log.debug(logCtx, `imagebuild logs: instance is not/no longer in 'building' state`, {
+                    phase: wsi?.status.phase,
+                });
+                return;
+            }
+            instance = wsi as WorkspaceInstance; // help the compiler a bit
+        }
+
+        const logInfo = instance.imageBuildInfo?.log;
+        if (!logInfo) {
+            log.error(logCtx, "cannot watch imagebuild logs for workspaceId: no image build info available");
+            throw new ApplicationError(
+                ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE,
+                "cannot watch imagebuild logs for workspaceId",
+            );
+        }
+
+        const aborted = new Deferred<boolean>();
+        try {
+            const logEndpoint: HeadlessLogEndpoint = {
+                url: logInfo.url,
+                headers: logInfo.headers,
+            };
+            let lineCount = 0;
+            await this.headlessLogService.streamImageBuildLog(
+                logCtx,
+                logEndpoint,
+                async (chunk) => {
+                    if (aborted.isResolved) {
+                        return;
+                    }
+
+                    try {
+                        chunk = chunk.replace("\n", WorkspaceImageBuild.LogLine.DELIMITER);
+                        lineCount += chunk.split(WorkspaceImageBuild.LogLine.DELIMITER_REGEX).length;
+
+                        client.onWorkspaceImageBuildLogs(undefined as any, {
+                            text: chunk,
+                            isDiff: true,
+                            upToLine: lineCount,
+                        });
+                    } catch (err) {
+                        log.error("error while streaming imagebuild logs", err);
+                        aborted.resolve(true);
+                    }
+                },
+                aborted,
+            );
+        } catch (err) {
+            // This error is most likely a temporary one (too early). We defer to the client whether they want to keep on trying or not.
+            log.debug(logCtx, "cannot watch imagebuild logs for workspaceId", err);
+            throw new ApplicationError(
+                ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE,
+                "cannot watch imagebuild logs for workspaceId",
+            );
+        } finally {
+            aborted.resolve(false);
+        }
     }
 }
 

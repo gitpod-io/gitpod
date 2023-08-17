@@ -32,11 +32,7 @@ import { HostContextProvider } from "./auth/host-context-provider";
 import { CodeSyncService } from "./code-sync/code-sync-service";
 import { increaseHttpRequestCounter, observeHttpRequestDuration, setGitpodVersion } from "./prometheus-metrics";
 import { OAuthController } from "./oauth-server/oauth-controller";
-import {
-    HeadlessLogController,
-    HEADLESS_LOGS_PATH_PREFIX,
-    HEADLESS_LOG_DOWNLOAD_PATH_PREFIX,
-} from "./workspace/headless-log-controller";
+import { HeadlessLogController } from "./workspace/headless-log-controller";
 import { NewsletterSubscriptionController } from "./user/newsletter-subscription-controller";
 import { Config } from "./config";
 import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
@@ -51,6 +47,7 @@ import { BitbucketServerApp } from "./prebuilds/bitbucket-server-app";
 import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
 import { JobRunner } from "./jobs/runner";
 import { RedisSubscriber } from "./messaging/redis-subscriber";
+import { HEADLESS_LOGS_PATH_PREFIX, HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from "./workspace/headless-log-service";
 
 @injectable()
 export class Server {

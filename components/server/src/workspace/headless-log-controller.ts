@@ -26,7 +26,12 @@ import {
 import { DBWithTracing, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-db";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { TeamDB } from "@gitpod/gitpod-db/lib/team-db";
-import { HeadlessLogService, HeadlessLogEndpoint } from "./headless-log-service";
+import {
+    HeadlessLogService,
+    HeadlessLogEndpoint,
+    HEADLESS_LOGS_PATH_PREFIX,
+    HEADLESS_LOG_DOWNLOAD_PATH_PREFIX,
+} from "./headless-log-service";
 import * as opentracing from "opentracing";
 import { asyncHandler } from "../express-util";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
@@ -37,9 +42,6 @@ import { ProjectsService } from "../projects/projects-service";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
-
-export const HEADLESS_LOGS_PATH_PREFIX = "/headless-logs";
-export const HEADLESS_LOG_DOWNLOAD_PATH_PREFIX = "/headless-log-download";
 
 @injectable()
 export class HeadlessLogController {
