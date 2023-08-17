@@ -18,23 +18,33 @@ type Props = {
 };
 export const NewProjectCreateFromURL: FC<Props> = ({ repoSearchFilter, isCreating, onCreateProject }) => {
     const { toast } = useToast();
-    const showCreateFromURL = useMemo(() => {
-        // TODO: Only accounts for https urls, need to account for ssh clone urls too?
-        const looksLikeURL = isURL(repoSearchFilter, {
-            require_protocol: true,
-            protocols: ["https"],
-        });
-
-        const hasTrailingGit = /\.git$/.test(repoSearchFilter);
-
-        return looksLikeURL && hasTrailingGit;
-    }, [repoSearchFilter]);
 
     const normalizedURL = useMemo(() => {
         let url = repoSearchFilter.toLowerCase().trim();
 
+        // Just parse out the origin/pathname to remove any query params or hash
+        try {
+            const parsedURL = new URL(url);
+            const { origin, pathname } = parsedURL;
+            url = `${origin}${pathname}`;
+        } catch (e) {
+            return url;
+        }
+
         return url;
     }, [repoSearchFilter]);
+
+    const showCreateFromURL = useMemo(() => {
+        // TODO: Only accounts for https urls, need to account for ssh clone urls too?
+        const looksLikeURL = isURL(normalizedURL, {
+            require_protocol: true,
+            protocols: ["https"],
+        });
+
+        const hasTrailingGit = /\.git$/.test(normalizedURL);
+
+        return looksLikeURL && hasTrailingGit;
+    }, [normalizedURL]);
 
     const handleCreate = useCallback(() => {
         let name = "";
@@ -42,15 +52,23 @@ export const NewProjectCreateFromURL: FC<Props> = ({ repoSearchFilter, isCreatin
 
         try {
             // try and parse the url for owner/repo path parts
-            console.log("url: ", normalizedURL.substring(0, normalizedURL.length - 4));
-            const [owner, repo] = new URL(normalizedURL.substring(0, normalizedURL.length - 4)).pathname.split("/");
+            const segments = new URL(normalizedURL.substring(0, normalizedURL.length - ".git".length)).pathname
+                .split("/")
+                .filter(Boolean);
+
+            // Repo is last segment
+            const repo = segments.pop();
+            // owner is everything else
+            const owner = segments.join("/");
+
             if (!owner && !repo) {
                 throw new Error();
             }
+
             name = repo || owner;
-            slug = repo || owner;
+            slug = (repo || owner).toLowerCase();
         } catch (e) {
-            toast("Sorry, it looks like we can't handle that URL. Is it a valid git clone url?");
+            toast("Sorry, it looks like we can't handle that URL. Is it a valid git clone URL?");
             return;
         }
 

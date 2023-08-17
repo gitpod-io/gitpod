@@ -32,7 +32,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProviderHost, onPro
     const createProject = useCreateProject();
 
     // Component state managed by this component
-    const [selectedAccount, _setSelectedAccount] = useState<string>();
+    const [selectedAccount, setSelectedAccount] = useState<string>();
     const [repoSearchFilter, setRepoSearchFilter] = useState("");
     const [installationId, setInstallationId] = useState<string>();
 
@@ -43,8 +43,8 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProviderHost, onPro
     });
 
     // Wrap setting selected account so we can clear the repo search filter at the same time
-    const updateSelectedAccount = useCallback((account?: string) => {
-        _setSelectedAccount(account);
+    const setSelectedAccountAndClearSearch = useCallback((account?: string) => {
+        setSelectedAccount(account);
         setRepoSearchFilter("");
     }, []);
 
@@ -117,22 +117,22 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProviderHost, onPro
         [onCreateProject],
     );
 
-    // Adjusts selectedAccount when repos change
+    // Adjusts selectedAccount when repos change if we don't have a selected account
     useEffect(() => {
         if (reposInAccounts?.length === 0) {
-            updateSelectedAccount(undefined);
-        } else {
+            setSelectedAccountAndClearSearch(undefined);
+        } else if (!selectedAccount) {
             const first = reposInAccounts?.[0];
             if (!!first?.installationUpdatedAt) {
                 const mostRecent = reposInAccounts?.reduce((prev, current) =>
                     (prev.installationUpdatedAt || 0) > (current.installationUpdatedAt || 0) ? prev : current,
                 );
-                updateSelectedAccount(mostRecent?.account);
+                setSelectedAccountAndClearSearch(mostRecent?.account);
             } else {
-                updateSelectedAccount(first?.account);
+                setSelectedAccountAndClearSearch(first?.account);
             }
         }
-    }, [reposInAccounts, updateSelectedAccount]);
+    }, [reposInAccounts, selectedAccount, setSelectedAccountAndClearSearch]);
 
     if (isLoading) {
         return <ReposLoading />;
@@ -150,7 +150,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProviderHost, onPro
                         accounts={accounts}
                         selectedAccount={selectedAccount}
                         selectedProviderHost={selectedProviderHost}
-                        onAccountSelected={updateSelectedAccount}
+                        onAccountSelected={setSelectedAccountAndClearSearch}
                         onAddGitHubAccount={reconfigure}
                         onSelectGitProvider={onChangeGitProvider}
                     />
