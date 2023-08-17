@@ -2691,7 +2691,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                     user: currentUser,
                     provider: "github.com",
                 });
-                return availableRepositories.some((r) => r.cloneUrl === cloneURL);
+                return availableRepositories.some(
+                    (r) => r?.cloneUrl?.toLocaleLowerCase() === cloneURL?.toLocaleLowerCase(),
+                );
             } else {
                 return await this.scmService.canInstallWebhook(currentUser, cloneURL);
 
