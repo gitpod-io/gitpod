@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -152,6 +153,13 @@ func main() {
 	}
 
 	activity := activity.NewWorkspaceActivity()
+
+	go func() {
+		for {
+			<-mgr.Elected()
+			activity.ManagerStartedAt = time.Now()
+		}
+	}()
 
 	timeoutReconciler, err := controllers.NewTimeoutReconciler(mgr.GetClient(), mgr.GetEventRecorderFor("workspace"), cfg.Manager, activity, maintenanceReconciler)
 	if err != nil {
