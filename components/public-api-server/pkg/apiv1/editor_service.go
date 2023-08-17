@@ -29,7 +29,7 @@ type EditorService struct {
 	v1connect.UnimplementedEditorServiceHandler
 }
 
-func (s *WorkspaceService) ListEditorOptions(ctx context.Context, req *connect.Request[v1.ListEditorOptionsRequest]) (*connect.Response[v1.ListEditorOptionsResponse], error) {
+func (s *EditorService) ListEditorOptions(ctx context.Context, req *connect.Request[v1.ListEditorOptionsRequest]) (*connect.Response[v1.ListEditorOptionsResponse], error) {
 	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
 		return nil, err

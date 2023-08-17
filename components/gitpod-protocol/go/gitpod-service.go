@@ -16,8 +16,6 @@ import (
 	"sync"
 	"time"
 
-	//ideconfig "github.com/gitpod-io/gitpod/ide-service-api/config"
-
 	"github.com/sourcegraph/jsonrpc2"
 
 	"github.com/sirupsen/logrus"
