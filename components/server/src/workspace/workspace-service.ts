@@ -40,6 +40,7 @@ import {
     PortSpec,
     ControlPortRequest,
     SetTimeoutRequest,
+    MarkActiveRequest,
 } from "@gitpod/ws-manager/lib";
 import { WorkspaceStarter } from "./workspace-starter";
 import { LogContext, log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -773,6 +774,43 @@ export class WorkspaceService {
             );
         } finally {
             aborted.resolve(false);
+        }
+    }
+
+    public async sendHeartBeat(
+        userId: string,
+        options: GitpodServer.SendHeartBeatOptions,
+        check: (instance: WorkspaceInstance, workspace: Workspace) => Promise<void> = async () => {},
+    ): Promise<void> {
+        const instanceId = options.instanceId;
+        const instance = await this.db.findInstanceById(instanceId);
+        if (!instance) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "workspace does not exist");
+        }
+        const workspaceId = instance.workspaceId;
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+
+        try {
+            const workspace = await this.getWorkspace(userId, workspaceId);
+            await check(instance, workspace);
+
+            const wasClosed = !!(options && options.wasClosed);
+            await this.db.updateLastHeartbeat(instanceId, userId, new Date(), wasClosed);
+
+            const req = new MarkActiveRequest();
+            req.setId(instanceId);
+            req.setClosed(wasClosed);
+
+            const client = await this.clientProvider.get(instance.region);
+            await client.markActive({}, req);
+        } catch (e) {
+            if (e.message && typeof e.message === "string" && (e.message as String).endsWith("does not exist")) {
+                // This is an old tab with open workspace: drop silently
+                return;
+            } else {
+                e = mapGrpcError(e);
+                throw e;
+            }
         }
     }
 }

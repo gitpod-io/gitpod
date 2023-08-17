@@ -365,6 +365,19 @@ describe("WorkspaceService", async () => {
             ) => {},
         }); // returns without error in case of non-running workspace
     });
+
+    it("should sendHeartBeat", async () => {
+        const svc = container.get(WorkspaceService);
+        await createTestWorkspace(svc, org, owner, project);
+
+        await expectError(
+            ErrorCodes.NOT_FOUND,
+            svc.sendHeartBeat(owner.id, {
+                instanceId: "non-existing-instanceId",
+            }),
+            "should fail on non-running workspace",
+        );
+    });
 });
 
 async function createTestWorkspace(svc: WorkspaceService, org: Organization, owner: User, project: Project) {

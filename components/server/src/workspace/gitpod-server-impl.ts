@@ -96,7 +96,6 @@ import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-pr
 import {
     AdmissionLevel,
     ControlAdmissionRequest,
-    MarkActiveRequest,
     StopWorkspacePolicy,
     TakeSnapshotRequest,
 } from "@gitpod/ws-manager/lib/core_pb";
@@ -173,7 +172,7 @@ import { RedisSubscriber } from "../messaging/redis-subscriber";
 import { UsageService } from "../orgs/usage-service";
 import { UserService } from "../user/user-service";
 import { SSHKeyService } from "../user/sshkey-service";
-import { StartWorkspaceOptions, WorkspaceService, mapGrpcError } from "./workspace-service";
+import { StartWorkspaceOptions, WorkspaceService } from "./workspace-service";
 import { GitpodTokenService } from "../user/gitpod-token-service";
 import { EnvVarService } from "../user/env-var-service";
 import { ScmService } from "../projects/scm-service";
@@ -1100,36 +1099,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("sendHeartBeat", undefined, { instanceId });
 
-        try {
-            const wsi = await this.workspaceDb.trace(ctx).findInstanceById(instanceId);
-            if (!wsi) {
-                throw new ApplicationError(ErrorCodes.NOT_FOUND, "workspace does not exist");
-            }
-
-            const ws = await this.workspaceDb.trace(ctx).findById(wsi.workspaceId);
-            if (!ws) {
-                throw new ApplicationError(ErrorCodes.NOT_FOUND, "workspace does not exist");
-            }
-            await this.guardAccess({ kind: "workspaceInstance", subject: wsi, workspace: ws }, "update");
-
-            const wasClosed = !!(options && options.wasClosed);
-            await this.workspaceDb.trace(ctx).updateLastHeartbeat(instanceId, user.id, new Date(), wasClosed);
-
-            const req = new MarkActiveRequest();
-            req.setId(instanceId);
-            req.setClosed(wasClosed);
-
-            const client = await this.workspaceManagerClientProvider.get(wsi.region);
-            await client.markActive(ctx, req);
-        } catch (e) {
-            if (e.message && typeof e.message === "string" && (e.message as String).endsWith("does not exist")) {
-                // This is an old tab with open workspace: drop silently
-                return;
-            } else {
-                e = mapGrpcError(e);
-                throw e;
-            }
-        }
+        await this.workspaceService.sendHeartBeat(user.id, options, (instance, workspace) =>
+            this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "update"),
+        );
     }
 
     async getWorkspaceOwner(ctx: TraceContext, workspaceId: string): Promise<UserInfo | undefined> {
