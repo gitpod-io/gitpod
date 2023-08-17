@@ -131,6 +131,7 @@ import { WorkspaceService } from "./workspace/workspace-service";
 import { SSHKeyService } from "./user/sshkey-service";
 import { GitpodTokenService } from "./user/gitpod-token-service";
 import { EnvVarService } from "./user/env-var-service";
+import { ScmService } from "./projects/scm-service";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -258,6 +259,7 @@ export const productionContainerModule = new ContainerModule(
 
         bind(OrganizationService).toSelf().inSingletonScope();
         bind(ProjectsService).toSelf().inSingletonScope();
+        bind(ScmService).toSelf().inSingletonScope();
 
         bind(NewsletterSubscriptionController).toSelf().inSingletonScope();
 
