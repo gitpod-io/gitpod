@@ -6,7 +6,14 @@
 
 import { TypeORM } from "@gitpod/gitpod-db/lib";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
-import { CommitContext, Organization, Project, User, WorkspaceConfig } from "@gitpod/gitpod-protocol";
+import {
+    CommitContext,
+    Organization,
+    Project,
+    User,
+    WorkspaceConfig,
+    WorkspaceInstancePort,
+} from "@gitpod/gitpod-protocol";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import * as chai from "chai";
@@ -258,6 +265,42 @@ describe("WorkspaceService", async () => {
         expect(ws2.description).to.equal(desc);
 
         await expectError(ErrorCodes.NOT_FOUND, svc.setDescription(stranger.id, ws.id, desc));
+    });
+
+    it("should getOpenPorts", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        await expectError(
+            ErrorCodes.NOT_FOUND,
+            svc.getOpenPorts(owner.id, ws.id),
+            "should fail on non-running workspace",
+        );
+    });
+
+    it("should openPort", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        const port: WorkspaceInstancePort = {
+            port: 8080,
+        };
+        await expectError(
+            ErrorCodes.NOT_FOUND,
+            svc.openPort(owner.id, ws.id, port),
+            "should fail on non-running workspace",
+        );
+    });
+
+    it("should closePort", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        await expectError(
+            ErrorCodes.NOT_FOUND,
+            svc.closePort(owner.id, ws.id, 8080),
+            "should fail on non-running workspace",
+        );
     });
 });
 
