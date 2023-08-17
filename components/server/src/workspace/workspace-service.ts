@@ -6,19 +6,24 @@
 
 import { inject, injectable } from "inversify";
 import * as grpc from "@grpc/grpc-js";
-import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { RedisPublisher, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
+    GetWorkspaceTimeoutResult,
     GitpodServer,
     PortProtocol,
     PortVisibility,
     Project,
+    SetWorkspaceTimeoutResult,
     StartWorkspaceResult,
     User,
+    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
     Workspace,
     WorkspaceContext,
     WorkspaceInstance,
     WorkspaceInstancePort,
+    WorkspaceInstanceRepoStatus,
     WorkspaceSoftDeletion,
+    WorkspaceTimeoutDuration,
 } from "@gitpod/gitpod-protocol";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Authorizer } from "../authorization/authorizer";
@@ -31,6 +36,7 @@ import {
     PortProtocol as ProtoPortProtocol,
     PortSpec,
     ControlPortRequest,
+    SetTimeoutRequest,
 } from "@gitpod/ws-manager/lib";
 import { WorkspaceStarter } from "./workspace-starter";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -42,6 +48,9 @@ import { RegionService } from "./region-service";
 import { ProjectsService } from "../projects/projects-service";
 import { EnvVarService } from "../user/env-var-service";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
+import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
+import { Config } from "../config";
+import { goDurationToHumanReadable } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     /**
@@ -53,6 +62,7 @@ export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOption
 @injectable()
 export class WorkspaceService {
     constructor(
+        @inject(Config) private readonly config: Config,
         @inject(WorkspaceFactory) private readonly factory: WorkspaceFactory,
         @inject(WorkspaceStarter) private readonly workspaceStarter: WorkspaceStarter,
         @inject(WorkspaceManagerClientProvider) private readonly clientProvider: WorkspaceManagerClientProvider,
@@ -60,6 +70,7 @@ export class WorkspaceService {
         @inject(EntitlementService) private readonly entitlementService: EntitlementService,
         @inject(EnvVarService) private readonly envVarService: EnvVarService,
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
+        @inject(RedisPublisher) private readonly publisher: RedisPublisher,
         @inject(Authorizer) private readonly auth: Authorizer,
     ) {}
 
@@ -538,6 +549,112 @@ export class WorkspaceService {
     public async setDescription(userId: string, workspaceId: string, description: string) {
         await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
         await this.db.updatePartial(workspaceId, { description });
+    }
+
+    public async updateGitStatus(
+        userId: string,
+        workspaceId: string,
+        gitStatus: Required<WorkspaceInstanceRepoStatus> | undefined,
+    ) {
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+
+        let instance = await this.getCurrentInstance(userId, workspaceId);
+        if (WorkspaceInstanceRepoStatus.equals(instance.gitStatus, gitStatus)) {
+            return;
+        }
+
+        const workspace = await this.getWorkspace(userId, workspaceId);
+        instance = await this.db.updateInstancePartial(instance.id, { gitStatus });
+        await this.publisher.publishInstanceUpdate({
+            instanceID: instance.id,
+            ownerID: workspace.ownerId,
+            workspaceID: workspace.id,
+        });
+    }
+
+    public async getSupportedWorkspaceClasses(userId: string): Promise<SupportedWorkspaceClass[]> {
+        // No access check required, valid session/user is enough
+        const classes = this.config.workspaceClasses.map((c) => ({
+            id: c.id,
+            category: c.category,
+            displayName: c.displayName,
+            description: c.description,
+            powerups: c.powerups,
+            isDefault: c.isDefault,
+        }));
+        return classes;
+    }
+
+    /**
+     *
+     * @param userId
+     * @param workspaceId
+     * @param check TODO(gpl) Remove after FGA rollout
+     * @returns
+     */
+    public async getWorkspaceTimeout(
+        userId: string,
+        workspaceId: string,
+        check: (instance: WorkspaceInstance, workspace: Workspace) => Promise<void> = async () => {},
+    ): Promise<GetWorkspaceTimeoutResult> {
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+
+        const workspace = await this.getWorkspace(userId, workspaceId);
+        const canChange = await this.entitlementService.maySetTimeout(userId, workspace.organizationId);
+
+        const instance = await this.db.findCurrentInstance(workspaceId);
+        if (!instance || instance.status.phase !== "running") {
+            log.warn({ userId, workspaceId }, "Can only get keep-alive for running workspaces");
+            const duration = WORKSPACE_TIMEOUT_DEFAULT_SHORT;
+            return { duration, canChange, humanReadableDuration: goDurationToHumanReadable(duration) };
+        }
+        await check(instance, workspace);
+
+        const req = new DescribeWorkspaceRequest();
+        req.setId(instance.id);
+        const client = await this.clientProvider.get(instance.region);
+        const desc = await client.describeWorkspace({}, req);
+        const duration = desc.getStatus()!.getSpec()!.getTimeout();
+
+        return { duration, canChange, humanReadableDuration: goDurationToHumanReadable(duration) };
+    }
+
+    public async setWorkspaceTimeout(
+        userId: string,
+        workspaceId: string,
+        duration: WorkspaceTimeoutDuration,
+        check: (instance: WorkspaceInstance, workspace: Workspace) => Promise<void> = async () => {},
+    ): Promise<SetWorkspaceTimeoutResult> {
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+
+        let validatedDuration;
+        try {
+            validatedDuration = WorkspaceTimeoutDuration.validate(duration);
+        } catch (err) {
+            throw new ApplicationError(ErrorCodes.INVALID_VALUE, "Invalid duration : " + err.message);
+        }
+
+        const workspace = await this.getWorkspace(userId, workspaceId);
+        if (!(await this.entitlementService.maySetTimeout(userId, workspace.organizationId))) {
+            throw new ApplicationError(ErrorCodes.PLAN_PROFESSIONAL_REQUIRED, "Plan upgrade is required");
+        }
+
+        const instance = await this.getCurrentInstance(userId, workspaceId);
+        if (instance.status.phase !== "running" || workspace.type !== "regular") {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Can only set keep-alive for regular, running workspaces");
+        }
+        await check(instance, workspace);
+
+        const client = await this.clientProvider.get(instance.region);
+        const req = new SetTimeoutRequest();
+        req.setId(instance.id);
+        req.setDuration(validatedDuration);
+        await client.setTimeout({}, req);
+
+        return {
+            resetTimeoutOnWorkspaces: [workspace.id],
+            humanReadableDuration: goDurationToHumanReadable(validatedDuration),
+        };
     }
 }
 
