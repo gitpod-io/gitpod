@@ -22,6 +22,7 @@ var Objects = common.CompositeRenderFunc(
 	func(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return Rolebinding(ctx, Component)
 	},
+	pdb,
 	common.GenerateService(Component, []common.ServicePort{
 		{
 			Name:          ContainerPortName,
