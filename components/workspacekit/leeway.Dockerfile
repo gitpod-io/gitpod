@@ -5,7 +5,6 @@
 FROM scratch
 
 COPY components-workspacekit--app/workspacekit \
-     components-workspacekit--fuse-overlayfs/fuse-overlayfs \
      /.supervisor/
 
 ARG __GIT_COMMIT
