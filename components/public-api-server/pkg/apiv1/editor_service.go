@@ -63,14 +63,14 @@ func (s *EditorService) ListEditorOptions(ctx context.Context, req *connect.Requ
 }
 
 func convertEditorOption(ideOption *protocol.IDEOption, id string) *v1.EditorOption {
-	var editorType *v1.EditorOption_EditorType
+	var editorType *v1.EditorOption_Type
 	switch ideOption.Type {
 	case "browser":
-		editorType = v1.EditorOption_EDITOR_TYPE_BROWSER.Enum()
+		editorType = v1.EditorOption_TYPE_BROWSER.Enum()
 	case "desktop":
-		editorType = v1.EditorOption_EDITOR_TYPE_DESKTOP.Enum()
+		editorType = v1.EditorOption_TYPE_DESKTOP.Enum()
 	default:
-		editorType = v1.EditorOption_EDITOR_TYPE_UNSPECIFIED.Enum()
+		editorType = v1.EditorOption_TYPE_UNSPECIFIED.Enum()
 	}
 
 	return &v1.EditorOption{

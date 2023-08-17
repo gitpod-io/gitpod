@@ -22,12 +22,12 @@ message EditorOption {
     string title = 2;
 
     // The type of the editor, currently browser or desktop.
-    enum EditorType {
-      EDITOR_TYPE_UNSPECIFIED = 0;
-      EDITOR_TYPE_BROWSER = 1;
-      EDITOR_TYPE_DESKTOP = 2;
+    enum Type {
+      TYPE_UNSPECIFIED = 0;
+      TYPE_BROWSER = 1;
+      TYPE_DESKTOP = 2;
     }
-    EditorType type = 3;
+    Type type = 3;
 
     // The logo for the editor
     string logo = 4;

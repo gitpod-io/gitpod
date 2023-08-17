@@ -99,9 +99,9 @@ export class EditorOption extends Message<EditorOption> {
   title = "";
 
   /**
-   * @generated from field: gitpod.experimental.v1.EditorOption.EditorType type = 3;
+   * @generated from field: gitpod.experimental.v1.EditorOption.Type type = 3;
    */
-  type = EditorOption_EditorType.UNSPECIFIED;
+  type = EditorOption_Type.UNSPECIFIED;
 
   /**
    * The logo for the editor
@@ -133,7 +133,7 @@ export class EditorOption extends Message<EditorOption> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "title", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "type", kind: "enum", T: proto3.getEnumType(EditorOption_EditorType) },
+    { no: 3, name: "type", kind: "enum", T: proto3.getEnumType(EditorOption_Type) },
     { no: 4, name: "logo", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "label", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 6, name: "version", kind: "message", T: EditorOption_Version },
@@ -159,29 +159,29 @@ export class EditorOption extends Message<EditorOption> {
 /**
  * The type of the editor, currently browser or desktop.
  *
- * @generated from enum gitpod.experimental.v1.EditorOption.EditorType
+ * @generated from enum gitpod.experimental.v1.EditorOption.Type
  */
-export enum EditorOption_EditorType {
+export enum EditorOption_Type {
   /**
-   * @generated from enum value: EDITOR_TYPE_UNSPECIFIED = 0;
+   * @generated from enum value: TYPE_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
-   * @generated from enum value: EDITOR_TYPE_BROWSER = 1;
+   * @generated from enum value: TYPE_BROWSER = 1;
    */
   BROWSER = 1,
 
   /**
-   * @generated from enum value: EDITOR_TYPE_DESKTOP = 2;
+   * @generated from enum value: TYPE_DESKTOP = 2;
    */
   DESKTOP = 2,
 }
-// Retrieve enum metadata with: proto3.getEnumType(EditorOption_EditorType)
-proto3.util.setEnumType(EditorOption_EditorType, "gitpod.experimental.v1.EditorOption.EditorType", [
-  { no: 0, name: "EDITOR_TYPE_UNSPECIFIED" },
-  { no: 1, name: "EDITOR_TYPE_BROWSER" },
-  { no: 2, name: "EDITOR_TYPE_DESKTOP" },
+// Retrieve enum metadata with: proto3.getEnumType(EditorOption_Type)
+proto3.util.setEnumType(EditorOption_Type, "gitpod.experimental.v1.EditorOption.Type", [
+  { no: 0, name: "TYPE_UNSPECIFIED" },
+  { no: 1, name: "TYPE_BROWSER" },
+  { no: 2, name: "TYPE_DESKTOP" },
 ]);
 
 /**
@@ -230,4 +230,3 @@ export class EditorOption_Version extends Message<EditorOption_Version> {
     return proto3.util.equals(EditorOption_Version, a, b);
   }
 }
-
