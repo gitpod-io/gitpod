@@ -19,12 +19,12 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { PartialProject } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
-import { Config } from "../config";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { URL } from "url";
 import { Authorizer } from "../authorization/authorizer";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
+import { ScmService } from "./scm-service";
 
 @injectable()
 export class ProjectsService {
@@ -32,10 +32,10 @@ export class ProjectsService {
         @inject(ProjectDB) private readonly projectDB: ProjectDB,
         @inject(TracedWorkspaceDB) private readonly workspaceDb: DBWithTracing<WorkspaceDB>,
         @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
-        @inject(Config) private readonly config: Config,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(WebhookEventDB) private readonly webhookEventDB: WebhookEventDB,
         @inject(Authorizer) private readonly auth: Authorizer,
+        @inject(ScmService) private readonly scmService: ScmService,
     ) {}
 
     async getProject(userId: string, projectId: string): Promise<Project> {
@@ -193,34 +193,6 @@ export class ProjectsService {
         return result;
     }
 
-    async canCreateProject(currentUser: User, cloneURL: string) {
-        try {
-            const parsedUrl = RepoURL.parseRepoUrl(cloneURL);
-            const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
-            const authProvider = hostContext && hostContext.authProvider.info;
-            const type = authProvider && authProvider.authProviderType;
-            const host = authProvider?.host;
-            if (!type || !host) {
-                throw Error("Unknown host: " + parsedUrl?.host);
-            }
-            if (
-                type === "GitLab" ||
-                type === "Bitbucket" ||
-                type === "BitbucketServer" ||
-                (type === "GitHub" && (host !== "github.com" || !this.config.githubApp?.enabled))
-            ) {
-                const repositoryService = hostContext?.services?.repositoryService;
-                if (repositoryService) {
-                    return await repositoryService.canInstallAutomatedPrebuilds(currentUser, cloneURL);
-                }
-            }
-            // The GitHub App case isn't handled here due to a circular dependency problem.
-        } catch (error) {
-            log.error("Failed to check precondition for creating a project.");
-        }
-        return false;
-    }
-
     async createProject(
         { name, slug, cloneUrl, teamId, appInstallationId }: CreateProjectParams,
         installer: User,
@@ -272,7 +244,12 @@ export class ProjectsService {
             await this.auth.removeProjectFromOrg(installer.id, teamId, project.id);
             throw err;
         }
-        await this.onDidCreateProject(project, installer);
+        await this.scmService.installWebhookForPrebuilds(project, installer);
+
+        // Pre-fetch project details in the background -- don't await
+        this.getProjectOverview(installer, project.id).catch((err) => {
+            log.error(`Error pre-fetching project details for project ${project.id}: ${err}`);
+        });
 
         this.analytics.track({
             userId: installer.id,
@@ -287,40 +264,6 @@ export class ProjectsService {
             },
         });
         return project;
-    }
-
-    private async onDidCreateProject(project: Project, installer: User) {
-        // Pre-fetch project details in the background -- don't await
-        this.getProjectOverview(installer, project.id).catch((err) => {
-            log.error(`Error pre-fetching project details for project ${project.id}: ${err}`);
-        });
-
-        // Install the prebuilds webhook if possible
-        const { teamId, cloneUrl } = project;
-        const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
-        const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
-        const authProvider = hostContext && hostContext.authProvider.info;
-        const type = authProvider && authProvider.authProviderType;
-        if (
-            type === "GitLab" ||
-            type === "Bitbucket" ||
-            type === "BitbucketServer" ||
-            (type === "GitHub" && (authProvider?.host !== "github.com" || !this.config.githubApp?.enabled))
-        ) {
-            const repositoryService = hostContext?.services?.repositoryService;
-            if (repositoryService) {
-                // Note: For GitLab, we expect .canInstallAutomatedPrebuilds() to always return true, because earlier
-                // in the project creation flow, we only propose repositories where the user is actually allowed to
-                // install a webhook.
-                if (await repositoryService.canInstallAutomatedPrebuilds(installer, cloneUrl)) {
-                    log.info(
-                        { organizationId: teamId, userId: installer.id },
-                        "Update prebuild installation for project.",
-                    );
-                    await repositoryService.installAutomatedPrebuilds(installer, cloneUrl);
-                }
-            }
-        }
     }
 
     async deleteProject(userId: string, projectId: string, transactionCtx?: TransactionalContext): Promise<void> {

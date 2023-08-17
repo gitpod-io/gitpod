@@ -184,6 +184,7 @@ import { SSHKeyService } from "../user/sshkey-service";
 import { StartWorkspaceOptions, WorkspaceService, mapGrpcError } from "./workspace-service";
 import { GitpodTokenService } from "../user/gitpod-token-service";
 import { EnvVarService } from "../user/env-var-service";
+import { ScmService } from "../projects/scm-service";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -243,6 +244,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(HeadlessLogService) private readonly headlessLogService: HeadlessLogService,
 
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
+        @inject(ScmService) private readonly scmService: ScmService,
 
         @inject(IDEService) private readonly ideService: IDEService,
 
@@ -2675,7 +2677,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     /**
      * Checks if a project can be created, i.e. the current user has the required permissions
-     * at the given git provider.
+     * to install webhooks for the given repository.
      */
     private async canCreateProject(currentUser: User, cloneURL: string) {
         try {
@@ -2691,7 +2693,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 });
                 return availableRepositories.some((r) => r.cloneUrl === cloneURL);
             } else {
-                return await this.projectsService.canCreateProject(currentUser, cloneURL);
+                return await this.scmService.canInstallWebhook(currentUser, cloneURL);
 
                 // note: the GitHub App based check is not included in the ProjectService due
                 // to a circular dependency problem which would otherwise occur.
