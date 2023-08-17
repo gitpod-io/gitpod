@@ -20,7 +20,7 @@ export const NewProjectCreateFromURL: FC<Props> = ({ repoSearchFilter, isCreatin
     const { toast } = useToast();
 
     const normalizedURL = useMemo(() => {
-        let url = repoSearchFilter.toLowerCase().trim();
+        let url = repoSearchFilter.toLocaleLowerCase().trim();
 
         // Just parse out the origin/pathname to remove any query params or hash
         try {
@@ -35,7 +35,7 @@ export const NewProjectCreateFromURL: FC<Props> = ({ repoSearchFilter, isCreatin
     }, [repoSearchFilter]);
 
     const showCreateFromURL = useMemo(() => {
-        // TODO: Only accounts for https urls, need to account for ssh clone urls too?
+        // TODO: Only accounts for https urls currently
         const looksLikeURL = isURL(normalizedURL, {
             require_protocol: true,
             protocols: ["https"],
@@ -59,14 +59,14 @@ export const NewProjectCreateFromURL: FC<Props> = ({ repoSearchFilter, isCreatin
             // Repo is last segment
             const repo = segments.pop();
             // owner is everything else
-            const owner = segments.join("/");
+            const owner = segments.join("-");
 
-            if (!owner && !repo) {
+            if (!repo) {
                 throw new Error();
             }
 
-            name = repo || owner;
-            slug = (repo || owner).toLowerCase();
+            name = repo;
+            slug = [repo, owner].filter(Boolean).join("-").toLowerCase();
         } catch (e) {
             toast("Sorry, it looks like we can't handle that URL. Is it a valid git clone URL?");
             return;
