@@ -500,8 +500,8 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return []string{owner.Name}
 	}
 	err := mgr.GetFieldIndexer().IndexField(context.Background(), &corev1.Pod{}, wsOwnerKey, idx)
-	if err != nil && err.Error() == "informer has already started" {
-		return nil
+	if err != nil {
+		return err
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
