@@ -58,7 +58,7 @@ func (s *EditorService) ListEditorOptions(ctx context.Context, req *connect.Requ
 	}
 
 	return connect.NewResponse(&v1.ListEditorOptionsResponse{
-		Options: convertedOptions,
+		Result: convertedOptions,
 	}), nil
 }
 
