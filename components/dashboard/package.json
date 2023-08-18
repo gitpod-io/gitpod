@@ -21,6 +21,7 @@
     "file-saver": "^2.0.5",
     "idb-keyval": "^6.2.0",
     "js-cookie": "^3.0.1",
+    "lodash.debounce": "^4.0.8",
     "monaco-editor": "^0.25.2",
     "p-throttle": "^5.1.0",
     "pretty-bytes": "^6.1.0",
