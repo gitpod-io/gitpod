@@ -13,6 +13,7 @@ import * as net from "net";
 import { WsLayer } from "./ws-layer";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { increaseHttpRequestCounter } from "../prometheus-metrics";
+import { Disposable, DisposableCollection } from "@gitpod/gitpod-protocol/lib/util/disposable";
 
 export type HttpServer = http.Server | https.Server;
 export type RouteMatcher = string | RegExp;
@@ -40,6 +41,8 @@ export class WsExpressHandler {
     protected readonly wss: websocket.Server;
     protected readonly routes: Route[] = [];
 
+    private readonly disposables = new DisposableCollection();
+
     constructor(protected readonly httpServer: HttpServer, protected readonly verifyClient?: WsConnectionFilter) {
         this.wss = new websocket.Server({
             verifyClient,
@@ -65,6 +68,10 @@ export class WsExpressHandler {
     ): void {
         const stack = WsLayer.createStack(...handlers);
         const dispatch = (ws: websocket, request: express.Request) => {
+            const toTerminate = Disposable.create(() => ws.terminate());
+            const cancelTerminate = this.disposables.push(toTerminate);
+            ws.on("close", () => cancelTerminate.dispose());
+
             handler(ws, request);
             stack
                 .dispatch(ws, request)
@@ -106,5 +113,22 @@ export class WsExpressHandler {
             return !!pathname && matcher.test(pathname);
         }
         return pathname === matcher;
+    }
+
+    /**
+     * Stop accepting new connections, returns when all connections are closed.
+     */
+    dispose(): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.wss.close((err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+            // terminate all connections
+            this.disposables.dispose();
+        });
     }
 }
