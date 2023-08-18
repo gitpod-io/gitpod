@@ -468,7 +468,7 @@ describe("WorkspaceService", async () => {
         await svc.watchWorkspaceImageBuildLogs(owner.id, ws.id, client); // returns without error in case of non-running workspace
 
         await expectError(
-            ErrorCodes.NOT_FOUND,
+            ErrorCodes.PERMISSION_DENIED,
             svc.watchWorkspaceImageBuildLogs(member.id, ws.id, client),
             "should fail for member on not-shared workspace",
         );
@@ -480,7 +480,7 @@ describe("WorkspaceService", async () => {
         );
     });
 
-    it("should watchWorkspaceImageBuildLogs", async () => {
+    it("should watchWorkspaceImageBuildLogs - shared", async () => {
         const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
         const client = {

@@ -395,7 +395,7 @@ export class Authorizer {
             set(rel.workspace(workspaceID).owner.user(userID)),
         ];
         if (shared) {
-            rels.push(set(rel.workspace(workspaceID).shared.user("*")));
+            rels.push(set(rel.workspace(workspaceID).shared.anyUser));
         }
 
         await this.authorizer.writeRelationships(...rels);
@@ -408,7 +408,7 @@ export class Authorizer {
         await this.authorizer.writeRelationships(
             remove(rel.workspace(workspaceID).org.organization(orgID)),
             remove(rel.workspace(workspaceID).owner.user(userID)),
-            remove(rel.workspace(workspaceID).shared.user("*")),
+            remove(rel.workspace(workspaceID).shared.anyUser),
         );
     }
 
@@ -417,7 +417,7 @@ export class Authorizer {
             return;
         }
         const op = shared ? set : remove;
-        await this.authorizer.writeRelationships(op(rel.workspace(workspaceID).shared.user("*")));
+        await this.authorizer.writeRelationships(op(rel.workspace(workspaceID).shared.anyUser));
     }
 
     async bulkCreateWorkspaceInOrg(ids: { orgID: string; userID: string; workspaceID: string }[]): Promise<void> {

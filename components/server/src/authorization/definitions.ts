@@ -431,13 +431,13 @@ export const rel = {
                     relation: "shared",
                 };
                 return {
-                    user(objectId: string) {
+                    get anyUser() {
                         return {
                             ...result2,
                             subject: {
                                 object: {
                                     objectType: "user",
-                                    objectId: objectId,
+                                    objectId: "*",
                                 },
                             },
                         } as v1.Relationship;
