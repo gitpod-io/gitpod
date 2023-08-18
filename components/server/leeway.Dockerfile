@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM node:16.13.0-slim as builder
+FROM node:18.17.1-slim as builder
 COPY components-server--app /installer/
 
 WORKDIR /app
