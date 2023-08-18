@@ -12,6 +12,7 @@ import {
     Project,
     User,
     WorkspaceConfig,
+    WorkspaceImageBuild,
     WorkspaceInstancePort,
 } from "@gitpod/gitpod-protocol";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
@@ -338,6 +339,42 @@ describe("WorkspaceService", async () => {
         await expectError(
             ErrorCodes.NOT_FOUND,
             svc.setWorkspaceTimeout(owner.id, ws.id, "180m"),
+            "should fail on non-running workspace",
+        );
+    });
+
+    it("should getHeadlessLog", async () => {
+        const svc = container.get(WorkspaceService);
+        await createTestWorkspace(svc, org, owner, project);
+
+        await expectError(
+            ErrorCodes.NOT_FOUND,
+            svc.getHeadlessLog(owner.id, "non-existing-instanceId"),
+            "should fail on non-running workspace",
+        );
+    });
+
+    it("should watchWorkspaceImageBuildLogs", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        await svc.watchWorkspaceImageBuildLogs(owner.id, ws.id, {
+            onWorkspaceImageBuildLogs: (
+                info: WorkspaceImageBuild.StateInfo,
+                content: WorkspaceImageBuild.LogContent | undefined,
+            ) => {},
+        }); // returns without error in case of non-running workspace
+    });
+
+    it("should sendHeartBeat", async () => {
+        const svc = container.get(WorkspaceService);
+        await createTestWorkspace(svc, org, owner, project);
+
+        await expectError(
+            ErrorCodes.NOT_FOUND,
+            svc.sendHeartBeat(owner.id, {
+                instanceId: "non-existing-instanceId",
+            }),
             "should fail on non-running workspace",
         );
     });
