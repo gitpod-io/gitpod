@@ -47,8 +47,7 @@ var _ = Describe("TimeoutController", func() {
 			customMaxLifetime *time.Duration
 			update            func(ws *workspacev1.Workspace)
 			updateStatus      func(ws *workspacev1.Workspace)
-			//controllerRestart time.Time
-			expectTimeout bool
+			expectTimeout     bool
 		}
 		DescribeTable("workspace timeouts",
 			func(tc testCase) {
