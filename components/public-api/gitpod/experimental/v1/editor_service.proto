@@ -11,7 +11,7 @@ service EditorService {
 message ListEditorOptionsRequest {}
 
 message ListEditorOptionsResponse {
-    repeated EditorOption options = 1;
+    repeated EditorOption result = 1;
 }
 
 message EditorOption {

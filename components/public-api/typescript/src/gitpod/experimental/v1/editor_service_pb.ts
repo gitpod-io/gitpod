@@ -48,9 +48,9 @@ export class ListEditorOptionsRequest extends Message<ListEditorOptionsRequest> 
  */
 export class ListEditorOptionsResponse extends Message<ListEditorOptionsResponse> {
   /**
-   * @generated from field: repeated gitpod.experimental.v1.EditorOption options = 1;
+   * @generated from field: repeated gitpod.experimental.v1.EditorOption result = 1;
    */
-  options: EditorOption[] = [];
+  result: EditorOption[] = [];
 
   constructor(data?: PartialMessage<ListEditorOptionsResponse>) {
     super();
@@ -60,7 +60,7 @@ export class ListEditorOptionsResponse extends Message<ListEditorOptionsResponse
   static readonly runtime = proto3;
   static readonly typeName = "gitpod.experimental.v1.ListEditorOptionsResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "options", kind: "message", T: EditorOption, repeated: true },
+    { no: 1, name: "result", kind: "message", T: EditorOption, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListEditorOptionsResponse {

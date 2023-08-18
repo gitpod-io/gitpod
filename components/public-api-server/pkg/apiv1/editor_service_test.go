@@ -45,7 +45,7 @@ func TestEditorService_ListEditorOptions(t *testing.T) {
 		retrieved, err := client.ListEditorOptions(context.Background(), connect.NewRequest(&v1.ListEditorOptionsRequest{}))
 		require.NoError(t, err)
 		requireEqualProto(t, &v1.ListEditorOptionsResponse{
-			Options: []*v1.EditorOption{
+			Result: []*v1.EditorOption{
 				{
 					Title: "Theia",
 					Id:    "theia",
