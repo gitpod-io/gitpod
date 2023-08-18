@@ -6,6 +6,7 @@
 
 // @ts-check
 
+const webpack = require("webpack");
 const path = require("path");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
@@ -36,12 +37,17 @@ module.exports = {
         fallback: {
             crypto: require.resolve("crypto-browserify"),
             stream: require.resolve("stream-browserify"),
+            url: require.resolve("url"),
+            util: require.resolve("util"),
         },
     },
     devtool: "source-map",
     plugins: [
         new CopyWebpackPlugin({
             patterns: [{ from: "public", to: "." }],
+        }),
+        new webpack.ProvidePlugin({
+            Buffer: ["buffer", "Buffer"],
         }),
     ],
 };
