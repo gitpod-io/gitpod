@@ -42,7 +42,6 @@ var ObjectRefKindList = map[ObjectRefKind]struct{}{
 }
 
 var FSShiftMethodList = map[FSShiftMethod]struct{}{
-	FSShiftFuseFS:  {},
 	FSShiftShiftFS: {},
 }
 

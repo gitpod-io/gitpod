@@ -256,34 +256,6 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 
 	mountpoint := filepath.Join(wbs.Session.ServiceLocNode, "mark")
 
-	if wbs.FSShift == api.FSShiftMethod_FUSE {
-		err = nsi.Nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
-			// In case of any change in the user mapping, the next line must be updated.
-			mappings := fmt.Sprintf("0:%v:1:1:100000:65534", wsinit.GitpodUID)
-			c.Args = append(c.Args, "mount-fusefs-mark",
-				"--source", rootfs,
-				"--merged", filepath.Join(wbs.Session.ServiceLocNode, "mark"),
-				"--upper", filepath.Join(wbs.Session.ServiceLocNode, "upper"),
-				"--work", filepath.Join(wbs.Session.ServiceLocNode, "work"),
-				"--uidmapping", mappings,
-				"--gidmapping", mappings)
-		})
-		if err != nil {
-			log.WithField("rootfs", rootfs).WithFields(wbs.Session.OWI()).WithError(err).Error("cannot mount fusefs mark")
-			return nil, status.Errorf(codes.Internal, "cannot mount fusefs mark")
-		}
-
-		log.WithFields(wbs.Session.OWI()).WithField("configuredShift", wbs.FSShift).Info("fs-shift using fuse")
-
-		if err := wbs.createWorkspaceCgroup(ctx, wscontainerID); err != nil {
-			return nil, err
-		}
-
-		return &api.PrepareForUserNSResponse{
-			FsShift: api.FSShiftMethod_FUSE,
-		}, nil
-	}
-
 	// We cannot use the nsenter syscall here because mount namespaces affect the whole process, not just the current thread.
 	// That's why we resort to exec'ing "nsenter ... mount ...".
 	err = nsi.Nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {

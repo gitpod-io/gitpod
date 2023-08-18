@@ -371,7 +371,6 @@ type Proxy struct {
 type FSShiftMethod string
 
 const (
-	FSShiftFuseFS  FSShiftMethod = "fuse"
 	FSShiftShiftFS FSShiftMethod = "shiftfs"
 )
 

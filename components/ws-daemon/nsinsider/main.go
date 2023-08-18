@@ -10,9 +10,6 @@ import (
 	"net"
 	"net/netip"
 	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
 	"time"
 	"unsafe"
 
@@ -86,74 +83,6 @@ func main() {
 				},
 				Action: func(c *cli.Context) error {
 					return unix.Mount("none", c.String("target"), "", unix.MS_SHARED, "")
-				},
-			},
-			{
-				Name:  "mount-fusefs-mark",
-				Usage: "mounts a fusefs mark",
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:     "source",
-						Required: true,
-					},
-					&cli.StringFlag{
-						Name:     "merged",
-						Required: true,
-					},
-					&cli.StringFlag{
-						Name:     "upper",
-						Required: true,
-					},
-					&cli.StringFlag{
-						Name:     "work",
-						Required: true,
-					},
-					&cli.StringFlag{
-						Name:     "uidmapping",
-						Required: false,
-					},
-					&cli.StringFlag{
-						Name:     "gidmapping",
-						Required: false,
-					},
-				},
-				Action: func(c *cli.Context) error {
-					target := filepath.Clean(c.String("merged"))
-					upper := filepath.Clean(c.String("upper"))
-					work := filepath.Clean(c.String("work"))
-					source := filepath.Clean(c.String("source"))
-
-					args := []string{
-						fmt.Sprintf("lowerdir=%s,upperdir=%v,workdir=%v", source, upper, work),
-					}
-
-					if len(c.String("uidmapping")) > 0 {
-						args = append(args, fmt.Sprintf("uidmapping=%v", c.String("uidmapping")))
-					}
-
-					if len(c.String("gidmapping")) > 0 {
-						args = append(args, fmt.Sprintf("gidmapping=%v", c.String("gidmapping")))
-					}
-
-					cmd := exec.Command(
-						fmt.Sprintf("%v/.supervisor/fuse-overlayfs", source),
-						"-o",
-						strings.Join(args, ","),
-						"none",
-						target,
-					)
-					cmd.Dir = source
-
-					out, err := cmd.CombinedOutput()
-					if err != nil {
-						return xerrors.Errorf("fuse-overlayfs (%v) failed: %q\n%v",
-							cmd.Args,
-							string(out),
-							err,
-						)
-					}
-
-					return nil
 				},
 			},
 			{

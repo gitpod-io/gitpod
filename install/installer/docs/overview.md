@@ -216,7 +216,7 @@ is `true`. External dependencies can be used in their place
 | `metadata.region` | Y | Location for your `objectStorage` provider | If using Minio, set to `local` |
 | `workspace.runtime.containerdRuntimeDir` | Y | The location of containerd on host machine | Common values are: <ul><li>`/run/containerd/io.containerd.runtime.v2.task/k8s.io` (K3s)</li><li>`/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io` (AWS/GCP)</li><li>`/run/containerd/io.containerd.runtime.v1.linux/k8s.io`</li><li>`/run/containerd/io.containerd.runtime.v1.linux/moby`</li></ul> |
 | `workspace.runtime.containerdSocket` | Y | The location of containerd socket on the host machine |
-| `workspace.runtime.fsShiftMethod` | Y | File system | Can be either `fuse` (fuse-overlayfs) or `shiftfs`. This depending upon your host OS/distribution. If unsure, use `fuse`. |
+| `workspace.runtime.fsShiftMethod` | Y | File system | Can be `shiftfs`. |
 
 ## Auth Providers
 
