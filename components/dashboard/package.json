@@ -60,6 +60,7 @@
     "@types/validator": "^13.7.12",
     "@typescript-eslint/eslint-plugin": "^4.21.0",
     "@typescript-eslint/parser": "^4.21.0",
+    "@useorbital/client-types": "^1.6.0",
     "autoprefixer": "^9.8.6",
     "eslint": "^7.24.0",
     "eslint-config-react-app": "^6.0.0",

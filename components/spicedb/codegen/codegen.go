@@ -55,6 +55,10 @@ func GetCompiledSchema() *compiler.CompiledSchema {
 	return devCtx.CompiledSchema
 }
 
+func firstUpper(in string) string {
+	return strings.ToUpper(string(in[0])) + in[1:]
+}
+
 func GenerateDefinition(schema *compiler.CompiledSchema) string {
 
 	resource := "export type ResourceType ="
@@ -67,7 +71,7 @@ func GenerateDefinition(schema *compiler.CompiledSchema) string {
 	// list definitions
 	for _, def := range schema.ObjectDefinitions {
 		// make sure the first character is upper case
-		simpleName := strings.ToUpper(string(def.Name[0])) + def.Name[1:]
+		simpleName := firstUpper(def.Name)
 		resourceTypeName := simpleName + "ResourceType"
 		resource += "\n  | " + resourceTypeName + ""
 		resourceTypes += "\n  \"" + def.Name + "\","
@@ -158,20 +162,38 @@ func generateFluentAPI(def *corev1.NamespaceDefinition) string {
 
 		objects := ``
 		for _, t := range rel.TypeInformation.AllowedDirectRelations {
-			objects += `
-				` + ifElse(t.Namespace == "installation",
-				"get "+t.Namespace+"()",
-				t.Namespace+"(objectId: string)") + ` {
-				return {
-					...result2,
-					subject: {
-						object: {
-							objectType: "` + t.Namespace + `",
-							objectId: ` + ifElse(t.Namespace == "installation", `InstallationID`, "objectId") + `,
+			if t.GetPublicWildcard() != nil {
+				objects += `get any` + firstUpper(t.Namespace) + `() {
+					return {
+						...result2,
+						subject: {
+							object: {
+								objectType: "` + t.Namespace + `",
+								objectId: "*",
+							},
+
 						},
-					},
-				} as v1.Relationship;
-			},`
+					} as v1.Relationship;
+				},`
+			} else {
+				hasRelation := t.GetRelation() != "..."
+				name := ifElse(hasRelation, t.Namespace+"_"+t.GetRelation(), t.Namespace)
+				objects += `
+				` + ifElse(t.Namespace == "installation",
+					"get "+name+"()",
+					name+"(objectId: string)") + ` {
+					return {
+						...result2,
+						subject: {
+							object: {
+								objectType: "` + t.Namespace + `",
+								objectId: ` + ifElse(t.Namespace == "installation", `InstallationID`, "objectId") + `,
+							},
+							` + ifElse(hasRelation, `optionalRelation: "`+t.GetRelation()+`",`, "") + `
+						},
+					} as v1.Relationship;
+				},`
+			}
 		}
 
 		relations += `

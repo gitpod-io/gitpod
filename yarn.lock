@@ -3470,6 +3470,11 @@
     "@typescript-eslint/types" "4.33.0"
     eslint-visitor-keys "^2.0.0"
 
+"@useorbital/client-types@^1.5.0":
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/@useorbital/client-types/-/client-types-1.6.0.tgz#5ae0828964cb50962395b142578ec4c2c39806e8"
+  integrity sha512-Lf490y3x1v8jFgEULuLRt7TmN/kSZeQ0hYS4Y6AfHijB6oBp/B0o1MWNrF11KqKY6ghs1CIZi5RxVOXsnd/geQ==
+
 "@webassemblyjs/ast@1.11.1":
   version "1.11.1"
   resolved "https://registry.npmjs.org/@webassemblyjs/ast/-/ast-1.11.1.tgz"
