@@ -509,9 +509,11 @@ func (wsm *WorkspaceManagerServer) MarkActive(ctx context.Context, req *wsmanapi
 		return &wsmanapi.MarkActiveResponse{}, nil
 	}
 
+	now := time.Now().UTC()
+	lastActivityStatus := metav1.NewTime(now)
+	ws.Status.LastActivity = &lastActivityStatus
+
 	err = wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
-		now := time.Now().UTC()
-		lastActivityStatus := metav1.NewTime(now)
 		ws.Status.LastActivity = &lastActivityStatus
 		return nil
 	})
