@@ -10,7 +10,8 @@
     "stream-browserify": "^2.0.1",
     "url": "^0.11.1",
     "util": "^0.11.1",
-    "buffer": "^4.3.0"
+    "buffer": "^4.3.0",
+    "process": "^0.11.10"
   },
   "devDependencies": {
     "@types/sharedworker": "^0.0.29",

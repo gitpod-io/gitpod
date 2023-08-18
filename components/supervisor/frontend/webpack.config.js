@@ -26,11 +26,6 @@ module.exports = {
                 test: /\.css$/i,
                 use: ["style-loader", "css-loader"],
             },
-            {
-                test: /\\.js$/,
-                enforce: "pre",
-                loader: "source-map-loader",
-            },
         ],
     },
     resolve: {
@@ -47,6 +42,7 @@ module.exports = {
             patterns: [{ from: "public", to: "." }],
         }),
         new webpack.ProvidePlugin({
+            process: "process/browser",
             Buffer: ["buffer", "Buffer"],
         }),
     ],
