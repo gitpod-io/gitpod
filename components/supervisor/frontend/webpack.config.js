@@ -10,6 +10,7 @@ const path = require("path");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = {
+    target: "web",
     entry: {
         main: path.resolve(__dirname, "lib/index.js"),
     },
@@ -29,34 +30,13 @@ module.exports = {
                 enforce: "pre",
                 loader: "source-map-loader",
             },
-            {
-                test: /\.js$/,
-                // include only es6 dependencies to transpile them to es5 classes
-                include: /vscode-ws-jsonrpc|vscode-jsonrpc|vscode-languageserver-protocol|vscode-languageserver-types/,
-                use: {
-                    loader: "babel-loader",
-                    options: {
-                        presets: ["@babel/preset-env"],
-                        plugins: [
-                            // reuse runtime babel lib instead of generating it in each js file
-                            "@babel/plugin-transform-runtime",
-                            // ensure that classes are transpiled
-                            "@babel/plugin-transform-classes",
-                        ],
-                        // see https://github.com/babel/babel/issues/8900#issuecomment-431240426
-                        sourceType: "unambiguous",
-                        cacheDirectory: true,
-                    },
-                },
-            },
         ],
     },
-    node: {
-        fs: "empty",
-        child_process: "empty",
-        net: "empty",
-        crypto: true,
-        tls: "empty",
+    resolve: {
+        fallback: {
+            crypto: require.resolve("crypto-browserify"),
+            stream: require.resolve("stream-browserify"),
+        },
     },
     devtool: "source-map",
     plugins: [
