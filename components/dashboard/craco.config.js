@@ -11,6 +11,21 @@ module.exports = {
             plugins: [require("tailwindcss"), require("autoprefixer")],
         },
     },
+    webpack: {
+        configure: {
+            resolve: { fallback: { crypto: false, net: false, path: false, fs: false, os: false } },
+            module: {
+                rules: [
+                    {
+                        test: /\.m?js$/,
+                        resolve: {
+                            fullySpecified: false,
+                        },
+                    },
+                ],
+            },
+        },
+    },
     ...when(process.env.GP_DEV_HOST && process.env.GP_DEV_COOKIE, () => ({
         devServer: {
             proxy: {

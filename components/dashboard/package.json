@@ -41,7 +41,8 @@
     "xterm-addon-fit": "^0.5.0"
   },
   "devDependencies": {
-    "@craco/craco": "^6.1.2",
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@craco/craco": "^7.1.0",
     "@tailwindcss/forms": "^0.3.2",
     "@tailwindcss/postcss7-compat": "^2.2.4",
     "@testing-library/jest-dom": "^5.11.10",
@@ -63,9 +64,9 @@
     "@useorbital/client-types": "^1.6.0",
     "autoprefixer": "^9.8.6",
     "eslint": "^7.24.0",
-    "eslint-config-react-app": "^6.0.0",
+    "eslint-config-react-app": "^7.0.1",
     "postcss": "^7.0.36",
-    "react-scripts": "^4.0.3",
+    "react-scripts": "^5.0.1",
     "tailwind-underline-utils": "^1.1.2",
     "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.2.4",
     "tailwindcss-filters": "^3.0.0",
