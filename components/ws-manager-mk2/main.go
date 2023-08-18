@@ -6,11 +6,13 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"net"
 	"os"
+	"sync/atomic"
 	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -59,6 +61,8 @@ var (
 
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
+
+	LeaderInstance atomic.Bool
 )
 
 func init() {
@@ -138,6 +142,11 @@ func main() {
 
 	mgrCtx := ctrl.SetupSignalHandler()
 
+	go func() {
+		<-mgr.Elected()
+		LeaderInstance.Store(true)
+	}()
+
 	maintenanceReconciler, err := controllers.NewMaintenanceReconciler(mgr.GetClient())
 	if err != nil {
 		setupLog.Error(err, "unable to create maintenance controller", "controller", "Maintenance")
@@ -177,6 +186,7 @@ func main() {
 	}
 
 	workspaceReconciler.OnReconcile = wsmanService.OnWorkspaceReconcile
+
 	if err = workspaceReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to setup workspace controller with manager", "controller", "Workspace")
 		os.Exit(1)
@@ -228,8 +238,27 @@ func setupGRPCService(cfg *config.ServiceConfiguration, k8s client.Client, maint
 	metrics.Registry.MustRegister(grpcMetrics)
 
 	grpcOpts := common_grpc.ServerOptionsWithInterceptors(
-		[]grpc.StreamServerInterceptor{grpcMetrics.StreamServerInterceptor()},
-		[]grpc.UnaryServerInterceptor{grpcMetrics.UnaryServerInterceptor(), ratelimits.UnaryInterceptor()},
+		[]grpc.StreamServerInterceptor{
+			grpcMetrics.StreamServerInterceptor(),
+			func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+				if LeaderInstance.Load() {
+					return handler(srv, ss)
+				}
+
+				return fmt.Errorf("Rejecting connection due leader election")
+			},
+		},
+		[]grpc.UnaryServerInterceptor{
+			grpcMetrics.UnaryServerInterceptor(),
+			ratelimits.UnaryInterceptor(),
+			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+				if LeaderInstance.Load() {
+					return handler(ctx, req)
+				}
+
+				return nil, fmt.Errorf("Rejecting connection due leader election")
+			},
+		},
 	)
 	if cfg.RPCServer.TLS.CA != "" && cfg.RPCServer.TLS.Certificate != "" && cfg.RPCServer.TLS.PrivateKey != "" {
 		tlsConfig, err := common_grpc.ClientAuthTLSConfig(
