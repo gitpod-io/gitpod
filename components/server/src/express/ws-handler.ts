@@ -13,6 +13,8 @@ import * as net from "net";
 import { WsLayer } from "./ws-layer";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { increaseHttpRequestCounter } from "../prometheus-metrics";
+import { Disposable } from "vscode-ws-jsonrpc";
+import { DisposableCollection } from "@gitpod/gitpod-protocol";
 
 export type HttpServer = http.Server | https.Server;
 export type RouteMatcher = string | RegExp;
@@ -36,9 +38,10 @@ interface Route {
     handler: (ws: websocket, req: express.Request) => void;
 }
 
-export class WsExpressHandler {
+export class WsExpressHandler implements Disposable {
     protected readonly wss: websocket.Server;
     protected readonly routes: Route[] = [];
+    private disposables = new DisposableCollection();
 
     constructor(protected readonly httpServer: HttpServer, protected readonly verifyClient?: WsConnectionFilter) {
         this.wss = new websocket.Server({
@@ -53,9 +56,24 @@ export class WsExpressHandler {
         this.wss.on("error", (err) => {
             log.error("websocket server error", err, { wss: this.wss });
         });
+        this.wss.on("connection", (ws) => {
+            const cancelTerminate = this.disposables.push(Disposable.create(() => ws.close()));
+            ws.on("close", () => {
+                cancelTerminate.dispose();
+            });
+        });
         this.httpServer.on("upgrade", (req: http.IncomingMessage, socket: net.Socket, head: Buffer) =>
             this.onUpgrade(req, socket, head),
         );
+    }
+
+    dispose(): void {
+        this.wss.close((err) => {
+            if (err) {
+                log.error("websocket server close error", err, { wss: this.wss });
+            }
+        });
+        this.disposables.dispose();
     }
 
     ws(

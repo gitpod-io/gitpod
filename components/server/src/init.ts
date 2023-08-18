@@ -108,8 +108,9 @@ export async function start(container: Container) {
 
     process.on("SIGTERM", async () => {
         log.info("SIGTERM received, stopping");
-        await server.stop();
         clearInterval(interval);
+        await server.stop();
+        process.exit(0);
     });
 
     const tracing = container.get(TracingManager);
