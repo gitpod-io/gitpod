@@ -56,6 +56,7 @@ export type OrganizationRelation = "installation" | "member" | "owner";
 
 export type OrganizationPermission =
     | "installation_admin"
+    | "installation_member"
     | "read_info"
     | "write_info"
     | "delete"
@@ -77,7 +78,14 @@ export type ProjectResourceType = "project";
 
 export type ProjectRelation = "org" | "editor" | "viewer";
 
-export type ProjectPermission = "read_info" | "write_info" | "delete" | "read_env_var" | "write_env_var";
+export type ProjectPermission =
+    | "read_info"
+    | "write_info"
+    | "delete"
+    | "read_env_var"
+    | "write_env_var"
+    | "read_prebuild"
+    | "write_prebuild";
 
 export type WorkspaceResourceType = "workspace";
 
@@ -341,13 +349,25 @@ export const rel = {
                             },
                         } as v1.Relationship;
                     },
-                    organization(objectId: string) {
+                    organization_member(objectId: string) {
                         return {
                             ...result2,
                             subject: {
                                 object: {
                                     objectType: "organization",
                                     objectId: objectId,
+                                },
+                                optionalRelation: "member",
+                            },
+                        } as v1.Relationship;
+                    },
+                    get anyUser() {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "user",
+                                    objectId: "*",
                                 },
                             },
                         } as v1.Relationship;

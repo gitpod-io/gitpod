@@ -74,6 +74,20 @@ describe("ProjectsService", async () => {
         await expectError(ErrorCodes.NOT_FOUND, () => ps.getProjects(stranger.id, org.id));
     });
 
+    it("should setVisibility", async () => {
+        const ps = container.get(ProjectsService);
+        const project = await createTestProject(ps, org, owner);
+
+        await expectError(ErrorCodes.NOT_FOUND, () => ps.getProject(stranger.id, project.id));
+        await expectError(ErrorCodes.NOT_FOUND, () => ps.getProjects(stranger.id, org.id));
+        await ps.setVisibility(owner.id, project.id, "public");
+
+        const foundProject = await ps.getProject(stranger.id, project.id);
+        expect(foundProject?.id).to.equal(project.id);
+        // listing by org still doesn't woprk because strangers don't have access to the org
+        await expectError(ErrorCodes.NOT_FOUND, () => ps.getProjects(stranger.id, org.id));
+    });
+
     it("should deleteProject", async () => {
         const ps = container.get(ProjectsService);
         const project = await createTestProject(ps, org, owner);

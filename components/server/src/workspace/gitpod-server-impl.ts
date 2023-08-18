@@ -388,6 +388,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 return;
             }
 
+            // check if the user has access to the project
+            if (
+                prebuiltWorkspace.projectId &&
+                !(await this.auth.hasPermissionOnProject(user.id, "read_prebuild", prebuiltWorkspace.projectId))
+            ) {
+                return undefined;
+            }
             if (prebuiltWorkspace.state === "available") {
                 log.info(logCtx, `Found prebuilt workspace for ${cloneUrl}:${commitSHAs}`, logPayload);
                 const result: PrebuiltWorkspaceContext = {
@@ -1500,6 +1507,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const project = await this.projectsService.getProject(user.id, projectId);
         await this.guardProjectOperation(user, projectId, "update");
+        await this.auth.checkPermissionOnProject(user.id, "write_prebuild", projectId);
 
         const branchDetails = !!branchName
             ? await this.projectsService.getBranchDetails(user, project, branchName)
@@ -2383,6 +2391,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const teamMembers = await this.organizationService.listMembers(user.id, workspace.organizationId);
         await this.guardAccess({ kind: "prebuild", subject: pbws, workspace, teamMembers }, "get");
+        await this.auth.checkPermissionOnProject(user.id, "read_prebuild", workspace.projectId!);
         const result: PrebuildWithStatus = { info, status: pbws.state };
         if (pbws.error) {
             result.error = pbws.error;
@@ -2407,6 +2416,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const teamMembers = await this.organizationService.listMembers(user.id, workspace.organizationId);
         await this.guardAccess({ kind: "prebuild", subject: pbws, workspace, teamMembers }, "get");
+        await this.auth.checkPermissionOnProject(user.id, "read_prebuild", workspace.projectId!);
         return pbws;
     }
 
@@ -2446,6 +2456,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         await this.projectsService.getProject(user.id, projectId);
         await this.guardProjectOperation(user, projectId, "update");
+        await this.auth.checkPermissionOnProject(user.id, "write_prebuild", projectId);
 
         const prebuild = await this.workspaceDb.trace(ctx).findPrebuildByID(prebuildId);
         if (!prebuild) {

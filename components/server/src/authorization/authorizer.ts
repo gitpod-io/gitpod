@@ -7,7 +7,7 @@
 import { v1 } from "@authzed/authzed-node";
 
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib";
-import { TeamMemberRole } from "@gitpod/gitpod-protocol";
+import { Project, TeamMemberRole } from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import {
     AllResourceTypes,
@@ -281,9 +281,34 @@ export class Authorizer {
         if (await this.isDisabled(userId)) {
             return;
         }
-        await this.authorizer.writeRelationships(
-            set(rel.project(projectID).org.organization(orgID)), //
-        );
+        await this.authorizer.writeRelationships(set(rel.project(projectID).org.organization(orgID)));
+    }
+
+    async setProjectVisibility(
+        userId: string,
+        projectID: string,
+        organizationId: string,
+        visibility: Project.Visibility,
+    ) {
+        if (await this.isDisabled(userId)) {
+            return;
+        }
+        const updates = [];
+        switch (visibility) {
+            case "private":
+                updates.push(remove(rel.project(projectID).viewer.organization_member(organizationId)));
+                updates.push(remove(rel.project(projectID).viewer.anyUser));
+                break;
+            case "org-public":
+                updates.push(set(rel.project(projectID).viewer.organization_member(organizationId)));
+                updates.push(remove(rel.project(projectID).viewer.anyUser));
+                break;
+            case "public":
+                updates.push(remove(rel.project(projectID).viewer.organization_member(organizationId)));
+                updates.push(set(rel.project(projectID).viewer.anyUser));
+                break;
+        }
+        await this.authorizer.writeRelationships(...updates);
     }
 
     async removeProjectFromOrg(userId: string, orgID: string, projectID: string): Promise<void> {
@@ -292,6 +317,8 @@ export class Authorizer {
         }
         await this.authorizer.writeRelationships(
             remove(rel.project(projectID).org.organization(orgID)), //
+            remove(rel.project(projectID).viewer.anyUser),
+            remove(rel.project(projectID).viewer.organization_member(orgID)),
         );
     }
 
@@ -318,6 +345,7 @@ export class Authorizer {
         const toBeRemoved = asSet(existing.map((r) => r.resource?.objectId));
         for (const projectId of projectIds) {
             await this.addProjectToOrg(userId, orgID, projectId);
+            await this.setProjectVisibility(userId, projectId, orgID, "org-public");
             toBeRemoved.delete(projectId);
         }
         for (const projectId of toBeRemoved) {

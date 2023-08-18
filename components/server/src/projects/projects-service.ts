@@ -239,6 +239,7 @@ export class ProjectsService {
                 await db.storeProject(project);
 
                 await this.auth.addProjectToOrg(installer.id, teamId, project.id);
+                await this.auth.setProjectVisibility(installer.id, project.id, teamId, "org-public");
             });
         } catch (err) {
             await this.auth.removeProjectFromOrg(installer.id, teamId, project.id);
@@ -264,6 +265,13 @@ export class ProjectsService {
             },
         });
         return project;
+    }
+
+    public async setVisibility(userId: string, projectId: string, visibility: Project.Visibility): Promise<void> {
+        await this.auth.checkPermissionOnProject(userId, "write_info", projectId);
+        const project = await this.getProject(userId, projectId);
+        //TODO store this information in the DB
+        await this.auth.setProjectVisibility(userId, projectId, project.teamId, visibility);
     }
 
     async deleteProject(userId: string, projectId: string, transactionCtx?: TransactionalContext): Promise<void> {
@@ -298,7 +306,7 @@ export class ProjectsService {
 
     async findPrebuilds(userId: string, params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
         const { projectId, prebuildId } = params;
-        await this.auth.checkPermissionOnProject(userId, "read_info", projectId);
+        await this.auth.checkPermissionOnProject(userId, "read_prebuild", projectId);
         const project = await this.projectDB.findProjectById(projectId);
         if (!project) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
