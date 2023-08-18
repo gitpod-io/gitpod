@@ -27,7 +27,7 @@ export class BitbucketServerService extends RepositoryService {
 
     async getRepositoriesForAutomatedPrebuilds(
         user: User,
-        params: { searchString: string; cancellationToken?: CancellationToken },
+        params: { searchString: string; limit?: number; cap?: number; cancellationToken?: CancellationToken },
     ): Promise<ProviderRepository[]> {
         const repos = await this.api.getRepos(user, { permission: "REPO_ADMIN", ...params });
         return repos.map((r) => {

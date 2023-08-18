@@ -12,7 +12,7 @@ import { CancellationToken } from "vscode-jsonrpc";
 export class RepositoryService {
     async getRepositoriesForAutomatedPrebuilds(
         user: User,
-        params: { searchString?: string; cancellationToken?: CancellationToken },
+        params: { searchString?: string; limit?: number; cap?: number; cancellationToken?: CancellationToken },
     ): Promise<ProviderRepository[]> {
         return [];
     }

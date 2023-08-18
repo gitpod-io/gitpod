@@ -19,6 +19,7 @@ import { useToast } from "../../components/toasts/Toasts";
 import { useProviderRepositoriesForUser } from "../../data/git-providers/provider-repositories-query";
 import { openReconfigureWindow } from "./reconfigure-github";
 import { NewProjectCreateFromURL } from "./NewProjectCreateFromURL";
+import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
 
 type Props = {
     selectedProviderHost?: string;
@@ -33,20 +34,24 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProviderHost, onPro
 
     // Component state managed by this component
     const [selectedAccount, setSelectedAccount] = useState<string>();
-    const [repoSearchFilter, setRepoSearchFilter] = useState("");
+    const [repoSearchFilter, setRepoSearchFilter, debouncedRepoSearchFilter] = useStateWithDebounce("");
     const [installationId, setInstallationId] = useState<string>();
 
     // Main query for listing repos given the current state
     const { data: reposInAccounts, isLoading } = useProviderRepositoriesForUser({
-        provider: selectedProviderHost || "",
+        providerHost: selectedProviderHost || "",
         installationId,
+        search: debouncedRepoSearchFilter,
     });
 
     // Wrap setting selected account so we can clear the repo search filter at the same time
-    const setSelectedAccountAndClearSearch = useCallback((account?: string) => {
-        setSelectedAccount(account);
-        setRepoSearchFilter("");
-    }, []);
+    const setSelectedAccountAndClearSearch = useCallback(
+        (account?: string) => {
+            setSelectedAccount(account);
+            setRepoSearchFilter("");
+        },
+        [setRepoSearchFilter],
+    );
 
     // Memoized & derived values
     const noReposAvailable = !!(reposInAccounts?.length === 0 || areGitHubWebhooksUnauthorized);

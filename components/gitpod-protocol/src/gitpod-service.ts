@@ -295,6 +295,8 @@ export interface GetProviderRepositoriesParams {
     provider: string;
     hints?: { installationId: string } | object;
     searchString?: string;
+    limit?: number;
+    maxPages?: number;
 }
 export interface ProviderRepository {
     name: string;
