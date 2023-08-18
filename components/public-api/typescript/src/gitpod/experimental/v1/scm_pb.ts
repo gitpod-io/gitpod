@@ -79,3 +79,4 @@ export class GetSuggestedRepoURLsResponse extends Message<GetSuggestedRepoURLsRe
     return proto3.util.equals(GetSuggestedRepoURLsResponse, a, b);
   }
 }
+

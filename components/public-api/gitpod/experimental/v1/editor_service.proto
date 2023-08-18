@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package gitpod.experimental.v1;
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1";
+
+service EditorService {
+    rpc ListEditorOptions(ListEditorOptionsRequest) returns (ListEditorOptionsResponse) {}
+}
+
+message ListEditorOptionsRequest {}
+
+message ListEditorOptionsResponse {
+    repeated EditorOption result = 1;
+}
+
+message EditorOption {
+    // The unique identifier for an editor.
+    string id = 1;
+
+    // Human readable title text of the editor (plain text only).
+    string title = 2;
+
+    // The type of the editor, currently browser or desktop.
+    enum Type {
+      TYPE_UNSPECIFIED = 0;
+      TYPE_BROWSER = 1;
+      TYPE_DESKTOP = 2;
+    }
+    Type type = 3;
+
+    // The logo for the editor
+    string logo = 4;
+
+    // Text of an optional label next to the editor option like “Insiders” (plain
+    // text only).
+    string label = 5;
+
+    message Kind {
+        // The semantic version of the editor.
+        string version = 1;
+    }
+
+    Kind stable = 6;
+    Kind latest = 7;
+}
