@@ -89,7 +89,7 @@ export type ProjectPermission =
 
 export type WorkspaceResourceType = "workspace";
 
-export type WorkspaceRelation = "org" | "owner";
+export type WorkspaceRelation = "org" | "owner" | "shared";
 
 export type WorkspacePermission = "access" | "start" | "stop" | "delete" | "read_info";
 
@@ -409,6 +409,26 @@ export const rel = {
                 const result2 = {
                     ...result,
                     relation: "owner",
+                };
+                return {
+                    user(objectId: string) {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "user",
+                                    objectId: objectId,
+                                },
+                            },
+                        } as v1.Relationship;
+                    },
+                };
+            },
+
+            get shared() {
+                const result2 = {
+                    ...result,
+                    relation: "shared",
                 };
                 return {
                     user(objectId: string) {

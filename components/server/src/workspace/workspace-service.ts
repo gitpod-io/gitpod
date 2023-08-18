@@ -108,7 +108,7 @@ export class WorkspaceService {
 
         // Instead, we fall back to removing access in case something goes wrong.
         try {
-            await this.auth.addWorkspaceToOrg(organizationId, user.id, workspace.id);
+            await this.auth.addWorkspaceToOrg(organizationId, user.id, workspace.id, !!workspace.shareable);
         } catch (err) {
             await this.hardDeleteWorkspace(user.id, workspace.id).catch((err) =>
                 log.error("failed to hard-delete workspace", err),
@@ -251,8 +251,9 @@ export class WorkspaceService {
     public async hardDeleteWorkspace(userId: string, workspaceId: string): Promise<void> {
         await this.auth.checkPermissionOnWorkspace(userId, "delete", workspaceId);
 
-        let orgId: string | undefined = undefined;
-        let ownerId: string | undefined = undefined;
+        let orgId: string | undefined;
+        let ownerId: string | undefined;
+        let ws: Workspace | undefined;
         try {
             await this.db.transaction(async (db) => {
                 const workspace = await this.db.findById(workspaceId);
@@ -261,13 +262,14 @@ export class WorkspaceService {
                 }
                 orgId = workspace.organizationId;
                 ownerId = workspace.ownerId;
+                ws = workspace;
                 await this.db.hardDeleteWorkspace(workspaceId);
 
                 await this.auth.removeWorkspaceFromOrg(orgId, ownerId, workspaceId);
             });
         } catch (err) {
-            if (orgId && ownerId) {
-                await this.auth.addWorkspaceToOrg(orgId, ownerId, workspaceId);
+            if (orgId && ownerId && ws) {
+                await this.auth.addWorkspaceToOrg(orgId, ownerId, workspaceId, !!ws.shareable);
             }
             throw err;
         }
@@ -859,7 +861,9 @@ export class WorkspaceService {
         }
 
         await this.db.transaction(async (db) => {
-            await db.updatePartial(workspaceId, { shareable: level === "everyone" });
+            const shareable = level === "everyone";
+            await db.updatePartial(workspaceId, { shareable });
+            await this.auth.setWorkspaceIsShared(userId, workspaceId, shareable);
         });
     }
 }
