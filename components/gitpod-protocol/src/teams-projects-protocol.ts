@@ -80,6 +80,8 @@ export namespace Project {
         changeUrl?: string;
         changeHash: string;
     }
+
+    export type Visibility = "public" | "org-public" | "private";
 }
 
 export type PartialProject = DeepPartial<Project> & Pick<Project, "id">;

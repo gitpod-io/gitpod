@@ -33,6 +33,7 @@ import { ImageSourceProvider } from "./image-source-provider";
 import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 import { IncrementalPrebuildsService } from "../prebuilds/incremental-prebuilds-service";
 import { increasePrebuildsStartedCounter } from "../prometheus-metrics";
+import { Authorizer } from "../authorization/authorizer";
 
 @injectable()
 export class WorkspaceFactory {
@@ -42,6 +43,7 @@ export class WorkspaceFactory {
         @inject(ConfigProvider) private configProvider: ConfigProvider,
         @inject(ImageSourceProvider) private imageSourceProvider: ImageSourceProvider,
         @inject(IncrementalPrebuildsService) private readonly incrementalPrebuildsService: IncrementalPrebuildsService,
+        @inject(Authorizer) private readonly authorizer: Authorizer,
     ) {}
 
     public async createForContext(
@@ -213,7 +215,6 @@ export class WorkspaceFactory {
         normalizedContextURL: string,
     ): Promise<Workspace> {
         const span = TraceContext.startSpan("createForPrebuiltWorkspace", ctx);
-
         try {
             const buildWorkspaceID = context.prebuiltWorkspace.buildWorkspaceId;
             const buildWorkspace = await this.db.trace({ span }).findById(buildWorkspaceID);
@@ -245,6 +246,7 @@ export class WorkspaceFactory {
                 const teams = await this.teamDB.findTeamsByUser(user.id);
                 if (teams.some((t) => t.id === project.teamId)) {
                     projectId = project.id;
+                    await this.authorizer.checkPermissionOnProject(user.id, "read_prebuild", projectId);
                 }
             }
 

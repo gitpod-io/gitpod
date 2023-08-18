@@ -21,7 +21,7 @@ schema: |-
 
     permission read_tokens = self
     permission write_tokens = self
-    
+
     permission read_env_var = self
     permission write_env_var = self
   }
@@ -48,6 +48,7 @@ schema: |-
 
     // synthetic permission for installation->admin (because https://github.com/authzed/spicedb/issues/15)
     permission installation_admin = installation->admin
+    permission installation_member = installation->member
 
     // General operations on organization
     permission read_info = member + owner + installation->admin
@@ -84,16 +85,20 @@ schema: |-
     relation editor: user
 
     // A subject is a viewer, if:
-    //  * the user is directly assigned as a viewer
-    //  * the project has granted access to everyone in an organization
-    relation viewer: user | organization#member
+    //  * the users with access are directly assigned as a viewer
+    //  * the project has granted access to all members in an organization
+    //  * the project has granted access to _any_ user on this installation
+    relation viewer: user | organization#member | user:*
 
-    permission read_info = viewer + org->member + editor + org->owner + org->installation_admin
+    permission read_info = viewer + editor + org->owner + org->installation_admin
     permission write_info = editor + org->owner + org->installation_admin
     permission delete = editor + org->owner + org->installation_admin
 
-    permission read_env_var = viewer + org->member + editor + org->owner + org->installation_admin
+    permission read_env_var = viewer + editor + org->owner + org->installation_admin
     permission write_env_var = editor + org->owner + org->installation_admin
+
+    permission read_prebuild = viewer + editor + org->owner + org->installation_admin
+    permission write_prebuild = editor + org->owner
   }
 
   definition workspace {
