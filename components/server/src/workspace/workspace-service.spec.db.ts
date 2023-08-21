@@ -120,6 +120,16 @@ describe("WorkspaceService", async () => {
     it("owner can start own workspace", async () => {
         const workspaceService = container.get(WorkspaceService);
         const workspace = await createTestWorkspace(workspaceService, org, owner, project);
+
+        const result = await workspaceService.startWorkspace({}, owner, workspace.id);
+        expect(result.workspaceURL).to.equal(`https://${workspace.id}.ws.gitpod.io`);
+    });
+
+    it("owner can start own workspace - shared", async () => {
+        const workspaceService = container.get(WorkspaceService);
+        const workspace = await createTestWorkspace(workspaceService, org, owner, project);
+        await workspaceService.controlAdmission(owner.id, workspace.id, "everyone");
+
         const result = await workspaceService.startWorkspace({}, owner, workspace.id);
         expect(result.workspaceURL).to.equal(`https://${workspace.id}.ws.gitpod.io`);
     });
@@ -130,9 +140,23 @@ describe("WorkspaceService", async () => {
         await expectError(ErrorCodes.NOT_FOUND, workspaceService.startWorkspace({}, stranger, workspace.id));
     });
 
+    it("stanger cannot start owner workspace - shared", async () => {
+        const workspaceService = container.get(WorkspaceService);
+        const workspace = await createTestWorkspace(workspaceService, org, owner, project);
+        await workspaceService.controlAdmission(owner.id, workspace.id, "everyone");
+        await expectError(ErrorCodes.PERMISSION_DENIED, workspaceService.startWorkspace({}, stranger, workspace.id));
+    });
+
     it("org member cannot start owner workspace", async () => {
         const workspaceService = container.get(WorkspaceService);
         const workspace = await createTestWorkspace(workspaceService, org, owner, project);
+        await expectError(ErrorCodes.PERMISSION_DENIED, workspaceService.startWorkspace({}, member, workspace.id));
+    });
+
+    it("org member cannot start owner workspace - shared", async () => {
+        const workspaceService = container.get(WorkspaceService);
+        const workspace = await createTestWorkspace(workspaceService, org, owner, project);
+        await workspaceService.controlAdmission(owner.id, workspace.id, "everyone");
         await expectError(ErrorCodes.PERMISSION_DENIED, workspaceService.startWorkspace({}, member, workspace.id));
     });
 
@@ -162,7 +186,24 @@ describe("WorkspaceService", async () => {
         const foundWorkspace = await svc.getWorkspace(owner.id, ws.id);
         expect(foundWorkspace?.id).to.equal(ws.id);
 
+        await expectError(ErrorCodes.PERMISSION_DENIED, svc.getWorkspace(member.id, ws.id));
         await expectError(ErrorCodes.NOT_FOUND, svc.getWorkspace(stranger.id, ws.id));
+    });
+
+    it("should getWorkspace - shared", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        await svc.controlAdmission(owner.id, ws.id, "everyone");
+
+        const foundWorkspace = await svc.getWorkspace(owner.id, ws.id);
+        expect(foundWorkspace?.id, "owner has access to shared workspace").to.equal(ws.id);
+
+        const memberFoundWorkspace = await svc.getWorkspace(member.id, ws.id);
+        expect(memberFoundWorkspace?.id, "member has access to shared workspace").to.equal(ws.id);
+
+        const strangerFoundWorkspace = await svc.getWorkspace(stranger.id, ws.id);
+        expect(strangerFoundWorkspace?.id, "stranger has access to shared workspace").to.equal(ws.id);
     });
 
     it("should getOwnerToken", async () => {
@@ -173,6 +214,12 @@ describe("WorkspaceService", async () => {
             ErrorCodes.NOT_FOUND,
             svc.getOwnerToken(owner.id, ws.id),
             "NOT_FOUND for non-running workspace",
+        );
+
+        await expectError(
+            ErrorCodes.PERMISSION_DENIED,
+            svc.getOwnerToken(member.id, ws.id),
+            "NOT_FOUND if member asks for the owner token",
         );
 
         await expectError(
@@ -196,14 +243,42 @@ describe("WorkspaceService", async () => {
         );
     });
 
+    it("should getIDECredentials - shared", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        await svc.controlAdmission(owner.id, ws.id, "everyone");
+
+        const ideCredentials = await svc.getIDECredentials(owner.id, ws.id);
+        expect(ideCredentials, "IDE credentials should be present").to.not.be.undefined;
+
+        const stragnerIdeCredentials = await svc.getIDECredentials(stranger.id, ws.id);
+        expect(stragnerIdeCredentials, "IDE credentials should be present").to.not.be.undefined;
+    });
+
     it("should stopWorkspace", async () => {
         const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
-        await svc.stopWorkspace(owner.id, ws.id, "test stopping stopped workspace");
+        await svc.stopWorkspace(owner.id, ws.id, "test");
         await expectError(
             ErrorCodes.NOT_FOUND,
-            svc.stopWorkspace(stranger.id, ws.id, "test stranger stopping stopped workspace"),
+            svc.stopWorkspace(stranger.id, ws.id, "test"),
+            "test stranger stopping stopped workspace",
+        );
+    });
+
+    it("should stopWorkspace - shared", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        await svc.controlAdmission(owner.id, ws.id, "everyone");
+
+        await svc.stopWorkspace(owner.id, ws.id, "test");
+        await expectError(
+            ErrorCodes.PERMISSION_DENIED,
+            svc.stopWorkspace(stranger.id, ws.id, "test"),
+            "test stranger stopping stopped workspace",
         );
     });
 
@@ -234,6 +309,32 @@ describe("WorkspaceService", async () => {
 
         await expectError(
             ErrorCodes.NOT_FOUND,
+            svc.hardDeleteWorkspace(stranger.id, ws.id),
+            "stranger can't hard-delete workspace",
+        );
+
+        await svc.hardDeleteWorkspace(owner.id, ws.id);
+        await expectError(
+            ErrorCodes.NOT_FOUND,
+            svc.getWorkspace(owner.id, ws.id),
+            "getWorkspace should return NOT_FOUND after hard-deletion",
+        );
+    });
+
+    it("should hardDeleteWorkspace - shared", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        await svc.controlAdmission(owner.id, ws.id, "everyone");
+
+        await expectError(
+            ErrorCodes.PERMISSION_DENIED,
+            svc.hardDeleteWorkspace(member.id, ws.id),
+            "member can't hard-delete workspace",
+        );
+
+        await expectError(
+            ErrorCodes.PERMISSION_DENIED,
             svc.hardDeleteWorkspace(stranger.id, ws.id),
             "stranger can't hard-delete workspace",
         );
@@ -357,13 +458,43 @@ describe("WorkspaceService", async () => {
     it("should watchWorkspaceImageBuildLogs", async () => {
         const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
-
-        await svc.watchWorkspaceImageBuildLogs(owner.id, ws.id, {
+        const client = {
             onWorkspaceImageBuildLogs: (
                 info: WorkspaceImageBuild.StateInfo,
                 content: WorkspaceImageBuild.LogContent | undefined,
             ) => {},
-        }); // returns without error in case of non-running workspace
+        };
+
+        await svc.watchWorkspaceImageBuildLogs(owner.id, ws.id, client); // returns without error in case of non-running workspace
+
+        await expectError(
+            ErrorCodes.PERMISSION_DENIED,
+            svc.watchWorkspaceImageBuildLogs(member.id, ws.id, client),
+            "should fail for member on not-shared workspace",
+        );
+
+        await expectError(
+            ErrorCodes.NOT_FOUND,
+            svc.watchWorkspaceImageBuildLogs(stranger.id, ws.id, client),
+            "should fail for stranger on not-shared workspace",
+        );
+    });
+
+    it("should watchWorkspaceImageBuildLogs - shared", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+        const client = {
+            onWorkspaceImageBuildLogs: (
+                info: WorkspaceImageBuild.StateInfo,
+                content: WorkspaceImageBuild.LogContent | undefined,
+            ) => {},
+        };
+
+        await svc.controlAdmission(owner.id, ws.id, "everyone");
+
+        await svc.watchWorkspaceImageBuildLogs(owner.id, ws.id, client); // returns without error in case of non-running workspace
+        await svc.watchWorkspaceImageBuildLogs(member.id, ws.id, client);
+        await svc.watchWorkspaceImageBuildLogs(stranger.id, ws.id, client);
     });
 
     it("should sendHeartBeat", async () => {
@@ -376,6 +507,64 @@ describe("WorkspaceService", async () => {
                 instanceId: "non-existing-instanceId",
             }),
             "should fail on non-running workspace",
+        );
+    });
+
+    it("should controlAdmission - owner", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        // owner can share workspace
+        await svc.controlAdmission(owner.id, ws.id, "everyone");
+        const wsActual = await svc.getWorkspace(owner.id, ws.id);
+        expect(wsActual.shareable, "owner should be able to share by default").to.equal(true);
+    });
+
+    it("should controlAdmission - non-owner", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        await expectError(
+            ErrorCodes.PERMISSION_DENIED,
+            svc.controlAdmission(member.id, ws.id, "everyone"),
+            "member can't share workspace",
+        );
+        await expectError(
+            ErrorCodes.NOT_FOUND,
+            svc.controlAdmission(stranger.id, ws.id, "everyone"),
+            "stranger does not see the workspace",
+        );
+        await expectError(
+            ErrorCodes.BAD_REQUEST,
+            svc.controlAdmission(owner.id, ws.id, "asd" as "everyone"),
+            "invalid admission level should fail",
+        );
+
+        const wsActual = await svc.getWorkspace(owner.id, ws.id);
+        expect(!!wsActual.shareable, "shareable should still be false").to.equal(false);
+    });
+
+    it("should controlAdmission - sharing disabled on org", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        const orgService = container.get(OrganizationService);
+        await orgService.updateSettings(owner.id, org.id, { workspaceSharingDisabled: true });
+
+        await expectError(
+            ErrorCodes.PERMISSION_DENIED,
+            svc.controlAdmission(owner.id, ws.id, "everyone"),
+            "owner can't share workspace with setting disabled",
+        );
+        await expectError(
+            ErrorCodes.PERMISSION_DENIED,
+            svc.controlAdmission(member.id, ws.id, "everyone"),
+            "member can't share workspace with setting disabled",
+        );
+        await expectError(
+            ErrorCodes.NOT_FOUND,
+            svc.controlAdmission(stranger.id, ws.id, "everyone"),
+            "stranger does not see the workspace with setting disabled",
         );
     });
 });
