@@ -8,7 +8,7 @@
 
 import { v1 } from "@authzed/authzed-node";
 
-const InstallationID = "1";
+export const InstallationID = "1";
 
 export type ResourceType =
     | UserResourceType
@@ -37,6 +37,7 @@ export type UserPermission =
     | "write_info"
     | "delete"
     | "make_admin"
+    | "admin_control"
     | "read_ssh"
     | "write_ssh"
     | "read_tokens"
@@ -48,7 +49,7 @@ export type InstallationResourceType = "installation";
 
 export type InstallationRelation = "member" | "admin";
 
-export type InstallationPermission = "create_organization";
+export type InstallationPermission = "create_organization" | "configure";
 
 export type OrganizationResourceType = "organization";
 

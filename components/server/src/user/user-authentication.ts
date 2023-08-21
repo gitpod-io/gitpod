@@ -14,8 +14,8 @@ import { AuthUser } from "../auth/auth-provider";
 import { TokenService } from "./token-service";
 import { EmailAddressAlreadyTakenException, SelectAccountException } from "../auth/errors";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
-import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UserService } from "./user-service";
+import { Authorizer } from "../authorization/authorizer";
 
 export interface CreateUserParams {
     organizationId?: string;
@@ -37,14 +37,12 @@ export class UserAuthentication {
         @inject(UserDB) private readonly userDb: UserDB,
         @inject(UserService) private readonly userService: UserService,
         @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
+        @inject(Authorizer) private readonly authorizer: Authorizer,
     ) {}
 
     async blockUser(userId: string, targetUserId: string, block: boolean): Promise<User> {
+        await this.authorizer.checkPermissionOnUser(userId, "admin_control", targetUserId);
         const target = await this.userService.findUserById(userId, targetUserId);
-        if (!target) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
-        }
-
         target.blocked = !!block;
         return await this.userDb.storeUser(target);
     }
