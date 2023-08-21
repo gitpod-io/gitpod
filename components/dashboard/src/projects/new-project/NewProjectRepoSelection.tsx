@@ -57,6 +57,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
     const noReposAvailable = !!(reposInAccounts?.length === 0 || areGitHubWebhooksUnauthorized);
     // TODO: check type instead of host?
     const isGitHub = selectedProvider?.host === "github.com";
+    const isBitbucketServer = selectedProvider?.authProviderType !== "BitbucketServer";
 
     const accounts = useMemo(() => {
         const accounts = new Map<string, { avatarUrl: string }>();
@@ -125,6 +126,11 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
 
     // Adjusts selectedAccount when repos change if we don't have a selected account
     useEffect(() => {
+        // TODO: find a better solution here
+        if (isBitbucketServer) {
+            return;
+        }
+
         if (reposInAccounts?.length === 0) {
             setSelectedAccountAndClearSearch(undefined);
         } else if (!selectedAccount) {
@@ -138,11 +144,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
                 setSelectedAccountAndClearSearch(first?.account);
             }
         }
-    }, [reposInAccounts, selectedAccount, setSelectedAccountAndClearSearch]);
-
-    if (isLoading) {
-        return <ReposLoading />;
-    }
+    }, [isBitbucketServer, reposInAccounts, selectedAccount, setSelectedAccountAndClearSearch]);
 
     return (
         <>
@@ -152,7 +154,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
             </p>
             <div className={`mt-2 flex-col ${noReposAvailable && isGitHub ? "w-96" : ""}`}>
                 <div className="px-8 flex flex-col space-y-2" data-analytics='{"label":"Identity"}'>
-                    {selectedProvider?.authProviderType !== "BitbucketServer" && (
+                    {!isBitbucketServer && (
                         <NewProjectAccountSelector
                             accounts={accounts}
                             selectedAccount={selectedAccount}
@@ -165,12 +167,16 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
                     <NewProjectSearchInput searchFilter={repoSearchFilter} onSearchFilterChange={setRepoSearchFilter} />
                 </div>
                 <div className="p-6 flex-col">
-                    <NewProjectRepoList
-                        isCreating={createProject.isLoading}
-                        filteredRepos={filteredRepos}
-                        noReposAvailable={noReposAvailable}
-                        onRepoSelected={handleRepoSelected}
-                    />
+                    {isLoading ? (
+                        <ReposLoading />
+                    ) : (
+                        <NewProjectRepoList
+                            isCreating={createProject.isLoading}
+                            filteredRepos={filteredRepos}
+                            noReposAvailable={noReposAvailable}
+                            onRepoSelected={handleRepoSelected}
+                        />
+                    )}
                     {!isLoading && noReposAvailable && isGitHub && (
                         <NewProjectAuthRequired
                             selectedProviderHost={selectedProvider?.host}
@@ -180,7 +186,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
                     )}
                 </div>
             </div>
-            {reposInAccounts && reposInAccounts.length > 0 && isGitHub && isGitHubAppEnabled && (
+            {!isLoading && reposInAccounts && reposInAccounts.length > 0 && isGitHub && isGitHubAppEnabled && (
                 <div>
                     <div className="text-gray-500 text-center w-96 mx-8">
                         Repository not found?{" "}
@@ -193,7 +199,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
                     </div>
                 </div>
             )}
-            {(filteredRepos?.length ?? 0) === 0 && repoSearchFilter.length > 0 && (
+            {!isLoading && (filteredRepos?.length ?? 0) === 0 && repoSearchFilter.length > 0 && (
                 <NewProjectCreateFromURL
                     repoSearchFilter={repoSearchFilter}
                     isCreating={createProject.isLoading}
