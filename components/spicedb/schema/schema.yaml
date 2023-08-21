@@ -117,8 +117,7 @@ schema: |-
     relation shared: user:*
 
     // Whether a user can access a workspace (with an IDE)
-    //+ (hasAccessToRepository && isPrebuild)
-    permission access = owner + shared
+    permission access = owner + shared + org->installation_admin
 
     // Note: All of this is modelled after current behavior.
     // There are a lot of improvements we can make here in the light of Organizations, but we explicitly do that as a separate step
@@ -127,10 +126,12 @@ schema: |-
     permission delete = owner
 
     // Whether a user can read basic info/metadata of a workspace
-    //+ (hasAccessToRepository && isPrebuild)
     permission read_info = owner + shared + org->member
 
     permission create_snapshot = owner & org->snapshoter
+
+    // Whether someone is allowed to do administrative tasks on a workspace, e.g. un-delete etc.
+    permission admin_control = org->installation_admin
   }
 # relationships to be used for assertions & validation
 relationships: |-
