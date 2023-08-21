@@ -25,27 +25,26 @@ export default function NewProject() {
     const authProviders = useAuthProviders();
 
     // State this component manages
-    const [selectedProviderHost, setSelectedProviderHost] = useState<string>();
+    const [selectedProvider, setSelectedProvider] = useState<AuthProviderInfo>();
     const [project, setProject] = useState<Project>();
 
     // Defaults selectedProviderHost if not set yet
     useEffect(() => {
-        if (user && authProviders.data && selectedProviderHost === undefined) {
+        if (user && authProviders.data && !selectedProvider) {
             for (let i = user.identities.length - 1; i >= 0; i--) {
                 const candidate = user.identities[i];
                 if (candidate) {
                     const authProvider = authProviders.data.find(
                         (ap) => ap.authProviderId === candidate.authProviderId,
                     );
-                    const host = authProvider?.host;
-                    if (host) {
-                        setSelectedProviderHost(host);
+                    if (authProvider) {
+                        setSelectedProvider(authProvider);
                         break;
                     }
                 }
             }
         }
-    }, [user, authProviders.data, selectedProviderHost]);
+    }, [authProviders.data, selectedProvider, user]);
 
     const onNewWorkspace = useCallback(async () => {
         const redirectToNewWorkspace = () => {
@@ -94,8 +93,8 @@ export default function NewProject() {
             <NewProjectSubheading />
 
             <NewProjectMainContent
-                selectedProviderHost={selectedProviderHost}
-                onProviderSelected={setSelectedProviderHost}
+                selectedProvider={selectedProvider}
+                onProviderSelected={setSelectedProvider}
                 onProjectCreated={setProject}
             />
         </div>
@@ -103,12 +102,12 @@ export default function NewProject() {
 }
 
 type NewProjectMainContentProps = {
-    selectedProviderHost?: string;
-    onProviderSelected: (host: string, updateUser?: boolean) => void;
+    selectedProvider?: AuthProviderInfo;
+    onProviderSelected: (ap: AuthProviderInfo, updateUser?: boolean) => void;
     onProjectCreated: (project: Project) => void;
 };
 const NewProjectMainContent: FC<NewProjectMainContentProps> = ({
-    selectedProviderHost,
+    selectedProvider,
     onProviderSelected,
     onProjectCreated,
 }) => {
@@ -118,13 +117,13 @@ const NewProjectMainContent: FC<NewProjectMainContentProps> = ({
     const [showGitProviders, setShowGitProviders] = useState(false);
 
     const onGitProviderSeleted = useCallback(
-        async (host: string, updateUser?: boolean) => {
+        async (ap: AuthProviderInfo, updateUser?: boolean) => {
             // TODO: Can we push this down into where sends updateUser=true?
             if (updateUser) {
                 setUser(await getGitpodService().server.getLoggedInUser());
             }
             setShowGitProviders(false);
-            onProviderSelected(host);
+            onProviderSelected(ap);
         },
         [onProviderSelected, setUser],
     );
@@ -134,12 +133,12 @@ const NewProjectMainContent: FC<NewProjectMainContentProps> = ({
     }
 
     if (showGitProviders) {
-        return <GitProviders onHostSelected={onGitProviderSeleted} authProviders={authProviders.data || []} />;
+        return <GitProviders onProviderSelected={onGitProviderSeleted} authProviders={authProviders.data || []} />;
     }
 
     return (
         <NewProjectRepoSelection
-            selectedProviderHost={selectedProviderHost}
+            selectedProvider={selectedProvider}
             onProjectCreated={onProjectCreated}
             onChangeGitProvider={() => setShowGitProviders(true)}
         />
@@ -148,8 +147,8 @@ const NewProjectMainContent: FC<NewProjectMainContentProps> = ({
 
 const GitProviders: FC<{
     authProviders: AuthProviderInfo[];
-    onHostSelected: (host: string, updateUser?: boolean) => void;
-}> = ({ authProviders, onHostSelected }) => {
+    onProviderSelected: (ap: AuthProviderInfo, updateUser?: boolean) => void;
+}> = ({ authProviders, onProviderSelected }) => {
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
     const selectProvider = useCallback(
@@ -158,14 +157,14 @@ const GitProviders: FC<{
 
             const token = await getGitpodService().server.getToken({ host: ap.host });
             if (token && !(ap.authProviderType === "GitHub" && !token.scopes.includes("repo"))) {
-                onHostSelected(ap.host);
+                onProviderSelected(ap);
                 return;
             }
             await openAuthorizeWindow({
                 host: ap.host,
                 scopes: ap.authProviderType === "GitHub" ? ["repo"] : ap.requirements?.default,
                 onSuccess: async () => {
-                    onHostSelected(ap.host, true);
+                    onProviderSelected(ap, true);
                 },
                 onError: (payload) => {
                     let errorMessage: string;
@@ -183,7 +182,7 @@ const GitProviders: FC<{
                 },
             });
         },
-        [onHostSelected],
+        [onProviderSelected],
     );
 
     const filteredProviders = useMemo(

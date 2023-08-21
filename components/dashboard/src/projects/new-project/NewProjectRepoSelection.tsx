@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Project } from "@gitpod/gitpod-protocol";
+import { AuthProviderInfo, Project } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { useAreGithubWebhooksUnauthorized, useIsGithubAppEnabled } from "../../data/git-providers/github-queries";
 import { LinkButton } from "../../components/LinkButton";
@@ -22,14 +22,14 @@ import { NewProjectCreateFromURL } from "./NewProjectCreateFromURL";
 import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
 
 type Props = {
-    selectedProviderHost?: string;
+    selectedProvider?: AuthProviderInfo;
     onProjectCreated: (project: Project) => void;
     onChangeGitProvider: () => void;
 };
-export const NewProjectRepoSelection: FC<Props> = ({ selectedProviderHost, onProjectCreated, onChangeGitProvider }) => {
+export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProjectCreated, onChangeGitProvider }) => {
     const { toast } = useToast();
     const { data: isGitHubAppEnabled } = useIsGithubAppEnabled();
-    const areGitHubWebhooksUnauthorized = useAreGithubWebhooksUnauthorized(selectedProviderHost || "");
+    const areGitHubWebhooksUnauthorized = useAreGithubWebhooksUnauthorized(selectedProvider?.host ?? "");
     const createProject = useCreateProject();
 
     // Component state managed by this component
@@ -39,7 +39,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProviderHost, onPro
 
     // Main query for listing repos given the current state
     const { data: reposInAccounts, isLoading } = useProviderRepositoriesForUser({
-        providerHost: selectedProviderHost || "",
+        providerHost: selectedProvider?.host ?? "",
         installationId,
         search: debouncedRepoSearchFilter,
     });
@@ -55,7 +55,8 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProviderHost, onPro
 
     // Memoized & derived values
     const noReposAvailable = !!(reposInAccounts?.length === 0 || areGitHubWebhooksUnauthorized);
-    const isGitHub = selectedProviderHost === "github.com";
+    // TODO: check type instead of host?
+    const isGitHub = selectedProvider?.host === "github.com";
 
     const accounts = useMemo(() => {
         const accounts = new Map<string, { avatarUrl: string }>();
@@ -147,18 +148,20 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProviderHost, onPro
         <>
             <p className="text-gray-500 text-center text-base mt-12">
                 {!isLoading && noReposAvailable ? "Select account on " : "Select a Git repository on "}
-                <b>{selectedProviderHost}</b> (<LinkButton onClick={onChangeGitProvider}>change</LinkButton>)
+                <b>{selectedProvider}</b> (<LinkButton onClick={onChangeGitProvider}>change</LinkButton>)
             </p>
             <div className={`mt-2 flex-col ${noReposAvailable && isGitHub ? "w-96" : ""}`}>
                 <div className="px-8 flex flex-col space-y-2" data-analytics='{"label":"Identity"}'>
-                    <NewProjectAccountSelector
-                        accounts={accounts}
-                        selectedAccount={selectedAccount}
-                        selectedProviderHost={selectedProviderHost}
-                        onAccountSelected={setSelectedAccountAndClearSearch}
-                        onAddGitHubAccount={reconfigure}
-                        onSelectGitProvider={onChangeGitProvider}
-                    />
+                    {selectedProvider?.authProviderType !== "BitbucketServer" && (
+                        <NewProjectAccountSelector
+                            accounts={accounts}
+                            selectedAccount={selectedAccount}
+                            selectedProviderHost={selectedProvider?.host}
+                            onAccountSelected={setSelectedAccountAndClearSearch}
+                            onAddGitHubAccount={reconfigure}
+                            onSelectGitProvider={onChangeGitProvider}
+                        />
+                    )}
                     <NewProjectSearchInput searchFilter={repoSearchFilter} onSearchFilterChange={setRepoSearchFilter} />
                 </div>
                 <div className="p-6 flex-col">
@@ -170,7 +173,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProviderHost, onPro
                     />
                     {!isLoading && noReposAvailable && isGitHub && (
                         <NewProjectAuthRequired
-                            selectedProviderHost={selectedProviderHost}
+                            selectedProviderHost={selectedProvider?.host}
                             areGitHubWebhooksUnauthorized={areGitHubWebhooksUnauthorized}
                             onReconfigure={reconfigure}
                         />
