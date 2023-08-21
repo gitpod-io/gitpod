@@ -70,7 +70,8 @@ message PrepareForUserNSResponse {
 // user namespaced workspaces.
 enum FSShiftMethod {
     SHIFTFS = 0;
-    FUSE = 1;
+    // was used for FUSE
+    reserved 1;
 }
 
 message WriteIDMappingResponse {

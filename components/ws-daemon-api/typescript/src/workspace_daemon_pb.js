@@ -3257,8 +3257,7 @@ proto.iws.Memory.prototype.setLimit = function(value) {
  * @enum {number}
  */
 proto.iws.FSShiftMethod = {
-  SHIFTFS: 0,
-  FUSE: 1
+  SHIFTFS: 0
 };
 
 goog.object.extend(exports, proto.iws);
