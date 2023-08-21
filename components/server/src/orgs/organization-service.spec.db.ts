@@ -202,4 +202,20 @@ describe("OrganizationService", async () => {
         expect(members.length).to.eq(1);
         expect(members.some((m) => m.userId === owner.id && m.role === "owner")).to.be.true;
     });
+
+    it("should listOrganizations", async () => {
+        const strangerOrg = await os.createOrganization(stranger.id, "stranger-org");
+        let orgs = await os.listOrganizations(owner.id, {});
+        expect(orgs.rows[0].id).to.eq(org.id);
+        expect(orgs.total).to.eq(1);
+
+        orgs = await os.listOrganizations(stranger.id, {});
+        expect(orgs.rows[0].id).to.eq(strangerOrg.id);
+        expect(orgs.total).to.eq(1);
+
+        orgs = await os.listOrganizations(admin.id, {});
+        expect(orgs.rows.some((org) => org.id === org.id)).to.be.true;
+        expect(orgs.rows.some((org) => org.id === strangerOrg.id)).to.be.true;
+        expect(orgs.total).to.eq(2);
+    });
 });
