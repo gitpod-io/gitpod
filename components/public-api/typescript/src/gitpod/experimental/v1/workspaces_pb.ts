@@ -774,7 +774,7 @@ export class ListWorkspaceClassesRequest extends Message<ListWorkspaceClassesReq
  */
 export class ListWorkspaceClassesResponse extends Message<ListWorkspaceClassesResponse> {
   /**
-   * @generated from field: repeated gitpod.experimental.v1.WorkspaceClass result = 2;
+   * @generated from field: repeated gitpod.experimental.v1.WorkspaceClass result = 1;
    */
   result: WorkspaceClass[] = [];
 
@@ -786,7 +786,7 @@ export class ListWorkspaceClassesResponse extends Message<ListWorkspaceClassesRe
   static readonly runtime = proto3;
   static readonly typeName = "gitpod.experimental.v1.ListWorkspaceClassesResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 2, name: "result", kind: "message", T: WorkspaceClass, repeated: true },
+    { no: 1, name: "result", kind: "message", T: WorkspaceClass, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListWorkspaceClassesResponse {
@@ -1909,11 +1909,11 @@ export class WorkspaceClass extends Message<WorkspaceClass> {
   id = "";
 
   /**
-   * title is the human readable name of the workspace class
+   * display_name is the human readable name of the workspace class
    *
-   * @generated from field: string title = 2;
+   * @generated from field: string display_name = 2;
    */
-  title = "";
+  displayName = "";
 
   /**
    * description is a human readable description of the workspace class
@@ -1938,7 +1938,7 @@ export class WorkspaceClass extends Message<WorkspaceClass> {
   static readonly typeName = "gitpod.experimental.v1.WorkspaceClass";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "title", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "display_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "is_default", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);

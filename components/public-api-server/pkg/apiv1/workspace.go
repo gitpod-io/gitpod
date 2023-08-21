@@ -315,7 +315,7 @@ func (s *WorkspaceService) ListWorkspaceClasses(ctx context.Context, req *connec
 	for _, c := range classes {
 		res = append(res, &v1.WorkspaceClass{
 			Id:          c.ID,
-			Title:       c.DisplayName,
+			DisplayName: c.DisplayName,
 			Description: c.Description,
 			IsDefault:   c.IsDefault,
 		})

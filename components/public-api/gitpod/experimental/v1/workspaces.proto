@@ -415,8 +415,8 @@ message WorkspaceClass {
     // id is the unique identifier of the workspace class
     string id = 1;
 
-    // title is the human readable name of the workspace class
-    string title = 2;
+    // display_name is the human readable name of the workspace class
+    string display_name = 2;
 
     // description is a human readable description of the workspace class
     string description = 3;
