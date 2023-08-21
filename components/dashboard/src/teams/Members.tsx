@@ -115,7 +115,7 @@ export default function MembersPage() {
                             onChange={(e) => setSearchText(e.target.value)}
                         />
                     </div>
-                    <div className="py-2 pl-3 pr-1 border border-gray-100 ml-2 rounded-md">
+                    <div className="py-2 pl-3 pr-1 border border-gray-100 dark:border-gray-800 ml-2 rounded-md">
                         <DropDown
                             customClasses="w-32"
                             activeEntry={
