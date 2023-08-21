@@ -597,13 +597,13 @@ func TestWorkspaceService_ListWorkspaceClasses(t *testing.T) {
 			Result: []*v1.WorkspaceClass{
 				{
 					Id:          "smol",
-					Title:       "Tiny",
+					DisplayName: "Tiny",
 					Description: "The littlest there is",
 					IsDefault:   true,
 				},
 				{
 					Id:          "big",
-					Title:       "Huge",
+					DisplayName: "Huge",
 					Description: "The biggest there is",
 					IsDefault:   false,
 				},
