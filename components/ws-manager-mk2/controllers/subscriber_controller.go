@@ -55,9 +55,8 @@ func (r *SubscriberReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	if r.OnReconcile != nil {
-		ws := workspace.DeepCopy()
 		go func() {
-			r.OnReconcile(ctx, ws)
+			r.OnReconcile(ctx, &workspace)
 		}()
 	}
 
