@@ -41,6 +41,8 @@ import {
     ControlPortRequest,
     SetTimeoutRequest,
     MarkActiveRequest,
+    AdmissionLevel,
+    ControlAdmissionRequest,
 } from "@gitpod/ws-manager/lib";
 import { WorkspaceStarter } from "./workspace-starter";
 import { LogContext, log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -57,6 +59,7 @@ import { Config } from "../config";
 import { goDurationToHumanReadable } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { HeadlessLogEndpoint, HeadlessLogService } from "./headless-log-service";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
+import { OrganizationService } from "../orgs/organization-service";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     /**
@@ -76,6 +79,7 @@ export class WorkspaceService {
         @inject(EntitlementService) private readonly entitlementService: EntitlementService,
         @inject(EnvVarService) private readonly envVarService: EnvVarService,
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
+        @inject(OrganizationService) private readonly orgService: OrganizationService,
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
         @inject(HeadlessLogService) private readonly headlessLogService: HeadlessLogService,
         @inject(Authorizer) private readonly auth: Authorizer,
@@ -104,7 +108,7 @@ export class WorkspaceService {
 
         // Instead, we fall back to removing access in case something goes wrong.
         try {
-            await this.auth.addWorkspaceToOrg(organizationId, user.id, workspace.id);
+            await this.auth.addWorkspaceToOrg(organizationId, user.id, workspace.id, !!workspace.shareable);
         } catch (err) {
             await this.hardDeleteWorkspace(user.id, workspace.id).catch((err) =>
                 log.error("failed to hard-delete workspace", err),
@@ -247,8 +251,9 @@ export class WorkspaceService {
     public async hardDeleteWorkspace(userId: string, workspaceId: string): Promise<void> {
         await this.auth.checkPermissionOnWorkspace(userId, "delete", workspaceId);
 
-        let orgId: string | undefined = undefined;
-        let ownerId: string | undefined = undefined;
+        let orgId: string | undefined;
+        let ownerId: string | undefined;
+        let ws: Workspace | undefined;
         try {
             await this.db.transaction(async (db) => {
                 const workspace = await this.db.findById(workspaceId);
@@ -257,13 +262,14 @@ export class WorkspaceService {
                 }
                 orgId = workspace.organizationId;
                 ownerId = workspace.ownerId;
+                ws = workspace;
                 await this.db.hardDeleteWorkspace(workspaceId);
 
                 await this.auth.removeWorkspaceFromOrg(orgId, ownerId, workspaceId);
             });
         } catch (err) {
-            if (orgId && ownerId) {
-                await this.auth.addWorkspaceToOrg(orgId, ownerId, workspaceId);
+            if (orgId && ownerId && ws) {
+                await this.auth.addWorkspaceToOrg(orgId, ownerId, workspaceId, !!ws.shareable);
             }
             throw err;
         }
@@ -812,6 +818,53 @@ export class WorkspaceService {
                 throw e;
             }
         }
+    }
+
+    public async controlAdmission(
+        userId: string,
+        workspaceId: string,
+        level: "owner" | "everyone",
+        check: (workspace: Workspace, instance?: WorkspaceInstance) => Promise<void> = async () => {},
+    ): Promise<void> {
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+
+        const lvlmap = new Map<string, AdmissionLevel>();
+        lvlmap.set("owner", AdmissionLevel.ADMIT_OWNER_ONLY);
+        lvlmap.set("everyone", AdmissionLevel.ADMIT_EVERYONE);
+        if (!lvlmap.has(level)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid admission level.");
+        }
+
+        const workspace = await this.getWorkspace(userId, workspaceId);
+        await check(workspace);
+
+        if (level !== "owner" && workspace.organizationId) {
+            const settings = await this.orgService.getSettings(userId, workspace.organizationId);
+            if (settings?.workspaceSharingDisabled) {
+                throw new ApplicationError(
+                    ErrorCodes.PERMISSION_DENIED,
+                    "An Organization Owner has disabled workspace sharing for workspaces in this Organization. ",
+                );
+            }
+        }
+
+        const instance = await this.db.findCurrentInstance(workspaceId);
+        if (instance && instance.status.phase === "running") {
+            await check(workspace, instance);
+
+            const req = new ControlAdmissionRequest();
+            req.setId(instance.id);
+            req.setLevel(lvlmap.get(level)!);
+
+            const client = await this.clientProvider.get(instance.region);
+            await client.controlAdmission({}, req);
+        }
+
+        await this.db.transaction(async (db) => {
+            const shareable = level === "everyone";
+            await db.updatePartial(workspaceId, { shareable });
+            await this.auth.setWorkspaceIsShared(userId, workspaceId, shareable);
+        });
     }
 }
 

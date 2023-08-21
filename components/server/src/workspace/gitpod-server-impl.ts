@@ -93,12 +93,7 @@ import {
 } from "@gitpod/gitpod-protocol/lib/analytics";
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
-import {
-    AdmissionLevel,
-    ControlAdmissionRequest,
-    StopWorkspacePolicy,
-    TakeSnapshotRequest,
-} from "@gitpod/ws-manager/lib/core_pb";
+import { StopWorkspacePolicy, TakeSnapshotRequest } from "@gitpod/ws-manager/lib/core_pb";
 import { inject, injectable } from "inversify";
 import { URL } from "url";
 import { v4 as uuidv4, validate as uuidValidate } from "uuid";
@@ -3297,41 +3292,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("controlAdmission");
 
-        const lvlmap = new Map<string, AdmissionLevel>();
-        lvlmap.set("owner", AdmissionLevel.ADMIT_OWNER_ONLY);
-        lvlmap.set("everyone", AdmissionLevel.ADMIT_EVERYONE);
-        if (!lvlmap.has(level)) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invalid admission level.");
-        }
-
-        const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
-        await this.guardAccess({ kind: "workspace", subject: workspace }, "update");
-
-        if (level != "owner" && workspace.organizationId) {
-            const settings = await this.organizationService.getSettings(user.id, workspace.organizationId);
-            if (settings?.workspaceSharingDisabled) {
-                throw new ApplicationError(
-                    ErrorCodes.PERMISSION_DENIED,
-                    "An Organization Owner has disabled workspace sharing for workspaces in this Organization. ",
+        await this.workspaceService.controlAdmission(user.id, workspaceId, level, (workspace, instance) => {
+            if (instance) {
+                return this.guardAccess(
+                    { kind: "workspaceInstance", subject: instance, workspace: workspace },
+                    "update",
                 );
+            } else {
+                return this.guardAccess({ kind: "workspace", subject: workspace }, "update");
             }
-        }
-
-        const instance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
-        if (instance) {
-            await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace: workspace }, "update");
-
-            const req = new ControlAdmissionRequest();
-            req.setId(instance.id);
-            req.setLevel(lvlmap.get(level)!);
-
-            const client = await this.workspaceManagerClientProvider.get(instance.region);
-            await client.controlAdmission(ctx, req);
-        }
-
-        await this.workspaceDb.trace(ctx).transaction(async (db) => {
-            workspace.shareable = level === "everyone";
-            await db.store(workspace);
         });
     }
 
