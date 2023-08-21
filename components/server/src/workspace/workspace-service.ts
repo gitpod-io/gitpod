@@ -134,9 +134,14 @@ export class WorkspaceService {
 
     // Internal method for allowing for additional DBs to be passed in
     private async doGetWorkspace(userId: string, workspaceId: string, db: WorkspaceDB = this.db): Promise<Workspace> {
-        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
-
         const workspace = await db.findById(workspaceId);
+
+        if (workspace?.type === "prebuild" && workspace.projectId) {
+            await this.auth.checkPermissionOnProject(userId, "read_prebuild", workspace.projectId);
+        } else {
+            await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+        }
+
         // TODO(gpl) We might want to add || !!workspace.softDeleted here in the future, but we were unsure how that would affect existing clients
         // In order to reduce risk, we leave it for a future changeset.
         if (!workspace || workspace.deleted) {
@@ -678,9 +683,13 @@ export class WorkspaceService {
     ): Promise<HeadlessLogUrls> {
         const workspace = await this.db.findByInstanceId(instanceId);
         if (!workspace) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace for instanceId ${instanceId} not found`);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Prebuild for instanceId ${instanceId} not found`);
         }
-        await this.auth.checkPermissionOnWorkspace(userId, "access", workspace.id);
+        if (workspace.type !== "prebuild" || !workspace.projectId) {
+            throw new ApplicationError(ErrorCodes.CONFLICT, `Workspace is not a prebuild`);
+        }
+
+        await this.auth.checkPermissionOnProject(userId, "read_prebuild", workspace.projectId);
 
         const wsiPromise = this.db.findInstanceById(instanceId);
         await check(workspace);
@@ -703,8 +712,8 @@ export class WorkspaceService {
         workspaceId: string,
         client: Pick<GitpodClient, "onWorkspaceImageBuildLogs">,
     ): Promise<void> {
-        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
-
+        // check access
+        await this.getWorkspace(userId, workspaceId);
         const logCtx: LogContext = { userId, workspaceId };
         let instance = await this.db.findCurrentInstance(workspaceId);
         if (!instance || instance.status.phase === "stopped") {
