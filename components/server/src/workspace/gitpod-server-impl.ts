@@ -530,7 +530,23 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     private forwardInstanceUpdateToClient(ctx: TraceContext, instance: WorkspaceInstance) {
         // gpl: We decided against tracing updates here, because it create far too much noise (cmp. history)
-        this.client?.onInstanceUpdate(this.censorInstance(instance));
+        if (this.userID) {
+            this.workspaceService
+                .getWorkspace(this.userID, instance.workspaceId)
+                .then((ws) => {
+                    this.client?.onInstanceUpdate(this.censorInstance(instance));
+                })
+                .catch((err) => {
+                    if (
+                        ApplicationError.hasErrorCode(err) &&
+                        (err.code === ErrorCodes.NOT_FOUND || err.code === ErrorCodes.PERMISSION_DENIED)
+                    ) {
+                        // ignore
+                    } else {
+                        log.error("error forwarding instance update to client", err);
+                    }
+                });
+        }
     }
 
     setClient(ctx: TraceContext, client: GitpodApiClient | undefined): void {
@@ -1197,11 +1213,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async isPrebuildDone(ctx: TraceContext, pwsId: string): Promise<boolean> {
         traceAPIParams(ctx, { pwsId });
 
+        const user = await this.checkUser("isPrebuildDone");
+
         const pws = await this.workspaceDb.trace(ctx).findPrebuildByID(pwsId);
-        if (!pws) {
+        if (!pws || !pws.projectId) {
             // there is no prebuild - that's as good one being done
             return true;
         }
+
+        await this.auth.checkPermissionOnProject(user.id, "read_prebuild", pws.projectId);
 
         return PrebuiltWorkspace.isDone(pws);
     }
@@ -1486,6 +1506,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const project = await this.projectsService.getProject(user.id, projectId);
         await this.guardProjectOperation(user, projectId, "get");
+        await this.auth.checkPermissionOnProject(user.id, "read_prebuild", projectId);
 
         const events = await this.projectsService.getPrebuildEvents(user.id, project.cloneUrl);
         return events;
