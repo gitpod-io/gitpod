@@ -5,6 +5,8 @@
 package spicedb
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"path/filepath"
 
@@ -42,7 +44,7 @@ func bootstrap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}, nil
 }
 
-func getBootstrapConfig(ctx *common.RenderContext) (corev1.Volume, corev1.VolumeMount, []string, error) {
+func getBootstrapConfig(ctx *common.RenderContext) (corev1.Volume, corev1.VolumeMount, []string, string, error) {
 	var volume corev1.Volume
 	var mount corev1.VolumeMount
 	var paths []string
@@ -68,12 +70,21 @@ func getBootstrapConfig(ctx *common.RenderContext) (corev1.Volume, corev1.Volume
 
 	files, err := spicedb_component.GetBootstrapFiles()
 	if err != nil {
-		return corev1.Volume{}, corev1.VolumeMount{}, nil, fmt.Errorf("failed to get bootstrap files: %w", err)
+		return corev1.Volume{}, corev1.VolumeMount{}, nil, "", fmt.Errorf("failed to get bootstrap files: %w", err)
 	}
 
 	for _, f := range files {
 		paths = append(paths, filepath.Join(mountPath, f.Name))
 	}
 
-	return volume, mount, paths, nil
+	concatenated := ""
+	for _, f := range files {
+		concatenated += f.Data
+	}
+
+	hasher := sha256.New()
+	hasher.Write([]byte(concatenated))
+	hash := hex.EncodeToString(hasher.Sum(nil))
+
+	return volume, mount, paths, hash, nil
 }

@@ -30,6 +30,37 @@ export class OrganizationService {
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
     ) {}
 
+    async listOrganizations(
+        userId: string,
+        req: {
+            offset?: number;
+            limit?: number;
+            orderBy?: keyof Organization;
+            orderDir?: "asc" | "desc";
+            searchTerm?: string;
+        },
+    ): Promise<{ total: number; rows: Organization[] }> {
+        const result = await this.teamDB.findTeams(
+            req.offset || 0,
+            req.limit || 50,
+            req.orderBy || "creationTime",
+            req.orderDir === "asc" ? "ASC" : "DESC",
+            req.searchTerm,
+        );
+
+        await Promise.all(
+            result.rows.map(async (org) => {
+                // if the user doesn't see the org, filter it out
+                if (!(await this.auth.hasPermissionOnOrganization(userId, "read_info", org.id))) {
+                    result.total--;
+                    result.rows = result.rows.filter((o) => o.id !== org.id);
+                }
+            }),
+        );
+
+        return result;
+    }
+
     async listOrganizationsByMember(userId: string, memberId: string): Promise<Organization[]> {
         //TODO check if user has access to member
         const orgs = await this.teamDB.findTeamsByUser(memberId);

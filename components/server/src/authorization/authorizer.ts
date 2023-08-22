@@ -11,6 +11,8 @@ import { Project, TeamMemberRole } from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import {
     AllResourceTypes,
+    InstallationID,
+    InstallationPermission,
     OrganizationPermission,
     Permission,
     ProjectPermission,
@@ -53,6 +55,31 @@ export const SYSTEM_USER = "SYSTEM_USER";
 
 export class Authorizer {
     constructor(private authorizer: SpiceDBAuthorizer) {}
+
+    async hasPermissionOnInstallation(userId: string, permission: InstallationPermission): Promise<boolean> {
+        if (userId === SYSTEM_USER) {
+            return true;
+        }
+
+        const req = v1.CheckPermissionRequest.create({
+            subject: subject("user", userId),
+            permission,
+            resource: object("installation", InstallationID),
+            consistency,
+        });
+
+        return this.authorizer.check(req, { userId });
+    }
+
+    async checkPermissionOnInstallation(userId: string, permission: InstallationPermission): Promise<void> {
+        if (await this.hasPermissionOnInstallation(userId, permission)) {
+            return;
+        }
+        throw new ApplicationError(
+            ErrorCodes.PERMISSION_DENIED,
+            `User ${userId} does not have permission '${permission}' on the installation.`,
+        );
+    }
 
     async hasPermissionOnOrganization(
         userId: string,

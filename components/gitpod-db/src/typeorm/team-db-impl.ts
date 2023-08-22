@@ -65,9 +65,13 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
         searchTerm?: string,
     ): Promise<{ total: number; rows: Team[] }> {
         const teamRepo = await this.getTeamRepo();
-        const queryBuilder = teamRepo
-            .createQueryBuilder("team")
-            .where("LOWER(team.name) LIKE LOWER(:searchTerm)", { searchTerm: `%${searchTerm}%` })
+        let queryBuilder = teamRepo.createQueryBuilder("team");
+        if (searchTerm) {
+            queryBuilder = queryBuilder.where("LOWER(team.name) LIKE LOWER(:searchTerm)", {
+                searchTerm: `%${searchTerm}%`,
+            });
+        }
+        queryBuilder = queryBuilder
             .andWhere("deleted = 0")
             .andWhere("markedDeleted = 0")
             .skip(offset)

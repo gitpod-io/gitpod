@@ -155,7 +155,7 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                                     {providerFromContext ? (
                                         <button
                                             key={"button" + providerFromContext.host}
-                                            className="btn-login flex-none w-56 h-10 p-0 inline-flex"
+                                            className="btn-login flex-none w-56 h-10 p-0 inline-flex rounded-xl"
                                             onClick={() => openLogin(providerFromContext!.host)}
                                         >
                                             {iconForAuthProvider(providerFromContext.authProviderType)}
@@ -167,7 +167,7 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                                         authProviders.data?.map((ap) => (
                                             <button
                                                 key={"button" + ap.host}
-                                                className="btn-login flex-none w-56 h-10 p-0 inline-flex"
+                                                className="btn-login flex-none w-56 h-10 p-0 inline-flex rounded-xl"
                                                 onClick={() => openLogin(ap.host)}
                                             >
                                                 {iconForAuthProvider(ap.authProviderType)}
