@@ -118,6 +118,28 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		})
 	}
 
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Redis != nil {
+			env = append(env, corev1.EnvVar{
+				Name:  "REDIS_USERNAME",
+				Value: cfg.WebApp.Redis.Username,
+			})
+
+			env = append(env, corev1.EnvVar{
+				Name: "REDIS_PASSWORD",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: cfg.WebApp.Redis.SecretRef,
+						},
+						Key: "password",
+					},
+				},
+			})
+		}
+		return nil
+	})
+
 	volumes := make([]corev1.Volume, 0)
 	volumeMounts := make([]corev1.VolumeMount, 0)
 
