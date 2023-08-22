@@ -345,18 +345,26 @@ export class BitbucketServerApi {
         };
 
         if (query.searchString?.trim()) {
-            const result: BitbucketServer.Repository[] = [];
-            const ids = new Set<number>(); // used to deduplicate
-            for (const param of ["name", "projectname"]) {
-                const pageResult = await runQuery(`${param}=${query.searchString}`);
-                for (const repo of pageResult) {
-                    if (!ids.has(repo.id)) {
-                        ids.add(repo.id);
-                        result.push(repo);
-                    }
-                }
+            const results: Map<number, BitbucketServer.Repository> = new Map();
+
+            // Query by name & projectname in parrallel
+            const [nameResults, projectResults] = await Promise.all([
+                runQuery(`name=${query.searchString}`),
+                runQuery(`projectname=${query.searchString}`),
+            ]);
+            for (const repo of [...nameResults, ...projectResults]) {
+                results.set(repo.id, repo);
             }
-            return result;
+
+            return Array.from(results.values());
+        } else if (query.searchString?.trim() === "" && (query.limit || query.cap)) {
+            // Empty search w/ limit/cap set - just grab latest repos
+            const { values = [] } = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.Repository>>(
+                userOrToken,
+                `/profile/recent/repos?${permission}${limit}`,
+            );
+
+            return values;
         } else {
             return await runQuery(`limit=1000`);
         }
