@@ -88,7 +88,9 @@ export const containerModule = new ContainerModule((bind) => {
     bind(Redis).toDynamicValue((ctx) => {
         const config = ctx.container.get<Configuration>(Configuration);
         const [host, port] = config.redis.address.split(":");
-        return newRedisClient({ host, port: Number(port), connectionName: "server" });
+        const username = process.env.REDIS_USERNAME;
+        const password = process.env.REDIS_PASSWORD;
+        return newRedisClient({ host, port: Number(port), connectionName: "server", username, password });
     });
     bind(RedisPublisher).toSelf().inSingletonScope();
 });
