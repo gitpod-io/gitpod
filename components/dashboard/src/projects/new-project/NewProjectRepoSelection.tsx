@@ -55,7 +55,6 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
 
     // Memoized & derived values
     const noReposAvailable = !!(reposInAccounts?.length === 0 || areGitHubWebhooksUnauthorized);
-    // TODO: check type instead of host?
     const isGitHub = selectedProvider?.host === "github.com";
     const isBitbucketServer = selectedProvider?.authProviderType === "BitbucketServer";
 
@@ -127,9 +126,9 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
         [onCreateProject],
     );
 
-    // Adjusts selectedAccount when repos change if we don't have a selected account
+    // Adjusts selectedAccount when repos change if we don't already have a selected account
     useEffect(() => {
-        // TODO: find a better solution here
+        // TODO: Once all providers filter on the server we can remove this account selection logic
         if (isBitbucketServer) {
             return;
         }
