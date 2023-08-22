@@ -19,7 +19,6 @@
     "test:leeway": "yarn build && yarn test",
     "test": "yarn test:unit && yarn test:db",
     "test:unit": "mocha --opts mocha.opts './**/*.spec.js' --exclude './node_modules/**'",
-    "test:unit2": "mocha --opts mocha.opts './**/bitbucket-server-context-parser.spec.js' --exclude './node_modules/**'",
     "test:db": "cleanup() { echo 'Cleanup started'; yarn stop-services; }; trap cleanup EXIT; . $(leeway run components/gitpod-db:db-test-env) && yarn start-services && mocha --opts mocha.opts './**/*.spec.db.js'  --exclude './node_modules/**'",
     "start-services": "yarn start-testdb && yarn start-redis && yarn start-spicedb",
     "stop-services": "yarn stop-redis && yarn stop-spicedb",
