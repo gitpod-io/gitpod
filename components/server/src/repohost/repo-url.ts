@@ -10,7 +10,7 @@ export namespace RepoURL {
         repoUrl: string,
     ): { host: string; owner: string; repo: string; repoKind?: string } | undefined {
         const u = new URL(repoUrl);
-        const host = u.host || "";
+        const host = u.host.toLowerCase() || "";
         const path = u.pathname || "";
         const segments = path.split("/").filter((s) => !!s); // e.g. [ 'gitpod-io', 'gitpod.git' ]
         if (segments.length === 2) {
