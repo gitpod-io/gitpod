@@ -10,6 +10,7 @@ import { useCurrentUser } from "../../user-context";
 import { CancellationTokenSource } from "vscode-jsonrpc";
 import { useAuthProviders } from "../auth-providers/auth-provider-query";
 import { GetProviderRepositoriesParams } from "@gitpod/gitpod-protocol";
+import { useFeatureFlag } from "../featureflag-query";
 
 type UseProviderRepositoriesQueryArgs = {
     providerHost: string;
@@ -22,13 +23,15 @@ export const useProviderRepositoriesForUser = ({
     search,
 }: UseProviderRepositoriesQueryArgs) => {
     const user = useCurrentUser();
+    const newProjectIncrementalRepoSearchBBS = useFeatureFlag("newProjectIncrementalRepoSearchBBS");
     const { data: authProviders } = useAuthProviders();
     const selectedProvider = authProviders?.find((p) => p.host === providerHost);
 
     const queryKey: any[] = ["provider-repositories", { userId: user?.id }, { providerHost, installationId }];
 
     const isBitbucketServer = selectedProvider?.authProviderType === "BitbucketServer";
-    if (isBitbucketServer) {
+    const enableIncrementalSearch = isBitbucketServer && newProjectIncrementalRepoSearchBBS;
+    if (enableIncrementalSearch) {
         queryKey.push({ search });
     }
 
@@ -47,8 +50,8 @@ export const useProviderRepositoriesForUser = ({
                 hints: { installationId },
             };
 
-            // TODO: Have this be the default for all providers
-            if (isBitbucketServer) {
+            // TODO: Have this be the default for all provider types
+            if (enableIncrementalSearch) {
                 params.searchString = search;
                 params.limit = 50;
                 params.maxPages = 1;

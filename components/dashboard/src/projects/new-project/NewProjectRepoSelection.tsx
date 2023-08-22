@@ -20,6 +20,7 @@ import { useProviderRepositoriesForUser } from "../../data/git-providers/provide
 import { openReconfigureWindow } from "./reconfigure-github";
 import { NewProjectCreateFromURL } from "./NewProjectCreateFromURL";
 import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
+import { useFeatureFlag } from "../../data/featureflag-query";
 
 type Props = {
     selectedProvider?: AuthProviderInfo;
@@ -28,6 +29,7 @@ type Props = {
 };
 export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProjectCreated, onChangeGitProvider }) => {
     const { toast } = useToast();
+    const newProjectIncrementalRepoSearchBBS = useFeatureFlag("newProjectIncrementalRepoSearchBBS");
     const { data: isGitHubAppEnabled } = useIsGithubAppEnabled();
     const areGitHubWebhooksUnauthorized = useAreGithubWebhooksUnauthorized(selectedProvider?.host ?? "");
     const createProject = useCreateProject();
@@ -57,6 +59,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
     const noReposAvailable = !!(reposInAccounts?.length === 0 || areGitHubWebhooksUnauthorized);
     const isGitHub = selectedProvider?.host === "github.com";
     const isBitbucketServer = selectedProvider?.authProviderType === "BitbucketServer";
+    const enableIncrementalSearch = isBitbucketServer && newProjectIncrementalRepoSearchBBS;
 
     const accounts = useMemo(() => {
         const accounts = new Map<string, { avatarUrl: string }>();
@@ -75,15 +78,15 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
     const filteredRepos = useMemo(() => {
         return areGitHubWebhooksUnauthorized
             ? []
-            : // filtering is done on server for Bitbucket Server
-            isBitbucketServer
+            : // filtering is done on server for incremental search
+            enableIncrementalSearch
             ? Array.from(reposInAccounts || [])
             : Array.from(reposInAccounts || []).filter(
                   (r) =>
                       (!selectedAccount || r.account === selectedAccount) &&
                       `${r.name}`.toLowerCase().includes(repoSearchFilter.toLowerCase().trim()),
               );
-    }, [areGitHubWebhooksUnauthorized, isBitbucketServer, repoSearchFilter, reposInAccounts, selectedAccount]);
+    }, [areGitHubWebhooksUnauthorized, enableIncrementalSearch, repoSearchFilter, reposInAccounts, selectedAccount]);
 
     const reconfigure = useCallback(() => {
         openReconfigureWindow({
@@ -129,7 +132,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
     // Adjusts selectedAccount when repos change if we don't already have a selected account
     useEffect(() => {
         // TODO: Once all providers filter on the server we can remove this account selection logic
-        if (isBitbucketServer) {
+        if (enableIncrementalSearch) {
             return;
         }
 
@@ -146,7 +149,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
                 setSelectedAccountAndClearSearch(first?.account);
             }
         }
-    }, [isBitbucketServer, reposInAccounts, selectedAccount, setSelectedAccountAndClearSearch]);
+    }, [enableIncrementalSearch, reposInAccounts, selectedAccount, setSelectedAccountAndClearSearch]);
 
     return (
         <>
@@ -156,7 +159,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
             </p>
             <div className={`mt-2 flex-col ${noReposAvailable && isGitHub ? "w-96" : ""}`}>
                 <div className="px-8 flex flex-col space-y-2" data-analytics='{"label":"Identity"}'>
-                    {!isBitbucketServer && (
+                    {!enableIncrementalSearch && (
                         <NewProjectAccountSelector
                             accounts={accounts}
                             selectedAccount={selectedAccount}
@@ -214,7 +217,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
 
 const ReposLoading: FC = () => (
     <div className="border rounded-xl border-gray-100 dark:border-gray-700 flex-col">
-        <div className="px-12 py-16 text-center text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl w-96 h-h96 flex items-center justify-center">
+        <div className="px-12 py-20 text-center text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-center">
             <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm">
                 <img className="h-4 w-4 animate-spin" src={Spinner} alt="loading spinner" />
                 <span>Fetching repositories...</span>
