@@ -10,6 +10,7 @@ import { inject, injectable } from "inversify";
 import { AuthProviderParams } from "../auth/auth-provider";
 import { BitbucketServerTokenHelper } from "./bitbucket-server-token-handler";
 import { CancellationToken } from "vscode-jsonrpc";
+import { URLSearchParams } from "url";
 
 @injectable()
 export class BitbucketServerApi {
@@ -311,14 +312,14 @@ export class BitbucketServerApi {
         if (isCancelled()) {
             return [];
         }
-        const cap = (query?.cap || 0) > 0 ? query.cap! : 10;
-        let requestsLeft = cap;
-        const limit = `limit=${(query?.limit || 0) > 0 ? query.limit! : 1000}&`;
-        const permission = query.permission ? `permission=${query.permission}&` : "";
-        const runQuery = async (params: string) => {
+
+        const fetchRepos = async (params: { [key: string]: string } = {}) => {
             if (isCancelled()) {
                 return [];
             }
+            // Ensure we only load as many pages as requested
+            let requestsLeft = query?.cap ?? 10;
+
             const result: BitbucketServer.Repository[] = [];
             let isLastPage = false;
             let start = 0;
@@ -326,9 +327,21 @@ export class BitbucketServerApi {
                 if (isCancelled()) {
                     return [];
                 }
+
+                const requestParams = new URLSearchParams({
+                    // Apply default params
+                    limit: `${query?.limit ?? 1000}`,
+                    permission: query.permission ?? "REPO_READ",
+                    start: `${start}`,
+                });
+                // Merge params from argument in
+                Object.keys(params).forEach((key) => {
+                    requestParams.set(key, params[key]);
+                });
+
                 const pageResult = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.Repository>>(
                     userOrToken,
-                    `/repos?${permission}${limit}start=${start}&${params}`,
+                    `/repos?${requestParams.toString()}`,
                 );
                 requestsLeft = requestsLeft - 1;
                 if (pageResult.values) {
@@ -349,24 +362,16 @@ export class BitbucketServerApi {
 
             // Query by name & projectname in parrallel
             const [nameResults, projectResults] = await Promise.all([
-                runQuery(`name=${query.searchString}`),
-                runQuery(`projectname=${query.searchString}`),
+                fetchRepos({ name: query.searchString }),
+                fetchRepos({ projectname: query.searchString }),
             ]);
             for (const repo of [...nameResults, ...projectResults]) {
                 results.set(repo.id, repo);
             }
 
             return Array.from(results.values());
-        } else if (query.searchString?.trim() === "" && (query.limit || query.cap)) {
-            // Empty search w/ limit/cap set - just grab latest repos
-            const { values = [] } = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.Repository>>(
-                userOrToken,
-                `/profile/recent/repos?${permission}${limit}`,
-            );
-
-            return values;
         } else {
-            return await runQuery(`limit=1000`);
+            return await fetchRepos();
         }
     }
 
