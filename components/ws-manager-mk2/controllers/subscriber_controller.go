@@ -55,9 +55,7 @@ func (r *SubscriberReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	if r.OnReconcile != nil {
-		go func() {
-			r.OnReconcile(ctx, &workspace)
-		}()
+		r.OnReconcile(ctx, &workspace)
 	}
 
 	return ctrl.Result{}, nil
