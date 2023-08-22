@@ -11,6 +11,8 @@ import { Project, TeamMemberRole } from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import {
     AllResourceTypes,
+    InstallationID,
+    InstallationPermission,
     OrganizationPermission,
     Permission,
     ProjectPermission,
@@ -53,6 +55,31 @@ export const SYSTEM_USER = "SYSTEM_USER";
 
 export class Authorizer {
     constructor(private authorizer: SpiceDBAuthorizer) {}
+
+    async hasPermissionOnInstallation(userId: string, permission: InstallationPermission): Promise<boolean> {
+        if (userId === SYSTEM_USER) {
+            return true;
+        }
+
+        const req = v1.CheckPermissionRequest.create({
+            subject: subject("user", userId),
+            permission,
+            resource: object("installation", InstallationID),
+            consistency,
+        });
+
+        return this.authorizer.check(req, { userId });
+    }
+
+    async checkPermissionOnInstallation(userId: string, permission: InstallationPermission): Promise<void> {
+        if (await this.hasPermissionOnInstallation(userId, permission)) {
+            return;
+        }
+        throw new ApplicationError(
+            ErrorCodes.PERMISSION_DENIED,
+            `User ${userId} does not have permission '${permission}' on the installation.`,
+        );
+    }
 
     async hasPermissionOnOrganization(
         userId: string,
@@ -386,14 +413,19 @@ export class Authorizer {
         );
     }
 
-    async addWorkspaceToOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {
+    async addWorkspaceToOrg(orgID: string, userID: string, workspaceID: string, shared: boolean): Promise<void> {
         if (await this.isDisabled(userID)) {
             return;
         }
-        await this.authorizer.writeRelationships(
+        const rels = [
             set(rel.workspace(workspaceID).org.organization(orgID)),
             set(rel.workspace(workspaceID).owner.user(userID)),
-        );
+        ];
+        if (shared) {
+            rels.push(set(rel.workspace(workspaceID).shared.anyUser));
+        }
+
+        await this.authorizer.writeRelationships(...rels);
     }
 
     async removeWorkspaceFromOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {
@@ -403,7 +435,16 @@ export class Authorizer {
         await this.authorizer.writeRelationships(
             remove(rel.workspace(workspaceID).org.organization(orgID)),
             remove(rel.workspace(workspaceID).owner.user(userID)),
+            remove(rel.workspace(workspaceID).shared.anyUser),
         );
+    }
+
+    async setWorkspaceIsShared(userID: string, workspaceID: string, shared: boolean): Promise<void> {
+        if (await this.isDisabled(userID)) {
+            return;
+        }
+        const op = shared ? set : remove;
+        await this.authorizer.writeRelationships(op(rel.workspace(workspaceID).shared.anyUser));
     }
 
     async bulkCreateWorkspaceInOrg(ids: { orgID: string; userID: string; workspaceID: string }[]): Promise<void> {

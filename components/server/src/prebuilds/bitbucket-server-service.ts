@@ -63,29 +63,8 @@ export class BitbucketServerService extends RepositoryService {
             console.log(`BBS: could not read webhooks.`, error, { error, cloneUrl });
             return false;
         }
-
-        if (repoKind === "users") {
-            const ownProfile = await this.api.getUserProfile(user, identity.authName);
-            if (owner === ownProfile.slug) {
-                return true;
-            }
-        }
-
-        let permission = await this.api.getPermission(user, { username: identity.authName, repoKind, owner, repoName });
-        if (!permission && repoKind === "projects") {
-            permission = await this.api.getPermission(user, { username: identity.authName, repoKind, owner });
-        }
-
-        if (this.hasPermissionToCreateWebhooks(permission)) {
-            return true;
-        }
-
-        console.log(`BBS: Not allowed to install webhooks.`, { permission });
-        return false;
-    }
-
-    protected hasPermissionToCreateWebhooks(permission: string | undefined) {
-        return permission && ["REPO_ADMIN", "PROJECT_ADMIN"].indexOf(permission) !== -1;
+        // return true once it can get webhooks, fallback to let SCM itself to check permission
+        return true;
     }
 
     async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<void> {

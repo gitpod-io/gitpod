@@ -371,8 +371,11 @@ func LaunchWorkspaceWithOptions(t *testing.T, ctx context.Context, opts *LaunchW
 		teams, _ := server.GetTeams(cctx)
 		var orgId string
 		if len(teams) == 0 {
-			// hack: there might be a better value to use here
-			orgId = u
+			team, err := server.CreateTeam(cctx, "test-team")
+			if err != nil {
+				return nil, nil, xerrors.Errorf("cannot create team: %w", err)
+			}
+			orgId = team.ID
 		} else {
 			orgId = teams[0].ID
 		}

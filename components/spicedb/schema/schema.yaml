@@ -14,7 +14,11 @@ schema: |-
     permission read_info = self + organization->member + organization->owner + installation->admin
     permission write_info = self
     permission delete = self
+
     permission make_admin = installation->admin + organization->installation_admin
+
+    // administrate is for changes such as blocking or verifiying, i.e. things that only admins can do on user
+    permission admin_control = installation->admin + organization->installation_admin
 
     permission read_ssh = self
     permission write_ssh = self
@@ -36,6 +40,8 @@ schema: |-
     // orgs can only be created by installation-level users
     permission create_organization = member + admin
 
+    // any global runtime configurations, such as the list of blocked repositories
+    permission configure = admin
   }
 
   definition organization {
@@ -105,10 +111,12 @@ schema: |-
     relation org: organization
     // The user that created the workspace
     relation owner: user
+    // Whether this workspace is shared (globally)
+    relation shared: user:*
 
     // Whether a user can access a workspace (with an IDE)
-    //+ (hasAccessToRepository && isPrebuild) + everyoneIfIsShared
-    permission access = owner
+    //+ (hasAccessToRepository && isPrebuild)
+    permission access = owner + shared
 
     // Note: All of this is modelled after current behavior.
     // There are a lot of improvements we can make here in the light of Organizations, but we explicitly do that as a separate step
@@ -117,8 +125,8 @@ schema: |-
     permission delete = owner
 
     // Whether a user can read basic info/metadata of a workspace
-    //+ (hasAccessToRepository && isPrebuild) + everyoneIfIsShared
-    permission read_info = owner + org->member
+    //+ (hasAccessToRepository && isPrebuild)
+    permission read_info = owner + shared + org->member
   }
 # relationships to be used for assertions & validation
 relationships: |-
@@ -150,6 +158,12 @@ relationships: |-
   project:project_2#org@organization:org_2
   // user_1 is viewer of project_2
   project:project_2#viewer@user:user_1
+
+  workspace:workspace_1#org@organization:org_1
+  workspace:workspace_1#owner@user:user_1
+  workspace:workspace_2_shared#org@organization:org_1
+  workspace:workspace_2_shared#owner@user:user_1
+  workspace:workspace_2_shared#shared@user:*
 
 # validation should assert that a particular relation exists between an entity, and a subject
 # validations are not used to assert that a permission exists
@@ -203,6 +217,11 @@ assertions:
     - organization:org_1#write_git_provider@user:user_admin
     # installation admin can create an org
     - installation:installation_0#create_organization@user:user_admin
+    # owner can access their workspaces
+    - workspace:workspace_1#access@user:user_1
+    - workspace:workspace_2_shared#access@user:user_1
+    # stranger can access other's workspaces
+    - workspace:workspace_2_shared#access@user:user_2
   assertFalse:
     # user 10 cannot access project_1
     - project:project_1#read_info@user:user_10
@@ -222,3 +241,5 @@ assertions:
     - organization:org_1#delete@user:user_1
     # org members can not delete project
     - project:project_1#delete@user:user_1
+    # stranger can't access other's non-shared workspace
+    - workspace:workspace_1#access@user:user_2

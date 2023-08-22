@@ -94,12 +94,7 @@ import {
 } from "@gitpod/gitpod-protocol/lib/analytics";
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
-import {
-    AdmissionLevel,
-    ControlAdmissionRequest,
-    StopWorkspacePolicy,
-    TakeSnapshotRequest,
-} from "@gitpod/ws-manager/lib/core_pb";
+import { StopWorkspacePolicy, TakeSnapshotRequest } from "@gitpod/ws-manager/lib/core_pb";
 import { inject, injectable } from "inversify";
 import { URL } from "url";
 import { v4 as uuidv4, validate as uuidValidate } from "uuid";
@@ -536,7 +531,23 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     private forwardInstanceUpdateToClient(ctx: TraceContext, instance: WorkspaceInstance) {
         // gpl: We decided against tracing updates here, because it create far too much noise (cmp. history)
-        this.client?.onInstanceUpdate(this.censorInstance(instance));
+        if (this.userID) {
+            this.workspaceService
+                .getWorkspace(this.userID, instance.workspaceId)
+                .then((ws) => {
+                    this.client?.onInstanceUpdate(this.censorInstance(instance));
+                })
+                .catch((err) => {
+                    if (
+                        ApplicationError.hasErrorCode(err) &&
+                        (err.code === ErrorCodes.NOT_FOUND || err.code === ErrorCodes.PERMISSION_DENIED)
+                    ) {
+                        // ignore
+                    } else {
+                        log.error("error forwarding instance update to client", err);
+                    }
+                });
+        }
     }
 
     setClient(ctx: TraceContext, client: GitpodApiClient | undefined): void {
@@ -1203,11 +1214,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async isPrebuildDone(ctx: TraceContext, pwsId: string): Promise<boolean> {
         traceAPIParams(ctx, { pwsId });
 
+        const user = await this.checkUser("isPrebuildDone");
+
         const pws = await this.workspaceDb.trace(ctx).findPrebuildByID(pwsId);
-        if (!pws) {
+        if (!pws || !pws.projectId) {
             // there is no prebuild - that's as good one being done
             return true;
         }
+
+        await this.auth.checkPermissionOnProject(user.id, "read_prebuild", pws.projectId);
 
         return PrebuiltWorkspace.isDone(pws);
     }
@@ -1494,6 +1509,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const project = await this.projectsService.getProject(user.id, projectId);
         await this.guardProjectOperation(user, projectId, "get");
+        await this.auth.checkPermissionOnProject(user.id, "read_prebuild", projectId);
 
         const events = await this.projectsService.getPrebuildEvents(user.id, project.cloneUrl);
         return events;
@@ -2633,7 +2649,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<AdminGetListResult<BlockedRepository>> {
         traceAPIParams(ctx, { req: censor(req, "searchTerm") }); // searchTerm may contain PII
 
-        await this.guardAdminAccess("adminGetBlockedRepositories", { req }, Permission.ADMIN_USERS);
+        const admin = await this.guardAdminAccess("adminGetBlockedRepositories", { req }, Permission.ADMIN_USERS);
+        await this.auth.checkPermissionOnInstallation(admin.id, "configure");
 
         try {
             const res = await this.blockedRepostoryDB.findAllBlockedRepositories(
@@ -2656,7 +2673,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<BlockedRepository> {
         traceAPIParams(ctx, { urlRegexp, blockUser });
 
-        await this.guardAdminAccess("adminCreateBlockedRepository", { urlRegexp, blockUser }, Permission.ADMIN_USERS);
+        const admin = await this.guardAdminAccess(
+            "adminCreateBlockedRepository",
+            { urlRegexp, blockUser },
+            Permission.ADMIN_USERS,
+        );
+        await this.auth.checkPermissionOnInstallation(admin.id, "configure");
 
         return await this.blockedRepostoryDB.createBlockedRepository(urlRegexp, blockUser);
     }
@@ -2664,7 +2686,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async adminDeleteBlockedRepository(ctx: TraceContext, id: number): Promise<void> {
         traceAPIParams(ctx, { id });
 
-        await this.guardAdminAccess("adminDeleteBlockedRepository", { id }, Permission.ADMIN_USERS);
+        const admin = await this.guardAdminAccess("adminDeleteBlockedRepository", { id }, Permission.ADMIN_USERS);
+        await this.auth.checkPermissionOnInstallation(admin.id, "configure");
 
         await this.blockedRepostoryDB.deleteBlockedRepository(id);
     }
@@ -2706,6 +2729,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     async adminVerifyUser(ctx: TraceContext, userId: string): Promise<User> {
         const admin = await this.guardAdminAccess("adminVerifyUser", { id: userId }, Permission.ADMIN_USERS);
+        await this.auth.checkPermissionOnUser(admin.id, "admin_control", userId);
         const user = await this.userService.findUserById(admin.id, userId);
 
         this.verificationService.markVerified(user);
@@ -2746,6 +2770,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             { req },
             Permission.ADMIN_USERS,
         );
+        await this.auth.checkPermissionOnUser(admin.id, "admin_control", req.id);
+
         const target = await this.userService.findUserById(admin.id, req.id);
 
         const featureSettings: UserFeatureSettings = target.featureFlags || {};
@@ -2877,15 +2903,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async adminGetTeams(ctx: TraceContext, req: AdminGetListRequest<Team>): Promise<AdminGetListResult<Team>> {
-        await this.guardAdminAccess("adminGetTeams", { req }, Permission.ADMIN_WORKSPACES);
-
-        return await this.teamDB.findTeams(
-            req.offset,
-            req.limit,
-            req.orderBy,
-            req.orderDir === "asc" ? "ASC" : "DESC",
-            req.searchTerm as string,
-        );
+        const admin = await this.guardAdminAccess("adminGetTeams", { req }, Permission.ADMIN_WORKSPACES);
+        return this.organizationService.listOrganizations(admin.id, req);
     }
 
     async adminGetTeamById(ctx: TraceContext, id: string): Promise<Team | undefined> {
@@ -3300,41 +3319,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("controlAdmission");
 
-        const lvlmap = new Map<string, AdmissionLevel>();
-        lvlmap.set("owner", AdmissionLevel.ADMIT_OWNER_ONLY);
-        lvlmap.set("everyone", AdmissionLevel.ADMIT_EVERYONE);
-        if (!lvlmap.has(level)) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invalid admission level.");
-        }
-
-        const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
-        await this.guardAccess({ kind: "workspace", subject: workspace }, "update");
-
-        if (level != "owner" && workspace.organizationId) {
-            const settings = await this.organizationService.getSettings(user.id, workspace.organizationId);
-            if (settings?.workspaceSharingDisabled) {
-                throw new ApplicationError(
-                    ErrorCodes.PERMISSION_DENIED,
-                    "An Organization Owner has disabled workspace sharing for workspaces in this Organization. ",
+        await this.workspaceService.controlAdmission(user.id, workspaceId, level, (workspace, instance) => {
+            if (instance) {
+                return this.guardAccess(
+                    { kind: "workspaceInstance", subject: instance, workspace: workspace },
+                    "update",
                 );
+            } else {
+                return this.guardAccess({ kind: "workspace", subject: workspace }, "update");
             }
-        }
-
-        const instance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
-        if (instance) {
-            await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace: workspace }, "update");
-
-            const req = new ControlAdmissionRequest();
-            req.setId(instance.id);
-            req.setLevel(lvlmap.get(level)!);
-
-            const client = await this.workspaceManagerClientProvider.get(instance.region);
-            await client.controlAdmission(ctx, req);
-        }
-
-        await this.workspaceDb.trace(ctx).transaction(async (db) => {
-            workspace.shareable = level === "everyone";
-            await db.store(workspace);
         });
     }
 
@@ -3636,8 +3629,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async adminGetBillingMode(ctx: TraceContextWithSpan, attributionId: string): Promise<BillingMode> {
         traceAPIParams(ctx, { attributionId });
 
-        const user = await this.checkAndBlockUser("adminGetBillingMode");
-        if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
+        const admin = await this.checkAndBlockUser("adminGetBillingMode");
+        if (!this.authorizationService.hasPermission(admin, Permission.ADMIN_USERS)) {
             throw new ApplicationError(ErrorCodes.PERMISSION_DENIED, "not allowed");
         }
 
@@ -3645,7 +3638,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (!parsedAttributionId) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Unable to parse attributionId");
         }
-        return this.billingModes.getBillingMode(user.id, parsedAttributionId.teamId);
+        await this.auth.checkPermissionOnOrganization(admin.id, "read_billing", attributionId);
+        return this.billingModes.getBillingMode(admin.id, parsedAttributionId.teamId);
     }
 
     async adminGetCostCenter(ctx: TraceContext, attributionId: string): Promise<CostCenterJSON | undefined> {
@@ -3713,6 +3707,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async adminGetBlockedEmailDomains(ctx: TraceContextWithSpan): Promise<EmailDomainFilterEntry[]> {
         const user = await this.checkAndBlockUser("adminGetBlockedEmailDomains");
         await this.guardAdminAccess("adminGetBlockedEmailDomains", { id: user.id }, Permission.ADMIN_USERS);
+        await this.auth.checkPermissionOnInstallation(user.id, "configure");
         return await this.emailDomainFilterdb.getFilterEntries();
     }
 
@@ -3722,6 +3717,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<void> {
         const user = await this.checkAndBlockUser("adminSaveBlockedEmailDomain");
         await this.guardAdminAccess("adminSaveBlockedEmailDomain", { id: user.id }, Permission.ADMIN_USERS);
+        await this.auth.checkPermissionOnInstallation(user.id, "configure");
         await this.emailDomainFilterdb.storeFilterEntry(domainFilterentry);
     }
 }
