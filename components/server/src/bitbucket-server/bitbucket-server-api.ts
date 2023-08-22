@@ -204,6 +204,7 @@ export class BitbucketServerApi {
         // @see https://bitbucket.gitpod-dev.com/rest/api/1.0/users/huiwen/repos/mustard/branches?filterText=develop
         const queryParam = qs.stringify({
             filterText: params.branch,
+            boostMatches: true,
         });
         const q = "?" + queryParam;
         const list = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.Branch>>(
