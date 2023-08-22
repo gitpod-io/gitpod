@@ -7,10 +7,6 @@
 import { ContainerModule } from "inversify";
 
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
-import {
-    ConfigCatClientFactory,
-    getExperimentsClientForBackend,
-} from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { GitpodFileParser } from "@gitpod/gitpod-protocol/lib/gitpod-file-parser";
 import { PrometheusClientCallMetrics } from "@gitpod/gitpod-protocol/lib/messaging/client-call-metrics";
 import { newAnalyticsWriterFromEnv } from "@gitpod/gitpod-protocol/lib/util/analytics";
@@ -293,12 +289,6 @@ export const productionContainerModule = new ContainerModule(
                             retryMaxAttempts: 15,
                         },
                     });
-            })
-            .inSingletonScope();
-
-        bind(ConfigCatClientFactory)
-            .toDynamicValue((ctx) => {
-                return () => getExperimentsClientForBackend();
             })
             .inSingletonScope();
 

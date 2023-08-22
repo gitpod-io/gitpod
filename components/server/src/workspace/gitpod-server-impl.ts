@@ -141,10 +141,7 @@ import { IDEService } from "../ide-service";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { CostCenterJSON } from "@gitpod/gitpod-protocol/lib/usage";
 import { createCookielessId, maskIp } from "../analytics";
-import {
-    ConfigCatClientFactory,
-    getExperimentsClientForBackend,
-} from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { increaseDashboardErrorBoundaryCounter } from "../prometheus-metrics";
 import { LinkedInService } from "../linkedin-service";
 import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
@@ -234,8 +231,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         @inject(VerificationService) private readonly verificationService: VerificationService,
         @inject(EntitlementService) private readonly entitlementService: EntitlementService,
-
-        @inject(ConfigCatClientFactory) private readonly configCatClientFactory: ConfigCatClientFactory,
 
         @inject(Authorizer) private readonly auth: Authorizer,
 
@@ -672,7 +667,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkUser("sendPhoneNumberVerificationToken");
 
         // Check if verify via call is enabled
-        const phoneVerificationByCall = await this.configCatClientFactory().getValueAsync(
+        const phoneVerificationByCall = await getExperimentsClientForBackend().getValueAsync(
             "phoneVerificationByCall",
             false,
             {
@@ -3178,7 +3173,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     private async guardWithFeatureFlag(flagName: string, user: User, teamId: string) {
         // Guard method w/ a feature flag check
-        const isEnabled = await this.configCatClientFactory().getValueAsync(flagName, false, {
+        const isEnabled = await getExperimentsClientForBackend().getValueAsync(flagName, false, {
             user: user,
             teamId,
         });
