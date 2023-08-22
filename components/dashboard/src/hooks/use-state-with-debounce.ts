@@ -7,7 +7,7 @@
 import { useEffect, useMemo, useState } from "react";
 import debounce from "lodash.debounce";
 
-export const useStateWithDebounce = <T>(initialValue: T, delay = 300): [T, (value: T) => void, T] => {
+export const useStateWithDebounce = <T>(initialValue: T, delay = 500): [T, (value: T) => void, T] => {
     const [value, setValue] = useState<T>(initialValue);
     const [debouncedValue, setDebouncedValue] = useState<T>(initialValue);
 

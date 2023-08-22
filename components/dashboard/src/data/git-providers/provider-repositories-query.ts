@@ -25,8 +25,15 @@ export const useProviderRepositoriesForUser = ({
     const { data: authProviders } = useAuthProviders();
     const selectedProvider = authProviders?.find((p) => p.host === providerHost);
 
+    const queryKey: any[] = ["provider-repositories", { userId: user?.id }, { providerHost, installationId }];
+
+    const isBitbucketServer = selectedProvider?.authProviderType === "BitbucketServer";
+    if (isBitbucketServer) {
+        queryKey.push({ search });
+    }
+
     return useQuery(
-        ["provider-repositories", { userId: user?.id }, { providerHost, installationId }],
+        queryKey,
         async ({ signal }) => {
             // jsonrpc cancellation token that we subscribe to the abort signal provided by react-query
             const cancelToken = new CancellationTokenSource();
@@ -41,7 +48,7 @@ export const useProviderRepositoriesForUser = ({
             };
 
             // TODO: Have this be the default for all providers
-            if (selectedProvider?.authProviderType === "BitbucketServer") {
+            if (isBitbucketServer) {
                 params.searchString = search;
                 params.limit = 50;
                 params.maxPages = 1;

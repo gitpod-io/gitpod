@@ -57,7 +57,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
     const noReposAvailable = !!(reposInAccounts?.length === 0 || areGitHubWebhooksUnauthorized);
     // TODO: check type instead of host?
     const isGitHub = selectedProvider?.host === "github.com";
-    const isBitbucketServer = selectedProvider?.authProviderType !== "BitbucketServer";
+    const isBitbucketServer = selectedProvider?.authProviderType === "BitbucketServer";
 
     const accounts = useMemo(() => {
         const accounts = new Map<string, { avatarUrl: string }>();
@@ -76,12 +76,15 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
     const filteredRepos = useMemo(() => {
         return areGitHubWebhooksUnauthorized
             ? []
+            : // filtering is done on server for Bitbucket Server
+            isBitbucketServer
+            ? Array.from(reposInAccounts || [])
             : Array.from(reposInAccounts || []).filter(
                   (r) =>
-                      r.account === selectedAccount &&
+                      (!selectedAccount || r.account === selectedAccount) &&
                       `${r.name}`.toLowerCase().includes(repoSearchFilter.toLowerCase().trim()),
               );
-    }, [areGitHubWebhooksUnauthorized, repoSearchFilter, reposInAccounts, selectedAccount]);
+    }, [areGitHubWebhooksUnauthorized, isBitbucketServer, repoSearchFilter, reposInAccounts, selectedAccount]);
 
     const reconfigure = useCallback(() => {
         openReconfigureWindow({
