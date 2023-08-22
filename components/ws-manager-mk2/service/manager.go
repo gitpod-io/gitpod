@@ -281,6 +281,14 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 			SshPublicKeys: req.Spec.SshPublicKeys,
 			StorageQuota:  int(storage.Value()),
 		},
+		Status: workspacev1.WorkspaceStatus{
+			PodStarts:  0,
+			Phase:      workspacev1.WorkspacePhasePending,
+			Conditions: []metav1.Condition{},
+			Runtime: &workspacev1.WorkspaceRuntimeStatus{
+				PodName: req.Id,
+			},
+		},
 	}
 	controllerutil.AddFinalizer(&ws, workspacev1.GitpodFinalizerName)
 
