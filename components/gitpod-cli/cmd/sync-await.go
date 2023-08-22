@@ -25,6 +25,7 @@ var awaitSyncCmd = &cobra.Command{
 		id := hex.EncodeToString(h.Sum(nil))
 		lockFile := fmt.Sprintf("/tmp/gp-%s.done", id)
 
+		fmt.Printf("Awaiting '%s'... ", args[0])
 		ticker := time.NewTicker(1 * time.Second)
 		done := make(chan bool)
 		go func() {
