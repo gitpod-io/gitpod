@@ -26,8 +26,8 @@
     "webpack-cli": "^5.1.4"
   },
   "scripts": {
-    "build": "tsc && NODE_OPTIONS=--openssl-legacy-provider webpack --mode=production",
-    "watch": "concurrently \"tsc --watch --preserveWatchOutput\" \"NODE_OPTIONS=--openssl-legacy-provider webpack --mode=development\"",
+    "build": "tsc && webpack --mode=production",
+    "watch": "concurrently \"tsc --watch --preserveWatchOutput\" \"webpack --mode=development\"",
     "clean": "rm -rf lib && rm -rf dist"
   }
 }
