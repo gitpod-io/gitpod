@@ -227,7 +227,19 @@ scripts:
         query="update d_b_user set blocked=0 where name=\"$user\";"
         mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
       fi
+
+      printf "\nFGA: Reset fgaRelationshipsVersion for $user...\n"
+      query="update d_b_user set additionalData = JSON_REMOVE(additionalData, '$.fgaRelationshipsVersion') where name=\"$user\";"
+      mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
+      if [ $? -ne 0 ]; then
+        echo "error resetting fgaRelationshipsVersion"
+        kill $PID || true
+        exit 1
+      fi
       kill $PID || true
+
+      printf "\nRestarting server and redis to pick up DB changes...\n"
+      kubectl rollout restart deployment/server deployment/redis
 
   - name: make-user-admin
     deps:
@@ -260,6 +272,9 @@ scripts:
         mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
       fi
       kill $PID || true
+
+      printf "\nRestarting server and redis to pick up DB changes...\n"
+      kubectl rollout restart deployment/server deployment/redis
 
   - name: add-smith-token
     deps:

@@ -5,7 +5,6 @@
  */
 
 import { IDESettings, TaskConfig, User, Workspace } from "@gitpod/gitpod-protocol";
-import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { IDEClient, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import * as IdeServiceApi from "@gitpod/ide-service-api/lib/ide.pb";
 import {
@@ -28,9 +27,6 @@ export class IDEService {
 
     @inject(AuthorizationService)
     protected readonly authService: AuthorizationService;
-
-    @inject(ConfigCatClientFactory)
-    protected readonly configCatClientFactory: ConfigCatClientFactory;
 
     private cacheConfig?: IDEConfig;
 
