@@ -153,11 +153,13 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
 
     return (
         <>
-            <p className="text-gray-500 text-center text-base mt-12">
-                {!isLoading && noReposAvailable ? "Select account on " : "Select a Git repository on "}
-                <b>{selectedProvider?.host}</b> (<LinkButton onClick={onChangeGitProvider}>change</LinkButton>)
-            </p>
-            <div className={`mt-2 flex-col ${noReposAvailable && isGitHub ? "w-96" : ""}`}>
+            <div className="flex flex-col text-gray-500 text-center text-base mt-12">
+                <span>{!isLoading && noReposAvailable ? "Select account on:" : "Select a Git repository on:"}</span>
+                <span>
+                    <b>{selectedProvider?.host}</b> (<LinkButton onClick={onChangeGitProvider}>change</LinkButton>)
+                </span>
+            </div>
+            <div className={`mt-2 flex-col w-full`}>
                 <div className="px-8 flex flex-col space-y-2" data-analytics='{"label":"Identity"}'>
                     {!enableBBSIncrementalSearch && (
                         <NewProjectAccountSelector

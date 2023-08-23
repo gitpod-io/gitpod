@@ -60,7 +60,7 @@ export default function NewProject() {
     // Show that the project was created
     if (project) {
         return (
-            <div className="flex flex-col w-96 mt-24 mx-auto items-center">
+            <div className="flex flex-col w-112 mt-24 mx-auto items-center">
                 <Heading1>Project Created</Heading1>
                 <Subheading className="mt-2 text-center">
                     Created{" "}
@@ -88,7 +88,7 @@ export default function NewProject() {
     }
 
     return (
-        <div className="flex flex-col w-96 mt-24 mx-auto items-center">
+        <div className="flex flex-col w-112 mt-24 mx-auto items-center">
             <Heading1>New Project</Heading1>
             <NewProjectSubheading />
 
