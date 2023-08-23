@@ -14,8 +14,7 @@
     "resolutions": {
         "minimatch": "3.0.5",
         "minimist": "1.2.8",
-        "jsonwebtoken": "^9.0.0",
-        "eslint-plugin-react":"7.32.2"
+        "jsonwebtoken": "^9.0.0"
     },
     "scripts": {
         "build": "leeway exec --filter-type yarn --components -- yarn build",
