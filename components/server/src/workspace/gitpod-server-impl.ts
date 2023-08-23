@@ -1923,6 +1923,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("takeSnapshot");
 
         const workspace = await this.guardSnaphotAccess(ctx, user.id, workspaceId);
+        await this.auth.checkPermissionOnWorkspace(user.id, "create_snapshot", workspaceId);
 
         const instance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
         if (!instance) {
@@ -1990,11 +1991,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("getSnapshots");
 
-        const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
-        if (!workspace || workspace.ownerId !== user.id) {
+        // we use the workspacService which checks if the requesting user has access to the workspace. If that is the case they have access to snapshots as well.
+        // below is the old permission check which would also check if the user has access to the snapshot itself. This is not the case anymore.
+        const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
+        if (workspace.ownerId !== user.id) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} does not exist.`);
         }
-
         const snapshots = await this.workspaceDb.trace(ctx).findSnapshotsByWorkspaceId(workspaceId);
         await Promise.all(snapshots.map((s) => this.guardAccess({ kind: "snapshot", subject: s, workspace }, "get")));
 

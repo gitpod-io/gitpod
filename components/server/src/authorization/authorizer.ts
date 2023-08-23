@@ -364,6 +364,7 @@ export class Authorizer {
 
         await this.authorizer.writeRelationships(
             set(rel.organization(orgId).installation.installation), //
+            set(rel.organization(orgId).snapshoter.organization_member(orgId)), //TODO allow orgs to opt-out of snapshotting
         );
     }
 
