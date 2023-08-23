@@ -65,11 +65,11 @@
     "@types/react-router-dom": "^5.1.7",
     "@types/uuid": "^8.3.1",
     "@types/validator": "^13.7.12",
-    "@typescript-eslint/eslint-plugin": "^4.21.0",
-    "@typescript-eslint/parser": "^4.21.0",
+    "@typescript-eslint/eslint-plugin": "^5.5.0",
+    "@typescript-eslint/parser": "^5.5.0",
     "@useorbital/client-types": "^1.6.0",
     "autoprefixer": "^9.8.6",
-    "eslint": "^7.24.0",
+    "eslint": "^8.47.0",
     "eslint-config-react-app": "^7.0.1",
     "postcss": "^7.0.36",
     "react-scripts": "^5.0.1",
@@ -94,12 +94,6 @@
     "build",
     "public"
   ],
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
   "browserslist": {
     "production": [
       ">0.2%",
