@@ -10,6 +10,7 @@ import { inject, injectable } from "inversify";
 import { AuthProviderParams } from "../auth/auth-provider";
 import { BitbucketServerTokenHelper } from "./bitbucket-server-token-handler";
 import { CancellationToken } from "vscode-jsonrpc";
+import { URLSearchParams } from "url";
 import * as qs from "node:querystring";
 
 @injectable()
@@ -344,7 +345,7 @@ export class BitbucketServerApi {
             /**
              * Maximum number of pagination request. Defaults to 10
              */
-            cap?: number;
+            maxPages?: number;
             /**
              * Limit or results per pagination request. Defaults to 1000
              */
@@ -357,14 +358,14 @@ export class BitbucketServerApi {
         if (isCancelled()) {
             return [];
         }
-        const cap = (query?.cap || 0) > 0 ? query.cap! : 10;
-        let requestsLeft = cap;
-        const limit = `limit=${(query?.limit || 0) > 0 ? query.limit! : 1000}&`;
-        const permission = query.permission ? `permission=${query.permission}&` : "";
-        const runQuery = async (params: string) => {
+
+        const fetchRepos = async (params: { [key: string]: string } = {}) => {
             if (isCancelled()) {
                 return [];
             }
+            // Ensure we only load as many pages as requested
+            let requestsLeft = query?.maxPages ?? 10;
+
             const result: BitbucketServer.Repository[] = [];
             let isLastPage = false;
             let start = 0;
@@ -372,9 +373,21 @@ export class BitbucketServerApi {
                 if (isCancelled()) {
                     return [];
                 }
+
+                const requestParams = new URLSearchParams({
+                    // Apply default params
+                    limit: `${query?.limit ?? 1000}`,
+                    permission: query.permission ?? "REPO_READ",
+                    start: `${start}`,
+                });
+                // Merge params from argument in
+                Object.keys(params).forEach((key) => {
+                    requestParams.set(key, params[key]);
+                });
+
                 const pageResult = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.Repository>>(
                     userOrToken,
-                    `/repos?${permission}${limit}start=${start}&${params}`,
+                    `/repos?${requestParams.toString()}`,
                 );
                 requestsLeft = requestsLeft - 1;
                 if (pageResult.values) {
@@ -391,20 +404,19 @@ export class BitbucketServerApi {
         };
 
         if (query.searchString?.trim()) {
-            const result: BitbucketServer.Repository[] = [];
-            const ids = new Set<number>(); // used to deduplicate
-            for (const param of ["name", "projectname"]) {
-                const pageResult = await runQuery(`${param}=${query.searchString}`);
-                for (const repo of pageResult) {
-                    if (!ids.has(repo.id)) {
-                        ids.add(repo.id);
-                        result.push(repo);
-                    }
-                }
+            const results: Map<number, BitbucketServer.Repository> = new Map();
+
+            // Query by name & projectname in series to reduce chances of hitting rate limits
+            const nameResults = await fetchRepos({ name: query.searchString });
+            const projectResults = await fetchRepos({ projectname: query.searchString });
+
+            for (const repo of [...nameResults, ...projectResults]) {
+                results.set(repo.id, repo);
             }
-            return result;
+
+            return Array.from(results.values());
         } else {
-            return await runQuery(`limit=1000`);
+            return await fetchRepos();
         }
     }
 

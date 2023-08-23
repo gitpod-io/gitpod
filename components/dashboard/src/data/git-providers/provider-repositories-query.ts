@@ -8,16 +8,35 @@ import { useQuery } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
 import { useCurrentUser } from "../../user-context";
 import { CancellationTokenSource } from "vscode-jsonrpc";
+import { useAuthProviders } from "../auth-providers/auth-provider-query";
+import { GetProviderRepositoriesParams } from "@gitpod/gitpod-protocol";
+import { useFeatureFlag } from "../featureflag-query";
 
 type UseProviderRepositoriesQueryArgs = {
-    provider: string;
+    providerHost: string;
     installationId?: string;
+    search?: string;
 };
-export const useProviderRepositoriesForUser = ({ provider, installationId }: UseProviderRepositoriesQueryArgs) => {
+export const useProviderRepositoriesForUser = ({
+    providerHost,
+    installationId,
+    search,
+}: UseProviderRepositoriesQueryArgs) => {
     const user = useCurrentUser();
+    const newProjectIncrementalRepoSearchBBS = useFeatureFlag("newProjectIncrementalRepoSearchBBS");
+    const { data: authProviders } = useAuthProviders();
+    const selectedProvider = authProviders?.find((p) => p.host === providerHost);
+
+    const queryKey: any[] = ["provider-repositories", { userId: user?.id }, { providerHost, installationId }];
+
+    const isBitbucketServer = selectedProvider?.authProviderType === "BitbucketServer";
+    const enableIncrementalSearch = isBitbucketServer && newProjectIncrementalRepoSearchBBS;
+    if (enableIncrementalSearch) {
+        queryKey.push({ search });
+    }
 
     return useQuery(
-        ["provider-repositories", { userId: user?.id }, { provider, installationId }],
+        queryKey,
         async ({ signal }) => {
             // jsonrpc cancellation token that we subscribe to the abort signal provided by react-query
             const cancelToken = new CancellationTokenSource();
@@ -26,17 +45,26 @@ export const useProviderRepositoriesForUser = ({ provider, installationId }: Use
                 cancelToken.cancel();
             });
 
+            const params: GetProviderRepositoriesParams = {
+                provider: providerHost,
+                hints: { installationId },
+            };
+
+            // TODO: Have this be the default for all provider types
+            if (enableIncrementalSearch) {
+                params.searchString = search;
+                params.limit = 50;
+                params.maxPages = 1;
+            }
+
             return await getGitpodService().server.getProviderRepositoriesForUser(
-                {
-                    provider,
-                    hints: { installationId },
-                },
+                params,
                 // @ts-ignore - not sure why types don't support this
                 cancelToken.token,
             );
         },
         {
-            enabled: !!provider,
+            enabled: !!providerHost,
         },
     );
 };

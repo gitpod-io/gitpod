@@ -66,6 +66,7 @@ import {
     PrebuildEvent,
     RoleOrPermission,
     WorkspaceInstanceRepoStatus,
+    GetProviderRepositoriesParams,
 } from "@gitpod/gitpod-protocol";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import {
@@ -1436,7 +1437,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     // Projects
     async getProviderRepositoriesForUser(
         ctx: TraceContext,
-        params: { provider: string; hints?: object; searchString?: string },
+        params: GetProviderRepositoriesParams,
         cancellationToken?: CancellationToken,
     ): Promise<ProviderRepository[]> {
         traceAPIParams(ctx, { params });
@@ -1465,6 +1466,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                     ...(await hostContext.services.repositoryService.getRepositoriesForAutomatedPrebuilds(user, {
                         searchString: params.searchString,
                         cancellationToken,
+                        limit: params.limit,
+                        maxPages: params.maxPages,
                     })),
                 );
             }
