@@ -51,6 +51,9 @@ schema: |-
     relation member: user
     // Some users in an organization may additionally have the `owner` role
     relation owner: user
+    // users who can snapshot workspaces
+    relation snapshoter: organization#member
+
 
     // synthetic permission for installation->admin (because https://github.com/authzed/spicedb/issues/15)
     permission installation_admin = installation->admin
@@ -95,7 +98,6 @@ schema: |-
     //  * the project has granted access to all members in an organization
     //  * the project has granted access to _any_ user on this installation
     relation viewer: user | organization#member | user:*
-
     permission read_info = viewer + editor + org->owner + org->installation_admin
     permission write_info = editor + org->owner + org->installation_admin
     permission delete = editor + org->owner + org->installation_admin
@@ -127,6 +129,8 @@ schema: |-
     // Whether a user can read basic info/metadata of a workspace
     //+ (hasAccessToRepository && isPrebuild)
     permission read_info = owner + shared + org->member
+
+    permission create_snapshot = owner & org->snapshoter
   }
 # relationships to be used for assertions & validation
 relationships: |-
