@@ -11,7 +11,6 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
@@ -21,6 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/gitpod-io/gitpod/common-go/util"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
@@ -155,7 +155,7 @@ func (r *TimeoutReconciler) isWorkspaceTimedOut(ws *workspacev1.Workspace) (reas
 	}
 
 	start := ws.ObjectMeta.CreationTimestamp.Time
-	lastActivity := ws.Status.LastActivity
+	lastActivity := activity.Last(ws)
 	isClosed := ws.IsConditionTrue(workspacev1.WorkspaceConditionClosed)
 
 	switch phase {
@@ -187,8 +187,7 @@ func (r *TimeoutReconciler) isWorkspaceTimedOut(ws *workspacev1.Workspace) (reas
 		activity := activityNone
 		if ws.IsHeadless() {
 			timeout = timeouts.HeadlessWorkspace
-			nt := metav1.NewTime(start)
-			lastActivity = &nt
+			lastActivity = &start
 			activity = activityRunningHeadless
 		} else if lastActivity == nil {
 			// The workspace is up and running, but the user has never produced any activity
@@ -202,13 +201,13 @@ func (r *TimeoutReconciler) isWorkspaceTimedOut(ws *workspacev1.Workspace) (reas
 						return ""
 					}
 				}
-				return decide(lastActivity.Time, afterClosed, activityClosed)
+				return decide(*lastActivity, afterClosed, activityClosed)
 			}()
 			if reason != "" {
 				return reason
 			}
 		}
-		return decide(lastActivity.Time, timeout, activity)
+		return decide(*lastActivity, timeout, activity)
 
 	case workspacev1.WorkspacePhaseStopping:
 		if isWorkspaceBeingDeleted(ws) && !ws.IsConditionTrue(workspacev1.WorkspaceConditionBackupComplete) {

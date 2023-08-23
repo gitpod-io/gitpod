@@ -40,6 +40,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api/config"
@@ -464,7 +465,7 @@ func (wsm *WorkspaceManagerServer) DescribeWorkspace(ctx context.Context, req *w
 		Status: wsm.extractWorkspaceStatus(&ws),
 	}
 
-	lastActivity := getLastActivity(&ws)
+	lastActivity := activity.Last(&ws)
 	if lastActivity != nil {
 		result.LastActivity = lastActivity.UTC().Format(time.RFC3339Nano)
 	}
@@ -1485,7 +1486,7 @@ func (wav *workspaceActivityVec) getWorkspaceActivityCounts() (active, notActive
 			continue
 		}
 
-		hasActivity := getLastActivity(&ws) != nil
+		hasActivity := activity.Last(&ws) != nil
 		if hasActivity {
 			active++
 		} else {
@@ -1494,22 +1495,4 @@ func (wav *workspaceActivityVec) getWorkspaceActivityCounts() (active, notActive
 	}
 
 	return
-}
-
-func getLastActivity(ws *workspacev1.Workspace) *time.Time {
-	lastActivity := ws.Status.LastActivity
-	if lastActivity != nil {
-		return &lastActivity.Time
-	}
-
-	// In case we don't have a record of the workspace's last activity, check for the FirstUserActivity condition
-	// to see if the lastActivity got lost on a manager restart.
-	if ws.IsConditionTrue(workspacev1.WorkspaceConditionFirstUserActivity) {
-		now := time.Now().UTC()
-		lastActivityStatus := metav1.NewTime(now)
-		return &lastActivityStatus.Time
-	}
-
-	// If the FirstUserActivity condition isn't present we know that the workspace has never had user activity.
-	return nil
 }
