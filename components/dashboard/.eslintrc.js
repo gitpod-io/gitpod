@@ -6,7 +6,7 @@
 
 module.exports = {
     root: true,
-    extends: ["react-app"],
+    extends: ["react-app", "react-app/jest"],
     rules: {
         "import/no-anonymous-default-export": "error",
         "react/jsx-no-constructed-context-values": "error",
