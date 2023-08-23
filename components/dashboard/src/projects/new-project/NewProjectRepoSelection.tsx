@@ -59,7 +59,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
     const noReposAvailable = !!(reposInAccounts?.length === 0 || areGitHubWebhooksUnauthorized);
     const isGitHub = selectedProvider?.host === "github.com";
     const isBitbucketServer = selectedProvider?.authProviderType === "BitbucketServer";
-    const enableIncrementalSearch = isBitbucketServer && newProjectIncrementalRepoSearchBBS;
+    const enableBBSIncrementalSearch = isBitbucketServer && newProjectIncrementalRepoSearchBBS;
 
     const accounts = useMemo(() => {
         const accounts = new Map<string, { avatarUrl: string }>();
@@ -79,14 +79,14 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
         return areGitHubWebhooksUnauthorized
             ? []
             : // filtering is done on server for incremental search
-            enableIncrementalSearch
+            enableBBSIncrementalSearch
             ? Array.from(reposInAccounts || [])
             : Array.from(reposInAccounts || []).filter(
                   (r) =>
                       (!selectedAccount || r.account === selectedAccount) &&
                       `${r.name}`.toLowerCase().includes(repoSearchFilter.toLowerCase().trim()),
               );
-    }, [areGitHubWebhooksUnauthorized, enableIncrementalSearch, repoSearchFilter, reposInAccounts, selectedAccount]);
+    }, [areGitHubWebhooksUnauthorized, enableBBSIncrementalSearch, repoSearchFilter, reposInAccounts, selectedAccount]);
 
     const reconfigure = useCallback(() => {
         openReconfigureWindow({
@@ -132,7 +132,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
     // Adjusts selectedAccount when repos change if we don't already have a selected account
     useEffect(() => {
         // TODO: Once all providers filter on the server we can remove this account selection logic
-        if (enableIncrementalSearch) {
+        if (enableBBSIncrementalSearch) {
             return;
         }
 
@@ -149,7 +149,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
                 setSelectedAccountAndClearSearch(first?.account);
             }
         }
-    }, [enableIncrementalSearch, reposInAccounts, selectedAccount, setSelectedAccountAndClearSearch]);
+    }, [enableBBSIncrementalSearch, reposInAccounts, selectedAccount, setSelectedAccountAndClearSearch]);
 
     return (
         <>
@@ -159,7 +159,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
             </p>
             <div className={`mt-2 flex-col ${noReposAvailable && isGitHub ? "w-96" : ""}`}>
                 <div className="px-8 flex flex-col space-y-2" data-analytics='{"label":"Identity"}'>
-                    {!enableIncrementalSearch && (
+                    {!enableBBSIncrementalSearch && (
                         <NewProjectAccountSelector
                             accounts={accounts}
                             selectedAccount={selectedAccount}
