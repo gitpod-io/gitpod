@@ -122,17 +122,11 @@ export class WorkspaceService {
         return workspace;
     }
 
-    async getWorkspace(
-        userId: string,
-        workspaceId: string,
-        check: (workspace: Workspace, instance?: WorkspaceInstance) => Promise<void> = async () => {},
-    ): Promise<WorkspaceInfo> {
+    async getWorkspace(userId: string, workspaceId: string): Promise<WorkspaceInfo> {
         const workspace = await this.doGetWorkspace(userId, workspaceId);
 
         const latestInstancePromise = this.db.findCurrentInstance(workspaceId);
-        await check(workspace);
         const latestInstance = await latestInstancePromise;
-        await check(workspace, latestInstance);
 
         return {
             workspace,
@@ -140,35 +134,20 @@ export class WorkspaceService {
         };
     }
 
-    async getWorkspaces(
-        userId: string,
-        options: GitpodServer.GetWorkspacesOptions,
-        check: (workspace: Workspace, instance?: WorkspaceInstance) => Promise<void> = async () => {},
-    ): Promise<WorkspaceInfo[]> {
+    async getWorkspaces(userId: string, options: GitpodServer.GetWorkspacesOptions): Promise<WorkspaceInfo[]> {
         const res = await this.db.find({
             limit: 20,
             ...options,
             userId, // gpl: We probably want to removed this limitation in the future, butkeeping the old behavior for now due to focus on FGA
             includeHeadless: false,
         });
-        const hasAccess = async (info: WorkspaceInfo) => {
-            try {
-                await this.auth.checkPermissionOnWorkspace(userId, "access", info.workspace.id);
-                await check(info.workspace, info.latestInstance);
-                return true;
-            } catch (err) {
-                if (
-                    ApplicationError.hasErrorCode(err) &&
-                    (err.code === ErrorCodes.NOT_FOUND || err.code === ErrorCodes.PERMISSION_DENIED)
-                ) {
-                    return false;
-                }
-                throw err;
-            }
-        };
 
         const filtered = (
-            await Promise.all(res.map(async (info) => ((await hasAccess(info)) ? info : undefined)))
+            await Promise.all(
+                res.map(async (info) =>
+                    (await this.auth.hasPermissionOnWorkspace(userId, "access", info.workspace.id)) ? info : undefined,
+                ),
+            )
         ).filter((info) => !!info) as WorkspaceInfo[];
         return filtered;
     }

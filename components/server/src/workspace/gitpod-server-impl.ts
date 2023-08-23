@@ -846,22 +846,22 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkUser("getWorkspace");
 
-        const result = await this.workspaceService.getWorkspace(user.id, workspaceId, async (workspace, instance) => {
-            if (instance) {
-                const teamMembers = await this.organizationService.listMembers(user.id, workspace.organizationId);
-                await this.guardAccess(
-                    {
-                        kind: "workspaceInstance",
-                        subject: instance,
-                        workspace,
-                        teamMembers,
-                    },
-                    "get",
-                );
-            } else {
-                return this.guardAccess({ kind: "workspace", subject: workspace }, "get");
-            }
-        });
+        const result = await this.workspaceService.getWorkspace(user.id, workspaceId);
+        const { workspace, latestInstance } = result;
+
+        const teamMembers = await this.organizationService.listMembers(user.id, workspace.organizationId);
+        await this.guardAccess({ kind: "workspace", subject: workspace, teamMembers: teamMembers }, "get");
+        if (!!latestInstance) {
+            await this.guardAccess(
+                {
+                    kind: "workspaceInstance",
+                    subject: latestInstance,
+                    workspace,
+                    teamMembers,
+                },
+                "get",
+            );
+        }
 
         return {
             ...result,
@@ -909,11 +909,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("startWorkspace", undefined, { workspaceId });
 
         // (gpl) We keep this check here for backwards compatibility, it should be superfluous in the future
-        const { workspace } = await this.workspaceService.getWorkspace(user.id, workspaceId);
+        const { workspace, latestInstance: instance } = await this.workspaceService.getWorkspace(user.id, workspaceId);
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
 
         // (gpl) We keep this check here for backwards compatibility, it should be superfluous in the future
-        const instance = await this.workspaceService.getCurrentInstance(user.id, workspace.id);
         if (instance && instance.status.phase !== "stopped") {
             traceWI(ctx, { instanceId: instance.id });
 
@@ -1078,13 +1077,17 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkUser("getWorkspaces");
 
-        return this.workspaceService.getWorkspaces(user.id, options, async (workspace, instance) => {
-            if (instance) {
-                return this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace: workspace }, "get");
-            } else {
-                return this.guardAccess({ kind: "workspace", subject: workspace }, "get");
-            }
-        });
+        const result = await this.workspaceService.getWorkspaces(user.id, options);
+        await Promise.all(result.map((ws) => this.guardAccess({ kind: "workspace", subject: ws.workspace }, "get")));
+        await Promise.all(
+            result.map((ws) =>
+                this.guardAccess(
+                    { kind: "workspaceInstance", subject: ws.latestInstance, workspace: ws.workspace },
+                    "get",
+                ),
+            ),
+        );
+        return result;
     }
 
     public async isWorkspaceOwner(ctx: TraceContext, workspaceId: string): Promise<boolean> {
@@ -1877,6 +1880,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         });
     }
 
+    // TODO(gpl): Remove after FGA rollout
     private async internGetCurrentWorkspaceInstance(
         ctx: TraceContext,
         user: User,
