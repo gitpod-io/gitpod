@@ -240,7 +240,6 @@ export class PromisifiedImageBuilderClient {
 
                 log.info("Needs image build?", {
                     status: resp.getStatus(),
-                    source: request.getSource(),
                     forceRebuild: request.getForceRebuild(),
                     triggeredBy: request.getTriggeredBy(),
                 });
