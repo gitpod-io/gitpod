@@ -345,7 +345,7 @@ export class BitbucketServerApi {
             /**
              * Maximum number of pagination request. Defaults to 10
              */
-            cap?: number;
+            maxPages?: number;
             /**
              * Limit or results per pagination request. Defaults to 1000
              */
@@ -364,7 +364,7 @@ export class BitbucketServerApi {
                 return [];
             }
             // Ensure we only load as many pages as requested
-            let requestsLeft = query?.cap ?? 10;
+            let requestsLeft = query?.maxPages ?? 10;
 
             const result: BitbucketServer.Repository[] = [];
             let isLastPage = false;

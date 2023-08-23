@@ -1472,7 +1472,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                         searchString: params.searchString,
                         cancellationToken,
                         limit: params.limit,
-                        cap: params.maxPages,
+                        maxPages: params.maxPages,
                     })),
                 );
             }

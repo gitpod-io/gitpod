@@ -114,7 +114,7 @@ class TestBitbucketServerApi {
     @test async test_getRepos_cap_no_searchstring() {
         const result = await this.api.getRepos(process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"]!, {
             permission: "REPO_READ",
-            cap: 3,
+            maxPages: 3,
         });
         expect(result.length).to.be.equal(3000);
 
