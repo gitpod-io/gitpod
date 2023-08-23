@@ -406,11 +406,10 @@ export class BitbucketServerApi {
         if (query.searchString?.trim()) {
             const results: Map<number, BitbucketServer.Repository> = new Map();
 
-            // Query by name & projectname in parrallel
-            const [nameResults, projectResults] = await Promise.all([
-                fetchRepos({ name: query.searchString }),
-                fetchRepos({ projectname: query.searchString }),
-            ]);
+            // Query by name & projectname in series to reduce chances of hitting rate limits
+            const nameResults = await fetchRepos({ name: query.searchString });
+            const projectResults = await fetchRepos({ projectname: query.searchString });
+
             for (const repo of [...nameResults, ...projectResults]) {
                 results.set(repo.id, repo);
             }
