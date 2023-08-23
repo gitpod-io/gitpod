@@ -146,7 +146,9 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
 
     async getUserRepos(user: User): Promise<string[]> {
         try {
-            const repos = await this.api.getRepos(user, { permission: "REPO_READ" });
+            // TODO: See if there's another api we could use here, such as recent repos for the user
+            // Only grab one page of up to 100 repos
+            const repos = await this.api.getRepos(user, { limit: 100, cap: 1, permission: "REPO_READ" });
             const result: string[] = [];
             repos.forEach((r) => {
                 const cloneUrl = r.links.clone.find((u) => u.name === "http")?.href;
