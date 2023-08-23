@@ -48,7 +48,7 @@ export const AuthEntryItem = (props: AuthEntryItemParams) => {
                 </span>
                 <span className="text-sm my-auto text-gray-400 dark:text-gray-500">Username</span>
             </ItemField>
-            <ItemField className="hidden xl:w-5/12 xl:flex xl:flex-col my-auto">
+            <ItemField className="hidden xl:w-1/3 xl:flex xl:flex-col my-auto">
                 <span className="my-auto truncate text-gray-500 overflow-ellipsis dark:text-gray-400">
                     {props.getPermissions(props.ap.authProviderId)?.join(", ") || "–"}
                 </span>
