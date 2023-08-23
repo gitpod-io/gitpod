@@ -12,8 +12,6 @@ import { newAlwaysReturningDefaultValueClient } from "./always-default";
 
 let client: Client | undefined;
 
-export type ConfigCatClientFactory = () => Client;
-export const ConfigCatClientFactory = Symbol("ConfigCatClientFactory");
 export namespace Experiments {
     export function configureTestingClient(config: Record<string, any>): void {
         client = {
@@ -54,6 +52,6 @@ export function getExperimentsClientForBackend(): Client {
         baseUrl: process.env.CONFIGCAT_BASE_URL,
     });
 
-    client = new ConfigCatClient(configCatClient);
+    client = new ConfigCatClient(configCatClient, process.env.HOST_URL);
     return client;
 }

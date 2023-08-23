@@ -323,12 +323,7 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
                             </div>
                             <div className="mt-4 flex space-x-1 text-gray-400 dark:text-gray-500">
                                 <div className="flex flex-col">
-                                    <span>
-                                        {priceInformation}{" "}
-                                        <a className="gp-link" href="https://www.gitpod.io/pricing#cost-estimator">
-                                            Estimate costs
-                                        </a>
-                                    </span>
+                                    <span>{priceInformation}</span>
                                 </div>
                             </div>
                             <div className="flex justify-end mt-6 space-x-2">
@@ -356,12 +351,7 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
                             <div className="mt-4 flex space-x-1 text-gray-400 dark:text-gray-500">
                                 <Check className="m-0.5 w-8 h-5 text-orange-500" />
                                 <div className="flex flex-col">
-                                    <span>
-                                        {priceInformation}{" "}
-                                        <a className="gp-link" href="https://www.gitpod.io/pricing#cost-estimator">
-                                            Estimate costs
-                                        </a>
-                                    </span>
+                                    <span>{priceInformation}</span>
                                 </div>
                             </div>
 

@@ -497,6 +497,12 @@ export class WorkspaceStarter {
     ): Promise<StartWorkspaceResult> {
         const span = TraceContext.startSpan("actuallyStartWorkspace", ctx);
         span.setTag("region_preference", region);
+        log.info("Attempting to start workspace", {
+            instanceID: instance.id,
+            userID: user.id,
+            rethrow: rethrow,
+            forceRebuild: forceRebuild,
+        });
 
         try {
             // build workspace image

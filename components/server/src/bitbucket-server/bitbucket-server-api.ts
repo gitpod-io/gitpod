@@ -10,6 +10,7 @@ import { inject, injectable } from "inversify";
 import { AuthProviderParams } from "../auth/auth-provider";
 import { BitbucketServerTokenHelper } from "./bitbucket-server-token-handler";
 import { CancellationToken } from "vscode-jsonrpc";
+import * as qs from "node:querystring";
 
 @injectable()
 export class BitbucketServerApi {
@@ -188,6 +189,51 @@ export class BitbucketServerApi {
             user,
             `/${params.repoKind}/${params.owner}/repos/${params.repositorySlug}/commits${q}`,
         );
+    }
+
+    async getBranchLatestCommit(
+        user: User,
+        params: {
+            repoKind: "projects" | "users" | string;
+            owner: string;
+            repositorySlug: string;
+            branch: string;
+        },
+    ): Promise<BitbucketServer.Branch | undefined> {
+        // @see https://developer.atlassian.com/server/bitbucket/rest/v811/api-group-repository/#api-api-latest-projects-projectkey-repos-repositoryslug-branches-get
+        // @see https://bitbucket.gitpod-dev.com/rest/api/1.0/users/huiwen/repos/mustard/branches?filterText=develop
+        const queryParam = qs.stringify({
+            filterText: params.branch,
+            boostMatches: true,
+        });
+        const q = "?" + queryParam;
+        const list = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.Branch>>(
+            user,
+            `/${params.repoKind}/${params.owner}/repos/${params.repositorySlug}/branches${q}`,
+        );
+        return list.values?.find((e) => e.displayId === params.branch);
+    }
+
+    async getTagLatestCommit(
+        user: User,
+        params: {
+            repoKind: "projects" | "users" | string;
+            owner: string;
+            repositorySlug: string;
+            tag: string;
+        },
+    ): Promise<BitbucketServer.Tag | undefined> {
+        // @see https://developer.atlassian.com/server/bitbucket/rest/v811/api-group-repository/#api-api-latest-projects-projectkey-repos-repositoryslug-tags-get
+        // @see https://bitbucket.gitpod-dev.com/rest/api/1.0/users/huiwen/repos/mustard/tags?filterText=11
+        const queryParam = qs.stringify({
+            filterText: params.tag,
+        });
+        const q = "?" + queryParam;
+        const list = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.Tag>>(
+            user,
+            `/${params.repoKind}/${params.owner}/repos/${params.repositorySlug}/tags${q}`,
+        );
+        return list.values?.find((e) => e.displayId === params.tag);
     }
 
     async getDefaultBranch(
@@ -409,6 +455,13 @@ export namespace BitbucketServer {
         type: "BRANCH" | string;
         latestCommit: string;
         isDefault: boolean;
+    }
+
+    export interface Tag {
+        id: string;
+        displayId: string;
+        type: "TAG" | string;
+        latestCommit: string;
     }
 
     export interface BranchWithMeta extends Branch {

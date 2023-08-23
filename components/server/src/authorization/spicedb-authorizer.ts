@@ -6,6 +6,7 @@
 
 import { v1 } from "@authzed/authzed-node";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { inject, injectable } from "inversify";
@@ -47,7 +48,9 @@ export class SpiceDBAuthorizer {
             return permitted;
         } catch (err) {
             error = err;
-            log.error("[spicedb] Failed to perform authorization check.", err, { req });
+            log.error("[spicedb] Failed to perform authorization check.", err, {
+                request: new TrustedValue(req),
+            });
             return false;
         } finally {
             observeSpicedbClientLatency("check", error, timer());
@@ -72,7 +75,7 @@ export class SpiceDBAuthorizer {
             return response;
         } catch (err) {
             error = err;
-            log.error("[spicedb] Failed to write relationships.", err, { updates });
+            log.error("[spicedb] Failed to write relationships.", err, { updates: new TrustedValue(updates) });
         } finally {
             observeSpicedbClientLatency("write", error, timer());
         }
@@ -104,7 +107,7 @@ export class SpiceDBAuthorizer {
             error = err;
             // While in we're running two authorization systems in parallel, we do not hard fail on writes.
             //TODO throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "Failed to delete relationships.");
-            log.error("[spicedb] Failed to delete relationships.", err, { req });
+            log.error("[spicedb] Failed to delete relationships.", err, { request: new TrustedValue(req) });
             return [];
         } finally {
             observeSpicedbClientLatency("delete", error, timer());

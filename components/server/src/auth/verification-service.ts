@@ -11,10 +11,10 @@ import { Config } from "../config";
 import { Twilio } from "twilio";
 import { ServiceContext } from "twilio/lib/rest/verify/v2/service";
 import { TeamDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { VerificationInstance } from "twilio/lib/rest/verify/v2/service/verification";
 import { v4 as uuidv4, validate as uuidValidate } from "uuid";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 @injectable()
 export class VerificationService {
@@ -22,7 +22,6 @@ export class VerificationService {
     @inject(WorkspaceDB) protected workspaceDB: WorkspaceDB;
     @inject(UserDB) protected userDB: UserDB;
     @inject(TeamDB) protected teamDB: TeamDB;
-    @inject(ConfigCatClientFactory) protected readonly configCatClientFactory: ConfigCatClientFactory;
 
     protected verifyService: ServiceContext;
 
@@ -45,7 +44,7 @@ export class VerificationService {
         if (user.creationDate < "2022-08-22") {
             return false;
         }
-        const isPhoneVerificationEnabled = await this.configCatClientFactory().getValueAsync(
+        const isPhoneVerificationEnabled = await getExperimentsClientForBackend().getValueAsync(
             "isPhoneVerificationEnabled",
             false,
             {

@@ -19,6 +19,7 @@ import searchIcon from "../icons/search.svg";
 import { teamsService } from "../service/public-api";
 import { useCurrentUser } from "../user-context";
 import { SpinnerLoader } from "../components/Loader";
+import { Delayed } from "../components/Delayed";
 import { InputField } from "../components/forms/InputField";
 import { InputWithCopy } from "../components/InputWithCopy";
 
@@ -74,6 +75,15 @@ export default function MembersPage() {
         return !!owners?.some((o) => o.userId === user?.id);
     }, [org.data?.members, user?.id]);
 
+    // Note: We would hardly get here, but just in case. We should show a loader instead of blank section.
+    if (org.isLoading) {
+        return (
+            <Delayed>
+                <SpinnerLoader />
+            </Delayed>
+        );
+    }
+
     const filteredMembers =
         org.data?.members.filter((m) => {
             if (!!roleFilter && m.role !== roleFilter) {
@@ -105,7 +115,7 @@ export default function MembersPage() {
                             onChange={(e) => setSearchText(e.target.value)}
                         />
                     </div>
-                    <div className="py-2 pl-3 pr-1 border border-gray-100 ml-2 rounded-md">
+                    <div className="py-2 pl-3 pr-1 border border-gray-100 dark:border-gray-800 ml-2 rounded-md">
                         <DropDown
                             customClasses="w-32"
                             activeEntry={
@@ -163,7 +173,7 @@ export default function MembersPage() {
                         </ItemField>
                     </Item>
                     {filteredMembers.length === 0 ? (
-                        <SpinnerLoader />
+                        <p className="pt-16 text-center">No members found</p>
                     ) : (
                         filteredMembers.map((m) => (
                             <Item className="grid grid-cols-3" key={m.userId}>

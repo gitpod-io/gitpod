@@ -59,24 +59,40 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
     async getBranches(user: User, owner: string, repo: string): Promise<Branch[]> {
         const branches: Branch[] = [];
         const api = await this.apiFactory.create(user);
-        const response = await api.repositories.listBranches({
-            workspace: owner,
-            repo_slug: repo,
-            sort: "target.date",
-        });
 
-        for (const branch of response.data.values!) {
-            branches.push({
-                htmlUrl: branch.links?.html?.href!,
-                name: branch.name!,
-                commit: {
-                    sha: branch.target?.hash!,
-                    author: branch.target?.author?.user?.display_name!,
-                    authorAvatarUrl: branch.target?.author?.user?.links?.avatar?.href,
-                    authorDate: branch.target?.date!,
-                    commitMessage: branch.target?.message || "missing commit message",
-                },
+        // Handle pagination.
+        let nextPage = 1;
+        let isMoreDataAvailable = true;
+
+        while (isMoreDataAvailable) {
+            const response = await api.repositories.listBranches({
+                workspace: owner,
+                repo_slug: repo,
+                sort: "target.date",
+                page: String(nextPage),
+                pagelen: 100,
             });
+
+            for (const branch of response.data.values!) {
+                branches.push({
+                    htmlUrl: branch.links?.html?.href!,
+                    name: branch.name!,
+                    commit: {
+                        sha: branch.target?.hash!,
+                        author: branch.target?.author?.user?.display_name!,
+                        authorAvatarUrl: branch.target?.author?.user?.links?.avatar?.href,
+                        authorDate: branch.target?.date!,
+                        commitMessage: branch.target?.message || "missing commit message",
+                    },
+                });
+            }
+
+            // If the response has a "next" property, it indicates there are more pages.
+            if (response.data.next) {
+                nextPage++;
+            } else {
+                isMoreDataAvailable = false;
+            }
         }
 
         return branches;

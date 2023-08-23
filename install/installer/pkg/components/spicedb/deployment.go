@@ -34,7 +34,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, errors.New("missing configuration for spicedb.secretRef")
 	}
 
-	bootstrapVolume, bootstrapVolumeMount, bootstrapFiles, err := getBootstrapConfig(ctx)
+	bootstrapVolume, bootstrapVolumeMount, bootstrapFiles, contentHash, err := getBootstrapConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get bootstrap config: %w", err)
 	}
@@ -56,10 +56,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:        Component,
-						Namespace:   ctx.Namespace,
-						Labels:      labels,
-						Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment),
+						Name:      Component,
+						Namespace: ctx.Namespace,
+						Labels:    labels,
+						Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment, func() map[string]string {
+							return map[string]string{
+								common.AnnotationConfigChecksum: contentHash,
+							}
+						}),
 					},
 					Spec: corev1.PodSpec{
 						Affinity:                      cluster.WithNodeAffinityHostnameAntiAffinity(Component, cluster.AffinityLabelMeta),

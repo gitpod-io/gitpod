@@ -127,7 +127,7 @@ func GenerateDefinition(schema *compiler.CompiledSchema) string {
 
 		import { v1 } from "@authzed/authzed-node";
 
-		const InstallationID = "1";
+		export const InstallationID = "1";
 
 		` + resource + `;
 

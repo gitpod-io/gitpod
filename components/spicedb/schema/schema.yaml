@@ -14,7 +14,11 @@ schema: |-
     permission read_info = self + organization->member + organization->owner + installation->admin
     permission write_info = self
     permission delete = self
+
     permission make_admin = installation->admin + organization->installation_admin
+
+    // administrate is for changes such as blocking or verifiying, i.e. things that only admins can do on user
+    permission admin_control = installation->admin + organization->installation_admin
 
     permission read_ssh = self
     permission write_ssh = self
@@ -36,6 +40,8 @@ schema: |-
     // orgs can only be created by installation-level users
     permission create_organization = member + admin
 
+    // any global runtime configurations, such as the list of blocked repositories
+    permission configure = admin
   }
 
   definition organization {
@@ -45,6 +51,9 @@ schema: |-
     relation member: user
     // Some users in an organization may additionally have the `owner` role
     relation owner: user
+    // users who can snapshot workspaces
+    relation snapshoter: organization#member
+
 
     // synthetic permission for installation->admin (because https://github.com/authzed/spicedb/issues/15)
     permission installation_admin = installation->admin
@@ -89,7 +98,6 @@ schema: |-
     //  * the project has granted access to all members in an organization
     //  * the project has granted access to _any_ user on this installation
     relation viewer: user | organization#member | user:*
-
     permission read_info = viewer + editor + org->owner + org->installation_admin
     permission write_info = editor + org->owner + org->installation_admin
     permission delete = editor + org->owner + org->installation_admin
@@ -121,6 +129,8 @@ schema: |-
     // Whether a user can read basic info/metadata of a workspace
     //+ (hasAccessToRepository && isPrebuild)
     permission read_info = owner + shared + org->member
+
+    permission create_snapshot = owner & org->snapshoter
   }
 # relationships to be used for assertions & validation
 relationships: |-

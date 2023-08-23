@@ -8,7 +8,7 @@
 
 import { v1 } from "@authzed/authzed-node";
 
-const InstallationID = "1";
+export const InstallationID = "1";
 
 export type ResourceType =
     | UserResourceType
@@ -37,6 +37,7 @@ export type UserPermission =
     | "write_info"
     | "delete"
     | "make_admin"
+    | "admin_control"
     | "read_ssh"
     | "write_ssh"
     | "read_tokens"
@@ -48,11 +49,11 @@ export type InstallationResourceType = "installation";
 
 export type InstallationRelation = "member" | "admin";
 
-export type InstallationPermission = "create_organization";
+export type InstallationPermission = "create_organization" | "configure";
 
 export type OrganizationResourceType = "organization";
 
-export type OrganizationRelation = "installation" | "member" | "owner";
+export type OrganizationRelation = "installation" | "member" | "owner" | "snapshoter";
 
 export type OrganizationPermission =
     | "installation_admin"
@@ -91,7 +92,7 @@ export type WorkspaceResourceType = "workspace";
 
 export type WorkspaceRelation = "org" | "owner" | "shared";
 
-export type WorkspacePermission = "access" | "start" | "stop" | "delete" | "read_info";
+export type WorkspacePermission = "access" | "start" | "stop" | "delete" | "read_info" | "create_snapshot";
 
 export const rel = {
     user(id: string) {
@@ -276,6 +277,27 @@ export const rel = {
                                     objectType: "user",
                                     objectId: objectId,
                                 },
+                            },
+                        } as v1.Relationship;
+                    },
+                };
+            },
+
+            get snapshoter() {
+                const result2 = {
+                    ...result,
+                    relation: "snapshoter",
+                };
+                return {
+                    organization_member(objectId: string) {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "organization",
+                                    objectId: objectId,
+                                },
+                                optionalRelation: "member",
                             },
                         } as v1.Relationship;
                     },
