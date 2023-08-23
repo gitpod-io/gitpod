@@ -164,7 +164,7 @@ func main() {
 
 	subscriberReconciler, err := controllers.NewSubscriberReconciler(mgr.GetClient(), &cfg.Manager)
 	if err != nil {
-		setupLog.Error(err, "unable to create timeout controller", "controller", "Timeout")
+		setupLog.Error(err, "unable to create subscriber controller", "controller", "Subscribers")
 		os.Exit(1)
 	}
 
