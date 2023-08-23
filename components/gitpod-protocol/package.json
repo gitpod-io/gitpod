@@ -68,8 +68,6 @@
         "reflect-metadata": "^0.1.13",
         "uuid": "^8.3.2",
         "vscode-jsonrpc": "^5.0.1",
-        "vscode-languageserver-protocol": "3.17.0",
-        "vscode-languageserver-types": "3.17.0",
         "vscode-uri": "^3.0.3",
         "vscode-ws-jsonrpc": "^0.2.0",
         "ws": "^7.4.6"
