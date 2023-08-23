@@ -21,6 +21,7 @@ import { openReconfigureWindow } from "./reconfigure-github";
 import { NewProjectCreateFromURL } from "./NewProjectCreateFromURL";
 import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
 import { useFeatureFlag } from "../../data/featureflag-query";
+import Alert from "../../components/Alert";
 
 type Props = {
     selectedProvider?: AuthProviderInfo;
@@ -170,6 +171,17 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
                             onAddGitHubAccount={reconfigure}
                             onSelectGitProvider={onChangeGitProvider}
                         />
+                    )}
+                    {enableBBSIncrementalSearch && (
+                        <Alert type="info" className="text-sm -mx-4 my-2">
+                            <div>
+                                Repository search requires that search queries start with the first character(s) of the
+                                given repository name. Wildcard search is not supported.
+                            </div>
+                            <div className="mt-1">
+                                <strong>Example:</strong> For “my-repo” search “my-re”, instead of “repo”
+                            </div>
+                        </Alert>
                     )}
                     <NewProjectSearchInput searchFilter={repoSearchFilter} onSearchFilterChange={setRepoSearchFilter} />
                 </div>
