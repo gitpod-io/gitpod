@@ -207,6 +207,7 @@ export class Server {
 
             const wsPingPongHandler = new WsConnectionHandler();
             const wsHandler = new WsExpressHandler(httpServer, verifyClient);
+            this.disposables.push(wsHandler);
             wsHandler.ws(
                 websocketConnectionHandler.path,
                 (ws, request) => {
@@ -266,7 +267,7 @@ export class Server {
         this.disposables.push(Disposable.create(() => this.redisSubscriber.stop().catch(log.error)));
 
         // Start periodic jobs
-        this.jobRunner.start();
+        this.disposables.push(this.jobRunner.start());
 
         this.app = app;
 
@@ -341,12 +342,34 @@ export class Server {
     }
 
     public async stop() {
-        await this.debugApp.stop();
-        await this.stopServer(this.iamSessionAppServer);
-        await this.stopServer(this.monitoringHttpServer);
-        await this.stopServer(this.httpServer);
-        await this.stopServer(this.apiServer);
-        this.disposables.dispose();
+        // run each stop with a timeout of 30s
+        async function race(workLoad: Promise<any>, task: string, ms: number = 30 * 1000): Promise<void> {
+            const before = Date.now();
+            let timedOut = false;
+            const timeout = new Promise<void>((resolve) =>
+                setTimeout(() => {
+                    timedOut = true;
+                    resolve();
+                }, ms),
+            );
+            await Promise.race([workLoad.catch((e) => log.error("error running " + task, e)), timeout]).then(() => {
+                const duration = Date.now() - before;
+                if (timedOut) {
+                    log.error(`task ${task} timed out after ${duration}ms`);
+                } else {
+                    log.info(`task ${task} took ${duration}ms`);
+                }
+            });
+        }
+        await Promise.all([
+            race(this.debugApp.stop(), "debugapp"),
+            race(this.stopServer(this.iamSessionAppServer), "stop iamsessionapp"),
+            race(this.stopServer(this.monitoringHttpServer), "stop monitoringapp"),
+            race(this.stopServer(this.httpServer), "stop httpserver"),
+            race(this.stopServer(this.apiServer), "stop api server"),
+            race((async () => this.disposables.dispose())(), "dispose disposables"),
+        ]);
+
         log.info("server stopped.");
     }
 
