@@ -328,6 +328,35 @@ func (s *WorkspaceService) DeleteWorkspace(ctx context.Context, req *connect.Req
 	return connect.NewResponse(&v1.DeleteWorkspaceResponse{}), nil
 }
 
+func (s *WorkspaceService) ListWorkspaceClasses(ctx context.Context, req *connect.Request[v1.ListWorkspaceClassesRequest]) (*connect.Response[v1.ListWorkspaceClassesResponse], error) {
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+
+	classes, err := conn.GetSupportedWorkspaceClasses(ctx)
+	if err != nil {
+		log.Extract(ctx).WithError(err).Error("Failed to get workspace classes.")
+		return nil, proxy.ConvertError(err)
+	}
+
+	res := make([]*v1.WorkspaceClass, 0, len(classes))
+	for _, c := range classes {
+		res = append(res, &v1.WorkspaceClass{
+			Id:          c.ID,
+			DisplayName: c.DisplayName,
+			Description: c.Description,
+			IsDefault:   c.IsDefault,
+		})
+	}
+
+	return connect.NewResponse(
+		&v1.ListWorkspaceClassesResponse{
+			Result: res,
+		},
+	), nil
+}
+
 func getLimitFromPagination(pagination *v1.Pagination) (int, error) {
 	const (
 		defaultLimit = 20

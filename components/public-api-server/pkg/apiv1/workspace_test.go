@@ -572,6 +572,46 @@ func TestClientServerStreamInterceptor(t *testing.T) {
 	resp.Close()
 }
 
+func TestWorkspaceService_ListWorkspaceClasses(t *testing.T) {
+
+	t.Run("proxies request to server", func(t *testing.T) {
+		serverMock, client := setupWorkspacesService(t)
+
+		serverMock.EXPECT().GetSupportedWorkspaceClasses(gomock.Any()).Return([]*protocol.SupportedWorkspaceClass{
+			{
+				ID:          "smol",
+				DisplayName: "Tiny",
+				Description: "The littlest there is",
+				IsDefault:   true,
+			},
+			{
+				ID:          "big",
+				DisplayName: "Huge",
+				Description: "The biggest there is",
+				IsDefault:   false,
+			}}, nil)
+
+		retrieved, err := client.ListWorkspaceClasses(context.Background(), connect.NewRequest(&v1.ListWorkspaceClassesRequest{}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.ListWorkspaceClassesResponse{
+			Result: []*v1.WorkspaceClass{
+				{
+					Id:          "smol",
+					DisplayName: "Tiny",
+					Description: "The littlest there is",
+					IsDefault:   true,
+				},
+				{
+					Id:          "big",
+					DisplayName: "Huge",
+					Description: "The biggest there is",
+					IsDefault:   false,
+				},
+			},
+		}, retrieved.Msg)
+	})
+}
+
 type TestInterceptor struct {
 	expectedToken string
 	t             *testing.T

@@ -9,7 +9,7 @@
 /* eslint-disable */
 /* @ts-nocheck */
 
-import {CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetOwnerTokenRequest, GetOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspacesRequest, ListWorkspacesResponse, StartWorkspaceRequest, StartWorkspaceResponse, StopWorkspaceRequest, StopWorkspaceResponse, StreamWorkspaceStatusRequest, StreamWorkspaceStatusResponse, UpdatePortRequest, UpdatePortResponse} from "./workspaces_pb.js";
+import {CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetOwnerTokenRequest, GetOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspaceClassesRequest, ListWorkspaceClassesResponse, ListWorkspacesRequest, ListWorkspacesResponse, StartWorkspaceRequest, StartWorkspaceResponse, StopWorkspaceRequest, StopWorkspaceResponse, StreamWorkspaceStatusRequest, StreamWorkspaceStatusResponse, UpdatePortRequest, UpdatePortResponse} from "./workspaces_pb.js";
 import {MethodKind} from "@bufbuild/protobuf";
 
 /**
@@ -120,6 +120,16 @@ export const WorkspacesService = {
       O: UpdatePortResponse,
       kind: MethodKind.Unary,
     },
+    /**
+     * ListWorkspaceClasses enumerates all available workspace classes.
+     *
+     * @generated from rpc gitpod.experimental.v1.WorkspacesService.ListWorkspaceClasses
+     */
+    listWorkspaceClasses: {
+      name: "ListWorkspaceClasses",
+      I: ListWorkspaceClassesRequest,
+      O: ListWorkspaceClassesResponse,
+      kind: MethodKind.Unary,
+    },
   }
 } as const;
-

@@ -40,6 +40,9 @@ service WorkspacesService {
     rpc DeleteWorkspace(DeleteWorkspaceRequest) returns (DeleteWorkspaceResponse) {}
 
     rpc UpdatePort(UpdatePortRequest) returns (UpdatePortResponse) {}
+
+    // ListWorkspaceClasses enumerates all available workspace classes.
+    rpc ListWorkspaceClasses(ListWorkspaceClassesRequest) returns (ListWorkspaceClassesResponse) {}
 }
 
 message ListWorkspacesRequest {
@@ -112,6 +115,12 @@ message DeleteWorkspaceRequest {
 }
 
 message DeleteWorkspaceResponse {}
+
+message ListWorkspaceClassesRequest {}
+
+message ListWorkspaceClassesResponse {
+    repeated WorkspaceClass result = 1;
+}
 
 ////////////////////////////////
 // Shared messages come here
@@ -409,4 +418,18 @@ message GitStatus {
 
     // the total number of unpushed changes
     int32 total_unpushed_commits = 8;
+}
+
+message WorkspaceClass {
+    // id is the unique identifier of the workspace class
+    string id = 1;
+
+    // display_name is the human readable name of the workspace class
+    string display_name = 2;
+
+    // description is a human readable description of the workspace class
+    string description = 3;
+
+    // is_default indicates if this workspace class is the default one
+    bool is_default = 4;
 }
