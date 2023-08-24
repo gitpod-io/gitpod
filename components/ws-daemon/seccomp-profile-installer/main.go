@@ -40,6 +40,8 @@ func main() {
 				"sethostname",
 				"unshare",
 				"keyctl",
+				"add_key",
+				"request_key",
 			},
 			Action: specs.ActAllow,
 		},
