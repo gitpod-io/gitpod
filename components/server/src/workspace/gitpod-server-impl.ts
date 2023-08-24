@@ -1988,7 +1988,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         // we use the workspacService which checks if the requesting user has access to the workspace. If that is the case they have access to snapshots as well.
         // below is the old permission check which would also check if the user has access to the snapshot itself. This is not the case anymore.
-        const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
+        const { workspace } = await this.workspaceService.getWorkspace(user.id, workspaceId);
         if (workspace.ownerId !== user.id) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} does not exist.`);
         }
