@@ -4,6 +4,10 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @layer components {
     .gp-modal-footer-alert {
         margin-top: -1px;

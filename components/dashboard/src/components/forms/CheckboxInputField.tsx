@@ -70,7 +70,7 @@ export const CheckboxInputField: FC<CheckboxInputFieldProps> = ({
                         "h-4 w-4 mt-0.5 rounded cursor-pointer border-2 dark:filter-invert",
                         "focus:ring-2 ring-blue-400",
                         "border-gray-600 dark:border-gray-900 bg-transparent",
-                        { "bg-gray-600 dark:bg-gray-900": checked },
+                        "checked:bg-gray-600 dark:checked:bg-gray-900",
                     )}
                     id={elementId}
                     checked={checked}

@@ -4,9 +4,13 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-module.exports = {
+/** @type {import('postcss-load-config').Config} */
+const config = {
     plugins: {
+        "postcss-import": {},
         tailwindcss: {},
         autoprefixer: {},
     },
 };
+
+module.exports = config;
