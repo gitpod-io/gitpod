@@ -30,7 +30,7 @@ export class GitlabFileProvider implements FileProvider {
         path: string,
     ): Promise<string> {
         const result = await this.gitlabApi.run<GitLab.Commit[]>(user, async (g) => {
-            return g.Commits.all(`${repository.owner}/${repository.name}`, { path, ref_name: revisionOrBranch });
+            return g.Commits.all(`${repository.owner}/${repository.name}`, { path, refName: revisionOrBranch });
         });
 
         if (GitLab.ApiError.is(result)) {

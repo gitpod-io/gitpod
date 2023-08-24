@@ -6,7 +6,7 @@
 
 import { AuthProviderInfo, ProviderRepository, User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
-import { Gitlab } from "@gitbeaker/node";
+import { Gitlab } from "@gitbeaker/rest";
 import { GitLab } from "./api";
 import { TokenProvider } from "../user/token-provider";
 
@@ -36,7 +36,7 @@ export class GitLabAppSupport {
         // also cf. https://docs.gitlab.com/ee/api/members.html#valid-access-levels
         //
         const projectsWithAccess = await api.Projects.all({
-            min_access_level: "40",
+            minAccessLevel: 40,
             perPage: 100,
         });
         for (const project of projectsWithAccess) {

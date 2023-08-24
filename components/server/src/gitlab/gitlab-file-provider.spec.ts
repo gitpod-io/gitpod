@@ -75,9 +75,8 @@ class TestFileProvider {
                 const project = await api.run<GitLab.Project>(this.user, (g) =>
                     g.Projects.create({
                         name: `test_project_${i}`,
-                        path: `test_project_${i}`,
-                        namespace_id: 57982169,
-                        initialize_with_readme: true,
+                        namespaceId: 57982169,
+                        initializeWithReadme: true,
                         description: "generated project to test pagination",
                     }),
                 );

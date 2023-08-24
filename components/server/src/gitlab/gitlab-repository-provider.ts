@@ -126,8 +126,8 @@ export class GitlabRepositoryProvider implements RepositoryProvider {
         const projectId = `${owner}/${repo}`;
         const result = await this.gitlab.run<GitLab.Commit[]>(user, async (g) => {
             return g.Commits.all(projectId, {
-                ref_name: ref,
-                per_page: maxDepth,
+                refName: ref,
+                perPage: maxDepth,
                 page: 1,
             });
         });

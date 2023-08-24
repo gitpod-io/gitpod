@@ -7,7 +7,7 @@
 import { injectable, inject } from "inversify";
 import { User } from "@gitpod/gitpod-protocol";
 
-import { Gitlab } from "@gitbeaker/node";
+import { Gitlab } from "@gitbeaker/rest";
 import {
     Projects,
     Users,
@@ -19,10 +19,11 @@ import {
     MergeRequests,
     Issues,
     RepositoryFiles,
+    NamespaceSchema,
+    UserSchema,
+    ExpandedUserSchema,
+    ProjectSchema,
 } from "@gitbeaker/core";
-import { ProjectExtendedSchema } from "@gitbeaker/core/dist/types/resources/Projects";
-import { NamespaceSchema } from "@gitbeaker/core/dist/types/resources/Namespaces";
-import { UserExtendedSchema, UserSchema } from "@gitbeaker/core/dist/types/resources/Users";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { GitLabScope } from "./scopes";
 import { AuthProviderParams } from "../auth/auth-provider";
@@ -90,9 +91,7 @@ export class GitLabApi {
         path: string,
     ): Promise<string | undefined> {
         const projectId = `${org}/${name}`;
-        const result = await this.run<string>(user, (api) =>
-            api.RepositoryFiles.showRaw(projectId, path, { ref: commitish }),
-        );
+        const result = await this.run<string>(user, (api) => api.RepositoryFiles.showRaw(projectId, path, commitish));
         if (GitLab.ApiError.is(result)) {
             return undefined; // e.g. 404 error, because the file isn't found
         }
@@ -137,7 +136,7 @@ export namespace GitLab {
     /**
      * https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/projects.md#get-single-project
      */
-    export interface Project extends ProjectExtendedSchema {
+    export interface Project extends ProjectSchema {
         visibility: "public" | "private" | "internal";
         archived: boolean;
         path: string; // "diaspora-project-site"
@@ -227,7 +226,7 @@ export namespace GitLab {
         merge_requests_count: number;
     }
     // https://docs.gitlab.com/ee/api/users.html#list-current-user-for-normal-users
-    export interface User extends UserExtendedSchema {
+    export interface User extends ExpandedUserSchema {
         email: string;
         state: "active" | string;
     }
@@ -256,19 +255,19 @@ export namespace GitLab {
     export namespace Permissions {
         export function hasWriteAccess(repo: Project): boolean {
             if (repo.permissions.project_access) {
-                return repo.permissions.project_access.access_level >= 30;
+                return (repo.permissions.project_access as unknown as { access_level: number }).access_level >= 30;
             }
             if (repo.permissions.group_access) {
-                return repo.permissions.group_access.access_level >= 30;
+                return (repo.permissions.group_access as unknown as { access_level: number }).access_level >= 30;
             }
             return false;
         }
         export function hasMaintainerAccess(repo: Project): boolean {
             if (repo.permissions.project_access) {
-                return repo.permissions.project_access.access_level >= 40;
+                return (repo.permissions.project_access as unknown as { access_level: number }).access_level >= 40;
             }
             if (repo.permissions.group_access) {
-                return repo.permissions.group_access.access_level >= 40;
+                return (repo.permissions.group_access as unknown as { access_level: number }).access_level >= 40;
             }
             return false;
         }
