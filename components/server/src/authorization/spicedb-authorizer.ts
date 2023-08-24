@@ -39,8 +39,7 @@ export class SpiceDBAuthorizer {
         const timer = spicedbClientLatency.startTimer();
         let error: Error | undefined;
         try {
-            const client = this.clientProvider.getClient();
-            const response = await client.checkPermission(req, this.callOptions);
+            const response = await this.client.checkPermission(req, this.callOptions);
             const permitted = response.permissionship === v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION;
 
             return permitted;
@@ -59,8 +58,7 @@ export class SpiceDBAuthorizer {
         const timer = spicedbClientLatency.startTimer();
         let error: Error | undefined;
         try {
-            const client = this.clientProvider.getClient();
-            const response = await client.writeRelationships(
+            const response = await this.client.writeRelationships(
                 v1.WriteRelationshipsRequest.create({
                     updates,
                 }),
@@ -81,11 +79,16 @@ export class SpiceDBAuthorizer {
         const timer = spicedbClientLatency.startTimer();
         let error: Error | undefined;
         try {
-            const client = this.clientProvider.getClient();
-            const existing = await client.readRelationships(v1.ReadRelationshipsRequest.create(req), this.callOptions);
+            const existing = await this.client.readRelationships(
+                v1.ReadRelationshipsRequest.create(req),
+                this.callOptions,
+            );
             if (existing.length > 0) {
-                const response = await client.deleteRelationships(req, this.callOptions);
-                const after = await client.readRelationships(v1.ReadRelationshipsRequest.create(req), this.callOptions);
+                const response = await this.client.deleteRelationships(req, this.callOptions);
+                const after = await this.client.readRelationships(
+                    v1.ReadRelationshipsRequest.create(req),
+                    this.callOptions,
+                );
                 if (after.length > 0) {
                     log.error("[spicedb] Failed to delete relationships.", { existing, after, request: req });
                 }
@@ -108,11 +111,11 @@ export class SpiceDBAuthorizer {
     }
 
     async readRelationships(req: v1.ReadRelationshipsRequest): Promise<v1.ReadRelationshipsResponse[]> {
-        const client = this.clientProvider.getClient();
-        if (!client) {
-            return [];
-        }
-        return client.readRelationships(req, this.callOptions);
+        return this.client.readRelationships(req, this.callOptions);
+    }
+
+    private get client() {
+        return this.clientProvider.getClient();
     }
 
     /**

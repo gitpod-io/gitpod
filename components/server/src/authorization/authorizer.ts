@@ -24,14 +24,13 @@ import {
 } from "./definitions";
 import { SpiceDBAuthorizer } from "./spicedb-authorizer";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 export function createInitializingAuthorizer(spiceDbAuthorizer: SpiceDBAuthorizer): Authorizer {
     const target = new Authorizer(spiceDbAuthorizer);
     const initialized = (async () => {
         await target.addInstallationAdminRole(BUILTIN_INSTLLATION_ADMIN_USER_ID);
         await target.addUser(BUILTIN_INSTLLATION_ADMIN_USER_ID);
-    })().catch((err) => log.error("Failed to initialize authorizer", err));
+    })();
     return new Proxy(target, {
         get(target, propKey, receiver) {
             const originalMethod = target[propKey as keyof typeof target];
