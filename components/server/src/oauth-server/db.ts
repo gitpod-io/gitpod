@@ -103,6 +103,9 @@ const desktopClient: OAuthClient = {
         { name: "function:getTeamProjects" },
         { name: "function:createWorkspace" },
         { name: "function:getToken" },
+        { name: "function:getSupportedWorkspaceClasses" },
+        { name: "function:getSuggestedContextURLs" },
+        { name: "function:getIDEOptions" },
         { name: "resource:default" },
     ],
 };
