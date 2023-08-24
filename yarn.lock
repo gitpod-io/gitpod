@@ -29,12 +29,12 @@
     jsonpointer "^5.0.0"
     leven "^3.1.0"
 
-"@authzed/authzed-node@^0.10.0":
-  version "0.10.0"
-  resolved "https://registry.yarnpkg.com/@authzed/authzed-node/-/authzed-node-0.10.0.tgz#623e4911fde221bb526e7f2e9ca335d9f3b9072d"
-  integrity sha512-TnAnatcU5dHvyGqrWoZzPNaO1opPpVU1y7P5LrJsV2j54y0xvx/OFhYtfeguMxHSz2kpbdCuIvIKJuB8WFbRRA==
+"@authzed/authzed-node@^0.12.1":
+  version "0.12.1"
+  resolved "https://registry.yarnpkg.com/@authzed/authzed-node/-/authzed-node-0.12.1.tgz#0c28395a64f9b1ecf33faf67259e32a9a3bce300"
+  integrity sha512-BVHLaPfiHQw1Vz+199m9i4xltT3YyFhqVHtkYPIQ28q8a7iJpnXmFRZIWuTMJcxJI01wtAxJYFuRJq3ktFe6qw==
   dependencies:
-    "@grpc/grpc-js" "^1.2.8"
+    "@grpc/grpc-js" "^1.8.3"
     "@protobuf-ts/runtime" "^2.8.1"
     "@protobuf-ts/runtime-rpc" "^2.8.1"
     google-protobuf "^3.15.3"
@@ -2222,18 +2222,10 @@
     qs "^6.10.1"
     xcase "^2.0.1"
 
-"@grpc/grpc-js@1.8.8":
+"@grpc/grpc-js@1.8.8", "@grpc/grpc-js@^1.8.3":
   version "1.8.8"
   resolved "https://registry.yarnpkg.com/@grpc/grpc-js/-/grpc-js-1.8.8.tgz#a7c6765d0302f47ba67c0ce3cb79718d6b028248"
   integrity sha512-4gfDqMLXTrorvYTKA1jL22zLvVwiHJ73t6Re1OHwdCFRjdGTDOVtSJuaWhtHaivyeDGg0LeCkmU77MTKoV3wPA==
-  dependencies:
-    "@grpc/proto-loader" "^0.7.0"
-    "@types/node" ">=12.12.47"
-
-"@grpc/grpc-js@^1.2.8":
-  version "1.8.7"
-  resolved "https://registry.yarnpkg.com/@grpc/grpc-js/-/grpc-js-1.8.7.tgz#2154fc0134462ad45f4134e8b54682a25ed05956"
-  integrity sha512-dRAWjRFN1Zy9mzPNLkFFIWT8T6C9euwluzCHZUKuhC+Bk3MayNPcpgDRyG+sg+n2sitEUySKxUynirVpu9ItKw==
   dependencies:
     "@grpc/proto-loader" "^0.7.0"
     "@types/node" ">=12.12.47"

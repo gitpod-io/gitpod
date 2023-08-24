@@ -155,10 +155,12 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 										},
 									},
 									InitialDelaySeconds: 5,
-									PeriodSeconds:       30,
-									FailureThreshold:    5,
-									SuccessThreshold:    1,
-									TimeoutSeconds:      3,
+									// try again every 10 seconds
+									PeriodSeconds: 10,
+									// fail after 6 * 10 + 5 = 65 seconds
+									FailureThreshold: 6,
+									SuccessThreshold: 1,
+									TimeoutSeconds:   3,
 								},
 								VolumeMounts: []v1.VolumeMount{
 									bootstrapVolumeMount,

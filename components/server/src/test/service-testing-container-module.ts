@@ -5,7 +5,6 @@
  */
 
 import * as grpc from "@grpc/grpc-js";
-import { v1 } from "@authzed/authzed-node";
 import { IAnalyticsWriter, NullAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { IDEServiceClient, IDEServiceDefinition } from "@gitpod/ide-service-api/lib/ide.pb";
 import { UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
@@ -14,7 +13,7 @@ import { v4 } from "uuid";
 import { AuthProviderParams } from "../auth/auth-provider";
 import { HostContextProvider, HostContextProviderFactory } from "../auth/host-context-provider";
 import { HostContextProviderImpl } from "../auth/host-context-provider-impl";
-import { SpiceDBClient } from "../authorization/spicedb";
+import { CachingSpiceDBClientProvider, SpiceDBClientProvider } from "../authorization/spicedb";
 import { Config } from "../config";
 import { StorageClient } from "../storage/storage-client";
 import { testContainer } from "@gitpod/gitpod-db/lib";
@@ -189,10 +188,13 @@ const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound,
         }))
         .inSingletonScope();
 
-    rebind(SpiceDBClient)
+    rebind(SpiceDBClientProvider)
         .toDynamicValue(() => {
-            const token = v4();
-            return v1.NewClient(token, "localhost:50051", v1.ClientSecurity.INSECURE_PLAINTEXT_CREDENTIALS).promises;
+            const config = {
+                token: v4(),
+                address: "localhost:50051",
+            };
+            return new CachingSpiceDBClientProvider(config);
         })
         .inSingletonScope();
 });
