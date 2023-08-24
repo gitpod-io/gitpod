@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Project } from "@gitpod/gitpod-protocol";
+import { AuthProviderInfo, Project } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { useAreGithubWebhooksUnauthorized, useIsGithubAppEnabled } from "../../data/git-providers/github-queries";
 import { LinkButton } from "../../components/LinkButton";
@@ -19,38 +19,48 @@ import { useToast } from "../../components/toasts/Toasts";
 import { useProviderRepositoriesForUser } from "../../data/git-providers/provider-repositories-query";
 import { openReconfigureWindow } from "./reconfigure-github";
 import { NewProjectCreateFromURL } from "./NewProjectCreateFromURL";
+import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
+import { useFeatureFlag } from "../../data/featureflag-query";
+import Alert from "../../components/Alert";
 
 type Props = {
-    selectedProviderHost?: string;
+    selectedProvider?: AuthProviderInfo;
     onProjectCreated: (project: Project) => void;
     onChangeGitProvider: () => void;
 };
-export const NewProjectRepoSelection: FC<Props> = ({ selectedProviderHost, onProjectCreated, onChangeGitProvider }) => {
+export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProjectCreated, onChangeGitProvider }) => {
     const { toast } = useToast();
+    const newProjectIncrementalRepoSearchBBS = useFeatureFlag("newProjectIncrementalRepoSearchBBS");
     const { data: isGitHubAppEnabled } = useIsGithubAppEnabled();
-    const areGitHubWebhooksUnauthorized = useAreGithubWebhooksUnauthorized(selectedProviderHost || "");
+    const areGitHubWebhooksUnauthorized = useAreGithubWebhooksUnauthorized(selectedProvider?.host ?? "");
     const createProject = useCreateProject();
 
     // Component state managed by this component
     const [selectedAccount, setSelectedAccount] = useState<string>();
-    const [repoSearchFilter, setRepoSearchFilter] = useState("");
+    const [repoSearchFilter, setRepoSearchFilter, debouncedRepoSearchFilter] = useStateWithDebounce("");
     const [installationId, setInstallationId] = useState<string>();
 
     // Main query for listing repos given the current state
     const { data: reposInAccounts, isLoading } = useProviderRepositoriesForUser({
-        provider: selectedProviderHost || "",
+        providerHost: selectedProvider?.host ?? "",
         installationId,
+        search: debouncedRepoSearchFilter,
     });
 
     // Wrap setting selected account so we can clear the repo search filter at the same time
-    const setSelectedAccountAndClearSearch = useCallback((account?: string) => {
-        setSelectedAccount(account);
-        setRepoSearchFilter("");
-    }, []);
+    const setSelectedAccountAndClearSearch = useCallback(
+        (account?: string) => {
+            setSelectedAccount(account);
+            setRepoSearchFilter("");
+        },
+        [setRepoSearchFilter],
+    );
 
     // Memoized & derived values
     const noReposAvailable = !!(reposInAccounts?.length === 0 || areGitHubWebhooksUnauthorized);
-    const isGitHub = selectedProviderHost === "github.com";
+    const isGitHub = selectedProvider?.host === "github.com";
+    const isBitbucketServer = selectedProvider?.authProviderType === "BitbucketServer";
+    const enableBBSIncrementalSearch = isBitbucketServer && newProjectIncrementalRepoSearchBBS;
 
     const accounts = useMemo(() => {
         const accounts = new Map<string, { avatarUrl: string }>();
@@ -69,12 +79,15 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProviderHost, onPro
     const filteredRepos = useMemo(() => {
         return areGitHubWebhooksUnauthorized
             ? []
+            : // filtering is done on server for incremental search
+            enableBBSIncrementalSearch
+            ? Array.from(reposInAccounts || [])
             : Array.from(reposInAccounts || []).filter(
                   (r) =>
-                      r.account === selectedAccount &&
+                      (!selectedAccount || r.account === selectedAccount) &&
                       `${r.name}`.toLowerCase().includes(repoSearchFilter.toLowerCase().trim()),
               );
-    }, [areGitHubWebhooksUnauthorized, repoSearchFilter, reposInAccounts, selectedAccount]);
+    }, [areGitHubWebhooksUnauthorized, enableBBSIncrementalSearch, repoSearchFilter, reposInAccounts, selectedAccount]);
 
     const reconfigure = useCallback(() => {
         openReconfigureWindow({
@@ -117,8 +130,13 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProviderHost, onPro
         [onCreateProject],
     );
 
-    // Adjusts selectedAccount when repos change if we don't have a selected account
+    // Adjusts selectedAccount when repos change if we don't already have a selected account
     useEffect(() => {
+        // TODO: Once all providers filter on the server we can remove this account selection logic
+        if (enableBBSIncrementalSearch) {
+            return;
+        }
+
         if (reposInAccounts?.length === 0) {
             setSelectedAccountAndClearSearch(undefined);
         } else if (!selectedAccount) {
@@ -132,47 +150,62 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProviderHost, onPro
                 setSelectedAccountAndClearSearch(first?.account);
             }
         }
-    }, [reposInAccounts, selectedAccount, setSelectedAccountAndClearSearch]);
-
-    if (isLoading) {
-        return <ReposLoading />;
-    }
+    }, [enableBBSIncrementalSearch, reposInAccounts, selectedAccount, setSelectedAccountAndClearSearch]);
 
     return (
         <>
-            <p className="text-gray-500 text-center text-base mt-12">
-                {!isLoading && noReposAvailable ? "Select account on " : "Select a Git repository on "}
-                <b>{selectedProviderHost}</b> (<LinkButton onClick={onChangeGitProvider}>change</LinkButton>)
-            </p>
-            <div className={`mt-2 flex-col ${noReposAvailable && isGitHub ? "w-96" : ""}`}>
+            <div className="flex flex-col text-gray-500 text-center text-base mt-12">
+                <span>{!isLoading && noReposAvailable ? "Select account on:" : "Select a Git repository on:"}</span>
+                <span>
+                    <b>{selectedProvider?.host}</b> (<LinkButton onClick={onChangeGitProvider}>change</LinkButton>)
+                </span>
+            </div>
+            <div className={`mt-2 flex-col w-full`}>
                 <div className="px-8 flex flex-col space-y-2" data-analytics='{"label":"Identity"}'>
-                    <NewProjectAccountSelector
-                        accounts={accounts}
-                        selectedAccount={selectedAccount}
-                        selectedProviderHost={selectedProviderHost}
-                        onAccountSelected={setSelectedAccountAndClearSearch}
-                        onAddGitHubAccount={reconfigure}
-                        onSelectGitProvider={onChangeGitProvider}
-                    />
+                    {!enableBBSIncrementalSearch && (
+                        <NewProjectAccountSelector
+                            accounts={accounts}
+                            selectedAccount={selectedAccount}
+                            selectedProviderHost={selectedProvider?.host}
+                            onAccountSelected={setSelectedAccountAndClearSearch}
+                            onAddGitHubAccount={reconfigure}
+                            onSelectGitProvider={onChangeGitProvider}
+                        />
+                    )}
+                    {enableBBSIncrementalSearch && (
+                        <Alert type="info" className="text-sm -mx-4 my-2">
+                            <div>
+                                Repository search requires that search queries start with the first character(s) of the
+                                given repository name. Wildcard search is not supported.
+                            </div>
+                            <div className="mt-1">
+                                <strong>Example:</strong> For “my-repo” search “my-re”, instead of “repo”
+                            </div>
+                        </Alert>
+                    )}
                     <NewProjectSearchInput searchFilter={repoSearchFilter} onSearchFilterChange={setRepoSearchFilter} />
                 </div>
                 <div className="p-6 flex-col">
-                    <NewProjectRepoList
-                        isCreating={createProject.isLoading}
-                        filteredRepos={filteredRepos}
-                        noReposAvailable={noReposAvailable}
-                        onRepoSelected={handleRepoSelected}
-                    />
+                    {isLoading ? (
+                        <ReposLoading />
+                    ) : (
+                        <NewProjectRepoList
+                            isCreating={createProject.isLoading}
+                            filteredRepos={filteredRepos}
+                            noReposAvailable={noReposAvailable}
+                            onRepoSelected={handleRepoSelected}
+                        />
+                    )}
                     {!isLoading && noReposAvailable && isGitHub && (
                         <NewProjectAuthRequired
-                            selectedProviderHost={selectedProviderHost}
+                            selectedProviderHost={selectedProvider?.host}
                             areGitHubWebhooksUnauthorized={areGitHubWebhooksUnauthorized}
                             onReconfigure={reconfigure}
                         />
                     )}
                 </div>
             </div>
-            {reposInAccounts && reposInAccounts.length > 0 && isGitHub && isGitHubAppEnabled && (
+            {!isLoading && reposInAccounts && reposInAccounts.length > 0 && isGitHub && isGitHubAppEnabled && (
                 <div>
                     <div className="text-gray-500 text-center w-96 mx-8">
                         Repository not found?{" "}
@@ -185,7 +218,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProviderHost, onPro
                     </div>
                 </div>
             )}
-            {(filteredRepos?.length ?? 0) === 0 && repoSearchFilter.length > 0 && (
+            {!isLoading && (filteredRepos?.length ?? 0) === 0 && repoSearchFilter.length > 0 && (
                 <NewProjectCreateFromURL
                     repoSearchFilter={repoSearchFilter}
                     isCreating={createProject.isLoading}
@@ -197,13 +230,11 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProviderHost, onPro
 };
 
 const ReposLoading: FC = () => (
-    <div className="mt-8 border rounded-xl border-gray-100 dark:border-gray-700 flex-col">
-        <div>
-            <div className="px-12 py-16 text-center text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl w-96 h-h96 flex items-center justify-center">
-                <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm">
-                    <img className="h-4 w-4 animate-spin" src={Spinner} alt="loading spinner" />
-                    <span>Fetching repositories...</span>
-                </div>
+    <div className="border rounded-xl border-gray-100 dark:border-gray-700 flex-col">
+        <div className="px-12 py-20 text-center text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-center">
+            <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm">
+                <img className="h-4 w-4 animate-spin" src={Spinner} alt="loading spinner" />
+                <span>Fetching repositories...</span>
             </div>
         </div>
     </div>

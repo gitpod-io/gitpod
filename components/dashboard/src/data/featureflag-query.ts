@@ -26,6 +26,7 @@ const featureFlags = {
     gitpod_desktop_use_local_ssh_proxy: false,
     supervisor_live_git_status: false,
     enabledOrbitalDiscoveries: "",
+    newProjectIncrementalRepoSearchBBS: false,
 };
 
 type FeatureFlags = typeof featureFlags;

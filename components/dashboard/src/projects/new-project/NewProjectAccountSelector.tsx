@@ -142,9 +142,9 @@ const useDropdownMenuEntries = ({
 
 const DropdownMenuItem: FC<{ label: string; icon: string; className?: string }> = ({ label, icon, className }) => {
     return (
-        <div className="w-full flex">
+        <div className="flex space-x-2">
             <img src={icon} className="rounded-full w-6 h-6 my-auto" alt="icon" />
-            <span className={classNames("pl-2 text-gray-600 dark:text-gray-100 text-base", className)}>{label}</span>
+            <span className={classNames("text-gray-600 dark:text-gray-100 text-base", className)}>{label}</span>
         </div>
     );
 };

@@ -183,8 +183,8 @@ describe("WorkspaceService", async () => {
         const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);
 
-        const foundWorkspace = await svc.getWorkspace(owner.id, ws.id);
-        expect(foundWorkspace?.id).to.equal(ws.id);
+        const { workspace: ownerWs } = await svc.getWorkspace(owner.id, ws.id);
+        expect(ownerWs.id).to.equal(ws.id);
 
         await expectError(ErrorCodes.PERMISSION_DENIED, svc.getWorkspace(member.id, ws.id));
         await expectError(ErrorCodes.NOT_FOUND, svc.getWorkspace(stranger.id, ws.id));
@@ -196,14 +196,45 @@ describe("WorkspaceService", async () => {
 
         await svc.controlAdmission(owner.id, ws.id, "everyone");
 
-        const foundWorkspace = await svc.getWorkspace(owner.id, ws.id);
-        expect(foundWorkspace?.id, "owner has access to shared workspace").to.equal(ws.id);
+        const { workspace: ownerWs } = await svc.getWorkspace(owner.id, ws.id);
+        expect(ownerWs.id, "owner has access to shared workspace").to.equal(ws.id);
 
-        const memberFoundWorkspace = await svc.getWorkspace(member.id, ws.id);
-        expect(memberFoundWorkspace?.id, "member has access to shared workspace").to.equal(ws.id);
+        const { workspace: memberWs } = await svc.getWorkspace(member.id, ws.id);
+        expect(memberWs.id, "member has access to shared workspace").to.equal(ws.id);
 
-        const strangerFoundWorkspace = await svc.getWorkspace(stranger.id, ws.id);
-        expect(strangerFoundWorkspace?.id, "stranger has access to shared workspace").to.equal(ws.id);
+        const { workspace: strangerWs } = await svc.getWorkspace(stranger.id, ws.id);
+        expect(strangerWs.id, "stranger has access to shared workspace").to.equal(ws.id);
+    });
+
+    it("should getWorkspaces", async () => {
+        const svc = container.get(WorkspaceService);
+        await createTestWorkspace(svc, org, owner, project);
+
+        const ownerResult = await svc.getWorkspaces(owner.id, {});
+        expect(ownerResult).to.have.lengthOf(1);
+
+        const memberResult = await svc.getWorkspaces(member.id, {});
+        expect(memberResult).to.have.lengthOf(0);
+
+        const strangerResult = await svc.getWorkspaces(stranger.id, {});
+        expect(strangerResult).to.have.lengthOf(0);
+    });
+
+    it("should getWorkspaces - shared", async () => {
+        const svc = container.get(WorkspaceService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        await svc.controlAdmission(owner.id, ws.id, "everyone");
+
+        const ownerResult = await svc.getWorkspaces(owner.id, {});
+        expect(ownerResult, "owner").to.have.lengthOf(1);
+
+        // getWorkspaces is limited to the user's own workspaces atm
+        const memberResult = await svc.getWorkspaces(member.id, {});
+        expect(memberResult, "member").to.have.lengthOf(0);
+
+        const strangerResult = await svc.getWorkspaces(stranger.id, {});
+        expect(strangerResult, "stranger").to.have.lengthOf(0);
     });
 
     it("should getOwnerToken", async () => {
@@ -299,7 +330,7 @@ describe("WorkspaceService", async () => {
         //     svc.getWorkspace(owner.id, ws.id),
         //     "getWorkspace should return NOT_FOUND after deletion",
         // );
-        const ws2 = await svc.getWorkspace(owner.id, ws.id);
+        const { workspace: ws2 } = await svc.getWorkspace(owner.id, ws.id);
         expect(ws2.softDeleted, "workspace should be marked as 'softDeleted'").to.equal("user");
     });
 
@@ -353,7 +384,7 @@ describe("WorkspaceService", async () => {
 
         await expectError(ErrorCodes.NOT_FOUND, svc.setPinned(stranger.id, ws.id, true));
         await svc.setPinned(owner.id, ws.id, true);
-        const ws2 = await svc.getWorkspace(owner.id, ws.id);
+        const { workspace: ws2 } = await svc.getWorkspace(owner.id, ws.id);
         expect(ws2.pinned, "workspace should be pinned").to.equal(true);
     });
 
@@ -363,7 +394,7 @@ describe("WorkspaceService", async () => {
         const desc = "Some description";
 
         await svc.setDescription(owner.id, ws.id, desc);
-        const ws2 = await svc.getWorkspace(owner.id, ws.id);
+        const { workspace: ws2 } = await svc.getWorkspace(owner.id, ws.id);
         expect(ws2.description).to.equal(desc);
 
         await expectError(ErrorCodes.NOT_FOUND, svc.setDescription(stranger.id, ws.id, desc));
@@ -516,7 +547,7 @@ describe("WorkspaceService", async () => {
 
         // owner can share workspace
         await svc.controlAdmission(owner.id, ws.id, "everyone");
-        const wsActual = await svc.getWorkspace(owner.id, ws.id);
+        const { workspace: wsActual } = await svc.getWorkspace(owner.id, ws.id);
         expect(wsActual.shareable, "owner should be able to share by default").to.equal(true);
     });
 
@@ -540,7 +571,7 @@ describe("WorkspaceService", async () => {
             "invalid admission level should fail",
         );
 
-        const wsActual = await svc.getWorkspace(owner.id, ws.id);
+        const { workspace: wsActual } = await svc.getWorkspace(owner.id, ws.id);
         expect(!!wsActual.shareable, "shareable should still be false").to.equal(false);
     });
 

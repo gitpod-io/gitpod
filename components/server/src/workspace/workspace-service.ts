@@ -22,6 +22,7 @@ import {
     Workspace,
     WorkspaceContext,
     WorkspaceImageBuild,
+    WorkspaceInfo,
     WorkspaceInstance,
     WorkspaceInstancePort,
     WorkspaceInstanceRepoStatus,
@@ -67,6 +68,8 @@ export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOption
      */
     clientRegionCode?: string;
 }
+
+export type CensorFunc = (instance: WorkspaceInstance) => WorkspaceInstance;
 
 @injectable()
 export class WorkspaceService {
@@ -119,8 +122,34 @@ export class WorkspaceService {
         return workspace;
     }
 
-    async getWorkspace(userId: string, workspaceId: string): Promise<Workspace> {
-        return this.doGetWorkspace(userId, workspaceId);
+    async getWorkspace(userId: string, workspaceId: string): Promise<WorkspaceInfo> {
+        const workspace = await this.doGetWorkspace(userId, workspaceId);
+
+        const latestInstancePromise = this.db.findCurrentInstance(workspaceId);
+        const latestInstance = await latestInstancePromise;
+
+        return {
+            workspace,
+            latestInstance,
+        };
+    }
+
+    async getWorkspaces(userId: string, options: GitpodServer.GetWorkspacesOptions): Promise<WorkspaceInfo[]> {
+        const res = await this.db.find({
+            limit: 20,
+            ...options,
+            userId, // gpl: We probably want to removed this limitation in the future, butkeeping the old behavior for now due to focus on FGA
+            includeHeadless: false,
+        });
+
+        const filtered = (
+            await Promise.all(
+                res.map(async (info) =>
+                    (await this.auth.hasPermissionOnWorkspace(userId, "access", info.workspace.id)) ? info : undefined,
+                ),
+            )
+        ).filter((info) => !!info) as WorkspaceInfo[];
+        return filtered;
     }
 
     async getCurrentInstance(userId: string, workspaceId: string): Promise<WorkspaceInstance> {
@@ -167,7 +196,7 @@ export class WorkspaceService {
     async getIDECredentials(userId: string, workspaceId: string): Promise<string> {
         await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
 
-        const ws = await this.getWorkspace(userId, workspaceId);
+        const ws = await this.doGetWorkspace(userId, workspaceId);
         if (ws.config.ideCredentials) {
             return ws.config.ideCredentials;
         }
@@ -192,7 +221,7 @@ export class WorkspaceService {
     ): Promise<void> {
         await this.auth.checkPermissionOnWorkspace(userId, "stop", workspaceId);
 
-        const workspace = await this.getWorkspace(userId, workspaceId);
+        const workspace = await this.doGetWorkspace(userId, workspaceId);
         const instance = await this.db.findRunningInstance(workspace.id);
         if (!instance) {
             // there's no instance running - we're done
@@ -581,7 +610,7 @@ export class WorkspaceService {
             return;
         }
 
-        const workspace = await this.getWorkspace(userId, workspaceId);
+        const workspace = await this.doGetWorkspace(userId, workspaceId);
         instance = await this.db.updateInstancePartial(instance.id, { gitStatus });
         await this.publisher.publishInstanceUpdate({
             instanceID: instance.id,
@@ -617,7 +646,7 @@ export class WorkspaceService {
     ): Promise<GetWorkspaceTimeoutResult> {
         await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
 
-        const workspace = await this.getWorkspace(userId, workspaceId);
+        const workspace = await this.doGetWorkspace(userId, workspaceId);
         const canChange = await this.entitlementService.maySetTimeout(userId, workspace.organizationId);
 
         const instance = await this.db.findCurrentInstance(workspaceId);
@@ -652,7 +681,7 @@ export class WorkspaceService {
             throw new ApplicationError(ErrorCodes.INVALID_VALUE, "Invalid duration : " + err.message);
         }
 
-        const workspace = await this.getWorkspace(userId, workspaceId);
+        const workspace = await this.doGetWorkspace(userId, workspaceId);
         if (!(await this.entitlementService.maySetTimeout(userId, workspace.organizationId))) {
             throw new ApplicationError(ErrorCodes.PLAN_PROFESSIONAL_REQUIRED, "Plan upgrade is required");
         }
@@ -806,7 +835,7 @@ export class WorkspaceService {
         await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
 
         try {
-            const workspace = await this.getWorkspace(userId, workspaceId);
+            const workspace = await this.doGetWorkspace(userId, workspaceId);
             await check(instance, workspace);
 
             const wasClosed = !!(options && options.wasClosed);
@@ -844,7 +873,7 @@ export class WorkspaceService {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid admission level.");
         }
 
-        const workspace = await this.getWorkspace(userId, workspaceId);
+        const workspace = await this.doGetWorkspace(userId, workspaceId);
         await check(workspace);
 
         if (level !== "owner" && workspace.organizationId) {
