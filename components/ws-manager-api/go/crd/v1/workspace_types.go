@@ -154,7 +154,7 @@ type PortSpec struct {
 type WorkspaceStatus struct {
 	PodStarts  int    `json:"podStarts"`
 	URL        string `json:"url,omitempty"`
-	OwnerToken string `json:"ownerToken,omitempty"`
+	OwnerToken string `json:"ownerToken,omitempty" scrub:"redact"`
 
 	// +kubebuilder:default=Unknown
 	Phase WorkspacePhase `json:"phase,omitempty"`

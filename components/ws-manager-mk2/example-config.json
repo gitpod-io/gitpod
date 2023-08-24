@@ -2,22 +2,8 @@
   "manager": {
     "namespace": "staging-cw-io-limit-hack",
     "schedulerName": "",
+    "secretsNamespace": "workspace-secrets",
     "seccompProfile": "localhost/workspace_default_cw-ws-manager-mk2.1.json",
-    "container": {
-      "workspace": {
-        "image": "OVERWRITTEN-IN-REQUEST",
-        "requests": {
-          "cpu": "1",
-          "memory": "2Gi",
-          "ephemeral-storage": ""
-        },
-        "limits": {
-          "cpu": "",
-          "memory": "",
-          "ephemeral-storage": ""
-        }
-      }
-    },
     "timeouts": {
       "startup": "1h0m0s",
       "initialization": "30m0s",
@@ -32,7 +18,6 @@
     "initProbe": {
       "timeout": "1s"
     },
-    "podTemplate": {},
     "urlTemplate": "https://{{ .Prefix }}.ws.foo.com",
     "portUrlTemplate": "https://{{ .WorkspacePort }}-{{ .Prefix }}.ws.foo.com",
     "workspaceHostPath": "/var/gitpod/workspaces",
@@ -57,9 +42,7 @@
       "gcloud": {
         "credentialsFile": "",
         "region": "",
-        "projectId": "",
-        "parallelUpload": 0,
-        "maximumBackupCount": 0
+        "projectId": ""
       },
       "minio": {
         "endpoint": "minio.default.svc.cluster.local:9000",
@@ -67,12 +50,7 @@
         "accessKeyFile": "",
         "secretKey": "ClclNAidlUwP2ESwEsXt",
         "secretKeyFile": "",
-        "region": "local",
-        "parallelUpload": 6
-      },
-      "backupTrail": {
-        "enabled": true,
-        "maxLength": 3
+        "region": "local"
       },
       "blobQuota": 5368709120
     }
