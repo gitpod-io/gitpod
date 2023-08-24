@@ -46,7 +46,7 @@ import { AuthJWT, SignInJWT } from "./auth/jwt";
 import { LoginCompletionHandler } from "./auth/login-completion-handler";
 import { VerificationService } from "./auth/verification-service";
 import { Authorizer, createInitializingAuthorizer } from "./authorization/authorizer";
-import { SpiceDBClient, spicedbClientFromEnv } from "./authorization/spicedb";
+import { CachingSpiceDBClientProvider, SpiceDBClientProvider, spiceDBConfigFromEnv } from "./authorization/spicedb";
 import { BillingModes } from "./billing/billing-mode";
 import { EntitlementService, EntitlementServiceImpl } from "./billing/entitlement-service";
 import { EntitlementServiceUBP } from "./billing/entitlement-service-ubp";
@@ -302,8 +302,15 @@ export const productionContainerModule = new ContainerModule(
         bind(IamSessionApp).toSelf().inSingletonScope();
 
         // Authorization & Perms
-        bind(SpiceDBClient)
-            .toDynamicValue(() => spicedbClientFromEnv())
+        bind(SpiceDBClientProvider)
+            .toDynamicValue((ctx) => {
+                const config = spiceDBConfigFromEnv();
+                if (!config) {
+                    throw new Error("[spicedb] Missing configuration expected in env vars!");
+                }
+                const clientCallMetrics = ctx.container.get<IClientCallMetrics>(IClientCallMetrics);
+                return new CachingSpiceDBClientProvider(config, clientCallMetrics);
+            })
             .inSingletonScope();
         bind(SpiceDBAuthorizer).toSelf().inSingletonScope();
         bind(Authorizer)

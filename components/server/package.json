@@ -34,7 +34,7 @@
     "/src"
   ],
   "dependencies": {
-    "@authzed/authzed-node": "^0.10.0",
+    "@authzed/authzed-node": "^0.12.1",
     "@bufbuild/connect": "^0.8.1",
     "@bufbuild/connect-express": "^0.8.1",
     "@gitbeaker/node": "^35.7.0",
