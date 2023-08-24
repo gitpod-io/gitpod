@@ -1988,7 +1988,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         // we use the workspacService which checks if the requesting user has access to the workspace. If that is the case they have access to snapshots as well.
         // below is the old permission check which would also check if the user has access to the snapshot itself. This is not the case anymore.
-        const workspace = await this.workspaceService.getWorkspace(user.id, workspaceId);
+        const { workspace } = await this.workspaceService.getWorkspace(user.id, workspaceId);
         if (workspace.ownerId !== user.id) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} does not exist.`);
         }
@@ -2785,9 +2785,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<AdminGetListResult<WorkspaceAndInstance>> {
         traceAPIParams(ctx, { req });
 
-        await this.guardAdminAccess("adminGetWorkspaces", { req }, Permission.ADMIN_WORKSPACES);
+        const admin = await this.guardAdminAccess("adminGetWorkspaces", { req }, Permission.ADMIN_WORKSPACES);
 
-        return await this.workspaceDb
+        const wss = await this.workspaceDb
             .trace(ctx)
             .findAllWorkspaceAndInstances(
                 req.offset,
@@ -2796,12 +2796,27 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 req.orderDir === "asc" ? "ASC" : "DESC",
                 req,
             );
+
+        await Promise.all(
+            wss.rows.map(async (row) => {
+                if (!(await this.auth.hasPermissionOnWorkspace(admin.id, "access", row.workspaceId))) {
+                    wss.total--;
+                    wss.rows = wss.rows.filter((ws) => ws.workspaceId !== row.workspaceId);
+                }
+            }),
+        );
+        return wss;
     }
 
     async adminGetWorkspace(ctx: TraceContext, workspaceId: string): Promise<WorkspaceAndInstance> {
         traceAPIParams(ctx, { workspaceId });
 
-        await this.guardAdminAccess("adminGetWorkspace", { id: workspaceId }, Permission.ADMIN_WORKSPACES);
+        const admin = await this.guardAdminAccess(
+            "adminGetWorkspace",
+            { id: workspaceId },
+            Permission.ADMIN_WORKSPACES,
+        );
+        await this.auth.checkPermissionOnWorkspace(admin.id, "access", workspaceId);
 
         const result = await this.workspaceDb.trace(ctx).findWorkspaceAndInstance(workspaceId);
         if (!result) {
@@ -2813,7 +2828,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async adminGetWorkspaceInstances(ctx: TraceContext, workspaceId: string): Promise<WorkspaceInstance[]> {
         traceAPIParams(ctx, { workspaceId });
 
-        await this.guardAdminAccess("adminGetWorkspaceInstances", { id: workspaceId }, Permission.ADMIN_WORKSPACES);
+        const admin = await this.guardAdminAccess(
+            "adminGetWorkspaceInstances",
+            { id: workspaceId },
+            Permission.ADMIN_WORKSPACES,
+        );
+        await this.auth.checkPermissionOnWorkspace(admin.id, "access", workspaceId);
 
         const result = await this.workspaceDb.trace(ctx).findInstances(workspaceId);
         return result || [];
@@ -2827,6 +2847,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             { id: workspaceId },
             Permission.ADMIN_WORKSPACES,
         );
+        await this.auth.checkPermissionOnWorkspace(admin.id, "admin_control", workspaceId);
 
         const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
         if (workspace) {
@@ -2844,11 +2865,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async adminRestoreSoftDeletedWorkspace(ctx: TraceContext, workspaceId: string): Promise<void> {
         traceAPIParams(ctx, { workspaceId });
 
-        await this.guardAdminAccess(
+        const admin = await this.guardAdminAccess(
             "adminRestoreSoftDeletedWorkspace",
             { id: workspaceId },
             Permission.ADMIN_WORKSPACES,
         );
+        await this.auth.checkPermissionOnWorkspace(admin.id, "admin_control", workspaceId);
 
         await this.workspaceDb.trace(ctx).transaction(async (db) => {
             const ws = await db.findById(workspaceId);
