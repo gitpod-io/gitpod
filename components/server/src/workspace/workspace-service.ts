@@ -285,25 +285,22 @@ export class WorkspaceService {
     public async hardDeleteWorkspace(userId: string, workspaceId: string): Promise<void> {
         await this.auth.checkPermissionOnWorkspace(userId, "delete", workspaceId);
 
-        let orgId: string | undefined;
-        let ownerId: string | undefined;
-        let ws: Workspace | undefined;
+        const workspace = await this.db.findById(workspaceId);
+        if (!workspace) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Workspace not found.");
+        }
+        const orgId = workspace.organizationId;
+        const ownerId = workspace.ownerId;
         try {
             await this.db.transaction(async (db) => {
-                const workspace = await this.db.findById(workspaceId);
-                if (!workspace) {
-                    throw new ApplicationError(ErrorCodes.NOT_FOUND, "Workspace not found.");
-                }
-                orgId = workspace.organizationId;
-                ownerId = workspace.ownerId;
-                ws = workspace;
                 await this.db.hardDeleteWorkspace(workspaceId);
-
-                await this.auth.removeWorkspaceFromOrg(orgId, ownerId, workspaceId);
+                if (orgId && ownerId && workspaceId) {
+                    await this.auth.removeWorkspaceFromOrg(orgId, ownerId, workspaceId);
+                }
             });
         } catch (err) {
-            if (orgId && ownerId && ws) {
-                await this.auth.addWorkspaceToOrg(orgId, ownerId, workspaceId, !!ws.shareable);
+            if (orgId && ownerId && workspace) {
+                await this.auth.addWorkspaceToOrg(orgId, ownerId, workspaceId, !!workspace.shareable);
             }
             throw err;
         }

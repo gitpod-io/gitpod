@@ -53,15 +53,11 @@ export class RelationshipUpdater {
             }
             return user;
         }
-        if (user.additionalData?.fgaRelationshipsVersion === this.version) {
+        if (this.isMigrated(user)) {
             return user;
         }
         const stopTimer = fgaRelationsUpdateClientLatency.startTimer();
         try {
-            log.info({ userId: user.id }, `Updating FGA relationships for user.`, {
-                fromVersion: user?.additionalData?.fgaRelationshipsVersion,
-                toVersion: this.version,
-            });
             return await this.mutex.using([`fga-migration-${user.id}`], 2000, async () => {
                 const before = new Date().getTime();
 
@@ -70,7 +66,7 @@ export class RelationshipUpdater {
                     throw new ApplicationError(ErrorCodes.NOT_FOUND, "User not found");
                 }
                 user = updatedUser;
-                if (user.additionalData?.fgaRelationshipsVersion === this.version) {
+                if (this.isMigrated(user)) {
                     return user;
                 }
                 log.info({ userId: user.id }, `Updating FGA relationships for user.`, {
@@ -100,6 +96,10 @@ export class RelationshipUpdater {
         } finally {
             fgaRelationsUpdateClientLatency.observe(stopTimer());
         }
+    }
+
+    private isMigrated(user: User) {
+        return user.additionalData?.fgaRelationshipsVersion === this.version;
     }
 
     private async findAffectedOrganizations(userId: string): Promise<Organization[]> {
