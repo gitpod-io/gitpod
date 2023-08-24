@@ -359,7 +359,9 @@ export const productionContainerModule = new ContainerModule(
         bind(Redis).toDynamicValue((ctx) => {
             const config = ctx.container.get<Config>(Config);
             const [host, port] = config.redis.address.split(":");
-            return newRedisClient({ host, port: Number(port), connectionName: "server" });
+            const username = process.env.REDIS_USERNAME;
+            const password = process.env.REDIS_PASSWORD;
+            return newRedisClient({ host, port: Number(port), connectionName: "server", username, password });
         });
 
         bind(RedisMutex).toSelf().inSingletonScope();

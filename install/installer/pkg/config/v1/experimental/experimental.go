@@ -182,6 +182,12 @@ type SpiceDBConfig struct {
 	SecretRef string `json:"secretRef"`
 }
 
+type RedisConfig struct {
+	Address   string `json:"address,omitempty"`
+	Username  string `json:"username,omitempty"`
+	SecretRef string `json:"secretRef,omitempty"`
+}
+
 type WebAppConfig struct {
 	PublicAPI *PublicAPIConfig `json:"publicApi,omitempty"`
 
@@ -202,6 +208,7 @@ type WebAppConfig struct {
 	IAM                          *IAMConfig             `json:"iam,omitempty"`
 	SpiceDB                      *SpiceDBConfig         `json:"spicedb,omitempty"`
 	CertmanagerNamespaceOverride string                 `json:"certmanagerNamespaceOverride,omitempty"`
+	Redis                        *RedisConfig           `json:"redis"`
 }
 
 type WorkspaceDefaults struct {
