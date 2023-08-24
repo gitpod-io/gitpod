@@ -418,15 +418,31 @@ export class Authorizer {
         if (await this.isDisabled(userID)) {
             return;
         }
-        const rels = [
-            set(rel.workspace(workspaceID).org.organization(orgID)),
-            set(rel.workspace(workspaceID).owner.user(userID)),
-        ];
-        if (shared) {
-            rels.push(set(rel.workspace(workspaceID).shared.anyUser));
-        }
+        return this.bulkAddWorkspaceToOrg([{ orgID, userID, workspaceID, shared }]);
+    }
 
+    async bulkAddWorkspaceToOrg(
+        ids: { orgID: string; userID: string; workspaceID: string; shared: boolean }[],
+    ): Promise<void> {
+        const rels: v1.RelationshipUpdate[] = [];
+        for (const { orgID, userID, workspaceID, shared } of ids) {
+            this.internalAddWorkspaceToOrg(orgID, userID, workspaceID, shared, (u) => rels.push(u));
+        }
         await this.authorizer.writeRelationships(...rels);
+    }
+
+    private internalAddWorkspaceToOrg(
+        orgID: string,
+        userID: string,
+        workspaceID: string,
+        shared: boolean,
+        acceptor: (update: v1.RelationshipUpdate) => void,
+    ): void {
+        acceptor(set(rel.workspace(workspaceID).org.organization(orgID)));
+        acceptor(set(rel.workspace(workspaceID).owner.user(userID)));
+        if (shared) {
+            acceptor(set(rel.workspace(workspaceID).shared.anyUser));
+        }
     }
 
     async removeWorkspaceFromOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {
@@ -446,16 +462,6 @@ export class Authorizer {
         }
         const op = shared ? set : remove;
         await this.authorizer.writeRelationships(op(rel.workspace(workspaceID).shared.anyUser));
-    }
-
-    async bulkCreateWorkspaceInOrg(ids: { orgID: string; userID: string; workspaceID: string }[]): Promise<void> {
-        const rels = ids
-            .map(({ orgID, userID, workspaceID }) => [
-                set(rel.workspace(workspaceID).org.organization(orgID)),
-                set(rel.workspace(workspaceID).owner.user(userID)),
-            ])
-            .flat();
-        await this.authorizer.writeRelationships(...rels);
     }
 
     public async find(relation: v1.Relationship): Promise<v1.Relationship | undefined> {

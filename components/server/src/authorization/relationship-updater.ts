@@ -17,7 +17,7 @@ import { RedisMutex } from "../redis/mutex";
 
 @injectable()
 export class RelationshipUpdater {
-    public readonly version = 1;
+    public readonly version = 2;
 
     constructor(
         @inject(UserDB) private readonly userDB: UserDB,
@@ -62,7 +62,7 @@ export class RelationshipUpdater {
                 fromVersion: user?.additionalData?.fgaRelationshipsVersion,
                 toVersion: this.version,
             });
-            return this.mutex.using([`fga-migration-${user.id}`], 2000, async () => {
+            return await this.mutex.using([`fga-migration-${user.id}`], 2000, async () => {
                 const before = new Date().getTime();
 
                 const updatedUser = await this.userDB.findUserById(user.id);
@@ -97,9 +97,6 @@ export class RelationshipUpdater {
                 });
                 return user;
             });
-        } catch (error) {
-            log.error({ userId: user.id }, `Error updating relationships.`, error);
-            return user;
         } finally {
             fgaRelationsUpdateClientLatency.observe(stopTimer());
         }
@@ -132,39 +129,22 @@ export class RelationshipUpdater {
         return orgs;
     }
 
-    // max number of relationships that can be created per request by SpiceDB
-    static maxRelationshipUpdates = 1000;
-    // how many relationships are created per workspace
-    static relationshipsPerWorkspace = 2;
-    static workspacesPageSize =
-        RelationshipUpdater.maxRelationshipUpdates / RelationshipUpdater.relationshipsPerWorkspace;
-
     private async updateWorkspaces(user: User): Promise<void> {
-        let offset = 0;
-        let currentPageSize = 0;
+        const workspaces = await this.workspaceDB.find({
+            userId: user.id,
+            includeHeadless: false,
+            includeWithoutProject: true,
+            limit: 500, // The largest amount of workspaces is 189 today (2023-08-24)
+        });
 
-        do {
-            // Because the total amount of workspaces per user can be very large, we want to paginate through them.
-            const workspaces = await this.workspaceDB.findAllWorkspaces(
-                offset,
-                RelationshipUpdater.workspacesPageSize,
-                "creationTime",
-                "ASC",
-                {
-                    ownerId: user.id,
-                    type: "regular",
-                },
-            );
-
-            currentPageSize = workspaces.rows.length;
-
-            if (currentPageSize) {
-                await this.authorizer.bulkCreateWorkspaceInOrg(
-                    workspaces.rows.map((ws) => ({ orgID: ws.organizationId, userID: ws.ownerId, workspaceID: ws.id })),
-                );
-                offset += currentPageSize;
-            }
-        } while (currentPageSize === RelationshipUpdater.workspacesPageSize);
+        await this.authorizer.bulkAddWorkspaceToOrg(
+            workspaces.map((ws) => ({
+                orgID: ws.workspace.organizationId,
+                userID: ws.workspace.ownerId,
+                workspaceID: ws.workspace.id,
+                shared: !!ws.workspace.shareable,
+            })),
+        );
     }
 
     private async updateUser(user: User): Promise<void> {
