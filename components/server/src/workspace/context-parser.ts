@@ -22,7 +22,7 @@ export abstract class AbstractContextParser implements IContextParser {
     @inject(AuthProviderParams) protected config: AuthProviderParams;
 
     protected get host(): string {
-        return this.config.host;
+        return this.config.host.toLowerCase();
     }
 
     public normalize(contextUrl: string): string | undefined {
