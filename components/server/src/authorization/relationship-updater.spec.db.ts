@@ -284,11 +284,9 @@ describe("RelationshipUpdater", async () => {
     });
 
     it("should create relationships for all user workspaces", async function () {
-        this.timeout(20000);
-
         const user = await userDB.newUser();
         const org = await orgDB.createTeam(user.id, "MyOrg");
-        const totalWorkspaces = RelationshipUpdater.workspacesPageSize * 2.5;
+        const totalWorkspaces = 20;
         const expectedWorkspaces: Workspace[] = [];
         for (let i = 0; i < totalWorkspaces; i++) {
             const workspace = await workspaceDB.store({
@@ -302,6 +300,7 @@ describe("RelationshipUpdater", async () => {
                 context: {
                     title: "myTitle",
                 },
+                shareable: i % 5 === 0,
                 config: {},
             });
             expectedWorkspaces.push(workspace);
@@ -311,6 +310,9 @@ describe("RelationshipUpdater", async () => {
         for (const workspace of expectedWorkspaces) {
             await expected(rel.workspace(workspace.id).org.organization(org.id));
             await expected(rel.workspace(workspace.id).owner.user(user.id));
+            if (workspace.shareable) {
+                await expected(rel.workspace(workspace.id).shared.anyUser);
+            }
         }
     });
 

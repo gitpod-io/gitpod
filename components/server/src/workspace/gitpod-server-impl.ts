@@ -2858,26 +2858,29 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             Permission.ADMIN_WORKSPACES,
         );
 
-        await this.workspaceDb.trace(ctx).transaction(async (db) => {
-            const ws = await db.findById(workspaceId);
-            if (!ws) {
-                throw new ApplicationError(ErrorCodes.NOT_FOUND, `No workspace with id '${workspaceId}' found.`);
-            }
-            if (!ws.softDeleted) {
-                return;
-            }
-            if (!!ws.contentDeletedTime) {
-                throw new ApplicationError(
-                    ErrorCodes.NOT_FOUND,
-                    "The workspace content was already garbage-collected.",
-                );
-            }
-            // @ts-ignore
-            ws.softDeleted = null;
-            ws.softDeletedTime = "";
-            ws.pinned = true;
-            await db.store(ws);
-        });
+        const ws = await this.workspaceDb.trace(ctx).findById(workspaceId);
+        if (!ws) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `No workspace with id '${workspaceId}' found.`);
+        }
+        if (!ws.softDeleted) {
+            return;
+        }
+        if (!!ws.contentDeletedTime) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "The workspace content was already garbage-collected.");
+        }
+        // @ts-ignore
+        ws.softDeleted = null;
+        ws.softDeletedTime = "";
+        ws.pinned = true;
+        try {
+            await this.workspaceDb.trace(ctx).transaction(async (db) => {
+                await db.store(ws);
+                await this.auth.addWorkspaceToOrg(ws.organizationId, ws.ownerId, ws.id, !!ws.shareable);
+            });
+        } catch (error) {
+            await this.auth.removeWorkspaceFromOrg(ws.organizationId, ws.ownerId, ws.id);
+            throw error;
+        }
     }
 
     async adminGetProjectsBySearchTerm(
