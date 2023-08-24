@@ -253,6 +253,15 @@ export class UserController {
                     );
             }
 
+            // reset the FGA state
+            await this.userService.updateUser(user.id, {
+                id: user.id,
+                additionalData: {
+                    ...(user.additionalData || {}),
+                    fgaRelationshipsVersion: undefined,
+                },
+            });
+
             const redirectToUrl = this.getSafeReturnToParam(req) || this.config.hostUrl.toString();
 
             if (req.isAuthenticated()) {
