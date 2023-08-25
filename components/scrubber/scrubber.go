@@ -32,7 +32,7 @@ Example:
 		Example
 	}
 
-	func (TrustedExample) isTrustedValue() {}
+	func (TrustedExample) IsTrustedValue() {}
 
 	func scrubExample(e *Example) *TrustedExample {
 		return &TrustedExample{
@@ -249,6 +249,9 @@ var (
 
 // Pointer implements reflectwalk.PointerValueWalker
 func (s *structScrubber) Pointer(val reflect.Value) error {
+	if !val.CanInterface() {
+		return nil
+	}
 	value := val.Interface()
 	if _, ok := value.(TrustedValue); ok {
 		return reflectwalk.SkipEntry

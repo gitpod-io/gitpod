@@ -28,6 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/components/scrubber"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
@@ -133,11 +134,18 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	r.updateMetrics(ctx, &workspace)
 	r.emitPhaseEvents(ctx, &workspace, oldStatus)
 
-	var podStatus *corev1.PodStatus
+	var scrubbedPodStatus *corev1.PodStatus
 	if len(workspacePods.Items) > 0 {
-		podStatus = &workspacePods.Items[0].Status
+		scrubbedPodStatus = workspacePods.Items[0].Status.DeepCopy()
+		if err = scrubber.Default.Struct(scrubbedPodStatus); err != nil {
+			log.Error(err, "failed to scrub pod status")
+		}
 	}
-	log.Info("updating workspace status", "status", workspace.Status, "podStatus", podStatus)
+	scrubbedStatus := workspace.Status.DeepCopy()
+	if err = scrubber.Default.Struct(scrubbedStatus); err != nil {
+		log.Error(err, "failed to scrub workspace status")
+	}
+	log.Info("updating workspace status", "status", scrubbedStatus, "podStatus", scrubbedPodStatus)
 	err = r.Status().Update(ctx, &workspace)
 	if err != nil {
 		return errorResultLogConflict(log, fmt.Errorf("failed to update workspace status: %w", err))
