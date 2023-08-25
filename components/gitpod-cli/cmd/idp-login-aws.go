@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpod"
 	"github.com/spf13/cobra"
 )
 
@@ -41,7 +42,12 @@ var idpLoginAwsCmd = &cobra.Command{
 			return err
 		}
 
-		awsCmd := exec.Command("aws", "sts", "assume-role-with-web-identity", "--role-arn", idpLoginAwsOpts.RoleARN, "--role-session-name", fmt.Sprintf("gitpod-%d", time.Now().Unix()), "--web-identity-token", tkn)
+		wsInfo, err := gitpod.GetWSInfo(ctx)
+		if err != nil {
+			return err
+		}
+
+		awsCmd := exec.Command("aws", "sts", "assume-role-with-web-identity", "--role-arn", idpLoginAwsOpts.RoleARN, "--role-session-name", fmt.Sprintf("%s-%d", wsInfo.WorkspaceId, time.Now().Unix()), "--web-identity-token", tkn)
 		out, err := awsCmd.CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("%w: %s", err, string(out))
