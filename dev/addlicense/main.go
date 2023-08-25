@@ -57,6 +57,7 @@ var (
 	remove    = flag.Bool("remove", false, "remove header mode: if a license header is present, we'll remove it")
 )
 
+// Processes and applies license headers based on CLI arguments.
 func main() {
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, helpText)
@@ -178,6 +179,7 @@ type file struct {
 	mode os.FileMode
 }
 
+// walk traverses the directory and sends file details to the provided channel.
 func walk(ch chan<- *file, start string) {
 	filepath.Walk(start, func(path string, fi os.FileInfo, err error) error {
 		if err != nil {
@@ -192,6 +194,7 @@ func walk(ch chan<- *file, start string) {
 	})
 }
 
+// addLicense adds a license header to a file if it doesn't already have one.
 func addLicense(path string, fmode os.FileMode, tmpl *template.Template, data *copyrightData) (bool, error) {
 	var lic []byte
 	var err error
@@ -217,6 +220,7 @@ func addLicense(path string, fmode os.FileMode, tmpl *template.Template, data *c
 	return true, os.WriteFile(path, b, fmode)
 }
 
+// removeLicense removes or updates the license header from a file.
 func removeLicense(path string, fmode os.FileMode, tmpl *template.Template, data *copyrightData) (haslic bool, modified bool, err error) {
 	var lic []byte
 	lic, err = licenseHeader(path, tmpl, data)
@@ -257,6 +261,7 @@ func fileHasLicense(path string) (bool, error) {
 	return true, nil
 }
 
+// licenseHeader determines the appropriate license header format based on the file extension.
 func licenseHeader(path string, tmpl *template.Template, data *copyrightData) ([]byte, error) {
 	var lic []byte
 	var err error
@@ -287,6 +292,7 @@ func licenseHeader(path string, tmpl *template.Template, data *copyrightData) ([
 	return lic, err
 }
 
+// fileExtension retrieves the file extension or the base name if there's no extension.
 func fileExtension(name string) string {
 	if v := filepath.Ext(name); v != "" {
 		return strings.ToLower(v)
@@ -303,6 +309,7 @@ var head = []string{
 	"<?php",                    // PHP opening tag
 }
 
+// hashBang detects and returns the shebang (or similar prefix) of a given byte slice, if present.
 func hashBang(b []byte) []byte {
 	var line []byte
 	for _, c := range b {
@@ -320,6 +327,7 @@ func hashBang(b []byte) []byte {
 	return nil
 }
 
+// hasLicense checks if a given byte slice contains a license identifier within its initial segment.
 func hasLicense(b []byte) bool {
 	n := 1000
 	if len(b) < 1000 {
