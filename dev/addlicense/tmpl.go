@@ -25,6 +25,7 @@ import (
 
 var licenseTemplate = make(map[string]*template.Template)
 
+// init initializes license templates.
 func init() {
 	// licenseTemplate["apache"] = template.Must(template.New("").Parse(tmplApache))
 	licenseTemplate["mit"] = template.Must(template.New("").Parse(tmplMIT))
