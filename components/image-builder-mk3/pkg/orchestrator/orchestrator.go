@@ -375,6 +375,10 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 					{Name: "BOB_BUILD_BASE", Value: buildBase},
 					{Name: "BOB_DOCKERFILE_PATH", Value: dockerfilePath},
 					{Name: "BOB_CONTEXT_DIR", Value: contextPath},
+					{
+						Name:  "BOB_WSLAYER_AUTH",
+						Value: string(additionalAuth),
+					},
 					{Name: "GITPOD_TASKS", Value: `[{"name": "build", "init": "sudo -E /app/bob build"}]`},
 					{Name: "WORKSPACEKIT_RING2_ENCLAVE", Value: "/app/bob proxy"},
 					{Name: "WORKSPACEKIT_BOBPROXY_BASEREF", Value: baseref},
