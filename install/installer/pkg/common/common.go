@@ -712,6 +712,10 @@ var (
 		APIVersion: "trust.cert-manager.io/v1alpha1",
 		Kind:       "Bundle",
 	}
+	TypePodDisruptionBudget = metav1.TypeMeta{
+		APIVersion: "policy/v1",
+		Kind:       "PodDisruptionBudget",
+	}
 )
 
 // validCookieChars contains all characters which may occur in an HTTP Cookie value (unicode \u0021 through \u007E),

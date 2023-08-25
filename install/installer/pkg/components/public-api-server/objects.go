@@ -14,6 +14,7 @@ func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
 		configmap,
 		deployment,
 		rolebinding,
+		pdb,
 		common.DefaultServiceAccount(Component),
 		service,
 		networkpolicy,
