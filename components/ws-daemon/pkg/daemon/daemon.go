@@ -24,6 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cgroup"
@@ -168,12 +169,19 @@ func NewDaemon(config Config) (*Daemon, error) {
 	var mgr manager.Manager
 
 	mgr, err = ctrl.NewManager(restCfg, ctrl.Options{
-		Scheme:                 scheme,
-		Port:                   9443,
-		Namespace:              config.Runtime.KubernetesNamespace,
+		Scheme: scheme,
+		Metrics: metricsserver.Options{
+			BindAddress: "0",
+		},
 		HealthProbeBindAddress: "0",
-		MetricsBindAddress:     "0", // Metrics are exposed through baseserver.
-		NewCache:               cache.MultiNamespacedCacheBuilder([]string{config.Runtime.KubernetesNamespace, config.Runtime.SecretsNamespace}),
+		NewCache: func(restConfig *rest.Config, opts cache.Options) (cache.Cache, error) {
+			opts.DefaultNamespaces = map[string]cache.Config{
+				config.Runtime.KubernetesNamespace: {},
+				config.Runtime.SecretsNamespace:    {},
+			}
+
+			return cache.New(restConfig, opts)
+		},
 	})
 	if err != nil {
 		return nil, err
