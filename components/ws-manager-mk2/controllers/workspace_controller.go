@@ -72,7 +72,6 @@ type WorkspaceReconciler struct {
 	metrics     *controllerMetrics
 	maintenance maintenance.Maintenance
 	Recorder    record.EventRecorder
-	OnReconcile func(ctx context.Context, ws *workspacev1.Workspace)
 }
 
 //+kubebuilder:rbac:groups=workspace.gitpod.io,resources=workspaces,verbs=get;list;watch;create;update;patch;delete
@@ -106,14 +105,6 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	if workspace.Status.Conditions == nil {
 		workspace.Status.Conditions = []metav1.Condition{}
-	}
-
-	if r.OnReconcile != nil {
-		// Publish to subscribers in a goroutine, to prevent blocking the main reconcile loop.
-		ws := workspace.DeepCopy()
-		go func() {
-			r.OnReconcile(ctx, ws)
-		}()
 	}
 
 	log.Info("reconciling workspace", "workspace", req.NamespacedName, "phase", workspace.Status.Phase)

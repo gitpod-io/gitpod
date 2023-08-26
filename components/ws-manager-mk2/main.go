@@ -18,6 +18,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 
 	"github.com/bombsimon/logrusr/v2"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
@@ -43,7 +44,6 @@ import (
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/controllers"
-	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	imgproxy "github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/proxy"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/service"
@@ -68,13 +68,9 @@ func init() {
 }
 
 func main() {
-	var enableLeaderElection bool
 	var configFN string
 	var jsonLog bool
 	var verbose bool
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
 	flag.StringVar(&configFN, "config", "", "Path to the config file")
 	flag.BoolVar(&jsonLog, "json-log", true, "produce JSON log output on verbose level")
 	flag.BoolVar(&verbose, "verbose", false, "Enable verbose logging")
@@ -115,24 +111,31 @@ func main() {
 		setupLog.Error(nil, "namespace cannot be empty")
 		os.Exit(1)
 	}
+
 	if cfg.Manager.SecretsNamespace == "" {
 		setupLog.Error(nil, "secretsNamespace cannot be empty")
 		os.Exit(1)
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		MetricsBindAddress:     cfg.Prometheus.Addr,
-		Port:                   9443,
-		HealthProbeBindAddress: cfg.Health.Addr,
-		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "ws-manager-mk2-leader.gitpod.io",
-		NewCache:               cache.MultiNamespacedCacheBuilder([]string{cfg.Manager.Namespace, cfg.Manager.SecretsNamespace}),
+		Scheme:                        scheme,
+		MetricsBindAddress:            cfg.Prometheus.Addr,
+		Port:                          9443,
+		HealthProbeBindAddress:        cfg.Health.Addr,
+		LeaderElection:                true,
+		LeaderElectionID:              "ws-manager-mk2-leader.gitpod.io",
+		LeaderElectionReleaseOnCancel: true,
+		NewCache: func(config *rest.Config, opts cache.Options) (cache.Cache, error) {
+			opts.Namespaces = []string{cfg.Manager.Namespace, cfg.Manager.SecretsNamespace}
+			return cache.New(config, opts)
+		},
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
+
+	mgrCtx := ctrl.SetupSignalHandler()
 
 	maintenanceReconciler, err := controllers.NewMaintenanceReconciler(mgr.GetClient())
 	if err != nil {
@@ -147,29 +150,42 @@ func main() {
 		os.Exit(1)
 	}
 
-	activity := activity.NewWorkspaceActivity()
-	timeoutReconciler, err := controllers.NewTimeoutReconciler(mgr.GetClient(), mgr.GetEventRecorderFor("workspace"), cfg.Manager, activity, maintenanceReconciler)
+	timeoutReconciler, err := controllers.NewTimeoutReconciler(mgr.GetClient(), mgr.GetEventRecorderFor("workspace"), cfg.Manager, maintenanceReconciler)
 	if err != nil {
 		setupLog.Error(err, "unable to create timeout controller", "controller", "Timeout")
 		os.Exit(1)
 	}
 
-	wsmanService, err := setupGRPCService(cfg, mgr.GetClient(), activity, maintenanceReconciler)
+	wsmanService, err := setupGRPCService(cfg, mgr.GetClient(), maintenanceReconciler)
 	if err != nil {
 		setupLog.Error(err, "unable to start manager service")
 		os.Exit(1)
 	}
 
-	workspaceReconciler.OnReconcile = wsmanService.OnWorkspaceReconcile
+	subscriberReconciler, err := controllers.NewSubscriberReconciler(mgr.GetClient(), &cfg.Manager)
+	if err != nil {
+		setupLog.Error(err, "unable to create subscriber controller", "controller", "Subscribers")
+		os.Exit(1)
+	}
+
+	subscriberReconciler.OnReconcile = wsmanService.OnWorkspaceReconcile
+
+	if err = subscriberReconciler.SetupWithManager(mgrCtx, mgr); err != nil {
+		setupLog.Error(err, "unable to setup workspace controller with manager", "controller", "Subscribers")
+		os.Exit(1)
+	}
+
 	if err = workspaceReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to setup workspace controller with manager", "controller", "Workspace")
 		os.Exit(1)
 	}
+
 	if err = timeoutReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to setup timeout controller with manager", "controller", "Timeout")
 		os.Exit(1)
 	}
-	if err = maintenanceReconciler.SetupWithManager(mgr); err != nil {
+
+	if err = maintenanceReconciler.SetupWithManager(mgrCtx, mgr); err != nil {
 		setupLog.Error(err, "unable to setup maintenance controller with manager", "controller", "Maintenance")
 		os.Exit(1)
 	}
@@ -191,13 +207,13 @@ func main() {
 	}
 
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(mgrCtx); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
 }
 
-func setupGRPCService(cfg *config.ServiceConfiguration, k8s client.Client, activity *activity.WorkspaceActivity, maintenance maintenance.Maintenance) (*service.WorkspaceManagerServer, error) {
+func setupGRPCService(cfg *config.ServiceConfiguration, k8s client.Client, maintenance maintenance.Maintenance) (*service.WorkspaceManagerServer, error) {
 	// TODO(cw): remove use of common-go/log
 
 	if len(cfg.RPCServer.RateLimits) > 0 {
@@ -253,7 +269,7 @@ func setupGRPCService(cfg *config.ServiceConfiguration, k8s client.Client, activ
 		imgbldr.RegisterImageBuilderServer(grpcServer, imgproxy.ImageBuilder{D: imgbldr.NewImageBuilderClient(conn)})
 	}
 
-	srv := service.NewWorkspaceManagerServer(k8s, &cfg.Manager, metrics.Registry, activity, maintenance)
+	srv := service.NewWorkspaceManagerServer(k8s, &cfg.Manager, metrics.Registry, maintenance)
 
 	grpc_prometheus.Register(grpcServer)
 	wsmanapi.RegisterWorkspaceManagerServer(grpcServer, srv)

@@ -522,6 +522,9 @@ spec:
                       type: string
                     type: array
                 type: object
+              lastActivity:
+                format: date-time
+                type: string
               ownerToken:
                 type: string
               phase:
