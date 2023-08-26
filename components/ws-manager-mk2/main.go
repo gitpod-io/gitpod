@@ -24,7 +24,6 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
@@ -130,13 +129,11 @@ func main() {
 		LeaderElection:                true,
 		LeaderElectionID:              "ws-manager-mk2-leader.gitpod.io",
 		LeaderElectionReleaseOnCancel: true,
-		NewCache: func(config *rest.Config, opts cache.Options) (cache.Cache, error) {
-			opts.DefaultNamespaces = map[string]cache.Config{
+		Cache: cache.Options{
+			DefaultNamespaces: map[string]cache.Config{
 				cfg.Manager.Namespace:        {},
 				cfg.Manager.SecretsNamespace: {},
-			}
-
-			return cache.New(config, opts)
+			},
 		},
 	})
 	if err != nil {

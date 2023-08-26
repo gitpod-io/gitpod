@@ -174,13 +174,11 @@ func NewDaemon(config Config) (*Daemon, error) {
 			BindAddress: "0",
 		},
 		HealthProbeBindAddress: "0",
-		NewCache: func(restConfig *rest.Config, opts cache.Options) (cache.Cache, error) {
-			opts.DefaultNamespaces = map[string]cache.Config{
+		Cache: cache.Options{
+			DefaultNamespaces: map[string]cache.Config{
 				config.Runtime.KubernetesNamespace: {},
 				config.Runtime.SecretsNamespace:    {},
-			}
-
-			return cache.New(restConfig, opts)
+			},
 		},
 	})
 	if err != nil {
