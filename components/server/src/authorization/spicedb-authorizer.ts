@@ -12,7 +12,6 @@ import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/expe
 import { inject, injectable } from "inversify";
 import { observeSpicedbClientLatency, spicedbClientLatency } from "../prometheus-metrics";
 import { SpiceDBClientProvider } from "./spicedb";
-import * as grpc from "@grpc/grpc-js";
 
 @injectable()
 export class SpiceDBAuthorizer {
@@ -20,6 +19,10 @@ export class SpiceDBAuthorizer {
         @inject(SpiceDBClientProvider)
         private readonly clientProvider: SpiceDBClientProvider,
     ) {}
+
+    private get client(): v1.ZedPromiseClientInterface {
+        return this.clientProvider.getClient();
+    }
 
     async check(
         req: v1.CheckPermissionRequest,
@@ -39,8 +42,7 @@ export class SpiceDBAuthorizer {
         const timer = spicedbClientLatency.startTimer();
         let error: Error | undefined;
         try {
-            const client = this.clientProvider.getClient();
-            const response = await client.checkPermission(req, this.callOptions);
+            const response = await this.client.checkPermission(req);
             const permitted = response.permissionship === v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION;
 
             return permitted;
@@ -59,12 +61,10 @@ export class SpiceDBAuthorizer {
         const timer = spicedbClientLatency.startTimer();
         let error: Error | undefined;
         try {
-            const client = this.clientProvider.getClient();
-            const response = await client.writeRelationships(
+            const response = await this.client.writeRelationships(
                 v1.WriteRelationshipsRequest.create({
                     updates,
                 }),
-                this.callOptions,
             );
             log.info("[spicedb] Successfully wrote relationships.", { response, updates });
 
@@ -81,11 +81,10 @@ export class SpiceDBAuthorizer {
         const timer = spicedbClientLatency.startTimer();
         let error: Error | undefined;
         try {
-            const client = this.clientProvider.getClient();
-            const existing = await client.readRelationships(v1.ReadRelationshipsRequest.create(req), this.callOptions);
+            const existing = await this.client.readRelationships(v1.ReadRelationshipsRequest.create(req));
             if (existing.length > 0) {
-                const response = await client.deleteRelationships(req, this.callOptions);
-                const after = await client.readRelationships(v1.ReadRelationshipsRequest.create(req), this.callOptions);
+                const response = await this.client.deleteRelationships(req);
+                const after = await this.client.readRelationships(v1.ReadRelationshipsRequest.create(req));
                 if (after.length > 0) {
                     log.error("[spicedb] Failed to delete relationships.", { existing, after, request: req });
                 }
@@ -108,21 +107,6 @@ export class SpiceDBAuthorizer {
     }
 
     async readRelationships(req: v1.ReadRelationshipsRequest): Promise<v1.ReadRelationshipsResponse[]> {
-        const client = this.clientProvider.getClient();
-        if (!client) {
-            return [];
-        }
-        return client.readRelationships(req, this.callOptions);
-    }
-
-    /**
-     * permission_service.grpc-client.d.ts has all methods overloaded with this pattern:
-     *  - xyzRelationships(input: Request, metadata?: grpc.Metadata | grpc.CallOptions, options?: grpc.CallOptions): grpc.ClientReadableStream<ReadRelationshipsResponse>;
-     * But the promisified client somehow does not have the same overloads. Thus we convince it here that options may be passed as 2nd argument.
-     */
-    private get callOptions(): grpc.Metadata {
-        return (<grpc.CallOptions>{
-            deadline: Date.now() + 8000,
-        }) as any as grpc.Metadata;
+        return this.client.readRelationships(req);
     }
 }

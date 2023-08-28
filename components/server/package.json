@@ -136,5 +136,8 @@
     "ts-node": "^10.4.0",
     "typescript": "~4.4.2",
     "watch": "^1.0.2"
+  },
+  "resolutions": {
+    "@authzed/authzed-node/**/@grpc/grpc-js": "1.9.1"
   }
 }
