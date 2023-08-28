@@ -222,7 +222,7 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
             }
 
             const result = await this.gitlabApi.run<GitLab.TreeObject[]>(user, async (g) => {
-                return g.Repositories.tree(`${owner}/${repoName}`, {
+                return g.Repositories.allRepositoryTrees(`${owner}/${repoName}`, {
                     ref: branchOrTag.name,
                     path: path.dirname(branchOrTag.fullPath),
                 });
@@ -421,7 +421,7 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
     ): Promise<IssueContext> {
         const ctxPromise = this.handleDefaultContext(user, host, owner, repoName);
         const result = await this.gitlabApi.run<GitLab.Issue>(user, async (g) => {
-            return g.Issues.show(`${owner}/${repoName}`, nr);
+            return g.Issues.show(nr, { projectId: `${owner}/${repoName}` });
         });
         if (GitLab.ApiError.is(result)) {
             throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, host, owner, repoName);

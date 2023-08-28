@@ -66,7 +66,7 @@ export class GitLabAuthProvider extends GenericAuthProvider {
             host: this.baseURL,
         });
         const getCurrentUser = async () => {
-            const response = await api.Users.current();
+            const response = await api.Users.showCurrentUser();
             return response as unknown as GitLab.User;
         };
         const unconfirmedUserMessage = "Please confirm your GitLab account and try again.";
