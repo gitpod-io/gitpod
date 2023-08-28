@@ -162,8 +162,8 @@ var runCmd = &cobra.Command{
 		ctrlCtx := ctrl.SetupSignalHandler()
 
 		go func() {
+			log.Infof("startint proxying on %s", cfg.Ingress.HTTPAddress)
 			proxy.NewWorkspaceProxy(cfg.Ingress, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffixRegex), infoprov, signers).MustServe(ctrlCtx)
-			log.Infof("started proxying on %s", cfg.Ingress.HTTPAddress)
 		}()
 
 		log.Info("🚪 ws-proxy is up and running")
