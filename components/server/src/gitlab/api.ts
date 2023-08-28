@@ -23,6 +23,7 @@ import {
     UserSchema,
     ExpandedUserSchema,
     ProjectSchema,
+    SimpleProjectSchema,
 } from "@gitbeaker/core";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { GitLabScope } from "./scopes";
@@ -124,7 +125,7 @@ export namespace GitLab {
     /**
      * https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/projects.md#get-single-project
      */
-    export interface Project extends ProjectSchema {
+    interface ProjectFiltered extends Omit<ProjectSchema, "permissions"> {
         visibility: "public" | "private" | "internal";
         archived: boolean;
         path: string; // "diaspora-project-site"
@@ -135,15 +136,19 @@ export namespace GitLab {
             "id" | "name" | "path" | "kind" | "full_path" | "avatar_url" | "web_url" | "avatar_url" | "parent_id"
         >;
         owner: Pick<UserSchema, "id" | "name" | "created_at" | "avatar_url">;
+        permissions: Permissions;
         merge_requests_enabled: boolean;
         issues_enabled: boolean;
         open_issues_count: number;
         forks_count: number;
         star_count: number;
-        forked_from_project?: Project;
+        forked_from_project?: ProjectSchema;
         default_branch: string;
         web_url: string;
     }
+    // workaround for https://github.com/microsoft/TypeScript/issues/36981
+    export type Project = ProjectFiltered & SimpleProjectSchema;
+
     export interface TreeObject {
         id: string;
         mode: string;
@@ -243,19 +248,19 @@ export namespace GitLab {
     export namespace Permissions {
         export function hasWriteAccess(repo: Project): boolean {
             if (repo.permissions.project_access) {
-                return (repo.permissions.project_access as unknown as { access_level: number }).access_level >= 30;
+                return repo.permissions.project_access.access_level >= 30;
             }
             if (repo.permissions.group_access) {
-                return (repo.permissions.group_access as unknown as { access_level: number }).access_level >= 30;
+                return repo.permissions.group_access.access_level >= 30;
             }
             return false;
         }
         export function hasMaintainerAccess(repo: Project): boolean {
             if (repo.permissions.project_access) {
-                return (repo.permissions.project_access as unknown as { access_level: number }).access_level >= 40;
+                return repo.permissions.project_access.access_level >= 40;
             }
             if (repo.permissions.group_access) {
-                return (repo.permissions.group_access as unknown as { access_level: number }).access_level >= 40;
+                return repo.permissions.group_access.access_level >= 40;
             }
             return false;
         }
