@@ -61,21 +61,11 @@ export class GitLabApi {
             const response = (await operation(userApi)) as R;
             return response as R;
         } catch (error) {
-            if (error && typeof error?.response?.status === "number" && error?.response?.status !== 200) {
-                return new GitLab.ApiError(`GitLab responded with code ${error.response.status}`, error);
-            }
-            if (error && error?.name === "HTTPError") {
-                // e.g.
-                //     {
-                //         "name": "HTTPError",
-                //         "timings": { },
-                //         "description": "404 Commit Not Found"
-                //     }
-
-                return new GitLab.ApiError(
-                    `GitLab Request Error: ${error?.description?.name || JSON.stringify(error?.description)}`,
-                    error,
-                );
+            const status = error?.cause?.response?.status;
+            const statusText = error?.cause?.response?.statusText;
+            if (error && typeof status === "number" && status !== 200) {
+                const description = error?.cause?.description || `${status} - ${statusText}`;
+                return new GitLab.ApiError(`GitLab responded: ${description}`, status);
             }
             throw error;
         } finally {
@@ -115,10 +105,8 @@ export namespace GitLab {
         RepositoryFiles: RepositoryFiles;
     }
     export class ApiError extends Error {
-        readonly httpError: { name: string; description: string } | undefined;
-        constructor(msg?: string, httpError?: any) {
+        constructor(msg?: string, readonly code?: number) {
             super(msg);
-            this.httpError = httpError;
             this.name = "GitLabApiError";
         }
     }
@@ -127,10 +115,10 @@ export namespace GitLab {
             return !!something && something.name === "GitLabApiError";
         }
         export function isNotFound(error: ApiError): boolean {
-            return !!error.httpError?.description.startsWith("404");
+            return error.code === 404;
         }
         export function isInternalServerError(error: ApiError): boolean {
-            return !!error.httpError?.description.startsWith("500");
+            return error.code === 500;
         }
     }
     /**

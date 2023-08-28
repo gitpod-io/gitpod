@@ -245,7 +245,7 @@ class TestGitlabContextParser {
             chai.assert.fail();
         } catch (e) {
             if (GitLab.ApiError.is(e)) {
-                expect(e.httpError?.description).equals("404 Commit Not Found");
+                expect(e.code).equals(404);
             } else {
                 chai.assert.fail("Unknown Error: " + JSON.stringify(e));
             }
