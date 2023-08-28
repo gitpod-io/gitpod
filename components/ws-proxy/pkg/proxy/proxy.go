@@ -60,10 +60,16 @@ func (p *WorkspaceProxy) MustServe(ctx context.Context) {
 	}
 
 	httpServer := &http.Server{
-		Addr:     p.Ingress.HTTPAddress,
-		Handler:  http.HandlerFunc(redirectToHTTPS),
-		ErrorLog: stdlog.New(logrusErrorWriter{}, "", 0),
+		Addr:              p.Ingress.HTTPAddress,
+		Handler:           http.HandlerFunc(redirectToHTTPS),
+		ErrorLog:          stdlog.New(logrusErrorWriter{}, "", 0),
+		ReadTimeout:       1 * time.Second,
+		WriteTimeout:      1 * time.Second,
+		IdleTimeout:       0,
+		ReadHeaderTimeout: 2 * time.Second,
 	}
+
+	httpServer.SetKeepAlivesEnabled(false)
 
 	httpsServer := &http.Server{
 		Addr:    p.Ingress.HTTPSAddress,
