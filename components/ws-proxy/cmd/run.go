@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/bombsimon/logrusr/v2"
-	"github.com/gitpod-io/golang-crypto/ssh"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -36,6 +35,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/config"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/sshproxy"
+	"github.com/gitpod-io/golang-crypto/ssh"
 )
 
 var (
@@ -159,11 +159,15 @@ var runCmd = &cobra.Command{
 			}
 		}
 
-		go proxy.NewWorkspaceProxy(cfg.Ingress, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffixRegex), infoprov, signers).MustServe()
-		log.Infof("started proxying on %s", cfg.Ingress.HTTPAddress)
+		ctrlCtx := ctrl.SetupSignalHandler()
+
+		go func() {
+			log.Infof("startint proxying on %s", cfg.Ingress.HTTPAddress)
+			proxy.NewWorkspaceProxy(cfg.Ingress, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffixRegex), infoprov, signers).MustServe(ctrlCtx)
+		}()
 
 		log.Info("🚪 ws-proxy is up and running")
-		if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+		if err := mgr.Start(ctrlCtx); err != nil {
 			log.WithError(err).Fatal(err, "problem starting ws-proxy")
 		}
 
