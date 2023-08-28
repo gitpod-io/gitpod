@@ -20,7 +20,7 @@ export class BitbucketServerTokenValidator implements IGitTokenValidator {
 
         let found = false;
         let isPrivateRepo: boolean | undefined;
-        let writeAccessToRepo: boolean | undefined;
+        let writeAccessToRepo: boolean | undefined = false;
 
         try {
             const repository = await this.api.getRepository(token, {
@@ -34,24 +34,17 @@ export class BitbucketServerTokenValidator implements IGitTokenValidator {
             console.error(error);
         }
 
-        if (found) {
-            writeAccessToRepo = false;
-            const username = await this.api.currentUsername(token);
-            const userProfile = await this.api.getUserProfile(token, username);
-            if (owner === userProfile.slug) {
-                writeAccessToRepo = true;
-            } else {
-                const permission = await this.api.getPermission(token, {
-                    repoKind: repoKind as any,
-                    owner,
-                    username,
-                    repoName: repo,
-                });
-                if (permission && ["REPO_WRITE", "REPO_ADMIN", "PROJECT_ADMIN", ""].includes(permission)) {
-                    writeAccessToRepo = true;
-                }
-            }
+        if (!found) {
+            return {
+                found,
+                isPrivateRepo,
+                writeAccessToRepo,
+            };
         }
+
+        // We can't check REPO_WRITE permission on BitBucketServer since there's no open api for it if we don't change data
+        // Leave this check back to BBS it self when push
+        writeAccessToRepo = true;
 
         return {
             found,

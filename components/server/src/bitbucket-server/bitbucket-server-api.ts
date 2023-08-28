@@ -122,31 +122,6 @@ export class BitbucketServerApi {
         return this.runQuery<BitbucketServer.Project>(userOrToken, `/projects/${projectSlug}`);
     }
 
-    async getPermission(
-        userOrToken: User | string,
-        params: { username: string; repoKind: BitbucketServer.RepoKind; owner: string; repoName?: string },
-    ): Promise<string | undefined> {
-        const { username, repoKind, owner, repoName } = params;
-        if (repoName) {
-            const repoPermissions = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.PermissionEntry>>(
-                userOrToken,
-                `/${repoKind}/${owner}/repos/${repoName}/permissions/users`,
-            );
-            const repoPermission = repoPermissions.values?.find((p) => p.user.name === username)?.permission;
-            if (repoPermission) {
-                return repoPermission;
-            }
-        }
-        if (repoKind === "projects") {
-            const projectPermissions = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.PermissionEntry>>(
-                userOrToken,
-                `/${repoKind}/${owner}/permissions/users`,
-            );
-            const projectPermission = projectPermissions.values?.find((p) => p.user.name === username)?.permission;
-            return projectPermission;
-        }
-    }
-
     protected get baseUrl(): string {
         return `https://${this.config.host}/rest/api/1.0`;
     }
