@@ -639,7 +639,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 statusMessage = (
                     <div>
                         <div className="flex space-x-3 items-center text-left rounded-xl m-auto px-4 h-16 w-72 mt-4 bg-gray-100 dark:bg-gray-800">
-                            <div className="rounded-full w-3 h-3 text-sm bg-gitpod-kumquat">&nbsp;</div>
+                            <div className="rounded-full w-3 h-3 text-sm bg-kumquat-ripe">&nbsp;</div>
                             <div>
                                 <p className="text-gray-700 dark:text-gray-200 font-semibold w-56 truncate">
                                     {this.state.workspaceInstance.workspaceId}
