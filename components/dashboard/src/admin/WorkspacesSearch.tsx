@@ -172,7 +172,7 @@ function WorkspaceEntry(p: { ws: WorkspaceAndInstance }) {
             to={"/admin/workspaces/" + p.ws.workspaceId}
             data-analytics='{"button_type":"sidebar_menu"}'
         >
-            <div className="rounded-xl whitespace-nowrap flex py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light group">
+            <div className="rounded-xl whitespace-nowrap flex py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-kumquat-light group">
                 <div className="pr-3 self-center w-8">
                     <WorkspaceStatusIndicator instance={WorkspaceAndInstance.toInstance(p.ws)} />
                 </div>

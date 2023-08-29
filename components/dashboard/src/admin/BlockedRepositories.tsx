@@ -175,7 +175,7 @@ function BlockedRepositoryEntry(props: { br: BlockedRepository; confirmedDelete:
         },
     ];
     return (
-        <div className="rounded whitespace-nowrap flex py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light group">
+        <div className="rounded whitespace-nowrap flex py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-kumquat-light group">
             <div className="flex flex-col w-9/12 truncate">
                 <span className="mr-3 text-lg text-gray-600 truncate">{props.br.urlRegexp}</span>
             </div>
@@ -273,7 +273,7 @@ function Details(props: {
     return (
         <div className="border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col">
             {props.error ? (
-                <div className="bg-gitpod-kumquat-light rounded-md p-3 text-gitpod-red text-sm mb-2">{props.error}</div>
+                <div className="bg-kumquat-light rounded-md p-3 text-gitpod-red text-sm mb-2">{props.error}</div>
             ) : null}
             <div>
                 <h4>Repository URL RegEx</h4>

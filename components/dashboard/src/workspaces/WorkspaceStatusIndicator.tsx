@@ -33,7 +33,7 @@ export function WorkspaceStatusIndicator({ instance }: { instance?: WorkspaceIns
             break;
         }
         default: {
-            stateClassName += " bg-gitpod-kumquat animate-pulse";
+            stateClassName += " bg-kumquat-ripe animate-pulse";
             break;
         }
     }

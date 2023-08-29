@@ -132,7 +132,7 @@ function UserEntry(p: { user: User }) {
     const email = User.getPrimaryEmail(p.user) || "---";
     return (
         <Link key={p.user.id} to={"/admin/users/" + p.user.id} data-analytics='{"button_type":"sidebar_menu"}'>
-            <div className="rounded-xl whitespace-nowrap flex space-x-2 py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light group">
+            <div className="rounded-xl whitespace-nowrap flex space-x-2 py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-kumquat-light group">
                 <div className="pr-3 self-center w-1/12">
                     <img className="rounded-full" src={p.user.avatarUrl} alt={p.user.fullName || p.user.name} />
                 </div>

@@ -35,7 +35,7 @@ function TokenEntry(props: TokenEntryProps) {
     };
 
     return (
-        <div className="rounded-xl whitespace-nowrap flex space-x-2 py-4 px-4 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light group">
+        <div className="rounded-xl whitespace-nowrap flex space-x-2 py-4 px-4 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-kumquat-light group">
             <div className="flex items-center pr-3 w-4/12">
                 <span className="truncate">{props.token.name || ""}</span>
             </div>
