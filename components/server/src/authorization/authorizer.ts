@@ -4,7 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { v1 } from "@authzed/authzed-node";
+import * as v1 from "@gitpod/spicedb-api/lib/authzed/api/v1/permission_service.pb";
+import * as core_v1 from "@gitpod/spicedb-api/lib/authzed/api/v1/core.pb";
 
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib";
 import { Project, TeamMemberRole } from "@gitpod/gitpod-protocol";
@@ -62,7 +63,7 @@ export class Authorizer {
             return true;
         }
 
-        const req = v1.CheckPermissionRequest.create({
+        const req = v1.CheckPermissionRequest.fromPartial({
             subject: subject("user", userId),
             permission,
             resource: object("installation", InstallationID),
@@ -91,7 +92,7 @@ export class Authorizer {
             return true;
         }
 
-        const req = v1.CheckPermissionRequest.create({
+        const req = v1.CheckPermissionRequest.fromPartial({
             subject: subject("user", userId),
             permission,
             resource: object("organization", orgId),
@@ -121,7 +122,7 @@ export class Authorizer {
             return true;
         }
 
-        const req = v1.CheckPermissionRequest.create({
+        const req = v1.CheckPermissionRequest.fromPartial({
             subject: subject("user", userId),
             permission,
             resource: object("project", projectId),
@@ -151,7 +152,7 @@ export class Authorizer {
             return true;
         }
 
-        const req = v1.CheckPermissionRequest.create({
+        const req = v1.CheckPermissionRequest.fromPartial({
             subject: subject("user", userId),
             permission,
             resource: object("user", resourceUserId),
@@ -184,7 +185,7 @@ export class Authorizer {
             return true;
         }
 
-        const req = v1.CheckPermissionRequest.create({
+        const req = v1.CheckPermissionRequest.fromPartial({
             subject: subject("user", userId),
             permission,
             resource: object("workspace", workspaceId),
@@ -214,7 +215,7 @@ export class Authorizer {
             return;
         }
         await this.authorizer.deleteRelationships(
-            v1.DeleteRelationshipsRequest.create({
+            v1.DeleteRelationshipsRequest.fromPartial({
                 relationshipFilter: {
                     resourceType: type,
                     optionalResourceId: id,
@@ -225,7 +226,7 @@ export class Authorizer {
         // iterate over all resource types and remove by subject
         for (const resourcetype of AllResourceTypes as ResourceType[]) {
             await this.authorizer.deleteRelationships(
-                v1.DeleteRelationshipsRequest.create({
+                v1.DeleteRelationshipsRequest.fromPartial({
                     relationshipFilter: {
                         resourceType: resourcetype,
                         optionalResourceId: "",
@@ -425,7 +426,7 @@ export class Authorizer {
     async bulkAddWorkspaceToOrg(
         ids: { orgID: string; userID: string; workspaceID: string; shared: boolean }[],
     ): Promise<void> {
-        const rels: v1.RelationshipUpdate[] = [];
+        const rels: core_v1.RelationshipUpdate[] = [];
         for (const { orgID, userID, workspaceID, shared } of ids) {
             this.internalAddWorkspaceToOrg(orgID, userID, workspaceID, shared, (u) => rels.push(u));
         }
@@ -437,7 +438,7 @@ export class Authorizer {
         userID: string,
         workspaceID: string,
         shared: boolean,
-        acceptor: (update: v1.RelationshipUpdate) => void,
+        acceptor: (update: core_v1.RelationshipUpdate) => void,
     ): void {
         acceptor(set(rel.workspace(workspaceID).org.organization(orgID)));
         acceptor(set(rel.workspace(workspaceID).owner.user(userID)));
@@ -465,50 +466,48 @@ export class Authorizer {
         await this.authorizer.writeRelationships(op(rel.workspace(workspaceID).shared.anyUser));
     }
 
-    public async find(relation: v1.Relationship): Promise<v1.Relationship | undefined> {
-        const relationships = await this.authorizer.readRelationships({
-            consistency: v1.Consistency.create({
-                requirement: {
-                    oneofKind: "fullyConsistent",
+    public async find(relation: core_v1.Relationship): Promise<core_v1.Relationship | undefined> {
+        const relationships = await this.authorizer.readRelationships(
+            v1.ReadRelationshipsRequest.fromPartial({
+                consistency: {
                     fullyConsistent: true,
                 },
-            }),
-            relationshipFilter: {
-                resourceType: relation.resource?.objectType || "",
-                optionalResourceId: relation.resource?.objectId || "",
-                optionalRelation: relation.relation,
-                optionalSubjectFilter: relation.subject?.object && {
-                    subjectType: relation.subject.object.objectType,
-                    optionalSubjectId: relation.subject.object.objectId,
+                relationshipFilter: {
+                    resourceType: relation.resource?.objectType || "",
+                    optionalResourceId: relation.resource?.objectId || "",
+                    optionalRelation: relation.relation,
+                    optionalSubjectFilter: relation.subject?.object && {
+                        subjectType: relation.subject.object.objectType,
+                        optionalSubjectId: relation.subject.object.objectId,
+                    },
                 },
-            },
-            optionalLimit: 0,
-        });
+                optionalLimit: 0,
+            }),
+        );
         if (relationships.length === 0) {
             return undefined;
         }
         return relationships[0].relationship;
     }
 
-    async findAll(relation: v1.Relationship): Promise<v1.Relationship[]> {
-        const relationships = await this.authorizer.readRelationships({
-            consistency: v1.Consistency.create({
-                requirement: {
-                    oneofKind: "fullyConsistent",
+    async findAll(relation: core_v1.Relationship): Promise<core_v1.Relationship[]> {
+        const relationships = await this.authorizer.readRelationships(
+            v1.ReadRelationshipsRequest.fromPartial({
+                consistency: {
                     fullyConsistent: true,
                 },
-            }),
-            relationshipFilter: {
-                resourceType: relation.resource?.objectType || "",
-                optionalResourceId: relation.resource?.objectId || "",
-                optionalRelation: relation.relation,
-                optionalSubjectFilter: relation.subject?.object && {
-                    subjectType: relation.subject.object.objectType,
-                    optionalSubjectId: relation.subject.object.objectId,
+                relationshipFilter: {
+                    resourceType: relation.resource?.objectType || "",
+                    optionalResourceId: relation.resource?.objectId || "",
+                    optionalRelation: relation.relation,
+                    optionalSubjectFilter: relation.subject?.object && {
+                        subjectType: relation.subject.object.objectType,
+                        optionalSubjectId: relation.subject.object.objectId,
+                    },
                 },
-            },
-            optionalLimit: 0,
-        });
+                optionalLimit: 0,
+            }),
+        );
         return relationships.map((r) => r.relationship!);
     }
 }
@@ -522,39 +521,36 @@ export async function isFgaAuthorizerEnabled(userId: string): Promise<boolean> {
     });
 }
 
-function set(rs: v1.Relationship): v1.RelationshipUpdate {
-    return v1.RelationshipUpdate.create({
-        operation: v1.RelationshipUpdate_Operation.TOUCH,
+function set(rs: core_v1.Relationship): core_v1.RelationshipUpdate {
+    return core_v1.RelationshipUpdate.fromPartial({
+        operation: core_v1.RelationshipUpdate_Operation.OPERATION_TOUCH,
         relationship: rs,
     });
 }
 
-function remove(rs: v1.Relationship): v1.RelationshipUpdate {
-    return v1.RelationshipUpdate.create({
-        operation: v1.RelationshipUpdate_Operation.DELETE,
+function remove(rs: core_v1.Relationship): core_v1.RelationshipUpdate {
+    return core_v1.RelationshipUpdate.fromPartial({
+        operation: core_v1.RelationshipUpdate_Operation.OPERATION_DELETE,
         relationship: rs,
     });
 }
 
-function object(type: ResourceType, id?: string): v1.ObjectReference {
-    return v1.ObjectReference.create({
+function object(type: ResourceType, id?: string): core_v1.ObjectReference {
+    return core_v1.ObjectReference.fromPartial({
         objectId: id,
         objectType: type,
     });
 }
 
-function subject(type: ResourceType, id?: string, relation?: Relation | Permission): v1.SubjectReference {
-    return v1.SubjectReference.create({
+function subject(type: ResourceType, id?: string, relation?: Relation | Permission): core_v1.SubjectReference {
+    return core_v1.SubjectReference.fromPartial({
         object: object(type, id),
         optionalRelation: relation,
     });
 }
 
-const consistency = v1.Consistency.create({
-    requirement: {
-        oneofKind: "fullyConsistent",
-        fullyConsistent: true,
-    },
+const consistency = v1.Consistency.fromPartial({
+    fullyConsistent: true,
 });
 
 function asSet<T>(array: (T | undefined)[]): Set<T> {

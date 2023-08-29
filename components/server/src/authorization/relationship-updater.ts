@@ -11,7 +11,7 @@ import { inject, injectable } from "inversify";
 import { Authorizer } from "./authorizer";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { v1 } from "@authzed/authzed-node";
+import * as core_v1 from "@gitpod/spicedb-api/lib/authzed/api/v1/core.pb";
 import { fgaRelationsUpdateClientLatency } from "../prometheus-metrics";
 import { RedisMutex } from "../redis/mutex";
 
@@ -105,7 +105,7 @@ export class RelationshipUpdater {
     private async findAffectedOrganizations(userId: string): Promise<Organization[]> {
         const orgs = await this.orgDB.findTeamsByUser(userId);
         const orgRelations = await this.authorizer.findAll(
-            v1.Relationship.create({
+            core_v1.Relationship.fromPartial({
                 subject: {
                     object: {
                         objectType: "user",

@@ -11,11 +11,7 @@ import { GitpodFileParser } from "@gitpod/gitpod-protocol/lib/gitpod-file-parser
 import { PrometheusClientCallMetrics } from "@gitpod/gitpod-protocol/lib/messaging/client-call-metrics";
 import { newAnalyticsWriterFromEnv } from "@gitpod/gitpod-protocol/lib/util/analytics";
 import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
-import {
-    IClientCallMetrics,
-    createClientCallMetricsInterceptor,
-    defaultGRPCOptions,
-} from "@gitpod/gitpod-protocol/lib/util/grpc";
+import { IClientCallMetrics, defaultGRPCOptions } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { prometheusClientMiddleware } from "@gitpod/gitpod-protocol/lib/util/nice-grpc";
 import { IDEServiceClient, IDEServiceDefinition } from "@gitpod/ide-service-api/lib/ide.pb";
 import { ImageBuilderClientCallMetrics, ImageBuilderClientProvider } from "@gitpod/image-builder/lib";
@@ -313,10 +309,7 @@ export const productionContainerModule = new ContainerModule(
                     throw new Error("[spicedb] Missing configuration expected in env vars!");
                 }
                 const clientCallMetrics = ctx.container.get<IClientCallMetrics>(IClientCallMetrics);
-                return new SpiceDBClientProvider(
-                    config, //
-                    [createClientCallMetricsInterceptor(clientCallMetrics)],
-                );
+                return new SpiceDBClientProvider(config, clientCallMetrics);
             })
             .inSingletonScope();
         bind(SpiceDBAuthorizer).toSelf().inSingletonScope();

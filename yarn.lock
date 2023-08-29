@@ -29,16 +29,6 @@
     jsonpointer "^5.0.0"
     leven "^3.1.0"
 
-"@authzed/authzed-node@^0.12.1":
-  version "0.12.1"
-  resolved "https://registry.yarnpkg.com/@authzed/authzed-node/-/authzed-node-0.12.1.tgz#0c28395a64f9b1ecf33faf67259e32a9a3bce300"
-  integrity sha512-BVHLaPfiHQw1Vz+199m9i4xltT3YyFhqVHtkYPIQ28q8a7iJpnXmFRZIWuTMJcxJI01wtAxJYFuRJq3ktFe6qw==
-  dependencies:
-    "@grpc/grpc-js" "^1.8.3"
-    "@protobuf-ts/runtime" "^2.8.1"
-    "@protobuf-ts/runtime-rpc" "^2.8.1"
-    google-protobuf "^3.15.3"
-
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.10.4", "@babel/code-frame@^7.16.0":
   version "7.16.0"
   resolved "https://registry.npmjs.org/@babel/code-frame/-/code-frame-7.16.0.tgz"
@@ -2222,7 +2212,7 @@
     qs "^6.10.1"
     xcase "^2.0.1"
 
-"@grpc/grpc-js@1.9.1", "@grpc/grpc-js@^1.6.1", "@grpc/grpc-js@^1.8.3":
+"@grpc/grpc-js@1.9.1", "@grpc/grpc-js@^1.6.1":
   version "1.9.1"
   resolved "https://registry.yarnpkg.com/@grpc/grpc-js/-/grpc-js-1.9.1.tgz#d6df7943cd2875a4feaf725f85ff605c08ac245d"
   integrity sha512-AvDEPQT4teS+J8++cTE5tku4rYCwpPwPguESJUummLs/Ug/O5Bouofnc1mxaDORmwA9QkrJ+PfRQ1Qs7adQgJg==
@@ -2920,18 +2910,6 @@
     pump "^3.0.0"
     readable-stream "^3.6.0"
     split2 "^4.0.0"
-
-"@protobuf-ts/runtime-rpc@^2.8.1":
-  version "2.8.2"
-  resolved "https://registry.yarnpkg.com/@protobuf-ts/runtime-rpc/-/runtime-rpc-2.8.2.tgz#8af6d5eab44e2fc92cfe9a83a5c351b5f2fcdfbe"
-  integrity sha512-vum/Y7AXdUTWGFu7dke/jCSB9dV3Oo3iVPcce3j7KudpzzWarDkEGvXjKv3Y8zJPj5waToyxwBNSb7eo5Vw5WA==
-  dependencies:
-    "@protobuf-ts/runtime" "^2.8.2"
-
-"@protobuf-ts/runtime@^2.8.1", "@protobuf-ts/runtime@^2.8.2":
-  version "2.8.2"
-  resolved "https://registry.yarnpkg.com/@protobuf-ts/runtime/-/runtime-2.8.2.tgz#5d5424a6ae7fb846c3f4d0f2dd6448db65bb69d6"
-  integrity sha512-PVxsH81y9kEbHldxxG/8Y3z2mTXWQytRl8zNS0mTPUjkEC+8GUX6gj6LsA8EFp25fAs9V0ruh+aNWmPccEI9MA==
 
 "@protobufjs/aspromise@^1.1.1", "@protobufjs/aspromise@^1.1.2":
   version "1.1.2"
@@ -8502,11 +8480,6 @@ google-protobuf@3.15.8:
   version "3.15.8"
   resolved "https://registry.npmjs.org/google-protobuf/-/google-protobuf-3.15.8.tgz"
   integrity sha512-2jtfdqTaSxk0cuBJBtTTWsot4WtR9RVr2rXg7x7OoqiuOKopPrwXpM1G4dXIkLcUNRh3RKzz76C8IOkksZSeOw==
-
-google-protobuf@^3.15.3:
-  version "3.21.2"
-  resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.21.2.tgz#4580a2bea8bbb291ee579d1fefb14d6fa3070ea4"
-  integrity sha512-3MSOYFO5U9mPGikIYCzK0SaThypfGgS6bHqrUGXG3DPHCrb+txNqeEcns1W0lkGfk0rCyNXm7xB9rMxnCiZOoA==
 
 google-protobuf@^3.19.1, google-protobuf@^3.6.1:
   version "3.19.1"

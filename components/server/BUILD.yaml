@@ -19,6 +19,7 @@ packages:
       - components/public-api/typescript:lib
       - components/gitpod-db:dbtest-init
       - components/spicedb:lib
+      - components/spicedb/typescript:lib
     config:
       packaging: offline-mirror
       yarnLock: ${coreYarnLockBase}/yarn.lock

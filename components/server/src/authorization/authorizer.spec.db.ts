@@ -3,7 +3,7 @@
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
-import { v1 } from "@authzed/authzed-node";
+import * as v1 from "@gitpod/spicedb-api/lib/authzed/api/v1/core.pb";
 import { TypeORM } from "@gitpod/gitpod-db/lib";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";

@@ -1,0 +1,14 @@
+#!/usr/bin/env -S buf generate buf.build/authzed/api:dc592e107033a7a4336935cf94fb90426719508d --template
+# The commit above corresponds to @authzed/authzed-node@0.12.1
+# ref: https://github.com/authzed/authzed-node/blob/v0.12.1/buf.gen.yaml
+version: v1
+plugins:
+  - name: ts_proto
+    out: typescript/src
+    path: typescript/node_modules/.bin/protoc-gen-ts_proto
+    opt:
+     - context=true
+     - lowerCaseServiceMethods=true
+     - stringEnums=true
+     - fileSuffix=.pb
+     - outputServices=nice-grpc,outputServices=generic-definitions,useExactTypes=false

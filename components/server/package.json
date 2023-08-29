@@ -34,7 +34,6 @@
     "/src"
   ],
   "dependencies": {
-    "@authzed/authzed-node": "^0.12.1",
     "@bufbuild/connect": "^0.8.1",
     "@bufbuild/connect-express": "^0.8.1",
     "@gitbeaker/node": "^35.7.0",
@@ -44,6 +43,7 @@
     "@gitpod/ide-service-api": "0.1.5",
     "@gitpod/image-builder": "0.1.5",
     "@gitpod/public-api": "0.1.5",
+    "@gitpod/spicedb-api": "0.1.5",
     "@gitpod/supervisor-api-grpcweb": "0.1.5",
     "@gitpod/usage-api": "0.1.5",
     "@gitpod/ws-manager": "0.1.5",
@@ -136,8 +136,5 @@
     "ts-node": "^10.4.0",
     "typescript": "~4.4.2",
     "watch": "^1.0.2"
-  },
-  "resolutions": {
-    "@authzed/authzed-node/**/@grpc/grpc-js": "1.9.1"
   }
 }

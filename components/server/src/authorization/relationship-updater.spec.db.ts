@@ -3,7 +3,7 @@
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
-import { v1 } from "@authzed/authzed-node";
+import * as core_v1 from "@gitpod/spicedb-api/lib/authzed/api/v1/core.pb";
 import {
     BUILTIN_INSTLLATION_ADMIN_USER_ID,
     ProjectDB,
@@ -316,7 +316,7 @@ describe("RelationshipUpdater", async () => {
         }
     });
 
-    async function expected(relation: v1.Relationship): Promise<void> {
+    async function expected(relation: core_v1.Relationship): Promise<void> {
         const rs = await authorizer.find(relation);
         const message = async () => {
             const expected = JSON.stringify(relation);
@@ -327,7 +327,7 @@ describe("RelationshipUpdater", async () => {
         expect(rs, await message()).to.not.be.undefined;
     }
 
-    async function notExpected(relation: v1.Relationship): Promise<void> {
+    async function notExpected(relation: core_v1.Relationship): Promise<void> {
         const rs = await authorizer.find(relation);
         expect(rs).to.be.undefined;
     }

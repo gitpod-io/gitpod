@@ -157,7 +157,8 @@ scripts:
         popd > /dev/null
       done
 
-      WEB_COMPONENTS=( local-app-api/typescript-grpcweb supervisor-api/typescript-grpc supervisor-api/typescript-grpcweb )
+      WEB_COMPONENTS=( local-app-api/typescript-grpcweb supervisor-api/typescript-grpc supervisor-api/typescript-grpcweb
+      spicedb/typescript )
       for COMPONENT in "${WEB_COMPONENTS[@]}";do
         echo "Generating code for component $COMPONENT..."
         pushd $COMPONENT > /dev/null
