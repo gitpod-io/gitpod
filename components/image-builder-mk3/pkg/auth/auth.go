@@ -129,6 +129,8 @@ func (ca CompositeAuth) Authenticate(ctx context.Context, registry string) (auth
 		}
 		if !res.Empty() {
 			return res, nil
+		} else {
+			log.WithField("registry", registry).Warn("response was empty for CompositeAuth authenticate")
 		}
 	}
 	return &Authentication{}, nil
