@@ -178,11 +178,28 @@ func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
 			return false, nil
 		}
 		if resp.StatusCode == http.StatusUnauthorized {
-			err := auth.AddResponses(context.Background(), []*http.Response{resp})
+			// the docker authorizer only refreshes OAuth tokens after two
+			// successive 401 errors for the same URL. Rather than issue the same
+			// request multiple times to tickle the token-refreshing logic, just
+			// provide the same response twice to trick it into refreshing the
+			// cached OAuth token. Call AddResponses() twice, first to invalidate
+			// the existing token (with two responses), second to fetch a new one
+			// (with one response).
+			// TODO: fix after one of these two PRs are merged and available:
+			//     https://github.com/containerd/containerd/pull/8735
+			//     https://github.com/containerd/containerd/pull/8388
+			err := auth.AddResponses(ctx, []*http.Response{resp, resp})
 			if err != nil {
 				log.WithError(err).WithField("URL", resp.Request.URL.String()).Warn("cannot add responses although response was Unauthorized")
 				return false, nil
 			}
+
+			err = auth.AddResponses(ctx, []*http.Response{resp})
+			if err != nil {
+				log.WithError(err).WithField("URL", resp.Request.URL.String()).Warn("cannot add responses although response was Unauthorized")
+				return false, nil
+			}
+
 			return true, nil
 		}
 
