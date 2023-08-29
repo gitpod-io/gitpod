@@ -30,21 +30,15 @@ export class BitbucketServerTokenValidator implements IGitTokenValidator {
             });
             found = true;
             isPrivateRepo = !repository.public;
+            writeAccessToRepo = await this.api.hasRepoPermission(token, {
+                permission: "REPO_WRITE",
+                projectKey: repository.project.key,
+                repoName: repository.name,
+                repoId: repository.id,
+            });
         } catch (error) {
             console.error(error);
         }
-
-        if (!found) {
-            return {
-                found,
-                isPrivateRepo,
-                writeAccessToRepo,
-            };
-        }
-
-        // We can't check REPO_WRITE permission on BitBucketServer since there's no open api for it if we don't change data
-        // Leave this check back to BBS it self when push
-        writeAccessToRepo = true;
 
         return {
             found,
