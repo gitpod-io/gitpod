@@ -198,15 +198,23 @@ func (s *GitStatusService) update(ctx context.Context, updateContext *gitStatusU
 
 	var newStatus *gitpod.WorkspaceInstanceRepoStatus
 	if status != nil {
+		limit := func(entries []string) []string {
+			const maxPendingChanges = 100
+			if len(entries) > maxPendingChanges {
+				return append(entries[0:maxPendingChanges], fmt.Sprintf("... and %d more", len(entries)-maxPendingChanges))
+			}
+
+			return entries
+		}
 		newStatus = &gitpod.WorkspaceInstanceRepoStatus{
 			Branch:               status.BranchHead,
 			LatestCommit:         status.LatestCommit,
 			TotalUncommitedFiles: float64(len(status.UncommitedFiles)),
 			TotalUntrackedFiles:  float64(len(status.UntrackedFiles)),
 			TotalUnpushedCommits: float64(len(status.UnpushedCommits)),
-			UncommitedFiles:      status.UncommitedFiles,
-			UntrackedFiles:       status.UntrackedFiles,
-			UnpushedCommits:      status.UnpushedCommits,
+			UncommitedFiles:      limit(status.UncommitedFiles),
+			UntrackedFiles:       limit(status.UntrackedFiles),
+			UnpushedCommits:      limit(status.UnpushedCommits),
 		}
 	}
 

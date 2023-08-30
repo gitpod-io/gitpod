@@ -77,7 +77,10 @@ export class DBWorkspaceInstance implements WorkspaceInstance {
     @Column("json")
     status: WorkspaceInstanceStatus;
 
-    @Column("simple-json", { nullable: true })
+    @Column({
+        type: "json",
+        nullable: true,
+    })
     gitStatus?: WorkspaceInstanceRepoStatus;
 
     /**
