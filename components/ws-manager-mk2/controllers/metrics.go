@@ -132,7 +132,6 @@ func (m *controllerMetrics) recordWorkspaceStartupTime(log *logr.Logger, ws *wor
 	}
 
 	duration := time.Since(ws.CreationTimestamp.Time)
-	log.Info("workspace startup time", "ws", ws.Name, "duration", duration)
 	hist.Observe(float64(duration.Seconds()))
 }
 

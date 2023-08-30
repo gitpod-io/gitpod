@@ -104,7 +104,7 @@ func (r *TimeoutReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 	}
 
 	// Workspace timed out, set Timeout condition.
-	log.Info("Workspace timed out", "reason", timedout)
+	log.V(2).Info("Workspace timed out", "reason", timedout)
 	if err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		err := r.Get(ctx, types.NamespacedName{Name: workspace.Name, Namespace: workspace.Namespace}, &workspace)
 		if err != nil {
