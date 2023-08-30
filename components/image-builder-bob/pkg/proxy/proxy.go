@@ -202,6 +202,10 @@ func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
 
 			return true, nil
 		}
+		if resp.StatusCode == http.StatusBadRequest {
+			log.WithField("URL", resp.Request.URL.String()).Warn("bad request")
+			return true, nil
+		}
 
 		return false, nil
 	}
