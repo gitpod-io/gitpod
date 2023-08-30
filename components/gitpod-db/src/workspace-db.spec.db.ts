@@ -780,5 +780,25 @@ class WorkspaceDBSpec {
         result = await this.db.findInstances(this.ws.id);
         expect(result.length).to.eq(0);
     }
+
+    @test()
+    public async storeAndUpdateGitStatus() {
+        const inst = {
+            ...this.wsi1,
+            gitstatus: undefined,
+        };
+
+        await this.db.storeInstance(inst);
+        let result = await this.db.findInstances(inst.workspaceId);
+        expect(!result[0].gitStatus).to.be.true;
+
+        inst.gitStatus = {
+            branch: "my/branch",
+        };
+        await this.db.storeInstance(inst);
+
+        result = await this.db.findInstances(inst.workspaceId);
+        expect(result[0].gitStatus?.branch).to.eq("my/branch");
+    }
 }
 module.exports = new WorkspaceDBSpec();
