@@ -75,6 +75,7 @@
     "lodash.debounce": "^4.0.8",
     "longjohn": "^0.2.12",
     "nice-grpc-client-middleware-retry": "^2.0.1",
+    "nice-grpc-client-middleware-deadline": "^2.0.7",
     "node-fetch": "^2.6.7",
     "opentracing": "^0.14.4",
     "p-throttle": "^5.1.0",

@@ -12,7 +12,7 @@ import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { inject, injectable } from "inversify";
 import { observeSpicedbClientLatency, spicedbClientLatency } from "../prometheus-metrics";
-import { SpiceDBClient, SpiceDBClientProvider } from "./spicedb";
+import { SpiceDBClientProvider } from "./spicedb";
 
 @injectable()
 export class SpiceDBAuthorizer {
@@ -21,7 +21,7 @@ export class SpiceDBAuthorizer {
         private readonly clientProvider: SpiceDBClientProvider,
     ) {}
 
-    private get client(): SpiceDBClient {
+    private async client() {
         return this.clientProvider.getClient();
     }
 
@@ -43,7 +43,8 @@ export class SpiceDBAuthorizer {
         const timer = spicedbClientLatency.startTimer();
         let error: Error | undefined;
         try {
-            const response = await this.client.checkPermission(req);
+            const client = await this.client();
+            const response = await client.checkPermission(req);
             const permitted =
                 response.permissionship === v1.CheckPermissionResponse_Permissionship.PERMISSIONSHIP_HAS_PERMISSION;
 
@@ -65,7 +66,8 @@ export class SpiceDBAuthorizer {
         const timer = spicedbClientLatency.startTimer();
         let error: Error | undefined;
         try {
-            const response = await this.client.writeRelationships(
+            const client = await this.client();
+            const response = await client.writeRelationships(
                 v1.WriteRelationshipsRequest.fromPartial({
                     updates,
                 }),
@@ -85,12 +87,11 @@ export class SpiceDBAuthorizer {
         const timer = spicedbClientLatency.startTimer();
         let error: Error | undefined;
         try {
-            const existing = await toArray(this.client.readRelationships(v1.ReadRelationshipsRequest.fromPartial(req)));
+            const client = await this.client();
+            const existing = await toArray(client.readRelationships(v1.ReadRelationshipsRequest.fromPartial(req)));
             if (existing.length > 0) {
-                const response = await this.client.deleteRelationships(req);
-                const after = await toArray(
-                    this.client.readRelationships(v1.ReadRelationshipsRequest.fromPartial(req)),
-                );
+                const response = await client.deleteRelationships(req);
+                const after = await toArray(client.readRelationships(v1.ReadRelationshipsRequest.fromPartial(req)));
                 if (after.length > 0) {
                     log.error("[spicedb] Failed to delete relationships.", { existing, after, request: req });
                 }
@@ -113,7 +114,8 @@ export class SpiceDBAuthorizer {
     }
 
     async readRelationships(req: v1.ReadRelationshipsRequest): Promise<v1.ReadRelationshipsResponse[]> {
-        return toArray(this.client.readRelationships(req));
+        const client = await this.client();
+        return toArray(client.readRelationships(req));
     }
 }
 async function toArray<T>(it: AsyncIterable<T>): Promise<T[]> {

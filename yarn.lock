@@ -11086,6 +11086,13 @@ neo-async@^2.6.0, neo-async@^2.6.2:
   resolved "https://registry.npmjs.org/neo-async/-/neo-async-2.6.2.tgz"
   integrity sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==
 
+nice-grpc-client-middleware-deadline@^2.0.7:
+  version "2.0.7"
+  resolved "https://registry.yarnpkg.com/nice-grpc-client-middleware-deadline/-/nice-grpc-client-middleware-deadline-2.0.7.tgz#c773faea2ebc1320eb19a3e065f1789cbf7977a0"
+  integrity sha512-K32Y4E+59X3Dd0qi5m0N1ay+2YgeQNWZXYAnR0tykAvKUjx0BhxBwad8OqMq2oB7ctLsFDTHXWPZ45aSIa7ZhA==
+  dependencies:
+    nice-grpc-common "^2.0.2"
+
 nice-grpc-client-middleware-retry@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/nice-grpc-client-middleware-retry/-/nice-grpc-client-middleware-retry-2.0.1.tgz#2b70d606baa6360acf8e216348ee761be20b34b2"
@@ -11098,6 +11105,13 @@ nice-grpc-common@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/nice-grpc-common/-/nice-grpc-common-2.0.0.tgz#36c9b9cdc38d3b4aa8ad7abf120fd4737eff70ea"
   integrity sha512-8h/QraeDmScnbKLd5ImS+e7uUDxumvByBo6ILj1jLHjKlIa74WKHNSn54u7RmnJ5tFAYE70iTm8VWyvbTv82yg==
+  dependencies:
+    ts-error "^1.0.6"
+
+nice-grpc-common@^2.0.2:
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/nice-grpc-common/-/nice-grpc-common-2.0.2.tgz#e6aeebb2bd19d87114b351e291e30d79dd38acf7"
+  integrity sha512-7RNWbls5kAL1QVUOXvBsv1uO0wPQK3lHv+cY1gwkTzirnG1Nop4cBJZubpgziNbaVc/bl9QJcyvsf/NQxa3rjQ==
   dependencies:
     ts-error "^1.0.6"
 

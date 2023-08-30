@@ -11,19 +11,19 @@ import {
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import * as grpc from "@grpc/grpc-js";
 import { createChannel, createClientFactory } from "nice-grpc";
-import { IClientCallMetrics, defaultGRPCOptions } from "@gitpod/gitpod-protocol/lib/util/grpc";
+import { IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { prometheusClientMiddleware } from "@gitpod/gitpod-protocol/lib/util/nice-grpc";
-import { retryMiddleware } from "nice-grpc-client-middleware-retry";
+import { RetryOptions, retryMiddleware } from "nice-grpc-client-middleware-retry";
 import { ConnectionOptions } from "tls";
+import { DeadlineOptions, deadlineMiddleware } from "nice-grpc-client-middleware-deadline";
 
 export interface SpiceDBClientConfig {
     address: string;
     token: string;
 }
 
-export type SpiceDBClient = Client;
-// type Client = v1.ZedClientInterface & grpc.Client;
-type Client = PermissionsServiceClient;
+export type SpiceDBCallOptions = RetryOptions & DeadlineOptions;
+export type SpiceDBClient = PermissionsServiceClient<SpiceDBCallOptions> & grpc.Client;
 
 export function spiceDBConfigFromEnv(): SpiceDBClientConfig | undefined {
     const token = process.env["SPICEDB_PRESHARED_KEY"];
@@ -44,87 +44,91 @@ export function spiceDBConfigFromEnv(): SpiceDBClientConfig | undefined {
 }
 
 export class SpiceDBClientProvider {
-    private client: Client | undefined;
+    private client: Promise<SpiceDBClient> | undefined;
 
     constructor(
         private readonly config: SpiceDBClientConfig,
         private readonly clientCallMetrics?: IClientCallMetrics,
     ) {}
 
-    getClient(): SpiceDBClient {
+    async getClient(): Promise<SpiceDBClient> {
         if (!this.client) {
-            const options: grpc.ClientOptions = {
-                ...defaultGRPCOptions,
-            };
-            let factory = createClientFactory();
-            if (this.clientCallMetrics) {
-                factory = factory.use(prometheusClientMiddleware(this.clientCallMetrics));
-            }
-            const credentials = createClientCreds(this.config.token, ClientSecurity.INSECURE_PLAINTEXT_CREDENTIALS);
-            this.client = factory
-                .use(retryMiddleware)
-                .create(PermissionsServiceDefinition, createChannel(this.config.address, credentials, options), {
-                    "*": {
-                        retryBaseDelayMs: 200,
-                        retryMaxAttempts: 15,
-                    },
-                });
-            // this.client = v1.NewClient(
-            //     this.clientConfig.token,
-            //     this.clientConfig.address,
-            //     v1.ClientSecurity.INSECURE_PLAINTEXT_CREDENTIALS,
-            //     undefined, //
-            //     {
-            //         callInvocationTransformer: (callProperties) => {
-            //             callProperties.callOptions = {
-            //                 ...callProperties.callOptions,
-            //                 deadline: Date.now() + 8000,
-            //             };
-            //             return callProperties;
-            //         },
-            //         channelFactoryOverride: (address, credentials, _options) => {
-            //             const options = {
-            //                 ..._options,
-            //                 "*": {
-            //                     retryBaseDelayMs: 200,
-            //                     retryMaxAttempts: 15,
-            //                 },
-            //             };
-            //             return createChannel(address, credentials, options);
-            //         },
-            //         // wie ping frequently to check if the connection is still alive
-            //         "grpc.keepalive_time_ms": 1000,
-            //         "grpc.keepalive_timeout_ms": 1000,
-            //         "grpc.dns_min_time_between_resolutions_ms": 5000, // default: 30000
-            //         "grpc-node.max_session_memory": 50,
-            //         "grpc.max_reconnect_backoff_ms": 5000,
-            //         "grpc.initial_reconnect_backoff_ms": 500,
-            //         // "grpc.service_config": JSON.stringify({
-            //         //     methodConfig: [
-            //         //         {
-            //         //             name: [{}],
-            //         //             deadline: {
-            //         //                 seconds: 1,
-            //         //                 nanos: 0,
-            //         //             },
-            //         //             retryPolicy: {
-            //         //                 maxAttempts: 5,
-            //         //                 initialBackoff: "0.1s",
-            //         //                 maxBackoff: "1s",
-            //         //                 backoffMultiplier: 2.0,
-            //         //                 retryableStatusCodes: ["UNAVAILABLE", "DEADLINE_EXCEEDED"],
-            //         //             },
-            //         //         },
-            //         //     ],
-            //         // }),
-
-            //         // "grpc.client_idle_timeout_ms": 10000, // this ensures a connection is not stuck in the "READY" state for too long. Required for the reconnect logic below.
-            //         "grpc.enable_retries": 1, //TODO enabled by default
-            //         interceptors: this.interceptors,
-            //     },
-            // ) as Client;
+            this.client = Promise.resolve(this.newClient());
+            return this.client;
         }
+
+        // const client = await this.client;
+        // const state = client.getChannel().getConnectivityState(true);
+        // if (state === grpc.connectivityState.TRANSIENT_FAILURE || state === grpc.connectivityState.SHUTDOWN) {
+        //     this.client = new Promise((resolve) => {
+        //         client.waitForReady(10000, (err) => {
+        //             if (err) {
+        //                 try {
+        //                     client.close();
+        //                 } catch (error) {
+        //                     log.error("[spicedb] Failed to close client", error);
+        //                 }
+
+        //                 log.warn("[spicedb] Lost connection to SpiceDB - reconnecting...");
+        //                 resolve(this.newClient());
+        //                 return;
+        //             }
+        //             resolve(client);
+        //         });
+        //     });
+        // }
         return this.client;
+    }
+
+    private newClient(): SpiceDBClient {
+        const options: grpc.ChannelOptions = {
+            // // we ping frequently to check if the connection is still alive
+            // "grpc.keepalive_time_ms": 1000,
+            // "grpc.keepalive_timeout_ms": 1000,
+            // "grpc.keepalive_permit_without_calls": 1,
+            // // ...still, we don't want to overwhelm http2
+            // "grpc.http2.min_time_between_pings_ms": 10000,
+            // grpc-node sometimes crashes node if we don't set this option
+            "grpc-node.max_session_memory": 50,
+            "grpc.initial_reconnect_backoff_ms": 1000,
+            "grpc.max_reconnect_backoff_ms": 5000,
+            "grpc.dns_min_time_between_resolutions_ms": 5000, // default: 30000
+        };
+        let factory = createClientFactory();
+        if (this.clientCallMetrics) {
+            factory = factory.use(prometheusClientMiddleware(this.clientCallMetrics));
+        }
+
+        const defaultCallOptions: SpiceDBCallOptions = {
+            deadline: 20000, // give enough time for all retries to happen
+            retryBaseDelayMs: 1000,
+            retryMaxDelayMs: 5000,
+            retryableStatuses: [grpc.status.UNAVAILABLE],
+            retryMaxAttempts: 6,
+        };
+        const credentials = createClientCreds(this.config.token, ClientSecurity.INSECURE_PLAINTEXT_CREDENTIALS);
+        const client = factory
+            .use(retryMiddleware)
+            .use(deadlineMiddleware)
+            .create(PermissionsServiceDefinition, createChannel(this.config.address, credentials, options), {
+                "*": {
+                    ...defaultCallOptions,
+                    // retry: Keep the default (based on protobuf definition of the RPC)
+                },
+                checkPermission: {
+                    ...defaultCallOptions,
+                    retry: true, // force override
+                },
+                readRelationships: {
+                    ...defaultCallOptions,
+                    retry: true, // force override
+                },
+                writeRelationships: {
+                    ...defaultCallOptions,
+                    retry: true, // force override
+                },
+            });
+        return client as SpiceDBClient;
     }
 }
 
@@ -135,7 +139,7 @@ export enum ClientSecurity {
     INSECURE_PLAINTEXT_CREDENTIALS = 2,
 }
 
-function createClientCreds(token: string, security: ClientSecurity = ClientSecurity.SECURE): grpc.ChannelCredentials {
+function createClientCreds(token: string, security: ClientSecurity): grpc.ChannelCredentials {
     const metadata = new grpc.Metadata();
     metadata.set("authorization", "Bearer " + token);
 
@@ -153,6 +157,28 @@ function createClientCreds(token: string, security: ClientSecurity = ClientSecur
         security === ClientSecurity.SECURE ? grpc.credentials.createSsl() : new KnownInsecureChannelCredentialsImpl(),
         ...creds,
     );
+}
+
+// See https://github.com/grpc/grpc-node/issues/543 for why this is necessary.
+class KnownInsecureChannelCredentialsImpl extends grpc.ChannelCredentials {
+    constructor(callCredentials?: grpc.CallCredentials) {
+        super(callCredentials);
+    }
+
+    compose(callCredentials: grpc.CallCredentials): grpc.ChannelCredentials {
+        const combinedCallCredentials = this.callCredentials.compose(callCredentials);
+        return new ComposedChannelCredentials(this, combinedCallCredentials);
+    }
+
+    _getConnectionOptions(): ConnectionOptions | null {
+        return null;
+    }
+    _isSecure(): boolean {
+        return false;
+    }
+    _equals(other: grpc.ChannelCredentials): boolean {
+        return other instanceof KnownInsecureChannelCredentialsImpl;
+    }
 }
 
 // Create our own known insecure channel creds.
@@ -185,27 +211,5 @@ class ComposedChannelCredentials extends grpc.ChannelCredentials {
         } else {
             return false;
         }
-    }
-}
-
-// See https://github.com/grpc/grpc-node/issues/543 for why this is necessary.
-class KnownInsecureChannelCredentialsImpl extends grpc.ChannelCredentials {
-    constructor(callCredentials?: grpc.CallCredentials) {
-        super(callCredentials);
-    }
-
-    compose(callCredentials: grpc.CallCredentials): grpc.ChannelCredentials {
-        const combinedCallCredentials = this.callCredentials.compose(callCredentials);
-        return new ComposedChannelCredentials(this, combinedCallCredentials);
-    }
-
-    _getConnectionOptions(): ConnectionOptions | null {
-        return null;
-    }
-    _isSecure(): boolean {
-        return false;
-    }
-    _equals(other: grpc.ChannelCredentials): boolean {
-        return other instanceof KnownInsecureChannelCredentialsImpl;
     }
 }
