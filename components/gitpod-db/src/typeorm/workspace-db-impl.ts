@@ -430,7 +430,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
 
     public async findRegularRunningInstances(userId?: string): Promise<WorkspaceInstance[]> {
         const infos = await this.findRunningInstancesWithWorkspaces(undefined, userId);
-        return infos.filter((info) => info.workspace.type === "regular").map((wsinfo) => wsinfo.latestInstance);
+        return infos.map((wsinfo) => wsinfo.latestInstance);
     }
 
     public async findRunningInstancesWithWorkspaces(
