@@ -46,6 +46,7 @@ func NewDockerConfigFileAuth(fn string) (*DockerConfigFileAuth, error) {
 		res.loadFromFile(fn)
 	})
 	if err != nil {
+		log.WithError(err).WithField("path", fn).Error("error watching file")
 		return nil, err
 	}
 
@@ -64,6 +65,7 @@ func (a *DockerConfigFileAuth) loadFromFile(fn string) (err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("error loading Docker config from %s: %w", fn, err)
+			log.WithError(err).WithField("path", fn).Error("failed loading from file")
 		}
 	}()
 
@@ -75,6 +77,7 @@ func (a *DockerConfigFileAuth) loadFromFile(fn string) (err error) {
 	_, _ = hash.Write(cntnt)
 	newHash := fmt.Sprintf("%x", hash.Sum(nil))
 	if a.hash == newHash {
+		log.Infof("nothing has changed: %s", fn)
 		return nil
 	}
 
@@ -91,6 +94,7 @@ func (a *DockerConfigFileAuth) loadFromFile(fn string) (err error) {
 	a.C = cfg
 	a.hash = newHash
 
+	log.Infof("file has changed: %s", fn)
 	return nil
 }
 
@@ -98,6 +102,7 @@ func (a *DockerConfigFileAuth) loadFromFile(fn string) (err error) {
 func (a *DockerConfigFileAuth) Authenticate(ctx context.Context, registry string) (auth *Authentication, err error) {
 	ac, err := a.C.GetAuthConfig(registry)
 	if err != nil {
+		log.WithError(err).WithField("registry", registry).Error("failed DockerConfigFileAuth Authenticate")
 		return nil, err
 	}
 
@@ -119,10 +124,13 @@ func (ca CompositeAuth) Authenticate(ctx context.Context, registry string) (auth
 	for _, ath := range ca {
 		res, err := ath.Authenticate(ctx, registry)
 		if err != nil {
+			log.WithError(err).WithField("registry", registry).Errorf("failed CompositeAuth Authenticate")
 			return nil, err
 		}
 		if !res.Empty() {
 			return res, nil
+		} else {
+			log.WithField("registry", registry).Warn("response was empty for CompositeAuth authenticate")
 		}
 	}
 	return &Authentication{}, nil
@@ -154,6 +162,13 @@ func (ath *ECRAuthenticator) Authenticate(ctx context.Context, registry string) 
 		return nil, nil
 	}
 
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("error with ECR authenticate: %w", err)
+			log.WithError(err).WithField("registry", registry).Error("failed ECR authenticate")
+		}
+	}()
+
 	ath.ecrAuthLock.Lock()
 	defer ath.ecrAuthLock.Unlock()
 	if time.Since(ath.ecrAuthLastRefreshTime) > ecrTokenRefreshTime {
@@ -162,7 +177,8 @@ func (ath *ECRAuthenticator) Authenticate(ctx context.Context, registry string) 
 			return nil, err
 		}
 		if len(tknout.AuthorizationData) == 0 {
-			return nil, fmt.Errorf("no ECR authorization data received")
+			err = fmt.Errorf("no ECR authorization data received")
+			return nil, err
 		}
 
 		pwd, err := base64.StdEncoding.DecodeString(aws.ToString(tknout.AuthorizationData[0].AuthorizationToken))
@@ -172,12 +188,15 @@ func (ath *ECRAuthenticator) Authenticate(ctx context.Context, registry string) 
 
 		ath.ecrAuth = string(pwd)
 		ath.ecrAuthLastRefreshTime = time.Now()
-		log.Debug("refreshed ECR token")
+		log.Info("refreshed ECR token")
+	} else {
+		log.Info("no ECR token refresh necessary")
 	}
 
 	segs := strings.Split(ath.ecrAuth, ":")
 	if len(segs) != 2 {
-		return nil, fmt.Errorf("cannot understand ECR token. Expected 2 segments, got %d", len(segs))
+		err = fmt.Errorf("cannot understand ECR token. Expected 2 segments, got %d", len(segs))
+		return nil, err
 	}
 	return &Authentication{
 		Username: segs[0],
@@ -299,6 +318,7 @@ func (a AllowedAuthFor) GetAuthFor(ctx context.Context, auth RegistryAuthenticat
 
 	ref, err := reference.ParseNormalizedNamed(refstr)
 	if err != nil {
+		log.WithError(err).Errorf("failed parsing normalized name")
 		return nil, xerrors.Errorf("cannot parse image ref: %v", err)
 	}
 	reg := reference.Domain(ref)
@@ -359,6 +379,8 @@ func (a AllowedAuthFor) additionalAuth(domain string) *Authentication {
 			res.Username = segs[0]
 			res.Password = strings.Join(segs[1:], ":")
 		}
+	} else {
+		log.Errorf("failed getting additional auth")
 	}
 	return res
 }
@@ -386,7 +408,7 @@ func (a AllowedAuthFor) GetImageBuildAuthFor(ctx context.Context, auth RegistryA
 	for _, reg := range additionalRegistries {
 		ath, err := auth.Authenticate(ctx, reg)
 		if err != nil {
-			log.WithError(err).WithField("registry", reg).Warn("cannot get authentication for additioanl registry for image build")
+			log.WithError(err).WithField("registry", reg).Warn("cannot get authentication for additional registry for image build")
 			continue
 		}
 		if ath.Empty() {
