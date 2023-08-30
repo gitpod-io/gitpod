@@ -414,8 +414,8 @@ func newUsageFromInstance(instance db.WorkspaceInstanceForUsage, pricer *Workspa
 		startedTime = db.TimeToISO8601(instance.StartedTime.Time())
 	}
 	endTime := ""
-	if instance.StoppingTime.IsSet() {
-		endTime = db.TimeToISO8601(instance.StoppingTime.Time())
+	if stopTime.IsSet() {
+		endTime = db.TimeToISO8601(stopTime.Time())
 	}
 	err := usage.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
 		WorkspaceId:    instance.WorkspaceID,
