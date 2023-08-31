@@ -5,11 +5,8 @@
  */
 
 import { v1 } from "@authzed/authzed-node";
-import { IClientCallMetrics, createClientCallMetricsInterceptor } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import * as grpc from "@grpc/grpc-js";
-
-export const SpiceDBClientProvider = Symbol("SpiceDBClientProvider");
 
 export interface SpiceDBClientConfig {
     address: string;
@@ -18,9 +15,6 @@ export interface SpiceDBClientConfig {
 
 export type SpiceDBClient = v1.ZedPromiseClientInterface;
 type Client = v1.ZedClientInterface & grpc.Client;
-export interface SpiceDBClientProvider {
-    getClient(): SpiceDBClient;
-}
 
 export function spiceDBConfigFromEnv(): SpiceDBClientConfig | undefined {
     const token = process.env["SPICEDB_PRESHARED_KEY"];
@@ -40,63 +34,48 @@ export function spiceDBConfigFromEnv(): SpiceDBClientConfig | undefined {
     };
 }
 
-function spicedbClientFromConfig(config: SpiceDBClientConfig): Client {
-    const clientOptions: grpc.ClientOptions = {
-        "grpc.client_idle_timeout_ms": 10000, // this ensures a connection is not stuck in the "READY" state for too long. Required for the reconnect logic below.
-        "grpc.max_reconnect_backoff_ms": 5000, // default: 12000
-    };
-
-    return v1.NewClient(
-        config.token,
-        config.address,
-        v1.ClientSecurity.INSECURE_PLAINTEXT_CREDENTIALS,
-        undefined,
-        clientOptions,
-    ) as Client;
-}
-
-export class CachingSpiceDBClientProvider implements SpiceDBClientProvider {
+export class SpiceDBClientProvider {
     private client: Client | undefined;
 
-    private readonly interceptors: grpc.Interceptor[] = [];
-
     constructor(
-        private readonly _clientConfig: SpiceDBClientConfig,
-        private readonly clientCallMetrics?: IClientCallMetrics | undefined,
-    ) {
-        if (this.clientCallMetrics) {
-            this.interceptors.push(createClientCallMetricsInterceptor(this.clientCallMetrics));
-        }
-    }
+        private readonly clientConfig: SpiceDBClientConfig,
+        private readonly interceptors: grpc.Interceptor[] = [],
+    ) {}
 
     getClient(): SpiceDBClient {
-        let client = this.client;
-        if (!client) {
-            client = spicedbClientFromConfig(this.clientConfig);
-        } else if (client.getChannel().getConnectivityState(true) !== grpc.connectivityState.READY) {
-            // (gpl): We need this check and explicit re-connect because we observe a ~120s connection timeout without it.
-            // It's not entirely clear where that timeout comes from, but likely from the underlying transport, that is not exposed by grpc/grpc-js
-            client.close();
+        if (!this.client) {
+            this.client = v1.NewClient(
+                this.clientConfig.token,
+                this.clientConfig.address,
+                v1.ClientSecurity.INSECURE_PLAINTEXT_CREDENTIALS,
+                undefined, //
+                {
+                    // we ping frequently to check if the connection is still alive
+                    "grpc.keepalive_time_ms": 1000,
+                    "grpc.keepalive_timeout_ms": 1000,
 
-            log.warn("[spicedb] Lost connection to SpiceDB - reconnecting...");
+                    "grpc.max_reconnect_backoff_ms": 5000,
+                    "grpc.initial_reconnect_backoff_ms": 500,
+                    "grpc.service_config": JSON.stringify({
+                        methodConfig: [
+                            {
+                                name: [{}],
+                                retryPolicy: {
+                                    maxAttempts: 10,
+                                    initialBackoff: "0.1s",
+                                    maxBackoff: "5s",
+                                    backoffMultiplier: 2.0,
+                                    retryableStatusCodes: ["UNAVAILABLE", "DEADLINE_EXCEEDED"],
+                                },
+                            },
+                        ],
+                    }),
 
-            client = spicedbClientFromConfig(this.clientConfig);
-        }
-        this.client = client;
-
-        return client.promises;
-    }
-
-    protected get clientConfig() {
-        const config = this._clientConfig;
-        if (this.interceptors) {
-            return {
-                ...config,
-                options: {
-                    interceptors: [...this.interceptors],
+                    "grpc.enable_retries": 1, //TODO enabled by default
+                    interceptors: this.interceptors,
                 },
-            };
+            ) as Client;
         }
-        return config;
+        return this.client.promises;
     }
 }

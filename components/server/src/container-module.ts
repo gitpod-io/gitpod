@@ -11,7 +11,11 @@ import { GitpodFileParser } from "@gitpod/gitpod-protocol/lib/gitpod-file-parser
 import { PrometheusClientCallMetrics } from "@gitpod/gitpod-protocol/lib/messaging/client-call-metrics";
 import { newAnalyticsWriterFromEnv } from "@gitpod/gitpod-protocol/lib/util/analytics";
 import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
-import { IClientCallMetrics, defaultGRPCOptions } from "@gitpod/gitpod-protocol/lib/util/grpc";
+import {
+    IClientCallMetrics,
+    createClientCallMetricsInterceptor,
+    defaultGRPCOptions,
+} from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { prometheusClientMiddleware } from "@gitpod/gitpod-protocol/lib/util/nice-grpc";
 import { IDEServiceClient, IDEServiceDefinition } from "@gitpod/ide-service-api/lib/ide.pb";
 import { ImageBuilderClientCallMetrics, ImageBuilderClientProvider } from "@gitpod/image-builder/lib";
@@ -46,7 +50,7 @@ import { AuthJWT, SignInJWT } from "./auth/jwt";
 import { LoginCompletionHandler } from "./auth/login-completion-handler";
 import { VerificationService } from "./auth/verification-service";
 import { Authorizer, createInitializingAuthorizer } from "./authorization/authorizer";
-import { CachingSpiceDBClientProvider, SpiceDBClientProvider, spiceDBConfigFromEnv } from "./authorization/spicedb";
+import { SpiceDBClientProvider, spiceDBConfigFromEnv } from "./authorization/spicedb";
 import { BillingModes } from "./billing/billing-mode";
 import { EntitlementService, EntitlementServiceImpl } from "./billing/entitlement-service";
 import { EntitlementServiceUBP } from "./billing/entitlement-service-ubp";
@@ -309,7 +313,10 @@ export const productionContainerModule = new ContainerModule(
                     throw new Error("[spicedb] Missing configuration expected in env vars!");
                 }
                 const clientCallMetrics = ctx.container.get<IClientCallMetrics>(IClientCallMetrics);
-                return new CachingSpiceDBClientProvider(config, clientCallMetrics);
+                return new SpiceDBClientProvider(
+                    config, //
+                    [createClientCallMetricsInterceptor(clientCallMetrics)],
+                );
             })
             .inSingletonScope();
         bind(SpiceDBAuthorizer).toSelf().inSingletonScope();
