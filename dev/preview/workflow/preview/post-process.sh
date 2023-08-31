@@ -170,12 +170,6 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       WS_URL_TEMP_EXPR="s|\"urlTemplate\": \"https://{{ .Prefix }}.$CURRENT_WS_HOST_NAME\"|\"urlTemplate\": \"https://{{ .Prefix }}.$NEW_WS_HOST_NAME\"|"
       sed -i "$WS_URL_TEMP_EXPR" /tmp/"$NAME"overrides.yaml
 
-      WS_SC_TEMP_EXPR="s|\"storageClass\": \"\"|\"storageClass\": \"rook-ceph-block\"|"
-      sed -i "$WS_SC_TEMP_EXPR" /tmp/"$NAME"overrides.yaml
-
-      WS_SC_TEMP_EXPR="s|\"snapshotClass\": \"\"|\"snapshotClass\": \"csi-rbdplugin-snapclass\"|"
-      sed -i "$WS_SC_TEMP_EXPR" /tmp/"$NAME"overrides.yaml
-
       # Change the port we use to connect to registry-facade
       # is expected to be reg.<branch-name-with-dashes>.staging.gitpod-dev.com:$REG_DAEMON_PORT
       # Change the port we use to connect to ws-daemon

@@ -131,53 +131,6 @@ EOF
   rm -f ${GITPOD_IMAGE_PULL_SECRET_NAME}
 }
 
-function installRookCeph {
-  diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" "$SCRIPT_PATH/../vm/manifests/rook-ceph/crds.yaml"
-
-  kubectl \
-    --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-    --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-    wait --for condition=established --timeout=120s crd/cephclusters.ceph.rook.io
-
-  for file in common operator cluster-test storageclass-test snapshotclass;do
-      diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" "$SCRIPT_PATH/../vm/manifests/rook-ceph/$file.yaml"
-  done
-}
-
-# Install Fluent-Bit sending logs to GCP
-function installFluentBit {
-    kubectl \
-      --kubeconfig "${DEV_KUBE_PATH}" \
-      --context "${DEV_KUBE_CONTEXT}" \
-      --namespace werft \
-      get secret "fluent-bit-external" -o yaml \
-    | yq d - 'metadata.namespace' \
-    | yq d - 'metadata.uid' \
-    | yq d - 'metadata.resourceVersion' \
-    | yq d - 'metadata.creationTimestamp' \
-    | yq d - 'metadata.ownerReferences' \
-    | sed "s/werft/${PREVIEW_NAMESPACE}/g" \
-    | kubectl \
-      --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-      --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-      apply -n ${PREVIEW_NAMESPACE} -f -
-
-    helm3 \
-      --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-      --kube-context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-      repo add fluent https://fluent.github.io/helm-charts
-
-    helm3 \
-      --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-      --kube-context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-      repo update
-
-    helm3 \
-      --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-      --kube-context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-      upgrade --install fluent-bit fluent/fluent-bit --version 0.21.6 -n "${PREVIEW_NAMESPACE}" -f "$SCRIPT_PATH/../vm/charts/fluentbit/values.yaml"
-}
-
 # ====================================
 # Prerequisites
 # ====================================
@@ -198,8 +151,6 @@ while ! copyCachedCertificate; do
 done
 
 copyImagePullSecret
-installRookCeph
-installFluentBit
 
 # ========
 # Init
