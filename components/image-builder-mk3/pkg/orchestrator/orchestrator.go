@@ -370,6 +370,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 				WorkspaceLocation: contextPath,
 				Envvars: []*wsmanapi.EnvironmentVariable{
 					{Name: "BOB_TARGET_REF", Value: "localhost:8080/target:latest"},
+					{Name: "BOB_BUILD_SOCI_INDEX", Value: fmt.Sprintf("%v", o.Config.EnableSOCIIndex)},
 					{Name: "BOB_BASE_REF", Value: bobBaseref},
 					{Name: "BOB_BUILD_BASE", Value: buildBase},
 					{Name: "BOB_DOCKERFILE_PATH", Value: dockerfilePath},

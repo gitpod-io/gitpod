@@ -56,6 +56,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		BuilderImage:             ctx.ImageName(ctx.Config.Repository, BuilderImage, ctx.VersionManifest.Components.ImageBuilderMk3.BuilderImage.Version),
 		WorkspaceImageRepository: fmt.Sprintf("%s/workspace-images", registryName),
 		EnableAdditionalECRAuth:  ctx.Config.ContainerRegistry.EnableAdditionalECRAuth,
+		EnableSOCIIndex:          ctx.Config.ContainerRegistry.EnableSOCIIndex,
 	}
 
 	workspaceImage := ctx.Config.Workspace.WorkspaceImage

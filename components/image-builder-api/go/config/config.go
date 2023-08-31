@@ -46,6 +46,9 @@ type Configuration struct {
 	// This will attempt to add ECR auth for any ECR repo a user is
 	// trying to access.
 	EnableAdditionalECRAuth bool `json:"enableAdditionalECRAuth"`
+
+	// EnableSOCIIndex builds the index required by the SOCI Snapshotter to allow lazy pulling of container images
+	EnableSOCIIndex bool `json:"enableSOCIIndex"`
 }
 
 type TLS struct {

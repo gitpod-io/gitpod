@@ -71,6 +71,13 @@ func (b *Builder) Build() error {
 		return err
 	}
 
+	if b.Config.BuildSOCIIndex {
+		err = buildSociIndex(ctx, cl, b.Config.TargetRef, b.Config.WorkspaceLayerAuth)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -99,6 +106,46 @@ func (b *Builder) buildWorkspaceImage(ctx context.Context, cl *client.Client) (e
 	return buildImage(ctx, contextDir, filepath.Join(contextDir, "Dockerfile"), b.Config.WorkspaceLayerAuth, b.Config.TargetRef)
 }
 
+func buildSociIndex(ctx context.Context, cl *client.Client, targetRef, authLayer string) error {
+	err := runSociCmd("create", targetRef)
+	if err != nil {
+		return xerrors.Errorf("unexpected error creating SOCI index")
+	}
+
+	dockerConfig := "/tmp/config.json"
+	defer os.Remove(dockerConfig)
+
+	if authLayer != "" {
+		err := buildDockerConfig(dockerConfig, authLayer)
+		if err != nil {
+			return xerrors.Errorf("unexpected error writing registry authentication: %w", err)
+		}
+	}
+
+	err = runSociCmd("push", targetRef)
+	if err != nil {
+		return xerrors.Errorf("unexpected error creating SOCI index")
+	}
+
+	return nil
+}
+
+func runSociCmd(cmd, arg string) error {
+	sociCmd := exec.Command("soci", cmd, arg)
+	sociCmd.Stderr = os.Stderr
+	sociCmd.Stdout = os.Stdout
+
+	env := os.Environ()
+	env = append(env, "DOCKER_CONFIG=/tmp")
+	sociCmd.Env = env
+
+	if err := sociCmd.Start(); err != nil {
+		return err
+	}
+
+	return sociCmd.Wait()
+}
+
 func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target string) (err error) {
 	log.Info("waiting for build context")
 	waitctx, cancel := context.WithTimeout(ctx, 30*time.Minute)
@@ -113,19 +160,7 @@ func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target s
 	defer os.Remove(dockerConfig)
 
 	if authLayer != "" {
-		configFile := configfile.ConfigFile{
-			AuthConfigs: make(map[string]types.AuthConfig),
-		}
-
-		err := configFile.LoadFromReader(bytes.NewReader([]byte(fmt.Sprintf(`{"auths": %v }`, authLayer))))
-		if err != nil {
-			return xerrors.Errorf("unexpected error reading registry authentication: %w", err)
-		}
-
-		f, _ := os.OpenFile(dockerConfig, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-		defer f.Close()
-
-		err = configFile.SaveToWriter(f)
+		err := buildDockerConfig(dockerConfig, authLayer)
 		if err != nil {
 			return xerrors.Errorf("unexpected error writing registry authentication: %w", err)
 		}
@@ -148,6 +183,7 @@ func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target s
 		"--frontend=dockerfile.v0",
 		"--local=dockerfile=" + filepath.Dir(dockerfile),
 		"--opt=filename=" + filepath.Base(dockerfile),
+		"--compression=zstd",
 	}
 
 	buildctlCmd := exec.Command("buildctl", buildctlArgs...)
@@ -168,6 +204,27 @@ func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target s
 	err = buildctlCmd.Wait()
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func buildDockerConfig(location, authLayer string) error {
+	configFile := configfile.ConfigFile{
+		AuthConfigs: make(map[string]types.AuthConfig),
+	}
+
+	err := configFile.LoadFromReader(bytes.NewReader([]byte(fmt.Sprintf(`{"auths": %v }`, authLayer))))
+	if err != nil {
+		return xerrors.Errorf("unexpected error reading registry authentication: %w", err)
+	}
+
+	f, _ := os.OpenFile(location, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	defer f.Close()
+
+	err = configFile.SaveToWriter(f)
+	if err != nil {
+		return xerrors.Errorf("unexpected error writing registry authentication: %w", err)
 	}
 
 	return nil

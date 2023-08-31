@@ -264,6 +264,7 @@ type ContainerRegistry struct {
 
 	PrivateBaseImageAllowList []string `json:"privateBaseImageAllowList"`
 	EnableAdditionalECRAuth   bool     `json:"enableAdditionalECRAuth"`
+	EnableSOCIIndex           bool     `json:"enableSOCIIndex"`
 }
 
 type ContainerRegistryExternal struct {

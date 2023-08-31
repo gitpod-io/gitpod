@@ -5,7 +5,7 @@
 FROM moby/buildkit:v0.12.2
 
 USER root
-RUN apk --no-cache add sudo bash \
+RUN apk --no-cache add sudo bash tar wget \
     && addgroup -g 33333 gitpod \
     && adduser -D -h /home/gitpod -s /bin/sh -u 33333 -G gitpod gitpod \
     && echo "gitpod ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/gitpod \
@@ -18,6 +18,11 @@ RUN chmod 4755 /app/runc-facade \
 
 COPY components-image-builder-bob--app/bob /app/
 RUN chmod 4755 /app/bob
+
+ARG SOCI_SNAPSHOTTER_VERSION=0.4.0
+RUN wget https://github.com/awslabs/soci-snapshotter/releases/download/v${SOCI_SNAPSHOTTER_VERSION}/soci-snapshotter-v${SOCI_SNAPSHOTTER_VERSION}-linux-amd64-static.tar.gz \
+    && tar zxpvf soci-snapshotter-v${SOCI_SNAPSHOTTER_VERSION}-linux-amd64-static.tar.gz -C /usr/bin soci \
+    && rm soci-snapshotter-v${SOCI_SNAPSHOTTER_VERSION}-linux-amd64-static.tar.gz
 
 RUN mkdir /ide
 COPY ide-startup.sh /ide/startup.sh

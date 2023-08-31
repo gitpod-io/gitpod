@@ -27,6 +27,8 @@ type Config struct {
 	ContextDir         string
 	ExternalBuildkitd  string
 	localCacheImport   string
+
+	BuildSOCIIndex bool
 }
 
 // GetConfigFromEnv extracts configuration from environment variables
@@ -42,6 +44,8 @@ func GetConfigFromEnv() (*Config, error) {
 		ContextDir:         os.Getenv("BOB_CONTEXT_DIR"),
 		ExternalBuildkitd:  os.Getenv("BOB_EXTERNAL_BUILDKITD"),
 		localCacheImport:   os.Getenv("BOB_LOCAL_CACHE_IMPORT"),
+
+		BuildSOCIIndex: os.Getenv("BOB_BUILD_SOCI_INDEX") == "true",
 	}
 
 	if cfg.BaseRef == "" {
