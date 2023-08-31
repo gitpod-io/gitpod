@@ -99,7 +99,6 @@ export function projectToProtocol(project: Project): ProtocolProject {
         name: project.name,
         cloneUrl: project.cloneUrl,
         creationTime: project.creationTime?.toDate().toISOString() || "",
-        slug: project.slug,
         teamId: project.teamId,
         appInstallationId: "undefined",
         settings: {

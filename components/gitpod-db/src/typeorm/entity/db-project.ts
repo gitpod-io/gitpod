@@ -18,9 +18,6 @@ export class DBProject {
     @Column()
     name: string;
 
-    @Column()
-    slug?: string;
-
     @Index("ind_cloneUrl")
     @Column()
     cloneUrl: string;

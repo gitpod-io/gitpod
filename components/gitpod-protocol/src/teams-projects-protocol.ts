@@ -27,7 +27,6 @@ export interface ProjectSettings {
 export interface Project {
     id: string;
     name: string;
-    slug?: string;
     cloneUrl: string;
     teamId: string;
     appInstallationId: string;
@@ -52,7 +51,7 @@ export namespace Project {
     };
 
     export function slug(p: Project): string {
-        return (p.slug || p.name) + "-" + p.id;
+        return p.name + "-" + p.id;
     }
 
     export interface Overview {

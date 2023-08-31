@@ -42,14 +42,6 @@ export class Project extends Message<Project> {
   name = "";
 
   /**
-   * Slug is a short-hand identifier for a project.
-   * Read-only.
-   *
-   * @generated from field: string slug = 5;
-   */
-  slug = "";
-
-  /**
    * Clone URL is the clone URL on which this Project is based.
    * Required.
    *
@@ -83,7 +75,6 @@ export class Project extends Message<Project> {
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "team_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 5, name: "slug", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 6, name: "clone_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 7, name: "creation_time", kind: "message", T: Timestamp },
     { no: 8, name: "settings", kind: "message", T: ProjectSettings },
@@ -595,4 +586,3 @@ export class DeleteProjectResponse extends Message<DeleteProjectResponse> {
     return proto3.util.equals(DeleteProjectResponse, a, b);
   }
 }
-

@@ -45,7 +45,6 @@ class ProjectDBSpec {
 
         const project = Project.create({
             name: "some-project",
-            slug: "some-project",
             cloneUrl: "some-random-clone-url",
             teamId: "team-1",
             appInstallationId: "app-1",

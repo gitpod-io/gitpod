@@ -295,7 +295,6 @@ func teamToAPIResponse(team *protocol.Team, members []*protocol.TeamMemberInfo, 
 	return &v1.Team{
 		Id:             team.ID,
 		Name:           team.Name,
-		Slug:           team.Slug,
 		Members:        teamMembersToAPIResponse(members),
 		TeamInvitation: teamInviteToAPIResponse(invite),
 	}
