@@ -5,7 +5,7 @@
  */
 
 import { inject, injectable } from "inversify";
-import * as express from "express";
+import express from "express";
 import { User } from "@gitpod/gitpod-protocol";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config } from "../config";

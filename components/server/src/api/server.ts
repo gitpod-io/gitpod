@@ -5,7 +5,7 @@
  */
 
 import * as http from "http";
-import * as express from "express";
+import express from "express";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
 import { APITeamsService } from "./teams";

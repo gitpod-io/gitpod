@@ -8,7 +8,7 @@ import * as crypto from "crypto";
 import { inject, injectable } from "inversify";
 import { OneTimeSecretDB, TeamDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib/user-db";
-import * as express from "express";
+import express from "express";
 import { Authenticator } from "../auth/authenticator";
 import { Config } from "../config";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";

@@ -5,7 +5,7 @@
  */
 
 import { injectable, inject } from "inversify";
-import * as express from "express";
+import express from "express";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { OneTimeSecretDB, DBWithTracing, TracedOneTimeSecretDB } from "@gitpod/gitpod-db/lib";
 import { Disposable } from "@gitpod/gitpod-protocol";

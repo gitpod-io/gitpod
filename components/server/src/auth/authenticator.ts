@@ -7,9 +7,9 @@
 import { TeamDB } from "@gitpod/gitpod-db/lib";
 import { User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import * as express from "express";
+import express from "express";
 import { inject, injectable, postConstruct } from "inversify";
-import * as passport from "passport";
+import passport from "passport";
 import { Config } from "../config";
 import { reportLoginCompleted } from "../prometheus-metrics";
 import { TokenProvider } from "../user/token-provider";

@@ -8,7 +8,7 @@ import { status } from "@grpc/grpc-js";
 import fetch from "node-fetch";
 import { User } from "@gitpod/gitpod-protocol/lib/protocol";
 import * as util from "util";
-import * as express from "express";
+import express from "express";
 import { inject, injectable } from "inversify";
 import { BearerAuth } from "../auth/bearer-authenticator";
 import { isWithFunctionAccessGuard } from "../auth/function-access";

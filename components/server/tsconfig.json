@@ -20,6 +20,7 @@
         "declarationMap": true,
         "skipLibCheck": true,
         "useUnknownInCatchVariables": false,
+        "esModuleInterop": true,
         "typeRoots": [
             "./src/typings"
         ]

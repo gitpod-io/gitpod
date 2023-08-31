@@ -8,7 +8,7 @@ import { UserDB, PersonalAccessTokenDB } from "@gitpod/gitpod-db/lib";
 import { GitpodTokenType, User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import * as crypto from "crypto";
-import * as express from "express";
+import express from "express";
 import { IncomingHttpHeaders } from "http";
 import { inject, injectable } from "inversify";
 import { Config } from "../config";

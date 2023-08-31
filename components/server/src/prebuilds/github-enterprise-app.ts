@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import * as express from "express";
+import express from "express";
 import { createHmac, timingSafeEqual } from "crypto";
 import { Buffer } from "buffer";
 import { postConstruct, injectable, inject } from "inversify";

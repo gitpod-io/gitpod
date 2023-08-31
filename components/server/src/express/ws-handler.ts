@@ -4,8 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import * as websocket from "ws";
-import * as express from "express";
+import WebSocket from "ws";
+import express from "express";
 import * as http from "http";
 import * as https from "https";
 import * as url from "url";
@@ -24,27 +24,27 @@ export interface WsNextFunction {
     (err?: any): MaybePromise;
 }
 export interface WsRequestHandler {
-    (ws: websocket, req: express.Request, next: WsNextFunction): MaybePromise;
+    (ws: WebSocket, req: express.Request, next: WsNextFunction): MaybePromise;
 }
 export interface WsErrorHandler {
-    (err: any | undefined, ws: websocket, req: express.Request, next: WsNextFunction): MaybePromise;
+    (err: any | undefined, ws: WebSocket, req: express.Request, next: WsNextFunction): MaybePromise;
 }
 export type WsHandler = WsRequestHandler | WsErrorHandler;
 
-export type WsConnectionFilter = websocket.VerifyClientCallbackAsync | websocket.VerifyClientCallbackSync;
+export type WsConnectionFilter = WebSocket.VerifyClientCallbackAsync | WebSocket.VerifyClientCallbackSync;
 
 interface Route {
     matcher: RouteMatcher;
-    handler: (ws: websocket, req: express.Request) => void;
+    handler: (ws: WebSocket, req: express.Request) => void;
 }
 
 export class WsExpressHandler implements Disposable {
-    protected readonly wss: websocket.Server;
+    protected readonly wss: WebSocket.Server;
     protected readonly routes: Route[] = [];
     private disposables = new DisposableCollection();
 
     constructor(protected readonly httpServer: HttpServer, protected readonly verifyClient?: WsConnectionFilter) {
-        this.wss = new websocket.Server({
+        this.wss = new WebSocket.Server({
             verifyClient,
             noServer: true,
             // disabling to reduce memory consumption, cf.
@@ -78,11 +78,11 @@ export class WsExpressHandler implements Disposable {
 
     ws(
         matcher: RouteMatcher,
-        handler: (ws: websocket, request: express.Request) => void,
+        handler: (ws: WebSocket, request: express.Request) => void,
         ...handlers: WsHandler[]
     ): void {
         const stack = WsLayer.createStack(...handlers);
-        const dispatch = (ws: websocket, request: express.Request) => {
+        const dispatch = (ws: WebSocket, request: express.Request) => {
             handler(ws, request);
             stack
                 .dispatch(ws, request)

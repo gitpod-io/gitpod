@@ -21,7 +21,7 @@ import {
 } from "@gitpod/gitpod-protocol/lib/messaging/proxy-factory";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { EventEmitter } from "events";
-import * as express from "express";
+import express from "express";
 import { ErrorCodes as RPCErrorCodes, MessageConnection, ResponseError } from "vscode-jsonrpc";
 import { AllAccessFunctionGuard, FunctionAccessGuard, WithFunctionAccessGuard } from "../auth/function-access";
 import { HostContextProvider } from "../auth/host-context-provider";

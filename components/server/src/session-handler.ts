@@ -4,9 +4,9 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import * as express from "express";
+import express from "express";
 import { inject, injectable } from "inversify";
-import * as websocket from "ws";
+import websocket from "ws";
 
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { AuthJWT } from "./auth/jwt";

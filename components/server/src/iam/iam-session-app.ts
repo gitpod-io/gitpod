@@ -5,7 +5,7 @@
  */
 
 import { injectable, inject } from "inversify";
-import * as express from "express";
+import express from "express";
 import { SessionHandler } from "../session-handler";
 import { Authenticator } from "../auth/authenticator";
 import { UserAuthentication } from "../user/user-authentication";

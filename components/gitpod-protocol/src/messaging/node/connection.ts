@@ -5,7 +5,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import * as ws from "ws";
+import ws from "ws";
 import {
     IWebSocket,
     Logger,

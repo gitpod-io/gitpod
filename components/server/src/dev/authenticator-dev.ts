@@ -5,7 +5,7 @@
  */
 
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
-import * as express from "express";
+import express from "express";
 import { injectable } from "inversify";
 import { Strategy as DummyStrategy } from "passport-dummy";
 import { AuthProvider } from "../auth/auth-provider";
