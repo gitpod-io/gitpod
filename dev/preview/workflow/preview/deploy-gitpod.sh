@@ -131,19 +131,6 @@ EOF
   rm -f ${GITPOD_IMAGE_PULL_SECRET_NAME}
 }
 
-function installRookCeph {
-  diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" "$SCRIPT_PATH/../vm/manifests/rook-ceph/crds.yaml"
-
-  kubectl \
-    --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-    --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-    wait --for condition=established --timeout=120s crd/cephclusters.ceph.rook.io
-
-  for file in common operator cluster-test storageclass-test snapshotclass;do
-      diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" "$SCRIPT_PATH/../vm/manifests/rook-ceph/$file.yaml"
-  done
-}
-
 # Install Fluent-Bit sending logs to GCP
 function installFluentBit {
     kubectl \
@@ -175,7 +162,7 @@ function installFluentBit {
     helm3 \
       --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
       --kube-context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-      upgrade --install fluent-bit fluent/fluent-bit --version 0.21.6 -n "${PREVIEW_NAMESPACE}" -f "$SCRIPT_PATH/../vm/charts/fluentbit/values.yaml"
+      upgrade --install fluent-bit fluent/fluent-bit --version 0.37.1 -n "${PREVIEW_NAMESPACE}" -f "$SCRIPT_PATH/../vm/charts/fluentbit/values.yaml"
 }
 
 # ====================================
@@ -198,7 +185,6 @@ while ! copyCachedCertificate; do
 done
 
 copyImagePullSecret
-installRookCeph
 installFluentBit
 
 # ========
@@ -589,7 +575,7 @@ rm -f "${INSTALLER_RENDER_PATH}"
 # =========================
 # Wait for objects to be ready
 # =========================
-for item in deployment.apps/blobserve deployment.apps/content-service deployment.apps/dashboard deployment.apps/ide-metrics deployment.apps/ide-proxy deployment.apps/ide-service deployment.apps/image-builder-mk3 deployment.apps/minio deployment.apps/node-labeler deployment.apps/proxy deployment.apps/public-api-server deployment.apps/redis deployment.apps/server deployment.apps/spicedb deployment.apps/usage deployment.apps/ws-manager-mk2 deployment.apps/ws-manager-bridge deployment.apps/ws-proxy statefulset.apps/mysql statefulset.apps/openvsx-proxy daemonset.apps/agent-smith daemonset.apps/fluent-bit daemonset.apps/registry-facade daemonset.apps/ws-daemon; do
+for item in deployment.apps/blobserve deployment.apps/content-service deployment.apps/dashboard deployment.apps/ide-metrics deployment.apps/ide-proxy deployment.apps/ide-service deployment.apps/image-builder-mk3 deployment.apps/minio deployment.apps/node-labeler deployment.apps/proxy deployment.apps/public-api-server deployment.apps/redis deployment.apps/server deployment.apps/spicedb deployment.apps/usage deployment.apps/ws-manager-mk2 deployment.apps/ws-manager-bridge deployment.apps/ws-proxy statefulset.apps/mysql statefulset.apps/openvsx-proxy daemonset.apps/agent-smith daemonset.apps/registry-facade daemonset.apps/ws-daemon; do
   kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" rollout status "${item}" --namespace="${PREVIEW_NAMESPACE}"
 done
 
