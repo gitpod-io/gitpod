@@ -1533,7 +1533,6 @@ export class WorkspaceStarter {
         startWorkspaceSpecIDEImage.setSupervisorRef(ideConfig.supervisorImage);
         spec.setIdeImage(startWorkspaceSpecIDEImage);
         spec.setIdeImageLayersList(ideConfig.ideImageLayers);
-        spec.setDeprecatedIdeImage(ideConfig.webImage);
         spec.setWorkspaceImage(instance.workspaceImage);
         spec.setWorkspaceLocation(workspace.config.workspaceLocation || checkoutLocation);
         spec.setFeatureFlagsList(this.toWorkspaceFeatureFlags(featureFlags));

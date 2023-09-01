@@ -699,12 +699,8 @@ export namespace WorkspaceStatus {
 export class IDEImage extends jspb.Message {
     getWebRef(): string;
     setWebRef(value: string): IDEImage;
-    getDesktopRef(): string;
-    setDesktopRef(value: string): IDEImage;
     getSupervisorRef(): string;
     setSupervisorRef(value: string): IDEImage;
-    getDesktopPluginRef(): string;
-    setDesktopPluginRef(value: string): IDEImage;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): IDEImage.AsObject;
@@ -719,17 +715,13 @@ export class IDEImage extends jspb.Message {
 export namespace IDEImage {
     export type AsObject = {
         webRef: string,
-        desktopRef: string,
         supervisorRef: string,
-        desktopPluginRef: string,
     }
 }
 
 export class WorkspaceSpec extends jspb.Message {
     getWorkspaceImage(): string;
     setWorkspaceImage(value: string): WorkspaceSpec;
-    getDeprecatedIdeImage(): string;
-    setDeprecatedIdeImage(value: string): WorkspaceSpec;
     getHeadless(): boolean;
     setHeadless(value: boolean): WorkspaceSpec;
     getUrl(): string;
@@ -769,7 +761,6 @@ export class WorkspaceSpec extends jspb.Message {
 export namespace WorkspaceSpec {
     export type AsObject = {
         workspaceImage: string,
-        deprecatedIdeImage: string,
         headless: boolean,
         url: string,
         exposedPortsList: Array<PortSpec.AsObject>,
@@ -991,8 +982,6 @@ export namespace WorkspaceAuthentication {
 export class StartWorkspaceSpec extends jspb.Message {
     getWorkspaceImage(): string;
     setWorkspaceImage(value: string): StartWorkspaceSpec;
-    getDeprecatedIdeImage(): string;
-    setDeprecatedIdeImage(value: string): StartWorkspaceSpec;
     clearFeatureFlagsList(): void;
     getFeatureFlagsList(): Array<WorkspaceFeatureFlag>;
     setFeatureFlagsList(value: Array<WorkspaceFeatureFlag>): StartWorkspaceSpec;
@@ -1058,7 +1047,6 @@ export class StartWorkspaceSpec extends jspb.Message {
 export namespace StartWorkspaceSpec {
     export type AsObject = {
         workspaceImage: string,
-        deprecatedIdeImage: string,
         featureFlagsList: Array<WorkspaceFeatureFlag>,
         initializer?: content_service_api_initializer_pb.WorkspaceInitializer.AsObject,
         portsList: Array<PortSpec.AsObject>,

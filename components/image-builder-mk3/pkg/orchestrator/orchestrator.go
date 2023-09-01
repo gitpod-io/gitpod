@@ -360,10 +360,9 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 				Owner: req.GetTriggeredBy(),
 			},
 			Spec: &wsmanapi.StartWorkspaceSpec{
-				Initializer:        initializer,
-				Timeout:            maxBuildRuntime.String(),
-				WorkspaceImage:     o.Config.BuilderImage,
-				DeprecatedIdeImage: o.Config.BuilderImage,
+				Initializer:    initializer,
+				Timeout:        maxBuildRuntime.String(),
+				WorkspaceImage: o.Config.BuilderImage,
 				IdeImage: &wsmanapi.IDEImage{
 					WebRef:        o.Config.BuilderImage,
 					SupervisorRef: req.SupervisorRef,

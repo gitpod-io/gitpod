@@ -5788,9 +5788,7 @@ proto.wsman.IDEImage.prototype.toObject = function(opt_includeInstance) {
 proto.wsman.IDEImage.toObject = function(includeInstance, msg) {
   var f, obj = {
     webRef: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    desktopRef: jspb.Message.getFieldWithDefault(msg, 2, ""),
-    supervisorRef: jspb.Message.getFieldWithDefault(msg, 3, ""),
-    desktopPluginRef: jspb.Message.getFieldWithDefault(msg, 4, "")
+    supervisorRef: jspb.Message.getFieldWithDefault(msg, 3, "")
   };
 
   if (includeInstance) {
@@ -5831,17 +5829,9 @@ proto.wsman.IDEImage.deserializeBinaryFromReader = function(msg, reader) {
       var value = /** @type {string} */ (reader.readString());
       msg.setWebRef(value);
       break;
-    case 2:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setDesktopRef(value);
-      break;
     case 3:
       var value = /** @type {string} */ (reader.readString());
       msg.setSupervisorRef(value);
-      break;
-    case 4:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setDesktopPluginRef(value);
       break;
     default:
       reader.skipField();
@@ -5879,24 +5869,10 @@ proto.wsman.IDEImage.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
-  f = message.getDesktopRef();
-  if (f.length > 0) {
-    writer.writeString(
-      2,
-      f
-    );
-  }
   f = message.getSupervisorRef();
   if (f.length > 0) {
     writer.writeString(
       3,
-      f
-    );
-  }
-  f = message.getDesktopPluginRef();
-  if (f.length > 0) {
-    writer.writeString(
-      4,
       f
     );
   }
@@ -5922,24 +5898,6 @@ proto.wsman.IDEImage.prototype.setWebRef = function(value) {
 
 
 /**
- * optional string desktop_ref = 2;
- * @return {string}
- */
-proto.wsman.IDEImage.prototype.getDesktopRef = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.wsman.IDEImage} returns this
- */
-proto.wsman.IDEImage.prototype.setDesktopRef = function(value) {
-  return jspb.Message.setProto3StringField(this, 2, value);
-};
-
-
-/**
  * optional string supervisor_ref = 3;
  * @return {string}
  */
@@ -5954,24 +5912,6 @@ proto.wsman.IDEImage.prototype.getSupervisorRef = function() {
  */
 proto.wsman.IDEImage.prototype.setSupervisorRef = function(value) {
   return jspb.Message.setProto3StringField(this, 3, value);
-};
-
-
-/**
- * optional string desktop_plugin_ref = 4;
- * @return {string}
- */
-proto.wsman.IDEImage.prototype.getDesktopPluginRef = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.wsman.IDEImage} returns this
- */
-proto.wsman.IDEImage.prototype.setDesktopPluginRef = function(value) {
-  return jspb.Message.setProto3StringField(this, 4, value);
 };
 
 
@@ -6015,7 +5955,6 @@ proto.wsman.WorkspaceSpec.prototype.toObject = function(opt_includeInstance) {
 proto.wsman.WorkspaceSpec.toObject = function(includeInstance, msg) {
   var f, obj = {
     workspaceImage: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    deprecatedIdeImage: jspb.Message.getFieldWithDefault(msg, 2, ""),
     headless: jspb.Message.getBooleanFieldWithDefault(msg, 3, false),
     url: jspb.Message.getFieldWithDefault(msg, 4, ""),
     exposedPortsList: jspb.Message.toObjectList(msg.getExposedPortsList(),
@@ -6065,10 +6004,6 @@ proto.wsman.WorkspaceSpec.deserializeBinaryFromReader = function(msg, reader) {
     case 1:
       var value = /** @type {string} */ (reader.readString());
       msg.setWorkspaceImage(value);
-      break;
-    case 2:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setDeprecatedIdeImage(value);
       break;
     case 3:
       var value = /** @type {boolean} */ (reader.readBool());
@@ -6141,13 +6076,6 @@ proto.wsman.WorkspaceSpec.serializeBinaryToWriter = function(message, writer) {
   if (f.length > 0) {
     writer.writeString(
       1,
-      f
-    );
-  }
-  f = message.getDeprecatedIdeImage();
-  if (f.length > 0) {
-    writer.writeString(
-      2,
       f
     );
   }
@@ -6234,24 +6162,6 @@ proto.wsman.WorkspaceSpec.prototype.getWorkspaceImage = function() {
  */
 proto.wsman.WorkspaceSpec.prototype.setWorkspaceImage = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
-};
-
-
-/**
- * optional string deprecated_ide_image = 2;
- * @return {string}
- */
-proto.wsman.WorkspaceSpec.prototype.getDeprecatedIdeImage = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.wsman.WorkspaceSpec} returns this
- */
-proto.wsman.WorkspaceSpec.prototype.setDeprecatedIdeImage = function(value) {
-  return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 
@@ -8087,7 +7997,6 @@ proto.wsman.StartWorkspaceSpec.prototype.toObject = function(opt_includeInstance
 proto.wsman.StartWorkspaceSpec.toObject = function(includeInstance, msg) {
   var f, obj = {
     workspaceImage: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    deprecatedIdeImage: jspb.Message.getFieldWithDefault(msg, 2, ""),
     featureFlagsList: (f = jspb.Message.getRepeatedField(msg, 3)) == null ? undefined : f,
     initializer: (f = msg.getInitializer()) && content$service$api_initializer_pb.WorkspaceInitializer.toObject(includeInstance, f),
     portsList: jspb.Message.toObjectList(msg.getPortsList(),
@@ -8145,10 +8054,6 @@ proto.wsman.StartWorkspaceSpec.deserializeBinaryFromReader = function(msg, reade
     case 1:
       var value = /** @type {string} */ (reader.readString());
       msg.setWorkspaceImage(value);
-      break;
-    case 2:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setDeprecatedIdeImage(value);
       break;
     case 3:
       var values = /** @type {!Array<!proto.wsman.WorkspaceFeatureFlag>} */ (reader.isDelimited() ? reader.readPackedEnum() : [reader.readEnum()]);
@@ -8251,13 +8156,6 @@ proto.wsman.StartWorkspaceSpec.serializeBinaryToWriter = function(message, write
   if (f.length > 0) {
     writer.writeString(
       1,
-      f
-    );
-  }
-  f = message.getDeprecatedIdeImage();
-  if (f.length > 0) {
-    writer.writeString(
-      2,
       f
     );
   }
@@ -8390,24 +8288,6 @@ proto.wsman.StartWorkspaceSpec.prototype.getWorkspaceImage = function() {
  */
 proto.wsman.StartWorkspaceSpec.prototype.setWorkspaceImage = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
-};
-
-
-/**
- * optional string deprecated_ide_image = 2;
- * @return {string}
- */
-proto.wsman.StartWorkspaceSpec.prototype.getDeprecatedIdeImage = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.wsman.StartWorkspaceSpec} returns this
- */
-proto.wsman.StartWorkspaceSpec.prototype.setDeprecatedIdeImage = function(value) {
-  return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 
