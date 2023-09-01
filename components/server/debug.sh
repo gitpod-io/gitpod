@@ -26,6 +26,11 @@ kubectl scale deployment $deploymentName --replicas=1
 echo "Wait for the pod to be ready"
 kubectl wait --for=condition=ready pod -l component=$deploymentName
 
+while [[ $(kubectl get pods -l component=$deploymentName -o 'jsonpath={..status.phase}' | grep -o 'Running' | wc -w) -ne 1 ]]; do
+  echo "Waiting for scale down operation to complete..."
+  sleep 1
+done
+
 podName=$(kubectl get pods -l component=$deploymentName -o=jsonpath='{.items[0].metadata.name}')
 echo "Forward $podName port $debugPort to localhost. Waiting for a debugger to attach ..."
 kubectl port-forward pod/"$podName" $debugPort

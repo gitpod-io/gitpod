@@ -154,13 +154,13 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 											Command: []string{"grpc_health_probe", "-v", fmt.Sprintf("-addr=localhost:%d", ContainerGRPCPort)},
 										},
 									},
-									InitialDelaySeconds: 5,
-									// try again every 10 seconds
-									PeriodSeconds: 10,
-									// fail after 6 * 10 + 5 = 65 seconds
-									FailureThreshold: 6,
+									InitialDelaySeconds: 1,
+									// try again every 2 seconds
+									PeriodSeconds: 2,
+									// fail after 30 * 2 + 1 = 61
+									FailureThreshold: 30,
 									SuccessThreshold: 1,
-									TimeoutSeconds:   3,
+									TimeoutSeconds:   1,
 								},
 								VolumeMounts: []v1.VolumeMount{
 									bootstrapVolumeMount,

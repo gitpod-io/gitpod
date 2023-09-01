@@ -13,7 +13,7 @@ import { v4 } from "uuid";
 import { AuthProviderParams } from "../auth/auth-provider";
 import { HostContextProvider, HostContextProviderFactory } from "../auth/host-context-provider";
 import { HostContextProviderImpl } from "../auth/host-context-provider-impl";
-import { CachingSpiceDBClientProvider, SpiceDBClientProvider } from "../authorization/spicedb";
+import { SpiceDBClientProvider } from "../authorization/spicedb";
 import { Config } from "../config";
 import { StorageClient } from "../storage/storage-client";
 import { testContainer } from "@gitpod/gitpod-db/lib";
@@ -194,7 +194,7 @@ const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound,
                 token: v4(),
                 address: "localhost:50051",
             };
-            return new CachingSpiceDBClientProvider(config);
+            return new SpiceDBClientProvider(config);
         })
         .inSingletonScope();
 });
