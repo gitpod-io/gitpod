@@ -31,15 +31,15 @@ export interface WorkspaceInstance {
     stoppedTime?: string;
 
     // ideUrl is the URL at which the workspace is available on the internet
-    // Note: this is nitially empty, filled during starting process!
+    // Note: this is initially empty, filled during starting process!
     ideUrl: string;
 
     // region is the name of the workspace cluster this instance runs in
-    // Note: this is nitially empty, filled during starting process!
+    // Note: this is initially empty, filled during starting process!
     region: string;
 
     // workspaceImage is the name of the Docker image this instance runs
-    // Note: this is nitially empty, filled during starting process!
+    // Note: this is initially empty, filled during starting process!
     workspaceImage: string;
 
     // status is the latest status of the instance that we're aware of
@@ -312,6 +312,9 @@ export interface WorkspaceInstanceConfiguration {
 
     // The region the user passed as a preference for this workspace
     regionPreference?: WorkspaceRegion;
+
+    // Whether this instance is started from a backup
+    fromBackup?: boolean;
 }
 
 /**

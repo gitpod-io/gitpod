@@ -298,6 +298,7 @@ export class WorkspaceStarter {
                     };
                 }
             }
+            const fromBackup = !!lastValidWorkspaceInstance?.id;
             const ideConfig = await this.resolveIDEConfiguration(ctx, workspace, user, ideSettings);
             // create an instance
             let instance = await this.newInstance(
@@ -308,6 +309,7 @@ export class WorkspaceStarter {
                 project,
                 options.excludeFeatureFlags || [],
                 ideConfig,
+                fromBackup,
                 options.region,
                 options.workspaceClass,
             );
@@ -322,15 +324,7 @@ export class WorkspaceStarter {
             span.log({ newInstance: instance.id });
             instanceId = instance.id;
 
-            const fromBackup = !!lastValidWorkspaceInstance?.id;
-            const result = await this.buildImageAndStartWorkspace(
-                { span },
-                user,
-                workspace,
-                instance,
-                envVars,
-                fromBackup,
-            );
+            const result = await this.buildImageAndStartWorkspace({ span }, user, workspace, instance, envVars);
             return result;
         } catch (e) {
             this.logAndTraceStartWorkspaceError({ span }, { userId: user.id, instanceId }, e);
@@ -346,7 +340,6 @@ export class WorkspaceStarter {
         workspace: Workspace,
         instance: WorkspaceInstance,
         envVars: ResolvedEnvVars,
-        fromBackup: boolean,
     ): Promise<StartWorkspaceResult> {
         const { span } = ctx;
 
@@ -374,21 +367,13 @@ export class WorkspaceStarter {
         }
 
         if (needsImageBuild) {
-            this.actuallyStartWorkspace({ span }, instance, workspace, user, fromBackup, envVars, forceRebuild).catch(
-                (err) => log.error("actuallyStartWorkspace", err),
+            this.actuallyStartWorkspace({ span }, instance, workspace, user, envVars, forceRebuild).catch((err) =>
+                log.error("actuallyStartWorkspace", err),
             );
             return { instanceID: instance.id };
         }
 
-        return await this.actuallyStartWorkspace(
-            { span },
-            instance,
-            workspace,
-            user,
-            fromBackup,
-            envVars,
-            forceRebuild,
-        );
+        return await this.actuallyStartWorkspace({ span }, instance, workspace, user, envVars, forceRebuild);
     }
 
     private async resolveIDEConfiguration(
@@ -495,7 +480,6 @@ export class WorkspaceStarter {
         instance: WorkspaceInstance,
         workspace: Workspace,
         user: User,
-        fromBackup: boolean,
         envVars: ResolvedEnvVars,
         forceRebuild?: boolean,
     ): Promise<StartWorkspaceResult> {
@@ -528,7 +512,7 @@ export class WorkspaceStarter {
             }
 
             // create spec
-            const spec = await this.createSpec({ span }, user, workspace, instance, fromBackup, envVars);
+            const spec = await this.createSpec({ span }, user, workspace, instance, envVars);
 
             // create start workspace request
             const metadata = await this.createMetadata(workspace);
@@ -842,6 +826,7 @@ export class WorkspaceStarter {
         project: Project | undefined,
         excludeFeatureFlags: NamedWorkspaceFeatureFlag[],
         ideConfig: IdeServiceApi.ResolveWorkspaceConfigResponse,
+        fromBackup: boolean,
         regionPreference: WorkspaceRegion | undefined,
         workspaceClassOverride?: string,
     ): Promise<WorkspaceInstance> {
@@ -868,6 +853,7 @@ export class WorkspaceStarter {
                     tasks: ideTasks,
                 },
                 regionPreference,
+                fromBackup,
             };
             if (ideConfig.ideSettings && ideConfig.ideSettings.trim() !== "") {
                 try {
@@ -1354,7 +1340,6 @@ export class WorkspaceStarter {
         user: User,
         workspace: Workspace,
         instance: WorkspaceInstance,
-        fromBackup: boolean,
         envVars: ResolvedEnvVars,
     ): Promise<StartWorkspaceSpec> {
         const context = workspace.context;
@@ -1502,7 +1487,13 @@ export class WorkspaceStarter {
             }
         }
 
-        const initializerPromise = this.createInitializer(traceCtx, workspace, workspace.context, user, fromBackup);
+        const initializerPromise = this.createInitializer(
+            traceCtx,
+            workspace,
+            workspace.context,
+            user,
+            instance.configuration.fromBackup || false,
+        );
         const userTimeoutPromise = this.entitlementService.getDefaultWorkspaceTimeout(
             user.id,
             workspace.organizationId,
