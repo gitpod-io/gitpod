@@ -75,6 +75,8 @@ jobs:
                   token: ${{ secrets.ROBOQUAT_REPO_PAT }}
                   committer: Robo Quat <roboquat@gitpod.io>
                   author: Robo Quat <roboquat@gitpod.io>
+                  team-reviewers: |
+                    team-experience
             - name: Get previous job's status
               id: lastrun
               uses: filiptronicek/get-last-job-status@main
