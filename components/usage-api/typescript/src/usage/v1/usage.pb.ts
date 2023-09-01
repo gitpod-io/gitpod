@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-/* eslint-disable */
+// @ts-ignore
 import * as Long from "long";
 import { CallContext, CallOptions } from "nice-grpc-common";
 import * as _m0 from "protobufjs/minimal";
