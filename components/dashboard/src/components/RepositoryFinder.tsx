@@ -131,11 +131,3 @@ function saveSearchData(searchData: string[]): void {
         console.warn("Could not save search data into local storage", error);
     }
 }
-
-export function refreshSearchData() {
-    getGitpodService()
-        .server.getSuggestedContextURLs()
-        .then((urls) => {
-            saveSearchData(urls);
-        });
-}
