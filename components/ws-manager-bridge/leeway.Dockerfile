@@ -8,7 +8,7 @@ COPY components-ws-manager-bridge--app /installer/
 WORKDIR /app
 RUN /installer/install.sh
 
-FROM cgr.dev/chainguard/node:18.17.1@sha256:fbaecf4d6ac9883699078c0b501aad22c866f9ce039d009212c0eed260914875
+FROM cgr.dev/chainguard/node:18.17.1@sha256:af073516c203b6bd0b55a77a806a0950b486f2e9ea7387a32b0f41ea72f20886
 ENV NODE_OPTIONS=--unhandled-rejections=warn
 EXPOSE 3000
 COPY --from=builder --chown=node:node /app /app/
