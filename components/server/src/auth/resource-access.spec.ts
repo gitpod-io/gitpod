@@ -706,6 +706,9 @@ class TestResourceAccess {
                 workspaceId,
                 creationTime: new Date(2000, 1, 2).toISOString(),
                 region: "local",
+                configuration: {
+                    ideImage: "gitpod/workspace-full:latest",
+                },
                 status: {
                     version: 1,
                     conditions: {},

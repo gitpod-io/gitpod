@@ -101,7 +101,7 @@ export class DBWorkspaceInstance implements WorkspaceInstance {
         type: "simple-json",
         nullable: true,
     })
-    configuration?: WorkspaceInstanceConfiguration;
+    configuration: WorkspaceInstanceConfiguration;
 
     @Column("simple-json", { nullable: true })
     imageBuildInfo?: ImageBuildInfo;
