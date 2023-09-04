@@ -11,6 +11,7 @@ import (
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -107,7 +108,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		workspace.Status.Conditions = []metav1.Condition{}
 	}
 
-	log.Info("reconciling workspace", "workspace", req.NamespacedName, "phase", workspace.Status.Phase)
+	log.V(2).Info("reconciling workspace", "workspace", req.NamespacedName, "phase", workspace.Status.Phase)
 
 	var workspacePods corev1.PodList
 	err := r.List(ctx, &workspacePods, client.InNamespace(req.Namespace), client.MatchingFields{wsOwnerKey: req.Name})
@@ -136,7 +137,11 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if err = scrubber.Default.Struct(scrubbedStatus); err != nil {
 		log.Error(err, "failed to scrub workspace status")
 	}
-	log.Info("updating workspace status", "status", scrubbedStatus, "podStatus", scrubbedPodStatus)
+
+	if !equality.Semantic.DeepDerivative(oldStatus, workspace.Status) {
+		log.Info("updating workspace status", "status", scrubbedStatus, "podStatus", scrubbedPodStatus)
+	}
+
 	err = r.Status().Update(ctx, &workspace)
 	if err != nil {
 		return errorResultLogConflict(log, fmt.Errorf("failed to update workspace status: %w", err))
@@ -178,11 +183,9 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 				return ctrl.Result{}, err
 			}
 
-			log.Info("creating workspace Pod for Workspace")
 			err = r.Create(ctx, pod)
 			if errors.IsAlreadyExists(err) {
 				// pod exists, we're good
-				log.Info("Workspace Pod already exists")
 			} else if err != nil {
 				log.Error(err, "unable to create Pod for Workspace", "pod", pod)
 				return ctrl.Result{Requeue: true}, err
@@ -390,9 +393,6 @@ func (r *WorkspaceReconciler) emitPhaseEvents(ctx context.Context, ws *workspace
 }
 
 func (r *WorkspaceReconciler) deleteWorkspacePod(ctx context.Context, pod *corev1.Pod, reason string) (ctrl.Result, error) {
-	log := log.FromContext(ctx).WithValues("pod", pod.Name, "reason", reason)
-	log.Info("deleting workspace pod")
-
 	// Workspace was requested to be deleted, propagate by deleting the Pod.
 	// The Pod deletion will then trigger workspace disposal steps.
 	err := r.Client.Delete(ctx, pod)
@@ -469,7 +469,6 @@ func (r *WorkspaceReconciler) deleteSecret(ctx context.Context, name, namespace 
 // behaviour as returning an error.
 func errorResultLogConflict(log logr.Logger, err error) (ctrl.Result, error) {
 	if errors.IsConflict(err) {
-		log.Info("conflict error, requeuing", "error", err.Error())
 		return ctrl.Result{RequeueAfter: 100 * time.Millisecond}, nil
 	} else {
 		return ctrl.Result{}, err
