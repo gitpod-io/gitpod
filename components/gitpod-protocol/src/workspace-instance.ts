@@ -70,6 +70,11 @@ export interface WorkspaceInstance {
      * (e.g. for usage analytics or billing purposes).
      */
     usageAttributionId?: string;
+
+    /**
+     * The id of the controller that is governing the start of this workspace instance
+     */
+    controllerId: string;
 }
 
 // WorkspaceInstanceStatus describes the current state of a workspace instance

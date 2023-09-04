@@ -130,23 +130,11 @@ export interface WorkspaceDB {
         query?: AdminGetWorkspacesQuery,
     ): Promise<{ total: number; rows: WorkspaceAndInstance[] }>;
     findWorkspaceAndInstance(id: string): Promise<WorkspaceAndInstance | undefined>;
-    findInstancesByPhaseAndRegion(phase: string, region: string): Promise<WorkspaceInstance[]>;
+    findInstancesByPhase(...phases: string[]): Promise<WorkspaceInstance[]>;
 
     getWorkspaceCount(type?: String): Promise<Number>;
     getWorkspaceCountByCloneURL(cloneURL: string, sinceLastDays?: number, type?: string): Promise<number>;
     getInstanceCount(type?: string): Promise<number>;
-
-    findAllWorkspaceInstances(
-        offset: number,
-        limit: number,
-        orderBy: keyof WorkspaceInstance,
-        orderDir: "ASC" | "DESC",
-        ownerId?: string,
-        minCreationTime?: Date,
-        maxCreationTime?: Date,
-        onlyRunning?: boolean,
-        type?: WorkspaceType,
-    ): Promise<{ total: number; rows: WorkspaceInstance[] }>;
 
     findRegularRunningInstances(userId?: string): Promise<WorkspaceInstance[]>;
     findRunningInstancesWithWorkspaces(
