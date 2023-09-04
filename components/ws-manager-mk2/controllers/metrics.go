@@ -139,24 +139,14 @@ func (m *controllerMetrics) countWorkspaceStartFailures(log *logr.Logger, ws *wo
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalStartsFailureCounterVec.GetMetricWithLabelValues(tpe, class)
-	if err != nil {
-		log.Error(err, "could not count workspace startup failure", "type", tpe, "class", class)
-	}
-
-	counter.Inc()
+	m.totalStartsFailureCounterVec.WithLabelValues(tpe, class).Inc()
 }
 
 func (m *controllerMetrics) countWorkspaceFailure(log *logr.Logger, ws *workspacev1.Workspace) {
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalFailuresCounterVec.GetMetricWithLabelValues(tpe, class)
-	if err != nil {
-		log.Error(err, "could not count workspace failure", "type", tpe, "class", class)
-	}
-
-	counter.Inc()
+	m.totalFailuresCounterVec.WithLabelValues(tpe, class).Inc()
 }
 
 func (m *controllerMetrics) countWorkspaceStop(log *logr.Logger, ws *workspacev1.Workspace) {
@@ -182,60 +172,35 @@ func (m *controllerMetrics) countWorkspaceStop(log *logr.Logger, ws *workspacev1
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalStopsCounterVec.GetMetricWithLabelValues(reason, tpe, class)
-	if err != nil {
-		log.Error(err, "could not count workspace stop", "reason", "unknown", "type", tpe, "class", class)
-	}
-
-	counter.Inc()
+	m.totalStopsCounterVec.WithLabelValues(reason, tpe, class).Inc()
 }
 
 func (m *controllerMetrics) countTotalBackups(log *logr.Logger, ws *workspacev1.Workspace) {
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalBackupCounterVec.GetMetricWithLabelValues(tpe, class)
-	if err != nil {
-		log.Error(err, "could not count workspace backup", "type", tpe, "class", class)
-	}
-
-	counter.Inc()
+	m.totalBackupCounterVec.WithLabelValues(tpe, class).Inc()
 }
 
 func (m *controllerMetrics) countTotalBackupFailures(log *logr.Logger, ws *workspacev1.Workspace) {
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalBackupFailureCounterVec.GetMetricWithLabelValues(tpe, class)
-	if err != nil {
-		log.Error(err, "could not count workspace backup failure", "type", tpe, "class", class)
-	}
-
-	counter.Inc()
+	m.totalBackupFailureCounterVec.WithLabelValues(tpe, class).Inc()
 }
 
 func (m *controllerMetrics) countTotalRestores(log *logr.Logger, ws *workspacev1.Workspace) {
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalRestoreCounterVec.GetMetricWithLabelValues(tpe, class)
-	if err != nil {
-		log.Error(err, "could not count workspace restore", "type", tpe, "class", class)
-	}
-
-	counter.Inc()
+	m.totalRestoreCounterVec.WithLabelValues(tpe, class).Inc()
 }
 
 func (m *controllerMetrics) countTotalRestoreFailures(log *logr.Logger, ws *workspacev1.Workspace) {
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalRestoreFailureCounterVec.GetMetricWithLabelValues(tpe, class)
-	if err != nil {
-		log.Error(err, "could not count workspace restore failure", "type", tpe, "class", class)
-	}
-
-	counter.Inc()
+	m.totalRestoreFailureCounterVec.WithLabelValues(tpe, class).Inc()
 }
 
 func (m *controllerMetrics) containsWorkspace(ws *workspacev1.Workspace) bool {
