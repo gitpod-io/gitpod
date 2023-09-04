@@ -122,29 +122,23 @@ export class BitbucketServerApi {
         return this.runQuery<BitbucketServer.Project>(userOrToken, `/projects/${projectSlug}`);
     }
 
-    async getPermission(
+    async hasRepoPermission(
         userOrToken: User | string,
-        params: { username: string; repoKind: BitbucketServer.RepoKind; owner: string; repoName?: string },
-    ): Promise<string | undefined> {
-        const { username, repoKind, owner, repoName } = params;
-        if (repoName) {
-            const repoPermissions = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.PermissionEntry>>(
-                userOrToken,
-                `/${repoKind}/${owner}/repos/${repoName}/permissions/users`,
-            );
-            const repoPermission = repoPermissions.values?.find((p) => p.user.name === username)?.permission;
-            if (repoPermission) {
-                return repoPermission;
-            }
-        }
-        if (repoKind === "projects") {
-            const projectPermissions = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.PermissionEntry>>(
-                userOrToken,
-                `/${repoKind}/${owner}/permissions/users`,
-            );
-            const projectPermission = projectPermissions.values?.find((p) => p.user.name === username)?.permission;
-            return projectPermission;
-        }
+        params: {
+            permission: "REPO_READ" | "REPO_WRITE" | "REPO_ADMIN";
+            projectKey?: string;
+            repoName: string;
+            repoId: number;
+        },
+    ): Promise<boolean> {
+        const { repoName, projectKey, permission, repoId } = params;
+
+        const repos = await this.getRepos(userOrToken, {
+            permission,
+            name: repoName,
+            projectKey,
+        });
+        return repos.findIndex((r) => r.id === repoId) >= 0;
     }
 
     protected get baseUrl(): string {
@@ -350,6 +344,14 @@ export class BitbucketServerApi {
              * Limit or results per pagination request. Defaults to 1000
              */
             limit?: number;
+            /**
+             * projectKey is the original param of BBS APIs, will limit the resulting repository list to ones whose project's key matches this parameter's value
+             */
+            projectKey?: string;
+            /**
+             * name is the original param of BBS APIs, will limit the resulting repository list to ones whose name matches this parameter's value
+             */
+            name?: string;
 
             cancellationToken?: CancellationToken;
         },
@@ -403,12 +405,19 @@ export class BitbucketServerApi {
             return result;
         };
 
+        const baseParams: { [key: string]: string } = {};
+        if (query.projectKey) {
+            baseParams.projectkey = query.projectKey;
+        }
+        if (query.name) {
+            baseParams.name = query.name;
+        }
         if (query.searchString?.trim()) {
             const results: Map<number, BitbucketServer.Repository> = new Map();
 
             // Query by name & projectname in series to reduce chances of hitting rate limits
-            const nameResults = await fetchRepos({ name: query.searchString });
-            const projectResults = await fetchRepos({ projectname: query.searchString });
+            const nameResults = await fetchRepos(Object.assign({}, baseParams, { name: query.searchString }));
+            const projectResults = await fetchRepos(Object.assign({}, baseParams, { projectname: query.searchString }));
 
             for (const repo of [...nameResults, ...projectResults]) {
                 results.set(repo.id, repo);
@@ -416,7 +425,7 @@ export class BitbucketServerApi {
 
             return Array.from(results.values());
         } else {
-            return await fetchRepos();
+            return await fetchRepos(baseParams);
         }
     }
 
