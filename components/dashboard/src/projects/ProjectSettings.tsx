@@ -38,14 +38,29 @@ export default function ProjectSettingsView() {
     const { setProject } = useContext(ProjectContext);
     const { project } = useCurrentProject();
     const [showRemoveModal, setShowRemoveModal] = useState(false);
-    const [projectName, setProjectName] = useState(project?.name || "");
-    let badProjectName = projectName.length > 0 ? undefined : "Project name can not be blank.";
-    if (projectName.length > 32) {
-        badProjectName = "Project name can not be longer than 32 characters.";
+    const [isDirty, setIsDirty] = useState(false);
+    const [projectName, internalSetProjectName] = useState(project?.name || "");
+    if (!projectName && project && !isDirty) {
+        internalSetProjectName(project.name);
+    }
+    let badProjectName: string | undefined;
+    if (project) {
+        badProjectName = projectName.length > 0 ? undefined : "Project name can not be blank.";
+        if (projectName.length > 32) {
+            badProjectName = "Project name can not be longer than 32 characters.";
+        }
     }
     const history = useHistory();
     const refreshProjects = useRefreshProjects();
     const toast = useToast();
+
+    const setProjectName = useCallback(
+        (projectName: string) => {
+            setIsDirty(true);
+            internalSetProjectName(projectName);
+        },
+        [setIsDirty, internalSetProjectName],
+    );
 
     const updateProjectName = useCallback(
         async (e: React.FormEvent) => {
