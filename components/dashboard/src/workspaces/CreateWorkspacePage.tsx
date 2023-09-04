@@ -40,7 +40,6 @@ import { useDirtyState } from "../hooks/use-dirty-state";
 import { LinkButton } from "../components/LinkButton";
 import { InputField } from "../components/forms/InputField";
 import Alert from "../components/Alert";
-import { useFeatureFlag } from "../data/featureflag-query";
 
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
@@ -419,7 +418,6 @@ export function CreateWorkspacePage() {
                     </Button>
                 </div>
 
-                {selectedIde === "code-desktop" && <LocalSSHWarning className="mx-6 mt-3 rounded-lg overflow-hidden" />}
                 {workspaceContext.data && (
                     <RememberOptions
                         disabled={workspaceContext.isLoading || createWorkspaceMutation.isStarting}
@@ -444,40 +442,6 @@ export function CreateWorkspacePage() {
                     </div>
                 )}
             </div>
-        </div>
-    );
-}
-
-function LocalSSHWarning(props: { className: string }) {
-    const isLocalSSHProxyEnabled = useFeatureFlag("gitpod_desktop_use_local_ssh_proxy");
-
-    if (!isLocalSSHProxyEnabled) {
-        return null;
-    }
-
-    return (
-        <div className={props.className}>
-            <Alert light className="bg-gray-100 dark:bg-gray-800" type="info">
-                Choosing VS Code for Desktop will add a single entry to your local SSH configuration. Gitpod won't
-                interfere with your existing SSH configurations.&nbsp;
-                <a
-                    className="gp-link"
-                    href="https://www.gitpod.io/docs/references/ides-and-editors/vscode#connecting-to-vs-code-desktop"
-                    target="_blank"
-                    rel="noreferrer"
-                >
-                    Learn more
-                </a>
-                &nbsp;&middot;&nbsp;
-                <a
-                    className="gp-link"
-                    href="https://github.com/gitpod-io/gitpod/issues/18109"
-                    target="_blank"
-                    rel="noreferrer"
-                >
-                    Send feedback
-                </a>
-            </Alert>
         </div>
     );
 }
