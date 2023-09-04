@@ -22,7 +22,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
-	ctrl "sigs.k8s.io/controller-runtime"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -99,9 +98,7 @@ func (r *WorkspaceReconciler) createWorkspacePod(sctx *startWorkspaceContext) (*
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create definite workspace pod: %w", err)
 	}
-	if err := ctrl.SetControllerReference(sctx.Workspace, pod, r.Scheme); err != nil {
-		return nil, err
-	}
+
 	err = combineDefiniteWorkspacePodWithTemplate(pod, podTemplate)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
