@@ -40,35 +40,44 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
 
     const getElements = useCallback(
         (searchString: string) => {
-            const result = [...suggestedContextURLs];
+            let result: string[];
             searchString = searchString.trim();
-            try {
-                // If the searchString is a URL, and it's not present in the proposed results, "artificially" add it here.
-                new URL(searchString);
-                if (!result.includes(searchString)) {
-                    result.push(searchString);
+            if (searchString.length > 1) {
+                result = suggestedContextURLs.filter((e) => e.toLowerCase().indexOf(searchString.toLowerCase()) !== -1);
+                if (result.length > 200) {
+                    result = result.slice(0, 200);
                 }
-            } catch {}
-            return result
-                .filter((e) => e.toLowerCase().indexOf(searchString.toLowerCase()) !== -1)
-                .map(
-                    (e) =>
-                        ({
-                            id: e,
-                            element: (
-                                <div className="flex-col ml-1 mt-1 flex-grow">
-                                    <div className="flex">
-                                        <div className="text-gray-700 dark:text-gray-300 font-semibold">
-                                            {stripOffProtocol(e)}
-                                        </div>
-                                        <div className="ml-1 text-gray-400">{}</div>
+                if (result.length === 0) {
+                    try {
+                        // If the searchString is a URL, and it's not present in the proposed results, "artificially" add it here.
+                        new URL(searchString);
+                        if (!suggestedContextURLs.includes(searchString)) {
+                            result.push(searchString);
+                        }
+                    } catch {}
+                }
+            } else {
+                result = suggestedContextURLs.slice(0, 200);
+            }
+
+            return result.map(
+                (e) =>
+                    ({
+                        id: e,
+                        element: (
+                            <div className="flex-col ml-1 mt-1 flex-grow">
+                                <div className="flex">
+                                    <div className="text-gray-700 dark:text-gray-300 font-semibold">
+                                        {stripOffProtocol(e)}
                                     </div>
-                                    <div className="flex text-xs text-gray-400">{}</div>
+                                    <div className="ml-1 text-gray-400">{}</div>
                                 </div>
-                            ),
-                            isSelectable: true,
-                        } as DropDown2Element),
-                );
+                                <div className="flex text-xs text-gray-400">{}</div>
+                            </div>
+                        ),
+                        isSelectable: true,
+                    } as DropDown2Element),
+            );
         },
         [suggestedContextURLs],
     );
@@ -130,12 +139,4 @@ function saveSearchData(searchData: string[]): void {
     } catch (error) {
         console.warn("Could not save search data into local storage", error);
     }
-}
-
-export function refreshSearchData() {
-    getGitpodService()
-        .server.getSuggestedContextURLs()
-        .then((urls) => {
-            saveSearchData(urls);
-        });
 }
