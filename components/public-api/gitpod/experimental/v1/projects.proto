@@ -23,9 +23,7 @@ message Project {
     // Required.
     string name = 4;
 
-    // Slug is a short-hand identifier for a project.
-    // Read-only.
-    string slug = 5;
+    reserved 5;
 
     // Clone URL is the clone URL on which this Project is based.
     // Required.

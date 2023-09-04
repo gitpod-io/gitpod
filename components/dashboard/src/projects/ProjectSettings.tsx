@@ -16,6 +16,10 @@ import { getProjectSettingsMenu, getProjectTabs } from "./projects.routes";
 import { Heading2, Subheading } from "../components/typography/headings";
 import { RemoveProjectModal } from "./RemoveProjectModal";
 import SelectWorkspaceClassComponent from "../components/SelectWorkspaceClassComponent";
+import { TextInputField } from "../components/forms/TextInputField";
+import { Button } from "../components/Button";
+import { useRefreshProjects } from "../data/projects/list-projects-query";
+import { useToast } from "../components/toasts/Toasts";
 
 export function ProjectSettingsPage(props: { project?: Project; children?: React.ReactNode }) {
     return (
@@ -34,10 +38,30 @@ export default function ProjectSettingsView() {
     const { setProject } = useContext(ProjectContext);
     const { project } = useCurrentProject();
     const [showRemoveModal, setShowRemoveModal] = useState(false);
+    const [projectName, setProjectName] = useState(project?.name || "");
+    let badProjectName = projectName.length > 0 ? undefined : "Project name can not be blank.";
+    if (projectName.length > 32) {
+        badProjectName = "Project name can not be longer than 32 characters.";
+    }
     const history = useHistory();
+    const refreshProjects = useRefreshProjects();
+    const toast = useToast();
+
+    const updateProjectName = useCallback(
+        async (e: React.FormEvent) => {
+            e.preventDefault();
+            if (!project || badProjectName) return;
+
+            await getGitpodService().server.updateProjectPartial({ id: project.id, name: projectName });
+            setProject({ ...project, name: projectName });
+            refreshProjects(project.teamId);
+            toast.toast(`Project ${projectName} updated.`);
+        },
+        [project, badProjectName, projectName, setProject, refreshProjects, toast],
+    );
 
     const updateProjectSettings = useCallback(
-        (settings: ProjectSettings) => {
+        async (settings: ProjectSettings) => {
             if (!project) return;
 
             const newSettings = { ...project.settings, ...settings };
@@ -80,7 +104,20 @@ export default function ProjectSettingsView() {
 
     return (
         <ProjectSettingsPage project={project}>
-            <Heading2>Prebuilds</Heading2>
+            <Heading2>Project Name</Heading2>
+            <form onSubmit={updateProjectName}>
+                <TextInputField
+                    hint="The name can be up to 32 characters long."
+                    value={projectName}
+                    error={badProjectName}
+                    onChange={setProjectName}
+                />
+
+                <Button className="mt-4" htmlType="submit" disabled={project?.name === projectName || !!badProjectName}>
+                    Update Name
+                </Button>
+            </form>
+            <Heading2 className="mt-12">Prebuilds</Heading2>
             <Subheading>Choose the workspace machine type for your prebuilds.</Subheading>
             <div className="max-w-md">
                 <SelectWorkspaceClassComponent
