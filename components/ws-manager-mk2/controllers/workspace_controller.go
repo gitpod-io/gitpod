@@ -8,11 +8,11 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
-	"k8s.io/apimachinery/pkg/api/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -95,7 +95,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	var workspace workspacev1.Workspace
 	if err := r.Get(ctx, req.NamespacedName, &workspace); err != nil {
-		if !errors.IsNotFound(err) {
+		if !apierrors.IsNotFound(err) {
 			log.Error(err, "unable to fetch workspace")
 		}
 		// we'll ignore not-found errors, since they can't be fixed by an immediate
@@ -184,7 +184,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 			}
 
 			err = r.Create(ctx, pod)
-			if errors.IsAlreadyExists(err) {
+			if apierrors.IsAlreadyExists(err) {
 				// pod exists, we're good
 			} else if err != nil {
 				log.Error(err, "unable to create Pod for Workspace", "pod", pod)
@@ -257,7 +257,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		err := r.Client.Delete(ctx, pod, &client.DeleteOptions{
 			GracePeriodSeconds: gracePeriodSeconds,
 		})
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			// pod is gone - nothing to do here
 		} else {
 			return ctrl.Result{Requeue: true}, err
@@ -282,7 +282,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		// Workspace was requested to be deleted, propagate by deleting the Pod.
 		// The Pod deletion will then trigger workspace disposal steps.
 		err := r.Client.Delete(ctx, pod)
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			// pod is gone - nothing to do here
 		} else {
 			return ctrl.Result{Requeue: true}, err
@@ -396,7 +396,7 @@ func (r *WorkspaceReconciler) deleteWorkspacePod(ctx context.Context, pod *corev
 	// Workspace was requested to be deleted, propagate by deleting the Pod.
 	// The Pod deletion will then trigger workspace disposal steps.
 	err := r.Client.Delete(ctx, pod)
-	if errors.IsNotFound(err) {
+	if apierrors.IsNotFound(err) {
 		// pod is gone - nothing to do here
 	} else {
 		return ctrl.Result{Requeue: true}, err
@@ -441,7 +441,7 @@ func (r *WorkspaceReconciler) deleteSecret(ctx context.Context, name, namespace 
 	}, func(ctx context.Context) (bool, error) {
 		var secret corev1.Secret
 		err := r.Client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &secret)
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			// nothing to delete
 			return true, nil
 		}
@@ -452,7 +452,7 @@ func (r *WorkspaceReconciler) deleteSecret(ctx context.Context, name, namespace 
 		}
 
 		err = r.Client.Delete(ctx, &secret)
-		if err != nil && !errors.IsNotFound(err) {
+		if err != nil && !apierrors.IsNotFound(err) {
 			log.Error(err, "cannot delete secret", "secret", name)
 			return false, nil
 		}
@@ -468,7 +468,7 @@ func (r *WorkspaceReconciler) deleteSecret(ctx context.Context, name, namespace 
 // For conflicts, instead a result with `Requeue: true` is returned, which has the same requeuing
 // behaviour as returning an error.
 func errorResultLogConflict(log logr.Logger, err error) (ctrl.Result, error) {
-	if errors.IsConflict(err) {
+	if apierrors.IsConflict(err) {
 		return ctrl.Result{RequeueAfter: 100 * time.Millisecond}, nil
 	} else {
 		return ctrl.Result{}, err
@@ -482,26 +482,6 @@ var (
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	idx := func(rawObj client.Object) []string {
-		// grab the job object, extract the owner...
-		job := rawObj.(*corev1.Pod)
-		owner := metav1.GetControllerOf(job)
-		if owner == nil {
-			return nil
-		}
-		// ...make sure it's a workspace...
-		if owner.APIVersion != apiGVStr || owner.Kind != "Workspace" {
-			return nil
-		}
-
-		// ...and if so, return it
-		return []string{owner.Name}
-	}
-	err := mgr.GetFieldIndexer().IndexField(context.Background(), &corev1.Pod{}, wsOwnerKey, idx)
-	if err != nil {
-		return err
-	}
-
 	return ctrl.NewControllerManagedBy(mgr).
 		Named("workspace").
 		WithOptions(controller.Options{
@@ -537,4 +517,30 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			},
 		}).
 		Complete(r)
+}
+
+func SetupIndexer(mgr ctrl.Manager) error {
+	var err error
+	var once sync.Once
+	once.Do(func() {
+		idx := func(rawObj client.Object) []string {
+			// grab the job object, extract the owner...
+			job := rawObj.(*corev1.Pod)
+			owner := metav1.GetControllerOf(job)
+			if owner == nil {
+				return nil
+			}
+			// ...make sure it's a workspace...
+			if owner.APIVersion != apiGVStr || owner.Kind != "Workspace" {
+				return nil
+			}
+
+			// ...and if so, return it
+			return []string{owner.Name}
+		}
+
+		err = mgr.GetFieldIndexer().IndexField(context.Background(), &corev1.Pod{}, wsOwnerKey, idx)
+	})
+
+	return err
 }

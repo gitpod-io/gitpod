@@ -143,13 +143,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	workspaceReconciler, err := controllers.NewWorkspaceReconciler(
-		mgr.GetClient(), mgr.GetScheme(), mgr.GetEventRecorderFor("workspace"), &cfg.Manager, metrics.Registry, maintenanceReconciler)
-	if err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Workspace")
-		os.Exit(1)
-	}
-
 	timeoutReconciler, err := controllers.NewTimeoutReconciler(mgr.GetClient(), mgr.GetEventRecorderFor("workspace"), cfg.Manager, maintenanceReconciler)
 	if err != nil {
 		setupLog.Error(err, "unable to create timeout controller", "controller", "Timeout")
@@ -175,10 +168,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = workspaceReconciler.SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to setup workspace controller with manager", "controller", "Workspace")
+	err = controllers.SetupIndexer(mgr)
+	if err != nil {
+		setupLog.Error(err, "unable to configure field indexer")
 		os.Exit(1)
 	}
+
+	go func() {
+		<-mgr.Elected()
+
+		workspaceReconciler, err := controllers.NewWorkspaceReconciler(
+			mgr.GetClient(), mgr.GetScheme(), mgr.GetEventRecorderFor("workspace"), &cfg.Manager, metrics.Registry, maintenanceReconciler)
+		if err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "Workspace")
+			os.Exit(1)
+		}
+
+		if err = workspaceReconciler.SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to setup workspace controller with manager", "controller", "Workspace")
+			os.Exit(1)
+		}
+	}()
 
 	if err = timeoutReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to setup timeout controller with manager", "controller", "Timeout")
