@@ -13,7 +13,7 @@ export interface StartWorkspaceOptions {
 }
 export namespace StartWorkspaceOptions {
     // The workspace class to use for the workspace. If not specified, the default workspace class is used.
-    export const WORKSPACE_CLASS = "workspaceClass";
+    export const WORKSPACE_CLASS = "workspaceclass";
 
     // The editor to use for the workspace. If not specified, the default editor is used.
     export const EDITOR = "editor";
@@ -22,7 +22,12 @@ export namespace StartWorkspaceOptions {
     export const AUTOSTART = "autostart";
 
     export function parseSearchParams(search: string): StartWorkspaceOptions {
-        const params = new URLSearchParams(search);
+        const original = new URLSearchParams(search);
+        const params = new URLSearchParams();
+        // translate to lower case
+        for (const [key, value] of original.entries()) {
+            params.set(key.toLowerCase(), value);
+        }
         const options: StartWorkspaceOptions = {};
         const workspaceClass = params.get(StartWorkspaceOptions.WORKSPACE_CLASS);
         if (workspaceClass) {
@@ -43,7 +48,7 @@ export namespace StartWorkspaceOptions {
             }
         }
         if (params.get(StartWorkspaceOptions.AUTOSTART)) {
-            options.autostart = params.get(StartWorkspaceOptions.AUTOSTART) === "true";
+            options.autostart = params.get(StartWorkspaceOptions.AUTOSTART) !== "false";
         }
         return options;
     }
@@ -58,8 +63,8 @@ export namespace StartWorkspaceOptions {
             const latest = options.ideSettings.useLatestVersion;
             params.set(StartWorkspaceOptions.EDITOR, latest ? ide + "-latest" : ide);
         }
-        if (options.autostart) {
-            params.set(StartWorkspaceOptions.AUTOSTART, "true");
+        if (options.autostart !== undefined) {
+            params.set(StartWorkspaceOptions.AUTOSTART, options.autostart.toString());
         }
         return params.toString();
     }

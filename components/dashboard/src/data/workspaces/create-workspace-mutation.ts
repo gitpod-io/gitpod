@@ -22,16 +22,6 @@ export const useCreateWorkspaceMutation = () => {
         onError: (error) => {
             setIsStarting(false);
         },
-        onSuccess: (result) => {
-            if (result && result.createdWorkspaceId) {
-                // successfully started a workspace, wait a bit before we allow to start another one
-                setTimeout(() => {
-                    setIsStarting(false);
-                }, 4000);
-            } else {
-                setIsStarting(false);
-            }
-        },
     });
     return {
         createWorkspace: (options: GitpodServer.CreateWorkspaceOptions) => {
