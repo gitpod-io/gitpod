@@ -140,10 +140,8 @@ export async function getWorkspaceClassForInstance(
     ctx: TraceContext,
     workspace: Workspace,
     previousInstance: WorkspaceInstance | undefined,
-    user: User,
     project: Project | undefined,
     workspaceClassOverride: string | undefined,
-    entitlementService: EntitlementService,
     config: WorkspaceClassesConfig,
 ): Promise<string> {
     const span = TraceContext.startSpan("getWorkspaceClassForInstance", ctx);
@@ -900,10 +898,8 @@ export class WorkspaceStarter {
                 ctx,
                 workspace,
                 previousInstance,
-                user,
                 project,
                 workspaceClassOverride,
-                this.entitlementService,
                 this.config.workspaceClasses,
             );
 

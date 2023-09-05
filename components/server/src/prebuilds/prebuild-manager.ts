@@ -22,7 +22,6 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { getCommitInfo, HostContextProvider } from "../auth/host-context-provider";
 import { ConfigProvider } from "../workspace/config-provider";
-import { WorkspaceStarter } from "../workspace/workspace-starter";
 import { Config } from "../config";
 import { ProjectsService } from "../projects/projects-service";
 import { secondsBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
@@ -37,7 +36,6 @@ import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messag
 import { UserAuthentication } from "../user/user-authentication";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
 import { WorkspaceService } from "../workspace/workspace-service";
-import { EnvVarService } from "../user/env-var-service";
 
 export class WorkspaceRunningError extends Error {
     constructor(msg: string, public instance: WorkspaceInstance) {
@@ -57,7 +55,6 @@ export interface StartPrebuildParams {
 export class PrebuildManager {
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
     @inject(WorkspaceService) protected readonly workspaceService: WorkspaceService;
-    @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(ConfigProvider) protected readonly configProvider: ConfigProvider;
     @inject(Config) protected readonly config: Config;
@@ -66,7 +63,6 @@ export class PrebuildManager {
     @inject(UserAuthentication) protected readonly userService: UserAuthentication;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
-    @inject(EnvVarService) private readonly envVarService: EnvVarService;
 
     async abortPrebuildsForBranch(ctx: TraceContext, project: Project, user: User, branch: string): Promise<void> {
         const span = TraceContext.startSpan("abortPrebuildsForBranch", ctx);
@@ -230,13 +226,6 @@ export class PrebuildManager {
                 context.normalizedContextURL!,
             );
 
-            const envVarsPromise = this.envVarService.resolveEnvVariables(
-                workspace.ownerId,
-                workspace.projectId,
-                workspace.type,
-                workspace.context,
-            );
-
             const prebuild = await this.workspaceDB.trace({ span }).findPrebuildByWorkspaceID(workspace.id)!;
             if (!prebuild) {
                 throw new Error(`Failed to create a prebuild for: ${context.normalizedContextURL}`);
@@ -280,10 +269,15 @@ export class PrebuildManager {
                 await this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild);
             } else {
                 span.setTag("starting", true);
-                const envVars = await envVarsPromise;
-                await this.workspaceStarter.startWorkspace({ span }, workspace, user, project, envVars, {
-                    excludeFeatureFlags: ["full_workspace_backup"],
-                });
+                await this.workspaceService.startWorkspace(
+                    { span },
+                    user,
+                    workspace.id,
+                    {
+                        excludeFeatureFlags: ["full_workspace_backup"],
+                    },
+                    false,
+                );
             }
 
             return { prebuildId: prebuild.id, wsid: workspace.id, done: false };
@@ -339,13 +333,7 @@ export class PrebuildManager {
             if (!prebuild) {
                 throw new Error("No prebuild found for workspace " + workspaceId);
             }
-            const envVars = await this.envVarService.resolveEnvVariables(
-                workspace.ownerId,
-                workspace.projectId,
-                workspace.type,
-                workspace.context,
-            );
-            await this.workspaceStarter.startWorkspace({ span }, workspace, user, project, envVars);
+            await this.workspaceService.startWorkspace({ span }, user, workspaceId, {}, false);
             return { prebuildId: prebuild.id, wsid: workspace.id, done: false };
         } catch (err) {
             TraceContext.setError({ span }, err);

@@ -45,7 +45,7 @@ import {
     AdmissionLevel,
     ControlAdmissionRequest,
 } from "@gitpod/ws-manager/lib";
-import { WorkspaceStarter } from "./workspace-starter";
+import { WorkspaceStarter, StartWorkspaceOptions as StarterStartWorkspaceOptions } from "./workspace-starter";
 import { LogContext, log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
 import * as crypto from "crypto";
@@ -62,7 +62,7 @@ import { HeadlessLogEndpoint, HeadlessLogService } from "./headless-log-service"
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { OrganizationService } from "../orgs/organization-service";
 
-export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
+export interface StartWorkspaceOptions extends StarterStartWorkspaceOptions {
     /**
      * This field is used to guess the workspace location using the RegionService
      */
@@ -437,10 +437,21 @@ export class WorkspaceService {
         user: User,
         workspaceId: string,
         options: StartWorkspaceOptions = {},
+        restrictToRegular = true,
     ): Promise<StartWorkspaceResult> {
         await this.auth.checkPermissionOnWorkspace(user.id, "start", workspaceId);
 
-        const workspace = await this.doGetWorkspace(user.id, workspaceId);
+        const { workspace, latestInstance } = await this.getWorkspace(user.id, workspaceId);
+        if (latestInstance) {
+            if (latestInstance.status.phase !== "stopped") {
+                // We already have a running workspace instance
+                return {
+                    instanceID: latestInstance.id,
+                    workspaceURL: latestInstance.ideUrl,
+                };
+            }
+        }
+
         const mayStartPromise = this.mayStartWorkspace(
             ctx,
             user,
@@ -456,7 +467,7 @@ export class WorkspaceService {
             };
         }
 
-        if (workspace.type !== "regular") {
+        if (restrictToRegular && workspace.type !== "regular") {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Cannot (re-)start irregular workspace.");
         }
 
