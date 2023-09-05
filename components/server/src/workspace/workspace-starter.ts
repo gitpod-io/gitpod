@@ -219,6 +219,7 @@ export class WorkspaceStarter {
         user: User,
         project: Project | undefined,
         envVars: ResolvedEnvVars,
+        controllerId: string,
         options?: StartWorkspaceOptions,
     ): Promise<StartWorkspaceResult> {
         const span = TraceContext.startSpan("WorkspaceStarter.startWorkspace", ctx);
@@ -309,6 +310,7 @@ export class WorkspaceStarter {
                 ideConfig,
                 fromBackup,
                 options.region,
+                controllerId,
                 options.workspaceClass,
             );
             // we run the actual creation of a new instance in a distributed lock, to make sure we always only start one instance per workspace.
@@ -332,7 +334,7 @@ export class WorkspaceStarter {
         }
     }
 
-    private async buildImageAndStartWorkspace(
+    public async buildImageAndStartWorkspace(
         ctx: TraceContextWithSpan,
         user: User,
         workspace: Workspace,
@@ -826,6 +828,7 @@ export class WorkspaceStarter {
         ideConfig: IdeServiceApi.ResolveWorkspaceConfigResponse,
         fromBackup: boolean,
         regionPreference: WorkspaceRegion | undefined,
+        controllerId: string,
         workspaceClassOverride?: string,
     ): Promise<WorkspaceInstance> {
         const span = TraceContext.startSpan("newInstance", ctx);
@@ -834,7 +837,7 @@ export class WorkspaceStarter {
             try {
                 ideTasks = JSON.parse(ideConfig.tasks);
             } catch (e) {
-                console.error("failed get tasks from ide config:", e);
+                log.error({ workspaceId: workspace.id }, "failed get tasks from ide config", e);
             }
 
             const configuration: WorkspaceInstanceConfiguration = {
@@ -928,6 +931,7 @@ export class WorkspaceStarter {
                 configuration,
                 usageAttributionId: usageAttributionId && AttributionId.render(usageAttributionId),
                 workspaceClass,
+                controllerId,
             };
 
             if (WithReferrerContext.is(workspace.context)) {

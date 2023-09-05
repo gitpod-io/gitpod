@@ -47,6 +47,7 @@ import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
 import { JobRunner } from "./jobs/runner";
 import { RedisSubscriber } from "./messaging/redis-subscriber";
 import { HEADLESS_LOGS_PATH_PREFIX, HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from "./workspace/headless-log-service";
+import { WorkspaceStartController } from "./workspace/workspace-start-controller";
 
 @injectable()
 export class Server {
@@ -92,6 +93,7 @@ export class Server {
         @inject(IamSessionApp) private readonly iamSessionAppCreator: IamSessionApp,
         @inject(API) private readonly api: API,
         @inject(RedisSubscriber) private readonly redisSubscriber: RedisSubscriber,
+        @inject(WorkspaceStartController) private readonly workspaceStartController: WorkspaceStartController,
     ) {}
 
     public async init(app: express.Application) {
@@ -267,6 +269,9 @@ export class Server {
 
         // Start periodic jobs
         this.disposables.push(this.jobRunner.start());
+
+        // Start workspace start controller
+        this.disposables.push(this.workspaceStartController.start());
 
         this.app = app;
 

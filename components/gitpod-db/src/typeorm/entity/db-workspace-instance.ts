@@ -117,4 +117,10 @@ export class DBWorkspaceInstance implements WorkspaceInstance {
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     usageAttributionId?: string;
+
+    @Column({
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+    })
+    controllerId: string;
 }

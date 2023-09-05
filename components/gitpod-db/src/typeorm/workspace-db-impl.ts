@@ -25,7 +25,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { daysBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import * as crypto from "crypto";
 import { inject, injectable, optional } from "inversify";
-import { Brackets, DeepPartial, EntityManager, Repository } from "typeorm";
+import { Brackets, DeepPartial, EntityManager, Repository, WhereExpressionBuilder } from "typeorm";
 import { BUILTIN_WORKSPACE_PROBE_USER_ID } from "../user-db";
 import {
     FindWorkspacesOptions,
@@ -377,45 +377,6 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             .orderBy("creationTime", "DESC")
             .limit(1);
         return qb.getOne();
-    }
-
-    public async findAllWorkspaceInstances(
-        offset: number,
-        limit: number,
-        orderBy: keyof WorkspaceInstance,
-        orderDir: "ASC" | "DESC",
-        ownerId?: string,
-        minCreationTime?: Date,
-        maxCreationTime?: Date,
-        onlyRunning?: boolean,
-        type?: WorkspaceType,
-    ): Promise<{ total: number; rows: WorkspaceInstance[] }> {
-        const workspaceInstanceRepo = await this.getWorkspaceInstanceRepo();
-        const queryBuilder = workspaceInstanceRepo
-            .createQueryBuilder("wsi")
-            .leftJoinAndMapOne("wsi.workspace", DBWorkspace, "ws", "wsi.workspaceId = ws.id")
-            .skip(offset)
-            .take(limit)
-            .orderBy("wsi." + orderBy, orderDir)
-            .where("ws.type = :type", { type: type ? type.toString() : "regular" }); // only regular workspaces by default
-        if (ownerId) {
-            queryBuilder.andWhere("wsi.ownerId = :ownerId", { ownerId });
-        }
-        if (minCreationTime) {
-            queryBuilder.andWhere("wsi.creationTime >= :minCreationTime", {
-                minCreationTime: minCreationTime.toISOString(),
-            });
-        }
-        if (maxCreationTime) {
-            queryBuilder.andWhere("wsi.creationTime < :maxCreationTime", {
-                maxCreationTime: maxCreationTime.toISOString(),
-            });
-        }
-        if (onlyRunning) {
-            queryBuilder.andWhere("wsi.phasePersisted != 'stopped'").andWhere("wsi.deleted != TRUE");
-        }
-        const [rows, total] = await queryBuilder.getManyAndCount();
-        return { total, rows };
     }
 
     public async getInstanceCount(type?: string): Promise<number> {
@@ -1096,13 +1057,24 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         return <WorkspaceAndInstance>res;
     }
 
-    async findInstancesByPhaseAndRegion(phase: string, region: string): Promise<WorkspaceInstance[]> {
+    async findInstancesByPhase(...phases: string[]): Promise<WorkspaceInstance[]> {
+        if (phases.length < 0) {
+            throw new Error("At least one phase must be provided");
+        }
+
         const repo = await this.getWorkspaceInstanceRepo();
-        // uses index: ind_phasePersisted_region
+        // uses index: ind_phasePersisted
         const qb = repo
             .createQueryBuilder("wsi")
-            .where("wsi.phasePersisted = :phase", { phase })
-            .andWhere("wsi.region = :region", { region });
+            .where("wsi.deleted != TRUE")
+            .andWhere(
+                // OR together all phases in "()"
+                new Brackets((qb: WhereExpressionBuilder) => {
+                    for (const phase of phases) {
+                        qb.orWhere("wsi.phasePersisted = :phase", { phase });
+                    }
+                }),
+            );
         return qb.getMany();
     }
 

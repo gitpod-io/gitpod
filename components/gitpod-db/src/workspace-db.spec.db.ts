@@ -69,6 +69,7 @@ class WorkspaceDBSpec {
         },
         deleted: false,
         usageAttributionId: undefined,
+        controllerId: "default",
     };
     readonly wsi2: WorkspaceInstance = {
         workspaceId: this.ws.id,
@@ -93,6 +94,7 @@ class WorkspaceDBSpec {
         },
         deleted: false,
         usageAttributionId: undefined,
+        controllerId: "default",
     };
     readonly ws2: Workspace = {
         id: "2",
@@ -133,6 +135,7 @@ class WorkspaceDBSpec {
         },
         deleted: false,
         usageAttributionId: undefined,
+        controllerId: "default",
     };
 
     readonly ws3: Workspace = {
@@ -173,6 +176,7 @@ class WorkspaceDBSpec {
         },
         deleted: false,
         usageAttributionId: undefined,
+        controllerId: "default",
     };
 
     async before() {

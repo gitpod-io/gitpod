@@ -320,6 +320,7 @@ namespace TestData {
             ideImage: "unknown",
         },
         deleted: false,
+        controllerId: "default",
     };
 }
 
