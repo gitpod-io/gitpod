@@ -4,11 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Message } from "vscode-jsonrpc/lib/messages";
-import { AbstractMessageWriter, MessageWriter } from "vscode-jsonrpc/lib/messageWriter";
-import { AbstractMessageReader, MessageReader, DataCallback } from "vscode-jsonrpc/lib/messageReader";
-import { MessageConnection, createMessageConnection } from "vscode-jsonrpc/lib/main";
-import { ConsoleLogger } from "vscode-ws-jsonrpc";
+import { Message } from "vscode-jsonrpc/lib/common/messages";
+import { AbstractMessageWriter, MessageWriter } from "vscode-jsonrpc/lib/common/messageWriter";
+import { AbstractMessageReader, MessageReader, DataCallback } from "vscode-jsonrpc/lib/common/messageReader";
+import { MessageConnection, createMessageConnection } from "vscode-jsonrpc/lib/browser/main";
+import { ConsoleLogger, Disposable } from "vscode-ws-jsonrpc";
 
 interface WindowMessage extends Message {
     serviceId: string;
@@ -29,10 +29,12 @@ export class WindowMessageWriter extends AbstractMessageWriter implements Messag
         super();
     }
 
-    write(msg: Message): void {
+    async write(msg: Message): Promise<void> {
         const { serviceId } = this;
         this.window.postMessage(Object.assign(msg, { serviceId }), this.targetOrigin);
     }
+
+    end(): void {}
 }
 
 export class WindowMessageReader extends AbstractMessageReader implements MessageReader {
@@ -60,13 +62,16 @@ export class WindowMessageReader extends AbstractMessageReader implements Messag
         );
     }
 
-    listen(callback: DataCallback): void {
+    listen(callback: DataCallback): Disposable {
         let message;
         while ((message = this.buffer.pop())) {
             callback(message);
         }
         Object.freeze(this.buffer);
         this.callback = callback;
+        return Disposable.create(() => {
+            this.callback = undefined;
+        });
     }
 }
 

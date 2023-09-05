@@ -6,9 +6,9 @@
  */
 
 import { Logger, ConsoleLogger, toSocket, IWebSocket } from "vscode-ws-jsonrpc";
-import { createMessageConnection } from "vscode-jsonrpc";
-import { AbstractMessageWriter } from "vscode-jsonrpc/lib/messageWriter";
-import { AbstractMessageReader } from "vscode-jsonrpc/lib/messageReader";
+import { Disposable, createMessageConnection } from "vscode-jsonrpc";
+import { AbstractMessageWriter } from "vscode-jsonrpc/lib/common/messageWriter";
+import { AbstractMessageReader, DataCallback } from "vscode-jsonrpc/lib/common/messageReader";
 import { JsonRpcProxyFactory, JsonRpcProxy } from "../proxy-factory";
 import { ConnectionEventHandler, ConnectionHandler } from "../handler";
 import ReconnectingWebSocket, { Event } from "reconnecting-websocket";
@@ -154,7 +154,7 @@ class BufferingWebSocketMessageWriter extends AbstractMessageWriter {
         socket.addEventListener("open", (event: Event) => this.flushBuffer());
     }
 
-    write(msg: any) {
+    async write(msg: any): Promise<void> {
         if (this.socket.readyState !== ReconnectingWebSocket.OPEN) {
             this.bufferMsg(msg);
             return;
@@ -188,6 +188,8 @@ class BufferingWebSocketMessageWriter extends AbstractMessageWriter {
         this.buffer.push(msg);
         //this.logger.info(`buffered message (${this.buffer.length})`);
     }
+
+    end() {}
 }
 
 /**
@@ -215,7 +217,7 @@ class NonClosingWebSocketMessageReader extends AbstractMessageReader {
             // this.fireClose();        // <-- reason for this class to be copied over
         });
     }
-    listen(callback: (message: any) => void) {
+    listen(callback: DataCallback): Disposable {
         if (this.state === "initial") {
             this.state = "listening";
             this.callback = callback;
@@ -230,13 +232,20 @@ class NonClosingWebSocketMessageReader extends AbstractMessageReader {
                 }
             }
         }
+        return Disposable.create(() => {
+            this.callback = () => {};
+        });
     }
     readMessage(message: any) {
         if (this.state === "initial") {
             this.events.splice(0, 0, { message });
         } else if (this.state === "listening") {
-            const data = JSON.parse(message);
-            this.callback(data);
+            try {
+                const data = JSON.parse(message);
+                this.callback(data);
+            } catch (error) {
+                console.error("Failed to decode JSON-RPC message.", error);
+            }
         }
     }
     fireError(error: any) {
