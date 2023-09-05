@@ -15,7 +15,7 @@ import io.gitpod.jetbrains.remote.AbstractGitpodMetricControlProvider
 class GitpodMetricControlProvider: AbstractGitpodMetricControlProvider() {
 
     override fun createProgressControl(ctx: VerticalGridBuilder, lifetime: Lifetime, label: String, cpuPercentage: Metric, labelProperty: Property<String>, cpuPercentageProperty: Property<String>, progressBar: DefiniteProgress) {
-        createProgressRow(ctx, id, lifetime, label, cpuPercentage.statusProperty, labelProperty, cpuPercentageProperty, progressBar)
+        createProgressRow(ctx, lifetime, label, cpuPercentage.statusProperty, labelProperty, cpuPercentageProperty, progressBar)
     }
 
 }

@@ -51,6 +51,7 @@ const packages = [];
 const generateIDEBuildPackage = function (ideConfig, qualifier) {
     let name = ideConfig.name + (qualifier === "stable" ? "" : "-" + qualifier);
     let helmName = ideConfig.name + (qualifier === "stable" ? "" : "Latest");
+    let ideVersion = getIDEVersion(qualifier, args[`${name}DownloadUrl`]);
     let pkg = {
         name,
         type: "docker",
@@ -65,13 +66,14 @@ const generateIDEBuildPackage = function (ideConfig, qualifier) {
                 JETBRAINS_DOWNLOAD_QUALIFIER: name,
                 SUPERVISOR_IDE_CONFIG: `supervisor-ide-config_${name}.json`,
                 JETBRAINS_BACKEND_QUALIFIER: qualifier,
-                JETBRAINS_BACKEND_VERSION: getIDEVersion(qualifier, args[`${ideConfig.name}DownloadUrl`]),
+                JETBRAINS_BACKEND_VERSION: ideVersion,
             },
             image: [],
         },
     };
     if (qualifier === "stable") {
-        pkg.config.image.push(`${args.imageRepoBase}/ide/${ideConfig.name}` + ":commit-${__git_commit}");
+        pkg.config.image.push(`${args.imageRepoBase}/ide/${ideConfig.name}:` + "commit-${__git_commit}");
+        pkg.config.image.push(`${args.imageRepoBase}/ide/${ideConfig.name}:${ideVersion}`);
     } else {
         if (args.version === "latest") {
             pkg.config.image.push(`${args.imageRepoBase}/ide/${ideConfig.name}:${args.version}`);

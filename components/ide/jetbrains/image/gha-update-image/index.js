@@ -9,6 +9,12 @@ const fs = require("fs");
 const axios = require("axios");
 const semver = require("semver");
 
+// all versions should be less than if given, for instance < 231
+let maxMajorVersion = process.argv[2];
+if (maxMajorVersion) {
+    maxMajorVersion = Number(maxMajorVersion)
+}
+
 const JB_PRODUCTS_DATA_URL = "https://data.services.jetbrains.com/products";
 
 const IDEs = [
@@ -109,7 +115,13 @@ const IDEs = [
     let buildVersion;
 
     responses.forEach((resp, index) => {
-        const lastRelease = resp.data[0].releases[0];
+        const lastRelease = resp.data[0].releases.find(release => {
+            if (maxMajorVersion) {
+                const buildVersion = semver.parse(release.build, true);
+                return buildVersion.major < maxMajorVersion
+            }
+            return true
+        });
         uniqueMajorVersions.add(lastRelease.majorVersion);
         const oldDownloadUrl = workspaceYaml.defaultArgs[`${IDEs[index].productId}DownloadUrl`];
         rawWorkspaceYaml = rawWorkspaceYaml.replace(oldDownloadUrl, lastRelease.downloads.linux.link);
