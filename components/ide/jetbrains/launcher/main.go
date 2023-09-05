@@ -75,18 +75,20 @@ type LaunchContext struct {
 
 // JB startup entrypoint
 func main() {
-	log.Init(ServiceName, Version, true, false)
-
 	if len(os.Args) == 3 && os.Args[1] == "env" && os.Args[2] != "" {
 		var mark = os.Args[2]
 		content, err := json.Marshal(os.Environ())
+		exitStatus := 0
 		if err != nil {
-			log.WithError(err).Fatal()
+			fmt.Fprintf(os.Stderr, "%s", err)
+			exitStatus = 1
 		}
 		fmt.Printf("%s%s%s", mark, content, mark)
+		os.Exit(exitStatus)
 		return
 	}
 
+	log.Init(ServiceName, Version, true, false)
 	log.Info(ServiceName + ": " + Version)
 	startTime := time.Now()
 
@@ -410,13 +412,13 @@ func launch(launchCtx *LaunchContext) {
 		}
 	}
 
-	configDir := fmt.Sprintf("/workspace/.config/JetBrains%s", launchCtx.qualifier)
 	launchCtx.projectDir = projectDir
-	launchCtx.configDir = configDir
+	launchCtx.configDir = fmt.Sprintf("/workspace/.config/JetBrains%s", launchCtx.qualifier)
 	launchCtx.systemDir = fmt.Sprintf("/workspace/.cache/JetBrains%s", launchCtx.qualifier)
 	launchCtx.riderSolutionFile = riderSolutionFile
 	launchCtx.projectContextDir = resolveProjectContextDir(launchCtx)
-	launchCtx.projectConfigDir = fmt.Sprintf("%s/RemoteDev-%s/%s", configDir, launchCtx.info.ProductCode, strings.ReplaceAll(launchCtx.projectContextDir, "/", "_"))
+	launchCtx.projectConfigDir = fmt.Sprintf("%s/RemoteDev-%s/%s", launchCtx.configDir, launchCtx.info.ProductCode, strings.ReplaceAll(launchCtx.projectContextDir, "/", "_"))
+	launchCtx.env = resolveLaunchContextEnv(launchCtx.configDir, launchCtx.systemDir)
 
 	// sync initial options
 	err = syncOptions(launchCtx)
@@ -479,7 +481,7 @@ func run(launchCtx *LaunchContext) {
 }
 
 // resolveUserEnvs emulats the interactive login shell to ensure that all user defined shell scripts are loaded
-func resolveUserEnvs(launchCtx *LaunchContext) (userEnvs []string, err error) {
+func resolveUserEnvs() (userEnvs []string, err error) {
 	shell := os.Getenv("SHELL")
 	if shell == "" {
 		shell = "/bin/bash"
@@ -488,12 +490,25 @@ func resolveUserEnvs(launchCtx *LaunchContext) (userEnvs []string, err error) {
 	if err != nil {
 		return
 	}
-	envCmd := exec.Command(shell, []string{"-ilc", "/ide-desktop/jb-launcher env " + mark.String()}...)
-	envCmd.Stderr = os.Stderr
-	output, err := envCmd.Output()
+
+	self, err := os.Executable()
 	if err != nil {
 		return
 	}
+	envCmd := exec.Command(shell, []string{"-i", "-l", "-c", strings.Join([]string{self, "env", mark.String()}, " ")}...)
+	envCmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	envCmd.Stderr = os.Stderr
+	envCmd.WaitDelay = 3 * time.Second
+
+	output, err := envCmd.Output()
+	if errors.Is(err, exec.ErrWaitDelay) {
+		// For some reason the command doesn't close it's I/O pipes but it already run successfully
+		// so just ignore this error
+		log.Warn("WaitDelay expired before envCmd I/O completed")
+	} else if err != nil {
+		return
+	}
+
 	markByte := []byte(mark.String())
 	start := bytes.Index(output, markByte)
 	if start == -1 {
@@ -514,31 +529,34 @@ func resolveUserEnvs(launchCtx *LaunchContext) (userEnvs []string, err error) {
 	return
 }
 
-func remoteDevServerCmd(args []string, launchCtx *LaunchContext) *exec.Cmd {
-	if launchCtx.env == nil {
-		userEnvs, err := resolveUserEnvs(launchCtx)
-		if err == nil {
-			launchCtx.env = append(launchCtx.env, userEnvs...)
-		} else {
-			log.WithError(err).Error("failed to resolve user env vars")
-			launchCtx.env = os.Environ()
-		}
-
-		// Set default config and system directories under /workspace to preserve between restarts
-		launchCtx.env = append(launchCtx.env,
-			// Set default config and system directories under /workspace to preserve between restarts
-			fmt.Sprintf("IJ_HOST_CONFIG_BASE_DIR=%s", launchCtx.configDir),
-			fmt.Sprintf("IJ_HOST_SYSTEM_BASE_DIR=%s", launchCtx.systemDir),
-		)
-
-		// instead put them into /ide-desktop/${alias}${qualifier}/backend/bin/idea64.vmoptions
-		// otherwise JB will complain to a user on each startup
-		// by default remote dev already set -Xmx2048m, see /ide-desktop/${alias}${qualifier}/backend/plugins/remote-dev-server/bin/launcher.sh
-		launchCtx.env = append(launchCtx.env, "JAVA_TOOL_OPTIONS=")
-
-		log.WithField("env", launchCtx.env).Debug("resolved launch env")
+func resolveLaunchContextEnv(configDir string, systemDir string) []string {
+	var launchCtxEnv []string
+	userEnvs, err := resolveUserEnvs()
+	if err == nil {
+		launchCtxEnv = append(launchCtxEnv, userEnvs...)
+	} else {
+		log.WithError(err).Error("failed to resolve user env vars")
+		launchCtxEnv = os.Environ()
 	}
 
+	// Set default config and system directories under /workspace to preserve between restarts
+	launchCtxEnv = append(launchCtxEnv,
+		// Set default config and system directories under /workspace to preserve between restarts
+		fmt.Sprintf("IJ_HOST_CONFIG_BASE_DIR=%s", configDir),
+		fmt.Sprintf("IJ_HOST_SYSTEM_BASE_DIR=%s", systemDir),
+	)
+
+	// instead put them into /ide-desktop/${alias}${qualifier}/backend/bin/idea64.vmoptions
+	// otherwise JB will complain to a user on each startup
+	// by default remote dev already set -Xmx2048m, see /ide-desktop/${alias}${qualifier}/backend/plugins/remote-dev-server/bin/launcher.sh
+	launchCtxEnv = append(launchCtxEnv, "JAVA_TOOL_OPTIONS=")
+
+	log.WithField("env", strings.Join(launchCtxEnv, "\n")).Info("resolved launch env")
+
+	return launchCtxEnv
+}
+
+func remoteDevServerCmd(args []string, launchCtx *LaunchContext) *exec.Cmd {
 	cmd := exec.Command(launchCtx.backendDir+"/bin/remote-dev-server.sh", args...)
 	cmd.Env = launchCtx.env
 	cmd.Stderr = os.Stderr
