@@ -17,7 +17,7 @@ import { TokenGarbageCollector } from "./token-gc";
 import { WebhookEventGarbageCollector } from "./webhook-gc";
 import { WorkspaceGarbageCollector } from "./workspace-gc";
 import { SnapshotsJob } from "./snapshots";
-import { WorkspaceStartController } from "../workspace/workspace-start-controller";
+import { DistributedWorkspaceStartController } from "../workspace/workspace-start-controller";
 
 export const Job = Symbol("Job");
 
@@ -37,7 +37,8 @@ export class JobRunner {
     @inject(TokenGarbageCollector) protected tokenGC: TokenGarbageCollector;
     @inject(WebhookEventGarbageCollector) protected webhookGC: WebhookEventGarbageCollector;
     @inject(WorkspaceGarbageCollector) protected workspaceGC: WorkspaceGarbageCollector;
-    @inject(WorkspaceStartController) protected workspaceStartController: WorkspaceStartController;
+    @inject(DistributedWorkspaceStartController)
+    protected workspaceStartController: DistributedWorkspaceStartController;
     @inject(SnapshotsJob) protected snapshotsJob: SnapshotsJob;
 
     public start(): DisposableCollection {

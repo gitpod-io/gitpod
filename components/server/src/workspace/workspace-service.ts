@@ -61,7 +61,6 @@ import { goDurationToHumanReadable } from "@gitpod/gitpod-protocol/lib/util/time
 import { HeadlessLogEndpoint, HeadlessLogService } from "./headless-log-service";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { OrganizationService } from "../orgs/organization-service";
-import { WorkspaceStartController } from "./workspace-start-controller";
 
 export interface StartWorkspaceOptions extends StarterStartWorkspaceOptions {
     /**
@@ -79,7 +78,6 @@ export class WorkspaceService {
         @inject(WorkspaceFactory) private readonly factory: WorkspaceFactory,
         @inject(WorkspaceStarter) private readonly workspaceStarter: WorkspaceStarter,
         @inject(WorkspaceManagerClientProvider) private readonly clientProvider: WorkspaceManagerClientProvider,
-        @inject(WorkspaceStartController) private readonly workspaceStartController: WorkspaceStartController,
         @inject(WorkspaceDB) private readonly db: WorkspaceDB,
         @inject(EntitlementService) private readonly entitlementService: EntitlementService,
         @inject(EnvVarService) private readonly envVarService: EnvVarService,
@@ -503,7 +501,6 @@ export class WorkspaceService {
             user,
             await projectPromise,
             await envVarsPromise,
-            this.workspaceStartController.getControllerId(),
             options,
         );
         return result;
