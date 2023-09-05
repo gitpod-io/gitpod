@@ -90,7 +90,7 @@
     "stripe": "^9.0.0",
     "twilio": "^3.78.0",
     "uuid": "^8.3.2",
-    "vscode-ws-jsonrpc": "^0.2.0",
+    "vscode-ws-jsonrpc": "^2.0.2",
     "ws": "^7.4.6"
   },
   "devDependencies": {

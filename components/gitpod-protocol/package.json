@@ -67,9 +67,9 @@
         "reconnecting-websocket": "^4.4.0",
         "reflect-metadata": "^0.1.13",
         "uuid": "^8.3.2",
-        "vscode-jsonrpc": "^5.0.1",
+        "vscode-jsonrpc": "8.0.2",
         "vscode-uri": "^3.0.3",
-        "vscode-ws-jsonrpc": "^0.2.0",
+        "vscode-ws-jsonrpc": "^2.0.2",
         "ws": "^7.4.6"
     }
 }
