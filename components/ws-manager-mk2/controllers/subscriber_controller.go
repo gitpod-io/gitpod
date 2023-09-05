@@ -22,6 +22,7 @@ import (
 
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
+	"github.com/google/go-cmp/cmp"
 )
 
 func NewSubscriberReconciler(c client.Client, cfg *config.Configuration) (*SubscriberReconciler, error) {
@@ -80,9 +81,16 @@ func (r *SubscriberReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 	}()
 
 	filterByStatus := predicate.Funcs{
+		CreateFunc: func(ce event.CreateEvent) bool {
+			return true
+		},
 		UpdateFunc: func(e event.UpdateEvent) bool {
 			old := e.ObjectOld.(*workspacev1.Workspace)
 			new := e.ObjectNew.(*workspacev1.Workspace)
+
+			if !cmp.Equal(old.Spec.Ports, new.Spec.Ports) {
+				return true
+			}
 
 			return !equality.Semantic.DeepDerivative(old.Status, new.Status)
 		},
