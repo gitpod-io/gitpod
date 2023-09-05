@@ -716,6 +716,7 @@ class TestResourceAccess {
                 },
                 ideUrl: "https://some.where",
                 workspaceImage: "gitpod/workspace-full:latest",
+                controllerId: "default",
             };
         };
         const createPrebuild = (): PrebuiltWorkspace => {
