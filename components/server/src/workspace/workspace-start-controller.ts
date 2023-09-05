@@ -113,7 +113,6 @@ const MANAGED_PHASES: WorkspaceInstancePhase[] = ["preparing", "building", "pend
 export class WorkspaceStartController {
     public readonly id: WorkspaceStartControllerId;
 
-    private readonly startingInstances = new Set<string>();
     // Used for sequencing doControlStartingWorkspace()
     private readonly queue = new Queue();
 
@@ -123,10 +122,11 @@ export class WorkspaceStartController {
     constructor(
         @inject(Config) private readonly config: Config,
         @inject(WorkspaceDB) private readonly workspaceDb: WorkspaceDB,
-        @inject(WorkspaceManagerClientProvider) private readonly clientProvider: WorkspaceManagerClientProvider,
         @inject(EnvVarService) private readonly envVarService: EnvVarService,
-        @inject(WorkspaceStarter) private readonly workspaceStarter: WorkspaceStarter,
         @inject(UserDB) private readonly userDb: UserDB,
+        @inject(WorkspaceStartRegistry) private readonly startingInstances: WorkspaceStartRegistry,
+        @inject(WorkspaceManagerClientProvider) private readonly clientProvider: WorkspaceManagerClientProvider,
+        @inject(WorkspaceStarter) private readonly workspaceStarter: WorkspaceStarter,
     ) {
         this.id = WorkspaceStartControllerId.create(this.config.version);
     }
@@ -140,14 +140,6 @@ export class WorkspaceStartController {
         for (const instance of instances) {
             await this.doControlStartingWorkspace(instance);
         }
-    }
-
-    public registerWorkspaceStart<T>(instanceId: string, startWorkspace: Promise<T>): Promise<T> {
-        this.startingInstances.add(instanceId);
-        startWorkspace.finally(() => {
-            this.startingInstances.delete(instanceId);
-        });
-        return startWorkspace;
     }
 
     public async checkForOrphanedInstances(_activeControllerIds: WorkspaceStartControllerId[]) {
@@ -202,18 +194,20 @@ export class WorkspaceStartController {
         if (instance.controllerId !== localControllerId) {
             return; // Not our business
         }
-        if (this.startingInstances.has(instance.id)) {
-            return; // Already started
-        }
 
         return this.queue.enqueue(async () => {
+            if (this.startingInstances.has(instance.id)) {
+                return; // Already started
+            }
             switch (instance.status.phase) {
                 case "preparing":
                     this.retriggerStartWorkspace(instance).catch(log.error);
+                    this.startingInstances.register(instance.id);
                     return;
 
                 case "building":
                     this.retriggerStartWorkspace(instance).catch(log.error);
+                    this.startingInstances.register(instance.id);
                     return;
 
                 case "pending":
@@ -234,7 +228,7 @@ export class WorkspaceStartController {
 
                     // Our time has come!
                     this.retriggerStartWorkspace(instance).catch(log.error);
-
+                    this.startingInstances.register(instance.id);
                     return;
 
                 default:
@@ -311,6 +305,23 @@ export class WorkspaceStartController {
 
     public getControllerId(): string {
         return WorkspaceStartControllerId.toString(this.id);
+    }
+}
+
+@injectable()
+export class WorkspaceStartRegistry {
+    private readonly startingInstances = new Set<string>();
+
+    public has(instanceId: string): boolean {
+        return this.startingInstances.has(instanceId);
+    }
+
+    public register(instanceId: string) {
+        this.startingInstances.add(instanceId);
+    }
+
+    public unregister(instanceId: string) {
+        this.startingInstances.delete(instanceId);
     }
 }
 

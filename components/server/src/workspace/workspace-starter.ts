@@ -128,7 +128,7 @@ import { ImageSourceProvider } from "./image-source-provider";
 import { WorkspaceClassesConfig } from "./workspace-classes";
 import { SYSTEM_USER } from "../authorization/authorizer";
 import { ResolvedEnvVars } from "../user/env-var-service";
-import { WorkspaceStartController } from "./workspace-start-controller";
+import { WorkspaceStartRegistry } from "./workspace-start-controller";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
@@ -213,7 +213,7 @@ export class WorkspaceStarter {
         @inject(EntitlementService) private readonly entitlementService: EntitlementService,
         @inject(RedisMutex) private readonly redisMutex: RedisMutex,
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
-        @inject(WorkspaceStartController) private readonly WorkspaceStartController: WorkspaceStartController,
+        @inject(WorkspaceStartRegistry) private readonly workspaceStartRegistry: WorkspaceStartRegistry,
     ) {}
     public async startWorkspace(
         ctx: TraceContext,
@@ -311,7 +311,7 @@ export class WorkspaceStarter {
                 ideConfig,
                 fromBackup,
                 options.region,
-                this.WorkspaceStartController.getControllerId(),
+                controllerId,
                 options.workspaceClass,
             );
             // we run the actual creation of a new instance in a distributed lock, to make sure we always only start one instance per workspace.
@@ -320,6 +320,7 @@ export class WorkspaceStarter {
                 if (runningInstance) {
                     throw new Error(`Workspace ${workspace.id} is already running`);
                 }
+                this.workspaceStartRegistry.register(instance.id);
                 instance = await this.workspaceDb.trace({ span }).storeInstance(instance);
             });
             span.log({ newInstance: instance.id });
@@ -328,6 +329,9 @@ export class WorkspaceStarter {
             const result = await this.buildImageAndStartWorkspace({ span }, user, workspace, instance, envVars);
             return result;
         } catch (e) {
+            if (instanceId) {
+                this.workspaceStartRegistry.unregister(instanceId);
+            }
             this.logAndTraceStartWorkspaceError({ span }, { userId: user.id, instanceId }, e);
             throw e;
         } finally {
@@ -344,40 +348,37 @@ export class WorkspaceStarter {
     ): Promise<StartWorkspaceResult> {
         const { span } = ctx;
 
-        const startWorkspace = async () => {
-            const forceRebuild = !!workspace.context.forceImageBuild;
-            let needsImageBuild: boolean;
-            try {
-                // if we need to build the workspace image we must not wait for actuallyStartWorkspace to return as that would block the
-                // frontend until the image is built.
-                const additionalAuth = await this.getAdditionalImageAuth(envVars);
-                needsImageBuild =
-                    forceRebuild || (await this.needsImageBuild(ctx, user, workspace, instance, additionalAuth));
-                if (needsImageBuild) {
-                    instance.status.conditions = {
-                        neededImageBuild: true,
-                    };
-                }
-                span.setTag("needsImageBuild", needsImageBuild);
-            } catch (err) {
-                // if we fail to check if the workspace needs an image build (e.g. becuase the image builder is unavailable),
-                // we must properly fail the workspace instance, i.e. set its status to stopped, deal with prebuilds etc.
-                //
-                // Once we've reached actuallyStartWorkspace that function will take care of failing the instance.
-                await this.failInstanceStart(ctx, err, workspace, instance);
-                throw err;
-            }
-
+        const forceRebuild = !!workspace.context.forceImageBuild;
+        let needsImageBuild: boolean;
+        try {
+            // if we need to build the workspace image we must not wait for actuallyStartWorkspace to return as that would block the
+            // frontend until the image is built.
+            const additionalAuth = await this.getAdditionalImageAuth(envVars);
+            needsImageBuild =
+                forceRebuild || (await this.needsImageBuild(ctx, user, workspace, instance, additionalAuth));
             if (needsImageBuild) {
-                this.actuallyStartWorkspace({ span }, instance, workspace, user, envVars, forceRebuild).catch((err) =>
-                    log.error("actuallyStartWorkspace", err),
-                );
-                return { instanceID: instance.id };
+                instance.status.conditions = {
+                    neededImageBuild: true,
+                };
             }
+            span.setTag("needsImageBuild", needsImageBuild);
+        } catch (err) {
+            // if we fail to check if the workspace needs an image build (e.g. becuase the image builder is unavailable),
+            // we must properly fail the workspace instance, i.e. set its status to stopped, deal with prebuilds etc.
+            //
+            // Once we've reached actuallyStartWorkspace that function will take care of failing the instance.
+            await this.failInstanceStart(ctx, err, workspace, instance);
+            throw err;
+        }
 
-            return await this.actuallyStartWorkspace({ span }, instance, workspace, user, envVars, forceRebuild);
-        };
-        return await this.WorkspaceStartController.registerWorkspaceStart(instance.id, startWorkspace());
+        if (needsImageBuild) {
+            this.actuallyStartWorkspace({ span }, instance, workspace, user, envVars, forceRebuild).catch((err) =>
+                log.error("actuallyStartWorkspace", err),
+            );
+            return { instanceID: instance.id };
+        }
+
+        return await this.actuallyStartWorkspace({ span }, instance, workspace, user, envVars, forceRebuild);
     }
 
     private async resolveIDEConfiguration(
@@ -764,6 +765,8 @@ export class WorkspaceStarter {
         const span = TraceContext.startSpan("failInstanceStart", ctx);
 
         try {
+            this.workspaceStartRegistry.unregister(instance.id);
+
             // We may have never actually started the workspace which means that ws-manager-bridge never set a workspace status.
             // We have to set that status ourselves.
             instance.status.phase = "stopped";
