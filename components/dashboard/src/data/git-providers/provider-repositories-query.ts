@@ -16,11 +16,13 @@ type UseProviderRepositoriesQueryArgs = {
     providerHost: string;
     installationId?: string;
     search?: string;
+    enabled?: boolean;
 };
 export const useProviderRepositoriesForUser = ({
     providerHost,
     installationId,
     search,
+    enabled = true,
 }: UseProviderRepositoriesQueryArgs) => {
     const user = useCurrentUser();
     const newProjectIncrementalRepoSearchBBS = useFeatureFlag("newProjectIncrementalRepoSearchBBS");
@@ -64,7 +66,7 @@ export const useProviderRepositoriesForUser = ({
             );
         },
         {
-            enabled: !!providerHost,
+            enabled: enabled && !!providerHost,
         },
     );
 };

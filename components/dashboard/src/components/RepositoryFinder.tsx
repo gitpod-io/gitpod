@@ -4,12 +4,10 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useCallback, useEffect, useState } from "react";
-import { getGitpodService } from "../service/service";
+import { useCallback } from "react";
 import { DropDown2, DropDown2Element, DropDown2SelectedElement } from "./DropDown2";
 import Repository from "../icons/Repository.svg";
-
-const LOCAL_STORAGE_KEY = "open-in-gitpod-search-data";
+import { useRepositorySearch } from "../data/git-providers/repository-search-query";
 
 interface RepositoryFinderProps {
     initialValue?: string;
@@ -28,61 +26,33 @@ function stripOffProtocol(url: string): string {
 }
 
 export default function RepositoryFinder(props: RepositoryFinderProps) {
-    const [suggestedContextURLs, setSuggestedContextURLs] = useState<string[]>(loadSearchData());
-    useEffect(() => {
-        getGitpodService()
-            .server.getSuggestedContextURLs()
-            .then((urls) => {
-                setSuggestedContextURLs(urls);
-                saveSearchData(urls);
-            });
-    }, []);
+    const { data: contextURLs } = useRepositorySearch({
+        search: props.initialValue,
+    });
 
-    const getElements = useCallback(
-        (searchString: string) => {
-            let result: string[];
-            searchString = searchString.trim();
-            if (searchString.length > 1) {
-                result = suggestedContextURLs.filter((e) => e.toLowerCase().indexOf(searchString.toLowerCase()) !== -1);
-                if (result.length > 200) {
-                    result = result.slice(0, 200);
-                }
-                if (result.length === 0) {
-                    try {
-                        // If the searchString is a URL, and it's not present in the proposed results, "artificially" add it here.
-                        new URL(searchString);
-                        if (!suggestedContextURLs.includes(searchString)) {
-                            result.push(searchString);
-                        }
-                    } catch {}
-                }
-            } else {
-                result = suggestedContextURLs.slice(0, 200);
-            }
-
-            return result.map(
-                (e) =>
-                    ({
-                        id: e,
-                        element: (
-                            <div className="flex-col ml-1 mt-1 flex-grow">
-                                <div className="flex">
-                                    <div className="text-gray-700 dark:text-gray-300 font-semibold">
-                                        {stripOffProtocol(e)}
-                                    </div>
-                                    <div className="ml-1 text-gray-400">{}</div>
-                                </div>
-                                <div className="flex text-xs text-gray-400">{}</div>
+    const getDropdownOptions = useCallback(() => {
+        const options = contextURLs.map((contextURL): DropDown2Element => {
+            return {
+                id: contextURL,
+                element: (
+                    <div className="flex-col ml-1 mt-1 flex-grow">
+                        <div className="flex">
+                            <div className="text-gray-700 dark:text-gray-300 font-semibold">
+                                {stripOffProtocol(contextURL)}
                             </div>
-                        ),
-                        isSelectable: true,
-                    } as DropDown2Element),
-            );
-        },
-        [suggestedContextURLs],
-    );
+                            <div className="ml-1 text-gray-400">{}</div>
+                        </div>
+                        <div className="flex text-xs text-gray-400">{}</div>
+                    </div>
+                ),
+                isSelectable: true,
+            };
+        });
 
-    const element = (
+        return options;
+    }, [contextURLs]);
+
+    const selectedElement = (
         <DropDown2SelectedElement
             iconSrc={Repository}
             htmlTitle={displayContextUrl(props.initialValue) || "Repository"}
@@ -96,18 +66,18 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
 
     if (!props.setSelection) {
         // readonly display value
-        return <div className="m-2">{element}</div>;
+        return <div className="m-2">{selectedElement}</div>;
     }
 
     return (
         <DropDown2
-            getElements={getElements}
+            getElements={getDropdownOptions}
             expanded={!props.initialValue}
             onSelectionChange={props.setSelection}
             disabled={props.disabled}
             searchPlaceholder="Paste repository URL or type to find suggestions"
         >
-            {element}
+            {selectedElement}
         </DropDown2>
     );
 }
@@ -117,26 +87,4 @@ function displayContextUrl(contextUrl?: string) {
         return undefined;
     }
     return stripOffProtocol(contextUrl);
-}
-
-function loadSearchData(): string[] {
-    const string = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (!string) {
-        return [];
-    }
-    try {
-        const data = JSON.parse(string);
-        return data;
-    } catch (error) {
-        console.warn("Could not load search data from local storage", error);
-        return [];
-    }
-}
-
-function saveSearchData(searchData: string[]): void {
-    try {
-        window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(searchData));
-    } catch (error) {
-        console.warn("Could not save search data into local storage", error);
-    }
 }
