@@ -10,13 +10,7 @@ import { Config } from "../config";
 import { Redis } from "ioredis";
 import { UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { LogContext, log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import {
-    Disposable,
-    DisposableCollection,
-    Queue,
-    WorkspaceInstance,
-    WorkspaceInstancePhase,
-} from "@gitpod/gitpod-protocol";
+import { Disposable, Queue, WorkspaceInstance, WorkspaceInstancePhase } from "@gitpod/gitpod-protocol";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import { durationLongerThanSeconds } from "@gitpod/gitpod-protocol/lib/util/timeutil";
@@ -35,36 +29,98 @@ const stripRedisControllerIdPrefix = (key: string): string | undefined => {
     return key.substring(REDIS_CONTROLLER_ID_PREFIX.length + 1);
 };
 
-const MANAGED_PHASES: WorkspaceInstancePhase[] = ["preparing", "building", "pending"];
-
 /**
- * This class is responsible for making sure that workspace instances are started, even in the face of unexpected container shutdown.
- *
- * To do so, it implements a distributed controller:
- *  - Every X seconds, _all_ server instances control the workspace instances they are responsible for.
- *  - Every Y seconds, _one_ server instance checks if there are workspace instances without a controller (decided by a keepalive mechanism
- *    using redis) and assumes controler over those as well.
+ * DistributedWorkspaceStartController ensures there is always exactly one WorkspaceStartController repsonsible for a given workspace instance.
+ * It does so by:
+ *  - implement a heartbeat mechanism with redis
+ *  - check regularly (+ on start) for uncontrolled instances by:
+ *    - assuming a Redlock (only one of the server instances wins)
+ *    - check for orphaned instances:
+ *     - if there are any, have the local WorkspaceStartController take control
  */
 @injectable()
-export class WorkspaceStartController implements Job {
-    private readonly id: WorkspaceStartControllerId;
-
-    // Used for sequencing doControlStartingWorkspace()
-    private readonly queue = new Queue();
-    private readonly disposable = new DisposableCollection();
-
+export class DistributedWorkspaceStartController implements Job {
     public readonly name = "workspace-start-controller";
     // How often we check for uncontrolled instances (+ once on startup)
     public readonly frequencyMs = 60 * 1000;
 
-    // How often we check "our" instances
-    private readonly controllerFrequencyMs = 10 * 1000;
+    private readonly heartbeatIntervalMs = 10 * 1000;
+    // After this period without update we consider a controller dead
     private get redisExpiryTime() {
-        return (this.controllerFrequencyMs / 1000) * 1.5; // After this period without update we consider a controller dead
+        return (this.heartbeatIntervalMs / 1000) * 1.5;
     }
 
     constructor(
         @inject(Redis) private readonly redis: Redis,
+        @inject(WorkspaceStartController) private readonly localController: WorkspaceStartController,
+    ) {}
+
+    public start(): Disposable {
+        return repeat(() => this.heartbeat(), this.heartbeatIntervalMs);
+    }
+
+    private async heartbeat() {
+        // Mark ourselves as active
+        const controllerId = this.localController.getControllerId();
+        await this.redis.setex(redisControllerIdKey(controllerId), this.redisExpiryTime, controllerId);
+    }
+
+    /**
+     * This is the loop checking regularly (and on start) for uncontrolled instances, and claiming ownership of those.
+     */
+    public async run(): Promise<void> {
+        const activeControllerIds = await this.listAllActiveControllerIds();
+        log.info("[wsc] all active controller ids", { activeControllerIds: new TrustedValue(activeControllerIds) });
+
+        await this.localController.checkForOrphanedInstances(activeControllerIds);
+    }
+
+    private async listAllActiveControllerIds(): Promise<WorkspaceStartControllerId[]> {
+        const keys = await new Promise<string[]>((resolve, reject) => {
+            const result: string[] = [];
+            this.redis
+                .scanStream({ match: redisControllerIdKey("*"), count: 20 })
+                .on("data", async (keys: string[]) => {
+                    result.push(...keys);
+                })
+                .on("error", reject)
+                .on("end", () => {
+                    resolve(result);
+                });
+        });
+
+        const allActiveIds = new Map<string, WorkspaceStartControllerId>();
+        const localControllerId = this.localController.id;
+        allActiveIds.set(WorkspaceStartControllerId.toString(localControllerId), localControllerId); // we're are definitely active
+        for (const idStr of keys.map(stripRedisControllerIdPrefix)) {
+            if (!idStr) {
+                continue;
+            }
+            const id = WorkspaceStartControllerId.fromString(idStr);
+            if (!id) {
+                log.warn("[wsc] cannot parse controller id", { idStr });
+                continue;
+            }
+            allActiveIds.set(idStr, id);
+        }
+        return Array.from(allActiveIds.values());
+    }
+}
+
+const MANAGED_PHASES: WorkspaceInstancePhase[] = ["preparing", "building", "pending"];
+
+@injectable()
+export class WorkspaceStartController {
+    public readonly id: WorkspaceStartControllerId;
+
+    private readonly startingInstances = new Set<string>();
+    // Used for sequencing doControlStartingWorkspace()
+    private readonly queue = new Queue();
+
+    // How often we check "our" instances
+    private readonly controllerFrequencyMs = 10 * 1000;
+
+    constructor(
         @inject(Config) private readonly config: Config,
         @inject(WorkspaceDB) private readonly workspaceDb: WorkspaceDB,
         @inject(WorkspaceManagerClientProvider) private readonly clientProvider: WorkspaceManagerClientProvider,
@@ -72,31 +128,37 @@ export class WorkspaceStartController implements Job {
         @inject(WorkspaceStarter) private readonly workspaceStarter: WorkspaceStarter,
         @inject(UserDB) private readonly userDb: UserDB,
     ) {
-        this.id = WorkspaceStartControllerId.create(this.config);
+        this.id = WorkspaceStartControllerId.create(this.config.version);
     }
 
     public start(): Disposable {
-        this.disposable.push(repeat(() => this.controlAllOurStartingWorkspaces(), this.controllerFrequencyMs));
-        // We rely on the JobRunner to call run() on startup once immediately.
-        return Disposable.create(() => this.disposable.dispose());
+        return repeat(() => this.controlAllOurStartingWorkspaces(), this.controllerFrequencyMs);
     }
 
-    /**
-     * This is the loop checking regularly (and on start) for uncontrolled instances, and claiming ownership of those.
-     */
-    public async run(): Promise<void> {
-        const controllerId = this.getControllerId();
+    private async controlAllOurStartingWorkspaces() {
+        const instances = await this.workspaceDb.findInstancesByPhase(MANAGED_PHASES);
+        for (const instance of instances) {
+            await this.doControlStartingWorkspace(instance);
+        }
+    }
 
-        const activeControllerIds = (await this.listAllActiveControllerIds()).map((id) =>
-            WorkspaceStartControllerId.toString(id),
-        );
-        log.info("[wsc] all active controller ids", { activeControllerIds: new TrustedValue(activeControllerIds) });
+    public registerWorkspaceStart<T>(instanceId: string, startWorkspace: Promise<T>): Promise<T> {
+        this.startingInstances.add(instanceId);
+        startWorkspace.finally(() => {
+            this.startingInstances.delete(instanceId);
+        });
+        return startWorkspace;
+    }
 
-        const instances = await this.workspaceDb.findInstancesByPhase(...MANAGED_PHASES);
+    public async checkForOrphanedInstances(_activeControllerIds: WorkspaceStartControllerId[]) {
+        const localControllerId = this.getControllerId();
+
+        const activeControllerIds = _activeControllerIds.map((id) => WorkspaceStartControllerId.toString(id));
+        const instances = await this.workspaceDb.findInstancesByPhase(MANAGED_PHASES);
         for (let instance of instances) {
             const alreadyTakenCareOf =
                 instance.controllerId && activeControllerIds.some((id) => id === instance.controllerId);
-            const fromPreviousSelf = WorkspaceStartControllerId.isPreviousIncarnation(
+            const fromPreviousSelf = WorkspaceStartControllerId.isPreviousSelf(
                 this.id,
                 WorkspaceStartControllerId.fromString(instance.controllerId),
             );
@@ -106,52 +168,44 @@ export class WorkspaceStartController implements Job {
 
             // No-one responsible yet/anymore: We take over
             try {
-                log.info({ instanceId: instance.id }, "[wsc] taking over instance", {
+                log.info({ instanceId: instance.id }, "[wsc] taking control over instance", {
                     oldControllerId: instance.controllerId,
-                    newControllerId: controllerId,
+                    newControllerId: localControllerId,
                 });
-                instance = await this.workspaceDb.updateInstancePartial(instance.id, { controllerId });
+                instance = await this.workspaceDb.updateInstancePartial(instance.id, {
+                    controllerId: localControllerId,
+                });
 
                 const triggerImmediately = fromPreviousSelf;
                 this.doControlStartingWorkspace(instance, triggerImmediately).catch((err) =>
                     log.error(
                         { instanceId: instance.id },
-                        "[wsc] error controlling instance after taking it over",
+                        "[wsc] error controlling instance after taking control",
                         err,
                         {
                             oldControllerId: instance.controllerId,
-                            newControllerId: controllerId,
+                            newControllerId: localControllerId,
                         },
                     ),
                 ); // No need to await. Also, we don't want block the mutex for too long
             } catch (err) {
                 log.warn({ instanceId: instance.id }, "[wsc] cannot set instance controller id", err, {
                     oldControllerId: instance.controllerId,
-                    newControllerId: controllerId,
+                    newControllerId: localControllerId,
                 });
             }
         }
     }
 
-    private async controlAllOurStartingWorkspaces() {
-        const controllerId = this.getControllerId();
-        // Mark ourselves as active
-        await this.redis.setex(redisControllerIdKey(controllerId), this.redisExpiryTime, controllerId);
-
-        const instances = await this.workspaceDb.findInstancesByPhase(...MANAGED_PHASES);
-        for (const instance of instances) {
-            if (instance.controllerId !== controllerId) {
-                continue; // Not our business
-            }
-
-            await this.doControlStartingWorkspace(instance);
-        }
-    }
-
-    /**
-     * The actual controlling part
-     */
     private async doControlStartingWorkspace(instance: WorkspaceInstance, triggerImmediately: boolean = false) {
+        const localControllerId = this.getControllerId();
+        if (instance.controllerId !== localControllerId) {
+            return; // Not our business
+        }
+        if (this.startingInstances.has(instance.id)) {
+            return; // Already started
+        }
+
         return this.queue.enqueue(async () => {
             switch (instance.status.phase) {
                 case "preparing":
@@ -255,36 +309,6 @@ export class WorkspaceStartController implements Job {
         }
     }
 
-    private async listAllActiveControllerIds(): Promise<WorkspaceStartControllerId[]> {
-        const keys = await new Promise<string[]>((resolve, reject) => {
-            const result: string[] = [];
-            this.redis
-                .scanStream({ match: redisControllerIdKey("*"), count: 20 })
-                .on("data", async (keys: string[]) => {
-                    result.push(...keys);
-                })
-                .on("error", reject)
-                .on("end", () => {
-                    resolve(result);
-                });
-        });
-
-        const allActiveIds = new Map<string, WorkspaceStartControllerId>();
-        allActiveIds.set(WorkspaceStartControllerId.toString(this.id), this.id); // we're are definitely active
-        for (const idStr of keys.map(stripRedisControllerIdPrefix)) {
-            if (!idStr) {
-                continue;
-            }
-            const id = WorkspaceStartControllerId.fromString(idStr);
-            if (!id) {
-                log.warn("[wsc] cannot parse controller id", { idStr });
-                continue;
-            }
-            allActiveIds.set(idStr, id);
-        }
-        return Array.from(allActiveIds.values());
-    }
-
     public getControllerId(): string {
         return WorkspaceStartControllerId.toString(this.id);
     }
@@ -304,10 +328,10 @@ interface WorkspaceStartControllerId {
 }
 namespace WorkspaceStartControllerId {
     const PREFIX = "wscid";
-    export function create(config: Config): WorkspaceStartControllerId {
+    export function create(version: string): WorkspaceStartControllerId {
         return {
             hostname: process.env.HOSTNAME || "unknown",
-            version: config.version,
+            version,
             initializationTime: new Date().toISOString(),
         };
     }
@@ -321,7 +345,7 @@ namespace WorkspaceStartControllerId {
     export function toString(id: WorkspaceStartControllerId): string {
         return `${PREFIX}_${id.hostname}_${id.version}_${id.initializationTime}`;
     }
-    export function isPreviousIncarnation(
+    export function isPreviousSelf(
         thisId: WorkspaceStartControllerId,
         previousId: WorkspaceStartControllerId | undefined,
     ): boolean {

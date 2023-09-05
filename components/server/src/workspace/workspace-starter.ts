@@ -128,6 +128,7 @@ import { ImageSourceProvider } from "./image-source-provider";
 import { WorkspaceClassesConfig } from "./workspace-classes";
 import { SYSTEM_USER } from "../authorization/authorizer";
 import { ResolvedEnvVars } from "../user/env-var-service";
+import { WorkspaceStartController } from "./workspace-start-controller";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
@@ -212,6 +213,7 @@ export class WorkspaceStarter {
         @inject(EntitlementService) private readonly entitlementService: EntitlementService,
         @inject(RedisMutex) private readonly redisMutex: RedisMutex,
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
+        @inject(WorkspaceStartController) private readonly WorkspaceStartController: WorkspaceStartController,
     ) {}
     public async startWorkspace(
         ctx: TraceContext,
@@ -219,7 +221,6 @@ export class WorkspaceStarter {
         user: User,
         project: Project | undefined,
         envVars: ResolvedEnvVars,
-        controllerId: string,
         options?: StartWorkspaceOptions,
     ): Promise<StartWorkspaceResult> {
         const span = TraceContext.startSpan("WorkspaceStarter.startWorkspace", ctx);
@@ -310,7 +311,7 @@ export class WorkspaceStarter {
                 ideConfig,
                 fromBackup,
                 options.region,
-                controllerId,
+                this.WorkspaceStartController.getControllerId(),
                 options.workspaceClass,
             );
             // we run the actual creation of a new instance in a distributed lock, to make sure we always only start one instance per workspace.
@@ -343,37 +344,40 @@ export class WorkspaceStarter {
     ): Promise<StartWorkspaceResult> {
         const { span } = ctx;
 
-        const forceRebuild = !!workspace.context.forceImageBuild;
-        let needsImageBuild: boolean;
-        try {
-            // if we need to build the workspace image we must not wait for actuallyStartWorkspace to return as that would block the
-            // frontend until the image is built.
-            const additionalAuth = await this.getAdditionalImageAuth(envVars);
-            needsImageBuild =
-                forceRebuild || (await this.needsImageBuild(ctx, user, workspace, instance, additionalAuth));
-            if (needsImageBuild) {
-                instance.status.conditions = {
-                    neededImageBuild: true,
-                };
+        const startWorkspace = async () => {
+            const forceRebuild = !!workspace.context.forceImageBuild;
+            let needsImageBuild: boolean;
+            try {
+                // if we need to build the workspace image we must not wait for actuallyStartWorkspace to return as that would block the
+                // frontend until the image is built.
+                const additionalAuth = await this.getAdditionalImageAuth(envVars);
+                needsImageBuild =
+                    forceRebuild || (await this.needsImageBuild(ctx, user, workspace, instance, additionalAuth));
+                if (needsImageBuild) {
+                    instance.status.conditions = {
+                        neededImageBuild: true,
+                    };
+                }
+                span.setTag("needsImageBuild", needsImageBuild);
+            } catch (err) {
+                // if we fail to check if the workspace needs an image build (e.g. becuase the image builder is unavailable),
+                // we must properly fail the workspace instance, i.e. set its status to stopped, deal with prebuilds etc.
+                //
+                // Once we've reached actuallyStartWorkspace that function will take care of failing the instance.
+                await this.failInstanceStart(ctx, err, workspace, instance);
+                throw err;
             }
-            span.setTag("needsImageBuild", needsImageBuild);
-        } catch (err) {
-            // if we fail to check if the workspace needs an image build (e.g. becuase the image builder is unavailable),
-            // we must properly fail the workspace instance, i.e. set its status to stopped, deal with prebuilds etc.
-            //
-            // Once we've reached actuallyStartWorkspace that function will take care of failing the instance.
-            await this.failInstanceStart(ctx, err, workspace, instance);
-            throw err;
-        }
 
-        if (needsImageBuild) {
-            this.actuallyStartWorkspace({ span }, instance, workspace, user, envVars, forceRebuild).catch((err) =>
-                log.error("actuallyStartWorkspace", err),
-            );
-            return { instanceID: instance.id };
-        }
+            if (needsImageBuild) {
+                this.actuallyStartWorkspace({ span }, instance, workspace, user, envVars, forceRebuild).catch((err) =>
+                    log.error("actuallyStartWorkspace", err),
+                );
+                return { instanceID: instance.id };
+            }
 
-        return await this.actuallyStartWorkspace({ span }, instance, workspace, user, envVars, forceRebuild);
+            return await this.actuallyStartWorkspace({ span }, instance, workspace, user, envVars, forceRebuild);
+        };
+        return await this.WorkspaceStartController.registerWorkspaceStart(instance.id, startWorkspace());
     }
 
     private async resolveIDEConfiguration(

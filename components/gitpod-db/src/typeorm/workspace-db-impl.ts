@@ -25,7 +25,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { daysBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import * as crypto from "crypto";
 import { inject, injectable, optional } from "inversify";
-import { Brackets, DeepPartial, EntityManager, Repository, WhereExpressionBuilder } from "typeorm";
+import { Brackets, DeepPartial, EntityManager, Repository } from "typeorm";
 import { BUILTIN_WORKSPACE_PROBE_USER_ID } from "../user-db";
 import {
     FindWorkspacesOptions,
@@ -1057,7 +1057,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         return <WorkspaceAndInstance>res;
     }
 
-    async findInstancesByPhase(...phases: string[]): Promise<WorkspaceInstance[]> {
+    async findInstancesByPhase(phases: string[]): Promise<WorkspaceInstance[]> {
         if (phases.length < 0) {
             throw new Error("At least one phase must be provided");
         }
@@ -1067,14 +1067,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         const qb = repo
             .createQueryBuilder("wsi")
             .where("wsi.deleted != TRUE")
-            .andWhere(
-                // OR together all phases in "()"
-                new Brackets((qb: WhereExpressionBuilder) => {
-                    for (const phase of phases) {
-                        qb.orWhere("wsi.phasePersisted = :phase", { phase });
-                    }
-                }),
-            );
+            .andWhere("wsi.phasePersisted IN (:phases)", { phases });
         return qb.getMany();
     }
 

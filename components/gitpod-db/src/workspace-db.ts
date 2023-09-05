@@ -130,7 +130,7 @@ export interface WorkspaceDB {
         query?: AdminGetWorkspacesQuery,
     ): Promise<{ total: number; rows: WorkspaceAndInstance[] }>;
     findWorkspaceAndInstance(id: string): Promise<WorkspaceAndInstance | undefined>;
-    findInstancesByPhase(...phases: string[]): Promise<WorkspaceInstance[]>;
+    findInstancesByPhase(phases: string[]): Promise<WorkspaceInstance[]>;
 
     getWorkspaceCount(type?: String): Promise<Number>;
     getWorkspaceCountByCloneURL(cloneURL: string, sinceLastDays?: number, type?: string): Promise<number>;
