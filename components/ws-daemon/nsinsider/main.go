@@ -42,7 +42,8 @@ func main() {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					return syscallMoveMount(c.Int("pipe-fd"), "", unix.AT_FDCWD, c.String("target"), flagMoveMountFEmptyPath)
+					err := syscallMoveMount(c.Int("pipe-fd"), "", unix.AT_FDCWD, c.String("target"), flagMoveMountFEmptyPath)
+					return fmt.Errorf("could not move mount: %v", err)
 				},
 			},
 			{
