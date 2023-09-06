@@ -7,8 +7,8 @@ package controllers
 import (
 	"context"
 	"os"
+	"reflect"
 
-	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -92,7 +92,7 @@ func (r *SubscriberReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 				return true
 			}
 
-			return !equality.Semantic.DeepDerivative(old.Status, new.Status)
+			return !reflect.DeepEqual(old.Status, new.Status)
 		},
 	}
 
