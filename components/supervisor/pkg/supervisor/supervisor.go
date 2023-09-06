@@ -1331,7 +1331,7 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 
 		go io.Copy(conn, conn2)
 		_, err = io.Copy(conn2, conn)
-		if err != nil {
+		if err != nil && !websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 			log.WithError(err).Error("tunnel ssh: error returned from io.copy")
 		}
 
