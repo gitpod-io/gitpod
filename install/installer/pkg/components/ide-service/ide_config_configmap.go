@@ -51,6 +51,25 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	codeWebExtensionImage := ctx.ImageName(ctx.Config.Repository, ide.CodeWebExtensionImage, ide.CodeWebExtensionVersion)
 	jbPluginImage := ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginImage.Version)
 	jbPluginLatestImage := ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginLatestImage.Version)
+	/*
+		Upgrading JB Version:
+
+		1. Access the previous JB version at: https://github.com/gitpod-io/gitpod/tree/jb/previous
+		2. Upgrade Process:
+		   - Navigate to the update script:
+		     https://github.com/gitpod-io/gitpod/blob/jb/previous/components/ide/jetbrains/image/gha-update-image
+		   - Execute the script with the desired version as an argument. For example, to upgrade to versions below 231:
+		     node index.js 231
+		   - This action will update both the WORKSPACE.yaml and the backend plugin's target platform version.
+		3. Transfer the changes to gradle-latest.properties to avoid version incompatibilities with latest.
+		4. Resolve any incompatibility issues that arise with the plugin.
+		5. Commit and push your changes to GitHub. This will trigger the build job, generating new images.
+		6. Test the new images in preview environments with stable versions.
+		7. If everything works as expected, update the versions for the plugin and IDEs here where the previous plugin was used.
+
+		TODO: When should it happen? Once a year? Each time when a new major is released, move previous to next, i.e. tracking 1 year behind?
+	*/
+	jbPluginPrevious := ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, "commit-e7eb44545510a8293c5c6aa814a0ad4e81852e5f")
 	jbLauncherImage := ctx.ImageName(ctx.Config.Repository, ide.JetBrainsLauncherImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsLauncherImage.Version)
 	idecfg := ide_config.IDEConfig{
 		SupervisorImage: ctx.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
@@ -110,6 +129,13 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PluginLatestImage: jbPluginLatestImage,
 					ImageLayers:       []string{jbPluginImage, jbLauncherImage},
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
+					VersionImageLayers: [][]string{
+						{
+							ctx.ImageName(ctx.Config.Repository, ide.IntelliJDesktopIDEImage, "2022.3.3"),
+							jbPluginPrevious,
+							jbLauncherImage,
+						},
+					},
 				},
 				goland: {
 					OrderKey:          "05",
@@ -122,6 +148,13 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PluginLatestImage: jbPluginLatestImage,
 					ImageLayers:       []string{jbPluginImage, jbLauncherImage},
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
+					VersionImageLayers: [][]string{
+						{
+							ctx.ImageName(ctx.Config.Repository, ide.GoLandDesktopIdeImage, "2022.3.4"),
+							jbPluginPrevious,
+							jbLauncherImage,
+						},
+					},
 				},
 				pycharm: {
 					OrderKey:          "06",
@@ -135,6 +168,13 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PluginLatestImage: jbPluginLatestImage,
 					ImageLayers:       []string{jbPluginImage, jbLauncherImage},
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
+					VersionImageLayers: [][]string{
+						{
+							ctx.ImageName(ctx.Config.Repository, ide.PyCharmDesktopIdeImage, "2022.3.3"),
+							jbPluginPrevious,
+							jbLauncherImage,
+						},
+					},
 				},
 				phpstorm: {
 					OrderKey:          "07",
@@ -147,6 +187,13 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PluginLatestImage: jbPluginLatestImage,
 					ImageLayers:       []string{jbPluginImage, jbLauncherImage},
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
+					VersionImageLayers: [][]string{
+						{
+							ctx.ImageName(ctx.Config.Repository, ide.PhpStormDesktopIdeImage, "2022.3.3"),
+							jbPluginPrevious,
+							jbLauncherImage,
+						},
+					},
 				},
 				rubymine: {
 					OrderKey:          "08",
@@ -159,6 +206,13 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PluginLatestImage: jbPluginLatestImage,
 					ImageLayers:       []string{jbPluginImage, jbLauncherImage},
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
+					VersionImageLayers: [][]string{
+						{
+							ctx.ImageName(ctx.Config.Repository, ide.RubyMineDesktopIdeImage, "2022.3.3"),
+							jbPluginPrevious,
+							jbLauncherImage,
+						},
+					},
 				},
 				webstorm: {
 					OrderKey:          "09",
@@ -171,6 +225,13 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PluginLatestImage: jbPluginLatestImage,
 					ImageLayers:       []string{jbPluginImage, jbLauncherImage},
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
+					VersionImageLayers: [][]string{
+						{
+							ctx.ImageName(ctx.Config.Repository, ide.WebStormDesktopIdeImage, "2022.3.4"),
+							jbPluginPrevious,
+							jbLauncherImage,
+						},
+					},
 				},
 				rider: {
 					OrderKey:          "10",
@@ -183,6 +244,13 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PluginLatestImage: jbPluginLatestImage,
 					ImageLayers:       []string{jbPluginImage, jbLauncherImage},
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
+					VersionImageLayers: [][]string{
+						{
+							ctx.ImageName(ctx.Config.Repository, ide.RiderDesktopIdeImage, "2022.3.3"),
+							jbPluginPrevious,
+							jbLauncherImage,
+						},
+					},
 				},
 				clion: {
 					OrderKey:          "11",
@@ -195,6 +263,13 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PluginLatestImage: jbPluginLatestImage,
 					ImageLayers:       []string{jbPluginImage, jbLauncherImage},
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
+					VersionImageLayers: [][]string{
+						{
+							ctx.ImageName(ctx.Config.Repository, ide.CLionDesktopIdeImage, "2022.3.3"),
+							jbPluginPrevious,
+							jbLauncherImage,
+						},
+					},
 				},
 				xterm: {
 					OrderKey: "12",
