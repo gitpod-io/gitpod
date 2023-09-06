@@ -5,9 +5,9 @@
  */
 
 /* eslint-disable */
-import * as Long from "long";
-import { CallContext, CallOptions } from "nice-grpc-common";
+import type { CallContext, CallOptions } from "nice-grpc-common";
 import * as _m0 from "protobufjs/minimal";
+import Long = require("long");
 
 export const protobufPackage = "usage.v1";
 
@@ -32,8 +32,8 @@ export interface CancelSubscriptionResponse {
 }
 
 export interface GetStripeCustomerRequest {
-  attributionId: string | undefined;
-  stripeCustomerId: string | undefined;
+  attributionId?: string | undefined;
+  stripeCustomerId?: string | undefined;
 }
 
 export interface GetStripeCustomerResponse {
@@ -108,16 +108,17 @@ export const ReconcileInvoicesRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): ReconcileInvoicesRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseReconcileInvoicesRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
-        default:
-          reader.skipType(tag & 7);
-          break;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -131,6 +132,9 @@ export const ReconcileInvoicesRequest = {
     return obj;
   },
 
+  create(base?: DeepPartial<ReconcileInvoicesRequest>): ReconcileInvoicesRequest {
+    return ReconcileInvoicesRequest.fromPartial(base ?? {});
+  },
   fromPartial(_: DeepPartial<ReconcileInvoicesRequest>): ReconcileInvoicesRequest {
     const message = createBaseReconcileInvoicesRequest();
     return message;
@@ -147,16 +151,17 @@ export const ReconcileInvoicesResponse = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): ReconcileInvoicesResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseReconcileInvoicesResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
-        default:
-          reader.skipType(tag & 7);
-          break;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -170,6 +175,9 @@ export const ReconcileInvoicesResponse = {
     return obj;
   },
 
+  create(base?: DeepPartial<ReconcileInvoicesResponse>): ReconcileInvoicesResponse {
+    return ReconcileInvoicesResponse.fromPartial(base ?? {});
+  },
   fromPartial(_: DeepPartial<ReconcileInvoicesResponse>): ReconcileInvoicesResponse {
     const message = createBaseReconcileInvoicesResponse();
     return message;
@@ -189,19 +197,24 @@ export const FinalizeInvoiceRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): FinalizeInvoiceRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseFinalizeInvoiceRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.invoiceId = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -212,10 +225,15 @@ export const FinalizeInvoiceRequest = {
 
   toJSON(message: FinalizeInvoiceRequest): unknown {
     const obj: any = {};
-    message.invoiceId !== undefined && (obj.invoiceId = message.invoiceId);
+    if (message.invoiceId !== "") {
+      obj.invoiceId = message.invoiceId;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<FinalizeInvoiceRequest>): FinalizeInvoiceRequest {
+    return FinalizeInvoiceRequest.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<FinalizeInvoiceRequest>): FinalizeInvoiceRequest {
     const message = createBaseFinalizeInvoiceRequest();
     message.invoiceId = object.invoiceId ?? "";
@@ -233,16 +251,17 @@ export const FinalizeInvoiceResponse = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): FinalizeInvoiceResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseFinalizeInvoiceResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
-        default:
-          reader.skipType(tag & 7);
-          break;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -256,6 +275,9 @@ export const FinalizeInvoiceResponse = {
     return obj;
   },
 
+  create(base?: DeepPartial<FinalizeInvoiceResponse>): FinalizeInvoiceResponse {
+    return FinalizeInvoiceResponse.fromPartial(base ?? {});
+  },
   fromPartial(_: DeepPartial<FinalizeInvoiceResponse>): FinalizeInvoiceResponse {
     const message = createBaseFinalizeInvoiceResponse();
     return message;
@@ -275,19 +297,24 @@ export const CancelSubscriptionRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): CancelSubscriptionRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseCancelSubscriptionRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.subscriptionId = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -298,10 +325,15 @@ export const CancelSubscriptionRequest = {
 
   toJSON(message: CancelSubscriptionRequest): unknown {
     const obj: any = {};
-    message.subscriptionId !== undefined && (obj.subscriptionId = message.subscriptionId);
+    if (message.subscriptionId !== "") {
+      obj.subscriptionId = message.subscriptionId;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<CancelSubscriptionRequest>): CancelSubscriptionRequest {
+    return CancelSubscriptionRequest.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<CancelSubscriptionRequest>): CancelSubscriptionRequest {
     const message = createBaseCancelSubscriptionRequest();
     message.subscriptionId = object.subscriptionId ?? "";
@@ -319,16 +351,17 @@ export const CancelSubscriptionResponse = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): CancelSubscriptionResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseCancelSubscriptionResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
-        default:
-          reader.skipType(tag & 7);
-          break;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -342,6 +375,9 @@ export const CancelSubscriptionResponse = {
     return obj;
   },
 
+  create(base?: DeepPartial<CancelSubscriptionResponse>): CancelSubscriptionResponse {
+    return CancelSubscriptionResponse.fromPartial(base ?? {});
+  },
   fromPartial(_: DeepPartial<CancelSubscriptionResponse>): CancelSubscriptionResponse {
     const message = createBaseCancelSubscriptionResponse();
     return message;
@@ -364,22 +400,31 @@ export const GetStripeCustomerRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): GetStripeCustomerRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseGetStripeCustomerRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.attributionId = reader.string();
-          break;
+          continue;
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.stripeCustomerId = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -393,11 +438,18 @@ export const GetStripeCustomerRequest = {
 
   toJSON(message: GetStripeCustomerRequest): unknown {
     const obj: any = {};
-    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
-    message.stripeCustomerId !== undefined && (obj.stripeCustomerId = message.stripeCustomerId);
+    if (message.attributionId !== undefined) {
+      obj.attributionId = message.attributionId;
+    }
+    if (message.stripeCustomerId !== undefined) {
+      obj.stripeCustomerId = message.stripeCustomerId;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<GetStripeCustomerRequest>): GetStripeCustomerRequest {
+    return GetStripeCustomerRequest.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<GetStripeCustomerRequest>): GetStripeCustomerRequest {
     const message = createBaseGetStripeCustomerRequest();
     message.attributionId = object.attributionId ?? undefined;
@@ -422,22 +474,31 @@ export const GetStripeCustomerResponse = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): GetStripeCustomerResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseGetStripeCustomerResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.customer = StripeCustomer.decode(reader, reader.uint32());
-          break;
+          continue;
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.attributionId = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -451,12 +512,18 @@ export const GetStripeCustomerResponse = {
 
   toJSON(message: GetStripeCustomerResponse): unknown {
     const obj: any = {};
-    message.customer !== undefined &&
-      (obj.customer = message.customer ? StripeCustomer.toJSON(message.customer) : undefined);
-    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
+    if (message.customer !== undefined) {
+      obj.customer = StripeCustomer.toJSON(message.customer);
+    }
+    if (message.attributionId !== "") {
+      obj.attributionId = message.attributionId;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<GetStripeCustomerResponse>): GetStripeCustomerResponse {
+    return GetStripeCustomerResponse.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<GetStripeCustomerResponse>): GetStripeCustomerResponse {
     const message = createBaseGetStripeCustomerResponse();
     message.customer = (object.customer !== undefined && object.customer !== null)
@@ -483,22 +550,31 @@ export const StripeCustomer = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): StripeCustomer {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseStripeCustomer();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.id = reader.string();
-          break;
+          continue;
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.currency = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -512,11 +588,18 @@ export const StripeCustomer = {
 
   toJSON(message: StripeCustomer): unknown {
     const obj: any = {};
-    message.id !== undefined && (obj.id = message.id);
-    message.currency !== undefined && (obj.currency = message.currency);
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.currency !== "") {
+      obj.currency = message.currency;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<StripeCustomer>): StripeCustomer {
+    return StripeCustomer.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<StripeCustomer>): StripeCustomer {
     const message = createBaseStripeCustomer();
     message.id = object.id ?? "";
@@ -550,31 +633,52 @@ export const CreateStripeCustomerRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): CreateStripeCustomerRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseCreateStripeCustomerRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.attributionId = reader.string();
-          break;
+          continue;
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.name = reader.string();
-          break;
+          continue;
         case 3:
+          if (tag !== 26) {
+            break;
+          }
+
           message.email = reader.string();
-          break;
+          continue;
         case 4:
+          if (tag !== 34) {
+            break;
+          }
+
           message.currency = reader.string();
-          break;
+          continue;
         case 5:
+          if (tag !== 42) {
+            break;
+          }
+
           message.billingCreatorUserId = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -591,14 +695,27 @@ export const CreateStripeCustomerRequest = {
 
   toJSON(message: CreateStripeCustomerRequest): unknown {
     const obj: any = {};
-    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
-    message.name !== undefined && (obj.name = message.name);
-    message.email !== undefined && (obj.email = message.email);
-    message.currency !== undefined && (obj.currency = message.currency);
-    message.billingCreatorUserId !== undefined && (obj.billingCreatorUserId = message.billingCreatorUserId);
+    if (message.attributionId !== "") {
+      obj.attributionId = message.attributionId;
+    }
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.email !== "") {
+      obj.email = message.email;
+    }
+    if (message.currency !== "") {
+      obj.currency = message.currency;
+    }
+    if (message.billingCreatorUserId !== "") {
+      obj.billingCreatorUserId = message.billingCreatorUserId;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<CreateStripeCustomerRequest>): CreateStripeCustomerRequest {
+    return CreateStripeCustomerRequest.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<CreateStripeCustomerRequest>): CreateStripeCustomerRequest {
     const message = createBaseCreateStripeCustomerRequest();
     message.attributionId = object.attributionId ?? "";
@@ -623,19 +740,24 @@ export const CreateStripeCustomerResponse = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): CreateStripeCustomerResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseCreateStripeCustomerResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.customer = StripeCustomer.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -646,11 +768,15 @@ export const CreateStripeCustomerResponse = {
 
   toJSON(message: CreateStripeCustomerResponse): unknown {
     const obj: any = {};
-    message.customer !== undefined &&
-      (obj.customer = message.customer ? StripeCustomer.toJSON(message.customer) : undefined);
+    if (message.customer !== undefined) {
+      obj.customer = StripeCustomer.toJSON(message.customer);
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<CreateStripeCustomerResponse>): CreateStripeCustomerResponse {
+    return CreateStripeCustomerResponse.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<CreateStripeCustomerResponse>): CreateStripeCustomerResponse {
     const message = createBaseCreateStripeCustomerResponse();
     message.customer = (object.customer !== undefined && object.customer !== null)
@@ -673,19 +799,24 @@ export const CreateHoldPaymentIntentRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): CreateHoldPaymentIntentRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseCreateHoldPaymentIntentRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.attributionId = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -696,10 +827,15 @@ export const CreateHoldPaymentIntentRequest = {
 
   toJSON(message: CreateHoldPaymentIntentRequest): unknown {
     const obj: any = {};
-    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
+    if (message.attributionId !== "") {
+      obj.attributionId = message.attributionId;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<CreateHoldPaymentIntentRequest>): CreateHoldPaymentIntentRequest {
+    return CreateHoldPaymentIntentRequest.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<CreateHoldPaymentIntentRequest>): CreateHoldPaymentIntentRequest {
     const message = createBaseCreateHoldPaymentIntentRequest();
     message.attributionId = object.attributionId ?? "";
@@ -723,22 +859,31 @@ export const CreateHoldPaymentIntentResponse = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): CreateHoldPaymentIntentResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseCreateHoldPaymentIntentResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.paymentIntentId = reader.string();
-          break;
+          continue;
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.paymentIntentClientSecret = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -754,12 +899,18 @@ export const CreateHoldPaymentIntentResponse = {
 
   toJSON(message: CreateHoldPaymentIntentResponse): unknown {
     const obj: any = {};
-    message.paymentIntentId !== undefined && (obj.paymentIntentId = message.paymentIntentId);
-    message.paymentIntentClientSecret !== undefined &&
-      (obj.paymentIntentClientSecret = message.paymentIntentClientSecret);
+    if (message.paymentIntentId !== "") {
+      obj.paymentIntentId = message.paymentIntentId;
+    }
+    if (message.paymentIntentClientSecret !== "") {
+      obj.paymentIntentClientSecret = message.paymentIntentClientSecret;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<CreateHoldPaymentIntentResponse>): CreateHoldPaymentIntentResponse {
+    return CreateHoldPaymentIntentResponse.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<CreateHoldPaymentIntentResponse>): CreateHoldPaymentIntentResponse {
     const message = createBaseCreateHoldPaymentIntentResponse();
     message.paymentIntentId = object.paymentIntentId ?? "";
@@ -787,25 +938,38 @@ export const CreateStripeSubscriptionRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): CreateStripeSubscriptionRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseCreateStripeSubscriptionRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.attributionId = reader.string();
-          break;
+          continue;
         case 3:
+          if (tag !== 24) {
+            break;
+          }
+
           message.usageLimit = longToNumber(reader.int64() as Long);
-          break;
+          continue;
         case 4:
+          if (tag !== 34) {
+            break;
+          }
+
           message.paymentIntentId = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -820,12 +984,21 @@ export const CreateStripeSubscriptionRequest = {
 
   toJSON(message: CreateStripeSubscriptionRequest): unknown {
     const obj: any = {};
-    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
-    message.usageLimit !== undefined && (obj.usageLimit = Math.round(message.usageLimit));
-    message.paymentIntentId !== undefined && (obj.paymentIntentId = message.paymentIntentId);
+    if (message.attributionId !== "") {
+      obj.attributionId = message.attributionId;
+    }
+    if (message.usageLimit !== 0) {
+      obj.usageLimit = Math.round(message.usageLimit);
+    }
+    if (message.paymentIntentId !== "") {
+      obj.paymentIntentId = message.paymentIntentId;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<CreateStripeSubscriptionRequest>): CreateStripeSubscriptionRequest {
+    return CreateStripeSubscriptionRequest.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<CreateStripeSubscriptionRequest>): CreateStripeSubscriptionRequest {
     const message = createBaseCreateStripeSubscriptionRequest();
     message.attributionId = object.attributionId ?? "";
@@ -848,19 +1021,24 @@ export const CreateStripeSubscriptionResponse = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): CreateStripeSubscriptionResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseCreateStripeSubscriptionResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.subscription = StripeSubscription.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -871,11 +1049,15 @@ export const CreateStripeSubscriptionResponse = {
 
   toJSON(message: CreateStripeSubscriptionResponse): unknown {
     const obj: any = {};
-    message.subscription !== undefined &&
-      (obj.subscription = message.subscription ? StripeSubscription.toJSON(message.subscription) : undefined);
+    if (message.subscription !== undefined) {
+      obj.subscription = StripeSubscription.toJSON(message.subscription);
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<CreateStripeSubscriptionResponse>): CreateStripeSubscriptionResponse {
+    return CreateStripeSubscriptionResponse.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<CreateStripeSubscriptionResponse>): CreateStripeSubscriptionResponse {
     const message = createBaseCreateStripeSubscriptionResponse();
     message.subscription = (object.subscription !== undefined && object.subscription !== null)
@@ -898,19 +1080,24 @@ export const StripeSubscription = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): StripeSubscription {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseStripeSubscription();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.id = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -921,10 +1108,15 @@ export const StripeSubscription = {
 
   toJSON(message: StripeSubscription): unknown {
     const obj: any = {};
-    message.id !== undefined && (obj.id = message.id);
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<StripeSubscription>): StripeSubscription {
+    return StripeSubscription.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<StripeSubscription>): StripeSubscription {
     const message = createBaseStripeSubscription();
     message.id = object.id ?? "";
@@ -945,19 +1137,24 @@ export const GetPriceInformationRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): GetPriceInformationRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseGetPriceInformationRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.attributionId = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -968,10 +1165,15 @@ export const GetPriceInformationRequest = {
 
   toJSON(message: GetPriceInformationRequest): unknown {
     const obj: any = {};
-    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
+    if (message.attributionId !== "") {
+      obj.attributionId = message.attributionId;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<GetPriceInformationRequest>): GetPriceInformationRequest {
+    return GetPriceInformationRequest.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<GetPriceInformationRequest>): GetPriceInformationRequest {
     const message = createBaseGetPriceInformationRequest();
     message.attributionId = object.attributionId ?? "";
@@ -992,19 +1194,24 @@ export const GetPriceInformationResponse = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): GetPriceInformationResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseGetPriceInformationResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.humanReadableDescription = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -1017,10 +1224,15 @@ export const GetPriceInformationResponse = {
 
   toJSON(message: GetPriceInformationResponse): unknown {
     const obj: any = {};
-    message.humanReadableDescription !== undefined && (obj.humanReadableDescription = message.humanReadableDescription);
+    if (message.humanReadableDescription !== "") {
+      obj.humanReadableDescription = message.humanReadableDescription;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<GetPriceInformationResponse>): GetPriceInformationResponse {
+    return GetPriceInformationResponse.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<GetPriceInformationResponse>): GetPriceInformationResponse {
     const message = createBaseGetPriceInformationResponse();
     message.humanReadableDescription = object.humanReadableDescription ?? "";
@@ -1041,19 +1253,24 @@ export const OnChargeDisputeRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): OnChargeDisputeRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseOnChargeDisputeRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.disputeId = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -1064,10 +1281,15 @@ export const OnChargeDisputeRequest = {
 
   toJSON(message: OnChargeDisputeRequest): unknown {
     const obj: any = {};
-    message.disputeId !== undefined && (obj.disputeId = message.disputeId);
+    if (message.disputeId !== "") {
+      obj.disputeId = message.disputeId;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<OnChargeDisputeRequest>): OnChargeDisputeRequest {
+    return OnChargeDisputeRequest.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<OnChargeDisputeRequest>): OnChargeDisputeRequest {
     const message = createBaseOnChargeDisputeRequest();
     message.disputeId = object.disputeId ?? "";
@@ -1085,16 +1307,17 @@ export const OnChargeDisputeResponse = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): OnChargeDisputeResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseOnChargeDisputeResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
-        default:
-          reader.skipType(tag & 7);
-          break;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -1108,6 +1331,9 @@ export const OnChargeDisputeResponse = {
     return obj;
   },
 
+  create(base?: DeepPartial<OnChargeDisputeResponse>): OnChargeDisputeResponse {
+    return OnChargeDisputeResponse.fromPartial(base ?? {});
+  },
   fromPartial(_: DeepPartial<OnChargeDisputeResponse>): OnChargeDisputeResponse {
     const message = createBaseOnChargeDisputeResponse();
     return message;
@@ -1218,7 +1444,7 @@ export const BillingServiceDefinition = {
   },
 } as const;
 
-export interface BillingServiceServiceImplementation<CallContextExt = {}> {
+export interface BillingServiceImplementation<CallContextExt = {}> {
   /**
    * ReconcileInvoices retrieves current credit balance and reflects it in
    * billing system. Internal RPC, not intended for general consumption.
@@ -1353,10 +1579,10 @@ export interface DataLoaders {
   getDataLoader<T>(identifier: string, constructorFn: () => T): T;
 }
 
-declare var self: any | undefined;
-declare var window: any | undefined;
-declare var global: any | undefined;
-var globalThis: any = (() => {
+declare const self: any | undefined;
+declare const window: any | undefined;
+declare const global: any | undefined;
+const tsProtoGlobalThis: any = (() => {
   if (typeof globalThis !== "undefined") {
     return globalThis;
   }
@@ -1381,13 +1607,11 @@ export type DeepPartial<T> = T extends Builtin ? T
 
 function longToNumber(long: Long): number {
   if (long.gt(Number.MAX_SAFE_INTEGER)) {
-    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+    throw new tsProtoGlobalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
   }
   return long.toNumber();
 }
 
-// If you get a compile-error about 'Constructor<Long> and ... have no overlap',
-// add '--ts_proto_opt=esModuleInterop=true' as a flag when calling 'protoc'.
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;
   _m0.configure();
