@@ -9,7 +9,7 @@ import { suite, test } from "@testdeck/mocha";
 import * as chai from "chai";
 import chaiHttp = require("chai-http");
 import * as http from "http";
-import * as express from "express";
+import express from "express";
 import { Server } from "../server";
 import { Container } from "inversify";
 import { productionContainerModule } from "../container-module";

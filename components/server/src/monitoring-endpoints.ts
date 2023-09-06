@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import * as express from "express";
+import express from "express";
 import { injectable } from "inversify";
 import * as prometheusClient from "prom-client";
 import { redisMetricsRegistry, registerDBMetrics } from "@gitpod/gitpod-db/lib";

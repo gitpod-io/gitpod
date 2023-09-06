@@ -12,9 +12,9 @@ import { Config } from "../config";
 import { Authenticator } from "../auth/authenticator";
 import { UserAuthentication } from "../user/user-authentication";
 
-import * as passport from "passport";
-import * as express from "express";
-import * as request from "supertest";
+import passport from "passport";
+import express from "express";
+import request from "supertest";
 
 import * as chai from "chai";
 import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";

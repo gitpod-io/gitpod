@@ -10,7 +10,7 @@ import { User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { OAuthRequest, OAuthResponse } from "@jmondi/oauth2-server";
 import { handleExpressResponse, handleExpressError } from "@jmondi/oauth2-server/dist/adapters/express";
-import * as express from "express";
+import express from "express";
 import { inject, injectable } from "inversify";
 import { URL } from "url";
 import { Config } from "../config";

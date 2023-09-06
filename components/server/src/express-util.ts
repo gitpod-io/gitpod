@@ -5,7 +5,7 @@
  */
 
 import { URL } from "url";
-import * as express from "express";
+import express from "express";
 import * as crypto from "crypto";
 
 export const query = (...tuples: [string, string][]) => {

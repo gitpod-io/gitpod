@@ -51,7 +51,7 @@ if (typeof (Symbol as any).asyncIterator === "undefined") {
     (Symbol as any).asyncIterator = Symbol.asyncIterator || Symbol("asyncIterator");
 }
 
-import * as express from "express";
+import express from "express";
 import { Container } from "inversify";
 import { Server } from "./server";
 import { log, LogrusLogLevel } from "@gitpod/gitpod-protocol/lib/util/logging";

@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import * as express from "express";
+import express from "express";
 import { postConstruct, injectable, inject } from "inversify";
 import { ProjectDB, TeamDB, WebhookEventDB } from "@gitpod/gitpod-db/lib";
 import { User, StartPrebuildResult, CommitContext, CommitInfo, Project, WebhookEvent } from "@gitpod/gitpod-protocol";

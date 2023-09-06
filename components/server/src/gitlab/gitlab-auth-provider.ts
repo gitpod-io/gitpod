@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import * as express from "express";
+import express from "express";
 import { injectable } from "inversify";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";

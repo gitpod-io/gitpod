@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import * as express from "express";
+import express from "express";
 import { AuthProviderInfo, User, OAuth2Config, AuthProviderEntry } from "@gitpod/gitpod-protocol";
 
 import { UserEnvVarValue } from "@gitpod/gitpod-protocol";

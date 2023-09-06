@@ -5,7 +5,7 @@
  */
 
 import * as http from "http";
-import * as express from "express";
+import express from "express";
 import { injectable, postConstruct } from "inversify";
 import { log, LogrusLogLevel } from "./logging";
 

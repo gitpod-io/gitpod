@@ -5,7 +5,7 @@
  */
 
 import { inject, injectable } from "inversify";
-import * as express from "express";
+import express from "express";
 import {
     HEADLESS_LOG_STREAM_STATUS_CODE,
     Queue,

@@ -5,9 +5,9 @@
  */
 
 import { injectable, inject, postConstruct } from "inversify";
-import * as express from "express";
-import * as passport from "passport";
-import * as OAuth2Strategy from "passport-oauth2";
+import express from "express";
+import passport from "passport";
+import OAuth2Strategy from "passport-oauth2";
 import { UserDB } from "@gitpod/gitpod-db/lib";
 import { AuthProviderInfo, Identity, Token, User } from "@gitpod/gitpod-protocol";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";

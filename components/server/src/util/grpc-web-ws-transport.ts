@@ -29,7 +29,7 @@ import {
     TransportFactory,
     TransportOptions,
 } from "@improbable-eng/grpc-web/dist/typings/transports/Transport";
-import * as WebSocket from "ws";
+import WebSocket from "ws";
 
 enum WebsocketSignal {
     FINISH_SEND = 1,

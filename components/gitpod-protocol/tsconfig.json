@@ -23,7 +23,8 @@
         "skipLibCheck": true,
         "rootDir": "src",
         "outDir": "lib",
-        "useUnknownInCatchVariables": false
+        "useUnknownInCatchVariables": false,
+        "esModuleInterop": true
     },
     "include": [
         "src"

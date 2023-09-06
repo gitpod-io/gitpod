@@ -19,7 +19,7 @@ import {
     TeamDB,
     WebhookEventDB,
 } from "@gitpod/gitpod-db/lib";
-import * as express from "express";
+import express from "express";
 import { log, LogContext, LogrusLogLevel } from "@gitpod/gitpod-protocol/lib/util/logging";
 import {
     WorkspaceConfig,
