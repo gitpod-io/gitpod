@@ -132,7 +132,12 @@ import { SSHKeyService } from "./user/sshkey-service";
 import { GitpodTokenService } from "./user/gitpod-token-service";
 import { EnvVarService } from "./user/env-var-service";
 import { ScmService } from "./projects/scm-service";
-import { WorkspaceStartController, DistributedWorkspaceStartController } from "./workspace/workspace-start-controller";
+import {
+    WorkspaceStartController,
+    DistributedWorkspaceStartController,
+    WorkspaceStartRegistry,
+    WorkspaceStartControllerIdProvider,
+} from "./workspace/workspace-start-controller";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -365,6 +370,14 @@ export const productionContainerModule = new ContainerModule(
         bind(WorkspaceGarbageCollector).toSelf().inSingletonScope();
         bind(DistributedWorkspaceStartController).toSelf().inSingletonScope();
         bind(WorkspaceStartController).toSelf().inSingletonScope();
+        // TODO(gpl) inversify shennanigans to break the circular dependency between WorkspaceStartController and WorkspaceStarter :(
+        bind(WorkspaceStartRegistry).toSelf().inSingletonScope();
+        bind(WorkspaceStartControllerIdProvider).toDynamicValue((ctx) => {
+            return <WorkspaceStartControllerIdProvider>(() => {
+                const startController = ctx.container.get(WorkspaceStartController);
+                return startController.getControllerId();
+            });
+        });
 
         bind(TokenGarbageCollector).toSelf().inSingletonScope();
         bind(WebhookEventGarbageCollector).toSelf().inSingletonScope();

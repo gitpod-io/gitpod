@@ -142,6 +142,10 @@ export class WorkspaceStartController {
         }
     }
 
+    /**
+     * This method is expected to only be called by DistributedWorkspaceStartController, which ensures there is only one caller at a time.
+     * @param _activeControllerIds
+     */
     public async checkForOrphanedInstances(_activeControllerIds: WorkspaceStartControllerId[]) {
         const localControllerId = this.getControllerId();
 
@@ -308,16 +312,30 @@ export class WorkspaceStartController {
     }
 }
 
+export const WorkspaceStartControllerIdProvider = Symbol("WorkspaceStartControllerIdProvider");
+export type WorkspaceStartControllerIdProvider = () => string;
+
 @injectable()
 export class WorkspaceStartRegistry {
     private readonly startingInstances = new Set<string>();
+
+    constructor(
+        @inject(WorkspaceStartControllerIdProvider)
+        private readonly getControllerId: WorkspaceStartControllerIdProvider,
+    ) {}
 
     public has(instanceId: string): boolean {
         return this.startingInstances.has(instanceId);
     }
 
-    public register(instanceId: string) {
+    /**
+     *
+     * @param instanceId
+     * @returns the controllerId this instance is registered with
+     */
+    public register(instanceId: string): string {
         this.startingInstances.add(instanceId);
+        return this.getControllerId();
     }
 
     public unregister(instanceId: string) {
@@ -332,13 +350,15 @@ export class WorkspaceStartRegistry {
  *  - unique per container restart (this.initializationTime)
  * @returns
  */
-interface WorkspaceStartControllerId {
+export interface WorkspaceStartControllerId {
     hostname: string;
     version: string;
     initializationTime: string;
 }
-namespace WorkspaceStartControllerId {
+export namespace WorkspaceStartControllerId {
+    export const UNKNOWN_ID = "";
     const PREFIX = "wscid";
+
     export function create(version: string): WorkspaceStartControllerId {
         return {
             hostname: process.env.HOSTNAME || "unknown",

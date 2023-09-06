@@ -128,7 +128,7 @@ import { ImageSourceProvider } from "./image-source-provider";
 import { WorkspaceClassesConfig } from "./workspace-classes";
 import { SYSTEM_USER } from "../authorization/authorizer";
 import { ResolvedEnvVars } from "../user/env-var-service";
-import { WorkspaceStartRegistry } from "./workspace-start-controller";
+import { WorkspaceStartControllerId, WorkspaceStartRegistry } from "./workspace-start-controller";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
@@ -311,7 +311,6 @@ export class WorkspaceStarter {
                 ideConfig,
                 fromBackup,
                 options.region,
-                controllerId,
                 options.workspaceClass,
             );
             // we run the actual creation of a new instance in a distributed lock, to make sure we always only start one instance per workspace.
@@ -320,7 +319,7 @@ export class WorkspaceStarter {
                 if (runningInstance) {
                     throw new Error(`Workspace ${workspace.id} is already running`);
                 }
-                this.workspaceStartRegistry.register(instance.id);
+                instance.controllerId = this.workspaceStartRegistry.register(instance.id);
                 instance = await this.workspaceDb.trace({ span }).storeInstance(instance);
             });
             span.log({ newInstance: instance.id });
@@ -835,7 +834,6 @@ export class WorkspaceStarter {
         ideConfig: IdeServiceApi.ResolveWorkspaceConfigResponse,
         fromBackup: boolean,
         regionPreference: WorkspaceRegion | undefined,
-        controllerId: string,
         workspaceClassOverride?: string,
     ): Promise<WorkspaceInstance> {
         const span = TraceContext.startSpan("newInstance", ctx);
@@ -938,7 +936,7 @@ export class WorkspaceStarter {
                 configuration,
                 usageAttributionId: usageAttributionId && AttributionId.render(usageAttributionId),
                 workspaceClass,
-                controllerId,
+                controllerId: WorkspaceStartControllerId.UNKNOWN_ID,
             };
 
             if (WithReferrerContext.is(workspace.context)) {
