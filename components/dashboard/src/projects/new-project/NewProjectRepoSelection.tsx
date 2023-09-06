@@ -85,7 +85,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
             : Array.from(reposInAccounts || []).filter(
                   (r) =>
                       (!selectedAccount || r.account === selectedAccount) &&
-                      `${r.name}`.toLowerCase().includes(repoSearchFilter.toLowerCase().trim()),
+                      `${r.account}/${r.name}`.toLowerCase().includes(repoSearchFilter.toLowerCase().trim()),
               );
     }, [areGitHubWebhooksUnauthorized, enableBBSIncrementalSearch, repoSearchFilter, reposInAccounts, selectedAccount]);
 
@@ -172,18 +172,12 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
                             onSelectGitProvider={onChangeGitProvider}
                         />
                     )}
+                    <NewProjectSearchInput searchFilter={repoSearchFilter} onSearchFilterChange={setRepoSearchFilter} />
                     {enableBBSIncrementalSearch && (
                         <Alert type="info" className="text-sm -mx-4 my-2">
-                            <div>
-                                Repository search requires that search queries start with the first character(s) of the
-                                given repository name. Wildcard search is not supported.
-                            </div>
-                            <div className="mt-1">
-                                <strong>Example:</strong> For “my-repo” search “my-re”, instead of “repo”
-                            </div>
+                            <div>Bitbucket Server only supports prefix search.</div>
                         </Alert>
                     )}
-                    <NewProjectSearchInput searchFilter={repoSearchFilter} onSearchFilterChange={setRepoSearchFilter} />
                 </div>
                 <div className="p-6 flex-col">
                     {isLoading ? (
