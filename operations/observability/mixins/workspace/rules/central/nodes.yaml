@@ -65,4 +65,4 @@ spec:
                     summary: Node pool load has been high for too long for 4 or more nodes
                     description: Node pool {{ $labels.nodepool }} in cluster {{ $labels.cluster }} has high, sustained load
                 expr: |
-                    sum by(nodepool) (count by(node, nodepool) (sum by(node, nodepool) (nodepool:node_load1:normalized{nodepool=~".*workspace.*", cluster!~"ephemeral.*"}) >= 1)) >= 4
+                    sum by(nodepool, cluster) (count by(node, nodepool, cluster) (sum by(node, nodepool, cluster) (nodepool:node_load1:normalized{nodepool=~".*workspace.*", cluster!~"ephemeral.*"}) >= 1)) >= 4
