@@ -6,7 +6,14 @@
  */
 
 import * as ws from "ws";
-import { IWebSocket } from "vscode-ws-jsonrpc";
+import {
+    IWebSocket,
+    Logger,
+    WebSocketMessageReader,
+    WebSocketMessageWriter,
+    createMessageConnection,
+} from "vscode-ws-jsonrpc";
+import { log } from "../../util/logging";
 
 export function toIWebSocket(ws: ws) {
     return <IWebSocket>{
@@ -37,4 +44,23 @@ export function toIWebSocket(ws: ws) {
             }
         },
     };
+}
+
+// copied from /node_modules/vscode-ws-jsonrpc/lib/socket/connection.js
+export function createWebSocketConnection(socket: IWebSocket, logger: Logger) {
+    const messageReader = new SafeWebSocketMessageReader(socket);
+    const messageWriter = new WebSocketMessageWriter(socket);
+    const connection = createMessageConnection(messageReader, messageWriter, logger);
+    connection.onClose(() => connection.dispose());
+    return connection;
+}
+
+class SafeWebSocketMessageReader extends WebSocketMessageReader {
+    protected readMessage(message: any): void {
+        try {
+            super.readMessage(message);
+        } catch (error) {
+            log.debug("Failed to decode JSON-RPC message.", error);
+        }
+    }
 }

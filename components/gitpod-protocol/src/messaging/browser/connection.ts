@@ -12,6 +12,7 @@ import { AbstractMessageReader } from "vscode-jsonrpc/lib/messageReader";
 import { JsonRpcProxyFactory, JsonRpcProxy } from "../proxy-factory";
 import { ConnectionEventHandler, ConnectionHandler } from "../handler";
 import ReconnectingWebSocket, { Event } from "reconnecting-websocket";
+import { log } from "../../util/logging";
 
 export interface WebSocketOptions {
     onerror?: (event: Event) => void;
@@ -235,8 +236,12 @@ class NonClosingWebSocketMessageReader extends AbstractMessageReader {
         if (this.state === "initial") {
             this.events.splice(0, 0, { message });
         } else if (this.state === "listening") {
-            const data = JSON.parse(message);
-            this.callback(data);
+            try {
+                const data = JSON.parse(message);
+                this.callback(data);
+            } catch (error) {
+                log.debug("Failed to decode JSON-RPC message.", error);
+            }
         }
     }
     fireError(error: any) {
