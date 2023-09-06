@@ -26,6 +26,27 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	codeDesktop := "code-desktop"
 
+	/*
+		Upgrading previous JB Version:
+
+		1. Access the previous JB version at: https://github.com/gitpod-io/gitpod/tree/jb/previous
+		2. Upgrade Process:
+		   - Navigate to the update script:
+		     https://github.com/gitpod-io/gitpod/blob/jb/previous/components/ide/jetbrains/image/gha-update-image
+		   - Execute the script with the desired version as an argument. For example, to upgrade to versions below 231:
+		     node index.js 231
+		   - This action will update both the WORKSPACE.yaml and the backend plugin's target platform version.
+		3. Transfer the changes to gradle-latest.properties to avoid version incompatibilities with latest.
+		4. Resolve any incompatibility issues that arise with the plugin.
+		5. Commit and push your changes to GitHub. This will trigger the build job, generating new images.
+		6. Test the new images in preview environments with stable versions.
+		7. If everything works as expected, update the versions for the plugin and IDEs here where the previous plugin was used.
+
+		TODO: When should it happen? Once a year? Each time when a new major is released, move previous to next, i.e. tracking 1 year behind?
+	*/
+	intellijPrevious := "intellij-previous"
+	jbPluginPrevious := ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, "commit-e7eb44545510a8293c5c6aa814a0ad4e81852e5f")
+
 	intellij := "intellij"
 	goland := "goland"
 	pycharm := "pycharm"
@@ -51,25 +72,6 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	codeWebExtensionImage := ctx.ImageName(ctx.Config.Repository, ide.CodeWebExtensionImage, ide.CodeWebExtensionVersion)
 	jbPluginImage := ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginImage.Version)
 	jbPluginLatestImage := ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginLatestImage.Version)
-	/*
-		Upgrading JB Version:
-
-		1. Access the previous JB version at: https://github.com/gitpod-io/gitpod/tree/jb/previous
-		2. Upgrade Process:
-		   - Navigate to the update script:
-		     https://github.com/gitpod-io/gitpod/blob/jb/previous/components/ide/jetbrains/image/gha-update-image
-		   - Execute the script with the desired version as an argument. For example, to upgrade to versions below 231:
-		     node index.js 231
-		   - This action will update both the WORKSPACE.yaml and the backend plugin's target platform version.
-		3. Transfer the changes to gradle-latest.properties to avoid version incompatibilities with latest.
-		4. Resolve any incompatibility issues that arise with the plugin.
-		5. Commit and push your changes to GitHub. This will trigger the build job, generating new images.
-		6. Test the new images in preview environments with stable versions.
-		7. If everything works as expected, update the versions for the plugin and IDEs here where the previous plugin was used.
-
-		TODO: When should it happen? Once a year? Each time when a new major is released, move previous to next, i.e. tracking 1 year behind?
-	*/
-	jbPluginPrevious := ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, "commit-e7eb44545510a8293c5c6aa814a0ad4e81852e5f")
 	jbLauncherImage := ctx.ImageName(ctx.Config.Repository, ide.JetBrainsLauncherImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsLauncherImage.Version)
 	idecfg := ide_config.IDEConfig{
 		SupervisorImage: ctx.ImageName(ctx.Config.Repository, workspace.SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),
@@ -118,7 +120,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					LatestImage: ctx.ImageName(ctx.Config.Repository, ide.CodeDesktopInsidersIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.CodeDesktopImageInsiders.Version),
 				},
 				intellij: {
-					OrderKey:          "04",
+					OrderKey:          "040",
 					Title:             "IntelliJ IDEA",
 					Label:             "Ultimate",
 					Type:              ide_config.IDETypeDesktop,
@@ -129,13 +131,15 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PluginLatestImage: jbPluginLatestImage,
 					ImageLayers:       []string{jbPluginImage, jbLauncherImage},
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
-					VersionImageLayers: [][]string{
-						{
-							ctx.ImageName(ctx.Config.Repository, ide.IntelliJDesktopIDEImage, "2022.3.3"),
-							jbPluginPrevious,
-							jbLauncherImage,
-						},
-					},
+				},
+				intellijPrevious: {
+					OrderKey:    "041",
+					Title:       "IntelliJ IDEA",
+					Label:       "Ultimate",
+					Type:        ide_config.IDETypeDesktop,
+					Logo:        getIdeLogoPath("intellijIdeaLogo"),
+					Image:       ctx.ImageName(ctx.Config.Repository, ide.IntelliJDesktopIDEImage, "2022.3.3"),
+					ImageLayers: []string{jbPluginPrevious, jbLauncherImage},
 				},
 				goland: {
 					OrderKey:          "05",

@@ -67,8 +67,6 @@ type IDEOption struct {
 	ImageLayers []string `json:"imageLayers,omitempty"`
 	// LatestImageLayers for latest additional ide layers and dependencies
 	LatestImageLayers []string `json:"latestImageLayers,omitempty"`
-	// VersionImageLayers for additional ide version, besides current stable and latest
-	VersionImageLayers [][]string `json:"versionImageLayers,omitempty"`
 }
 
 type IDEClient struct {
