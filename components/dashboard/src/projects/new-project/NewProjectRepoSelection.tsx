@@ -175,7 +175,10 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
                     <NewProjectSearchInput searchFilter={repoSearchFilter} onSearchFilterChange={setRepoSearchFilter} />
                     {enableBBSIncrementalSearch && (
                         <Alert type="info" className="text-sm -mx-4 my-2">
-                            <div>Bitbucket Server only supports prefix search.</div>
+                            <div>
+                                <span className="font-semibold">Bitbucket Server</span> supports only prefix search for
+                                projects.
+                            </div>
                         </Alert>
                     )}
                 </div>
