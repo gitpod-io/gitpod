@@ -33,7 +33,7 @@ export const NewProjectRepoList: FC<Props> = ({ filteredRepos, noReposAvailable,
                                         (r.inUse ? " text-gray-400 dark:text-gray-500" : "text-gray-700")
                                     }
                                 >
-                                    {toSimpleName(r.name)}
+                                    {toSimpleName(r)}
                                 </div>
                                 {r.updatedAt && <p>Updated {dayjs(r.updatedAt).fromNow()}</p>}
                             </div>
@@ -44,13 +44,10 @@ export const NewProjectRepoList: FC<Props> = ({ filteredRepos, noReposAvailable,
                                             Select
                                         </Button>
                                     ) : (
-                                        <p className="text-gray-500 font-medium">
-                                            <a rel="noopener" className="gp-link" href={userLink(r)}>
-                                                @{r.inUse.userName}
-                                            </a>{" "}
-                                            already
+                                        <p className="text-gray-500">
+                                            Project already
                                             <br />
-                                            added this repo
+                                            exists.
                                         </p>
                                     )}
                                 </div>
@@ -64,14 +61,6 @@ export const NewProjectRepoList: FC<Props> = ({ filteredRepos, noReposAvailable,
     );
 };
 
-const toSimpleName = (fullName: string) => {
-    const splitted = fullName.split("/");
-    if (splitted.length < 2) {
-        return fullName;
-    }
-    return splitted.shift() && splitted.join("/");
-};
-
-const userLink = (r: ProviderRepository) => {
-    return `https://${new URL(r.cloneUrl).host}/${r.inUse?.userName}`;
+const toSimpleName = (repo: ProviderRepository) => {
+    return `${repo.account}/${repo.name}`;
 };
