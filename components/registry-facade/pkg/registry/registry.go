@@ -320,6 +320,7 @@ func (reg *Registry) UpdateStaticLayer(ctx context.Context, cfg []config.StaticL
 // Serve serves the registry on the given port
 func (reg *Registry) Serve() error {
 	routes := distv2.RouterWithPrefix(reg.Config.Prefix)
+
 	reg.registerHandler(routes)
 
 	var handler http.Handler = routes

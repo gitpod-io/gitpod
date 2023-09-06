@@ -62,20 +62,6 @@ func rewriteDockerAPIURL(u *url.URL, fromRepo, toRepo, host, tag string) {
 	// we reset the escaped encoding hint, because EscapedPath will produce a valid encoding.
 	u.RawPath = ""
 
-	if tag != "" {
-		// We're forcing the image tag which only affects manifests. No matter what the user
-		// requested we look at, we'll force the tag to the one we're given.
-		segs := strings.Split(u.Path, "/")
-		if len(segs) >= 2 && segs[len(segs)-2] == "manifests" {
-			// We're on the manifest found, hence the last segment must be the reference.
-			// Even if the reference is a digest, we'll just force it to the tag.
-			// This might break some consumers, but we want to use the tag forcing as a means
-			// of excerting control, hence rather break folks than allow unauthorized access.
-			segs[len(segs)-1] = tag
-			u.Path = strings.Join(segs, "/")
-		}
-	}
-
 	u.Host = host
 }
 

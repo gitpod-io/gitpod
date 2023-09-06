@@ -6,14 +6,12 @@ package cmd
 
 import (
 	"context"
-	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/image-builder/api"
 	"github.com/gitpod-io/gitpod/image-builder/pkg/orchestrator"
-	"github.com/gitpod-io/gitpod/image-builder/pkg/resolve"
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/spf13/cobra"
@@ -43,19 +41,6 @@ var runCmd = &cobra.Command{
 		service, err := orchestrator.NewOrchestratingBuilder(cfg.Orchestrator)
 		if err != nil {
 			log.Fatal(err)
-		}
-		if cfg.RefCache.Interval != "" && len(cfg.RefCache.Refs) > 0 {
-			interval, err := time.ParseDuration(cfg.RefCache.Interval)
-			if err != nil {
-				log.WithError(err).WithField("interval", cfg.RefCache.Interval).Fatal("interval is not a valid duration")
-			}
-
-			resolver := &resolve.PrecachingRefResolver{
-				Resolver:   &resolve.StandaloneRefResolver{},
-				Candidates: cfg.RefCache.Refs,
-			}
-			go resolver.StartCaching(ctx, interval)
-			service.RefResolver = resolver
 		}
 
 		err = service.RegisterMetrics(srv.MetricsRegistry())

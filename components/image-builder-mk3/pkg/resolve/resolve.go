@@ -10,8 +10,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
-	"sync"
-	"time"
 
 	"github.com/containerd/containerd/remotes"
 	dockerremote "github.com/containerd/containerd/remotes/docker"
@@ -20,7 +18,6 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/image-builder/pkg/auth"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
@@ -74,28 +71,6 @@ func (sr *StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts .
 		return "", xerrors.Errorf("cannt resolve image ref: %w", err)
 	}
 
-	// The reference is already in digest form we don't have to do anything
-	if cref, ok := pref.(reference.Canonical); ok {
-		// if reference contain tag, we should remove it to avoid tag and digest conflict
-		if _, ok := pref.(reference.Tagged); ok {
-			dref, err := reference.WithDigest(reference.TrimNamed(pref), cref.Digest())
-			if err != nil {
-				return "", err
-			}
-			ref = dref.String()
-		}
-		span.LogKV("result", ref)
-		return ref, nil
-	}
-
-	// Some users don't specify a tag, and Docker assumes "latest" - we follow the same convention
-	if _, ok := pref.(reference.Tagged); !ok {
-		pref, err = reference.WithTag(pref, "latest")
-		if err != nil {
-			return "", err
-		}
-	}
-
 	nref := pref.String()
 	pref = reference.TrimNamed(pref)
 	span.LogKV("normalized-ref", nref)
@@ -109,6 +84,7 @@ func (sr *StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts .
 		}
 		return
 	}
+
 	fetcher, err := r.Fetcher(ctx, res)
 	if err != nil {
 		return
@@ -192,90 +168,6 @@ func getOptions(o []DockerRefResolverOption) *opts {
 type DockerRefResolver interface {
 	// Resolve resolves a mutable Docker tag to its absolute digest form.
 	Resolve(ctx context.Context, ref string, opts ...DockerRefResolverOption) (res string, err error)
-}
-
-// PrecachingRefResolver regularly resolves a set of references and returns the cached value when asked to resolve that reference.
-type PrecachingRefResolver struct {
-	Resolver   DockerRefResolver
-	Candidates []string
-	Auth       auth.RegistryAuthenticator
-
-	mu    sync.RWMutex
-	cache map[string]string
-}
-
-var _ DockerRefResolver = &PrecachingRefResolver{}
-
-// StartCaching starts the precaching of resolved references at the given interval. This function blocks until the context is canceled
-// and is intended to run as a Go routine.
-func (pr *PrecachingRefResolver) StartCaching(ctx context.Context, interval time.Duration) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "PrecachingRefResolver.StartCaching")
-	defer tracing.FinishSpan(span, nil)
-
-	t := time.NewTicker(interval)
-
-	log.WithField("interval", interval.String()).WithField("refs", pr.Candidates).Info("starting Docker ref pre-cache")
-
-	pr.cache = make(map[string]string)
-	for {
-		for _, c := range pr.Candidates {
-			var opts []DockerRefResolverOption
-			if pr.Auth != ((auth.RegistryAuthenticator)(nil)) {
-				ref, err := reference.ParseNormalizedNamed(c)
-				if err != nil {
-					log.WithError(err).WithField("ref", c).Warn("unable to precache reference: cannot parse")
-					continue
-				}
-
-				auth, err := pr.Auth.Authenticate(ctx, reference.Domain(ref))
-				if err != nil {
-					log.WithError(err).WithField("ref", c).Warn("unable to precache reference: cannot authenticate")
-					continue
-				}
-
-				opts = append(opts, WithAuthentication(auth))
-			}
-
-			res, err := pr.Resolver.Resolve(ctx, c, opts...)
-			if err != nil {
-				log.WithError(err).WithField("ref", c).Warn("unable to precache reference")
-				continue
-			}
-
-			pr.mu.Lock()
-			pr.cache[c] = res
-			pr.mu.Unlock()
-
-			log.WithField("ref", c).WithField("resolved-to", res).Debug("pre-cached Docker ref")
-		}
-
-		select {
-		case <-t.C:
-		case <-ctx.Done():
-			log.Debug("context cancelled - shutting down Docker ref pre-caching")
-			return
-		}
-	}
-}
-
-// Resolve aims to resolve a ref using its own cache first and asks the underlying resolver otherwise
-func (pr *PrecachingRefResolver) Resolve(ctx context.Context, ref string, opts ...DockerRefResolverOption) (res string, err error) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "PrecachingRefResolver.Resolve")
-	defer tracing.FinishSpan(span, &err)
-
-	pr.mu.RLock()
-	defer pr.mu.RUnlock()
-
-	if pr.cache == nil {
-		return pr.Resolver.Resolve(ctx, ref, opts...)
-	}
-
-	res, ok := pr.cache[ref]
-	if !ok {
-		return pr.Resolver.Resolve(ctx, ref, opts...)
-	}
-
-	return res, nil
 }
 
 type MockRefResolver map[string]string

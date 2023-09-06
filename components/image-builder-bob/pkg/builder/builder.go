@@ -15,12 +15,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/cli/cli/config/types"
 	"github.com/moby/buildkit/client"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 const (
@@ -72,8 +72,9 @@ func (b *Builder) Build() error {
 	}
 
 	if b.Config.BuildSOCIIndex {
-		err = buildSociIndex(ctx, cl, b.Config.TargetRef, b.Config.WorkspaceLayerAuth)
+		err := buildSociIndex(ctx, cl, b.Config.TargetRef, b.Config.WorkspaceLayerAuth)
 		if err != nil {
+			log.WithError(err).Error("running SOCI command")
 			return err
 		}
 	}
@@ -122,7 +123,7 @@ func buildSociIndex(ctx context.Context, cl *client.Client, targetRef, authLayer
 		}
 	}
 
-	err = runSociCmd("push", targetRef)
+	err = runSociCmd("push", "--plain-http", targetRef)
 	if err != nil {
 		return xerrors.Errorf("unexpected error creating SOCI index")
 	}
@@ -130,8 +131,11 @@ func buildSociIndex(ctx context.Context, cl *client.Client, targetRef, authLayer
 	return nil
 }
 
-func runSociCmd(cmd, arg string) error {
-	sociCmd := exec.Command("soci", cmd, arg)
+func runSociCmd(cmd string, cmdArgs ...string) error {
+	args := []string{"--namespace", "buildkit", cmd}
+	args = append(args, cmdArgs...)
+	log.WithField("args", args).Info("executing soci command")
+	sociCmd := exec.Command("soci", args...)
 	sociCmd.Stderr = os.Stderr
 	sociCmd.Stdout = os.Stdout
 
@@ -172,18 +176,13 @@ func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target s
 	}
 
 	buildctlArgs := []string{
-		// "--debug",
 		"build",
 		"--progress=plain",
-		"--output=type=image,name=" + target + ",push=true,oci-mediatypes=true",
-		//"--export-cache=type=inline",
+		"--output=type=image,name=" + target + ",push=true,oci-mediatypes=true,force-compression=true",
 		"--local=context=" + contextdir,
-		//"--export-cache=type=registry,ref=" + target + "-cache",
-		//"--import-cache=type=registry,ref=" + target + "-cache",
 		"--frontend=dockerfile.v0",
 		"--local=dockerfile=" + filepath.Dir(dockerfile),
 		"--opt=filename=" + filepath.Base(dockerfile),
-		"--compression=zstd",
 	}
 
 	buildctlCmd := exec.Command("buildctl", buildctlArgs...)
@@ -270,7 +269,7 @@ func StartBuildkit(socketPath string) (cl *client.Client, teardown func() error,
 	cmd := exec.Command("buildkitd",
 		"--debug",
 		"--addr="+socketPath,
-		"--oci-worker-net=host",
+		"--containerd-worker=true", "--oci-worker=false",
 		"--root=/workspace/buildkit",
 	)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Credential: &syscall.Credential{Uid: 0, Gid: 0}}
@@ -297,9 +296,47 @@ func StartBuildkit(socketPath string) (cl *client.Client, teardown func() error,
 		log.WithField("buildkitd-stderr", string(serr)).WithField("buildkitd-stdout", string(sout)).Error("buildkitd failure")
 	}()
 
+	containerdStderr, err := ioutil.TempFile(os.TempDir(), "containerd_stderr")
+	if err != nil {
+		return nil, nil, xerrors.Errorf("cannot create containerd log file: %w", err)
+	}
+	containerdStdout, err := ioutil.TempFile(os.TempDir(), "containerd_stdout")
+	if err != nil {
+		return nil, nil, xerrors.Errorf("cannot create containerd log file: %w", err)
+	}
+
+	containerdCmd := exec.Command("containerd")
+	containerdCmd.SysProcAttr = &syscall.SysProcAttr{Credential: &syscall.Credential{Uid: 0, Gid: 0}}
+	containerdCmd.Stderr = containerdStderr
+	containerdCmd.Stdout = containerdStdout
+	err = containerdCmd.Start()
+	if err != nil {
+		return nil, nil, xerrors.Errorf("cannot start containerd: %w", err)
+	}
+	log.WithField("stderr", stderr.Name()).WithField("stdout", stdout.Name()).Debug("containerd started")
+
+	defer func() {
+		if err == nil {
+			return
+		}
+
+		if containerdCmd.Process != nil {
+			_ = containerdCmd.Process.Kill()
+		}
+
+		serr, _ := ioutil.ReadFile(containerdStderr.Name())
+		sout, _ := ioutil.ReadFile(containerdStdout.Name())
+
+		log.WithField("containerd-stderr", string(serr)).WithField("containerd-stdout", string(sout)).Error("containerd failure")
+	}()
+
 	teardown = func() error {
 		stdout.Close()
 		stderr.Close()
+		_ = containerdCmd.Process.Kill()
+		containerdStdout.Close()
+		containerdStderr.Close()
+
 		return cmd.Process.Kill()
 	}
 

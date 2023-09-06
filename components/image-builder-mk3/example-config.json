@@ -14,12 +14,6 @@
         "workspaceImageRepository": "eu.gcr.io/gitpod-core-dev/build/workspace-images",
         "builderImage": "eu.gcr.io/gitpod-core-dev/build/image-builder-mk3/bob:4d9d04b1bf94218d47294f83b11eba652455a790"
     },
-    "refCache": {
-        "interval": "6h0m0s",
-        "refs": [
-            "docker.io/gitpod/workspace-full:latest"
-        ]
-    },
     "server": {
         "services": {
             "grpc": {

@@ -160,12 +160,29 @@ func TestRewriteDockerAPIURL(t *testing.T) {
 				tag:      "tag12345",
 				u: url.URL{
 					Host: "localhost.com",
-					Path: "/v2/base/uploads/manifests/manifest12345",
+					Path: "/v2/base/uploads/manifests/tag12345",
 				},
 			},
 			u: url.URL{
 				Host: "prince.azurecr.io",
 				Path: "/v2/base-images/uploads/manifests/tag12345",
+			},
+		},
+		{
+			Name: "manifest reference update with sha256",
+			in: input{
+				fromRepo: "base",
+				toRepo:   "base-images",
+				host:     "prince.azurecr.io",
+				tag:      "tag12345",
+				u: url.URL{
+					Host: "localhost.com",
+					Path: "/v2/base/uploads/manifests/sha256:12345",
+				},
+			},
+			u: url.URL{
+				Host: "prince.azurecr.io",
+				Path: "/v2/base-images/uploads/manifests/sha256:12345",
 			},
 		},
 	}

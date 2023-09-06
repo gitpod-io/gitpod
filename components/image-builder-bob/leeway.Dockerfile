@@ -5,7 +5,7 @@
 FROM moby/buildkit:v0.12.2
 
 USER root
-RUN apk --no-cache add sudo bash tar wget \
+RUN apk --no-cache add sudo bash tar wget containerd pigz zstd-libs \
     && addgroup -g 33333 gitpod \
     && adduser -D -h /home/gitpod -s /bin/sh -u 33333 -G gitpod gitpod \
     && echo "gitpod ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/gitpod \
@@ -33,6 +33,6 @@ ARG VERSION
 
 ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
 ENV GITPOD_BUILD_VERSION=${VERSION}
-# sudo buildctl-daemonless.sh
+
 ENTRYPOINT [ "/app/bob" ]
 CMD [ "build" ]

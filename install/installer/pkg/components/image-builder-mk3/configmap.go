@@ -7,11 +7,9 @@ package image_builder_mk3
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 
-	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/image-builder/api/config"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
@@ -78,12 +76,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	imgcfg := config.ServiceConfig{
 		Orchestrator: orchestrator,
-		RefCache: config.RefCacheConfig{
-			Interval: util.Duration(time.Hour * 6).String(),
-			Refs: []string{
-				workspaceImage,
-			},
-		},
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{

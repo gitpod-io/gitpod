@@ -9,15 +9,9 @@ import (
 )
 
 type ServiceConfig struct {
-	Orchestrator Configuration  `json:"orchestrator"`
-	RefCache     RefCacheConfig `json:"refCache,omitempty"`
+	Orchestrator Configuration `json:"orchestrator"`
 
 	Server *baseserver.Configuration `json:"server"`
-}
-
-type RefCacheConfig struct {
-	Interval string   `json:"interval"`
-	Refs     []string `json:"refs"`
 }
 
 // Configuration configures the orchestrator

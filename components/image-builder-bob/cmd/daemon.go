@@ -12,15 +12,15 @@ import (
 	"os/signal"
 	"syscall"
 
-	log "github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/image-builder/bob/pkg/builder"
-
 	"github.com/containerd/console"
 	"github.com/moby/buildkit/client"
 	"github.com/moby/buildkit/client/llb"
 	"github.com/moby/buildkit/util/progress/progressui"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
+
+	log "github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/image-builder/bob/pkg/builder"
 )
 
 // daemonCmd represents the build command

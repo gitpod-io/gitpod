@@ -34,25 +34,6 @@
       "additionalProperties": false,
       "type": "object"
     },
-    "RefCacheConfig": {
-      "required": [
-        "interval",
-        "refs"
-      ],
-      "properties": {
-        "interval": {
-          "type": "string"
-        },
-        "refs": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object"
-    },
     "ServiceConfig": {
       "required": [
         "orchestrator",
@@ -62,10 +43,6 @@
         "orchestrator": {
           "$schema": "http://json-schema.org/draft-04/schema#",
           "$ref": "#/definitions/Configuration"
-        },
-        "refCache": {
-          "$schema": "http://json-schema.org/draft-04/schema#",
-          "$ref": "#/definitions/RefCacheConfig"
         },
         "server": {
           "$ref": "#/definitions/Configuration"

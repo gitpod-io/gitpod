@@ -28,7 +28,7 @@ var buildCmd = &cobra.Command{
 		}
 
 		// give the headless listener some time to attach
-		time.Sleep(1 * time.Second)
+		time.Sleep(5 * time.Second)
 
 		cfg, err := builder.GetConfigFromEnv()
 		if err != nil {

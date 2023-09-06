@@ -222,23 +222,7 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			// When serving images.MediaTypeDockerSchema2Manifest we have to set the mediaType in the manifest itself.
-			// Although somewhat compatible with the OCI manifest spec (see https://github.com/opencontainers/image-spec/blob/master/manifest.md),
-			// this field is not part of the OCI Go structs. In this particular case, we'll go ahead and add it ourselves.
-			//
-			// fixes https://github.com/gitpod-io/gitpod/pull/3397
-			if desc.MediaType == images.MediaTypeDockerSchema2Manifest {
-				type ManifestWithMediaType struct {
-					ociv1.Manifest
-					MediaType string `json:"mediaType"`
-				}
-				p, _ = json.Marshal(ManifestWithMediaType{
-					Manifest:  *manifest,
-					MediaType: images.MediaTypeDockerSchema2Manifest,
-				})
-			} else {
-				p, _ = json.Marshal(manifest)
-			}
+			p, _ = json.Marshal(manifest)
 		}
 
 		dgst := digest.FromBytes(p).String()
