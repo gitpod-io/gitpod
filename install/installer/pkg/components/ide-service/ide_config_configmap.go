@@ -148,13 +148,6 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PluginLatestImage: jbPluginLatestImage,
 					ImageLayers:       []string{jbPluginImage, jbLauncherImage},
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
-					VersionImageLayers: [][]string{
-						{
-							ctx.ImageName(ctx.Config.Repository, ide.GoLandDesktopIdeImage, "2022.3.4"),
-							jbPluginPrevious,
-							jbLauncherImage,
-						},
-					},
 				},
 				pycharm: {
 					OrderKey:          "06",
@@ -168,13 +161,6 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PluginLatestImage: jbPluginLatestImage,
 					ImageLayers:       []string{jbPluginImage, jbLauncherImage},
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
-					VersionImageLayers: [][]string{
-						{
-							ctx.ImageName(ctx.Config.Repository, ide.PyCharmDesktopIdeImage, "2022.3.3"),
-							jbPluginPrevious,
-							jbLauncherImage,
-						},
-					},
 				},
 				phpstorm: {
 					OrderKey:          "07",
@@ -187,13 +173,6 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PluginLatestImage: jbPluginLatestImage,
 					ImageLayers:       []string{jbPluginImage, jbLauncherImage},
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
-					VersionImageLayers: [][]string{
-						{
-							ctx.ImageName(ctx.Config.Repository, ide.PhpStormDesktopIdeImage, "2022.3.3"),
-							jbPluginPrevious,
-							jbLauncherImage,
-						},
-					},
 				},
 				rubymine: {
 					OrderKey:          "08",
@@ -206,13 +185,6 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PluginLatestImage: jbPluginLatestImage,
 					ImageLayers:       []string{jbPluginImage, jbLauncherImage},
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
-					VersionImageLayers: [][]string{
-						{
-							ctx.ImageName(ctx.Config.Repository, ide.RubyMineDesktopIdeImage, "2022.3.3"),
-							jbPluginPrevious,
-							jbLauncherImage,
-						},
-					},
 				},
 				webstorm: {
 					OrderKey:          "09",
@@ -225,13 +197,6 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PluginLatestImage: jbPluginLatestImage,
 					ImageLayers:       []string{jbPluginImage, jbLauncherImage},
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
-					VersionImageLayers: [][]string{
-						{
-							ctx.ImageName(ctx.Config.Repository, ide.WebStormDesktopIdeImage, "2022.3.4"),
-							jbPluginPrevious,
-							jbLauncherImage,
-						},
-					},
 				},
 				rider: {
 					OrderKey:          "10",
@@ -244,13 +209,6 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PluginLatestImage: jbPluginLatestImage,
 					ImageLayers:       []string{jbPluginImage, jbLauncherImage},
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
-					VersionImageLayers: [][]string{
-						{
-							ctx.ImageName(ctx.Config.Repository, ide.RiderDesktopIdeImage, "2022.3.3"),
-							jbPluginPrevious,
-							jbLauncherImage,
-						},
-					},
 				},
 				clion: {
 					OrderKey:          "11",
@@ -263,13 +221,6 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PluginLatestImage: jbPluginLatestImage,
 					ImageLayers:       []string{jbPluginImage, jbLauncherImage},
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
-					VersionImageLayers: [][]string{
-						{
-							ctx.ImageName(ctx.Config.Repository, ide.CLionDesktopIdeImage, "2022.3.3"),
-							jbPluginPrevious,
-							jbLauncherImage,
-						},
-					},
 				},
 				xterm: {
 					OrderKey: "12",
