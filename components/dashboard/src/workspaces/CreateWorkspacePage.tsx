@@ -40,6 +40,7 @@ import { useDirtyState } from "../hooks/use-dirty-state";
 import { LinkButton } from "../components/LinkButton";
 import { InputField } from "../components/forms/InputField";
 import Alert from "../components/Alert";
+import { WorkspaceDetails } from "./create-workspace/WorkspaceDetails";
 
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
@@ -405,6 +406,14 @@ export function CreateWorkspacePage() {
                             loading={workspaceContext.isLoading}
                         />
                     </InputField>
+
+                    <WorkspaceDetails
+                        selectedIDE={selectedIde || ""}
+                        useLatestIDE={useLatestIde}
+                        selectedWSClassID={selectedWsClass || ""}
+                        onWSClassChange={setSelectedWsClass}
+                        onIDEChange={onSelectEditorChange}
+                    />
                 </div>
                 <div className="w-full flex justify-end mt-3 space-x-2 px-6">
                     <Button
