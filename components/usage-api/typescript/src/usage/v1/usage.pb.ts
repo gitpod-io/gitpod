@@ -5,10 +5,10 @@
  */
 
 /* eslint-disable */
-import * as Long from "long";
-import { CallContext, CallOptions } from "nice-grpc-common";
+import type { CallContext, CallOptions } from "nice-grpc-common";
 import * as _m0 from "protobufjs/minimal";
 import { Timestamp } from "../../google/protobuf/timestamp.pb";
+import Long = require("long");
 
 export const protobufPackage = "usage.v1";
 
@@ -280,22 +280,31 @@ export const ReconcileUsageRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): ReconcileUsageRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseReconcileUsageRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.from = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
-          break;
+          continue;
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.to = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -309,11 +318,18 @@ export const ReconcileUsageRequest = {
 
   toJSON(message: ReconcileUsageRequest): unknown {
     const obj: any = {};
-    message.from !== undefined && (obj.from = message.from.toISOString());
-    message.to !== undefined && (obj.to = message.to.toISOString());
+    if (message.from !== undefined) {
+      obj.from = message.from.toISOString();
+    }
+    if (message.to !== undefined) {
+      obj.to = message.to.toISOString();
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<ReconcileUsageRequest>): ReconcileUsageRequest {
+    return ReconcileUsageRequest.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<ReconcileUsageRequest>): ReconcileUsageRequest {
     const message = createBaseReconcileUsageRequest();
     message.from = object.from ?? undefined;
@@ -332,16 +348,17 @@ export const ReconcileUsageResponse = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): ReconcileUsageResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseReconcileUsageResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
-        default:
-          reader.skipType(tag & 7);
-          break;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -355,6 +372,9 @@ export const ReconcileUsageResponse = {
     return obj;
   },
 
+  create(base?: DeepPartial<ReconcileUsageResponse>): ReconcileUsageResponse {
+    return ReconcileUsageResponse.fromPartial(base ?? {});
+  },
   fromPartial(_: DeepPartial<ReconcileUsageResponse>): ReconcileUsageResponse {
     const message = createBaseReconcileUsageResponse();
     return message;
@@ -377,22 +397,31 @@ export const PaginatedRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): PaginatedRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBasePaginatedRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 8) {
+            break;
+          }
+
           message.perPage = longToNumber(reader.int64() as Long);
-          break;
+          continue;
         case 2:
+          if (tag !== 16) {
+            break;
+          }
+
           message.page = longToNumber(reader.int64() as Long);
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -406,11 +435,18 @@ export const PaginatedRequest = {
 
   toJSON(message: PaginatedRequest): unknown {
     const obj: any = {};
-    message.perPage !== undefined && (obj.perPage = Math.round(message.perPage));
-    message.page !== undefined && (obj.page = Math.round(message.page));
+    if (message.perPage !== 0) {
+      obj.perPage = Math.round(message.perPage);
+    }
+    if (message.page !== 0) {
+      obj.page = Math.round(message.page);
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<PaginatedRequest>): PaginatedRequest {
+    return PaginatedRequest.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<PaginatedRequest>): PaginatedRequest {
     const message = createBasePaginatedRequest();
     message.perPage = object.perPage ?? 0;
@@ -441,28 +477,45 @@ export const PaginatedResponse = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): PaginatedResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBasePaginatedResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 2:
+          if (tag !== 16) {
+            break;
+          }
+
           message.perPage = longToNumber(reader.int64() as Long);
-          break;
+          continue;
         case 3:
+          if (tag !== 24) {
+            break;
+          }
+
           message.totalPages = longToNumber(reader.int64() as Long);
-          break;
+          continue;
         case 4:
+          if (tag !== 32) {
+            break;
+          }
+
           message.total = longToNumber(reader.int64() as Long);
-          break;
+          continue;
         case 5:
+          if (tag !== 40) {
+            break;
+          }
+
           message.page = longToNumber(reader.int64() as Long);
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -478,13 +531,24 @@ export const PaginatedResponse = {
 
   toJSON(message: PaginatedResponse): unknown {
     const obj: any = {};
-    message.perPage !== undefined && (obj.perPage = Math.round(message.perPage));
-    message.totalPages !== undefined && (obj.totalPages = Math.round(message.totalPages));
-    message.total !== undefined && (obj.total = Math.round(message.total));
-    message.page !== undefined && (obj.page = Math.round(message.page));
+    if (message.perPage !== 0) {
+      obj.perPage = Math.round(message.perPage);
+    }
+    if (message.totalPages !== 0) {
+      obj.totalPages = Math.round(message.totalPages);
+    }
+    if (message.total !== 0) {
+      obj.total = Math.round(message.total);
+    }
+    if (message.page !== 0) {
+      obj.page = Math.round(message.page);
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<PaginatedResponse>): PaginatedResponse {
+    return PaginatedResponse.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<PaginatedResponse>): PaginatedResponse {
     const message = createBasePaginatedResponse();
     message.perPage = object.perPage ?? 0;
@@ -530,34 +594,59 @@ export const ListUsageRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): ListUsageRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseListUsageRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.attributionId = reader.string();
-          break;
+          continue;
         case 6:
+          if (tag !== 50) {
+            break;
+          }
+
           message.userId = reader.string();
-          break;
+          continue;
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.from = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
-          break;
+          continue;
         case 3:
+          if (tag !== 26) {
+            break;
+          }
+
           message.to = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
-          break;
+          continue;
         case 4:
+          if (tag !== 32) {
+            break;
+          }
+
           message.order = listUsageRequest_OrderingFromJSON(reader.int32());
-          break;
+          continue;
         case 5:
+          if (tag !== 42) {
+            break;
+          }
+
           message.pagination = PaginatedRequest.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -577,16 +666,30 @@ export const ListUsageRequest = {
 
   toJSON(message: ListUsageRequest): unknown {
     const obj: any = {};
-    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
-    message.userId !== undefined && (obj.userId = message.userId);
-    message.from !== undefined && (obj.from = message.from.toISOString());
-    message.to !== undefined && (obj.to = message.to.toISOString());
-    message.order !== undefined && (obj.order = listUsageRequest_OrderingToJSON(message.order));
-    message.pagination !== undefined &&
-      (obj.pagination = message.pagination ? PaginatedRequest.toJSON(message.pagination) : undefined);
+    if (message.attributionId !== "") {
+      obj.attributionId = message.attributionId;
+    }
+    if (message.userId !== "") {
+      obj.userId = message.userId;
+    }
+    if (message.from !== undefined) {
+      obj.from = message.from.toISOString();
+    }
+    if (message.to !== undefined) {
+      obj.to = message.to.toISOString();
+    }
+    if (message.order !== ListUsageRequest_Ordering.ORDERING_DESCENDING) {
+      obj.order = listUsageRequest_OrderingToJSON(message.order);
+    }
+    if (message.pagination !== undefined) {
+      obj.pagination = PaginatedRequest.toJSON(message.pagination);
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<ListUsageRequest>): ListUsageRequest {
+    return ListUsageRequest.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<ListUsageRequest>): ListUsageRequest {
     const message = createBaseListUsageRequest();
     message.attributionId = object.attributionId ?? "";
@@ -620,25 +723,38 @@ export const ListUsageResponse = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): ListUsageResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseListUsageResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.usageEntries.push(Usage.decode(reader, reader.uint32()));
-          break;
+          continue;
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.pagination = PaginatedResponse.decode(reader, reader.uint32());
-          break;
+          continue;
         case 3:
+          if (tag !== 25) {
+            break;
+          }
+
           message.creditsUsed = reader.double();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -653,17 +769,21 @@ export const ListUsageResponse = {
 
   toJSON(message: ListUsageResponse): unknown {
     const obj: any = {};
-    if (message.usageEntries) {
-      obj.usageEntries = message.usageEntries.map((e) => e ? Usage.toJSON(e) : undefined);
-    } else {
-      obj.usageEntries = [];
+    if (message.usageEntries?.length) {
+      obj.usageEntries = message.usageEntries.map((e) => Usage.toJSON(e));
     }
-    message.pagination !== undefined &&
-      (obj.pagination = message.pagination ? PaginatedResponse.toJSON(message.pagination) : undefined);
-    message.creditsUsed !== undefined && (obj.creditsUsed = message.creditsUsed);
+    if (message.pagination !== undefined) {
+      obj.pagination = PaginatedResponse.toJSON(message.pagination);
+    }
+    if (message.creditsUsed !== 0) {
+      obj.creditsUsed = message.creditsUsed;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<ListUsageResponse>): ListUsageResponse {
+    return ListUsageResponse.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<ListUsageResponse>): ListUsageResponse {
     const message = createBaseListUsageResponse();
     message.usageEntries = object.usageEntries?.map((e) => Usage.fromPartial(e)) || [];
@@ -722,43 +842,80 @@ export const Usage = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): Usage {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseUsage();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.id = reader.string();
-          break;
+          continue;
         case 2:
+          if (tag !== 18) {
+            break;
+          }
+
           message.attributionId = reader.string();
-          break;
+          continue;
         case 3:
+          if (tag !== 26) {
+            break;
+          }
+
           message.description = reader.string();
-          break;
+          continue;
         case 4:
+          if (tag !== 33) {
+            break;
+          }
+
           message.credits = reader.double();
-          break;
+          continue;
         case 5:
+          if (tag !== 42) {
+            break;
+          }
+
           message.effectiveTime = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
-          break;
+          continue;
         case 6:
+          if (tag !== 48) {
+            break;
+          }
+
           message.kind = usage_KindFromJSON(reader.int32());
-          break;
+          continue;
         case 7:
+          if (tag !== 58) {
+            break;
+          }
+
           message.workspaceInstanceId = reader.string();
-          break;
+          continue;
         case 8:
+          if (tag !== 64) {
+            break;
+          }
+
           message.draft = reader.bool();
-          break;
+          continue;
         case 9:
+          if (tag !== 74) {
+            break;
+          }
+
           message.metadata = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -779,18 +936,39 @@ export const Usage = {
 
   toJSON(message: Usage): unknown {
     const obj: any = {};
-    message.id !== undefined && (obj.id = message.id);
-    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
-    message.description !== undefined && (obj.description = message.description);
-    message.credits !== undefined && (obj.credits = message.credits);
-    message.effectiveTime !== undefined && (obj.effectiveTime = message.effectiveTime.toISOString());
-    message.kind !== undefined && (obj.kind = usage_KindToJSON(message.kind));
-    message.workspaceInstanceId !== undefined && (obj.workspaceInstanceId = message.workspaceInstanceId);
-    message.draft !== undefined && (obj.draft = message.draft);
-    message.metadata !== undefined && (obj.metadata = message.metadata);
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.attributionId !== "") {
+      obj.attributionId = message.attributionId;
+    }
+    if (message.description !== "") {
+      obj.description = message.description;
+    }
+    if (message.credits !== 0) {
+      obj.credits = message.credits;
+    }
+    if (message.effectiveTime !== undefined) {
+      obj.effectiveTime = message.effectiveTime.toISOString();
+    }
+    if (message.kind !== Usage_Kind.KIND_WORKSPACE_INSTANCE) {
+      obj.kind = usage_KindToJSON(message.kind);
+    }
+    if (message.workspaceInstanceId !== "") {
+      obj.workspaceInstanceId = message.workspaceInstanceId;
+    }
+    if (message.draft === true) {
+      obj.draft = message.draft;
+    }
+    if (message.metadata !== "") {
+      obj.metadata = message.metadata;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<Usage>): Usage {
+    return Usage.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<Usage>): Usage {
     const message = createBaseUsage();
     message.id = object.id ?? "";
@@ -819,19 +997,24 @@ export const SetCostCenterRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): SetCostCenterRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseSetCostCenterRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.costCenter = CostCenter.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -842,11 +1025,15 @@ export const SetCostCenterRequest = {
 
   toJSON(message: SetCostCenterRequest): unknown {
     const obj: any = {};
-    message.costCenter !== undefined &&
-      (obj.costCenter = message.costCenter ? CostCenter.toJSON(message.costCenter) : undefined);
+    if (message.costCenter !== undefined) {
+      obj.costCenter = CostCenter.toJSON(message.costCenter);
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<SetCostCenterRequest>): SetCostCenterRequest {
+    return SetCostCenterRequest.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<SetCostCenterRequest>): SetCostCenterRequest {
     const message = createBaseSetCostCenterRequest();
     message.costCenter = (object.costCenter !== undefined && object.costCenter !== null)
@@ -869,19 +1056,24 @@ export const SetCostCenterResponse = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): SetCostCenterResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseSetCostCenterResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.costCenter = CostCenter.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -892,11 +1084,15 @@ export const SetCostCenterResponse = {
 
   toJSON(message: SetCostCenterResponse): unknown {
     const obj: any = {};
-    message.costCenter !== undefined &&
-      (obj.costCenter = message.costCenter ? CostCenter.toJSON(message.costCenter) : undefined);
+    if (message.costCenter !== undefined) {
+      obj.costCenter = CostCenter.toJSON(message.costCenter);
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<SetCostCenterResponse>): SetCostCenterResponse {
+    return SetCostCenterResponse.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<SetCostCenterResponse>): SetCostCenterResponse {
     const message = createBaseSetCostCenterResponse();
     message.costCenter = (object.costCenter !== undefined && object.costCenter !== null)
@@ -919,19 +1115,24 @@ export const GetBalanceRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): GetBalanceRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseGetBalanceRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.attributionId = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -942,10 +1143,15 @@ export const GetBalanceRequest = {
 
   toJSON(message: GetBalanceRequest): unknown {
     const obj: any = {};
-    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
+    if (message.attributionId !== "") {
+      obj.attributionId = message.attributionId;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<GetBalanceRequest>): GetBalanceRequest {
+    return GetBalanceRequest.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<GetBalanceRequest>): GetBalanceRequest {
     const message = createBaseGetBalanceRequest();
     message.attributionId = object.attributionId ?? "";
@@ -966,19 +1172,24 @@ export const GetBalanceResponse = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): GetBalanceResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseGetBalanceResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 4:
+          if (tag !== 33) {
+            break;
+          }
+
           message.credits = reader.double();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -989,10 +1200,15 @@ export const GetBalanceResponse = {
 
   toJSON(message: GetBalanceResponse): unknown {
     const obj: any = {};
-    message.credits !== undefined && (obj.credits = message.credits);
+    if (message.credits !== 0) {
+      obj.credits = message.credits;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<GetBalanceResponse>): GetBalanceResponse {
+    return GetBalanceResponse.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<GetBalanceResponse>): GetBalanceResponse {
     const message = createBaseGetBalanceResponse();
     message.credits = object.credits ?? 0;
@@ -1013,19 +1229,24 @@ export const GetCostCenterRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): GetCostCenterRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseGetCostCenterRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.attributionId = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -1036,10 +1257,15 @@ export const GetCostCenterRequest = {
 
   toJSON(message: GetCostCenterRequest): unknown {
     const obj: any = {};
-    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
+    if (message.attributionId !== "") {
+      obj.attributionId = message.attributionId;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<GetCostCenterRequest>): GetCostCenterRequest {
+    return GetCostCenterRequest.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<GetCostCenterRequest>): GetCostCenterRequest {
     const message = createBaseGetCostCenterRequest();
     message.attributionId = object.attributionId ?? "";
@@ -1060,19 +1286,24 @@ export const GetCostCenterResponse = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): GetCostCenterResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseGetCostCenterResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.costCenter = CostCenter.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -1083,11 +1314,15 @@ export const GetCostCenterResponse = {
 
   toJSON(message: GetCostCenterResponse): unknown {
     const obj: any = {};
-    message.costCenter !== undefined &&
-      (obj.costCenter = message.costCenter ? CostCenter.toJSON(message.costCenter) : undefined);
+    if (message.costCenter !== undefined) {
+      obj.costCenter = CostCenter.toJSON(message.costCenter);
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<GetCostCenterResponse>): GetCostCenterResponse {
+    return GetCostCenterResponse.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<GetCostCenterResponse>): GetCostCenterResponse {
     const message = createBaseGetCostCenterResponse();
     message.costCenter = (object.costCenter !== undefined && object.costCenter !== null)
@@ -1128,31 +1363,52 @@ export const CostCenter = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): CostCenter {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseCostCenter();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.attributionId = reader.string();
-          break;
+          continue;
         case 2:
+          if (tag !== 16) {
+            break;
+          }
+
           message.spendingLimit = reader.int32();
-          break;
+          continue;
         case 3:
+          if (tag !== 24) {
+            break;
+          }
+
           message.billingStrategy = costCenter_BillingStrategyFromJSON(reader.int32());
-          break;
+          continue;
         case 4:
+          if (tag !== 34) {
+            break;
+          }
+
           message.nextBillingTime = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
-          break;
+          continue;
         case 5:
+          if (tag !== 42) {
+            break;
+          }
+
           message.billingCycleStart = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -1171,15 +1427,27 @@ export const CostCenter = {
 
   toJSON(message: CostCenter): unknown {
     const obj: any = {};
-    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
-    message.spendingLimit !== undefined && (obj.spendingLimit = Math.round(message.spendingLimit));
-    message.billingStrategy !== undefined &&
-      (obj.billingStrategy = costCenter_BillingStrategyToJSON(message.billingStrategy));
-    message.nextBillingTime !== undefined && (obj.nextBillingTime = message.nextBillingTime.toISOString());
-    message.billingCycleStart !== undefined && (obj.billingCycleStart = message.billingCycleStart.toISOString());
+    if (message.attributionId !== "") {
+      obj.attributionId = message.attributionId;
+    }
+    if (message.spendingLimit !== 0) {
+      obj.spendingLimit = Math.round(message.spendingLimit);
+    }
+    if (message.billingStrategy !== CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
+      obj.billingStrategy = costCenter_BillingStrategyToJSON(message.billingStrategy);
+    }
+    if (message.nextBillingTime !== undefined) {
+      obj.nextBillingTime = message.nextBillingTime.toISOString();
+    }
+    if (message.billingCycleStart !== undefined) {
+      obj.billingCycleStart = message.billingCycleStart.toISOString();
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<CostCenter>): CostCenter {
+    return CostCenter.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<CostCenter>): CostCenter {
     const message = createBaseCostCenter();
     message.attributionId = object.attributionId ?? "";
@@ -1201,16 +1469,17 @@ export const ResetUsageRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): ResetUsageRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseResetUsageRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
-        default:
-          reader.skipType(tag & 7);
-          break;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -1224,6 +1493,9 @@ export const ResetUsageRequest = {
     return obj;
   },
 
+  create(base?: DeepPartial<ResetUsageRequest>): ResetUsageRequest {
+    return ResetUsageRequest.fromPartial(base ?? {});
+  },
   fromPartial(_: DeepPartial<ResetUsageRequest>): ResetUsageRequest {
     const message = createBaseResetUsageRequest();
     return message;
@@ -1240,16 +1512,17 @@ export const ResetUsageResponse = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): ResetUsageResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseResetUsageResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
-        default:
-          reader.skipType(tag & 7);
-          break;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -1263,6 +1536,9 @@ export const ResetUsageResponse = {
     return obj;
   },
 
+  create(base?: DeepPartial<ResetUsageResponse>): ResetUsageResponse {
+    return ResetUsageResponse.fromPartial(base ?? {});
+  },
   fromPartial(_: DeepPartial<ResetUsageResponse>): ResetUsageResponse {
     const message = createBaseResetUsageResponse();
     return message;
@@ -1291,28 +1567,45 @@ export const AddUsageCreditNoteRequest = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): AddUsageCreditNoteRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseAddUsageCreditNoteRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          if (tag !== 10) {
+            break;
+          }
+
           message.attributionId = reader.string();
-          break;
+          continue;
         case 2:
+          if (tag !== 16) {
+            break;
+          }
+
           message.credits = reader.int32();
-          break;
+          continue;
         case 3:
+          if (tag !== 26) {
+            break;
+          }
+
           message.description = reader.string();
-          break;
+          continue;
         case 4:
+          if (tag !== 34) {
+            break;
+          }
+
           message.userId = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
+          continue;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -1328,13 +1621,24 @@ export const AddUsageCreditNoteRequest = {
 
   toJSON(message: AddUsageCreditNoteRequest): unknown {
     const obj: any = {};
-    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
-    message.credits !== undefined && (obj.credits = Math.round(message.credits));
-    message.description !== undefined && (obj.description = message.description);
-    message.userId !== undefined && (obj.userId = message.userId);
+    if (message.attributionId !== "") {
+      obj.attributionId = message.attributionId;
+    }
+    if (message.credits !== 0) {
+      obj.credits = Math.round(message.credits);
+    }
+    if (message.description !== "") {
+      obj.description = message.description;
+    }
+    if (message.userId !== "") {
+      obj.userId = message.userId;
+    }
     return obj;
   },
 
+  create(base?: DeepPartial<AddUsageCreditNoteRequest>): AddUsageCreditNoteRequest {
+    return AddUsageCreditNoteRequest.fromPartial(base ?? {});
+  },
   fromPartial(object: DeepPartial<AddUsageCreditNoteRequest>): AddUsageCreditNoteRequest {
     const message = createBaseAddUsageCreditNoteRequest();
     message.attributionId = object.attributionId ?? "";
@@ -1355,16 +1659,17 @@ export const AddUsageCreditNoteResponse = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): AddUsageCreditNoteResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseAddUsageCreditNoteResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
-        default:
-          reader.skipType(tag & 7);
-          break;
       }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
     }
     return message;
   },
@@ -1378,6 +1683,9 @@ export const AddUsageCreditNoteResponse = {
     return obj;
   },
 
+  create(base?: DeepPartial<AddUsageCreditNoteResponse>): AddUsageCreditNoteResponse {
+    return AddUsageCreditNoteResponse.fromPartial(base ?? {});
+  },
   fromPartial(_: DeepPartial<AddUsageCreditNoteResponse>): AddUsageCreditNoteResponse {
     const message = createBaseAddUsageCreditNoteResponse();
     return message;
@@ -1455,7 +1763,7 @@ export const UsageServiceDefinition = {
   },
 } as const;
 
-export interface UsageServiceServiceImplementation<CallContextExt = {}> {
+export interface UsageServiceImplementation<CallContextExt = {}> {
   /** GetCostCenter retrieves the active cost center for the given attributionID */
   getCostCenter(
     request: GetCostCenterRequest,
@@ -1534,10 +1842,10 @@ export interface DataLoaders {
   getDataLoader<T>(identifier: string, constructorFn: () => T): T;
 }
 
-declare var self: any | undefined;
-declare var window: any | undefined;
-declare var global: any | undefined;
-var globalThis: any = (() => {
+declare const self: any | undefined;
+declare const window: any | undefined;
+declare const global: any | undefined;
+const tsProtoGlobalThis: any = (() => {
   if (typeof globalThis !== "undefined") {
     return globalThis;
   }
@@ -1567,8 +1875,8 @@ function toTimestamp(date: Date): Timestamp {
 }
 
 function fromTimestamp(t: Timestamp): Date {
-  let millis = t.seconds * 1_000;
-  millis += t.nanos / 1_000_000;
+  let millis = (t.seconds || 0) * 1_000;
+  millis += (t.nanos || 0) / 1_000_000;
   return new Date(millis);
 }
 
@@ -1584,13 +1892,11 @@ function fromJsonTimestamp(o: any): Date {
 
 function longToNumber(long: Long): number {
   if (long.gt(Number.MAX_SAFE_INTEGER)) {
-    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+    throw new tsProtoGlobalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
   }
   return long.toNumber();
 }
 
-// If you get a compile-error about 'Constructor<Long> and ... have no overlap',
-// add '--ts_proto_opt=esModuleInterop=true' as a flag when calling 'protoc'.
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;
   _m0.configure();
