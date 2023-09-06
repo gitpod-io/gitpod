@@ -6,13 +6,21 @@ package helm
 
 import (
 	"fmt"
-	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"os"
+	"strings"
+
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
 )
 
 // KeyValue ensure that a key/value pair is correctly formatted for Values
 func KeyValue(key string, value string) string {
 	return fmt.Sprintf("%s=%s", key, value)
+}
+
+// KeyValueArray ensure that a key/value pair is correctly formatted for Arrays
+func KeyValueArray(key string, arr []string) string {
+	// Helm array nomenclature
+	return KeyValue(key, fmt.Sprintf("{%s}", strings.Join(arr, ",")))
 }
 
 // KeyFileValue ensure that a key/value pair is correctly formatted for FileValues
