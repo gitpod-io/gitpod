@@ -80,7 +80,10 @@ func (r *SubscriberReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 		}
 	}()
 
-	filterByStatus := predicate.Funcs{
+	// we need several reconciliation loops during a workspace creation until it reaches a stable state.
+	// this introduces the side effect of multiple notifications to the subscribers with partial information.
+	// the filterByUpdate predicate acts as a filter to avoid this
+	filterByUpdate := predicate.Funcs{
 		CreateFunc: func(ce event.CreateEvent) bool {
 			return true
 		},
@@ -92,9 +95,13 @@ func (r *SubscriberReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 				return true
 			}
 
+			// do not notify LastActivity changes
+			old.Status.LastActivity = nil
+			new.Status.LastActivity = nil
+
 			return !reflect.DeepEqual(old.Status, new.Status)
 		},
 	}
 
-	return c.Watch(source.Kind(mgr.GetCache(), &workspacev1.Workspace{}), &handler.EnqueueRequestForObject{}, filterByStatus)
+	return c.Watch(source.Kind(mgr.GetCache(), &workspacev1.Workspace{}), &handler.EnqueueRequestForObject{}, filterByUpdate)
 }
