@@ -44,7 +44,7 @@ export const NewProjectRepoList: FC<Props> = ({ filteredRepos, noReposAvailable,
                                             Select
                                         </Button>
                                     ) : (
-                                        <p className="text-gray-500 font-medium">
+                                        <p className="text-gray-500">
                                             Project already
                                             <br />
                                             exists.
