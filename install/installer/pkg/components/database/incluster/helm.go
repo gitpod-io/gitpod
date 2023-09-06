@@ -10,6 +10,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/helm"
 	"github.com/gitpod-io/gitpod/installer/third_party/charts"
 	"helm.sh/helm/v3/pkg/cli/values"
+	"sigs.k8s.io/yaml"
 )
 
 var Helm = common.CompositeHelmFunc(
@@ -26,10 +27,28 @@ var Helm = common.CompositeHelmFunc(
 
 		imageRegistry := common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL)
 
-		// We switched to specific tags because we got subtle broken versions with just specifying major versions
+		type EnvVar struct {
+			// json because: https://pkg.go.dev/sigs.k8s.io/yaml@v1.3.0#Marshal
+			Name  string `json:"name,omitempty"`
+			Value string `json:"value,omitempty"`
+		}
+		extraEnvVars := []EnvVar{}
+		// MySQL 5.7: We switched to specific tags because we got subtle broken versions with just specifying major versions
 		mysqlBitnamiImageTag := "5.7.34-debian-10-r55"
 		if cfg.Config.Database.InClusterMysSQL_8_0 {
 			mysqlBitnamiImageTag = "8.0.33-debian-11-r24"
+			extraEnvVars = append(extraEnvVars, EnvVar{
+				Name:  "MYSQL_AUTHENTICATION_PLUGIN",
+				Value: "mysql_native_password",
+			})
+		}
+		extraEnvVarsBytes, err := yaml.Marshal(extraEnvVars)
+		if err != nil {
+			return nil, err
+		}
+		extraEnvVarsTemplate, err := helm.KeyFileValue("mysql.primary.extraEnvVars", extraEnvVarsBytes)
+		if err != nil {
+			return nil, err
 		}
 
 		return &common.HelmConfig{
@@ -57,6 +76,7 @@ var Helm = common.CompositeHelmFunc(
 				// This is too complex to be sent as a string
 				FileValues: []string{
 					primaryAffinityTemplate,
+					extraEnvVarsTemplate,
 				},
 			},
 		}, nil
