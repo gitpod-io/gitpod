@@ -17,7 +17,7 @@ export const WorkspaceClass: FC<WorkspaceClassProps> = ({ selectedWSClassID, onC
 
     const menuEntries = useMemo((): ContextMenuEntry[] => {
         return (workspaceClasses || [])?.map((c) => ({
-            title: c.description,
+            title: c.displayName,
             onClick: () => {
                 onChange(c.id);
             },

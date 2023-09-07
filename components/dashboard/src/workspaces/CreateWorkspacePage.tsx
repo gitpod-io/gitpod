@@ -14,8 +14,6 @@ import { Link } from "react-router-dom";
 import { Button } from "../components/Button";
 import Modal from "../components/Modal";
 import RepositoryFinder from "../components/RepositoryFinder";
-import SelectIDEComponent from "../components/SelectIDEComponent";
-import SelectWorkspaceClassComponent from "../components/SelectWorkspaceClassComponent";
 import { UsageLimitReachedModal } from "../components/UsageLimitReachedModal";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { Heading1 } from "../components/typography/headings";
@@ -65,7 +63,8 @@ export function CreateWorkspacePage() {
     const [selectedIde, setSelectedIde, selectedIdeIsDirty] = useDirtyState(defaultIde);
     const defaultWorkspaceClass = props.workspaceClass;
     const [selectedWsClass, setSelectedWsClass, selectedWsClassIsDirty] = useDirtyState(defaultWorkspaceClass);
-    const [errorWsClass, setErrorWsClass] = useState<string | undefined>(undefined);
+    // TODO: handle errors in WorkspaceDetail
+    const [errorWsClass] = useState<string | undefined>(undefined);
     const [contextURL, setContextURL] = useState<string | undefined>(
         StartWorkspaceOptions.parseContextUrl(location.hash),
     );
@@ -164,7 +163,8 @@ export function CreateWorkspacePage() {
         },
         [setSelectedIde, setUseLatestIde],
     );
-    const [errorIde, setErrorIde] = useState<string | undefined>(undefined);
+    // TODO: handle errors in WorkspaceDetail
+    const [errorIde] = useState<string | undefined>(undefined);
 
     const existingWorkspaces = useMemo(() => {
         if (!workspaces.data || !CommitContext.is(workspaceContext.data)) {
@@ -386,7 +386,7 @@ export function CreateWorkspacePage() {
                         />
                     </InputField>
 
-                    <InputField error={errorIde}>
+                    {/* <InputField error={errorIde}>
                         <SelectIDEComponent
                             onSelectionChange={onSelectEditorChange}
                             setError={setErrorIde}
@@ -405,7 +405,7 @@ export function CreateWorkspacePage() {
                             disabled={createWorkspaceMutation.isStarting}
                             loading={workspaceContext.isLoading}
                         />
-                    </InputField>
+                    </InputField> */}
 
                     <WorkspaceDetails
                         selectedIDE={selectedIde || ""}
