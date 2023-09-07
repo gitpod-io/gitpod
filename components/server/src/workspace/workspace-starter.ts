@@ -394,7 +394,7 @@ export class WorkspaceStarter {
                         // we must properly fail the workspace instance, i.e. set its status to stopped, deal with prebuilds etc.
                         //
                         // Once we've reached actuallyStartWorkspace that function will take care of failing the instance.
-                        await this.failInstanceStart(ctx, err, workspace, instance);
+                        await this.failInstanceStart(ctx, err, workspace, instance, abortSignal);
                         throw err;
                     }
 
@@ -594,7 +594,15 @@ export class WorkspaceStarter {
                     if (abortSignal.aborted) {
                         return;
                     }
-                    resp = await this.tryStartOnCluster({ span }, startRequest, user, workspace, instance, region);
+                    resp = await this.tryStartOnCluster(
+                        { span },
+                        startRequest,
+                        user,
+                        workspace,
+                        instance,
+                        abortSignal,
+                        region,
+                    );
                     if (resp) {
                         break;
                     }
@@ -611,13 +619,13 @@ export class WorkspaceStarter {
                         "Cannot start a workspace because the workspace cluster is temporarily unavailable due to maintenance. Please try again in a few minutes",
                     );
                 }
-                await this.failInstanceStart({ span }, err, workspace, instance);
+                await this.failInstanceStart({ span }, err, workspace, instance, abortSignal);
                 throw new StartInstanceError(reason, err);
             }
 
             if (!resp) {
                 const err = new Error("cannot start a workspace because no workspace clusters are available");
-                await this.failInstanceStart({ span }, err, workspace, instance);
+                await this.failInstanceStart({ span }, err, workspace, instance, abortSignal);
                 throw new StartInstanceError("clusterSelectionFailed", err);
             }
             increaseSuccessfulInstanceStartCounter(retries);
@@ -647,6 +655,9 @@ export class WorkspaceStarter {
         } catch (err) {
             this.logAndTraceStartWorkspaceError({ span }, logCtx, err);
         } finally {
+            if (abortSignal.aborted) {
+                ctx.span?.setTag("aborted", true);
+            }
             span.finish();
         }
     }
@@ -683,11 +694,15 @@ export class WorkspaceStarter {
         user: User,
         workspace: Workspace,
         instance: WorkspaceInstance,
+        abortSignal: RedlockAbortSignal,
         region?: WorkspaceRegion,
     ): Promise<StartWorkspaceResponse.AsObject | undefined> {
         let lastInstallation = "";
         const clusters = await this.clientProvider.getStartClusterSets(user, workspace, instance, region);
         for await (const cluster of clusters) {
+            if (abortSignal.aborted) {
+                return;
+            }
             try {
                 // getStartManager will throw an exception if there's no cluster available and hence exit the loop
                 const { manager, installation } = cluster;
@@ -774,9 +789,18 @@ export class WorkspaceStarter {
      * failInstanceStart properly fails a workspace instance if something goes wrong before the instance ever reaches
      * workspace manager. In this case we need to make sure we also fulfil the tasks of the bridge (e.g. for prebulds).
      */
-    private async failInstanceStart(ctx: TraceContext, err: Error, workspace: Workspace, instance: WorkspaceInstance) {
-        const span = TraceContext.startSpan("failInstanceStart", ctx);
+    private async failInstanceStart(
+        ctx: TraceContext,
+        err: Error,
+        workspace: Workspace,
+        instance: WorkspaceInstance,
+        abortSignal: RedlockAbortSignal,
+    ) {
+        if (abortSignal.aborted) {
+            return;
+        }
 
+        const span = TraceContext.startSpan("failInstanceStart", ctx);
         try {
             // We may have never actually started the workspace which means that ws-manager-bridge never set a workspace status.
             // We have to set that status ourselves.
