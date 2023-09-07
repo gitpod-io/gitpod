@@ -1846,34 +1846,25 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             log.error(logCtx, "Could not fetch projects", projects.reason);
         }
 
-        // Add examples
-        if (examples.status === "fulfilled") {
-            for (const repo of examples.value) {
-                if (!uniqueRepositories.has(repo.url)) {
-                    uniqueRepositories.set(repo.url, repo);
-                }
+        const remainingRepos = [
+            ...(examples.status === "fulfilled" ? examples.value : []),
+            ...(userRepos.status === "fulfilled" ? userRepos.value : []),
+            ...(recentRepos.status === "fulfilled" ? recentRepos.value : []),
+        ];
+        for (const repo of remainingRepos) {
+            const existingRepo = uniqueRepositories.get(repo.url);
+            if (!existingRepo) {
+                uniqueRepositories.set(repo.url, repo);
+            } else if (repo.lastUse && repo.lastUse > (existingRepo.lastUse || "")) {
+                // If we have a more recent lastUse, update the existing repo
+                uniqueRepositories.set(repo.url, {
+                    ...existingRepo,
+                    lastUse: repo.lastUse,
+                });
             }
         }
 
-        // Add user repos
-        if (userRepos.status === "fulfilled") {
-            for (const repo of userRepos.value) {
-                if (!uniqueRepositories.has(repo.url)) {
-                    uniqueRepositories.set(repo.url, repo);
-                }
-            }
-        }
-
-        // Add recent repos
-        if (recentRepos.status === "fulfilled") {
-            for (const repo of recentRepos.value) {
-                if (!uniqueRepositories.has(repo.url)) {
-                    uniqueRepositories.set(repo.url, repo);
-                }
-            }
-        }
-
-        const suggestedRepositories = Array.from(uniqueRepositories.values()).sort((a, b) => {
+        const sortedRepos = Array.from(uniqueRepositories.values()).sort((a, b) => {
             // priority first
             if (a.priority !== b.priority) {
                 return a.priority < b.priority ? 1 : -1;
@@ -1890,13 +1881,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             return ua > ub ? 1 : ua === ub ? 0 : -1;
         });
 
-        return suggestedRepositories.map((repo) => ({
-            url: repo.url,
-            projectId: repo.projectId,
-            projectName: repo.projectName,
-            // TODO: determine if we want to include this
-            repositoryName: repo.repositoryName,
-        }));
+        // Convert to return type
+        return sortedRepos.map(
+            (repo): SuggestedRepository => ({
+                url: repo.url,
+                projectId: repo.projectId,
+                projectName: repo.projectName,
+                // TODO: determine if we want to include this
+                repositoryName: repo.repositoryName,
+            }),
+        );
     }
 
     public async setWorkspaceTimeout(
