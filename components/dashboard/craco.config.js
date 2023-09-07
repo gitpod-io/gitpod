@@ -47,6 +47,15 @@ module.exports = {
             ],
         },
     },
+    devServer: {
+        client: {
+            webSocketURL: {
+                hostname: process.env.HMR_HOST ? new URL(process.env.HMR_HOST).hostname : "localhost",
+                port: process.env.HMR_HOST ? 443 : 3000,
+                protocol: "wss",
+            },
+        },
+    },
     ...when(process.env.GP_DEV_HOST && process.env.GP_DEV_COOKIE, () => ({
         devServer: {
             proxy: {
