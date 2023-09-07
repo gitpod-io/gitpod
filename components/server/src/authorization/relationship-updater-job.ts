@@ -19,7 +19,7 @@ export class RelationshipUpdateJob implements Job {
     ) {}
 
     public name = "relationship-update-job";
-    public frequencyMs = 1000 * 60 * 60 * 1; // 1h
+    public frequencyMs = 1000 * 60 * 3; // 3m
 
     public async run(): Promise<void> {
         try {
@@ -31,24 +31,26 @@ export class RelationshipUpdateJob implements Job {
                     additionalData->"$.fgaRelationshipsVersion" IS NULL) AND
                     markedDeleted = 0
                 ORDER BY _lastModified DESC
-                LIMIT 1000;`);
+                LIMIT 50;`);
             const now = Date.now();
+            let migrated = 0;
             for (const result of results) {
                 const user = await this.userDB.findUserById(result.id);
                 if (!user) {
                     continue;
                 }
                 try {
-                    await this.relationshipUpdater.migrate(user);
+                    const resultingUser = await this.relationshipUpdater.migrate(user);
+                    if (resultingUser.additionalData?.fgaRelationshipsVersion === RelationshipUpdater.version) {
+                        migrated++;
+                    }
                 } catch (error) {
-                    log.error(RelationshipUpdateJob.name + ": error running relationship update job", error);
+                    log.error(this.name + ": error running relationship update job", error);
                 }
             }
-            log.info(
-                RelationshipUpdateJob.name + ": updated " + results.length + " users in " + (Date.now() - now) + "ms",
-            );
+            log.info(this.name + ": updated " + migrated + " users in " + (Date.now() - now) + "ms");
         } catch (error) {
-            log.error(RelationshipUpdateJob.name + ": error running relationship update job", error);
+            log.error(this.name + ": error running relationship update job", error);
         }
     }
 }
