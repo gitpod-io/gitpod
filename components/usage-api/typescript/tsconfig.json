@@ -15,6 +15,7 @@
         "downlevelIteration": true,
         "module": "commonjs",
         "moduleResolution": "node",
+        "esModuleInterop": true,
         "target": "es6",
         "jsx": "react",
         "sourceMap": true,

@@ -17,6 +17,7 @@ import { TokenGarbageCollector } from "./token-gc";
 import { WebhookEventGarbageCollector } from "./webhook-gc";
 import { WorkspaceGarbageCollector } from "./workspace-gc";
 import { SnapshotsJob } from "./snapshots";
+import { RelationshipUpdateJob } from "../authorization/relationship-updater-job";
 
 export const Job = Symbol("Job");
 
@@ -29,14 +30,16 @@ export interface Job {
 
 @injectable()
 export class JobRunner {
-    @inject(RedisMutex) protected mutex: RedisMutex;
-
-    @inject(DatabaseGarbageCollector) protected databaseGC: DatabaseGarbageCollector;
-    @inject(OTSGarbageCollector) protected otsGC: OTSGarbageCollector;
-    @inject(TokenGarbageCollector) protected tokenGC: TokenGarbageCollector;
-    @inject(WebhookEventGarbageCollector) protected webhookGC: WebhookEventGarbageCollector;
-    @inject(WorkspaceGarbageCollector) protected workspaceGC: WorkspaceGarbageCollector;
-    @inject(SnapshotsJob) protected snapshotsJob: SnapshotsJob;
+    constructor(
+        @inject(RedisMutex) private readonly mutex: RedisMutex,
+        @inject(DatabaseGarbageCollector) private readonly databaseGC: DatabaseGarbageCollector,
+        @inject(OTSGarbageCollector) private readonly otsGC: OTSGarbageCollector,
+        @inject(TokenGarbageCollector) private readonly tokenGC: TokenGarbageCollector,
+        @inject(WebhookEventGarbageCollector) private readonly webhookGC: WebhookEventGarbageCollector,
+        @inject(WorkspaceGarbageCollector) private readonly workspaceGC: WorkspaceGarbageCollector,
+        @inject(SnapshotsJob) private readonly snapshotsJob: SnapshotsJob,
+        @inject(RelationshipUpdateJob) private readonly relationshipUpdateJob: RelationshipUpdateJob,
+    ) {}
 
     public start(): DisposableCollection {
         const disposables = new DisposableCollection();
@@ -48,6 +51,7 @@ export class JobRunner {
             this.webhookGC,
             this.workspaceGC,
             this.snapshotsJob,
+            this.relationshipUpdateJob,
         ];
 
         for (const job of jobs) {

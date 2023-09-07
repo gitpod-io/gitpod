@@ -337,7 +337,7 @@ describe("RelationshipUpdater", async () => {
         AdditionalUserData.set(user, { fgaRelationshipsVersion: undefined });
         user = await userDB.storeUser(user);
         user = await migrator.migrate(user);
-        expect(user.additionalData?.fgaRelationshipsVersion).to.equal(migrator.version);
+        expect(user.additionalData?.fgaRelationshipsVersion).to.equal(RelationshipUpdater.version);
         return user;
     }
 });
