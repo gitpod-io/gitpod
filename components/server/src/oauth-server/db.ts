@@ -57,12 +57,18 @@ const jetBrainsGateway: OAuthClient = {
     ],
 };
 
-function createVSCodeClient(protocol: "vscode" | "vscode-insiders" | "vscodium"): OAuthClient {
+function createVSCodeClient(protocol: "vscode" | "vscode-insiders" | "vscodium" | "cursor"): OAuthClient {
+    let name = "VS Code";
+    if (protocol === "vscode-insiders") {
+        name = "VS Code Insiders";
+    } else if (protocol === "vscodium") {
+        name = "VS Codium";
+    } else if (protocol === "cursor") {
+        name = "Cursor";
+    }
     return {
         id: protocol + "-" + "gitpod",
-        name: `VS${protocol === "vscodium" ? "Codium" : " Code"}${
-            protocol === "vscode-insiders" ? " Insiders" : ""
-        }: Gitpod extension`,
+        name: `${name}: Gitpod extension`,
         redirectUris: [protocol + "://gitpod.gitpod-desktop/complete-gitpod-auth"],
         allowedGrants: ["authorization_code"],
         scopes: [
@@ -113,6 +119,7 @@ const desktopClient: OAuthClient = {
 const vscode = createVSCodeClient("vscode");
 const vscodeInsiders = createVSCodeClient("vscode-insiders");
 const vscodium = createVSCodeClient("vscodium");
+const cursor = createVSCodeClient("cursor");
 
 export const inMemoryDatabase: InMemory = {
     clients: {
@@ -121,6 +128,7 @@ export const inMemoryDatabase: InMemory = {
         [vscode.id]: vscode,
         [vscodeInsiders.id]: vscodeInsiders,
         [vscodium.id]: vscodium,
+        [cursor.id]: cursor,
         [desktopClient.id]: desktopClient,
     },
     tokens: {},
