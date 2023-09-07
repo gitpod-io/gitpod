@@ -379,45 +379,6 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         return qb.getOne();
     }
 
-    public async findAllWorkspaceInstances(
-        offset: number,
-        limit: number,
-        orderBy: keyof WorkspaceInstance,
-        orderDir: "ASC" | "DESC",
-        ownerId?: string,
-        minCreationTime?: Date,
-        maxCreationTime?: Date,
-        onlyRunning?: boolean,
-        type?: WorkspaceType,
-    ): Promise<{ total: number; rows: WorkspaceInstance[] }> {
-        const workspaceInstanceRepo = await this.getWorkspaceInstanceRepo();
-        const queryBuilder = workspaceInstanceRepo
-            .createQueryBuilder("wsi")
-            .leftJoinAndMapOne("wsi.workspace", DBWorkspace, "ws", "wsi.workspaceId = ws.id")
-            .skip(offset)
-            .take(limit)
-            .orderBy("wsi." + orderBy, orderDir)
-            .where("ws.type = :type", { type: type ? type.toString() : "regular" }); // only regular workspaces by default
-        if (ownerId) {
-            queryBuilder.andWhere("wsi.ownerId = :ownerId", { ownerId });
-        }
-        if (minCreationTime) {
-            queryBuilder.andWhere("wsi.creationTime >= :minCreationTime", {
-                minCreationTime: minCreationTime.toISOString(),
-            });
-        }
-        if (maxCreationTime) {
-            queryBuilder.andWhere("wsi.creationTime < :maxCreationTime", {
-                maxCreationTime: maxCreationTime.toISOString(),
-            });
-        }
-        if (onlyRunning) {
-            queryBuilder.andWhere("wsi.phasePersisted != 'stopped'").andWhere("wsi.deleted != TRUE");
-        }
-        const [rows, total] = await queryBuilder.getManyAndCount();
-        return { total, rows };
-    }
-
     public async getInstanceCount(type?: string): Promise<number> {
         const workspaceInstanceRepo = await this.getWorkspaceInstanceRepo();
         const queryBuilder = workspaceInstanceRepo
@@ -1096,13 +1057,17 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         return <WorkspaceAndInstance>res;
     }
 
-    async findInstancesByPhaseAndRegion(phase: string, region: string): Promise<WorkspaceInstance[]> {
+    async findInstancesByPhase(phases: string[]): Promise<WorkspaceInstance[]> {
+        if (phases.length < 0) {
+            throw new Error("At least one phase must be provided");
+        }
+
         const repo = await this.getWorkspaceInstanceRepo();
-        // uses index: ind_phasePersisted_region
+        // uses index: ind_phasePersisted
         const qb = repo
             .createQueryBuilder("wsi")
-            .where("wsi.phasePersisted = :phase", { phase })
-            .andWhere("wsi.region = :region", { region });
+            .where("wsi.deleted != TRUE")
+            .andWhere("wsi.phasePersisted IN (:phases)", { phases });
         return qb.getMany();
     }
 

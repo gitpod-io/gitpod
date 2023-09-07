@@ -122,7 +122,7 @@ describe("WorkspaceService", async () => {
         const workspace = await createTestWorkspace(workspaceService, org, owner, project);
 
         const result = await workspaceService.startWorkspace({}, owner, workspace.id);
-        expect(result.workspaceURL).to.equal(`https://${workspace.id}.ws.gitpod.io`);
+        expect(result.instanceID).to.not.be.undefined;
     });
 
     it("owner can start own workspace - shared", async () => {
@@ -131,7 +131,7 @@ describe("WorkspaceService", async () => {
         await workspaceService.controlAdmission(owner.id, workspace.id, "everyone");
 
         const result = await workspaceService.startWorkspace({}, owner, workspace.id);
-        expect(result.workspaceURL).to.equal(`https://${workspace.id}.ws.gitpod.io`);
+        expect(result.instanceID).to.not.be.undefined;
     });
 
     it("stanger cannot start owner workspace", async () => {
@@ -164,7 +164,7 @@ describe("WorkspaceService", async () => {
         const workspaceService = container.get(WorkspaceService);
         const workspace = await createTestWorkspace(workspaceService, org, member, project);
         const result = await workspaceService.startWorkspace({}, member, workspace.id);
-        expect(result.workspaceURL).to.equal(`https://${workspace.id}.ws.gitpod.io`);
+        expect(result.instanceID).to.not.be.undefined;
     });
 
     it("stanger cannot start org member workspace", async () => {

@@ -133,6 +133,7 @@ import { GitpodTokenService } from "./user/gitpod-token-service";
 import { EnvVarService } from "./user/env-var-service";
 import { ScmService } from "./projects/scm-service";
 import { RelationshipUpdateJob } from "./authorization/relationship-updater-job";
+import { WorkspaceStartController } from "./workspace/workspace-start-controller";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -170,6 +171,7 @@ export const productionContainerModule = new ContainerModule(
         bind(WorkspaceService).toSelf().inSingletonScope();
         bind(WorkspaceFactory).toSelf().inSingletonScope();
         bind(WorkspaceStarter).toSelf().inSingletonScope();
+        bind(WorkspaceStartController).toSelf().inSingletonScope();
         bind(ImageSourceProvider).toSelf().inSingletonScope();
 
         bind(ServerFactory).toAutoFactory(GitpodServerImpl);

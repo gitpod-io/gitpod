@@ -19,6 +19,7 @@ import { ClientProvider } from "./wsman-subscriber";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 import { PrebuildUpdater } from "./prebuild-updater";
 import { RedisPublisher } from "@gitpod/gitpod-db/lib";
+import { durationLongerThanSeconds } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 
 export const WorkspaceInstanceController = Symbol("WorkspaceInstanceController");
 
@@ -306,7 +307,3 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
         }
     }
 }
-
-const durationLongerThanSeconds = (time: number, durationSeconds: number, now: number = Date.now()) => {
-    return (now - time) / 1000 > durationSeconds;
-};

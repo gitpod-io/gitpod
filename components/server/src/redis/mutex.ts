@@ -6,7 +6,7 @@
 
 import { inject, injectable } from "inversify";
 import { Redis } from "ioredis";
-import Redlock, { RedlockAbortSignal } from "redlock";
+import Redlock, { RedlockAbortSignal, ResourceLockedError, ExecutionError, Settings } from "redlock";
 
 @injectable()
 export class RedisMutex {
@@ -40,7 +40,12 @@ export class RedisMutex {
         resources: string[],
         duration: number,
         routine: (signal: RedlockAbortSignal) => Promise<T>,
+        settings: Partial<Settings> = {},
     ): Promise<T> {
-        return this.client().using(resources, duration, routine);
+        return this.client().using(resources, duration, settings, routine);
+    }
+
+    public static isLockError(err: any): boolean {
+        return err instanceof ResourceLockedError || err instanceof ExecutionError;
     }
 }

@@ -9,7 +9,6 @@ import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 import { inject, injectable } from "inversify";
 import { RedisMutex } from "../redis/mutex";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { ExecutionError, ResourceLockedError } from "redlock";
 import { jobsDurationSeconds, reportJobCompleted, reportJobStarted } from "../prometheus-metrics";
 import { DatabaseGarbageCollector } from "./database-gc";
 import { OTSGarbageCollector } from "./ots-gc";
@@ -19,6 +18,7 @@ import { WorkspaceGarbageCollector } from "./workspace-gc";
 import { SnapshotsJob } from "./snapshots";
 import { RelationshipUpdateJob } from "../authorization/relationship-updater-job";
 import { runWithContext } from "../util/log-context";
+import { WorkspaceStartController } from "../workspace/workspace-start-controller";
 
 export const Job = Symbol("Job");
 
@@ -40,6 +40,7 @@ export class JobRunner {
         @inject(WorkspaceGarbageCollector) private readonly workspaceGC: WorkspaceGarbageCollector,
         @inject(SnapshotsJob) private readonly snapshotsJob: SnapshotsJob,
         @inject(RelationshipUpdateJob) private readonly relationshipUpdateJob: RelationshipUpdateJob,
+        @inject(WorkspaceStartController) private readonly workspaceStartController: WorkspaceStartController,
     ) {}
 
     public start(): DisposableCollection {
@@ -53,6 +54,7 @@ export class JobRunner {
             this.workspaceGC,
             this.snapshotsJob,
             this.relationshipUpdateJob,
+            this.workspaceStartController,
         ];
 
         for (const job of jobs) {
@@ -106,7 +108,7 @@ export class JobRunner {
                 });
             });
         } catch (err) {
-            if (err instanceof ResourceLockedError || err instanceof ExecutionError) {
+            if (RedisMutex.isLockError(err)) {
                 log.debug(
                     `Failed to acquire lock for job ${job.name}. Likely another instance already holds the lock.`,
                     err,
