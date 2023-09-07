@@ -30,6 +30,7 @@ import {
     WorkspaceTimeoutSetting,
     WorkspaceContext,
     LinkedInProfile,
+    SuggestedRepository,
 } from "./protocol";
 import {
     Team,
@@ -98,6 +99,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getWorkspaceUsers(workspaceId: string): Promise<WorkspaceInstanceUser[]>;
     getFeaturedRepositories(): Promise<WhitelistedRepository[]>;
     getSuggestedContextURLs(): Promise<string[]>;
+    getSuggestedRepositories(organizationId: string): Promise<SuggestedRepository[]>;
     /**
      * **Security:**
      * Sensitive information like an owner token is erased, since it allows access for all team members.

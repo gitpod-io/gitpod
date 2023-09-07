@@ -67,6 +67,7 @@ import {
     RoleOrPermission,
     WorkspaceInstanceRepoStatus,
     GetProviderRepositoriesParams,
+    SuggestedRepository,
 } from "@gitpod/gitpod-protocol";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import {
@@ -1067,7 +1068,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     public async getWorkspaces(
         ctx: TraceContext,
-        options: GitpodServer.GetWorkspacesOptions,
+        options: GitpodServer.GetWorkspacesOptions = {},
     ): Promise<WorkspaceInfo[]> {
         traceAPIParams(ctx, { options });
 
@@ -1734,6 +1735,168 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 return true;
             })
             .map((s) => s.url);
+    }
+
+    public async getSuggestedRepositories(ctx: TraceContext, organizationId: string): Promise<SuggestedRepository[]> {
+        const user = await this.checkAndBlockUser("getSuggestedProjects");
+        const logCtx: LogContext = { userId: user.id };
+
+        type SuggestedRepositoryWithSorting = SuggestedRepository & {
+            priority: number;
+            lastUse?: string;
+        };
+
+        const fetchExampleRepos = async (): Promise<SuggestedRepositoryWithSorting[]> => {
+            const repos = await this.getFeaturedRepositories(ctx);
+
+            return repos.map((repo) => ({
+                repositoryName: repo.name,
+                url: repo.url,
+                priority: 0,
+            }));
+        };
+
+        const fetchProjects = async (): Promise<SuggestedRepositoryWithSorting[]> => {
+            const projects = await this.getAccessibleProjects();
+
+            return projects.map((project) => ({
+                // TODO: determine if we can parse this name out of the cloneUrl
+                // repositoryName: project.id,
+                projectName: project.name,
+                projectId: project.id,
+                url: project.cloneUrl.replace(/\.git$/, ""),
+                priority: 1,
+            }));
+        };
+
+        const fetchUserRepos = async (): Promise<SuggestedRepositoryWithSorting[]> => {
+            // User repositories (from Git hosts directly)
+            const authProviders = await this.getAuthProviders(ctx);
+
+            const providerRepos = await Promise.all(
+                authProviders.map(async (p): Promise<SuggestedRepositoryWithSorting[]> => {
+                    try {
+                        const hostContext = this.hostContextProvider.get(p.host);
+                        const services = hostContext?.services;
+                        if (!services) {
+                            log.error(logCtx, "Unsupported repository host: " + p.host);
+                            return [];
+                        }
+                        const userRepos = await services.repositoryProvider.getUserRepos(user);
+
+                        return userRepos.map((r) => ({
+                            // repositoryName: "",
+                            url: r.replace(/\.git$/, ""),
+                            priority: 5,
+                        }));
+                    } catch (error) {
+                        log.debug(logCtx, "Could not get user repositories from host " + p.host, error);
+                    }
+
+                    return [];
+                }),
+            );
+
+            return providerRepos.flat();
+        };
+
+        const fetchRecentRepos = async (): Promise<SuggestedRepositoryWithSorting[]> => {
+            const workspaces = await this.getWorkspaces(ctx);
+            const recentRepos: SuggestedRepositoryWithSorting[] = [];
+
+            for (const ws of workspaces) {
+                let repoUrl;
+                if (CommitContext.is(ws.workspace.context)) {
+                    repoUrl = ws.workspace.context?.repository?.cloneUrl?.replace(/\.git$/, "");
+                }
+                if (!repoUrl) {
+                    repoUrl = ws.workspace.contextURL;
+                }
+                if (repoUrl) {
+                    const lastUse = WorkspaceInfo.lastActiveISODate(ws);
+
+                    recentRepos.push({
+                        url: repoUrl,
+                        projectId: ws.workspace.projectId,
+                        // TODO: get project name
+                        lastUse,
+                        priority: 10,
+                    });
+                }
+            }
+
+            return recentRepos;
+        };
+
+        const [examples, projects, userRepos, recentRepos] = await Promise.allSettled([
+            fetchExampleRepos(),
+            fetchProjects(),
+            fetchUserRepos(),
+            fetchRecentRepos(),
+        ]);
+
+        const uniqueRepositories = new Map<string, SuggestedRepositoryWithSorting>();
+
+        // Add projects first
+        if (projects.status === "fulfilled") {
+            for (const repo of projects.value) {
+                uniqueRepositories.set(repo.url, repo);
+            }
+        } else {
+            log.error(logCtx, "Could not fetch projects", projects.reason);
+        }
+
+        // Add examples
+        if (examples.status === "fulfilled") {
+            for (const repo of examples.value) {
+                if (!uniqueRepositories.has(repo.url)) {
+                    uniqueRepositories.set(repo.url, repo);
+                }
+            }
+        }
+
+        // Add user repos
+        if (userRepos.status === "fulfilled") {
+            for (const repo of userRepos.value) {
+                if (!uniqueRepositories.has(repo.url)) {
+                    uniqueRepositories.set(repo.url, repo);
+                }
+            }
+        }
+
+        // Add recent repos
+        if (recentRepos.status === "fulfilled") {
+            for (const repo of recentRepos.value) {
+                if (!uniqueRepositories.has(repo.url)) {
+                    uniqueRepositories.set(repo.url, repo);
+                }
+            }
+        }
+
+        const suggestedRepositories = Array.from(uniqueRepositories.values()).sort((a, b) => {
+            // priority first
+            if (a.priority !== b.priority) {
+                return a.priority < b.priority ? 1 : -1;
+            }
+            // Most recently used second
+            if (b.lastUse || a.lastUse) {
+                const la = a.lastUse || "";
+                const lb = b.lastUse || "";
+                return la < lb ? 1 : la === lb ? 0 : -1;
+            }
+            // Otherwise, alphasort
+            const ua = a.url.toLowerCase();
+            const ub = b.url.toLowerCase();
+            return ua > ub ? 1 : ua === ub ? 0 : -1;
+        });
+
+        return suggestedRepositories.map((repo) => ({
+            url: repo.url,
+            projectId: repo.projectId,
+            projectName: repo.projectName,
+            // TODO: determine if we want to include this
+            repositoryName: repo.repositoryName,
+        }));
     }
 
     public async setWorkspaceTimeout(
