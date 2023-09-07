@@ -1757,7 +1757,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         };
 
         const fetchProjects = async (): Promise<SuggestedRepositoryWithSorting[]> => {
-            const projects = await this.getAccessibleProjects();
+            const projects = await this.projectsService.getProjects(user.id, organizationId);
 
             return projects.map((project) => ({
                 // TODO: determine if we can parse this name out of the cloneUrl
@@ -1801,7 +1801,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         };
 
         const fetchRecentRepos = async (): Promise<SuggestedRepositoryWithSorting[]> => {
-            const workspaces = await this.getWorkspaces(ctx);
+            const workspaces = await this.getWorkspaces(ctx, { organizationId });
             const recentRepos: SuggestedRepositoryWithSorting[] = [];
 
             for (const ws of workspaces) {
@@ -1837,7 +1837,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const uniqueRepositories = new Map<string, SuggestedRepositoryWithSorting>();
 
-        // Add projects first
         if (projects.status === "fulfilled") {
             for (const repo of projects.value) {
                 uniqueRepositories.set(repo.url, repo);
@@ -1847,6 +1846,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         const remainingRepos = [
+            // Add projects first so we have projectId/projectName set
+            ...(projects.status === "rejected" ? [] : projects.value),
+            // Add the rest - order doesn't matter here
             ...(examples.status === "fulfilled" ? examples.value : []),
             ...(userRepos.status === "fulfilled" ? userRepos.value : []),
             ...(recentRepos.status === "fulfilled" ? recentRepos.value : []),
