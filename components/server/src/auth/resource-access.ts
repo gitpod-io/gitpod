@@ -22,7 +22,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { UnauthorizedError } from "../errors";
 import { RepoURL } from "../repohost";
 import { HostContextProvider } from "./host-context-provider";
-import { isFgaAuthorizerEnabled } from "../authorization/authorizer";
+import { isFgaChecksEnabled } from "../authorization/authorizer";
 import { reportGuardAccessCheck } from "../prometheus-metrics";
 
 declare let resourceInstance: GuardedResource;
@@ -161,7 +161,7 @@ export class FGAResourceAccessGuard implements ResourceAccessGuard {
     constructor(private readonly userId: string, private readonly delegate: ResourceAccessGuard) {}
 
     async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
-        const authorizerEnabled = await isFgaAuthorizerEnabled(this.userId);
+        const authorizerEnabled = await isFgaChecksEnabled(this.userId);
         if (authorizerEnabled) {
             // Authorizer takes over, so we should not check.
             reportGuardAccessCheck("fga");

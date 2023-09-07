@@ -8,9 +8,8 @@ import { ProjectDB, TeamDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { AdditionalUserData, Organization, User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
-import { Authorizer } from "./authorizer";
+import { Authorizer, isFgaWritesEnabled } from "./authorizer";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { v1 } from "@authzed/authzed-node";
 import { fgaRelationsUpdateClientLatency } from "../prometheus-metrics";
 import { RedisMutex } from "../redis/mutex";
@@ -39,19 +38,7 @@ export class RelationshipUpdater {
      * @returns
      */
     public async migrate(user: User): Promise<User> {
-        let isEnabled = await getExperimentsClientForBackend().getValueAsync("spicedb_relationship_updates", false, {
-            user: {
-                id: user.id,
-            },
-        });
-        if (!isEnabled) {
-            // check the centralizedPermission featureflag
-            isEnabled = await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
-                user: {
-                    id: user.id,
-                },
-            });
-        }
+        const isEnabled = await isFgaWritesEnabled(user.id);
         if (!isEnabled) {
             if (user.additionalData?.fgaRelationshipsVersion !== undefined) {
                 log.info({ userId: user.id }, `User has been removed from FGA.`);
