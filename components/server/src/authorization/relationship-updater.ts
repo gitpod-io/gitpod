@@ -17,7 +17,7 @@ import { RedisMutex } from "../redis/mutex";
 
 @injectable()
 export class RelationshipUpdater {
-    public readonly version = 2;
+    public static readonly version = 2;
 
     constructor(
         @inject(UserDB) private readonly userDB: UserDB,
@@ -39,12 +39,20 @@ export class RelationshipUpdater {
      * @returns
      */
     public async migrate(user: User): Promise<User> {
-        const fgaEnabled = await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
+        let isEnabled = await getExperimentsClientForBackend().getValueAsync("spicedb_relationship_updates", false, {
             user: {
                 id: user.id,
             },
         });
-        if (!fgaEnabled) {
+        if (!isEnabled) {
+            // check the centralizedPermission featureflag
+            isEnabled = await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
+                user: {
+                    id: user.id,
+                },
+            });
+        }
+        if (!isEnabled) {
             if (user.additionalData?.fgaRelationshipsVersion !== undefined) {
                 log.info({ userId: user.id }, `User has been removed from FGA.`);
                 // reset the fgaRelationshipsVersion to undefined, so the migration is triggered again when the feature is enabled
@@ -71,7 +79,7 @@ export class RelationshipUpdater {
                 }
                 log.info({ userId: user.id }, `Updating FGA relationships for user.`, {
                     fromVersion: user?.additionalData?.fgaRelationshipsVersion,
-                    toVersion: this.version,
+                    toVersion: RelationshipUpdater.version,
                 });
                 const orgs = await this.findAffectedOrganizations(user.id);
 
@@ -82,7 +90,7 @@ export class RelationshipUpdater {
                 }
                 await this.updateWorkspaces(user);
                 AdditionalUserData.set(user, {
-                    fgaRelationshipsVersion: this.version,
+                    fgaRelationshipsVersion: RelationshipUpdater.version,
                 });
                 await this.userDB.updateUserPartial({
                     id: user.id,
@@ -99,7 +107,7 @@ export class RelationshipUpdater {
     }
 
     private isMigrated(user: User) {
-        return user.additionalData?.fgaRelationshipsVersion === this.version;
+        return user.additionalData?.fgaRelationshipsVersion === RelationshipUpdater.version;
     }
 
     private async findAffectedOrganizations(userId: string): Promise<Organization[]> {

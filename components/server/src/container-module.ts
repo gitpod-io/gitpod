@@ -132,6 +132,7 @@ import { SSHKeyService } from "./user/sshkey-service";
 import { GitpodTokenService } from "./user/gitpod-token-service";
 import { EnvVarService } from "./user/env-var-service";
 import { ScmService } from "./projects/scm-service";
+import { RelationshipUpdateJob } from "./authorization/relationship-updater-job";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -368,6 +369,7 @@ export const productionContainerModule = new ContainerModule(
         bind(OTSGarbageCollector).toSelf().inSingletonScope();
         bind(SnapshotsJob).toSelf().inSingletonScope();
         bind(JobRunner).toSelf().inSingletonScope();
+        bind(RelationshipUpdateJob).toSelf().inSingletonScope();
 
         // Redis
         bind(Redis).toDynamicValue((ctx) => {
