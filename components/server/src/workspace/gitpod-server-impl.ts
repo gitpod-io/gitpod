@@ -1738,7 +1738,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     public async getSuggestedRepositories(ctx: TraceContext, organizationId: string): Promise<SuggestedRepository[]> {
-        const user = await this.checkAndBlockUser("getSuggestedProjects");
+        const user = await this.checkAndBlockUser("getSuggestedRepositories");
+        await this.guardWithFeatureFlag("includeProjectsOnCreateWorkspace", user, organizationId);
+
+        if (!uuidValidate(organizationId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId must be a valid UUID");
+        }
+
         const logCtx: LogContext = { userId: user.id };
 
         type SuggestedRepositoryWithSorting = SuggestedRepository & {
