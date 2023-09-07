@@ -12,6 +12,7 @@ const (
 	CodeWebExtensionVersion     = "commit-1de61b5711089287b7f27bc1223c57d6d9bb3144" // gitpod-web extension version comes from https://github.com/gitpod-io/gitpod-code
 	CodeDesktopIDEImage         = "ide/code-desktop"
 	CodeDesktopInsidersIDEImage = "ide/code-desktop-insiders"
+	CursorIDEImage              = "ide/cursor"
 	XtermIDEImage               = "ide/xterm-web"
 	IntelliJDesktopIDEImage     = "ide/intellij"
 	GoLandDesktopIdeImage       = "ide/goland"

@@ -25,6 +25,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	codeDesktop := "code-desktop"
+	cursor := "cursor"
 
 	/*
 		Upgrading previous JB Version:
@@ -96,6 +97,13 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					DesktopIDEs:       []string{intellij, goland, pycharm, phpstorm, rubymine, webstorm, rider, clion},
 					InstallationSteps: []string{
 						"If you don't see an open dialog in your browser, make sure you have the <a target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'>JetBrains Gateway with Gitpod Plugin</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
+					},
+				},
+				"cursor": {
+					DefaultDesktopIDE: cursor,
+					DesktopIDEs:       []string{cursor},
+					InstallationSteps: []string{
+						"If you don't see an open dialog in your browser, make sure you have <a target='_blank' class='gp-link' href='https://www.cursor.so'>Cursor</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
 					},
 				},
 			},
@@ -236,6 +244,13 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Image:              ctx.ImageName(ctx.Config.Repository, ide.XtermIDEImage, "latest"),
 					LatestImage:        ctx.ImageName(ctx.Config.Repository, ide.XtermIDEImage, "latest"),
 					ResolveImageDigest: true,
+				},
+				cursor: {
+					OrderKey: "13",
+					Title:    "Cursor",
+					Type:     ide_config.IDETypeDesktop,
+					Logo:     getIdeLogoPath("vscode"),
+					Image:    ctx.ImageName(ctx.Config.Repository, ide.CursorIDEImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.Cursor.Version),
 				},
 			},
 			DefaultIde:        "code",

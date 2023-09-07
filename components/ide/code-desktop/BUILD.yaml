@@ -35,3 +35,21 @@ packages:
       image:
         - ${imageRepoBase}/ide/code-desktop-insiders:${version}
         - ${imageRepoBase}/ide/code-desktop-insiders:commit-${__git_commit}
+  - name: docker-cursor
+    type: docker
+    srcs:
+      - "startup.sh"
+      - "supervisor-ide-config_cursor.json"
+    deps:
+      - components/ide/code-desktop/status:app
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.desktopIdeImages.cursor
+      buildArgs:
+        SUPERVISOR_IDE_CONFIG: supervisor-ide-config_cursor.json
+      image:
+        - ${imageRepoBase}/ide/cursor:${version}
+        - ${imageRepoBase}/ide/cursor:commit-${__git_commit}

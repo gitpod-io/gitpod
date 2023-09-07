@@ -49,6 +49,7 @@ type Components struct {
 		DesktopIdeImages struct {
 			CodeDesktopImage                  Versioned `json:"codeDesktop"`
 			CodeDesktopImageInsiders          Versioned `json:"codeDesktopInsiders"`
+			Cursor                            Versioned `json:"cursor"`
 			IntelliJImage                     Versioned `json:"intellij"`
 			IntelliJLatestImage               Versioned `json:"intellijLatest"`
 			GoLandImage                       Versioned `json:"goland"`

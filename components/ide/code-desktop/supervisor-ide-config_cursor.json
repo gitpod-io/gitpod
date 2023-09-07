@@ -1,0 +1,10 @@
+{
+    "entrypoint": "/ide-desktop/status",
+    "entrypointArgs": [ "{DESKTOPIDEPORT}", "Open in Cursor", "cursor" ],
+    "readinessProbe": {
+        "type": "http",
+        "http": {
+            "path": "/status"
+        }
+      }
+}
