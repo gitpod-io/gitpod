@@ -1750,7 +1750,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             const repos = await this.getFeaturedRepositories(ctx);
 
             return repos.map((repo) => ({
-                repositoryName: repo.name,
                 url: repo.url,
                 priority: 0,
             }));
@@ -1760,11 +1759,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             const projects = await this.projectsService.getProjects(user.id, organizationId);
 
             return projects.map((project) => ({
-                // TODO: determine if we can parse this name out of the cloneUrl
-                // repositoryName: project.id,
-                projectName: project.name,
-                projectId: project.id,
                 url: project.cloneUrl.replace(/\.git$/, ""),
+                projectId: project.id,
+                projectName: project.name,
                 priority: 1,
             }));
         };
@@ -1785,7 +1782,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                         const userRepos = await services.repositoryProvider.getUserRepos(user);
 
                         return userRepos.map((r) => ({
-                            // repositoryName: "",
                             url: r.replace(/\.git$/, ""),
                             priority: 5,
                         }));
@@ -1818,9 +1814,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                     recentRepos.push({
                         url: repoUrl,
                         projectId: ws.workspace.projectId,
-                        // TODO: get project name
-                        lastUse,
                         priority: 10,
+                        lastUse,
                     });
                 }
             }
@@ -1836,14 +1831,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         ]);
 
         const uniqueRepositories = new Map<string, SuggestedRepositoryWithSorting>();
-
-        if (projects.status === "fulfilled") {
-            for (const repo of projects.value) {
-                uniqueRepositories.set(repo.url, repo);
-            }
-        } else {
-            log.error(logCtx, "Could not fetch projects", projects.reason);
-        }
 
         const remainingRepos = [
             // Add projects first so we have projectId/projectName set
