@@ -8,11 +8,11 @@ import { v1 } from "@authzed/authzed-node";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { inject, injectable } from "inversify";
 import { observeSpicedbClientLatency, spicedbClientLatency } from "../prometheus-metrics";
 import { SpiceDBClientProvider } from "./spicedb";
 import * as grpc from "@grpc/grpc-js";
+import { isFgaChecksEnabled } from "./authorizer";
 
 @injectable()
 export class SpiceDBAuthorizer {
@@ -31,11 +31,7 @@ export class SpiceDBAuthorizer {
             userId: string;
         },
     ): Promise<boolean> {
-        const featureEnabled = await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
-            user: {
-                id: experimentsFields.userId,
-            },
-        });
+        const featureEnabled = await isFgaChecksEnabled(experimentsFields.userId);
         if (!featureEnabled) {
             return true;
         }

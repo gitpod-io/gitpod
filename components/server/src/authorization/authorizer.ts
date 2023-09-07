@@ -210,7 +210,7 @@ export class Authorizer {
 
     // write operations below
     public async removeAllRelationships(userId: string, type: ResourceType, id: string) {
-        if (await this.isDisabled(userId)) {
+        if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
         await this.authorizer.deleteRelationships(
@@ -240,12 +240,8 @@ export class Authorizer {
         }
     }
 
-    private async isDisabled(userId: string): Promise<boolean> {
-        return !(await isFgaAuthorizerEnabled(userId));
-    }
-
     async addUser(userId: string, owningOrgId?: string) {
-        if (await this.isDisabled(userId)) {
+        if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
         const oldOrgs = await this.findAll(rel.user(userId).organization.organization(""));
@@ -275,14 +271,14 @@ export class Authorizer {
     }
 
     async removeUser(userId: string) {
-        if (await this.isDisabled(userId)) {
+        if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
         await this.removeAllRelationships(userId, "user", userId);
     }
 
     async addOrganizationRole(orgID: string, userID: string, role: TeamMemberRole): Promise<void> {
-        if (await this.isDisabled(userID)) {
+        if (!(await isFgaWritesEnabled(userID))) {
             return;
         }
         const updates = [set(rel.organization(orgID).member.user(userID))];
@@ -295,7 +291,7 @@ export class Authorizer {
     }
 
     async removeOrganizationRole(orgID: string, userID: string, role: TeamMemberRole): Promise<void> {
-        if (await this.isDisabled(userID)) {
+        if (!(await isFgaWritesEnabled(userID))) {
             return;
         }
         const updates = [remove(rel.organization(orgID).owner.user(userID))];
@@ -306,7 +302,7 @@ export class Authorizer {
     }
 
     async addProjectToOrg(userId: string, orgID: string, projectID: string): Promise<void> {
-        if (await this.isDisabled(userId)) {
+        if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
         await this.authorizer.writeRelationships(set(rel.project(projectID).org.organization(orgID)));
@@ -318,7 +314,7 @@ export class Authorizer {
         organizationId: string,
         visibility: Project.Visibility,
     ) {
-        if (await this.isDisabled(userId)) {
+        if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
         const updates = [];
@@ -340,7 +336,7 @@ export class Authorizer {
     }
 
     async removeProjectFromOrg(userId: string, orgID: string, projectID: string): Promise<void> {
-        if (await this.isDisabled(userId)) {
+        if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
         await this.authorizer.writeRelationships(
@@ -356,7 +352,7 @@ export class Authorizer {
         members: { userId: string; role: TeamMemberRole }[],
         projectIds: string[],
     ): Promise<void> {
-        if (await this.isDisabled(userId)) {
+        if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
         await this.addOrganizationMembers(orgId, members);
@@ -398,7 +394,7 @@ export class Authorizer {
     }
 
     async addInstallationAdminRole(userId: string) {
-        if (await this.isDisabled(userId)) {
+        if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
         await this.authorizer.writeRelationships(
@@ -407,7 +403,7 @@ export class Authorizer {
     }
 
     async removeInstallationAdminRole(userId: string) {
-        if (await this.isDisabled(userId)) {
+        if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
         await this.authorizer.writeRelationships(
@@ -416,7 +412,7 @@ export class Authorizer {
     }
 
     async addWorkspaceToOrg(orgID: string, userID: string, workspaceID: string, shared: boolean): Promise<void> {
-        if (await this.isDisabled(userID)) {
+        if (!(await isFgaWritesEnabled(userID))) {
             return;
         }
         return this.bulkAddWorkspaceToOrg([{ orgID, userID, workspaceID, shared }]);
@@ -447,7 +443,7 @@ export class Authorizer {
     }
 
     async removeWorkspaceFromOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {
-        if (await this.isDisabled(userID)) {
+        if (!(await isFgaWritesEnabled(userID))) {
             return;
         }
         await this.authorizer.writeRelationships(
@@ -458,7 +454,7 @@ export class Authorizer {
     }
 
     async setWorkspaceIsShared(userID: string, workspaceID: string, shared: boolean): Promise<void> {
-        if (await this.isDisabled(userID)) {
+        if (!(await isFgaWritesEnabled(userID))) {
             return;
         }
         const op = shared ? set : remove;
@@ -513,13 +509,21 @@ export class Authorizer {
     }
 }
 
-// TODO(gpl) remove after FGA rollout
-export async function isFgaAuthorizerEnabled(userId: string): Promise<boolean> {
+export async function isFgaChecksEnabled(userId: string): Promise<boolean> {
     return getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
         user: {
             id: userId,
         },
     });
+}
+
+export async function isFgaWritesEnabled(userId: string): Promise<boolean> {
+    const result = await getExperimentsClientForBackend().getValueAsync("spicedb_relationship_updates", false, {
+        user: {
+            id: userId,
+        },
+    });
+    return result || (await isFgaChecksEnabled(userId));
 }
 
 function set(rs: v1.Relationship): v1.RelationshipUpdate {
