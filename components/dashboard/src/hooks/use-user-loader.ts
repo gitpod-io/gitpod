@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 import { UserContext } from "../user-context";
 import { getGitpodService } from "../service/service";
 import { trackLocation } from "../Analytics";
@@ -19,7 +19,7 @@ export const useUserLoader = () => {
 
     // For now, we're using the user context to store the user, but letting react-query handle the loading
     // In the future, we should remove the user context and use react-query to access the user
-    const userQuery = useQuery({
+    const { isLoading } = useQuery({
         queryKey: noPersistence(["current-user"]),
         queryFn: async () => {
             const user = await getGitpodService().server.getLoggedInUser();
@@ -40,18 +40,13 @@ export const useUserLoader = () => {
         retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
         cacheTime: 1000 * 60 * 60 * 1, // 1 hour
         staleTime: 1000 * 60 * 60 * 1, // 1 hour
-
+        onSuccess: (loadedUser) => {
+            setUser(loadedUser);
+        },
         onSettled: (loadedUser) => {
             trackLocation(!!loadedUser);
         },
     });
 
-    // onSuccess is deprecated: https://tkdodo.eu/blog/breaking-react-querys-api-on-purpose
-    useEffect(() => {
-        if (userQuery.data) {
-            setUser(userQuery.data);
-        }
-    }, [userQuery.data, setUser]);
-
-    return { user, loading: userQuery.isLoading };
+    return { user, loading: isLoading };
 };
