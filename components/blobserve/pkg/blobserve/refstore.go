@@ -18,7 +18,6 @@ import (
 
 	blobserve_config "github.com/gitpod-io/gitpod/blobserve/pkg/config"
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/registry-facade/pkg/registry"
 )
 
 const (
@@ -297,27 +296,32 @@ func (store *refstore) handleRequest(ctx context.Context, ref string, force bool
 }
 
 func resolveRef(ctx context.Context, ref string, resolver remotes.Resolver) (*ociv1.Descriptor, error) {
-	_, desc, err := resolver.Resolve(ctx, ref)
-	if err != nil {
-		return nil, err
-	}
-	fetcher, err := resolver.Fetcher(ctx, ref)
-	if err != nil {
-		return nil, err
-	}
-	manifest, _, err := registry.DownloadManifest(ctx, registry.AsFetcherFunc(fetcher), desc)
-	if err != nil {
-		return nil, err
-	}
+	/*
+		_, desc, err := resolver.Resolve(ctx, ref)
+		if err != nil {
+			return nil, err
+		}
+		fetcher, err := resolver.Fetcher(ctx, ref)
+		if err != nil {
+			return nil, err
+		}
 
-	layerCount := len(manifest.Layers)
-	if layerCount <= 0 {
-		log.WithField("ref", ref).Error("image has no layers - cannot serve its blob")
-		return nil, errdefs.ErrNotFound
-	}
-	if layerCount > 1 {
-		log.WithField("ref", ref).Warn("image has more than one layers - serving from first layer only")
-	}
-	blobLayer := manifest.Layers[0]
-	return &blobLayer, nil
+			manifest, _, err := registry.DownloadManifest(ctx, registry.AsFetcherFunc(fetcher), desc)
+			if err != nil {
+				return nil, err
+			}
+
+			layerCount := len(manifest.Layers)
+			if layerCount <= 0 {
+				log.WithField("ref", ref).Error("image has no layers - cannot serve its blob")
+				return nil, errdefs.ErrNotFound
+			}
+			if layerCount > 1 {
+				log.WithField("ref", ref).Warn("image has more than one layers - serving from first layer only")
+			}
+			blobLayer := manifest.Layers[0]
+			return &blobLayer, nil
+	*/
+
+	return nil, nil
 }

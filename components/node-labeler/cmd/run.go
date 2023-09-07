@@ -39,11 +39,9 @@ import (
 )
 
 const (
-	registryFacadeLabel = "gitpod.io/registry-facade_ready_ns_%v"
-	wsdaemonLabel       = "gitpod.io/ws-daemon_ready_ns_%v"
+	wsdaemonLabel = "gitpod.io/ws-daemon_ready_ns_%v"
 
-	registryFacade = "registry-facade"
-	wsDaemon       = "ws-daemon"
+	wsDaemon = "ws-daemon"
 )
 
 var defaultRequeueTime = time.Second * 10
@@ -160,11 +158,6 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 	)
 
 	switch {
-	case strings.HasPrefix(pod.Name, registryFacade):
-		component = registryFacade
-		labelToUpdate = fmt.Sprintf(registryFacadeLabel, namespace)
-		ipAddress = pod.Status.HostIP
-		port = strconv.Itoa(registryFacadePort)
 	case strings.HasPrefix(pod.Name, wsDaemon):
 		component = wsDaemon
 		labelToUpdate = fmt.Sprintf(wsdaemonLabel, namespace)
@@ -214,14 +207,6 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 	if err != nil {
 		log.WithField("host", ipAddress).WithField("port", port).WithField("pod", pod.Name).WithError(err).Error("checking if TCP port is open")
 		return reconcile.Result{RequeueAfter: defaultRequeueTime}, nil
-	}
-
-	if component == registryFacade {
-		err = checkRegistryFacade(ipAddress, port)
-		if err != nil {
-			log.WithError(err).Error("checking registry-facade")
-			return reconcile.Result{RequeueAfter: defaultRequeueTime}, nil
-		}
 	}
 
 	err = updateLabel(labelToUpdate, true, nodeName, r)

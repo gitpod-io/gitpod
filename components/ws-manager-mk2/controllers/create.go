@@ -26,7 +26,6 @@ import (
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
-	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
@@ -339,10 +338,6 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 			Key:      "gitpod.io/ws-daemon_ready_ns_" + sctx.Config.Namespace,
 			Operator: corev1.NodeSelectorOpExists,
 		},
-		{
-			Key:      "gitpod.io/registry-facade_ready_ns_" + sctx.Config.Namespace,
-			Operator: corev1.NodeSelectorOpExists,
-		},
 	}
 
 	affinity := &corev1.Affinity{
@@ -457,8 +452,6 @@ func createWorkspaceContainer(sctx *startWorkspaceContext) (*corev1.Container, e
 		}
 	)
 
-	image := fmt.Sprintf("%s/%s/%s", sctx.Config.RegistryFacadeHost, regapi.ProviderPrefixRemote, sctx.Workspace.Name)
-
 	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:             workspaceVolumeName,
@@ -484,7 +477,7 @@ func createWorkspaceContainer(sctx *startWorkspaceContext) (*corev1.Container, e
 
 	return &corev1.Container{
 		Name:            "workspace",
-		Image:           image,
+		Image:           *sctx.Workspace.Spec.Image.Workspace.Ref,
 		SecurityContext: sec,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Ports: []corev1.ContainerPort{

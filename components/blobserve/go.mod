@@ -7,7 +7,6 @@ require (
 	github.com/docker/cli v24.0.5+incompatible
 	github.com/docker/distribution v2.8.2+incompatible
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/registry-facade v0.0.0-00010101000000-000000000000
 	github.com/google/go-cmp v0.5.9
 	github.com/gorilla/mux v1.8.0
 	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb
@@ -30,7 +29,6 @@ require (
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/gitpod-io/gitpod/components/scrubber v0.0.0-00010101000000-000000000000 // indirect
-	github.com/gitpod-io/gitpod/registry-facade/api v0.0.0-00010101000000-000000000000 // indirect
 	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -125,10 +123,6 @@ require (
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
 
 replace github.com/gitpod-io/gitpod/components/scrubber => ../scrubber // leeway
-
-replace github.com/gitpod-io/gitpod/registry-facade => ../registry-facade // leeway
-
-replace github.com/gitpod-io/gitpod/registry-facade/api => ../registry-facade-api/go // leeway
 
 replace k8s.io/api => k8s.io/api v0.27.3 // leeway indirect from components/common-go:lib
 

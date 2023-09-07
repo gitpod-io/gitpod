@@ -42,7 +42,6 @@
 /install/installer/pkg/components/image-builder-mk3-wsman @gitpod-io/team-engine
 /install/installer/pkg/components/openvsx-proxy @gitpod-io/team-experience
 /install/installer/pkg/components/proxy @gitpod-io/team-experience
-/install/installer/pkg/components/registry-facade @gitpod-io/team-engine
 /install/installer/pkg/components/spicedb @gitpod-io/team-experience
 /install/installer/pkg/components/public-api-server @gitpod-io/team-experience
 /install/installer/pkg/components/server @gitpod-io/team-experience
@@ -64,8 +63,6 @@
 # Any team can make changes to the experimental package
 /components/public-api/gitpod/experimental @gitpod-io/team-experience
 /components/public-api-server @gitpod-io/team-experience
-/components/registry-facade-api @gitpod-io/team-engine
-/components/registry-facade @gitpod-io/team-engine
 /components/server @gitpod-io/team-experience
 /components/server/src/ide-service.* @gitpod-io/team-experience
 /components/service-waiter @gitpod-io/team-experience

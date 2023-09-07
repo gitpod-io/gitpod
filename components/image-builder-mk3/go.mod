@@ -107,8 +107,6 @@ replace github.com/gitpod-io/gitpod/content-service/api => ../content-service-ap
 
 replace github.com/gitpod-io/gitpod/image-builder/api => ../image-builder-api/go // leeway
 
-replace github.com/gitpod-io/gitpod/registry-facade/api => ../registry-facade-api/go // leeway
-
 replace github.com/gitpod-io/gitpod/supervisor/api => ../supervisor-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/ws-manager/api => ../ws-manager-api/go // leeway

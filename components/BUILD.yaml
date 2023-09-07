@@ -66,7 +66,6 @@ packages:
       - components/usage:docker
       - components/openvsx-proxy:docker
       - components/proxy:docker
-      - components/registry-facade:docker
       - components/server:docker
       - components/service-waiter:docker
       - components/supervisor:docker
@@ -111,7 +110,6 @@ packages:
       - components/image-builder-mk3:app
       - components/openvsx-proxy:app
       - components/public-api-server:app
-      - components/registry-facade:app
       - components/server:app
       - components/service-waiter:app
       - components/supervisor:app
@@ -148,7 +146,7 @@ scripts:
     srcs:
       - components/**/*
     script: |
-      GO_COMPONENTS=( local-app-api content-service-api image-builder-api registry-facade-api supervisor-api ws-daemon-api ws-manager-api ws-manager-bridge-api )
+      GO_COMPONENTS=( local-app-api content-service-api image-builder-api supervisor-api ws-daemon-api ws-manager-api ws-manager-bridge-api )
 
       for COMPONENT in "${GO_COMPONENTS[@]}";do
         echo "Generating code for component $COMPONENT..."

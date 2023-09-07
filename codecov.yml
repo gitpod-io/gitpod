@@ -47,12 +47,6 @@ flags:
   components-local-app-app-linux:
     paths:
       - components/local-app/
-  components-registry-facade-app:
-    paths:
-      - components/registry-facade/
-  components-registry-facade-api-go-lib:
-    paths:
-      - components/registry-facade-api/
   components-service-waiter-app:
     paths:
       - components/service-waiter/

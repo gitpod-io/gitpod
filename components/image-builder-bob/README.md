@@ -11,7 +11,7 @@ For each image build, a headless workspace gets created in the meta cluster by `
   - **workspace image**, which builds an image from the base layer, where the base layer is either a previously built custom Dockerfile or a public image.
   These images get pushed over `localhost` to `bob proxy`, as `bob build` does not receive the credentials to push to private registries.
 
-  The built images do not include e.g. `supervisor` or the IDE, these layers will get added by [`registry-facade`](../registry-facade/README.md) during image pull.
+  The built images do not include e.g. `supervisor` or the IDE. These layers will get added by during image pull.
 
 ## How to try locally
 

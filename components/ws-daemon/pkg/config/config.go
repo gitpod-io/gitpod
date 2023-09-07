@@ -33,6 +33,7 @@ func Read(fn string) (*Config, error) {
 }
 
 type Config struct {
-	Daemon  daemon.Config                  `json:"daemon"`
-	Service baseserver.ServerConfiguration `json:"service"`
+	Daemon       daemon.Config                  `json:"daemon"`
+	Service      baseserver.ServerConfiguration `json:"service"`
+	StaticLayers []string                       `json:"staticLayers"`
 }

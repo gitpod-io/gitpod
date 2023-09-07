@@ -38,7 +38,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	imgbldr "github.com/gitpod-io/gitpod/image-builder/api"
-	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
@@ -283,10 +282,12 @@ func setupGRPCService(cfg *config.ServiceConfiguration, k8s client.Client, maint
 
 	grpc_prometheus.Register(grpcServer)
 	wsmanapi.RegisterWorkspaceManagerServer(grpcServer, srv)
-	regapi.RegisterSpecProviderServer(grpcServer, &service.WorkspaceImageSpecProvider{
-		Client:    k8s,
-		Namespace: cfg.Manager.Namespace,
-	})
+	/*
+		regapi.RegisterSpecProviderServer(grpcServer, &service.WorkspaceImageSpecProvider{
+			Client:    k8s,
+			Namespace: cfg.Manager.Namespace,
+		})
+	*/
 
 	lis, err := net.Listen("tcp", cfg.RPCServer.Addr)
 	if err != nil {

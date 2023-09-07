@@ -178,22 +178,29 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				KeyPath:  "/certs/tls.key",
 			},
 		},
+		StaticLayers: []string{
+			ctx.ImageName(ctx.Config.Repository, "supervisor", ctx.VersionManifest.Components.Workspace.Supervisor.Version),
+			ctx.ImageName(ctx.Config.Repository, "workspacekit", ctx.VersionManifest.Components.Workspace.Workspacekit.Version),
+			ctx.ImageName(ctx.Config.Repository, "docker-up", ctx.VersionManifest.Components.Workspace.DockerUp.Version),
+		},
 	}
 	fc, err := common.ToJSONString(wsdcfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal ws-daemon config: %w", err)
 	}
 
-	return []runtime.Object{&corev1.ConfigMap{
-		TypeMeta: common.TypeMetaConfigmap,
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        Component,
-			Namespace:   ctx.Namespace,
-			Labels:      common.CustomizeLabel(ctx, Component, common.TypeMetaConfigmap),
-			Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaConfigmap),
+	return []runtime.Object{
+		&corev1.ConfigMap{
+			TypeMeta: common.TypeMetaConfigmap,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        Component,
+				Namespace:   ctx.Namespace,
+				Labels:      common.CustomizeLabel(ctx, Component, common.TypeMetaConfigmap),
+				Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaConfigmap),
+			},
+			Data: map[string]string{
+				"config.json": string(fc),
+			},
 		},
-		Data: map[string]string{
-			"config.json": string(fc),
-		},
-	}}, nil
+	}, nil
 }
