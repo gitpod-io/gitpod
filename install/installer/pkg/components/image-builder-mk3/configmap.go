@@ -9,11 +9,9 @@ import (
 	"strings"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
-
 	"github.com/gitpod-io/gitpod/image-builder/api/config"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	wsmanagermk2 "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager-mk2"
 	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 
@@ -55,11 +53,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		WorkspaceImageRepository: fmt.Sprintf("%s/workspace-images", registryName),
 		EnableAdditionalECRAuth:  ctx.Config.ContainerRegistry.EnableAdditionalECRAuth,
 		EnableSOCIIndex:          ctx.Config.ContainerRegistry.EnableSOCIIndex,
-	}
-
-	workspaceImage := ctx.Config.Workspace.WorkspaceImage
-	if workspaceImage == "" {
-		workspaceImage = ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, ""), workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion)
 	}
 
 	var tls *baseserver.TLSConfiguration

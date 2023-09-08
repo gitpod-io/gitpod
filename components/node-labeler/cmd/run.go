@@ -6,10 +6,8 @@ package cmd
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"net"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -258,51 +256,4 @@ func checkTCPPortIsReachable(host string, port string) error {
 	defer conn.Close()
 
 	return nil
-}
-
-func checkRegistryFacade(host, port string) error {
-	transport := newDefaultTransport()
-	transport.TLSClientConfig = &tls.Config{
-		InsecureSkipVerify: true,
-	}
-
-	client := &http.Client{
-		Transport: transport,
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-
-	dummyURL := fmt.Sprintf("https://%v:%v/v2/remote/not-a-valid-image/manifests/latest", host, port)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, dummyURL, nil)
-	if err != nil {
-		return fmt.Errorf("building HTTP request: %v", err)
-	}
-
-	req.Header.Set("Accept", "application/vnd.oci.image.manifest.v1+json, application/vnd.oci.image.index.v1+json")
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("unexpected error during HTTP request: %v", err)
-	}
-	resp.Body.Close()
-
-	if resp.StatusCode == http.StatusNotFound {
-		return nil
-	}
-
-	return fmt.Errorf("registry-facade is not ready yet")
-}
-
-func newDefaultTransport() *http.Transport {
-	return &http.Transport{
-		DialContext: (&net.Dialer{
-			Timeout:   1 * time.Second,
-			DualStack: false,
-		}).DialContext,
-		MaxIdleConns:          0,
-		MaxIdleConnsPerHost:   1,
-		IdleConnTimeout:       5 * time.Second,
-		ExpectContinueTimeout: 5 * time.Second,
-		DisableKeepAlives:     true,
-	}
 }

@@ -109,14 +109,15 @@ func UpdateImagesConfig(images []string) error {
 		return err
 	}
 
-	defer f.Close()
-
 	for _, image := range images {
 		_, err := f.WriteString(image + "\n")
 		if err != nil {
 			return err
 		}
 	}
+
+	_ = f.Sync()
+	_ = f.Close()
 
 	return nil
 }

@@ -362,6 +362,7 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 			Finalizers:  []string{workspacev1.GitpodFinalizerName},
 		},
 		Spec: corev1.PodSpec{
+			RuntimeClassName:             pointer.String("gitpod"),
 			Hostname:                     sctx.Workspace.Spec.Ownership.WorkspaceID,
 			AutomountServiceAccountToken: pointer.Bool(false),
 			ServiceAccountName:           "workspace",
