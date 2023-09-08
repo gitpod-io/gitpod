@@ -1873,8 +1873,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 url: repo.url,
                 projectId: repo.projectId,
                 projectName: repo.projectName,
-                // TODO: determine if we want to include this
-                repositoryName: repo.repositoryName,
             }),
         );
     }
