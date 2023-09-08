@@ -1772,8 +1772,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             }));
         };
 
+        // Load user repositories (from Git hosts directly)
         const fetchUserRepos = async (): Promise<SuggestedRepositoryWithSorting[]> => {
-            // User repositories (from Git hosts directly)
             const authProviders = await this.getAuthProviders(ctx);
 
             const providerRepos = await Promise.all(
@@ -1829,55 +1829,46 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             return recentRepos;
         };
 
-        const [examples, projects, userRepos, recentRepos] = await Promise.allSettled([
-            fetchExampleRepos(),
-            fetchProjects(),
-            fetchUserRepos(),
-            fetchRecentRepos(),
+        const repoResults = await Promise.allSettled([
+            fetchExampleRepos().catch((e) => log.error(logCtx, "Could not fetch example repositories", e)),
+            fetchProjects().catch((e) => log.error(logCtx, "Could not fetch projects", e)),
+            fetchUserRepos().catch((e) => log.error(logCtx, "Could not fetch user repositories", e)),
+            fetchRecentRepos().catch((e) => log.error(logCtx, "Could not fetch recent repositories", e)),
         ]);
+
+        const sortedRepos = repoResults
+            .map((r) => (r.status === "fulfilled" ? r.value || [] : []))
+            .flat()
+            .sort((a, b) => {
+                // priority first
+                if (a.priority !== b.priority) {
+                    return a.priority < b.priority ? 1 : -1;
+                }
+                // Most recently used second
+                if (b.lastUse || a.lastUse) {
+                    const la = a.lastUse || "";
+                    const lb = b.lastUse || "";
+                    return la < lb ? 1 : la === lb ? 0 : -1;
+                }
+                // Otherwise, alphasort
+                const ua = a.url.toLowerCase();
+                const ub = b.url.toLowerCase();
+                return ua > ub ? 1 : ua === ub ? 0 : -1;
+            });
 
         const uniqueRepositories = new Map<string, SuggestedRepositoryWithSorting>();
 
-        const remainingRepos = [
-            // Add projects first so we have projectId/projectName set
-            ...(projects.status === "rejected" ? [] : projects.value),
-            // Add the rest - order doesn't matter here
-            ...(examples.status === "fulfilled" ? examples.value : []),
-            ...(userRepos.status === "fulfilled" ? userRepos.value : []),
-            ...(recentRepos.status === "fulfilled" ? recentRepos.value : []),
-        ];
-        for (const repo of remainingRepos) {
+        for (const repo of sortedRepos) {
             const existingRepo = uniqueRepositories.get(repo.url);
-            if (!existingRepo) {
-                uniqueRepositories.set(repo.url, repo);
-            } else if (repo.lastUse && repo.lastUse > (existingRepo.lastUse || "")) {
-                // If we have a more recent lastUse, update the existing repo
-                uniqueRepositories.set(repo.url, {
-                    ...existingRepo,
-                    lastUse: repo.lastUse,
-                });
-            }
+
+            uniqueRepositories.set(repo.url, {
+                ...(existingRepo || {}),
+                ...repo,
+            });
         }
 
-        const sortedRepos = Array.from(uniqueRepositories.values()).sort((a, b) => {
-            // priority first
-            if (a.priority !== b.priority) {
-                return a.priority < b.priority ? 1 : -1;
-            }
-            // Most recently used second
-            if (b.lastUse || a.lastUse) {
-                const la = a.lastUse || "";
-                const lb = b.lastUse || "";
-                return la < lb ? 1 : la === lb ? 0 : -1;
-            }
-            // Otherwise, alphasort
-            const ua = a.url.toLowerCase();
-            const ub = b.url.toLowerCase();
-            return ua > ub ? 1 : ua === ub ? 0 : -1;
-        });
-
         // Convert to return type
-        return sortedRepos.map(
+        return Array.from(uniqueRepositories.values()).map(
             (repo): SuggestedRepository => ({
                 url: repo.url,
                 projectId: repo.projectId,
