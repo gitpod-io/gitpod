@@ -159,7 +159,7 @@ import {
 } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 import { ClientError } from "nice-grpc-common";
 import { BillingModes } from "../billing/billing-mode";
-import { Authorizer, SYSTEM_USER } from "../authorization/authorizer";
+import { Authorizer, SYSTEM_USER, isFgaChecksEnabled } from "../authorization/authorizer";
 import { OrganizationService } from "../orgs/organization-service";
 import { RedisSubscriber } from "../messaging/redis-subscriber";
 import { UsageService } from "../orgs/usage-service";
@@ -845,18 +845,21 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const result = await this.workspaceService.getWorkspace(user.id, workspaceId);
         const { workspace, latestInstance } = result;
 
-        const teamMembers = await this.organizationService.listMembers(user.id, workspace.organizationId);
-        await this.guardAccess({ kind: "workspace", subject: workspace, teamMembers: teamMembers }, "get");
-        if (!!latestInstance) {
-            await this.guardAccess(
-                {
-                    kind: "workspaceInstance",
-                    subject: latestInstance,
-                    workspace,
-                    teamMembers,
-                },
-                "get",
-            );
+        // We must not try to fetch the team members if the user is FGA enabled, ebcause this might be a shared workspace, where the user has access to the workspace but not to the org.
+        if (!(await isFgaChecksEnabled(user.id))) {
+            const teamMembers = await this.organizationService.listMembers(user.id, workspace.organizationId);
+            await this.guardAccess({ kind: "workspace", subject: workspace, teamMembers: teamMembers }, "get");
+            if (!!latestInstance) {
+                await this.guardAccess(
+                    {
+                        kind: "workspaceInstance",
+                        subject: latestInstance,
+                        workspace,
+                        teamMembers,
+                    },
+                    "get",
+                );
+            }
         }
 
         return {
