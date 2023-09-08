@@ -5,15 +5,23 @@
 package blobserve
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/remotes"
 	"github.com/docker/distribution/reference"
+	"github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/pkg/errors"
 	"golang.org/x/xerrors"
 
 	blobserve_config "github.com/gitpod-io/gitpod/blobserve/pkg/config"
@@ -296,32 +304,202 @@ func (store *refstore) handleRequest(ctx context.Context, ref string, force bool
 }
 
 func resolveRef(ctx context.Context, ref string, resolver remotes.Resolver) (*ociv1.Descriptor, error) {
-	/*
-		_, desc, err := resolver.Resolve(ctx, ref)
-		if err != nil {
-			return nil, err
-		}
-		fetcher, err := resolver.Fetcher(ctx, ref)
-		if err != nil {
-			return nil, err
-		}
+	_, desc, err := resolver.Resolve(ctx, ref)
+	if err != nil {
+		return nil, err
+	}
 
-			manifest, _, err := registry.DownloadManifest(ctx, registry.AsFetcherFunc(fetcher), desc)
+	fetcher, err := resolver.Fetcher(ctx, ref)
+	if err != nil {
+		return nil, err
+	}
+
+	manifest, _, err := downloadManifest(ctx, AsFetcherFunc(fetcher), desc)
+	if err != nil {
+		return nil, err
+	}
+
+	layerCount := len(manifest.Layers)
+	if layerCount <= 0 {
+		log.WithField("ref", ref).Error("image has no layers - cannot serve its blob")
+		return nil, errdefs.ErrNotFound
+	}
+	if layerCount > 1 {
+		log.WithField("ref", ref).Warn("image has more than one layers - serving from first layer only")
+	}
+	blobLayer := manifest.Layers[0]
+	return &blobLayer, nil
+}
+
+type manifestDownloadOptions struct {
+	Store content.Store
+}
+
+// ManifestDownloadOption alters the default manifest download behaviour
+type ManifestDownloadOption func(*manifestDownloadOptions)
+
+type FetcherFunc func() (remotes.Fetcher, error)
+
+func AsFetcherFunc(f remotes.Fetcher) FetcherFunc {
+	return func() (remotes.Fetcher, error) { return f, nil }
+}
+
+func downloadManifest(ctx context.Context, fetch FetcherFunc, desc ociv1.Descriptor, options ...ManifestDownloadOption) (cfg *ociv1.Manifest, rdesc *ociv1.Descriptor, err error) {
+	var opts manifestDownloadOptions
+	for _, o := range options {
+		o(&opts)
+	}
+
+	var (
+		placeInStore bool
+		rc           io.ReadCloser
+		mediaType    = desc.MediaType
+	)
+	if opts.Store != nil {
+		func() {
+			nfo, err := opts.Store.Info(ctx, desc.Digest)
+			if errors.Is(err, errdefs.ErrNotFound) {
+				// not in store yet
+				return
+			}
 			if err != nil {
-				return nil, err
+				log.WithError(err).WithField("desc", desc).Warn("cannot get manifest from store")
+				return
+			}
+			if nfo.Labels["Content-Type"] == "" {
+				// we have broken data in the store - ignore it and overwrite
+				return
 			}
 
-			layerCount := len(manifest.Layers)
-			if layerCount <= 0 {
-				log.WithField("ref", ref).Error("image has no layers - cannot serve its blob")
-				return nil, errdefs.ErrNotFound
+			r, err := opts.Store.ReaderAt(ctx, desc)
+			if errors.Is(err, errdefs.ErrNotFound) {
+				// not in store yet
+				return
 			}
-			if layerCount > 1 {
-				log.WithField("ref", ref).Warn("image has more than one layers - serving from first layer only")
+			if err != nil {
+				log.WithError(err).WithField("desc", desc).Warn("cannot get manifest from store")
+				return
 			}
-			blobLayer := manifest.Layers[0]
-			return &blobLayer, nil
-	*/
 
-	return nil, nil
+			mediaType, rc = nfo.Labels["Content-Type"], &reader{ReaderAt: r}
+		}()
+	}
+	if rc == nil {
+		// did not find in store, or there was no store. Either way, let's fetch this
+		// thing from the remote.
+		placeInStore = true
+
+		var fetcher remotes.Fetcher
+		fetcher, err = fetch()
+		if err != nil {
+			return
+		}
+
+		rc, err = fetcher.Fetch(ctx, desc)
+		if err != nil {
+			err = xerrors.Errorf("cannot fetch manifest: %w", err)
+			return
+		}
+		mediaType = desc.MediaType
+	}
+
+	inpt, err := io.ReadAll(rc)
+	rc.Close()
+	if err != nil {
+		err = xerrors.Errorf("cannot download manifest: %w", err)
+		return
+	}
+
+	rdesc = &desc
+	rdesc.MediaType = mediaType
+
+	switch rdesc.MediaType {
+	case images.MediaTypeDockerSchema2ManifestList, ociv1.MediaTypeImageIndex:
+		log.WithField("desc", rdesc).Debug("resolving image index")
+
+		// we received a manifest list which means we'll pick the default platform
+		// and fetch that manifest
+		var list ociv1.Index
+		err = json.Unmarshal(inpt, &list)
+		if err != nil {
+			err = xerrors.Errorf("cannot unmarshal index: %w", err)
+			return
+		}
+		if len(list.Manifests) == 0 {
+			err = xerrors.Errorf("empty manifest")
+			return
+		}
+
+		var fetcher remotes.Fetcher
+		fetcher, err = fetch()
+		if err != nil {
+			return
+		}
+
+		// TODO(cw): choose by platform, not just the first manifest
+		md := list.Manifests[0]
+		rc, err = fetcher.Fetch(ctx, md)
+		if err != nil {
+			err = xerrors.Errorf("cannot download config: %w", err)
+			return
+		}
+		rdesc = &md
+		inpt, err = io.ReadAll(rc)
+		rc.Close()
+		if err != nil {
+			err = xerrors.Errorf("cannot download manifest: %w", err)
+			return
+		}
+	}
+
+	switch rdesc.MediaType {
+	case images.MediaTypeDockerSchema2Manifest, ociv1.MediaTypeImageManifest:
+	default:
+		err = xerrors.Errorf("unsupported media type: %s", rdesc.MediaType)
+		return
+	}
+
+	var res ociv1.Manifest
+	err = json.Unmarshal(inpt, &res)
+	if err != nil {
+		err = xerrors.Errorf("cannot decode config: %w", err)
+		return
+	}
+
+	if opts.Store != nil && placeInStore {
+		// We're cheating here and store the actual image manifest under the desc of what's
+		// possibly an image index. This way we don't have to resolve the image index the next
+		// time one wishes to resolve desc.
+		w, err := opts.Store.Writer(ctx, content.WithDescriptor(desc), content.WithRef(desc.Digest.String()))
+		if err != nil {
+			if err != nil && !strings.Contains(err.Error(), "already exists") {
+				log.WithError(err).WithField("desc", *rdesc).Warn("cannot create store writer")
+			}
+		} else {
+			_, err = io.Copy(w, bytes.NewReader(inpt))
+			if err != nil {
+				log.WithError(err).WithField("desc", *rdesc).Warn("cannot copy manifest")
+			}
+
+			err = w.Commit(ctx, 0, digest.FromBytes(inpt), content.WithLabels(map[string]string{"Content-Type": rdesc.MediaType}))
+			if err != nil {
+				log.WithError(err).WithField("desc", *rdesc).Warn("cannot store manifest")
+			}
+			w.Close()
+		}
+	}
+
+	cfg = &res
+	return
+}
+
+type reader struct {
+	content.ReaderAt
+	off int64
+}
+
+func (r *reader) Read(b []byte) (n int, err error) {
+	n, err = r.ReadAt(b, r.off)
+	r.off += int64(n)
+	return
 }
