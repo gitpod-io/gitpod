@@ -1620,5 +1620,4 @@ export type SuggestedRepository = {
     url: string;
     projectId?: string;
     projectName?: string;
-    repositoryName?: string;
 };
