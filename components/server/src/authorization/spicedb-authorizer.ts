@@ -55,23 +55,40 @@ export class SpiceDBAuthorizer {
     }
 
     async writeRelationships(...updates: v1.RelationshipUpdate[]): Promise<v1.WriteRelationshipsResponse | undefined> {
-        const timer = spicedbClientLatency.startTimer();
-        let error: Error | undefined;
-        try {
-            const response = await this.client.writeRelationships(
-                v1.WriteRelationshipsRequest.create({
-                    updates,
-                }),
-                this.callOptions,
-            );
-            log.info("[spicedb] Successfully wrote relationships.", { response, updates });
+        let tries = 0;
+        // we do sometimes see INTERNAL errors from SpiceDB, so we retry a few times
+        // last time we checked it was 15 times per day (check logs)
+        while (tries++ < 3) {
+            const timer = spicedbClientLatency.startTimer();
+            let error: Error | undefined;
+            try {
+                const response = await this.client.writeRelationships(
+                    v1.WriteRelationshipsRequest.create({
+                        updates,
+                    }),
+                    this.callOptions,
+                );
+                log.info("[spicedb] Successfully wrote relationships.", { response, updates, tries });
 
-            return response;
-        } catch (err) {
-            error = err;
-            log.error("[spicedb] Failed to write relationships.", err, { updates: new TrustedValue(updates) });
-        } finally {
-            observeSpicedbClientLatency("write", error, timer());
+                return response;
+            } catch (err) {
+                error = err;
+                if (err.code === grpc.status.INTERNAL && tries < 3) {
+                    log.warn("[spicedb] Failed to write relationships.", err, {
+                        updates: new TrustedValue(updates),
+                        tries,
+                    });
+                } else {
+                    log.error("[spicedb] Failed to write relationships.", err, {
+                        updates: new TrustedValue(updates),
+                        tries,
+                    });
+                    // we don't try again on other errors
+                    return;
+                }
+            } finally {
+                observeSpicedbClientLatency("write", error, timer());
+            }
         }
     }
 
