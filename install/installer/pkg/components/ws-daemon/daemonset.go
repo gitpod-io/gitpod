@@ -37,10 +37,12 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 				"-c",
 				fmt.Sprintf("cp -f /installer/workspace_default.json /mnt/dst/workspace_default_%s.json", ctx.VersionManifest.Version),
 			},
-			VolumeMounts: []corev1.VolumeMount{{
-				Name:      "hostseccomp",
-				MountPath: "/mnt/dst",
-			}},
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      "hostseccomp",
+					MountPath: "/mnt/dst",
+				},
+			},
 			SecurityContext: &corev1.SecurityContext{Privileged: pointer.Bool(true)},
 		},
 		{
@@ -140,6 +142,13 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Type: func() *corev1.HostPathType { r := corev1.HostPathDirectoryOrCreate; return &r }(),
 			}},
 		},
+		{
+			Name: "gitpod-images-config",
+			VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
+				Path: HostGitpodImagesConfig,
+				Type: func() *corev1.HostPathType { r := corev1.HostPathDirectoryOrCreate; return &r }(),
+			}},
+		},
 		common.CAVolume(),
 	}
 
@@ -183,6 +192,11 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		{
 			Name:      "gcloud-tmp",
 			MountPath: "/mnt/sync-tmp",
+		},
+		{
+			Name:             "gitpod-images-config",
+			MountPath:        HostGitpodImagesConfig,
+			MountPropagation: func() *corev1.MountPropagationMode { r := corev1.MountPropagationBidirectional; return &r }(),
 		},
 		common.CAVolumeMount(),
 	}

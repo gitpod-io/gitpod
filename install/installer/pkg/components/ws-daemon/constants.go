@@ -14,5 +14,6 @@ const (
 	HostBackupPath          = "/var/gitpod/tmp/backup"
 	TLSSecretName           = "ws-daemon-tls"
 	VolumeTLSCerts          = "ws-daemon-tls-certs"
+	HostGitpodImagesConfig  = "/etc/gitpod/config"
 	ReadinessPort           = baseserver.BuiltinHealthPort
 )

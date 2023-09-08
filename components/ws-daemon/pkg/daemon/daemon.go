@@ -40,7 +40,6 @@ import (
 
 var (
 	scheme = runtime.NewScheme()
-	// setupLog = ctrl.Log.WithName("setup")
 )
 
 func init() {
@@ -162,6 +161,12 @@ func NewDaemon(config Config) (*Daemon, error) {
 		if config.NetLimit.Enabled {
 			netlimiter.Update(config.NetLimit)
 		}
+
+		err := content.UpdateImagesConfig(config.StaticLayers)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	}))
 
@@ -173,7 +178,10 @@ func NewDaemon(config Config) (*Daemon, error) {
 		Namespace:              config.Runtime.KubernetesNamespace,
 		HealthProbeBindAddress: "0",
 		MetricsBindAddress:     "0", // Metrics are exposed through baseserver.
-		NewCache:               cache.MultiNamespacedCacheBuilder([]string{config.Runtime.KubernetesNamespace, config.Runtime.SecretsNamespace}),
+		NewCache: func(cfg *rest.Config, opts cache.Options) (cache.Cache, error) {
+			opts.Namespaces = []string{config.Runtime.KubernetesNamespace, config.Runtime.SecretsNamespace}
+			return cache.New(cfg, opts)
+		},
 	})
 	if err != nil {
 		return nil, err

@@ -23,6 +23,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/watch"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/config"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/daemon"
 )
 
@@ -45,6 +46,11 @@ var runCmd = &cobra.Command{
 		ctrl.SetLogger(baseLogger)
 		// Set the logger used by k8s (e.g. client-go).
 		klog.SetLogger(baseLogger)
+
+		err = content.UpdateImagesConfig(cfg.StaticLayers)
+		if err != nil {
+			log.WithError(err).Fatal("cannot write configuration file")
+		}
 
 		dmn, err := daemon.NewDaemon(cfg.Daemon)
 		if err != nil {

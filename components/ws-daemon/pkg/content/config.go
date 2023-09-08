@@ -6,6 +6,9 @@ package content
 
 import (
 	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gitpod-io/gitpod/common-go/util"
@@ -88,4 +91,32 @@ type InitializerConfig struct {
 
 	// Args are additional arguments to pass to the CI runtime
 	Args []string `json:"args"`
+}
+
+const (
+	dynamicGitpodImagesCfg = "/etc/gitpod/config/dynamic-images"
+)
+
+func UpdateImagesConfig(images []string) error {
+	confDirParent := filepath.Dir(dynamicGitpodImagesCfg)
+	err := os.MkdirAll(confDirParent, 0755)
+	if err != nil {
+		return fmt.Errorf("failed to create the parent directory %s: %w", confDirParent, err)
+	}
+
+	f, err := os.Create(dynamicGitpodImagesCfg)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	for _, image := range images {
+		_, err := f.WriteString(image + "\n")
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

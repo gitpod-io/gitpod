@@ -30,6 +30,8 @@ type Config struct {
 	OOMScores           cgroup.OOMScoreAdjConfig  `json:"oomScores"`
 	DiskSpaceGuard      diskguard.Config          `json:"disk"`
 	WorkspaceController WorkspaceControllerConfig `json:"workspaceController"`
+
+	StaticLayers []string `json:"staticLayers"`
 }
 
 type WorkspaceControllerConfig struct {
