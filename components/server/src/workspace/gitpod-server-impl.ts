@@ -1068,7 +1068,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     public async getWorkspaces(
         ctx: TraceContext,
-        options: GitpodServer.GetWorkspacesOptions = {},
+        options: GitpodServer.GetWorkspacesOptions,
     ): Promise<WorkspaceInfo[]> {
         traceAPIParams(ctx, { options });
 

@@ -41,6 +41,8 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
             return suggestedContextURLs;
         }
 
+        // For now, convert the suggestedRepos to a list of URLs
+        // We'll follow up with updating the UI with the new data
         return suggestedRepos?.map((repo) => repo.url) || [];
     }, [suggestedContextURLs, suggestedRepos, includeProjectsOnCreateWorkspace]);
 
