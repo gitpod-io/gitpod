@@ -11,6 +11,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace/ide"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	wsdapi "github.com/gitpod-io/gitpod/ws-daemon/api"
@@ -179,6 +180,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ctx.ImageName(ctx.Config.Repository, "supervisor", ctx.VersionManifest.Components.Workspace.Supervisor.Version),
 			ctx.ImageName(ctx.Config.Repository, "workspacekit", ctx.VersionManifest.Components.Workspace.Workspacekit.Version),
 			ctx.ImageName(ctx.Config.Repository, "docker-up", ctx.VersionManifest.Components.Workspace.DockerUp.Version),
+			ctx.ImageName(ctx.Config.Repository, ide.CodeHelperIDEImage, ctx.VersionManifest.Components.Workspace.CodeHelperImage.Version),
+			ctx.ImageName(ctx.Config.Repository, ide.CodeWebExtensionImage, ide.CodeWebExtensionVersion),
 		},
 	}
 	fc, err := common.ToJSONString(wsdcfg)
