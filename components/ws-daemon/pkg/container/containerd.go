@@ -20,7 +20,6 @@ import (
 	"github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/oci"
 	"github.com/containerd/typeurl/v2"
 	ocispecs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opentracing/opentracing-go"
@@ -451,7 +450,7 @@ func (s *Containerd) ContainerRootfs(ctx context.Context, id ID, opts OptsContai
 		return "", err
 	}
 
-	var spec oci.Spec
+	var spec ocispecs.Spec
 	if err := json.Unmarshal(cr.Spec.GetValue(), &s); err != nil {
 		return "", err
 	}
