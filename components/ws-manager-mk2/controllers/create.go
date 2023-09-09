@@ -53,11 +53,6 @@ const (
 	gracePeriod = 30 * time.Minute
 )
 
-var (
-	// for testing
-	runtimeClass = pointer.String("gitpod")
-)
-
 type startWorkspaceContext struct {
 	Config         *config.Configuration
 	Workspace      *workspacev1.Workspace
@@ -367,7 +362,6 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 			Finalizers:  []string{workspacev1.GitpodFinalizerName},
 		},
 		Spec: corev1.PodSpec{
-			RuntimeClassName:             runtimeClass,
 			Hostname:                     sctx.Workspace.Spec.Ownership.WorkspaceID,
 			AutomountServiceAccountToken: pointer.Bool(false),
 			ServiceAccountName:           "workspace",

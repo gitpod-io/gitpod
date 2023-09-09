@@ -99,7 +99,12 @@ func (b *Builder) buildWorkspaceImage(ctx context.Context, cl *client.Client) (e
 		return err
 	}
 
-	err = ioutil.WriteFile(filepath.Join(contextDir, "Dockerfile"), []byte(fmt.Sprintf("FROM %v", b.Config.BaseRef)), 0644)
+	dockerFile := `#
+FROM %v
+LABEL org.opencontainers.image.authors="GitpodImageBuilder"
+`
+
+	err = ioutil.WriteFile(filepath.Join(contextDir, "Dockerfile"), []byte(fmt.Sprintf(dockerFile, b.Config.BaseRef)), 0644)
 	if err != nil {
 		return xerrors.Errorf("unexpected error creating temporal directory: %w", err)
 	}
