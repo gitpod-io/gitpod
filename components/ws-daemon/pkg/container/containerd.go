@@ -443,28 +443,13 @@ func (s *Containerd) ContainerRootfs(ctx context.Context, id ID, opts OptsContai
 		return "", ErrNotFound
 	}
 
-	cr, err := s.Client.ContainerService().Get(ctx, string(id))
-	if err != nil {
-		return "", err
-	}
-
-	data, err := json.Marshal(cr)
-	if err != nil {
-		return "", err
-	}
-
-	log.WithField("container", string(data)).Info("Container")
-
-	var spec ocispecs.Spec
-	if err := json.Unmarshal(cr.Spec.GetValue(), &s); err != nil {
-		return "", err
-	}
+	rootfs := fmt.Sprintf("/run/containerd/io.containerd.runtime.v2.task/k8s.io/%v/rootfs", id)
 
 	if opts.Unmapped {
-		return spec.Root.Path, nil
+		return rootfs, nil
 	}
 
-	return s.Mapping.Translate(spec.Root.Path)
+	return s.Mapping.Translate(rootfs)
 }
 
 // ContainerCGroupPath finds the container's cgroup path suffix
