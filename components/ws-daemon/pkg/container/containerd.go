@@ -38,7 +38,7 @@ const (
 )
 
 // NewContainerd creates a new containerd adapter
-func NewContainerd(cfg *ContainerdConfig, mounts *NodeMountsLookup, pathMapping PathMapping) (*Containerd, error) {
+func NewContainerd(cfg *ContainerdConfig, pathMapping PathMapping) (*Containerd, error) {
 	cc, err := containerd.New(cfg.SocketPath, containerd.WithDefaultNamespace(kubernetesNamespace))
 	if err != nil {
 		return nil, xerrors.Errorf("cannot connect to containerd at %s: %w", cfg.SocketPath, err)
@@ -52,7 +52,6 @@ func NewContainerd(cfg *ContainerdConfig, mounts *NodeMountsLookup, pathMapping 
 
 	res := &Containerd{
 		Client:  cc,
-		Mounts:  mounts,
 		Mapping: pathMapping,
 
 		cond:   sync.NewCond(&sync.Mutex{}),
@@ -68,7 +67,6 @@ func NewContainerd(cfg *ContainerdConfig, mounts *NodeMountsLookup, pathMapping 
 // Containerd implements the ws-daemon CRI for containerd
 type Containerd struct {
 	Client  *containerd.Client
-	Mounts  *NodeMountsLookup
 	Mapping PathMapping
 
 	cond   *sync.Cond
@@ -440,27 +438,18 @@ func (s *Containerd) ContainerExists(ctx context.Context, id ID) (exists bool, e
 
 // ContainerRootfs finds the workspace container's rootfs.
 func (s *Containerd) ContainerRootfs(ctx context.Context, id ID, opts OptsContainerRootfs) (loc string, err error) {
-	info, ok := s.cntIdx[string(id)]
+	_, ok := s.cntIdx[string(id)]
 	if !ok {
 		return "", ErrNotFound
 	}
 
-	// TODO(cw): make this less brittle
-	// We can't get the rootfs location on the node from containerd somehow.
-	// As a workaround we'll look at the node's mount table using the snapshotter key.
-	// This feels brittle and we should keep looking for a better way.
-	mnt, err := s.Mounts.GetMountpoint(func(mountPoint string) bool {
-		return strings.Contains(mountPoint, info.SnapshotKey)
-	})
-	if err != nil {
-		return
-	}
+	rootfs := fmt.Sprintf("/run/containerd/io.containerd.runtime.v2.task/k8s.io/%v/rootfs", id)
 
 	if opts.Unmapped {
-		return mnt, nil
+		return rootfs, nil
 	}
 
-	return s.Mapping.Translate(mnt)
+	return s.Mapping.Translate(rootfs)
 }
 
 // ContainerCGroupPath finds the container's cgroup path suffix
