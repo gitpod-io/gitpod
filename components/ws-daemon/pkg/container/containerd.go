@@ -20,6 +20,7 @@ import (
 	"github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/oci"
 	"github.com/containerd/typeurl/v2"
 	ocispecs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opentracing/opentracing-go"
@@ -440,27 +441,26 @@ func (s *Containerd) ContainerExists(ctx context.Context, id ID) (exists bool, e
 
 // ContainerRootfs finds the workspace container's rootfs.
 func (s *Containerd) ContainerRootfs(ctx context.Context, id ID, opts OptsContainerRootfs) (loc string, err error) {
-	info, ok := s.cntIdx[string(id)]
+	_, ok := s.cntIdx[string(id)]
 	if !ok {
 		return "", ErrNotFound
 	}
 
-	// TODO(cw): make this less brittle
-	// We can't get the rootfs location on the node from containerd somehow.
-	// As a workaround we'll look at the node's mount table using the snapshotter key.
-	// This feels brittle and we should keep looking for a better way.
-	mnt, err := s.Mounts.GetMountpoint(func(mountPoint string) bool {
-		return strings.Contains(mountPoint, info.SnapshotKey)
-	})
+	cr, err := s.Client.ContainerService().Get(ctx, string(id))
 	if err != nil {
-		return
+		return "", err
+	}
+
+	var spec oci.Spec
+	if err := json.Unmarshal(cr.Spec.GetValue(), &s); err != nil {
+		return "", err
 	}
 
 	if opts.Unmapped {
-		return mnt, nil
+		return spec.Root.Path, nil
 	}
 
-	return s.Mapping.Translate(mnt)
+	return s.Mapping.Translate(spec.Root.Path)
 }
 
 // ContainerCGroupPath finds the container's cgroup path suffix
