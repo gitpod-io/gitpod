@@ -327,18 +327,6 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 	if err != nil {
 		return xerrors.Errorf("cannot parse baseref: %v", err)
 	}
-	bobBaseref := "localhost:8080/base"
-
-	defRef := strings.Split(baseref, ":")[1]
-	if defRef != "" {
-		bobBaseref += ":" + defRef
-	} else if r, ok := pbaseref.(reference.Digested); ok {
-		bobBaseref += "@" + r.Digest().String()
-	} else if r, ok := pbaseref.(reference.Canonical); ok {
-		bobBaseref += "@" + r.Digest().String()
-	} else {
-		bobBaseref += ":latest"
-	}
 
 	wsref, err := reference.ParseNamed(wsrefstr)
 	var additionalAuth []byte
@@ -378,7 +366,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 				Envvars: []*wsmanapi.EnvironmentVariable{
 					{Name: "BOB_TARGET_REF", Value: fmt.Sprintf("localhost:8080/target:%v", strings.Split(wsrefstr, ":")[1])},
 					{Name: "BOB_BUILD_SOCI_INDEX", Value: fmt.Sprintf("%v", o.Config.EnableSOCIIndex)},
-					{Name: "BOB_BASE_REF", Value: bobBaseref},
+					{Name: "BOB_BASE_REF", Value: baseref},
 					{Name: "BOB_BUILD_BASE", Value: buildBase},
 					{Name: "BOB_DOCKERFILE_PATH", Value: dockerfilePath},
 					{Name: "BOB_CONTEXT_DIR", Value: contextPath},
