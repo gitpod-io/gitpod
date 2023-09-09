@@ -119,9 +119,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Container: &container.Config{
 					Runtime: container.RuntimeContainerd,
 					Mapping: runtimeMapping,
-					Mounts: container.NodeMountsLookupConfig{
-						ProcLoc: "/mnt/mounts",
-					},
 					Containerd: &container.ContainerdConfig{
 						SocketPath: "/mnt/containerd/containerd.sock",
 					},

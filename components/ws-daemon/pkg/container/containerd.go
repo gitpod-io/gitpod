@@ -38,7 +38,7 @@ const (
 )
 
 // NewContainerd creates a new containerd adapter
-func NewContainerd(cfg *ContainerdConfig, mounts *NodeMountsLookup, pathMapping PathMapping) (*Containerd, error) {
+func NewContainerd(cfg *ContainerdConfig, pathMapping PathMapping) (*Containerd, error) {
 	cc, err := containerd.New(cfg.SocketPath, containerd.WithDefaultNamespace(kubernetesNamespace))
 	if err != nil {
 		return nil, xerrors.Errorf("cannot connect to containerd at %s: %w", cfg.SocketPath, err)
@@ -52,7 +52,6 @@ func NewContainerd(cfg *ContainerdConfig, mounts *NodeMountsLookup, pathMapping 
 
 	res := &Containerd{
 		Client:  cc,
-		Mounts:  mounts,
 		Mapping: pathMapping,
 
 		cond:   sync.NewCond(&sync.Mutex{}),
@@ -68,7 +67,6 @@ func NewContainerd(cfg *ContainerdConfig, mounts *NodeMountsLookup, pathMapping 
 // Containerd implements the ws-daemon CRI for containerd
 type Containerd struct {
 	Client  *containerd.Client
-	Mounts  *NodeMountsLookup
 	Mapping PathMapping
 
 	cond   *sync.Cond
@@ -449,6 +447,13 @@ func (s *Containerd) ContainerRootfs(ctx context.Context, id ID, opts OptsContai
 	if err != nil {
 		return "", err
 	}
+
+	data, err := json.Marshal(cr)
+	if err != nil {
+		return "", err
+	}
+
+	log.WithField("container", string(data)).Info("Container")
 
 	var spec ocispecs.Spec
 	if err := json.Unmarshal(cr.Spec.GetValue(), &s); err != nil {

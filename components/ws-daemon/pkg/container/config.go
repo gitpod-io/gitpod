@@ -14,17 +14,8 @@ import (
 	"golang.org/x/xerrors"
 )
 
-// NodeMountsLookupConfig confiugures the node mount/fs access
-type NodeMountsLookupConfig struct {
-	// ProcLoc is the path to the node's /proc/mounts -
-	ProcLoc string `json:"proc"`
-}
-
 // Config configures the container runtime interface
 type Config struct {
-	// Mounts configures the node mounts lookup
-	Mounts NodeMountsLookupConfig `json:"mounts"`
-
 	// Mapping mapps a path from the node to the container by stripping the key and prepending the value of this map.
 	// For example {"/var/lib/containerd": "/mnt/snapshots"} would translate /var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/ to /mnt/snapshots/io.containerd.snapshotter.v1.overlayfs/snapshots/
 	Mapping map[string]string `json:"nodeToContainerMapping"`
@@ -58,17 +49,12 @@ func FromConfig(cfg *Config) (rt Runtime, err error) {
 		return
 	}
 
-	mounts, err := NewNodeMountsLookup(&cfg.Mounts)
-	if err != nil {
-		return nil, err
-	}
-
 	switch cfg.Runtime {
 	case RuntimeContainerd:
 		if cfg.Containerd == nil {
 			return nil, xerrors.Errorf("runtime is set to containerd, but not containerd config is provided")
 		}
-		return NewContainerd(cfg.Containerd, mounts, cfg.Mapping)
+		return NewContainerd(cfg.Containerd, cfg.Mapping)
 	default:
 		return nil, xerrors.Errorf("unknown runtime type: %s", cfg.Runtime)
 	}
