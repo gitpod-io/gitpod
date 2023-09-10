@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:6823db3719cabd2e6de71f7a521907827eacabbff4a272a807bc1c66c9f95b6c
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:f73a3360466ecc4d6df3f451d7d5c4c49663096e158848ddbc9603c52a47bffe
 
 # Ensure latest packages are present, like security updates.
 RUN apk upgrade --no-cache \
