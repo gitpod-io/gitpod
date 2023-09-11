@@ -150,22 +150,6 @@ type PortSpec struct {
 	Protocol PortProtocol `json:"protocol"`
 }
 
-func (ps PortSpec) Equal(other PortSpec) bool {
-	if ps.Port != other.Port {
-		return false
-	}
-
-	if ps.Visibility != other.Visibility {
-		return false
-	}
-
-	if ps.Protocol != other.Protocol {
-		return false
-	}
-
-	return true
-}
-
 // WorkspaceStatus defines the observed state of Workspace
 type WorkspaceStatus struct {
 	PodStarts  int    `json:"podStarts"`
