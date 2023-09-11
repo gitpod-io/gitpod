@@ -14,7 +14,7 @@ import { UserService as UserServiceDefinition } from "@gitpod/public-api/lib/git
 import { WorkspacesService as WorkspacesServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/workspaces_connectweb";
 import express from "express";
 import * as http from "http";
-import { inject, injectable } from "inversify";
+import { inject, injectable, interfaces } from "inversify";
 import { AddressInfo } from "net";
 import { APIHelloService } from "./dummy";
 import { APIStatsService } from "./stats";
@@ -64,5 +64,14 @@ export class API {
             }),
         );
         return router;
+    }
+
+    static contribute(bind: interfaces.Bind): void {
+        bind(APIHelloService).toSelf().inSingletonScope();
+        bind(APIUserService).toSelf().inSingletonScope();
+        bind(APITeamsService).toSelf().inSingletonScope();
+        bind(APIWorkspacesService).toSelf().inSingletonScope();
+        bind(APIStatsService).toSelf().inSingletonScope();
+        bind(API).toSelf().inSingletonScope();
     }
 }

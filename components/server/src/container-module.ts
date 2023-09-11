@@ -6,6 +6,7 @@
 
 import { ContainerModule } from "inversify";
 
+import { RedisPublisher, newRedisClient } from "@gitpod/gitpod-db/lib";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { GitpodFileParser } from "@gitpod/gitpod-protocol/lib/gitpod-file-parser";
 import { PrometheusClientCallMetrics } from "@gitpod/gitpod-protocol/lib/messaging/client-call-metrics";
@@ -32,8 +33,10 @@ import {
     WorkspaceManagerClientProviderSource,
 } from "@gitpod/ws-manager/lib/client-provider-source";
 import * as grpc from "@grpc/grpc-js";
+import { Redis } from "ioredis";
 import { createChannel, createClient, createClientFactory } from "nice-grpc";
 import { retryMiddleware } from "nice-grpc-client-middleware-retry";
+import { APIHelloService } from "./api/dummy";
 import { API } from "./api/server";
 import { APIStatsService } from "./api/stats";
 import { APITeamsService } from "./api/teams";
@@ -50,10 +53,14 @@ import { AuthJWT, SignInJWT } from "./auth/jwt";
 import { LoginCompletionHandler } from "./auth/login-completion-handler";
 import { VerificationService } from "./auth/verification-service";
 import { Authorizer, createInitializingAuthorizer } from "./authorization/authorizer";
+import { RelationshipUpdater } from "./authorization/relationship-updater";
+import { RelationshipUpdateJob } from "./authorization/relationship-updater-job";
 import { SpiceDBClientProvider, spiceDBConfigFromEnv } from "./authorization/spicedb";
+import { SpiceDBAuthorizer } from "./authorization/spicedb-authorizer";
 import { BillingModes } from "./billing/billing-mode";
 import { EntitlementService, EntitlementServiceImpl } from "./billing/entitlement-service";
 import { EntitlementServiceUBP } from "./billing/entitlement-service-ubp";
+import { StripeService } from "./billing/stripe-service";
 import { BitbucketAppSupport } from "./bitbucket/bitbucket-app-support";
 import { CodeSyncService } from "./code-sync/code-sync-service";
 import { Config, ConfigFile } from "./config";
@@ -71,9 +78,12 @@ import { WebhookEventGarbageCollector } from "./jobs/webhook-gc";
 import { WorkspaceGarbageCollector } from "./jobs/workspace-gc";
 import { LinkedInService } from "./linkedin-service";
 import { LivenessController } from "./liveness/liveness-controller";
+import { RedisSubscriber } from "./messaging/redis-subscriber";
 import { MonitoringEndpointsApp } from "./monitoring-endpoints";
 import { OAuthController } from "./oauth-server/oauth-controller";
 import { OneTimeSecretServer } from "./one-time-secret-server";
+import { OrganizationService } from "./orgs/organization-service";
+import { UsageService } from "./orgs/usage-service";
 import { BitbucketApp } from "./prebuilds/bitbucket-app";
 import { BitbucketServerApp } from "./prebuilds/bitbucket-server-app";
 import { GithubApp } from "./prebuilds/github-app";
@@ -85,20 +95,23 @@ import { PrebuildManager } from "./prebuilds/prebuild-manager";
 import { PrebuildStatusMaintainer } from "./prebuilds/prebuilt-status-maintainer";
 import { StartPrebuildContextParser } from "./prebuilds/start-prebuild-context-parser";
 import { ProjectsService } from "./projects/projects-service";
+import { ScmService } from "./projects/scm-service";
 import { RedisMutex } from "./redis/mutex";
 import { Server } from "./server";
 import { SessionHandler } from "./session-handler";
 import { ContentServiceStorageClient } from "./storage/content-service-client";
 import { StorageClient } from "./storage/storage-client";
 import { AuthorizationService, AuthorizationServiceImpl } from "./user/authorization-service";
+import { EnvVarService } from "./user/env-var-service";
+import { GitpodTokenService } from "./user/gitpod-token-service";
 import { NewsletterSubscriptionController } from "./user/newsletter-subscription-controller";
-import { StripeService } from "./billing/stripe-service";
+import { SSHKeyService } from "./user/sshkey-service";
 import { TokenProvider } from "./user/token-provider";
 import { TokenService } from "./user/token-service";
-import { UsageService } from "./orgs/usage-service";
+import { UserAuthentication } from "./user/user-authentication";
 import { ServerFactory, UserController } from "./user/user-controller";
 import { UserDeletionService } from "./user/user-deletion-service";
-import { UserAuthentication } from "./user/user-authentication";
+import { UserService } from "./user/user-service";
 import { contentServiceBinder } from "./util/content-service-sugar";
 import { WebsocketConnectionManager } from "./websocket/websocket-connection-manager";
 import { ConfigProvider } from "./workspace/config-provider";
@@ -119,14 +132,6 @@ import { SnapshotService } from "./workspace/snapshot-service";
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace/workspace-cluster-imagebuilder-client-provider";
 import { WorkspaceDownloadService } from "./workspace/workspace-download-service";
 import { WorkspaceFactory } from "./workspace/workspace-factory";
-import { WorkspaceStarter } from "./workspace/workspace-starter";
-import { SpiceDBAuthorizer } from "./authorization/spicedb-authorizer";
-import { OrganizationService } from "./orgs/organization-service";
-import { RedisSubscriber } from "./messaging/redis-subscriber";
-import { Redis } from "ioredis";
-import { RedisPublisher, newRedisClient } from "@gitpod/gitpod-db/lib";
-import { UserService } from "./user/user-service";
-import { RelationshipUpdater } from "./authorization/relationship-updater";
 import { WorkspaceService } from "./workspace/workspace-service";
 import { SSHKeyService } from "./user/sshkey-service";
 import { GitpodTokenService } from "./user/gitpod-token-service";
@@ -134,7 +139,6 @@ import { EnvVarService } from "./user/env-var-service";
 import { ScmService } from "./projects/scm-service";
 import { RelationshipUpdateJob } from "./authorization/relationship-updater-job";
 import { WorkspaceStartController } from "./workspace/workspace-start-controller";
-import { APIHelloService } from "./api/dummy";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -333,6 +337,8 @@ export const productionContainerModule = new ContainerModule(
         bind(RelationshipUpdater).toSelf().inSingletonScope();
 
         // grpc / Connect API
+        API.contribute(bind);
+
         bind(APIHelloService).toSelf().inSingletonScope();
         bind(APIUserService).toSelf().inSingletonScope();
         bind(APITeamsService).toSelf().inSingletonScope();
