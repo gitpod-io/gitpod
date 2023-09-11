@@ -103,7 +103,7 @@ describe("ProjectsService", async () => {
     it("should updateProject", async () => {
         const ps = container.get(ProjectsService);
         const project = await createTestProject(ps, org, owner);
-        await ps.updateProject(owner.id, {
+        await ps.updateProject(owner, {
             id: project.id,
             settings: {
                 useIncrementalPrebuilds: !project.settings?.useIncrementalPrebuilds,
@@ -117,7 +117,7 @@ describe("ProjectsService", async () => {
         );
 
         await expectError(ErrorCodes.PERMISSION_DENIED, () =>
-            ps.updateProject(member.id, {
+            ps.updateProject(member, {
                 id: project.id,
                 settings: {
                     useIncrementalPrebuilds: !project.settings?.useIncrementalPrebuilds,
@@ -125,7 +125,7 @@ describe("ProjectsService", async () => {
             }),
         );
         await expectError(ErrorCodes.NOT_FOUND, () =>
-            ps.updateProject(stranger.id, {
+            ps.updateProject(stranger, {
                 id: project.id,
                 settings: {
                     useIncrementalPrebuilds: !project.settings?.useIncrementalPrebuilds,
