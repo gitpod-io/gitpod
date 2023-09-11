@@ -10,6 +10,8 @@ import { Job } from "../jobs/runner";
 import { DBWithTracing, TracedWorkspaceDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { durationLongerThanSeconds } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { WorkspaceStarter } from "./workspace-starter";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class WorkspaceStartController implements Job {
@@ -29,27 +31,44 @@ export class WorkspaceStartController implements Job {
         try {
             const instances = await this.workspaceDB.trace(ctx).findInstancesByPhase(WorkspaceStarter.STARTING_PHASES);
             for (const instance of instances) {
-                const phase = instance.status.phase;
-                if (
-                    phase === "preparing" ||
-                    phase === "building" ||
-                    // !!! Note: during pending, the handover between app-cluster and ws-manager happens. !!!
-                    // This means:
-                    //  - there is a control loop on ws-manager-bridge that checks for an upper limit a instance may be in pending phase
-                    //  - it will take some time after calling ws-manager to see the first status update
-                    // In 99.9% this is due to timing, so we need to be a bit cautious here not to spam ourselves.
-                    (phase === "pending" && durationLongerThanSeconds(Date.parse(instance.creationTime), 30))
-                ) {
-                    // this.reconcileWorkspaceStart(ctx, instance.id);
-                    const workspace = await this.workspaceDB.trace(ctx).findById(instance.workspaceId);
-                    if (!workspace) {
-                        throw new Error("cannot find workspace for instance");
+                try {
+                    const phase = instance.status.phase;
+                    if (
+                        phase === "preparing" ||
+                        phase === "building" ||
+                        // !!! Note: during pending, the handover between app-cluster and ws-manager happens. !!!
+                        // This means:
+                        //  - there is a control loop on ws-manager-bridge that checks for an upper limit a instance may be in pending phase
+                        //  - it will take some time after calling ws-manager to see the first status update
+                        // In 99.9% this is due to timing, so we need to be a bit cautious here not to spam ourselves.
+                        (phase === "pending" && durationLongerThanSeconds(Date.parse(instance.creationTime), 30))
+                    ) {
+                        // this.reconcileWorkspaceStart(ctx, instance.id);
+                        const workspace = await this.workspaceDB.trace(ctx).findById(instance.workspaceId);
+                        if (!workspace) {
+                            throw new Error("cannot find workspace for instance");
+                        }
+                        const user = await this.userDB.findUserById(workspace.ownerId);
+                        if (!user) {
+                            throw new Error("cannot find owner for workspace");
+                        }
+
+                        const isEnabled = await getExperimentsClientForBackend().getValueAsync(
+                            "workspace_start_controller",
+                            false,
+                            {
+                                user,
+                                projectId: workspace.projectId,
+                            },
+                        );
+                        if (!isEnabled) {
+                            continue;
+                        }
+
+                        await this.workspaceStarter.reconcileWorkspaceStart(ctx, instance.id, user, workspace);
                     }
-                    const user = await this.userDB.findUserById(workspace.ownerId);
-                    if (!user) {
-                        throw new Error("cannot find owner for workspace");
-                    }
-                    this.workspaceStarter.reconcileWorkspaceStart(ctx, instance.id, user, workspace);
+                } catch (err) {
+                    log.warn({ instanceId: instance.id }, "error while reconciling workspace start", err);
                 }
             }
         } catch (err) {

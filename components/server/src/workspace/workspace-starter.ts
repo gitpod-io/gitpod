@@ -130,6 +130,7 @@ import { WorkspaceClassesConfig } from "./workspace-classes";
 import { SYSTEM_USER } from "../authorization/authorizer";
 import { EnvVarService, ResolvedEnvVars } from "../user/env-var-service";
 import { RedlockAbortSignal } from "redlock";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
@@ -175,10 +176,7 @@ export async function getWorkspaceClassForInstance(
 }
 
 class StartInstanceError extends Error {
-    constructor(
-        public readonly reason: FailedInstanceStartReason,
-        public readonly cause: Error,
-    ) {
+    constructor(public readonly reason: FailedInstanceStartReason, public readonly cause: Error) {
         super("Starting workspace instance failed: " + cause.message);
     }
 }
@@ -331,7 +329,7 @@ export class WorkspaceStarter {
             instanceId = instance.id;
 
             // start the instance
-            this.reconcileWorkspaceStart({ span }, instance.id, user, workspace);
+            await this.reconcileWorkspaceStart({ span }, instance.id, user, workspace);
 
             return { instanceID: instance.id };
         } catch (e) {
@@ -342,8 +340,73 @@ export class WorkspaceStarter {
         }
     }
 
-    public reconcileWorkspaceStart(_ctx: TraceContext, instanceId: string, user: User, workspace: Workspace) {
+    public async reconcileWorkspaceStart(_ctx: TraceContext, instanceId: string, user: User, workspace: Workspace) {
         const ctx = TraceContext.childContext("reconcileWorkspaceStart", _ctx);
+
+        const doReconcileWorkspaceStart = async (abortSignal: RedlockAbortSignal) => {
+            try {
+                // Fetch a fresh instance to check it's phase
+                const instance = await this.workspaceDb.trace({}).findInstanceById(instanceId);
+                if (!instance) {
+                    ctx.span.finish();
+                    throw new Error("cannot find workspace for instance");
+                }
+                if (!WorkspaceStarter.STARTING_PHASES.includes(instance.status.phase)) {
+                    log.debug(
+                        { instanceId, workspaceId: instance.workspaceId, userId: user.id },
+                        "can't start workspace instance in this phase",
+                        { phase: instance.status.phase },
+                    );
+                    return;
+                }
+
+                const envVars = await this.envVarService.resolveEnvVariables(
+                    user.id,
+                    workspace.projectId,
+                    workspace.type,
+                    workspace.context,
+                );
+
+                const forceRebuild = !!workspace.context.forceImageBuild;
+                try {
+                    // if we need to build the workspace image we must not wait for actuallyStartWorkspace to return as that would block the
+                    // frontend until the image is built.
+                    const additionalAuth = await this.getAdditionalImageAuth(envVars);
+                    const needsImageBuild =
+                        forceRebuild || (await this.needsImageBuild(ctx, user, workspace, instance, additionalAuth));
+                    if (needsImageBuild) {
+                        instance.status.conditions = {
+                            neededImageBuild: true,
+                        };
+                    }
+                    ctx.span?.setTag("needsImageBuild", needsImageBuild);
+                } catch (err) {
+                    // if we fail to check if the workspace needs an image build (e.g. becuase the image builder is unavailable),
+                    // we must properly fail the workspace instance, i.e. set its status to stopped, deal with prebuilds etc.
+                    //
+                    // Once we've reached actuallyStartWorkspace that function will take care of failing the instance.
+                    await this.failInstanceStart(ctx, err, workspace, instance, abortSignal);
+                    throw err;
+                }
+
+                await this.actuallyStartWorkspace(ctx, instance, workspace, user, envVars, abortSignal, forceRebuild);
+            } catch (err) {
+                log.error({ instanceId }, "error in reconcileWorkspaceStart", err);
+            } finally {
+                ctx.span.finish();
+            }
+        };
+
+        const runWithMutex = await getExperimentsClientForBackend().getValueAsync("workspace_start_controller", false, {
+            user,
+            projectId: workspace.projectId,
+        });
+        ctx.span.setTag("runWithMutex", runWithMutex);
+        if (!runWithMutex) {
+            const abortController = new AbortController();
+            await doReconcileWorkspaceStart(abortController.signal);
+            return;
+        }
 
         // We try to acquire a mutex here, which we intend to hold until the workspace start request is sent to ws-manager.
         // In case this container dies for whatever reason, the mutex is eventually released, and the instance can be picked up
@@ -352,73 +415,14 @@ export class WorkspaceStarter {
             .using(
                 ["workspace-instance-start-" + instanceId],
                 5000, // After 5s without extension the lock is released
-                async (abortSignal) => {
-                    // Fetch a fresh instance to check it's phase
-                    const instance = await this.workspaceDb.trace({}).findInstanceById(instanceId);
-                    if (!instance) {
-                        ctx.span.finish();
-                        throw new Error("cannot find workspace for instance");
-                    }
-                    if (!WorkspaceStarter.STARTING_PHASES.includes(instance.status.phase)) {
-                        log.debug(
-                            { instanceId, workspaceId: instance.workspaceId, userId: user.id },
-                            "can't start workspace instance in this phase",
-                            { phase: instance.status.phase },
-                        );
-                        return;
-                    }
-
-                    const envVars = await this.envVarService.resolveEnvVariables(
-                        user.id,
-                        workspace.projectId,
-                        workspace.type,
-                        workspace.context,
-                    );
-
-                    const forceRebuild = !!workspace.context.forceImageBuild;
-                    try {
-                        // if we need to build the workspace image we must not wait for actuallyStartWorkspace to return as that would block the
-                        // frontend until the image is built.
-                        const additionalAuth = await this.getAdditionalImageAuth(envVars);
-                        const needsImageBuild =
-                            forceRebuild ||
-                            (await this.needsImageBuild(ctx, user, workspace, instance, additionalAuth));
-                        if (needsImageBuild) {
-                            instance.status.conditions = {
-                                neededImageBuild: true,
-                            };
-                        }
-                        ctx.span?.setTag("needsImageBuild", needsImageBuild);
-                    } catch (err) {
-                        // if we fail to check if the workspace needs an image build (e.g. becuase the image builder is unavailable),
-                        // we must properly fail the workspace instance, i.e. set its status to stopped, deal with prebuilds etc.
-                        //
-                        // Once we've reached actuallyStartWorkspace that function will take care of failing the instance.
-                        await this.failInstanceStart(ctx, err, workspace, instance, abortSignal);
-                        throw err;
-                    }
-
-                    await this.actuallyStartWorkspace(
-                        ctx,
-                        instance,
-                        workspace,
-                        user,
-                        envVars,
-                        abortSignal,
-                        forceRebuild,
-                    );
-                },
+                doReconcileWorkspaceStart,
                 { retryCount: 4, retryDelay: 500 }, // We wait at most 2s until we give up, and conclude that someone else is already starting this instance
             )
             .catch((err) => {
                 if (RedisMutex.isLockError(err)) {
-                    log.debug({ instanceId }, "unable to acquire lock for workspace instance start");
+                    log.warn({ instanceId }, "unable to acquire lock for workspace instance start");
                     return;
                 }
-                log.error({ instanceId }, "error in reconcileWorkspaceStart", err);
-            })
-            .finally(() => {
-                ctx.span.finish();
             });
     }
 
