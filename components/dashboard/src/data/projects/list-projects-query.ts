@@ -18,8 +18,7 @@ export const useListProjectsQuery = () => {
     const org = useCurrentOrg().data;
     const orgId = org?.id;
     return useQuery<ListProjectsQueryResults>({
-        // Projects are either tied to current team, otherwise current user
-        queryKey: getListProjectsQueryKey(orgId || ""),
+        queryKey: orgId ? getListProjectsQueryKey(orgId) : ["no-persistence"],
         cacheTime: 1000 * 60 * 60 * 1, // 1 hour
         queryFn: async () => {
             if (!orgId) {
@@ -57,9 +56,5 @@ export const useRefreshProjects = () => {
 };
 
 export const getListProjectsQueryKey = (orgId: string) => {
-    if (!orgId) {
-        throw new Error("Must provide either an orgId for projects query key");
-    }
-
     return ["projects", "list", { orgId }];
 };
