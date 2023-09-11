@@ -7,18 +7,22 @@ package controllers
 import (
 	"context"
 	"os"
+	"reflect"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
+	"github.com/google/go-cmp/cmp"
 )
 
 func NewSubscriberReconciler(c client.Client, cfg *config.Configuration) (*SubscriberReconciler, error) {
@@ -76,5 +80,24 @@ func (r *SubscriberReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 		}
 	}()
 
-	return c.Watch(source.Kind(mgr.GetCache(), &workspacev1.Workspace{}), &handler.EnqueueRequestForObject{})
+	// we need several reconciliation loops during a workspace creation until it reaches a stable state.
+	// this introduces the side effect of multiple notifications to the subscribers with partial information.
+	// the filterByUpdate predicate acts as a filter to avoid this
+	filterByUpdate := predicate.Funcs{
+		CreateFunc: func(ce event.CreateEvent) bool {
+			return true
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			old := e.ObjectOld.(*workspacev1.Workspace)
+			new := e.ObjectNew.(*workspacev1.Workspace)
+
+			if !cmp.Equal(old.Spec.Ports, new.Spec.Ports) {
+				return true
+			}
+
+			return !reflect.DeepEqual(old.Status, new.Status)
+		},
+	}
+
+	return c.Watch(source.Kind(mgr.GetCache(), &workspacev1.Workspace{}), &handler.EnqueueRequestForObject{}, filterByUpdate)
 }
