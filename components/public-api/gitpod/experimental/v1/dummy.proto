@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package gitpod.experimental.v1;
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1";
+
+// HelloService is a dummy service that says hello. It is used for reliability
+// testing.
+service HelloService {
+  // Unary RPCs where the client sends a single request to the server and gets a
+  // single response back, just like a normal function call.
+  rpc SayHello(SayHelloRequest) returns (SayHelloResponse);
+  // Server streaming RPCs where the client sends a request to the server and
+  // gets a stream to read a sequence of messages back.
+  rpc LotsOfReplies(LotsOfRepliesRequest)
+      returns (stream LotsOfRepliesResponse);
+}
+
+message SayHelloRequest { string greeting = 1; }
+message SayHelloResponse { string reply = 1; }
+
+message LotsOfRepliesRequest { string greeting = 1; }
+message LotsOfRepliesResponse { string reply = 1; }
