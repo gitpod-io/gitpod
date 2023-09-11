@@ -16,8 +16,13 @@ service HelloService {
       returns (stream LotsOfRepliesResponse);
 }
 
-message SayHelloRequest { string greeting = 1; }
+message SayHelloRequest {}
 message SayHelloResponse { string reply = 1; }
 
-message LotsOfRepliesRequest { string greeting = 1; }
-message LotsOfRepliesResponse { string reply = 1; }
+message LotsOfRepliesRequest {
+  int32 previous_count = 1;
+}
+message LotsOfRepliesResponse {
+  string reply = 1;
+  int32 count = 2;
+}

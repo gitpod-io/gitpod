@@ -95,6 +95,11 @@ export class LotsOfRepliesRequest extends Message<LotsOfRepliesRequest> {
    */
   greeting = "";
 
+  /**
+   * @generated from field: int32 previous_count = 2;
+   */
+  previousCount = 0;
+
   constructor(data?: PartialMessage<LotsOfRepliesRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -104,6 +109,7 @@ export class LotsOfRepliesRequest extends Message<LotsOfRepliesRequest> {
   static readonly typeName = "gitpod.experimental.v1.LotsOfRepliesRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "greeting", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "previous_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): LotsOfRepliesRequest {
@@ -132,6 +138,11 @@ export class LotsOfRepliesResponse extends Message<LotsOfRepliesResponse> {
    */
   reply = "";
 
+  /**
+   * @generated from field: int32 count = 2;
+   */
+  count = 0;
+
   constructor(data?: PartialMessage<LotsOfRepliesResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -141,6 +152,7 @@ export class LotsOfRepliesResponse extends Message<LotsOfRepliesResponse> {
   static readonly typeName = "gitpod.experimental.v1.LotsOfRepliesResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "reply", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): LotsOfRepliesResponse {

@@ -317,6 +317,8 @@ export class Server {
 
         log.info("Registered Bitbucket Server app at " + BitbucketServerApp.path);
         app.use(BitbucketServerApp.path, this.bitbucketServerApp.router);
+
+        app.use(this.api.apiRouter);
     }
 
     public async start(port: number) {

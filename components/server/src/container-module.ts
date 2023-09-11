@@ -134,6 +134,7 @@ import { EnvVarService } from "./user/env-var-service";
 import { ScmService } from "./projects/scm-service";
 import { RelationshipUpdateJob } from "./authorization/relationship-updater-job";
 import { WorkspaceStartController } from "./workspace/workspace-start-controller";
+import { APIHelloService } from "./api/dummy";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -332,6 +333,7 @@ export const productionContainerModule = new ContainerModule(
         bind(RelationshipUpdater).toSelf().inSingletonScope();
 
         // grpc / Connect API
+        bind(APIHelloService).toSelf().inSingletonScope();
         bind(APIUserService).toSelf().inSingletonScope();
         bind(APITeamsService).toSelf().inSingletonScope();
         bind(APIWorkspacesService).toSelf().inSingletonScope();
