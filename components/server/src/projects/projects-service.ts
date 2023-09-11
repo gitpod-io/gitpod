@@ -24,6 +24,7 @@ import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messag
 import { URL } from "url";
 import { Authorizer } from "../authorization/authorizer";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
+import { ScmService } from "./scm-service";
 
 @injectable()
 export class ProjectsService {
@@ -34,6 +35,7 @@ export class ProjectsService {
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(WebhookEventDB) private readonly webhookEventDB: WebhookEventDB,
         @inject(Authorizer) private readonly auth: Authorizer,
+        @inject(ScmService) private readonly scmService: ScmService,
     ) {}
 
     async getProject(userId: string, projectId: string): Promise<Project> {
@@ -334,8 +336,8 @@ export class ProjectsService {
         return result;
     }
 
-    async updateProject(userId: string, partialProject: PartialProject): Promise<void> {
-        await this.auth.checkPermissionOnProject(userId, "write_info", partialProject.id);
+    async updateProject(user: User, partialProject: PartialProject): Promise<void> {
+        await this.auth.checkPermissionOnProject(user.id, "write_info", partialProject.id);
 
         const partial: PartialProject = { id: partialProject.id };
         if (partialProject.name) {
@@ -351,10 +353,35 @@ export class ProjectsService {
         const allowedFields: (keyof Project)[] = ["settings", "name"];
         for (const f of allowedFields) {
             if (f in partialProject) {
-                (partial[f] as any) = partialProject[f];
+                (partial as any)[f] = partialProject[f];
             }
         }
+        await this.handleEnablePrebuild(user, partialProject);
         return this.projectDB.updateProject(partialProject);
+    }
+
+    private async handleEnablePrebuild(user: User, partialProject: PartialProject): Promise<void> {
+        const enablePrebuildsNew = partialProject?.settings?.enablePrebuilds;
+        if (typeof enablePrebuildsNew === "boolean") {
+            const project = await this.projectDB.findProjectById(partialProject.id);
+            if (!project) {
+                return;
+            }
+            let enablePrebuildsPrev = project.settings?.enablePrebuilds;
+            if (typeof enablePrebuildsPrev === "undefined") {
+                // Compatibility mode for existing projects without persisted settings.
+                enablePrebuildsPrev = true;
+            }
+            const installWebhook = enablePrebuildsNew && !enablePrebuildsPrev;
+            const uninstallWebhook = !enablePrebuildsNew && enablePrebuildsPrev;
+            if (installWebhook) {
+                await this.scmService.installWebhookForPrebuilds(project, user);
+            }
+            if (uninstallWebhook) {
+                // TODO
+                // await this.scmService.uninstallWebhookForPrebuilds(project, user);
+            }
+        }
     }
 
     async isProjectConsideredInactive(userId: string, projectId: string): Promise<boolean> {
