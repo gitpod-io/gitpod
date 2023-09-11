@@ -20,6 +20,10 @@ import { injectable } from "inversify";
  * - server-side observability
  * - client-side observability
  * - rate limitting
+ * - logging context
+ * - feature flags for unary and stream tests
+ * - SLOs
+ * - alerting
  */
 @injectable()
 export class APIHelloService implements ServiceImpl<typeof HelloService> {

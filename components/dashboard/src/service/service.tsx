@@ -60,10 +60,14 @@ export function getGitpodService(): GitpodService {
     const service = _gp.gitpodService || (_gp.gitpodService = createGitpodService());
     service.server = new Proxy(service.server, {
         get(target, propKey) {
-            return function (...args: any[]) {
+            return async function (...args: any[]) {
+                // TODO(ak) feature flagged
                 if (propKey === "getWorkspace") {
-                    // TODO(ak) feature flagged
-                    helloService.sayHello({}).catch(console.error);
+                    try {
+                        return await target[propKey](...args);
+                    } finally {
+                        helloService.sayHello({}).catch(console.error);
+                    }
                 }
                 return target[propKey](...args);
             };
