@@ -135,7 +135,7 @@ export class BitbucketApp {
                 commit: context.revision,
             });
             const config = await this.prebuildManager.fetchConfig({ span }, user, context);
-            if (!this.prebuildManager.shouldPrebuild(config)) {
+            if (!this.prebuildManager.shouldPrebuild({ config, project: projectAndOwner.project })) {
                 console.log("Bitbucket push event: No config. No prebuild.");
                 await this.webhookEvents.updateEvent(event.id, {
                     prebuildStatus: "ignored_unconfigured",
@@ -158,7 +158,12 @@ export class BitbucketApp {
             }
             const ws = await this.prebuildManager.startPrebuild(
                 { span },
-                { user, project: projectAndOwner.project, context, commitInfo },
+                {
+                    user,
+                    project: projectAndOwner.project!,
+                    context,
+                    commitInfo,
+                },
             );
             if (!ws.done) {
                 await this.webhookEvents.updateEvent(event.id, {

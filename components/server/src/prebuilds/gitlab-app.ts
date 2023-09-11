@@ -159,7 +159,7 @@ export class GitLabApp {
             });
 
             const config = await this.prebuildManager.fetchConfig({ span }, user, context);
-            if (!this.prebuildManager.shouldPrebuild(config)) {
+            if (!this.prebuildManager.shouldPrebuild({ config, project: projectAndOwner.project })) {
                 log.debug({ userId: user.id }, "GitLab push hook: There is no prebuild config.", {
                     context: body,
                     contextURL,
@@ -178,7 +178,7 @@ export class GitLabApp {
                 { span },
                 {
                     user: projectAndOwner.user || user,
-                    project: projectAndOwner.project,
+                    project: projectAndOwner.project!,
                     context,
                     commitInfo,
                 },

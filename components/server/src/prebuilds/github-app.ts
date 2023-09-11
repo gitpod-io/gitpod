@@ -310,7 +310,7 @@ export class GithubApp {
             });
 
             const runPrebuild =
-                this.prebuildManager.shouldPrebuild(config) &&
+                this.prebuildManager.shouldPrebuild({ config, project }) &&
                 this.appRules.shouldRunPrebuild(config, branch == repo.default_branch, false, false);
             if (!runPrebuild) {
                 const reason = `Not running prebuild, the user did not enable it for this context or did not configure prebuild task(s)`;
@@ -325,7 +325,7 @@ export class GithubApp {
 
             const commitInfo = await this.getCommitInfo(user, repo.html_url, ctx.payload.after);
             this.prebuildManager
-                .startPrebuild({ span }, { user, context, project, commitInfo })
+                .startPrebuild({ span }, { user, context, project: project!, commitInfo })
                 .then(async (result) => {
                     if (!result.done) {
                         await this.webhookEvents.updateEvent(event.id, {
@@ -539,13 +539,14 @@ export class GithubApp {
 
         const isFork = pr.head.repo.id !== pr.base.repo.id;
         const runPrebuild =
-            this.prebuildManager.shouldPrebuild(config) && this.appRules.shouldRunPrebuild(config, false, true, isFork);
+            this.prebuildManager.shouldPrebuild({ config, project }) &&
+            this.appRules.shouldRunPrebuild(config, false, true, isFork);
         if (runPrebuild) {
             const commitInfo = await this.getCommitInfo(user, ctx.payload.repository.html_url, pr.head.sha);
             const result = await this.prebuildManager.startPrebuild(tracecContext, {
                 user,
                 context,
-                project,
+                project: project!,
                 commitInfo,
             });
             if (result?.done) {
