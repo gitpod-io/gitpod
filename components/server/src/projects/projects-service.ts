@@ -236,7 +236,6 @@ export class ProjectsService {
             await this.auth.removeProjectFromOrg(installer.id, teamId, project.id);
             throw err;
         }
-        await this.scmService.installWebhookForPrebuilds(project, installer);
 
         // Pre-fetch project details in the background -- don't await
         this.getProjectOverview(installer, project.id).catch((err) => {
