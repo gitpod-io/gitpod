@@ -13,6 +13,7 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 import { v1 } from "@authzed/authzed-node";
 import { fgaRelationsUpdateClientLatency } from "../prometheus-metrics";
 import { RedisMutex } from "../redis/mutex";
+import { rel } from "./definitions";
 
 @injectable()
 export class RelationshipUpdater {
@@ -48,7 +49,7 @@ export class RelationshipUpdater {
             }
             return user;
         }
-        if (this.isMigrated(user)) {
+        if (await this.isMigrated(user)) {
             return user;
         }
         const stopTimer = fgaRelationsUpdateClientLatency.startTimer();
@@ -61,7 +62,7 @@ export class RelationshipUpdater {
                     throw new ApplicationError(ErrorCodes.NOT_FOUND, "User not found");
                 }
                 user = updatedUser;
-                if (this.isMigrated(user)) {
+                if (await this.isMigrated(user)) {
                     return user;
                 }
                 log.info({ userId: user.id }, `Updating FGA relationships for user.`, {
@@ -93,8 +94,23 @@ export class RelationshipUpdater {
         }
     }
 
-    private isMigrated(user: User) {
-        return user.additionalData?.fgaRelationshipsVersion === RelationshipUpdater.version;
+    private async isMigrated(user: User) {
+        const isMigrated = user.additionalData?.fgaRelationshipsVersion === RelationshipUpdater.version;
+        if (isMigrated) {
+            const hasSelfRelationship = await this.authorizer.find(rel.user(user.id).self.user(user.id));
+            if (!hasSelfRelationship) {
+                log.warn({ userId: user.id }, `User is marked as migrated but doesn't have self relationship.`);
+                //TODO(se) this is an extra safety net to detect
+                // reset the fgaRelationshipsVersion to undefined, so the migration is triggered again when the feature is enabled
+                AdditionalUserData.set(user, { fgaRelationshipsVersion: undefined });
+                await this.userDB.updateUserPartial({
+                    id: user.id,
+                    additionalData: user.additionalData,
+                });
+                return false;
+            }
+        }
+        return isMigrated;
     }
 
     private async findAffectedOrganizations(userId: string): Promise<Organization[]> {
