@@ -130,7 +130,7 @@ function capitalize(label?: string) {
     return label && label[0].toLocaleUpperCase() + label.slice(1);
 }
 
-const IdeOptionElementSelected: FC<IdeOptionElementProps> = ({ option, useLatest, loading = false }) => {
+export const IdeOptionElementSelected: FC<IdeOptionElementProps> = ({ option, useLatest, loading = false }) => {
     let version: string | undefined, label: string | undefined, title: string;
     if (!option) {
         title = "Select Editor";
@@ -171,7 +171,7 @@ const IdeOptionElementSelected: FC<IdeOptionElementProps> = ({ option, useLatest
     );
 };
 
-function IdeOptionElementInDropDown(p: IdeOptionElementProps): JSX.Element {
+export function IdeOptionElementInDropDown(p: IdeOptionElementProps): JSX.Element {
     const { option, useLatest } = p;
     if (!option) {
         return <></>;

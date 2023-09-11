@@ -23,9 +23,9 @@ export const WorkspaceDetails: FC<Props> = ({
     onIDEChange,
 }) => {
     return (
-        <div className="flex flex-row gap-1">
+        <div className="flex flex-row justify-start items-center gap-2 mt-4 mx-2">
             <WorkspaceClass selectedWSClassID={selectedWSClassID} onChange={onWSClassChange} />
-            <span> class with </span>
+            <span>with</span>
             <WorkspaceIDE selectedIDE={selectedIDE} useLatestIDE={useLatestIDE} onChange={onIDEChange} />
         </div>
     );

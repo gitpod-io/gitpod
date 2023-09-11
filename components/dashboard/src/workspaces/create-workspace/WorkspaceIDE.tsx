@@ -7,6 +7,10 @@
 import { FC, useMemo } from "react";
 import ContextMenu, { ContextMenuEntry } from "../../components/ContextMenu";
 import { useFilteredAndSortedIDEOptions } from "../../data/ide-options/ide-options-query";
+import { Button } from "../../components/Button";
+import Arrow from "../../components/Arrow";
+import Editor from "../../icons/Editor.svg";
+import { IdeOptionElementInDropDown } from "../../components/SelectIDEComponent";
 
 type WorkspaceIDEProps = {
     selectedIDE: string;
@@ -19,6 +23,7 @@ export const WorkspaceIDE: FC<WorkspaceIDEProps> = ({ selectedIDE, useLatestIDE,
     const menuEntries = useMemo((): ContextMenuEntry[] => {
         return (ideOptions || []).map((ide) => ({
             title: ide.title,
+            customContent: <IdeOptionElementInDropDown option={ide} useLatest={useLatestIDE} />,
             onClick: () => {
                 onChange(ide.id, useLatestIDE);
             },
@@ -38,8 +43,29 @@ export const WorkspaceIDE: FC<WorkspaceIDEProps> = ({ selectedIDE, useLatestIDE,
     }
 
     return (
-        <ContextMenu menuEntries={menuEntries}>
-            <span>{selectedOption?.title ?? "unknown"}</span>
+        <ContextMenu menuEntries={menuEntries} customClasses="right-0">
+            {/* {selectedOption ? (
+                <IdeOptionElementSelected option={selectedOption} useLatest={useLatestIDE} loading={isLoading} />
+            ) : (
+                <span>Please select an Editor</span>
+            )} */}
+            <Button
+                type="secondary"
+                size="small"
+                icon={<img className="w-4 filter-grayscale" src={Editor} alt="logo" />}
+            >
+                {/* <span className="flex flex-row gap-1 items-center"> */}
+                {/* <img className="w-4 filter-grayscale" src={Editor} alt="logo" /> */}
+                <span className="font-semibold">{selectedOption?.title ?? "unknown"}</span>
+                {selectedOption?.label && (
+                    <>
+                        <span className="text-gray-300 dark:text-gray-600 font-normal">&middot;</span>
+                        <span className="text-sm">{selectedOption?.label}</span>
+                    </>
+                )}
+                <Arrow direction={"down"} />
+                {/* </span> */}
+            </Button>
         </ContextMenu>
     );
 };
