@@ -2251,6 +2251,7 @@ type Project struct {
 }
 
 type ProjectSettings struct {
+	EnablePrebuilds              bool                      `json:"enablePrebuilds,omitempty"`
 	UseIncrementalPrebuilds      bool                      `json:"useIncrementalPrebuilds,omitempty"`
 	UsePersistentVolumeClaim     bool                      `json:"usePersistentVolumeClaim,omitempty"`
 	KeepOutdatedPrebuildsRunning bool                      `json:"keepOutdatedPrebuildsRunning,omitempty"`

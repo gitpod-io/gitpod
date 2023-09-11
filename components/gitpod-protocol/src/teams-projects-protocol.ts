@@ -14,6 +14,7 @@ export interface ProjectConfig {
 }
 
 export interface ProjectSettings {
+    enablePrebuilds?: boolean;
     useIncrementalPrebuilds?: boolean;
     keepOutdatedPrebuildsRunning?: boolean;
     // whether new workspaces can start on older prebuilds and incrementally update
