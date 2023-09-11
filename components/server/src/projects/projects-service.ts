@@ -24,7 +24,6 @@ import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messag
 import { URL } from "url";
 import { Authorizer } from "../authorization/authorizer";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
-import { ScmService } from "./scm-service";
 
 @injectable()
 export class ProjectsService {
@@ -35,7 +34,6 @@ export class ProjectsService {
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(WebhookEventDB) private readonly webhookEventDB: WebhookEventDB,
         @inject(Authorizer) private readonly auth: Authorizer,
-        @inject(ScmService) private readonly scmService: ScmService,
     ) {}
 
     async getProject(userId: string, projectId: string): Promise<Project> {
