@@ -64,7 +64,7 @@ export default function NewProject() {
                 <Heading1>Project Created</Heading1>
                 <Subheading className="mt-2 text-center">
                     Created{" "}
-                    <a className="gp-link" href={`/projects/${Project.slug(project!)}`}>
+                    <a className="gp-link" href={`/projects/${Project.slug(project!)}/settings`}>
                         {project.name}
                     </a>{" "}
                     {!currentTeam ? (
