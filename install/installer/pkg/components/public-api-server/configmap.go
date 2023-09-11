@@ -31,7 +31,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	var stripeSecretPath string
 	var personalAccessTokenSigningKeyPath string
 
-	publicUrl := fmt.Sprintf("https://api.%s", ctx.Config.Domain)
+	publicUrl := fmt.Sprintf("https://services.%s", ctx.Config.Domain)
 
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		_, _, stripeSecretPath, _ = getStripeConfig(cfg)
