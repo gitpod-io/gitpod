@@ -318,6 +318,7 @@ export class Server {
         log.info("Registered Bitbucket Server app at " + BitbucketServerApp.path);
         app.use(BitbucketServerApp.path, this.bitbucketServerApp.router);
 
+        // TODO(ak) move to own app on port 3001
         app.use(this.api.apiRouter);
     }
 

@@ -4,7 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { HandlerContext, ServiceImpl } from "@bufbuild/connect";
+import { Code, ConnectError, HandlerContext, ServiceImpl } from "@bufbuild/connect";
+import { User } from "@gitpod/gitpod-protocol";
 import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connectweb";
 import {
     LotsOfRepliesRequest,
@@ -12,11 +13,11 @@ import {
     SayHelloRequest,
     SayHelloResponse,
 } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_pb";
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
+import { SessionHandler } from "../session-handler";
 
 /**
  * TODO(ak):
- * - auth
  * - server-side observability
  * - client-side observability
  * - rate limitting
@@ -27,16 +28,23 @@ import { injectable } from "inversify";
  */
 @injectable()
 export class APIHelloService implements ServiceImpl<typeof HelloService> {
+    constructor(
+        @inject(SessionHandler)
+        private readonly sessionHandler: SessionHandler,
+    ) {}
+
     async sayHello(req: SayHelloRequest, context: HandlerContext): Promise<SayHelloResponse> {
+        const user = await this.authUser(context);
         const response = new SayHelloResponse();
-        response.reply = "Hello " + this.getSubject();
+        response.reply = "Hello " + this.getSubject(user);
         return response;
     }
     async *lotsOfReplies(req: LotsOfRepliesRequest, context: HandlerContext): AsyncGenerator<LotsOfRepliesResponse> {
+        const user = await this.authUser(context);
         let count = req.previousCount || 0;
         while (true) {
             const response = new LotsOfRepliesResponse();
-            response.reply = `Hello ${this.getSubject()} ${count}`;
+            response.reply = `Hello ${this.getSubject(user)} ${count}`;
             response.count = count;
             yield response;
             count++;
@@ -44,8 +52,16 @@ export class APIHelloService implements ServiceImpl<typeof HelloService> {
         }
     }
 
-    private getSubject(): string {
-        // TODO(ak) get identify from JWT
-        return "World";
+    private getSubject(user: User): string {
+        return User.getName(user) || "World";
+    }
+
+    // TODO(ak) decorate
+    private async authUser(context: HandlerContext) {
+        const user = await this.sessionHandler.verify(context.requestHeader.get("cookie"));
+        if (!user) {
+            throw new ConnectError("unauthenticated", Code.Unauthenticated);
+        }
+        return user;
     }
 }
