@@ -237,11 +237,6 @@ export class ProjectsService {
             throw err;
         }
 
-        // Pre-fetch project details in the background -- don't await
-        this.getProjectOverview(installer, project.id).catch((err) => {
-            log.error(`Error pre-fetching project details for project ${project.id}: ${err}`);
-        });
-
         this.analytics.track({
             userId: installer.id,
             event: "project_created",
