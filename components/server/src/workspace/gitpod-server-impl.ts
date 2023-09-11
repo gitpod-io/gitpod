@@ -1738,8 +1738,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     public async getSuggestedRepositories(ctx: TraceContext, organizationId: string): Promise<SuggestedRepository[]> {
+        traceAPIParams(ctx, { organizationId });
+
         const user = await this.checkAndBlockUser("getSuggestedRepositories");
-        await this.guardWithFeatureFlag("includeProjectsOnCreateWorkspace", user, organizationId);
 
         if (!uuidValidate(organizationId)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId must be a valid UUID");
@@ -1752,33 +1753,32 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             lastUse?: string;
         };
 
-        const fetchExampleRepos = async (): Promise<SuggestedRepositoryWithSorting[]> => {
-            const repos = await this.getFeaturedRepositories(ctx);
-
-            return repos.map((repo) => ({
-                url: repo.url,
-                priority: 0,
-            }));
-        };
-
         const fetchProjects = async (): Promise<SuggestedRepositoryWithSorting[]> => {
+            const span = TraceContext.startSpan("getSuggestedRepositories.fetchProjects", ctx);
             const projects = await this.projectsService.getProjects(user.id, organizationId);
 
-            return projects.map((project) => ({
+            const projectRepos = projects.map((project) => ({
                 url: project.cloneUrl.replace(/\.git$/, ""),
                 projectId: project.id,
                 projectName: project.name,
                 priority: 1,
             }));
+
+            span.finish();
+
+            return projectRepos;
         };
 
         // Load user repositories (from Git hosts directly)
         const fetchUserRepos = async (): Promise<SuggestedRepositoryWithSorting[]> => {
+            const span = TraceContext.startSpan("getSuggestedRepositories.fetchUserRepos", ctx);
             const authProviders = await this.getAuthProviders(ctx);
 
             const providerRepos = await Promise.all(
                 authProviders.map(async (p): Promise<SuggestedRepositoryWithSorting[]> => {
                     try {
+                        span.setTag("host", p.host);
+
                         const hostContext = this.hostContextProvider.get(p.host);
                         const services = hostContext?.services;
                         if (!services) {
@@ -1799,10 +1799,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 }),
             );
 
+            span.finish();
+
             return providerRepos.flat();
         };
 
         const fetchRecentRepos = async (): Promise<SuggestedRepositoryWithSorting[]> => {
+            const span = TraceContext.startSpan("getSuggestedRepositories.fetchRecentRepos", ctx);
+
             const workspaces = await this.getWorkspaces(ctx, { organizationId });
             const recentRepos: SuggestedRepositoryWithSorting[] = [];
 
@@ -1826,11 +1830,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 }
             }
 
+            span.finish();
+
             return recentRepos;
         };
 
         const repoResults = await Promise.allSettled([
-            fetchExampleRepos().catch((e) => log.error(logCtx, "Could not fetch example repositories", e)),
             fetchProjects().catch((e) => log.error(logCtx, "Could not fetch projects", e)),
             fetchUserRepos().catch((e) => log.error(logCtx, "Could not fetch user repositories", e)),
             fetchRecentRepos().catch((e) => log.error(logCtx, "Could not fetch recent repositories", e)),
