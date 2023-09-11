@@ -15,7 +15,6 @@ import { Workspace } from ".";
  * TODO(gpl) See if we can get this into `server` code to remove the burden from clients
  */
 export namespace ContextURL {
-    export const PREBUILD_PREFIX = "prebuild";
     export const IMAGEBUILD_PREFIX = "imagebuild";
     export const SNAPSHOT_PREFIX = "snapshot";
     export const REFERRER_PREFIX = "referrer:";
@@ -89,7 +88,6 @@ export namespace ContextURL {
 
         const firstSegment = segments[0];
         if (
-            firstSegment === PREBUILD_PREFIX ||
             firstSegment === IMAGEBUILD_PREFIX ||
             firstSegment === SNAPSHOT_PREFIX ||
             firstSegment.startsWith(REFERRER_PREFIX)
