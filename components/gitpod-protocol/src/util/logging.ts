@@ -20,7 +20,17 @@ export interface LogContext {
     workspaceId?: string;
     instanceId?: string;
 }
+
+/**
+ * allows to globally augment the log context, default is an identity function
+ */
+let logContextAugmenter: LogContext.Augmenter = (context) => context;
+
 export namespace LogContext {
+    export type Augmenter = (context: LogContext | undefined) => LogContext | undefined;
+    export function setAugmenter(augmenter: Augmenter): void {
+        logContextAugmenter = augmenter;
+    }
     export function from(params: { userId?: string; user?: any; request?: any }) {
         return <LogContext>{
             sessionId: params.request?.requestID,
@@ -306,6 +316,7 @@ function makeLogItem(
     if (context !== undefined && Object.keys(context).length == 0) {
         context = undefined;
     }
+    context = logContextAugmenter(context);
     context = scrubPayload(context, plainLogging);
 
     let reportedErrorEvent: {} = {};
