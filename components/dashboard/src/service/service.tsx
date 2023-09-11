@@ -19,6 +19,7 @@ import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url"
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/frontend-dashboard-service";
 import { RemoteTrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
+import { helloService } from "./public-api";
 
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
@@ -57,6 +58,17 @@ export function getGitpodService(): GitpodService {
         return service;
     }
     const service = _gp.gitpodService || (_gp.gitpodService = createGitpodService());
+    service.server = new Proxy(service.server, {
+        get(target, propKey) {
+            return function (...args: any[]) {
+                if (propKey === "getWorkspace") {
+                    // TODO(ak) feature flagged
+                    helloService.sayHello({}).catch(console.error);
+                }
+                return target[propKey](...args);
+            };
+        },
+    });
     return service;
 }
 

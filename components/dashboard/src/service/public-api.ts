@@ -6,6 +6,7 @@
 
 import { createConnectTransport, createPromiseClient } from "@bufbuild/connect-web";
 import { Project as ProtocolProject, Team as ProtocolTeam } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
+import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connectweb";
 import { TeamsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
 import { TokensService } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_connectweb";
 import { ProjectsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_connectweb";
@@ -20,6 +21,7 @@ const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
 });
 
+export const helloService = createPromiseClient(HelloService, transport);
 export const teamsService = createPromiseClient(TeamsService, transport);
 export const personalAccessTokensService = createPromiseClient(TokensService, transport);
 export const projectsService = createPromiseClient(ProjectsService, transport);

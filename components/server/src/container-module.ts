@@ -36,12 +36,7 @@ import * as grpc from "@grpc/grpc-js";
 import { Redis } from "ioredis";
 import { createChannel, createClient, createClientFactory } from "nice-grpc";
 import { retryMiddleware } from "nice-grpc-client-middleware-retry";
-import { APIHelloService } from "./api/dummy";
 import { API } from "./api/server";
-import { APIStatsService } from "./api/stats";
-import { APITeamsService } from "./api/teams";
-import { APIUserService } from "./api/user";
-import { APIWorkspacesService } from "./api/workspaces";
 import { AuthProviderParams } from "./auth/auth-provider";
 import { AuthProviderService } from "./auth/auth-provider-service";
 import { Authenticator } from "./auth/authenticator";
@@ -338,13 +333,6 @@ export const productionContainerModule = new ContainerModule(
 
         // grpc / Connect API
         API.contribute(bind);
-
-        bind(APIHelloService).toSelf().inSingletonScope();
-        bind(APIUserService).toSelf().inSingletonScope();
-        bind(APITeamsService).toSelf().inSingletonScope();
-        bind(APIWorkspacesService).toSelf().inSingletonScope();
-        bind(APIStatsService).toSelf().inSingletonScope();
-        bind(API).toSelf().inSingletonScope();
 
         bind(AuthJWT).toSelf().inSingletonScope();
         bind(SignInJWT).toSelf().inSingletonScope();
