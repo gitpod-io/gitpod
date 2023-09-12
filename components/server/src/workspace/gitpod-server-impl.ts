@@ -1672,7 +1672,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                                 }
                                 const userRepos = await services.repositoryProvider.getUserRepos(user);
                                 userRepos.forEach((r) =>
-                                    suggestions.push({ url: r.replace(/\.git$/, ""), priority: 5 }),
+                                    suggestions.push({ url: r.url.replace(/\.git$/, ""), priority: 5 }),
                                 );
                             } catch (error) {
                                 log.debug(logCtx, "Could not get user repositories from host " + p.host, error);
@@ -1760,12 +1760,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             const span = TraceContext.startSpan("getSuggestedRepositories.fetchProjects", ctx);
             const projects = await this.projectsService.getProjects(user.id, organizationId);
 
-            const projectRepos = projects.map((project) => ({
-                url: project.cloneUrl.replace(/\.git$/, ""),
-                projectId: project.id,
-                projectName: project.name,
-                priority: 1,
-            }));
+            const projectRepos = projects.map((project): SuggestedRepositoryWithSorting => {
+                return {
+                    url: project.cloneUrl.replace(/\.git$/, ""),
+                    projectId: project.id,
+                    projectName: project.name,
+                    priority: 1,
+                };
+            });
 
             span.finish();
 
@@ -1791,7 +1793,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                         const userRepos = await services.repositoryProvider.getUserRepos(user);
 
                         return userRepos.map((r) => ({
-                            url: r.replace(/\.git$/, ""),
+                            url: r.url.replace(/\.git$/, ""),
+                            repositoryName: r.name,
                             priority: 5,
                         }));
                     } catch (error) {
@@ -1815,8 +1818,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
             for (const ws of workspaces) {
                 let repoUrl;
+                let repoName;
                 if (CommitContext.is(ws.workspace.context)) {
                     repoUrl = ws.workspace.context?.repository?.cloneUrl?.replace(/\.git$/, "");
+                    repoName = ws.workspace.context?.repository?.name;
                 }
                 if (!repoUrl) {
                     repoUrl = ws.workspace.contextURL;
@@ -1829,6 +1834,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                         projectId: ws.workspace.projectId,
                         priority: 10,
                         lastUse,
+                        repositoryName: repoName || "",
                     });
                 }
             }

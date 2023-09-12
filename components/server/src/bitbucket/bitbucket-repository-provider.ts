@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Branch, CommitInfo, Repository, User } from "@gitpod/gitpod-protocol";
+import { Branch, CommitInfo, Repository, RepositorySlim, User } from "@gitpod/gitpod-protocol";
 import { Schema } from "bitbucket";
 import { inject, injectable } from "inversify";
 import { URL } from "url";
@@ -115,7 +115,7 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
         };
     }
 
-    async getUserRepos(user: User): Promise<string[]> {
+    async getUserRepos(user: User): Promise<RepositorySlim[]> {
         // FIXME(janx): Not implemented yet
         return [];
     }

@@ -125,9 +125,10 @@ class TestBitbucketServerRepositoryProvider {
 
     @test async test_getUserRepos_ok() {
         const result = await this.service.getUserRepos(this.user);
-        expect(result).to.contain(
-            "https://7990-alextugarev-bbs-6v0gqcpgvj7.ws-eu102.gitpod.io/scm/~alex.tugarev/user.repo.git",
-        );
+        expect(result).to.contain({
+            url: "https://7990-alextugarev-bbs-6v0gqcpgvj7.ws-eu102.gitpod.io/scm/~alex.tugarev/user.repo.git",
+            name: "user.repo",
+        });
     }
 }
 

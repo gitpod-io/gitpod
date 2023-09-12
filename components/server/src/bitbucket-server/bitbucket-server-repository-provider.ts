@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Branch, CommitInfo, Repository, User } from "@gitpod/gitpod-protocol";
+import { Branch, CommitInfo, Repository, RepositorySlim, User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { RepoURL } from "../repohost";
 import { RepositoryProvider } from "../repohost/repository-provider";
@@ -144,15 +144,18 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
         }
     }
 
-    async getUserRepos(user: User): Promise<string[]> {
+    async getUserRepos(user: User): Promise<RepositorySlim[]> {
         try {
             // TODO: implement incremental search
             const repos = await this.api.getRepos(user, { maxPages: 10, permission: "REPO_READ" });
-            const result: string[] = [];
+            const result: RepositorySlim[] = [];
             repos.forEach((r) => {
                 const cloneUrl = r.links.clone.find((u) => u.name === "http")?.href;
                 if (cloneUrl) {
-                    result.push(cloneUrl.replace("http://", "https://"));
+                    result.push({
+                        url: cloneUrl.replace("http://", "https://"),
+                        name: r.name,
+                    });
                 }
             });
 

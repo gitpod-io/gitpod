@@ -10,7 +10,7 @@ import { User, Repository } from "@gitpod/gitpod-protocol";
 import { GitHubGraphQlEndpoint, GitHubRestApi } from "./api";
 import { RepositoryProvider } from "../repohost/repository-provider";
 import { RepoURL } from "../repohost/repo-url";
-import { Branch, CommitInfo } from "@gitpod/gitpod-protocol/lib/protocol";
+import { Branch, CommitInfo, RepositorySlim } from "@gitpod/gitpod-protocol/lib/protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
@@ -171,13 +171,14 @@ export class GithubRepositoryProvider implements RepositoryProvider {
         }
     }
 
-    async getUserRepos(user: User): Promise<string[]> {
+    async getUserRepos(user: User): Promise<RepositorySlim[]> {
         const result: any = await this.githubQueryApi.runQuery(
             user,
             `
             fragment Repos on RepositoryConnection {
                 nodes {
                   url
+                  name
                 }
               }
 
@@ -213,14 +214,20 @@ export class GithubRepositoryProvider implements RepositoryProvider {
               }`,
         );
 
-        const urls = [];
+        let repos: RepositorySlim[] = [];
+
         for (const type of ["contributedTo", "original", "forked"]) {
             const nodes = result.data.viewer[type]?.nodes;
             if (nodes) {
-                urls.push(...nodes.map((n: any) => n?.url).filter((u: any) => typeof u === "string"));
+                repos = nodes.map((n: any): RepositorySlim => {
+                    return {
+                        name: n.name,
+                        url: n.url,
+                    };
+                });
             }
         }
-        return urls;
+        return repos;
     }
 
     async hasReadAccess(user: User, owner: string, repo: string): Promise<boolean> {
