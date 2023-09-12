@@ -87,6 +87,13 @@ export class RelationshipUpdater {
                 log.info({ userId: user.id }, `Finished updating relationships.`, {
                     duration: new Date().getTime() - before,
                 });
+
+                // let's double check the migration worked.
+                if (!(await this.isMigrated(user))) {
+                    log.error({ userId: user.id }, `User migration failed.`, {
+                        markedMigrated: user.additionalData?.fgaRelationshipsVersion === RelationshipUpdater.version,
+                    });
+                }
                 return user;
             });
         } finally {
