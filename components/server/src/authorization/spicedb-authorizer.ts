@@ -14,6 +14,30 @@ import { SpiceDBClientProvider } from "./spicedb";
 import * as grpc from "@grpc/grpc-js";
 import { isFgaChecksEnabled } from "./authorizer";
 
+async function tryThree<T>(errMessage: string, code: (attempt: number) => Promise<T>): Promise<T> {
+    let attempt = 0;
+    // we do sometimes see INTERNAL errors from SpiceDB, so we retry a few times
+    // last time we checked it was 15 times per day (check logs)
+    while (attempt++ < 3) {
+        try {
+            return await code(attempt);
+        } catch (err) {
+            if (err.code === grpc.status.INTERNAL && attempt < 3) {
+                log.warn(errMessage, err, {
+                    attempt,
+                });
+            } else {
+                log.error(errMessage, err, {
+                    attempt,
+                });
+                // we don't try again on other errors
+                throw err;
+            }
+        }
+    }
+    throw new Error("unreachable");
+}
+
 @injectable()
 export class SpiceDBAuthorizer {
     constructor(
@@ -35,11 +59,12 @@ export class SpiceDBAuthorizer {
         if (!featureEnabled) {
             return true;
         }
-
         const timer = spicedbClientLatency.startTimer();
         let error: Error | undefined;
         try {
-            const response = await this.client.checkPermission(req, this.callOptions);
+            const response = await tryThree("[spicedb] Failed to perform authorization check.", () =>
+                this.client.checkPermission(req, this.callOptions),
+            );
             const permitted = response.permissionship === v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION;
 
             return permitted;
@@ -55,40 +80,22 @@ export class SpiceDBAuthorizer {
     }
 
     async writeRelationships(...updates: v1.RelationshipUpdate[]): Promise<v1.WriteRelationshipsResponse | undefined> {
-        let tries = 0;
-        // we do sometimes see INTERNAL errors from SpiceDB, so we retry a few times
-        // last time we checked it was 15 times per day (check logs)
-        while (tries++ < 3) {
-            const timer = spicedbClientLatency.startTimer();
-            let error: Error | undefined;
-            try {
-                const response = await this.client.writeRelationships(
+        const timer = spicedbClientLatency.startTimer();
+        let error: Error | undefined;
+        try {
+            const response = await tryThree("[spicedb] Failed to write relationships.", () =>
+                this.client.writeRelationships(
                     v1.WriteRelationshipsRequest.create({
                         updates,
                     }),
                     this.callOptions,
-                );
-                log.info("[spicedb] Successfully wrote relationships.", { response, updates, tries });
+                ),
+            );
+            log.info("[spicedb] Successfully wrote relationships.", { response, updates });
 
-                return response;
-            } catch (err) {
-                error = err;
-                if (err.code === grpc.status.INTERNAL && tries < 3) {
-                    log.warn("[spicedb] Failed to write relationships.", err, {
-                        updates: new TrustedValue(updates),
-                        tries,
-                    });
-                } else {
-                    log.error("[spicedb] Failed to write relationships.", err, {
-                        updates: new TrustedValue(updates),
-                        tries,
-                    });
-                    // we don't try again on other errors
-                    return;
-                }
-            } finally {
-                observeSpicedbClientLatency("write", error, timer());
-            }
+            return response;
+        } finally {
+            observeSpicedbClientLatency("write", error, timer());
         }
     }
 
@@ -96,15 +103,15 @@ export class SpiceDBAuthorizer {
         const timer = spicedbClientLatency.startTimer();
         let error: Error | undefined;
         try {
-            const existing = await this.client.readRelationships(
-                v1.ReadRelationshipsRequest.create(req),
-                this.callOptions,
+            const existing = await tryThree("readRelationships before deleteRelationships failed.", () =>
+                this.client.readRelationships(v1.ReadRelationshipsRequest.create(req), this.callOptions),
             );
             if (existing.length > 0) {
-                const response = await this.client.deleteRelationships(req, this.callOptions);
-                const after = await this.client.readRelationships(
-                    v1.ReadRelationshipsRequest.create(req),
-                    this.callOptions,
+                const response = await tryThree("deleteRelationships failed.", () =>
+                    this.client.deleteRelationships(req, this.callOptions),
+                );
+                const after = await tryThree("readRelationships failed.", () =>
+                    this.client.readRelationships(v1.ReadRelationshipsRequest.create(req), this.callOptions),
                 );
                 if (after.length > 0) {
                     log.error("[spicedb] Failed to delete relationships.", { existing, after, request: req });
@@ -128,7 +135,7 @@ export class SpiceDBAuthorizer {
     }
 
     async readRelationships(req: v1.ReadRelationshipsRequest): Promise<v1.ReadRelationshipsResponse[]> {
-        return this.client.readRelationships(req, this.callOptions);
+        return tryThree("readRelationships failed.", () => this.client.readRelationships(req, this.callOptions));
     }
 
     /**
