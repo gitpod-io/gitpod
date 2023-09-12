@@ -27,7 +27,7 @@ export function Item(props: { children?: React.ReactNode; className?: string; he
 }
 
 export function ItemField(props: { children?: React.ReactNode; className?: string }) {
-    return <div className={`flex-grow mx-1 ${props.className || ""}`}>{props.children}</div>;
+    return <div className={`mx-1 ${props.className || ""}`}>{props.children}</div>;
 }
 
 export function ItemFieldIcon(props: { children?: React.ReactNode; className?: string }) {

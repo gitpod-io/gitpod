@@ -20,6 +20,8 @@ import dayjs from "dayjs";
 import { WorkspaceEntryOverflowMenu } from "./WorkspaceOverflowMenu";
 import { WorkspaceStatusIndicator } from "./WorkspaceStatusIndicator";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { useListProjectsQuery } from "../data/projects/list-projects-query";
+import { toRemoteURL } from "../projects/render-utils";
 
 type Props = {
     info: WorkspaceInfo;
@@ -28,8 +30,9 @@ type Props = {
 
 export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion }) => {
     const [menuActive, setMenuActive] = useState(false);
-
     const liveGitStatus = useFeatureFlag("supervisor_live_git_status");
+    const listProjectsQuery = useListProjectsQuery();
+
     let repo: WorkspaceInstanceRepoStatus | undefined;
     if (liveGitStatus) {
         repo = info.latestInstance?.gitStatus;
@@ -39,9 +42,16 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
 
     const workspace = info.workspace;
     const currentBranch = repo?.branch || Workspace.getBranchName(info.workspace) || "<unknown>";
-    const project = getProjectPath(workspace);
+    const project = workspace.projectId
+        ? listProjectsQuery.data?.projects.find((p) => p.id === workspace.projectId)
+        : undefined;
     const normalizedContextUrl = ContextURL.getNormalizedURL(workspace)?.toString();
     const normalizedContextUrlDescription = normalizedContextUrl || workspace.contextURL; // Instead of showing nothing, we prefer to show the raw content instead
+    const projectName =
+        project?.name || (CommitContext.is(workspace.context) && workspace.context.repository.name) || "";
+    const repositoryUrl = toRemoteURL(
+        project?.cloneUrl || (CommitContext.is(workspace.context) && workspace.context.repository.cloneUrl) || "",
+    );
 
     const changeMenuState = (state: boolean) => {
         setMenuActive(state);
@@ -59,6 +69,46 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
         [workspace.id],
     );
 
+    if (liveGitStatus) {
+        return (
+            <Item className="whitespace-nowrap py-3 relative" solid={menuActive}>
+                <div className="flex items-center px-3">
+                    <WorkspaceStatusIndicator instance={info?.latestInstance} />
+                </div>
+                <div className="flex-grow overflow-x-hidden overflow-ellipses">
+                    <div className="flex space-x-2 items-center">
+                        <a
+                            href={startUrl}
+                            className="font-medium text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400"
+                        >
+                            {currentBranch}
+                        </a>
+                        <div className="text-sm">&middot;</div>
+                        <a
+                            href={startUrl}
+                            className="text-sm text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400"
+                        >
+                            {projectName}
+                        </a>
+                        <div className="text-sm text-gray-400">&middot;</div>
+                        <div className="text-sm w-full text-gray-400 overflow-ellipsis truncate">{repositoryUrl}</div>
+                    </div>
+                    <div className="flex items-center">
+                        <PendingChangesDropdown workspaceInstance={info.latestInstance} />
+                    </div>
+                </div>
+                <div className="flex items-center px-6">
+                    <Tooltip content={`Created ${dayjs(info.workspace.creationTime).fromNow()}`}>
+                        <div className="text-sm w-full text-gray-400 overflow-ellipsis truncate">
+                            {dayjs(WorkspaceInfo.lastActiveISODate(info)).fromNow()}
+                        </div>
+                    </Tooltip>
+                </div>
+                <WorkspaceEntryOverflowMenu changeMenuState={changeMenuState} info={info} />
+            </Item>
+        );
+    }
+
     return (
         <Item className="whitespace-nowrap py-6 px-6" solid={menuActive}>
             <ItemFieldIcon>
@@ -70,13 +120,6 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
                         {workspace.id}
                     </div>
                 </a>
-                <Tooltip content={project ? "https://" + project : ""} allowWrap={true}>
-                    <a href={project ? "https://" + project : undefined}>
-                        <div className="text-sm overflow-ellipsis truncate text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400">
-                            {project || "Unknown"}
-                        </div>
-                    </a>
-                </Tooltip>
             </ItemField>
             {!shortVersion && (
                 <>
