@@ -13,24 +13,33 @@ import { v4 } from "uuid";
 type EnhancedLogContext = LogContext & {
     contextId?: string;
     contextTimeMs: number;
+    contextKind: string;
 };
+
 const asyncLocalStorage = new AsyncLocalStorage<EnhancedLogContext>();
 const augmenter: LogContext.Augmenter = (ctx) => {
     const globalContext = asyncLocalStorage.getStore();
-    const contextTime = globalContext?.contextTimeMs ? Date.now() - globalContext.contextTimeMs : undefined;
-    return {
+    const contextTimeMs = globalContext?.contextTimeMs ? Date.now() - globalContext.contextTimeMs : undefined;
+    const result = {
         ...globalContext,
-        contextTime,
+        contextTimeMs,
         ...ctx,
     };
+    // if its an empty object return undefined
+    return Object.keys(result).length === 0 ? undefined : result;
 };
 LogContext.setAugmenter(augmenter);
 
-export async function runWithContext<T>(context: LogContext, fun: () => T): Promise<T> {
+export async function runWithContext<T>(
+    contextKind: string,
+    context: LogContext & { contextId?: string },
+    fun: () => T,
+): Promise<T> {
     return asyncLocalStorage.run(
         {
             ...context,
-            contextId: v4(),
+            contextKind,
+            contextId: context.contextId || v4(),
             contextTimeMs: Date.now(),
         },
         fun,

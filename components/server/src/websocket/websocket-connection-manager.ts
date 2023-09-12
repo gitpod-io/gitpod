@@ -374,21 +374,33 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
     }
 
     protected async onRequest(method: string, ...args: any[]): Promise<any> {
+        const span = TraceContext.startSpan(method, undefined);
         const userId = this.clientMetadata.userId;
+        const requestId = span.context().toTraceId();
         return runWithContext(
+            "request",
             {
                 userId,
+                contextId: requestId,
             },
             () => {
-                return this.internalOnRequest(method, ...args);
+                try {
+                    return this.internalOnRequest(span, requestId, method, ...args);
+                } finally {
+                    span.finish();
+                }
             },
         );
     }
 
-    private async internalOnRequest(method: string, ...args: any[]): Promise<any> {
-        const span = TraceContext.startSpan(method, undefined);
-        const ctx = { span };
+    private async internalOnRequest(
+        span: opentracing.Span,
+        requestId: string,
+        method: string,
+        ...args: any[]
+    ): Promise<any> {
         const userId = this.clientMetadata.userId;
+        const ctx = { span };
         const timer = apiCallDurationHistogram.startTimer();
         try {
             // generic tracing data
@@ -432,7 +444,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
             observeAPICallsDuration(method, 200, timer());
             return result;
         } catch (e) {
-            const traceID = span.context().toTraceId();
+            const requestIdMessage = ` If this error is unexpected, please quote the request ID '${requestId}' when reaching out to Gitpod Support.`;
             if (ApplicationError.hasErrorCode(e)) {
                 increaseApiCallCounter(method, e.code);
                 observeAPICallsDuration(method, e.code, timer());
@@ -449,13 +461,13 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
                         message: e.message,
                     },
                 );
-                throw new ResponseError(e.code, e.message, e.data);
+                throw new ResponseError(e.code, e.message + requestIdMessage, e.data);
             } else {
                 TraceContext.setError(ctx, e); // this is a "real" error
 
                 const err = new ApplicationError(
                     ErrorCodes.INTERNAL_SERVER_ERROR,
-                    `Internal server error. Please quote trace ID: '${traceID}' when reaching to Gitpod Support`,
+                    `Internal server error: '${e.message}'` + requestIdMessage,
                 );
                 increaseApiCallCounter(method, err.code);
                 observeAPICallsDuration(method, err.code, timer());
@@ -464,8 +476,6 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
                 log.error({ userId }, `Request ${method} failed with internal server error`, e, { method, args });
                 throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.message);
             }
-        } finally {
-            span.finish();
         }
     }
 

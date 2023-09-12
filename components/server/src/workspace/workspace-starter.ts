@@ -484,9 +484,13 @@ export class WorkspaceStarter {
         const span = TraceContext.startSpan("actuallyStartWorkspace", ctx);
         const region = instance.configuration.regionPreference;
         span.setTag("region_preference", region);
-        log.info("Attempting to start workspace", {
-            instanceID: instance.id,
-            userID: user.id,
+        const logCtx: LogContext = {
+            instanceId: instance.id,
+            userId: user.id,
+            organizationId: workspace.organizationId,
+            workspaceId: workspace.id,
+        };
+        log.info(logCtx, "Attempting to start workspace", {
             forceRebuild: forceRebuild,
         });
 
@@ -524,18 +528,10 @@ export class WorkspaceStarter {
             const ideUrlPromise = new Deferred<string>();
             const before = Date.now();
             const logSuccess = (fromWsManager: boolean) => {
-                log.info(
-                    {
-                        instanceId: instance.id,
-                        userId: workspace.ownerId,
-                        workspaceId: workspace.id,
-                    },
-                    "Received ideURL",
-                    {
-                        tookMs: Date.now() - before,
-                        fromWsManager,
-                    },
-                );
+                log.info(logCtx, "Received ideURL", {
+                    tookMs: Date.now() - before,
+                    fromWsManager,
+                });
             };
 
             const doStartWorkspace = async () => {
@@ -623,7 +619,7 @@ export class WorkspaceStarter {
                 intervalHandle.dispose();
             }
         } catch (err) {
-            this.logAndTraceStartWorkspaceError({ span }, { userId: user.id, instanceId: instance.id }, err);
+            this.logAndTraceStartWorkspaceError({ span }, logCtx, err);
 
             return { instanceID: instance.id };
         } finally {
