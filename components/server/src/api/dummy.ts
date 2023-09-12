@@ -17,7 +17,6 @@ import { injectable } from "inversify";
 
 /**
  * TODO(ak):
- * - client-side observability (add SLOs)
  * - client-side feature flags for unary and stream tests
  */
 @injectable()

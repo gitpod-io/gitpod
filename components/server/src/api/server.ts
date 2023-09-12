@@ -93,8 +93,6 @@ export class API {
      * - rate limitting
      * - logging context
      * - tracing
-     *
-     * - add SLOs
      */
 
     private interceptService<T extends ServiceType>(type: T): ProxyHandler<ServiceImpl<T>> {
@@ -121,7 +119,7 @@ export class API {
                     } else if (method.kind === MethodKind.ClientStreaming) {
                         kind = "client_stream";
                     } else if (method.kind === MethodKind.BiDiStreaming) {
-                        kind = "bidi";
+                        kind = "bidi_stream";
                     }
 
                     const context = args[1] as HandlerContext;

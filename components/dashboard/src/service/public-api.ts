@@ -4,7 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { createConnectTransport, createPromiseClient } from "@bufbuild/connect-web";
+import { createPromiseClient } from "@bufbuild/connect";
+import { createConnectTransport } from "@bufbuild/connect-web";
 import { Project as ProtocolProject, Team as ProtocolTeam } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connectweb";
 import { TeamsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
@@ -12,6 +13,7 @@ import { TokensService } from "@gitpod/public-api/lib/gitpod/experimental/v1/tok
 import { ProjectsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_connectweb";
 import { WorkspacesService } from "@gitpod/public-api/lib/gitpod/experimental/v1/workspaces_connectweb";
 import { OIDCService } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_connectweb";
+import { getMetricsInterceptor, MetricsReporter } from "@gitpod/public-api/lib/metrics";
 import { Team } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
 import { TeamMember, TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
@@ -19,7 +21,11 @@ import { Project } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_
 
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
+    interceptors: [getMetricsInterceptor()],
 });
+
+const metricsReporter = new MetricsReporter(window.location.host, "dashboard");
+metricsReporter.startReporting();
 
 export const helloService = createPromiseClient(HelloService, transport);
 export const teamsService = createPromiseClient(TeamsService, transport);

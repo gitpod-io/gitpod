@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { ConnectError } from "@bufbuild/connect-web";
+import { ConnectError } from "@bufbuild/connect";
 import { FormEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { Heading1, Heading3, Subheading } from "../components/typography/headings";
