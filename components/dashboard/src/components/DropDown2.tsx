@@ -27,6 +27,7 @@ export interface DropDown2Element {
 export interface DropDown2Props {
     getElements: (searchString: string) => DropDown2Element[];
     disabled?: boolean;
+    loading?: boolean;
     searchPlaceholder?: string;
     disableSearch?: boolean;
     expanded?: boolean;
@@ -36,6 +37,7 @@ export interface DropDown2Props {
 
 export const DropDown2: FunctionComponent<DropDown2Props> = ({
     disabled = false,
+    loading = false,
     expanded = false,
     searchPlaceholder,
     allOptions,
@@ -201,7 +203,13 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                         </div>
                     )}
                     <ul className="max-h-60 overflow-auto">
-                        {filteredOptions.length > 0 ? (
+                        {loading && (
+                            <div className="flex-col space-y-2 animate-pulse">
+                                <div className="bg-gray-300 dark:bg-gray-500 h-4 rounded" />
+                                <div className="bg-gray-300 dark:bg-gray-500 h-4 rounded" />
+                            </div>
+                        )}
+                        {!loading && filteredOptions.length > 0 ? (
                             filteredOptions.map((element) => {
                                 let selectionClasses = `dark:bg-gray-800 cursor-pointer`;
                                 if (element.id === selectedElementTemp) {
@@ -229,11 +237,11 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                                     </li>
                                 );
                             })
-                        ) : (
+                        ) : !loading ? (
                             <li key="no-elements" className={"rounded-md "}>
                                 <div className="h-12 pl-8 py-3 text-gray-800 dark:text-gray-200">No results</div>
                             </li>
-                        )}
+                        ) : null}
                     </ul>
                 </div>
             )}

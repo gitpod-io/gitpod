@@ -8,8 +8,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getGitpodService } from "../service/service";
 import { DropDown2, DropDown2Element, DropDown2SelectedElement } from "./DropDown2";
 import Repository from "../icons/Repository.svg";
+import { ReactComponent as RepositoryIcon } from "../icons/RepositoryWithColor.svg";
 import { useSuggestedRepositories } from "../data/git-providers/suggested-repositories-query";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { SuggestedRepository } from "@gitpod/gitpod-protocol";
+import { TextLight } from "./typography/text";
+import classNames from "classnames";
 
 const LOCAL_STORAGE_KEY = "open-in-gitpod-search-data";
 
@@ -33,17 +37,19 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
     const includeProjectsOnCreateWorkspace = useFeatureFlag("includeProjectsOnCreateWorkspace");
 
     const [suggestedContextURLs, setSuggestedContextURLs] = useState<string[]>(loadSearchData());
-    const { data: suggestedRepos } = useSuggestedRepositories();
+    const { data: suggestedRepos, isLoading } = useSuggestedRepositories();
 
     const suggestedRepoURLs = useMemo(() => {
-        // If the flag is disabled continue to use suggestedContextURLs
+        // If the flag is disabled continue to use suggestedContextURLs, but convert into SuggestedRepository objects
         if (!includeProjectsOnCreateWorkspace) {
-            return suggestedContextURLs;
+            return suggestedContextURLs.map(
+                (url): SuggestedRepository => ({
+                    url,
+                }),
+            );
         }
 
-        // For now, convert the suggestedRepos to a list of URLs
-        // We'll follow up with updating the UI with the new data
-        return suggestedRepos?.map((repo) => repo.url) || [];
+        return suggestedRepos || [];
     }, [suggestedContextURLs, suggestedRepos, includeProjectsOnCreateWorkspace]);
 
     useEffect(() => {
@@ -57,46 +63,52 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
 
     const getElements = useCallback(
         (searchString: string) => {
-            let result: string[];
-            searchString = searchString.trim();
-            if (searchString.length > 1) {
-                result = suggestedRepoURLs.filter((e) => e.toLowerCase().indexOf(searchString.toLowerCase()) !== -1);
-                if (result.length > 200) {
-                    result = result.slice(0, 200);
-                }
-                if (result.length === 0) {
-                    try {
-                        // If the searchString is a URL, and it's not present in the proposed results, "artificially" add it here.
-                        new URL(searchString);
-                        if (!suggestedRepoURLs.includes(searchString)) {
-                            result.push(searchString);
-                        }
-                    } catch {}
-                }
-            } else {
-                result = suggestedRepoURLs.slice(0, 200);
+            const results = filterRepos(searchString, suggestedRepoURLs);
+
+            // With the flag off, we only want to show the suggestedContextURLs
+            if (!includeProjectsOnCreateWorkspace) {
+                return results.map(
+                    (repo) =>
+                        ({
+                            id: repo.url,
+                            element: (
+                                <div className="flex-col ml-1 mt-1 flex-grow">
+                                    <div className="flex">
+                                        <div className="text-gray-700 dark:text-gray-300 font-semibold">
+                                            {stripOffProtocol(repo.url)}
+                                        </div>
+                                        <div className="ml-1 text-gray-400">{}</div>
+                                    </div>
+                                    <div className="flex text-xs text-gray-400">{}</div>
+                                </div>
+                            ),
+                            isSelectable: true,
+                        } as DropDown2Element),
+                );
             }
 
-            return result.map(
-                (e) =>
-                    ({
-                        id: e,
-                        element: (
-                            <div className="flex-col ml-1 mt-1 flex-grow">
-                                <div className="flex">
-                                    <div className="text-gray-700 dark:text-gray-300 font-semibold">
-                                        {stripOffProtocol(e)}
-                                    </div>
-                                    <div className="ml-1 text-gray-400">{}</div>
-                                </div>
-                                <div className="flex text-xs text-gray-400">{}</div>
-                            </div>
-                        ),
-                        isSelectable: true,
-                    } as DropDown2Element),
-            );
+            // Otherwise we show the suggestedRepos
+            return results.map((repo) => {
+                const name = repo.projectName || repo.repositoryName;
+
+                return {
+                    id: repo.url,
+                    element: (
+                        <div className="flex flex-row ml-1 mt-1 gap-1 items-center">
+                            <span className={classNames("text-orange-500", !repo.projectId && "filter-grayscale")}>
+                                <RepositoryIcon className="text-orange-500 w-5 h-5" />
+                            </span>
+                            {name && <span className="text-sm whitespace-nowrap font-semibold">{name}</span>}
+                            <TextLight className="text-xs whitespace-nowrap overflow-clip">
+                                {stripOffProtocol(repo.url)}
+                            </TextLight>
+                        </div>
+                    ),
+                    isSelectable: true,
+                } as DropDown2Element;
+            });
         },
-        [suggestedRepoURLs],
+        [includeProjectsOnCreateWorkspace, suggestedRepoURLs],
     );
 
     const element = (
@@ -107,7 +119,7 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
                 <div className="truncate w-80">{displayContextUrl(props.initialValue) || "Select a repository"}</div>
             }
             subtitle="Context URL"
-            loading={props.loading}
+            loading={props.loading || isLoading}
         />
     );
 
@@ -122,6 +134,7 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
             expanded={!props.initialValue}
             onSelectionChange={props.setSelection}
             disabled={props.disabled}
+            loading={props.loading || isLoading}
             searchPlaceholder="Paste repository URL or type to find suggestions"
         >
             {element}
@@ -156,4 +169,26 @@ function saveSearchData(searchData: string[]): void {
     } catch (error) {
         console.warn("Could not save search data into local storage", error);
     }
+}
+
+function filterRepos(searchString: string, suggestedRepos: SuggestedRepository[]) {
+    let results = suggestedRepos;
+    const normalizedSearchString = searchString.trim().toLowerCase();
+
+    if (normalizedSearchString.length > 1) {
+        results = suggestedRepos.filter((r) => {
+            return `${r.url}${r.projectName || ""}`.toLowerCase().includes(normalizedSearchString);
+        });
+
+        if (results.length === 0) {
+            try {
+                // If the normalizedSearchString is a URL, and it's not present in the proposed results, "artificially" add it here.
+                new URL(normalizedSearchString);
+                results.push({ url: normalizedSearchString });
+            } catch {}
+        }
+    }
+
+    // Limit what we show to 200 results
+    return results.length > 200 ? results.slice(0, 200) : results;
 }
