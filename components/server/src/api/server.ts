@@ -106,12 +106,12 @@ export class API {
                     if (!method) {
                         // Increment metrics for unknown method attempts
                         console.warn("public api: unknown method", type.typeName, prop);
-                        const code = Code.InvalidArgument;
+                        const code = Code.Unimplemented;
                         connectServerStarted.labels(type.typeName, "unknown", "unknown").inc();
                         connectServerHandled
                             .labels(type.typeName, "unknown", "unknown", Code[code].toLowerCase())
                             .observe(0);
-                        throw new ConnectError("Invalid method", code);
+                        throw new ConnectError("unimplemented", code);
                     }
                     let kind = "unknown";
                     if (method.kind === MethodKind.Unary) {
