@@ -151,11 +151,13 @@ export default function ProjectSettingsView() {
                     onChange={(checked) => updateProjectSettings({ enablePrebuilds: checked })}
                 />
                 <InputField label="Workspace machine type" disabled={!enablePrebuilds}>
-                    <SelectWorkspaceClassComponent
-                        disabled={!enablePrebuilds}
-                        selectedWorkspaceClass={project.settings?.workspaceClasses?.prebuild}
-                        onSelectionChange={setWorkspaceClassForPrebuild}
-                    />
+                    <div className="max-w-md">
+                        <SelectWorkspaceClassComponent
+                            disabled={!enablePrebuilds}
+                            selectedWorkspaceClass={project.settings?.workspaceClasses?.prebuild}
+                            onSelectionChange={setWorkspaceClassForPrebuild}
+                        />
+                    </div>
                 </InputField>
                 <CheckboxInputField
                     label="Enable Incremental Prebuilds"
