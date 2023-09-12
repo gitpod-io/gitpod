@@ -146,7 +146,7 @@ export default function ProjectSettingsView() {
                 <Heading2 className="mt-12">Prebuilds</Heading2>
                 <CheckboxInputField
                     label="Enable prebuilds"
-                    hint="You need to have admin permissions on the repository in order to install a webhook for prebuilds."
+                    hint="Requires permissions to create and manage repository webhooks."
                     checked={enablePrebuilds}
                     onChange={(checked) => updateProjectSettings({ enablePrebuilds: checked })}
                 />
