@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { ConnectRouter } from "@bufbuild/connect";
+import { Code, ConnectError, ConnectRouter, HandlerContext } from "@bufbuild/connect";
 import { expressConnectMiddleware } from "@bufbuild/connect-express";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connectweb";
@@ -16,6 +16,7 @@ import express from "express";
 import * as http from "http";
 import { inject, injectable, interfaces } from "inversify";
 import { AddressInfo } from "net";
+import { SessionHandler } from "../session-handler";
 import { APIHelloService } from "./dummy";
 import { APIStatsService } from "./stats";
 import { APITeamsService } from "./teams";
@@ -24,24 +25,36 @@ import { APIWorkspacesService } from "./workspaces";
 
 @injectable()
 export class API {
-    @inject(APIUserService) protected readonly apiUserService: APIUserService;
-    @inject(APITeamsService) protected readonly apiTeamService: APITeamsService;
-    @inject(APIWorkspacesService) protected readonly apiWorkspacesService: APIWorkspacesService;
-    @inject(APIStatsService) protected readonly apiStatsService: APIStatsService;
+    @inject(APIUserService) private readonly apiUserService: APIUserService;
+    @inject(APITeamsService) private readonly apiTeamService: APITeamsService;
+    @inject(APIWorkspacesService) private readonly apiWorkspacesService: APIWorkspacesService;
+    @inject(APIStatsService) private readonly apiStatsService: APIStatsService;
     @inject(APIHelloService) private readonly apiHelloService: APIHelloService;
+    @inject(SessionHandler) private readonly sessionHandler: SessionHandler;
 
-    public listen(): http.Server {
+    listenPrivate(): http.Server {
         const app = express();
-        this.register(app);
+        this.registerPrivate(app);
 
         const server = app.listen(9877, () => {
-            log.info(`Connect API server listening on port: ${(server.address() as AddressInfo).port}`);
+            log.info(`Connect Private API server listening on port: ${(server.address() as AddressInfo).port}`);
         });
 
         return server;
     }
 
-    private register(app: express.Application) {
+    listen(): http.Server {
+        const app = express();
+        this.register(app);
+
+        const server = app.listen(3001, () => {
+            log.info(`Connect Public API server listening on port: ${(server.address() as AddressInfo).port}`);
+        });
+
+        return server;
+    }
+
+    private registerPrivate(app: express.Application) {
         app.use(
             expressConnectMiddleware({
                 routes: (router: ConnectRouter) => {
@@ -54,16 +67,52 @@ export class API {
         );
     }
 
-    get apiRouter(): express.Router {
-        const router = express.Router();
-        router.use(
+    private register(app: express.Application) {
+        const self = this;
+        const serviceInterceptor: ProxyHandler<any> = {
+            get(target, prop, receiver) {
+                const original = target[prop as any];
+                if (typeof original !== "function") {
+                    return Reflect.get(target, prop, receiver);
+                }
+                return async (...args: any[]) => {
+                    const context = args[1] as HandlerContext;
+                    await self.intercept(context);
+                    return original.apply(target, args);
+                };
+            },
+        };
+        app.use(
             expressConnectMiddleware({
                 routes: (router: ConnectRouter) => {
-                    router.service(HelloService, this.apiHelloService);
+                    for (const service of [this.apiHelloService]) {
+                        router.service(HelloService, new Proxy(service, serviceInterceptor));
+                    }
                 },
             }),
         );
-        return router;
+    }
+
+    /**
+     * intercept handles cross-cutting concerns for all calls:
+     * - authentication
+     * TODO(ak):
+     * - server-side observability (SLOs)
+     * - rate limitting
+     * - logging context
+     * - tracing
+     */
+    private async intercept(context: HandlerContext): Promise<void> {
+        const user = await this.verify(context);
+        context.user = user;
+    }
+
+    private async verify(context: HandlerContext) {
+        const user = await this.sessionHandler.verify(context.requestHeader.get("cookie"));
+        if (!user) {
+            throw new ConnectError("unauthenticated", Code.Unauthenticated);
+        }
+        return user;
     }
 
     static contribute(bind: interfaces.Bind): void {

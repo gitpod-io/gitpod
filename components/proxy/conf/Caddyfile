@@ -198,9 +198,10 @@ https://{$GITPOD_DOMAIN} {
 	@proxy_server_public_api path /public-api/gitpod.experimental.v1.HelloService*
 	handle @proxy_server_public_api {
 		uri strip_prefix /public-api
+		# TODO(ak) verify that it only enabled for json content-type, not grpc
 		import compression
 
-		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3001 {
 			import upstream_connection
 		}
 	}

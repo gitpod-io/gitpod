@@ -382,6 +382,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							}, {
 								Name:          GRPCAPIName,
 								ContainerPort: GRPCAPIPort,
+							}, {
+								Name:          PublicAPIName,
+								ContainerPort: PublicAPIPort,
 							},
 							},
 							// todo(sje): do we need to cater for serverContainer.env from values.yaml?

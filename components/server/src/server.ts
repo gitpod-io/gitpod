@@ -56,7 +56,8 @@ export class Server {
     protected iamSessionApp?: express.Application;
     protected iamSessionAppServer?: http.Server;
 
-    protected apiServer?: http.Server;
+    protected publicApiServer?: http.Server;
+    protected privateApiServer?: http.Server;
 
     protected readonly eventEmitter = new EventEmitter();
     protected app?: express.Application;
@@ -317,9 +318,6 @@ export class Server {
 
         log.info("Registered Bitbucket Server app at " + BitbucketServerApp.path);
         app.use(BitbucketServerApp.path, this.bitbucketServerApp.router);
-
-        // TODO(ak) move to own app on port 3001
-        app.use(this.api.apiRouter);
     }
 
     public async start(port: number) {
@@ -349,7 +347,8 @@ export class Server {
             });
         }
 
-        this.apiServer = this.api.listen();
+        this.publicApiServer = this.api.listen();
+        this.privateApiServer = this.api.listenPrivate();
 
         this.debugApp.start();
     }
@@ -379,7 +378,8 @@ export class Server {
             race(this.stopServer(this.iamSessionAppServer), "stop iamsessionapp"),
             race(this.stopServer(this.monitoringHttpServer), "stop monitoringapp"),
             race(this.stopServer(this.httpServer), "stop httpserver"),
-            race(this.stopServer(this.apiServer), "stop api server"),
+            race(this.stopServer(this.privateApiServer), "stop private api server"),
+            race(this.stopServer(this.publicApiServer), "stop public api server"),
             race((async () => this.disposables.dispose())(), "dispose disposables"),
         ]);
 
