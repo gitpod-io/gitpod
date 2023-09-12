@@ -141,7 +141,7 @@ export default function ProjectSettingsView() {
                     Update Name
                 </Button>
             </form>
-            <div className="">
+            <div>
                 <Heading2 className="mt-12">Prebuilds</Heading2>
                 <CheckboxInputField
                     label="Enable prebuilds"
@@ -262,7 +262,7 @@ export default function ProjectSettingsView() {
                     </div>
                 </div>
             </div>
-            <div className="">
+            <div>
                 <Heading2 className="mt-12">Remove Project</Heading2>
                 <Subheading className="pb-4">
                     This will delete the project and all project-level environment variables you've set for this

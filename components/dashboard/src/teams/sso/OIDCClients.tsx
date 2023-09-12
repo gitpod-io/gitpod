@@ -83,7 +83,7 @@ const OIDCClientsList: FC<OIDCClientsListProps> = ({ clientConfigs }) => {
                 </div>
 
                 {clientConfigs.length !== 0 ? (
-                    <div className="">
+                    <div>
                         <Button className="whitespace-nowrap" onClick={onCreate}>
                             New Configuration
                         </Button>

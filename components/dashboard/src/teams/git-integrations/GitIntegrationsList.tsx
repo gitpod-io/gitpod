@@ -31,7 +31,7 @@ export const GitIntegrationsList: FunctionComponent<Props> = ({ providers }) => 
                 </div>
 
                 {providers.length !== 0 ? (
-                    <div className="">
+                    <div>
                         <Button className="whitespace-nowrap" onClick={onCreate}>
                             New Git Provider
                         </Button>
