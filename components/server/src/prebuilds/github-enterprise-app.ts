@@ -148,13 +148,12 @@ export class GitHubEnterpriseApp {
         const span = TraceContext.startSpan("GitHubEnterpriseApp.handlePushHook", ctx);
         try {
             const cloneURL = payload.repository.clone_url;
-            const projectAndOwner = await this.findProjectAndOwner(cloneURL, user);
-            if (projectAndOwner.project) {
-                this.projectDB
-                    .updateProjectUsage(projectAndOwner.project.id, {
-                        lastWebhookReceived: new Date().toISOString(),
-                    })
-                    .catch((err) => log.error("cannot update project usage", err));
+            const { user: projectOwner, project } = await this.findProjectAndOwner(cloneURL, user);
+            if (!project) {
+                throw new ApplicationError(
+                    ErrorCodes.NOT_FOUND,
+                    `Project not found. Please add '${cloneURL}' as a project.`,
+                );
             }
             const contextURL = this.createContextUrl(payload);
             span.setTag("contextURL", contextURL);
@@ -162,7 +161,7 @@ export class GitHubEnterpriseApp {
 
             await this.webhookEvents.updateEvent(event.id, {
                 authorizedUserId: user.id,
-                projectId: projectAndOwner?.project?.id,
+                projectId: project.id,
                 cloneUrl: cloneURL,
                 branch: context.ref,
                 commit: context.revision,
@@ -170,7 +169,7 @@ export class GitHubEnterpriseApp {
 
             const config = await this.prebuildManager.fetchConfig({ span }, user, context);
             if (
-                !this.prebuildManager.shouldPrebuild({ config, project: projectAndOwner.project }) ||
+                !this.prebuildManager.shouldPrebuild({ config, project }) ||
                 !this.appRules.shouldRunPrebuild(config, context.ref === context.repository.defaultBranch, false, false)
             ) {
                 log.info("GitHub Enterprise push event: No prebuild.", { config, context });
@@ -189,8 +188,8 @@ export class GitHubEnterpriseApp {
                 { span },
                 {
                     context,
-                    user: projectAndOwner.user,
-                    project: projectAndOwner.project!,
+                    user: projectOwner,
+                    project: project,
                     commitInfo,
                 },
             );

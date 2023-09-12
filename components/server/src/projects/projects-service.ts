@@ -18,7 +18,7 @@ import {
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { PartialProject } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
+import { PartialProject, ProjectUsage } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { URL } from "url";
@@ -105,10 +105,14 @@ export class ProjectsService {
         return [];
     }
 
-    async markActive(userId: string, projectId: string): Promise<void> {
+    async markActive(
+        userId: string,
+        projectId: string,
+        kind: keyof ProjectUsage = "lastWorkspaceStart",
+    ): Promise<void> {
         await this.auth.checkPermissionOnProject(userId, "read_info", projectId);
         await this.projectDB.updateProjectUsage(projectId, {
-            lastWorkspaceStart: new Date().toISOString(),
+            [kind]: new Date().toISOString(),
         });
     }
 

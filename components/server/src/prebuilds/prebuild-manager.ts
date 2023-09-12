@@ -120,6 +120,12 @@ export class PrebuildManager {
         span.setTag("cloneURL", cloneURL);
         span.setTag("commit", commitInfo?.sha);
 
+        // TODO figure out right place to mark activity of a project. For now, just moving at the beginning
+        // of `startPrebuild` to remain previous semantics when it was happening on call sites.
+        this.projectService
+            .markActive(user.id, project.id, "lastWebhookReceived")
+            .catch((e) => log.error("cannot update project usage", e));
+
         try {
             if (user.blocked) {
                 throw new ApplicationError(
@@ -335,14 +341,10 @@ export class PrebuildManager {
         }
     }
 
-    shouldPrebuild(params: { config?: WorkspaceConfig; project?: Project }): boolean {
+    shouldPrebuild(params: { config: WorkspaceConfig; project: Project }): boolean {
         const { config, project } = params;
         if (!config || !config._origin || config._origin !== "repo") {
             // we demand an explicit gitpod config
-            return false;
-        }
-
-        if (!project) {
             return false;
         }
 
