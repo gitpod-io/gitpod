@@ -20,6 +20,7 @@ import { v4 as uuidv4 } from "uuid";
 import { UserAuthentication } from "../user/user-authentication";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { API } from "./server";
+import { SessionHandler } from "../session-handler";
 
 const expect = chai.expect;
 
@@ -37,6 +38,7 @@ export class APITeamsServiceSpec {
 
         this.container.bind(WorkspaceService).toConstantValue({} as WorkspaceService);
         this.container.bind(UserAuthentication).toConstantValue({} as UserAuthentication);
+        this.container.bind(SessionHandler).toConstantValue({} as SessionHandler);
 
         // Clean-up database
         const typeorm = testContainer.get<TypeORM>(TypeORM);
