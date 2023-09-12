@@ -18,7 +18,8 @@ export const useListProjectsQuery = () => {
     const org = useCurrentOrg().data;
     const orgId = org?.id;
     return useQuery<ListProjectsQueryResults>({
-        queryKey: orgId ? getListProjectsQueryKey(orgId) : ["no-persistence"],
+        enabled: !!orgId,
+        queryKey: getListProjectsQueryKey(orgId || ""),
         cacheTime: 1000 * 60 * 60 * 1, // 1 hour
         queryFn: async () => {
             if (!orgId) {
