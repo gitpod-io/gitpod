@@ -18,6 +18,7 @@ import { WebhookEventGarbageCollector } from "./webhook-gc";
 import { WorkspaceGarbageCollector } from "./workspace-gc";
 import { SnapshotsJob } from "./snapshots";
 import { RelationshipUpdateJob } from "../authorization/relationship-updater-job";
+import { runWithContext } from "../util/log-context";
 
 export const Job = Symbol("Job");
 
@@ -78,29 +79,31 @@ export class JobRunner {
 
         try {
             await this.mutex.using([job.name, ...(job.lockedResources || [])], job.frequencyMs, async (signal) => {
-                log.info(`Acquired lock for job ${job.name}.`, logCtx);
-                // we want to hold the lock for the entire duration of the job, so we return earliest after frequencyMs
-                const timeout = new Promise<void>((resolve) => setTimeout(resolve, job.frequencyMs));
-                const timer = jobsDurationSeconds.startTimer({ name: job.name });
-                reportJobStarted(job.name);
-                const now = new Date().getTime();
-                try {
-                    await job.run();
-                    log.info(`Successfully finished job ${job.name}`, {
-                        ...logCtx,
-                        jobTookSec: `${(new Date().getTime() - now) / 1000}s`,
-                    });
-                    reportJobCompleted(job.name, true);
-                } catch (err) {
-                    log.error(`Error while running job ${job.name}`, err, {
-                        ...logCtx,
-                        jobTookSec: `${(new Date().getTime() - now) / 1000}s`,
-                    });
-                    reportJobCompleted(job.name, false);
-                } finally {
-                    jobsDurationSeconds.observe(timer());
-                    await timeout;
-                }
+                await runWithContext(job.name, {}, async () => {
+                    log.info(`Acquired lock for job ${job.name}.`, logCtx);
+                    // we want to hold the lock for the entire duration of the job, so we return earliest after frequencyMs
+                    const timeout = new Promise<void>((resolve) => setTimeout(resolve, job.frequencyMs));
+                    const timer = jobsDurationSeconds.startTimer({ name: job.name });
+                    reportJobStarted(job.name);
+                    const now = new Date().getTime();
+                    try {
+                        await job.run();
+                        log.info(`Successfully finished job ${job.name}`, {
+                            ...logCtx,
+                            jobTookSec: `${(new Date().getTime() - now) / 1000}s`,
+                        });
+                        reportJobCompleted(job.name, true);
+                    } catch (err) {
+                        log.error(`Error while running job ${job.name}`, err, {
+                            ...logCtx,
+                            jobTookSec: `${(new Date().getTime() - now) / 1000}s`,
+                        });
+                        reportJobCompleted(job.name, false);
+                    } finally {
+                        jobsDurationSeconds.observe(timer());
+                        await timeout;
+                    }
+                });
             });
         } catch (err) {
             if (err instanceof ResourceLockedError || err instanceof ExecutionError) {

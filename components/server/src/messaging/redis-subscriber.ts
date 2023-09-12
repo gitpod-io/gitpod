@@ -29,6 +29,7 @@ import {
 } from "../prometheus-metrics";
 import { Redis } from "ioredis";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { runWithContext } from "../util/log-context";
 
 const UNDEFINED_KEY = "undefined";
 
@@ -54,18 +55,20 @@ export class RedisSubscriber {
         }
 
         this.redis.on("message", async (channel: string, message: string) => {
-            reportRedisUpdateReceived(channel);
+            await runWithContext("redis-subscriber", {}, async () => {
+                reportRedisUpdateReceived(channel);
 
-            let err: Error | undefined;
-            try {
-                await this.onMessage(channel, message);
-                log.debug("[redis] Succesfully handled update", { channel, message });
-            } catch (e) {
-                err = e;
-                log.error("[redis] Failed to handle message from Pub/Sub", e, { channel, message });
-            } finally {
-                reportRedisUpdateCompleted(channel, err);
-            }
+                let err: Error | undefined;
+                try {
+                    await this.onMessage(channel, message);
+                    log.debug("[redis] Succesfully handled update", { channel, message });
+                } catch (e) {
+                    err = e;
+                    log.error("[redis] Failed to handle message from Pub/Sub", e, { channel, message });
+                } finally {
+                    reportRedisUpdateCompleted(channel, err);
+                }
+            });
         });
     }
 

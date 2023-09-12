@@ -47,6 +47,7 @@ import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
 import { JobRunner } from "./jobs/runner";
 import { RedisSubscriber } from "./messaging/redis-subscriber";
 import { HEADLESS_LOGS_PATH_PREFIX, HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from "./workspace/headless-log-service";
+import { runWithContext } from "./util/log-context";
 
 @injectable()
 export class Server {
@@ -137,6 +138,16 @@ export class Server {
 
         // Install passport
         await this.authenticator.init(app);
+
+        // log context
+        app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+            try {
+                const userId = req.user ? req.user.id : undefined;
+                await runWithContext("http", { userId }, () => next());
+            } catch (err) {
+                next(err);
+            }
+        });
 
         // Ensure that host contexts of dynamic auth providers are initialized.
         await this.hostCtxProvider.init();
