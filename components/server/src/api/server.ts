@@ -4,7 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Code, ConnectError, ConnectRouter, HandlerContext } from "@bufbuild/connect";
+import { Code, ConnectError, ConnectRouter, HandlerContext, ServiceImpl } from "@bufbuild/connect";
+import { ServiceType, MethodKind } from "@bufbuild/protobuf";
 import { expressConnectMiddleware } from "@bufbuild/connect-express";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connectweb";
@@ -22,6 +23,11 @@ import { APIStatsService } from "./stats";
 import { APITeamsService } from "./teams";
 import { APIUserService } from "./user";
 import { APIWorkspacesService } from "./workspaces";
+import { connectServerHandled, connectServerStarted } from "../prometheus-metrics";
+
+function service<T extends ServiceType>(type: T, impl: ServiceImpl<T>): [T, ServiceImpl<T>] {
+    return [type, impl];
+}
 
 @injectable()
 export class API {
@@ -68,25 +74,11 @@ export class API {
     }
 
     private register(app: express.Application) {
-        const self = this;
-        const serviceInterceptor: ProxyHandler<any> = {
-            get(target, prop, receiver) {
-                const original = target[prop as any];
-                if (typeof original !== "function") {
-                    return Reflect.get(target, prop, receiver);
-                }
-                return async (...args: any[]) => {
-                    const context = args[1] as HandlerContext;
-                    await self.intercept(context);
-                    return original.apply(target, args);
-                };
-            },
-        };
         app.use(
             expressConnectMiddleware({
                 routes: (router: ConnectRouter) => {
-                    for (const service of [this.apiHelloService]) {
-                        router.service(HelloService, new Proxy(service, serviceInterceptor));
+                    for (const [type, impl] of [service(HelloService, this.apiHelloService)]) {
+                        router.service(HelloService, new Proxy(impl, this.interceptService(type)));
                     }
                 },
             }),
@@ -96,15 +88,73 @@ export class API {
     /**
      * intercept handles cross-cutting concerns for all calls:
      * - authentication
+     * - server-side observability
      * TODO(ak):
-     * - server-side observability (SLOs)
      * - rate limitting
      * - logging context
      * - tracing
+     *
+     * - add SLOs
      */
-    private async intercept(context: HandlerContext): Promise<void> {
-        const user = await this.verify(context);
-        context.user = user;
+
+    private interceptService<T extends ServiceType>(type: T): ProxyHandler<ServiceImpl<T>> {
+        const self = this;
+        return {
+            get(target, prop) {
+                return async (...args: any[]) => {
+                    const method = type.methods[prop as any];
+                    if (!method) {
+                        // Increment metrics for unknown method attempts
+                        console.warn("public api: unknown method", type.typeName, prop);
+                        const code = Code.InvalidArgument;
+                        connectServerStarted.labels(type.typeName, "unknown", "unknown").inc();
+                        connectServerHandled
+                            .labels(type.typeName, "unknown", "unknown", Code[code].toLowerCase())
+                            .observe(0);
+                        throw new ConnectError("Invalid method", code);
+                    }
+                    let kind = "unknown";
+                    if (method.kind === MethodKind.Unary) {
+                        kind = "unary";
+                    } else if (method.kind === MethodKind.ServerStreaming) {
+                        kind = "server_stream";
+                    } else if (method.kind === MethodKind.ClientStreaming) {
+                        kind = "client_stream";
+                    } else if (method.kind === MethodKind.BiDiStreaming) {
+                        kind = "bidi";
+                    }
+
+                    const context = args[1] as HandlerContext;
+
+                    const startTime = Date.now();
+                    connectServerStarted.labels(type.typeName, method.name, kind).inc();
+
+                    let result: any;
+                    let error: ConnectError | undefined;
+                    try {
+                        const user = await self.verify(context);
+                        context.user = user;
+                        result = await (target[prop as any] as Function).apply(target, args);
+                    } catch (e) {
+                        if (!(e instanceof ConnectError)) {
+                            console.error("public api: internal: failed to handle request", e);
+                            error = new ConnectError("internal", Code.Internal);
+                        } else {
+                            error = e;
+                        }
+                    }
+
+                    const code = error ? Code[error.code].toLowerCase() : "ok";
+                    connectServerHandled
+                        .labels(type.typeName, method.name, kind, code)
+                        .observe((Date.now() - startTime) / 1000);
+                    if (error) {
+                        throw error;
+                    }
+                    return result;
+                };
+            },
+        };
     }
 
     private async verify(context: HandlerContext) {
