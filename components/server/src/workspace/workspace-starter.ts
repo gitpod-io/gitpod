@@ -828,9 +828,13 @@ export class WorkspaceStarter {
         try {
             let ideTasks: TaskConfig[] = [];
             try {
-                ideTasks = JSON.parse(ideConfig.tasks);
+                if (ideConfig.tasks && ideConfig.tasks.trim() !== "") {
+                    ideTasks = JSON.parse(ideConfig.tasks);
+                }
             } catch (e) {
-                console.error("failed get tasks from ide config:", e);
+                log.info("failed parse tasks from ide config:", e, {
+                    tasks: ideConfig.tasks,
+                });
             }
 
             const configuration: WorkspaceInstanceConfiguration = {
