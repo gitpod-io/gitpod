@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/ws-manager/api/config"
+	"github.com/prometheus/client_golang/prometheus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -33,11 +34,16 @@ var (
 	lookupOnce sync.Once
 )
 
-func NewMaintenanceReconciler(c client.Client) (*MaintenanceReconciler, error) {
-	return &MaintenanceReconciler{
+func NewMaintenanceReconciler(c client.Client, reg prometheus.Registerer) (*MaintenanceReconciler, error) {
+	r := &MaintenanceReconciler{
 		Client:       c,
 		enabledUntil: nil,
-	}, nil
+	}
+
+	gauge := newMaintenanceEnabledGauge(r)
+	reg.MustRegister(gauge)
+
+	return r, nil
 }
 
 type MaintenanceReconciler struct {
