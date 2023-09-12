@@ -137,7 +137,7 @@ func main() {
 
 	mgrCtx := ctrl.SetupSignalHandler()
 
-	maintenanceReconciler, err := controllers.NewMaintenanceReconciler(mgr.GetClient())
+	maintenanceReconciler, err := controllers.NewMaintenanceReconciler(mgr.GetClient(), metrics.Registry)
 	if err != nil {
 		setupLog.Error(err, "unable to create maintenance controller", "controller", "Maintenance")
 		os.Exit(1)
