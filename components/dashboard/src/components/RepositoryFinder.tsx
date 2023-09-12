@@ -4,10 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getGitpodService } from "../service/service";
 import { DropDown2, DropDown2Element, DropDown2SelectedElement } from "./DropDown2";
 import Repository from "../icons/Repository.svg";
+import { useSuggestedRepositories } from "../data/git-providers/suggested-repositories-query";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 const LOCAL_STORAGE_KEY = "open-in-gitpod-search-data";
 
@@ -28,7 +30,22 @@ function stripOffProtocol(url: string): string {
 }
 
 export default function RepositoryFinder(props: RepositoryFinderProps) {
+    const includeProjectsOnCreateWorkspace = useFeatureFlag("includeProjectsOnCreateWorkspace");
+
     const [suggestedContextURLs, setSuggestedContextURLs] = useState<string[]>(loadSearchData());
+    const { data: suggestedRepos } = useSuggestedRepositories();
+
+    const suggestedRepoURLs = useMemo(() => {
+        // If the flag is disabled continue to use suggestedContextURLs
+        if (!includeProjectsOnCreateWorkspace) {
+            return suggestedContextURLs;
+        }
+
+        // For now, convert the suggestedRepos to a list of URLs
+        // We'll follow up with updating the UI with the new data
+        return suggestedRepos?.map((repo) => repo.url) || [];
+    }, [suggestedContextURLs, suggestedRepos, includeProjectsOnCreateWorkspace]);
+
     useEffect(() => {
         getGitpodService()
             .server.getSuggestedContextURLs()
@@ -43,7 +60,7 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
             let result: string[];
             searchString = searchString.trim();
             if (searchString.length > 1) {
-                result = suggestedContextURLs.filter((e) => e.toLowerCase().indexOf(searchString.toLowerCase()) !== -1);
+                result = suggestedRepoURLs.filter((e) => e.toLowerCase().indexOf(searchString.toLowerCase()) !== -1);
                 if (result.length > 200) {
                     result = result.slice(0, 200);
                 }
@@ -51,13 +68,13 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
                     try {
                         // If the searchString is a URL, and it's not present in the proposed results, "artificially" add it here.
                         new URL(searchString);
-                        if (!suggestedContextURLs.includes(searchString)) {
+                        if (!suggestedRepoURLs.includes(searchString)) {
                             result.push(searchString);
                         }
                     } catch {}
                 }
             } else {
-                result = suggestedContextURLs.slice(0, 200);
+                result = suggestedRepoURLs.slice(0, 200);
             }
 
             return result.map(
@@ -79,7 +96,7 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
                     } as DropDown2Element),
             );
         },
-        [suggestedContextURLs],
+        [suggestedRepoURLs],
     );
 
     const element = (

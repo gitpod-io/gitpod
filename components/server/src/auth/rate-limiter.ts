@@ -65,6 +65,7 @@ const defaultFunctions: FunctionsConfig = {
     getWorkspaceUsers: { group: "default", points: 1 },
     getFeaturedRepositories: { group: "default", points: 1 },
     getSuggestedContextURLs: { group: "default", points: 1 },
+    getSuggestedRepositories: { group: "default", points: 1 },
     getWorkspace: { group: "default", points: 1 },
     isWorkspaceOwner: { group: "default", points: 1 },
     getOwnerToken: { group: "default", points: 1 },
