@@ -21,6 +21,7 @@ import { Button } from "../components/Button";
 import { useRefreshProjects } from "../data/projects/list-projects-query";
 import { useToast } from "../components/toasts/Toasts";
 import classNames from "classnames";
+import { InputField } from "../components/forms/InputField";
 
 export function ProjectSettingsPage(props: { project?: Project; children?: React.ReactNode }) {
     return (
@@ -149,27 +150,13 @@ export default function ProjectSettingsView() {
                     checked={enablePrebuilds}
                     onChange={(checked) => updateProjectSettings({ enablePrebuilds: checked })}
                 />
-                <div className="flex mt-4 max-w-2xl">
-                    <div className="flex flex-col ml-6">
-                        <label
-                            className={classNames(
-                                "text-sm font-semibold cursor-pointer tracking-wide",
-                                !enablePrebuilds
-                                    ? "text-gray-400 dark:text-gray-400"
-                                    : "text-gray-600 dark:text-gray-100",
-                            )}
-                        >
-                            Workspace machine type
-                        </label>
-                        <div className="max-w-md mt-2">
-                            <SelectWorkspaceClassComponent
-                                disabled={!enablePrebuilds}
-                                selectedWorkspaceClass={project.settings?.workspaceClasses?.prebuild}
-                                onSelectionChange={setWorkspaceClassForPrebuild}
-                            />
-                        </div>
-                    </div>
-                </div>
+                <InputField label="Workspace machine type" disabled={!enablePrebuilds}>
+                    <SelectWorkspaceClassComponent
+                        disabled={!enablePrebuilds}
+                        selectedWorkspaceClass={project.settings?.workspaceClasses?.prebuild}
+                        onSelectionChange={setWorkspaceClassForPrebuild}
+                    />
+                </InputField>
                 <CheckboxInputField
                     label="Enable Incremental Prebuilds"
                     hint={
