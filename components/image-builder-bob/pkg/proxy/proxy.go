@@ -171,6 +171,10 @@ func (proxy *Proxy) reverse(alias string, namespace string) *httputil.ReversePro
 	var host string
 	if !ok {
 		// we don't have an alias, hence don't know what to do other than try and proxy.
+		if namespace == "" {
+			// At this poing things will probably fail.
+			return nil
+		}
 		host = namespace
 	} else {
 		host = repo.Host
