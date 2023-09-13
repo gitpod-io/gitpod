@@ -82,7 +82,7 @@ export default function NewProject() {
 
                 <div className="mt-12 flex space-x-2">
                     <a href={`/projects/${Project.slug(project!)}/settings`}>
-                        <Button className="secondary" onClick={onNewWorkspace}>
+                        <Button type="secondary" onClick={onNewWorkspace}>
                             Enable Prebuilds
                         </Button>
                     </a>
