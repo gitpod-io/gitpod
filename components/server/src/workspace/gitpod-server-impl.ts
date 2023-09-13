@@ -171,11 +171,11 @@ import { GitpodTokenService } from "../user/gitpod-token-service";
 import { EnvVarService } from "../user/env-var-service";
 import { ScmService } from "../projects/scm-service";
 import {
-    PRIORITY_HIGH,
-    PRIORITY_LOW,
-    PRIORITY_MEDIUM,
     SuggestedRepositoryWithSorting,
     sortSuggestedRepositories,
+    suggestionFromProject,
+    suggestionFromRecentWorkspace,
+    suggestionFromUserRepo,
 } from "./suggested-repos-sorter";
 
 // shortcut
@@ -1762,13 +1762,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             const span = TraceContext.startSpan("getSuggestedRepositories.fetchProjects", ctx);
             const projects = await this.projectsService.getProjects(user.id, organizationId);
 
-            const projectRepos = projects.map((project): SuggestedRepositoryWithSorting => {
-                return {
+            const projectRepos = projects.map((project) => {
+                return suggestionFromProject({
                     url: project.cloneUrl.replace(/\.git$/, ""),
                     projectId: project.id,
                     projectName: project.name,
-                    priority: PRIORITY_HIGH,
-                };
+                });
             });
 
             span.finish();
@@ -1794,11 +1793,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                         }
                         const userRepos = await services.repositoryProvider.getUserRepos(user);
 
-                        return userRepos.map((r) => ({
-                            url: r.url.replace(/\.git$/, ""),
-                            repositoryName: r.name,
-                            priority: PRIORITY_LOW,
-                        }));
+                        return userRepos.map((r) =>
+                            suggestionFromUserRepo({
+                                url: r.url.replace(/\.git$/, ""),
+                                repositoryName: r.name,
+                            }),
+                        );
                     } catch (error) {
                         log.debug(logCtx, "Could not get user repositories from host " + p.host, error);
                     }
@@ -1831,13 +1831,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 if (repoUrl) {
                     const lastUse = WorkspaceInfo.lastActiveISODate(ws);
 
-                    recentRepos.push({
-                        url: repoUrl,
-                        projectId: ws.workspace.projectId,
-                        priority: PRIORITY_MEDIUM,
-                        lastUse,
-                        repositoryName: repoName || "",
-                    });
+                    recentRepos.push(
+                        suggestionFromRecentWorkspace(
+                            {
+                                url: repoUrl,
+                                projectId: ws.workspace.projectId,
+                                repositoryName: repoName || "",
+                            },
+                            lastUse,
+                        ),
+                    );
                 }
             }
 

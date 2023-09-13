@@ -5,11 +5,10 @@
  */
 
 import { SuggestedRepository } from "@gitpod/gitpod-protocol";
-import mergeWith from "lodash.mergewith";
 
-export const PRIORITY_LOW = 1;
-export const PRIORITY_MEDIUM = 5;
-export const PRIORITY_HIGH = 10;
+const PRIORITY_LOW = 1;
+const PRIORITY_MEDIUM = 2;
+const PRIORITY_HIGH = 5;
 
 export type SuggestedRepositoryWithSorting = SuggestedRepository & {
     priority: number;
@@ -24,10 +23,12 @@ export const sortSuggestedRepositories = (repos: SuggestedRepositoryWithSorting[
     for (const repo of repos) {
         const existingRepo = uniqueRepositories.get(repo.url);
 
-        // Only merge properties if the source doesn't already have a value for it
-        const mergedEntry = mergeWith(existingRepo || {}, repo, (objValue, srcValue) => {
-            return objValue === undefined ? srcValue : objValue;
-        });
+        const mergedEntry = {
+            ...(existingRepo || repo),
+            priority: existingRepo?.priority === undefined ? repo.priority : existingRepo.priority + repo.priority,
+            lastUse: existingRepo?.lastUse || repo.lastUse,
+            repositoryName: existingRepo?.repositoryName || repo.repositoryName,
+        };
 
         uniqueRepositories.set(repo.url, mergedEntry);
     }
@@ -51,4 +52,29 @@ export const sortSuggestedRepositories = (repos: SuggestedRepositoryWithSorting[
     });
 
     return sortedRepos;
+};
+
+export const suggestionFromProject = (repo: SuggestedRepository): SuggestedRepositoryWithSorting => {
+    return {
+        ...repo,
+        priority: PRIORITY_LOW,
+    };
+};
+
+export const suggestionFromUserRepo = (repo: SuggestedRepository): SuggestedRepositoryWithSorting => {
+    return {
+        ...repo,
+        priority: PRIORITY_MEDIUM,
+    };
+};
+
+export const suggestionFromRecentWorkspace = (
+    repo: SuggestedRepository,
+    lastUse?: string,
+): SuggestedRepositoryWithSorting => {
+    return {
+        ...repo,
+        priority: PRIORITY_HIGH,
+        lastUse,
+    };
 };
