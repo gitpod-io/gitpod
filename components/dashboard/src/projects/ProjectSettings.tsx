@@ -264,7 +264,7 @@ export default function ProjectSettingsView() {
             </div>
             <div>
                 <Heading2 className="mt-12">Remove Project</Heading2>
-                <Subheading className="pb-4">
+                <Subheading className="pb-4 max-w-md">
                     This will delete the project and all project-level environment variables you've set for this
                     project.
                 </Subheading>
