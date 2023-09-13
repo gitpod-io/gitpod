@@ -5,8 +5,8 @@
  */
 
 import { Code, ConnectError, ConnectRouter, HandlerContext, ServiceImpl } from "@bufbuild/connect";
-import { ServiceType, MethodKind } from "@bufbuild/protobuf";
 import { expressConnectMiddleware } from "@bufbuild/connect-express";
+import { MethodKind, ServiceType } from "@bufbuild/protobuf";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connectweb";
 import { StatsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/stats_connectweb";
@@ -17,13 +17,13 @@ import express from "express";
 import * as http from "http";
 import { inject, injectable, interfaces } from "inversify";
 import { AddressInfo } from "net";
+import { grpcServerHandled, grpcServerHandling, grpcServerStarted } from "../prometheus-metrics";
 import { SessionHandler } from "../session-handler";
 import { APIHelloService } from "./dummy";
 import { APIStatsService } from "./stats";
 import { APITeamsService } from "./teams";
 import { APIUserService } from "./user";
 import { APIWorkspacesService } from "./workspaces";
-import { grpcServerHandled, grpcServerHandling, grpcServerStarted } from "../prometheus-metrics";
 
 function service<T extends ServiceType>(type: T, impl: ServiceImpl<T>): [T, ServiceImpl<T>] {
     return [type, impl];
@@ -96,6 +96,7 @@ export class API {
      */
 
     private interceptService<T extends ServiceType>(type: T): ProxyHandler<ServiceImpl<T>> {
+        const grpc_service = type.typeName;
         const self = this;
         return {
             get(target, prop) {
@@ -103,54 +104,42 @@ export class API {
                     const method = type.methods[prop as any];
                     if (!method) {
                         // Increment metrics for unknown method attempts
-                        console.warn("public api: unknown method", type.typeName, prop);
+                        console.warn("public api: unknown method", grpc_service, prop);
                         const code = Code.Unimplemented;
-                        grpcServerStarted.labels(type.typeName, "unknown", "unknown").inc();
-                        grpcServerHandling
-                            .labels(type.typeName, "unknown", "unknown", Code[code].toLowerCase())
-                            .observe(0);
+                        grpcServerStarted.labels(grpc_service, "unknown", "unknown").inc();
+                        grpcServerHandled.labels(grpc_service, "unknown", "unknown", Code[code]).inc();
+                        grpcServerHandling.labels(grpc_service, "unknown", "unknown", Code[code]).observe(0);
                         throw new ConnectError("unimplemented", code);
                     }
-                    let kind = "unknown";
+                    const grpc_method = method.name;
+                    let grpc_type = "unknown";
                     if (method.kind === MethodKind.Unary) {
-                        kind = "unary";
+                        grpc_type = "unary";
                     } else if (method.kind === MethodKind.ServerStreaming) {
-                        kind = "server_stream";
+                        grpc_type = "server_stream";
                     } else if (method.kind === MethodKind.ClientStreaming) {
-                        kind = "client_stream";
+                        grpc_type = "client_stream";
                     } else if (method.kind === MethodKind.BiDiStreaming) {
-                        kind = "bidi_stream";
+                        grpc_type = "bidi_stream";
                     }
 
-                    const context = args[1] as HandlerContext;
+                    grpcServerStarted.labels(grpc_service, grpc_method, grpc_type).inc();
+                    const stopTimer = grpcServerHandling.startTimer({ grpc_service, grpc_method, grpc_type });
 
-                    const startTime = Date.now();
-                    grpcServerStarted.labels(type.typeName, method.name, kind).inc();
-
-                    let result: any;
-                    let error: ConnectError | undefined;
+                    let grpc_code = "OK";
                     try {
+                        const context = args[1] as HandlerContext;
                         const user = await self.verify(context);
                         context.user = user;
-                        result = await (target[prop as any] as Function).apply(target, args);
+                        return await (target[prop as any] as Function).apply(target, args);
                     } catch (e) {
-                        if (!(e instanceof ConnectError)) {
-                            console.error("public api: internal: failed to handle request", e);
-                            error = new ConnectError("internal", Code.Internal);
-                        } else {
-                            error = e;
-                        }
+                        const err = ConnectError.from(e);
+                        grpc_code = Code[err.code];
+                        throw err;
+                    } finally {
+                        grpcServerHandled.labels(grpc_service, grpc_method, grpc_type, grpc_code).inc();
+                        stopTimer({ grpc_code });
                     }
-
-                    const code = error ? Code[error.code].toLowerCase() : "ok";
-                    grpcServerHandled.labels(type.typeName, method.name, kind, code).inc();
-                    grpcServerHandling
-                        .labels(type.typeName, method.name, kind, code)
-                        .observe((Date.now() - startTime) / 1000);
-                    if (error) {
-                        throw error;
-                    }
-                    return result;
                 };
             },
         };
