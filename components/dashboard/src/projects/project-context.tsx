@@ -91,6 +91,9 @@ export function useCurrentProject(): { project: Project | undefined; loading: bo
             if (!org.data) {
                 return;
             }
+            if (!listProjects.data) {
+                return;
+            }
             const projects = listProjects.data?.projects || [];
 
             // Find project matching with slug, otherwise with name
