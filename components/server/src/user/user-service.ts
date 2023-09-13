@@ -94,11 +94,6 @@ export class UserService {
 
     async findTokensForIdentity(userId: string, identity: Identity): Promise<TokenEntry[]> {
         const result = await this.userDb.findTokensForIdentity(identity);
-        for (const token of result) {
-            if (!(await this.authorizer.hasPermissionOnUser(userId, "read_info", token.uid))) {
-                throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
-            }
-        }
         return result;
     }
 
