@@ -52,26 +52,16 @@ export class ScmService {
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
         const authProvider = hostContext && hostContext.authProvider.info;
-        const type = authProvider && authProvider.authProviderType;
-        if (
-            type === "GitLab" ||
-            type === "Bitbucket" ||
-            type === "BitbucketServer" ||
-            (type === "GitHub" && (authProvider?.host !== "github.com" || !this.config.githubApp?.enabled))
-        ) {
-            const repositoryService = hostContext?.services?.repositoryService;
-            if (repositoryService) {
-                // Note: For GitLab, we expect .canInstallAutomatedPrebuilds() to always return true, because earlier
-                // in the project creation flow, we only propose repositories where the user is actually allowed to
-                // install a webhook.
-                if (await repositoryService.canInstallAutomatedPrebuilds(installer, cloneUrl)) {
-                    log.info(
-                        { organizationId: teamId, userId: installer.id },
-                        "Update prebuild installation for project.",
-                    );
-                    await repositoryService.installAutomatedPrebuilds(installer, cloneUrl);
-                }
-            }
+        const isGitHubAppInUse = authProvider?.host === "github.com" && !!this.config.githubApp?.enabled;
+        if (isGitHubAppInUse) {
+            // Silently returning here, as the configuration of the GH App is on a different code path
+            // and this check will become just obsolete on the departure of the GH App.
+            return;
+        }
+        const repositoryService = hostContext?.services?.repositoryService;
+        if (repositoryService) {
+            log.info({ organizationId: teamId, userId: installer.id }, "Update prebuild installation for project.");
+            await repositoryService.installAutomatedPrebuilds(installer, cloneUrl);
         }
     }
 }

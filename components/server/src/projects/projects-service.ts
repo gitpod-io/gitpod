@@ -18,7 +18,7 @@ import {
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { PartialProject, ProjectUsage } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
+import { PartialProject, ProjectSettings, ProjectUsage } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { URL } from "url";
@@ -28,6 +28,10 @@ import { ScmService } from "./scm-service";
 
 @injectable()
 export class ProjectsService {
+    public static PROJECT_SETTINGS_DEFAULTS: ProjectSettings = {
+        enablePrebuilds: false,
+    };
+
     constructor(
         @inject(ProjectDB) private readonly projectDB: ProjectDB,
         @inject(TracedWorkspaceDB) private readonly workspaceDb: DBWithTracing<WorkspaceDB>,
@@ -200,6 +204,7 @@ export class ProjectsService {
     async createProject(
         { name, slug, cloneUrl, teamId, appInstallationId }: CreateProjectParams,
         installer: User,
+        projectSettingsDefaults: ProjectSettings = ProjectsService.PROJECT_SETTINGS_DEFAULTS,
     ): Promise<Project> {
         await this.auth.checkPermissionOnOrganization(installer.id, "create_project", teamId);
 
@@ -227,6 +232,7 @@ export class ProjectsService {
             cloneUrl,
             teamId,
             appInstallationId,
+            settings: projectSettingsDefaults,
         });
 
         try {
@@ -371,11 +377,7 @@ export class ProjectsService {
             if (!project) {
                 return;
             }
-            let enablePrebuildsPrev = project.settings?.enablePrebuilds;
-            if (typeof enablePrebuildsPrev === "undefined") {
-                // Compatibility mode for existing projects without persisted settings.
-                enablePrebuildsPrev = true;
-            }
+            const enablePrebuildsPrev = !!project.settings?.enablePrebuilds;
             const installWebhook = enablePrebuildsNew && !enablePrebuildsPrev;
             const uninstallWebhook = !enablePrebuildsNew && enablePrebuildsPrev;
             if (installWebhook) {

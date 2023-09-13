@@ -10,7 +10,7 @@ import { IDEServiceClient, IDEServiceDefinition } from "@gitpod/ide-service-api/
 import { UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import { ContainerModule } from "inversify";
 import { v4 } from "uuid";
-import { AuthProviderParams } from "../auth/auth-provider";
+import { AuthProvider, AuthProviderParams } from "../auth/auth-provider";
 import { HostContextProvider, HostContextProviderFactory } from "../auth/host-context-provider";
 import { HostContextProviderImpl } from "../auth/host-context-provider-impl";
 import { SpiceDBClientProvider } from "../authorization/spicedb";
@@ -44,12 +44,28 @@ import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url"
  *  - replaces the analytics writer with a null analytics writer
  */
 const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound, rebind) => {
+    const webhooks = new Set<String>();
+    bind("webhooks").toConstantValue(webhooks);
     rebind(HostContextProvider).toConstantValue({
         get: () => {
             const authProviderId = "Public-GitHub";
             return {
-                authProvider: {
+                authProvider: <AuthProvider>{
                     authProviderId,
+                    info: {
+                        authProviderId,
+                        authProviderType: "GitHub",
+                    },
+                },
+                services: {
+                    repositoryService: {
+                        installAutomatedPrebuilds: async (user: any, cloneUrl: any) => {
+                            webhooks.add(cloneUrl);
+                        },
+                        canInstallAutomatedPrebuilds: async () => {
+                            throw "not expected to be called";
+                        },
+                    },
                 },
             };
         },
