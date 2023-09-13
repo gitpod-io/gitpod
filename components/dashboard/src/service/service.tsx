@@ -59,67 +59,70 @@ export function getGitpodService(): GitpodService {
         const service = _gp.gitpodService || (_gp.gitpodService = require("./service-mock").gitpodServiceMock);
         return service;
     }
-    let user: any;
-    const service = _gp.gitpodService || (_gp.gitpodService = createGitpodService());
-    service.server = new Proxy(service.server, {
-        get(target, propKey) {
-            return async function (...args: any[]) {
-                if (propKey === "getLoggedInUser") {
-                    user = await target[propKey](...args);
-                    return user;
-                }
-                if (propKey === "getWorkspace") {
-                    try {
-                        return await target[propKey](...args);
-                    } finally {
-                        const grpcType = "unary";
-                        // emulates frequent unary calls to public API
-                        const isTest = await getExperimentsClient().getValueAsync(
-                            "public_api_dummy_reliability_test",
-                            false,
-                            { user, grpcType },
-                        );
-                        if (isTest) {
-                            helloService.sayHello({}).catch((e) => {
-                                metricsReporter.reportError(e, {
-                                    userId: user?.id,
-                                    workspaceId: args[0],
-                                    grpcType,
+    let service = _gp.gitpodService;
+    if (!service) {
+        let user: any;
+        service = _gp.gitpodService = createGitpodService();
+        service.server = new Proxy(service.server, {
+            get(target, propKey) {
+                return async function (...args: any[]) {
+                    if (propKey === "getLoggedInUser") {
+                        user = await target[propKey](...args);
+                        return user;
+                    }
+                    if (propKey === "getWorkspace") {
+                        try {
+                            return await target[propKey](...args);
+                        } finally {
+                            const grpcType = "unary";
+                            // emulates frequent unary calls to public API
+                            const isTest = await getExperimentsClient().getValueAsync(
+                                "public_api_dummy_reliability_test",
+                                false,
+                                { user, grpcType },
+                            );
+                            if (isTest) {
+                                helloService.sayHello({}).catch((e) => {
+                                    metricsReporter.reportError(e, {
+                                        userId: user?.id,
+                                        workspaceId: args[0],
+                                        grpcType,
+                                    });
+                                    console.error(e);
                                 });
-                                console.error(e);
-                            });
+                            }
                         }
                     }
-                }
-                return target[propKey](...args);
-            };
-        },
-    });
-    (async () => {
-        const grpcType = "server-stream";
-        // emulates server side streaming with public API
-        while (true) {
-            const isTest = await getExperimentsClient().getValueAsync("public_api_dummy_reliability_test", false, {
-                user,
-                grpcType,
-            });
-            if (isTest) {
-                try {
-                    let previousCount = 0;
-                    for await (const reply of helloService.lotsOfReplies({ previousCount })) {
-                        previousCount = reply.count;
+                    return target[propKey](...args);
+                };
+            },
+        });
+        (async () => {
+            const grpcType = "server-stream";
+            // emulates server side streaming with public API
+            while (true) {
+                const isTest = await getExperimentsClient().getValueAsync("public_api_dummy_reliability_test", false, {
+                    user,
+                    grpcType,
+                });
+                if (isTest) {
+                    try {
+                        let previousCount = 0;
+                        for await (const reply of helloService.lotsOfReplies({ previousCount })) {
+                            previousCount = reply.count;
+                        }
+                    } catch (e) {
+                        metricsReporter.reportError(e, {
+                            userId: user?.id,
+                            grpcType,
+                        });
+                        console.error(e);
                     }
-                } catch (e) {
-                    metricsReporter.reportError(e, {
-                        userId: user?.id,
-                        grpcType,
-                    });
-                    console.error(e);
                 }
+                await new Promise((resolve) => setTimeout(resolve, 3000));
             }
-            await new Promise((resolve) => setTimeout(resolve, 3000));
-        }
-    })();
+        })();
+    }
     return service;
 }
 

@@ -24,6 +24,7 @@ import { APIStatsService } from "./stats";
 import { APITeamsService } from "./teams";
 import { APIUserService } from "./user";
 import { APIWorkspacesService } from "./workspaces";
+import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 
 function service<T extends ServiceType>(type: T, impl: ServiceImpl<T>): [T, ServiceImpl<T>] {
     return [type, impl];
@@ -94,13 +95,12 @@ export class API {
      * - logging context
      * - tracing
      */
-
     private interceptService<T extends ServiceType>(type: T): ProxyHandler<ServiceImpl<T>> {
         const grpc_service = type.typeName;
         const self = this;
         return {
             get(target, prop) {
-                return async (...args: any[]) => {
+                return (...args: any[]) => {
                     const method = type.methods[prop as any];
                     if (!method) {
                         // Increment metrics for unknown method attempts
@@ -125,21 +125,48 @@ export class API {
 
                     grpcServerStarted.labels(grpc_service, grpc_method, grpc_type).inc();
                     const stopTimer = grpcServerHandling.startTimer({ grpc_service, grpc_method, grpc_type });
-
-                    let grpc_code = "OK";
-                    try {
-                        const context = args[1] as HandlerContext;
-                        const user = await self.verify(context);
-                        context.user = user;
-                        return await (target[prop as any] as Function).apply(target, args);
-                    } catch (e) {
-                        const err = ConnectError.from(e);
-                        grpc_code = Code[err.code];
-                        throw err;
-                    } finally {
+                    const deferred = new Deferred<ConnectError | undefined>();
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    deferred.promise.then((err) => {
+                        const grpc_code = err ? Code[err.code] : "OK";
                         grpcServerHandled.labels(grpc_service, grpc_method, grpc_type, grpc_code).inc();
                         stopTimer({ grpc_code });
+                    });
+
+                    const context = args[1] as HandlerContext;
+                    async function call<T>(): Promise<T> {
+                        const user = await self.verify(context);
+                        context.user = user;
+
+                        return (target[prop as any] as Function).apply(target, args);
                     }
+                    if (grpc_type === "unary" || grpc_type === "client_stream") {
+                        return (async () => {
+                            try {
+                                const promise = await call<Promise<any>>();
+                                const result = await promise;
+                                deferred.resolve(undefined);
+                                return result;
+                            } catch (e) {
+                                const err = ConnectError.from(e);
+                                deferred.resolve(e);
+                                throw err;
+                            }
+                        })();
+                    }
+                    return (async function* () {
+                        try {
+                            const generator = await call<AsyncGenerator<any>>();
+                            for await (const item of generator) {
+                                yield item;
+                            }
+                            deferred.resolve(undefined);
+                        } catch (e) {
+                            const err = ConnectError.from(e);
+                            deferred.resolve(err);
+                            throw err;
+                        }
+                    })();
                 };
             },
         };
