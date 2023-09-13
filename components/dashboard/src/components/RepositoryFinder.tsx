@@ -14,6 +14,7 @@ import { useFeatureFlag } from "../data/featureflag-query";
 import { SuggestedRepository } from "@gitpod/gitpod-protocol";
 import { TextLight } from "./typography/text";
 import classNames from "classnames";
+import { MiddleDot } from "./typography/MiddleDot";
 
 const LOCAL_STORAGE_KEY = "open-in-gitpod-search-data";
 
@@ -94,12 +95,25 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
                 return {
                     id: repo.url,
                     element: (
-                        <div className="flex flex-row ml-1 mt-1 gap-1 items-center">
-                            <span className={classNames("text-orange-500", !repo.projectId && "filter-grayscale")}>
-                                <RepositoryIcon className="text-orange-500 w-5 h-5" />
+                        <div className="flex flex-row items-center overflow-hidden">
+                            <span className={"pr-3"}>
+                                <RepositoryIcon
+                                    className={classNames(
+                                        "w-5 h-5 text-orange-500",
+                                        !repo.projectId && "filter-grayscale",
+                                    )}
+                                />
                             </span>
+
                             {name && <span className="text-sm whitespace-nowrap font-semibold">{name}</span>}
-                            <TextLight className="text-xs whitespace-nowrap overflow-clip">
+
+                            {/* TODO: would be nice to have an easy way to set text colors here instead of wrapping w/ text */}
+                            <TextLight>
+                                <MiddleDot className="px-0.5" />
+                            </TextLight>
+
+                            {/* TODO: determine if Text component is helpful */}
+                            <TextLight className="text-xs whitespace-nowrap truncate overflow-ellipsis">
                                 {stripOffProtocol(repo.url)}
                             </TextLight>
                         </div>
