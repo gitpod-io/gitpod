@@ -20,6 +20,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/ecr"
 	"github.com/docker/distribution/reference"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/google/uuid"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
@@ -334,8 +335,17 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		bobBaseref += ":latest"
 	}
 	wsref, err := reference.ParseNamed(wsrefstr)
+	var workspaceAuth []byte
 	var additionalAuth []byte
 	if err == nil {
+		res := make(auth.ImageBuildAuth)
+		if wsrefAuth != nil {
+			res[reference.Domain(wsref)] = registry.AuthConfig(*wsrefAuth)
+		}
+		workspaceAuth, err = json.Marshal(map[string]auth.ImageBuildAuth{"auths": res})
+		if err != nil {
+			return xerrors.Errorf("cannot marshal additional auth: %w", err)
+		}
 		ath := reqauth.GetImageBuildAuthFor(ctx, o.Auth, []string{reference.Domain(pbaseref)}, []string{
 			reference.Domain(wsref),
 		})
@@ -380,11 +390,8 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 					{Name: "WORKSPACEKIT_BOBPROXY_BASEREF", Value: baseref},
 					{Name: "WORKSPACEKIT_BOBPROXY_TARGETREF", Value: wsrefstr},
 					{
-						Name: "WORKSPACEKIT_BOBPROXY_AUTH",
-						Secret: &wsmanapi.EnvironmentVariable_SecretKeyRef{
-							SecretName: o.Config.PullSecret,
-							Key:        ".dockerconfigjson",
-						},
+						Name:  "WORKSPACEKIT_BOBPROXY_AUTH",
+						Value: string(workspaceAuth),
 					},
 					{
 						Name:  "WORKSPACEKIT_BOBPROXY_ADDITIONALAUTH",

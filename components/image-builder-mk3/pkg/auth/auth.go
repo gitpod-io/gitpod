@@ -32,6 +32,8 @@ import (
 type RegistryAuthenticator interface {
 	// Authenticate attempts to provide authentication for Docker registry access
 	Authenticate(ctx context.Context, registry string) (auth *Authentication, err error)
+
+	GetRegistries() []string
 }
 
 // NewDockerConfigFileAuth reads a docker config file to provide authentication
@@ -94,6 +96,14 @@ func (a *DockerConfigFileAuth) loadFromFile(fn string) (err error) {
 	return nil
 }
 
+func (ath *DockerConfigFileAuth) GetRegistries() []string {
+	registries := []string{}
+	for reg := range ath.C.AuthConfigs {
+		registries = append(registries, reg)
+	}
+	return registries
+}
+
 // Authenticate attempts to provide an encoded authentication string for Docker registry access
 func (a *DockerConfigFileAuth) Authenticate(ctx context.Context, registry string) (auth *Authentication, err error) {
 	ac, err := a.C.GetAuthConfig(registry)
@@ -114,6 +124,14 @@ func (a *DockerConfigFileAuth) Authenticate(ctx context.Context, registry string
 
 // CompositeAuth returns the first non-empty authentication of any of its consitutents
 type CompositeAuth []RegistryAuthenticator
+
+func (ca CompositeAuth) GetRegistries() []string {
+	registries := []string{}
+	for _, reg := range ca {
+		registries = append(registries, reg.GetRegistries()...)
+	}
+	return registries
+}
 
 func (ca CompositeAuth) Authenticate(ctx context.Context, registry string) (auth *Authentication, err error) {
 	for _, ath := range ca {
@@ -148,6 +166,10 @@ const (
 	// [1] https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_GetAuthorizationToken.html
 	ecrTokenRefreshTime = 4 * time.Hour
 )
+
+func (ath ECRAuthenticator) GetRegistries() []string {
+	return []string{}
+}
 
 func (ath *ECRAuthenticator) Authenticate(ctx context.Context, registry string) (auth *Authentication, err error) {
 	if !isECRRegistry(registry) {
@@ -383,7 +405,7 @@ func (a AllowedAuthFor) GetImageBuildAuthFor(ctx context.Context, auth RegistryA
 		ath := a.additionalAuth(reg)
 		res[reg] = types.AuthConfig(*ath)
 	}
-	for _, reg := range additionalRegistries {
+	for _, reg := range append(auth.GetRegistries(), additionalRegistries...) {
 		ath, err := auth.Authenticate(ctx, reg)
 		if err != nil {
 			log.WithError(err).WithField("registry", reg).Warn("cannot get authentication for additioanl registry for image build")

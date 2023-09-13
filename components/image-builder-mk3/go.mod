@@ -7,7 +7,7 @@ require (
 	github.com/containerd/containerd v1.7.3
 	github.com/docker/cli v24.0.5+incompatible
 	github.com/docker/distribution v2.8.2+incompatible
-	github.com/docker/docker v20.10.17+incompatible
+	github.com/docker/docker v24.0.5+incompatible
 	github.com/docker/docker-credential-helpers v0.6.4 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
