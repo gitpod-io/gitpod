@@ -13,23 +13,16 @@ import { TokensService } from "@gitpod/public-api/lib/gitpod/experimental/v1/tok
 import { ProjectsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_connectweb";
 import { WorkspacesService } from "@gitpod/public-api/lib/gitpod/experimental/v1/workspaces_connectweb";
 import { OIDCService } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_connectweb";
-import { getMetricsInterceptor, MetricsReporter } from "@gitpod/public-api/lib/metrics";
+import { getMetricsInterceptor } from "@gitpod/public-api/lib/metrics";
 import { Team } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
 import { TeamMember, TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { Project } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_pb";
-import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
     interceptors: [getMetricsInterceptor()],
 });
-
-const metricsReporter = new MetricsReporter(
-    new GitpodHostUrl(window.location.href).withoutWorkspacePrefix().toString(),
-    "dashboard",
-);
-metricsReporter.startReporting();
 
 export const helloService = createPromiseClient(HelloService, transport);
 export const teamsService = createPromiseClient(TeamsService, transport);

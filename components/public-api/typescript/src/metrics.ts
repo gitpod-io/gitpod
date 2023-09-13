@@ -251,10 +251,13 @@ export class MetricsReporter {
     private readonly metricsHost: string;
 
     constructor(
-        url: string,
-        private readonly clientName: string,
+        private readonly options: {
+            gitpodUrl: string;
+            clientName: string;
+            clientVersion: string;
+        },
     ) {
-        this.metricsHost = `ide.${new URL(url).hostname}`;
+        this.metricsHost = `ide.${new URL(options.gitpodUrl).hostname}`;
     }
 
     startReporting() {
@@ -335,7 +338,8 @@ export class MetricsReporter {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "X-Client": this.clientName,
+                "X-Client": this.options.clientName,
+                "X-Client-Version": this.options.clientVersion,
             },
             body: JSON.stringify(data),
         });
@@ -363,7 +367,8 @@ export class MetricsReporter {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "X-Client": this.clientName,
+                "X-Client": this.options.clientName,
+                "X-Client-Version": this.options.clientVersion,
             },
             body: JSON.stringify(data),
         });
@@ -371,5 +376,57 @@ export class MetricsReporter {
         if (!resp.ok) {
             console.error("metrics: endpoint responded with", resp.status, resp.statusText);
         }
+    }
+
+    reportError(
+        error: Error,
+        data?: {
+            userId?: string;
+            workspaceId?: string;
+            instanceId?: string;
+            [key: string]: string | undefined;
+        },
+    ): void {
+        const properties = { ...data };
+        const errorProps = { message: error.message, stack: error.stack };
+
+        properties["error_name"] = error.name;
+        properties["error_message"] = errorProps.message;
+
+        const workspaceId = properties["workspaceId"] ?? "";
+        const instanceId = properties["instanceId"] ?? "";
+        const userId = properties["userId"] ?? "";
+
+        delete properties["workspaceId"];
+        delete properties["instanceId"];
+        delete properties["userId"];
+
+        const jsonData = {
+            component: this.options.clientName,
+            errorStack: errorProps.stack || "",
+            version: this.options.clientVersion,
+            workspaceId,
+            instanceId,
+            userId,
+            properties,
+        };
+
+        fetch(`https://${this.metricsHost}/metrics-api/reportError`, {
+            method: "POST",
+            body: JSON.stringify(jsonData),
+            headers: {
+                "Content-Type": "application/json",
+                "X-Client": this.options.clientName,
+                "X-Client-Version": this.options.clientVersion,
+            },
+        })
+            .then((resp) => {
+                if (!resp.ok) {
+                    console.error(`metrics: endpoint responded with ${resp.status} ${resp.statusText}`);
+                }
+            })
+            .catch((e) => {
+                console.error("metrics: failed to report error to metrics endpoint!", e);
+            });
     }
 }

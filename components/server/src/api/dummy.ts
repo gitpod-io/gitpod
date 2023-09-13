@@ -15,10 +15,6 @@ import {
 } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_pb";
 import { injectable } from "inversify";
 
-/**
- * TODO(ak):
- * - client-side feature flags for unary and stream tests
- */
 @injectable()
 export class APIHelloService implements ServiceImpl<typeof HelloService> {
     async sayHello(req: SayHelloRequest, context: HandlerContext): Promise<SayHelloResponse> {

@@ -20,6 +20,8 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/frontend-dashboard-service";
 import { RemoteTrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
 import { helloService } from "./public-api";
+import { getExperimentsClient } from "../experiments/client";
+import { metricsReporter } from "./metrics";
 
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
@@ -57,22 +59,67 @@ export function getGitpodService(): GitpodService {
         const service = _gp.gitpodService || (_gp.gitpodService = require("./service-mock").gitpodServiceMock);
         return service;
     }
+    let user: any;
     const service = _gp.gitpodService || (_gp.gitpodService = createGitpodService());
     service.server = new Proxy(service.server, {
         get(target, propKey) {
             return async function (...args: any[]) {
-                // TODO(ak) feature flagged
+                if (propKey === "getLoggedInUser") {
+                    user = await target[propKey](...args);
+                    return user;
+                }
                 if (propKey === "getWorkspace") {
                     try {
                         return await target[propKey](...args);
                     } finally {
-                        helloService.sayHello({}).catch(console.error);
+                        const grpcType = "unary";
+                        // emulates frequent unary calls to public API
+                        const isTest = await getExperimentsClient().getValueAsync(
+                            "public_api_dummy_reliability_test",
+                            false,
+                            { user, grpcType },
+                        );
+                        if (isTest) {
+                            helloService.sayHello({}).catch((e) => {
+                                metricsReporter.reportError(e, {
+                                    userId: user?.id,
+                                    workspaceId: args[0],
+                                    grpcType,
+                                });
+                                console.error(e);
+                            });
+                        }
                     }
                 }
                 return target[propKey](...args);
             };
         },
     });
+    (async () => {
+        const grpcType = "server-stream";
+        // emulates server side streaming with public API
+        while (true) {
+            const isTest = await getExperimentsClient().getValueAsync("public_api_dummy_reliability_test", false, {
+                user,
+                grpcType,
+            });
+            if (isTest) {
+                try {
+                    let previousCount = 0;
+                    for await (const reply of helloService.lotsOfReplies({ previousCount })) {
+                        previousCount = reply.count;
+                    }
+                } catch (e) {
+                    metricsReporter.reportError(e, {
+                        userId: user?.id,
+                        grpcType,
+                    });
+                    console.error(e);
+                }
+            }
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+        }
+    })();
     return service;
 }
 

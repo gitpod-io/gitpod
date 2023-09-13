@@ -24,8 +24,11 @@ import { ProjectContextProvider } from "./projects/project-context";
 import { ThemeContextProvider } from "./theme-context";
 import { UserContextProvider } from "./user-context";
 import { getURLHash, isGitpodIo, isWebsiteSlug } from "./utils";
+import { metricsReporter } from "./service/metrics";
 
 const bootApp = () => {
+    metricsReporter.startReporting();
+
     // gitpod.io specific boot logic
     if (isGitpodIo()) {
         // Redirect to www website for any website slugs
