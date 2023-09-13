@@ -66,6 +66,7 @@ function parseProjectSlug(slug: string): ProjectInfo | undefined {
 
 export function useCurrentProject(): { project: Project | undefined; loading: boolean } {
     const { project, setProject } = useContext(ProjectContext);
+    const [loading, setLoading] = useState(true);
     const user = useCurrentUser();
     const org = useCurrentOrg();
     const orgs = useOrganizations();
@@ -75,6 +76,7 @@ export function useCurrentProject(): { project: Project | undefined; loading: bo
     const listProjects = useListProjectsQuery();
 
     useEffect(() => {
+        setLoading(true);
         if (!user) {
             setProject(undefined);
             // without a user we are still consider this loading
@@ -82,6 +84,7 @@ export function useCurrentProject(): { project: Project | undefined; loading: bo
         }
         if (!projectInfo) {
             setProject(undefined);
+            setLoading(false);
             return;
         }
         (async () => {
@@ -107,8 +110,9 @@ export function useCurrentProject(): { project: Project | undefined; loading: bo
                 }
             }
             setProject(project);
+            setLoading(false);
         })();
     }, [setProject, org.data, user, orgs.data, location, history, projectInfo, listProjects.data]);
 
-    return { project, loading: listProjects.isLoading };
+    return { project, loading };
 }
