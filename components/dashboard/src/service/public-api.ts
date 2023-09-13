@@ -18,13 +18,17 @@ import { Team } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
 import { TeamMember, TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { Project } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_pb";
+import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
     interceptors: [getMetricsInterceptor()],
 });
 
-const metricsReporter = new MetricsReporter(window.location.host, "dashboard");
+const metricsReporter = new MetricsReporter(
+    new GitpodHostUrl(window.location.href).withoutWorkspacePrefix().toString(),
+    "dashboard",
+);
 metricsReporter.startReporting();
 
 export const helloService = createPromiseClient(HelloService, transport);

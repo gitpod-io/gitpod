@@ -16,9 +16,9 @@ import type {
     MetricValueWithName,
 } from "prom-client";
 
-const Registry: typeof PromRegistry = require("prom-client/lib/registry").Registry;
-const Counter: typeof PromCounter = require("prom-client/lib/counter").Counter;
-const Histogram: typeof PromHistorgram = require("prom-client/lib/histogram").Histogram;
+const Registry: typeof PromRegistry = require("prom-client/lib/registry");
+const Counter: typeof PromCounter = require("prom-client/lib/counter");
+const Histogram: typeof PromHistorgram = require("prom-client/lib/histogram");
 
 import { MethodKind } from "@bufbuild/protobuf";
 import {
@@ -121,12 +121,22 @@ class PrometheusClientCallMetrics {
 
     startHandleTimer(
         labels: IGrpcCallMetricsLabels,
-    ): (labels?: Partial<Record<string, string | number>> | undefined) => number {
-        return this.handledSecondsHistogram.startTimer({
+    ): (endLabels?: Partial<Record<string, string | number>> | undefined) => number {
+        const startLabels = {
             grpc_service: labels.service,
             grpc_method: labels.method,
             grpc_type: labels.type,
-        });
+        };
+        if (typeof window !== "undefined") {
+            const start = performance.now();
+            return (endLabels) => {
+                const delta = performance.now() - start;
+                const value = delta / 1e9;
+                this.handledSecondsHistogram.labels(Object.assign(startLabels, endLabels)).observe(value);
+                return value;
+            };
+        }
+        return this.handledSecondsHistogram.startTimer(startLabels);
     }
 }
 
@@ -234,18 +244,17 @@ export function getMetricsInterceptor(): Interceptor {
 }
 
 export class MetricsReporter {
-    private static readonly REPORT_INTERVAL = 60000;
+    private static readonly REPORT_INTERVAL = 10000;
 
     private intervalHandler: NodeJS.Timer | undefined;
 
     private readonly metricsHost: string;
 
     constructor(
-        gitpodHost: string,
+        url: string,
         private readonly clientName: string,
     ) {
-        const serviceUrl = new URL(gitpodHost);
-        this.metricsHost = `ide.${serviceUrl.hostname}`;
+        this.metricsHost = `ide.${new URL(url).hostname}`;
     }
 
     startReporting() {
