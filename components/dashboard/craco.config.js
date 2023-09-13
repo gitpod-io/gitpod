@@ -27,11 +27,6 @@ module.exports = {
                     path: false,
                     fs: false,
                     os: false,
-                    http: false,
-                    https: false,
-                    zlib: false,
-                    cluster: false,
-                    v8: false,
                 },
             },
             module: {

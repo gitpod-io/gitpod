@@ -3,15 +3,23 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import {
-    Registry,
-    Counter,
-    Histogram,
+/**
+ * prom-client is node library, we onyl import some types and values
+ * not default node metrics
+ */
+import type {
+    Registry as PromRegistry,
+    Counter as PromCounter,
+    Histogram as PromHistorgram,
     MetricObjectWithValues,
     MetricValue,
-    MetricType,
     MetricValueWithName,
 } from "prom-client";
+
+const Registry: typeof PromRegistry = require("prom-client/lib/registry").Registry;
+const Counter: typeof PromCounter = require("prom-client/lib/counter").Counter;
+const Histogram: typeof PromHistorgram = require("prom-client/lib/histogram").Histogram;
+
 import { MethodKind } from "@bufbuild/protobuf";
 import {
     StreamResponse,
@@ -38,11 +46,11 @@ interface IGrpcCallMetricsLabelsWithCode extends IGrpcCallMetricsLabels {
 const register = new Registry();
 
 class PrometheusClientCallMetrics {
-    readonly startedCounter: Counter<string>;
-    readonly sentCounter: Counter<string>;
-    readonly receivedCounter: Counter<string>;
-    readonly handledCounter: Counter<string>;
-    readonly handledSecondsHistogram: Histogram<string>;
+    readonly startedCounter: PromCounter<string>;
+    readonly sentCounter: PromCounter<string>;
+    readonly receivedCounter: PromCounter<string>;
+    readonly handledCounter: PromCounter<string>;
+    readonly handledSecondsHistogram: PromHistorgram<string>;
 
     constructor() {
         this.startedCounter = new Counter({
@@ -259,9 +267,10 @@ export class MetricsReporter {
                 continue;
             }
 
-            if (m.type === MetricType.Counter) {
+            const type = m.type as unknown as string;
+            if (type === "counter") {
                 await this.reportCounter(m);
-            } else if (m.type === MetricType.Histogram) {
+            } else if (type === "histogram") {
                 await this.reportHistogram(m);
             }
         }

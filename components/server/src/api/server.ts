@@ -23,7 +23,7 @@ import { APIStatsService } from "./stats";
 import { APITeamsService } from "./teams";
 import { APIUserService } from "./user";
 import { APIWorkspacesService } from "./workspaces";
-import { connectServerHandled, connectServerStarted } from "../prometheus-metrics";
+import { grpcServerHandled, grpcServerHandling, grpcServerStarted } from "../prometheus-metrics";
 
 function service<T extends ServiceType>(type: T, impl: ServiceImpl<T>): [T, ServiceImpl<T>] {
     return [type, impl];
@@ -105,8 +105,8 @@ export class API {
                         // Increment metrics for unknown method attempts
                         console.warn("public api: unknown method", type.typeName, prop);
                         const code = Code.Unimplemented;
-                        connectServerStarted.labels(type.typeName, "unknown", "unknown").inc();
-                        connectServerHandled
+                        grpcServerStarted.labels(type.typeName, "unknown", "unknown").inc();
+                        grpcServerHandling
                             .labels(type.typeName, "unknown", "unknown", Code[code].toLowerCase())
                             .observe(0);
                         throw new ConnectError("unimplemented", code);
@@ -125,7 +125,7 @@ export class API {
                     const context = args[1] as HandlerContext;
 
                     const startTime = Date.now();
-                    connectServerStarted.labels(type.typeName, method.name, kind).inc();
+                    grpcServerStarted.labels(type.typeName, method.name, kind).inc();
 
                     let result: any;
                     let error: ConnectError | undefined;
@@ -143,7 +143,8 @@ export class API {
                     }
 
                     const code = error ? Code[error.code].toLowerCase() : "ok";
-                    connectServerHandled
+                    grpcServerHandled.labels(type.typeName, method.name, kind, code).inc();
+                    grpcServerHandling
                         .labels(type.typeName, method.name, kind, code)
                         .observe((Date.now() - startTime) / 1000);
                     if (error) {
