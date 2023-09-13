@@ -499,6 +499,9 @@ func resolveUserEnvs() (userEnvs []string, err error) {
 	envCmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	envCmd.Stderr = os.Stderr
 	envCmd.WaitDelay = 3 * time.Second
+	time.AfterFunc(8*time.Second, func() {
+		_ = syscall.Kill(-envCmd.Process.Pid, syscall.SIGKILL)
+	})
 
 	output, err := envCmd.Output()
 	if errors.Is(err, exec.ErrWaitDelay) {
