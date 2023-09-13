@@ -170,6 +170,13 @@ import { StartWorkspaceOptions, WorkspaceService } from "./workspace-service";
 import { GitpodTokenService } from "../user/gitpod-token-service";
 import { EnvVarService } from "../user/env-var-service";
 import { ScmService } from "../projects/scm-service";
+import {
+    PRIORITY_HIGH,
+    PRIORITY_LOW,
+    PRIORITY_MEDIUM,
+    SuggestedRepositoryWithSorting,
+    sortSuggestedRepositories,
+} from "./suggested-repos-sorter";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -1751,11 +1758,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const logCtx: LogContext = { userId: user.id };
 
-        type SuggestedRepositoryWithSorting = SuggestedRepository & {
-            priority: number;
-            lastUse?: string;
-        };
-
         const fetchProjects = async (): Promise<SuggestedRepositoryWithSorting[]> => {
             const span = TraceContext.startSpan("getSuggestedRepositories.fetchProjects", ctx);
             const projects = await this.projectsService.getProjects(user.id, organizationId);
@@ -1765,7 +1767,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                     url: project.cloneUrl.replace(/\.git$/, ""),
                     projectId: project.id,
                     projectName: project.name,
-                    priority: 1,
+                    priority: PRIORITY_HIGH,
                 };
             });
 
@@ -1795,7 +1797,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                         return userRepos.map((r) => ({
                             url: r.url.replace(/\.git$/, ""),
                             repositoryName: r.name,
-                            priority: 5,
+                            priority: PRIORITY_LOW,
                         }));
                     } catch (error) {
                         log.debug(logCtx, "Could not get user repositories from host " + p.host, error);
@@ -1832,7 +1834,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                     recentRepos.push({
                         url: repoUrl,
                         projectId: ws.workspace.projectId,
-                        priority: 10,
+                        priority: PRIORITY_MEDIUM,
                         lastUse,
                         repositoryName: repoName || "",
                     });
@@ -1850,39 +1852,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             fetchRecentRepos().catch((e) => log.error(logCtx, "Could not fetch recent repositories", e)),
         ]);
 
-        const sortedRepos = repoResults
-            .map((r) => (r.status === "fulfilled" ? r.value || [] : []))
-            .flat()
-            .sort((a, b) => {
-                // priority first
-                if (a.priority !== b.priority) {
-                    return a.priority < b.priority ? 1 : -1;
-                }
-                // Most recently used second
-                if (b.lastUse || a.lastUse) {
-                    const la = a.lastUse || "";
-                    const lb = b.lastUse || "";
-                    return la < lb ? 1 : la === lb ? 0 : -1;
-                }
-                // Otherwise, alphasort
-                const ua = a.url.toLowerCase();
-                const ub = b.url.toLowerCase();
-                return ua > ub ? 1 : ua === ub ? 0 : -1;
-            });
+        const sortedRepos = sortSuggestedRepositories(
+            repoResults.map((r) => (r.status === "fulfilled" ? r.value || [] : [])).flat(),
+        );
 
-        const uniqueRepositories = new Map<string, SuggestedRepositoryWithSorting>();
-
-        for (const repo of sortedRepos) {
-            const existingRepo = uniqueRepositories.get(repo.url);
-
-            uniqueRepositories.set(repo.url, {
-                ...(existingRepo || {}),
-                ...repo,
-            });
-        }
-
-        // Convert to return type
-        return Array.from(uniqueRepositories.values()).map(
+        // Convert to SuggestedRepository (drops sorting props)
+        return sortedRepos.map(
             (repo): SuggestedRepository => ({
                 url: repo.url,
                 projectId: repo.projectId,
