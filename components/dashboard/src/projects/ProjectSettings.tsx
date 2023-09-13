@@ -148,7 +148,23 @@ export default function ProjectSettingsView() {
                 <Heading2 className="mt-12">Prebuilds</Heading2>
                 <CheckboxInputField
                     label="Enable prebuilds"
-                    hint="Requires permissions to create and manage repository webhooks."
+                    hint={
+                        enablePrebuilds ? (
+                            <span>
+                                Make sure to push a <code>.gitpod.yml</code> file to the repository.{" "}
+                                <a
+                                    className="gp-link"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    href="https://www.gitpod.io/docs/configure/projects/prebuilds"
+                                >
+                                    Learn more
+                                </a>
+                            </span>
+                        ) : (
+                            "Requires permissions to create and manage repository webhooks."
+                        )
+                    }
                     checked={enablePrebuilds}
                     onChange={(checked) => updateProjectSettings({ enablePrebuilds: checked })}
                 />
@@ -172,6 +188,8 @@ export default function ProjectSettingsView() {
                                     longer than 10 minutes.{" "}
                                     <a
                                         className="gp-link"
+                                        target="_blank"
+                                        rel="noreferrer"
                                         href="https://www.gitpod.io/changelog/faster-incremental-prebuilds"
                                     >
                                         Learn more
