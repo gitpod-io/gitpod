@@ -126,6 +126,35 @@ class TestSuggestedReposSorter {
         expect(repos[2].url).equals(repo4.url);
         expect(repos[3].url).equals(repo3.url);
     }
+
+    @test
+    public testProjectWithLastUseSorting() {
+        // represents a project
+        const project1 = {
+            priority: PRIORITY_HIGH,
+            url: "https://github.com/repo1",
+            projectName: "Project A",
+        };
+        // represents another project
+        const project2 = {
+            priority: PRIORITY_HIGH,
+            url: "https://github.com/repo2",
+            projectName: "Project B",
+        };
+        // represents a workspace started for a project
+        // repo3 should get merged into project2 (same url) so lastUse can be considered
+        const repo3 = {
+            priority: PRIORITY_LOW,
+            url: "https://github.com/repo2",
+            repositoryName: "Repo 2",
+            lastUse: "2023-08-13T04:00:00Z",
+        };
+
+        const repos = sortSuggestedRepositories([project1, project2, repo3]);
+        expect(repos).lengthOf(2);
+        expect(repos[0].url).equals(project2.url);
+        expect(repos[1].url).equals(project1.url);
+    }
 }
 
 module.exports = new TestSuggestedReposSorter();

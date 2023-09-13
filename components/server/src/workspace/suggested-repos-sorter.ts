@@ -5,6 +5,7 @@
  */
 
 import { SuggestedRepository } from "@gitpod/gitpod-protocol";
+import mergeWith from "lodash.mergewith";
 
 export const PRIORITY_LOW = 1;
 export const PRIORITY_MEDIUM = 5;
@@ -16,7 +17,22 @@ export type SuggestedRepositoryWithSorting = SuggestedRepository & {
 };
 
 export const sortSuggestedRepositories = (repos: SuggestedRepositoryWithSorting[]) => {
-    const sortedRepos = repos.sort((a, b) => {
+    // First we need to make a unique list and merge properties for entries with the same repo url
+    // This allows us to consider the lastUse of a recently used project when sorting
+    // as it will may have an entry for the project (no lastUse), and another for recent workspaces (w/ lastUse)
+    const uniqueRepositories = new Map<string, SuggestedRepositoryWithSorting>();
+    for (const repo of repos) {
+        const existingRepo = uniqueRepositories.get(repo.url);
+
+        // Only merge properties if the source doesn't already have a value for it
+        const mergedEntry = mergeWith(existingRepo || {}, repo, (objValue, srcValue) => {
+            return objValue === undefined ? srcValue : objValue;
+        });
+
+        uniqueRepositories.set(repo.url, mergedEntry);
+    }
+
+    const sortedRepos = Array.from(uniqueRepositories.values()).sort((a, b) => {
         // priority first
         if (a.priority !== b.priority) {
             return a.priority > b.priority ? -1 : 1;
@@ -34,16 +50,5 @@ export const sortSuggestedRepositories = (repos: SuggestedRepositoryWithSorting[
         return ua < ub ? -1 : ua === ub ? 0 : 1;
     });
 
-    const uniqueRepositories = new Map<string, SuggestedRepositoryWithSorting>();
-
-    for (const repo of sortedRepos) {
-        const existingRepo = uniqueRepositories.get(repo.url);
-
-        uniqueRepositories.set(repo.url, {
-            ...(existingRepo || {}),
-            ...repo,
-        });
-    }
-
-    return Array.from(uniqueRepositories.values());
+    return sortedRepos;
 };
