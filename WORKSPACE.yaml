@@ -7,8 +7,8 @@ defaultArgs:
   publishToNPM: true
   publishToJBMarketplace: true
   localAppVersion: unknown
-  codeCommit: be9e0586f5943994482945a8ffcb1f9a04b78aa2
-  codeVersion: 1.82.0
+  codeCommit: 4bfcf94526f18dec9e7d73fe8ff3741062f273c1
+  codeVersion: 1.82.1
   codeQuality: stable
   noVerifyJBPlugin: false
   intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2023.2.1.tar.gz"
