@@ -34,7 +34,7 @@ var daemonCmd = &cobra.Command{
 		}
 
 		skt := args[0]
-		cl, teardown, err := builder.StartBuildkit(skt)
+		cl, teardown, err := builder.StartBuildkit(skt, os.Getenv("WORKSPACEKIT_BOBPROXY_ADDITIONALAUTH"))
 		if err != nil {
 			log.WithError(err).Fatal("cannot start daemon")
 		}

@@ -72,7 +72,7 @@ var proxyCmd = &cobra.Command{
 				Tag:  targettag,
 				Auth: auth,
 			},
-		})
+		}, auth)
 		if err != nil {
 			log.Fatal(err)
 		}

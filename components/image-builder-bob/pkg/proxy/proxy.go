@@ -20,7 +20,7 @@ import (
 
 const authKey = "authKey"
 
-func NewProxy(host *url.URL, aliases map[string]Repo) (*Proxy, error) {
+func NewProxy(host *url.URL, aliases map[string]Repo, defaultAuth func() docker.Authorizer) (*Proxy, error) {
 	if host.Host == "" || host.Scheme == "" {
 		return nil, fmt.Errorf("host Host or Scheme are missing")
 	}
@@ -31,9 +31,10 @@ func NewProxy(host *url.URL, aliases map[string]Repo) (*Proxy, error) {
 		aliases[k] = v
 	}
 	return &Proxy{
-		Host:    *host,
-		Aliases: aliases,
-		proxies: make(map[string]*httputil.ReverseProxy),
+		Host:        *host,
+		Aliases:     aliases,
+		proxies:     make(map[string]*httputil.ReverseProxy),
+		defaultAuth: defaultAuth,
 	}, nil
 }
 
@@ -41,8 +42,9 @@ type Proxy struct {
 	Host    url.URL
 	Aliases map[string]Repo
 
-	mu      sync.Mutex
-	proxies map[string]*httputil.ReverseProxy
+	mu          sync.Mutex
+	proxies     map[string]*httputil.ReverseProxy
+	defaultAuth func() docker.Authorizer
 }
 
 type Repo struct {
@@ -126,14 +128,21 @@ func (proxy *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
+	var auth docker.Authorizer
+	ns := r.URL.Query().Get("ns")
 	if repo == nil {
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		return
+		auth = proxy.defaultAuth()
+		if ns == "" {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			return
+		}
+		log.Debug("no repo found, using direct proxy.")
+	} else {
+		auth = repo.Auth()
 	}
 
 	r.Host = r.URL.Host
 
-	auth := repo.Auth()
 	r = r.WithContext(context.WithValue(ctx, authKey, auth))
 
 	err := auth.Authorize(ctx, r)
@@ -146,11 +155,11 @@ func (proxy *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.WithField("req", r.URL.Path).Info("serving request")
 
 	r.RequestURI = ""
-	proxy.reverse(alias).ServeHTTP(w, r)
+	proxy.reverse(alias, ns).ServeHTTP(w, r)
 }
 
 // reverse produces an authentication-adding reverse proxy for a given repo alias
-func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
+func (proxy *Proxy) reverse(alias string, namespace string) *httputil.ReverseProxy {
 	proxy.mu.Lock()
 	defer proxy.mu.Unlock()
 
@@ -159,12 +168,14 @@ func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
 	}
 
 	repo, ok := proxy.Aliases[alias]
+	var host string
 	if !ok {
 		// we don't have an alias, hence don't know what to do other than try and proxy.
-		// At this poing things will probably fail.
-		return nil
+		host = namespace
+	} else {
+		host = repo.Host
 	}
-	rp := httputil.NewSingleHostReverseProxy(&url.URL{Scheme: "https", Host: repo.Host})
+	rp := httputil.NewSingleHostReverseProxy(&url.URL{Scheme: "https", Host: host})
 
 	client := retryablehttp.NewClient()
 	client.RetryMax = 3

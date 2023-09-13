@@ -18,7 +18,6 @@ type Config struct {
 	BaseRef            string
 	BaseContext        string
 	BuildBase          bool
-	BaseLayerAuth      string
 	WorkspaceLayerAuth string
 	Dockerfile         string
 	ContextDir         string
@@ -61,6 +60,9 @@ func GetConfigFromEnv() (*Config, error) {
 		if stat, err := os.Stat(cfg.Dockerfile); err != nil || stat.IsDir() {
 			return nil, xerrors.Errorf("BOB_DOCKERFILE_PATH does not exist or isn't a file")
 		}
+	}
+	if cfg.WorkspaceLayerAuth == "" {
+		cfg.WorkspaceLayerAuth = "[]"
 	}
 
 	return cfg, nil

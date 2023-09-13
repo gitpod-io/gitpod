@@ -5,8 +5,8 @@
 package builder
 
 import (
-	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -16,9 +16,8 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	toml "github.com/pelletier/go-toml"
 
-	"github.com/docker/cli/cli/config/configfile"
-	"github.com/docker/cli/cli/config/types"
 	"github.com/moby/buildkit/client"
 	"golang.org/x/xerrors"
 )
@@ -49,10 +48,10 @@ func (b *Builder) Build() error {
 
 		if err != nil {
 			log.Warn("cannot connect to node-local buildkitd - falling back to pod-local one")
-			cl, teardown, err = StartBuildkit(buildkitdSocketPath)
+			cl, teardown, err = StartBuildkit(buildkitdSocketPath, b.Config.WorkspaceLayerAuth)
 		}
 	} else {
-		cl, teardown, err = StartBuildkit(buildkitdSocketPath)
+		cl, teardown, err = StartBuildkit(buildkitdSocketPath, b.Config.WorkspaceLayerAuth)
 	}
 	if err != nil {
 		return err
@@ -80,7 +79,7 @@ func (b *Builder) buildBaseLayer(ctx context.Context, cl *client.Client) error {
 	}
 
 	log.Info("building base image")
-	return buildImage(ctx, b.Config.ContextDir, b.Config.Dockerfile, b.Config.WorkspaceLayerAuth, b.Config.BaseRef)
+	return buildImage(ctx, b.Config.ContextDir, b.Config.Dockerfile, b.Config.BaseRef)
 }
 
 func (b *Builder) buildWorkspaceImage(ctx context.Context, cl *client.Client) (err error) {
@@ -96,10 +95,10 @@ func (b *Builder) buildWorkspaceImage(ctx context.Context, cl *client.Client) (e
 		return xerrors.Errorf("unexpected error creating temporal directory: %w", err)
 	}
 
-	return buildImage(ctx, contextDir, filepath.Join(contextDir, "Dockerfile"), b.Config.WorkspaceLayerAuth, b.Config.TargetRef)
+	return buildImage(ctx, contextDir, filepath.Join(contextDir, "Dockerfile"), b.Config.TargetRef)
 }
 
-func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target string) (err error) {
+func buildImage(ctx context.Context, contextDir, dockerfile, target string) (err error) {
 	log.Info("waiting for build context")
 	waitctx, cancel := context.WithTimeout(ctx, 30*time.Minute)
 	defer cancel()
@@ -107,28 +106,6 @@ func buildImage(ctx context.Context, contextDir, dockerfile, authLayer, target s
 	err = waitForBuildContext(waitctx)
 	if err != nil {
 		return err
-	}
-
-	dockerConfig := "/tmp/config.json"
-	defer os.Remove(dockerConfig)
-
-	if authLayer != "" {
-		configFile := configfile.ConfigFile{
-			AuthConfigs: make(map[string]types.AuthConfig),
-		}
-
-		err := configFile.LoadFromReader(bytes.NewReader([]byte(fmt.Sprintf(`{"auths": %v }`, authLayer))))
-		if err != nil {
-			return xerrors.Errorf("unexpected error reading registry authentication: %w", err)
-		}
-
-		f, _ := os.OpenFile(dockerConfig, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-		defer f.Close()
-
-		err = configFile.SaveToWriter(f)
-		if err != nil {
-			return xerrors.Errorf("unexpected error writing registry authentication: %w", err)
-		}
 	}
 
 	contextdir := contextDir
@@ -200,7 +177,7 @@ func waitForBuildContext(ctx context.Context) error {
 }
 
 // StartBuildkit starts a local buildkit daemon
-func StartBuildkit(socketPath string) (cl *client.Client, teardown func() error, err error) {
+func StartBuildkit(socketPath string, authLayer string) (cl *client.Client, teardown func() error, err error) {
 	stderr, err := ioutil.TempFile(os.TempDir(), "buildkitd_stderr")
 	if err != nil {
 		return nil, nil, xerrors.Errorf("cannot create buildkitd log file: %w", err)
@@ -210,7 +187,27 @@ func StartBuildkit(socketPath string) (cl *client.Client, teardown func() error,
 		return nil, nil, xerrors.Errorf("cannot create buildkitd log file: %w", err)
 	}
 
+	buildkitCfg, err := createBuildkitConfig(authLayer)
+	if err != nil {
+		return nil, nil, xerrors.Errorf("cannot create buildkitd config: %w", err)
+	}
+	buildkitCfgData, err := toml.Marshal(buildkitCfg)
+	if err != nil {
+		return nil, nil, xerrors.Errorf("cannot marshal buildkitd config: %w", err)
+	}
+	buildkitCfgFile := "/etc/buildkitd.toml"
+	f, err := os.Create(buildkitCfgFile)
+	defer f.Close()
+	if err != nil {
+		return nil, nil, xerrors.Errorf("unexpected error creating buildkitd config file: %w", err)
+	}
+	_, err = f.Write(buildkitCfgData)
+	if err != nil {
+		return nil, nil, xerrors.Errorf("unexpected error writing buildkitd config file: %w", err)
+	}
+
 	cmd := exec.Command("buildkitd",
+		"--config"+buildkitCfgFile,
 		"--debug",
 		"--addr="+socketPath,
 		"--oci-worker-net=host",
@@ -291,4 +288,39 @@ func connectToBuildkitd(socketPath string) (cl *client.Client, err error) {
 	}
 
 	return nil, xerrors.Errorf("cannot connect to buildkitd")
+}
+
+type BuildkitConfig struct {
+	Registry map[string]RegistryConfig `toml:"registry"`
+}
+type RegistryConfig struct {
+	Mirrors   *[]string `toml:"mirrors"`
+	PlainHttp *bool     `toml:"http"`
+}
+
+func createBuildkitConfig(authLayer string) (buildkitConfig BuildkitConfig, err error) {
+	registryConfig := make(map[string]RegistryConfig)
+
+	registries := []string{}
+
+	err = json.Unmarshal([]byte(authLayer), &registries)
+	if err != nil {
+		return buildkitConfig, xerrors.Errorf("unexpected error reading registry authentication: %w", err)
+	}
+
+	t := true
+	for _, host := range registries {
+		if host != "" {
+			registryConfig[host] = RegistryConfig{
+				Mirrors: &[]string{"localhost:8080"},
+			}
+		}
+	}
+
+	registryConfig["localhost:8080"] = RegistryConfig{
+		PlainHttp: &t,
+	}
+	return BuildkitConfig{
+		Registry: registryConfig,
+	}, nil
 }

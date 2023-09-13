@@ -335,6 +335,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 	}
 	wsref, err := reference.ParseNamed(wsrefstr)
 	var additionalAuth []byte
+	var additionalAuthRegistries []byte
 	if err == nil {
 		ath := reqauth.GetImageBuildAuthFor(ctx, o.Auth, []string{reference.Domain(pbaseref)}, []string{
 			reference.Domain(wsref),
@@ -342,6 +343,17 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		additionalAuth, err = json.Marshal(ath)
 		if err != nil {
 			return xerrors.Errorf("cannot marshal additional auth: %w", err)
+		}
+
+		registries := []string{}
+		for reg := range ath {
+			if reg != "" {
+				registries = append(registries, reg)
+			}
+		}
+		additionalAuthRegistries, err = json.Marshal(registries)
+		if err != nil {
+			return xerrors.Errorf("cannot marshal additional auth registries: %w", err)
 		}
 	}
 
@@ -377,7 +389,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 					{Name: "BOB_CONTEXT_DIR", Value: contextPath},
 					{
 						Name:  "BOB_WSLAYER_AUTH",
-						Value: string(additionalAuth),
+						Value: string(additionalAuthRegistries),
 					},
 					{Name: "GITPOD_TASKS", Value: `[{"name": "build", "init": "sudo -E /app/bob build"}]`},
 					{Name: "WORKSPACEKIT_RING2_ENCLAVE", Value: "/app/bob proxy"},
