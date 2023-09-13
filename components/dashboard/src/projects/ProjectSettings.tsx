@@ -151,7 +151,7 @@ export default function ProjectSettingsView() {
                     hint={
                         enablePrebuilds ? (
                             <span>
-                                Make sure to push a <code>.gitpod.yml</code> file to the repository.{" "}
+                                Prebuilds will run for any <code>before</code> or <code>init</code> tasks.{" "}
                                 <a
                                     className="gp-link"
                                     target="_blank"
@@ -162,7 +162,7 @@ export default function ProjectSettingsView() {
                                 </a>
                             </span>
                         ) : (
-                            "Requires permissions to create and manage repository webhooks."
+                            "Requires permissions to configure repository webhooks."
                         )
                     }
                     checked={enablePrebuilds}
