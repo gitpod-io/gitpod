@@ -22,6 +22,8 @@ import {
     AdditionalContentContext,
     WithDefaultConfig,
     ProjectConfig,
+    OrganizationSettings,
+    WorkspaceConfigContext,
 } from "@gitpod/gitpod-protocol";
 import { GitpodFileParser } from "@gitpod/gitpod-protocol/lib/gitpod-file-parser";
 
@@ -49,6 +51,7 @@ export class ConfigProvider {
         ctx: TraceContext,
         user: User,
         commit: CommitContext,
+        configContext: WorkspaceConfigContext,
     ): Promise<{ config: WorkspaceConfig; literalConfig?: ProjectConfig }> {
         const span = TraceContext.startSpan("fetchConfig", ctx);
         span.addTags({
@@ -59,6 +62,11 @@ export class ConfigProvider {
         try {
             let customConfig: WorkspaceConfig | undefined;
             let literalConfig: ProjectConfig | undefined;
+            let orgSettings: OrganizationSettings | undefined;
+
+            if (configContext.organizationId) {
+                orgSettings = await this.teamDB.findOrgSettings(configContext.organizationId);
+            }
 
             if (!WithDefaultConfig.is(commit)) {
                 const cc = await this.fetchCustomConfig(ctx, user, commit);
@@ -78,13 +86,16 @@ export class ConfigProvider {
                 if (!ImageConfigString.is(config.image)) {
                     throw new Error(`Default config must contain a base image!`);
                 }
+                if (orgSettings?.defaultWorkspaceImage) {
+                    config.image = orgSettings.defaultWorkspaceImage;
+                }
                 config._origin = "default";
                 return { config, literalConfig };
             }
 
             const config = customConfig;
             if (!config.image) {
-                config.image = this.config.workspaceDefaults.workspaceImage;
+                config.image = orgSettings?.defaultWorkspaceImage ?? this.config.workspaceDefaults.workspaceImage;
             } else if (ImageConfigFile.is(config.image)) {
                 const dockerfilePath = [configBasePath, config.image.file].filter((s) => !!s).join("/");
                 const repo = commit.repository;

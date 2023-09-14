@@ -117,7 +117,9 @@ export class ContextParser {
         }
         const span = TraceContext.startSpan("ContextParser.handleMultiRepositoryContext", ctx);
         try {
-            let config = await this.configProvider.fetchConfig({ span }, user, context);
+            // Note: we only care about repo related stuff in this function.
+            // Fields like `config.image` will not be exposed, so pass an empty WorkspaceConfigContext here
+            let config = await this.configProvider.fetchConfig({ span }, user, context, {});
             let mainRepoContext: WorkspaceContext | undefined;
             if (config.config.mainConfiguration) {
                 mainRepoContext = await this.internalHandleWithoutPrefix(
@@ -130,7 +132,9 @@ export class ContextParser {
                         `Cannot find main repository '${config.config.mainConfiguration}'.`,
                     ]);
                 }
-                config = await this.configProvider.fetchConfig({ span }, user, mainRepoContext);
+                // Note: we only care about repo related stuff in this function.
+                // Fields like `config.image` will not be exposed, so pass an empty WorkspaceConfigContext here
+                config = await this.configProvider.fetchConfig({ span }, user, mainRepoContext, {});
             }
 
             if (config.config.additionalRepositories && config.config.additionalRepositories.length > 0) {

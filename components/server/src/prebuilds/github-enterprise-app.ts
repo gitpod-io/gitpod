@@ -167,7 +167,9 @@ export class GitHubEnterpriseApp {
                 commit: context.revision,
             });
 
-            const config = await this.prebuildManager.fetchConfig({ span }, user, context);
+            const config = await this.prebuildManager.fetchConfig({ span }, user, context, {
+                organizationId: projectAndOwner.project?.teamId,
+            });
             if (
                 !this.prebuildManager.shouldPrebuild({ config, project }) ||
                 !this.appRules.shouldRunPrebuild(config, context.ref === context.repository.defaultBranch, false, false)

@@ -368,7 +368,10 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
 
     public async findOrgSettings(orgId: string): Promise<OrganizationSettings | undefined> {
         const repo = await this.getOrgSettingsRepo();
-        return repo.findOne({ where: { orgId, deleted: false }, select: ["orgId", "workspaceSharingDisabled"] });
+        return repo.findOne({
+            where: { orgId, deleted: false },
+            select: ["orgId", "workspaceSharingDisabled", "defaultWorkspaceImage"],
+        });
     }
 
     public async setOrgSettings(orgId: string, settings: Partial<OrganizationSettings>): Promise<void> {
@@ -381,6 +384,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
             });
         } else {
             team.workspaceSharingDisabled = settings.workspaceSharingDisabled;
+            team.defaultWorkspaceImage = settings.defaultWorkspaceImage;
             repo.save(team);
         }
     }

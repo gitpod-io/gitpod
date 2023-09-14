@@ -19,5 +19,8 @@ export class DBOrgSettings implements OrganizationSettings {
     workspaceSharingDisabled?: boolean;
 
     @Column()
+    defaultWorkspaceImage?: string; // TODO: migration
+
+    @Column()
     deleted: boolean;
 }

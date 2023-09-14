@@ -136,7 +136,9 @@ export class BitbucketServerApp {
                 branch: context.ref,
                 commit: context.revision,
             });
-            const config = await this.prebuildManager.fetchConfig({ span }, user, context);
+            const config = await this.prebuildManager.fetchConfig({ span }, user, context, {
+                organizationId: project?.teamId,
+            });
             if (!this.prebuildManager.shouldPrebuild({ config, project })) {
                 log.info("Bitbucket Server push event: No prebuild.", { config, context });
                 await this.webhookEvents.updateEvent(event.id, {

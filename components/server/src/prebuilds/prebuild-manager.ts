@@ -16,6 +16,7 @@ import {
     User,
     Workspace,
     WorkspaceConfig,
+    WorkspaceConfigContext,
     WorkspaceInstance,
 } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -135,7 +136,9 @@ export class PrebuildManager {
             }
             await this.checkUsageLimitReached(user, project.teamId); // throws if out of credits
 
-            const config = await this.fetchConfig({ span }, user, context);
+            const config = await this.fetchConfig({ span }, user, context, {
+                organizationId: project.teamId,
+            });
 
             if (!forcePrebuild) {
                 // Check for an existing, successful prebuild, before triggering a new one.
@@ -365,10 +368,15 @@ export class PrebuildManager {
         return this.config.incrementalPrebuilds.repositoryPasslist.some((url) => trimRepoUrl(url) === repoUrl);
     }
 
-    async fetchConfig(ctx: TraceContext, user: User, context: CommitContext): Promise<WorkspaceConfig> {
+    async fetchConfig(
+        ctx: TraceContext,
+        user: User,
+        context: CommitContext,
+        configContext: WorkspaceConfigContext,
+    ): Promise<WorkspaceConfig> {
         const span = TraceContext.startSpan("fetchConfig", ctx);
         try {
-            return (await this.configProvider.fetchConfig({ span }, user, context)).config;
+            return (await this.configProvider.fetchConfig({ span }, user, context, configContext)).config;
         } catch (err) {
             TraceContext.setError({ span }, err);
             throw err;

@@ -132,6 +132,7 @@ import {
     ProjectEnvVar,
     UserEnvVar,
     UserFeatureSettings,
+    WorkspaceConfigContext,
     WorkspaceTimeoutSetting,
 } from "@gitpod/gitpod-protocol/lib/protocol";
 import { ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
@@ -330,6 +331,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         parentCtx: TraceContext,
         user: User,
         context: WorkspaceContext,
+        configContext: WorkspaceConfigContext,
         ignoreRunningPrebuild?: boolean,
         allowUsingPreviousPrebuilds?: boolean,
     ): Promise<WorkspaceCreationResult | PrebuiltWorkspaceContext | undefined> {
@@ -366,7 +368,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                     .trace(ctx)
                     .findPrebuiltWorkspaceByCommit(cloneUrl, commitSHAs);
                 if (!prebuiltWorkspace && allowUsingPreviousPrebuilds) {
-                    const { config } = await this.configProvider.fetchConfig({}, user, context);
+                    const { config } = await this.configProvider.fetchConfig({}, user, context, configContext);
                     const history = await this.incrementalPrebuildsService.getCommitHistoryForContext(context, user);
                     prebuiltWorkspace = await this.incrementalPrebuildsService.findGoodBaseForIncrementalBuild(
                         context,
@@ -1344,6 +1346,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 ctx,
                 user,
                 context,
+                { organizationId: options.organizationId },
                 options.ignoreRunningPrebuild,
                 options.allowUsingPreviousPrebuilds || project?.settings?.allowUsingPreviousPrebuilds,
             );

@@ -88,6 +88,7 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 	var dockerContext string
 	switch img := gitpodConfig.Image.(type) {
 	case nil:
+		// TODO: GET FROM SERVER
 		image = "gitpod/workspace-full:latest"
 	case string:
 		image = img
