@@ -108,6 +108,7 @@ export function projectToProtocol(project: Project): ProtocolProject {
         appInstallationId: "undefined",
         settings: {
             enablePrebuilds: project.settings?.prebuild?.enablePrebuilds,
+            prebuildDefaultBranchOnly: project.settings?.prebuild?.prebuildDefaultBranchOnly,
             allowUsingPreviousPrebuilds: project.settings?.prebuild?.usePreviousPrebuilds,
             keepOutdatedPrebuildsRunning: project.settings?.prebuild?.keepOutdatedPrebuildsRunning,
             prebuildEveryNthCommit: project.settings?.prebuild?.prebuildEveryNth,
