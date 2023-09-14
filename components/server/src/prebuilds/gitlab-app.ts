@@ -160,8 +160,8 @@ export class GitLabApp {
                 commit: context.revision,
             });
 
-            const config = await this.prebuildManager.fetchConfig({ span }, user, context, project.teamId);
-            if (!this.prebuildManager.shouldPrebuild({ config, project })) {
+            const config = await this.prebuildManager.fetchConfig({ span }, user, context, project?.teamId);
+            if (!this.prebuildManager.shouldPrebuild({ config, project, context })) {
                 log.info("GitLab push event: No prebuild.", { config, context });
                 await this.webhookEvents.updateEvent(event.id, {
                     prebuildStatus: "ignored_unconfigured",

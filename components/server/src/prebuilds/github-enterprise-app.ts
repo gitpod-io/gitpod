@@ -169,7 +169,7 @@ export class GitHubEnterpriseApp {
 
             const config = await this.prebuildManager.fetchConfig({ span }, user, context, project?.teamId);
             if (
-                !this.prebuildManager.shouldPrebuild({ config, project }) ||
+                !this.prebuildManager.shouldPrebuild({ config, project, context }) ||
                 !this.appRules.shouldRunPrebuild(config, context.ref === context.repository.defaultBranch, false, false)
             ) {
                 log.info("GitHub Enterprise push event: No prebuild.", { config, context });

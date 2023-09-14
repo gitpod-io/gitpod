@@ -341,8 +341,8 @@ export class PrebuildManager {
         }
     }
 
-    shouldPrebuild(params: { config: WorkspaceConfig; project: Project }): boolean {
-        const { config, project } = params;
+    shouldPrebuild(params: { config: WorkspaceConfig; project: Project; context: CommitContext }): boolean {
+        const { config, project, context } = params;
         if (!config || !config._origin || config._origin !== "repo") {
             // we demand an explicit gitpod config
             return false;
@@ -353,7 +353,21 @@ export class PrebuildManager {
             return false;
         }
 
-        return Project.isPrebuildsEnabled(project);
+        const isPrebuildsEnabled = Project.isPrebuildsEnabled(project);
+        if (!isPrebuildsEnabled) {
+            return false;
+        }
+
+        if (!project.settings?.prebuildDefaultBranchOnly) {
+            return true;
+        }
+
+        const defaultBranch = context.repository.defaultBranch;
+        if (!defaultBranch) {
+            log.debug("CommitContext is missing the default branch.", { context });
+            return true;
+        }
+        return context.ref === defaultBranch;
     }
 
     protected shouldPrebuildIncrementally(cloneUrl: string, project: Project): boolean {
