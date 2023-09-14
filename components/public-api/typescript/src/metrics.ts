@@ -256,6 +256,7 @@ export class MetricsReporter {
             clientName: string;
             clientVersion: string;
             logError: typeof console.error;
+            isEnabled: () => Promise<boolean>;
         },
     ) {
         this.metricsHost = `ide.${new URL(options.gitpodUrl).hostname}`;
@@ -271,7 +272,17 @@ export class MetricsReporter {
         );
     }
 
+    stopReporting() {
+        if (this.intervalHandler) {
+            clearInterval(this.intervalHandler);
+        }
+    }
+
     private async report() {
+        const enabled = await this.options.isEnabled();
+        if (!enabled) {
+            return;
+        }
         const metrics = await register.getMetricsAsJSON();
         register.resetMetrics();
         for (const m of metrics) {
@@ -282,22 +293,26 @@ export class MetricsReporter {
 
             const type = m.type as unknown as string;
             if (type === "counter") {
-                await this.reportCounter(m);
+                this.syncReportCounter(m);
             } else if (type === "histogram") {
-                await this.reportHistogram(m);
+                this.syncReportHistogram(m);
             }
         }
     }
 
-    private async reportCounter(metric: MetricObjectWithValues<MetricValue<string>>) {
+    private syncReportCounter(metric: MetricObjectWithValues<MetricValue<string>>) {
         for (const { value, labels } of metric.values) {
             if (value > 0) {
-                await this.addCounter(metric.name, labels as Record<string, string>, value);
+                this.post("metrics/counter/add/" + metric.name, {
+                    name: metric.name,
+                    labels,
+                    value,
+                });
             }
         }
     }
 
-    private async reportHistogram(metric: MetricObjectWithValues<MetricValueWithName<string>>) {
+    private syncReportHistogram(metric: MetricObjectWithValues<MetricValueWithName<string>>) {
         let sum = 0;
         let buckets: number[] = [];
         for (const { value, labels, metricName } of metric.values) {
@@ -315,69 +330,17 @@ export class MetricsReporter {
                 sum = value;
             } else if (metricName.endsWith("_count")) {
                 if (value > 0) {
-                    await this.addHistogram(metric.name, labels as Record<string, string>, value, sum, buckets);
+                    this.post("metrics/histogram/add/" + metric.name, {
+                        name: metric.name,
+                        labels,
+                        count: value,
+                        sum,
+                        buckets,
+                    });
                 }
                 sum = 0;
                 buckets = [];
             }
-        }
-    }
-
-    stopReporting() {
-        if (this.intervalHandler) {
-            clearInterval(this.intervalHandler);
-        }
-    }
-
-    private async addCounter(name: string, labels: Record<string, string>, value: number) {
-        const data = {
-            name,
-            labels,
-            value,
-        };
-        const resp = await fetch(`https://${this.metricsHost}/metrics-api/metrics/counter/add/${name}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-Client": this.options.clientName,
-                "X-Client-Version": this.options.clientVersion,
-            },
-            body: JSON.stringify(data),
-            credentials: "omit",
-        });
-
-        if (!resp.ok) {
-            this.options.logError(`metrics: endpoint responded with ${resp.status} ${resp.statusText}`);
-        }
-    }
-
-    private async addHistogram(
-        name: string,
-        labels: Record<string, string>,
-        count: number,
-        sum: number,
-        buckets: number[],
-    ) {
-        const data = {
-            name,
-            labels,
-            count,
-            sum,
-            buckets,
-        };
-        const resp = await fetch(`https://${this.metricsHost}/metrics-api/metrics/histogram/add/${name}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-Client": this.options.clientName,
-                "X-Client-Version": this.options.clientVersion,
-            },
-            body: JSON.stringify(data),
-            credentials: "omit",
-        });
-
-        if (!resp.ok) {
-            this.options.logError("metrics: endpoint responded with", resp.status, resp.statusText);
         }
     }
 
@@ -390,46 +353,59 @@ export class MetricsReporter {
             [key: string]: string | undefined;
         },
     ): void {
-        const properties = { ...data };
+        this.asyncReportError(error, data);
+    }
 
+    private async asyncReportError(
+        error: Error,
+        data?: {
+            userId?: string;
+            workspaceId?: string;
+            instanceId?: string;
+            [key: string]: string | undefined;
+        },
+    ): Promise<void> {
+        const enabled = await this.options.isEnabled();
+        if (!enabled) {
+            return;
+        }
+        const properties = { ...data };
         properties["error_name"] = error.name;
         properties["error_message"] = error.message;
-
-        const workspaceId = properties["workspaceId"] ?? "";
-        const instanceId = properties["instanceId"] ?? "";
-        const userId = properties["userId"] ?? "";
 
         delete properties["workspaceId"];
         delete properties["instanceId"];
         delete properties["userId"];
 
-        const jsonData = {
+        await this.post("reportError", {
             component: this.options.clientName,
             errorStack: error.stack ?? String(error),
             version: this.options.clientVersion,
-            workspaceId,
-            instanceId,
-            userId,
+            workspaceId: properties["workspaceId"] ?? "",
+            instanceId: properties["instanceId"] ?? "",
+            userId: properties["userId"] ?? "",
             properties,
-        };
+        });
+    }
 
-        fetch(`https://${this.metricsHost}/metrics-api/reportError`, {
-            method: "POST",
-            body: JSON.stringify(jsonData),
-            headers: {
-                "Content-Type": "application/json",
-                "X-Client": this.options.clientName,
-                "X-Client-Version": this.options.clientVersion,
-            },
-            credentials: "omit",
-        })
-            .then((resp) => {
-                if (!resp.ok) {
-                    this.options.logError(`metrics: endpoint responded with ${resp.status} ${resp.statusText}`);
-                }
-            })
-            .catch((e) => {
-                this.options.logError("metrics: failed to report error to metrics endpoint!", e);
+    private async post(endpoint: string, data: any): Promise<void> {
+        try {
+            const response = await fetch(`https://${this.metricsHost}/metrics-api/` + endpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Client": this.options.clientName,
+                    "X-Client-Version": this.options.clientVersion,
+                },
+                body: JSON.stringify(data),
+                credentials: "omit",
             });
+
+            if (!response.ok) {
+                this.options.logError(`metrics: endpoint responded with ${response.status} ${response.statusText}`);
+            }
+        } catch (e) {
+            this.options.logError("metrics: failed to post", e);
+        }
     }
 }

@@ -28,9 +28,6 @@ export interface Attributes {
 
     // Host name of the Gitpod installation (mapped to "custom.gitpod_host")
     gitpodHost?: string;
-
-    // The type of the gRPC client request (mapped to "custom.grpc_type")
-    grpcType?: "unary" | "server-stream";
 }
 
 export interface Client {

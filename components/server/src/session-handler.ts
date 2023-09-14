@@ -121,6 +121,7 @@ export class SessionHandler {
             return await this.userService.findUserById(subject, subject);
         } catch (err) {
             log.warn("Failed to authenticate user with JWT Session", err);
+            // Remove the existing cookie, to force the user to re-sing in, and hence refresh it
             return undefined;
         }
     }

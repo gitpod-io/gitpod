@@ -59,9 +59,6 @@ export function attributesToUser(attributes: Attributes): ConfigCatUser {
     if (attributes.gitpodHost) {
         custom[GITPOD_HOST] = attributes.gitpodHost;
     }
-    if (attributes.grpcType) {
-        custom[GRPC_TYPE] = attributes.grpcType;
-    }
 
     return new ConfigCatUser(userId, email, "", custom);
 }

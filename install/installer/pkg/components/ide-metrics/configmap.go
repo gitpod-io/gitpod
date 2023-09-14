@@ -202,7 +202,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Client: &config.ClientAllowList{
 				Name:         "metric_client",
-				AllowValues:  []string{"vscode-desktop-extension", "supervisor", "unknown"},
+				AllowValues:  []string{"dashboard", "vscode-desktop-extension", "supervisor", "unknown"},
 				DefaultValue: "unknown",
 			},
 		}, {
@@ -228,7 +228,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Client: &config.ClientAllowList{
 				Name:         "metric_client",
-				AllowValues:  []string{"vscode-desktop-extension", "supervisor", "unknown"},
+				AllowValues:  []string{"dashboard", "vscode-desktop-extension", "supervisor", "unknown"},
 				DefaultValue: "unknown",
 			},
 		},
@@ -398,7 +398,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Buckets: []float64{0.1, 0.2, 0.5, 1, 2, 5, 10},
 			Client: &config.ClientAllowList{
 				Name:         "metric_client",
-				AllowValues:  []string{"vscode-desktop-extension", "supervisor", "unknown"},
+				AllowValues:  []string{"dashboard", "vscode-desktop-extension", "supervisor", "unknown"},
 				DefaultValue: "unknown",
 			},
 		}, {

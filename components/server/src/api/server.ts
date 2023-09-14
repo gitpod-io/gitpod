@@ -79,11 +79,12 @@ export class API {
             expressConnectMiddleware({
                 routes: (router: ConnectRouter) => {
                     for (const [type, impl] of [service(HelloService, this.apiHelloService)]) {
-                        router.service(HelloService, new Proxy(impl, this.interceptService(type)));
+                        router.service(type, new Proxy(impl, this.interceptService(type)));
                     }
                 },
             }),
         );
+        // TODO(al) cover unhandled cases
     }
 
     /**

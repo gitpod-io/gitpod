@@ -6,6 +6,7 @@
 
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { MetricsReporter } from "@gitpod/public-api/lib/metrics";
+import { getExperimentsClient } from "../experiments/client";
 
 const originalConsoleError = console.error;
 
@@ -14,6 +15,7 @@ const options = {
     clientName: "dashboard",
     clientVersion: "",
     logError: originalConsoleError.bind(console),
+    isEnabled: () => getExperimentsClient().getValueAsync("dashboard_metrics_enabled", false, {}),
 };
 fetch("/api/version").then(async (res) => {
     const version = await res.text();

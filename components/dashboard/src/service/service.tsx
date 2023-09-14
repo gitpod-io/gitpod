@@ -78,7 +78,7 @@ export function getGitpodService(): GitpodService {
                             const isTest = await getExperimentsClient().getValueAsync(
                                 "public_api_dummy_reliability_test",
                                 false,
-                                { user, grpcType },
+                                { user },
                             );
                             if (isTest) {
                                 helloService.sayHello({}).catch((e) => {
@@ -101,7 +101,6 @@ export function getGitpodService(): GitpodService {
             while (true) {
                 const isTest = await getExperimentsClient().getValueAsync("public_api_dummy_reliability_test", false, {
                     user,
-                    grpcType,
                 });
                 if (isTest) {
                     try {
