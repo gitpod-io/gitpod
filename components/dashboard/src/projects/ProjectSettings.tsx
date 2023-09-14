@@ -5,7 +5,7 @@
  */
 
 import { Project, ProjectSettings } from "@gitpod/gitpod-protocol";
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useContext, useState, Fragment } from "react";
 import { useHistory } from "react-router";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
@@ -145,21 +145,23 @@ export default function ProjectSettingsView() {
                 <CheckboxInputField
                     label="Enable prebuilds"
                     hint={
-                        enablePrebuilds ? (
-                            <span>
-                                Prebuilds will run for any <code>before</code> or <code>init</code> tasks.{" "}
-                                <a
-                                    className="gp-link"
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    href="https://www.gitpod.io/docs/configure/projects/prebuilds"
-                                >
-                                    Learn more
-                                </a>
-                            </span>
-                        ) : (
-                            "Requires permissions to configure repository webhooks."
-                        )
+                        <span>
+                            {enablePrebuilds ? (
+                                <Fragment>
+                                    Prebuilds will run for any <code>before</code> or <code>init</code> tasks.
+                                </Fragment>
+                            ) : (
+                                "Requires permissions to configure repository webhooks."
+                            )}{" "}
+                            <a
+                                className="gp-link"
+                                target="_blank"
+                                rel="noreferrer"
+                                href="https://www.gitpod.io/docs/configure/projects/prebuilds"
+                            >
+                                Learn more
+                            </a>
+                        </span>
                     }
                     checked={enablePrebuilds}
                     onChange={(checked) => updateProjectSettings({ enablePrebuilds: checked })}
