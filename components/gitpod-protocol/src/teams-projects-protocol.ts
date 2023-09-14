@@ -55,6 +55,25 @@ export namespace Project {
         return p.name + "-" + p.id;
     }
 
+    /**
+     * If *no settings* are present on pre-existing projects, this defaults to `true` (enabled) for
+     * backwards compatibility. This allows to do any explicit migration of data or adjustment of
+     * the default behavior at a later point in time.
+     *
+     * Otherwise this returns the value of the `enablePrebuilds` settings persisted in the given
+     * project.
+     */
+    export function isPrebuildsEnabled(project: Project): boolean {
+        // Defaulting to `true` for backwards compatibility. Ignoring non-boolean for `enablePrebuilds`
+        // for evaluation here allows to do any explicit migration of data or adjustment of the default
+        // behavior at a later point in time.
+        if (typeof project.settings?.enablePrebuilds === "undefined") {
+            return true;
+        }
+
+        return project.settings.enablePrebuilds;
+    }
+
     export interface Overview {
         branches: BranchDetails[];
         isConsideredInactive?: boolean;

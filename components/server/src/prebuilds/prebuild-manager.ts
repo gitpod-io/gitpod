@@ -353,14 +353,7 @@ export class PrebuildManager {
             return false;
         }
 
-        // Defaulting to `true` for backwards compatibility. Ignoring non-boolean for `enablePrebuilds`
-        // for evaluation here allows to do any explicit migration of data or adjustment of the default
-        // behavior at a later point in time.
-        if (typeof project.settings?.enablePrebuilds === "undefined") {
-            return true;
-        }
-
-        return project.settings.enablePrebuilds;
+        return Project.isPrebuildsEnabled(project);
     }
 
     protected shouldPrebuildIncrementally(cloneUrl: string, project: Project): boolean {

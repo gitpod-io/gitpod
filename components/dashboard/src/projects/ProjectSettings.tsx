@@ -123,11 +123,7 @@ export default function ProjectSettingsView() {
     // TODO: Render a generic error screen for when an entity isn't found
     if (!project) return null;
 
-    const enablePrebuilds =
-        !!project.settings?.enablePrebuilds ||
-        // TODO(at): out of scope for now, but once we've migrated the settings of existings projects
-        // we can remove the implicit enablement here
-        !project.settings;
+    const enablePrebuilds = Project.isPrebuildsEnabled(project);
 
     return (
         <ProjectSettingsPage project={project}>
