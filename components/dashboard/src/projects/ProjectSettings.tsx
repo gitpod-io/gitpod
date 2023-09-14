@@ -168,6 +168,13 @@ export default function ProjectSettingsView() {
                 />
                 {enablePrebuilds && (
                     <>
+                        <CheckboxInputField
+                            label="Prebuild the default branch only"
+                            hint="Commits on other branches will be ignored."
+                            disabled={!enablePrebuilds}
+                            checked={project.settings?.prebuildDefaultBranchOnly ?? false}
+                            onChange={(checked) => updateProjectSettings({ prebuildDefaultBranchOnly: checked })}
+                        />
                         <InputField label="Workspace machine type" disabled={!enablePrebuilds}>
                             <div className="max-w-md">
                                 <SelectWorkspaceClassComponent
