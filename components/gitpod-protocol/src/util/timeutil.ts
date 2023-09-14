@@ -77,6 +77,10 @@ export function rightBefore(date: string): string {
     return new Date(new Date(date).getTime() - 1).toISOString();
 }
 
+export function durationLongerThanSeconds(time: number, durationSeconds: number, now: number = Date.now()): boolean {
+    return (now - time) / 1000 > durationSeconds;
+}
+
 export function millisecondsToHours(milliseconds: number): number {
     return milliseconds / 1000 / 60 / 60;
 }

@@ -53,7 +53,6 @@ import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/expe
 import { WorkspaceRegion, isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { RegionService } from "./region-service";
 import { ProjectsService } from "../projects/projects-service";
-import { EnvVarService } from "../user/env-var-service";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 import { Config } from "../config";
@@ -80,7 +79,6 @@ export class WorkspaceService {
         @inject(WorkspaceManagerClientProvider) private readonly clientProvider: WorkspaceManagerClientProvider,
         @inject(WorkspaceDB) private readonly db: WorkspaceDB,
         @inject(EntitlementService) private readonly entitlementService: EntitlementService,
-        @inject(EnvVarService) private readonly envVarService: EnvVarService,
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
         @inject(OrganizationService) private readonly orgService: OrganizationService,
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
@@ -475,12 +473,6 @@ export class WorkspaceService {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Workspace not found!");
         }
 
-        const envVarsPromise = this.envVarService.resolveEnvVariables(
-            user.id,
-            workspace.projectId,
-            workspace.type,
-            workspace.context,
-        );
         const projectPromise = workspace.projectId
             ? ApplicationError.notFoundToUndefined(this.projectsService.getProject(user.id, workspace.projectId))
             : Promise.resolve(undefined);
@@ -495,14 +487,7 @@ export class WorkspaceService {
         );
 
         // at this point we're about to actually start a new workspace
-        const result = await this.workspaceStarter.startWorkspace(
-            ctx,
-            workspace,
-            user,
-            await projectPromise,
-            await envVarsPromise,
-            options,
-        );
+        const result = await this.workspaceStarter.startWorkspace(ctx, workspace, user, await projectPromise, options);
         return result;
     }
 
