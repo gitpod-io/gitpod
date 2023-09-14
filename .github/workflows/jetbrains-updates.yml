@@ -33,7 +33,9 @@ jobs:
 
                       ## How to test
 
-                      Merge if tests are green, if something breaks then add tests for regressions.
+                      Merge if:
+                      - [ ] Tests are green, if something breaks then add tests for regressions.
+                      - [ ] Warmup is working properly using IntelliJ and spring-petclinic project sample
 
                       <details>
                       <summary>if you want to test manually for some reasons</summary>
