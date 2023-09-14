@@ -95,7 +95,10 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
                 return {
                     id: repo.url,
                     element: (
-                        <div className="flex flex-row items-center overflow-hidden">
+                        <div
+                            className="flex flex-row items-center overflow-hidden"
+                            aria-label={`${repo.projectId ? "Project" : "Repo"}: ${repo.url}`}
+                        >
                             <span className={"pr-3"}>
                                 <RepositoryIcon
                                     className={classNames(
