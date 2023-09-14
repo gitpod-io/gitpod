@@ -15,7 +15,6 @@ export const TEAM_ID_ATTRIBUTE = "team_id";
 export const TEAM_NAME_ATTRIBUTE = "team_name";
 export const BILLING_TIER_ATTRIBUTE = "billing_tier";
 export const GITPOD_HOST = "gitpod_host";
-export const GRPC_TYPE = "grpc_type";
 
 export class ConfigCatClient implements Client {
     constructor(private readonly client: IConfigCatClient, private readonly gitpodHost?: string) {}
