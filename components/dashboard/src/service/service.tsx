@@ -21,7 +21,6 @@ import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/fronten
 import { RemoteTrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
 import { helloService } from "./public-api";
 import { getExperimentsClient } from "../experiments/client";
-import { metricsReporter } from "./metrics";
 
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
@@ -83,12 +82,11 @@ export function getGitpodService(): GitpodService {
                             );
                             if (isTest) {
                                 helloService.sayHello({}).catch((e) => {
-                                    metricsReporter.reportError(e, {
+                                    console.error(e, {
                                         userId: user?.id,
                                         workspaceId: args[0],
                                         grpcType,
                                     });
-                                    console.error(e);
                                 });
                             }
                         }
@@ -112,11 +110,10 @@ export function getGitpodService(): GitpodService {
                             previousCount = reply.count;
                         }
                     } catch (e) {
-                        metricsReporter.reportError(e, {
+                        console.error(e, {
                             userId: user?.id,
                             grpcType,
                         });
-                        console.error(e);
                     }
                 }
                 await new Promise((resolve) => setTimeout(resolve, 3000));

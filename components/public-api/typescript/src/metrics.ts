@@ -255,6 +255,7 @@ export class MetricsReporter {
             gitpodUrl: string;
             clientName: string;
             clientVersion: string;
+            logError: typeof console.error;
         },
     ) {
         this.metricsHost = `ide.${new URL(options.gitpodUrl).hostname}`;
@@ -265,7 +266,7 @@ export class MetricsReporter {
             return;
         }
         this.intervalHandler = setInterval(
-            () => this.report().catch((e) => console.error("metrics: error while reporting", e)),
+            () => this.report().catch((e) => this.options.logError("metrics: error while reporting", e)),
             MetricsReporter.REPORT_INTERVAL,
         );
     }
@@ -342,10 +343,11 @@ export class MetricsReporter {
                 "X-Client-Version": this.options.clientVersion,
             },
             body: JSON.stringify(data),
+            credentials: "omit",
         });
 
         if (!resp.ok) {
-            console.error(`metrics: endpoint responded with ${resp.status} ${resp.statusText}`);
+            this.options.logError(`metrics: endpoint responded with ${resp.status} ${resp.statusText}`);
         }
     }
 
@@ -371,10 +373,11 @@ export class MetricsReporter {
                 "X-Client-Version": this.options.clientVersion,
             },
             body: JSON.stringify(data),
+            credentials: "omit",
         });
 
         if (!resp.ok) {
-            console.error("metrics: endpoint responded with", resp.status, resp.statusText);
+            this.options.logError("metrics: endpoint responded with", resp.status, resp.statusText);
         }
     }
 
@@ -388,10 +391,9 @@ export class MetricsReporter {
         },
     ): void {
         const properties = { ...data };
-        const errorProps = { message: error.message, stack: error.stack };
 
         properties["error_name"] = error.name;
-        properties["error_message"] = errorProps.message;
+        properties["error_message"] = error.message;
 
         const workspaceId = properties["workspaceId"] ?? "";
         const instanceId = properties["instanceId"] ?? "";
@@ -403,7 +405,7 @@ export class MetricsReporter {
 
         const jsonData = {
             component: this.options.clientName,
-            errorStack: errorProps.stack || "",
+            errorStack: error.stack ?? String(error),
             version: this.options.clientVersion,
             workspaceId,
             instanceId,
@@ -419,14 +421,15 @@ export class MetricsReporter {
                 "X-Client": this.options.clientName,
                 "X-Client-Version": this.options.clientVersion,
             },
+            credentials: "omit",
         })
             .then((resp) => {
                 if (!resp.ok) {
-                    console.error(`metrics: endpoint responded with ${resp.status} ${resp.statusText}`);
+                    this.options.logError(`metrics: endpoint responded with ${resp.status} ${resp.statusText}`);
                 }
             })
             .catch((e) => {
-                console.error("metrics: failed to report error to metrics endpoint!", e);
+                this.options.logError("metrics: failed to report error to metrics endpoint!", e);
             });
     }
 }
