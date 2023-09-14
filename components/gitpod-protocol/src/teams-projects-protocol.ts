@@ -15,6 +15,11 @@ export interface ProjectConfig {
 
 export interface ProjectSettings {
     enablePrebuilds?: boolean;
+    /**
+     * Wether prebuilds (if enabled) should only be started on the default branch.
+     * Defaults to `true` on project creation.
+     */
+    prebuildDefaultBranchOnly?: boolean;
     useIncrementalPrebuilds?: boolean;
     keepOutdatedPrebuildsRunning?: boolean;
     // whether new workspaces can start on older prebuilds and incrementally update
