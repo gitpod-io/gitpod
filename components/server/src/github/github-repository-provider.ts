@@ -10,7 +10,7 @@ import { User, Repository } from "@gitpod/gitpod-protocol";
 import { GitHubGraphQlEndpoint, GitHubRestApi } from "./api";
 import { RepositoryProvider } from "../repohost/repository-provider";
 import { RepoURL } from "../repohost/repo-url";
-import { Branch, CommitInfo, RepositorySlim } from "@gitpod/gitpod-protocol/lib/protocol";
+import { Branch, CommitInfo, RepositoryInfo } from "@gitpod/gitpod-protocol/lib/protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
@@ -171,7 +171,7 @@ export class GithubRepositoryProvider implements RepositoryProvider {
         }
     }
 
-    async getUserRepos(user: User): Promise<RepositorySlim[]> {
+    async getUserRepos(user: User): Promise<RepositoryInfo[]> {
         const result: any = await this.githubQueryApi.runQuery(
             user,
             `
@@ -214,12 +214,12 @@ export class GithubRepositoryProvider implements RepositoryProvider {
               }`,
         );
 
-        let repos: RepositorySlim[] = [];
+        let repos: RepositoryInfo[] = [];
 
         for (const type of ["contributedTo", "original", "forked"]) {
             const nodes = result.data.viewer[type]?.nodes;
             if (nodes) {
-                repos = nodes.map((n: any): RepositorySlim => {
+                repos = nodes.map((n: any): RepositoryInfo => {
                     return {
                         name: n.name,
                         url: n.url,

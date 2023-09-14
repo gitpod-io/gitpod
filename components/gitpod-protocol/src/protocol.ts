@@ -1437,7 +1437,7 @@ export interface Repository {
     };
 }
 
-export interface RepositorySlim {
+export interface RepositoryInfo {
     url: string;
     name: string;
 }
