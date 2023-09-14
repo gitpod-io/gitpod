@@ -128,12 +128,8 @@ import { WorkspaceClusterImagebuilderClientProvider } from "./workspace/workspac
 import { WorkspaceDownloadService } from "./workspace/workspace-download-service";
 import { WorkspaceFactory } from "./workspace/workspace-factory";
 import { WorkspaceService } from "./workspace/workspace-service";
-import { SSHKeyService } from "./user/sshkey-service";
-import { GitpodTokenService } from "./user/gitpod-token-service";
-import { EnvVarService } from "./user/env-var-service";
-import { ScmService } from "./projects/scm-service";
-import { RelationshipUpdateJob } from "./authorization/relationship-updater-job";
 import { WorkspaceStartController } from "./workspace/workspace-start-controller";
+import { WorkspaceStarter } from "./workspace/workspace-starter";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
