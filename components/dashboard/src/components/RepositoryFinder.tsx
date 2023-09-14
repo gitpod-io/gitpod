@@ -105,14 +105,16 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
                                 />
                             </span>
 
-                            {name && <span className="text-sm whitespace-nowrap font-semibold">{name}</span>}
+                            {name && (
+                                <>
+                                    <span className="text-sm whitespace-nowrap font-semibold">{name}</span>
+                                    <TextLight>
+                                        <MiddleDot className="px-0.5" />
+                                    </TextLight>
+                                </>
+                            )}
 
-                            {/* TODO: would be nice to have an easy way to set text colors here instead of wrapping w/ text */}
-                            <TextLight>
-                                <MiddleDot className="px-0.5" />
-                            </TextLight>
-
-                            {/* TODO: determine if Text component is helpful */}
+                            {/* TODO: refine some Text* components a bit to make it easy to set the right colors for dark/light mode */}
                             <TextLight className="text-xs whitespace-nowrap truncate overflow-ellipsis">
                                 {stripOffProtocol(repo.url)}
                             </TextLight>
