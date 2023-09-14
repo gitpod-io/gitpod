@@ -83,7 +83,7 @@ export default function ProjectSettingsView() {
 
             const newSettings = { ...project.settings, ...settings };
             try {
-                getGitpodService().server.updateProjectPartial({ id: project.id, settings: newSettings });
+                await getGitpodService().server.updateProjectPartial({ id: project.id, settings: newSettings });
                 setProject({ ...project, settings: newSettings });
             } catch (error) {
                 toast(error?.message || "Oh no, there was a problem with updating project settings.");
