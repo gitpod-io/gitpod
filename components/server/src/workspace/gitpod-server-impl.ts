@@ -144,7 +144,6 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { CostCenterJSON } from "@gitpod/gitpod-protocol/lib/usage";
 import { createCookielessId, maskIp } from "../analytics";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { increaseDashboardErrorBoundaryCounter } from "../prometheus-metrics";
 import { LinkedInService } from "../linkedin-service";
 import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
 import { IncrementalPrebuildsService } from "../prebuilds/incremental-prebuilds-service";
@@ -3464,14 +3463,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     //
     //#endregion
 
+    /**
+     * TODO(ak)
+     * @deprecated remove it after dashboard is deployed. It was replaced with error reporting in GCP.
+     */
     async reportErrorBoundary(ctx: TraceContextWithSpan, url: string, message: string): Promise<void> {
-        // Cap message and url length so the entries aren't of unbounded length
-        log.warn("dashboard error boundary", {
-            message: (message || "").substring(0, 200),
-            url: (url || "").substring(0, 200),
-            userId: this.userID,
-        });
-        increaseDashboardErrorBoundaryCounter();
+        // no-op
     }
 
     async getIDToken(): Promise<void> {}

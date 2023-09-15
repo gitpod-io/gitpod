@@ -40,7 +40,7 @@ console.error = function (...args) {
     reportError(...args);
 };
 
-function reportError(...args: any[]) {
+export function reportError(...args: any[]) {
     let err = undefined;
     let details = undefined;
     if (args[0] instanceof Error) {
