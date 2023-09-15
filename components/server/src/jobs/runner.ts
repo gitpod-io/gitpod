@@ -108,7 +108,7 @@ export class JobRunner {
                 });
             });
         } catch (err) {
-            if (RedisMutex.isLockError(err)) {
+            if (RedisMutex.isLockedError(err)) {
                 log.debug(
                     `Failed to acquire lock for job ${job.name}. Likely another instance already holds the lock.`,
                     err,

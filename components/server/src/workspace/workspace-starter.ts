@@ -419,9 +419,8 @@ export class WorkspaceStarter {
                 { retryCount: 4, retryDelay: 500 }, // We wait at most 2s until we give up, and conclude that someone else is already starting this instance
             )
             .catch((err) => {
-                if (RedisMutex.isLockError(err)) {
-                    log.warn({ instanceId }, "unable to acquire lock for workspace instance start");
-                    return;
+                if (!RedisMutex.isLockedError(err)) {
+                    log.warn({ instanceId }, "unexpected error during workspace instance start", err);
                 }
             });
     }
@@ -582,9 +581,10 @@ export class WorkspaceStarter {
                 // due to the reconciliation loop we might have already started the workspace, especially in the "pending" phase
                 const workspaceAlreadyExists = await this.existsWithWsManager(ctx, instance);
                 if (workspaceAlreadyExists) {
-                    log.warn(
+                    log.debug(
                         { instanceId: instance.id, workspaceId: instance.workspaceId },
                         "workspace already exists, not starting again",
+                        { phase: instance.status.phase },
                     );
                     return;
                 }
