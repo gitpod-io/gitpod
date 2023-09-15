@@ -835,11 +835,12 @@ func (mr *MockAPIInterfaceMockRecorder) RemoveTeamMember(ctx, teamID, userID int
 }
 
 // GetOrgSettings mocks base method.
-func (m *MockAPIInterface) GetOrgSettings(ctx context.Context, orgID string) error {
+func (m *MockAPIInterface) GetOrgSettings(ctx context.Context, orgID string) (*OrganizationSettings, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetOrgSettings", ctx, orgID)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*OrganizationSettings)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GetOrgSettings indicates an expected call of GetOrgSettings.
