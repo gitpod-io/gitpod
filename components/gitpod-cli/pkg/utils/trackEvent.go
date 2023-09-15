@@ -24,16 +24,15 @@ const (
 	UserErrorCode   = "user_error"
 
 	// Rebuild
-	RebuildErrorCode_ImageBuildFailed        = "rebuild_image_build_failed"
-	RebuildErrorCode_DockerErr               = "rebuild_docker_err"
-	RebuildErrorCode_DockerNotFound          = "rebuild_docker_not_found"
-	RebuildErrorCode_DockerRunFailed         = "rebuild_docker_run_failed"
-	RebuildErrorCode_MalformedGitpodYaml     = "rebuild_malformed_gitpod_yaml"
-	RebuildErrorCode_MissingGitpodYaml       = "rebuild_missing_gitpod_yaml"
-	RebuildErrorCode_NoCustomImage           = "rebuild_no_custom_image"
-	RebuildErrorCode_AlreadyInDebug          = "rebuild_already_in_debug"
-	RebuildErrorCode_InvaligLogLevel         = "rebuild_invalid_log_level"
-	RebuildErrorCode_FailedToGetDefaultImage = "rebuild_failed_to_get_default_image"
+	RebuildErrorCode_ImageBuildFailed    = "rebuild_image_build_failed"
+	RebuildErrorCode_DockerErr           = "rebuild_docker_err"
+	RebuildErrorCode_DockerNotFound      = "rebuild_docker_not_found"
+	RebuildErrorCode_DockerRunFailed     = "rebuild_docker_run_failed"
+	RebuildErrorCode_MalformedGitpodYaml = "rebuild_malformed_gitpod_yaml"
+	RebuildErrorCode_MissingGitpodYaml   = "rebuild_missing_gitpod_yaml"
+	RebuildErrorCode_NoCustomImage       = "rebuild_no_custom_image"
+	RebuildErrorCode_AlreadyInDebug      = "rebuild_already_in_debug"
+	RebuildErrorCode_InvaligLogLevel     = "rebuild_invalid_log_level"
 
 	// UserError
 	UserErrorCode_NeedUpgradePlan  = "plan_upgrade_required"

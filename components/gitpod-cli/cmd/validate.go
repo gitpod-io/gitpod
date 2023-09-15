@@ -89,12 +89,14 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 	var dockerContext string
 	switch img := gitpodConfig.Image.(type) {
 	case nil:
-		defaultImage, err := getOrganizationDefaultWorkspaceImage(ctx)
-		if err != nil {
-			return GpError{Err: err, OutCome: utils.Outcome_SystemErr, ErrorCode: utils.RebuildErrorCode_FailedToGetDefaultImage, Silence: true}
+		// TODO: default image won't be always gitpod/workspace-full, just added for compatibility before server is deployed
+		image = "gitpod/workspace-full:latest"
+		if defaultImage, err := getOrganizationDefaultWorkspaceImage(ctx); err != nil {
+			fmt.Printf("Failed to get organization default workspace image: %v\n", err)
+		} else {
+			fmt.Println("Using organization default workspace image:", defaultImage)
+			image = defaultImage
 		}
-		fmt.Println("Using organization default workspace image:", defaultImage)
-		image = defaultImage
 	case string:
 		image = img
 	case map[interface{}]interface{}:
