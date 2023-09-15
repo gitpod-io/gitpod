@@ -40,6 +40,11 @@ console.error = function (...args) {
     reportError(...args);
 };
 
+let commonDetails = {};
+export function updateCommonErrorDetails(update: { [key: string]: string | undefined }) {
+    Object.assign(commonDetails, update);
+}
+
 export function reportError(...args: any[]) {
     let err = undefined;
     let details = undefined;
@@ -61,22 +66,26 @@ export function reportError(...args: any[]) {
         }
     }
 
-    let data = undefined;
+    let data = {};
     if (details && typeof details === "object") {
-        data = Object.fromEntries(
-            Object.entries(details)
-                .filter(([key, value]) => {
-                    return (
-                        typeof value === "string" ||
-                        typeof value === "number" ||
-                        typeof value === "boolean" ||
-                        value === null ||
-                        typeof value === "undefined"
-                    );
-                })
-                .map(([key, value]) => [key, String(value)]),
+        data = Object.assign(
+            data,
+            Object.fromEntries(
+                Object.entries(details)
+                    .filter(([key, value]) => {
+                        return (
+                            typeof value === "string" ||
+                            typeof value === "number" ||
+                            typeof value === "boolean" ||
+                            value === null ||
+                            typeof value === "undefined"
+                        );
+                    })
+                    .map(([key, value]) => [key, String(value)]),
+            ),
         );
     }
+    data = Object.assign(data, commonDetails);
 
     if (err) {
         metricsReporter.reportError(err, data);

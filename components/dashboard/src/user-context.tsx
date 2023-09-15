@@ -7,6 +7,7 @@
 import { User } from "@gitpod/gitpod-protocol";
 import { useQueryClient } from "@tanstack/react-query";
 import React, { createContext, useState, useContext, useMemo, useCallback } from "react";
+import { updateCommonErrorDetails } from "./service/metrics";
 
 const UserContext = createContext<{
     user?: User;
@@ -18,10 +19,16 @@ const UserContext = createContext<{
 const UserContextProvider: React.FC = ({ children }) => {
     const [user, setUser] = useState<User>();
 
+    const updateErrorUserDetails = (user?: User) => {
+        updateCommonErrorDetails({ userId: user?.id });
+    };
+    updateErrorUserDetails(user);
+
     const client = useQueryClient();
 
     const doSetUser = useCallback(
         (updatedUser: User) => {
+            updateErrorUserDetails(updatedUser);
             if (user?.id !== updatedUser.id) {
                 client.clear();
             }
