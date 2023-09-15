@@ -19,6 +19,7 @@ import { inject, injectable } from "inversify";
 import { Authorizer } from "../authorization/authorizer";
 import { ProjectsService } from "../projects/projects-service";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
+import { Config } from "../config";
 
 @injectable()
 export class OrganizationService {
@@ -28,6 +29,7 @@ export class OrganizationService {
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
         @inject(Authorizer) private readonly auth: Authorizer,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
+        @inject(Config) protected readonly config: Config,
     ) {}
 
     async listOrganizations(
@@ -327,11 +329,18 @@ export class OrganizationService {
 
     async getSettings(userId: string, orgId: string): Promise<OrganizationSettings> {
         await this.auth.checkPermissionOnOrganization(userId, "read_settings", orgId);
-        return (await this.teamDB.findOrgSettings(orgId)) || {};
+        const settings = (await this.teamDB.findOrgSettings(orgId)) || {};
+        if (!settings.defaultWorkspaceImage) {
+            settings.defaultWorkspaceImage = this.config.workspaceDefaults.workspaceImage;
+        }
+        return settings;
     }
 
     async updateSettings(userId: string, orgId: string, settings: OrganizationSettings): Promise<OrganizationSettings> {
         await this.auth.checkPermissionOnOrganization(userId, "write_settings", orgId);
+        if (!settings.defaultWorkspaceImage) {
+            settings.defaultWorkspaceImage = this.config.workspaceDefaults.workspaceImage;
+        }
         await this.teamDB.setOrgSettings(orgId, settings);
         return settings;
     }
