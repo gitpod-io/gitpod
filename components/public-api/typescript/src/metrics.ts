@@ -373,6 +373,10 @@ export class MetricsReporter {
         properties["error_name"] = error.name;
         properties["error_message"] = error.message;
 
+        const workspaceId = properties["workspaceId"];
+        const instanceId = properties["instanceId"];
+        const userId = properties["userId"];
+
         delete properties["workspaceId"];
         delete properties["instanceId"];
         delete properties["userId"];
@@ -381,9 +385,9 @@ export class MetricsReporter {
             component: this.options.clientName,
             errorStack: error.stack ?? String(error),
             version: this.options.clientVersion,
-            workspaceId: properties["workspaceId"] ?? "",
-            instanceId: properties["instanceId"] ?? "",
-            userId: properties["userId"] ?? "",
+            workspaceId: workspaceId ?? "",
+            instanceId: instanceId ?? "",
+            userId: userId ?? "",
             properties,
         });
     }
