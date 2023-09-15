@@ -41,6 +41,7 @@ const (
 	ServerIAMSessionPort        = 9876
 	ServerInstallationAdminPort = 9000
 	ServerGRPCAPIPort           = 9877
+	ServerPublicAPIPort         = 3001
 	SystemNodeCritical          = "system-node-critical"
 	PublicApiComponent          = "public-api-server"
 	UsageComponent              = "usage"

@@ -34,7 +34,25 @@ export function registerServerMetrics(registry: prometheusClient.Registry) {
     registry.registerMetric(updateSubscribersRegistered);
     registry.registerMetric(dbConnectionsTotal);
     registry.registerMetric(dbConnectionsFree);
+    registry.registerMetric(grpcServerStarted);
+    registry.registerMetric(grpcServerHandling);
 }
+
+export const grpcServerStarted = new prometheusClient.Counter({
+    name: "grpc_server_started_total",
+    help: "Total number of RPCs started on the server.",
+    labelNames: ["grpc_service", "grpc_method", "grpc_type"],
+});
+export const grpcServerHandled = new prometheusClient.Counter({
+    name: "grpc_server_handled_total",
+    help: "Total number of RPCs completed on the server, regardless of success or failure.",
+    labelNames: ["grpc_service", "grpc_method", "grpc_type", "grpc_code"],
+});
+export const grpcServerHandling = new prometheusClient.Histogram({
+    name: "grpc_server_handling_seconds",
+    help: "Histogram of response latency (seconds) of gRPC that had been application-level handled by the server.",
+    labelNames: ["grpc_service", "grpc_method", "grpc_type", "grpc_code"],
+});
 
 export const dbConnectionsTotal = new prometheusClient.Gauge({
     name: "gitpod_typeorm_total_connections",

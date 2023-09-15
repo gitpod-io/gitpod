@@ -19,6 +19,8 @@ import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url"
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/frontend-dashboard-service";
 import { RemoteTrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
+import { helloService } from "./public-api";
+import { getExperimentsClient } from "../experiments/client";
 
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
@@ -56,10 +58,81 @@ export function getGitpodService(): GitpodService {
         const service = _gp.gitpodService || (_gp.gitpodService = require("./service-mock").gitpodServiceMock);
         return service;
     }
-    const service = _gp.gitpodService || (_gp.gitpodService = createGitpodService());
+    let service = _gp.gitpodService;
+    if (!service) {
+        service = _gp.gitpodService = createGitpodService();
+        testPublicAPI(service);
+    }
     return service;
 }
 
+/**
+ * Emulates getWorkspace calls and listen to workspace statuses with Public API.
+ * // TODO(ak): remove after reliability of Public API is confirmed
+ */
+function testPublicAPI(service: any): void {
+    let user: any;
+    service.server = new Proxy(service.server, {
+        get(target, propKey) {
+            return async function (...args: any[]) {
+                if (propKey === "getLoggedInUser") {
+                    user = await target[propKey](...args);
+                    return user;
+                }
+                if (propKey === "getWorkspace") {
+                    try {
+                        return await target[propKey](...args);
+                    } finally {
+                        const grpcType = "unary";
+                        // emulates frequent unary calls to public API
+                        const isTest = await getExperimentsClient().getValueAsync(
+                            "public_api_dummy_reliability_test",
+                            false,
+                            {
+                                user,
+                                gitpodHost: window.location.host,
+                            },
+                        );
+                        if (isTest) {
+                            helloService.sayHello({}).catch((e) => {
+                                console.error(e, {
+                                    userId: user?.id,
+                                    workspaceId: args[0],
+                                    grpcType,
+                                });
+                            });
+                        }
+                    }
+                }
+                return target[propKey](...args);
+            };
+        },
+    });
+    (async () => {
+        const grpcType = "server-stream";
+        // emulates server side streaming with public API
+        while (true) {
+            const isTest = await getExperimentsClient().getValueAsync("public_api_dummy_reliability_test", false, {
+                user,
+                gitpodHost: window.location.host,
+            });
+            if (isTest) {
+                try {
+                    let previousCount = 0;
+                    for await (const reply of helloService.lotsOfReplies({ previousCount })) {
+                        previousCount = reply.count;
+                    }
+                } catch (e) {
+                    console.error(e, {
+                        userId: user?.id,
+                        grpcType,
+                    });
+                }
+            }
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+        }
+    })();
+}
 let ideFrontendService: IDEFrontendService | undefined;
 export function getIDEFrontendService(workspaceID: string, sessionId: string, service: GitpodService) {
     if (!ideFrontendService) {

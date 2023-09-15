@@ -5,7 +5,8 @@
         "outDir": "lib",
         "lib": [
             "es6",
-            "esnext.asynciterable"
+            "esnext.asynciterable",
+            "DOM"
         ],
         "strict": true,
         "noEmitOnError": false,

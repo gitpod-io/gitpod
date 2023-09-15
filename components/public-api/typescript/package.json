@@ -14,10 +14,11 @@
     "test:brk": "yarn test --inspect-brk"
   },
   "dependencies": {
-    "@bufbuild/connect-web": "^0.2.1",
+    "@bufbuild/connect": "^0.13.0",
     "@bufbuild/protobuf": "^0.1.1",
     "@bufbuild/protoc-gen-connect-web": "^0.2.1",
-    "@bufbuild/protoc-gen-es": "^0.1.1"
+    "@bufbuild/protoc-gen-es": "^0.1.1",
+    "prom-client": "^14.2.0"
   },
   "devDependencies": {
     "@testdeck/mocha": "0.1.2",

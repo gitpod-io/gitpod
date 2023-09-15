@@ -32,4 +32,7 @@ const (
 
 	GRPCAPIName = "grpc"
 	GRPCAPIPort = common.ServerGRPCAPIPort
+
+	PublicAPIName = "public-api"
+	PublicAPIPort = common.ServerPublicAPIPort
 )
