@@ -33,7 +33,6 @@ import { error } from "console";
 import { IncrementalPrebuildsService } from "./incremental-prebuilds-service";
 import { PrebuildRateLimiterConfig } from "../workspace/prebuild-rate-limiter";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { UserAuthentication } from "../user/user-authentication";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
 import { WorkspaceService } from "../workspace/workspace-service";
 
@@ -46,7 +45,7 @@ export class WorkspaceRunningError extends Error {
 export interface StartPrebuildParams {
     user: User;
     context: CommitContext;
-    project?: Project;
+    project: Project;
     commitInfo?: CommitInfo;
     forcePrebuild?: boolean;
 }
@@ -60,7 +59,6 @@ export class PrebuildManager {
     @inject(Config) protected readonly config: Config;
     @inject(ProjectsService) protected readonly projectService: ProjectsService;
     @inject(IncrementalPrebuildsService) protected readonly incrementalPrebuildsService: IncrementalPrebuildsService;
-    @inject(UserAuthentication) protected readonly userService: UserAuthentication;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
 
@@ -122,17 +120,17 @@ export class PrebuildManager {
         span.setTag("cloneURL", cloneURL);
         span.setTag("commit", commitInfo?.sha);
 
+        // TODO figure out right place to mark activity of a project. For now, just moving at the beginning
+        // of `startPrebuild` to remain previous semantics when it was happening on call sites.
+        this.projectService
+            .markActive(user.id, project.id, "lastWebhookReceived")
+            .catch((e) => log.error("cannot update project usage", e));
+
         try {
             if (user.blocked) {
                 throw new ApplicationError(
                     ErrorCodes.USER_BLOCKED,
                     `Blocked users cannot start prebuilds (${user.name})`,
-                );
-            }
-            if (!project) {
-                throw new ApplicationError(
-                    ErrorCodes.PROJECT_REQUIRED,
-                    `Running prebuilds without a project is no longer supported. Please add '${cloneURL}' as a project in a team.`,
                 );
             }
             await this.checkUsageLimitReached(user, project.teamId); // throws if out of credits
@@ -343,7 +341,8 @@ export class PrebuildManager {
         }
     }
 
-    shouldPrebuild(config: WorkspaceConfig | undefined): boolean {
+    shouldPrebuild(params: { config: WorkspaceConfig; project: Project }): boolean {
+        const { config, project } = params;
         if (!config || !config._origin || config._origin !== "repo") {
             // we demand an explicit gitpod config
             return false;
@@ -354,10 +353,10 @@ export class PrebuildManager {
             return false;
         }
 
-        return true;
+        return Project.isPrebuildsEnabled(project);
     }
 
-    protected shouldPrebuildIncrementally(cloneUrl: string, project?: Project): boolean {
+    protected shouldPrebuildIncrementally(cloneUrl: string, project: Project): boolean {
         if (project?.settings?.useIncrementalPrebuilds) {
             return true;
         }

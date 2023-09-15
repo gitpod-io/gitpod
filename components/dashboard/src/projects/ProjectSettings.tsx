@@ -5,7 +5,7 @@
  */
 
 import { Project, ProjectSettings } from "@gitpod/gitpod-protocol";
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useContext, useState, Fragment } from "react";
 import { useHistory } from "react-router";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
@@ -20,6 +20,8 @@ import { TextInputField } from "../components/forms/TextInputField";
 import { Button } from "../components/Button";
 import { useRefreshProjects } from "../data/projects/list-projects-query";
 import { useToast } from "../components/toasts/Toasts";
+import classNames from "classnames";
+import { InputField } from "../components/forms/InputField";
 
 export function ProjectSettingsPage(props: { project?: Project; children?: React.ReactNode }) {
     return (
@@ -52,7 +54,7 @@ export default function ProjectSettingsView() {
     }
     const history = useHistory();
     const refreshProjects = useRefreshProjects();
-    const toast = useToast();
+    const { toast } = useToast();
 
     const setProjectName = useCallback(
         (projectName: string) => {
@@ -70,7 +72,7 @@ export default function ProjectSettingsView() {
             await getGitpodService().server.updateProjectPartial({ id: project.id, name: projectName });
             setProject({ ...project, name: projectName });
             refreshProjects(project.teamId);
-            toast.toast(`Project ${projectName} updated.`);
+            toast(`Project ${projectName} updated.`);
         },
         [project, badProjectName, projectName, setProject, refreshProjects, toast],
     );
@@ -80,10 +82,14 @@ export default function ProjectSettingsView() {
             if (!project) return;
 
             const newSettings = { ...project.settings, ...settings };
-            getGitpodService().server.updateProjectPartial({ id: project.id, settings: newSettings });
-            setProject({ ...project, settings: newSettings });
+            try {
+                await getGitpodService().server.updateProjectPartial({ id: project.id, settings: newSettings });
+                setProject({ ...project, settings: newSettings });
+            } catch (error) {
+                toast(error?.message || "Oh no, there was a problem with updating project settings.");
+            }
         },
-        [project, setProject],
+        [project, setProject, toast],
     );
 
     const setWorkspaceClass = useCallback(
@@ -117,6 +123,8 @@ export default function ProjectSettingsView() {
     // TODO: Render a generic error screen for when an entity isn't found
     if (!project) return null;
 
+    const enablePrebuilds = Project.isPrebuildsEnabled(project);
+
     return (
         <ProjectSettingsPage project={project}>
             <Heading2>Project Name</Heading2>
@@ -132,100 +140,147 @@ export default function ProjectSettingsView() {
                     Update Name
                 </Button>
             </form>
-            <Heading2 className="mt-12">Prebuilds</Heading2>
-            <Subheading>Choose the workspace machine type for your prebuilds.</Subheading>
-            <div className="max-w-md">
-                <SelectWorkspaceClassComponent
-                    selectedWorkspaceClass={project.settings?.workspaceClasses?.prebuild}
-                    onSelectionChange={setWorkspaceClassForPrebuild}
+            <div>
+                <Heading2 className="mt-12">Prebuilds</Heading2>
+                <CheckboxInputField
+                    label="Enable prebuilds"
+                    hint={
+                        <span>
+                            {enablePrebuilds ? (
+                                <Fragment>
+                                    Prebuilds will run for any <code>before</code> or <code>init</code> tasks.
+                                </Fragment>
+                            ) : (
+                                "Requires permissions to configure repository webhooks."
+                            )}{" "}
+                            <a
+                                className="gp-link"
+                                target="_blank"
+                                rel="noreferrer"
+                                href="https://www.gitpod.io/docs/configure/projects/prebuilds"
+                            >
+                                Learn more
+                            </a>
+                        </span>
+                    }
+                    checked={enablePrebuilds}
+                    onChange={(checked) => updateProjectSettings({ enablePrebuilds: checked })}
                 />
-            </div>
-            <CheckboxInputField
-                label="Enable Incremental Prebuilds"
-                hint={
-                    <span>
-                        When possible, use an earlier successful prebuild as a base to create new prebuilds. This can
-                        make your prebuilds significantly faster, especially if they normally take longer than 10
-                        minutes.{" "}
-                        <a className="gp-link" href="https://www.gitpod.io/changelog/faster-incremental-prebuilds">
-                            Learn more
-                        </a>
-                    </span>
-                }
-                checked={project.settings?.useIncrementalPrebuilds ?? false}
-                onChange={(checked) => updateProjectSettings({ useIncrementalPrebuilds: checked })}
-            />
-            <CheckboxInputField
-                label="Cancel Prebuilds on Outdated Commits"
-                hint="Cancel pending or running prebuilds on the same branch when new commits are pushed."
-                checked={!project.settings?.keepOutdatedPrebuildsRunning}
-                onChange={(checked) => updateProjectSettings({ keepOutdatedPrebuildsRunning: !checked })}
-            />
-            <CheckboxInputField
-                label={
-                    <span>
-                        Use Last Successful Prebuild{" "}
-                        <PillLabel type="warn" className="font-semibold mt-2 ml-2 py-0.5 px-2 self-center">
-                            Alpha
-                        </PillLabel>
-                    </span>
-                }
-                hint="Skip waiting for prebuilds in progress and use the last successful prebuild from previous
+                {enablePrebuilds && (
+                    <>
+                        <InputField label="Workspace machine type" disabled={!enablePrebuilds}>
+                            <div className="max-w-md">
+                                <SelectWorkspaceClassComponent
+                                    disabled={!enablePrebuilds}
+                                    selectedWorkspaceClass={project.settings?.workspaceClasses?.prebuild}
+                                    onSelectionChange={setWorkspaceClassForPrebuild}
+                                />
+                            </div>
+                        </InputField>
+                        <CheckboxInputField
+                            label="Enable Incremental Prebuilds"
+                            hint={
+                                <span>
+                                    When possible, use an earlier successful prebuild as a base to create new prebuilds.
+                                    This can make your prebuilds significantly faster, especially if they normally take
+                                    longer than 10 minutes.{" "}
+                                    <a
+                                        className="gp-link"
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        href="https://www.gitpod.io/changelog/faster-incremental-prebuilds"
+                                    >
+                                        Learn more
+                                    </a>
+                                </span>
+                            }
+                            disabled={!enablePrebuilds}
+                            checked={project.settings?.useIncrementalPrebuilds ?? false}
+                            onChange={(checked) => updateProjectSettings({ useIncrementalPrebuilds: checked })}
+                        />
+                        <CheckboxInputField
+                            label="Cancel Prebuilds on Outdated Commits"
+                            hint="Cancel pending or running prebuilds on the same branch when new commits are pushed."
+                            disabled={!enablePrebuilds}
+                            checked={!project.settings?.keepOutdatedPrebuildsRunning}
+                            onChange={(checked) => updateProjectSettings({ keepOutdatedPrebuildsRunning: !checked })}
+                        />
+                        <CheckboxInputField
+                            label={
+                                <span>
+                                    Use Last Successful Prebuild{" "}
+                                    <PillLabel type="warn" className="font-semibold mt-2 ml-2 py-0.5 px-2 self-center">
+                                        Alpha
+                                    </PillLabel>
+                                </span>
+                            }
+                            hint="Skip waiting for prebuilds in progress and use the last successful prebuild from previous
                     commits on the same branch."
-                checked={!!project.settings?.allowUsingPreviousPrebuilds}
-                onChange={(checked) =>
-                    updateProjectSettings({
-                        allowUsingPreviousPrebuilds: checked,
-                        // we are disabling prebuild cancellation when incremental workspaces are enabled
-                        keepOutdatedPrebuildsRunning: checked || project?.settings?.keepOutdatedPrebuildsRunning,
-                    })
-                }
-            />
-            <div className="flex mt-4 max-w-2xl">
-                <div className="flex flex-col ml-6">
-                    <label
-                        htmlFor="prebuildNthCommit"
-                        className="text-gray-800 dark:text-gray-100 text-md font-semibold cursor-pointer tracking-wide"
-                    >
-                        Skip Prebuilds
-                    </label>
-                    <input
-                        type="number"
-                        id="prebuildNthCommit"
-                        min="0"
-                        max="100"
-                        step="5"
-                        className="mt-2"
-                        disabled={!project.settings?.allowUsingPreviousPrebuilds}
-                        value={
-                            project.settings?.prebuildEveryNthCommit === undefined
-                                ? 0
-                                : project.settings?.prebuildEveryNthCommit
-                        }
-                        onChange={({ target }) =>
-                            updateProjectSettings({
-                                prebuildEveryNthCommit: Math.abs(Math.min(Number.parseInt(target.value), 100)) || 0,
-                            })
-                        }
-                    />
-                    <div className="text-gray-500 dark:text-gray-400 text-sm mt-2">
-                        The number of commits that are skipped between prebuilds.
+                            disabled={!enablePrebuilds}
+                            checked={!!project.settings?.allowUsingPreviousPrebuilds}
+                            onChange={(checked) =>
+                                updateProjectSettings({
+                                    allowUsingPreviousPrebuilds: checked,
+                                    // we are disabling prebuild cancellation when incremental workspaces are enabled
+                                    keepOutdatedPrebuildsRunning:
+                                        checked || project?.settings?.keepOutdatedPrebuildsRunning,
+                                })
+                            }
+                        />
+                        <div className="flex mt-4 max-w-2xl">
+                            <div className="flex flex-col ml-6">
+                                <label
+                                    htmlFor="prebuildNthCommit"
+                                    className={classNames(
+                                        "text-sm font-semibold cursor-pointer tracking-wide",
+                                        !enablePrebuilds || !project.settings?.allowUsingPreviousPrebuilds
+                                            ? "text-gray-400 dark:text-gray-400"
+                                            : "text-gray-600 dark:text-gray-100",
+                                    )}
+                                >
+                                    Skip Prebuilds
+                                </label>
+                                <input
+                                    type="number"
+                                    id="prebuildNthCommit"
+                                    min="0"
+                                    max="100"
+                                    step="5"
+                                    className="mt-2"
+                                    disabled={!project.settings?.allowUsingPreviousPrebuilds}
+                                    value={
+                                        project.settings?.prebuildEveryNthCommit === undefined
+                                            ? 0
+                                            : project.settings?.prebuildEveryNthCommit
+                                    }
+                                    onChange={({ target }) =>
+                                        updateProjectSettings({
+                                            prebuildEveryNthCommit:
+                                                Math.abs(Math.min(Number.parseInt(target.value), 100)) || 0,
+                                        })
+                                    }
+                                />
+                                <div className="text-gray-500 dark:text-gray-400 text-sm mt-2">
+                                    The number of commits that are skipped between prebuilds.
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                )}
+                <div>
+                    <Heading2 className="mt-12">Workspaces</Heading2>
+                    <Subheading>Choose the workspace machine type for your workspaces.</Subheading>
+                    <div className="max-w-md mt-2">
+                        <SelectWorkspaceClassComponent
+                            selectedWorkspaceClass={project.settings?.workspaceClasses?.regular}
+                            onSelectionChange={setWorkspaceClass}
+                        />
                     </div>
                 </div>
             </div>
             <div>
-                <Heading2 className="mt-12">Workspaces</Heading2>
-                <Subheading>Choose the workspace machine type for your workspaces.</Subheading>
-                <div className="max-w-md">
-                    <SelectWorkspaceClassComponent
-                        selectedWorkspaceClass={project.settings?.workspaceClasses?.regular}
-                        onSelectionChange={setWorkspaceClass}
-                    />
-                </div>
-            </div>
-            <div className="">
                 <Heading2 className="mt-12">Remove Project</Heading2>
-                <Subheading className="pb-4">
+                <Subheading className="pb-4 max-w-md">
                     This will delete the project and all project-level environment variables you've set for this
                     project.
                 </Subheading>

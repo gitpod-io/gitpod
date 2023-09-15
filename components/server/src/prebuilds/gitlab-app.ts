@@ -138,32 +138,31 @@ export class GitLabApp {
     ): Promise<StartPrebuildResult | undefined> {
         const span = TraceContext.startSpan("GitLapApp.handlePushHook", ctx);
         try {
-            const contextURL = this.createContextUrl(body);
+            const cloneUrl = this.getCloneUrl(body);
+            const { user: projectOwner, project } = await this.findProjectAndOwner(cloneUrl, user);
+            if (!project) {
+                throw new ApplicationError(
+                    ErrorCodes.NOT_FOUND,
+                    `Project not found. Please add '${cloneUrl}' as a project.`,
+                );
+            }
+
+            const contextURL = this.createBranchContextUrl(body);
             log.debug({ userId: user.id }, "GitLab push hook: Context URL", { context: body, contextURL });
             span.setTag("contextURL", contextURL);
             const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
-            const projectAndOwner = await this.findProjectAndOwner(context.repository.cloneUrl, user);
-            if (projectAndOwner.project) {
-                this.projectDB
-                    .updateProjectUsage(projectAndOwner.project.id, {
-                        lastWebhookReceived: new Date().toISOString(),
-                    })
-                    .catch((e) => log.error("cannot update project usage", e));
-            }
+
             await this.webhookEvents.updateEvent(event.id, {
                 authorizedUserId: user.id,
-                projectId: projectAndOwner?.project?.id,
+                projectId: project?.id,
                 cloneUrl: context.repository.cloneUrl,
                 branch: context.ref,
                 commit: context.revision,
             });
 
             const config = await this.prebuildManager.fetchConfig({ span }, user, context);
-            if (!this.prebuildManager.shouldPrebuild(config)) {
-                log.debug({ userId: user.id }, "GitLab push hook: There is no prebuild config.", {
-                    context: body,
-                    contextURL,
-                });
+            if (!this.prebuildManager.shouldPrebuild({ config, project })) {
+                log.info("GitLab push event: No prebuild.", { config, context });
                 await this.webhookEvents.updateEvent(event.id, {
                     prebuildStatus: "ignored_unconfigured",
                     status: "processed",
@@ -171,14 +170,14 @@ export class GitLabApp {
                 return undefined;
             }
 
-            log.debug({ userId: user.id }, "GitLab push hook: Starting prebuild", { body, contextURL });
+            log.debug({ userId: user.id }, "GitLab push event: Starting prebuild", { body, contextURL });
 
             const commitInfo = await this.getCommitInfo(user, body.repository.git_http_url, body.after);
             const ws = await this.prebuildManager.startPrebuild(
                 { span },
                 {
-                    user: projectAndOwner.user || user,
-                    project: projectAndOwner.project,
+                    user: projectOwner || user,
+                    project: project,
                     context,
                     commitInfo,
                 },
@@ -253,10 +252,14 @@ export class GitLabApp {
         return { user: webhookInstaller };
     }
 
-    protected createContextUrl(body: GitLabPushHook) {
+    protected createBranchContextUrl(body: GitLabPushHook) {
         const repoUrl = body.repository.git_http_url;
         const contextURL = `${repoUrl.substr(0, repoUrl.length - 4)}/-/tree${body.ref.substr("refs/head/".length)}`;
         return contextURL;
+    }
+
+    protected getCloneUrl(body: GitLabPushHook) {
+        return body.repository.git_http_url;
     }
 
     get router(): express.Router {

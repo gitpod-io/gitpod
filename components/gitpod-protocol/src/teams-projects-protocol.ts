@@ -14,6 +14,7 @@ export interface ProjectConfig {
 }
 
 export interface ProjectSettings {
+    enablePrebuilds?: boolean;
     useIncrementalPrebuilds?: boolean;
     keepOutdatedPrebuildsRunning?: boolean;
     // whether new workspaces can start on older prebuilds and incrementally update
@@ -52,6 +53,25 @@ export namespace Project {
 
     export function slug(p: Project): string {
         return p.name + "-" + p.id;
+    }
+
+    /**
+     * If *no settings* are present on pre-existing projects, this defaults to `true` (enabled) for
+     * backwards compatibility. This allows to do any explicit migration of data or adjustment of
+     * the default behavior at a later point in time.
+     *
+     * Otherwise this returns the value of the `enablePrebuilds` settings persisted in the given
+     * project.
+     */
+    export function isPrebuildsEnabled(project: Project): boolean {
+        // Defaulting to `true` for backwards compatibility. Ignoring non-boolean for `enablePrebuilds`
+        // for evaluation here allows to do any explicit migration of data or adjustment of the default
+        // behavior at a later point in time.
+        if (typeof project.settings?.enablePrebuilds === "undefined") {
+            return true;
+        }
+
+        return project.settings.enablePrebuilds;
     }
 
     export interface Overview {

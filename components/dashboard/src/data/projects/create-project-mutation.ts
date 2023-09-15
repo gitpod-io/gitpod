@@ -35,9 +35,6 @@ export const useCreateProject = () => {
                 if (org) {
                     refreshProjects(org.id);
                 }
-
-                // Kick off a prebuild for the new project
-                getGitpodService().server.triggerPrebuild(project.id, null);
             },
         },
     );

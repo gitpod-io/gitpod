@@ -169,6 +169,7 @@ func projectSettingsToAPIResponse(s *protocol.ProjectSettings) *v1.ProjectSettin
 
 	return &v1.ProjectSettings{
 		Prebuild: &v1.PrebuildSettings{
+			EnablePrebuilds:              s.EnablePrebuilds,
 			EnableIncrementalPrebuilds:   s.UseIncrementalPrebuilds,
 			KeepOutdatedPrebuildsRunning: s.KeepOutdatedPrebuildsRunning,
 			UsePreviousPrebuilds:         s.AllowUsingPreviousPrebuilds,

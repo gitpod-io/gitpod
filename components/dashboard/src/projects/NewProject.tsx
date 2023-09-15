@@ -64,7 +64,7 @@ export default function NewProject() {
                 <Heading1>Project Created</Heading1>
                 <Subheading className="mt-2 text-center">
                     Created{" "}
-                    <a className="gp-link" href={`/projects/${Project.slug(project!)}`}>
+                    <a className="gp-link" href={`/projects/${Project.slug(project)}/settings`}>
                         {project.name}
                     </a>{" "}
                     {!currentTeam ? (
@@ -80,7 +80,12 @@ export default function NewProject() {
                     )}
                 </Subheading>
 
-                <div className="mt-12">
+                <div className="mt-12 flex space-x-2">
+                    <a href={`/projects/${Project.slug(project)}/settings`}>
+                        <Button type="secondary" onClick={onNewWorkspace}>
+                            Enable Prebuilds
+                        </Button>
+                    </a>
                     <Button onClick={onNewWorkspace}>New Workspace</Button>
                 </div>
             </div>

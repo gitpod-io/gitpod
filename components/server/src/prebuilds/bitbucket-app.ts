@@ -17,6 +17,7 @@ import { RepoURL } from "../repohost";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { UserService } from "../user/user-service";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { URL } from "url";
 
 @injectable()
 export class BitbucketApp {
@@ -115,13 +116,13 @@ export class BitbucketApp {
     ): Promise<StartPrebuildResult | undefined> {
         const span = TraceContext.startSpan("Bitbucket.handlePushHook", ctx);
         try {
-            const projectAndOwner = await this.findProjectAndOwner(data.gitCloneUrl, user);
-            if (projectAndOwner.project) {
-                this.projectDB
-                    .updateProjectUsage(projectAndOwner.project.id, {
-                        lastWebhookReceived: new Date().toISOString(),
-                    })
-                    .catch((err) => log.error("cannot update project usage", err));
+            const cloneURL = data.gitCloneUrl;
+            const { user: projectOwner, project } = await this.findProjectAndOwner(cloneURL, user);
+            if (!project) {
+                throw new ApplicationError(
+                    ErrorCodes.NOT_FOUND,
+                    `Project not found. Please add '${cloneURL}' as a project.`,
+                );
             }
 
             const contextURL = this.createContextUrl(data);
@@ -129,14 +130,14 @@ export class BitbucketApp {
             const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
             await this.webhookEvents.updateEvent(event.id, {
                 authorizedUserId: user.id,
-                projectId: projectAndOwner?.project?.id,
+                projectId: project?.id,
                 cloneUrl: context.repository.cloneUrl,
                 branch: context.ref,
                 commit: context.revision,
             });
             const config = await this.prebuildManager.fetchConfig({ span }, user, context);
-            if (!this.prebuildManager.shouldPrebuild(config)) {
-                console.log("Bitbucket push event: No config. No prebuild.");
+            if (!this.prebuildManager.shouldPrebuild({ config, project })) {
+                log.info("Bitbucket push event: No prebuild.", { config, context });
                 await this.webhookEvents.updateEvent(event.id, {
                     prebuildStatus: "ignored_unconfigured",
                     status: "processed",
@@ -158,7 +159,12 @@ export class BitbucketApp {
             }
             const ws = await this.prebuildManager.startPrebuild(
                 { span },
-                { user, project: projectAndOwner.project, context, commitInfo },
+                {
+                    user: projectOwner,
+                    project,
+                    context,
+                    commitInfo,
+                },
             );
             if (!ws.done) {
                 await this.webhookEvents.updateEvent(event.id, {
@@ -205,9 +211,11 @@ export class BitbucketApp {
                 if (teamMembers.some((t) => t.userId === webhookInstaller.id)) {
                     return { user: webhookInstaller, project };
                 }
+                const hostContext = this.hostCtxProvider.get(new URL(cloneURL).host);
+                const authProviderId = hostContext?.authProvider.authProviderId;
                 for (const teamMember of teamMembers) {
                     const user = await this.userService.findUserById(teamMember.userId, teamMember.userId);
-                    if (user && user.identities.some((i) => i.authProviderId === "Public-Bitbucket")) {
+                    if (user && user.identities.some((i) => i.authProviderId === authProviderId)) {
                         return { user, project };
                     }
                 }

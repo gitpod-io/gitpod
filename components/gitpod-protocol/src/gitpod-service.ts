@@ -280,6 +280,7 @@ export interface RateLimiterError {
 
 export interface CreateProjectParams {
     name: string;
+    /** @deprecated unused */
     slug: string;
     cloneUrl: string;
     teamId: string;

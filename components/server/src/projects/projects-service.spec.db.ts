@@ -103,7 +103,7 @@ describe("ProjectsService", async () => {
     it("should updateProject", async () => {
         const ps = container.get(ProjectsService);
         const project = await createTestProject(ps, org, owner);
-        await ps.updateProject(owner.id, {
+        await ps.updateProject(owner, {
             id: project.id,
             settings: {
                 useIncrementalPrebuilds: !project.settings?.useIncrementalPrebuilds,
@@ -117,7 +117,7 @@ describe("ProjectsService", async () => {
         );
 
         await expectError(ErrorCodes.PERMISSION_DENIED, () =>
-            ps.updateProject(member.id, {
+            ps.updateProject(member, {
                 id: project.id,
                 settings: {
                     useIncrementalPrebuilds: !project.settings?.useIncrementalPrebuilds,
@@ -125,13 +125,46 @@ describe("ProjectsService", async () => {
             }),
         );
         await expectError(ErrorCodes.NOT_FOUND, () =>
-            ps.updateProject(stranger.id, {
+            ps.updateProject(stranger, {
                 id: project.id,
                 settings: {
                     useIncrementalPrebuilds: !project.settings?.useIncrementalPrebuilds,
                 },
             }),
         );
+    });
+
+    describe("enablePrebuild handling", async () => {
+        it("should install webhook on new projects", async () => {
+            const webhooks = container.get<Set<String>>("webhooks");
+            webhooks.clear();
+            const ps = container.get(ProjectsService);
+            const project = await createTestProject(ps, org, owner); // using new default settings
+            await ps.updateProject(owner, {
+                id: project.id,
+                settings: {
+                    enablePrebuilds: true,
+                },
+            });
+            expect(webhooks).to.contain(project.cloneUrl);
+        });
+
+        it("should install webhook on pre-existing projects", async () => {
+            const webhooks = container.get<Set<String>>("webhooks");
+            webhooks.clear();
+            const cloneUrl = "https://github.com/gitpod-io/gitpod.git";
+            const ps = container.get(ProjectsService);
+            const project = await createTestProject(ps, org, owner, "test", cloneUrl, {
+                /* empty settings */
+            });
+            await ps.updateProject(owner, {
+                id: project.id,
+                settings: {
+                    enablePrebuilds: true,
+                },
+            });
+            expect(webhooks).to.contain(project.cloneUrl);
+        });
     });
 
     it("should findProjects", async () => {
@@ -162,6 +195,7 @@ async function createTestProject(
     owner: User,
     name = "my-project",
     cloneUrl = "https://github.com/gitpod-io/gitpod.git",
+    projectSettings = ProjectsService.PROJECT_SETTINGS_DEFAULTS,
 ) {
     const project = await ps.createProject(
         {
@@ -172,6 +206,7 @@ async function createTestProject(
             appInstallationId: "noid",
         },
         owner,
+        projectSettings,
     );
     return project;
 }

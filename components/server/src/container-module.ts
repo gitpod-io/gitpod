@@ -83,7 +83,6 @@ import { GitLabApp } from "./prebuilds/gitlab-app";
 import { IncrementalPrebuildsService } from "./prebuilds/incremental-prebuilds-service";
 import { PrebuildManager } from "./prebuilds/prebuild-manager";
 import { PrebuildStatusMaintainer } from "./prebuilds/prebuilt-status-maintainer";
-import { StartPrebuildContextParser } from "./prebuilds/start-prebuild-context-parser";
 import { ProjectsService } from "./projects/projects-service";
 import { RedisMutex } from "./redis/mutex";
 import { Server } from "./server";
@@ -342,7 +341,6 @@ export const productionContainerModule = new ContainerModule(
         bind(SignInJWT).toSelf().inSingletonScope();
 
         bind(PrebuildManager).toSelf().inSingletonScope();
-        bind(IPrefixContextParser).to(StartPrebuildContextParser).inSingletonScope();
         bind(GithubApp).toSelf().inSingletonScope();
         bind(GitHubAppSupport).toSelf().inSingletonScope();
         bind(GithubAppRules).toSelf().inSingletonScope();

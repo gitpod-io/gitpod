@@ -10,6 +10,7 @@ import { useHistory, useLocation, useRouteMatch } from "react-router";
 import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
 import { listAllProjects } from "../service/public-api";
 import { useCurrentUser } from "../user-context";
+import { useListProjectsQuery } from "../data/projects/list-projects-query";
 
 export const ProjectContext = createContext<{
     project?: Project;
@@ -72,6 +73,7 @@ export function useCurrentProject(): { project: Project | undefined; loading: bo
     const projectInfo = useProjectInfo();
     const location = useLocation();
     const history = useHistory();
+    const listProjects = useListProjectsQuery();
 
     useEffect(() => {
         setLoading(true);
@@ -89,7 +91,10 @@ export function useCurrentProject(): { project: Project | undefined; loading: bo
             if (!org.data) {
                 return;
             }
-            let projects = await listAllProjects({ orgId: org.data.id });
+            if (!listProjects.data) {
+                return;
+            }
+            const projects = listProjects.data?.projects || [];
 
             // Find project matching with slug, otherwise with name
             const project = projects.find((p) => p.id === projectInfo.id);
@@ -110,7 +115,7 @@ export function useCurrentProject(): { project: Project | undefined; loading: bo
             setProject(project);
             setLoading(false);
         })();
-    }, [setProject, org.data, user, orgs.data, location, history, projectInfo]);
+    }, [setProject, org.data, user, orgs.data, location, history, projectInfo, listProjects.data]);
 
     return { project, loading };
 }

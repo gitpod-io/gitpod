@@ -15,17 +15,22 @@ type Props = {
     error?: ReactNode;
     topMargin?: boolean;
     className?: string;
+    disabled?: boolean;
 };
 
 export const InputField: FunctionComponent<Props> = memo(
-    ({ label, id, hint, error, topMargin = true, className, children }) => {
+    ({ label, id, hint, error, topMargin = true, className, children, disabled = false }) => {
         return (
             <div className={classNames("flex flex-col space-y-2", { "mt-4": topMargin }, className)}>
                 {label && (
                     <label
                         className={classNames(
-                            "text-md font-semibold dark:text-gray-400",
-                            error ? "text-red-600" : "text-gray-600",
+                            "text-md font-semibold",
+                            disabled
+                                ? "text-gray-400 dark:text-gray-400"
+                                : error
+                                ? "text-red-600 dark:text-red-400"
+                                : "text-gray-600 dark:text-gray-100",
                         )}
                         htmlFor={id}
                     >

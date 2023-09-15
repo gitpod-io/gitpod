@@ -2710,7 +2710,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkUser("updateProjectPartial");
         await this.guardProjectOperation(user, partialProject.id, "update");
-        await this.projectsService.updateProject(user.id, partialProject);
+        await this.projectsService.updateProject(user, partialProject);
     }
 
     public async getGitpodTokens(ctx: TraceContext): Promise<GitpodToken[]> {

@@ -18,7 +18,7 @@ import {
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { PartialProject } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
+import { PartialProject, ProjectSettings, ProjectUsage } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { URL } from "url";
@@ -28,6 +28,10 @@ import { ScmService } from "./scm-service";
 
 @injectable()
 export class ProjectsService {
+    public static PROJECT_SETTINGS_DEFAULTS: ProjectSettings = {
+        enablePrebuilds: false,
+    };
+
     constructor(
         @inject(ProjectDB) private readonly projectDB: ProjectDB,
         @inject(TracedWorkspaceDB) private readonly workspaceDb: DBWithTracing<WorkspaceDB>,
@@ -105,10 +109,14 @@ export class ProjectsService {
         return [];
     }
 
-    async markActive(userId: string, projectId: string): Promise<void> {
+    async markActive(
+        userId: string,
+        projectId: string,
+        kind: keyof ProjectUsage = "lastWorkspaceStart",
+    ): Promise<void> {
         await this.auth.checkPermissionOnProject(userId, "read_info", projectId);
         await this.projectDB.updateProjectUsage(projectId, {
-            lastWorkspaceStart: new Date().toISOString(),
+            [kind]: new Date().toISOString(),
         });
     }
 
@@ -196,6 +204,7 @@ export class ProjectsService {
     async createProject(
         { name, slug, cloneUrl, teamId, appInstallationId }: CreateProjectParams,
         installer: User,
+        projectSettingsDefaults: ProjectSettings = ProjectsService.PROJECT_SETTINGS_DEFAULTS,
     ): Promise<Project> {
         await this.auth.checkPermissionOnOrganization(installer.id, "create_project", teamId);
 
@@ -223,6 +232,7 @@ export class ProjectsService {
             cloneUrl,
             teamId,
             appInstallationId,
+            settings: projectSettingsDefaults,
         });
 
         try {
@@ -236,12 +246,6 @@ export class ProjectsService {
             await this.auth.removeProjectFromOrg(installer.id, teamId, project.id);
             throw err;
         }
-        await this.scmService.installWebhookForPrebuilds(project, installer);
-
-        // Pre-fetch project details in the background -- don't await
-        this.getProjectOverview(installer, project.id).catch((err) => {
-            log.error(`Error pre-fetching project details for project ${project.id}: ${err}`);
-        });
 
         this.analytics.track({
             userId: installer.id,
@@ -342,8 +346,8 @@ export class ProjectsService {
         return result;
     }
 
-    async updateProject(userId: string, partialProject: PartialProject): Promise<void> {
-        await this.auth.checkPermissionOnProject(userId, "write_info", partialProject.id);
+    async updateProject(user: User, partialProject: PartialProject): Promise<void> {
+        await this.auth.checkPermissionOnProject(user.id, "write_info", partialProject.id);
 
         const partial: PartialProject = { id: partialProject.id };
         if (partialProject.name) {
@@ -359,10 +363,31 @@ export class ProjectsService {
         const allowedFields: (keyof Project)[] = ["settings", "name"];
         for (const f of allowedFields) {
             if (f in partialProject) {
-                (partial[f] as any) = partialProject[f];
+                (partial as any)[f] = partialProject[f];
             }
         }
+        await this.handleEnablePrebuild(user, partialProject);
         return this.projectDB.updateProject(partialProject);
+    }
+
+    private async handleEnablePrebuild(user: User, partialProject: PartialProject): Promise<void> {
+        const enablePrebuildsNew = partialProject?.settings?.enablePrebuilds;
+        if (typeof enablePrebuildsNew === "boolean") {
+            const project = await this.projectDB.findProjectById(partialProject.id);
+            if (!project) {
+                return;
+            }
+            const enablePrebuildsPrev = !!project.settings?.enablePrebuilds;
+            const installWebhook = enablePrebuildsNew && !enablePrebuildsPrev;
+            const uninstallWebhook = !enablePrebuildsNew && enablePrebuildsPrev;
+            if (installWebhook) {
+                await this.scmService.installWebhookForPrebuilds(project, user);
+            }
+            if (uninstallWebhook) {
+                // TODO
+                // await this.scmService.uninstallWebhookForPrebuilds(project, user);
+            }
+        }
     }
 
     async isProjectConsideredInactive(userId: string, projectId: string): Promise<boolean> {

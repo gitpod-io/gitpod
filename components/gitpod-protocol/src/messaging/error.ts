@@ -74,9 +74,6 @@ export const ErrorCodes = {
     // 430 Repository not whitelisted (custom status code)
     REPOSITORY_NOT_WHITELISTED: 430 as const,
 
-    // 440 Prebuilds now always require a project (custom status code)
-    PROJECT_REQUIRED: 440 as const,
-
     // 451 Out of credits
     PAYMENT_SPENDING_LIMIT_REACHED: 451 as const,
 

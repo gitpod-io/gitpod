@@ -38,7 +38,7 @@ import { asyncHandler } from "../express-util";
 import { ContextParser } from "../workspace/context-parser-service";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
-import { ApplicationError, ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ApplicationError, ErrorCode, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UserService } from "../user/user-service";
 
 /**
@@ -262,13 +262,7 @@ export class GithubApp {
             const installationId = ctx.payload.installation?.id;
             const cloneURL = ctx.payload.repository.clone_url;
             let { user, project } = await this.findOwnerAndProject(installationId, cloneURL);
-            if (project) {
-                this.projectDB
-                    .updateProjectUsage(project.id, {
-                        lastWebhookReceived: new Date().toISOString(),
-                    })
-                    .catch((err) => log.error("cannot update project usage", err));
-            }
+
             await this.webhookEvents.updateEvent(event.id, { projectId: project?.id, cloneUrl: cloneURL });
 
             const logCtx: LogContext = { userId: user.id };
@@ -300,6 +294,12 @@ export class GithubApp {
             const r = await this.ensureMainProjectAndUser(user, project, context, installationId);
             user = r.user;
             project = r.project;
+            if (!project) {
+                throw new ApplicationError(
+                    ErrorCodes.NOT_FOUND,
+                    `Project not found. Please add '${cloneURL}' as a project.`,
+                );
+            }
 
             await this.webhookEvents.updateEvent(event.id, {
                 authorizedUserId: user.id,
@@ -310,7 +310,7 @@ export class GithubApp {
             });
 
             const runPrebuild =
-                this.prebuildManager.shouldPrebuild(config) &&
+                this.prebuildManager.shouldPrebuild({ config, project }) &&
                 this.appRules.shouldRunPrebuild(config, branch == repo.default_branch, false, false);
             if (!runPrebuild) {
                 const reason = `Not running prebuild, the user did not enable it for this context or did not configure prebuild task(s)`;
@@ -325,7 +325,7 @@ export class GithubApp {
 
             const commitInfo = await this.getCommitInfo(user, repo.html_url, ctx.payload.after);
             this.prebuildManager
-                .startPrebuild({ span }, { user, context, project, commitInfo })
+                .startPrebuild({ span }, { user, context, project: project!, commitInfo })
                 .then(async (result) => {
                     if (!result.done) {
                         await this.webhookEvents.updateEvent(event.id, {
@@ -426,13 +426,6 @@ export class GithubApp {
             const pr = ctx.payload.pull_request;
             const contextURL = pr.html_url;
             let { user, project } = await this.findOwnerAndProject(installationId, cloneURL);
-            if (project) {
-                this.projectDB
-                    .updateProjectUsage(project.id, {
-                        lastWebhookReceived: new Date().toISOString(),
-                    })
-                    .catch((err) => log.error("Error updating project usage", err));
-            }
 
             const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
             const config = await this.prebuildManager.fetchConfig({ span }, user, context);
@@ -440,6 +433,12 @@ export class GithubApp {
             const r = await this.ensureMainProjectAndUser(user, project, context, installationId);
             user = r.user;
             project = r.project;
+            if (!project) {
+                throw new ApplicationError(
+                    ErrorCodes.NOT_FOUND,
+                    `Project not found. Please add '${cloneURL}' as a project.`,
+                );
+            }
 
             await this.webhookEvents.updateEvent(event.id, {
                 authorizedUserId: user.id,
@@ -532,20 +531,21 @@ export class GithubApp {
         config: WorkspaceConfig,
         context: CommitContext,
         user: User,
-        project?: Project,
+        project: Project,
     ): Promise<StartPrebuildResult | undefined> {
         const pr = ctx.payload.pull_request;
         const contextURL = pr.html_url;
 
         const isFork = pr.head.repo.id !== pr.base.repo.id;
         const runPrebuild =
-            this.prebuildManager.shouldPrebuild(config) && this.appRules.shouldRunPrebuild(config, false, true, isFork);
+            this.prebuildManager.shouldPrebuild({ config, project }) &&
+            this.appRules.shouldRunPrebuild(config, false, true, isFork);
         if (runPrebuild) {
             const commitInfo = await this.getCommitInfo(user, ctx.payload.repository.html_url, pr.head.sha);
             const result = await this.prebuildManager.startPrebuild(tracecContext, {
                 user,
                 context,
-                project,
+                project: project!,
                 commitInfo,
             });
             if (result?.done) {
