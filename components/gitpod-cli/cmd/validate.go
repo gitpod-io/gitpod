@@ -93,6 +93,7 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		if err != nil {
 			return GpError{Err: err, OutCome: utils.Outcome_SystemErr, ErrorCode: utils.RebuildErrorCode_FailedToGetDefaultImage, Silence: true}
 		}
+		fmt.Println("Using organization default workspace image:", defaultImage)
 		image = defaultImage
 	case string:
 		image = img
