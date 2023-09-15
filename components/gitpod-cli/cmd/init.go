@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -31,9 +32,10 @@ var initCmd = &cobra.Command{
 Create a Gitpod configuration for this project.
 	`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
 		cfg := gitpodlib.GitpodFile{}
 		if interactive {
-			if err := askForDockerImage(&cfg); err != nil {
+			if err := askForDockerImage(ctx, &cfg); err != nil {
 				return err
 			}
 			if err := askForPorts(&cfg); err != nil {
@@ -52,7 +54,17 @@ Create a Gitpod configuration for this project.
 			return err
 		}
 		if !interactive {
-			d = []byte(`# List the start up tasks. Learn more: https://www.gitpod.io/docs/configure/workspaces/tasks
+			defaultImage, err := getOrganizationDefaultWorkspaceImage(ctx)
+			if err != nil {
+				// TODO: improve if we have --verbose flag
+				fmt.Printf("failed to get organization default workspace image: %v\n", err)
+				fmt.Println("fallback to gitpod default")
+				defaultImage = "gitpod/workspace-full"
+			}
+			yml := fmt.Sprintf(`# Image of workspace. Learn more: https://www.gitpod.io/docs/configure/workspaces/workspace-image
+image: %s
+
+# List the start up tasks. Learn more: https://www.gitpod.io/docs/configure/workspaces/tasks
 tasks:
   - name: Script Task
     init: echo 'init script' # runs during prebuild => https://www.gitpod.io/docs/configure/projects/prebuilds
@@ -66,7 +78,8 @@ ports:
     onOpen: open-preview
 
 # Learn more from ready-to-use templates: https://www.gitpod.io/docs/introduction/getting-started/quickstart
-`)
+`, defaultImage)
+			d = []byte(yml)
 		} else {
 			fmt.Printf("\n\n---\n%s", d)
 		}
@@ -132,7 +145,7 @@ func ask(lbl string, def string, validator promptui.ValidateFunc) (string, error
 	return prompt.Run()
 }
 
-func askForDockerImage(cfg *gitpodlib.GitpodFile) error {
+func askForDockerImage(ctx context.Context, cfg *gitpodlib.GitpodFile) error {
 	prompt := promptui.Select{
 		Label: "Workspace Docker image",
 		Items: []string{"default", "custom image", "docker file"},
@@ -146,6 +159,11 @@ func askForDockerImage(cfg *gitpodlib.GitpodFile) error {
 	}
 
 	if chce == 0 {
+		defaultImage, err := getOrganizationDefaultWorkspaceImage(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get organization default workspace image: %w", err)
+		}
+		cfg.SetImageName(defaultImage)
 		return nil
 	}
 	if chce == 1 {
