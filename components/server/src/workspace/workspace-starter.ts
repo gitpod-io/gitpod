@@ -40,7 +40,6 @@ import {
     ImageBuildLogInfo,
     ImageConfigFile,
     NamedWorkspaceFeatureFlag,
-    Organization,
     Permission,
     Project,
     RefType,
