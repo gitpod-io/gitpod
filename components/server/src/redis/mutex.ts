@@ -45,7 +45,12 @@ export class RedisMutex {
         return this.client().using(resources, duration, settings, routine);
     }
 
-    public static isLockError(err: any): boolean {
-        return err instanceof ResourceLockedError || err instanceof ExecutionError;
+    public static isLockedError(err: any): boolean {
+        return (
+            err instanceof ResourceLockedError ||
+            // Should be a ResourceLockedError as well, but is ExecutionError in v5.x: https://github.com/mike-marcacci/node-redlock/issues/168
+            (err instanceof ExecutionError &&
+                err.message.includes("unable to achieve a quorum during its retry window"))
+        );
     }
 }
