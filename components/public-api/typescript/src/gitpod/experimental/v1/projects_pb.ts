@@ -165,9 +165,9 @@ export class PrebuildSettings extends Message<PrebuildSettings> {
   prebuildEveryNth = 0;
 
   /**
-   * @generated from field: bool enable_prebuilds = 5;
+   * @generated from field: optional bool enable_prebuilds = 5;
    */
-  enablePrebuilds = false;
+  enablePrebuilds?: boolean;
 
   constructor(data?: PartialMessage<PrebuildSettings>) {
     super();
@@ -181,7 +181,7 @@ export class PrebuildSettings extends Message<PrebuildSettings> {
     { no: 2, name: "keep_outdated_prebuilds_running", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 3, name: "use_previous_prebuilds", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 4, name: "prebuild_every_nth", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 5, name: "enable_prebuilds", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 5, name: "enable_prebuilds", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PrebuildSettings {
