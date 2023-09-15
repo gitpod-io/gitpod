@@ -171,12 +171,7 @@ export default function TeamSettingsPage() {
                     />
 
                     {org?.isOwner && (
-                        <Button
-                            htmlType="submit"
-                            size="block"
-                            className="mt-4"
-                            disabled={!org.isOwner || defaultWorkspaceImage.trim() === ""}
-                        >
+                        <Button htmlType="submit" size="block" className="mt-4" disabled={!org.isOwner}>
                             Save
                         </Button>
                     )}
