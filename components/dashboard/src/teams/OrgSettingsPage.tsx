@@ -32,6 +32,7 @@ export function OrgSettingsPage({ children }: OrgSettingsPageProps) {
                 billingMode: orgBillingMode.data,
                 ssoEnabled: oidcServiceEnabled,
                 orgGitAuthProviders,
+                isOwner: org.data?.isOwner,
             }),
         [org.data, orgBillingMode.data, oidcServiceEnabled, orgGitAuthProviders],
     );
@@ -51,8 +52,11 @@ export function OrgSettingsPage({ children }: OrgSettingsPageProps) {
         );
     }
 
+    // TODO: redirect when current page is not included in menu
+    const onlyForOwner = false;
+
     // After we've loaded, ensure user is an owner, if not, redirect
-    if (!org.data?.isOwner) {
+    if (onlyForOwner && !org.data?.isOwner) {
         return <Redirect to={"/"} />;
     }
 
@@ -68,27 +72,28 @@ function getTeamSettingsMenu(params: {
     billingMode?: BillingMode;
     ssoEnabled?: boolean;
     orgGitAuthProviders: boolean;
+    isOwner?: boolean;
 }) {
-    const { billingMode, ssoEnabled, orgGitAuthProviders } = params;
+    const { billingMode, ssoEnabled, orgGitAuthProviders, isOwner } = params;
     const result = [
         {
             title: "General",
             link: [`/settings`],
         },
     ];
-    if (ssoEnabled) {
+    if (isOwner && ssoEnabled) {
         result.push({
             title: "SSO",
             link: [`/sso`],
         });
     }
-    if (orgGitAuthProviders) {
+    if (isOwner && orgGitAuthProviders) {
         result.push({
             title: "Git Providers",
             link: [`/settings/git`],
         });
     }
-    if (billingMode?.mode !== "none") {
+    if (isOwner && billingMode?.mode !== "none") {
         // The Billing page handles billing mode itself, so: always show it!
         result.push({
             title: "Billing",
