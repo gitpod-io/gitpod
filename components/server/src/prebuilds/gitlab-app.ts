@@ -138,7 +138,7 @@ export class GitLabApp {
     ): Promise<StartPrebuildResult | undefined> {
         const span = TraceContext.startSpan("GitLapApp.handlePushHook", ctx);
         try {
-            const cloneUrl = this.createBranchContextUrl(body);
+            const cloneUrl = this.getCloneUrl(body);
             const { user: projectOwner, project } = await this.findProjectAndOwner(cloneUrl, user);
             if (!project) {
                 throw new ApplicationError(
