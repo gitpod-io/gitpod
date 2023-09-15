@@ -39,12 +39,15 @@ export default function TeamSettingsPage() {
             if (!org?.id) {
                 throw new Error("no organization selected");
             }
+            if (!org.isOwner) {
+                throw new Error("no organization settings change permission");
+            }
             updateTeamSettings.mutate({
                 ...settings,
                 ...newSettings,
             });
         },
-        [updateTeamSettings, org?.id, settings],
+        [updateTeamSettings, org?.id, org?.isOwner, settings],
     );
 
     const close = () => setModal(false);
@@ -60,6 +63,9 @@ export default function TeamSettingsPage() {
 
     const updateTeamInformation = useCallback(
         async (e: React.FormEvent) => {
+            if (!org?.isOwner) {
+                return;
+            }
             e.preventDefault();
 
             if (!orgFormIsValid) {
@@ -74,7 +80,7 @@ export default function TeamSettingsPage() {
                 console.error(error);
             }
         },
-        [orgFormIsValid, updateOrg, teamName],
+        [orgFormIsValid, updateOrg, teamName, org],
     );
 
     const deleteTeam = useCallback(async () => {
@@ -117,12 +123,15 @@ export default function TeamSettingsPage() {
                         value={teamName}
                         error={teamNameError.message}
                         onChange={setTeamName}
+                        disabled={!org?.isOwner}
                         onBlur={teamNameError.onBlur}
                     />
 
-                    <Button className="mt-4" htmlType="submit" disabled={org?.name === teamName || !orgFormIsValid}>
-                        Update Organization
-                    </Button>
+                    {org?.isOwner && (
+                        <Button className="mt-4" htmlType="submit" disabled={org?.name === teamName || !orgFormIsValid}>
+                            Update Organization
+                        </Button>
+                    )}
 
                     <Heading2 className="pt-12">Collaboration & Sharing</Heading2>
                     <CheckboxInputField
@@ -130,11 +139,20 @@ export default function TeamSettingsPage() {
                         hint="Allow workspaces created within an Organization to share the workspace with any authenticated user."
                         checked={!settings?.workspaceSharingDisabled}
                         onChange={(checked) => handleUpdateTeamSettings({ workspaceSharingDisabled: !checked })}
-                        disabled={isLoading}
+                        disabled={isLoading || !org?.isOwner}
+                    />
+
+                    <Heading2 className="pt-12">Workspace Settings</Heading2>
+                    <TextInputField
+                        label="Default Image"
+                        hint="Default image of organization workspaces"
+                        value={settings?.defaultWorkspaceImage ?? ""}
+                        onChange={(value) => handleUpdateTeamSettings({ defaultWorkspaceImage: value })}
+                        disabled={isLoading || !org?.isOwner}
                     />
                 </form>
 
-                {user?.organizationId !== org?.id && (
+                {user?.organizationId !== org?.id && org?.isOwner && (
                     <>
                         <Heading2 className="pt-12">Delete Organization</Heading2>
                         <Subheading className="pb-4 max-w-2xl">
