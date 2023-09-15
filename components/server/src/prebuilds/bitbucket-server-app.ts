@@ -126,7 +126,7 @@ export class BitbucketServerApp {
             span.setTag("contextUrl", contextUrl);
             const context = await this.contextParser.handle({ span }, user, contextUrl);
             if (!CommitContext.is(context)) {
-                throw new Error("CommitContext exprected.");
+                throw new Error("CommitContext expected.");
             }
             const commit = context.revision;
             await this.webhookEvents.updateEvent(event.id, {
@@ -240,7 +240,24 @@ export class BitbucketServerApp {
     }
 
     protected getCloneUrl(event: PushEventPayload): string {
-        return event.repository.links.clone[0].href;
+        // "links": {
+        //     "clone": [
+        //         {
+        //             "href": "ssh://git@bitbucket.gitpod-dev.com:7999/tes/hello-world-zz-1.git",
+        //             "name": "ssh"
+        //         },
+        //         {
+        //             "href": "https://bitbucket.gitpod-dev.com/scm/tes/hello-world-zz-1.git",
+        //             "name": "http"
+        //         }
+        //     ],
+        //     "self": [...]
+        // }
+        const cloneURL = event.repository?.links?.clone?.find((link) => link?.name === "http")?.href;
+        if (!cloneURL) {
+            throw new Error(`Expected to read clone URL from push event. Repository: ${event?.repository?.name}`);
+        }
+        return cloneURL;
     }
 
     get router(): express.Router {
