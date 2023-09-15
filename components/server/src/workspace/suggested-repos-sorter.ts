@@ -57,14 +57,14 @@ export const sortSuggestedRepositories = (repos: SuggestedRepositoryWithSorting[
 export const suggestionFromProject = (repo: SuggestedRepository): SuggestedRepositoryWithSorting => {
     return {
         ...repo,
-        priority: PRIORITY_LOW,
+        priority: PRIORITY_MEDIUM,
     };
 };
 
 export const suggestionFromUserRepo = (repo: SuggestedRepository): SuggestedRepositoryWithSorting => {
     return {
         ...repo,
-        priority: PRIORITY_MEDIUM,
+        priority: PRIORITY_LOW,
     };
 };
 
