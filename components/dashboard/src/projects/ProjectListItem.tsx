@@ -25,11 +25,7 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
     const [showRemoveModal, setShowRemoveModal] = useState(false);
     const { data: prebuild, isLoading } = useLatestProjectPrebuildQuery({ projectId: project.id });
 
-    const enablePrebuilds =
-        !!project.settings?.enablePrebuilds ||
-        // TODO(at): out of scope for now, but once we've migrated the settings of existings projects
-        // we can remove the implicit enablement here
-        !project.settings;
+    const enablePrebuilds = Project.isPrebuildsEnabled(project);
 
     return (
         <div key={`project-${project.id}`} className="h-52">
