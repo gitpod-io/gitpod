@@ -168,7 +168,7 @@ export class GitHubEnterpriseApp {
             });
 
             const config = await this.prebuildManager.fetchConfig({ span }, user, context, {
-                organizationId: projectAndOwner.project?.teamId,
+                organizationId: project?.teamId,
             });
             if (
                 !this.prebuildManager.shouldPrebuild({ config, project }) ||
