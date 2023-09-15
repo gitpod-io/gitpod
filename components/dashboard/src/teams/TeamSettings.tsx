@@ -21,6 +21,7 @@ import { teamsService } from "../service/public-api";
 import { gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
+import { useToast } from "../components/toasts/Toasts";
 
 export default function TeamSettingsPage() {
     const user = useCurrentUser();
@@ -33,21 +34,31 @@ export default function TeamSettingsPage() {
     const updateOrg = useUpdateOrgMutation();
     const { data: settings, isLoading } = useOrgSettingsQuery();
     const updateTeamSettings = useUpdateOrgSettingsMutation();
+    const [defaultWorkspaceImage, setDefaultWorkspaceImage] = useState(settings?.defaultWorkspaceImage ?? "");
+    const { toast } = useToast();
 
     const handleUpdateTeamSettings = useCallback(
-        (newSettings: Partial<OrganizationSettings>) => {
+        async (newSettings: Partial<OrganizationSettings>) => {
             if (!org?.id) {
                 throw new Error("no organization selected");
             }
             if (!org.isOwner) {
                 throw new Error("no organization settings change permission");
             }
-            updateTeamSettings.mutate({
-                ...settings,
-                ...newSettings,
-            });
+            try {
+                await updateTeamSettings.mutateAsync({
+                    ...settings,
+                    ...newSettings,
+                });
+                if (newSettings.defaultWorkspaceImage) {
+                    toast("Default workspace image has been updated.");
+                }
+            } catch (error) {
+                console.error(error);
+                toast(error.message || "Oh no, there was a problem with our service.");
+            }
         },
-        [updateTeamSettings, org?.id, org?.isOwner, settings],
+        [updateTeamSettings, org?.id, org?.isOwner, settings, toast],
     );
 
     const close = () => setModal(false);
@@ -132,8 +143,14 @@ export default function TeamSettingsPage() {
                             Update Organization
                         </Button>
                     )}
+                </form>
 
+                <form onSubmit={() => handleUpdateTeamSettings({ defaultWorkspaceImage })}>
                     <Heading2 className="pt-12">Collaboration & Sharing</Heading2>
+                    <Subheading className="max-w-2xl">
+                        Choose which workspace images you want to use for your workspaces.
+                    </Subheading>
+
                     <CheckboxInputField
                         label="Workspace Sharing"
                         hint="Allow workspaces created within an Organization to share the workspace with any authenticated user."
@@ -145,13 +162,25 @@ export default function TeamSettingsPage() {
                     <Heading2 className="pt-12">Workspace Settings</Heading2>
                     <TextInputField
                         label="Default Image"
-                        hint="Default image of organization workspaces"
-                        value={settings?.defaultWorkspaceImage ?? ""}
-                        onChange={(value) => handleUpdateTeamSettings({ defaultWorkspaceImage: value })}
+                        // TODO: ECR is dedicated only now
+                        // TODO: Provide document links
+                        hint="Use any workspace image from Gitpod, or any image from your private ECR registry, e.g. <xyz>.amazonaws.com/<your-image-name:tag>. "
+                        value={defaultWorkspaceImage}
+                        onChange={setDefaultWorkspaceImage}
                         disabled={isLoading || !org?.isOwner}
                     />
-                </form>
 
+                    {org?.isOwner && (
+                        <Button
+                            htmlType="submit"
+                            size="block"
+                            className="mt-4"
+                            disabled={!org.isOwner || defaultWorkspaceImage.trim() === ""}
+                        >
+                            Save
+                        </Button>
+                    )}
+                </form>
                 {user?.organizationId !== org?.id && org?.isOwner && (
                     <>
                         <Heading2 className="pt-12">Delete Organization</Heading2>
