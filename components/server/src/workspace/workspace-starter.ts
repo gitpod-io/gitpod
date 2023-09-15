@@ -40,6 +40,7 @@ import {
     ImageBuildLogInfo,
     ImageConfigFile,
     NamedWorkspaceFeatureFlag,
+    Organization,
     Permission,
     Project,
     RefType,
@@ -1563,6 +1564,11 @@ export class WorkspaceStarter {
             sysEnvvars.push(ev);
         }
 
+        const orgIdEnv = new EnvironmentVariable();
+        orgIdEnv.setName("GITPOD_ORGANIZATION_ID");
+        orgIdEnv.setValue(workspace.organizationId);
+        sysEnvvars.push(orgIdEnv);
+
         const spec = new StartWorkspaceSpec();
         await createGitpodTokenPromise;
         spec.setEnvvarsList(envvars);
@@ -1634,6 +1640,7 @@ export class WorkspaceStarter {
             "function:setEnvVar",
             "function:deleteEnvVar",
             "function:getTeams",
+            "function:getOrgSettings",
             "function:trackEvent",
             "function:getSupportedWorkspaceClasses",
             // getIDToken is used by Gitpod's OIDC Identity Provider to check for authorisation.
@@ -1677,6 +1684,12 @@ export class WorkspaceStarter {
                     kind: "contentBlob",
                     subjectID: "*",
                     operations: ["create", "get"],
+                }),
+            "resource:" +
+                ScopedResourceGuard.marshalResourceScope({
+                    kind: "team",
+                    subjectID: workspace.organizationId,
+                    operations: ["get"],
                 }),
         ];
         if (CommitContext.is(workspace.context)) {

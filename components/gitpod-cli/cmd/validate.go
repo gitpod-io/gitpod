@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpod"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 	"github.com/sirupsen/logrus"
@@ -88,8 +89,11 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 	var dockerContext string
 	switch img := gitpodConfig.Image.(type) {
 	case nil:
-		// TODO: GET FROM SERVER
-		image = "gitpod/workspace-full:latest"
+		defaultImage, err := getOrganizationDefaultWorkspaceImage(ctx)
+		if err != nil {
+			return GpError{Err: err, OutCome: utils.Outcome_SystemErr, ErrorCode: utils.RebuildErrorCode_FailedToGetDefaultImage, Silence: true}
+		}
+		image = defaultImage
 	case string:
 		image = img
 	case map[interface{}]interface{}:
@@ -483,6 +487,26 @@ Connect using SSH keys (https://gitpod.io/keys):
 	}
 
 	return nil
+}
+
+func getOrganizationDefaultWorkspaceImage(ctx context.Context) (string, error) {
+	wsInfo, err := gitpod.GetWSInfo(ctx)
+	if err != nil {
+		return "", err
+	}
+	client, err := gitpod.ConnectToServer(ctx, wsInfo, []string{
+		"function:getOrgSettings",
+		"resource:team::" + wsInfo.OrganizationId + "::get",
+	})
+	if err != nil {
+		return "", err
+	}
+	defer client.Close()
+	settings, err := client.GetOrgSettings(ctx, wsInfo.OrganizationId)
+	if err != nil {
+		return "", err
+	}
+	return settings.DefaultWorkspaceImage, nil
 }
 
 func setLoggerFormatter(logger *logrus.Logger) {
