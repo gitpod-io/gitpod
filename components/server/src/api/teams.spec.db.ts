@@ -34,7 +34,7 @@ export class APITeamsServiceSpec {
 
     async before() {
         this.container = testContainer.createChild();
-        API.contribute(this.container.bind.bind(this.container));
+        API.bindAPI(this.container.bind.bind(this.container));
 
         this.container.bind(WorkspaceService).toConstantValue({} as WorkspaceService);
         this.container.bind(UserAuthentication).toConstantValue({} as UserAuthentication);

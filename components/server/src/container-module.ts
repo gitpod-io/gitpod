@@ -328,7 +328,7 @@ export const productionContainerModule = new ContainerModule(
         bind(RelationshipUpdater).toSelf().inSingletonScope();
 
         // grpc / Connect API
-        API.contribute(bind);
+        API.bindAPI(bind);
 
         bind(AuthJWT).toSelf().inSingletonScope();
         bind(SignInJWT).toSelf().inSingletonScope();

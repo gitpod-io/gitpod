@@ -181,7 +181,7 @@ export class API {
         return user;
     }
 
-    static contribute(bind: interfaces.Bind): void {
+    static bindAPI(bind: interfaces.Bind): void {
         bind(APIHelloService).toSelf().inSingletonScope();
         bind(APIUserService).toSelf().inSingletonScope();
         bind(APITeamsService).toSelf().inSingletonScope();
