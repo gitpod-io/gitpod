@@ -28,7 +28,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	//nolint:typecheck
 	openVSXProxyUrl := "vsx-proxy-host"
 	if hasOpenVSXProxy {
-		openVSXProxyUrl = fmt.Sprintf("open-vsx.%s", ctx.Config.Domain)
+		openVSXProxyUrl = fmt.Sprintf("https://open-vsx.%s", ctx.Config.Domain)
 	}
 
 	// Check also link below before change values
@@ -49,7 +49,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Replacement: ctx.Config.Domain,
 						Path:        "/ide/out/vs/workbench/workbench.web.main.js",
 					}, {
-						Search:      "open-vsx.org",
+						Search:      "https://open-vsx.org",
 						Replacement: openVSXProxyUrl,
 						Path:        "/ide/out/vs/workbench/workbench.web.main.js",
 					}, {
@@ -76,20 +76,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					// TODO consider to provide it as a part of image label or rather inline ${ide} and ${supervisor} in index.html
 					// to decouple blobserve and code image
 					InlineStatic: []blobserve_config.InlineReplacement{{
+						Search:      "{{WORKBENCH_WEB_BASE_URL}}",
+						Replacement: "${ide}",
+					}, {
 						Search:      "window.location.origin;",
 						Replacement: "'${ide}';",
 					}, {
-						Search:      "${window.location.origin}",
-						Replacement: ".",
-					}, {
-						Search:      "value.startsWith(window.location.origin)",
-						Replacement: "value.startsWith(window.location.origin) || value.startsWith('${ide}')",
-					}, {
 						Search:      "./out",
 						Replacement: "${ide}/out",
-					}, {
-						Search:      "./node_modules",
-						Replacement: "${ide}/node_modules",
 					}, {
 						Search:      "/_supervisor/frontend",
 						Replacement: "${supervisor}",
