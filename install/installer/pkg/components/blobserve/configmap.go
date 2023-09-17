@@ -55,15 +55,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					}, {
 						Search:      "{{extensionsGalleryItemUrl}}",
 						Replacement: extensionsGalleryItemUrl,
-						Path:        "/ide/out/vs/workbench/workbench.web.api.js",
-					}, {
-						Search:      "{{extensionsGalleryItemUrl}}",
-						Replacement: extensionsGalleryItemUrl,
 						Path:        "/ide/out/vs/workbench/workbench.web.main.js",
-					}, {
-						Search:      "{{trustedDomain}}",
-						Replacement: trustedDomain,
-						Path:        "/ide/out/vs/workbench/workbench.web.api.js",
 					}, {
 						Search:      "{{trustedDomain}}",
 						Replacement: trustedDomain,
