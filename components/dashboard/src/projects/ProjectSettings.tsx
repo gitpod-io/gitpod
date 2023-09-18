@@ -185,21 +185,23 @@ export default function ProjectSettingsView() {
                             disabled={!enablePrebuilds}
                             label="Build branches"
                             value={prebuildBranchStrategy}
-                            topMargin={false}
+                            containerClassName="max-w-md ml-6 text-sm"
                             onChange={(val) => setPrebuildBranchStrategy(val as ProjectSettings.PrebuildBranchStrategy)}
                         >
-                            <option value="defaultBranch">Default branch</option>
+                            <option value="defaultBranch">Default branch (e.g. main)</option>
                             <option value="allBranches">All branches</option>
                             {/* <option value="selectedBranches">Matched by pattern</option> */}
                         </SelectInputField>
-                        <InputField label="Workspace machine type" disabled={!enablePrebuilds}>
-                            <div className="max-w-md">
-                                <SelectWorkspaceClassComponent
-                                    disabled={!enablePrebuilds}
-                                    selectedWorkspaceClass={project.settings?.workspaceClasses?.prebuild}
-                                    onSelectionChange={setWorkspaceClassForPrebuild}
-                                />
-                            </div>
+                        <InputField
+                            className="max-w-md ml-6 text-sm"
+                            label="Workspace machine type"
+                            disabled={!enablePrebuilds}
+                        >
+                            <SelectWorkspaceClassComponent
+                                disabled={!enablePrebuilds}
+                                selectedWorkspaceClass={project.settings?.workspaceClasses?.prebuild}
+                                onSelectionChange={setWorkspaceClassForPrebuild}
+                            />
                         </InputField>
                         <CheckboxInputField
                             label="Enable Incremental Prebuilds"
