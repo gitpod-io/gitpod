@@ -22,7 +22,6 @@ export function registerServerMetrics(registry: prometheusClient.Registry) {
     registry.registerMetric(imageBuildsStartedTotal);
     registry.registerMetric(imageBuildsCompletedTotal);
     registry.registerMetric(spicedbClientLatency);
-    registry.registerMetric(dashboardErrorBoundary);
     registry.registerMetric(jwtCookieIssued);
     registry.registerMetric(jobStartedTotal);
     registry.registerMetric(jobsCompletedTotal);
@@ -262,15 +261,6 @@ export function observeSpicedbClientLatency(operation: string, outcome: Error | 
         { operation, outcome: outcome === undefined ? "success" : "error" },
         durationInSeconds,
     );
-}
-
-export const dashboardErrorBoundary = new prometheusClient.Counter({
-    name: "gitpod_dashboard_error_boundary_total",
-    help: "Total number of errors caught by an error boundary in the dashboard",
-});
-
-export function increaseDashboardErrorBoundaryCounter() {
-    dashboardErrorBoundary.inc();
 }
 
 export const jobStartedTotal = new prometheusClient.Counter({
