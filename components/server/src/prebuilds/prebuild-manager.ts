@@ -35,9 +35,13 @@ import { PrebuildRateLimiterConfig } from "../workspace/prebuild-rate-limiter";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
 import { WorkspaceService } from "../workspace/workspace-service";
+import { minimatch as globMatch } from "minimatch";
 
 export class WorkspaceRunningError extends Error {
-    constructor(msg: string, public instance: WorkspaceInstance) {
+    constructor(
+        msg: string,
+        public instance: WorkspaceInstance,
+    ) {
         super(msg);
     }
 }
@@ -379,7 +383,30 @@ export class PrebuildManager {
         }
 
         if (strategy === "selectedBranches") {
-            // TODO support "selectedBranches" next
+            const branchName = context.ref;
+            if (!branchName) {
+                log.debug("CommitContext is missing the branch name. Ignoring request.", { context });
+                return false;
+            }
+
+            const branchNamePattern = project.settings?.prebuildBranchPattern?.trim();
+            if (!branchNamePattern) {
+                // no pattern provided is treated as run on all branches
+                return true;
+            }
+
+            for (const pattern of branchNamePattern.split(",")) {
+                try {
+                    if (globMatch(branchName, pattern.trim())) {
+                        return true;
+                    }
+                } catch (error) {
+                    log.debug("Ignored error with attempt to match a branch by pattern.", {
+                        branchNamePattern,
+                        error: error?.message,
+                    });
+                }
+            }
         }
 
         log.debug("Unknown prebuild branch strategy. Ignoring request.", { context, config });
