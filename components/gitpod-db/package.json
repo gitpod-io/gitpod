@@ -38,14 +38,14 @@
   "devDependencies": {
     "@testdeck/mocha": "^0.3.3",
     "@types/chai": "^4.2.2",
-    "@types/mocha": "^2.2.45",
+    "@types/mocha": "^10.0.1",
     "@types/mysql": "^2.15.0",
     "@types/uuid": "^8.3.1",
     "@typescript-eslint/eslint-plugin": "^5.5.0",
     "@typescript-eslint/parser": "^5.5.0",
     "chai": "^4.2.0",
     "eslint": "^8.47.0",
-    "mocha": "^4.1.0",
+    "mocha": "^10.2.0",
     "rimraf": "^2.6.1",
     "ts-node": "^10.4.0",
     "typescript": "~4.4.2"
