@@ -10,7 +10,9 @@ import { getGitpodService } from "../../service/service";
 import { getOrgSettingsQueryKey, OrgSettingsResult } from "./org-settings-query";
 import { useCurrentOrg } from "./orgs-query";
 
-type UpdateOrganizationSettingsArgs = Pick<OrganizationSettings, "workspaceSharingDisabled" | "defaultWorkspaceImage">;
+type UpdateOrganizationSettingsArgs = Partial<
+    Pick<OrganizationSettings, "workspaceSharingDisabled" | "defaultWorkspaceImage">
+>;
 
 export const useUpdateOrgSettingsMutation = () => {
     const queryClient = useQueryClient();

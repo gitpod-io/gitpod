@@ -383,8 +383,12 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
                 orgId,
             });
         } else {
-            team.workspaceSharingDisabled = settings.workspaceSharingDisabled;
-            team.defaultWorkspaceImage = settings.defaultWorkspaceImage;
+            if (settings.workspaceSharingDisabled) {
+                team.workspaceSharingDisabled = settings.workspaceSharingDisabled;
+            }
+            if (settings.defaultWorkspaceImage) {
+                team.defaultWorkspaceImage = settings.defaultWorkspaceImage;
+            }
             repo.save(team);
         }
     }

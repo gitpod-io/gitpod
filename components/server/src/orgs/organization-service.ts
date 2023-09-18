@@ -338,9 +338,6 @@ export class OrganizationService {
 
     async updateSettings(userId: string, orgId: string, settings: OrganizationSettings): Promise<OrganizationSettings> {
         await this.auth.checkPermissionOnOrganization(userId, "write_settings", orgId);
-        if (!settings.defaultWorkspaceImage) {
-            settings.defaultWorkspaceImage = this.config.workspaceDefaults.workspaceImage;
-        }
         await this.teamDB.setOrgSettings(orgId, settings);
         return settings;
     }

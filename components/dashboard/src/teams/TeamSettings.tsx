@@ -190,7 +190,8 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
             }
             try {
                 await updateTeamSettings.mutateAsync({
-                    ...settings,
+                    // We don't want to have original setting passed, since defaultWorkspaceImage could be undefined
+                    // to bring compatibility when we're going to change Gitpod install value's defaultImage setting
                     ...newSettings,
                 });
                 if (newSettings.defaultWorkspaceImage) {
@@ -205,7 +206,7 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
                 );
             }
         },
-        [updateTeamSettings, org?.id, org?.isOwner, settings, toast],
+        [updateTeamSettings, org?.id, org?.isOwner, toast],
     );
 
     return (
