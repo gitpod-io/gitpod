@@ -239,7 +239,7 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
             <TextInputField
                 label="Default Image"
                 // TODO: Provide document links
-                hint="Use any official Gitpod Docker image, or a URL to an image."
+                hint="Use any official Gitpod Docker image, or Docker image reference"
                 value={defaultWorkspaceImage}
                 onChange={setDefaultWorkspaceImage}
                 disabled={isLoading || !org?.isOwner}
