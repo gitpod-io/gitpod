@@ -659,11 +659,16 @@ func (is *InfoService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) 
 
 // WorkspaceInfo provides information about the workspace.
 func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest) (*api.WorkspaceInfoResponse, error) {
+	defaultWorkspaceImage := is.cfg.DefaultWorkspaceImage
+	if defaultWorkspaceImage == "" {
+		// TODO: delete-me, added for compatibility before server is deployed / rollback
+		defaultWorkspaceImage = "gitpod/workspace-full:latest"
+	}
 	resp := &api.WorkspaceInfoResponse{
 		CheckoutLocation:      is.cfg.RepoRoot,
 		InstanceId:            is.cfg.WorkspaceInstanceID,
 		WorkspaceId:           is.cfg.WorkspaceID,
-		DefaultWorkspaceImage: is.cfg.DefaultWorkspaceImage,
+		DefaultWorkspaceImage: defaultWorkspaceImage,
 		GitpodHost:            is.cfg.GitpodHost,
 		WorkspaceContextUrl:   is.cfg.WorkspaceContextURL,
 		WorkspaceClusterHost:  is.cfg.WorkspaceClusterHost,

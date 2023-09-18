@@ -130,10 +130,6 @@ func getDefaultWorkspaceImage(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if wsInfo.DefaultWorkspaceImage == "" {
-		// TODO: delete-me, added for compatibility before server is deployed
-		return "gitpod/workspace-full:latest", nil
-	}
 	return wsInfo.DefaultWorkspaceImage, nil
 }
 
