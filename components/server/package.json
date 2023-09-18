@@ -35,7 +35,8 @@
       "source-map-support/register"
     ],
     "spec": [
-      "dist/**/*.spec.js"
+      "dist/**/*.spec.js",
+      "dist/**/*.spec.db.js"
     ],
     "recursive": true,
     "extensions": [
