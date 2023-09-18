@@ -5,11 +5,14 @@
 package main
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"io/fs"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -420,10 +423,14 @@ func launch(launchCtx *LaunchContext) {
 	launchCtx.projectConfigDir = fmt.Sprintf("%s/RemoteDev-%s/%s", launchCtx.configDir, launchCtx.info.ProductCode, strings.ReplaceAll(launchCtx.projectContextDir, "/", "_"))
 	launchCtx.env = resolveLaunchContextEnv(launchCtx.configDir, launchCtx.systemDir)
 
-	// sync initial options
-	err = syncOptions(launchCtx)
+	err = syncInitialContent(launchCtx, Options)
 	if err != nil {
 		log.WithError(err).Error("failed to sync initial options")
+	}
+
+	err = syncInitialContent(launchCtx, Plugins)
+	if err != nil {
+		log.WithError(err).Error("failed to sync initial plugins")
 	}
 
 	// install project plugins
@@ -710,17 +717,111 @@ func resolveProductInfo(backendDir string) (*ProductInfo, error) {
 	return &info, err
 }
 
-func syncOptions(launchCtx *LaunchContext) error {
-	userHomeDir, err := os.UserHomeDir()
+type SyncTarget string
+
+const (
+	Options SyncTarget = "options"
+	Plugins SyncTarget = "plugins"
+)
+
+func syncInitialContent(launchCtx *LaunchContext, target SyncTarget) error {
+	destDir, err, alreadySynced := ensureInitialSyncDest(launchCtx, target)
+	if alreadySynced {
+		log.Infof("initial %s is already synced, skipping", target)
+		return nil
+	}
 	if err != nil {
 		return err
 	}
+
+	srcDirs, err := collectSyncSources(launchCtx, target)
+	if err != nil {
+		return err
+	}
+	if len(srcDirs) == 0 {
+		// nothing to sync
+		return nil
+	}
+
+	for _, srcDir := range srcDirs {
+		if target == Plugins {
+			files, err := ioutil.ReadDir(srcDir)
+			if err != nil {
+				return err
+			}
+
+			for _, file := range files {
+				err := syncPlugin(file, srcDir, destDir)
+				if err != nil {
+					log.WithError(err).WithField("file", file.Name()).WithField("srcDir", srcDir).WithField("destDir", destDir).Error("failed to sync plugin")
+				}
+			}
+		} else {
+			cp := exec.Command("cp", "-rf", srcDir+"/.", destDir)
+			err = cp.Run()
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func syncPlugin(file fs.FileInfo, srcDir, destDir string) error {
+	if file.IsDir() {
+		_, err := os.Stat(filepath.Join(destDir, file.Name()))
+		if !os.IsNotExist(err) {
+			log.WithField("plugin", file.Name()).Info("plugin is already synced, skipping")
+			return nil
+		}
+		return exec.Command("cp", "-rf", filepath.Join(srcDir, file.Name()), destDir).Run()
+	}
+	if filepath.Ext(file.Name()) != ".zip" {
+		return nil
+	}
+	archiveFile := filepath.Join(srcDir, file.Name())
+	rootDir, err := getRootDirFromArchive(archiveFile)
+	if err != nil {
+		return err
+	}
+	_, err = os.Stat(filepath.Join(destDir, rootDir))
+	if !os.IsNotExist(err) {
+		log.WithField("plugin", rootDir).Info("plugin is already synced, skipping")
+		return nil
+	}
+	return unzipArchive(archiveFile, destDir)
+}
+
+func ensureInitialSyncDest(launchCtx *LaunchContext, target SyncTarget) (string, error, bool) {
+	targetDestDir := launchCtx.projectConfigDir
+	if target == Plugins {
+		targetDestDir = launchCtx.backendDir
+	}
+	destDir := fmt.Sprintf("%s/%s", targetDestDir, target)
+	if target == Options {
+		_, err := os.Stat(destDir)
+		if !os.IsNotExist(err) {
+			return "", nil, true
+		}
+		err = os.MkdirAll(destDir, os.ModePerm)
+		if err != nil {
+			return "", err, false
+		}
+	}
+	return destDir, nil, false
+}
+
+func collectSyncSources(launchCtx *LaunchContext, target SyncTarget) ([]string, error) {
+	userHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
 	var srcDirs []string
 	for _, srcDir := range []string{
-		fmt.Sprintf("%s/.gitpod/jetbrains/options", userHomeDir),
-		fmt.Sprintf("%s/.gitpod/jetbrains/%s/options", userHomeDir, launchCtx.alias),
-		fmt.Sprintf("%s/.gitpod/jetbrains/options", launchCtx.projectDir),
-		fmt.Sprintf("%s/.gitpod/jetbrains/%s/options", launchCtx.projectDir, launchCtx.alias),
+		fmt.Sprintf("%s/.gitpod/jetbrains/%s", userHomeDir, target),
+		fmt.Sprintf("%s/.gitpod/jetbrains/%s/%s", userHomeDir, launchCtx.alias, target),
+		fmt.Sprintf("%s/.gitpod/jetbrains/%s", launchCtx.projectDir, target),
+		fmt.Sprintf("%s/.gitpod/jetbrains/%s/%s", launchCtx.projectDir, launchCtx.alias, target),
 	} {
 		srcStat, err := os.Stat(srcDir)
 		if os.IsNotExist(err) {
@@ -728,34 +829,68 @@ func syncOptions(launchCtx *LaunchContext) error {
 			continue
 		}
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if !srcStat.IsDir() {
-			return fmt.Errorf("%s is not a directory", srcDir)
+			return nil, fmt.Errorf("%s is not a directory", srcDir)
 		}
 		srcDirs = append(srcDirs, srcDir)
 	}
-	if len(srcDirs) == 0 {
-		// nothing to sync
-		return nil
+	return srcDirs, nil
+}
+
+func getRootDirFromArchive(zipPath string) (string, error) {
+	r, err := zip.OpenReader(zipPath)
+	if err != nil {
+		return "", err
+	}
+	defer r.Close()
+
+	if len(r.File) == 0 {
+		return "", fmt.Errorf("empty archive")
 	}
 
-	destDir := fmt.Sprintf("%s/options", launchCtx.projectConfigDir)
-	_, err = os.Stat(destDir)
-	if !os.IsNotExist(err) {
-		// already synced skipping, i.e. restart of jb backend
-		return nil
-	}
-	err = os.MkdirAll(destDir, os.ModePerm)
+	// Assuming the first file in the zip is the root directory or a file in the root directory
+	return strings.SplitN(r.File[0].Name, "/", 2)[0], nil
+}
+
+func unzipArchive(src, dest string) error {
+	r, err := zip.OpenReader(src)
 	if err != nil {
 		return err
 	}
+	defer r.Close()
 
-	for _, srcDir := range srcDirs {
-		cp := exec.Command("cp", "-rf", srcDir+"/.", destDir)
-		err = cp.Run()
+	for _, f := range r.File {
+		rc, err := f.Open()
 		if err != nil {
 			return err
+		}
+		defer rc.Close()
+
+		fpath := filepath.Join(dest, f.Name)
+		if f.FileInfo().IsDir() {
+			err := os.MkdirAll(fpath, os.ModePerm)
+			if err != nil {
+				return err
+			}
+		} else {
+			fdir := filepath.Dir(fpath)
+			err := os.MkdirAll(fdir, os.ModePerm)
+			if err != nil {
+				return err
+			}
+
+			outFile, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+			if err != nil {
+				return err
+			}
+			defer outFile.Close()
+
+			_, err = io.Copy(outFile, rc)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
