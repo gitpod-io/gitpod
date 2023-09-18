@@ -131,6 +131,7 @@ import { SYSTEM_USER } from "../authorization/authorizer";
 import { EnvVarService, ResolvedEnvVars } from "../user/env-var-service";
 import { RedlockAbortSignal } from "redlock";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { ConfigProvider } from "./config-provider";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
@@ -201,6 +202,7 @@ export class WorkspaceStarter {
     constructor(
         @inject(WorkspaceManagerClientProvider) private readonly clientProvider: WorkspaceManagerClientProvider,
         @inject(Config) private readonly config: Config,
+        @inject(ConfigProvider) private readonly configProvider: ConfigProvider,
         @inject(IDEService) private readonly ideService: IDEService,
         @inject(TracedWorkspaceDB) private readonly workspaceDb: DBWithTracing<WorkspaceDB>,
         @inject(TracedUserDB) private readonly userDB: DBWithTracing<UserDB>,
@@ -1564,8 +1566,8 @@ export class WorkspaceStarter {
         }
 
         const orgIdEnv = new EnvironmentVariable();
-        orgIdEnv.setName("GITPOD_ORGANIZATION_ID");
-        orgIdEnv.setValue(workspace.organizationId);
+        orgIdEnv.setName("GITPOD_WORKSPACE_DEFAULT_IMAGE");
+        orgIdEnv.setValue(await this.configProvider.getDefaultImage({ organizationId: workspace.organizationId }));
         sysEnvvars.push(orgIdEnv);
 
         const spec = new StartWorkspaceSpec();
@@ -1639,7 +1641,6 @@ export class WorkspaceStarter {
             "function:setEnvVar",
             "function:deleteEnvVar",
             "function:getTeams",
-            "function:getOrgSettings",
             "function:trackEvent",
             "function:getSupportedWorkspaceClasses",
             // getIDToken is used by Gitpod's OIDC Identity Provider to check for authorisation.
@@ -1683,12 +1684,6 @@ export class WorkspaceStarter {
                     kind: "contentBlob",
                     subjectID: "*",
                     operations: ["create", "get"],
-                }),
-            "resource:" +
-                ScopedResourceGuard.marshalResourceScope({
-                    kind: "team",
-                    subjectID: workspace.organizationId,
-                    operations: ["get"],
                 }),
         ];
         if (CommitContext.is(workspace.context)) {

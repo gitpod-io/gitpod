@@ -101,8 +101,8 @@ message WorkspaceInfoResponse {
     // configcat_enabled controls whether configcat is enabled
     bool configcat_enabled = 18;
 
-    // organization_id is the Organization that open this workspace
-    string organization_id = 19;
+    // workspace_default_image is the default image of the workspace
+    string workspace_default_image = 19;
 }
 
 enum DebugWorkspaceType {

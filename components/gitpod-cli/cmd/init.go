@@ -54,9 +54,8 @@ Create a Gitpod configuration for this project.
 			return err
 		}
 		if !interactive {
-			defaultImage, err := getOrganizationDefaultWorkspaceImage(ctx)
+			defaultImage, err := getDefaultWorkspaceImage(ctx)
 			if err != nil {
-				// TODO: improve if we have --verbose flag
 				fmt.Printf("failed to get organization default workspace image: %v\n", err)
 				fmt.Println("fallback to gitpod default")
 				defaultImage = "gitpod/workspace-full"
@@ -159,7 +158,7 @@ func askForDockerImage(ctx context.Context, cfg *gitpodlib.GitpodFile) error {
 	}
 
 	if chce == 0 {
-		defaultImage, err := getOrganizationDefaultWorkspaceImage(ctx)
+		defaultImage, err := getDefaultWorkspaceImage(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to get organization default workspace image: %w", err)
 		}

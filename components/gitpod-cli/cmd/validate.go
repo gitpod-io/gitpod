@@ -91,10 +91,10 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 	case nil:
 		// TODO: default image won't be always gitpod/workspace-full, just added for compatibility before server is deployed
 		image = "gitpod/workspace-full:latest"
-		if defaultImage, err := getOrganizationDefaultWorkspaceImage(ctx); err != nil {
-			fmt.Printf("Failed to get organization default workspace image: %v\n", err)
+		if defaultImage, err := getDefaultWorkspaceImage(ctx); err != nil {
+			fmt.Printf("Failed to get default workspace image: %v\n", err)
 		} else {
-			fmt.Println("Using organization default workspace image:", defaultImage)
+			fmt.Println("Using default workspace image:", defaultImage)
 			image = defaultImage
 		}
 	case string:
@@ -492,24 +492,12 @@ Connect using SSH keys (https://gitpod.io/keys):
 	return nil
 }
 
-func getOrganizationDefaultWorkspaceImage(ctx context.Context) (string, error) {
+func getDefaultWorkspaceImage(ctx context.Context) (string, error) {
 	wsInfo, err := gitpod.GetWSInfo(ctx)
 	if err != nil {
 		return "", err
 	}
-	client, err := gitpod.ConnectToServer(ctx, wsInfo, []string{
-		"function:getOrgSettings",
-		"resource:team::" + wsInfo.OrganizationId + "::get",
-	})
-	if err != nil {
-		return "", err
-	}
-	defer client.Close()
-	settings, err := client.GetOrgSettings(ctx, wsInfo.OrganizationId)
-	if err != nil {
-		return "", err
-	}
-	return settings.DefaultWorkspaceImage, nil
+	return wsInfo.WorkspaceDefaultImage, nil
 }
 
 func setLoggerFormatter(logger *logrus.Logger) {

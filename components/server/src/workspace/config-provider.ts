@@ -22,7 +22,6 @@ import {
     AdditionalContentContext,
     WithDefaultConfig,
     ProjectConfig,
-    OrganizationSettings,
     WorkspaceConfigContext,
 } from "@gitpod/gitpod-protocol";
 import { GitpodFileParser } from "@gitpod/gitpod-protocol/lib/gitpod-file-parser";
@@ -62,11 +61,6 @@ export class ConfigProvider {
         try {
             let customConfig: WorkspaceConfig | undefined;
             let literalConfig: ProjectConfig | undefined;
-            let orgSettings: OrganizationSettings | undefined;
-
-            if (configContext.organizationId) {
-                orgSettings = await this.teamDB.findOrgSettings(configContext.organizationId);
-            }
 
             if (!WithDefaultConfig.is(commit)) {
                 const cc = await this.fetchCustomConfig(ctx, user, commit);
@@ -82,12 +76,9 @@ export class ConfigProvider {
                     repoCloneUrl: commit.repository.cloneUrl,
                     revision: commit.revision,
                 });
-                const config = this.defaultConfig();
+                const config = await this.defaultConfig(configContext);
                 if (!ImageConfigString.is(config.image)) {
                     throw new Error(`Default config must contain a base image!`);
-                }
-                if (orgSettings?.defaultWorkspaceImage) {
-                    config.image = orgSettings.defaultWorkspaceImage;
                 }
                 config._origin = "default";
                 return { config, literalConfig };
@@ -95,7 +86,7 @@ export class ConfigProvider {
 
             const config = customConfig;
             if (!config.image) {
-                config.image = orgSettings?.defaultWorkspaceImage ?? this.config.workspaceDefaults.workspaceImage;
+                config.image = await this.getDefaultImage(configContext);
             } else if (ImageConfigFile.is(config.image)) {
                 const dockerfilePath = [configBasePath, config.image.file].filter((s) => !!s).join("/");
                 const repo = commit.repository;
@@ -221,13 +212,24 @@ export class ConfigProvider {
         }
     }
 
-    public defaultConfig(): WorkspaceConfig {
+    public async defaultConfig(configContext: WorkspaceConfigContext): Promise<WorkspaceConfig> {
         return {
             ports: [],
             tasks: [],
-            image: this.config.workspaceDefaults.workspaceImage,
+            image: await this.getDefaultImage(configContext),
             ideCredentials: crypto.randomBytes(32).toString("base64"),
         };
+    }
+
+    public async getDefaultImage(configContext: WorkspaceConfigContext) {
+        let defaultImage = this.config.workspaceDefaults.workspaceImage;
+        if (configContext.organizationId) {
+            const settings = await this.teamDB.findOrgSettings(configContext.organizationId);
+            if (settings?.defaultWorkspaceImage) {
+                defaultImage = settings.defaultWorkspaceImage;
+            }
+        }
+        return defaultImage;
     }
 
     private async fetchWorkspaceImageSourceDocker(
