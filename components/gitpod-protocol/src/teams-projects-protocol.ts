@@ -101,10 +101,13 @@ export namespace Project {
         if (typeof project.settings?.prebuildDefaultBranchOnly === "undefined") {
             return "defaultBranch"; // default value for `settings.prebuildDefaultBranchOnly`
         }
-        if (project.settings.prebuildDefaultBranchOnly) {
+        if (project.settings?.prebuildDefaultBranchOnly) {
             return "defaultBranch";
         }
-        // TODO support "selectedBranches" next
+        const prebuildBranchPattern = project.settings?.prebuildBranchPattern?.trim();
+        if (typeof prebuildBranchPattern === "string" && prebuildBranchPattern.length > 1) {
+            return "selectedBranches";
+        }
         return "allBranches";
     }
 
