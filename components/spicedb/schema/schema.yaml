@@ -91,13 +91,15 @@ schema: |-
   definition project {
     relation org: organization
 
-    relation editor: user
-
     // A subject is a viewer, if:
     //  * the users with access are directly assigned as a viewer
     //  * the project has granted access to all members in an organization
     //  * the project has granted access to _any_ user on this installation
     relation viewer: user | organization#member | user:*
+
+    // All org members are editors for now, to model the existing behavior.
+    permission editor = org->member
+
     permission read_info = viewer + editor + org->owner + org->installation_admin
     permission write_info = editor + org->owner + org->installation_admin
     permission delete = editor + org->owner + org->installation_admin
@@ -209,10 +211,14 @@ assertions:
     - organization:org_1#delete@user:user_0
     # Org owner can delete projects
     - project:project_1#delete@user:user_0
+    # org members can delete project
+    - project:project_1#delete@user:user_1
     # Org member can view projects
     - project:project_1#read_info@user:user_1
     # Org member can create projects
     - organization:org_1#create_project@user:user_1
+    # user 10 can access project_2
+    - project:project_2#write_info@user:user_10
     # installation user can create orgs
     - installation:installation_0#create_organization@user:user_0
     # Installation admin can do what org owners can
@@ -230,7 +236,6 @@ assertions:
   assertFalse:
     # user 10 cannot access project_1
     - project:project_1#read_info@user:user_10
-    - project:project_2#write_info@user:user_10
     # non-member/owner cannot access organization
     - organization:org_1#read_info@user:user_3
     - organization:org_1#write_info@user:user_3
@@ -244,7 +249,5 @@ assertions:
     - organization:org_1#write_git_provider@user:user_1
     # org member can not delete org
     - organization:org_1#delete@user:user_1
-    # org members can not delete project
-    - project:project_1#delete@user:user_1
     # stranger can't access other's non-shared workspace
     - workspace:workspace_1#access@user:user_2

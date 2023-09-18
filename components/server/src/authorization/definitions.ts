@@ -77,9 +77,10 @@ export type OrganizationPermission =
 
 export type ProjectResourceType = "project";
 
-export type ProjectRelation = "org" | "editor" | "viewer";
+export type ProjectRelation = "org" | "viewer";
 
 export type ProjectPermission =
+    | "editor"
     | "read_info"
     | "write_info"
     | "delete"
@@ -333,26 +334,6 @@ export const rel = {
                             subject: {
                                 object: {
                                     objectType: "organization",
-                                    objectId: objectId,
-                                },
-                            },
-                        } as v1.Relationship;
-                    },
-                };
-            },
-
-            get editor() {
-                const result2 = {
-                    ...result,
-                    relation: "editor",
-                };
-                return {
-                    user(objectId: string) {
-                        return {
-                            ...result2,
-                            subject: {
-                                object: {
-                                    objectType: "user",
                                     objectId: objectId,
                                 },
                             },
