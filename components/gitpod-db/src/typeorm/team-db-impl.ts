@@ -377,19 +377,23 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
     public async setOrgSettings(orgId: string, settings: Partial<OrganizationSettings>): Promise<void> {
         const repo = await this.getOrgSettingsRepo();
         const team = await repo.findOne({ where: { orgId, deleted: false } });
+        const update: Partial<OrganizationSettings> = {};
+        if (settings.workspaceSharingDisabled != undefined) {
+            update.workspaceSharingDisabled = settings.workspaceSharingDisabled;
+        }
+        if (settings.defaultWorkspaceImage) {
+            update.defaultWorkspaceImage = settings.defaultWorkspaceImage;
+        }
         if (!team) {
             await repo.insert({
-                ...settings,
+                ...update,
                 orgId,
             });
         } else {
-            if (settings.workspaceSharingDisabled) {
-                team.workspaceSharingDisabled = settings.workspaceSharingDisabled;
-            }
-            if (settings.defaultWorkspaceImage) {
-                team.defaultWorkspaceImage = settings.defaultWorkspaceImage;
-            }
-            repo.save(team);
+            repo.save({
+                ...team,
+                ...update,
+            });
         }
     }
 
