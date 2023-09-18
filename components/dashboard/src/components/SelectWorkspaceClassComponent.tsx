@@ -90,7 +90,7 @@ const WorkspaceClassDropDownElementSelected: FC<WorkspaceClassDropDownElementSel
 
     return (
         <DropDown2SelectedElement
-            iconSrc={WorkspaceClass}
+            icon={WorkspaceClass}
             loading={loading}
             htmlTitle={title}
             title={<div className="truncate w-80">{title}</div>}

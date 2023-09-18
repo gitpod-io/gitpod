@@ -250,7 +250,8 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
 };
 
 type DropDown2SelectedElementProps = {
-    iconSrc: string;
+    // Either a string of the icon source or an element
+    icon: ReactNode;
     loading?: boolean;
     title: ReactNode;
     subtitle: ReactNode;
@@ -258,7 +259,7 @@ type DropDown2SelectedElementProps = {
 };
 
 export const DropDown2SelectedElement: FC<DropDown2SelectedElementProps> = ({
-    iconSrc,
+    icon,
     loading = false,
     title,
     subtitle,
@@ -272,7 +273,11 @@ export const DropDown2SelectedElement: FC<DropDown2SelectedElementProps> = ({
             aria-busy={loading}
         >
             <div className="mx-2 my-3 flex-shrink-0">
-                <img className="w-8 filter-grayscale" src={iconSrc} alt="logo" />
+                {typeof icon === "string" ? (
+                    <img className={"w-8 filter-grayscale"} src={icon} alt="logo" />
+                ) : (
+                    <>{icon}</>
+                )}
             </div>
             <div className="flex-col ml-1 flex-grow">
                 {loading ? (

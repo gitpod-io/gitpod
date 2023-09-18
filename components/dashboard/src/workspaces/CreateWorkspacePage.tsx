@@ -68,6 +68,10 @@ export function CreateWorkspacePage() {
     const [contextURL, setContextURL] = useState<string | undefined>(
         StartWorkspaceOptions.parseContextUrl(location.hash),
     );
+    // Currently this tracks if the user has selected a project from the dropdown
+    // Need to make sure we initialize this to a project if the url hash value maps to a project's repo url
+    // Will need to handle multiple projects w/ same repo url
+    const [selectedProjectID, setSelectedProjectID] = useState<string | undefined>(undefined);
     const workspaceContext = useWorkspaceContext(contextURL);
     const [rememberOptions, setRememberOptions] = useState(false);
     const needsGitAuthorization = useNeedsGitAuthorization();
@@ -117,9 +121,17 @@ export function CreateWorkspacePage() {
                 return;
             }
 
+            // TODO: Account for multiple projects w/ the same cloneUrl
             return projects.data.projects.find((p) => p.cloneUrl === cloneUrl);
         }
     }, [projects.data, workspaceContext.data]);
+
+    // Handle the case where the context url in the hash matches a project and we don't have that project selected yet
+    useEffect(() => {
+        if (project && !selectedProjectID) {
+            setSelectedProjectID(project.id);
+        }
+    }, [project, selectedProjectID]);
 
     // Apply project ws class settings
     useEffect(() => {
@@ -147,10 +159,11 @@ export function CreateWorkspacePage() {
     // In addition to updating state, we want to update the url hash as well
     // This allows the contextURL to persist if user changes orgs, or copies/shares url
     const handleContextURLChange = useCallback(
-        (newContextURL: string) => {
+        (newContextURL: string, projectID?: string) => {
             // we disable auto start if the user changes the context URL
             setAutostart(false);
             setContextURL(newContextURL);
+            setSelectedProjectID(projectID);
             history.replace(`#${newContextURL}`);
         },
         [history],
@@ -380,7 +393,8 @@ export function CreateWorkspacePage() {
                     <InputField>
                         <RepositoryFinder
                             setSelection={handleContextURLChange}
-                            initialValue={contextURL}
+                            selectedContextURL={contextURL}
+                            selectedProjectID={selectedProjectID}
                             disabled={createWorkspaceMutation.isStarting}
                         />
                     </InputField>
