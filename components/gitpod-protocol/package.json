@@ -41,8 +41,8 @@
         "build": "yarn lint && tsc",
         "lint": "yarn eslint src/*.ts src/**/*.ts",
         "lint:fix": "yarn eslint src/*.ts src/**/*.ts --fix",
-        "test": "mocha './**/*.spec.ts'",
-        "test-debug": "mocha --inspect-brk './**/*.spec.ts'",
+        "test": "mocha './**/*.spec.ts' --exclude './node_modules/**'",
+        "test-debug": "mocha --inspect-brk './**/*.spec.ts' --exclude './node_modules/**'",
         "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput"
     },
     "mocha": {

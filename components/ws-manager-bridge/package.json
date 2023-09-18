@@ -5,7 +5,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "start": "node ./dist/index.js",
-    "test": "mocha './**/*.spec.ts'",
+    "test": "mocha './**/*.spec.ts' --exclude './node_modules/**'",
     "lint": "yarn eslint src/*.ts src/**/*.ts",
     "lint:fix": "yarn eslint src/*.ts src/**/*.ts --fix",
     "build": "yarn lint && npx tsc",

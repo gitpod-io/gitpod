@@ -10,7 +10,7 @@
   "scripts": {
     "build": "mkdir -p lib; tsc",
     "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput",
-    "test": "mocha './**/*.spec.ts'",
+    "test": "mocha './**/*.spec.ts' --exclude './node_modules/**'",
     "test:brk": "yarn test --inspect-brk"
   },
   "mocha": {
