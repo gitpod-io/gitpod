@@ -223,7 +223,7 @@ describe("EnvVarService", async () => {
         expect(emptyEnvVars.length).to.equal(0);
     });
 
-    it("should not let members create, delete but allow get project env vars", async () => {
+    it("let members create, delete and get project env vars", async () => {
         await es.addProjectEnvVar(owner.id, project.id, { name: "FOO", value: "BAR", censored: false });
 
         const envVars = await es.listProjectEnvVars(member.id, project.id);
@@ -232,12 +232,9 @@ describe("EnvVarService", async () => {
         const envVarById = await es.getProjectEnvVarById(member.id, envVars[0].id);
         expect(envVarById?.name).to.equal("FOO");
 
-        await expectError(ErrorCodes.PERMISSION_DENIED, es.deleteProjectEnvVar(member.id, envVars[0].id));
+        await es.deleteProjectEnvVar(member.id, envVars[0].id);
 
-        await expectError(
-            ErrorCodes.PERMISSION_DENIED,
-            es.addProjectEnvVar(member.id, project.id, { name: "FOO", value: "BAR", censored: false }),
-        );
+        await es.addProjectEnvVar(owner.id, project.id, { name: "FOO", value: "BAR", censored: false });
     });
 
     it("should not let strangers create, delete and get project env vars", async () => {

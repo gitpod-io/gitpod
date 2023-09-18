@@ -90,45 +90,47 @@ describe("ProjectsService", async () => {
 
     it("should deleteProject", async () => {
         const ps = container.get(ProjectsService);
-        const project = await createTestProject(ps, org, owner);
+        const project1 = await createTestProject(ps, org, owner);
 
-        await expectError(ErrorCodes.PERMISSION_DENIED, () => ps.deleteProject(member.id, project.id));
-        await expectError(ErrorCodes.NOT_FOUND, () => ps.deleteProject(stranger.id, project.id));
+        await ps.deleteProject(member.id, project1.id);
+        let projects = await ps.getProjects(member.id, org.id);
+        expect(projects.length).to.equal(0);
 
-        await ps.deleteProject(owner.id, project.id);
-        const projects = await ps.getProjects(owner.id, org.id);
+        const project2 = await createTestProject(ps, org, owner);
+        await expectError(ErrorCodes.NOT_FOUND, () => ps.deleteProject(stranger.id, project2.id));
+
+        await ps.deleteProject(owner.id, project2.id);
+        projects = await ps.getProjects(owner.id, org.id);
         expect(projects.length).to.equal(0);
     });
 
     it("should updateProject", async () => {
         const ps = container.get(ProjectsService);
         const project = await createTestProject(ps, org, owner);
+
         await ps.updateProject(owner, {
             id: project.id,
             settings: {
-                useIncrementalPrebuilds: !project.settings?.useIncrementalPrebuilds,
+                prebuildEveryNthCommit: 1,
             },
         });
+        const updatedProject1 = await ps.getProject(owner.id, project.id);
+        expect(updatedProject1?.settings?.prebuildEveryNthCommit).to.equal(1);
 
-        const updatedProject = await ps.getProject(owner.id, project.id);
+        await ps.updateProject(member, {
+            id: project.id,
+            settings: {
+                prebuildEveryNthCommit: 2,
+            },
+        });
+        const updatedProject2 = await ps.getProject(member.id, project.id);
+        expect(updatedProject2?.settings?.prebuildEveryNthCommit).to.equal(2);
 
-        expect(updatedProject?.settings?.useIncrementalPrebuilds).to.not.equal(
-            project.settings?.useIncrementalPrebuilds,
-        );
-
-        await expectError(ErrorCodes.PERMISSION_DENIED, () =>
-            ps.updateProject(member, {
-                id: project.id,
-                settings: {
-                    useIncrementalPrebuilds: !project.settings?.useIncrementalPrebuilds,
-                },
-            }),
-        );
         await expectError(ErrorCodes.NOT_FOUND, () =>
             ps.updateProject(stranger, {
                 id: project.id,
                 settings: {
-                    useIncrementalPrebuilds: !project.settings?.useIncrementalPrebuilds,
+                    prebuildEveryNthCommit: 3,
                 },
             }),
         );
