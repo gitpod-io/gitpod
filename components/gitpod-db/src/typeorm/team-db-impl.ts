@@ -390,7 +390,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
                 orgId,
             });
         } else {
-            repo.save({
+            await repo.save({
                 ...team,
                 ...update,
             });
