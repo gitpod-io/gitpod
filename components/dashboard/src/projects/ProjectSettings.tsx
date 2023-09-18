@@ -22,6 +22,7 @@ import { useRefreshProjects } from "../data/projects/list-projects-query";
 import { useToast } from "../components/toasts/Toasts";
 import classNames from "classnames";
 import { InputField } from "../components/forms/InputField";
+import { SelectInputField } from "../components/forms/SelectInputField";
 
 export function ProjectSettingsPage(props: { project?: Project; children?: React.ReactNode }) {
     return (
@@ -92,6 +93,16 @@ export default function ProjectSettingsView() {
         [project, setProject, toast],
     );
 
+    const setPrebuildBranchStrategy = useCallback(
+        async (value: ProjectSettings.PrebuildBranchStrategy) => {
+            const prebuildDefaultBranchOnly = value === "defaultBranch";
+            await updateProjectSettings({
+                prebuildDefaultBranchOnly,
+            });
+        },
+        [updateProjectSettings],
+    );
+
     const setWorkspaceClass = useCallback(
         async (value: string) => {
             if (!project) {
@@ -124,6 +135,8 @@ export default function ProjectSettingsView() {
     if (!project) return null;
 
     const enablePrebuilds = Project.isPrebuildsEnabled(project);
+
+    const prebuildBranchStrategy = Project.getPrebuildBranchStrategy(project);
 
     return (
         <ProjectSettingsPage project={project}>
@@ -168,13 +181,17 @@ export default function ProjectSettingsView() {
                 />
                 {enablePrebuilds && (
                     <>
-                        <CheckboxInputField
-                            label="Prebuild the default branch only"
-                            hint="Commits on other branches will be ignored."
+                        <SelectInputField
                             disabled={!enablePrebuilds}
-                            checked={project.settings?.prebuildDefaultBranchOnly ?? false}
-                            onChange={(checked) => updateProjectSettings({ prebuildDefaultBranchOnly: checked })}
-                        />
+                            label="Build branches"
+                            value={prebuildBranchStrategy}
+                            topMargin={false}
+                            onChange={(val) => setPrebuildBranchStrategy(val as ProjectSettings.PrebuildBranchStrategy)}
+                        >
+                            <option value="defaultBranch">Default branch</option>
+                            <option value="allBranches">All branches</option>
+                            {/* <option value="selectedBranches">Matched by pattern</option> */}
+                        </SelectInputField>
                         <InputField label="Workspace machine type" disabled={!enablePrebuilds}>
                             <div className="max-w-md">
                                 <SelectWorkspaceClassComponent

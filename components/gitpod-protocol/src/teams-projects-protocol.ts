@@ -29,6 +29,9 @@ export interface ProjectSettings {
     // preferred workspace classes
     workspaceClasses?: WorkspaceClasses;
 }
+export namespace ProjectSettings {
+    export type PrebuildBranchStrategy = "defaultBranch" | "allBranches" | "selectedBranches";
+}
 
 export interface Project {
     id: string;
@@ -77,6 +80,20 @@ export namespace Project {
         }
 
         return project.settings.enablePrebuilds;
+    }
+
+    export function getPrebuildBranchStrategy(project: Project): ProjectSettings.PrebuildBranchStrategy {
+        if (typeof project.settings?.enablePrebuilds === "undefined") {
+            return "defaultBranch"; // default value for `settings.prebuildDefaultBranchOnly`
+        }
+        if (typeof project.settings?.prebuildDefaultBranchOnly === "undefined") {
+            return "defaultBranch"; // default value for `settings.prebuildDefaultBranchOnly`
+        }
+        if (project.settings.prebuildDefaultBranchOnly) {
+            return "defaultBranch";
+        }
+        // TODO support "selectedBranches" next
+        return "allBranches";
     }
 
     export interface Overview {
