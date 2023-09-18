@@ -247,7 +247,7 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
 
             {org?.isOwner && (
                 <Button htmlType="submit" className="mt-4" disabled={!org.isOwner}>
-                    Save
+                    Update Default Image
                 </Button>
             )}
         </form>
