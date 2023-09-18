@@ -168,7 +168,7 @@ export interface Organization {
 
 export interface OrganizationSettings {
     workspaceSharingDisabled?: boolean;
-    defaultWorkspaceImage?: string;
+    defaultWorkspaceImage?: string | null;
 }
 
 export type TeamMemberRole = OrgMemberRole;

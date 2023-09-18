@@ -381,7 +381,10 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
         if (settings.workspaceSharingDisabled != undefined) {
             update.workspaceSharingDisabled = settings.workspaceSharingDisabled;
         }
-        if (settings.defaultWorkspaceImage) {
+        // Set to null if defaultWorkspaceImage is empty string, so that we can fallback to default when getting org settings
+        if (settings.defaultWorkspaceImage?.trim() === "") {
+            update.defaultWorkspaceImage = null;
+        } else if (settings.defaultWorkspaceImage != undefined) {
             update.defaultWorkspaceImage = settings.defaultWorkspaceImage;
         }
         if (!team) {
