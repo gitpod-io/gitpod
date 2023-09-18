@@ -20,6 +20,12 @@ export interface ProjectSettings {
      * Defaults to `true` on project creation.
      */
     prebuildDefaultBranchOnly?: boolean;
+    /**
+     * Use this pattern to match branch names to run prebuilds on.
+     * The pattern matching will only be applied if prebuilds are enabled and
+     * they are not limited to the default branch.
+     */
+    prebuildBranchPattern?: string;
     useIncrementalPrebuilds?: boolean;
     keepOutdatedPrebuildsRunning?: boolean;
     // whether new workspaces can start on older prebuilds and incrementally update
