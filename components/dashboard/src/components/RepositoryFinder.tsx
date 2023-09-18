@@ -7,6 +7,7 @@
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { getGitpodService } from "../service/service";
 import { DropDown2, DropDown2Element, DropDown2SelectedElement } from "./DropDown2";
+import RepositorySVG from "../icons/Repository.svg";
 import { ReactComponent as RepositoryIcon } from "../icons/RepositoryWithColor.svg";
 import { useSuggestedRepositories } from "../data/git-providers/suggested-repositories-query";
 import { useFeatureFlag } from "../data/featureflag-query";
@@ -156,13 +157,13 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
             searchPlaceholder="Paste repository URL or type to find suggestions"
         >
             <DropDown2SelectedElement
+                // TODO: clean this up - have to use different icons to keep the right shade of gray when there's no project
                 icon={
-                    <RepositoryIcon
-                        className={classNames(
-                            "w-8 h-8 text-orange-500",
-                            !selectedSuggestion?.projectId && "filter-grayscale",
-                        )}
-                    />
+                    selectedSuggestion?.projectId ? (
+                        <RepositoryIcon className={classNames("w-8 h-8 text-orange-500")} />
+                    ) : (
+                        RepositorySVG
+                    )
                 }
                 htmlTitle={displayContextUrl(props.selectedContextURL) || "Repository"}
                 title={
