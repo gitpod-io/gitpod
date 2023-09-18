@@ -1567,7 +1567,7 @@ export class WorkspaceStarter {
 
         const orgIdEnv = new EnvironmentVariable();
         orgIdEnv.setName("GITPOD_WORKSPACE_DEFAULT_IMAGE");
-        orgIdEnv.setValue(await this.configProvider.getDefaultImage({ organizationId: workspace.organizationId }));
+        orgIdEnv.setValue(await this.configProvider.getDefaultImage(workspace.organizationId));
         sysEnvvars.push(orgIdEnv);
 
         const spec = new StartWorkspaceSpec();

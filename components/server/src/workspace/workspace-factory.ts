@@ -110,9 +110,7 @@ export class WorkspaceFactory {
 
             await assertNoPrebuildIsRunningForSameCommit();
 
-            const { config } = await this.configProvider.fetchConfig({ span }, user, context.actual, {
-                organizationId,
-            });
+            const { config } = await this.configProvider.fetchConfig({ span }, user, context.actual, organizationId);
 
             // If an incremental prebuild was requested, see if we can find a recent prebuild to act as a base.
             let ws;
@@ -373,9 +371,12 @@ export class WorkspaceFactory {
         const span = TraceContext.startSpan("createForCommit", ctx);
 
         try {
-            const { config, literalConfig } = await this.configProvider.fetchConfig({ span }, user, context, {
+            const { config, literalConfig } = await this.configProvider.fetchConfig(
+                { span },
+                user,
+                context,
                 organizationId,
-            });
+            );
             const imageSource = await this.imageSourceProvider.getImageSource(ctx, user, context, config);
             if (config._origin === "derived" && literalConfig) {
                 (context as any as AdditionalContentContext).additionalFiles = { ...literalConfig };

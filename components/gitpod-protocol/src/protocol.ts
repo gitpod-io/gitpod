@@ -972,13 +972,6 @@ export interface WorkspaceConfig {
     _featureFlags?: NamedWorkspaceFeatureFlag[];
 }
 
-// WorkspaceConfigContext is the context to help parse/generate workspace config
-export interface WorkspaceConfigContext {
-    // organizationId is used to find organization related workspace config settings,
-    //      - defaultWorkspaceImage: it will affect `image` field
-    organizationId?: string;
-}
-
 export interface GithubAppConfig {
     prebuilds?: GithubAppPrebuildConfig;
 }

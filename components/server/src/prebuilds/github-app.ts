@@ -289,9 +289,7 @@ export class GithubApp {
             span.setTag("contextURL", contextURL);
 
             const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
-            const config = await this.prebuildManager.fetchConfig({ span }, user, context, {
-                organizationId: project?.teamId,
-            });
+            const config = await this.prebuildManager.fetchConfig({ span }, user, context, project?.teamId);
 
             const r = await this.ensureMainProjectAndUser(user, project, context, installationId);
             user = r.user;
@@ -430,9 +428,7 @@ export class GithubApp {
             let { user, project } = await this.findOwnerAndProject(installationId, cloneURL);
 
             const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
-            const config = await this.prebuildManager.fetchConfig({ span }, user, context, {
-                organizationId: project?.teamId,
-            });
+            const config = await this.prebuildManager.fetchConfig({ span }, user, context, project?.teamId);
 
             const r = await this.ensureMainProjectAndUser(user, project, context, installationId);
             user = r.user;
