@@ -130,7 +130,8 @@ export class ConfigProvider {
         }
     }
 
-    private async fetchCustomConfig(
+    // fetchCustomConfig entry is only used for unit tests data mocking
+    public async fetchCustomConfig(
         ctx: TraceContext,
         user: User,
         commit: CommitContext,
