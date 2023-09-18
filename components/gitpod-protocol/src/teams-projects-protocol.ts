@@ -102,6 +102,20 @@ export namespace Project {
         return "allBranches";
     }
 
+    export function getPrebuildBranchStrategy(project: Project): ProjectSettings.PrebuildBranchStrategy {
+        if (typeof project.settings?.enablePrebuilds === "undefined") {
+            return "defaultBranch"; // default value for `settings.prebuildDefaultBranchOnly`
+        }
+        if (typeof project.settings?.prebuildDefaultBranchOnly === "undefined") {
+            return "defaultBranch"; // default value for `settings.prebuildDefaultBranchOnly`
+        }
+        if (project.settings.prebuildDefaultBranchOnly) {
+            return "defaultBranch";
+        }
+        // TODO support "selectedBranches" next
+        return "allBranches";
+    }
+
     export interface Overview {
         branches: BranchDetails[];
         isConsideredInactive?: boolean;

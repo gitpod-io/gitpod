@@ -106,6 +106,16 @@ export default function ProjectSettingsView() {
         [updateProjectSettings],
     );
 
+    const setPrebuildBranchStrategy = useCallback(
+        async (value: ProjectSettings.PrebuildBranchStrategy) => {
+            const prebuildDefaultBranchOnly = value === "defaultBranch";
+            await updateProjectSettings({
+                prebuildDefaultBranchOnly,
+            });
+        },
+        [updateProjectSettings],
+    );
+
     const setWorkspaceClass = useCallback(
         async (value: string) => {
             if (!project) {
