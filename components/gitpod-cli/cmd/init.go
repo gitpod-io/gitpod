@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpod"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpodlib"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 )
@@ -122,6 +123,18 @@ USER gitpod
 		}
 		return openCmd.RunE(cmd, []string{".gitpod.yml"})
 	},
+}
+
+func getDefaultWorkspaceImage(ctx context.Context) (string, error) {
+	wsInfo, err := gitpod.GetWSInfo(ctx)
+	if err != nil {
+		return "", err
+	}
+	if wsInfo.DefaultWorkspaceImage == "" {
+		// TODO: delete-me, added for compatibility before server is deployed
+		return "gitpod/workspace-full:latest", nil
+	}
+	return wsInfo.DefaultWorkspaceImage, nil
 }
 
 func isRequired(input string) error {

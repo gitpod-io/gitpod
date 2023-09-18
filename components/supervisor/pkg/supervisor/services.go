@@ -663,7 +663,7 @@ func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest)
 		CheckoutLocation:      is.cfg.RepoRoot,
 		InstanceId:            is.cfg.WorkspaceInstanceID,
 		WorkspaceId:           is.cfg.WorkspaceID,
-		WorkspaceDefaultImage: is.cfg.WorkspaceDefaultImage,
+		DefaultWorkspaceImage: is.cfg.DefaultWorkspaceImage,
 		GitpodHost:            is.cfg.GitpodHost,
 		WorkspaceContextUrl:   is.cfg.WorkspaceContextURL,
 		WorkspaceClusterHost:  is.cfg.WorkspaceClusterHost,

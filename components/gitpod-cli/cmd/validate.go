@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpod"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 	"github.com/sirupsen/logrus"
@@ -89,14 +88,13 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 	var dockerContext string
 	switch img := gitpodConfig.Image.(type) {
 	case nil:
-		// TODO: default image won't be always gitpod/workspace-full, just added for compatibility before server is deployed
-		image = "gitpod/workspace-full:latest"
-		if defaultImage, err := getDefaultWorkspaceImage(ctx); err != nil {
-			fmt.Printf("Failed to get default workspace image: %v\n", err)
-		} else {
-			fmt.Println("Using default workspace image:", defaultImage)
-			image = defaultImage
+
+		image = wsInfo.DefaultWorkspaceImage
+		if image == "" {
+			// TODO: delete-me, added for compatibility before server is deployed
+			image = "gitpod/workspace-full:latest"
 		}
+		fmt.Println("Using default workspace image:", image)
 	case string:
 		image = img
 	case map[interface{}]interface{}:
@@ -490,14 +488,6 @@ Connect using SSH keys (https://gitpod.io/keys):
 	}
 
 	return nil
-}
-
-func getDefaultWorkspaceImage(ctx context.Context) (string, error) {
-	wsInfo, err := gitpod.GetWSInfo(ctx)
-	if err != nil {
-		return "", err
-	}
-	return wsInfo.WorkspaceDefaultImage, nil
 }
 
 func setLoggerFormatter(logger *logrus.Logger) {
