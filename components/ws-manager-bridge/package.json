@@ -5,7 +5,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "start": "node ./dist/index.js",
-    "test": "mocha --opts mocha.opts './**/*.spec.ts' --exclude './node_modules/**'",
+    "test": "mocha './**/*.spec.ts'",
     "lint": "yarn eslint src/*.ts src/**/*.ts",
     "lint:fix": "yarn eslint src/*.ts src/**/*.ts --fix",
     "build": "yarn lint && npx tsc",
@@ -18,6 +18,20 @@
     "purge": "yarn clean && yarn clean:node && yarn run rimraf yarn.lock",
     "debug": "nodemon -w ./dist --inspect=9300 ./dist/index.js",
     "telepresence": "leeway run .:telepresence"
+  },
+  "mocha": {
+    "require": [
+      "ts-node/register",
+      "reflect-metadata/Reflect",
+      "source-map-support/register"
+    ],
+    "spec": [
+      "src/**/*.spec.ts"
+    ],
+    "recursive": true,
+    "extensions": [
+      "ts"
+    ]
   },
   "files": [
     "/dist"

@@ -1,5 +1,0 @@
---require reflect-metadata/Reflect
---require source-map-support/register
---reporter spec
---watch-extensions js
---exit
