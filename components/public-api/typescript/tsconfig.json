@@ -14,7 +14,7 @@
         "emitDecoratorMetadata": true,
         "strictPropertyInitialization": false,
         "downlevelIteration": true,
-        "module": "commonjs",
+        "module": "ES6",
         "moduleResolution": "node",
         "target": "es6",
         "jsx": "react",
