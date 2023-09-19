@@ -192,8 +192,7 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
             }
             try {
                 await updateTeamSettings.mutateAsync({
-                    // We don't want to have original setting passed, since defaultWorkspaceImage could be undefined
-                    // to bring compatibility when we're going to change Gitpod install value's defaultImage setting
+                    ...settings,
                     ...newSettings,
                 });
                 if (newSettings.defaultWorkspaceImage) {
@@ -208,14 +207,14 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
                 );
             }
         },
-        [updateTeamSettings, org?.id, org?.isOwner, toast],
+        [updateTeamSettings, org?.id, org?.isOwner, settings, toast],
     );
 
     return (
         <form
             onSubmit={(e) => {
                 e.preventDefault();
-                handleUpdateTeamSettings({ defaultWorkspaceImage: defaultWorkspaceImage || null });
+                handleUpdateTeamSettings({ defaultWorkspaceImage });
             }}
         >
             <Heading2 className="pt-12">Collaboration & Sharing</Heading2>
