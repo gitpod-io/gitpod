@@ -358,16 +358,26 @@ export class PrebuildManager {
             return false;
         }
 
-        if (!project.settings?.prebuildDefaultBranchOnly) {
+        const strategy = Project.getPrebuildBranchStrategy(project);
+        if (strategy === "allBranches") {
             return true;
         }
 
-        const defaultBranch = context.repository.defaultBranch;
-        if (!defaultBranch) {
-            log.debug("CommitContext is missing the default branch.", { context });
-            return true;
+        if (strategy === "defaultBranch") {
+            const defaultBranch = context.repository.defaultBranch;
+            if (!defaultBranch) {
+                log.debug("CommitContext is missing the default branch. Ignoring request.", { context });
+                return false;
+            }
+            return context.ref === defaultBranch;
         }
-        return context.ref === defaultBranch;
+
+        if (strategy === "selectedBranches") {
+            // TODO support "selectedBranches" next
+        }
+
+        log.debug("Unknown prebuild branch strategy. Ignoring request.", { context, config });
+        return false;
     }
 
     protected shouldPrebuildIncrementally(cloneUrl: string, project: Project): boolean {
