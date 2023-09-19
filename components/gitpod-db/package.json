@@ -12,13 +12,24 @@
     "test": "yarn db-test",
     "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput",
     "db-test": "r(){ . $(leeway run components/gitpod-db:db-test-env); yarn db-test-run; };r",
-    "db-test-run": "mocha --opts mocha.opts '**/*.spec.db.ts' --exclude './node_modules/**'",
+    "db-test-run": "mocha '**/*.spec.db.ts' --exclude './node_modules/**' --exit",
     "wait-for-db": "node ./lib/wait-for-db.js",
     "typeorm": "typeorm -f lib/typeorm/ormconfig",
     "migrate-migrations": "node ./lib/migrate-migrations.js",
     "clean": "yarn run rimraf lib",
     "clean:node": "yarn run rimraf node_modules",
     "purge": "yarn clean && yarn clean:node && yarn run rimraf yarn.lock"
+  },
+  "mocha": {
+    "require": [
+      "ts-node/register",
+      "reflect-metadata/Reflect",
+      "source-map-support/register"
+    ],
+    "extensions": [
+      "ts"
+    ],
+    "exit": true
   },
   "files": [
     "/lib"
@@ -38,14 +49,14 @@
   "devDependencies": {
     "@testdeck/mocha": "^0.3.3",
     "@types/chai": "^4.2.2",
-    "@types/mocha": "^2.2.45",
+    "@types/mocha": "^10.0.1",
     "@types/mysql": "^2.15.0",
     "@types/uuid": "^8.3.1",
     "@typescript-eslint/eslint-plugin": "^5.5.0",
     "@typescript-eslint/parser": "^5.5.0",
     "chai": "^4.2.0",
     "eslint": "^8.47.0",
-    "mocha": "^4.1.0",
+    "mocha": "^10.2.0",
     "rimraf": "^2.6.1",
     "ts-node": "^10.4.0",
     "typescript": "~4.4.2"
