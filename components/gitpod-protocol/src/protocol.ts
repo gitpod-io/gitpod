@@ -1436,6 +1436,12 @@ export interface Repository {
         parent: Repository;
     };
 }
+
+export interface RepositoryInfo {
+    url: string;
+    name: string;
+}
+
 export interface Branch {
     name: string;
     commit: CommitInfo;
@@ -1620,4 +1626,5 @@ export type SuggestedRepository = {
     url: string;
     projectId?: string;
     projectName?: string;
+    repositoryName?: string;
 };

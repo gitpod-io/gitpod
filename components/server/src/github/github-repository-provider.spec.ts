@@ -81,7 +81,7 @@ class TestGithubContextRepositoryProvider {
 
     @test public async testGetUserRepos() {
         const result = await this.provider.getUserRepos(this.user);
-        expect(result).to.include("https://github.com/gitpod-io/gitpod");
+        expect(result).to.include({ url: "https://github.com/gitpod-io/gitpod", name: "gitpod" });
     }
 }
 module.exports = new TestGithubContextRepositoryProvider(); // Only to circumvent no usage warning :-/

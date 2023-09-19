@@ -142,7 +142,7 @@ const IdeOptionElementSelected: FC<IdeOptionElementProps> = ({ option, useLatest
 
     return (
         <DropDown2SelectedElement
-            iconSrc={Editor}
+            icon={Editor}
             loading={loading}
             htmlTitle={title}
             title={

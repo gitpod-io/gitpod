@@ -6,7 +6,7 @@
 
 import { injectable, inject } from "inversify";
 
-import { User, Repository, Branch, CommitInfo } from "@gitpod/gitpod-protocol";
+import { User, Repository, Branch, CommitInfo, RepositoryInfo } from "@gitpod/gitpod-protocol";
 import { GitLabApi, GitLab } from "./api";
 import { RepositoryProvider } from "../repohost/repository-provider";
 import { RepoURL } from "../repohost/repo-url";
@@ -95,7 +95,7 @@ export class GitlabRepositoryProvider implements RepositoryProvider {
         };
     }
 
-    async getUserRepos(user: User): Promise<string[]> {
+    async getUserRepos(user: User): Promise<RepositoryInfo[]> {
         // FIXME(janx): Not implemented yet
         return [];
     }
