@@ -23,7 +23,6 @@ import { CreateUserParams } from "./user-authentication";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
 import { RelationshipUpdater } from "../authorization/relationship-updater";
-import { EntitlementService } from "../billing/entitlement-service";
 
 @injectable()
 export class UserService {
@@ -33,7 +32,6 @@ export class UserService {
         @inject(Authorizer) private readonly authorizer: Authorizer,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(RelationshipUpdater) private readonly relationshipUpdater: RelationshipUpdater,
-        @inject(EntitlementService) private readonly entitlementService: EntitlementService,
     ) {}
 
     public async createUser(
@@ -142,13 +140,6 @@ export class UserService {
             } catch (err) {
                 throw new ApplicationError(ErrorCodes.BAD_REQUEST, err.message);
             }
-        }
-
-        if (!(await this.entitlementService.maySetTimeout(targetUserId))) {
-            throw new ApplicationError(
-                ErrorCodes.PERMISSION_DENIED,
-                "Configure workspace timeout only available for paid user.",
-            );
         }
 
         const user = await this.findUserById(userId, targetUserId);

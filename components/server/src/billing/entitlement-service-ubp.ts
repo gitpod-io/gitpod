@@ -121,7 +121,7 @@ export class EntitlementServiceUBP implements EntitlementService {
             }
         }
 
-        // TODO(gpl) Remove everything below once organizations are fully rolled out
+        // TODO(gpl) Remove everything below once organizationId is always passed
         // This is the old behavior, stemming from our transition to PAYF, where our API did-/doesn't pass organizationId, yet
         // Member of paid team?
         const teams = await this.teamDB.findTeamsByUser(userId);

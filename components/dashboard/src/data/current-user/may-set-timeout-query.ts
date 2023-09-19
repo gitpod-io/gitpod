@@ -7,21 +7,26 @@
 import { useQuery } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
 import { useCurrentUser } from "../../user-context";
+import { useCurrentOrg } from "../organizations/orgs-query";
 
-export const useUserMaySetTimeout = () => {
+export const useMaySetTimeout = () => {
     const user = useCurrentUser();
+    const org = useCurrentOrg();
 
     return useQuery<boolean>({
-        queryKey: getUserMaySetTimeoutQueryKey(user?.id ?? ""),
+        queryKey: getMaySetTimeoutQueryKey(user?.id ?? "", org.data?.id ?? ""),
         queryFn: async () => {
             if (!user) {
                 throw new Error("No current user");
             }
+            if (!org.data) {
+                throw new Error("No current org");
+            }
 
-            return !!(await getGitpodService().server.maySetTimeout());
+            return !!(await getGitpodService().server.maySetTimeout({ organizationId: org.data.id }));
         },
-        enabled: !!user,
+        enabled: !!user && !!org.data,
     });
 };
 
-export const getUserMaySetTimeoutQueryKey = (userId: string) => ["may-set-timeout", { userId }];
+export const getMaySetTimeoutQueryKey = (userId: string, orgId: string) => ["may-set-timeout", { userId }, { orgId }];

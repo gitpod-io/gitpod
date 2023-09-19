@@ -650,12 +650,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return updatedUser;
     }
 
-    public async maySetTimeout(ctx: TraceContext): Promise<boolean> {
-        const user = await this.checkUser("maySetTimeout");
+    public async maySetTimeout(ctx: TraceContext, opts?: { organizationId?: string }): Promise<boolean> {
+        const user = await this.checkUser("maySetTimeout", opts);
         await this.guardAccess({ kind: "user", subject: user }, "get");
+        // TODO(gpl) Remove once organizationId is mandatory
         await this.auth.checkPermissionOnUser(user.id, "read_info", user.id);
+        if (opts?.organizationId) {
+            await this.auth.checkPermissionOnOrganization(user.id, "read_info", opts.organizationId);
+        }
 
-        return await this.entitlementService.maySetTimeout(user.id);
+        return await this.entitlementService.maySetTimeout(user.id, opts?.organizationId);
     }
 
     public async updateWorkspaceTimeoutSetting(
