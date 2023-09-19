@@ -30,7 +30,6 @@
       "src/**/*.spec.ts",
       "src/**/*.spec.db.ts"
     ],
-    "recursive": true,
     "extensions": [
       "ts"
     ]

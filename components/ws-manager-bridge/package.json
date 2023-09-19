@@ -28,7 +28,6 @@
     "spec": [
       "src/**/*.spec.ts"
     ],
-    "recursive": true,
     "extensions": [
       "ts"
     ]

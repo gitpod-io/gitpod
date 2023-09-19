@@ -38,7 +38,6 @@
       "dist/**/*.spec.js",
       "dist/**/*.spec.db.js"
     ],
-    "recursive": true,
     "extensions": [
       "js"
     ]
