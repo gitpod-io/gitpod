@@ -5,7 +5,7 @@
  */
 
 import { Project, ProjectSettings } from "@gitpod/gitpod-protocol";
-import { useCallback, useContext, useState, Fragment, useMemo } from "react";
+import { useCallback, useContext, useState, Fragment, useMemo, useEffect } from "react";
 import { useHistory } from "react-router";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
@@ -57,9 +57,14 @@ export default function ProjectSettingsView() {
     const history = useHistory();
     const refreshProjects = useRefreshProjects();
     const { toast } = useToast();
-    const [prebuildBranchPattern, setPrebuildBranchPattern] = useState<string>(
-        project?.settings?.prebuildBranchPattern || "",
-    );
+    const [prebuildBranchPattern, setPrebuildBranchPattern] = useState("");
+
+    useEffect(() => {
+        if (!project) {
+            return;
+        }
+        setPrebuildBranchPattern(project?.settings?.prebuildBranchPattern || "");
+    }, [project]);
 
     const setProjectName = useCallback(
         (projectName: string) => {
