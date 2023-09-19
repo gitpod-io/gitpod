@@ -21,6 +21,7 @@ import { inject, injectable } from "inversify";
 import { EntitlementService, HitParallelWorkspaceLimit, MayStartWorkspaceResult } from "./entitlement-service";
 import { CostCenter_BillingStrategy } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import { UsageService } from "../orgs/usage-service";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 const MAX_PARALLEL_WORKSPACES_FREE = 4;
 const MAX_PARALLEL_WORKSPACES_PAID = 16;
@@ -110,10 +111,17 @@ export class EntitlementServiceUBP implements EntitlementService {
 
     private async hasPaidSubscription(userId: string, organizationId?: string): Promise<boolean> {
         if (organizationId) {
-            // This is the "stricter", more correct version: We only allow privileges on the Organization that is paying for it
-            const { billingStrategy } = await this.usageService.getCostCenter(userId, organizationId);
-            return billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
+            try {
+                // This is the "stricter", more correct version: We only allow privileges on the Organization that is paying for it
+                const { billingStrategy } = await this.usageService.getCostCenter(userId, organizationId);
+                return billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
+            } catch (err) {
+                log.warn({ userId, organizationId }, "Error checking if user is subscribed to organization", err);
+                return false;
+            }
         }
+
+        // TODO(gpl) Remove everything below once organizations are fully rolled out
         // This is the old behavior, stemming from our transition to PAYF, where our API did-/doesn't pass organizationId, yet
         // Member of paid team?
         const teams = await this.teamDB.findTeamsByUser(userId);
@@ -126,8 +134,13 @@ export class EntitlementServiceUBP implements EntitlementService {
         return new Promise((resolve, reject) => {
             // If any promise returns true, immediately resolve with true
             isTeamSubscribedPromises.forEach(async (isTeamSubscribedPromise: Promise<boolean>) => {
-                const isTeamSubscribed = await isTeamSubscribedPromise;
-                if (isTeamSubscribed) resolve(true);
+                try {
+                    const isTeamSubscribed = await isTeamSubscribedPromise;
+                    if (isTeamSubscribed) resolve(true);
+                } catch (err) {
+                    log.warn({ userId, organizationId }, "Error checking if user is subscribed to organization", err);
+                    resolve(false);
+                }
             });
 
             // If neither of the above fires, resolve with false
