@@ -381,9 +381,9 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
             defaultWorkspaceImage: settings.defaultWorkspaceImage,
             workspaceSharingDisabled: settings.workspaceSharingDisabled,
         };
-        // Set to undefine if defaultWorkspaceImage is empty string, so that it can fallback to default image
+        // Set to null if defaultWorkspaceImage is empty string, so that it can fallback to default image
         if (update.defaultWorkspaceImage?.trim() === "") {
-            update.defaultWorkspaceImage = undefined;
+            update.defaultWorkspaceImage = null;
         }
         if (!team) {
             await repo.insert({
