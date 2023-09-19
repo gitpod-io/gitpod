@@ -57,7 +57,9 @@ export default function ProjectSettingsView() {
     const history = useHistory();
     const refreshProjects = useRefreshProjects();
     const { toast } = useToast();
-    const [prebuildBranchPattern, setPrebuildBranchPattern] = useState<string>("");
+    const [prebuildBranchPattern, setPrebuildBranchPattern] = useState<string>(
+        project?.settings?.prebuildBranchPattern || "",
+    );
 
     const setProjectName = useCallback(
         (projectName: string) => {
@@ -240,7 +242,7 @@ export default function ProjectSettingsView() {
                             <option value="selectedBranches">Matched by pattern</option>
                         </SelectInputField>
                         {prebuildBranchStrategy === "selectedBranches" && (
-                            <div className="flex flex-col ml-6">
+                            <div className="flex flex-col ml-6 mt-2">
                                 <label
                                     htmlFor="selectedBranches"
                                     className={classNames(
@@ -253,11 +255,8 @@ export default function ProjectSettingsView() {
                                     Branch name pattern
                                 </label>
                                 <input
-                                    type="number"
+                                    type="text"
                                     id="selectedBranches"
-                                    min="0"
-                                    max="100"
-                                    step="5"
                                     className="mt-2"
                                     disabled={prebuildBranchStrategy !== "selectedBranches"}
                                     value={prebuildBranchPattern}
