@@ -483,11 +483,6 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.networkLimits.enforce 
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.networkLimits.connectionsPerMinute "3000"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.networkLimits.bucketSize "3000"
 
-#
-# Configure DB
-#
-yq w -i "${INSTALLER_CONFIG_PATH}" database.inClusterMySql_8_0 "true"
-
 log_success "Generated config at $INSTALLER_CONFIG_PATH"
 
 # ========

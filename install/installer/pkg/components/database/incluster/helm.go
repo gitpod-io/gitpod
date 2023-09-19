@@ -33,15 +33,11 @@ var Helm = common.CompositeHelmFunc(
 			Value string `json:"value,omitempty"`
 		}
 		extraEnvVars := []EnvVar{}
-		// MySQL 5.7: We switched to specific tags because we got subtle broken versions with just specifying major versions
-		mysqlBitnamiImageTag := "5.7.34-debian-10-r55"
-		if cfg.Config.Database.InClusterMysSQL_8_0 {
-			mysqlBitnamiImageTag = "8.0.33-debian-11-r24"
-			extraEnvVars = append(extraEnvVars, EnvVar{
-				Name:  "MYSQL_AUTHENTICATION_PLUGIN",
-				Value: "mysql_native_password",
-			})
-		}
+		mysqlBitnamiImageTag := "8.0.33-debian-11-r24"
+		extraEnvVars = append(extraEnvVars, EnvVar{
+			Name:  "MYSQL_AUTHENTICATION_PLUGIN",
+			Value: "mysql_native_password",
+		})
 		extraEnvVarsBytes, err := yaml.Marshal(extraEnvVars)
 		if err != nil {
 			return nil, err
