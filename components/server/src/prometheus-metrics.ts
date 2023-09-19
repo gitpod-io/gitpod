@@ -200,6 +200,7 @@ export type FailedInstanceStartReason =
     | "clusterSelectionFailed"
     | "startOnClusterFailed"
     | "imageBuildFailed"
+    | "imageBuildFailedUser"
     | "resourceExhausted"
     | "workspaceClusterMaintenance"
     | "other";

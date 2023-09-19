@@ -559,6 +559,7 @@ export class WorkspaceStarter {
                 additionalAuth,
                 forceRebuild,
                 forceRebuild,
+                abortSignal,
                 region,
             );
 
@@ -579,23 +580,23 @@ export class WorkspaceStarter {
             startRequest.setSpec(spec);
             startRequest.setServicePrefix(workspace.id);
 
-            if (instance.status.phase === "pending") {
-                // due to the reconciliation loop we might have already started the workspace, especially in the "pending" phase
-                const workspaceAlreadyExists = await this.existsWithWsManager(ctx, instance);
-                if (workspaceAlreadyExists) {
-                    log.debug(
-                        { instanceId: instance.id, workspaceId: instance.workspaceId },
-                        "workspace already exists, not starting again",
-                        { phase: instance.status.phase },
-                    );
-                    return;
-                }
-            }
-
             // choose a cluster and start the instance
             let resp: StartWorkspaceResponse.AsObject | undefined = undefined;
             let retries = 0;
             try {
+                if (instance.status.phase === "pending") {
+                    // due to the reconciliation loop we might have already started the workspace, especially in the "pending" phase
+                    const workspaceAlreadyExists = await this.existsWithWsManager(ctx, instance);
+                    if (workspaceAlreadyExists) {
+                        log.debug(
+                            { instanceId: instance.id, workspaceId: instance.workspaceId },
+                            "workspace already exists, not starting again",
+                            { phase: instance.status.phase },
+                        );
+                        return;
+                    }
+                }
+
                 for (; retries < MAX_INSTANCE_START_RETRIES; retries++) {
                     if (abortSignal.aborted) {
                         return;
@@ -659,6 +660,12 @@ export class WorkspaceStarter {
                 });
             }
         } catch (err) {
+            if (!(err instanceof StartInstanceError)) {
+                // fallback in case we did not already handle this error
+                await this.failInstanceStart({ span }, err, workspace, instance, abortSignal);
+                err = new StartInstanceError("other", err); // don't throw because there's nobody catching it. We just want to log/trace it.
+            }
+
             this.logAndTraceStartWorkspaceError({ span }, logCtx, err);
         } finally {
             if (abortSignal.aborted) {
@@ -811,8 +818,9 @@ export class WorkspaceStarter {
             // We may have never actually started the workspace which means that ws-manager-bridge never set a workspace status.
             // We have to set that status ourselves.
             instance.status.phase = "stopped";
-            instance.stoppingTime = new Date().toISOString();
-            instance.stoppedTime = new Date().toISOString();
+            const now = new Date().toISOString();
+            instance.stoppingTime = now;
+            instance.stoppedTime = now;
 
             instance.status.conditions.failed = err.toString();
             instance.status.message = `Workspace cannot be started: ${err}`;
@@ -1201,6 +1209,7 @@ export class WorkspaceStarter {
         additionalAuth: Map<string, string>,
         ignoreBaseImageresolvedAndRebuildBase: boolean = false,
         forceRebuild: boolean = false,
+        abortSignal: RedlockAbortSignal,
         region?: WorkspaceRegion,
     ): Promise<WorkspaceInstance> {
         const span = TraceContext.startSpan("buildWorkspaceImage", ctx);
@@ -1302,6 +1311,7 @@ export class WorkspaceStarter {
                         additionalAuth,
                         true,
                         forceRebuild,
+                        abortSignal,
                         region,
                     );
                 } else {
@@ -1338,24 +1348,8 @@ export class WorkspaceStarter {
             }
 
             // This instance's image build "failed" as well, so mark it as such.
-            const now = new Date().toISOString();
-            instance = await this.workspaceDb.trace({ span }).updateInstancePartial(instance.id, {
-                status: { ...instance.status, phase: "stopped", conditions: { failed: message }, message },
-                stoppedTime: now,
-                stoppingTime: now,
-            });
+            await this.failInstanceStart({ span }, err, workspace, instance, abortSignal);
 
-            // Mark the PrebuildWorkspace as failed
-            await this.failPrebuildWorkspace({ span }, err, workspace);
-
-            // Publish updated workspace instance
-            await this.publisher.publishInstanceUpdate({
-                workspaceID: workspace.ownerId,
-                instanceID: instance.id,
-                ownerID: workspace.ownerId,
-            });
-
-            TraceContext.setError({ span }, err);
             const looksLikeUserError = (msg: string): boolean => {
                 return msg.startsWith("build failed:") || msg.includes("headless task failed:");
             };
@@ -1365,6 +1359,8 @@ export class WorkspaceStarter {
                     `workspace image build failed: ${message}`,
                     { looksLikeUserError: true },
                 );
+                err = new StartInstanceError("imageBuildFailedUser", err);
+                // Don't report this as "failed" to our metrics as it would trigger an alert
             } else {
                 log.error(
                     { instanceId: instance.id, userId: user.id, workspaceId: workspace.id },
@@ -1963,6 +1959,9 @@ export class WorkspaceStarter {
             await client.describeWorkspace(ctx, req);
             return true;
         } catch (err) {
+            if (isClusterMaintenanceError(err)) {
+                throw err;
+            }
             return false;
         }
     }
