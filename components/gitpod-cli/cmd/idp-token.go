@@ -6,7 +6,10 @@ package cmd
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	connect "github.com/bufbuild/connect-go"
@@ -23,6 +26,7 @@ import (
 
 var idpTokenOpts struct {
 	Audience []string
+	Decode   bool
 }
 
 var idpTokenCmd = &cobra.Command{
@@ -35,6 +39,57 @@ var idpTokenCmd = &cobra.Command{
 		defer cancel()
 
 		tkn, err := idpToken(ctx, idpTokenOpts.Audience)
+
+		// If the user wants to decode the token, then do so.
+		if idpTokenOpts.Decode {
+			// Split the token into its three parts.
+			parts := strings.Split(tkn, ".")
+			if len(parts) != 3 {
+				xerrors.Errorf("JWT token is not valid")
+			}
+
+			// Decode the header.
+			header, err := base64.RawURLEncoding.DecodeString(parts[0])
+			if err != nil {
+				xerrors.Errorf("Failed to decode header: ", err)
+			}
+
+			// Decode the payload.
+			payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+			if err != nil {
+				xerrors.Errorf("Failed to decode payload: ", err)
+			}
+
+			// Unmarshal the header and payload into JSON.
+			var headerJSON map[string]interface{}
+			var payloadJSON map[string]interface{}
+
+			if err := json.Unmarshal(header, &headerJSON); err != nil {
+				xerrors.Errorf("Failed to unmarshal header: ", err)
+			}
+
+			if err := json.Unmarshal(payload, &payloadJSON); err != nil {
+				xerrors.Errorf("Failed to unmarshal payload: ", err)
+			}
+
+			// Marshal the JSON into a pretty format.
+			headerPretty, err := json.MarshalIndent(headerJSON, "", "  ")
+			if err != nil {
+				xerrors.Errorf("Failed to marshal header: ", err)
+			}
+
+			payloadPretty, err := json.MarshalIndent(payloadJSON, "", "  ")
+			if err != nil {
+				xerrors.Errorf("Failed to marshal payload: ", err)
+			}
+
+			// Print the pretty formatted header and payload.
+			fmt.Printf("Header: %s\n", headerPretty)
+			fmt.Printf("Payload: %s\n", payloadPretty)
+
+			return nil
+		}
+
 		if err != nil {
 			return err
 		}
@@ -86,4 +141,6 @@ func init() {
 
 	idpTokenCmd.Flags().StringArrayVar(&idpTokenOpts.Audience, "audience", nil, "audience of the ID token")
 	_ = idpTokenCmd.MarkFlagRequired("audience")
+
+	idpTokenCmd.Flags().BoolVar(&idpTokenOpts.Decode, "decode", false, "decode token to JSON")
 }
