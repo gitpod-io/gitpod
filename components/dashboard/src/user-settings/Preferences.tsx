@@ -12,7 +12,7 @@ import { ThemeSelector } from "../components/ThemeSelector";
 import Alert from "../components/Alert";
 import { Link } from "react-router-dom";
 import { Heading2, Heading3, Subheading } from "../components/typography/headings";
-import { useUserMaySetTimeout } from "../data/current-user/may-set-timeout-query";
+import { useMaySetTimeout } from "../data/current-user/may-set-timeout-query";
 import { Button } from "../components/Button";
 import SelectIDE from "./SelectIDE";
 import { InputField } from "../components/forms/InputField";
@@ -26,7 +26,7 @@ export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "pr
 export default function Preferences() {
     const { toast } = useToast();
     const { user, setUser } = useContext(UserContext);
-    const maySetTimeout = useUserMaySetTimeout();
+    const maySetTimeout = useMaySetTimeout();
     const updateDotfileRepo = useUpdateCurrentUserDotfileRepoMutation();
 
     const [dotfileRepo, setDotfileRepo] = useState<string>(user?.additionalData?.dotfileRepo || "");
@@ -57,7 +57,9 @@ export default function Preferences() {
                 const updatedUser = await getGitpodService().server.getLoggedInUser();
                 setUser(updatedUser);
 
-                toast("Your default workspace timeout was updated.");
+                toast(
+                    "Your default workspace timeout was updated. Note that this will only affect workspaces in paid organizations.",
+                );
             } catch (e) {
                 // TODO: Convert this to an error style toast
                 alert("Cannot set custom workspace timeout: " + e.message);
