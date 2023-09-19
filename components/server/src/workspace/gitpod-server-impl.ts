@@ -2512,6 +2512,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return this.organizationService.updateSettings(user.id, orgId, settings);
     }
 
+    async getDefaultWorkspaceImage(ctx: TraceContextWithSpan): Promise<string> {
+        const userId = this.userID;
+        traceAPIParams(ctx, { userId });
+        return this.config.workspaceDefaults.workspaceImage;
+    }
+
     public async getTeamProjects(ctx: TraceContext, teamId: string): Promise<Project[]> {
         traceAPIParams(ctx, { teamId });
 
