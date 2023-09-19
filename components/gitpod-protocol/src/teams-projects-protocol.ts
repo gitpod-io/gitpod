@@ -84,7 +84,9 @@ export namespace Project {
 
     export function getPrebuildBranchStrategy(project: Project): ProjectSettings.PrebuildBranchStrategy {
         if (typeof project.settings?.enablePrebuilds === "undefined") {
-            return "defaultBranch"; // default value for `settings.prebuildDefaultBranchOnly`
+            // returning "all branches" to mimic the default value of projects which were added
+            // before introduction of persisted settings for prebuilds.
+            return "allBranches";
         }
         if (typeof project.settings?.prebuildDefaultBranchOnly === "undefined") {
             return "defaultBranch"; // default value for `settings.prebuildDefaultBranchOnly`
