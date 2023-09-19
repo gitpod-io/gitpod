@@ -10,7 +10,7 @@
   "scripts": {
     "build": "mkdir -p lib && cp -f src/*.js src/*d.ts lib && tsc",
     "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput",
-    "test": "mocha './**/*.spec.ts' --exclude './node_modules/**'",
+    "test": "mocha './**/*.spec.ts' --exclude './node_modules/**' --exit",
     "test:brk": "yarn test --inspect-brk"
   },
   "mocha": {
@@ -19,12 +19,10 @@
       "reflect-metadata/Reflect",
       "source-map-support/register"
     ],
-    "spec": [
-      "src/**/*.spec.ts"
-    ],
     "extensions": [
       "ts"
-    ]
+    ],
+    "exit": true
   },
   "dependencies": {
     "@gitpod/content-service": "0.1.5",

@@ -42,7 +42,7 @@
         "lint": "yarn eslint src/*.ts src/**/*.ts",
         "lint:fix": "yarn eslint src/*.ts src/**/*.ts --fix",
         "test": "mocha './**/*.spec.ts' --exclude './node_modules/**'",
-        "test-debug": "mocha --inspect-brk './**/*.spec.ts' --exclude './node_modules/**'",
+        "test-debug": "mocha --inspect-brk './**/*.spec.ts' --exclude './node_modules/**' --exit",
         "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput"
     },
     "mocha": {
@@ -51,12 +51,10 @@
             "reflect-metadata/Reflect",
             "source-map-support/register"
         ],
-        "spec": [
-            "src/**/*.spec.ts"
-        ],
         "extensions": [
             "ts"
-        ]
+        ],
+        "exit": true
     },
     "dependencies": {
         "@types/react": "17.0.32",

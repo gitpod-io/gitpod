@@ -12,7 +12,7 @@
     "test": "yarn db-test",
     "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput",
     "db-test": "r(){ . $(leeway run components/gitpod-db:db-test-env); yarn db-test-run; };r",
-    "db-test-run": "mocha '**/*.spec.db.ts' --exclude './node_modules/**'",
+    "db-test-run": "mocha '**/*.spec.db.ts' --exclude './node_modules/**' --exit",
     "wait-for-db": "node ./lib/wait-for-db.js",
     "typeorm": "typeorm -f lib/typeorm/ormconfig",
     "migrate-migrations": "node ./lib/migrate-migrations.js",
@@ -26,13 +26,10 @@
       "reflect-metadata/Reflect",
       "source-map-support/register"
     ],
-    "spec": [
-      "src/**/*.spec.ts",
-      "src/**/*.spec.db.ts"
-    ],
     "extensions": [
       "ts"
-    ]
+    ],
+    "exit": true
   },
   "files": [
     "/lib"
