@@ -195,7 +195,7 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
                     ...settings,
                     ...newSettings,
                 });
-                if (newSettings.defaultWorkspaceImage) {
+                if (newSettings.defaultWorkspaceImage !== undefined) {
                     toast("Default workspace image has been updated.");
                 }
             } catch (error) {
