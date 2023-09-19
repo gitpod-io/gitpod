@@ -38,10 +38,7 @@ import { WorkspaceService } from "../workspace/workspace-service";
 import { minimatch as globMatch } from "minimatch";
 
 export class WorkspaceRunningError extends Error {
-    constructor(
-        msg: string,
-        public instance: WorkspaceInstance,
-    ) {
+    constructor(msg: string, public instance: WorkspaceInstance) {
         super(msg);
     }
 }
@@ -395,9 +392,12 @@ export class PrebuildManager {
                 return true;
             }
 
-            for (const pattern of branchNamePattern.split(",")) {
+            for (let pattern of branchNamePattern.split(",")) {
+                // prepending `**/` as branch names can be 'refs/heads/something/feature-x'
+                // and we want to allow simple patterns like: `feature-*`
+                pattern = "**/" + pattern.trim();
                 try {
-                    if (globMatch(branchName, pattern.trim())) {
+                    if (globMatch(branchName, pattern)) {
                         return true;
                     }
                 } catch (error) {
