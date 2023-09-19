@@ -25,7 +25,6 @@ export namespace Transformer {
 
     export const MAP_NULL_TO_UNDEFINED: ValueTransformer = {
         to(value: any): any {
-            console.log("=============MAP_NULL_TO_UNDEFINED.to", value);
             if (value === undefined) {
                 return null;
             }
