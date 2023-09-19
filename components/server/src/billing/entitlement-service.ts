@@ -122,7 +122,7 @@ export class EntitlementServiceImpl implements EntitlementService {
                     throw new Error("Unsupported billing mode: " + (billingMode as any).mode); // safety net
             }
         } catch (err) {
-            log.error({ userId: user.id }, "EntitlementService error: mayStartWorkspace", err);
+            log.warn({ userId: user.id }, "EntitlementService error: mayStartWorkspace", err);
             return {}; // When there is an EntitlementService error, we never want to break workspace starts
         }
     }
@@ -139,7 +139,7 @@ export class EntitlementServiceImpl implements EntitlementService {
                     return this.ubp.maySetTimeout(userId, organizationId);
             }
         } catch (err) {
-            log.error({ userId }, "EntitlementService error: maySetTimeout", err);
+            log.warn({ userId }, "EntitlementService error: maySetTimeout", err);
             return true;
         }
     }
@@ -154,7 +154,7 @@ export class EntitlementServiceImpl implements EntitlementService {
                     return this.ubp.getDefaultWorkspaceTimeout(userId, organizationId);
             }
         } catch (err) {
-            log.error({ userId }, "EntitlementService error: getDefaultWorkspaceTimeout", err);
+            log.warn({ userId }, "EntitlementService error: getDefaultWorkspaceTimeout", err);
             return WORKSPACE_TIMEOUT_DEFAULT_LONG;
         }
     }
@@ -169,7 +169,7 @@ export class EntitlementServiceImpl implements EntitlementService {
                     return this.ubp.getDefaultWorkspaceLifetime(userId, organizationId);
             }
         } catch (err) {
-            log.error({ userId }, "EntitlementService error: getDefaultWorkspaceLifetime", err);
+            log.warn({ userId }, "EntitlementService error: getDefaultWorkspaceLifetime", err);
             return WORKSPACE_LIFETIME_LONG;
         }
     }
@@ -188,7 +188,7 @@ export class EntitlementServiceImpl implements EntitlementService {
                     return this.ubp.limitNetworkConnections(userId, organizationId);
             }
         } catch (err) {
-            log.error({ userId }, "EntitlementService error: limitNetworkConnections", err);
+            log.warn({ userId }, "EntitlementService error: limitNetworkConnections", err);
             return false;
         }
     }
@@ -208,7 +208,7 @@ export class EntitlementServiceImpl implements EntitlementService {
                     return billingMode.paid ? "paid" : "free";
             }
         } catch (err) {
-            log.error({ userId }, "EntitlementService error: getBillingTier", err);
+            log.warn({ userId }, "EntitlementService error: getBillingTier", err);
             return "paid";
         }
     }
