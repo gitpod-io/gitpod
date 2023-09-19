@@ -93,6 +93,9 @@ type APIInterface interface {
 	SetTeamMemberRole(ctx context.Context, teamID, userID string, role TeamMemberRole) error
 	RemoveTeamMember(ctx context.Context, teamID, userID string) error
 
+	// Organization
+	GetOrgSettings(ctx context.Context, orgID string) (*OrganizationSettings, error)
+
 	// Projects
 	CreateProject(ctx context.Context, options *CreateProjectOptions) (*Project, error)
 	DeleteProject(ctx context.Context, projectID string) error
@@ -234,6 +237,10 @@ const (
 	FunctionRemoveTeamMember FunctionName = "removeTeamMember"
 	// FunctionDeleteTeam is the name of the deleteTeam function
 	FunctionDeleteTeam FunctionName = "deleteTeam"
+
+	// Organizations
+	// FunctionGetOrgSettings is the name of the getOrgSettings function
+	FunctionGetOrgSettings FunctionName = "getOrgSettings"
 
 	// Projects
 	FunctionCreateProject   FunctionName = "createProject"
@@ -1471,6 +1478,16 @@ func (gp *APIoverJSONRPC) DeleteTeam(ctx context.Context, teamID string) (err er
 	return
 }
 
+func (gp *APIoverJSONRPC) GetOrgSettings(ctx context.Context, orgID string) (res *OrganizationSettings, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	_params := []interface{}{orgID}
+	err = gp.C.Call(ctx, string(FunctionGetOrgSettings), _params, &res)
+	return
+}
+
 func (gp *APIoverJSONRPC) CreateProject(ctx context.Context, options *CreateProjectOptions) (res *Project, err error) {
 	if gp == nil {
 		err = errNotConnected
@@ -2236,6 +2253,11 @@ type TeamMembershipInvite struct {
 	CreationTime     string         `json:"creationTime,omitempty"`
 	InvalidationTime string         `json:"invalidationTime,omitempty"`
 	InvitedEmail     string         `json:"invitedEmail,omitempty"`
+}
+
+type OrganizationSettings struct {
+	WorkspaceSharingDisabled bool    `json:"workspaceSharingDisabled,omitempty"`
+	DefaultWorkspaceImage    *string `json:"defaultWorkspaceImage,omitempty"`
 }
 
 type Project struct {

@@ -329,6 +329,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         parentCtx: TraceContext,
         user: User,
         context: WorkspaceContext,
+        organizationId?: string,
         ignoreRunningPrebuild?: boolean,
         allowUsingPreviousPrebuilds?: boolean,
     ): Promise<WorkspaceCreationResult | PrebuiltWorkspaceContext | undefined> {
@@ -365,7 +366,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                     .trace(ctx)
                     .findPrebuiltWorkspaceByCommit(cloneUrl, commitSHAs);
                 if (!prebuiltWorkspace && allowUsingPreviousPrebuilds) {
-                    const { config } = await this.configProvider.fetchConfig({}, user, context);
+                    const { config } = await this.configProvider.fetchConfig({}, user, context, organizationId);
                     const history = await this.incrementalPrebuildsService.getCommitHistoryForContext(context, user);
                     prebuiltWorkspace = await this.incrementalPrebuildsService.findGoodBaseForIncrementalBuild(
                         context,
@@ -1343,6 +1344,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 ctx,
                 user,
                 context,
+                options.organizationId,
                 options.ignoreRunningPrebuild,
                 options.allowUsingPreviousPrebuilds || project?.settings?.allowUsingPreviousPrebuilds,
             );
@@ -2506,6 +2508,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("updateOrgSettings");
         traceAPIParams(ctx, { orgId, userId: user.id });
         await this.guardTeamOperation(orgId, "update");
+        // TODO: call ImageBuilder ResolveBaseImage to dry test if we can access this image
         return this.organizationService.updateSettings(user.id, orgId, settings);
     }
 

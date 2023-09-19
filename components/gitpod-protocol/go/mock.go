@@ -834,6 +834,21 @@ func (mr *MockAPIInterfaceMockRecorder) RemoveTeamMember(ctx, teamID, userID int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveTeamMember", reflect.TypeOf((*MockAPIInterface)(nil).RemoveTeamMember), ctx, teamID, userID)
 }
 
+// GetOrgSettings mocks base method.
+func (m *MockAPIInterface) GetOrgSettings(ctx context.Context, orgID string) (*OrganizationSettings, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOrgSettings", ctx, orgID)
+	ret0, _ := ret[0].(*OrganizationSettings)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOrgSettings indicates an expected call of GetOrgSettings.
+func (mr *MockAPIInterfaceMockRecorder) GetOrgSettings(ctx, orgID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrgSettings", reflect.TypeOf((*MockAPIInterface)(nil).GetOrgSettings), ctx, orgID)
+}
+
 // ResetGenericInvite mocks base method.
 func (m *MockAPIInterface) ResetGenericInvite(ctx context.Context, teamID string) (*TeamMembershipInvite, error) {
 	m.ctrl.T.Helper()

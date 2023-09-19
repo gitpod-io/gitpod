@@ -49,6 +49,7 @@ export class ConfigProvider {
         ctx: TraceContext,
         user: User,
         commit: CommitContext,
+        organizationId?: string,
     ): Promise<{ config: WorkspaceConfig; literalConfig?: ProjectConfig }> {
         const span = TraceContext.startSpan("fetchConfig", ctx);
         span.addTags({
@@ -74,7 +75,7 @@ export class ConfigProvider {
                     repoCloneUrl: commit.repository.cloneUrl,
                     revision: commit.revision,
                 });
-                const config = this.defaultConfig();
+                const config = await this.defaultConfig(organizationId);
                 if (!ImageConfigString.is(config.image)) {
                     throw new Error(`Default config must contain a base image!`);
                 }
@@ -84,7 +85,7 @@ export class ConfigProvider {
 
             const config = customConfig;
             if (!config.image) {
-                config.image = this.config.workspaceDefaults.workspaceImage;
+                config.image = await this.getDefaultImage(organizationId);
             } else if (ImageConfigFile.is(config.image)) {
                 const dockerfilePath = [configBasePath, config.image.file].filter((s) => !!s).join("/");
                 const repo = commit.repository;
@@ -129,7 +130,8 @@ export class ConfigProvider {
         }
     }
 
-    private async fetchCustomConfig(
+    // fetchCustomConfig entry is only used for unit tests data mocking
+    public async fetchCustomConfig(
         ctx: TraceContext,
         user: User,
         commit: CommitContext,
@@ -210,13 +212,24 @@ export class ConfigProvider {
         }
     }
 
-    public defaultConfig(): WorkspaceConfig {
+    public async defaultConfig(organizationId?: string): Promise<WorkspaceConfig> {
         return {
             ports: [],
             tasks: [],
-            image: this.config.workspaceDefaults.workspaceImage,
+            image: await this.getDefaultImage(organizationId),
             ideCredentials: crypto.randomBytes(32).toString("base64"),
         };
+    }
+
+    public async getDefaultImage(organizationId?: string) {
+        let defaultImage = this.config.workspaceDefaults.workspaceImage;
+        if (organizationId) {
+            const settings = await this.teamDB.findOrgSettings(organizationId);
+            if (settings?.defaultWorkspaceImage) {
+                defaultImage = settings.defaultWorkspaceImage;
+            }
+        }
+        return defaultImage;
     }
 
     private async fetchWorkspaceImageSourceDocker(

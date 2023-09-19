@@ -659,20 +659,26 @@ func (is *InfoService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) 
 
 // WorkspaceInfo provides information about the workspace.
 func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest) (*api.WorkspaceInfoResponse, error) {
+	defaultWorkspaceImage := is.cfg.DefaultWorkspaceImage
+	if defaultWorkspaceImage == "" {
+		// TODO: delete-me, added for compatibility before server is deployed / rollback
+		defaultWorkspaceImage = "gitpod/workspace-full:latest"
+	}
 	resp := &api.WorkspaceInfoResponse{
-		CheckoutLocation:     is.cfg.RepoRoot,
-		InstanceId:           is.cfg.WorkspaceInstanceID,
-		WorkspaceId:          is.cfg.WorkspaceID,
-		GitpodHost:           is.cfg.GitpodHost,
-		WorkspaceContextUrl:  is.cfg.WorkspaceContextURL,
-		WorkspaceClusterHost: is.cfg.WorkspaceClusterHost,
-		WorkspaceUrl:         is.cfg.WorkspaceUrl,
-		IdeAlias:             is.cfg.IDEAlias,
-		IdePort:              uint32(is.cfg.IDEPort),
-		WorkspaceClass:       &api.WorkspaceInfoResponse_WorkspaceClass{Id: is.cfg.WorkspaceClass},
-		OwnerId:              is.cfg.OwnerId,
-		DebugWorkspaceType:   is.cfg.DebugWorkspaceType,
-		ConfigcatEnabled:     is.cfg.ConfigcatEnabled,
+		CheckoutLocation:      is.cfg.RepoRoot,
+		InstanceId:            is.cfg.WorkspaceInstanceID,
+		WorkspaceId:           is.cfg.WorkspaceID,
+		DefaultWorkspaceImage: defaultWorkspaceImage,
+		GitpodHost:            is.cfg.GitpodHost,
+		WorkspaceContextUrl:   is.cfg.WorkspaceContextURL,
+		WorkspaceClusterHost:  is.cfg.WorkspaceClusterHost,
+		WorkspaceUrl:          is.cfg.WorkspaceUrl,
+		IdeAlias:              is.cfg.IDEAlias,
+		IdePort:               uint32(is.cfg.IDEPort),
+		WorkspaceClass:        &api.WorkspaceInfoResponse_WorkspaceClass{Id: is.cfg.WorkspaceClass},
+		OwnerId:               is.cfg.OwnerId,
+		DebugWorkspaceType:    is.cfg.DebugWorkspaceType,
+		ConfigcatEnabled:      is.cfg.ConfigcatEnabled,
 	}
 	if is.cfg.WorkspaceClassInfo != nil {
 		resp.WorkspaceClass.DisplayName = is.cfg.WorkspaceClassInfo.DisplayName

@@ -131,6 +131,7 @@ import { SYSTEM_USER } from "../authorization/authorizer";
 import { EnvVarService, ResolvedEnvVars } from "../user/env-var-service";
 import { RedlockAbortSignal } from "redlock";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { ConfigProvider } from "./config-provider";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
@@ -201,6 +202,7 @@ export class WorkspaceStarter {
     constructor(
         @inject(WorkspaceManagerClientProvider) private readonly clientProvider: WorkspaceManagerClientProvider,
         @inject(Config) private readonly config: Config,
+        @inject(ConfigProvider) private readonly configProvider: ConfigProvider,
         @inject(IDEService) private readonly ideService: IDEService,
         @inject(TracedWorkspaceDB) private readonly workspaceDb: DBWithTracing<WorkspaceDB>,
         @inject(TracedUserDB) private readonly userDB: DBWithTracing<UserDB>,
@@ -1562,6 +1564,11 @@ export class WorkspaceStarter {
             ev.setValue(e.value);
             sysEnvvars.push(ev);
         }
+
+        const orgIdEnv = new EnvironmentVariable();
+        orgIdEnv.setName("GITPOD_DEFAULT_WORKSPACE_IMAGE");
+        orgIdEnv.setValue(await this.configProvider.getDefaultImage(workspace.organizationId));
+        sysEnvvars.push(orgIdEnv);
 
         const spec = new StartWorkspaceSpec();
         await createGitpodTokenPromise;

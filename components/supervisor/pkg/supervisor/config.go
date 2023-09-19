@@ -243,6 +243,9 @@ type WorkspaceConfig struct {
 	// WorkspaceClassInfo denotes the detail of workspace class
 	WorkspaceClassInfo *WorkspaceClassInfo `env:"GITPOD_WORKSPACE_CLASS_INFO"`
 
+	// DefaultWorkspaceImage is the default image of current workspace
+	DefaultWorkspaceImage string `env:"GITPOD_DEFAULT_WORKSPACE_IMAGE"`
+
 	// IDEPort is the port at which the IDE will need to run on. This is not an IDE config
 	// because Gitpod determines this port, not the IDE.
 	IDEPort int `env:"GITPOD_THEIA_PORT"`

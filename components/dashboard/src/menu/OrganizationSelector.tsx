@@ -70,19 +70,19 @@ export default function OrganizationSelector() {
             separator: false,
             link: "/usage",
         });
-    }
-
-    // Show billing & settings if user is an owner of current org
-    if (currentOrg.data && currentOrg.data.isOwner) {
-        if (billingMode?.mode === "usage-based") {
-            linkEntries.push({
-                title: "Billing",
-                customContent: <LinkEntry>Billing</LinkEntry>,
-                active: false,
-                separator: false,
-                link: "/billing",
-            });
+        // Show billing if user is an owner of current org
+        if (currentOrg.data.isOwner) {
+            if (billingMode?.mode === "usage-based") {
+                linkEntries.push({
+                    title: "Billing",
+                    customContent: <LinkEntry>Billing</LinkEntry>,
+                    active: false,
+                    separator: false,
+                    link: "/billing",
+                });
+            }
         }
+        // Org settings is available for all members, but only owner can change them
         linkEntries.push({
             title: "Settings",
             customContent: <LinkEntry>Settings</LinkEntry>,
