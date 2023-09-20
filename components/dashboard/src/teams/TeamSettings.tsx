@@ -223,7 +223,7 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
 
             <Heading2 className="pt-12">Workspace Images</Heading2>
             <Subheading className="max-w-2xl">
-                Choose which workspace images you want to use for your workspaces.
+                Choose a default image for all workspaces in the organization.
             </Subheading>
 
             <WorkspaceImageButton
