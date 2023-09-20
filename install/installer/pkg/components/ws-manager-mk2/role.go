@@ -135,6 +135,7 @@ var leaderElectionRules = []rbacv1.PolicyRule{
 		Verbs: []string{
 			"create",
 			"patch",
+			// necessary to inspect pod events for image pull times
 			"list",
 			"get",
 		},

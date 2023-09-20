@@ -317,7 +317,7 @@ func (r *WorkspaceReconciler) logImagePullDuration(ctx context.Context, pod *cor
 	log := log.FromContext(ctx)
 
 	eventList := &corev1.EventList{}
-	eventListOpts := client.MatchingFields{"involvedObject.uid": string(pod.UID)}
+	eventListOpts := client.MatchingFields{"involvedObject.name": string(pod.Name)}
 	err := r.Client.List(ctx, eventList, eventListOpts)
 	if err != nil {
 		log.Error(err, "cannot list events for workspace pod", "pod", pod.Name)
