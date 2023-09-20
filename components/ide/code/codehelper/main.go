@@ -61,14 +61,21 @@ func main() {
 	}
 	phaseDone()
 
+	url, err := url.Parse(wsInfo.GitpodHost)
+	if err != nil {
+		log.WithError(err).Errorf("failed to parse GitpodHost %s", wsInfo.GitpodHost)
+		return
+	}
+	domain := url.Hostname()
+
 	if wsInfo.DebugWorkspaceType != supervisor.DebugWorkspaceType_noDebug {
 		// TODO actually should be performed always
 		// the better way would be to apply replacements during a workspace start
 		// to aling with content in blobserve
-		if err := prepareWebWorkbenchMain(wsInfo); err != nil {
+		if err := prepareWebWorkbenchMain(domain); err != nil {
 			log.WithError(err).Error("failed to prepare web workbench")
 		}
-		if err := prepareServerMain(wsInfo); err != nil {
+		if err := prepareServerMain(domain); err != nil {
 			log.WithError(err).Error("failed to prepare server")
 		}
 	}
@@ -132,8 +139,9 @@ func main() {
 	args = append(args, os.Args[1:]...)
 	args = append(args, "--do-not-sync")
 	args = append(args, "--start-server")
+	cmdEnv := append(os.Environ(), fmt.Sprintf("GITPOD_CODE_HOST=%s", domain))
 	log.WithField("cost", time.Now().Local().Sub(startTime).Milliseconds()).Info("starting server")
-	if err := syscall.Exec(Code, append([]string{"gitpod-code"}, args...), os.Environ()); err != nil {
+	if err := syscall.Exec(Code, append([]string{"gitpod-code"}, args...), cmdEnv); err != nil {
 		log.WithError(err).Error("install ext and start code server failed")
 	}
 }
@@ -246,18 +254,13 @@ func replaceOpenVSXUrl() error {
 
 // TODO it is be applied as well by blobserve if served for regular workspace location
 // reconsider how to configure in all modes, i.e. regular, debug, dev
-func prepareWebWorkbenchMain(wsInfo *supervisor.WorkspaceInfoResponse) error {
+func prepareWebWorkbenchMain(domain string) error {
 	phase := phaseLogging("prepareWebWorkbenchMain")
 	defer phase()
 	b, err := os.ReadFile(WebWorkbenchMainLocation)
 	if err != nil {
 		return errors.New("failed to read " + WebWorkbenchMainLocation + ": " + err.Error())
 	}
-	url, err := url.Parse(wsInfo.GitpodHost)
-	if err != nil {
-		return errors.New("failed to parse " + wsInfo.GitpodHost + ": " + err.Error())
-	}
-	domain := url.Hostname()
 	b = bytes.ReplaceAll(b, []byte("vscode-cdn.net"), []byte(domain))
 	b = bytes.ReplaceAll(b, []byte("ide.gitpod.io/code/markeplace.json"), []byte(fmt.Sprintf("ide.%s/code/marketplace.json", domain)))
 
@@ -269,18 +272,13 @@ func prepareWebWorkbenchMain(wsInfo *supervisor.WorkspaceInfoResponse) error {
 	return nil
 }
 
-func prepareServerMain(wsInfo *supervisor.WorkspaceInfoResponse) error {
+func prepareServerMain(domain string) error {
 	phase := phaseLogging("prepareServerMain")
 	defer phase()
 	b, err := os.ReadFile(ServerMainLocation)
 	if err != nil {
 		return errors.New("failed to read " + ServerMainLocation + ": " + err.Error())
 	}
-	url, err := url.Parse(wsInfo.GitpodHost)
-	if err != nil {
-		return errors.New("failed to parse " + wsInfo.GitpodHost + ": " + err.Error())
-	}
-	domain := url.Hostname()
 	b = bytes.ReplaceAll(b, []byte("https://*.vscode-cdn.net"), []byte(fmt.Sprintf("https://%s https://*.%s", domain, domain)))
 	if err := os.WriteFile(ServerMainLocation, b, 0644); err != nil {
 		return errors.New("failed to write " + ServerMainLocation + ": " + err.Error())
