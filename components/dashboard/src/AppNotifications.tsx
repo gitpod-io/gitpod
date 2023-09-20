@@ -7,6 +7,10 @@
 import { useCallback, useEffect, useState } from "react";
 import Alert, { AlertType } from "./components/Alert";
 import { useFeatureFlag } from "./data/featureflag-query";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+import advancedFormat from "dayjs/plugin/advancedFormat";
 
 const KEY_APP_DISMISSED_NOTIFICATIONS = "gitpod-app-notifications-dismissed";
 
@@ -16,13 +20,23 @@ interface Notification {
     message: JSX.Element;
 }
 
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(advancedFormat);
+
+function localizedTime(dateStr: string): JSX.Element {
+    const formatted = dayjs.utc(dateStr).local().format("dddd, MMM. D, HH:mm (z)");
+    return <time dateTime={dateStr}>{formatted}</time>;
+}
+
 const SCHEDULED_DOWNTIME: Notification = {
     id: "230924-scheduled-downtime",
     type: "info",
     message: (
         <span className="text-md">
-            To improve the reliability of gitpod.io we are performing a scheduled maintenance this{" "}
-            <span className="font-semibold">Sunday, Sept. 24th, 05:00-06:00 UTC</span>.{" "}
+            Gitpod will be uncharacteristically unavailable for essential maintenance beginning{" "}
+            <span className="font-semibold">{localizedTime("2023-09-24T05:00:00.000Z")}</span> and lasting up to one
+            hour. We apologize for any inconvenience this may cause.{" "}
             <a
                 className="gp-link"
                 href="https://www.gitpodstatus.com/incidents/0d5vlgxcp27v"
