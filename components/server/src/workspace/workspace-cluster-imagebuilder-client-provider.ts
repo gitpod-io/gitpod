@@ -31,8 +31,8 @@ export class WorkspaceClusterImagebuilderClientProvider implements ImageBuilderC
 
     async getClient(
         user: User,
-        workspace: Workspace,
-        instance: WorkspaceInstance,
+        workspace?: Workspace,
+        instance?: WorkspaceInstance,
         region?: WorkspaceRegion,
     ): Promise<PromisifiedImageBuilderClient> {
         const clusters = await this.clientProvider.getStartClusterSets(user, workspace, instance, region);

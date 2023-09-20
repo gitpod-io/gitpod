@@ -5,6 +5,7 @@
  */
 
 import { scrubber } from "../util/scrubbing";
+import { Status } from "nice-grpc-common";
 
 export class ApplicationError extends Error {
     constructor(public readonly code: ErrorCode, message: string, public readonly data?: any) {
@@ -35,6 +36,33 @@ export namespace ApplicationError {
             }
             throw e;
         }
+    }
+
+    export function fromGRPCError(e: any & Error, data?: any): ApplicationError {
+        // Argument e should be ServerErrorResponse
+        // But to reduce dependency requirement, we use Error here
+        return new ApplicationError(categorizeRPCError(e.code), e.message, data);
+    }
+
+    export function categorizeRPCError(code?: Status): ErrorCode {
+        // Mostly align to https://github.com/gitpod-io/gitpod/blob/ef95e6f3ca0bf314c40da1b83251423c2208d175/components/public-api-server/pkg/proxy/errors.go#L25
+        switch (code) {
+            case Status.INVALID_ARGUMENT:
+                return ErrorCodes.BAD_REQUEST;
+            case Status.UNAUTHENTICATED:
+                return ErrorCodes.NOT_AUTHENTICATED;
+            case Status.PERMISSION_DENIED:
+                return ErrorCodes.PERMISSION_DENIED; // or UserBlocked
+            case Status.NOT_FOUND:
+                return ErrorCodes.NOT_FOUND;
+            case Status.ALREADY_EXISTS:
+                return ErrorCodes.CONFLICT;
+            case Status.FAILED_PRECONDITION:
+                return ErrorCodes.PRECONDITION_FAILED;
+            case Status.RESOURCE_EXHAUSTED:
+                return ErrorCodes.TOO_MANY_REQUESTS;
+        }
+        return ErrorCodes.INTERNAL_SERVER_ERROR;
     }
 }
 

@@ -33,7 +33,7 @@ export const ImageBuilderClientProvider = Symbol("ImageBuilderClientProvider");
 export interface ImageBuilderClientProvider {
     getClient(
         user: User,
-        workspace: Workspace,
+        workspace?: Workspace,
         instance?: WorkspaceInstance,
         region?: string,
     ): Promise<PromisifiedImageBuilderClient>;
@@ -96,7 +96,7 @@ export class CachingImageBuilderClientProvider implements ImageBuilderClientProv
         return connection;
     }
 
-    async getClient(user: User, workspace: Workspace, instance?: WorkspaceInstance) {
+    async getClient(user: User, workspace?: Workspace, instance?: WorkspaceInstance) {
         return this.getDefault();
     }
 
