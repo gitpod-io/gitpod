@@ -132,6 +132,7 @@ import { EnvVarService, ResolvedEnvVars } from "../user/env-var-service";
 import { RedlockAbortSignal } from "redlock";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { ConfigProvider } from "./config-provider";
+import { isGrpcError } from "@gitpod/gitpod-protocol/lib/util/grpc";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
@@ -660,7 +661,9 @@ export class WorkspaceStarter {
                 });
             }
         } catch (err) {
-            if (!(err instanceof StartInstanceError)) {
+            if (isGrpcError(err) && (err.code === grpc.status.UNAVAILABLE || err.code === grpc.status.ALREADY_EXISTS)) {
+                // fall-through: we don't want to fail but retry/wait for future updates to resolve this
+            } else if (!(err instanceof StartInstanceError)) {
                 // fallback in case we did not already handle this error
                 await this.failInstanceStart({ span }, err, workspace, instance, abortSignal);
                 err = new StartInstanceError("other", err); // don't throw because there's nobody catching it. We just want to log/trace it.

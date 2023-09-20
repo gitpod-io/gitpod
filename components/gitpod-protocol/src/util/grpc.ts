@@ -105,3 +105,7 @@ export function createClientCallMetricsInterceptor(metrics: IClientCallMetrics):
         return new grpc.InterceptingCall(nextCall(options), requester);
     };
 }
+
+export function isGrpcError(err: any): err is grpc.StatusObject {
+    return err.code && err.details;
+}
