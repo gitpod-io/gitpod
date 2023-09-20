@@ -5,7 +5,7 @@
  */
 
 import { OrganizationSettings } from "@gitpod/gitpod-protocol";
-import React, { ReactChild, useCallback, useState } from "react";
+import React, { Children, ReactNode, useCallback, useMemo, useState } from "react";
 import Alert from "../components/Alert";
 import { Button } from "../components/Button";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
@@ -275,16 +275,30 @@ function WorkspaceImageButton(props: {
 
     const image = props.settings?.defaultWorkspaceImage ?? props.defaultWorkspaceImage ?? "";
 
-    let description: ReactChild | undefined = undefined;
-    if (props.disabled) {
-        description = (
-            <>
-                Requires <span className="font-medium">Owner</span> permissions to change
-            </>
-        );
-    } else if (!props.settings?.defaultWorkspaceImage) {
-        description = <>Default image</>;
-    }
+    const descList = useMemo(() => {
+        const arr: ReactNode[] = [];
+        if (!props.settings?.defaultWorkspaceImage) {
+            arr.push(<span className="font-medium">Default image</span>);
+        }
+        if (props.disabled) {
+            arr.push(
+                <>
+                    Requires <span className="font-medium">Owner</span> permissions to change
+                </>,
+            );
+        }
+        return arr;
+    }, [props.settings, props.disabled]);
+
+    const renderedDescription = useMemo(() => {
+        return Children.toArray(descList).reduce((acc: ReactNode[], child, index) => {
+            acc.push(child);
+            if (index < descList.length - 1) {
+                acc.push(<>&nbsp;&middot;&nbsp;</>);
+            }
+            return acc;
+        }, []);
+    }, [descList]);
 
     return (
         <InputField disabled={props.disabled} className="w-full max-w-lg">
@@ -308,7 +322,9 @@ function WorkspaceImageButton(props: {
                         </Button>
                     )}
                 </div>
-                {description && <div className="ml-6 truncate text-gray-400 dark:text-gray-500">{description}</div>}
+                {descList.length > 0 && (
+                    <div className="mx-6 text-gray-400 dark:text-gray-500 truncate">{renderedDescription}</div>
+                )}
             </div>
         </InputField>
     );
