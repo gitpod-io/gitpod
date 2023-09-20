@@ -340,7 +340,7 @@ function OrgDefaultWorkspaceImageModal(props: OrgDefaultWorkspaceImageModalProps
                 <div className="mt-4">
                     <TextInputField
                         label="Default Image"
-                        hint="Use any official or custom workspace image from Docker Hub, or any from private container registries that the instance can access."
+                        hint="Use any official or custom workspace image from Docker Hub or any private container registry that the instance can access."
                         placeholder={props.globalDefaultImage}
                         value={defaultWorkspaceImage}
                         onChange={setDefaultWorkspaceImage}
