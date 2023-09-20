@@ -28,6 +28,7 @@ export * from "./email-domain-filter-db";
 export * from "./project-db";
 export * from "./team-db";
 export * from "./webhook-event-db";
+export * from "./webhook-installation-db";
 export * from "./typeorm/metrics";
 export * from "./personal-access-token-db";
 export * from "./typeorm/entity/db-personal-access-token";

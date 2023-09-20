@@ -13,16 +13,22 @@ import { BitbucketApp } from "./bitbucket-app";
 import { Config } from "../config";
 import { TokenService } from "../user/token-service";
 import { BitbucketContextParser } from "../bitbucket/bitbucket-context-parser";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class BitbucketService extends RepositoryService {
     static PREBUILD_TOKEN_SCOPE = "prebuilds";
 
-    @inject(BitbucketApiFactory) protected api: BitbucketApiFactory;
-    @inject(Config) protected readonly config: Config;
-    @inject(AuthProviderParams) protected authProviderConfig: AuthProviderParams;
-    @inject(TokenService) protected tokenService: TokenService;
-    @inject(BitbucketContextParser) protected bitbucketContextParser: BitbucketContextParser;
+    constructor(
+        @inject(BitbucketApiFactory) private api: BitbucketApiFactory,
+        @inject(Config) private readonly config: Config,
+        @inject(AuthProviderParams) private authProviderConfig: AuthProviderParams,
+        @inject(TokenService) private tokenService: TokenService,
+        @inject(BitbucketContextParser) private bitbucketContextParser: BitbucketContextParser,
+    ) {
+        super();
+    }
 
     async canInstallAutomatedPrebuilds(user: User, cloneUrl: string): Promise<boolean> {
         const { host, owner, repoName } = await this.bitbucketContextParser.parseURL(user, cloneUrl);
@@ -38,7 +44,7 @@ export class BitbucketService extends RepositoryService {
         return !!response.data?.values && response.data.values[0]?.permission === "admin";
     }
 
-    async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<void> {
+    async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<string> {
         try {
             const api = await this.api.create(user);
             const { owner, repoName } = await this.bitbucketContextParser.parseURL(user, cloneUrl);
@@ -47,12 +53,18 @@ export class BitbucketService extends RepositoryService {
                 workspace: owner,
             });
             const hookUrl = this.getHookUrl();
-            if (
-                existing.data.values &&
-                existing.data.values.some((hook) => hook.url && hook.url.indexOf(hookUrl) !== -1)
-            ) {
-                console.log(`bitbucket webhook already installed on ${owner}/${repoName}`);
-                return;
+            const existingGitpodHook = existing.data.values
+                ? existing.data.values.find((hook) => hook.url && hook.url.indexOf(hookUrl) !== -1)
+                : undefined;
+            if (existingGitpodHook) {
+                log.info(`bitbucket webhook already installed on ${owner}/${repoName}`);
+                if (!existingGitpodHook.uuid) {
+                    throw new ApplicationError(
+                        ErrorCodes.CONFLICT,
+                        `Couldn't install webhook for ${cloneUrl}: existing webhook has no uuid`,
+                    );
+                }
+                return existingGitpodHook.uuid;
             }
             const tokenEntry = await this.tokenService.createGitpodToken(
                 user,
@@ -71,15 +83,38 @@ export class BitbucketService extends RepositoryService {
                 },
             });
             if (response.status !== 201) {
-                throw new Error(`Couldn't install webhook for ${cloneUrl}: ${response.status}`);
+                throw new ApplicationError(
+                    ErrorCodes.CONFLICT,
+                    `Couldn't install webhook for ${cloneUrl}: ${response.status}`,
+                );
             }
-            console.log("Installed Bitbucket Webhook for " + cloneUrl);
+            log.info("Installed Bitbucket Webhook for " + cloneUrl);
+            if (!response.data.uuid) {
+                throw new ApplicationError(
+                    ErrorCodes.CONFLICT,
+                    `Couldn't install webhook for ${cloneUrl}: webhook has no uuid`,
+                );
+            }
+            return response.data.uuid;
         } catch (error) {
-            console.error("Failed to install Bitbucket webhook for " + cloneUrl, error);
+            throw new ApplicationError(ErrorCodes.CONFLICT, `Couldn't install webhook for ${cloneUrl}: ` + error, {
+                error,
+            });
         }
     }
 
-    protected getHookUrl() {
+    async uninstallAutomatedPrebuilds(user: User, cloneUrl: string, webhookId: string): Promise<void> {
+        const api = await this.api.create(user);
+        const { owner, repoName } = await this.bitbucketContextParser.parseURL(user, cloneUrl);
+
+        await api.repositories.deleteWebhook({
+            uid: webhookId,
+            repo_slug: repoName,
+            workspace: owner,
+        });
+    }
+
+    private getHookUrl() {
         return this.config.hostUrl
             .asPublicServices()
             .with({

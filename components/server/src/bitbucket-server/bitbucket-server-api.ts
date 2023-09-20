@@ -311,13 +311,26 @@ export class BitbucketServerApi {
         user: User,
         params: { repoKind: "projects" | "users"; owner: string; repositorySlug: string },
         webhook: BitbucketServer.WebhookParams,
-    ) {
+    ): Promise<BitbucketServer.Webhook> {
         const body = JSON.stringify(webhook);
-        return this.runQuery<any>(
+        const result = await this.runQuery<BitbucketServer.Webhook>(
             user,
             `/${params.repoKind}/${params.owner}/repos/${params.repositorySlug}/webhooks`,
             "POST",
             body,
+        );
+        return result;
+    }
+
+    async deleteWebhook(
+        user: User,
+        params: { repoKind: "projects" | "users"; owner: string; repositorySlug: string },
+        webhookId: string,
+    ): Promise<void> {
+        await this.runQuery<void>(
+            user,
+            `/${params.repoKind}/${params.owner}/repos/${params.repositorySlug}/webhooks/${webhookId}`,
+            "DELETE",
         );
     }
 

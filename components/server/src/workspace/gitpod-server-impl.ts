@@ -30,7 +30,6 @@ import {
     PrebuiltWorkspace,
     PrebuiltWorkspaceContext,
     SetWorkspaceTimeoutResult,
-    StartPrebuildContext,
     StartWorkspaceResult,
     Token,
     User,
@@ -1303,30 +1302,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             // if we're forced to use the default config, mark the context as such
             if (!!options.forceDefaultConfig) {
                 context = WithDefaultConfig.mark(context);
-            }
-
-            // if this is an explicit prebuild, check if the user wants to install an app.
-            if (
-                StartPrebuildContext.is(context) &&
-                CommitContext.is(context.actual) &&
-                context.actual.repository.cloneUrl
-            ) {
-                const cloneUrl = context.actual.repository.cloneUrl;
-                const host = new URL(cloneUrl).hostname;
-                const hostContext = this.hostContextProvider.get(host);
-                const services = hostContext && hostContext.services;
-                if (!hostContext || !services) {
-                    console.error("Unknown host: " + host);
-                } else {
-                    // on purpose to not await on that installation process, because it‘s not required of workspace start
-                    // See https://github.com/gitpod-io/gitpod/pull/6420#issuecomment-953499632 for more detail
-                    (async () => {
-                        if (await services.repositoryService.canInstallAutomatedPrebuilds(user, cloneUrl)) {
-                            console.log("Installing automated prebuilds for " + cloneUrl);
-                            await services.repositoryService.installAutomatedPrebuilds(user, cloneUrl);
-                        }
-                    })().catch((e) => console.error("Install automated prebuilds failed", e));
-                }
             }
 
             if (!options.ignoreRunningWorkspaceOnSameCommit && !context.forceCreateNewWorkspace) {

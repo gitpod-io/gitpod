@@ -46,22 +46,32 @@ export class ScmService {
         return false;
     }
 
-    async installWebhookForPrebuilds(project: Project, installer: User) {
-        // Install the prebuilds webhook if possible
+    /*
+     * Installs a prebuilds webhook if possible
+     */
+    async installWebhookForPrebuilds(project: Project, installer: User): Promise<string | undefined> {
         const { teamId, cloneUrl } = project;
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
-        const authProvider = hostContext && hostContext.authProvider.info;
-        const isGitHubAppInUse = authProvider?.host === "github.com" && !!this.config.githubApp?.enabled;
-        if (isGitHubAppInUse) {
-            // Silently returning here, as the configuration of the GH App is on a different code path
-            // and this check will become just obsolete on the departure of the GH App.
-            return;
-        }
         const repositoryService = hostContext?.services?.repositoryService;
-        if (repositoryService) {
-            log.info({ organizationId: teamId, userId: installer.id }, "Update prebuild installation for project.");
-            await repositoryService.installAutomatedPrebuilds(installer, cloneUrl);
+        if (repositoryService && (await repositoryService.canInstallAutomatedPrebuilds(installer, project.cloneUrl))) {
+            log.info({ organizationId: teamId, userId: installer.id }, "Update prebuild installation for project.", {
+                projectId: project.id,
+            });
+            return await repositoryService.installAutomatedPrebuilds(installer, cloneUrl);
+        }
+        return undefined;
+    }
+
+    /*
+     * Uninstalls a prebuilds webhook if possible
+     */
+    async uninstallWebhookForPrebuilds(installer: User, cloneUrl: string, webhookId: string): Promise<void> {
+        const parsedUrl = RepoURL.parseRepoUrl(cloneUrl);
+        const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
+        const repositoryService = hostContext?.services?.repositoryService;
+        if (repositoryService && (await repositoryService.canInstallAutomatedPrebuilds(installer, cloneUrl))) {
+            await repositoryService.uninstallAutomatedPrebuilds(installer, cloneUrl, webhookId);
         }
     }
 }

@@ -45,6 +45,8 @@ import { LinkedInProfileDB } from "./linked-in-profile-db";
 import { DataCache, DataCacheNoop } from "./data-cache";
 import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { EncryptionService, GlobalEncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
+import { WebhookInstallationDBImpl } from "./typeorm/webhook-installation-db-impl";
+import { WebhookInstallationDB } from "./webhook-installation-db";
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = (cacheClass = DataCacheNoop) =>
@@ -108,6 +110,8 @@ export const dbContainerModule = (cacheClass = DataCacheNoop) =>
         bind(ProjectDB).toService(ProjectDBImpl);
         bind(WebhookEventDBImpl).toSelf().inSingletonScope();
         bind(WebhookEventDB).toService(WebhookEventDBImpl);
+        bind(WebhookInstallationDBImpl).toSelf().inSingletonScope();
+        bind(WebhookInstallationDB).toService(WebhookInstallationDBImpl);
 
         bind(PersonalAccessTokenDBImpl).toSelf().inSingletonScope();
         bind(PersonalAccessTokenDB).toService(PersonalAccessTokenDBImpl);

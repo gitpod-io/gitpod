@@ -14,6 +14,7 @@ import { Config } from "../config";
 import { TokenService } from "../user/token-service";
 import { BitbucketServerApp } from "./bitbucket-server-app";
 import { CancellationToken } from "vscode-jsonrpc";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 @injectable()
 export class BitbucketServerService extends RepositoryService {
@@ -67,7 +68,7 @@ export class BitbucketServerService extends RepositoryService {
         return true;
     }
 
-    async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<void> {
+    async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<string> {
         const { owner, repoName, repoKind } = await this.contextParser.parseURL(user, cloneUrl);
 
         const existing = await this.api.getWebhooks(user, {
@@ -78,7 +79,7 @@ export class BitbucketServerService extends RepositoryService {
         const hookUrl = this.getHookUrl();
         if (existing.values && existing.values.some((hook) => hook.url && hook.url.indexOf(hookUrl) !== -1)) {
             console.log(`BBS webhook already installed.`, { cloneUrl });
-            return;
+            return "" + existing.values[0].id;
         }
         const tokenEntry = await this.tokenService.createGitpodToken(
             user,
@@ -86,7 +87,7 @@ export class BitbucketServerService extends RepositoryService {
             cloneUrl,
         );
         try {
-            await this.api.setWebhook(
+            const result = await this.api.setWebhook(
                 user,
                 { repoKind, repositorySlug: repoName, owner },
                 {
@@ -100,9 +101,27 @@ export class BitbucketServerService extends RepositoryService {
                 },
             );
             console.log("BBS: webhook installed.", { cloneUrl });
+            return "" + result.id;
         } catch (error) {
-            console.error(`BBS: webhook installation failed.`, error, { cloneUrl, error });
+            throw new ApplicationError(ErrorCodes.CONFLICT, `Webhook installation failed: ` + error, {
+                cloneUrl,
+                error,
+            });
         }
+    }
+
+    async uninstallAutomatedPrebuilds(user: User, cloneUrl: string, webhookId: string): Promise<void> {
+        const { owner, repoName, repoKind } = await this.contextParser.parseURL(user, cloneUrl);
+
+        await this.api.deleteWebhook(
+            user,
+            {
+                repoKind,
+                repositorySlug: repoName,
+                owner,
+            },
+            webhookId,
+        );
     }
 
     protected getHookUrl() {

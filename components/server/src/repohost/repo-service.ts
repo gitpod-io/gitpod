@@ -21,7 +21,11 @@ export class RepositoryService {
         return false;
     }
 
-    async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<void> {
+    async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<string> {
+        throw new Error("unsupported");
+    }
+
+    async uninstallAutomatedPrebuilds(user: User, cloneUrl: string, webhookId: string): Promise<void> {
         throw new Error("unsupported");
     }
 }

@@ -5,7 +5,14 @@
  */
 
 import { inject, injectable } from "inversify";
-import { DBWithTracing, ProjectDB, TracedWorkspaceDB, WebhookEventDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import {
+    DBWithTracing,
+    ProjectDB,
+    TracedWorkspaceDB,
+    WebhookEventDB,
+    WebhookInstallationDB,
+    WorkspaceDB,
+} from "@gitpod/gitpod-db/lib";
 import {
     Branch,
     PrebuildWithStatus,
@@ -34,6 +41,7 @@ export class ProjectsService {
 
     constructor(
         @inject(ProjectDB) private readonly projectDB: ProjectDB,
+        @inject(WebhookInstallationDB) private readonly webhookInstallationDB: WebhookInstallationDB,
         @inject(TracedWorkspaceDB) private readonly workspaceDb: DBWithTracing<WorkspaceDB>,
         @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
@@ -381,11 +389,28 @@ export class ProjectsService {
             const installWebhook = enablePrebuildsNew && !enablePrebuildsPrev;
             const uninstallWebhook = !enablePrebuildsNew && enablePrebuildsPrev;
             if (installWebhook) {
-                await this.scmService.installWebhookForPrebuilds(project, user);
+                if (!(await this.scmService.canInstallWebhook(user, project.cloneUrl))) {
+                    throw new ApplicationError(ErrorCodes.PERMISSION_DENIED, "Cannot install webhook.");
+                }
+                const webhookId = await this.scmService.installWebhookForPrebuilds(project, user);
+                if (!webhookId) {
+                    throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "Could not install webhook.");
+                }
+                await this.webhookInstallationDB.createInstallation({
+                    id: webhookId,
+                    projectId: project.id,
+                    installerUserId: user.id,
+                });
             }
             if (uninstallWebhook) {
-                // TODO
-                // await this.scmService.uninstallWebhookForPrebuilds(project, user);
+                if (!(await this.scmService.canInstallWebhook(user, project.cloneUrl))) {
+                    throw new ApplicationError(ErrorCodes.PERMISSION_DENIED, "Cannot uninstall webhook.");
+                }
+                const webhook = await this.webhookInstallationDB.findByProjectId(project.id);
+                if (webhook) {
+                    log.info({ userId: user.id }, "Uninstalling webhook for prebuilds.", { projectId: project.id });
+                    await this.scmService.uninstallWebhookForPrebuilds(user, project.cloneUrl, webhook.id);
+                }
             }
         }
     }

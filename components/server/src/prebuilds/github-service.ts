@@ -78,14 +78,8 @@ export class GitHubService extends RepositoryService {
         }
     }
 
-    async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<void> {
+    async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<string> {
         const { owner, repoName: repo } = await this.githubContextParser.parseURL(user, cloneUrl);
-        const webhooks = (await this.githubApi.run(user, (gh) => gh.repos.listWebhooks({ owner, repo }))).data;
-        for (const webhook of webhooks) {
-            if (webhook.config.url === this.getHookUrl()) {
-                await this.githubApi.run(user, (gh) => gh.repos.deleteWebhook({ owner, repo, hook_id: webhook.id }));
-            }
-        }
         const tokenEntry = await this.tokenService.createGitpodToken(
             user,
             GitHubService.PREBUILD_TOKEN_SCOPE,
@@ -96,7 +90,13 @@ export class GitHubService extends RepositoryService {
             content_type: "json",
             secret: user.id + "|" + tokenEntry.token.value,
         };
-        await this.githubApi.run(user, (gh) => gh.repos.createWebhook({ owner, repo, config }));
+        const result = await this.githubApi.run(user, (gh) => gh.repos.createWebhook({ owner, repo, config }));
+        return "" + result.data.id;
+    }
+
+    async uninstallAutomatedPrebuilds(user: User, cloneUrl: string, webhookId: string): Promise<void> {
+        const { owner, repoName: repo } = await this.githubContextParser.parseURL(user, cloneUrl);
+        await this.githubApi.run(user, (gh) => gh.repos.deleteWebhook({ owner, repo, hook_id: parseInt(webhookId) }));
     }
 
     protected getHookUrl() {
