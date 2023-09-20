@@ -274,7 +274,7 @@ function WorkspaceImageButton(props: { image: string; onClick: () => void; disab
                     <span className="w-5 h-5 mr-1">
                         <Stack />
                     </span>
-                    <span className="truncate">{parseDockerImage(props.image).repository}</span>
+                    <span className="truncate font-medium text-gray-700 dark:text-gray-200">{parseDockerImage(props.image).repository}</span>
                     &nbsp;&middot;&nbsp;
                     <span className="flex-none w-16 truncate text-gray-500 dark:text-gray-400">
                         {parseDockerImage(props.image).tag}
