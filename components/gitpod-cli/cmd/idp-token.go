@@ -6,7 +6,10 @@ package cmd
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	connect "github.com/bufbuild/connect-go"
@@ -23,6 +26,7 @@ import (
 
 var idpTokenOpts struct {
 	Audience []string
+	Decode   bool
 }
 
 var idpTokenCmd = &cobra.Command{
@@ -35,6 +39,56 @@ var idpTokenCmd = &cobra.Command{
 		defer cancel()
 
 		tkn, err := idpToken(ctx, idpTokenOpts.Audience)
+
+		// If the user wants to decode the token, then do so.
+		if idpTokenOpts.Decode {
+			// Split the token into its three parts.
+			parts := strings.Split(tkn, ".")
+			if len(parts) != 3 {
+				xerrors.Errorf("JWT token is not valid")
+			}
+
+			// Decode the header.
+			header, err := base64.RawURLEncoding.DecodeString(parts[0])
+			if err != nil {
+				xerrors.Errorf("Failed to decode header: ", err)
+			}
+
+			// Decode the payload.
+			payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+			if err != nil {
+				xerrors.Errorf("Failed to decode payload: ", err)
+			}
+
+			// Unmarshal the header and payload into JSON.
+			var headerJSON map[string]interface{}
+			var payloadJSON map[string]interface{}
+
+			// This function unmarshals the header and payload of a JWT.
+			// The header is unmarshalled into a HeaderJSON struct, and the payload is unmarshalled into a PayloadJSON struct.
+			if err := json.Unmarshal(header, &headerJSON); err != nil {
+				xerrors.Errorf("Failed to unmarshal header: ", err)
+			}
+
+			if err := json.Unmarshal(payload, &payloadJSON); err != nil {
+				xerrors.Errorf("Failed to unmarshal payload: ", err)
+			}
+
+			output := map[string]interface{}{
+				"Header":  headerJSON,
+				"Payload": payloadJSON,
+			}
+
+			// The header and payload are then marshalled into a map and printed to the screen.
+			outputPretty, err := json.MarshalIndent(output, "", "  ")
+			if err != nil {
+				xerrors.Errorf("Failed to marshal output: ", err)
+			}
+
+			fmt.Printf("%s\n", outputPretty)
+			return nil
+		}
+
 		if err != nil {
 			return err
 		}
@@ -86,4 +140,6 @@ func init() {
 
 	idpTokenCmd.Flags().StringArrayVar(&idpTokenOpts.Audience, "audience", nil, "audience of the ID token")
 	_ = idpTokenCmd.MarkFlagRequired("audience")
+
+	idpTokenCmd.Flags().BoolVar(&idpTokenOpts.Decode, "decode", false, "decode token to JSON")
 }
