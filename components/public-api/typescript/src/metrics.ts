@@ -131,7 +131,7 @@ class PrometheusClientCallMetrics {
             const start = performance.now();
             return (endLabels) => {
                 const delta = performance.now() - start;
-                const value = delta / 1e9;
+                const value = delta / 1000;
                 this.handledSecondsHistogram.labels(Object.assign(startLabels, endLabels)).observe(value);
                 return value;
             };
