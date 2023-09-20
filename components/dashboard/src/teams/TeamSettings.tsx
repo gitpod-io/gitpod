@@ -308,7 +308,7 @@ function WorkspaceImageButton(props: {
                         </Button>
                     )}
                 </div>
-                {description && <div className="ml-6 truncate text-gray-500 dark:text-gray-400">{description}</div>}
+                {description && <div className="ml-6 truncate text-gray-400 dark:text-gray-500">{description}</div>}
             </div>
         </InputField>
     );
