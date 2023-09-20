@@ -60,6 +60,7 @@ import { goDurationToHumanReadable } from "@gitpod/gitpod-protocol/lib/util/time
 import { HeadlessLogEndpoint, HeadlessLogService } from "./headless-log-service";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { OrganizationService } from "../orgs/organization-service";
+import { isGrpcError } from "@gitpod/gitpod-protocol/lib/util/grpc";
 
 export interface StartWorkspaceOptions extends StarterStartWorkspaceOptions {
     /**
@@ -901,10 +902,6 @@ export class WorkspaceService {
 
 // TODO(gpl) Make private after FGA rollout
 export function mapGrpcError(err: Error): Error {
-    function isGrpcError(err: any): err is grpc.StatusObject {
-        return err.code && err.details;
-    }
-
     if (!isGrpcError(err)) {
         return err;
     }
