@@ -29,7 +29,10 @@ const UserContextProvider: React.FC = ({ children }) => {
     const doSetUser = useCallback(
         (updatedUser: User) => {
             updateErrorUserDetails(updatedUser);
-            if (user?.id !== updatedUser.id) {
+            // If user has changed clear cache
+            // Ignore the case where user hasn't been set yet - initial load
+            if (user && user?.id !== updatedUser.id) {
+                console.log("user changed, clearing query cache");
                 client.clear();
             }
             setUser(updatedUser);
@@ -53,7 +56,7 @@ const UserContextProvider: React.FC = ({ children }) => {
                 }, frequencyMs);
             }
         },
-        [user?.id, setUser, client],
+        [user, client],
     );
 
     // Wrap value in useMemo to avoid unnecessary re-renders
