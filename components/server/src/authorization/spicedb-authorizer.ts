@@ -56,9 +56,6 @@ export class SpiceDBAuthorizer {
         },
     ): Promise<boolean> {
         const featureEnabled = await isFgaChecksEnabled(experimentsFields.userId);
-        if (!featureEnabled) {
-            return true;
-        }
         const timer = spicedbClientLatency.startTimer();
         let error: Error | undefined;
         try {
@@ -66,6 +63,13 @@ export class SpiceDBAuthorizer {
                 this.client.checkPermission(req, this.callOptions),
             );
             const permitted = response.permissionship === v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION;
+            if (!permitted && !featureEnabled) {
+                log.info("[spicedb] Permission denied.", {
+                    response: new TrustedValue(response),
+                    request: new TrustedValue(req),
+                });
+                return true;
+            }
 
             return permitted;
         } catch (err) {
@@ -73,7 +77,7 @@ export class SpiceDBAuthorizer {
             log.error("[spicedb] Failed to perform authorization check.", err, {
                 request: new TrustedValue(req),
             });
-            return false;
+            return !featureEnabled;
         } finally {
             observeSpicedbClientLatency("check", error, timer());
         }
