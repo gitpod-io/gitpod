@@ -383,13 +383,13 @@ export class PrebuildManager {
             const branchName = context.ref;
             if (!branchName) {
                 log.debug("CommitContext is missing the branch name. Ignoring request.", { context });
-                return false;
+                return { shouldRun: false, reason: "branch-name-missing-in-commit-context" };
             }
 
             const branchNamePattern = project.settings?.prebuildBranchPattern?.trim();
             if (!branchNamePattern) {
                 // no pattern provided is treated as run on all branches
-                return true;
+                return { shouldRun: true, reason: "all-branches-selected" };
             }
 
             for (let pattern of branchNamePattern.split(",")) {
@@ -398,7 +398,7 @@ export class PrebuildManager {
                 pattern = "**/" + pattern.trim();
                 try {
                     if (globMatch(branchName, pattern)) {
-                        return true;
+                        return { shouldRun: true, reason: "branch-matched" };
                     }
                 } catch (error) {
                     log.debug("Ignored error with attempt to match a branch by pattern.", {
@@ -407,6 +407,7 @@ export class PrebuildManager {
                     });
                 }
             }
+            return { shouldRun: false, reason: "branch-unmatched" };
         }
 
         log.debug("Unknown prebuild branch strategy. Ignoring request.", { context, config });
