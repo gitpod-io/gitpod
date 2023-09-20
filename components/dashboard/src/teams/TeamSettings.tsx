@@ -5,7 +5,7 @@
  */
 
 import { OrganizationSettings } from "@gitpod/gitpod-protocol";
-import React, { useCallback, useState } from "react";
+import React, { ReactChild, useCallback, useState } from "react";
 import Alert from "../components/Alert";
 import { Button } from "../components/Button";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
@@ -228,7 +228,8 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
 
             <WorkspaceImageButton
                 disabled={!org?.isOwner}
-                image={settings?.defaultWorkspaceImage ?? globalDefaultImage ?? ""}
+                settings={settings}
+                defaultWorkspaceImage={globalDefaultImage}
                 onClick={() => setShowImageEditModal(true)}
             />
 
@@ -243,7 +244,12 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
     );
 }
 
-function WorkspaceImageButton(props: { image: string; onClick: () => void; disabled?: boolean }) {
+function WorkspaceImageButton(props: {
+    settings?: OrganizationSettings;
+    defaultWorkspaceImage?: string;
+    onClick: () => void;
+    disabled?: boolean;
+}) {
     function parseDockerImage(image: string) {
         // https://docs.docker.com/registry/spec/api/
         let registry, repository, tag;
@@ -267,26 +273,42 @@ function WorkspaceImageButton(props: { image: string; onClick: () => void; disab
         };
     }
 
+    const image = props.settings?.defaultWorkspaceImage ?? props.defaultWorkspaceImage ?? "";
+
+    let description: ReactChild | undefined = undefined;
+    if (props.disabled) {
+        description = (
+            <>
+                Requires <span className="font-medium">Owner</span> permissions to change
+            </>
+        );
+    } else if (!props.settings?.defaultWorkspaceImage) {
+        description = <>Default image</>;
+    }
+
     return (
         <InputField disabled={props.disabled} className="w-full max-w-lg">
-            <div className="flex items-center bg-gray-50 dark:bg-gray-800 p-3 justify-between rounded-lg">
-                <div className="flex items-center overflow-hidden h-8" title={props.image}>
-                    <span className="w-5 h-5 mr-1">
-                        <Stack />
-                    </span>
-                    <span className="truncate font-medium text-gray-700 dark:text-gray-200">
-                        {parseDockerImage(props.image).repository}
-                    </span>
-                    &nbsp;&middot;&nbsp;
-                    <span className="flex-none w-16 truncate text-gray-500 dark:text-gray-400">
-                        {parseDockerImage(props.image).tag}
-                    </span>
+            <div className="flex flex-col bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center overflow-hidden h-8" title={image}>
+                        <span className="w-5 h-5 mr-1">
+                            <Stack />
+                        </span>
+                        <span className="truncate font-medium text-gray-700 dark:text-gray-200">
+                            {parseDockerImage(image).repository}
+                        </span>
+                        &nbsp;&middot;&nbsp;
+                        <span className="flex-none w-16 truncate text-gray-500 dark:text-gray-400">
+                            {parseDockerImage(image).tag}
+                        </span>
+                    </div>
+                    {!props.disabled && (
+                        <Button htmlType="button" type="transparent" className="text-blue-500" onClick={props.onClick}>
+                            Change
+                        </Button>
+                    )}
                 </div>
-                {!props.disabled && (
-                    <Button htmlType="button" type="transparent" className="text-blue-500" onClick={props.onClick}>
-                        Change
-                    </Button>
-                )}
+                {description && <div className="ml-6 truncate text-gray-500 dark:text-gray-400">{description}</div>}
             </div>
         </InputField>
     );
