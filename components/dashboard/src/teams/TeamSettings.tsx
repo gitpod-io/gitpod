@@ -331,7 +331,7 @@ function OrgDefaultWorkspaceImageModal(props: OrgDefaultWorkspaceImageModalProps
             <ModalHeader>Workspace Default Image</ModalHeader>
             <ModalBody>
                 <Alert type="warning" className="mb-2">
-                    Warning: You are setting a default image for all workspaces within the organization.
+                    <span className="font-medium">Warning:</span> You are setting a default image for all workspaces within the organization.
                 </Alert>
                 {errorMsg.length > 0 && (
                     <Alert type="error" className="mb-2">
