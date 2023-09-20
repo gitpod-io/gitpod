@@ -296,6 +296,8 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 
 	// we've disposed already - try to remove the finalizer and call it a day
 	case workspace.Status.Phase == workspacev1.WorkspacePhaseStopped:
+		r.logImagePullDuration(ctx, pod)
+
 		hadFinalizer := controllerutil.ContainsFinalizer(pod, workspacev1.GitpodFinalizerName)
 		controllerutil.RemoveFinalizer(pod, workspacev1.GitpodFinalizerName)
 		if err := r.Client.Update(ctx, pod); err != nil {
@@ -309,6 +311,36 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *WorkspaceReconciler) logImagePullDuration(ctx context.Context, pod *corev1.Pod) {
+	log := log.FromContext(ctx)
+
+	eventList := &corev1.EventList{}
+	eventListOpts := client.MatchingFields{"involvedObject.uid": string(pod.UID)}
+	err := r.Client.List(ctx, eventList, eventListOpts)
+	if err != nil {
+		log.Error(err, "cannot list events for workspace pod", "pod", pod.Name)
+		return
+	}
+	var pullStartTime, pullEndTime time.Time
+	for _, event := range eventList.Items {
+		if event.Reason == "Pulling" {
+			pullStartTime = event.LastTimestamp.Time
+		} else if event.Reason == "Pulled" {
+			pullEndTime = event.LastTimestamp.Time
+		}
+	}
+
+	if pullStartTime.IsZero() || pullEndTime.IsZero() {
+		msg := fmt.Sprintf("cannot determine pull time for: %s", pod.Name)
+		log.Info("insufficient data to measure image pull duration", "warning", msg, "startZero", pullStartTime.IsZero(), "endZero", pullEndTime.IsZero())
+		return
+	}
+
+	duration := pullEndTime.Sub(pullStartTime)
+	log.Info("image pull duration", "duration", duration.String())
+	// TODO: emit metric
 }
 
 func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *workspacev1.Workspace) {

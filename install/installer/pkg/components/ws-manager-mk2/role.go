@@ -135,6 +135,8 @@ var leaderElectionRules = []rbacv1.PolicyRule{
 		Verbs: []string{
 			"create",
 			"patch",
+			"list",
+			"get",
 		},
 	},
 }
