@@ -1,0 +1,28 @@
+/**
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    html,
+    body {
+        @apply h-full;
+    }
+    body {
+        @apply bg-gray-100 dark:bg-gitpod-black text-black dark:text-white;
+    }
+    p {
+        @apply text-gray-600 dark:text-gray-400;
+    }
+}
+
+@layer components {
+    .gp-link {
+        @apply text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500 cursor-pointer;
+    }
+}
