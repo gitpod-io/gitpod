@@ -280,7 +280,13 @@ function WorkspaceImageButton(props: { image: string; onClick: () => void; disab
                         {parseDockerImage(props.image).tag}
                     </span>
                 </div>
-                <Button htmlType="button" type="transparent" className="text-blue-500" onClick={props.onClick}>
+                <Button
+                    disabled={props.disabled}
+                    htmlType="button"
+                    type="transparent"
+                    className="text-blue-500"
+                    onClick={props.onClick}
+                >
                     Change
                 </Button>
             </div>
