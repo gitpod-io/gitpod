@@ -75,15 +75,19 @@ export namespace Project {
         // Defaulting to `true` for backwards compatibility. Ignoring non-boolean for `enablePrebuilds`
         // for evaluation here allows to do any explicit migration of data or adjustment of the default
         // behavior at a later point in time.
-        if (typeof project.settings?.enablePrebuilds === "undefined") {
+        if (!hasPrebuildSettings(project)) {
             return true;
         }
 
-        return project.settings.enablePrebuilds;
+        return !!project.settings?.enablePrebuilds;
+    }
+
+    export function hasPrebuildSettings(project: Project) {
+        return !(typeof project.settings?.enablePrebuilds === "undefined");
     }
 
     export function getPrebuildBranchStrategy(project: Project): ProjectSettings.PrebuildBranchStrategy {
-        if (typeof project.settings?.enablePrebuilds === "undefined") {
+        if (!hasPrebuildSettings(project)) {
             // returning "all branches" to mimic the default value of projects which were added
             // before introduction of persisted settings for prebuilds.
             return "allBranches";

@@ -1366,6 +1366,10 @@ export namespace CommitContext {
         }
         return hasher.digest("hex");
     }
+
+    export function isDefaultBranch(commitContext: CommitContext): boolean {
+        return commitContext.ref === commitContext.repository.defaultBranch;
+    }
 }
 
 export interface GitCheckoutInfo extends Commit {

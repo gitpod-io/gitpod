@@ -372,7 +372,7 @@ export class PrebuildManager {
                 return { shouldRun: false, reason: "default-branch-missing-in-commit-context" };
             }
 
-            if (context.ref === defaultBranch) {
+            if (CommitContext.isDefaultBranch(context)) {
                 return { shouldRun: true, reason: "default-branch-matched" };
             }
             return { shouldRun: false, reason: "default-branch-unmatched" };
