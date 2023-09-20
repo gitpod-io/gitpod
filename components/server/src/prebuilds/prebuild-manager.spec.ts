@@ -267,6 +267,22 @@ describe("PrebuildManager", () => {
                     }),
             ),
         },
+        {
+            title: "selected-branches/matched/globstar",
+            shouldRun: true,
+            reason: "branch-matched",
+            config,
+            context: clone(context, (c) => (c.ref = "anything")),
+            project: clone(
+                project,
+                (p) =>
+                    (p.settings = {
+                        enablePrebuilds: true,
+                        prebuildDefaultBranchOnly: false,
+                        prebuildBranchPattern: "**",
+                    }),
+            ),
+        },
     ];
 
     for (const { title, config, context, project, shouldRun, reason } of checkPrebuildPreconditionCases) {
