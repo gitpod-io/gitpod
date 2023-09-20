@@ -64,6 +64,8 @@ var idpTokenCmd = &cobra.Command{
 			var headerJSON map[string]interface{}
 			var payloadJSON map[string]interface{}
 
+			// This function unmarshals the header and payload of a JWT.
+			// The header is unmarshalled into a HeaderJSON struct, and the payload is unmarshalled into a PayloadJSON struct.
 			if err := json.Unmarshal(header, &headerJSON); err != nil {
 				xerrors.Errorf("Failed to unmarshal header: ", err)
 			}
@@ -72,21 +74,18 @@ var idpTokenCmd = &cobra.Command{
 				xerrors.Errorf("Failed to unmarshal payload: ", err)
 			}
 
-			// Marshal the JSON into a pretty format.
-			headerPretty, err := json.MarshalIndent(headerJSON, "", "  ")
-			if err != nil {
-				xerrors.Errorf("Failed to marshal header: ", err)
+			output := map[string]interface{}{
+				"Header":  headerJSON,
+				"Payload": payloadJSON,
 			}
 
-			payloadPretty, err := json.MarshalIndent(payloadJSON, "", "  ")
+			// The header and payload are then marshalled into a map and printed to the screen.
+			outputPretty, err := json.MarshalIndent(output, "", "  ")
 			if err != nil {
-				xerrors.Errorf("Failed to marshal payload: ", err)
+				xerrors.Errorf("Failed to marshal output: ", err)
 			}
 
-			// Print the pretty formatted header and payload.
-			fmt.Printf("Header: %s\n", headerPretty)
-			fmt.Printf("Payload: %s\n", payloadPretty)
-
+			fmt.Printf("%s\n", outputPretty)
 			return nil
 		}
 
