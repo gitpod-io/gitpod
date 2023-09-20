@@ -31,9 +31,10 @@ func NewProxy(host *url.URL, aliases map[string]Repo, mirrorAuth func() docker.A
 		aliases[k] = v
 	}
 	return &Proxy{
-		Host:    *host,
-		Aliases: aliases,
-		proxies: make(map[string]*httputil.ReverseProxy),
+		Host:       *host,
+		Aliases:    aliases,
+		proxies:    make(map[string]*httputil.ReverseProxy),
+		mirrorAuth: mirrorAuth,
 	}, nil
 }
 
@@ -130,13 +131,12 @@ func (proxy *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// get mirror host
 	if host := r.URL.Query().Get("ns"); host != "" && (r.Method == http.MethodGet || r.Method == http.MethodHead) {
-		if host == "docker.io" {
-			host = "registry-1.docker.io"
-		}
+		host, _ = docker.DefaultHost(host)
+
 		r.URL.Host = host
 		r.Host = host
 
-		auth := proxy.mirrorAuth
+		auth := proxy.mirrorAuth()
 		r = r.WithContext(context.WithValue(ctx, authKey, auth))
 
 		r.RequestURI = ""

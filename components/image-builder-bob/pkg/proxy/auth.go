@@ -23,6 +23,18 @@ func isECRRegistry(domain string) bool {
 	return ecrRegistryRegexp.MatchString(domain)
 }
 
+// isDockerHubRegistry returns true if the registry domain is an docker hub
+func isDockerHubRegistry(domain string) bool {
+	switch domain {
+	case "registry-1.docker.io":
+		fallthrough
+	case "docker.io":
+		return true
+	default:
+		return false
+	}
+}
+
 // authConfig configures authentication for a single host
 type authConfig struct {
 	Username string `json:"username"`
@@ -40,15 +52,36 @@ func (a MapAuthorizer) Authorize(host string) (user, pass string, err error) {
 		}).Info("authorizing registry access")
 	}()
 
-	res, ok := a[host]
+	explicitHostMatcher := func() (authConfig, bool) {
+		res, ok := a[host]
+		return res, ok
+	}
+	ecrHostMatcher := func() (authConfig, bool) {
+		if isECRRegistry(host) {
+			res, ok := a[DummyECRRegistryDomain]
+			return res, ok
+		}
+		return authConfig{}, false
+	}
+	dockerHubHostMatcher := func() (authConfig, bool) {
+		if isDockerHubRegistry(host) {
+			res, ok := a["docker.io"]
+			return res, ok
+		}
+		return authConfig{}, false
+	}
+
+	matchers := []func() (authConfig, bool){explicitHostMatcher, ecrHostMatcher, dockerHubHostMatcher}
+	res, ok := authConfig{}, false
+	for _, matcher := range matchers {
+		res, ok = matcher()
+		if ok {
+			break
+		}
+	}
+
 	if !ok {
-		if !isECRRegistry(host) {
-			return
-		}
-		res, ok = a[DummyECRRegistryDomain]
-		if !ok {
-			return
-		}
+		return
 	}
 
 	user, pass = res.Username, res.Password
