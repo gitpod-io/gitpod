@@ -11,6 +11,7 @@ import { ReactComponent as InfoSvg } from "../images/info.svg";
 import { ReactComponent as XSvg } from "../images/x.svg";
 import { ReactComponent as Check } from "../images/check-circle.svg";
 import classNames from "classnames";
+import { Button } from "./Button";
 
 export type AlertType =
     // Green
@@ -122,14 +123,14 @@ export default function Alert(props: AlertProps) {
             {props.closable && (
                 <span className={`mt-1 ml-4`}>
                     {/* Use an IconButton component once we make it */}
-                    <button
-                        type="button"
-                        className="bg-transparent p-1"
+                    <Button
+                        type="secondary"
+                        className="bg-transparent hover:bg-transparent"
                         onClick={handleClose}
                         autoFocus={autoFocusClose}
                     >
                         <XSvg className="w-3 h-4 cursor-pointer" />
-                    </button>
+                    </Button>
                 </span>
             )}
         </div>
