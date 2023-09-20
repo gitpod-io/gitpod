@@ -890,7 +890,7 @@ export class WorkspaceService {
             const client = await this.clientProvider.get(instance.region);
             await client.controlAdmission({}, req);
         }
-
+        log.info({ userId, workspaceId }, "Admission level changed", { level });
         await this.db.transaction(async (db) => {
             const shareable = level === "everyone";
             await db.updatePartial(workspaceId, { shareable });
