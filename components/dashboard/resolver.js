@@ -3,10 +3,23 @@
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
+
+/*
+ * Resolver allows to reconstruct stack traces from obfuscated stack traces for the dashboard.
+ * Usage:
+ *  node resolver.js < obfuscated-stack-trace.txt
+ *
+ * OR
+ *
+ *  node resolver.js <<EOF
+ *  obfuscated stack trace
+ *  EOF
+ */
+
 //@ts-check
-const path = require('path');
-const fetch = require('node-fetch').default;
-const { SourceMapConsumer } = require('source-map');
+const path = require("path");
+const fetch = require("node-fetch").default;
+const { SourceMapConsumer } = require("source-map");
 
 const sourceMapCache = {};
 
@@ -27,10 +40,10 @@ async function fetchSourceMap(jsUrl) {
     // Extract source map URL from the JS file
     const mapUrlMatch = jsContent.match(/\/\/#\s*sourceMappingURL=(.+)/);
     if (!mapUrlMatch) {
-        throw new Error('Source map URL not found');
+        throw new Error("Source map URL not found");
     }
 
-    const mapUrl = new URL(mapUrlMatch[1], jsUrl).href;  // Resolve relative URL
+    const mapUrl = new URL(mapUrlMatch[1], jsUrl).href; // Resolve relative URL
     const mapResponse = await fetch(mapUrl);
     const mapData = await mapResponse.json();
 
@@ -40,7 +53,7 @@ async function fetchSourceMap(jsUrl) {
     return mapData;
 }
 
-const BASE_PATH = '/workspace/gitpod/components';
+const BASE_PATH = "/workspace/gitpod/components";
 
 async function resolveLine(line) {
     const jsUrl = extractJsUrlFromLine(line);
@@ -53,7 +66,7 @@ async function resolveLine(line) {
         return line;
     }
 
-    const functionName = matches[1] || '';
+    const functionName = matches[1] || "";
     const lineNum = Number(matches[3]);
     const colNum = Number(matches[4]);
 
@@ -69,18 +82,17 @@ async function resolveLine(line) {
     return line;
 }
 
+let obfuscatedTrace = "";
 
-let obfuscatedTrace = '';
-
-process.stdin.on('data', function(data) {
+process.stdin.on("data", function (data) {
     obfuscatedTrace += data;
 });
 
-process.stdin.on('end', async function() {
-    const lines = obfuscatedTrace.split('\n');
+process.stdin.on("end", async function () {
+    const lines = obfuscatedTrace.split("\n");
     const resolvedLines = await Promise.all(lines.map(resolveLine));
-    const resolvedTrace = resolvedLines.join('\n');
-    console.log('\nResolved Stack Trace:\n');
+    const resolvedTrace = resolvedLines.join("\n");
+    console.log("\nResolved Stack Trace:\n");
     console.log(resolvedTrace);
 });
 
