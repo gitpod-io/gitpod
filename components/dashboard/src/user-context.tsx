@@ -32,7 +32,6 @@ const UserContextProvider: React.FC = ({ children }) => {
             // If user has changed clear cache
             // Ignore the case where user hasn't been set yet - initial load
             if (user && user?.id !== updatedUser.id) {
-                console.log("user changed, clearing query cache");
                 client.clear();
             }
             setUser(updatedUser);
