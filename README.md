@@ -4,6 +4,7 @@
     <br />
     <strong>Gitpod</strong>
   </a>
+  HELLO
   <br />
   <span>Always ready-to-code.</span>
 </p>
