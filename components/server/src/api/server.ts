@@ -24,7 +24,6 @@ import { APIStatsService } from "./stats";
 import { APITeamsService } from "./teams";
 import { APIUserService } from "./user";
 import { APIWorkspacesService } from "./workspaces";
-import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 
 function service<T extends ServiceType>(type: T, impl: ServiceImpl<T>): [T, ServiceImpl<T>] {
     return [type, impl];
@@ -55,7 +54,7 @@ export class API {
         this.register(app);
 
         const server = app.listen(3001, () => {
-            log.info(`Connect Public API server listening on port: ${(server.address() as AddressInfo).port}`);
+            log.info(`public api: listening on port: ${(server.address() as AddressInfo).port}`);
         });
 
         return server;
@@ -126,13 +125,22 @@ export class API {
 
                     grpcServerStarted.labels(grpc_service, grpc_method, grpc_type).inc();
                     const stopTimer = grpcServerHandling.startTimer({ grpc_service, grpc_method, grpc_type });
-                    const deferred = new Deferred<ConnectError | undefined>();
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    deferred.promise.then((err) => {
+                    const done = (err?: ConnectError) => {
                         const grpc_code = err ? Code[err.code] : "OK";
                         grpcServerHandled.labels(grpc_service, grpc_method, grpc_type, grpc_code).inc();
                         stopTimer({ grpc_code });
-                    });
+                    };
+                    const handleError = (reason: unknown) => {
+                        let err = ConnectError.from(reason, Code.Internal);
+                        if (reason != err && err.code === Code.Internal) {
+                            console.error("public api: unexpected internal error", reason);
+                            // don't leak internal errors to a user
+                            // TODO(ak) instead surface request id
+                            err = ConnectError.from(`please check server logs`, Code.Internal);
+                        }
+                        done(err);
+                        throw err;
+                    };
 
                     const context = args[1] as HandlerContext;
                     async function call<T>(): Promise<T> {
@@ -146,12 +154,10 @@ export class API {
                             try {
                                 const promise = await call<Promise<any>>();
                                 const result = await promise;
-                                deferred.resolve(undefined);
+                                done();
                                 return result;
                             } catch (e) {
-                                const err = ConnectError.from(e);
-                                deferred.resolve(e);
-                                throw err;
+                                handleError(e);
                             }
                         })();
                     }
@@ -161,11 +167,9 @@ export class API {
                             for await (const item of generator) {
                                 yield item;
                             }
-                            deferred.resolve(undefined);
+                            done();
                         } catch (e) {
-                            const err = ConnectError.from(e);
-                            deferred.resolve(err);
-                            throw err;
+                            handleError(e);
                         }
                     })();
                 };
@@ -174,7 +178,7 @@ export class API {
     }
 
     private async verify(context: HandlerContext) {
-        const user = await this.sessionHandler.verify(context.requestHeader.get("cookie"));
+        const user = await this.sessionHandler.verify(context.requestHeader.get("cookie") || "");
         if (!user) {
             throw new ConnectError("unauthenticated", Code.Unauthenticated);
         }

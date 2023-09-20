@@ -110,6 +110,10 @@ function testPublicAPI(service: any): void {
     });
     (async () => {
         const grpcType = "server-stream";
+        const MAX_BACKOFF = 60000;
+        const BASE_BACKOFF = 3000;
+        let backoff = BASE_BACKOFF;
+
         // emulates server side streaming with public API
         while (true) {
             const isTest = await getExperimentsClient().getValueAsync("public_api_dummy_reliability_test", false, {
@@ -121,15 +125,21 @@ function testPublicAPI(service: any): void {
                     let previousCount = 0;
                     for await (const reply of helloService.lotsOfReplies({ previousCount })) {
                         previousCount = reply.count;
+                        backoff = BASE_BACKOFF;
                     }
                 } catch (e) {
                     console.error(e, {
                         userId: user?.id,
                         grpcType,
                     });
+                    backoff = Math.min(2 * backoff, MAX_BACKOFF);
                 }
+            } else {
+                backoff = BASE_BACKOFF;
             }
-            await new Promise((resolve) => setTimeout(resolve, 3000));
+            const jitter = Math.random() * 0.3 * backoff;
+            const delay = backoff + jitter;
+            await new Promise((resolve) => setTimeout(resolve, delay));
         }
     })();
 }

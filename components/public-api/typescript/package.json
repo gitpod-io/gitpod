@@ -4,11 +4,31 @@
   "license": "AGPL-3.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
+  "module": "./lib/esm/index.js",
   "files": [
     "lib"
   ],
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/esm/index.js",
+      "require": "./lib/index.js"
+    },
+    "./lib/*": {
+      "types": "./lib/*.d.ts",
+      "import": "./lib/esm/*.js",
+      "require": "./lib/*.js"
+    },
+    "./lib/gitpod/experimental/v1": {
+      "types": "./lib/gitpod/experimental/v1/index.d.ts",
+      "import": "./lib/esm/gitpod/experimental/v1/index.js",
+      "require": "./lib/gitpod/experimental/v1/index.js"
+    }
+  },
   "scripts": {
-    "build": "mkdir -p lib; tsc",
+    "build": "yarn run build:cjs && yarn run build:esm",
+    "build:cjs": "tsc",
+    "build:esm": "tsc --module es2015 --outDir ./lib/esm",
     "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput",
     "test": "mocha './**/*.spec.ts' --exclude './node_modules/**' --exit",
     "test:brk": "yarn test --inspect-brk"
@@ -27,11 +47,11 @@
   "dependencies": {
     "@bufbuild/connect": "^0.13.0",
     "@bufbuild/protobuf": "^0.1.1",
-    "@bufbuild/protoc-gen-connect-web": "^0.2.1",
-    "@bufbuild/protoc-gen-es": "^0.1.1",
     "prom-client": "^14.2.0"
   },
   "devDependencies": {
+    "@bufbuild/protoc-gen-connect-web": "^0.2.1",
+    "@bufbuild/protoc-gen-es": "^0.1.1",
     "@testdeck/mocha": "0.1.2",
     "@types/chai": "^4.1.2",
     "@types/node": "^16.11.0",
