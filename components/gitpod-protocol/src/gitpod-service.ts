@@ -173,6 +173,8 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getOrgAuthProviders(params: GitpodServer.GetOrgAuthProviderParams): Promise<AuthProviderEntry[]>;
     deleteOrgAuthProvider(params: GitpodServer.DeleteOrgAuthProviderParams): Promise<void>;
 
+    getDefaultWorkspaceImage(): Promise<string>;
+
     // Dedicated, Dedicated, Dedicated
     getOnboardingState(): Promise<GitpodServer.OnboardingState>;
 

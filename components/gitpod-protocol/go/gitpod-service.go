@@ -2256,8 +2256,8 @@ type TeamMembershipInvite struct {
 }
 
 type OrganizationSettings struct {
-	WorkspaceSharingDisabled bool    `json:"workspaceSharingDisabled,omitempty"`
-	DefaultWorkspaceImage    *string `json:"defaultWorkspaceImage,omitempty"`
+	WorkspaceSharingDisabled bool   `json:"workspaceSharingDisabled,omitempty"`
+	DefaultWorkspaceImage    string `json:"defaultWorkspaceImage,omitempty"`
 }
 
 type Project struct {

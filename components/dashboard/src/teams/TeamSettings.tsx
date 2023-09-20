@@ -22,6 +22,7 @@ import { gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
 import { useToast } from "../components/toasts/Toasts";
+import { useDefaultWorkspaceImageQuery } from "../data/workspaces/default-workspace-image-query";
 
 export default function TeamSettingsPage() {
     const user = useCurrentUser();
@@ -169,6 +170,7 @@ export default function TeamSettingsPage() {
 function OrgSettingsForm(props: { org?: OrganizationInfo }) {
     const { org } = props;
     const { data: settings, isLoading } = useOrgSettingsQuery();
+    const { data: globalDefaultImage } = useDefaultWorkspaceImageQuery();
     const updateTeamSettings = useUpdateOrgSettingsMutation();
     const [defaultWorkspaceImage, setDefaultWorkspaceImage] = useState(settings?.defaultWorkspaceImage ?? "");
     const { toast } = useToast();
@@ -190,11 +192,10 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
             }
             try {
                 await updateTeamSettings.mutateAsync({
-                    // We don't want to have original setting passed, since defaultWorkspaceImage could be undefined
-                    // to bring compatibility when we're going to change Gitpod install value's defaultImage setting
+                    ...settings,
                     ...newSettings,
                 });
-                if (newSettings.defaultWorkspaceImage) {
+                if (newSettings.defaultWorkspaceImage !== undefined) {
                     toast("Default workspace image has been updated.");
                 }
             } catch (error) {
@@ -206,7 +207,7 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
                 );
             }
         },
-        [updateTeamSettings, org?.id, org?.isOwner, toast],
+        [updateTeamSettings, org?.id, org?.isOwner, settings, toast],
     );
 
     return (
@@ -241,6 +242,7 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
                 label="Default Image"
                 // TODO: Provide document links
                 hint="Use any official Gitpod Docker image, or Docker image reference"
+                placeholder={globalDefaultImage}
                 value={defaultWorkspaceImage}
                 onChange={setDefaultWorkspaceImage}
                 disabled={isLoading || !org?.isOwner}
