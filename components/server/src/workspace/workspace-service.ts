@@ -898,6 +898,16 @@ export class WorkspaceService {
             await this.auth.setWorkspaceIsShared(userId, workspaceId, shareable);
         });
     }
+
+    public async resolveBaseImage(ctx: TraceContext, user: User, imageRef: string) {
+        try {
+            return this.workspaceStarter.resolveBaseImage(ctx, user, imageRef);
+        } catch (e) {
+            // we could map proper response message according to e.code
+            // see https://github.com/gitpod-io/gitpod/blob/ef95e6f3ca0bf314c40da1b83251423c2208d175/components/image-builder-mk3/pkg/orchestrator/orchestrator_test.go#L178
+            throw ApplicationError.fromGRPCError(e);
+        }
+    }
 }
 
 // TODO(gpl) Make private after FGA rollout

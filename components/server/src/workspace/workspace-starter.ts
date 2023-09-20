@@ -266,16 +266,14 @@ export class WorkspaceStarter {
             }
 
             if (options.forceDefaultImage) {
-                const req = new ResolveBaseImageRequest();
-                req.setRef(this.config.workspaceDefaults.workspaceImage);
-                const allowAll = new BuildRegistryAuthTotal();
-                allowAll.setAllowAll(true);
-                const auth = new BuildRegistryAuth();
-                auth.setTotal(allowAll);
-                req.setAuth(auth);
-
-                const client = await this.getImageBuilderClient(user, workspace, undefined, options?.region);
-                const res = await client.resolveBaseImage({ span }, req);
+                const res = await this.resolveBaseImage(
+                    { span },
+                    user,
+                    this.config.workspaceDefaults.workspaceImage,
+                    workspace,
+                    undefined,
+                    options.region,
+                );
                 workspace.imageSource = <WorkspaceImageSourceReference>{
                     baseImageResolved: res.getRef(),
                 };
@@ -1946,11 +1944,30 @@ export class WorkspaceStarter {
      */
     private async getImageBuilderClient(
         user: User,
-        workspace: Workspace,
+        workspace?: Workspace,
         instance?: WorkspaceInstance,
         region?: WorkspaceRegion,
     ) {
         return this.imagebuilderClientProvider.getClient(user, workspace, instance, region);
+    }
+
+    public async resolveBaseImage(
+        ctx: TraceContext,
+        user: User,
+        imageRef: string,
+        workspace?: Workspace,
+        instance?: WorkspaceInstance,
+        region?: WorkspaceRegion,
+    ) {
+        const req = new ResolveBaseImageRequest();
+        req.setRef(imageRef);
+        const allowAll = new BuildRegistryAuthTotal();
+        allowAll.setAllowAll(true);
+        const auth = new BuildRegistryAuth();
+        auth.setTotal(allowAll);
+        req.setAuth(auth);
+        const client = await this.getImageBuilderClient(user, workspace, instance, region);
+        return client.resolveBaseImage({ span: ctx.span }, req);
     }
 
     private async existsWithWsManager(ctx: TraceContext, instance: WorkspaceInstance): Promise<boolean> {

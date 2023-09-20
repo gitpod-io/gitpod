@@ -5,7 +5,7 @@
  */
 
 import { OrganizationSettings } from "@gitpod/gitpod-protocol";
-import React, { useCallback, useState, useEffect } from "react";
+import React, { Children, ReactNode, useCallback, useMemo, useState } from "react";
 import Alert from "../components/Alert";
 import { Button } from "../components/Button";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
@@ -21,8 +21,10 @@ import { teamsService } from "../service/public-api";
 import { gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
-import { useToast } from "../components/toasts/Toasts";
 import { useDefaultWorkspaceImageQuery } from "../data/workspaces/default-workspace-image-query";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
+import { InputField } from "../components/forms/InputField";
+import { ReactComponent as Stack } from "../icons/Stack.svg";
 
 export default function TeamSettingsPage() {
     const user = useCurrentUser();
@@ -172,15 +174,8 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
     const { data: settings, isLoading } = useOrgSettingsQuery();
     const { data: globalDefaultImage } = useDefaultWorkspaceImageQuery();
     const updateTeamSettings = useUpdateOrgSettingsMutation();
-    const [defaultWorkspaceImage, setDefaultWorkspaceImage] = useState(settings?.defaultWorkspaceImage ?? "");
-    const { toast } = useToast();
 
-    useEffect(() => {
-        if (!settings) {
-            return;
-        }
-        setDefaultWorkspaceImage(settings.defaultWorkspaceImage ?? "");
-    }, [settings]);
+    const [showImageEditModal, setShowImageEditModal] = useState(false);
 
     const handleUpdateTeamSettings = useCallback(
         async (newSettings: Partial<OrganizationSettings>) => {
@@ -195,32 +190,21 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
                     ...settings,
                     ...newSettings,
                 });
-                if (newSettings.defaultWorkspaceImage !== undefined) {
-                    toast("Default workspace image has been updated.");
-                }
             } catch (error) {
                 console.error(error);
-                toast(
-                    error.message
-                        ? "Failed to update organization settings: " + error.message
-                        : "Oh no, there was a problem with our service.",
-                );
             }
         },
-        [updateTeamSettings, org?.id, org?.isOwner, settings, toast],
+        [updateTeamSettings, org?.id, org?.isOwner, settings],
     );
 
     return (
         <form
             onSubmit={(e) => {
                 e.preventDefault();
-                handleUpdateTeamSettings({ defaultWorkspaceImage });
+                // handleUpdateTeamSettings({ defaultWorkspaceImage });
             }}
         >
             <Heading2 className="pt-12">Collaboration & Sharing</Heading2>
-            <Subheading className="max-w-2xl">
-                Choose which workspace images you want to use for your workspaces.
-            </Subheading>
 
             {updateTeamSettings.isError && (
                 <Alert type="error" closable={true} className="mb-2 max-w-xl rounded-md">
@@ -237,22 +221,173 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
                 disabled={isLoading || !org?.isOwner}
             />
 
-            <Heading2 className="pt-12">Workspace Settings</Heading2>
-            <TextInputField
-                label="Default Image"
-                // TODO: Provide document links
-                hint="Use any official Gitpod Docker image, or Docker image reference"
-                placeholder={globalDefaultImage}
-                value={defaultWorkspaceImage}
-                onChange={setDefaultWorkspaceImage}
-                disabled={isLoading || !org?.isOwner}
+            <Heading2 className="pt-12">Workspace Images</Heading2>
+            <Subheading className="max-w-2xl">
+                Choose a default image for all workspaces in the organization.
+            </Subheading>
+
+            <WorkspaceImageButton
+                disabled={!org?.isOwner}
+                settings={settings}
+                defaultWorkspaceImage={globalDefaultImage}
+                onClick={() => setShowImageEditModal(true)}
             />
 
-            {org?.isOwner && (
-                <Button htmlType="submit" className="mt-4" disabled={!org.isOwner}>
-                    Update Default Image
-                </Button>
+            {showImageEditModal && (
+                <OrgDefaultWorkspaceImageModal
+                    settings={settings}
+                    globalDefaultImage={globalDefaultImage}
+                    onClose={() => setShowImageEditModal(false)}
+                />
             )}
         </form>
+    );
+}
+
+function WorkspaceImageButton(props: {
+    settings?: OrganizationSettings;
+    defaultWorkspaceImage?: string;
+    onClick: () => void;
+    disabled?: boolean;
+}) {
+    function parseDockerImage(image: string) {
+        // https://docs.docker.com/registry/spec/api/
+        let registry, repository, tag;
+        let parts = image.split("/");
+
+        if (parts.length > 1 && parts[0].includes(".")) {
+            registry = parts.shift();
+        } else {
+            registry = "docker.io";
+        }
+
+        const remaining = parts.join("/");
+        [repository, tag] = remaining.split(":");
+        if (!tag) {
+            tag = "latest";
+        }
+        return {
+            registry,
+            repository,
+            tag,
+        };
+    }
+
+    const image = props.settings?.defaultWorkspaceImage ?? props.defaultWorkspaceImage ?? "";
+
+    const descList = useMemo(() => {
+        const arr: ReactNode[] = [];
+        if (!props.settings?.defaultWorkspaceImage) {
+            arr.push(<span className="font-medium">Default image</span>);
+        }
+        if (props.disabled) {
+            arr.push(
+                <>
+                    Requires <span className="font-medium">Owner</span> permissions to change
+                </>,
+            );
+        }
+        return arr;
+    }, [props.settings, props.disabled]);
+
+    const renderedDescription = useMemo(() => {
+        return Children.toArray(descList).reduce((acc: ReactNode[], child, index) => {
+            acc.push(child);
+            if (index < descList.length - 1) {
+                acc.push(<>&nbsp;&middot;&nbsp;</>);
+            }
+            return acc;
+        }, []);
+    }, [descList]);
+
+    return (
+        <InputField disabled={props.disabled} className="w-full max-w-lg">
+            <div className="flex flex-col bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center overflow-hidden h-8" title={image}>
+                        <span className="w-5 h-5 mr-1">
+                            <Stack />
+                        </span>
+                        <span className="truncate font-medium text-gray-700 dark:text-gray-200">
+                            {parseDockerImage(image).repository}
+                        </span>
+                        &nbsp;&middot;&nbsp;
+                        <span className="flex-none w-16 truncate text-gray-500 dark:text-gray-400">
+                            {parseDockerImage(image).tag}
+                        </span>
+                    </div>
+                    {!props.disabled && (
+                        <Button htmlType="button" type="transparent" className="text-blue-500" onClick={props.onClick}>
+                            Change
+                        </Button>
+                    )}
+                </div>
+                {descList.length > 0 && (
+                    <div className="mx-6 text-gray-400 dark:text-gray-500 truncate">{renderedDescription}</div>
+                )}
+            </div>
+        </InputField>
+    );
+}
+
+interface OrgDefaultWorkspaceImageModalProps {
+    globalDefaultImage: string | undefined;
+    settings: OrganizationSettings | undefined;
+    onClose: () => void;
+}
+
+function OrgDefaultWorkspaceImageModal(props: OrgDefaultWorkspaceImageModalProps) {
+    const [errorMsg, setErrorMsg] = useState("");
+    const [defaultWorkspaceImage, setDefaultWorkspaceImage] = useState(props.settings?.defaultWorkspaceImage ?? "");
+    const updateTeamSettings = useUpdateOrgSettingsMutation();
+
+    const handleUpdateTeamSettings = useCallback(
+        async (newSettings: Partial<OrganizationSettings>) => {
+            try {
+                await updateTeamSettings.mutateAsync({
+                    ...props.settings,
+                    ...newSettings,
+                });
+                props.onClose();
+            } catch (error) {
+                console.error(error);
+                setErrorMsg(error.message);
+            }
+        },
+        [updateTeamSettings, props],
+    );
+
+    return (
+        <Modal
+            visible
+            closeable
+            onClose={props.onClose}
+            onSubmit={() => handleUpdateTeamSettings({ defaultWorkspaceImage })}
+        >
+            <ModalHeader>Workspace Default Image</ModalHeader>
+            <ModalBody>
+                <Alert type="warning" className="mb-2">
+                    <span className="font-medium">Warning:</span> You are setting a default image for all workspaces
+                    within the organization.
+                </Alert>
+                {errorMsg.length > 0 && (
+                    <Alert type="error" className="mb-2">
+                        {errorMsg}
+                    </Alert>
+                )}
+                <div className="mt-4">
+                    <TextInputField
+                        label="Default Image"
+                        hint="Use any official or custom workspace image from Docker Hub or any private container registry that the Gitpod instance can access."
+                        placeholder={props.globalDefaultImage}
+                        value={defaultWorkspaceImage}
+                        onChange={setDefaultWorkspaceImage}
+                    />
+                </div>
+            </ModalBody>
+            <ModalFooter>
+                <Button htmlType="submit">Update Workspace Default Image</Button>
+            </ModalFooter>
+        </Modal>
     );
 }
