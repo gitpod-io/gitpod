@@ -270,7 +270,7 @@ function WorkspaceImageButton(props: { image: string; onClick: () => void; disab
     return (
         <InputField disabled={props.disabled} className="w-full max-w-lg">
             <div className="flex items-center bg-gray-50 dark:bg-gray-800 p-3 justify-between rounded-lg">
-                <div className="flex items-center overflow-hidden" title={props.image}>
+                <div className="flex items-center overflow-hidden h-8" title={props.image}>
                     <span className="w-5 h-5 mr-1">
                         <Stack />
                     </span>
