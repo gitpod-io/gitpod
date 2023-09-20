@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { DBWithTracing, TeamDB, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
     CommitContext,
     CommitInfo,
@@ -59,7 +59,6 @@ export class PrebuildManager {
     @inject(Config) protected readonly config: Config;
     @inject(ProjectsService) protected readonly projectService: ProjectsService;
     @inject(IncrementalPrebuildsService) protected readonly incrementalPrebuildsService: IncrementalPrebuildsService;
-    @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
 
     async abortPrebuildsForBranch(ctx: TraceContext, project: Project, user: User, branch: string): Promise<void> {
@@ -341,35 +340,42 @@ export class PrebuildManager {
         }
     }
 
-    shouldPrebuild(params: { config: WorkspaceConfig; project: Project; context: CommitContext }): boolean {
+    checkPrebuildPrecondition(params: { config: WorkspaceConfig; project: Project; context: CommitContext }): {
+        shouldRun: boolean;
+        reason: string;
+    } {
         const { config, project, context } = params;
         if (!config || !config._origin || config._origin !== "repo") {
             // we demand an explicit gitpod config
-            return false;
+            return { shouldRun: false, reason: "no-gitpod-config-in-repo" };
         }
 
         const hasPrebuildTask = !!config.tasks && config.tasks.find((t) => !!t.before || !!t.init || !!t.prebuild);
         if (!hasPrebuildTask) {
-            return false;
+            return { shouldRun: false, reason: "no-tasks-in-gitpod-config" };
         }
 
         const isPrebuildsEnabled = Project.isPrebuildsEnabled(project);
         if (!isPrebuildsEnabled) {
-            return false;
+            return { shouldRun: false, reason: "prebuilds-not-enabled" };
         }
 
         const strategy = Project.getPrebuildBranchStrategy(project);
         if (strategy === "allBranches") {
-            return true;
+            return { shouldRun: true, reason: "all-branches-selected" };
         }
 
         if (strategy === "defaultBranch") {
             const defaultBranch = context.repository.defaultBranch;
             if (!defaultBranch) {
                 log.debug("CommitContext is missing the default branch. Ignoring request.", { context });
-                return false;
+                return { shouldRun: false, reason: "default-branch-missing-in-commit-context" };
             }
-            return context.ref === defaultBranch;
+
+            if (context.ref === defaultBranch) {
+                return { shouldRun: true, reason: "default-branch-matched" };
+            }
+            return { shouldRun: false, reason: "default-branch-unmatched" };
         }
 
         if (strategy === "selectedBranches") {
@@ -377,7 +383,7 @@ export class PrebuildManager {
         }
 
         log.debug("Unknown prebuild branch strategy. Ignoring request.", { context, config });
-        return false;
+        return { shouldRun: false, reason: "unknown-strategy" };
     }
 
     protected shouldPrebuildIncrementally(cloneUrl: string, project: Project): boolean {

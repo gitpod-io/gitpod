@@ -308,9 +308,9 @@ export class GithubApp {
                 branch: context.ref,
                 commit: context.revision,
             });
-
+            const prebuildPrecondition = this.prebuildManager.checkPrebuildPrecondition({ config, project, context });
             const runPrebuild =
-                this.prebuildManager.shouldPrebuild({ config, project, context }) &&
+                prebuildPrecondition.shouldRun &&
                 this.appRules.shouldRunPrebuild(config, branch == repo.default_branch, false, false);
             if (!runPrebuild) {
                 const reason = `Not running prebuild, the user did not enable it for this context or did not configure prebuild task(s)`;
@@ -537,9 +537,9 @@ export class GithubApp {
         const contextURL = pr.html_url;
 
         const isFork = pr.head.repo.id !== pr.base.repo.id;
+        const prebuildPrecondition = this.prebuildManager.checkPrebuildPrecondition({ config, project, context });
         const runPrebuild =
-            this.prebuildManager.shouldPrebuild({ config, project, context }) &&
-            this.appRules.shouldRunPrebuild(config, false, true, isFork);
+            prebuildPrecondition.shouldRun && this.appRules.shouldRunPrebuild(config, false, true, isFork);
         if (runPrebuild) {
             const commitInfo = await this.getCommitInfo(user, ctx.payload.repository.html_url, pr.head.sha);
             const result = await this.prebuildManager.startPrebuild(tracecContext, {
