@@ -170,7 +170,7 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
                 subtitle={
                     // Only show the url if we have a project or repo name, otherwise it's redundant w/ the title
                     selectedSuggestion?.projectName || selectedSuggestion?.repositoryName
-                        ? selectedSuggestion?.url
+                        ? displayContextUrl(selectedSuggestion?.url)
                         : undefined
                 }
                 loading={props.loading || isLoading}
