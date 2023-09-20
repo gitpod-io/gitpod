@@ -423,6 +423,7 @@ export class ProjectsService {
             prebuildId: we.prebuildId,
             projectId: we.projectId,
             status: we.prebuildStatus || we.status,
+            message: we.message,
         }));
     }
 }
