@@ -7,6 +7,7 @@
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { MetricsReporter } from "@gitpod/public-api/lib/metrics";
 import { getExperimentsClient } from "../experiments/client";
+import { v4 } from "uuid";
 
 const originalConsoleError = console.error;
 
@@ -40,7 +41,9 @@ console.error = function (...args) {
     reportError(...args);
 };
 
-let commonDetails = {};
+const commonDetails = {
+    sessionId: v4(),
+};
 export function updateCommonErrorDetails(update: { [key: string]: string | undefined }) {
     Object.assign(commonDetails, update);
 }

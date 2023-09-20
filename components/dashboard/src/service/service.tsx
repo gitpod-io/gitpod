@@ -116,10 +116,12 @@ function testPublicAPI(service: any): void {
 
         // emulates server side streaming with public API
         while (true) {
-            const isTest = await getExperimentsClient().getValueAsync("public_api_dummy_reliability_test", false, {
-                user,
-                gitpodHost: window.location.host,
-            });
+            const isTest =
+                !!user &&
+                (await getExperimentsClient().getValueAsync("public_api_dummy_reliability_test", false, {
+                    user,
+                    gitpodHost: window.location.host,
+                }));
             if (isTest) {
                 try {
                     let previousCount = 0;
