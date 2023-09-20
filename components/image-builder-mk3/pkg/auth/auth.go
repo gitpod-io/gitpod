@@ -220,6 +220,8 @@ func (a *Authentication) Empty() bool {
 
 var ecrRegistryRegexp = regexp.MustCompile(`\d{12}.dkr.ecr.\w+-\w+-\w+.amazonaws.com`)
 
+const DummyECRRegistryDomain = "000000000000.dkr.ecr.dummy-host-zone.amazonaws.com"
+
 // isECRRegistry returns true if the registry domain is an ECR registry
 func isECRRegistry(domain string) bool {
 	return ecrRegistryRegexp.MatchString(domain)

@@ -7,11 +7,21 @@ package proxy
 import (
 	"encoding/base64"
 	"encoding/json"
+	"regexp"
 	"strings"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/sirupsen/logrus"
 )
+
+var ecrRegistryRegexp = regexp.MustCompile(`\d{12}.dkr.ecr.\w+-\w+-\w+.amazonaws.com`)
+
+const DummyECRRegistryDomain = "000000000000.dkr.ecr.dummy-host-zone.amazonaws.com"
+
+// isECRRegistry returns true if the registry domain is an ECR registry
+func isECRRegistry(domain string) bool {
+	return ecrRegistryRegexp.MatchString(domain)
+}
 
 // authConfig configures authentication for a single host
 type authConfig struct {
@@ -32,7 +42,13 @@ func (a MapAuthorizer) Authorize(host string) (user, pass string, err error) {
 
 	res, ok := a[host]
 	if !ok {
-		return
+		if !isECRRegistry(host) {
+			return
+		}
+		res, ok = a[DummyECRRegistryDomain]
+		if !ok {
+			return
+		}
 	}
 
 	user, pass = res.Username, res.Password

@@ -336,7 +336,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 	wsref, err := reference.ParseNamed(wsrefstr)
 	var additionalAuth []byte
 	if err == nil {
-		ath := reqauth.GetImageBuildAuthFor(ctx, o.Auth, []string{reference.Domain(pbaseref)}, []string{
+		ath := reqauth.GetImageBuildAuthFor(ctx, o.Auth, []string{reference.Domain(pbaseref), auth.DummyECRRegistryDomain}, []string{
 			reference.Domain(wsref),
 		})
 		additionalAuth, err = json.Marshal(ath)
