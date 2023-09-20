@@ -102,22 +102,6 @@ export namespace Project {
         return "allBranches";
     }
 
-    export function getPrebuildBranchStrategy(project: Project): ProjectSettings.PrebuildBranchStrategy {
-        if (typeof project.settings?.enablePrebuilds === "undefined") {
-            // returning "all branches" to mimic the default value of projects which were added
-            // before introduction of persisted settings for prebuilds.
-            return "allBranches";
-        }
-        if (typeof project.settings?.prebuildDefaultBranchOnly === "undefined") {
-            return "defaultBranch"; // default value for `settings.prebuildDefaultBranchOnly`
-        }
-        if (project.settings.prebuildDefaultBranchOnly) {
-            return "defaultBranch";
-        }
-        // TODO support "selectedBranches" next
-        return "allBranches";
-    }
-
     export interface Overview {
         branches: BranchDetails[];
         isConsideredInactive?: boolean;
