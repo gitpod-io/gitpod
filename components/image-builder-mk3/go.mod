@@ -4,11 +4,11 @@ go 1.20
 
 require (
 	github.com/alecthomas/jsonschema v0.0.0-20210526225647-edb03dcab7bc
-	github.com/containerd/containerd v1.7.3
+	github.com/containerd/containerd v1.7.6
 	github.com/docker/cli v24.0.5+incompatible
 	github.com/docker/distribution v2.8.2+incompatible
-	github.com/docker/docker v20.10.17+incompatible
-	github.com/docker/docker-credential-helpers v0.6.4 // indirect
+	github.com/docker/docker v23.0.3+incompatible
+	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
@@ -31,11 +31,10 @@ require (
 )
 
 require (
-	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230106234847-43070de90fa1 // indirect
+	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230811130428-ced1acdcaa24 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.18.33
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
-	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
@@ -95,7 +94,10 @@ require (
 	github.com/aws/smithy-go v1.14.1 // indirect
 )
 
-require github.com/jmespath/go-jmespath v0.4.0 // indirect
+require (
+	github.com/Microsoft/hcsshim v0.11.0 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
+)
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
 
