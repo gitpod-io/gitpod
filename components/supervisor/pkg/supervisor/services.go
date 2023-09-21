@@ -27,6 +27,7 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/serverapi"
 )
 
 // RegisterableService can register a service.
@@ -641,8 +642,9 @@ func (rt *remoteTokenProvider) GetToken(ctx context.Context, req *api.GetTokenRe
 
 // InfoService implements the api.InfoService.
 type InfoService struct {
-	cfg          *Config
-	ContentState ContentState
+	cfg           *Config
+	ContentState  ContentState
+	GitpodService serverapi.APIInterface
 
 	api.UnimplementedInfoServiceServer
 }
@@ -658,11 +660,14 @@ func (is *InfoService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) 
 }
 
 // WorkspaceInfo provides information about the workspace.
-func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest) (*api.WorkspaceInfoResponse, error) {
-	defaultWorkspaceImage := is.cfg.DefaultWorkspaceImage
-	if defaultWorkspaceImage == "" {
+func (is *InfoService) WorkspaceInfo(ctx context.Context, req *api.WorkspaceInfoRequest) (*api.WorkspaceInfoResponse, error) {
+	defaultWorkspaceImage, err := is.GitpodService.GetDefaultWorkspaceImage(ctx)
+	if err != nil {
 		// TODO: delete-me, added for compatibility before server is deployed / rollback
-		defaultWorkspaceImage = "gitpod/workspace-full:latest"
+		defaultWorkspaceImage = is.cfg.DefaultWorkspaceImage
+		if defaultWorkspaceImage == "" {
+			defaultWorkspaceImage = "gitpod/workspace-full:latest"
+		}
 	}
 	resp := &api.WorkspaceInfoResponse{
 		CheckoutLocation:      is.cfg.RepoRoot,

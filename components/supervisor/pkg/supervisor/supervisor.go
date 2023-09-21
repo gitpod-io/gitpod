@@ -383,7 +383,7 @@ func Run(options ...RunOption) {
 		termMuxSrv,
 		RegistrableTokenService{Service: tokenService},
 		notificationService,
-		&InfoService{cfg: cfg, ContentState: cstate},
+		&InfoService{cfg: cfg, ContentState: cstate, GitpodService: gitpodService},
 		&ControlService{portsManager: portMgmt},
 		&portService{portsManager: portMgmt},
 	}
