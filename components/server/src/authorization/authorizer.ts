@@ -179,6 +179,7 @@ export class Authorizer {
         userId: string,
         permission: WorkspacePermission,
         workspaceId: string,
+        forceEnablement?: boolean, // temporary to find an issue with workspace sharing
     ): Promise<boolean> {
         if (userId === SYSTEM_USER) {
             return true;
@@ -191,7 +192,7 @@ export class Authorizer {
             consistency,
         });
 
-        return this.authorizer.check(req, { userId });
+        return this.authorizer.check(req, { userId }, forceEnablement);
     }
 
     async checkPermissionOnWorkspace(userId: string, permission: WorkspacePermission, workspaceId: string) {
@@ -423,23 +424,13 @@ export class Authorizer {
     ): Promise<void> {
         const rels: v1.RelationshipUpdate[] = [];
         for (const { orgID, userID, workspaceID, shared } of ids) {
-            this.internalAddWorkspaceToOrg(orgID, userID, workspaceID, shared, (u) => rels.push(u));
+            rels.push(set(rel.workspace(workspaceID).org.organization(orgID)));
+            rels.push(set(rel.workspace(workspaceID).owner.user(userID)));
+            if (shared) {
+                rels.push(set(rel.workspace(workspaceID).shared.anyUser));
+            }
         }
         await this.authorizer.writeRelationships(...rels);
-    }
-
-    private internalAddWorkspaceToOrg(
-        orgID: string,
-        userID: string,
-        workspaceID: string,
-        shared: boolean,
-        acceptor: (update: v1.RelationshipUpdate) => void,
-    ): void {
-        acceptor(set(rel.workspace(workspaceID).org.organization(orgID)));
-        acceptor(set(rel.workspace(workspaceID).owner.user(userID)));
-        if (shared) {
-            acceptor(set(rel.workspace(workspaceID).shared.anyUser));
-        }
     }
 
     async removeWorkspaceFromOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {

@@ -54,8 +54,9 @@ export class SpiceDBAuthorizer {
         experimentsFields: {
             userId: string;
         },
+        forceEnablement?: boolean,
     ): Promise<boolean> {
-        const featureEnabled = await isFgaChecksEnabled(experimentsFields.userId);
+        const featureEnabled = !!forceEnablement || (await isFgaChecksEnabled(experimentsFields.userId));
         const timer = spicedbClientLatency.startTimer();
         let error: Error | undefined;
         try {
