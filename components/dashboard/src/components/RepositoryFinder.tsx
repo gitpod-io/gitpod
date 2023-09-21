@@ -212,7 +212,7 @@ const SuggestedRepositoryOption: FC<SuggestedRepositoryOptionProps> = ({ repo })
             )}
 
             {/* TODO: refine some Text* components a bit to make it easy to set the right colors for dark/light mode */}
-            <span className="text-xs whitespace-nowrap truncate overflow-ellipsis text-gray-400 dark:text-gray-400">
+            <span className="text-sm whitespace-nowrap truncate overflow-ellipsis text-gray-500 dark:text-gray-400">
                 {stripOffProtocol(repo.url)}
             </span>
         </div>
