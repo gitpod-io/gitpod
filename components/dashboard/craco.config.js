@@ -51,7 +51,7 @@ module.exports = {
         client: {
             webSocketURL: {
                 hostname: process.env.HMR_HOST ? new URL(process.env.HMR_HOST).hostname : "localhost",
-                port: process.env.HMR_HOST ? 443 : 3000,
+                port: process.env.HMR_HOST ? 443 : 3001,
                 protocol: "wss",
             },
         },

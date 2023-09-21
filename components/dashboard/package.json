@@ -83,7 +83,7 @@
     "web-vitals": "^1.1.1"
   },
   "scripts": {
-    "start": "BROWSER=none HMR_HOST=`gp url 3000` craco start",
+    "start": "BROWSER=none HMR_HOST=`gp url 3001` craco start",
     "build": "craco build --verbose",
     "lint": "eslint --max-warnings=0 --ext=.jsx,.js,.tsx,.ts ./src",
     "test": "yarn test:unit",

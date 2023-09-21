@@ -1,0 +1,45 @@
+<!doctype html>
+<!--
+ Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+ Licensed under the GNU Affero General Public License (AGPL).
+ See License.AGPL.txt in the project root for license information.
+-->
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <link rel="icon" href="./favicon256.png" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script src="https://cdn.tailwindcss.com"></script>
+        <meta name="theme-color" content="#000000" />
+        <meta name="robots" content="noindex" />
+        <meta name="Gitpod" content="Always Ready-to-Code" />
+        <link rel="apple-touch-icon" href="./favicon192.png" />
+        <link rel="stylesheet" href="./index.css" />
+        <title>Gitpod - Maintenance</title>
+
+        <script>
+            (() => {
+                const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
+                const theme = localStorage.getItem('theme')
+                if (theme === "dark" || (prefersDark && !theme)) {
+                    document.documentElement.classList.toggle("dark", true);
+                }
+            })();
+        </script>
+    </head>
+    <body class="flex justify-center items-center">
+        <div class="flex flex-col justify-center items-center max-w-xl text-center">
+            <img src="./gitpod.svg" alt="Gitpod Logo" class="h-16 flex-shrink-0 mb-8" />
+
+            <h1 class="text-gray-900 dark:text-gray-100 font-bold text-3xl mb-4">Uncharacteristically unavailable</h1>
+
+            <p clas="text-gray-200 dark:text-gray-800">Gitpod is performing essential maintenance. Things should be back to normal by <strong><time datetime="2023-09-24T06:00:00.000Z">06:00 UTC</time></strong> latest. We apologize for any inconvenience this has caused.</p>
+
+            <p class="mt-16">
+                Check <a href="https://www.gitpodstatus.com/" class="gp-link">gitpodstatus.com</a> or follow
+                <a href="https://twitter.com/Gitpodstatus" class="gp-link">@gitpodstatus</a> for updates.
+            </p>
+        </div>
+    </body>
+</html>

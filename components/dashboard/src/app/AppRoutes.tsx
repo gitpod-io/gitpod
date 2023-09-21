@@ -39,6 +39,7 @@ import PersonalAccessTokenCreateView from "../user-settings/PersonalAccessTokens
 import { CreateWorkspacePage } from "../workspaces/CreateWorkspacePage";
 import { WebsocketClients } from "./WebsocketClients";
 import { BlockedEmailDomains } from "../admin/BlockedEmailDomains";
+import { AppNotifications } from "../AppNotifications";
 
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Account"));
@@ -121,6 +122,7 @@ export const AppRoutes = () => {
         <Route>
             <div className="container">
                 <Menu />
+                <AppNotifications />
                 <Switch>
                     <Route path="/new" exact component={CreateWorkspacePage} />
                     <Route path={projectsPathNew} exact component={NewProject} />
