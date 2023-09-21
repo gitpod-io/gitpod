@@ -172,7 +172,7 @@ export default function TeamSettingsPage() {
 function OrgSettingsForm(props: { org?: OrganizationInfo }) {
     const { org } = props;
     const { data: settings, isLoading } = useOrgSettingsQuery();
-    const { data: globalDefaultImage } = useDefaultWorkspaceImageQuery();
+    const { data: imageInfo } = useDefaultWorkspaceImageQuery();
     const updateTeamSettings = useUpdateOrgSettingsMutation();
 
     const [showImageEditModal, setShowImageEditModal] = useState(false);
@@ -229,14 +229,14 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
             <WorkspaceImageButton
                 disabled={!org?.isOwner}
                 settings={settings}
-                defaultWorkspaceImage={globalDefaultImage?.image}
+                defaultWorkspaceImage={imageInfo?.image}
                 onClick={() => setShowImageEditModal(true)}
             />
 
             {showImageEditModal && (
                 <OrgDefaultWorkspaceImageModal
                     settings={settings}
-                    globalDefaultImage={globalDefaultImage?.image}
+                    globalDefaultImage={imageInfo?.image}
                     onClose={() => setShowImageEditModal(false)}
                 />
             )}

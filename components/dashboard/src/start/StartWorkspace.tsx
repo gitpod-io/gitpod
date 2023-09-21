@@ -30,6 +30,7 @@ import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
 import Alert from "../components/Alert";
 import { workspacesService } from "../service/public-api";
+import { useDefaultWorkspaceImageQuery } from "../data/workspaces/default-workspace-image-query";
 
 const sessionId = v4();
 
@@ -708,6 +709,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                 <button>Open Workspace</button>
                             </a>
                         </div>
+                        <OrgDefaultWorkspaceWarningView workspaceId={this.state.workspaceInstance.workspaceId} />
                     </div>
                 );
                 break;
@@ -804,5 +806,18 @@ function ImageBuildView(props: ImageBuildViewProps) {
                 </>
             )}
         </StartPage>
+    );
+}
+
+function OrgDefaultWorkspaceWarningView(props: { workspaceId: string }) {
+    const { data: imageInfo } = useDefaultWorkspaceImageQuery(props.workspaceId);
+    if (imageInfo?.source === "installation") {
+        return null;
+    }
+    return (
+        <Alert className="w-96 mt-4" type="warning">
+            A custom <span className="font-medium">default workspace image</span> is set for this organization. Contact
+            an organization owner or specify a different image in <code>.gitpod.yml</code>.
+        </Alert>
     );
 }
