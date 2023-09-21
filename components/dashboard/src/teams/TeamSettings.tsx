@@ -229,14 +229,14 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
             <WorkspaceImageButton
                 disabled={!org?.isOwner}
                 settings={settings}
-                defaultWorkspaceImage={globalDefaultImage}
+                defaultWorkspaceImage={globalDefaultImage?.image}
                 onClick={() => setShowImageEditModal(true)}
             />
 
             {showImageEditModal && (
                 <OrgDefaultWorkspaceImageModal
                     settings={settings}
-                    globalDefaultImage={globalDefaultImage}
+                    globalDefaultImage={globalDefaultImage?.image}
                     onClose={() => setShowImageEditModal(false)}
                 />
             )}

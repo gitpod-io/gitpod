@@ -6,14 +6,14 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
+import { GetDefaultWorkspaceImageResult } from "@gitpod/gitpod-protocol";
 
-export const useDefaultWorkspaceImageQuery = () => {
-    return useQuery<string>({
-        queryKey: ["default-workspace-image"],
+export const useDefaultWorkspaceImageQuery = (workspaceId?: string) => {
+    return useQuery<GetDefaultWorkspaceImageResult>({
+        queryKey: ["default-workspace-image", { workspaceId }],
         staleTime: 1000 * 60 * 10, // 10 minute
         queryFn: async () => {
-            const image = await getGitpodService().server.getDefaultWorkspaceImage();
-            return image;
+            return await getGitpodService().server.getDefaultWorkspaceImage({ workspaceId });
         },
     });
 };
