@@ -191,6 +191,38 @@ const UserMenu: FC<UserMenuProps> = ({ user, className, withAdminLink, withFeedb
         return items;
     }, [onFeedback, user?.rolesOrPermissions, withAdminLink, withFeedbackLink]);
 
+    const menuEntries = useMemo(() => {
+        return [
+            {
+                title: (user && (User.getPrimaryEmail(user) || user?.name)) || "User",
+                customFontStyle: "text-gray-400",
+                separator: true,
+            },
+            {
+                title: "User Settings",
+                link: "/user/settings",
+            },
+            {
+                title: "Docs",
+                href: "https://www.gitpod.io/docs/",
+                target: "_blank",
+                rel: "noreferrer",
+            },
+            {
+                title: "Help",
+                href: "https://www.gitpod.io/support/",
+                target: "_blank",
+                rel: "noreferrer",
+                separator: true,
+            },
+            ...extraSection,
+            {
+                title: "Log out",
+                href: gitpodHostUrl.asApiLogout().toString(),
+            },
+        ];
+    }, [extraSection, user]);
+
     return (
         <div
             className={classNames(
@@ -199,37 +231,7 @@ const UserMenu: FC<UserMenuProps> = ({ user, className, withAdminLink, withFeedb
             )}
             data-analytics='{"label":"Account"}'
         >
-            <ContextMenu
-                menuEntries={[
-                    {
-                        title: (user && (User.getPrimaryEmail(user) || user?.name)) || "User",
-                        customFontStyle: "text-gray-400",
-                        separator: true,
-                    },
-                    {
-                        title: "User Settings",
-                        link: "/user/settings",
-                    },
-                    {
-                        title: "Docs",
-                        href: "https://www.gitpod.io/docs/",
-                        target: "_blank",
-                        rel: "noreferrer",
-                    },
-                    {
-                        title: "Help",
-                        href: "https://www.gitpod.io/support/",
-                        target: "_blank",
-                        rel: "noreferrer",
-                        separator: true,
-                    },
-                    ...extraSection,
-                    {
-                        title: "Log out",
-                        href: gitpodHostUrl.asApiLogout().toString(),
-                    },
-                ]}
-            >
+            <ContextMenu menuEntries={menuEntries}>
                 <img className="rounded-full w-8 h-8" src={user?.avatarUrl || ""} alt={user?.name || "Anonymous"} />
             </ContextMenu>
         </div>
