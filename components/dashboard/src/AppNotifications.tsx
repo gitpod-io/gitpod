@@ -37,12 +37,7 @@ const SCHEDULED_DOWNTIME: Notification = {
             Gitpod will be uncharacteristically unavailable for essential maintenance beginning{" "}
             <span className="font-semibold">{localizedTime("2023-09-24T05:00:00.000Z")}</span> and lasting up to one
             hour. We apologize for any inconvenience this may cause.{" "}
-            <a
-                className="gp-link"
-                href="https://www.gitpodstatus.com/incidents/0d5vlgxcp27v"
-                target="_blank"
-                rel="noreferrer"
-            >
+            <a className="gp-link" href="https://www.gitpodstatus.com" target="_blank" rel="noreferrer">
                 Learn more
             </a>
         </span>
