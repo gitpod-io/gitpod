@@ -68,6 +68,8 @@ import {
     WorkspaceInstanceRepoStatus,
     GetProviderRepositoriesParams,
     SuggestedRepository,
+    GetDefaultWorkspaceImageParams,
+    GetDefaultWorkspaceImageResult,
 } from "@gitpod/gitpod-protocol";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import {
@@ -2518,10 +2520,26 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return this.organizationService.updateSettings(user.id, orgId, settings);
     }
 
-    async getDefaultWorkspaceImage(ctx: TraceContextWithSpan): Promise<string> {
-        const userId = this.userID;
-        traceAPIParams(ctx, { userId });
-        return this.config.workspaceDefaults.workspaceImage;
+    async getDefaultWorkspaceImage(
+        ctx: TraceContextWithSpan,
+        params: GetDefaultWorkspaceImageParams,
+    ): Promise<GetDefaultWorkspaceImageResult> {
+        const user = await this.checkAndBlockUser("getDefaultWorkspaceImage");
+        traceAPIParams(ctx, { params, userId: user.id });
+        if (params.workspaceId) {
+            const workspace = await this.getWorkspace(ctx, params.workspaceId);
+            const orgSettings = await this.organizationService.getSettings(user.id, workspace.workspace.organizationId);
+            if (orgSettings.defaultWorkspaceImage) {
+                return {
+                    image: orgSettings.defaultWorkspaceImage,
+                    source: "organization",
+                };
+            }
+        }
+        return {
+            image: this.config.workspaceDefaults.workspaceImage,
+            source: "installation",
+        };
     }
 
     public async getTeamProjects(ctx: TraceContext, teamId: string): Promise<Project[]> {
