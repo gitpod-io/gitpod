@@ -25,7 +25,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/cgroups"
 	"github.com/rootless-containers/rootlesskit/pkg/sigproxy"
 	sigproxysignal "github.com/rootless-containers/rootlesskit/pkg/sigproxy/signal"
 	"github.com/sirupsen/logrus"
@@ -104,18 +103,7 @@ func runWithinNetns() (err error) {
 
 	args := []string{
 		"--data-root=/workspace/.docker-root",
-	}
-
-	unified, err := cgroups.IsUnifiedCgroupSetup()
-	if err != nil {
-		return xerrors.Errorf("could not determine cgroup setup: %w", err)
-	}
-	if !unified {
-		// Enable rootless mode only in cgroup v1 because docker requires systemd when using it in cgroup v2
-		args = append(args,
-			"--experimental",
-			"--rootless",
-		)
+		"--cri-containerd",
 	}
 
 	if opts.Verbose {
