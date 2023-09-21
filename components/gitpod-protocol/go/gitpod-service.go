@@ -96,6 +96,8 @@ type APIInterface interface {
 	// Organization
 	GetOrgSettings(ctx context.Context, orgID string) (*OrganizationSettings, error)
 
+	GetDefaultWorkspaceImage(ctx context.Context, params *GetDefaultWorkspaceImageParams) (res *GetDefaultWorkspaceImageResult, err error)
+
 	// Projects
 	CreateProject(ctx context.Context, options *CreateProjectOptions) (*Project, error)
 	DeleteProject(ctx context.Context, projectID string) error
@@ -241,6 +243,9 @@ const (
 	// Organizations
 	// FunctionGetOrgSettings is the name of the getOrgSettings function
 	FunctionGetOrgSettings FunctionName = "getOrgSettings"
+
+	// FunctionGetDefaultWorkspaceImage is the name of the getDefaultWorkspaceImage function
+	FunctionGetDefaultWorkspaceImage FunctionName = "getDefaultWorkspaceImage"
 
 	// Projects
 	FunctionCreateProject   FunctionName = "createProject"
@@ -1488,6 +1493,19 @@ func (gp *APIoverJSONRPC) GetOrgSettings(ctx context.Context, orgID string) (res
 	return
 }
 
+func (gp *APIoverJSONRPC) GetDefaultWorkspaceImage(ctx context.Context, params *GetDefaultWorkspaceImageParams) (res *GetDefaultWorkspaceImageResult, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	var _params []interface{}
+
+	_params = append(_params, params)
+
+	err = gp.C.Call(ctx, string(FunctionGetDefaultWorkspaceImage), _params, &res)
+	return
+}
+
 func (gp *APIoverJSONRPC) CreateProject(ctx context.Context, options *CreateProjectOptions) (res *Project, err error) {
 	if gp == nil {
 		err = errNotConnected
@@ -2368,4 +2386,20 @@ type IDEClient struct {
 	DesktopIDEs []string `json:"desktopIDEs,omitempty"`
 	// InstallationSteps to install the client on user machine.
 	InstallationSteps []string `json:"installationSteps,omitempty"`
+}
+
+type GetDefaultWorkspaceImageParams struct {
+	WorkspaceID string `json:"workspaceId,omitempty"`
+}
+
+type WorkspaceImageSource string
+
+const (
+	WorkspaceImageSourceInstallation WorkspaceImageSource = "installation"
+	WorkspaceImageSourceOrganization WorkspaceImageSource = "organization"
+)
+
+type GetDefaultWorkspaceImageResult struct {
+	Image  string               `json:"image,omitempty"`
+	Source WorkspaceImageSource `json:"source,omitempty"`
 }
