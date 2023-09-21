@@ -30,7 +30,6 @@ import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
 import Alert from "../components/Alert";
 import { workspacesService } from "../service/public-api";
-import { useDefaultWorkspaceImageQuery } from "../data/workspaces/default-workspace-image-query";
 
 const sessionId = v4();
 
@@ -502,7 +501,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             case "running":
                 if (isPrebuild) {
                     return (
-                        <StartPage title="Prebuild in Progress">
+                        <StartPage title="Prebuild in Progress" workspaceId={this.props.workspaceId}>
                             <div className="mt-6 w-11/12 lg:w-3/5">
                                 {/* TODO(gpl) These classes are copied around in Start-/CreateWorkspace. This should properly go somewhere central. */}
                                 <PrebuildLogs workspaceId={this.props.workspaceId} />
@@ -628,7 +627,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 isStoppingOrStoppedPhase = true;
                 if (isPrebuild) {
                     return (
-                        <StartPage title="Prebuild in Progress">
+                        <StartPage title="Prebuild in Progress" workspaceId={this.props.workspaceId}>
                             <div className="mt-6 w-11/12 lg:w-3/5">
                                 {/* TODO(gpl) These classes are copied around in Start-/CreateWorkspace. This should properly go somewhere central. */}
                                 <PrebuildLogs workspaceId={this.props.workspaceId} />
@@ -709,9 +708,6 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                 <button>Open Workspace</button>
                             </a>
                         </div>
-                        {error && (
-                            <OrgDefaultWorkspaceWarningView workspaceId={this.state.workspaceInstance.workspaceId} />
-                        )}
                     </div>
                 );
                 break;
@@ -722,6 +718,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 error={error}
                 title={title}
                 showLatestIdeWarning={useLatest && (isError || !isStoppingOrStoppedPhase)}
+                workspaceId={this.props.workspaceId}
             >
                 {statusMessage}
             </StartPage>
@@ -782,7 +779,7 @@ function ImageBuildView(props: ImageBuildViewProps) {
     }, []);
 
     return (
-        <StartPage title="Building Image" phase={props.phase}>
+        <StartPage title="Building Image" phase={props.phase} workspaceId={props.workspaceId}>
             <Suspense fallback={<div />}>
                 <WorkspaceLogs logsEmitter={logsEmitter} errorMessage={props.error?.message} />
             </Suspense>
@@ -808,18 +805,5 @@ function ImageBuildView(props: ImageBuildViewProps) {
                 </>
             )}
         </StartPage>
-    );
-}
-
-function OrgDefaultWorkspaceWarningView(props: { workspaceId: string }) {
-    const { data: imageInfo } = useDefaultWorkspaceImageQuery(props.workspaceId);
-    if (imageInfo?.source === "installation") {
-        return null;
-    }
-    return (
-        <Alert className="w-96 mt-4" type="warning">
-            A custom <span className="font-medium">default workspace image</span> is set for this organization. Contact
-            an organization owner or specify a different image in <code>.gitpod.yml</code>.
-        </Alert>
     );
 }

@@ -12,6 +12,7 @@ import { useDocumentTitle } from "../hooks/use-document-title";
 import gitpodIcon from "../icons/gitpod.svg";
 import { gitpodHostUrl } from "../service/service";
 import { VerifyModal } from "./VerifyModal";
+import { useDefaultWorkspaceImageQuery } from "../data/workspaces/default-workspace-image-query";
 
 export enum StartPhase {
     Checking = 0,
@@ -81,6 +82,7 @@ export interface StartPageProps {
     title?: string;
     children?: React.ReactNode;
     showLatestIdeWarning?: boolean;
+    workspaceId: string;
 }
 
 export interface StartWorkspaceError {
@@ -90,7 +92,7 @@ export interface StartWorkspaceError {
 }
 
 export function StartPage(props: StartPageProps) {
-    const { phase, error } = props;
+    const { phase, error, workspaceId } = props;
     let title = props.title || getPhaseTitle(phase, error);
     useDocumentTitle("Starting");
     return (
@@ -127,6 +129,7 @@ export function StartPage(props: StartPageProps) {
                         </a>
                     </Alert>
                 )}
+                {error && workspaceId && <OrgDefaultWorkspaceWarningView workspaceId={workspaceId} />}
             </div>
         </div>
     );
@@ -138,4 +141,17 @@ function StartError(props: { error: StartWorkspaceError }) {
         return null;
     }
     return <p className="text-base text-gitpod-red w-96">{error.message}</p>;
+}
+
+function OrgDefaultWorkspaceWarningView(props: { workspaceId: string }) {
+    const { data: imageInfo } = useDefaultWorkspaceImageQuery(props.workspaceId);
+    if (imageInfo?.source !== "organization") {
+        return null;
+    }
+    return (
+        <Alert className="w-96 mt-4" type="warning">
+            A custom <span className="font-medium">default workspace image</span> is set for this organization. Contact
+            an organization owner or specify a different image in <code>.gitpod.yml</code>.
+        </Alert>
+    );
 }
