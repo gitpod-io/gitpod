@@ -137,7 +137,6 @@ import {
 import { ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
 import { VerificationService } from "../auth/verification-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import { EntitlementService } from "../billing/entitlement-service";
 import { formatPhoneNumber } from "../user/phone-numbers";
 import { IDEService } from "../ide-service";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
@@ -238,7 +237,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(IDEService) private readonly ideService: IDEService,
 
         @inject(VerificationService) private readonly verificationService: VerificationService,
-        @inject(EntitlementService) private readonly entitlementService: EntitlementService,
 
         @inject(Authorizer) private readonly auth: Authorizer,
 
@@ -648,14 +646,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         });
 
         return updatedUser;
-    }
-
-    public async maySetTimeout(ctx: TraceContext): Promise<boolean> {
-        const user = await this.checkUser("maySetTimeout");
-        await this.guardAccess({ kind: "user", subject: user }, "get");
-        await this.auth.checkPermissionOnUser(user.id, "read_info", user.id);
-
-        return await this.entitlementService.maySetTimeout(user.id);
     }
 
     public async updateWorkspaceTimeoutSetting(
