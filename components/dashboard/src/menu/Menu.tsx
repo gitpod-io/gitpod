@@ -20,7 +20,6 @@ import { isGitpodIo } from "../utils";
 import OrganizationSelector from "./OrganizationSelector";
 import { getAdminTabs } from "../admin/admin.routes";
 import classNames from "classnames";
-import { useQueryClient } from "@tanstack/react-query";
 
 interface Entry {
     title: string;
@@ -168,8 +167,6 @@ type UserMenuProps = {
     onFeedback?: () => void;
 };
 const UserMenu: FC<UserMenuProps> = ({ user, className, withAdminLink, withFeedbackLink, onFeedback }) => {
-    const client = useQueryClient();
-
     const extraSection = useMemo(() => {
         const items: ContextMenuEntry[] = [];
 
@@ -222,13 +219,9 @@ const UserMenu: FC<UserMenuProps> = ({ user, className, withAdminLink, withFeedb
             {
                 title: "Log out",
                 href: gitpodHostUrl.asApiLogout().toString(),
-                // Clear query cache on logout
-                onClick: () => {
-                    client.clear();
-                },
             },
         ];
-    }, [client, extraSection, user]);
+    }, [extraSection, user]);
 
     return (
         <div

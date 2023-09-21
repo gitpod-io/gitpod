@@ -21,7 +21,6 @@ import { SSOLoginForm } from "./login/SSOLoginForm";
 import { useAuthProviders } from "./data/auth-providers/auth-provider-query";
 import { SetupPending } from "./login/SetupPending";
 import { useNeedsSetup } from "./dedicated-setup/use-needs-setup";
-import { useQueryClient } from "@tanstack/react-query";
 
 export function markLoggedIn() {
     document.cookie = GitpodCookie.generateCookie(window.location.hostname);
@@ -36,7 +35,6 @@ type LoginProps = {
 };
 export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
     const { setUser } = useContext(UserContext);
-    const client = useQueryClient();
 
     const urlHash = useMemo(() => getURLHash(), []);
 
@@ -68,11 +66,9 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
     const updateUser = useCallback(async () => {
         await getGitpodService().reconnect();
         const user = await getGitpodService().server.getLoggedInUser();
-        // Clear the query cache on login to reset it
-        client.clear();
         setUser(user);
         markLoggedIn();
-    }, [client, setUser]);
+    }, [setUser]);
 
     const authorizeSuccessful = useCallback(async () => {
         updateUser().catch(console.error);

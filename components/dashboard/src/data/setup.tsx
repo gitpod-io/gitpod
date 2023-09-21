@@ -30,6 +30,12 @@ export function isNoPersistence(queryKey: QueryKey): boolean {
 
 export const setupQueryClientProvider = () => {
     const client = new QueryClient({
+        defaultOptions: {
+            queries: {
+                // Default stale time to help avoid re-fetching data too frequently
+                staleTime: 1000 * 5, // 5 seconds
+            },
+        },
         queryCache: new QueryCache({
             // log any errors our queries throw
             onError: (error) => {

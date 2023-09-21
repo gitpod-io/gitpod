@@ -5,7 +5,7 @@
  */
 
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { QueryErrorResetBoundary } from "@tanstack/react-query";
+import { QueryErrorResetBoundary, useQueryClient } from "@tanstack/react-query";
 import { FC } from "react";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import { hasLoggedInBefore, Login } from "../../Login";
@@ -28,11 +28,14 @@ export const QueryErrorBoundary: FC = ({ children }) => {
 
 // This handles any expected errors, i.e. errors w/ a code that an api call produced
 const ExpectedQueryErrorsFallback: FC<FallbackProps> = ({ error, resetErrorBoundary }) => {
+    const client = useQueryClient();
     // adjust typing, as we may have caught an api error here w/ a code property
     const caughtError = error as CaughtError;
 
     // User needs to Login
     if (caughtError.code === ErrorCodes.NOT_AUTHENTICATED) {
+        console.log("clearing query cache for unauthenticated user");
+        client.clear();
         // Before we show a Login screen, check to see if we need to redirect to www site
         // Redirects if it's the root, no user, and no gp cookie present (has logged in recently)
         if (isGitpodIo() && window.location.pathname === "/" && window.location.hash === "") {
