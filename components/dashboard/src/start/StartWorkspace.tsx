@@ -709,7 +709,9 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                 <button>Open Workspace</button>
                             </a>
                         </div>
-                        <OrgDefaultWorkspaceWarningView workspaceId={this.state.workspaceInstance.workspaceId} />
+                        {error && (
+                            <OrgDefaultWorkspaceWarningView workspaceId={this.state.workspaceInstance.workspaceId} />
+                        )}
                     </div>
                 );
                 break;
