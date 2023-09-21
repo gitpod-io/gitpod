@@ -22,7 +22,6 @@ export namespace BillingMode {
     }
 
     export function canSetCostCenter(billingMode: BillingMode): boolean {
-        // if has any Stripe Subscription, either directly or per team
         return billingMode.mode === "usage-based";
     }
 }
@@ -36,6 +35,6 @@ interface None {
 interface UsageBased {
     mode: "usage-based";
 
-    /** True iff this is a team, and is based on a paid plan. Currently only set for teams! */
+    /** True if the org has a paid plan. */
     paid?: boolean;
 }

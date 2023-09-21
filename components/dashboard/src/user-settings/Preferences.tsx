@@ -9,10 +9,8 @@ import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { ThemeSelector } from "../components/ThemeSelector";
-import Alert from "../components/Alert";
 import { Link } from "react-router-dom";
 import { Heading2, Heading3, Subheading } from "../components/typography/headings";
-import { useUserMaySetTimeout } from "../data/current-user/may-set-timeout-query";
 import { Button } from "../components/Button";
 import SelectIDE from "./SelectIDE";
 import { InputField } from "../components/forms/InputField";
@@ -20,13 +18,14 @@ import { TextInput } from "../components/forms/TextInputField";
 import { useToast } from "../components/toasts/Toasts";
 import { useUpdateCurrentUserDotfileRepoMutation } from "../data/current-user/update-mutation";
 import { AdditionalUserData } from "@gitpod/gitpod-protocol";
+import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 
 export default function Preferences() {
     const { toast } = useToast();
     const { user, setUser } = useContext(UserContext);
-    const maySetTimeout = useUserMaySetTimeout();
+    const billingMode = useOrgBillingMode();
     const updateDotfileRepo = useUpdateCurrentUserDotfileRepoMutation();
 
     const [dotfileRepo, setDotfileRepo] = useState<string>(user?.additionalData?.dotfileRepo || "");
@@ -57,7 +56,21 @@ export default function Preferences() {
                 const updatedUser = await getGitpodService().server.getLoggedInUser();
                 setUser(updatedUser);
 
-                toast("Your default workspace timeout was updated.");
+                let toastMessage = <>"Your default workspace timeout was updated."</>;
+                if (billingMode.data?.mode === "usage-based") {
+                    if (!billingMode.data.paid) {
+                        toastMessage = (
+                            <>
+                                {toastMessage} Note that this will only affect workspaces in paid organizations. Go to{" "}
+                                <Link to="/billing" className="gp-link">
+                                    billing
+                                </Link>{" "}
+                                to upgrade your organization.
+                            </>
+                        );
+                    }
+                }
+                toast(toastMessage);
             } catch (e) {
                 // TODO: Convert this to an error style toast
                 alert("Cannot set custom workspace timeout: " + e.message);
@@ -65,7 +78,7 @@ export default function Preferences() {
                 setTimeoutUpdating(false);
             }
         },
-        [toast, setUser, workspaceTimeout],
+        [toast, setUser, workspaceTimeout, billingMode],
     );
 
     const clearAutostartWorkspaceOptions = useCallback(async () => {
@@ -136,46 +149,34 @@ export default function Preferences() {
                 <Subheading>Workspaces will stop after a period of inactivity without any user input.</Subheading>
 
                 <div className="mt-4 max-w-xl">
-                    {!maySetTimeout.isLoading && maySetTimeout.data === false && (
-                        <Alert type="message">
-                            Upgrade organization{" "}
-                            <Link to="/billing" className="gp-link">
-                                billing
-                            </Link>{" "}
-                            plan to use a custom inactivity timeout.
-                        </Alert>
-                    )}
-
-                    {maySetTimeout.data === true && (
-                        <form onSubmit={saveWorkspaceTimeout}>
-                            <InputField
-                                label="Default Workspace Timeout"
-                                hint={
-                                    <span>
-                                        Use minutes or hours, like <span className="font-semibold">30m</span> or{" "}
-                                        <span className="font-semibold">2h</span>
-                                    </span>
-                                }
-                            >
-                                <div className="flex space-x-2">
-                                    <div className="flex-grow">
-                                        <TextInput
-                                            value={workspaceTimeout}
-                                            placeholder="e.g. 30m"
-                                            onChange={setWorkspaceTimeout}
-                                        />
-                                    </div>
-                                    <Button
-                                        htmlType="submit"
-                                        loading={timeoutUpdating}
-                                        disabled={workspaceTimeout === user?.additionalData?.workspaceTimeout ?? ""}
-                                    >
-                                        Save
-                                    </Button>
+                    <form onSubmit={saveWorkspaceTimeout}>
+                        <InputField
+                            label="Default Workspace Timeout"
+                            hint={
+                                <span>
+                                    Use minutes or hours, like <span className="font-semibold">30m</span> or{" "}
+                                    <span className="font-semibold">2h</span>
+                                </span>
+                            }
+                        >
+                            <div className="flex space-x-2">
+                                <div className="flex-grow">
+                                    <TextInput
+                                        value={workspaceTimeout}
+                                        placeholder="e.g. 30m"
+                                        onChange={setWorkspaceTimeout}
+                                    />
                                 </div>
-                            </InputField>
-                        </form>
-                    )}
+                                <Button
+                                    htmlType="submit"
+                                    loading={timeoutUpdating}
+                                    disabled={workspaceTimeout === user?.additionalData?.workspaceTimeout ?? ""}
+                                >
+                                    Save
+                                </Button>
+                            </div>
+                        </InputField>
+                    </form>
                 </div>
             </PageWithSettingsSubMenu>
         </div>
