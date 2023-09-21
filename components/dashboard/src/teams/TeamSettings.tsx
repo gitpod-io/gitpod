@@ -276,7 +276,7 @@ function WorkspaceImageButton(props: {
     const image = props.settings?.defaultWorkspaceImage ?? props.defaultWorkspaceImage ?? "";
 
     const descList = useMemo(() => {
-        const arr: ReactNode[] = [<span className="font-medium">Default image</span>];
+        const arr: ReactNode[] = [<span>Default image</span>];
         if (props.disabled) {
             arr.push(
                 <>
