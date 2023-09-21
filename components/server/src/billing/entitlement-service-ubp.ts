@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { TeamDB } from "@gitpod/gitpod-db/lib";
 import {
     WorkspaceInstance,
     WorkspaceTimeoutDuration,
@@ -14,7 +13,6 @@ import {
     WORKSPACE_LIFETIME_SHORT,
     User,
     BillingTier,
-    Team,
 } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { inject, injectable } from "inversify";
@@ -31,10 +29,7 @@ const MAX_PARALLEL_WORKSPACES_PAID = 16;
  */
 @injectable()
 export class EntitlementServiceUBP implements EntitlementService {
-    constructor(
-        @inject(UsageService) private readonly usageService: UsageService,
-        @inject(TeamDB) private readonly teamDB: TeamDB,
-    ) {}
+    constructor(@inject(UsageService) private readonly usageService: UsageService) {}
 
     async mayStartWorkspace(
         user: User,
@@ -79,7 +74,7 @@ export class EntitlementServiceUBP implements EntitlementService {
         }
     }
 
-    async maySetTimeout(userId: string, organizationId?: string): Promise<boolean> {
+    async maySetTimeout(userId: string, organizationId: string): Promise<boolean> {
         return this.hasPaidSubscription(userId, organizationId);
     }
 
@@ -109,48 +104,15 @@ export class EntitlementServiceUBP implements EntitlementService {
         return true;
     }
 
-    private async hasPaidSubscription(userId: string, organizationId?: string): Promise<boolean> {
-        if (organizationId) {
-            try {
-                // This is the "stricter", more correct version: We only allow privileges on the Organization that is paying for it
-                const { billingStrategy } = await this.usageService.getCostCenter(userId, organizationId);
-                return billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
-            } catch (err) {
-                log.warn({ userId, organizationId }, "Error checking if user is subscribed to organization", err);
-                return false;
-            }
-        }
-
-        // TODO(gpl) Remove everything below once organizations are fully rolled out
-        // This is the old behavior, stemming from our transition to PAYF, where our API did-/doesn't pass organizationId, yet
-        // Member of paid team?
-        const teams = await this.teamDB.findTeamsByUser(userId);
-        const isTeamSubscribedPromises = teams.map(async (team: Team) => {
-            const { billingStrategy } = await this.usageService.getCostCenter(userId, team.id);
+    private async hasPaidSubscription(userId: string, organizationId: string): Promise<boolean> {
+        try {
+            // This is the "stricter", more correct version: We only allow privileges on the Organization that is paying for it
+            const { billingStrategy } = await this.usageService.getCostCenter(userId, organizationId);
             return billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
-        });
-        // Return the first truthy promise, or false if all the promises were falsy.
-        // Source: https://gist.github.com/jbreckmckye/66364021ebaa0785e426deec0410a235
-        return new Promise((resolve, reject) => {
-            // If any promise returns true, immediately resolve with true
-            isTeamSubscribedPromises.forEach(async (isTeamSubscribedPromise: Promise<boolean>) => {
-                try {
-                    const isTeamSubscribed = await isTeamSubscribedPromise;
-                    if (isTeamSubscribed) resolve(true);
-                } catch (err) {
-                    log.warn({ userId, organizationId }, "Error checking if user is subscribed to organization", err);
-                    resolve(false);
-                }
-            });
-
-            // If neither of the above fires, resolve with false
-            // Check truthiness just in case callbacks fire out-of-band
-            Promise.all(isTeamSubscribedPromises)
-                .then((areTeamsSubscribed) => {
-                    resolve(!!areTeamsSubscribed.find((isTeamSubscribed: boolean) => !!isTeamSubscribed));
-                })
-                .catch(reject);
-        });
+        } catch (err) {
+            log.warn({ userId, organizationId }, "Error checking if user is subscribed to organization", err);
+            return false;
+        }
     }
 
     async getBillingTier(userId: string, organizationId: string): Promise<BillingTier> {
