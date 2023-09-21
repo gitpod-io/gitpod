@@ -36,5 +36,5 @@ interface UsageBased {
     mode: "usage-based";
 
     /** True if the org has a paid plan. */
-    paid?: boolean;
+    paid: boolean;
 }

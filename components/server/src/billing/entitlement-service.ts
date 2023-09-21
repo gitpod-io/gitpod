@@ -54,7 +54,7 @@ export interface EntitlementService {
      * @param userId
      * @param organizationId
      */
-    maySetTimeout(userId: string, organizationId?: string): Promise<boolean>;
+    maySetTimeout(userId: string, organizationId: string): Promise<boolean>;
 
     /**
      * Returns the default workspace timeout for the given user at a given point in time
@@ -127,10 +127,9 @@ export class EntitlementServiceImpl implements EntitlementService {
         }
     }
 
-    async maySetTimeout(userId: string, organizationId?: string): Promise<boolean> {
+    async maySetTimeout(userId: string, organizationId: string): Promise<boolean> {
         try {
-            // TODO(gpl): We need to replace this with ".getBillingMode(user.id, organizationId);" once all callers forward organizationId
-            const billingMode = await this.billingModes.getBillingModeForUser();
+            const billingMode = await this.billingModes.getBillingMode(userId, organizationId);
             switch (billingMode.mode) {
                 case "none":
                     // when payment is disabled users can do everything

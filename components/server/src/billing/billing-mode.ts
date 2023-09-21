@@ -31,20 +31,4 @@ export class BillingModes {
         const paid = billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
         return { mode: "usage-based", paid };
     }
-
-    /**
-     * @deprecated use getBillingMode(userId, organizationId) instead
-     * @returns
-     */
-    async getBillingModeForUser(): Promise<BillingMode> {
-        if (!this.config.enablePayment) {
-            // Payment is not enabled. E.g. Self-Hosted.
-            return { mode: "none" };
-        }
-
-        // "paid" is not set here, just as before. Also, it's we should remove this whole method once the org-migration is done, and center all capabilities around Organizations
-        return {
-            mode: "usage-based",
-        };
-    }
 }
