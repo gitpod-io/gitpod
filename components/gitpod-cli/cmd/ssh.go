@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpod"
@@ -39,16 +40,16 @@ See %s/user/keys for a guide on setting them up.
 			return fmt.Errorf("cannot get workspace info: %w", err)
 		}
 
-		var options = ""
+		var cmdline = []string{"ssh"}
 		if sshCmdOpts.Local {
-			options += "-L 3000:localhost:3000 "
+			cmdline = append(cmdline, "-L 3000:localhost:3000")
 		}
 		if sshCmdOpts.Remote {
-			options += "-N -R 5000:localhost:5000 "
+			cmdline = append(cmdline, "-N -R 5000:localhost:5000")
 		}
 
-		sshCommand := fmt.Sprintf("ssh '%s@%s.ssh.%s' %s", wsInfo.WorkspaceId, wsInfo.WorkspaceId, wsInfo.WorkspaceClusterHost, options)
-		fmt.Println(sshCommand)
+		cmdline = append(cmdline, fmt.Sprintf("'%s@%s.ssh.%s'", wsInfo.WorkspaceId, wsInfo.WorkspaceId, wsInfo.WorkspaceClusterHost))
+		fmt.Println(strings.Join(cmdline, " "))
 		return nil
 	},
 }
