@@ -134,7 +134,7 @@ func hasUser(u *user.User) (bool, error) {
 	}
 	if userByID == nil && userByName != nil {
 		// a user with this name already exists, but has a different GID
-		return true, xerrors.Errorf("user named %s exists but uses different UID %s, should be: %d", u.Username, userByName.Uid, u.Uid)
+		return true, xerrors.Errorf("user named %s exists but uses different UID %s, should be: %s", u.Username, userByName.Uid, u.Uid)
 	}
 
 	// at this point it doesn't matter if we use userByID or byName - they're likely the same
