@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"math"
 	"net"
 	"net/http"
@@ -71,12 +70,8 @@ import (
 )
 
 const (
-	gitpodUID       = 33333
-	gitpodUserName  = "gitpod"
-	gitpodGID       = 33333
-	gitpodGroupName = "gitpod"
-	desktopIDEPort  = 24000
-	debugProxyPort  = 23003
+	desktopIDEPort = 24000
+	debugProxyPort = 23003
 )
 
 var (
@@ -189,9 +184,11 @@ func Run(options ...RunOption) {
 	//         URL, which would fail if we tried another time.
 	childProcEnvvars = buildChildProcEnv(cfg, nil, opts.RunGP)
 
-	err = AddGitpodUserIfNotExists()
-	if err != nil {
-		log.WithError(err).Fatal("cannot ensure Gitpod user exists")
+	if cfg.WorkspaceLinuxUID == legacyGitpodUID || cfg.WorkspaceLinuxGID == legacyGitpodGID {
+		err = AddGitpodUserIfNotExists()
+		if err != nil {
+			log.WithError(err).Fatal("cannot ensure Gitpod user exists")
+		}
 	}
 	symlinkBinaries(cfg)
 
@@ -349,8 +346,8 @@ func Run(options ...RunOption) {
 	}
 	termMuxSrv.Env = childProcEnvvars
 	termMuxSrv.DefaultCreds = &syscall.Credential{
-		Uid: gitpodUID,
-		Gid: gitpodGID,
+		Uid: cfg.WorkspaceLinuxUID,
+		Gid: cfg.WorkspaceLinuxGID,
 	}
 
 	taskManager := newTasksManager(cfg, termMuxSrv, cstate, nil, ideReady, desktopIdeReady)
@@ -384,7 +381,7 @@ func Run(options ...RunOption) {
 		RegistrableTokenService{Service: tokenService},
 		notificationService,
 		&InfoService{cfg: cfg, ContentState: cstate},
-		&ControlService{portsManager: portMgmt},
+		&ControlService{portsManager: portMgmt, uid: int(cfg.WorkspaceLinuxUID), gid: int(cfg.WorkspaceLinuxGID)},
 		&portService{portsManager: portMgmt},
 	}
 	apiServices = append(apiServices, additionalServices...)
@@ -462,11 +459,11 @@ func Run(options ...RunOption) {
 					log.Debugf("unshallow of local repository took %v", time.Since(start))
 				}()
 
-				if !isShallowRepository(repoRoot) {
+				if !isShallowRepository(repoRoot, cfg.WorkspaceLinuxUID, cfg.WorkspaceLinuxGID) {
 					return
 				}
 
-				cmd := runAsGitpodUser(exec.Command("git", "fetch", "--unshallow", "--tags"))
+				cmd := runAsUser(exec.Command("git", "fetch", "--unshallow", "--tags"), cfg.WorkspaceLinuxUID, cfg.WorkspaceLinuxGID)
 				cmd.Dir = repoRoot
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
@@ -503,8 +500,8 @@ func Run(options ...RunOption) {
 	wg.Wait()
 }
 
-func isShallowRepository(rootDir string) bool {
-	cmd := runAsGitpodUser(exec.Command("git", "rev-parse", "--is-shallow-repository"))
+func isShallowRepository(rootDir string, uid, gid uint32) bool {
+	cmd := runAsUser(exec.Command("git", "rev-parse", "--is-shallow-repository"), uid, gid)
 	cmd.Dir = rootDir
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -536,7 +533,7 @@ func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTok
 	prep := func(cfg *Config, out io.Writer, name string, args ...string) *exec.Cmd {
 		cmd := exec.Command(name, args...)
 		cmd.Dir = "/home/gitpod"
-		runAsGitpodUser(cmd)
+		runAsUser(cmd, cfg.WorkspaceLinuxUID, cfg.WorkspaceLinuxGID)
 		cmd.Stdout = out
 		cmd.Stderr = out
 		return cmd
@@ -595,7 +592,7 @@ func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTok
 
 		filepath.Walk(dotfilePath, func(name string, info os.FileInfo, err error) error {
 			if err == nil {
-				err = os.Chown(name, gitpodUID, gitpodGID)
+				err = os.Chown(name, int(cfg.WorkspaceLinuxUID), int(cfg.WorkspaceLinuxGID))
 			}
 			return err
 		})
@@ -741,7 +738,7 @@ func configureGit(cfg *Config) {
 
 	for _, s := range settings {
 		cmd := exec.Command("git", append([]string{"config", "--global"}, s...)...)
-		cmd = runAsGitpodUser(cmd)
+		cmd = runAsUser(cmd, cfg.WorkspaceLinuxUID, cfg.WorkspaceLinuxGID)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err := cmd.Run()
@@ -926,7 +923,7 @@ func prepareIDELaunch(cfg *Config, ideConfig *IDEConfig) *exec.Cmd {
 
 	// All supervisor children run as gitpod user. The environment variables we produce are also
 	// gitpod user specific.
-	runAsGitpodUser(cmd)
+	runAsUser(cmd, cfg.WorkspaceLinuxUID, cfg.WorkspaceLinuxGID)
 
 	// We need the child process to run in its own process group, s.t. we can suspend and resume
 	// IDE and its children.
@@ -1159,7 +1156,7 @@ func ideStatusRequest(url string) ([]byte, error) {
 		return nil, xerrors.Errorf("IDE readiness probe came back with non-200 status code (%v)", resp.StatusCode)
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -1442,7 +1439,7 @@ func stopWhenTasksAreDone(ctx context.Context, wg *sync.WaitGroup, shutdown chan
 	if success.Failed() {
 		// we signal task failure via kubernetes termination log
 		msg := []byte("headless task failed: " + string(success))
-		err := ioutil.WriteFile("/dev/termination-log", msg, 0o644)
+		err := os.WriteFile("/dev/termination-log", msg, 0o644)
 		if err != nil {
 			log.WithError(err).Error("err while writing termination log")
 		}
@@ -1764,7 +1761,7 @@ func trackReadiness(ctx context.Context, w analytics.Writer, cfg *Config, cstate
 	}
 }
 
-func runAsGitpodUser(cmd *exec.Cmd) *exec.Cmd {
+func runAsUser(cmd *exec.Cmd, uid, gid uint32) *exec.Cmd {
 	if cmd.SysProcAttr == nil {
 		cmd.SysProcAttr = &syscall.SysProcAttr{}
 	}
@@ -1772,8 +1769,8 @@ func runAsGitpodUser(cmd *exec.Cmd) *exec.Cmd {
 		cmd.SysProcAttr.Credential = &syscall.Credential{}
 	}
 	cmd.Env = append(cmd.Env, childProcEnvvars...)
-	cmd.SysProcAttr.Credential.Uid = gitpodUID
-	cmd.SysProcAttr.Credential.Gid = gitpodGID
+	cmd.SysProcAttr.Credential.Uid = uid
+	cmd.SysProcAttr.Credential.Gid = gid
 	return cmd
 }
 

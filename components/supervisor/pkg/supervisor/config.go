@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math"
 	"net/http"
 	"net/url"
@@ -329,6 +328,9 @@ type WorkspaceConfig struct {
 
 	// ConfigcatEnabled controls whether configcat is enabled
 	ConfigcatEnabled bool `env:"GITPOD_CONFIGCAT_ENABLED"`
+
+	WorkspaceLinuxUID uint32 `env:"GITPOD_WORKSPACE_LINUX_UID,default=33333"`
+	WorkspaceLinuxGID uint32 `env:"GITPOD_WORKSPACE_LINUX_GID,default=33333"`
 }
 
 // WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service.
@@ -587,7 +589,7 @@ func loadDesktopIDEs(static *StaticConfig) ([]*IDEConfig, error) {
 		uniqueDesktopIDEs[desktopIDE.Name] = struct{}{}
 	}
 
-	files, err := ioutil.ReadDir(static.DesktopIDERoot)
+	files, err := os.ReadDir(static.DesktopIDERoot)
 	if err != nil {
 		return nil, err
 	}
