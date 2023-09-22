@@ -19,7 +19,7 @@ import (
 var gitpodHost = os.Getenv("GITPOD_HOST")
 
 var sshCmdOpts struct {
-	Local bool
+	Local  bool
 	Remote bool
 }
 
@@ -39,7 +39,7 @@ See %s/user/keys for a guide on setting them up.
 			return fmt.Errorf("cannot get workspace info: %w", err)
 		}
 
-		var options := ""
+		var options = ""
 		if sshCmdOpts.Local {
 			options += "-L 3000:localhost:3000 "
 		}
