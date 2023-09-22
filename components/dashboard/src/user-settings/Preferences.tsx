@@ -56,12 +56,12 @@ export default function Preferences() {
                 const updatedUser = await getGitpodService().server.getLoggedInUser();
                 setUser(updatedUser);
 
-                let toastMessage = <>"Your default workspace timeout was updated."</>;
+                let toastMessage = <>Default workspace timeout was updated.</>;
                 if (billingMode.data?.mode === "usage-based") {
                     if (!billingMode.data.paid) {
                         toastMessage = (
                             <>
-                                {toastMessage} Note that this will only affect workspaces in paid organizations. Go to{" "}
+                                {toastMessage} Changes will only affect workspaces in paid organizations. Go to{" "}
                                 <Link to="/billing" className="gp-link">
                                     billing
                                 </Link>{" "}
