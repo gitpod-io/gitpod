@@ -198,14 +198,14 @@ func (s *Service) usePublicAPI(ctx context.Context) bool {
 }
 
 func (s *Service) GetToken(ctx context.Context, query *gitpod.GetTokenSearchOptions) (res *gitpod.Token, err error) {
+	if s == nil {
+		return nil, errNotConnected
+	}
 	startTime := time.Now()
 	usePublicApi := s.usePublicAPI(ctx)
 	defer func() {
 		s.apiMetrics.ProcessMetrics(usePublicApi, "GetToken", err, startTime)
 	}()
-	if s == nil {
-		return nil, errNotConnected
-	}
 	if !usePublicApi {
 		return s.gitpodService.GetToken(ctx, query)
 	}
@@ -230,14 +230,14 @@ func (s *Service) GetToken(ctx context.Context, query *gitpod.GetTokenSearchOpti
 }
 
 func (s *Service) UpdateGitStatus(ctx context.Context, status *gitpod.WorkspaceInstanceRepoStatus) (err error) {
+	if s == nil {
+		return errNotConnected
+	}
 	startTime := time.Now()
 	usePublicApi := s.usePublicAPI(ctx)
 	defer func() {
 		s.apiMetrics.ProcessMetrics(usePublicApi, "UpdateGitStatus", err, startTime)
 	}()
-	if s == nil {
-		return errNotConnected
-	}
 	workspaceID := s.cfg.WorkspaceID
 	if !usePublicApi {
 		return s.gitpodService.UpdateGitStatus(ctx, workspaceID, status)
@@ -263,14 +263,14 @@ func (s *Service) UpdateGitStatus(ctx context.Context, status *gitpod.WorkspaceI
 }
 
 func (s *Service) OpenPort(ctx context.Context, port *gitpod.WorkspaceInstancePort) (res *gitpod.WorkspaceInstancePort, err error) {
+	if s == nil {
+		return nil, errNotConnected
+	}
 	startTime := time.Now()
 	usePublicApi := s.usePublicAPI(ctx)
 	defer func() {
 		s.apiMetrics.ProcessMetrics(usePublicApi, "OpenPort", err, startTime)
 	}()
-	if s == nil {
-		return nil, errNotConnected
-	}
 	workspaceID := s.cfg.WorkspaceID
 	if !usePublicApi {
 		return s.gitpodService.OpenPort(ctx, workspaceID, port)
@@ -304,14 +304,14 @@ func (s *Service) OpenPort(ctx context.Context, port *gitpod.WorkspaceInstancePo
 }
 
 func (s *Service) GetDefaultWorkspaceImage(ctx context.Context) (image string, err error) {
+	if s == nil {
+		return "", errNotConnected
+	}
 	startTime := time.Now()
 	usePublicApi := s.usePublicAPI(ctx)
 	defer func() {
 		s.apiMetrics.ProcessMetrics(usePublicApi, "GetDefaultWorkspaceImage", nil, startTime)
 	}()
-	if s == nil {
-		return "", errNotConnected
-	}
 	workspaceID := s.cfg.WorkspaceID
 	if !usePublicApi {
 		resp, err := s.gitpodService.GetDefaultWorkspaceImage(ctx, &gitpod.GetDefaultWorkspaceImageParams{
