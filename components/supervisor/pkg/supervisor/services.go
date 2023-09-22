@@ -707,7 +707,7 @@ func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest)
 		}
 	}
 
-	resp.UserHome = "/home/gitpod"
+	resp.UserHome = os.Getenv("HOME")
 
 	endpoint, host, err := is.cfg.GitpodAPIEndpoint()
 	if err != nil {
@@ -752,7 +752,7 @@ func (c *ControlService) ExposePort(ctx context.Context, req *api.ExposePortRequ
 
 // CreateSSHKeyPair create a ssh key pair for the workspace.
 func (c *ControlService) CreateSSHKeyPair(ctx context.Context, req *api.CreateSSHKeyPairRequest) (response *api.CreateSSHKeyPairResponse, err error) {
-	home := "/home/gitpod/"
+	home := os.Getenv("HOME")
 	if c.privateKey != "" && c.publicKey != "" {
 		checkKey := func() error {
 			data, err := os.ReadFile(filepath.Join(home, ".ssh/authorized_keys"))

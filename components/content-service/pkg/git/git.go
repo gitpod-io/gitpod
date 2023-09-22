@@ -183,8 +183,6 @@ func (c *Client) GitWithOutput(ctx context.Context, ignoreErr *string, subcomman
 		env = append(env, fmt.Sprintf("GIT_AUTH_PASSWORD=%s", pwd))
 	}
 
-	env = append(env, "HOME=/home/gitpod")
-
 	fullArgs = append(fullArgs, subcommand)
 	fullArgs = append(fullArgs, args...)
 

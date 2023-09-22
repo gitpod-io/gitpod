@@ -531,7 +531,9 @@ func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTok
 		return
 	}
 
-	const dotfilePath = "/home/gitpod/.dotfiles"
+	home := os.Getenv("HOME")
+
+	dotfilePath := filepath.Join(home, ".dotfiles")
 	if _, err := os.Stat(dotfilePath); err == nil {
 		// dotfile path exists already - nothing to do here
 		return
@@ -539,7 +541,7 @@ func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTok
 
 	prep := func(cfg *Config, out io.Writer, name string, args ...string) *exec.Cmd {
 		cmd := exec.Command(name, args...)
-		cmd.Dir = "/home/gitpod"
+		cmd.Dir = home
 		runAsUser(cmd, cfg.WorkspaceLinuxUID, cfg.WorkspaceLinuxGID)
 		cmd.Stdout = out
 		cmd.Stderr = out
@@ -547,7 +549,7 @@ func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTok
 	}
 
 	err := func() (err error) {
-		out, err := os.OpenFile("/home/gitpod/.dotfiles.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+		out, err := os.OpenFile(dotfilePath+".log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 		if err != nil {
 			return err
 		}
@@ -661,7 +663,7 @@ func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTok
 				return nil
 			}
 
-			homeFN := filepath.Join("/home/gitpod", strings.TrimPrefix(path, dotfilePath))
+			homeFN := filepath.Join(os.Getenv("HOME"), strings.TrimPrefix(path, dotfilePath))
 			if _, err := os.Stat(homeFN); err == nil {
 				// homeFN exists already - do nothing
 				return nil
@@ -1028,8 +1030,10 @@ func buildChildProcEnv(cfg *Config, envvars []string, runGP bool) []string {
 	//     - https://github.com/mirror/busybox/blob/24198f652f10dca5603df7c704263358ca21f5ce/libbb/setup_environment.c#L32
 	//     - https://github.com/mirror/busybox/blob/24198f652f10dca5603df7c704263358ca21f5ce/libbb/login.c#L140-L170
 	//
-	envs["HOME"] = "/home/gitpod"
-	envs["USER"] = "gitpod"
+	if cfg.WorkspaceRuntime != WorkspaceRuntimeNextgen {
+		envs["HOME"] = "/home/gitpod"
+		envs["USER"] = "gitpod"
+	}
 
 	// Particular Java optimisation: Java pre v10 did not gauge it's available memory correctly, and needed explicitly setting "-Xmx" for all Hotspot/openJDK VMs
 	if mem, ok := envs["GITPOD_MEMORY"]; ok {
