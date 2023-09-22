@@ -22,6 +22,7 @@ import { useRefreshProjects } from "../data/projects/list-projects-query";
 import { useToast } from "../components/toasts/Toasts";
 import classNames from "classnames";
 import { InputField } from "../components/forms/InputField";
+import { SelectInputField } from "../components/forms/SelectInputField";
 
 export function ProjectSettingsPage(props: { project?: Project; children?: React.ReactNode }) {
     return (
@@ -81,15 +82,28 @@ export default function ProjectSettingsView() {
         async (settings: ProjectSettings) => {
             if (!project) return;
 
+            const oldSettings = { ...project.settings };
             const newSettings = { ...project.settings, ...settings };
+            setProject({ ...project, settings: newSettings });
             try {
                 await getGitpodService().server.updateProjectPartial({ id: project.id, settings: newSettings });
-                setProject({ ...project, settings: newSettings });
+                toast(`Project ${projectName} updated.`);
             } catch (error) {
+                setProject({ ...project, settings: oldSettings });
                 toast(error?.message || "Oh no, there was a problem with updating project settings.");
             }
         },
-        [project, setProject, toast],
+        [project, setProject, toast, projectName],
+    );
+
+    const setPrebuildBranchStrategy = useCallback(
+        async (value: ProjectSettings.PrebuildBranchStrategy) => {
+            const prebuildDefaultBranchOnly = value === "defaultBranch";
+            await updateProjectSettings({
+                prebuildDefaultBranchOnly,
+            });
+        },
+        [updateProjectSettings],
     );
 
     const setWorkspaceClass = useCallback(
@@ -124,6 +138,8 @@ export default function ProjectSettingsView() {
     if (!project) return null;
 
     const enablePrebuilds = Project.isPrebuildsEnabled(project);
+
+    const prebuildBranchStrategy = Project.getPrebuildBranchStrategy(project);
 
     return (
         <ProjectSettingsPage project={project}>
@@ -168,14 +184,27 @@ export default function ProjectSettingsView() {
                 />
                 {enablePrebuilds && (
                     <>
-                        <InputField label="Workspace machine type" disabled={!enablePrebuilds}>
-                            <div className="max-w-md">
-                                <SelectWorkspaceClassComponent
-                                    disabled={!enablePrebuilds}
-                                    selectedWorkspaceClass={project.settings?.workspaceClasses?.prebuild}
-                                    onSelectionChange={setWorkspaceClassForPrebuild}
-                                />
-                            </div>
+                        <SelectInputField
+                            disabled={!enablePrebuilds}
+                            label="Build branches"
+                            value={prebuildBranchStrategy}
+                            containerClassName="max-w-md ml-6 text-sm"
+                            onChange={(val) => setPrebuildBranchStrategy(val as ProjectSettings.PrebuildBranchStrategy)}
+                        >
+                            <option value="defaultBranch">Default branch (e.g. main)</option>
+                            <option value="allBranches">All branches</option>
+                            {/* <option value="selectedBranches">Matched by pattern</option> */}
+                        </SelectInputField>
+                        <InputField
+                            className="max-w-md ml-6 text-sm"
+                            label="Workspace machine type"
+                            disabled={!enablePrebuilds}
+                        >
+                            <SelectWorkspaceClassComponent
+                                disabled={!enablePrebuilds}
+                                selectedWorkspaceClass={project.settings?.workspaceClasses?.prebuild}
+                                onSelectionChange={setWorkspaceClassForPrebuild}
+                            />
                         </InputField>
                         <CheckboxInputField
                             label="Enable Incremental Prebuilds"

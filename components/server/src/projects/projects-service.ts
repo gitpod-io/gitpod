@@ -30,6 +30,7 @@ import { ScmService } from "./scm-service";
 export class ProjectsService {
     public static PROJECT_SETTINGS_DEFAULTS: ProjectSettings = {
         enablePrebuilds: false,
+        prebuildDefaultBranchOnly: true,
     };
 
     constructor(
@@ -422,6 +423,7 @@ export class ProjectsService {
             prebuildId: we.prebuildId,
             projectId: we.projectId,
             status: we.prebuildStatus || we.status,
+            message: we.message,
         }));
     }
 }
