@@ -659,16 +659,25 @@ func (is *InfoService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) 
 	return api.RegisterInfoServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 }
 
+func (is *InfoService) getDefaultWorkspaceImage(ctx context.Context) (defaultWorkspaceImage string) {
+	defaultWorkspaceImage = is.cfg.DefaultWorkspaceImage
+	if defaultWorkspaceImage == "" {
+		// TODO: delete-me, added for compatibility before server is deployed / rollback
+		defaultWorkspaceImage = "gitpod/workspace-full:latest"
+	}
+	if is.GitpodService == nil {
+		return
+	}
+	wsImage, err := is.GitpodService.GetDefaultWorkspaceImage(ctx)
+	if err == nil {
+		defaultWorkspaceImage = wsImage
+	}
+	return
+}
+
 // WorkspaceInfo provides information about the workspace.
 func (is *InfoService) WorkspaceInfo(ctx context.Context, req *api.WorkspaceInfoRequest) (*api.WorkspaceInfoResponse, error) {
-	defaultWorkspaceImage, err := is.GitpodService.GetDefaultWorkspaceImage(ctx)
-	if err != nil {
-		// TODO: delete-me, added for compatibility before server is deployed / rollback
-		defaultWorkspaceImage = is.cfg.DefaultWorkspaceImage
-		if defaultWorkspaceImage == "" {
-			defaultWorkspaceImage = "gitpod/workspace-full:latest"
-		}
-	}
+	defaultWorkspaceImage := is.getDefaultWorkspaceImage(ctx)
 	resp := &api.WorkspaceInfoResponse{
 		CheckoutLocation:      is.cfg.RepoRoot,
 		InstanceId:            is.cfg.WorkspaceInstanceID,
