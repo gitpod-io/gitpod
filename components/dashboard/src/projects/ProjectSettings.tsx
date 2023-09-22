@@ -135,7 +135,7 @@ export default function ProjectSettingsView() {
     const debouncedUpdatePrebuildBranchPattern = useMemo(() => {
         return debounce(async (prebuildBranchPattern) => {
             await updateProjectSettings({ prebuildBranchPattern });
-        }, 500);
+        }, 1500);
     }, [updateProjectSettings]);
 
     const updatePrebuildBranchPattern = useCallback(
