@@ -12,7 +12,7 @@ RUN apk add --no-cache curl file \
 RUN curl -OsSL https://github.com/peak/s5cmd/releases/download/v2.2.2/s5cmd_2.2.2_Linux-64bit.tar.gz \
  && tar -xzvf s5cmd_2.2.2_Linux-64bit.tar.gz s5cmd \
  && chmod +x s5cmd \
- && if ! file s5cmd | grep -iq "ELF 64-bit LSB pie executable"; then echo "s5cmd is not a binary file"; exit 1;fi
+ && if ! file s5cmd | grep -iq "ELF 64-bit LSB executable"; then echo "s5cmd is not a binary file"; exit 1;fi
 
 FROM ubuntu:22.04
 
