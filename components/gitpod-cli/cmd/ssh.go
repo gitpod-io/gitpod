@@ -18,6 +18,11 @@ import (
 // todo(ft): distribute this common metadata from the root command to all subcommands to reduce latency
 var gitpodHost = os.Getenv("GITPOD_HOST")
 
+var sshCmdOpts struct {
+	Local bool
+	Remote bool
+}
+
 // sshCmd represents the ssh command
 var sshCmd = &cobra.Command{
 	Use:   "ssh",
@@ -34,12 +39,22 @@ See %s/user/keys for a guide on setting them up.
 			return fmt.Errorf("cannot get workspace info: %w", err)
 		}
 
-		sshCommand := fmt.Sprintf("ssh '%s@%s.ssh.%s'", wsInfo.WorkspaceId, wsInfo.WorkspaceId, wsInfo.WorkspaceClusterHost)
+		var options := ""
+		if sshCmdOpts.Local {
+			options += "-L 3000:localhost:3000 "
+		}
+		if sshCmdOpts.Remote {
+			options += "-N -R 5000:localhost:5000 "
+		}
+
+		sshCommand := fmt.Sprintf("ssh '%s@%s.ssh.%s' %s", wsInfo.WorkspaceId, wsInfo.WorkspaceId, wsInfo.WorkspaceClusterHost, options)
 		fmt.Println(sshCommand)
 		return nil
 	},
 }
 
 func init() {
+	sshCmd.Flags().BoolVarP(&sshCmdOpts.Local, "local", "", false, "Add options for local port forwarding")
+	sshCmd.Flags().BoolVarP(&sshCmdOpts.Remote, "remote", "", false, "Add options for remote port forwarding")
 	rootCmd.AddCommand(sshCmd)
 }
