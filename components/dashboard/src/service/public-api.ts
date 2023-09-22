@@ -109,6 +109,7 @@ export function projectToProtocol(project: Project): ProtocolProject {
         settings: {
             enablePrebuilds: project.settings?.prebuild?.enablePrebuilds,
             prebuildDefaultBranchOnly: project.settings?.prebuild?.prebuildDefaultBranchOnly,
+            prebuildBranchPattern: project.settings?.prebuild?.prebuildBranchPattern,
             allowUsingPreviousPrebuilds: project.settings?.prebuild?.usePreviousPrebuilds,
             keepOutdatedPrebuildsRunning: project.settings?.prebuild?.keepOutdatedPrebuildsRunning,
             prebuildEveryNthCommit: project.settings?.prebuild?.prebuildEveryNth,

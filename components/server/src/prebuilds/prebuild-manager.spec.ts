@@ -187,6 +187,102 @@ describe("PrebuildManager", () => {
                     }),
             ),
         },
+        {
+            title: "selected-branches/branch-name-missing",
+            shouldRun: false,
+            reason: "branch-name-missing-in-commit-context",
+            config,
+            context: clone(context, (c) => delete c.ref),
+            project: clone(
+                project,
+                (p) =>
+                    (p.settings = {
+                        enablePrebuilds: true,
+                        prebuildDefaultBranchOnly: false,
+                        prebuildBranchPattern: "*foo*",
+                    }),
+            ),
+        },
+        {
+            title: "selected-branches/unmatched",
+            shouldRun: false,
+            reason: "branch-unmatched",
+            config,
+            context: clone(context, (c) => (c.ref = "feature-branch")),
+            project: clone(
+                project,
+                (p) =>
+                    (p.settings = {
+                        enablePrebuilds: true,
+                        prebuildDefaultBranchOnly: false,
+                        prebuildBranchPattern: "*foo*",
+                    }),
+            ),
+        },
+        {
+            title: "selected-branches/matched/simple-pattern",
+            shouldRun: true,
+            reason: "branch-matched",
+            config,
+            context: clone(context, (c) => (c.ref = "feature-branch")),
+            project: clone(
+                project,
+                (p) =>
+                    (p.settings = {
+                        enablePrebuilds: true,
+                        prebuildDefaultBranchOnly: false,
+                        prebuildBranchPattern: "*feature*",
+                    }),
+            ),
+        },
+        {
+            title: "selected-branches/matched/comma-separated",
+            shouldRun: true,
+            reason: "branch-matched",
+            config,
+            context: clone(context, (c) => (c.ref = "feature-branch")),
+            project: clone(
+                project,
+                (p) =>
+                    (p.settings = {
+                        enablePrebuilds: true,
+                        prebuildDefaultBranchOnly: false,
+                        prebuildBranchPattern: "main, bug-*, *feature*",
+                    }),
+            ),
+        },
+        {
+            title: "selected-branches/matched/folders",
+            shouldRun: true,
+            reason: "branch-matched",
+            config,
+            context: clone(context, (c) => (c.ref = "folder/sub/feature-branch")),
+            project: clone(
+                project,
+                (p) =>
+                    (p.settings = {
+                        enablePrebuilds: true,
+                        prebuildDefaultBranchOnly: false,
+                        prebuildBranchPattern: "bug-*, *sub/feature*",
+                    }),
+            ),
+        },
+        {
+            title: "selected-branches/matched/globstar",
+            shouldRun: true,
+            reason: "branch-matched",
+            config,
+            context: clone(context, (c) => (c.ref = "anything")),
+            project: clone(
+                project,
+                (p) =>
+                    (p.settings = {
+                        enablePrebuilds: true,
+                        prebuildDefaultBranchOnly: false,
+                        prebuildBranchPattern: "**",
+                    }),
+            ),
+        },
     ];
 
     for (const { title, config, context, project, shouldRun, reason } of checkPrebuildPreconditionCases) {

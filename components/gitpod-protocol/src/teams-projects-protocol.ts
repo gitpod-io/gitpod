@@ -20,6 +20,12 @@ export interface ProjectSettings {
      * Defaults to `true` on project creation.
      */
     prebuildDefaultBranchOnly?: boolean;
+    /**
+     * Use this pattern to match branch names to run prebuilds on.
+     * The pattern matching will only be applied if prebuilds are enabled and
+     * they are not limited to the default branch.
+     */
+    prebuildBranchPattern?: string;
     useIncrementalPrebuilds?: boolean;
     keepOutdatedPrebuildsRunning?: boolean;
     // whether new workspaces can start on older prebuilds and incrementally update
@@ -95,10 +101,13 @@ export namespace Project {
         if (typeof project.settings?.prebuildDefaultBranchOnly === "undefined") {
             return "defaultBranch"; // default value for `settings.prebuildDefaultBranchOnly`
         }
-        if (project.settings.prebuildDefaultBranchOnly) {
+        if (project.settings?.prebuildDefaultBranchOnly) {
             return "defaultBranch";
         }
-        // TODO support "selectedBranches" next
+        const prebuildBranchPattern = project.settings?.prebuildBranchPattern?.trim();
+        if (typeof prebuildBranchPattern === "string" && prebuildBranchPattern.length > 1) {
+            return "selectedBranches";
+        }
         return "allBranches";
     }
 

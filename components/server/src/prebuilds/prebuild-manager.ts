@@ -35,6 +35,7 @@ import { PrebuildRateLimiterConfig } from "../workspace/prebuild-rate-limiter";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
 import { WorkspaceService } from "../workspace/workspace-service";
+import { minimatch as globMatch } from "minimatch";
 
 export class WorkspaceRunningError extends Error {
     constructor(msg: string, public instance: WorkspaceInstance) {
@@ -379,7 +380,34 @@ export class PrebuildManager {
         }
 
         if (strategy === "selectedBranches") {
-            // TODO support "selectedBranches" next
+            const branchName = context.ref;
+            if (!branchName) {
+                log.debug("CommitContext is missing the branch name. Ignoring request.", { context });
+                return { shouldRun: false, reason: "branch-name-missing-in-commit-context" };
+            }
+
+            const branchNamePattern = project.settings?.prebuildBranchPattern?.trim();
+            if (!branchNamePattern) {
+                // no pattern provided is treated as run on all branches
+                return { shouldRun: true, reason: "all-branches-selected" };
+            }
+
+            for (let pattern of branchNamePattern.split(",")) {
+                // prepending `**/` as branch names can be 'refs/heads/something/feature-x'
+                // and we want to allow simple patterns like: `feature-*`
+                pattern = "**/" + pattern.trim();
+                try {
+                    if (globMatch(branchName, pattern)) {
+                        return { shouldRun: true, reason: "branch-matched" };
+                    }
+                } catch (error) {
+                    log.debug("Ignored error with attempt to match a branch by pattern.", {
+                        branchNamePattern,
+                        error: error?.message,
+                    });
+                }
+            }
+            return { shouldRun: false, reason: "branch-unmatched" };
         }
 
         log.debug("Unknown prebuild branch strategy. Ignoring request.", { context, config });
