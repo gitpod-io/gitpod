@@ -237,7 +237,7 @@ export default function ProjectSettingsView() {
                             <option value="selectedBranches">Matched by pattern</option>
                         </SelectInputField>
                         {prebuildBranchStrategy === "selectedBranches" && (
-                            <div className="flex flex-col ml-6 mt-2">
+                            <div className="flex flex-col ml-6 mt-4">
                                 <label
                                     htmlFor="selectedBranches"
                                     className={classNames(
@@ -258,7 +258,7 @@ export default function ProjectSettingsView() {
                                     onChange={({ target }) => updatePrebuildBranchPattern(target.value)}
                                 />
                                 <div className="text-gray-500 dark:text-gray-400 text-sm mt-2">
-                                    Glob patterns accepted as a comma-separated list.
+                                    Glob patterns separated by commas are supported.
                                 </div>
                             </div>
                         )}
