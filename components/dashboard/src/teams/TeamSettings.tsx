@@ -315,6 +315,7 @@ function WorkspaceImageButton(props: {
                         <Button
                             htmlType="button"
                             type="transparent"
+                            spacing="compact"
                             className="text-blue-500 flex-none"
                             onClick={props.onClick}
                         >

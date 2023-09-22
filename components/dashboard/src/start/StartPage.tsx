@@ -116,20 +116,11 @@ export function StartPage(props: StartPageProps) {
                 )}
                 {error && <StartError error={error} />}
                 {props.children}
-                {props.showLatestIdeWarning && (
-                    <Alert type="warning" className="mt-4 w-96">
-                        This workspace is configured with the latest release (unstable) for the editor.{" "}
-                        <a
-                            className="gp-link"
-                            target="_blank"
-                            rel="noreferrer"
-                            href={gitpodHostUrl.asPreferences().toString()}
-                        >
-                            Change Preferences
-                        </a>
-                    </Alert>
-                )}
-                {error && workspaceId && <OrgDefaultWorkspaceWarningView workspaceId={workspaceId} />}
+                <WarningView
+                    workspaceId={workspaceId}
+                    showLatestIdeWarning={props.showLatestIdeWarning}
+                    error={props.error}
+                />
             </div>
         </div>
     );
@@ -143,15 +134,33 @@ function StartError(props: { error: StartWorkspaceError }) {
     return <p className="text-base text-gitpod-red w-96">{error.message}</p>;
 }
 
-function OrgDefaultWorkspaceWarningView(props: { workspaceId: string }) {
+function WarningView(props: { workspaceId?: string; showLatestIdeWarning?: boolean; error?: StartWorkspaceError }) {
     const { data: imageInfo } = useDefaultWorkspaceImageQuery(props.workspaceId);
-    if (imageInfo?.source !== "organization") {
-        return null;
+    let useWarning: "latestIde" | "orgImage" | undefined = props.showLatestIdeWarning ? "latestIde" : undefined;
+    if (props.error && props.workspaceId && imageInfo?.source === "organization") {
+        useWarning = "orgImage";
     }
     return (
-        <Alert className="w-96 mt-4" type="warning">
-            A custom <span className="font-medium">default workspace image</span> is set for this organization. Contact
-            an organization owner or specify a different image in <code>.gitpod.yml</code>.
-        </Alert>
+        <div>
+            {useWarning === "latestIde" && (
+                <Alert type="warning" className="mt-4 w-96">
+                    This workspace is configured with the latest release (unstable) for the editor.{" "}
+                    <a
+                        className="gp-link"
+                        target="_blank"
+                        rel="noreferrer"
+                        href={gitpodHostUrl.asPreferences().toString()}
+                    >
+                        Change Preferences
+                    </a>
+                </Alert>
+            )}
+            {useWarning === "orgImage" && (
+                <Alert className="w-96 mt-4" type="warning">
+                    <span className="font-medium">Could not use workspace image?</span> Try a different workspace image
+                    in the yaml configuration or check the default workspace image in organization settings.
+                </Alert>
+            )}
+        </div>
     );
 }
