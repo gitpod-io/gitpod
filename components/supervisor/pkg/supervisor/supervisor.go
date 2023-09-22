@@ -54,6 +54,7 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/executor"
 	"github.com/gitpod-io/gitpod/content-service/pkg/git"
+	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/config"
@@ -1537,8 +1538,22 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 	}
 
 	log.Info("supervisor: running content service executor with content descriptor")
-	var src csapi.WorkspaceInitSource
-	src, err = executor.Execute(ctx, "/workspace", bytes.NewReader(contentFile), true)
+	var (
+		src  csapi.WorkspaceInitSource
+		user *initializer.User
+	)
+	if cfg.WorkspaceRuntime == WorkspaceRuntimeNextgen {
+		user = &initializer.User{
+			UID: cfg.WorkspaceLinuxUID,
+			GID: cfg.WorkspaceLinuxGID,
+		}
+	} else {
+		user = &initializer.User{
+			UID: legacyGitpodUID,
+			GID: legacyGitpodGID,
+		}
+	}
+	src, err = executor.Execute(ctx, "/workspace", bytes.NewReader(contentFile), user)
 	if err != nil {
 		return
 	}

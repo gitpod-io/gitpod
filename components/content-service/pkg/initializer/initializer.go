@@ -99,11 +99,13 @@ func (e CompositeInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 
 // NewFromRequestOpts configures the initializer produced from a content init request
 type NewFromRequestOpts struct {
-	// ForceGitpodUserForGit forces gitpod:gitpod ownership on all files produced by the Git initializer.
-	// For FWB workspaces the content init is run from supervisor which runs as UID 0. Using this flag, the
-	// Git content is forced to the Gitpod user. All other content (backup, prebuild, snapshot) will already
-	// have the correct user.
-	ForceGitpodUserForGit bool
+	// RunAs - if not nil - decides the user with which the initiallisation will be executed
+	RunAs *User
+}
+
+type User struct {
+	UID uint32
+	GID uint32
 }
 
 // NewFromRequest picks the initializer from the request but does not execute it.
@@ -132,7 +134,7 @@ func NewFromRequest(ctx context.Context, loc string, rs storage.DirectDownloader
 			return nil, status.Error(codes.InvalidArgument, "missing Git initializer spec")
 		}
 
-		initializer, err = newGitInitializer(ctx, loc, ir.Git, opts.ForceGitpodUserForGit)
+		initializer, err = newGitInitializer(ctx, loc, ir.Git, opts.RunAs)
 	} else if ir, ok := spec.(*csapi.WorkspaceInitializer_Prebuild); ok {
 		if ir.Prebuild == nil {
 			return nil, status.Error(codes.InvalidArgument, "missing prebuild initializer spec")
@@ -146,7 +148,7 @@ func NewFromRequest(ctx context.Context, loc string, rs storage.DirectDownloader
 		}
 		var gits []*GitInitializer
 		for _, gi := range ir.Prebuild.Git {
-			gitinit, err := newGitInitializer(ctx, loc, gi, opts.ForceGitpodUserForGit)
+			gitinit, err := newGitInitializer(ctx, loc, gi, opts.RunAs)
 			if err != nil {
 				return nil, err
 			}
@@ -249,7 +251,7 @@ func (bi *fromBackupInitializer) Run(ctx context.Context, mappings []archive.IDM
 
 // newGitInitializer creates a Git initializer based on the request.
 // Returns gRPC errors.
-func newGitInitializer(ctx context.Context, loc string, req *csapi.GitInitializer, forceGitpodUser bool) (*GitInitializer, error) {
+func newGitInitializer(ctx context.Context, loc string, req *csapi.GitInitializer, runAs *User) (*GitInitializer, error) {
 	if req.Config == nil {
 		return nil, status.Error(codes.InvalidArgument, "Git initializer misses config")
 	}
@@ -294,6 +296,11 @@ func newGitInitializer(ctx context.Context, loc string, req *csapi.GitInitialize
 		return
 	})
 
+	var user *git.User
+	if runAs != nil {
+		user = &git.User{UID: runAs.UID, GID: runAs.GID}
+	}
+
 	log.WithField("location", loc).Debug("using Git initializer")
 	return &GitInitializer{
 		Client: git.Client{
@@ -303,7 +310,7 @@ func newGitInitializer(ctx context.Context, loc string, req *csapi.GitInitialize
 			Config:            req.Config.CustomConfig,
 			AuthMethod:        authMethod,
 			AuthProvider:      authProvider,
-			RunAsGitpodUser:   forceGitpodUser,
+			RunAs:             user,
 		},
 		TargetMode:  targetMode,
 		CloneTarget: req.CloneTaget,
