@@ -82,15 +82,18 @@ export default function ProjectSettingsView() {
         async (settings: ProjectSettings) => {
             if (!project) return;
 
+            const oldSettings = { ...project.settings };
             const newSettings = { ...project.settings, ...settings };
+            setProject({ ...project, settings: newSettings });
             try {
                 await getGitpodService().server.updateProjectPartial({ id: project.id, settings: newSettings });
-                setProject({ ...project, settings: newSettings });
+                toast(`Project ${projectName} updated.`);
             } catch (error) {
+                setProject({ ...project, settings: oldSettings });
                 toast(error?.message || "Oh no, there was a problem with updating project settings.");
             }
         },
-        [project, setProject, toast],
+        [project, setProject, toast, projectName],
     );
 
     const setPrebuildBranchStrategy = useCallback(
