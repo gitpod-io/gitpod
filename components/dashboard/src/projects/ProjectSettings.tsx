@@ -5,7 +5,7 @@
  */
 
 import { Project, ProjectSettings } from "@gitpod/gitpod-protocol";
-import { useCallback, useContext, useState, Fragment } from "react";
+import { useCallback, useContext, useState, Fragment, useMemo, useEffect } from "react";
 import { useHistory } from "react-router";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
@@ -22,6 +22,8 @@ import { useRefreshProjects } from "../data/projects/list-projects-query";
 import { useToast } from "../components/toasts/Toasts";
 import classNames from "classnames";
 import { InputField } from "../components/forms/InputField";
+import { SelectInputField } from "../components/forms/SelectInputField";
+import debounce from "lodash.debounce";
 
 export function ProjectSettingsPage(props: { project?: Project; children?: React.ReactNode }) {
     return (
@@ -55,6 +57,14 @@ export default function ProjectSettingsView() {
     const history = useHistory();
     const refreshProjects = useRefreshProjects();
     const { toast } = useToast();
+    const [prebuildBranchPattern, setPrebuildBranchPattern] = useState("");
+
+    useEffect(() => {
+        if (!project) {
+            return;
+        }
+        setPrebuildBranchPattern(project?.settings?.prebuildBranchPattern || "");
+    }, [project]);
 
     const setProjectName = useCallback(
         (projectName: string) => {
@@ -81,15 +91,60 @@ export default function ProjectSettingsView() {
         async (settings: ProjectSettings) => {
             if (!project) return;
 
+            const oldSettings = { ...project.settings };
             const newSettings = { ...project.settings, ...settings };
+            setProject({ ...project, settings: newSettings });
             try {
                 await getGitpodService().server.updateProjectPartial({ id: project.id, settings: newSettings });
-                setProject({ ...project, settings: newSettings });
+                toast(`Project ${projectName} updated.`);
             } catch (error) {
+                setProject({ ...project, settings: oldSettings });
                 toast(error?.message || "Oh no, there was a problem with updating project settings.");
             }
         },
-        [project, setProject, toast],
+        [project, setProject, toast, projectName],
+    );
+
+    const setPrebuildBranchStrategy = useCallback(
+        async (value: ProjectSettings.PrebuildBranchStrategy) => {
+            if (!project) {
+                return;
+            }
+            const oldValue = Project.getPrebuildBranchStrategy(project);
+            if (oldValue === value) {
+                return;
+            }
+            const update: ProjectSettings = {};
+            if (value === "defaultBranch") {
+                update.prebuildDefaultBranchOnly = true;
+                update.prebuildBranchPattern = "";
+            }
+            if (value === "allBranches") {
+                update.prebuildDefaultBranchOnly = false;
+                update.prebuildBranchPattern = "";
+            }
+            if (value === "selectedBranches") {
+                update.prebuildDefaultBranchOnly = false;
+                update.prebuildBranchPattern = "**";
+            }
+            await updateProjectSettings(update);
+        },
+        [updateProjectSettings, project],
+    );
+
+    const debouncedUpdatePrebuildBranchPattern = useMemo(() => {
+        return debounce(async (prebuildBranchPattern) => {
+            await updateProjectSettings({ prebuildBranchPattern });
+        }, 1500);
+    }, [updateProjectSettings]);
+
+    const updatePrebuildBranchPattern = useCallback(
+        async (value: string) => {
+            setPrebuildBranchPattern(value);
+
+            debouncedUpdatePrebuildBranchPattern(value);
+        },
+        [debouncedUpdatePrebuildBranchPattern],
     );
 
     const setWorkspaceClass = useCallback(
@@ -124,6 +179,8 @@ export default function ProjectSettingsView() {
     if (!project) return null;
 
     const enablePrebuilds = Project.isPrebuildsEnabled(project);
+
+    const prebuildBranchStrategy = Project.getPrebuildBranchStrategy(project);
 
     return (
         <ProjectSettingsPage project={project}>
@@ -168,14 +225,53 @@ export default function ProjectSettingsView() {
                 />
                 {enablePrebuilds && (
                     <>
-                        <InputField label="Workspace machine type" disabled={!enablePrebuilds}>
-                            <div className="max-w-md">
-                                <SelectWorkspaceClassComponent
-                                    disabled={!enablePrebuilds}
-                                    selectedWorkspaceClass={project.settings?.workspaceClasses?.prebuild}
-                                    onSelectionChange={setWorkspaceClassForPrebuild}
+                        <SelectInputField
+                            disabled={!enablePrebuilds}
+                            label="Build branches"
+                            value={prebuildBranchStrategy}
+                            containerClassName="max-w-md ml-6 text-sm"
+                            onChange={(val) => setPrebuildBranchStrategy(val as ProjectSettings.PrebuildBranchStrategy)}
+                        >
+                            <option value="defaultBranch">Default branch (e.g. main)</option>
+                            <option value="allBranches">All branches</option>
+                            <option value="selectedBranches">Matched by pattern</option>
+                        </SelectInputField>
+                        {prebuildBranchStrategy === "selectedBranches" && (
+                            <div className="flex flex-col ml-6 mt-4">
+                                <label
+                                    htmlFor="selectedBranches"
+                                    className={classNames(
+                                        "text-sm font-semibold cursor-pointer tracking-wide",
+                                        !enablePrebuilds
+                                            ? "text-gray-400 dark:text-gray-400"
+                                            : "text-gray-600 dark:text-gray-100",
+                                    )}
+                                >
+                                    Branch name pattern
+                                </label>
+                                <input
+                                    type="text"
+                                    id="selectedBranches"
+                                    className="mt-2"
+                                    disabled={prebuildBranchStrategy !== "selectedBranches"}
+                                    value={prebuildBranchPattern}
+                                    onChange={({ target }) => updatePrebuildBranchPattern(target.value)}
                                 />
+                                <div className="text-gray-500 dark:text-gray-400 text-sm mt-2">
+                                    Glob patterns separated by commas are supported.
+                                </div>
                             </div>
+                        )}
+                        <InputField
+                            className="max-w-md ml-6 text-sm"
+                            label="Workspace machine type"
+                            disabled={!enablePrebuilds}
+                        >
+                            <SelectWorkspaceClassComponent
+                                disabled={!enablePrebuilds}
+                                selectedWorkspaceClass={project.settings?.workspaceClasses?.prebuild}
+                                onSelectionChange={setWorkspaceClassForPrebuild}
+                            />
                         </InputField>
                         <CheckboxInputField
                             label="Enable Incremental Prebuilds"

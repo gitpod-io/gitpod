@@ -35,6 +35,7 @@ describe("GitHub app", () => {
                     prebuilds: pbcfg,
                 },
                 tasks: [{ init: "ls" }],
+                _origin: "repo",
             };
 
             chai.assert.equal(

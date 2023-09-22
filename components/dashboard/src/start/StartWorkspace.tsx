@@ -408,7 +408,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             }
             if (code !== 200) {
                 // getting workspace auth didn't work as planned
-                console.error("Unable to retrieve workspace-auth cookie! Quitting.", {
+                console.warn("Unable to retrieve workspace-auth cookie.", {
                     instanceID,
                     code,
                     attempt,
@@ -501,7 +501,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             case "running":
                 if (isPrebuild) {
                     return (
-                        <StartPage title="Prebuild in Progress">
+                        <StartPage title="Prebuild in Progress" workspaceId={this.props.workspaceId}>
                             <div className="mt-6 w-11/12 lg:w-3/5">
                                 {/* TODO(gpl) These classes are copied around in Start-/CreateWorkspace. This should properly go somewhere central. */}
                                 <PrebuildLogs workspaceId={this.props.workspaceId} />
@@ -627,7 +627,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 isStoppingOrStoppedPhase = true;
                 if (isPrebuild) {
                     return (
-                        <StartPage title="Prebuild in Progress">
+                        <StartPage title="Prebuild in Progress" workspaceId={this.props.workspaceId}>
                             <div className="mt-6 w-11/12 lg:w-3/5">
                                 {/* TODO(gpl) These classes are copied around in Start-/CreateWorkspace. This should properly go somewhere central. */}
                                 <PrebuildLogs workspaceId={this.props.workspaceId} />
@@ -718,6 +718,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 error={error}
                 title={title}
                 showLatestIdeWarning={useLatest && (isError || !isStoppingOrStoppedPhase)}
+                workspaceId={this.props.workspaceId}
             >
                 {statusMessage}
             </StartPage>
@@ -778,7 +779,7 @@ function ImageBuildView(props: ImageBuildViewProps) {
     }, []);
 
     return (
-        <StartPage title="Building Image" phase={props.phase}>
+        <StartPage title="Building Image" phase={props.phase} workspaceId={props.workspaceId}>
             <Suspense fallback={<div />}>
                 <WorkspaceLogs logsEmitter={logsEmitter} errorMessage={props.error?.message} />
             </Suspense>

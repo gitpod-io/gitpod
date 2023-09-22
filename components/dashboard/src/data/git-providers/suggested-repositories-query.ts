@@ -11,11 +11,18 @@ import { getGitpodService } from "../../service/service";
 export const useSuggestedRepositories = () => {
     const { data: org } = useCurrentOrg();
 
-    return useQuery(["suggested-repositories", { orgId: org?.id }], async () => {
-        if (!org) {
-            throw new Error("No org selected");
-        }
+    return useQuery(
+        ["suggested-repositories", { orgId: org?.id }],
+        async () => {
+            if (!org) {
+                throw new Error("No org selected");
+            }
 
-        return await getGitpodService().server.getSuggestedRepositories(org.id);
-    });
+            return await getGitpodService().server.getSuggestedRepositories(org.id);
+        },
+        {
+            // Keeps data in cache for 24h - will still refresh though
+            cacheTime: 1000 * 60 * 60 * 24,
+        },
+    );
 };

@@ -108,3 +108,13 @@ func (s *ProxyWorkspacesServiceHandler) ListWorkspaceClasses(ctx context.Context
 
 	return connect_go.NewResponse(resp), nil
 }
+
+func (s *ProxyWorkspacesServiceHandler) GetDefaultWorkspaceImage(ctx context.Context, req *connect_go.Request[v1.GetDefaultWorkspaceImageRequest]) (*connect_go.Response[v1.GetDefaultWorkspaceImageResponse], error) {
+	resp, err := s.Client.GetDefaultWorkspaceImage(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}

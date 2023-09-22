@@ -169,6 +169,16 @@ export class PrebuildSettings extends Message<PrebuildSettings> {
    */
   enablePrebuilds?: boolean;
 
+  /**
+   * @generated from field: optional bool prebuild_default_branch_only = 6;
+   */
+  prebuildDefaultBranchOnly?: boolean;
+
+  /**
+   * @generated from field: optional string prebuild_branch_pattern = 7;
+   */
+  prebuildBranchPattern?: string;
+
   constructor(data?: PartialMessage<PrebuildSettings>) {
     super();
     proto3.util.initPartial(data, this);
@@ -182,6 +192,8 @@ export class PrebuildSettings extends Message<PrebuildSettings> {
     { no: 3, name: "use_previous_prebuilds", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 4, name: "prebuild_every_nth", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 5, name: "enable_prebuilds", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 6, name: "prebuild_default_branch_only", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 7, name: "prebuild_branch_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PrebuildSettings {

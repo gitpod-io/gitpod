@@ -34,13 +34,23 @@ export class GithubAppRules {
         return deepmerge(defaultConfig, cfg.github);
     }
 
+    /**
+     *
+     * @deprecated
+     */
     public shouldRunPrebuild(
         config: WorkspaceConfig | undefined,
         isDefaultBranch: boolean,
         isPR: boolean,
         isFork: boolean,
     ): boolean {
-        if (!config) {
+        if (!config || !config._origin || config._origin !== "repo") {
+            // we demand an explicit gitpod config
+            return false;
+        }
+
+        const hasPrebuildTask = !!config.tasks && config.tasks.find((t) => !!t.before || !!t.init || !!t.prebuild);
+        if (!hasPrebuildTask) {
             return false;
         }
 

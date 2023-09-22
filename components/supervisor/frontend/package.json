@@ -5,17 +5,20 @@
   "version": "0.0.0",
   "dependencies": {
     "@gitpod/gitpod-protocol": "0.1.5",
+    "@gitpod/public-api": "0.1.5",
     "@gitpod/supervisor-api-grpc": "0.1.5",
+    "buffer": "^4.3.0",
     "crypto-browserify": "3.12.0",
+    "process": "^0.11.10",
     "stream-browserify": "^2.0.1",
     "url": "^0.11.1",
     "util": "^0.11.1",
-    "buffer": "^4.3.0",
-    "process": "^0.11.10"
+    "uuid": "8.3.2"
   },
   "devDependencies": {
     "@types/sharedworker": "^0.0.29",
     "@types/trusted-types": "^2.0.0",
+    "@types/uuid": "8.3.1",
     "concurrently": "^6.2.1",
     "copy-webpack-plugin": "^11.0.0",
     "css-loader": "^6.8.1",

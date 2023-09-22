@@ -58,11 +58,34 @@ import { log, LogrusLogLevel } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { TypeORM } from "@gitpod/gitpod-db/lib";
 import { dbConnectionsEnqueued, dbConnectionsFree, dbConnectionsTotal } from "./prometheus-metrics";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 if (process.env.NODE_ENV === "development") {
     require("longjohn");
 }
 
 log.enableJSONLogging("server", process.env.VERSION, LogrusLogLevel.getFromEnv());
+
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
+(async () => {
+    let isEnabled = await getExperimentsClientForBackend().getValueAsync("google_cloud_profiler", false, {});
+    while (!isEnabled) {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        isEnabled = await getExperimentsClientForBackend().getValueAsync("google_cloud_profiler", false, {});
+    }
+    try {
+        const profiler = await import("@google-cloud/profiler");
+        // there is no way to stop it: https://github.com/googleapis/cloud-profiler-nodejs/issues/876
+        // disable google_cloud_profiler and cycle servers
+        await profiler.start({
+            serviceContext: {
+                service: "server",
+                version: process.env.VERSION,
+            },
+        });
+    } catch (err) {
+        console.error("failed to start cloud profiler", err);
+    }
+})();
 
 export async function start(container: Container) {
     const server = container.get(Server);

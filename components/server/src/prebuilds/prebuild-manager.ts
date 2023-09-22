@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { DBWithTracing, TeamDB, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
     CommitContext,
     CommitInfo,
@@ -35,6 +35,7 @@ import { PrebuildRateLimiterConfig } from "../workspace/prebuild-rate-limiter";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
 import { WorkspaceService } from "../workspace/workspace-service";
+import { minimatch as globMatch } from "minimatch";
 
 export class WorkspaceRunningError extends Error {
     constructor(msg: string, public instance: WorkspaceInstance) {
@@ -59,7 +60,6 @@ export class PrebuildManager {
     @inject(Config) protected readonly config: Config;
     @inject(ProjectsService) protected readonly projectService: ProjectsService;
     @inject(IncrementalPrebuildsService) protected readonly incrementalPrebuildsService: IncrementalPrebuildsService;
-    @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
 
     async abortPrebuildsForBranch(ctx: TraceContext, project: Project, user: User, branch: string): Promise<void> {
@@ -341,19 +341,77 @@ export class PrebuildManager {
         }
     }
 
-    shouldPrebuild(params: { config: WorkspaceConfig; project: Project }): boolean {
-        const { config, project } = params;
+    checkPrebuildPrecondition(params: { config: WorkspaceConfig; project: Project; context: CommitContext }): {
+        shouldRun: boolean;
+        reason: string;
+    } {
+        const { config, project, context } = params;
         if (!config || !config._origin || config._origin !== "repo") {
             // we demand an explicit gitpod config
-            return false;
+            return { shouldRun: false, reason: "no-gitpod-config-in-repo" };
         }
 
         const hasPrebuildTask = !!config.tasks && config.tasks.find((t) => !!t.before || !!t.init || !!t.prebuild);
         if (!hasPrebuildTask) {
-            return false;
+            return { shouldRun: false, reason: "no-tasks-in-gitpod-config" };
         }
 
-        return Project.isPrebuildsEnabled(project);
+        const isPrebuildsEnabled = Project.isPrebuildsEnabled(project);
+        if (!isPrebuildsEnabled) {
+            return { shouldRun: false, reason: "prebuilds-not-enabled" };
+        }
+
+        const strategy = Project.getPrebuildBranchStrategy(project);
+        if (strategy === "allBranches") {
+            return { shouldRun: true, reason: "all-branches-selected" };
+        }
+
+        if (strategy === "defaultBranch") {
+            const defaultBranch = context.repository.defaultBranch;
+            if (!defaultBranch) {
+                log.debug("CommitContext is missing the default branch. Ignoring request.", { context });
+                return { shouldRun: false, reason: "default-branch-missing-in-commit-context" };
+            }
+
+            if (CommitContext.isDefaultBranch(context)) {
+                return { shouldRun: true, reason: "default-branch-matched" };
+            }
+            return { shouldRun: false, reason: "default-branch-unmatched" };
+        }
+
+        if (strategy === "selectedBranches") {
+            const branchName = context.ref;
+            if (!branchName) {
+                log.debug("CommitContext is missing the branch name. Ignoring request.", { context });
+                return { shouldRun: false, reason: "branch-name-missing-in-commit-context" };
+            }
+
+            const branchNamePattern = project.settings?.prebuildBranchPattern?.trim();
+            if (!branchNamePattern) {
+                // no pattern provided is treated as run on all branches
+                return { shouldRun: true, reason: "all-branches-selected" };
+            }
+
+            for (let pattern of branchNamePattern.split(",")) {
+                // prepending `**/` as branch names can be 'refs/heads/something/feature-x'
+                // and we want to allow simple patterns like: `feature-*`
+                pattern = "**/" + pattern.trim();
+                try {
+                    if (globMatch(branchName, pattern)) {
+                        return { shouldRun: true, reason: "branch-matched" };
+                    }
+                } catch (error) {
+                    log.debug("Ignored error with attempt to match a branch by pattern.", {
+                        branchNamePattern,
+                        error: error?.message,
+                    });
+                }
+            }
+            return { shouldRun: false, reason: "branch-unmatched" };
+        }
+
+        log.debug("Unknown prebuild branch strategy. Ignoring request.", { context, config });
+        return { shouldRun: false, reason: "unknown-strategy" };
     }
 
     protected shouldPrebuildIncrementally(cloneUrl: string, project: Project): boolean {

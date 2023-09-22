@@ -65,7 +65,7 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
 
     const updateUser = useCallback(async () => {
         await getGitpodService().reconnect();
-        const [user] = await Promise.all([getGitpodService().server.getLoggedInUser()]);
+        const user = await getGitpodService().server.getLoggedInUser();
         setUser(user);
         markLoggedIn();
     }, [setUser]);

@@ -849,6 +849,21 @@ func (mr *MockAPIInterfaceMockRecorder) GetOrgSettings(ctx, orgID interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrgSettings", reflect.TypeOf((*MockAPIInterface)(nil).GetOrgSettings), ctx, orgID)
 }
 
+// GetDefaultWorkspaceImage mocks base method.
+func (m *MockAPIInterface) GetDefaultWorkspaceImage(ctx context.Context, params *GetDefaultWorkspaceImageParams) (*GetDefaultWorkspaceImageResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDefaultWorkspaceImage", ctx)
+	ret0, _ := ret[0].(*GetDefaultWorkspaceImageResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDefaultWorkspaceImage indicates an expected call of GetDefaultWorkspaceImage.
+func (mr *MockAPIInterfaceMockRecorder) GetDefaultWorkspaceImage(ctx, params *GetDefaultWorkspaceImageParams) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDefaultWorkspaceImage", reflect.TypeOf((*MockAPIInterface)(nil).GetDefaultWorkspaceImage), ctx, params)
+}
+
 // ResetGenericInvite mocks base method.
 func (m *MockAPIInterface) ResetGenericInvite(ctx context.Context, teamID string) (*TeamMembershipInvite, error) {
 	m.ctrl.T.Helper()

@@ -2024,3 +2024,117 @@ export class WorkspaceClass extends Message<WorkspaceClass> {
     return proto3.util.equals(WorkspaceClass, a, b);
   }
 }
+
+/**
+ * @generated from message gitpod.experimental.v1.GetDefaultWorkspaceImageRequest
+ */
+export class GetDefaultWorkspaceImageRequest extends Message<GetDefaultWorkspaceImageRequest> {
+  /**
+   * @generated from field: optional string workspace_id = 1;
+   */
+  workspaceId?: string;
+
+  constructor(data?: PartialMessage<GetDefaultWorkspaceImageRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.GetDefaultWorkspaceImageRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetDefaultWorkspaceImageRequest {
+    return new GetDefaultWorkspaceImageRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetDefaultWorkspaceImageRequest {
+    return new GetDefaultWorkspaceImageRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetDefaultWorkspaceImageRequest {
+    return new GetDefaultWorkspaceImageRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetDefaultWorkspaceImageRequest | PlainMessage<GetDefaultWorkspaceImageRequest> | undefined, b: GetDefaultWorkspaceImageRequest | PlainMessage<GetDefaultWorkspaceImageRequest> | undefined): boolean {
+    return proto3.util.equals(GetDefaultWorkspaceImageRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.GetDefaultWorkspaceImageResponse
+ */
+export class GetDefaultWorkspaceImageResponse extends Message<GetDefaultWorkspaceImageResponse> {
+  /**
+   * image is the image ref
+   *
+   * @generated from field: string image = 1;
+   */
+  image = "";
+
+  /**
+   * source is the source of the image
+   *
+   * @generated from field: gitpod.experimental.v1.GetDefaultWorkspaceImageResponse.ImageSource source = 2;
+   */
+  source = GetDefaultWorkspaceImageResponse_ImageSource.UNSPECIFIED;
+
+  constructor(data?: PartialMessage<GetDefaultWorkspaceImageResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.GetDefaultWorkspaceImageResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "image", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "source", kind: "enum", T: proto3.getEnumType(GetDefaultWorkspaceImageResponse_ImageSource) },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetDefaultWorkspaceImageResponse {
+    return new GetDefaultWorkspaceImageResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetDefaultWorkspaceImageResponse {
+    return new GetDefaultWorkspaceImageResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetDefaultWorkspaceImageResponse {
+    return new GetDefaultWorkspaceImageResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetDefaultWorkspaceImageResponse | PlainMessage<GetDefaultWorkspaceImageResponse> | undefined, b: GetDefaultWorkspaceImageResponse | PlainMessage<GetDefaultWorkspaceImageResponse> | undefined): boolean {
+    return proto3.util.equals(GetDefaultWorkspaceImageResponse, a, b);
+  }
+}
+
+/**
+ * @generated from enum gitpod.experimental.v1.GetDefaultWorkspaceImageResponse.ImageSource
+ */
+export enum GetDefaultWorkspaceImageResponse_ImageSource {
+  /**
+   * @generated from enum value: IMAGE_SOURCE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * IMAGE_SOURCE_INSTALLATION means the image from Gitpod instance install config
+   *
+   * @generated from enum value: IMAGE_SOURCE_INSTALLATION = 1;
+   */
+  INSTALLATION = 1,
+
+  /**
+   * IMAGE_SOURCE_ORGANIZATION means the image from  Organization settings
+   *
+   * @generated from enum value: IMAGE_SOURCE_ORGANIZATION = 2;
+   */
+  ORGANIZATION = 2,
+}
+// Retrieve enum metadata with: proto3.getEnumType(GetDefaultWorkspaceImageResponse_ImageSource)
+proto3.util.setEnumType(GetDefaultWorkspaceImageResponse_ImageSource, "gitpod.experimental.v1.GetDefaultWorkspaceImageResponse.ImageSource", [
+  { no: 0, name: "IMAGE_SOURCE_UNSPECIFIED" },
+  { no: 1, name: "IMAGE_SOURCE_INSTALLATION" },
+  { no: 2, name: "IMAGE_SOURCE_ORGANIZATION" },
+]);

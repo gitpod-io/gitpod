@@ -54,8 +54,6 @@ import {
     WorkspaceInstanceRepoStatus,
 } from "./workspace-instance";
 import { AdminServer } from "./admin-protocol";
-import { GitpodHostUrl } from "./util/gitpod-host-url";
-import { WebSocketConnectionProvider } from "./messaging/browser/connection";
 import { Emitter } from "./util/event";
 import { RemotePageMessage, RemoteTrackMessage, RemoteIdentifyMessage } from "./analytics";
 import { IDEServer } from "./ide-protocol";
@@ -173,7 +171,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getOrgAuthProviders(params: GitpodServer.GetOrgAuthProviderParams): Promise<AuthProviderEntry[]>;
     deleteOrgAuthProvider(params: GitpodServer.DeleteOrgAuthProviderParams): Promise<void>;
 
-    getDefaultWorkspaceImage(): Promise<string>;
+    getDefaultWorkspaceImage(params: GetDefaultWorkspaceImageParams): Promise<GetDefaultWorkspaceImageResult>;
 
     // Dedicated, Dedicated, Dedicated
     getOnboardingState(): Promise<GitpodServer.OnboardingState>;
@@ -261,7 +259,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     reportErrorBoundary(url: string, message: string): Promise<void>;
 
     getSupportedWorkspaceClasses(): Promise<SupportedWorkspaceClass[]>;
-    maySetTimeout(): Promise<boolean>;
     updateWorkspaceTimeoutSetting(setting: Partial<WorkspaceTimeoutSetting>): Promise<void>;
 
     /**
@@ -278,6 +275,20 @@ export interface RateLimiterError {
      * cmp.: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After
      */
     retryAfter: number;
+}
+
+export interface GetDefaultWorkspaceImageParams {
+    // filter with workspaceId (actually we will find with organizationId, and it's a real time finding)
+    workspaceId?: string;
+}
+
+export type DefaultImageSource =
+    | "installation" // Source installation means the image comes from Gitpod instance install config
+    | "organization"; // Source organization means the image comes from Organization settings
+
+export interface GetDefaultWorkspaceImageResult {
+    image: string;
+    source: DefaultImageSource;
 }
 
 export interface CreateProjectParams {
@@ -698,27 +709,4 @@ export class GitpodServiceImpl<Client extends GitpodClient, Server extends Gitpo
             await this.options.onReconnect();
         }
     }
-}
-
-export function createGitpodService<C extends GitpodClient, S extends GitpodServer>(
-    serverUrl: string | Promise<string>,
-) {
-    const toWsUrl = (serverUrl: string) => {
-        return new GitpodHostUrl(serverUrl).asWebsocket().withApi({ pathname: GitpodServerPath }).toString();
-    };
-    let url: string | Promise<string>;
-    if (typeof serverUrl === "string") {
-        url = toWsUrl(serverUrl);
-    } else {
-        url = serverUrl.then((url) => toWsUrl(url));
-    }
-
-    const connectionProvider = new WebSocketConnectionProvider();
-    let onReconnect = () => {};
-    const gitpodServer = connectionProvider.createProxy<S>(url, undefined, {
-        onListening: (socket) => {
-            onReconnect = () => socket.reconnect();
-        },
-    });
-    return new GitpodServiceImpl<C, S>(gitpodServer, { onReconnect });
 }

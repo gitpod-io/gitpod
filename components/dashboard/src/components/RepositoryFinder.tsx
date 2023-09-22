@@ -12,7 +12,6 @@ import { ReactComponent as RepositoryIcon } from "../icons/RepositoryWithColor.s
 import { useSuggestedRepositories } from "../data/git-providers/suggested-repositories-query";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { SuggestedRepository } from "@gitpod/gitpod-protocol";
-import classNames from "classnames";
 import { MiddleDot } from "./typography/MiddleDot";
 
 // TODO: Remove this once we've fully enabled `includeProjectsOnCreateWorkspace`
@@ -157,14 +156,7 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
             searchPlaceholder="Paste repository URL or type to find suggestions"
         >
             <DropDown2SelectedElement
-                // TODO: clean this up - have to use different icons to keep the right shade of gray when there's no project
-                icon={
-                    selectedSuggestion?.projectId ? (
-                        <RepositoryIcon className={classNames("w-8 h-8 text-orange-500")} />
-                    ) : (
-                        RepositorySVG
-                    )
-                }
+                icon={RepositorySVG}
                 htmlTitle={displayContextUrl(props.selectedContextURL) || "Repository"}
                 title={
                     <div className="truncate w-80">
@@ -178,7 +170,7 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
                 subtitle={
                     // Only show the url if we have a project or repo name, otherwise it's redundant w/ the title
                     selectedSuggestion?.projectName || selectedSuggestion?.repositoryName
-                        ? selectedSuggestion?.url
+                        ? displayContextUrl(selectedSuggestion?.url)
                         : undefined
                 }
                 loading={props.loading || isLoading}
@@ -199,9 +191,7 @@ const SuggestedRepositoryOption: FC<SuggestedRepositoryOptionProps> = ({ repo })
             aria-label={`${repo.projectId ? "Project" : "Repo"}: ${repo.url}`}
         >
             <span className={"pr-2"}>
-                <RepositoryIcon
-                    className={classNames("w-5 h-5 text-orange-500", !repo.projectId && "filter-grayscale")}
-                />
+                <RepositoryIcon className={"w-5 h-5 text-gray-400"} />
             </span>
 
             {name && (

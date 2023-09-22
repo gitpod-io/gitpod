@@ -51,6 +51,8 @@ type WorkspacesServiceClient interface {
 	UpdatePort(ctx context.Context, in *UpdatePortRequest, opts ...grpc.CallOption) (*UpdatePortResponse, error)
 	// ListWorkspaceClasses enumerates all available workspace classes.
 	ListWorkspaceClasses(ctx context.Context, in *ListWorkspaceClassesRequest, opts ...grpc.CallOption) (*ListWorkspaceClassesResponse, error)
+	// GetDefaultWorkspaceImage returns the default workspace image from different sources.
+	GetDefaultWorkspaceImage(ctx context.Context, in *GetDefaultWorkspaceImageRequest, opts ...grpc.CallOption) (*GetDefaultWorkspaceImageResponse, error)
 }
 
 type workspacesServiceClient struct {
@@ -174,6 +176,15 @@ func (c *workspacesServiceClient) ListWorkspaceClasses(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *workspacesServiceClient) GetDefaultWorkspaceImage(ctx context.Context, in *GetDefaultWorkspaceImageRequest, opts ...grpc.CallOption) (*GetDefaultWorkspaceImageResponse, error) {
+	out := new(GetDefaultWorkspaceImageResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.WorkspacesService/GetDefaultWorkspaceImage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkspacesServiceServer is the server API for WorkspacesService service.
 // All implementations must embed UnimplementedWorkspacesServiceServer
 // for forward compatibility
@@ -203,6 +214,8 @@ type WorkspacesServiceServer interface {
 	UpdatePort(context.Context, *UpdatePortRequest) (*UpdatePortResponse, error)
 	// ListWorkspaceClasses enumerates all available workspace classes.
 	ListWorkspaceClasses(context.Context, *ListWorkspaceClassesRequest) (*ListWorkspaceClassesResponse, error)
+	// GetDefaultWorkspaceImage returns the default workspace image from different sources.
+	GetDefaultWorkspaceImage(context.Context, *GetDefaultWorkspaceImageRequest) (*GetDefaultWorkspaceImageResponse, error)
 	mustEmbedUnimplementedWorkspacesServiceServer()
 }
 
@@ -239,6 +252,9 @@ func (UnimplementedWorkspacesServiceServer) UpdatePort(context.Context, *UpdateP
 }
 func (UnimplementedWorkspacesServiceServer) ListWorkspaceClasses(context.Context, *ListWorkspaceClassesRequest) (*ListWorkspaceClassesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListWorkspaceClasses not implemented")
+}
+func (UnimplementedWorkspacesServiceServer) GetDefaultWorkspaceImage(context.Context, *GetDefaultWorkspaceImageRequest) (*GetDefaultWorkspaceImageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDefaultWorkspaceImage not implemented")
 }
 func (UnimplementedWorkspacesServiceServer) mustEmbedUnimplementedWorkspacesServiceServer() {}
 
@@ -436,6 +452,24 @@ func _WorkspacesService_ListWorkspaceClasses_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkspacesService_GetDefaultWorkspaceImage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDefaultWorkspaceImageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspacesServiceServer).GetDefaultWorkspaceImage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.experimental.v1.WorkspacesService/GetDefaultWorkspaceImage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspacesServiceServer).GetDefaultWorkspaceImage(ctx, req.(*GetDefaultWorkspaceImageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorkspacesService_ServiceDesc is the grpc.ServiceDesc for WorkspacesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -478,6 +512,10 @@ var WorkspacesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListWorkspaceClasses",
 			Handler:    _WorkspacesService_ListWorkspaceClasses_Handler,
+		},
+		{
+			MethodName: "GetDefaultWorkspaceImage",
+			Handler:    _WorkspacesService_GetDefaultWorkspaceImage_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

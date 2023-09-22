@@ -48,6 +48,8 @@ message PrebuildSettings {
     bool use_previous_prebuilds = 3;
     int32 prebuild_every_nth = 4;
     optional bool enable_prebuilds = 5;
+    optional bool prebuild_default_branch_only = 6;
+    optional string prebuild_branch_pattern = 7;
 }
 
 message WorkspaceSettings {

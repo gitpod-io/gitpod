@@ -168,15 +168,18 @@ export class GitHubEnterpriseApp {
             });
 
             const config = await this.prebuildManager.fetchConfig({ span }, user, context, project?.teamId);
-            if (
-                !this.prebuildManager.shouldPrebuild({ config, project }) ||
-                !this.appRules.shouldRunPrebuild(config, context.ref === context.repository.defaultBranch, false, false)
-            ) {
+            const prebuildPrecondition = this.prebuildManager.checkPrebuildPrecondition({ config, project, context });
+
+            const shouldRun = Project.hasPrebuildSettings(project)
+                ? prebuildPrecondition.shouldRun
+                : this.appRules.shouldRunPrebuild(config, CommitContext.isDefaultBranch(context), false, false);
+            if (!shouldRun) {
                 log.info("GitHub Enterprise push event: No prebuild.", { config, context });
 
                 await this.webhookEvents.updateEvent(event.id, {
                     prebuildStatus: "ignored_unconfigured",
                     status: "processed",
+                    message: prebuildPrecondition.reason,
                 });
                 return undefined;
             }

@@ -21,6 +21,8 @@ import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/fronten
 import { RemoteTrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
 import { helloService } from "./public-api";
 import { getExperimentsClient } from "../experiments/client";
+import { ConnectError, Code } from "@bufbuild/connect";
+import { instrumentWebSocket } from "./metrics";
 
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
@@ -28,6 +30,7 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
     let host = gitpodHostUrl.asWebsocket().with({ pathname: GitpodServerPath }).withApi();
 
     const connectionProvider = new WebSocketConnectionProvider();
+    instrumentWebSocketConnection(connectionProvider);
     let numberOfErrors = 0;
     let onReconnect = () => {};
     const proxy = connectionProvider.createProxy<S>(host.toString(), undefined, {
@@ -49,6 +52,23 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
     });
 
     return new GitpodServiceImpl<C, S>(proxy, { onReconnect });
+}
+
+function instrumentWebSocketConnection(connectionProvider: WebSocketConnectionProvider): void {
+    const originalCreateWebSocket = connectionProvider["createWebSocket"];
+    connectionProvider["createWebSocket"] = (url: string) => {
+        return originalCreateWebSocket.call(
+            connectionProvider,
+            url,
+            new Proxy(WebSocket, {
+                construct(target: any, argArray) {
+                    const webSocket = new target(...argArray);
+                    instrumentWebSocket(webSocket, "gitpod");
+                    return webSocket;
+                },
+            }),
+        );
+    };
 }
 
 export function getGitpodService(): GitpodService {
@@ -125,16 +145,28 @@ function testPublicAPI(service: any): void {
             if (isTest) {
                 try {
                     let previousCount = 0;
-                    for await (const reply of helloService.lotsOfReplies({ previousCount })) {
+                    for await (const reply of helloService.lotsOfReplies(
+                        { previousCount },
+                        {
+                            // GCP timeout is 10 minutes, we timeout 3 mins earlier
+                            // to avoid unknown network errors
+                            timeoutMs: 7 * 60 * 1000,
+                        },
+                    )) {
                         previousCount = reply.count;
                         backoff = BASE_BACKOFF;
                     }
                 } catch (e) {
-                    console.error(e, {
-                        userId: user?.id,
-                        grpcType,
-                    });
-                    backoff = Math.min(2 * backoff, MAX_BACKOFF);
+                    if (ConnectError.from(e).code === Code.Canceled) {
+                        // timeout is expected, continue as usual
+                        backoff = BASE_BACKOFF;
+                    } else {
+                        backoff = Math.min(2 * backoff, MAX_BACKOFF);
+                        console.error(e, {
+                            userId: user?.id,
+                            grpcType,
+                        });
+                    }
                 }
             } else {
                 backoff = BASE_BACKOFF;

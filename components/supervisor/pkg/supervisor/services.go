@@ -27,6 +27,7 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/serverapi"
 )
 
 // RegisterableService can register a service.
@@ -641,8 +642,9 @@ func (rt *remoteTokenProvider) GetToken(ctx context.Context, req *api.GetTokenRe
 
 // InfoService implements the api.InfoService.
 type InfoService struct {
-	cfg          *Config
-	ContentState ContentState
+	cfg           *Config
+	ContentState  ContentState
+	GitpodService serverapi.APIInterface
 
 	api.UnimplementedInfoServiceServer
 }
@@ -657,13 +659,25 @@ func (is *InfoService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) 
 	return api.RegisterInfoServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 }
 
-// WorkspaceInfo provides information about the workspace.
-func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest) (*api.WorkspaceInfoResponse, error) {
-	defaultWorkspaceImage := is.cfg.DefaultWorkspaceImage
+func (is *InfoService) getDefaultWorkspaceImage(ctx context.Context) (defaultWorkspaceImage string) {
+	defaultWorkspaceImage = is.cfg.DefaultWorkspaceImage
 	if defaultWorkspaceImage == "" {
 		// TODO: delete-me, added for compatibility before server is deployed / rollback
 		defaultWorkspaceImage = "gitpod/workspace-full:latest"
 	}
+	if is.GitpodService == nil {
+		return
+	}
+	wsImage, err := is.GitpodService.GetDefaultWorkspaceImage(ctx)
+	if err == nil {
+		defaultWorkspaceImage = wsImage
+	}
+	return
+}
+
+// WorkspaceInfo provides information about the workspace.
+func (is *InfoService) WorkspaceInfo(ctx context.Context, req *api.WorkspaceInfoRequest) (*api.WorkspaceInfoResponse, error) {
+	defaultWorkspaceImage := is.getDefaultWorkspaceImage(ctx)
 	resp := &api.WorkspaceInfoResponse{
 		CheckoutLocation:      is.cfg.RepoRoot,
 		InstanceId:            is.cfg.WorkspaceInstanceID,

@@ -275,6 +275,57 @@ func (WorkspaceInstanceStatus_Phase) EnumDescriptor() ([]byte, []int) {
 	return file_gitpod_experimental_v1_workspaces_proto_rawDescGZIP(), []int{22, 0}
 }
 
+type GetDefaultWorkspaceImageResponse_ImageSource int32
+
+const (
+	GetDefaultWorkspaceImageResponse_IMAGE_SOURCE_UNSPECIFIED GetDefaultWorkspaceImageResponse_ImageSource = 0
+	// IMAGE_SOURCE_INSTALLATION means the image from Gitpod instance install config
+	GetDefaultWorkspaceImageResponse_IMAGE_SOURCE_INSTALLATION GetDefaultWorkspaceImageResponse_ImageSource = 1
+	// IMAGE_SOURCE_ORGANIZATION means the image from  Organization settings
+	GetDefaultWorkspaceImageResponse_IMAGE_SOURCE_ORGANIZATION GetDefaultWorkspaceImageResponse_ImageSource = 2
+)
+
+// Enum value maps for GetDefaultWorkspaceImageResponse_ImageSource.
+var (
+	GetDefaultWorkspaceImageResponse_ImageSource_name = map[int32]string{
+		0: "IMAGE_SOURCE_UNSPECIFIED",
+		1: "IMAGE_SOURCE_INSTALLATION",
+		2: "IMAGE_SOURCE_ORGANIZATION",
+	}
+	GetDefaultWorkspaceImageResponse_ImageSource_value = map[string]int32{
+		"IMAGE_SOURCE_UNSPECIFIED":  0,
+		"IMAGE_SOURCE_INSTALLATION": 1,
+		"IMAGE_SOURCE_ORGANIZATION": 2,
+	}
+)
+
+func (x GetDefaultWorkspaceImageResponse_ImageSource) Enum() *GetDefaultWorkspaceImageResponse_ImageSource {
+	p := new(GetDefaultWorkspaceImageResponse_ImageSource)
+	*p = x
+	return p
+}
+
+func (x GetDefaultWorkspaceImageResponse_ImageSource) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (GetDefaultWorkspaceImageResponse_ImageSource) Descriptor() protoreflect.EnumDescriptor {
+	return file_gitpod_experimental_v1_workspaces_proto_enumTypes[4].Descriptor()
+}
+
+func (GetDefaultWorkspaceImageResponse_ImageSource) Type() protoreflect.EnumType {
+	return &file_gitpod_experimental_v1_workspaces_proto_enumTypes[4]
+}
+
+func (x GetDefaultWorkspaceImageResponse_ImageSource) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use GetDefaultWorkspaceImageResponse_ImageSource.Descriptor instead.
+func (GetDefaultWorkspaceImageResponse_ImageSource) EnumDescriptor() ([]byte, []int) {
+	return file_gitpod_experimental_v1_workspaces_proto_rawDescGZIP(), []int{32, 0}
+}
+
 type ListWorkspacesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2175,6 +2226,110 @@ func (x *WorkspaceClass) GetIsDefault() bool {
 	return false
 }
 
+type GetDefaultWorkspaceImageRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	WorkspaceId *string `protobuf:"bytes,1,opt,name=workspace_id,json=workspaceId,proto3,oneof" json:"workspace_id,omitempty"`
+}
+
+func (x *GetDefaultWorkspaceImageRequest) Reset() {
+	*x = GetDefaultWorkspaceImageRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[31]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetDefaultWorkspaceImageRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDefaultWorkspaceImageRequest) ProtoMessage() {}
+
+func (x *GetDefaultWorkspaceImageRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[31]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDefaultWorkspaceImageRequest.ProtoReflect.Descriptor instead.
+func (*GetDefaultWorkspaceImageRequest) Descriptor() ([]byte, []int) {
+	return file_gitpod_experimental_v1_workspaces_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *GetDefaultWorkspaceImageRequest) GetWorkspaceId() string {
+	if x != nil && x.WorkspaceId != nil {
+		return *x.WorkspaceId
+	}
+	return ""
+}
+
+type GetDefaultWorkspaceImageResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// image is the image ref
+	Image string `protobuf:"bytes,1,opt,name=image,proto3" json:"image,omitempty"`
+	// source is the source of the image
+	Source GetDefaultWorkspaceImageResponse_ImageSource `protobuf:"varint,2,opt,name=source,proto3,enum=gitpod.experimental.v1.GetDefaultWorkspaceImageResponse_ImageSource" json:"source,omitempty"`
+}
+
+func (x *GetDefaultWorkspaceImageResponse) Reset() {
+	*x = GetDefaultWorkspaceImageResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[32]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetDefaultWorkspaceImageResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDefaultWorkspaceImageResponse) ProtoMessage() {}
+
+func (x *GetDefaultWorkspaceImageResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[32]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDefaultWorkspaceImageResponse.ProtoReflect.Descriptor instead.
+func (*GetDefaultWorkspaceImageResponse) Descriptor() ([]byte, []int) {
+	return file_gitpod_experimental_v1_workspaces_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *GetDefaultWorkspaceImageResponse) GetImage() string {
+	if x != nil {
+		return x.Image
+	}
+	return ""
+}
+
+func (x *GetDefaultWorkspaceImageResponse) GetSource() GetDefaultWorkspaceImageResponse_ImageSource {
+	if x != nil {
+		return x.Source
+	}
+	return GetDefaultWorkspaceImageResponse_IMAGE_SOURCE_UNSPECIFIED
+}
+
 // GitProvider describes the git provider
 type WorkspaceContext_GitProvider struct {
 	state         protoimpl.MessageState
@@ -2190,7 +2345,7 @@ type WorkspaceContext_GitProvider struct {
 func (x *WorkspaceContext_GitProvider) Reset() {
 	*x = WorkspaceContext_GitProvider{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[31]
+		mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[33]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2203,7 +2358,7 @@ func (x *WorkspaceContext_GitProvider) String() string {
 func (*WorkspaceContext_GitProvider) ProtoMessage() {}
 
 func (x *WorkspaceContext_GitProvider) ProtoReflect() protoreflect.Message {
-	mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[31]
+	mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[33]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2246,7 +2401,7 @@ type WorkspaceContext_Repository struct {
 func (x *WorkspaceContext_Repository) Reset() {
 	*x = WorkspaceContext_Repository{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[32]
+		mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[34]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2259,7 +2414,7 @@ func (x *WorkspaceContext_Repository) String() string {
 func (*WorkspaceContext_Repository) ProtoMessage() {}
 
 func (x *WorkspaceContext_Repository) ProtoReflect() protoreflect.Message {
-	mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[32]
+	mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[34]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2304,7 +2459,7 @@ type WorkspaceContext_Git struct {
 func (x *WorkspaceContext_Git) Reset() {
 	*x = WorkspaceContext_Git{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[33]
+		mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[35]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2317,7 +2472,7 @@ func (x *WorkspaceContext_Git) String() string {
 func (*WorkspaceContext_Git) ProtoMessage() {}
 
 func (x *WorkspaceContext_Git) ProtoReflect() protoreflect.Message {
-	mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[33]
+	mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[35]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2370,7 +2525,7 @@ type WorkspaceContext_Prebuild struct {
 func (x *WorkspaceContext_Prebuild) Reset() {
 	*x = WorkspaceContext_Prebuild{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[34]
+		mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[36]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2383,7 +2538,7 @@ func (x *WorkspaceContext_Prebuild) String() string {
 func (*WorkspaceContext_Prebuild) ProtoMessage() {}
 
 func (x *WorkspaceContext_Prebuild) ProtoReflect() protoreflect.Message {
-	mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[34]
+	mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[36]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2425,7 +2580,7 @@ type WorkspaceContext_Snapshot struct {
 func (x *WorkspaceContext_Snapshot) Reset() {
 	*x = WorkspaceContext_Snapshot{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[35]
+		mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[37]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2438,7 +2593,7 @@ func (x *WorkspaceContext_Snapshot) String() string {
 func (*WorkspaceContext_Snapshot) ProtoMessage() {}
 
 func (x *WorkspaceContext_Snapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[35]
+	mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[37]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2482,7 +2637,7 @@ type WorkspaceInstanceStatus_Conditions struct {
 func (x *WorkspaceInstanceStatus_Conditions) Reset() {
 	*x = WorkspaceInstanceStatus_Conditions{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[36]
+		mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[38]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2495,7 +2650,7 @@ func (x *WorkspaceInstanceStatus_Conditions) String() string {
 func (*WorkspaceInstanceStatus_Conditions) ProtoMessage() {}
 
 func (x *WorkspaceInstanceStatus_Conditions) ProtoReflect() protoreflect.Message {
-	mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[36]
+	mi := &file_gitpod_experimental_v1_workspaces_proto_msgTypes[38]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2874,7 +3029,29 @@ var file_gitpod_experimental_v1_workspaces_proto_rawDesc = []byte{
 	0x69, 0x6f, 0x6e, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72,
 	0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x1d, 0x0a, 0x0a, 0x69, 0x73, 0x5f, 0x64, 0x65, 0x66,
 	0x61, 0x75, 0x6c, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28, 0x08, 0x52, 0x09, 0x69, 0x73, 0x44, 0x65,
-	0x66, 0x61, 0x75, 0x6c, 0x74, 0x2a, 0x5a, 0x0a, 0x0a, 0x50, 0x6f, 0x72, 0x74, 0x50, 0x6f, 0x6c,
+	0x66, 0x61, 0x75, 0x6c, 0x74, 0x22, 0x5a, 0x0a, 0x1f, 0x47, 0x65, 0x74, 0x44, 0x65, 0x66, 0x61,
+	0x75, 0x6c, 0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x6d, 0x61, 0x67,
+	0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x26, 0x0a, 0x0c, 0x77, 0x6f, 0x72, 0x6b,
+	0x73, 0x70, 0x61, 0x63, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00,
+	0x52, 0x0b, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x64, 0x88, 0x01, 0x01,
+	0x42, 0x0f, 0x0a, 0x0d, 0x5f, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x5f, 0x69,
+	0x64, 0x22, 0x81, 0x02, 0x0a, 0x20, 0x47, 0x65, 0x74, 0x44, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74,
+	0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x12, 0x5c, 0x0a, 0x06,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x44, 0x2e, 0x67,
+	0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74,
+	0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x44, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74,
+	0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x53, 0x6f, 0x75, 0x72,
+	0x63, 0x65, 0x52, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x22, 0x69, 0x0a, 0x0b, 0x49, 0x6d,
+	0x61, 0x67, 0x65, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x1c, 0x0a, 0x18, 0x49, 0x4d, 0x41,
+	0x47, 0x45, 0x5f, 0x53, 0x4f, 0x55, 0x52, 0x43, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43,
+	0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x1d, 0x0a, 0x19, 0x49, 0x4d, 0x41, 0x47, 0x45,
+	0x5f, 0x53, 0x4f, 0x55, 0x52, 0x43, 0x45, 0x5f, 0x49, 0x4e, 0x53, 0x54, 0x41, 0x4c, 0x4c, 0x41,
+	0x54, 0x49, 0x4f, 0x4e, 0x10, 0x01, 0x12, 0x1d, 0x0a, 0x19, 0x49, 0x4d, 0x41, 0x47, 0x45, 0x5f,
+	0x53, 0x4f, 0x55, 0x52, 0x43, 0x45, 0x5f, 0x4f, 0x52, 0x47, 0x41, 0x4e, 0x49, 0x5a, 0x41, 0x54,
+	0x49, 0x4f, 0x4e, 0x10, 0x02, 0x2a, 0x5a, 0x0a, 0x0a, 0x50, 0x6f, 0x72, 0x74, 0x50, 0x6f, 0x6c,
 	0x69, 0x63, 0x79, 0x12, 0x1b, 0x0a, 0x17, 0x50, 0x4f, 0x52, 0x54, 0x5f, 0x50, 0x4f, 0x4c, 0x49,
 	0x43, 0x59, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00,
 	0x12, 0x17, 0x0a, 0x13, 0x50, 0x4f, 0x52, 0x54, 0x5f, 0x50, 0x4f, 0x4c, 0x49, 0x43, 0x59, 0x5f,
@@ -2893,7 +3070,7 @@ var file_gitpod_experimental_v1_workspaces_proto_rawDesc = []byte{
 	0x4e, 0x5f, 0x4c, 0x45, 0x56, 0x45, 0x4c, 0x5f, 0x4f, 0x57, 0x4e, 0x45, 0x52, 0x5f, 0x4f, 0x4e,
 	0x4c, 0x59, 0x10, 0x01, 0x12, 0x1c, 0x0a, 0x18, 0x41, 0x44, 0x4d, 0x49, 0x53, 0x53, 0x49, 0x4f,
 	0x4e, 0x5f, 0x4c, 0x45, 0x56, 0x45, 0x4c, 0x5f, 0x45, 0x56, 0x45, 0x52, 0x59, 0x4f, 0x4e, 0x45,
-	0x10, 0x02, 0x32, 0xc3, 0x09, 0x0a, 0x11, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65,
+	0x10, 0x02, 0x32, 0xd5, 0x0a, 0x0a, 0x11, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65,
 	0x73, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x71, 0x0a, 0x0e, 0x4c, 0x69, 0x73, 0x74,
 	0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x73, 0x12, 0x2d, 0x2e, 0x67, 0x69, 0x74,
 	0x70, 0x6f, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c,
@@ -2969,12 +3146,21 @@ var file_gitpod_experimental_v1_workspaces_proto_rawDesc = []byte{
 	0x1a, 0x34, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69,
 	0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x57, 0x6f,
 	0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x43, 0x6c, 0x61, 0x73, 0x73, 0x65, 0x73, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x42, 0x46, 0x5a, 0x44, 0x67, 0x69, 0x74, 0x68,
-	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2d, 0x69, 0x6f,
-	0x2f, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2f, 0x63, 0x6f, 0x6d, 0x70, 0x6f, 0x6e, 0x65, 0x6e,
-	0x74, 0x73, 0x2f, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x2d, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x6f,
-	0x2f, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2f, 0x76, 0x31,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x8f, 0x01, 0x0a, 0x18, 0x47, 0x65, 0x74,
+	0x44, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65,
+	0x49, 0x6d, 0x61, 0x67, 0x65, 0x12, 0x37, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x65,
+	0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x47,
+	0x65, 0x74, 0x44, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61,
+	0x63, 0x65, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x38,
+	0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65,
+	0x6e, 0x74, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x44, 0x65, 0x66, 0x61, 0x75,
+	0x6c, 0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x6d, 0x61, 0x67, 0x65,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x42, 0x46, 0x5a, 0x44, 0x67, 0x69,
+	0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2d,
+	0x69, 0x6f, 0x2f, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2f, 0x63, 0x6f, 0x6d, 0x70, 0x6f, 0x6e,
+	0x65, 0x6e, 0x74, 0x73, 0x2f, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x2d, 0x61, 0x70, 0x69, 0x2f,
+	0x67, 0x6f, 0x2f, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x6c, 0x2f,
+	0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2989,112 +3175,118 @@ func file_gitpod_experimental_v1_workspaces_proto_rawDescGZIP() []byte {
 	return file_gitpod_experimental_v1_workspaces_proto_rawDescData
 }
 
-var file_gitpod_experimental_v1_workspaces_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_gitpod_experimental_v1_workspaces_proto_msgTypes = make([]protoimpl.MessageInfo, 37)
+var file_gitpod_experimental_v1_workspaces_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
+var file_gitpod_experimental_v1_workspaces_proto_msgTypes = make([]protoimpl.MessageInfo, 39)
 var file_gitpod_experimental_v1_workspaces_proto_goTypes = []interface{}{
-	(PortPolicy)(0),                            // 0: gitpod.experimental.v1.PortPolicy
-	(PortProtocol)(0),                          // 1: gitpod.experimental.v1.PortProtocol
-	(AdmissionLevel)(0),                        // 2: gitpod.experimental.v1.AdmissionLevel
-	(WorkspaceInstanceStatus_Phase)(0),         // 3: gitpod.experimental.v1.WorkspaceInstanceStatus.Phase
-	(*ListWorkspacesRequest)(nil),              // 4: gitpod.experimental.v1.ListWorkspacesRequest
-	(*ListWorkspacesResponse)(nil),             // 5: gitpod.experimental.v1.ListWorkspacesResponse
-	(*GetWorkspaceRequest)(nil),                // 6: gitpod.experimental.v1.GetWorkspaceRequest
-	(*GetWorkspaceResponse)(nil),               // 7: gitpod.experimental.v1.GetWorkspaceResponse
-	(*StreamWorkspaceStatusRequest)(nil),       // 8: gitpod.experimental.v1.StreamWorkspaceStatusRequest
-	(*StreamWorkspaceStatusResponse)(nil),      // 9: gitpod.experimental.v1.StreamWorkspaceStatusResponse
-	(*GetOwnerTokenRequest)(nil),               // 10: gitpod.experimental.v1.GetOwnerTokenRequest
-	(*GetOwnerTokenResponse)(nil),              // 11: gitpod.experimental.v1.GetOwnerTokenResponse
-	(*CreateAndStartWorkspaceRequest)(nil),     // 12: gitpod.experimental.v1.CreateAndStartWorkspaceRequest
-	(*CreateAndStartWorkspaceResponse)(nil),    // 13: gitpod.experimental.v1.CreateAndStartWorkspaceResponse
-	(*StartWorkspaceRequest)(nil),              // 14: gitpod.experimental.v1.StartWorkspaceRequest
-	(*StartWorkspaceResponse)(nil),             // 15: gitpod.experimental.v1.StartWorkspaceResponse
-	(*StopWorkspaceRequest)(nil),               // 16: gitpod.experimental.v1.StopWorkspaceRequest
-	(*StopWorkspaceResponse)(nil),              // 17: gitpod.experimental.v1.StopWorkspaceResponse
-	(*DeleteWorkspaceRequest)(nil),             // 18: gitpod.experimental.v1.DeleteWorkspaceRequest
-	(*DeleteWorkspaceResponse)(nil),            // 19: gitpod.experimental.v1.DeleteWorkspaceResponse
-	(*ListWorkspaceClassesRequest)(nil),        // 20: gitpod.experimental.v1.ListWorkspaceClassesRequest
-	(*ListWorkspaceClassesResponse)(nil),       // 21: gitpod.experimental.v1.ListWorkspaceClassesResponse
-	(*Workspace)(nil),                          // 22: gitpod.experimental.v1.Workspace
-	(*WorkspaceStatus)(nil),                    // 23: gitpod.experimental.v1.WorkspaceStatus
-	(*WorkspaceContext)(nil),                   // 24: gitpod.experimental.v1.WorkspaceContext
-	(*WorkspaceInstance)(nil),                  // 25: gitpod.experimental.v1.WorkspaceInstance
-	(*WorkspaceInstanceStatus)(nil),            // 26: gitpod.experimental.v1.WorkspaceInstanceStatus
-	(*Port)(nil),                               // 27: gitpod.experimental.v1.Port
-	(*StartWorkspaceSpec)(nil),                 // 28: gitpod.experimental.v1.StartWorkspaceSpec
-	(*IDESettings)(nil),                        // 29: gitpod.experimental.v1.IDESettings
-	(*PortSpec)(nil),                           // 30: gitpod.experimental.v1.PortSpec
-	(*UpdatePortRequest)(nil),                  // 31: gitpod.experimental.v1.UpdatePortRequest
-	(*UpdatePortResponse)(nil),                 // 32: gitpod.experimental.v1.UpdatePortResponse
-	(*GitStatus)(nil),                          // 33: gitpod.experimental.v1.GitStatus
-	(*WorkspaceClass)(nil),                     // 34: gitpod.experimental.v1.WorkspaceClass
-	(*WorkspaceContext_GitProvider)(nil),       // 35: gitpod.experimental.v1.WorkspaceContext.GitProvider
-	(*WorkspaceContext_Repository)(nil),        // 36: gitpod.experimental.v1.WorkspaceContext.Repository
-	(*WorkspaceContext_Git)(nil),               // 37: gitpod.experimental.v1.WorkspaceContext.Git
-	(*WorkspaceContext_Prebuild)(nil),          // 38: gitpod.experimental.v1.WorkspaceContext.Prebuild
-	(*WorkspaceContext_Snapshot)(nil),          // 39: gitpod.experimental.v1.WorkspaceContext.Snapshot
-	(*WorkspaceInstanceStatus_Conditions)(nil), // 40: gitpod.experimental.v1.WorkspaceInstanceStatus.Conditions
-	(*Pagination)(nil),                         // 41: gitpod.experimental.v1.Pagination
-	(*fieldmaskpb.FieldMask)(nil),              // 42: google.protobuf.FieldMask
-	(*timestamppb.Timestamp)(nil),              // 43: google.protobuf.Timestamp
+	(PortPolicy)(0),                                   // 0: gitpod.experimental.v1.PortPolicy
+	(PortProtocol)(0),                                 // 1: gitpod.experimental.v1.PortProtocol
+	(AdmissionLevel)(0),                               // 2: gitpod.experimental.v1.AdmissionLevel
+	(WorkspaceInstanceStatus_Phase)(0),                // 3: gitpod.experimental.v1.WorkspaceInstanceStatus.Phase
+	(GetDefaultWorkspaceImageResponse_ImageSource)(0), // 4: gitpod.experimental.v1.GetDefaultWorkspaceImageResponse.ImageSource
+	(*ListWorkspacesRequest)(nil),                     // 5: gitpod.experimental.v1.ListWorkspacesRequest
+	(*ListWorkspacesResponse)(nil),                    // 6: gitpod.experimental.v1.ListWorkspacesResponse
+	(*GetWorkspaceRequest)(nil),                       // 7: gitpod.experimental.v1.GetWorkspaceRequest
+	(*GetWorkspaceResponse)(nil),                      // 8: gitpod.experimental.v1.GetWorkspaceResponse
+	(*StreamWorkspaceStatusRequest)(nil),              // 9: gitpod.experimental.v1.StreamWorkspaceStatusRequest
+	(*StreamWorkspaceStatusResponse)(nil),             // 10: gitpod.experimental.v1.StreamWorkspaceStatusResponse
+	(*GetOwnerTokenRequest)(nil),                      // 11: gitpod.experimental.v1.GetOwnerTokenRequest
+	(*GetOwnerTokenResponse)(nil),                     // 12: gitpod.experimental.v1.GetOwnerTokenResponse
+	(*CreateAndStartWorkspaceRequest)(nil),            // 13: gitpod.experimental.v1.CreateAndStartWorkspaceRequest
+	(*CreateAndStartWorkspaceResponse)(nil),           // 14: gitpod.experimental.v1.CreateAndStartWorkspaceResponse
+	(*StartWorkspaceRequest)(nil),                     // 15: gitpod.experimental.v1.StartWorkspaceRequest
+	(*StartWorkspaceResponse)(nil),                    // 16: gitpod.experimental.v1.StartWorkspaceResponse
+	(*StopWorkspaceRequest)(nil),                      // 17: gitpod.experimental.v1.StopWorkspaceRequest
+	(*StopWorkspaceResponse)(nil),                     // 18: gitpod.experimental.v1.StopWorkspaceResponse
+	(*DeleteWorkspaceRequest)(nil),                    // 19: gitpod.experimental.v1.DeleteWorkspaceRequest
+	(*DeleteWorkspaceResponse)(nil),                   // 20: gitpod.experimental.v1.DeleteWorkspaceResponse
+	(*ListWorkspaceClassesRequest)(nil),               // 21: gitpod.experimental.v1.ListWorkspaceClassesRequest
+	(*ListWorkspaceClassesResponse)(nil),              // 22: gitpod.experimental.v1.ListWorkspaceClassesResponse
+	(*Workspace)(nil),                                 // 23: gitpod.experimental.v1.Workspace
+	(*WorkspaceStatus)(nil),                           // 24: gitpod.experimental.v1.WorkspaceStatus
+	(*WorkspaceContext)(nil),                          // 25: gitpod.experimental.v1.WorkspaceContext
+	(*WorkspaceInstance)(nil),                         // 26: gitpod.experimental.v1.WorkspaceInstance
+	(*WorkspaceInstanceStatus)(nil),                   // 27: gitpod.experimental.v1.WorkspaceInstanceStatus
+	(*Port)(nil),                                      // 28: gitpod.experimental.v1.Port
+	(*StartWorkspaceSpec)(nil),                        // 29: gitpod.experimental.v1.StartWorkspaceSpec
+	(*IDESettings)(nil),                               // 30: gitpod.experimental.v1.IDESettings
+	(*PortSpec)(nil),                                  // 31: gitpod.experimental.v1.PortSpec
+	(*UpdatePortRequest)(nil),                         // 32: gitpod.experimental.v1.UpdatePortRequest
+	(*UpdatePortResponse)(nil),                        // 33: gitpod.experimental.v1.UpdatePortResponse
+	(*GitStatus)(nil),                                 // 34: gitpod.experimental.v1.GitStatus
+	(*WorkspaceClass)(nil),                            // 35: gitpod.experimental.v1.WorkspaceClass
+	(*GetDefaultWorkspaceImageRequest)(nil),           // 36: gitpod.experimental.v1.GetDefaultWorkspaceImageRequest
+	(*GetDefaultWorkspaceImageResponse)(nil),          // 37: gitpod.experimental.v1.GetDefaultWorkspaceImageResponse
+	(*WorkspaceContext_GitProvider)(nil),              // 38: gitpod.experimental.v1.WorkspaceContext.GitProvider
+	(*WorkspaceContext_Repository)(nil),               // 39: gitpod.experimental.v1.WorkspaceContext.Repository
+	(*WorkspaceContext_Git)(nil),                      // 40: gitpod.experimental.v1.WorkspaceContext.Git
+	(*WorkspaceContext_Prebuild)(nil),                 // 41: gitpod.experimental.v1.WorkspaceContext.Prebuild
+	(*WorkspaceContext_Snapshot)(nil),                 // 42: gitpod.experimental.v1.WorkspaceContext.Snapshot
+	(*WorkspaceInstanceStatus_Conditions)(nil),        // 43: gitpod.experimental.v1.WorkspaceInstanceStatus.Conditions
+	(*Pagination)(nil),                                // 44: gitpod.experimental.v1.Pagination
+	(*fieldmaskpb.FieldMask)(nil),                     // 45: google.protobuf.FieldMask
+	(*timestamppb.Timestamp)(nil),                     // 46: google.protobuf.Timestamp
 }
 var file_gitpod_experimental_v1_workspaces_proto_depIdxs = []int32{
-	41, // 0: gitpod.experimental.v1.ListWorkspacesRequest.pagination:type_name -> gitpod.experimental.v1.Pagination
-	42, // 1: gitpod.experimental.v1.ListWorkspacesRequest.field_mask:type_name -> google.protobuf.FieldMask
-	22, // 2: gitpod.experimental.v1.ListWorkspacesResponse.result:type_name -> gitpod.experimental.v1.Workspace
-	22, // 3: gitpod.experimental.v1.GetWorkspaceResponse.result:type_name -> gitpod.experimental.v1.Workspace
-	23, // 4: gitpod.experimental.v1.StreamWorkspaceStatusResponse.result:type_name -> gitpod.experimental.v1.WorkspaceStatus
-	28, // 5: gitpod.experimental.v1.CreateAndStartWorkspaceRequest.start_spec:type_name -> gitpod.experimental.v1.StartWorkspaceSpec
-	22, // 6: gitpod.experimental.v1.StartWorkspaceResponse.result:type_name -> gitpod.experimental.v1.Workspace
-	22, // 7: gitpod.experimental.v1.StopWorkspaceResponse.result:type_name -> gitpod.experimental.v1.Workspace
-	34, // 8: gitpod.experimental.v1.ListWorkspaceClassesResponse.result:type_name -> gitpod.experimental.v1.WorkspaceClass
-	24, // 9: gitpod.experimental.v1.Workspace.context:type_name -> gitpod.experimental.v1.WorkspaceContext
-	23, // 10: gitpod.experimental.v1.Workspace.status:type_name -> gitpod.experimental.v1.WorkspaceStatus
-	25, // 11: gitpod.experimental.v1.WorkspaceStatus.instance:type_name -> gitpod.experimental.v1.WorkspaceInstance
-	37, // 12: gitpod.experimental.v1.WorkspaceContext.git:type_name -> gitpod.experimental.v1.WorkspaceContext.Git
-	38, // 13: gitpod.experimental.v1.WorkspaceContext.prebuild:type_name -> gitpod.experimental.v1.WorkspaceContext.Prebuild
-	39, // 14: gitpod.experimental.v1.WorkspaceContext.snapshot:type_name -> gitpod.experimental.v1.WorkspaceContext.Snapshot
-	43, // 15: gitpod.experimental.v1.WorkspaceInstance.created_at:type_name -> google.protobuf.Timestamp
-	26, // 16: gitpod.experimental.v1.WorkspaceInstance.status:type_name -> gitpod.experimental.v1.WorkspaceInstanceStatus
+	44, // 0: gitpod.experimental.v1.ListWorkspacesRequest.pagination:type_name -> gitpod.experimental.v1.Pagination
+	45, // 1: gitpod.experimental.v1.ListWorkspacesRequest.field_mask:type_name -> google.protobuf.FieldMask
+	23, // 2: gitpod.experimental.v1.ListWorkspacesResponse.result:type_name -> gitpod.experimental.v1.Workspace
+	23, // 3: gitpod.experimental.v1.GetWorkspaceResponse.result:type_name -> gitpod.experimental.v1.Workspace
+	24, // 4: gitpod.experimental.v1.StreamWorkspaceStatusResponse.result:type_name -> gitpod.experimental.v1.WorkspaceStatus
+	29, // 5: gitpod.experimental.v1.CreateAndStartWorkspaceRequest.start_spec:type_name -> gitpod.experimental.v1.StartWorkspaceSpec
+	23, // 6: gitpod.experimental.v1.StartWorkspaceResponse.result:type_name -> gitpod.experimental.v1.Workspace
+	23, // 7: gitpod.experimental.v1.StopWorkspaceResponse.result:type_name -> gitpod.experimental.v1.Workspace
+	35, // 8: gitpod.experimental.v1.ListWorkspaceClassesResponse.result:type_name -> gitpod.experimental.v1.WorkspaceClass
+	25, // 9: gitpod.experimental.v1.Workspace.context:type_name -> gitpod.experimental.v1.WorkspaceContext
+	24, // 10: gitpod.experimental.v1.Workspace.status:type_name -> gitpod.experimental.v1.WorkspaceStatus
+	26, // 11: gitpod.experimental.v1.WorkspaceStatus.instance:type_name -> gitpod.experimental.v1.WorkspaceInstance
+	40, // 12: gitpod.experimental.v1.WorkspaceContext.git:type_name -> gitpod.experimental.v1.WorkspaceContext.Git
+	41, // 13: gitpod.experimental.v1.WorkspaceContext.prebuild:type_name -> gitpod.experimental.v1.WorkspaceContext.Prebuild
+	42, // 14: gitpod.experimental.v1.WorkspaceContext.snapshot:type_name -> gitpod.experimental.v1.WorkspaceContext.Snapshot
+	46, // 15: gitpod.experimental.v1.WorkspaceInstance.created_at:type_name -> google.protobuf.Timestamp
+	27, // 16: gitpod.experimental.v1.WorkspaceInstance.status:type_name -> gitpod.experimental.v1.WorkspaceInstanceStatus
 	3,  // 17: gitpod.experimental.v1.WorkspaceInstanceStatus.phase:type_name -> gitpod.experimental.v1.WorkspaceInstanceStatus.Phase
-	40, // 18: gitpod.experimental.v1.WorkspaceInstanceStatus.conditions:type_name -> gitpod.experimental.v1.WorkspaceInstanceStatus.Conditions
+	43, // 18: gitpod.experimental.v1.WorkspaceInstanceStatus.conditions:type_name -> gitpod.experimental.v1.WorkspaceInstanceStatus.Conditions
 	2,  // 19: gitpod.experimental.v1.WorkspaceInstanceStatus.admission:type_name -> gitpod.experimental.v1.AdmissionLevel
-	27, // 20: gitpod.experimental.v1.WorkspaceInstanceStatus.ports:type_name -> gitpod.experimental.v1.Port
-	33, // 21: gitpod.experimental.v1.WorkspaceInstanceStatus.git_status:type_name -> gitpod.experimental.v1.GitStatus
+	28, // 20: gitpod.experimental.v1.WorkspaceInstanceStatus.ports:type_name -> gitpod.experimental.v1.Port
+	34, // 21: gitpod.experimental.v1.WorkspaceInstanceStatus.git_status:type_name -> gitpod.experimental.v1.GitStatus
 	0,  // 22: gitpod.experimental.v1.Port.policy:type_name -> gitpod.experimental.v1.PortPolicy
 	1,  // 23: gitpod.experimental.v1.Port.protocol:type_name -> gitpod.experimental.v1.PortProtocol
-	29, // 24: gitpod.experimental.v1.StartWorkspaceSpec.ide_settings:type_name -> gitpod.experimental.v1.IDESettings
+	30, // 24: gitpod.experimental.v1.StartWorkspaceSpec.ide_settings:type_name -> gitpod.experimental.v1.IDESettings
 	0,  // 25: gitpod.experimental.v1.PortSpec.policy:type_name -> gitpod.experimental.v1.PortPolicy
 	1,  // 26: gitpod.experimental.v1.PortSpec.protocol:type_name -> gitpod.experimental.v1.PortProtocol
-	30, // 27: gitpod.experimental.v1.UpdatePortRequest.port:type_name -> gitpod.experimental.v1.PortSpec
-	36, // 28: gitpod.experimental.v1.WorkspaceContext.Git.repository:type_name -> gitpod.experimental.v1.WorkspaceContext.Repository
-	35, // 29: gitpod.experimental.v1.WorkspaceContext.Git.provider:type_name -> gitpod.experimental.v1.WorkspaceContext.GitProvider
-	37, // 30: gitpod.experimental.v1.WorkspaceContext.Prebuild.original_context:type_name -> gitpod.experimental.v1.WorkspaceContext.Git
-	43, // 31: gitpod.experimental.v1.WorkspaceInstanceStatus.Conditions.first_user_activity:type_name -> google.protobuf.Timestamp
-	4,  // 32: gitpod.experimental.v1.WorkspacesService.ListWorkspaces:input_type -> gitpod.experimental.v1.ListWorkspacesRequest
-	6,  // 33: gitpod.experimental.v1.WorkspacesService.GetWorkspace:input_type -> gitpod.experimental.v1.GetWorkspaceRequest
-	8,  // 34: gitpod.experimental.v1.WorkspacesService.StreamWorkspaceStatus:input_type -> gitpod.experimental.v1.StreamWorkspaceStatusRequest
-	10, // 35: gitpod.experimental.v1.WorkspacesService.GetOwnerToken:input_type -> gitpod.experimental.v1.GetOwnerTokenRequest
-	12, // 36: gitpod.experimental.v1.WorkspacesService.CreateAndStartWorkspace:input_type -> gitpod.experimental.v1.CreateAndStartWorkspaceRequest
-	14, // 37: gitpod.experimental.v1.WorkspacesService.StartWorkspace:input_type -> gitpod.experimental.v1.StartWorkspaceRequest
-	16, // 38: gitpod.experimental.v1.WorkspacesService.StopWorkspace:input_type -> gitpod.experimental.v1.StopWorkspaceRequest
-	18, // 39: gitpod.experimental.v1.WorkspacesService.DeleteWorkspace:input_type -> gitpod.experimental.v1.DeleteWorkspaceRequest
-	31, // 40: gitpod.experimental.v1.WorkspacesService.UpdatePort:input_type -> gitpod.experimental.v1.UpdatePortRequest
-	20, // 41: gitpod.experimental.v1.WorkspacesService.ListWorkspaceClasses:input_type -> gitpod.experimental.v1.ListWorkspaceClassesRequest
-	5,  // 42: gitpod.experimental.v1.WorkspacesService.ListWorkspaces:output_type -> gitpod.experimental.v1.ListWorkspacesResponse
-	7,  // 43: gitpod.experimental.v1.WorkspacesService.GetWorkspace:output_type -> gitpod.experimental.v1.GetWorkspaceResponse
-	9,  // 44: gitpod.experimental.v1.WorkspacesService.StreamWorkspaceStatus:output_type -> gitpod.experimental.v1.StreamWorkspaceStatusResponse
-	11, // 45: gitpod.experimental.v1.WorkspacesService.GetOwnerToken:output_type -> gitpod.experimental.v1.GetOwnerTokenResponse
-	13, // 46: gitpod.experimental.v1.WorkspacesService.CreateAndStartWorkspace:output_type -> gitpod.experimental.v1.CreateAndStartWorkspaceResponse
-	15, // 47: gitpod.experimental.v1.WorkspacesService.StartWorkspace:output_type -> gitpod.experimental.v1.StartWorkspaceResponse
-	17, // 48: gitpod.experimental.v1.WorkspacesService.StopWorkspace:output_type -> gitpod.experimental.v1.StopWorkspaceResponse
-	19, // 49: gitpod.experimental.v1.WorkspacesService.DeleteWorkspace:output_type -> gitpod.experimental.v1.DeleteWorkspaceResponse
-	32, // 50: gitpod.experimental.v1.WorkspacesService.UpdatePort:output_type -> gitpod.experimental.v1.UpdatePortResponse
-	21, // 51: gitpod.experimental.v1.WorkspacesService.ListWorkspaceClasses:output_type -> gitpod.experimental.v1.ListWorkspaceClassesResponse
-	42, // [42:52] is the sub-list for method output_type
-	32, // [32:42] is the sub-list for method input_type
-	32, // [32:32] is the sub-list for extension type_name
-	32, // [32:32] is the sub-list for extension extendee
-	0,  // [0:32] is the sub-list for field type_name
+	31, // 27: gitpod.experimental.v1.UpdatePortRequest.port:type_name -> gitpod.experimental.v1.PortSpec
+	4,  // 28: gitpod.experimental.v1.GetDefaultWorkspaceImageResponse.source:type_name -> gitpod.experimental.v1.GetDefaultWorkspaceImageResponse.ImageSource
+	39, // 29: gitpod.experimental.v1.WorkspaceContext.Git.repository:type_name -> gitpod.experimental.v1.WorkspaceContext.Repository
+	38, // 30: gitpod.experimental.v1.WorkspaceContext.Git.provider:type_name -> gitpod.experimental.v1.WorkspaceContext.GitProvider
+	40, // 31: gitpod.experimental.v1.WorkspaceContext.Prebuild.original_context:type_name -> gitpod.experimental.v1.WorkspaceContext.Git
+	46, // 32: gitpod.experimental.v1.WorkspaceInstanceStatus.Conditions.first_user_activity:type_name -> google.protobuf.Timestamp
+	5,  // 33: gitpod.experimental.v1.WorkspacesService.ListWorkspaces:input_type -> gitpod.experimental.v1.ListWorkspacesRequest
+	7,  // 34: gitpod.experimental.v1.WorkspacesService.GetWorkspace:input_type -> gitpod.experimental.v1.GetWorkspaceRequest
+	9,  // 35: gitpod.experimental.v1.WorkspacesService.StreamWorkspaceStatus:input_type -> gitpod.experimental.v1.StreamWorkspaceStatusRequest
+	11, // 36: gitpod.experimental.v1.WorkspacesService.GetOwnerToken:input_type -> gitpod.experimental.v1.GetOwnerTokenRequest
+	13, // 37: gitpod.experimental.v1.WorkspacesService.CreateAndStartWorkspace:input_type -> gitpod.experimental.v1.CreateAndStartWorkspaceRequest
+	15, // 38: gitpod.experimental.v1.WorkspacesService.StartWorkspace:input_type -> gitpod.experimental.v1.StartWorkspaceRequest
+	17, // 39: gitpod.experimental.v1.WorkspacesService.StopWorkspace:input_type -> gitpod.experimental.v1.StopWorkspaceRequest
+	19, // 40: gitpod.experimental.v1.WorkspacesService.DeleteWorkspace:input_type -> gitpod.experimental.v1.DeleteWorkspaceRequest
+	32, // 41: gitpod.experimental.v1.WorkspacesService.UpdatePort:input_type -> gitpod.experimental.v1.UpdatePortRequest
+	21, // 42: gitpod.experimental.v1.WorkspacesService.ListWorkspaceClasses:input_type -> gitpod.experimental.v1.ListWorkspaceClassesRequest
+	36, // 43: gitpod.experimental.v1.WorkspacesService.GetDefaultWorkspaceImage:input_type -> gitpod.experimental.v1.GetDefaultWorkspaceImageRequest
+	6,  // 44: gitpod.experimental.v1.WorkspacesService.ListWorkspaces:output_type -> gitpod.experimental.v1.ListWorkspacesResponse
+	8,  // 45: gitpod.experimental.v1.WorkspacesService.GetWorkspace:output_type -> gitpod.experimental.v1.GetWorkspaceResponse
+	10, // 46: gitpod.experimental.v1.WorkspacesService.StreamWorkspaceStatus:output_type -> gitpod.experimental.v1.StreamWorkspaceStatusResponse
+	12, // 47: gitpod.experimental.v1.WorkspacesService.GetOwnerToken:output_type -> gitpod.experimental.v1.GetOwnerTokenResponse
+	14, // 48: gitpod.experimental.v1.WorkspacesService.CreateAndStartWorkspace:output_type -> gitpod.experimental.v1.CreateAndStartWorkspaceResponse
+	16, // 49: gitpod.experimental.v1.WorkspacesService.StartWorkspace:output_type -> gitpod.experimental.v1.StartWorkspaceResponse
+	18, // 50: gitpod.experimental.v1.WorkspacesService.StopWorkspace:output_type -> gitpod.experimental.v1.StopWorkspaceResponse
+	20, // 51: gitpod.experimental.v1.WorkspacesService.DeleteWorkspace:output_type -> gitpod.experimental.v1.DeleteWorkspaceResponse
+	33, // 52: gitpod.experimental.v1.WorkspacesService.UpdatePort:output_type -> gitpod.experimental.v1.UpdatePortResponse
+	22, // 53: gitpod.experimental.v1.WorkspacesService.ListWorkspaceClasses:output_type -> gitpod.experimental.v1.ListWorkspaceClassesResponse
+	37, // 54: gitpod.experimental.v1.WorkspacesService.GetDefaultWorkspaceImage:output_type -> gitpod.experimental.v1.GetDefaultWorkspaceImageResponse
+	44, // [44:55] is the sub-list for method output_type
+	33, // [33:44] is the sub-list for method input_type
+	33, // [33:33] is the sub-list for extension type_name
+	33, // [33:33] is the sub-list for extension extendee
+	0,  // [0:33] is the sub-list for field type_name
 }
 
 func init() { file_gitpod_experimental_v1_workspaces_proto_init() }
@@ -3477,7 +3669,7 @@ func file_gitpod_experimental_v1_workspaces_proto_init() {
 			}
 		}
 		file_gitpod_experimental_v1_workspaces_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*WorkspaceContext_GitProvider); i {
+			switch v := v.(*GetDefaultWorkspaceImageRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3489,7 +3681,7 @@ func file_gitpod_experimental_v1_workspaces_proto_init() {
 			}
 		}
 		file_gitpod_experimental_v1_workspaces_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*WorkspaceContext_Repository); i {
+			switch v := v.(*GetDefaultWorkspaceImageResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3501,7 +3693,7 @@ func file_gitpod_experimental_v1_workspaces_proto_init() {
 			}
 		}
 		file_gitpod_experimental_v1_workspaces_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*WorkspaceContext_Git); i {
+			switch v := v.(*WorkspaceContext_GitProvider); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3513,7 +3705,7 @@ func file_gitpod_experimental_v1_workspaces_proto_init() {
 			}
 		}
 		file_gitpod_experimental_v1_workspaces_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*WorkspaceContext_Prebuild); i {
+			switch v := v.(*WorkspaceContext_Repository); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3525,7 +3717,7 @@ func file_gitpod_experimental_v1_workspaces_proto_init() {
 			}
 		}
 		file_gitpod_experimental_v1_workspaces_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*WorkspaceContext_Snapshot); i {
+			switch v := v.(*WorkspaceContext_Git); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3537,6 +3729,30 @@ func file_gitpod_experimental_v1_workspaces_proto_init() {
 			}
 		}
 		file_gitpod_experimental_v1_workspaces_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*WorkspaceContext_Prebuild); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_experimental_v1_workspaces_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*WorkspaceContext_Snapshot); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_experimental_v1_workspaces_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*WorkspaceInstanceStatus_Conditions); i {
 			case 0:
 				return &v.state
@@ -3558,14 +3774,15 @@ func file_gitpod_experimental_v1_workspaces_proto_init() {
 		(*WorkspaceContext_Prebuild_)(nil),
 		(*WorkspaceContext_Snapshot_)(nil),
 	}
-	file_gitpod_experimental_v1_workspaces_proto_msgTypes[36].OneofWrappers = []interface{}{}
+	file_gitpod_experimental_v1_workspaces_proto_msgTypes[31].OneofWrappers = []interface{}{}
+	file_gitpod_experimental_v1_workspaces_proto_msgTypes[38].OneofWrappers = []interface{}{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_gitpod_experimental_v1_workspaces_proto_rawDesc,
-			NumEnums:      4,
-			NumMessages:   37,
+			NumEnums:      5,
+			NumMessages:   39,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
