@@ -305,6 +305,37 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				DefaultValue: "unknown",
 			},
 		},
+		{
+			Name: "websocket_client_total",
+			Help: "Total number of WebSocket connections by the client",
+			Labels: []config.LabelAllowList{
+				{
+					Name:         "origin",
+					AllowValues:  []string{"unknown", "workspace", "gitpod", "localhost"},
+					DefaultValue: "unknown",
+				},
+				{
+					Name:         "instance_phase",
+					AllowValues:  []string{"undefined", "unknown", "preparing", "building", "pending", "creating", "initializing", "running", "interrupted", "stopping", "stopped"},
+					DefaultValue: "undefined",
+				},
+				{
+					Name:         "status",
+					AllowValues:  []string{"unknown", "new", "open", "error", "close"},
+					DefaultValue: "unknown",
+				},
+				{
+					Name:         "code",
+					AllowValues:  []string{"*"},
+					DefaultValue: "unknown",
+				},
+				{
+					Name:         "was_clean",
+					AllowValues:  []string{"unknown", "0", "1"},
+					DefaultValue: "unknown",
+				},
+			},
+		},
 	}
 
 	histogramMetrics := []config.HistogramMetricsConfiguration{

@@ -12,6 +12,7 @@ packages:
       - components/gitpod-protocol:lib
       - components/supervisor-api/typescript-grpc:lib
       - components/ide-metrics-api/typescript-grpcweb:lib
+      - components/public-api/typescript:lib
     config:
       dontTest: true
       yarnLock: ${coreYarnLockBase}/../yarn.lock

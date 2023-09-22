@@ -9,6 +9,7 @@ import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/fronten
 import { RemoteTrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
 import { Emitter } from "@gitpod/gitpod-protocol/lib/util/event";
 import { workspaceUrl, serverUrl } from "./urls";
+import { metricsReporter } from "../ide/ide-metrics-service-client";
 
 export class FrontendDashboardServiceClient implements IDEFrontendDashboardService.IClient {
     public latestInfo!: IDEFrontendDashboardService.Info;
@@ -31,6 +32,13 @@ export class FrontendDashboardServiceClient implements IDEFrontendDashboardServi
                 return;
             }
             if (IDEFrontendDashboardService.isInfoUpdateEventData(event.data)) {
+                metricsReporter.updateCommonErrorDetails({
+                    userId: event.data.info.loggedUserId,
+                    ownerId: event.data.info.ownerId,
+                    workspaceId: event.data.info.workspaceID,
+                    instanceId: event.data.info.instanceId,
+                    instancePhase: event.data.info.statusPhase,
+                });
                 this.version = event.data.version;
                 this.latestInfo = event.data.info;
                 if (event.data.info.credentialsToken?.length > 0) {
