@@ -198,7 +198,6 @@ yq eval-all --inplace \
 - All Gitpod components
 - Container registry*
 - MySQL database*
-- RabbitMQ
 - Minio object storage*
 
 \* By default, these dependencies are installed if the `inCluster` setting
