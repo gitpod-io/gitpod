@@ -331,6 +331,9 @@ type WorkspaceConfig struct {
 
 	WorkspaceLinuxUID uint32 `env:"GITPOD_WORKSPACE_LINUX_UID,default=33333"`
 	WorkspaceLinuxGID uint32 `env:"GITPOD_WORKSPACE_LINUX_GID,default=33333"`
+
+	// ContentInitializer - if set - will run the content initializer instead of waiting for the ready file
+	ContentInitializer string `env:"SUPERVISOR_CONTENT_INITIALIZER"`
 }
 
 // WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service.

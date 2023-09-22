@@ -5,6 +5,7 @@
 package supervisor
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
@@ -1490,14 +1491,15 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 	fn := "/workspace/.gitpod/content.json"
 	fnReady := "/workspace/.gitpod/ready"
 
-	contentFile, err := os.Open(fn)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			log.WithError(err).Error("cannot open init descriptor")
-			return
-		}
-
-		log.Infof("%s does not exist, going to wait for %s", fn, fnReady)
+	contentFile, err := os.ReadFile(fn)
+	if os.IsNotExist(err) {
+		contentFile = []byte(cfg.ContentInitializer)
+	} else if err != nil {
+		log.WithError(err).Error("cannot open init descriptor")
+		return
+	}
+	if len(contentFile) == 0 {
+		log.Infof("no content initializer provided, waiting for %s", fnReady)
 
 		// If there is no content descriptor the content must have come from somewhere (i.e. a layer or ws-daemon).
 		// Let's wait for that to happen.
@@ -1529,11 +1531,9 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 		return
 	}
 
-	defer contentFile.Close()
-
 	log.Info("supervisor: running content service executor with content descriptor")
 	var src csapi.WorkspaceInitSource
-	src, err = executor.Execute(ctx, "/workspace", contentFile, true)
+	src, err = executor.Execute(ctx, "/workspace", bytes.NewReader(contentFile), true)
 	if err != nil {
 		return
 	}
