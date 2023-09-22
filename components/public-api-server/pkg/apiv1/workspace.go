@@ -357,6 +357,32 @@ func (s *WorkspaceService) ListWorkspaceClasses(ctx context.Context, req *connec
 	), nil
 }
 
+func (s *WorkspaceService) GetDefaultWorkspaceImage(ctx context.Context, req *connect.Request[v1.GetDefaultWorkspaceImageRequest]) (*connect.Response[v1.GetDefaultWorkspaceImageResponse], error) {
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+	wsImage, err := conn.GetDefaultWorkspaceImage(ctx, &protocol.GetDefaultWorkspaceImageParams{
+		WorkspaceID: req.Msg.GetWorkspaceId(),
+	})
+	if err != nil {
+		log.Extract(ctx).WithError(err).Error("Failed to get default workspace image.")
+		return nil, proxy.ConvertError(err)
+	}
+
+	source := v1.GetDefaultWorkspaceImageResponse_IMAGE_SOURCE_UNSPECIFIED
+	if wsImage.Source == protocol.WorkspaceImageSourceInstallation {
+		source = v1.GetDefaultWorkspaceImageResponse_IMAGE_SOURCE_INSTALLATION
+	} else if wsImage.Source == protocol.WorkspaceImageSourceOrganization {
+		source = v1.GetDefaultWorkspaceImageResponse_IMAGE_SOURCE_ORGANIZATION
+	}
+
+	return connect.NewResponse(&v1.GetDefaultWorkspaceImageResponse{
+		Image:  wsImage.Image,
+		Source: source,
+	}), nil
+}
+
 func getLimitFromPagination(pagination *v1.Pagination) (int, error) {
 	const (
 		defaultLimit = 20

@@ -43,6 +43,9 @@ service WorkspacesService {
 
     // ListWorkspaceClasses enumerates all available workspace classes.
     rpc ListWorkspaceClasses(ListWorkspaceClassesRequest) returns (ListWorkspaceClassesResponse) {}
+
+    // GetDefaultWorkspaceImage returns the default workspace image from different sources.
+    rpc GetDefaultWorkspaceImage(GetDefaultWorkspaceImageRequest) returns (GetDefaultWorkspaceImageResponse) {}
 }
 
 message ListWorkspacesRequest {
@@ -432,4 +435,26 @@ message WorkspaceClass {
 
     // is_default indicates if this workspace class is the default one
     bool is_default = 4;
+}
+
+message GetDefaultWorkspaceImageRequest {
+    optional string workspace_id = 1;
+}
+
+message GetDefaultWorkspaceImageResponse {
+    enum ImageSource {
+        IMAGE_SOURCE_UNSPECIFIED = 0;
+
+        // IMAGE_SOURCE_INSTALLATION means the image from Gitpod instance install config
+        IMAGE_SOURCE_INSTALLATION = 1;
+
+        // IMAGE_SOURCE_ORGANIZATION means the image from  Organization settings
+        IMAGE_SOURCE_ORGANIZATION = 2;
+    }
+
+    // image is the image ref
+    string image = 1;
+
+    // source is the source of the image
+    ImageSource source = 2;
 }

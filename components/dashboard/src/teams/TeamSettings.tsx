@@ -172,7 +172,7 @@ export default function TeamSettingsPage() {
 function OrgSettingsForm(props: { org?: OrganizationInfo }) {
     const { org } = props;
     const { data: settings, isLoading } = useOrgSettingsQuery();
-    const { data: globalDefaultImage } = useDefaultWorkspaceImageQuery();
+    const { data: imageInfo } = useDefaultWorkspaceImageQuery();
     const updateTeamSettings = useUpdateOrgSettingsMutation();
 
     const [showImageEditModal, setShowImageEditModal] = useState(false);
@@ -229,14 +229,14 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
             <WorkspaceImageButton
                 disabled={!org?.isOwner}
                 settings={settings}
-                defaultWorkspaceImage={globalDefaultImage}
+                defaultWorkspaceImage={imageInfo?.image}
                 onClick={() => setShowImageEditModal(true)}
             />
 
             {showImageEditModal && (
                 <OrgDefaultWorkspaceImageModal
                     settings={settings}
-                    globalDefaultImage={globalDefaultImage}
+                    globalDefaultImage={imageInfo?.image}
                     onClose={() => setShowImageEditModal(false)}
                 />
             )}
@@ -276,10 +276,7 @@ function WorkspaceImageButton(props: {
     const image = props.settings?.defaultWorkspaceImage ?? props.defaultWorkspaceImage ?? "";
 
     const descList = useMemo(() => {
-        const arr: ReactNode[] = [];
-        if (!props.settings?.defaultWorkspaceImage) {
-            arr.push(<span className="font-medium">Default image</span>);
-        }
+        const arr: ReactNode[] = [<span>Default image</span>];
         if (props.disabled) {
             arr.push(
                 <>
@@ -288,7 +285,7 @@ function WorkspaceImageButton(props: {
             );
         }
         return arr;
-    }, [props.settings, props.disabled]);
+    }, [props.disabled]);
 
     const renderedDescription = useMemo(() => {
         return Children.toArray(descList).reduce((acc: ReactNode[], child, index) => {
@@ -304,7 +301,7 @@ function WorkspaceImageButton(props: {
         <InputField disabled={props.disabled} className="w-full max-w-lg">
             <div className="flex flex-col bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center overflow-hidden h-8" title={image}>
+                    <div className="flex-1 flex items-center overflow-hidden h-8" title={image}>
                         <span className="w-5 h-5 mr-1">
                             <Stack />
                         </span>
@@ -312,12 +309,16 @@ function WorkspaceImageButton(props: {
                             {parseDockerImage(image).repository}
                         </span>
                         &nbsp;&middot;&nbsp;
-                        <span className="flex-none w-16 truncate text-gray-500 dark:text-gray-400">
-                            {parseDockerImage(image).tag}
-                        </span>
+                        <span className="truncate text-gray-500 dark:text-gray-400">{parseDockerImage(image).tag}</span>
                     </div>
                     {!props.disabled && (
-                        <Button htmlType="button" type="transparent" className="text-blue-500" onClick={props.onClick}>
+                        <Button
+                            htmlType="button"
+                            type="transparent"
+                            spacing="compact"
+                            className="text-blue-500 flex-none"
+                            onClick={props.onClick}
+                        >
                             Change
                         </Button>
                     )}
