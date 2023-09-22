@@ -181,6 +181,11 @@ func Run(options ...RunOption) {
 		return
 	}
 
+	// Note(cw): legacy rungp behaviour
+	if opts.RunGP {
+		cfg.WorkspaceRuntime = WorkspaceRuntimeRunGP
+	}
+
 	// BEWARE: we can only call buildChildProcEnv once, because it might download env vars from a one-time-secret
 	//         URL, which would fail if we tried another time.
 	childProcEnvvars = buildChildProcEnv(cfg, nil, opts.RunGP)
@@ -200,7 +205,7 @@ func Run(options ...RunOption) {
 
 	tokenService := NewInMemoryTokenService()
 
-	if !opts.RunGP {
+	if cfg.WorkspaceRuntime != WorkspaceRuntimeRunGP {
 		tkns, err := cfg.GetTokens(true)
 		if err != nil {
 			log.WithError(err).Warn("cannot prepare tokens")
@@ -264,7 +269,7 @@ func Run(options ...RunOption) {
 		notificationService = NewNotificationService()
 	)
 
-	if !opts.RunGP {
+	if cfg.WorkspaceRuntime != WorkspaceRuntimeRunGP {
 		gitpodService = serverapi.NewServerApiService(ctx, &serverapi.ServiceConfig{
 			Host:              host,
 			Endpoint:          endpoint,
@@ -279,7 +284,7 @@ func Run(options ...RunOption) {
 	if cfg.GetDesktopIDE() != nil {
 		desktopIdeReady = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
 	}
-	if !cfg.isHeadless() && !opts.RunGP && !cfg.isDebugWorkspace() {
+	if !cfg.isHeadless() && cfg.WorkspaceRuntime != WorkspaceRuntimeRunGP && !cfg.isDebugWorkspace() {
 		go trackReadiness(ctx, telemetry, cfg, cstate, ideReady, desktopIdeReady)
 	}
 	tokenService.provider[KindGit] = []tokenProvider{NewGitTokenProvider(gitpodService, cfg.WorkspaceConfig, notificationService)}
@@ -289,7 +294,7 @@ func Run(options ...RunOption) {
 
 	var exposedPorts ports.ExposedPortsInterface
 
-	if !opts.RunGP {
+	if cfg.WorkspaceRuntime != WorkspaceRuntimeRunGP {
 		exposedPorts = createExposedPortsImpl(cfg, gitpodService)
 	}
 
@@ -304,18 +309,18 @@ func Run(options ...RunOption) {
 	)
 
 	topService := NewTopService()
-	if !opts.RunGP {
+	if cfg.WorkspaceRuntime == WorkspaceRuntimeContainer {
 		topService.Observe(ctx)
 	}
 
-	if !cfg.isHeadless() && !opts.RunGP {
+	if !cfg.isHeadless() && cfg.WorkspaceRuntime != WorkspaceRuntimeRunGP {
 		go analyseConfigChanges(ctx, cfg, telemetry, gitpodConfigService)
 		go analysePerfChanges(ctx, cfg, telemetry, topService)
 	}
 
 	supervisorMetrics := metrics.NewMetrics()
 	var metricsReporter *metrics.GrpcMetricsReporter
-	if !opts.RunGP && !cfg.isDebugWorkspace() && !strings.Contains("ephemeral", cfg.WorkspaceClusterHost) {
+	if cfg.WorkspaceRuntime != WorkspaceRuntimeRunGP && !cfg.isDebugWorkspace() && !strings.Contains("ephemeral", cfg.WorkspaceClusterHost) {
 		_, gitpodHost, err := cfg.GitpodAPIEndpoint()
 		if err != nil {
 			log.WithError(err).Error("grpc metrics: failed to parse gitpod host")
@@ -355,7 +360,7 @@ func Run(options ...RunOption) {
 
 	gitStatusWg := &sync.WaitGroup{}
 	gitStatusCtx, stopGitStatus := context.WithCancel(ctx)
-	if !cfg.isPrebuild() && !cfg.isHeadless() && !opts.RunGP && !cfg.isDebugWorkspace() {
+	if !cfg.isPrebuild() && !cfg.isHeadless() && cfg.WorkspaceRuntime != WorkspaceRuntimeRunGP && !cfg.isDebugWorkspace() {
 		gitStatusWg.Add(1)
 		gitStatusService := &GitStatusService{
 			cfg:           cfg,
@@ -406,7 +411,7 @@ func Run(options ...RunOption) {
 		shutdown = make(chan ShutdownReason, 1)
 	)
 
-	if opts.RunGP {
+	if cfg.WorkspaceRuntime == WorkspaceRuntimeRunGP {
 		cstate.MarkContentReady(csapi.WorkspaceInitFromOther)
 	} else if cfg.isDebugWorkspace() {
 		cstate.MarkContentReady(cfg.GetDebugWorkspaceContentSource())
@@ -425,7 +430,7 @@ func Run(options ...RunOption) {
 	tasksSuccessChan := make(chan taskSuccess, 1)
 	go taskManager.Run(ctx, &wg, tasksSuccessChan)
 
-	if !opts.RunGP {
+	if cfg.WorkspaceRuntime != WorkspaceRuntimeRunGP {
 		wg.Add(1)
 		go socketActivationForDocker(ctx, &wg, termMux, cfg, telemetry, notificationService, cstate)
 	}
@@ -433,7 +438,7 @@ func Run(options ...RunOption) {
 	if cfg.isHeadless() {
 		wg.Add(1)
 		go stopWhenTasksAreDone(ctx, &wg, shutdown, tasksSuccessChan)
-	} else if !opts.RunGP {
+	} else if cfg.WorkspaceRuntime != WorkspaceRuntimeRunGP {
 		wg.Add(1)
 		go portMgmt.Run(ctx, &wg)
 	}
@@ -449,7 +454,7 @@ func Run(options ...RunOption) {
 		}()
 	}
 
-	if !cfg.isPrebuild() && !opts.RunGP && !cfg.isDebugWorkspace() {
+	if !cfg.isPrebuild() && cfg.WorkspaceRuntime != WorkspaceRuntimeRunGP && !cfg.isDebugWorkspace() {
 		go func() {
 			for _, repoRoot := range strings.Split(cfg.RepoRoots, ",") {
 				<-cstate.ContentReady()
