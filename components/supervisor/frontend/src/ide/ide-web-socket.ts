@@ -4,6 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { serverUrl } from "../shared/urls";
+import { metricsReporter } from "./ide-metrics-service-client";
 import ReconnectingWebSocket from "reconnecting-websocket";
 import { Disposable } from "@gitpod/gitpod-protocol/lib/util/disposable";
 
@@ -11,11 +13,22 @@ let connected = false;
 const workspaceSockets = new Set<IDEWebSocket>();
 
 const workspaceOrigin = new URL(window.location.href).origin;
+const gitpodOrigin = new URL(serverUrl.toString()).origin;
 const WebSocket = window.WebSocket;
 function isWorkspaceOrigin(url: string): boolean {
     const originUrl = new URL(url);
     originUrl.protocol = window.location.protocol;
     return originUrl.origin === workspaceOrigin;
+}
+function isLocalhostOrigin(url: string): boolean {
+    const originUrl = new URL(url);
+    originUrl.protocol = window.location.protocol;
+    return originUrl.hostname === "localhost";
+}
+function isGitpodOrigin(url: string): boolean {
+    const originUrl = new URL(url);
+    originUrl.protocol = window.location.protocol;
+    return originUrl.origin === gitpodOrigin;
 }
 /**
  * IDEWebSocket is a proxy to standard WebSocket
@@ -31,12 +44,19 @@ class IDEWebSocket extends ReconnectingWebSocket {
             maxRetries: 0,
             connectionTimeout: 2147483647, // disable connection timeout, clients should handle it
         });
+        let origin = "unknown";
         if (isWorkspaceOrigin(url)) {
+            origin = "workspace";
             workspaceSockets.add(this);
             this.addEventListener("close", () => {
                 workspaceSockets.delete(this);
             });
+        } else if (isLocalhostOrigin(url)) {
+            origin = "localhost";
+        } else if (isGitpodOrigin(url)) {
+            origin = "gitpod";
         }
+        metricsReporter.instrumentWebSocket(this as any, origin);
     }
     static disconnectWorkspace(): void {
         for (const socket of workspaceSockets) {

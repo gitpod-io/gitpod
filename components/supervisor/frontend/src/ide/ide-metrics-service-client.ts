@@ -4,17 +4,33 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FrontendDashboardServiceClient } from "../shared/frontend-dashboard-service";
 import { serverUrl, workspaceUrl } from "../shared/urls";
 const commit = require("../../config.json").commit;
+import { v4 } from "uuid";
+
+import { MetricsReporter } from "@gitpod/public-api/lib/metrics";
+
+export const metricsReporter = new MetricsReporter({
+    gitpodUrl: serverUrl.toString(),
+    clientName: "supervisor-frontend",
+    clientVersion: commit,
+    log: console,
+    commonErrorDetails: {
+        sessionId: v4(),
+    },
+});
+metricsReporter.startReporting();
+
+import { FrontendDashboardServiceClient } from "../shared/frontend-dashboard-service";
+
+// TODO(ak) migrate to MetricsReporter
+const MetricsUrl = serverUrl.asIDEMetrics().toString();
 
 export enum MetricsName {
     SupervisorFrontendClientTotal = "gitpod_supervisor_frontend_client_total",
     SupervisorFrontendErrorTotal = "gitpod_supervisor_frontend_error_total",
     SupervisorFrontendLoadTotal = "gitpod_vscode_web_load_total",
 }
-
-const MetricsUrl = serverUrl.asIDEMetrics().toString();
 
 interface AddCounterParam {
     value?: number;

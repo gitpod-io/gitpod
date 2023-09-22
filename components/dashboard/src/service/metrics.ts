@@ -8,21 +8,23 @@ import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url"
 import { MetricsReporter } from "@gitpod/public-api/lib/metrics";
 import { getExperimentsClient } from "../experiments/client";
 import { v4 } from "uuid";
+const commit = require("./config.json").commit;
 
 const originalConsoleError = console.error;
 
-const options = {
+const metricsReporter = new MetricsReporter({
     gitpodUrl: new GitpodHostUrl(window.location.href).withoutWorkspacePrefix().toString(),
     clientName: "dashboard",
-    clientVersion: "",
-    logError: originalConsoleError.bind(console),
+    clientVersion: commit,
+    log: {
+        error: originalConsoleError.bind(console),
+        debug: console.debug.bind(console),
+    },
     isEnabled: () => getExperimentsClient().getValueAsync("dashboard_metrics_enabled", false, {}),
-};
-fetch("/api/version").then(async (res) => {
-    const version = await res.text();
-    options.clientVersion = version;
+    commonErrorDetails: {
+        sessionId: v4(),
+    },
 });
-const metricsReporter = new MetricsReporter(options);
 metricsReporter.startReporting();
 
 window.addEventListener("unhandledrejection", (event) => {
@@ -41,11 +43,12 @@ console.error = function (...args) {
     reportError(...args);
 };
 
-const commonDetails = {
-    sessionId: v4(),
-};
 export function updateCommonErrorDetails(update: { [key: string]: string | undefined }) {
-    Object.assign(commonDetails, update);
+    metricsReporter.updateCommonErrorDetails(update);
+}
+
+export function instrumentWebSocket(ws: WebSocket, origin: string) {
+    metricsReporter.instrumentWebSocket(ws, origin);
 }
 
 export function reportError(...args: any[]) {
@@ -88,7 +91,6 @@ export function reportError(...args: any[]) {
             ),
         );
     }
-    data = Object.assign(data, commonDetails);
 
     if (err) {
         metricsReporter.reportError(err, data);

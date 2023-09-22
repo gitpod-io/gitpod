@@ -87,14 +87,14 @@ export class WebSocketConnectionProvider {
     /**
      * Creates a web socket for the given url
      */
-    createWebSocket(url: string): WebSocket {
+    createWebSocket(url: string, WebSocketConstructor = WebSocket): WebSocket {
         return new ReconnectingWebSocket(url, undefined, {
             maxReconnectionDelay: 10000,
             minReconnectionDelay: 1000,
             reconnectionDelayGrowFactor: 1.3,
             maxRetries: Infinity,
             debug: false,
-            WebSocket: WebSocket,
+            WebSocket: WebSocketConstructor,
         }) as any;
     }
 }
