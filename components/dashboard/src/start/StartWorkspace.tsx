@@ -408,7 +408,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             }
             if (code !== 200) {
                 // getting workspace auth didn't work as planned
-                console.error("Unable to retrieve workspace-auth cookie! Quitting.", {
+                console.warn("Unable to retrieve workspace-auth cookie.", {
                     instanceID,
                     code,
                     attempt,
