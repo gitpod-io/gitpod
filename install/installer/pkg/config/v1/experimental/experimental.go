@@ -35,8 +35,6 @@ type Config struct {
 type CommonConfig struct {
 	// Deprecated.
 	PodConfig map[string]*PodConfig `json:"podConfig,omitempty"`
-	// Deprecated use a secret instead in messageBus.credentials
-	StaticMessagebusPassword string `json:"staticMessagebusPassword"`
 }
 
 type PodConfig struct {

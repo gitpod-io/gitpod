@@ -121,9 +121,6 @@ type Config struct {
 
 	Database Database `json:"database" validate:"required"`
 
-	// Deprecated.
-	MessageBus *MessageBus `json:"messageBus,omitempty"`
-
 	ObjectStorage ObjectStorage `json:"objectStorage" validate:"required"`
 
 	ContainerRegistry ContainerRegistry `json:"containerRegistry" validate:"required"`
@@ -184,10 +181,6 @@ type Tracing struct {
 	// Name of the kubernetes secret to use for Jaeger authentication
 	// The secret should contains two definitions: JAEGER_USER and JAEGER_PASSWORD
 	SecretName *string `json:"secretName,omitempty"`
-}
-
-type MessageBus struct {
-	Credentials *ObjectRef `json:"credentials"`
 }
 
 type Database struct {
