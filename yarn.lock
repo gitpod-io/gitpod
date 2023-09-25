@@ -3667,6 +3667,11 @@
   resolved "https://registry.yarnpkg.com/@types/trusted-types/-/trusted-types-2.0.3.tgz#a136f83b0758698df454e328759dbd3d44555311"
   integrity sha512-NfQ4gyz38SL8sDNrSixxU2Os1a5xcdFxipAFxYEuLUlvU2uDwS4NUpsImcf1//SlWItCVMMLiylsxbmNMToV/g==
 
+"@types/ua-parser-js@^0.7.37":
+  version "0.7.37"
+  resolved "https://registry.yarnpkg.com/@types/ua-parser-js/-/ua-parser-js-0.7.37.tgz#2e45bf948a6a94391859a1b0682104ae3c13ba72"
+  integrity sha512-4sOxS3ZWXC0uHJLYcWAaLMxTvjRX3hT96eF4YWUh1ovTaenvibaZOE5uXtIp4mksKMLRwo7YDiCBCw6vBiUPVg==
+
 "@types/uuid@8.3.1", "@types/uuid@^8.3.1":
   version "8.3.1"
   resolved "https://registry.npmjs.org/@types/uuid/-/uuid-8.3.1.tgz"
@@ -14551,6 +14556,11 @@ typescript@~4.2.3:
   version "4.2.4"
   resolved "https://registry.npmjs.org/typescript/-/typescript-4.2.4.tgz"
   integrity sha512-V+evlYHZnQkaz8TRBuxTA92yZBPotr5H+WhQ7bD3hZUndx5tGOa1fuCgeSjxAzM1RiN5IzvadIXTVefuuwZCRg==
+
+ua-parser-js@^1.0.36:
+  version "1.0.36"
+  resolved "https://registry.yarnpkg.com/ua-parser-js/-/ua-parser-js-1.0.36.tgz#a9ab6b9bd3a8efb90bb0816674b412717b7c428c"
+  integrity sha512-znuyCIXzl8ciS3+y3fHJI/2OhQIXbXw9MWC/o3qwyR+RGppjZHrM27CGFSKCJXi2Kctiz537iOu2KnXs1lMQhw==
 
 uc.micro@^1.0.1, uc.micro@^1.0.5:
   version "1.0.6"

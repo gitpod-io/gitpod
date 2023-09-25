@@ -40,6 +40,7 @@ import { useDirtyState } from "../hooks/use-dirty-state";
 import { LinkButton } from "../components/LinkButton";
 import { InputField } from "../components/forms/InputField";
 import Alert from "../components/Alert";
+import { BrowserExtensionBanner } from "./BrowserExtensionBanner";
 
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
@@ -369,7 +370,7 @@ export function CreateWorkspacePage() {
     }
 
     return (
-        <div className="flex flex-col mt-32 mx-auto ">
+        <div className="flex flex-col mt-32 mx-auto">
             <div className="flex flex-col max-h-screen max-w-lg mx-auto items-center w-full">
                 <Heading1>New Workspace</Heading1>
                 <div className="text-gray-500 text-center text-base">
@@ -458,6 +459,7 @@ export function CreateWorkspacePage() {
                     </div>
                 )}
             </div>
+            <BrowserExtensionBanner />
         </div>
     );
 }
