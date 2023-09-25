@@ -286,7 +286,7 @@ describe("RelationshipUpdater", async () => {
     it("should create relationships for all user workspaces", async function () {
         const user = await userDB.newUser();
         const org = await orgDB.createTeam(user.id, "MyOrg");
-        const totalWorkspaces = 20;
+        const totalWorkspaces = 50;
         const expectedWorkspaces: Workspace[] = [];
         for (let i = 0; i < totalWorkspaces; i++) {
             const workspace = await workspaceDB.store({
