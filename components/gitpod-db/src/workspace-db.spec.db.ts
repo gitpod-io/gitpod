@@ -16,6 +16,7 @@ import { TypeORM } from "./typeorm/typeorm";
 import { DBPrebuiltWorkspace } from "./typeorm/entity/db-prebuilt-workspace";
 import { secondsBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { resetDB } from "./test/reset-db";
+import { v4 } from "uuid";
 
 @suite
 class WorkspaceDBSpec {
@@ -508,6 +509,7 @@ class WorkspaceDBSpec {
     public async testCountUnabortedPrebuildsSince() {
         const now = new Date();
         const cloneURL = "https://github.com/gitpod-io/gitpod";
+        const projectId = v4();
 
         await Promise.all([
             // Created now, and queued
@@ -516,6 +518,7 @@ class WorkspaceDBSpec {
                 buildWorkspaceId: "apples",
                 creationTime: now.toISOString(),
                 cloneURL: cloneURL,
+                projectId,
                 commit: "",
                 state: "queued",
                 statusVersion: 0,
@@ -526,6 +529,7 @@ class WorkspaceDBSpec {
                 buildWorkspaceId: "bananas",
                 creationTime: now.toISOString(),
                 cloneURL: cloneURL,
+                projectId,
                 commit: "",
                 state: "aborted",
                 statusVersion: 0,
@@ -536,14 +540,26 @@ class WorkspaceDBSpec {
                 buildWorkspaceId: "oranges",
                 creationTime: secondsBefore(now.toISOString(), 62),
                 cloneURL: cloneURL,
+                projectId,
                 commit: "",
                 state: "available",
+                statusVersion: 0,
+            }),
+            // different project now and queued
+            this.storePrebuiltWorkspace({
+                id: "prebuild123-other",
+                buildWorkspaceId: "apples",
+                creationTime: now.toISOString(),
+                cloneURL: cloneURL,
+                projectId: "other-projectId",
+                commit: "",
+                state: "queued",
                 statusVersion: 0,
             }),
         ]);
 
         const minuteAgo = secondsBefore(now.toISOString(), 60);
-        const unabortedCount = await this.db.countUnabortedPrebuildsSince(cloneURL, new Date(minuteAgo));
+        const unabortedCount = await this.db.countUnabortedPrebuildsSince(projectId, new Date(minuteAgo));
         expect(unabortedCount).to.eq(1);
     }
 

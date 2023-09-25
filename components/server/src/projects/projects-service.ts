@@ -102,12 +102,14 @@ export class ProjectsService {
     }
 
     async findProjectsByCloneUrl(userId: string, cloneUrl: string): Promise<Project[]> {
-        // TODO (se): currently we only allow one project per cloneUrl
-        const project = await this.projectDB.findProjectByCloneUrl(cloneUrl);
-        if (project && (await this.auth.hasPermissionOnProject(userId, "read_info", project.id))) {
-            return [project];
+        const projects = await this.projectDB.findProjectsByCloneUrl(cloneUrl);
+        const result: Project[] = [];
+        for (const project of projects) {
+            if (await this.auth.hasPermissionOnProject(userId, "read_info", project.id)) {
+                result.push(project);
+            }
         }
-        return [];
+        return result;
     }
 
     async markActive(
@@ -119,18 +121,6 @@ export class ProjectsService {
         await this.projectDB.updateProjectUsage(projectId, {
             [kind]: new Date().toISOString(),
         });
-    }
-
-    /**
-     * @deprecated this is a temporary method until we allow mutliple projects per cloneURL
-     */
-    async getProjectsByCloneUrls(
-        userId: string,
-        cloneUrls: string[],
-    ): Promise<(Project & { teamOwners?: string[] })[]> {
-        //FIXME we intentionally allow to query for projects that the user does not have access to
-        const projects = await this.projectDB.findProjectsByCloneUrls(cloneUrls);
-        return projects;
     }
 
     async getProjectOverview(user: User, projectId: string): Promise<Project.Overview> {
@@ -224,10 +214,6 @@ export class ProjectsService {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Clone URL must be a valid URL.");
         }
 
-        const projects = await this.getProjectsByCloneUrls(installer.id, [cloneUrl]);
-        if (projects.length > 0) {
-            throw new Error("Project for repository already exists.");
-        }
         const project = Project.create({
             name,
             cloneUrl,
@@ -403,17 +389,9 @@ export class ProjectsService {
         return now - lastUse > inactiveProjectTime;
     }
 
-    async getPrebuildEvents(userId: string, cloneUrl: string): Promise<PrebuildEvent[]> {
-        const project = await this.projectDB.findProjectByCloneUrl(cloneUrl);
-        if (!project) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project with ${cloneUrl} not found.`);
-        }
-        try {
-            await this.auth.checkPermissionOnProject(userId, "read_info", project.id);
-        } catch (err) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project with ${cloneUrl} not found.`);
-        }
-        const events = await this.webhookEventDB.findByCloneUrl(cloneUrl, 100);
+    async getPrebuildEvents(userId: string, projectId: string): Promise<PrebuildEvent[]> {
+        const project = await this.getProject(userId, projectId);
+        const events = await this.webhookEventDB.findByCloneUrl(project.cloneUrl, 100);
         return events.map((we) => ({
             id: we.id,
             creationTime: we.creationTime,

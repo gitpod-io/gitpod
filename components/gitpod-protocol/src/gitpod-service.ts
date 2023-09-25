@@ -323,8 +323,6 @@ export interface ProviderRepository {
     updatedAt?: string;
     installationId?: number;
     installationUpdatedAt?: string;
-
-    inUse?: { userName: string };
 }
 
 export interface ClientHeaderFields {
@@ -416,6 +414,7 @@ export namespace GitpodServer {
     export interface CreateWorkspaceOptions extends StartWorkspaceOptions {
         contextUrl: string;
         organizationId: string;
+        projectId?: string;
 
         // whether running workspaces on the same context should be ignored. If false (default) users will be asked.
         //TODO(se) remove this option and let clients do that check if they like. The new create workspace page does it already

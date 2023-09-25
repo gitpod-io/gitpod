@@ -57,6 +57,7 @@ import {
 } from "./metrics";
 import { TransactionalDBImpl } from "./transactional-db-impl";
 import { TypeORM } from "./typeorm";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 type RawTo<T> = (instance: WorkspaceInstance, ws: Workspace) => T;
 interface OrderBy {
@@ -710,16 +711,19 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
 
     // Find the (last triggered) prebuild for a given commit
     public async findPrebuiltWorkspaceByCommit(
-        cloneURL: string,
+        projectId: string,
         commit: string,
     ): Promise<PrebuiltWorkspace | undefined> {
-        if (!commit || !cloneURL) {
-            return undefined;
+        if (!commit || !projectId) {
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "Illegal arguments", { projectId, commit });
         }
         const repo = await this.getPrebuiltWorkspaceRepo();
         return await repo
             .createQueryBuilder("pws")
-            .where("pws.cloneURL = :cloneURL AND pws.commit LIKE :commit", { cloneURL, commit: commit + "%" })
+            .where("pws.projectId = :projectId AND pws.commit LIKE :commit", {
+                projectId,
+                commit: commit + "%",
+            })
             .orderBy("pws.creationTime", "DESC")
             .innerJoinAndMapOne(
                 "pws.workspace",
@@ -770,19 +774,12 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         const repo = await this.getPrebuiltWorkspaceRepo();
         return await repo.findOne(pwsid);
     }
-    public async countRunningPrebuilds(cloneURL: string): Promise<number> {
-        const repo = await this.getPrebuiltWorkspaceRepo();
-        return await repo
-            .createQueryBuilder("pws")
-            .where('pws.cloneURL = :cloneURL AND state = "building"', { cloneURL })
-            .getCount();
-    }
 
-    public async findPrebuildsWithWorkpace(cloneURL: string): Promise<PrebuildWithWorkspace[]> {
+    public async findPrebuildsWithWorkspace(projectId: string): Promise<PrebuildWithWorkspace[]> {
         const repo = await this.getPrebuiltWorkspaceRepo();
 
         let query = repo.createQueryBuilder("pws");
-        query = query.where("pws.cloneURL = :cloneURL", { cloneURL });
+        query = query.where("pws.projectId = :projectId", { projectId });
         query = query.orderBy("pws.creationTime", "DESC");
         query = query.innerJoinAndMapOne("pws.workspace", DBWorkspace, "ws", "pws.buildWorkspaceId = ws.id");
         query = query.andWhere("ws.deleted = false");
@@ -798,37 +795,17 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         });
     }
 
-    public async countUnabortedPrebuildsSince(cloneURL: string, date: Date): Promise<number> {
+    public async countUnabortedPrebuildsSince(projectId: string, date: Date): Promise<number> {
         const abortedState: PrebuiltWorkspaceState = "aborted";
         const repo = await this.getPrebuiltWorkspaceRepo();
 
         let query = repo.createQueryBuilder("pws");
-        query = query.where("pws.cloneURL = :cloneURL", { cloneURL });
+        query = query.where("pws.projectId != :projectId", { projectId });
         query = query.andWhere("pws.creationTime >= :time", { time: date.toISOString() });
         query = query.andWhere("pws.state != :state", { state: abortedState });
         return query.getCount();
     }
 
-    public async findQueuedPrebuilds(cloneURL?: string): Promise<PrebuildWithWorkspace[]> {
-        const repo = await this.getPrebuiltWorkspaceRepo();
-
-        let query = await repo.createQueryBuilder("pws");
-        query = query.where('state = "queued"');
-        if (cloneURL) {
-            query = query.andWhere("pws.cloneURL = :cloneURL", { cloneURL });
-        }
-        query = query.orderBy("pws.creationTime", "ASC");
-        query = query.innerJoinAndMapOne("pws.workspace", DBWorkspace, "ws", "pws.buildWorkspaceId = ws.id");
-
-        const res = await query.getMany();
-        return res.map((r) => {
-            const withWorkspace: PrebuiltWorkspace & { workspace: Workspace } = r as any;
-            return {
-                prebuild: r,
-                workspace: withWorkspace.workspace,
-            };
-        });
-    }
     public async attachUpdatableToPrebuild(pwsid: string, update: PrebuiltWorkspaceUpdatable): Promise<void> {
         const repo = await this.getPrebuiltWorkspaceUpdatableRepo();
         await repo.save(update);

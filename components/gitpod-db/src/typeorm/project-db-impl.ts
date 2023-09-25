@@ -7,7 +7,7 @@
 import { PartialProject, Project, ProjectEnvVar, ProjectEnvVarWithValue, ProjectUsage } from "@gitpod/gitpod-protocol";
 import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
 import { inject, injectable, optional } from "inversify";
-import { EntityManager, Repository } from "typeorm";
+import { EntityManager, FindConditions, Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
 import { ProjectDB } from "../project-db";
 import { DBProject } from "./entity/db-project";
@@ -58,46 +58,10 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
         return repo.findOne({ id: projectId, markedDeleted: false });
     }
 
-    public async findProjectByCloneUrl(cloneUrl: string): Promise<Project | undefined> {
+    public async findProjectsByCloneUrl(cloneUrl: string): Promise<Project[]> {
         const repo = await this.getRepo();
-        return repo.findOne({ cloneUrl, markedDeleted: false });
-    }
-
-    public async findProjectsByCloneUrls(cloneUrls: string[]): Promise<(Project & { teamOwners?: string[] })[]> {
-        if (cloneUrls.length === 0) {
-            return [];
-        }
-        const repo = await this.getRepo();
-        const q = repo
-            .createQueryBuilder("project")
-            .where("project.markedDeleted = false")
-            .andWhere(`project.cloneUrl in (${cloneUrls.map((u) => `'${u}'`).join(", ")})`);
-        const projects = await q.getMany();
-
-        const teamIds = Array.from(new Set(projects.map((p) => p.teamId).filter((id) => !!id)));
-
-        const teamIdsAndOwners =
-            teamIds.length === 0
-                ? []
-                : ((await (
-                      await this.getEntityManager()
-                  ).query(`
-                SELECT member.teamId AS teamId, user.name AS owner FROM d_b_user AS user
-                    LEFT JOIN d_b_team_membership AS member ON (user.id = member.userId)
-                    WHERE member.teamId IN (${teamIds.map((id) => `'${id}'`).join(", ")})
-                    AND member.deleted = 0
-                    AND member.role = 'owner'
-            `)) as { teamId: string; owner: string }[]);
-
-        const result: (Project & { teamOwners?: string[] })[] = [];
-        for (const project of projects) {
-            result.push({
-                ...project,
-                teamOwners: teamIdsAndOwners.filter((i) => i.teamId === project.teamId).map((i) => i.owner),
-            });
-        }
-
-        return result;
+        const conditions: FindConditions<DBProject> = { cloneUrl, markedDeleted: false };
+        return repo.find(conditions);
     }
 
     public async findProjects(orgId: string): Promise<Project[]> {
