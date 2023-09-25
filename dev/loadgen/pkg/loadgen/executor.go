@@ -20,6 +20,10 @@ import (
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
+var (
+	markActiveInterval = 1 * time.Minute
+)
+
 // Executor starts and watches workspaces
 type Executor interface {
 	// StartWorkspace starts a new workspace
@@ -143,11 +147,39 @@ func (w *WsmanExecutor) StartWorkspace(spec *StartWorkspaceSpec) (callDuration t
 		return 0, err
 	}
 
+	go w.SimulateActivity(ss.Id, markActiveInterval)
+
 	// Must lock as StartWorkspace is called from multiple goroutines.
 	w.mu.Lock()
 	w.workspaces = append(w.workspaces, ss.Id)
 	w.mu.Unlock()
 	return time.Since(t0), nil
+}
+
+// SimulateActivity simulates activity in a workspace by marking it active at the given interval.
+// Normally the IDE would be calling this when a user is active in a workspace.
+// Marking workspaces as active generates events on the Workspace resource, which could mean increased
+// load on the ws-manager-mk2 and more events being sent to bridge (although we should filter out events
+// that only change a workspace's last activity timestamp).
+func (w *WsmanExecutor) SimulateActivity(workspaceID string, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		_, err := w.C.MarkActive(context.Background(), &api.MarkActiveRequest{
+			Id: workspaceID,
+		})
+		if err != nil {
+			if status.Code(err) == codes.NotFound {
+				// Workspace no longer exists, stop marking it active.
+				log.WithError(err).WithField("workspaceId", workspaceID).Debug("workspace no longer exists, stopping activity simulation")
+				return
+			}
+
+			log.WithError(err).WithField("workspaceId", workspaceID).Warn("failed to mark workspace active")
+			continue
+		}
+	}
 }
 
 // Observe observes all workspaces started by the excecutor
