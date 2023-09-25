@@ -17,7 +17,7 @@ import { rel } from "./definitions";
 
 @injectable()
 export class RelationshipUpdater {
-    public static readonly version = 2;
+    public static readonly version = 3;
 
     constructor(
         @inject(UserDB) private readonly userDB: UserDB,
@@ -155,14 +155,18 @@ export class RelationshipUpdater {
             limit: 500, // The largest amount of workspaces is 189 today (2023-08-24)
         });
 
-        await this.authorizer.bulkAddWorkspaceToOrg(
-            workspaces.map((ws) => ({
-                orgID: ws.workspace.organizationId,
-                userID: ws.workspace.ownerId,
-                workspaceID: ws.workspace.id,
-                shared: !!ws.workspace.shareable,
-            })),
-        );
+        for (const ws of workspaces) {
+            await this.authorizer
+                .addWorkspaceToOrg(
+                    ws.workspace.organizationId,
+                    ws.workspace.ownerId,
+                    ws.workspace.id,
+                    !!ws.workspace.shareable,
+                )
+                .catch((err) => {
+                    log.error({ userId: user.id, workspaceId: ws.workspace.id }, "Failed to update workspace", err);
+                });
+        }
     }
 
     private async updateUser(user: User): Promise<void> {
