@@ -1643,6 +1643,7 @@ export class WorkspaceStarter {
             // getIDToken is used by Gitpod's OIDC Identity Provider to check for authorisation.
             // Without this scope the workspace cannot produce ID tokens.
             "function:getIDToken",
+            "function:getDefaultWorkspaceImage",
 
             "resource:" +
                 ScopedResourceGuard.marshalResourceScope({
