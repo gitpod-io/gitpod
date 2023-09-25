@@ -23,6 +23,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"runtime/debug"
 	"strconv"
@@ -418,7 +419,7 @@ func Run(options ...RunOption) {
 	}
 
 	wg.Add(1)
-	go startAPIEndpoint(ctx, cfg, &wg, apiServices, tunneledPortsService, metricsReporter, apiEndpointOpts...)
+	go startAPIEndpoint(ctx, cfg, &wg, apiServices, tunneledPortsService, metricsReporter, supervisorMetrics, topService, apiEndpointOpts...)
 
 	wg.Add(1)
 	go startSSHServer(ctx, cfg, &wg)
@@ -1187,7 +1188,28 @@ func isBlacklistedEnvvar(name string) bool {
 	return false
 }
 
-func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, services []RegisterableService, tunneled *ports.TunneledPortsService, metricsReporter *metrics.GrpcMetricsReporter, opts ...grpc.ServerOption) {
+var websocketCloseErrorPattern = regexp.MustCompile(`websocket: close (\d+)`)
+
+func extractCloseErrorCode(errStr string) string {
+	matches := websocketCloseErrorPattern.FindStringSubmatch(errStr)
+	if len(matches) < 2 {
+		return "unknown"
+	}
+
+	return matches[1]
+}
+
+func startAPIEndpoint(
+	ctx context.Context,
+	cfg *Config,
+	wg *sync.WaitGroup,
+	services []RegisterableService,
+	tunneled *ports.TunneledPortsService,
+	metricsReporter *metrics.GrpcMetricsReporter,
+	supervisorMetrics *metrics.SupervisorMetrics,
+	topService *TopService,
+	opts ...grpc.ServerOption,
+) {
 	defer wg.Done()
 	defer log.Debug("startAPIEndpoint shutdown")
 
@@ -1308,6 +1330,17 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 		tunnelOverWebSocket(tunneled, conn)
 	}))
 	routes.Handle("/_supervisor/tunnel/ssh", http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		var err error
+		supervisorMetrics.SSHTunnelOpenedTotal.WithLabelValues().Inc()
+		defer func() {
+			code := "unknown"
+			if err != nil {
+				code = extractCloseErrorCode(err.Error())
+			}
+			supervisorMetrics.SSHTunnelClosedTotal.WithLabelValues(code).Inc()
+		}()
+		startTime := time.Now()
+		log := log.WithField("userAgent", r.Header.Get("user-agent")).WithField("remoteAddr", r.RemoteAddr)
 		wsConn, err := upgrader.Upgrade(rw, r, nil)
 		if err != nil {
 			log.WithError(err).Error("tunnel ssh: upgrade to the WebSocket protocol failed")
@@ -1331,13 +1364,21 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 
 		go io.Copy(conn, conn2)
 		_, err = io.Copy(conn2, conn)
-		if err != nil && !websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-			log.WithError(err).Error("tunnel ssh: error returned from io.copy")
+		if err != nil {
+			var usedCpu, usedMemory int64
+			data := topService.data
+			if data != nil && data.Cpu != nil {
+				usedCpu = data.Cpu.Used
+			}
+			if data != nil && data.Memory != nil {
+				usedMemory = data.Memory.Used
+			}
+			log.WithField("usedCpu", usedCpu).WithField("usedMemory", usedMemory).WithError(err).Error("tunnel ssh: error returned from io.copy")
 		}
 
 		conn.Close()
 		conn2.Close()
-		log.Infof("tunnel ssh: Disconnect from %s", conn.RemoteAddr())
+		log.WithField("duration", time.Since(startTime).Seconds()).Infof("tunnel ssh: Disconnect from %s", conn.RemoteAddr())
 	}))
 	if cfg.DebugEnable {
 		routes.Handle("/_supervisor/debug/tunnels", http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
