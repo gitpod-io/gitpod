@@ -9,6 +9,11 @@ RUN apk add --no-cache curl file \
   && chmod +x runc.amd64 \
   && if ! file runc.amd64 | grep -iq "ELF 64-bit LSB pie executable"; then echo "runc.amd64 is not a binary file"; exit 1;fi
 
+RUN curl -OsSL https://github.com/peak/s5cmd/releases/download/v2.2.2/s5cmd_2.2.2_Linux-64bit.tar.gz \
+ && tar -xzvf s5cmd_2.2.2_Linux-64bit.tar.gz s5cmd \
+ && chmod +x s5cmd \
+ && if ! file s5cmd | grep -iq "ELF 64-bit LSB executable"; then echo "s5cmd is not a binary file"; exit 1;fi
+
 FROM ubuntu:22.04
 
 # trigger manual rebuild increasing the value
@@ -46,6 +51,7 @@ RUN apt update \
     /var/tmp/*
 
 COPY --from=dl /dl/runc.amd64 /usr/bin/runc
+COPY --from=dl /dl/s5cmd /usr/bin/s5cmd
 
 # Add gitpod user for operations (e.g. checkout because of the post-checkout hook!)
 RUN groupadd -r -g 33333 gitpod \
