@@ -21,20 +21,11 @@ RUN mkdir -p /tmp/helm/ \
     && rm -rf /tmp/helm/ \
     && helm completion bash > /usr/share/bash-completion/completions/helm
 
-### kubernetes ###
-RUN mkdir -p /usr/local/kubernetes/ && \
-    curl -fsSL https://github.com/kubernetes/kubernetes/releases/download/v1.24.1/kubernetes.tar.gz \
-    | tar -xzvC /usr/local/kubernetes/ --strip-components=1 \
-    && KUBERNETES_SKIP_CONFIRM=true /usr/local/kubernetes/cluster/get-kube-binaries.sh \
-    && chown gitpod:gitpod -R /usr/local/kubernetes
-
-ENV PATH=$PATH:/usr/local/kubernetes/cluster/:/usr/local/kubernetes/client/bin/
-
 ### kubectl ###
 RUN curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
     # really 'xenial'
     && add-apt-repository -yu "deb https://apt.kubernetes.io/ kubernetes-xenial main" \
-    && install-packages kubectl=1.24.1-00 \
+    && install-packages kubectl=1.27.1-00 \
     && kubectl completion bash > /usr/share/bash-completion/completions/kubectl
 
 RUN curl -fsSL -o /usr/bin/kubectx https://raw.githubusercontent.com/ahmetb/kubectx/master/kubectx && chmod +x /usr/bin/kubectx \
@@ -51,13 +42,13 @@ RUN curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.gpg | sudo apt-key
 RUN install-packages mysql-client
 
 ### CertManager's cmctl
-RUN cd /usr/bin && curl -fsSL https://github.com/cert-manager/cert-manager/releases/download/v1.8.2/cmctl-linux-amd64.tar.gz | tar xzv --no-anchored cmctl
+RUN cd /usr/bin && curl -fsSL https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cmctl-linux-amd64.tar.gz | tar xzv --no-anchored cmctl
 
 # gokart
 RUN cd /usr/bin && curl -fsSL https://github.com/praetorian-inc/gokart/releases/download/v0.4.0/gokart_0.4.0_linux_x86_64.tar.gz | tar xzv --no-anchored gokart
 
 # leeway
-ARG LEEWAY_VERSION=0.7.6
+ARG LEEWAY_VERSION=0.7.8
 ENV LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE=8388608
 ENV LEEWAY_WORKSPACE_ROOT=/workspace/gitpod
 ENV LEEWAY_REMOTE_CACHE_BUCKET=gitpod-core-leeway-cache-branch
@@ -151,7 +142,7 @@ ARG GCS_DIR=/opt/google-cloud-sdk
 ENV PATH=$GCS_DIR/bin:$PATH
 RUN sudo chown gitpod: /opt \
     && mkdir $GCS_DIR \
-    && curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-420.0.0-linux-x86_64.tar.gz \
+    && curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-445.0.0-linux-x86_64.tar.gz \
     | tar -xzvC /opt \
     && /opt/google-cloud-sdk/install.sh --quiet --usage-reporting=false --bash-completion=true \
     --additional-components gke-gcloud-auth-plugin docker-credential-gcr alpha beta \
@@ -207,8 +198,8 @@ RUN sudo install-packages shellcheck \
     && sudo python3 -m pip install pre-commit
 
 # gh (Github CLI) binary:
-RUN cd /usr/bin && curl -fsSL https://github.com/cli/cli/releases/download/v2.11.3/gh_2.11.3_linux_amd64.tar.gz \
-    | sudo tar xzv --strip-components=2 gh_2.11.3_linux_amd64/bin/gh
+RUN cd /usr/bin && curl -fsSL https://github.com/cli/cli/releases/download/v2.35.0/gh_2.35.0_linux_amd64.tar.gz \
+    | sudo tar xzv --strip-components=2 gh_2.35.0_linux_amd64/bin/gh
 
 # Install observability-related binaries
 ARG PROM_VERSION="2.36.0"
@@ -243,14 +234,13 @@ RUN sudo apt-add-repository -y ppa:fish-shell/release-3 && \
     sudo apt install -y fish
 
 # Install tmux + tmuxinator
-RUN brew install tmux tmuxinator
-
-# Install redis-server
-RUN brew install redis@7.0
-
-# Install zed & spicedb CLI
-RUN brew install authzed/tap/zed
-RUN brew install authzed/tap/spicedb
+RUN brew install tmux tmuxinator \
+    # Install redis-server
+    && brew install redis \
+    # Install zed & spicedb CLI
+    && brew install authzed/tap/zed \
+    && brew install authzed/tap/spicedb \
+    && brew cleanup
 
 # Copy our own tools
 ENV NEW_KUBECDL=2
