@@ -262,3 +262,6 @@ RUN go install github.com/ericchiang/pup@v0.4.0
 # Install oci-tool
 RUN curl -fsSL https://github.com/csweichel/oci-tool/releases/download/v0.2.0/oci-tool_0.2.0_linux_amd64.tar.gz | sudo tar xz -C /usr/local/bin \
     && sudo chmod +x /usr/local/bin/oci-tool
+
+# Install golangci-lint
+RUN go install -v github.com/golangci/golangci-lint/cmd/golangci-lint@latest
