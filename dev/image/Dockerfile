@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM eu.gcr.io/gitpod-core-dev/dev/dev-environment:base
+FROM gitpod/workspace-gitpod-dev:latest
 
 ENV TRIGGER_REBUILD 40
 
