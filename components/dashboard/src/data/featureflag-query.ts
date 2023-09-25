@@ -15,7 +15,6 @@ const featureFlags = {
     publicApiExperimentalWorkspaceService: false,
     personalAccessTokensEnabled: false,
     oidcServiceEnabled: false,
-    scheduled_downtime_notification: false,
     // Default to true to enable on gitpod dedicated until ff support is added for dedicated
     orgGitAuthProviders: true,
     userGitAuthProviders: false,

@@ -195,22 +195,6 @@ https://{$GITPOD_DOMAIN} {
 	import ssl_configuration
 	import security_headers
 
-	# maintenance redirect (+ redirect away afterwards)
-	@maintenance_redirect {
-		expression `'{$MAINTENANCE_REDIRECT}' == 'true'`
-		not path /maintenance/*
-	}
-	handle @maintenance_redirect {
-		redir https://{$GITPOD_DOMAIN}/maintenance/index.html 307
-	}
-	@maintenance_done_redirect {
-		expression `'{$MAINTENANCE_REDIRECT}' != 'true'`
-		path /maintenance/*
-	}
-	handle @maintenance_done_redirect {
-		redir https://{$GITPOD_DOMAIN}/workspaces permanent
-	}
-
 	@proxy_server_public_api path /public-api/gitpod.experimental.v1.HelloService*
 	handle @proxy_server_public_api {
 		uri strip_prefix /public-api
