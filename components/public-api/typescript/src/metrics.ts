@@ -487,19 +487,23 @@ export class MetricsReporter {
                 .inc();
         };
         inc("new");
-        ws.addEventListener("open", () => inc("open"));
+        ws.addEventListener("open", () => {
+            inc("open");
+            // only report close if opened that we can construct ratio of close to open
+            // otherwise close can be also fire on failed instantiaion
+            ws.addEventListener("close", (event) => {
+                inc("close", event.code, event.wasClean);
+                if (!event.wasClean) {
+                    this.reportError(new Error("WebSocket was not closed cleanly"), {
+                        code: String(event.code),
+                        reason: event.reason,
+                    });
+                }
+            });
+        });
         ws.addEventListener("error", (event) => {
             inc("error");
             this.reportError(new Error(`WebSocket failed: ${String(event)}`));
-        });
-        ws.addEventListener("close", (event) => {
-            inc("close", event.code, event.wasClean);
-            if (!event.wasClean) {
-                this.reportError(new Error("WebSocket was not closed cleanly"), {
-                    code: String(event.code),
-                    reason: event.reason,
-                });
-            }
         });
     }
 }
