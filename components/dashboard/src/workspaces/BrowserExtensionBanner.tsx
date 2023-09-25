@@ -5,26 +5,34 @@
  */
 
 import UAParser from "ua-parser-js";
+interface BrowserOption {
+    url: string;
+    icon: string;
+}
 
-export function BrowserExtensionBanner() {
-    const parser = new UAParser();
-    const parserResults = parser.getResult();
-    const browserName = parserResults.browser.name;
+const installationOptions: Record<string, BrowserOption> = {
+    firefox: {
+        url: "https://addons.mozilla.org/en-US/firefox/addon/gitpod/",
+        icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Firefox_logo%2C_2019.svg/1920px-Firefox_logo%2C_2019.svg.png",
+    },
+    chrome: {
+        url: "https://chrome.google.com/webstore/detail/gitpod-always-ready-to-co/dodmmooeoklaejobgleioelladacbeki",
+        icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Google_Chrome_icon_%28February_2022%29.svg/1920px-Google_Chrome_icon_%28February_2022%29.svg.png",
+    },
+    edge: {
+        url: "https://chrome.google.com/webstore/detail/gitpod-always-ready-to-co/dodmmooeoklaejobgleioelladacbeki",
+        icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Edge_Logo_2019.svg/1920px-Edge_Logo_2019.svg.png",
+    },
+};
 
-    const installationOptions = {
-        firefox: {
-            url: "https://google.com",
-        },
-        chrome: {
-            url: "https://google.com",
-        },
-        edge: {
-            url: "https://google.com",
-        },
-    };
+interface BrowserExtensionBannerProps {
+    parser?: UAParser;
+}
 
-    const browserOption = installationOptions[browserName.toLowerCase()];
-    if (!Object.keys(installationOptions).includes(browserName.toLowerCase())) {
+export function BrowserExtensionBanner({ parser = new UAParser() }: BrowserExtensionBannerProps) {
+    const browserName = parser.getBrowser().name?.toLowerCase();
+    const browserOption = installationOptions[browserName];
+    if (!browserOption) {
         return null;
     }
 
@@ -32,11 +40,7 @@ export function BrowserExtensionBanner() {
         <div className="relative flex justify-center p-4 sm:absolute sm:bottom-2 sm:left-2">
             <div className="grid h-28 w-72 grid-cols-6 items-end gap-x-2 rounded-xl border-2 border-dashed border-[#dadada] bg-[#fafaf9] p-4">
                 <div className="col-span-1">
-                    <img
-                        src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Google_Chrome_icon_%28February_2022%29.svg/1920px-Google_Chrome_icon_%28February_2022%29.svg.png"
-                        alt=""
-                        className="h-8 w-8"
-                    />
+                    <img src={browserOption.icon} alt="" className="h-8 w-8" />
                 </div>
 
                 <div className="col-span-5">
