@@ -24,6 +24,7 @@ import { OrgSettingsPage } from "./OrgSettingsPage";
 import { useDefaultWorkspaceImageQuery } from "../data/workspaces/default-workspace-image-query";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { InputField } from "../components/forms/InputField";
+import { InputWithCopy } from "../components/InputWithCopy";
 import { ReactComponent as Stack } from "../icons/Stack.svg";
 
 export default function TeamSettingsPage() {
@@ -204,6 +205,12 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
                 // handleUpdateTeamSettings({ defaultWorkspaceImage });
             }}
         >
+            {props.org && (
+                <InputField label="Organization ID">
+                    <InputWithCopy value={props.org.id} tip="Copy Organization ID" />
+                </InputField>
+            )}
+
             <Heading2 className="pt-12">Collaboration & Sharing</Heading2>
 
             {updateTeamSettings.isError && (
