@@ -96,8 +96,8 @@ export class PrebuildManager {
         }
     }
 
-    protected async findNonFailedPrebuiltWorkspace(ctx: TraceContext, cloneURL: string, commitSHA: string) {
-        const existingPB = await this.workspaceDB.trace(ctx).findPrebuiltWorkspaceByCommit(cloneURL, commitSHA);
+    private async findNonFailedPrebuiltWorkspace(ctx: TraceContext, projectId: string, commitSHA: string) {
+        const existingPB = await this.workspaceDB.trace(ctx).findPrebuiltWorkspaceByCommit(projectId, commitSHA);
 
         if (
             !!existingPB &&
@@ -139,7 +139,7 @@ export class PrebuildManager {
 
             if (!forcePrebuild) {
                 // Check for an existing, successful prebuild, before triggering a new one.
-                const existingPB = await this.findNonFailedPrebuiltWorkspace({ span }, cloneURL, commitSHAIdentifier);
+                const existingPB = await this.findNonFailedPrebuiltWorkspace({ span }, project.id, commitSHAIdentifier);
                 if (existingPB) {
                     // But if the existing prebuild is failed, or based on an outdated config, it will still be retriggered below.
                     const existingPBWS = await this.workspaceDB.trace({ span }).findById(existingPB.buildWorkspaceId);
@@ -200,11 +200,12 @@ export class PrebuildManager {
                     config,
                     history,
                     user,
+                    project.id,
                 );
                 if (prebuild) {
                     return { prebuildId: prebuild.id, wsid: prebuild.buildWorkspaceId, done: true };
                 }
-            } else if (this.shouldPrebuildIncrementally(context.repository.cloneUrl, project)) {
+            } else if (this.shouldPrebuildIncrementally(project)) {
                 // We store the commit histories in the `StartPrebuildContext` in order to pass them down to
                 // `WorkspaceFactoryEE.createForStartPrebuild`.
                 if (commitHistory) {
@@ -249,21 +250,16 @@ export class PrebuildManager {
                 await this.storePrebuildInfo({ span }, project, prebuild, workspace, user, aCommitInfo);
             }
 
-            if (await this.shouldRateLimitPrebuild(span, cloneURL)) {
+            if (await this.shouldRateLimitPrebuild(span, project)) {
                 prebuild.state = "aborted";
                 prebuild.error =
                     "Prebuild is rate limited. Please contact Gitpod if you believe this happened in error.";
                 await this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild);
                 span.setTag("ratelimited", true);
-            } else if (project && (await this.shouldSkipInactiveProject(user.id, project))) {
+            } else if (await this.projectService.isProjectConsideredInactive(user.id, project.id)) {
                 prebuild.state = "aborted";
                 prebuild.error =
                     "Project is inactive. Please start a new workspace for this project to re-enable prebuilds.";
-                await this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild);
-            } else if (!project && (await this.shouldSkipInactiveRepository({ span }, cloneURL))) {
-                prebuild.state = "aborted";
-                prebuild.error =
-                    "Repository is inactive. Please create a project for this repository to re-enable prebuilds.";
                 await this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild);
             } else {
                 span.setTag("starting", true);
@@ -287,7 +283,7 @@ export class PrebuildManager {
         }
     }
 
-    protected async checkUsageLimitReached(user: User, organizationId: string): Promise<void> {
+    private async checkUsageLimitReached(user: User, organizationId: string): Promise<void> {
         let result: MayStartWorkspaceResult = {};
         try {
             result = await this.entitlementService.mayStartWorkspace(user, organizationId, Promise.resolve([]));
@@ -414,12 +410,12 @@ export class PrebuildManager {
         return { shouldRun: false, reason: "unknown-strategy" };
     }
 
-    protected shouldPrebuildIncrementally(cloneUrl: string, project: Project): boolean {
+    private shouldPrebuildIncrementally(project: Project): boolean {
         if (project?.settings?.useIncrementalPrebuilds) {
             return true;
         }
         const trimRepoUrl = (url: string) => url.replace(/\/$/, "").replace(/\.git$/, "");
-        const repoUrl = trimRepoUrl(cloneUrl);
+        const repoUrl = trimRepoUrl(project.cloneUrl);
         return this.config.incrementalPrebuilds.repositoryPasslist.some((url) => trimRepoUrl(url) === repoUrl);
     }
 
@@ -441,7 +437,7 @@ export class PrebuildManager {
     }
 
     //TODO this doesn't belong so deep here. All this context should be stored on the surface not passed down.
-    protected async storePrebuildInfo(
+    private async storePrebuildInfo(
         ctx: TraceContext,
         project: Project,
         pws: PrebuiltWorkspace,
@@ -481,50 +477,22 @@ export class PrebuildManager {
         }
     }
 
-    private async shouldRateLimitPrebuild(span: opentracing.Span, cloneURL: string): Promise<boolean> {
-        const rateLimit = PrebuildRateLimiterConfig.getConfigForCloneURL(this.config.prebuildLimiter, cloneURL);
+    private async shouldRateLimitPrebuild(span: opentracing.Span, project: Project): Promise<boolean> {
+        const rateLimit = PrebuildRateLimiterConfig.getConfigForCloneURL(this.config.prebuildLimiter, project.cloneUrl);
 
         const windowStart = secondsBefore(new Date().toISOString(), rateLimit.period);
         const unabortedCount = await this.workspaceDB
             .trace({ span })
-            .countUnabortedPrebuildsSince(cloneURL, new Date(windowStart));
+            .countUnabortedPrebuildsSince(project.id, new Date(windowStart));
 
         if (unabortedCount >= rateLimit.limit) {
             log.debug("Prebuild exceeds rate limit", {
                 ...rateLimit,
                 unabortedPrebuildsCount: unabortedCount,
-                cloneURL,
+                projectId: project.id,
             });
             return true;
         }
         return false;
-    }
-
-    private async shouldSkipInactiveProject(userID: string, project: Project): Promise<boolean> {
-        return await this.projectService.isProjectConsideredInactive(userID, project.id);
-    }
-
-    private async shouldSkipInactiveRepository(ctx: TraceContext, cloneURL: string): Promise<boolean> {
-        const span = TraceContext.startSpan("shouldSkipInactiveRepository", ctx);
-        const { inactivityPeriodForReposInDays } = this.config;
-        if (!inactivityPeriodForReposInDays) {
-            // skipping is disabled if `inactivityPeriodForReposInDays` is not set
-            span.finish();
-            return false;
-        }
-        try {
-            return (
-                (await this.workspaceDB
-                    .trace({ span })
-                    .getWorkspaceCountByCloneURL(cloneURL, inactivityPeriodForReposInDays /* in days */, "regular")) ===
-                0
-            );
-        } catch (error) {
-            log.error("cannot compute activity for repository", { cloneURL }, error);
-            TraceContext.setError(ctx, error);
-            return false;
-        } finally {
-            span.finish();
-        }
     }
 }

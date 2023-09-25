@@ -55,7 +55,10 @@ export class WorkspaceFactory {
         normalizedContextURL: string,
     ): Promise<Workspace> {
         if (StartPrebuildContext.is(context)) {
-            return this.createForStartPrebuild(ctx, user, organizationId, context, normalizedContextURL);
+            if (!project) {
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Cannot start prebuild without a project.");
+            }
+            return this.createForStartPrebuild(ctx, user, project?.id, organizationId, context, normalizedContextURL);
         } else if (PrebuiltWorkspaceContext.is(context)) {
             return this.createForPrebuiltWorkspace(ctx, user, organizationId, project, context, normalizedContextURL);
         }
@@ -72,6 +75,7 @@ export class WorkspaceFactory {
     private async createForStartPrebuild(
         ctx: TraceContext,
         user: User,
+        projectId: string,
         organizationId: string,
         context: StartPrebuildContext,
         normalizedContextURL: string,
@@ -90,10 +94,7 @@ export class WorkspaceFactory {
             const assertNoPrebuildIsRunningForSameCommit = async () => {
                 const existingPWS = await this.db
                     .trace({ span })
-                    .findPrebuiltWorkspaceByCommit(
-                        commitContext.repository.cloneUrl,
-                        CommitContext.computeHash(commitContext),
-                    );
+                    .findPrebuiltWorkspaceByCommit(projectId, CommitContext.computeHash(commitContext));
                 if (!existingPWS) {
                     return;
                 }
@@ -119,6 +120,7 @@ export class WorkspaceFactory {
                 config,
                 context,
                 user,
+                projectId,
             );
             if (recentPrebuild) {
                 const loggedContext = filterForLogging(context);

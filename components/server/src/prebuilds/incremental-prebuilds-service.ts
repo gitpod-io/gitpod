@@ -69,6 +69,7 @@ export class IncrementalPrebuildsService {
         config: WorkspaceConfig,
         history: WithCommitHistory,
         user: User,
+        projectId: string,
     ): Promise<PrebuiltWorkspace | undefined> {
         if (!history.commitHistory || history.commitHistory.length < 1) {
             return;
@@ -78,7 +79,7 @@ export class IncrementalPrebuildsService {
 
         // Note: This query returns only not-garbage-collected prebuilds in order to reduce cardinality
         // (e.g., at the time of writing, the Gitpod repository has 16K+ prebuilds, but only ~300 not-garbage-collected)
-        const recentPrebuilds = await this.workspaceDB.findPrebuildsWithWorkpace(context.repository.cloneUrl);
+        const recentPrebuilds = await this.workspaceDB.findPrebuildsWithWorkspace(projectId);
         for (const recentPrebuild of recentPrebuilds) {
             if (
                 await this.isGoodBaseforIncrementalBuild(

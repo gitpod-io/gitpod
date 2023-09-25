@@ -21,7 +21,10 @@ export const sortSuggestedRepositories = (repos: SuggestedRepositoryWithSorting[
     // as it will may have an entry for the project (no lastUse), and another for recent workspaces (w/ lastUse)
     const uniqueRepositories = new Map<string, SuggestedRepositoryWithSorting>();
     for (const repo of repos) {
-        const existingRepo = uniqueRepositories.get(repo.url);
+        const key = (repo: SuggestedRepositoryWithSorting) => {
+            return repo.url + (repo.projectId ? "|" + repo.projectId : "");
+        };
+        const existingRepo = uniqueRepositories.get(key(repo));
 
         const mergedEntry = {
             ...(existingRepo || repo),
@@ -30,8 +33,14 @@ export const sortSuggestedRepositories = (repos: SuggestedRepositoryWithSorting[
             repositoryName: existingRepo?.repositoryName || repo.repositoryName,
         };
 
-        uniqueRepositories.set(repo.url, mergedEntry);
+        uniqueRepositories.set(key(repo), mergedEntry);
     }
+    // remove every non-project entry when there is at least one with a project id
+    uniqueRepositories.forEach((repo, _) => {
+        if (repo.projectId) {
+            uniqueRepositories.delete(repo.url);
+        }
+    });
 
     const sortedRepos = Array.from(uniqueRepositories.values()).sort((a, b) => {
         // priority first

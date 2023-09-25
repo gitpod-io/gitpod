@@ -237,6 +237,7 @@ export function CreateWorkspacePage() {
                 const result = await createWorkspaceMutation.createWorkspace({
                     contextUrl: contextURL,
                     organizationId,
+                    projectId: selectedProjectID,
                     ...opts,
                 });
                 await storeAutoStartOptions();
@@ -263,6 +264,7 @@ export function CreateWorkspacePage() {
             selectedIde,
             useLatestIde,
             createWorkspaceMutation,
+            selectedProjectID,
             storeAutoStartOptions,
             history,
             autostart,

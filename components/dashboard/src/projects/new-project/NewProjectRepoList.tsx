@@ -29,8 +29,7 @@ export const NewProjectRepoList: FC<Props> = ({ filteredRepos, noReposAvailable,
                             <div className="flex-grow">
                                 <div
                                     className={
-                                        "text-base text-gray-900 dark:text-gray-50 font-medium rounded-xl whitespace-nowrap" +
-                                        (r.inUse ? " text-gray-400 dark:text-gray-500" : "text-gray-700")
+                                        "text-base text-gray-900 dark:text-gray-50 font-medium rounded-xl whitespace-nowrap text-gray-700"
                                     }
                                 >
                                     {toSimpleName(r)}
@@ -39,17 +38,9 @@ export const NewProjectRepoList: FC<Props> = ({ filteredRepos, noReposAvailable,
                             </div>
                             <div className="flex justify-end">
                                 <div className="h-full my-auto flex self-center opacity-0 group-hover:opacity-100 items-center mr-2 text-right">
-                                    {!r.inUse ? (
-                                        <Button onClick={() => onRepoSelected(r)} loading={isCreating}>
-                                            Select
-                                        </Button>
-                                    ) : (
-                                        <p className="text-gray-500">
-                                            Project already
-                                            <br />
-                                            exists.
-                                        </p>
-                                    )}
+                                    <Button onClick={() => onRepoSelected(r)} loading={isCreating}>
+                                        Select
+                                    </Button>
                                 </div>
                             </div>
                         </div>

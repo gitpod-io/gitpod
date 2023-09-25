@@ -337,6 +337,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     private async findPrebuiltWorkspace(
         parentCtx: TraceContext,
         user: User,
+        projectId: string,
         context: WorkspaceContext,
         organizationId?: string,
         ignoreRunningPrebuild?: boolean,
@@ -373,7 +374,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 log.debug(logCtx, "Looking for prebuilt workspace: ", logPayload);
                 prebuiltWorkspace = await this.workspaceDb
                     .trace(ctx)
-                    .findPrebuiltWorkspaceByCommit(cloneUrl, commitSHAs);
+                    .findPrebuiltWorkspaceByCommit(projectId, commitSHAs);
                 if (!prebuiltWorkspace && allowUsingPreviousPrebuilds) {
                     const { config } = await this.configProvider.fetchConfig({}, user, context, organizationId);
                     const history = await this.incrementalPrebuildsService.getCommitHistoryForContext(context, user);
@@ -382,18 +383,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                         config,
                         history,
                         user,
+                        projectId,
                     );
                 }
             }
-            if (!prebuiltWorkspace) {
+            if (!prebuiltWorkspace?.projectId) {
                 return;
             }
 
             // check if the user has access to the project
-            if (
-                prebuiltWorkspace.projectId &&
-                !(await this.auth.hasPermissionOnProject(user.id, "read_prebuild", prebuiltWorkspace.projectId))
-            ) {
+            if (!(await this.auth.hasPermissionOnProject(user.id, "read_prebuild", prebuiltWorkspace.projectId))) {
                 return undefined;
             }
             if (prebuiltWorkspace.state === "available") {
@@ -1346,9 +1345,22 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                     return { existingWorkspaces: runningForContext };
                 }
             }
-            const project = CommitContext.is(context)
-                ? (await this.projectsService.findProjectsByCloneUrl(user.id, context.repository.cloneUrl))[0]
-                : undefined;
+
+            let project: Project | undefined = undefined;
+            if (options.projectId) {
+                project = await this.projectsService.getProject(user.id, options.projectId);
+            } else if (CommitContext.is(context)) {
+                const projects = await this.projectsService.findProjectsByCloneUrl(
+                    user.id,
+                    context.repository.cloneUrl,
+                );
+                if (projects.length > 1) {
+                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Multiple projects found for clone URL.");
+                }
+                if (projects.length === 1) {
+                    project = projects[0];
+                }
+            }
 
             const mayStartWorkspacePromise = this.workspaceService.mayStartWorkspace(
                 ctx,
@@ -1358,14 +1370,17 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             );
 
             // TODO (se) findPrebuiltWorkspace also needs the organizationId once we limit prebuild reuse to the same org
-            const prebuiltWorkspace = await this.findPrebuiltWorkspace(
-                ctx,
-                user,
-                context,
-                options.organizationId,
-                options.ignoreRunningPrebuild,
-                options.allowUsingPreviousPrebuilds || project?.settings?.allowUsingPreviousPrebuilds,
-            );
+            const prebuiltWorkspace =
+                project &&
+                (await this.findPrebuiltWorkspace(
+                    ctx,
+                    user,
+                    project.id,
+                    context,
+                    options.organizationId,
+                    options.ignoreRunningPrebuild,
+                    options.allowUsingPreviousPrebuilds || project.settings?.allowUsingPreviousPrebuilds,
+                ));
             if (WorkspaceCreationResult.is(prebuiltWorkspace)) {
                 ctx.span?.log({ prebuild: "running" });
                 return prebuiltWorkspace as WorkspaceCreationResult;
@@ -1490,24 +1505,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         } else {
             log.info({ userId: user.id }, `Unsupported provider: "${params.provider}"`, { params });
         }
-        const projects = await this.projectsService.getProjectsByCloneUrls(
-            user.id,
-            repositories.map((r) => r.cloneUrl),
-        );
-
-        const cloneUrlToProject = new Map(projects.map((p) => [p.cloneUrl, p]));
-
-        for (const repo of repositories) {
-            const p = cloneUrlToProject.get(repo.cloneUrl);
-
-            if (p) {
-                if (p.teamOwners && p.teamOwners[0]) {
-                    repo.inUse = {
-                        userName: p.teamOwners[0] || "somebody",
-                    };
-                }
-            }
-        }
 
         return repositories;
     }
@@ -1520,7 +1517,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardProjectOperation(user, projectId, "get");
         await this.auth.checkPermissionOnProject(user.id, "read_prebuild", projectId);
 
-        const events = await this.projectsService.getPrebuildEvents(user.id, project.cloneUrl);
+        const events = await this.projectsService.getPrebuildEvents(user.id, project.id);
         return events;
     }
 
