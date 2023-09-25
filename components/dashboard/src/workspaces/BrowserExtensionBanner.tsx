@@ -40,8 +40,15 @@ export function BrowserExtensionBanner({ parser = new UAParser() }: BrowserExten
         return null;
     }
 
+    const persistedDisabled =
+        localStorage.getItem("browser-extension-installed") ||
+        localStorage.getItem("browser-extension-banner-dismissed");
+    if (persistedDisabled) {
+        return null;
+    }
+
     return (
-        <div className="relative flex justify-center p-4 sm:absolute sm:bottom-2 sm:left-2">
+        <section className="relative flex justify-center p-4 sm:absolute sm:bottom-2 sm:left-2">
             <div className="grid h-28 w-72 grid-cols-6 items-end gap-x-2 rounded-xl border-2 border-dashed border-[#dadada] bg-[#fafaf9] p-4">
                 <div className="col-span-1">
                     <img src={browserOption.icon} alt="" className="h-8 w-8" />
@@ -55,11 +62,16 @@ export function BrowserExtensionBanner({ parser = new UAParser() }: BrowserExten
                 <div className="col-span-1"></div>
 
                 <div className="col-span-5">
-                    <a href={browserOption.url} className="text-sm font-semibold text-blue-500">
+                    <a
+                        href={browserOption.url}
+                        className="text-sm font-semibold text-blue-500"
+                        target="_blank"
+                        rel="noreferrer"
+                    >
                         Try the browser extension →
                     </a>
                 </div>
             </div>
-        </div>
+        </section>
     );
 }
