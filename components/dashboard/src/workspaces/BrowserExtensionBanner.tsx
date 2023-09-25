@@ -41,7 +41,7 @@ export function BrowserExtensionBanner({ parser = new UAParser() }: BrowserExten
     }
 
     const persistedDisabled =
-        localStorage.getItem("browser-extension-installed") ||
+        sessionStorage.getItem("browser-extension-installed") ||
         localStorage.getItem("browser-extension-banner-dismissed");
     if (persistedDisabled) {
         return null;
