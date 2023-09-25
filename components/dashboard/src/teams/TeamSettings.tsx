@@ -207,7 +207,7 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
         >
             {props.org && (
                 <InputField label="Organization ID">
-                    <InputWithCopy value={props.org.id} tip="Copy Org ID" />
+                    <InputWithCopy value={props.org.id} tip="Copy Organization ID" />
                 </InputField>
             )}
 
