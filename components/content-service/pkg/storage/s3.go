@@ -299,8 +299,11 @@ func (s3st *s3Storage) download(ctx context.Context, destination string, obj str
 	tempFile.Close()
 
 	args := []string{
-		"--numworkers", "20",
-		"cp", "--part-size", "25",
+		"cp",
+		// # of file parts to download at once
+		"--concurrency", "20",
+		// size in MB of each part
+		"--part-size", "25",
 		destination,
 		tempFile.Name(),
 	}
