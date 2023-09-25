@@ -31,6 +31,10 @@ interface BrowserExtensionBannerProps {
 
 export function BrowserExtensionBanner({ parser = new UAParser() }: BrowserExtensionBannerProps) {
     const browserName = parser.getBrowser().name?.toLowerCase();
+    if (!browserName) {
+        return null;
+    }
+
     const browserOption = installationOptions[browserName];
     if (!browserOption) {
         return null;
