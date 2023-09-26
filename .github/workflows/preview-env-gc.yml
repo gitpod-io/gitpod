@@ -20,7 +20,7 @@ jobs:
       names: ${{ steps.set-matrix.outputs.names }}
       count: ${{ steps.set-matrix.outputs.count }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Compute matrix
@@ -57,7 +57,7 @@ jobs:
       matrix:
         name: ${{ fromJSON(needs.stale.outputs.names) }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Delete preview environment ${{ matrix.name }}
         uses: ./.github/actions/delete-preview
         with:

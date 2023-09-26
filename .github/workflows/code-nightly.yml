@@ -18,7 +18,7 @@ jobs:
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-update-image-gha.17642
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-environment
         with:
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
