@@ -303,7 +303,7 @@ export interface ProfileDetails {
     // when was the last time the user updated their profile information or has been nudged to do so.
     lastUpdatedDetailsNudge?: string;
     // when was the last time the user has accepted our privacy policy
-    acceptedPrivacyPoliceDate?: string;
+    acceptedPrivacyPolicyDate?: string;
     // the user's company name
     companyName?: string;
     // the user's email

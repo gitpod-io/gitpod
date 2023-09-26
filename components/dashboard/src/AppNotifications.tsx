@@ -11,9 +11,11 @@ import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import advancedFormat from "dayjs/plugin/advancedFormat";
 import { useUserLoader } from "./hooks/use-user-loader";
+import { getGitpodService } from "./service/service";
+import { deepMerge } from "./utils";
 
 const KEY_APP_DISMISSED_NOTIFICATIONS = "gitpod-app-notifications-dismissed";
-const PRIVACY_POLICY_LAST_UPDATED = "09/25/2023";
+const PRIVACY_POLICY_LAST_UPDATED = "2023-09-26";
 
 interface Notification {
     id: string;
@@ -33,7 +35,7 @@ export function localizedTime(dateStr: string): JSX.Element {
 }
 
 function formatDate(dateString: string): JSX.Element {
-    const formatted = dayjs.utc(dateString).local().format("LL");
+    const formatted = dayjs.utc(dateString).local().format("MMMM D, YYYY");
     return <time dateTime={dateString}>{formatted}</time>;
 }
 
@@ -41,8 +43,13 @@ const UPDATED_PRIVACY_POLICY: Notification = {
     id: "privacy-policy-update",
     type: "info",
     preventDismiss: true,
-    onClose: () => {
+    onClose: async () => {
         console.error("Well... happy for you");
+        const userUpdates = { additionalData: { profile: { acceptedPrivacyPolicyDate: dayjs().toISOString() } } };
+        const previousUser = await getGitpodService().server.getLoggedInUser();
+        const user = await getGitpodService().server.updateLoggedInUser(deepMerge(previousUser, userUpdates));
+
+        console.log(user);
     },
     message: (
         <span className="text-md">
@@ -61,8 +68,11 @@ export function AppNotifications() {
 
     useEffect(() => {
         const notifications = [];
-        if (!loading && user?.additionalData) {
-            if (new Date(PRIVACY_POLICY_LAST_UPDATED) > new Date(user.additionalData.acceptedPrivacyPoliceDate)) {
+        if (!loading && user?.additionalData?.profile) {
+            if (
+                !user.additionalData.profile.acceptedPrivacyPolicyDate ||
+                new Date(PRIVACY_POLICY_LAST_UPDATED) > new Date(user.additionalData.profile?.acceptedPrivacyPolicyDate)
+            ) {
                 notifications.push(UPDATED_PRIVACY_POLICY);
             }
         }
