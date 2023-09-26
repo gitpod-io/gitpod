@@ -6,9 +6,7 @@ package sshproxy
 
 import (
 	"context"
-	"crypto/md5"
 	"crypto/subtle"
-	"encoding/hex"
 	"net"
 	"regexp"
 	"strings"
@@ -251,12 +249,7 @@ func (s *Server) HandleConn(c net.Conn) {
 	wsInfo, err := s.GetWorkspaceInfo(workspaceId)
 	if err != nil {
 		ReportSSHAttemptMetrics(err)
-		workspaceIdBytes := []byte(workspaceId)
-		hash := md5.New()
-		hash.Write(workspaceIdBytes)
-		checksum := hash.Sum(nil)
-		derivedInstanceId := hex.EncodeToString(checksum)
-		log.WithField("derivedInstanceId", derivedInstanceId).WithError(err).Error("failed to get workspace info")
+		log.WithField("workspaceId", workspaceId).WithError(err).Error("failed to get workspace info")
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
