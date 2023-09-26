@@ -138,19 +138,22 @@ func TestFindRunningWorkspace(t *testing.T) {
 		}),
 		// one unstopped before 10 days ago
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
-			WorkspaceID: workspace.ID,
-			StartedTime: db.NewVarCharTime(moreThan10DaysAgo),
+			WorkspaceID:    workspace.ID,
+			StartedTime:    db.NewVarCharTime(moreThan10DaysAgo),
+			PhasePersisted: "running",
 		}),
 		// Two running instances
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
-			ID:          uuid.New(),
-			WorkspaceID: workspace.ID,
-			StartedTime: db.NewVarCharTime(tenMinAgo),
+			ID:             uuid.New(),
+			WorkspaceID:    workspace.ID,
+			StartedTime:    db.NewVarCharTime(tenMinAgo),
+			PhasePersisted: "running",
 		}),
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
-			ID:          uuid.New(),
-			WorkspaceID: workspace.ID,
-			StartedTime: db.NewVarCharTime(tenMinAgo),
+			ID:             uuid.New(),
+			WorkspaceID:    workspace.ID,
+			StartedTime:    db.NewVarCharTime(tenMinAgo),
+			PhasePersisted: "running",
 		}),
 	}
 
