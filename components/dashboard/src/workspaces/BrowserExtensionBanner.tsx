@@ -48,8 +48,8 @@ export function BrowserExtensionBanner({ parser = new UAParser() }: BrowserExten
     }
 
     return (
-        <section className="relative flex justify-center p-4 sm:absolute sm:bottom-2 sm:left-2">
-            <div className="grid h-28 w-72 grid-cols-6 items-end gap-x-2 rounded-xl border-2 border-dashed border-[#dadada] bg-[#fafaf9] p-4">
+        <section className="hidden p-4 sm:block sm:absolute sm:bottom-2 sm:left-2">
+            <div className="grid h-28 w-72 grid-cols-6 items-end gap-x-2 rounded-xl border-2 border-dashed border-[#dadada] bg-[#fafaf9] dark:bg-gray-800 dark:border-gray-600 p-4">
                 <div className="col-span-1">
                     <img src={browserOption.icon} alt="" className="h-8 w-8" />
                 </div>
