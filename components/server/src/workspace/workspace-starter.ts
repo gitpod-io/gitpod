@@ -79,7 +79,6 @@ import {
     BuildStatus,
     ImageBuilderClientProvider,
     ResolveBaseImageRequest,
-    ResolveWorkspaceImageRequest,
 } from "@gitpod/image-builder/lib";
 import {
     IDEImage,
@@ -368,31 +367,13 @@ export class WorkspaceStarter {
                     workspace.context,
                 );
 
-                const forceRebuild = !!workspace.context.forceImageBuild;
-                try {
-                    // if we need to build the workspace image we must not wait for actuallyStartWorkspace to return as that would block the
-                    // frontend until the image is built.
-                    const additionalAuth = await this.getAdditionalImageAuth(envVars);
-                    const needsImageBuild =
-                        forceRebuild || (await this.needsImageBuild(ctx, user, workspace, instance, additionalAuth));
-                    if (needsImageBuild) {
-                        instance.status.conditions = {
-                            neededImageBuild: true,
-                        };
-                    }
-                    ctx.span?.setTag("needsImageBuild", needsImageBuild);
-                } catch (err) {
-                    // if we fail to check if the workspace needs an image build (e.g. becuase the image builder is unavailable),
-                    // we must properly fail the workspace instance, i.e. set its status to stopped, deal with prebuilds etc.
-                    //
-                    // Once we've reached actuallyStartWorkspace that function will take care of failing the instance.
-                    await this.failInstanceStart(ctx, err, workspace, instance, abortSignal);
-                    throw err;
-                }
-
-                await this.actuallyStartWorkspace(ctx, instance, workspace, user, envVars, abortSignal, forceRebuild);
+                await this.actuallyStartWorkspace(ctx, instance, workspace, user, envVars, abortSignal);
             } catch (err) {
-                log.error({ instanceId }, "error in reconcileWorkspaceStart", err);
+                this.logAndTraceStartWorkspaceError(
+                    ctx,
+                    { userId: user.id, workspaceId: workspace.id, instanceId },
+                    err,
+                );
             } finally {
                 ctx.span.finish();
             }
@@ -532,7 +513,6 @@ export class WorkspaceStarter {
         user: User,
         envVars: ResolvedEnvVars,
         abortSignal: RedlockAbortSignal,
-        forceRebuild?: boolean,
     ): Promise<void> {
         const span = TraceContext.startSpan("actuallyStartWorkspace", ctx);
         const region = instance.configuration.regionPreference;
@@ -543,6 +523,7 @@ export class WorkspaceStarter {
             organizationId: workspace.organizationId,
             workspaceId: workspace.id,
         };
+        const forceRebuild = !!workspace.context.forceImageBuild;
         log.info(logCtx, "Attempting to start workspace", {
             forceRebuild: forceRebuild,
         });
@@ -661,6 +642,7 @@ export class WorkspaceStarter {
         } catch (err) {
             if (isGrpcError(err) && (err.code === grpc.status.UNAVAILABLE || err.code === grpc.status.ALREADY_EXISTS)) {
                 // fall-through: we don't want to fail but retry/wait for future updates to resolve this
+                log.warn(logCtx, "cannot start workspace instance due to temporary error", err);
             } else if (!(err instanceof StartInstanceError)) {
                 // fallback in case we did not already handle this error
                 await this.failInstanceStart({ span }, err, workspace, instance, abortSignal);
@@ -1146,62 +1128,6 @@ export class WorkspaceStarter {
         }
     }
 
-    private async needsImageBuild(
-        ctx: TraceContext,
-        user: User,
-        workspace: Workspace,
-        instance: WorkspaceInstance,
-        additionalAuth: Map<string, string>,
-    ): Promise<boolean> {
-        const span = TraceContext.startSpan("needsImageBuild", ctx);
-        try {
-            const client = await this.getImageBuilderClient(
-                user,
-                workspace,
-                instance,
-                instance.configuration.regionPreference,
-            );
-            const { src, auth, disposable } = await this.prepareBuildRequest(
-                { span },
-                workspace,
-                workspace.imageSource!,
-                user,
-                additionalAuth,
-            );
-
-            const req = new ResolveWorkspaceImageRequest();
-            req.setSource(src);
-            req.setAuth(auth);
-            const result = await client.resolveWorkspaceImage({ span }, req);
-
-            if (!!disposable) {
-                disposable.dispose();
-            }
-
-            if (result.getStatus() != BuildStatus.DONE_SUCCESS) {
-                log.info(
-                    {
-                        instanceId: instance.id,
-                        userId: workspace.ownerId,
-                        workspaceId: workspace.id,
-                        organizationId: workspace.organizationId,
-                    },
-                    "Resolve workspace was unsuccessful",
-                    {
-                        buildStatus: result.getStatus(),
-                    },
-                );
-            }
-
-            return result.getStatus() != BuildStatus.DONE_SUCCESS;
-        } catch (err) {
-            TraceContext.setError({ span }, err);
-            throw err;
-        } finally {
-            span.finish();
-        }
-    }
-
     private async buildWorkspaceImage(
         ctx: TraceContext,
         user: User,
@@ -1266,6 +1192,11 @@ export class WorkspaceStarter {
             const result = await client.build({ span }, req, imageBuildLogInfo);
 
             if (result.actuallyNeedsBuild) {
+                instance.status.conditions = {
+                    ...instance.status.conditions,
+                    neededImageBuild: true,
+                }; // Stored below
+                ctx.span?.setTag("needsImageBuild", true);
                 increaseImageBuildsStartedTotal();
             }
 
@@ -1352,7 +1283,11 @@ export class WorkspaceStarter {
             await this.failInstanceStart({ span }, err, workspace, instance, abortSignal);
 
             const looksLikeUserError = (msg: string): boolean => {
-                return msg.startsWith("build failed:") || msg.includes("headless task failed:");
+                return (
+                    msg.startsWith("build failed:") ||
+                    msg.includes("headless task failed:") ||
+                    msg.includes("cannot resolve image")
+                );
             };
             if (looksLikeUserError(message)) {
                 log.info(
