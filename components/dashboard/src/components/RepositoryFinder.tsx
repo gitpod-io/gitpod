@@ -25,7 +25,6 @@ interface RepositoryFinderProps {
     setSelection: (repoUrl: string, projectID?: string) => void;
     onError?: (error: string) => void;
     disabled?: boolean;
-    loading?: boolean;
 }
 
 export default function RepositoryFinder(props: RepositoryFinderProps) {
@@ -152,7 +151,8 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
             expanded={!props.selectedContextURL}
             onSelectionChange={handleSelectionChange}
             disabled={props.disabled}
-            loading={props.loading || isLoading}
+            // Only consider the isLoading prop if we're including projects in list
+            loading={isLoading && includeProjectsOnCreateWorkspace}
             searchPlaceholder="Paste repository URL or type to find suggestions"
         >
             <DropDown2SelectedElement
@@ -173,7 +173,7 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
                         ? displayContextUrl(selectedSuggestion?.url)
                         : undefined
                 }
-                loading={props.loading || isLoading}
+                loading={isLoading && includeProjectsOnCreateWorkspace}
             />
         </DropDown2>
     );
