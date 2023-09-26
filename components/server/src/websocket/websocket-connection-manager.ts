@@ -382,6 +382,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
             {
                 userId,
                 contextId: requestId,
+                method,
             },
             () => {
                 try {

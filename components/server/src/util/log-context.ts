@@ -32,7 +32,7 @@ LogContext.setAugmenter(augmenter);
 
 export async function runWithContext<T>(
     contextKind: string,
-    context: LogContext & { contextId?: string },
+    context: LogContext & { contextId?: string } & any,
     fun: () => T,
 ): Promise<T> {
     return asyncLocalStorage.run(
