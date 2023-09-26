@@ -107,6 +107,7 @@ type ComponentAPI struct {
 	wsmanStatusMu          sync.Mutex
 	contentServiceStatusMu sync.Mutex
 	imgbldStatusMu         sync.Mutex
+	serverStatusMu         sync.Mutex
 }
 
 type EncryptionKeyMetadata struct {
@@ -285,7 +286,11 @@ func (c *ComponentAPI) GitpodServer(opts ...GitpodServerOpt) (gitpod.APIInterfac
 			if err != nil {
 				return err
 			}
-			c.serverStatus.Token[options.User] = tkn
+			func() {
+				c.serverStatusMu.Lock()
+				defer c.serverStatusMu.Unlock()
+				c.serverStatus.Token[options.User] = tkn
+			}()
 		}
 
 		var pods corev1.PodList
@@ -322,7 +327,12 @@ func (c *ComponentAPI) GitpodServer(opts ...GitpodServerOpt) (gitpod.APIInterfac
 			return err
 		}
 
-		c.serverStatus.Client[options.User] = cl
+		func() {
+			c.serverStatusMu.Lock()
+			defer c.serverStatusMu.Unlock()
+			c.serverStatus.Client[options.User] = cl
+		}()
+
 		res = cl
 		c.appendCloser(cl.Close)
 
