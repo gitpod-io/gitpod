@@ -198,6 +198,25 @@ func TestCostCenterManager_UpdateCostCenter(t *testing.T) {
 		})
 		require.NoError(t, err)
 	})
+
+	t.Run("increment billing cycle should always increment to now", func(t *testing.T) {
+		mnr := db.NewCostCenterManager(conn, limits)
+		teamAttributionID := db.NewTeamAttributionID(uuid.New().String())
+		cleanUp(t, conn, teamAttributionID)
+
+		res, err := mnr.GetOrCreateCostCenter(context.Background(), teamAttributionID)
+		require.NoError(t, err)
+
+		// set res.nextBillingTime to two months ago
+		res.NextBillingTime = db.NewVarCharTime(time.Now().AddDate(0, -2, 0))
+		conn.Save(res)
+
+		cc, err := mnr.IncrementBillingCycle(context.Background(), teamAttributionID)
+		require.NoError(t, err)
+
+		require.True(t, cc.NextBillingTime.Time().After(time.Now()), "The next billing time should be in the future")
+		require.True(t, cc.BillingCycleStart.Time().Before(time.Now()), "The next billing time should be in the future")
+	})
 }
 
 func TestSaveCostCenterMovedToStripe(t *testing.T) {
