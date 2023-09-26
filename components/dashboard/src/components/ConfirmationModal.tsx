@@ -47,7 +47,12 @@ export const ConfirmationModal: FC<Props> = ({
     }, [onConfirm]);
 
     return (
-        <Modal visible={visible === undefined ? true : visible} onClose={onClose} onSubmit={handleSubmit}>
+        <Modal
+            visible={visible === undefined ? true : visible}
+            onClose={onClose}
+            onSubmit={handleSubmit}
+            disabled={buttonDisabled}
+        >
             <ModalHeader>{title}</ModalHeader>
             <ModalBody>
                 {warningText && (
