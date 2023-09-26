@@ -8,7 +8,7 @@ import { ProjectDB, TeamDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { AdditionalUserData, Organization, User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
-import { Authorizer, isFgaWritesEnabled } from "./authorizer";
+import { Authorizer, isFgaChecksEnabled, isFgaWritesEnabled } from "./authorizer";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { v1 } from "@authzed/authzed-node";
 import { fgaRelationsUpdateClientLatency } from "../prometheus-metrics";
@@ -52,6 +52,23 @@ export class RelationshipUpdater {
         if (await this.isMigrated(user)) {
             return user;
         }
+        const migrated = this.internalMigrate(user);
+        // if checks are not enabled, we don't want to wait for the migration to finish
+        if (!(await isFgaChecksEnabled(user.id))) {
+            migrated.catch((err) => {
+                log.error({ userId: user.id }, "Error while migrating user", err);
+            });
+            return user;
+        }
+        try {
+            return await migrated;
+        } catch (error) {
+            log.error({ userId: user.id }, "Error while migrating user", error);
+            throw error;
+        }
+    }
+
+    private async internalMigrate(user: User): Promise<User> {
         const stopTimer = fgaRelationsUpdateClientLatency.startTimer();
         try {
             return await this.mutex.using([`fga-migration-${user.id}`], 2000, async () => {
@@ -156,16 +173,12 @@ export class RelationshipUpdater {
         });
 
         for (const ws of workspaces) {
-            await this.authorizer
-                .addWorkspaceToOrg(
-                    ws.workspace.organizationId,
-                    ws.workspace.ownerId,
-                    ws.workspace.id,
-                    !!ws.workspace.shareable,
-                )
-                .catch((err) => {
-                    log.error({ userId: user.id, workspaceId: ws.workspace.id }, "Failed to update workspace", err);
-                });
+            await this.authorizer.addWorkspaceToOrg(
+                ws.workspace.organizationId,
+                ws.workspace.ownerId,
+                ws.workspace.id,
+                !!ws.workspace.shareable,
+            );
         }
     }
 

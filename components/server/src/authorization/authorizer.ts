@@ -424,46 +424,50 @@ export class Authorizer {
         }
         await this.authorizer.writeRelationships(...rels);
 
-        //TODO(se) remove this double checking once we're confident that the above works
-        // check if the relationships were written
-        try {
-            const wsToOrgRel = this.find(rel.workspace(workspaceID).org.organization(orgID));
-            const wsToOwnerRel = this.find(rel.workspace(workspaceID).owner.user(userID));
-            const wsSharedRel = shared ? this.find(rel.workspace(workspaceID).shared.anyUser) : Promise.resolve(true);
-            if (!(await wsToOrgRel)) {
-                log.error("Failed to write workspace to org relationship", {
-                    orgID,
-                    userID,
-                    workspaceID,
+        (async () => {
+            //TODO(se) remove this double checking once we're confident that the above works
+            // check if the relationships were written
+            try {
+                const wsToOrgRel = await this.find(rel.workspace(workspaceID).org.organization(orgID));
+                if (!wsToOrgRel) {
+                    log.error("Failed to write workspace to org relationship", {
+                        orgID,
+                        userID,
+                        workspaceID,
 
-                    shared,
-                });
-            }
-            if (!(await wsToOwnerRel)) {
-                log.error("Failed to write workspace to owner relationship", {
+                        shared,
+                    });
+                }
+                const wsToOwnerRel = await this.find(rel.workspace(workspaceID).owner.user(userID));
+                if (!wsToOwnerRel) {
+                    log.error("Failed to write workspace to owner relationship", {
+                        orgID,
+                        userID,
+                        workspaceID,
+                        shared,
+                    });
+                }
+                if (shared) {
+                    const wsSharedRel = await this.find(rel.workspace(workspaceID).shared.anyUser);
+                    if (!wsSharedRel) {
+                        log.error("Failed to write workspace shared relationship", {
+                            orgID,
+                            userID,
+                            workspaceID,
+                            shared,
+                        });
+                    }
+                }
+            } catch (error) {
+                log.error("Failed to check workspace relationships", {
                     orgID,
                     userID,
                     workspaceID,
                     shared,
+                    error,
                 });
             }
-            if (!(await wsSharedRel)) {
-                log.error("Failed to write workspace shared relationship", {
-                    orgID,
-                    userID,
-                    workspaceID,
-                    shared,
-                });
-            }
-        } catch (error) {
-            log.error("Failed to check workspace relationships", {
-                orgID,
-                userID,
-                workspaceID,
-                shared,
-                error,
-            });
-        }
+        })().catch((error) => log.error({ userId: userID }, "Failed to check workspace relationships", { error }));
     }
 
     async removeWorkspaceFromOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {
