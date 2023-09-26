@@ -271,6 +271,9 @@ export class MetricsReporter {
         },
     ) {
         this.metricsHost = `ide.${new URL(options.gitpodUrl).hostname}`;
+        if (typeof window !== "undefined") {
+            this.options.commonErrorDetails["userAgent"] = window.navigator.userAgent
+        }
     }
 
     updateCommonErrorDetails(update: { [key: string]: string | undefined }) {
@@ -303,6 +306,9 @@ export class MetricsReporter {
     private async report() {
         const enabled = await this.isEnabled();
         if (!enabled) {
+            return;
+        }
+        if (typeof window !== undefined && !window.navigator.onLine) {
             return;
         }
 
@@ -404,8 +410,13 @@ export class MetricsReporter {
             return;
         }
         const properties = { ...data, ...this.options.commonErrorDetails };
+        properties["error_timestamp"] = new Date().toISOString();
         properties["error_name"] = error.name;
         properties["error_message"] = error.message;
+
+        if (typeof window !== undefined) {
+            properties["onLine"] = String(window.navigator.onLine);
+        }
 
         const workspaceId = properties["workspaceId"];
         const instanceId = properties["instanceId"];
@@ -456,7 +467,11 @@ export class MetricsReporter {
 
     private async send(request: MetricsRequest | undefined): Promise<void> {
         if (!request) {
-            return request;
+            return;
+        }
+        if (typeof window !== undefined && !window.navigator.onLine) {
+            this.push(request);
+            return;
         }
         this.sendQueue = this.sendQueue.then(async () => {
             try {
