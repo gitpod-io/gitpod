@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/previewctl
 
-go 1.20
+go 1.21
 
 replace github.com/gitpod-io/gitpod/common-go => ../../../components/common-go // leeway
 

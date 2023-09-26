@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/agent-smith
 
-go 1.20
+go 1.21
 
 require (
 	github.com/alecthomas/jsonschema v0.0.0-20210413112511-5c9c23bdc720

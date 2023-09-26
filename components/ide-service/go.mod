@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/ide-service
 
-go 1.20
+go 1.21
 
 require (
 	github.com/containerd/containerd v1.7.6
