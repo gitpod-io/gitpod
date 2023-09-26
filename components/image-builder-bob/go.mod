@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/image-builder/bob
 
-go 1.20
+go 1.21
 
 require (
 	github.com/containerd/console v1.0.3

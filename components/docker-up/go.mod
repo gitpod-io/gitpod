@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/docker-up
 
-go 1.20
+go 1.21
 
 require (
 	github.com/opencontainers/runtime-spec v1.1.0

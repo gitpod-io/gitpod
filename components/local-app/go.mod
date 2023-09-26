@@ -1,6 +1,6 @@
 module github.com/gitpod-io/local-app
 
-go 1.20
+go 1.21
 
 require (
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
