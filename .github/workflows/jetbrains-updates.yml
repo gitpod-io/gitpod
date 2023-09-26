@@ -9,7 +9,7 @@ jobs:
     update-jetbrains:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
             - name: Check for updates
               run: |
                   cd ./components/ide/jetbrains/image/gha-update-image

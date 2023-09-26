@@ -12,7 +12,7 @@ jobs:
     name: Validate schema
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Validate SpiceDB schema
         uses: authzed/action-spicedb-validate@v1.0.1
         with:

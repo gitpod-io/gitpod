@@ -62,7 +62,7 @@ jobs:
     concurrency:
       group: ${{ needs.configuration.outputs.name }}-infrastructure
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Create preview environment infrastructure
         id: create
         uses: ./.github/actions/preview-create
@@ -90,7 +90,7 @@ jobs:
         - /var/tmp:/var/tmp
         - /tmp:/tmp
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Check
         shell: bash
         env:
@@ -172,7 +172,7 @@ jobs:
     if: always()
     runs-on: ${{ needs.create-runner.outputs.label }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Delete preview environment
         uses: ./.github/actions/delete-preview
         with:

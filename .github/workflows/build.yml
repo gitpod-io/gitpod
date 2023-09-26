@@ -101,7 +101,7 @@ jobs:
     outputs:
       previewctl_hash: ${{ steps.build.outputs.previewctl_hash }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-environment
         with:
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
@@ -124,7 +124,7 @@ jobs:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-infrastructure
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Create preview environment infrastructure
         id: create
         uses: ./.github/actions/preview-create
@@ -166,7 +166,7 @@ jobs:
         # GitHub action + MySQL 8.0 need longer to initialize
         DB_RETRIES: 5
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-environment
         with:
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
@@ -334,7 +334,7 @@ jobs:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-install
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Deploy Gitpod to the preview environment
         id: deploy-gitpod
         uses: ./.github/actions/deploy-gitpod
@@ -379,7 +379,7 @@ jobs:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-monitoring
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Deploy monitoring satellite to the preview environment
         id: deploy-monitoring-satellite
         uses: ./.github/actions/deploy-monitoring-satellite
@@ -404,7 +404,7 @@ jobs:
       group: ${{ needs.configuration.outputs.preview_name }}-integration-test
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-environment
         with:
           sa_key: ${{ secrets.GCP_CREDENTIALS }}

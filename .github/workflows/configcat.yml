@@ -9,7 +9,7 @@ jobs:
     name: Scan repository for configcat code references
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Scan & upload
         uses: configcat/scan-repository@v1
         with:
