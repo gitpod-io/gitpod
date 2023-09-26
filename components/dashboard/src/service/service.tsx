@@ -157,7 +157,7 @@ function testPublicAPI(service: any): void {
                         backoff = BASE_BACKOFF;
                     }
                 } catch (e) {
-                    if (ConnectError.from(e).code === Code.Canceled) {
+                    if (e instanceof ConnectError && e.code === Code.DeadlineExceeded) {
                         // timeout is expected, continue as usual
                         backoff = BASE_BACKOFF;
                     } else {
