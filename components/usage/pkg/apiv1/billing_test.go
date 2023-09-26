@@ -55,7 +55,7 @@ func NewStripeRecorder(t *testing.T, name string) *recorder.Recorder {
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		r.Stop()
+		err = r.Stop()
 	})
 
 	// Add a hook which removes Authorization headers from all requests
@@ -191,7 +191,7 @@ func TestBalancesForStripeCostCenters(t *testing.T) {
 func TestFinalizeInvoiceForIndividual(t *testing.T) {
 	invoice := stripe_api.Invoice{}
 	require.NoError(t, json.Unmarshal([]byte(IndiInvoiceTestData), &invoice))
-	usage, err := InternalComputeInvoiceUsage(context.Background(), &invoice)
+	usage, err := InternalComputeInvoiceUsage(context.Background(), &invoice, invoice.Customer)
 	require.NoError(t, err)
 	require.Equal(t, usage.CreditCents, db.CreditCents(-103100))
 }
