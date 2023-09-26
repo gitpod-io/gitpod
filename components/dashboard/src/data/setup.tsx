@@ -81,7 +81,7 @@ function createIDBPersister(idbValidKey: IDBValidKey = "gitpodQueryClient"): Per
     // Ensure we don't persist the client too frequently
     // Important to debounce (not throttle) this so we aren't queuing up a bunch of writes
     // but instead, only persist the latest state
-    const throttledSet = debounce(
+    const debouncedSet = debounce(
         async (client: PersistedClient) => {
             await set(idbValidKey, client);
         },
@@ -102,7 +102,7 @@ function createIDBPersister(idbValidKey: IDBValidKey = "gitpodQueryClient"): Per
             }
 
             try {
-                await throttledSet(client);
+                await debouncedSet(client);
             } catch (e) {
                 console.error("unable to persist query client");
                 persistanceActive = false;
