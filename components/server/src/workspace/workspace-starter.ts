@@ -970,6 +970,7 @@ export class WorkspaceStarter {
                     conditions: {},
                     phase: "preparing",
                 },
+                gitStatus: previousInstance?.gitStatus,
                 configuration,
                 usageAttributionId: usageAttributionId && AttributionId.render(usageAttributionId),
                 workspaceClass,
