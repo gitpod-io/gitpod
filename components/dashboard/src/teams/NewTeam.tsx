@@ -27,7 +27,8 @@ export default function NewTeamPage() {
             const team = publicApiTeamToProtocol((await teamsService.createTeam({ name })).team!);
 
             invalidateOrgs();
-            history.push(`/?org=${team.id}`);
+            // Redirects to the new Org's dashboard
+            history.push(`/workspaces/?org=${team.id}`);
         } catch (error) {
             console.error(error);
             if (error instanceof ConnectError) {
