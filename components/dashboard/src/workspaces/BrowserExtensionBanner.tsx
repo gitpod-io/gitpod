@@ -4,6 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { useEffect, useState } from "react";
 import UAParser from "ua-parser-js";
 interface BrowserOption {
     url: string;
@@ -30,6 +31,27 @@ interface BrowserExtensionBannerProps {
 }
 
 export function BrowserExtensionBanner({ parser = new UAParser() }: BrowserExtensionBannerProps) {
+    const [isVisible, setIsVisible] = useState(true);
+
+    useEffect(() => {
+        const persistedDisabled =
+            sessionStorage.getItem("browser-extension-installed") ||
+            localStorage.getItem("browser-extension-banner-dismissed");
+
+        if (persistedDisabled) {
+            setIsVisible(false);
+        }
+    }, []);
+
+    const handleClose = () => {
+        localStorage.setItem("browser-extension-banner-dismissed", "true");
+        setIsVisible(false);
+    };
+
+    if (!isVisible) {
+        return null;
+    }
+
     const browserName = parser.getBrowser().name?.toLowerCase();
     if (!browserName) {
         return null;
@@ -40,16 +62,16 @@ export function BrowserExtensionBanner({ parser = new UAParser() }: BrowserExten
         return null;
     }
 
-    const persistedDisabled =
-        sessionStorage.getItem("browser-extension-installed") ||
-        localStorage.getItem("browser-extension-banner-dismissed");
-    if (persistedDisabled) {
-        return null;
-    }
-
     return (
         <section className="hidden p-4 sm:block sm:absolute sm:bottom-2 sm:left-2">
             <div className="grid h-28 w-72 grid-cols-6 items-end gap-x-2 rounded-xl border-2 border-dashed border-[#dadada] bg-[#fafaf9] dark:bg-gray-800 dark:border-gray-600 p-4">
+                <button
+                    className="absolute right-[2.1rem] top-[2.4rem] text-gray-500 dark:text-gray-200"
+                    onClick={handleClose}
+                >
+                    &#10005;
+                </button>
+
                 <div className="col-span-1">
                     <img src={browserOption.icon} alt="" className="h-8 w-8" />
                 </div>
