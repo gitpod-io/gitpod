@@ -23,6 +23,22 @@ export default function NewTeamPage() {
     const createTeam = async (event: FormEvent) => {
         event.preventDefault();
 
+        /* Basic name validation before sending to the server to save time & API calls */
+
+        // The name is invalid if it is empty. Show an error message and don't send the request to the server.
+        if (!name) {
+            return setCreationError(new Error("Organization name is required"));
+        }
+
+        // The name is invalid if it is shorter than 3 characters or longer than 64 characters
+        if (name.length < 3) {
+            return setCreationError(new Error("Organization name must be at least 3 characters long"));
+        }
+
+        if (name.length > 64) {
+            return setCreationError(new Error("Organization name can not be longer than 64 characters"));
+        }
+
         try {
             const team = publicApiTeamToProtocol((await teamsService.createTeam({ name })).team!);
 
@@ -62,9 +78,10 @@ export default function NewTeamPage() {
                     <h4>Organization Name</h4>
                     <input
                         autoFocus
-                        className={`w-full${!!creationError ? " error" : ""}`}
+                        className={`w-full ${!!creationError ? "error" : ""}`}
                         type="text"
                         onChange={(event) => setName(event.target.value)}
+                        placeholder="My Organization"
                     />
                     {!!creationError && (
                         <p className="text-gitpod-red">

@@ -191,6 +191,7 @@ export default function ProjectSettingsView() {
                     value={projectName}
                     error={badProjectName}
                     onChange={setProjectName}
+                    placeholder="My Project"
                 />
 
                 <Button className="mt-4" htmlType="submit" disabled={project?.name === projectName || !!badProjectName}>
