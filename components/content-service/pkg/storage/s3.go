@@ -313,7 +313,7 @@ func (s3st *s3Storage) download(ctx context.Context, destination string, obj str
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		log.WithError(err).WithField("out", string(out)).Error("unexpected error downloading file")
-		return true, xerrors.Errorf("unexpected error downloading file")
+		return false, xerrors.Errorf("unexpected error downloading file")
 	}
 	downloadDuration := time.Since(downloadStart)
 	log.WithField("downloadDuration", downloadDuration.String()).Info("S3 download duration")
