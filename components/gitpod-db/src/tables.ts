@@ -63,12 +63,6 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             timeColumn: "_lastModified",
         },
         {
-            name: "d_b_token_entry",
-            primaryKeys: ["uid"],
-            deletionColumn: "deleted",
-            timeColumn: "_lastModified",
-        },
-        {
             name: "d_b_gitpod_token",
             primaryKeys: ["tokenHash"],
             deletionColumn: "deleted",
