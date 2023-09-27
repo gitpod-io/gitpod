@@ -340,10 +340,10 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
         }
     }
 
-    public async findTokensForIdentity(identity: Identity, includeDeleted?: boolean): Promise<TokenEntry[]> {
+    public async findTokensForIdentity(identity: Identity): Promise<TokenEntry[]> {
         const repo = await this.getTokenRepo();
         const entry = await repo.find({ authProviderId: identity.authProviderId, authId: identity.authId });
-        return entry.filter((te) => includeDeleted || !te.deleted);
+        return entry;
     }
 
     private mapUserToDBUser(user: User): DBUser {

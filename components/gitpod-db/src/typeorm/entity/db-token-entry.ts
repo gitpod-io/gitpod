@@ -42,7 +42,4 @@ export class DBTokenEntry implements TokenEntry {
         ),
     })
     token: Token;
-
-    @Column()
-    deleted?: boolean;
 }
