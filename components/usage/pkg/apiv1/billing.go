@@ -348,7 +348,8 @@ func (s *BillingService) ReconcileStripeCustomers(ctx context.Context) error {
 		log.Infof("Reconciling stripe invoices for cost center %s", costCenter.ID)
 		err := s.reconcileStripeInvoices(ctx, costCenter.ID)
 		if err != nil {
-			return err
+			log.WithError(err).Errorf("Failed to reconcile stripe invoices for cost center %s", costCenter.ID)
+			continue
 		}
 		_, err = s.ccManager.IncrementBillingCycle(ctx, costCenter.ID)
 		if err != nil {
@@ -370,7 +371,7 @@ func (s *BillingService) reconcileStripeInvoices(ctx context.Context, id db.Attr
 	}
 	for _, invoice := range invoices {
 		if invoice.Status == "paid" {
-			usage, err := InternalComputeInvoiceUsage(ctx, invoice, invoice.Customer)
+			usage, err := InternalComputeInvoiceUsage(ctx, invoice, cust)
 			if err != nil {
 				return err
 			}
