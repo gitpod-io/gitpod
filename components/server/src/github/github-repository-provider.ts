@@ -230,6 +230,74 @@ export class GithubRepositoryProvider implements RepositoryProvider {
         return repos;
     }
 
+    public async searchRepos(user: User, searchString: string): Promise<RepositoryInfo[]> {
+        const logCtx = { userId: user.id, searchString };
+
+        // search personal repos
+        const userSearch = this.github.run(user, async (api) => {
+            return api.search.repos({
+                q: `${encodeURIComponent(searchString)} in name+user:@me`,
+                sort: "updated",
+            });
+        });
+
+        // Attach an error handler to log error and not throw
+        userSearch.catch((err) => {
+            log.warn(logCtx, "Error searching user repos", err);
+        });
+
+        // find all orgs user belongs to
+        const orgs = await this.github
+            .run(user, async (api) => {
+                return api.orgs.listMembershipsForAuthenticatedUser({
+                    state: "active",
+                    // limit to 5 orgs
+                    per_page: 5,
+                });
+            })
+            .catch((err) => {
+                log.warn(logCtx, "Error listing orgs", err);
+            });
+
+        const orgLogins = orgs?.data.map((org) => org.organization.login) ?? [];
+
+        const orgSearches = orgLogins.map((org) => {
+            const orgSearch = this.github.run(user, async (api) => {
+                return api.search.repos({
+                    q: `${encodeURIComponent(searchString)} in name+org:${org}`,
+                    sort: "updated",
+                    per_page: 5,
+                });
+            });
+
+            // Attach an error handler to log error and not throw
+            orgSearch.catch((err) => {
+                log.warn(logCtx, "Error searching org repos", err);
+            });
+
+            return orgSearch;
+        });
+
+        const responses = await Promise.allSettled([userSearch, ...orgSearches]);
+
+        // collect successful results
+        const results = responses
+            .map((result) => {
+                return result.status === "fulfilled" ? result.value?.data.items : [];
+            })
+            .flat();
+
+        // transform to correct format
+        const repos = results.map((repo): RepositoryInfo => {
+            return {
+                name: repo.name,
+                url: repo.html_url,
+            };
+        });
+
+        return repos;
+    }
+
     async hasReadAccess(user: User, owner: string, repo: string): Promise<boolean> {
         try {
             // If you have no "viewerPermission" on a repository you may not read it
