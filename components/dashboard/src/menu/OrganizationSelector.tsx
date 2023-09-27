@@ -152,7 +152,7 @@ export default function OrganizationSelector() {
     return (
         <ContextMenu customClasses="w-64 left-0" menuEntries={entries}>
             <div className={`${classes} rounded-2xl pl-1`}>
-                <div className="py-1 pr-1 flex font-medium whitespace-nowrap max-w-xs overflow-hidden">
+                <div className="py-1 pr-1 flex font-medium truncate max-w-xs">
                     <OrgIcon
                         id={currentOrg?.data?.id || user?.id || "empty"}
                         name={selectedTitle}
@@ -193,7 +193,7 @@ type OrgEntryProps = {
 };
 export const OrgEntry: FunctionComponent<OrgEntryProps> = ({ id, title, subtitle, iconSize }) => {
     return (
-        <div className="w-full text-gray-400 flex items-center">
+        <div className="w-full text-gray-400 flex items-center truncate">
             <OrgIcon id={id} name={title} className="mr-4" size={iconSize} />
             <div className="flex flex-col">
                 <span className="text-gray-800 dark:text-gray-300 text-base font-semibold">{title}</span>
@@ -209,7 +209,7 @@ type CurrentOrgEntryProps = {
 };
 const CurrentOrgEntry: FunctionComponent<CurrentOrgEntryProps> = ({ title, subtitle }) => {
     return (
-        <div className="w-full text-gray-400 flex items-center justify-between">
+        <div className="w-full text-gray-400 flex items-center justify-between truncate">
             <div className="flex flex-col">
                 <span className="text-gray-800 dark:text-gray-300 text-base font-semibold">{title}</span>
                 <span>{subtitle}</span>
