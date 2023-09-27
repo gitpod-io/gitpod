@@ -201,7 +201,6 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
         {
             name: "d_b_cost_center",
             primaryKeys: ["id", "creationTime"],
-            deletionColumn: "deleted",
             timeColumn: "_lastModified",
         },
         {
