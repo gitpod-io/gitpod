@@ -221,7 +221,6 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
         } else {
             qBuilder.where("gitpodToken.tokenHash = :tokenHash", { tokenHash });
         }
-        qBuilder.andWhere("gitpodToken.deleted <> TRUE");
         const token = await qBuilder.getOne();
         if (!token) {
             return;
