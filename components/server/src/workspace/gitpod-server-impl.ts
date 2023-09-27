@@ -1884,7 +1884,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         ctx: TraceContext,
         params: SearchRepositoriesParams,
     ): Promise<SuggestedRepository[]> {
-        const user = await this.checkAndBlockUser("getProviderRepositoriesForUser");
+        const user = await this.checkAndBlockUser("searchRepositories");
 
         const logCtx: LogContext = { userId: user.id };
 
