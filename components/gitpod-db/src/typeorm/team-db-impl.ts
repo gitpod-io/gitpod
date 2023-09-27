@@ -71,12 +71,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
                 searchTerm: `%${searchTerm}%`,
             });
         }
-        queryBuilder = queryBuilder
-            .andWhere("deleted = 0")
-            .andWhere("markedDeleted = 0")
-            .skip(offset)
-            .take(limit)
-            .orderBy(orderBy, orderDir);
+        queryBuilder = queryBuilder.andWhere("markedDeleted = 0").skip(offset).take(limit).orderBy(orderBy, orderDir);
 
         const [rows, total] = await queryBuilder.getManyAndCount();
         return { total, rows };
@@ -84,7 +79,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
 
     public async findTeamById(teamId: string): Promise<Team | undefined> {
         const teamRepo = await this.getTeamRepo();
-        return teamRepo.findOne({ id: teamId, deleted: false, markedDeleted: false });
+        return teamRepo.findOne({ id: teamId, markedDeleted: false });
     }
 
     public async findTeamByMembershipId(membershipId: string): Promise<Team | undefined> {
@@ -154,7 +149,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
         return await this.transaction<DBTeam>(async (_, ctx) => {
             const teamRepo = ctx.entityManager.getRepository<DBTeam>(DBTeam);
 
-            const existingTeam = await teamRepo.findOne({ id: teamId, deleted: false, markedDeleted: false });
+            const existingTeam = await teamRepo.findOne({ id: teamId, markedDeleted: false });
             if (!existingTeam) {
                 throw new ApplicationError(ErrorCodes.NOT_FOUND, "Organization not found");
             }
@@ -230,7 +225,6 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
             tries++ < 5 &&
             (await teamRepo.findOne({
                 slug,
-                deleted: false,
                 markedDeleted: false,
             }))
         ) {
@@ -267,7 +261,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
     public async addMemberToTeam(userId: string, teamId: string): Promise<"added" | "already_member"> {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOne(teamId);
-        if (!team || !!team.deleted) {
+        if (!team) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
         }
         const membershipRepo = await this.getMembershipRepo();
@@ -289,7 +283,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
     public async setTeamMemberRole(userId: string, teamId: string, role: TeamMemberRole): Promise<void> {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOne(teamId);
-        if (!team || !!team.deleted) {
+        if (!team) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
         }
         const membershipRepo = await this.getMembershipRepo();
@@ -317,7 +311,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
     public async removeMemberFromTeam(userId: string, teamId: string): Promise<void> {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOne(teamId);
-        if (!team || !!team.deleted) {
+        if (!team) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
         }
         const membershipRepo = await this.getMembershipRepo();
@@ -403,7 +397,6 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
             `select org.id from d_b_team as org inner join d_b_oidc_client_config as oidc on org.id = oidc.organizationId
                 where oidc.active = 1
                 and oidc.deleted = 0
-                and org.deleted = 0
                 and org.markedDeleted = 0
                 and org.id = ?
                 limit 1;`,

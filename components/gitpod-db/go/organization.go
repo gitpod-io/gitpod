@@ -23,9 +23,6 @@ type Organization struct {
 	LastModified time.Time   `gorm:"column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
 
 	MarkedDeleted bool `gorm:"column:markedDeleted;type:tinyint;default:0;" json:"marked_deleted"`
-
-	// deleted is reserved for use by periodic deleter
-	_ bool `gorm:"column:deleted;type:tinyint;default:0;" json:"deleted"`
 }
 
 // TableName sets the insert table name for this struct type
@@ -85,7 +82,6 @@ func GetSingleOrganizationWithActiveSSO(ctx context.Context, conn *gorm.DB) (Org
 		WithContext(ctx).
 		Table(fmt.Sprintf("%s as team", (&Organization{}).TableName())).
 		Joins(fmt.Sprintf("JOIN %s AS config ON team.id = config.organizationId", (&OIDCClientConfig{}).TableName())).
-		Where("team.deleted = ?", 0).
 		Where("config.deleted = ?", 0).
 		Where("config.active = ?", 1).
 		Find(&orgs)
