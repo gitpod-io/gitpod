@@ -39,16 +39,6 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             deletionColumn: "deleted",
         },
         {
-            name: "d_b_oauth_auth_code_entry",
-            primaryKeys: ["id"],
-            timeColumn: "_lastModified",
-        },
-        {
-            name: "d_b_installation_admin",
-            primaryKeys: ["id"],
-            timeColumn: "_lastModified",
-        },
-        {
             name: "d_b_volume_snapshot",
             primaryKeys: ["id"],
             timeColumn: "_lastModified",
@@ -80,42 +70,9 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             dependencies: ["d_b_user"],
         },
         {
-            name: "d_b_workspace_instance_user",
-            primaryKeys: ["instanceId", "userId"],
-            timeColumn: "_lastModified",
-            dependencies: ["d_b_user"],
-        },
-        {
-            name: "d_b_workspace_report_entry",
-            primaryKeys: ["uid"],
-            timeColumn: "time",
-            dependencies: [],
-        },
-        {
-            name: "d_b_snapshot",
-            primaryKeys: ["id"],
-            timeColumn: "creationTime",
-            dependencies: [],
-        },
-        {
-            name: "d_b_email_domain_filter",
-            primaryKeys: ["domain"],
-            timeColumn: "_lastModified",
-        },
-        {
-            name: "d_b_app_installation",
-            primaryKeys: ["platform", "installationID", "state"],
-            timeColumn: "creationTime",
-        },
-        {
             name: "d_b_token_entry",
             primaryKeys: ["uid"],
             deletionColumn: "deleted",
-            timeColumn: "_lastModified",
-        },
-        {
-            name: "d_b_user_env_var",
-            primaryKeys: ["id", "userId"],
             timeColumn: "_lastModified",
         },
         {
@@ -136,17 +93,6 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             primaryKeys: ["id"],
             deletionColumn: "deleted",
             timeColumn: "_lastModified",
-        },
-        {
-            name: "d_b_code_sync_collection",
-            primaryKeys: ["userId", "collection"],
-            timeColumn: "_lastModified",
-        },
-        {
-            name: "d_b_code_sync_resource",
-            primaryKeys: ["userId", "kind", "rev", "collection"],
-            timeColumn: "created",
-            dependencies: ["d_b_code_sync_collection"],
         },
         {
             name: "d_b_team",
@@ -197,16 +143,6 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             timeColumn: "_lastModified",
         },
         {
-            name: "d_b_cost_center",
-            primaryKeys: ["id", "creationTime"],
-            timeColumn: "_lastModified",
-        },
-        {
-            name: "d_b_usage",
-            primaryKeys: ["id"],
-            timeColumn: "_lastModified",
-        },
-        {
             name: "d_b_stripe_customer",
             primaryKeys: ["stripeCustomerId"],
             timeColumn: "_lastModified",
@@ -217,11 +153,6 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             primaryKeys: ["id"],
             timeColumn: "_lastModified",
             deletionColumn: "deleted",
-        },
-        {
-            name: "d_b_linked_in_profile",
-            primaryKeys: ["id"],
-            timeColumn: "_lastModified",
         },
     ];
 
