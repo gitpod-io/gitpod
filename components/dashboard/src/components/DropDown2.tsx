@@ -32,6 +32,8 @@ export interface DropDown2Props {
     disableSearch?: boolean;
     expanded?: boolean;
     onSelectionChange: (id: string) => void;
+    // Meant to allow consumers to react to search changes even though state is managed internally
+    onSearchChange?: (searchString: string) => void;
     allOptions?: string;
 }
 
@@ -45,6 +47,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
     disableSearch,
     children,
     onSelectionChange,
+    onSearchChange,
 }) => {
     const [showDropDown, setShowDropDown] = useState<boolean>(!disabled && !!expanded);
     const nodeRef: RefObject<HTMLDivElement> = useRef(null);
@@ -61,7 +64,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
 
     // reset search when the drop down is expanded or closed
     useEffect(() => {
-        setSearch("");
+        updateSearch("");
         if (allOptions) {
             setSelectedElementTemp(allOptions);
         }
@@ -71,6 +74,16 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
         // we only want this behavior when showDropDown changes to true.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [showDropDown]);
+
+    const updateSearch = useCallback(
+        (value: string) => {
+            setSearch(value);
+            if (onSearchChange) {
+                onSearchChange(value);
+            }
+        },
+        [onSearchChange],
+    );
 
     const toggleDropDown = useCallback(() => {
         if (disabled) {
@@ -198,7 +211,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                                 className={"w-full focus rounded-lg"}
                                 placeholder={searchPlaceholder}
                                 value={search}
-                                onChange={(e) => setSearch(e.target.value)}
+                                onChange={(e) => updateSearch(e.target.value)}
                             />
                         </div>
                     )}

@@ -233,26 +233,48 @@ export class GithubRepositoryProvider implements RepositoryProvider {
     public async searchRepos(user: User, searchString: string): Promise<RepositoryInfo[]> {
         const logCtx = { userId: user.id, searchString };
 
+        // TODO: look to try graphql api to reduce response payload size
         // search personal repos
         const userSearch = this.github.run(user, async (api) => {
             return api.search.repos({
-                q: `${encodeURIComponent(searchString)} in name+user:@me`,
+                q: `"${searchString}" in:name user:@me sort:updated`,
                 sort: "updated",
+                per_page: 10,
             });
         });
+
+        // const queryString = `"${searchString}" in:name user:@me sort:updated`;
+        // const userSearch2 = this.githubQueryApi.runQuery(
+        //     user,
+        //     `query {
+        //         search(query: ${queryString}, type: REPOSITORY, first: 10) {
+        //             repos: edges {
+        //                 repo: node {
+        //                     ... on Repository {
+        //                         url
+        //                         name
+        //                         updatedAt
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }`,
+        // );
 
         // Attach an error handler to log error and not throw
         userSearch.catch((err) => {
             log.warn(logCtx, "Error searching user repos", err);
         });
 
-        // find all orgs user belongs to
+        // TODO: Look at using graphql query to grab all orgs w/ some kind of latest activity date
+        // We could then sort in memory and grab the 5 most recent orgs
+        // Find all orgs user belongs to
         const orgs = await this.github
             .run(user, async (api) => {
                 return api.orgs.listMembershipsForAuthenticatedUser({
                     state: "active",
                     // limit to 5 orgs
-                    per_page: 5,
+                    per_page: 10,
                 });
             })
             .catch((err) => {
@@ -261,10 +283,13 @@ export class GithubRepositoryProvider implements RepositoryProvider {
 
         const orgLogins = orgs?.data.map((org) => org.organization.login) ?? [];
 
+        // TODO: remove this
+        log.debug(logCtx, "Searching org repos", { orgs: orgLogins.join(",") });
+
         const orgSearches = orgLogins.map((org) => {
             const orgSearch = this.github.run(user, async (api) => {
                 return api.search.repos({
-                    q: `${encodeURIComponent(searchString)} in name+org:${org}`,
+                    q: `"${searchString}" in:name org:${org} sort:updated`,
                     sort: "updated",
                     per_page: 5,
                 });

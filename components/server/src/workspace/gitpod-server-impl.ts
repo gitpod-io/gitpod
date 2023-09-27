@@ -1924,6 +1924,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             };
         });
 
+        // TODO: consider how we want to sort these results
+
         return repos;
     }
 
