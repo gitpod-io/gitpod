@@ -32,7 +32,4 @@ export class DBGitpodToken implements GitpodToken {
 
     @Column()
     created: string;
-
-    @Column()
-    deleted?: boolean;
 }
