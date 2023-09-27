@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { PrimaryColumn, Column, Entity } from "typeorm";
+import { PrimaryColumn, Column, Entity, Index } from "typeorm";
 import { TypeORM } from "../typeorm";
 import { UserEnvVar } from "@gitpod/gitpod-protocol";
 import { Transformer } from "../transformer";
@@ -23,6 +23,7 @@ export class DBUserEnvVar implements UserEnvVar {
     // But userId is part of the primary key and we ensure that users can only overwrite/set variables
     // that belong to them.
     @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
+    @Index("ind_userId")
     userId: string;
 
     @Column()
