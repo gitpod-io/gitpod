@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
@@ -308,11 +309,14 @@ func (s3st *s3Storage) download(ctx context.Context, destination string, obj str
 		tempFile.Name(),
 	}
 	cmd := exec.Command("s5cmd", args...)
+	downloadStart := time.Now()
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		log.WithError(err).WithField("out", string(out)).Error("unexpected error downloading file")
-		return true, xerrors.Errorf("unexpected error downloading file")
+		return false, xerrors.Errorf("unexpected error downloading file")
 	}
+	downloadDuration := time.Since(downloadStart)
+	log.WithField("downloadDuration", downloadDuration.String()).Info("S3 download duration")
 
 	tempFile, err = os.Open(tempFile.Name())
 	if err != nil {
@@ -322,10 +326,13 @@ func (s3st *s3Storage) download(ctx context.Context, destination string, obj str
 	defer os.Remove(tempFile.Name())
 	defer tempFile.Close()
 
+	extractStart := time.Now()
 	err = archive.ExtractTarbal(ctx, tempFile, destination, archive.WithUIDMapping(mappings), archive.WithGIDMapping(mappings))
 	if err != nil {
 		return true, xerrors.Errorf("tar %s: %s", destination, err.Error())
 	}
+	extractDuration := time.Since(extractStart)
+	log.WithField("extractdDuration", extractDuration.String()).Info("tarbar extraction duration")
 
 	return true, nil
 }
