@@ -29,7 +29,7 @@ import {
     OAuthUser,
 } from "@jmondi/oauth2-server";
 import { inject, injectable, optional } from "inversify";
-import { EntityManager, Equal, Not, Repository } from "typeorm";
+import { EntityManager, Equal, FindOperator, Not, Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
 import {
     BUILTIN_WORKSPACE_PROBE_USER_ID,
@@ -256,27 +256,12 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
 
     public async deleteGitpodToken(tokenHash: string): Promise<void> {
         const repo = await this.getGitpodTokenRepo();
-        await repo.query(
-            `
-                UPDATE d_b_gitpod_token AS gt
-                SET gt.deleted = TRUE
-                WHERE tokenHash = ?;
-            `,
-            [tokenHash],
-        );
+        await repo.delete({ tokenHash });
     }
 
     public async deleteGitpodTokensNamedLike(userId: string, namePattern: string): Promise<void> {
         const repo = await this.getGitpodTokenRepo();
-        await repo.query(
-            `
-            UPDATE d_b_gitpod_token AS gt
-            SET gt.deleted = TRUE
-            WHERE userId = ?
-              AND name LIKE ?
-        `,
-            [userId, namePattern],
-        );
+        await repo.delete({ userId, name: new FindOperator("like", namePattern) });
     }
 
     public async storeSingleToken(identity: Identity, token: Token): Promise<TokenEntry> {
