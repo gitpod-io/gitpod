@@ -45,7 +45,4 @@ export class DBAuthProviderEntry implements AuthProviderEntry {
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     oauthRevision?: string;
-
-    @Column()
-    deleted?: boolean;
 }
