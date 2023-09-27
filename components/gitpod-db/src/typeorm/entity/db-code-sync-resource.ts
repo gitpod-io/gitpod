@@ -86,7 +86,4 @@ export class DBCodeSyncResource {
         },
     })
     created: string;
-
-    @Column()
-    deleted: boolean;
 }

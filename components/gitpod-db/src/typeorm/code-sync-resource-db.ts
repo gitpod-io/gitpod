@@ -32,7 +32,7 @@ export class CodeSyncResourceDB {
         const resourcesResult = await connection.manager
             .createQueryBuilder(DBCodeSyncResource, "resource")
             .where(
-                "resource.userId = :userId AND resource.kind != 'editSessions' AND resource.collection = :collection AND resource.deleted = 0",
+                "resource.userId = :userId AND resource.kind != 'editSessions' AND resource.collection = :collection",
                 {
                     userId,
                     collection: uuid.NIL,
@@ -46,7 +46,7 @@ export class CodeSyncResourceDB {
                     .addSelect("max(resource2.created)")
                     .from(DBCodeSyncResource, "resource2")
                     .where(
-                        "resource2.userId = :userId AND resource2.kind != 'editSessions' AND resource2.collection = :collection AND resource2.deleted = 0",
+                        "resource2.userId = :userId AND resource2.kind != 'editSessions' AND resource2.collection = :collection",
                         { userId, collection: uuid.NIL },
                     )
                     .groupBy("resource2.kind")
@@ -63,7 +63,7 @@ export class CodeSyncResourceDB {
         const collectionsResult = await connection.manager
             .createQueryBuilder(DBCodeSyncResource, "resource")
             .where(
-                "resource.userId = :userId AND resource.kind != 'editSessions' AND resource.collection != :collection AND resource.deleted = 0",
+                "resource.userId = :userId AND resource.kind != 'editSessions' AND resource.collection != :collection",
                 {
                     userId,
                     collection: uuid.NIL,
@@ -78,7 +78,7 @@ export class CodeSyncResourceDB {
                     .addSelect("max(resource2.created)")
                     .from(DBCodeSyncResource, "resource2")
                     .where(
-                        "resource2.userId = :userId AND resource2.kind != 'editSessions' AND resource2.collection != :collection AND resource2.deleted = 0",
+                        "resource2.userId = :userId AND resource2.kind != 'editSessions' AND resource2.collection != :collection",
                         { userId, collection: uuid.NIL },
                     )
                     .groupBy("resource2.kind")
@@ -236,19 +236,21 @@ export class CodeSyncResourceDB {
         if (rev === "latest") {
             return manager
                 .createQueryBuilder(DBCodeSyncResource, "resource")
-                .where(
-                    "resource.userId = :userId AND resource.kind = :kind AND resource.collection = :collection AND resource.deleted = 0",
-                    { userId, kind, collection: collection || uuid.NIL },
-                )
+                .where("resource.userId = :userId AND resource.kind = :kind AND resource.collection = :collection", {
+                    userId,
+                    kind,
+                    collection: collection || uuid.NIL,
+                })
                 .orderBy("resource.created", "DESC")
                 .getOne();
         } else {
             return manager
                 .createQueryBuilder(DBCodeSyncResource, "resource")
-                .where(
-                    "resource.userId = :userId AND resource.kind = :kind AND resource.collection = :collection AND resource.deleted = 0",
-                    { userId, kind, collection: collection || uuid.NIL },
-                )
+                .where("resource.userId = :userId AND resource.kind = :kind AND resource.collection = :collection", {
+                    userId,
+                    kind,
+                    collection: collection || uuid.NIL,
+                })
                 .andWhere("resource.rev = :rev", { rev })
                 .getOne();
         }
@@ -263,10 +265,11 @@ export class CodeSyncResourceDB {
         return manager
             .getRepository(DBCodeSyncResource)
             .createQueryBuilder("resource")
-            .where(
-                "resource.userId = :userId AND resource.kind = :kind AND resource.collection = :collection AND resource.deleted = 0",
-                { userId, kind, collection: collection || uuid.NIL },
-            )
+            .where("resource.userId = :userId AND resource.kind = :kind AND resource.collection = :collection", {
+                userId,
+                kind,
+                collection: collection || uuid.NIL,
+            })
             .orderBy("resource.created", "DESC")
             .getMany();
     }
@@ -275,7 +278,7 @@ export class CodeSyncResourceDB {
         const connection = await this.typeORM.getConnection();
         const result = await connection.manager
             .createQueryBuilder(DBCodeSyncCollection, "collection")
-            .where("collection.userId = :userId AND collection.deleted = 0", { userId })
+            .where("collection.userId = :userId", { userId })
             .getMany();
         return result.map((r) => ({ id: r.collection }));
     }
@@ -284,7 +287,7 @@ export class CodeSyncResourceDB {
         const connection = await this.typeORM.getConnection();
         const result = await connection.manager
             .createQueryBuilder(DBCodeSyncCollection, "collection")
-            .where("collection.userId = :userId AND collection.collection = :collection AND collection.deleted = 0", {
+            .where("collection.userId = :userId AND collection.collection = :collection", {
                 userId,
                 collection,
             })
