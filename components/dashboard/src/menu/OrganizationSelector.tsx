@@ -152,7 +152,7 @@ export default function OrganizationSelector() {
     return (
         <ContextMenu customClasses="w-64 left-0" menuEntries={entries}>
             <div className={`${classes} rounded-2xl pl-1`}>
-                <div className="py-1 pr-1 flex font-medium max-w-xs">
+                <div className="py-1 pr-1 flex font-medium max-w-xs truncate">
                     <OrgIcon
                         id={currentOrg?.data?.id || user?.id || "empty"}
                         name={selectedTitle}
