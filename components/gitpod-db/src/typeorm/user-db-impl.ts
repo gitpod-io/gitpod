@@ -463,7 +463,7 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
 
     public async deleteSSHPublicKey(userId: string, id: string): Promise<void> {
         const repo = await this.getSSHPublicKeyRepo();
-        await repo.update({ userId, id }, { deleted: true });
+        await repo.delete({ userId, id });
     }
 
     public async findAllUsers(
