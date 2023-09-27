@@ -309,16 +309,14 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
 
     public async deleteExpiredTokenEntries(date: string): Promise<void> {
         const repo = await this.getTokenRepo();
-        await repo.query(
-            `
-            UPDATE d_b_token_entry AS te
-                SET te.deleted = TRUE
-                WHERE te.expiryDate != ''
-                    AND te.refreshable != 1
-                    AND te.expiryDate <= ?;
-            `,
-            [date],
-        );
+        await repo
+            .createQueryBuilder()
+            .delete()
+            .from(DBTokenEntry)
+            .where("expiryDate != ''")
+            .andWhere("refreshable != 1")
+            .andWhere("expiryDate <= :date", { date })
+            .execute();
     }
 
     public async updateTokenEntry(tokenEntry: Partial<TokenEntry> & Pick<TokenEntry, "uid">): Promise<void> {
@@ -331,8 +329,7 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
         const repo = await this.getTokenRepo();
         for (const existing of existingTokens) {
             if (!shouldDelete || shouldDelete(existing)) {
-                existing.deleted = true;
-                await repo.save(existing);
+                await repo.delete(existing.uid);
             }
         }
     }
