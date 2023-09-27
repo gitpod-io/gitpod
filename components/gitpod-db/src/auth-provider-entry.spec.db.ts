@@ -38,7 +38,6 @@ describe("AuthProviderEntryDBSpec", async () => {
             status: "verified",
             type: "GitHub",
             oauthRevision: undefined,
-            deleted: false,
             ...ap,
             oauth: {
                 callBackUrl: "example.org/some/callback",
