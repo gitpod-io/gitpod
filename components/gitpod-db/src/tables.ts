@@ -140,13 +140,11 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
         {
             name: "d_b_code_sync_collection",
             primaryKeys: ["userId", "collection"],
-            deletionColumn: "deleted",
             timeColumn: "_lastModified",
         },
         {
             name: "d_b_code_sync_resource",
             primaryKeys: ["userId", "kind", "rev", "collection"],
-            deletionColumn: "deleted",
             timeColumn: "created",
             dependencies: ["d_b_code_sync_collection"],
         },
