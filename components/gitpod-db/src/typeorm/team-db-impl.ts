@@ -328,8 +328,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
                 "The given user is not currently a member of this organization or does not exist.",
             );
         }
-        membership.deleted = true;
-        await membershipRepo.save(membership);
+        await membershipRepo.delete(membership);
     }
 
     public async findTeamMembershipInviteById(inviteId: string): Promise<TeamMembershipInvite> {
