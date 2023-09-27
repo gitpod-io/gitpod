@@ -377,7 +377,7 @@ func (s *BillingService) reconcileStripeInvoices(ctx context.Context, id db.Attr
 			}
 			// check if a usage entry exists for this invoice
 			var existingUsage db.Usage
-			result := s.conn.First(existingUsage, "description = ?", usage.Description)
+			result := s.conn.First(&existingUsage, "description = ?", usage.Description)
 			if result.Error != nil {
 				if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 					log.Infof("No usage entry found for invoice %s. Inserting one now.", invoice.ID)
