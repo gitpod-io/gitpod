@@ -84,7 +84,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
 
     public async findTeamById(teamId: string): Promise<Team | undefined> {
         const teamRepo = await this.getTeamRepo();
-        return teamRepo.findOne({ id: teamId, deleted: false, markedDeleted: false });
+        return teamRepo.findOne({ id: teamId, markedDeleted: false });
     }
 
     public async findTeamByMembershipId(membershipId: string): Promise<Team | undefined> {
@@ -154,7 +154,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
         return await this.transaction<DBTeam>(async (_, ctx) => {
             const teamRepo = ctx.entityManager.getRepository<DBTeam>(DBTeam);
 
-            const existingTeam = await teamRepo.findOne({ id: teamId, deleted: false, markedDeleted: false });
+            const existingTeam = await teamRepo.findOne({ id: teamId, markedDeleted: false });
             if (!existingTeam) {
                 throw new ApplicationError(ErrorCodes.NOT_FOUND, "Organization not found");
             }
@@ -230,7 +230,6 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
             tries++ < 5 &&
             (await teamRepo.findOne({
                 slug,
-                deleted: false,
                 markedDeleted: false,
             }))
         ) {
@@ -267,7 +266,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
     public async addMemberToTeam(userId: string, teamId: string): Promise<"added" | "already_member"> {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOne(teamId);
-        if (!team || !!team.deleted) {
+        if (!team) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
         }
         const membershipRepo = await this.getMembershipRepo();
@@ -289,7 +288,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
     public async setTeamMemberRole(userId: string, teamId: string, role: TeamMemberRole): Promise<void> {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOne(teamId);
-        if (!team || !!team.deleted) {
+        if (!team) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
         }
         const membershipRepo = await this.getMembershipRepo();
@@ -317,7 +316,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
     public async removeMemberFromTeam(userId: string, teamId: string): Promise<void> {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOne(teamId);
-        if (!team || !!team.deleted) {
+        if (!team) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
         }
         const membershipRepo = await this.getMembershipRepo();
