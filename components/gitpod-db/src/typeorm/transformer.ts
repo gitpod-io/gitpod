@@ -23,6 +23,21 @@ export namespace Transformer {
         },
     };
 
+    export const MAP_ZERO_TO_UNDEFINED: ValueTransformer = {
+        to(value: any): any {
+            if (value === undefined) {
+                return 0;
+            }
+            return value;
+        },
+        from(value: any): any {
+            if (value === 0) {
+                return undefined;
+            }
+            return value;
+        },
+    };
+
     export const MAP_NULL_TO_UNDEFINED: ValueTransformer = {
         to(value: any): any {
             if (value === undefined) {
