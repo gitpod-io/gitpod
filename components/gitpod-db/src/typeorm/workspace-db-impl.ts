@@ -597,6 +597,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
                 LEFT OUTER JOIN d_b_workspace AS usages ON usages.basedOnPrebuildId = pb.id
                 WHERE
                         pb.buildworkspaceId = ws.id
+                    AND ws.type = 'prebuild'
                     AND ws.contentDeletedTime = ''
                     AND ws.pinned = 0
                     AND ws.creationTime < NOW() - INTERVAL ? DAY
