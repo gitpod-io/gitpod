@@ -26,6 +26,9 @@ export const useSearchRepositories = ({ searchString }: { searchString: string }
             enabled: searchString.length >= 3 && !!org,
             // Need this to keep previous results while we wait for a new search to complete since debouncedSearchString changes and updates the key
             keepPreviousData: true,
+            // We intentionally don't want to trigger refetches here
+            refetchOnWindowFocus: false,
+            refetchOnReconnect: false,
         },
     );
 };

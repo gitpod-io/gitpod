@@ -119,21 +119,21 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
                 const filteredResults = filterRepos(searchString, normalizedRepos);
                 return filteredResults.map(
                     (repo) =>
-                    ({
-                        id: repo.url,
-                        element: (
-                            <div className="flex-col ml-1 mt-1 flex-grow">
-                                <div className="flex">
-                                    <div className="text-gray-700 dark:text-gray-300 font-semibold">
-                                        {stripOffProtocol(repo.url)}
+                        ({
+                            id: repo.url,
+                            element: (
+                                <div className="flex-col ml-1 mt-1 flex-grow">
+                                    <div className="flex">
+                                        <div className="text-gray-700 dark:text-gray-300 font-semibold">
+                                            {stripOffProtocol(repo.url)}
+                                        </div>
+                                        <div className="ml-1 text-gray-400">{}</div>
                                     </div>
-                                    <div className="ml-1 text-gray-400">{ }</div>
+                                    <div className="flex text-xs text-gray-400">{}</div>
                                 </div>
-                                <div className="flex text-xs text-gray-400">{ }</div>
-                            </div>
-                        ),
-                        isSelectable: true,
-                    } as DropDown2Element),
+                            ),
+                            isSelectable: true,
+                        } as DropDown2Element),
                 );
             }
 
@@ -157,11 +157,10 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
             onSelectionChange={handleSelectionChange}
             disabled={props.disabled}
             // Only consider the isLoading prop if we're including projects in list
-            loading={isLoading && includeProjectsOnCreateWorkspace}
+            loading={includeProjectsOnCreateWorkspace && (isLoading || isSearching)}
             searchPlaceholder="Paste repository URL or type to find suggestions"
             onSearchChange={setSearchString}
         >
-            {/* TODO: add a subtle indicator for the isSearching state */}
             <DropDown2SelectedElement
                 icon={RepositorySVG}
                 htmlTitle={displayContextUrl(props.selectedContextURL) || "Repository"}
@@ -169,8 +168,8 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
                     <div className="truncate w-80">
                         {displayContextUrl(
                             selectedSuggestion?.projectName ||
-                            selectedSuggestion?.repositoryName ||
-                            selectedSuggestion?.url,
+                                selectedSuggestion?.repositoryName ||
+                                selectedSuggestion?.url,
                         ) || "Select a repository"}
                     </div>
                 }
@@ -180,7 +179,7 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
                         ? displayContextUrl(selectedSuggestion?.url)
                         : undefined
                 }
-                loading={isLoading && includeProjectsOnCreateWorkspace}
+                loading={includeProjectsOnCreateWorkspace && isLoading}
             />
         </DropDown2>
     );
@@ -260,7 +259,7 @@ function filterRepos(searchString: string, suggestedRepos: SuggestedRepository[]
                 // If the normalizedSearchString is a URL, and it's not present in the proposed results, "artificially" add it here.
                 new URL(normalizedSearchString);
                 results.push({ url: normalizedSearchString });
-            } catch { }
+            } catch {}
         }
     }
 

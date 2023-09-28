@@ -17,6 +17,7 @@ import React, {
 } from "react";
 import Arrow from "./Arrow";
 import classNames from "classnames";
+import { SpinnerLoader } from "./Loader";
 
 export interface DropDown2Element {
     id: string;
@@ -171,6 +172,9 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
         [setShowDropDown],
     );
 
+    const showInputLoadingIndicator = filteredOptions.length > 0 && loading;
+    const showResultsLoadingIndicator = filteredOptions.length === 0 && loading;
+
     return (
         <div
             onKeyDown={onKeyDown}
@@ -213,16 +217,21 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                                 value={search}
                                 onChange={(e) => updateSearch(e.target.value)}
                             />
+                            {showInputLoadingIndicator && (
+                                <div className="absolute top-0 right-0 h-full flex items-center pr-2">
+                                    <SpinnerLoader />
+                                </div>
+                            )}
                         </div>
                     )}
                     <ul className="max-h-60 overflow-auto">
-                        {loading && (
+                        {showResultsLoadingIndicator && (
                             <div className="flex-col space-y-2 animate-pulse">
                                 <div className="bg-gray-300 dark:bg-gray-500 h-4 rounded" />
                                 <div className="bg-gray-300 dark:bg-gray-500 h-4 rounded" />
                             </div>
                         )}
-                        {!loading && filteredOptions.length > 0 ? (
+                        {!showResultsLoadingIndicator && filteredOptions.length > 0 ? (
                             filteredOptions.map((element) => {
                                 let selectionClasses = `dark:bg-gray-800 cursor-pointer`;
                                 if (element.id === selectedElementTemp) {
@@ -250,7 +259,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                                     </li>
                                 );
                             })
-                        ) : !loading ? (
+                        ) : !showResultsLoadingIndicator ? (
                             <li key="no-elements" className={"rounded-md "}>
                                 <div className="h-12 pl-8 py-3 text-gray-800 dark:text-gray-200">No results</div>
                             </li>
