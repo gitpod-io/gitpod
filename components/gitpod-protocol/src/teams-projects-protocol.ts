@@ -14,29 +14,68 @@ export interface ProjectConfig {
 }
 
 export interface ProjectSettings {
+    /**
+     * Controls settings of prebuilds for this project.
+     */
+    prebuilds?: PrebuildSettings;
+
+    /** @deprecated see `Project.settings.prebuilds.enabled` instead. */
     enablePrebuilds?: boolean;
     /**
      * Wether prebuilds (if enabled) should only be started on the default branch.
      * Defaults to `true` on project creation.
+     *
+     * @deprecated see `Project.settings.prebuilds.branchStrategy` instead.
      */
     prebuildDefaultBranchOnly?: boolean;
     /**
      * Use this pattern to match branch names to run prebuilds on.
      * The pattern matching will only be applied if prebuilds are enabled and
      * they are not limited to the default branch.
+     *
+     * @deprecated see `Project.settings.prebuilds.branchMatchingPattern` instead.
      */
     prebuildBranchPattern?: string;
+
     useIncrementalPrebuilds?: boolean;
     keepOutdatedPrebuildsRunning?: boolean;
     // whether new workspaces can start on older prebuilds and incrementally update
     allowUsingPreviousPrebuilds?: boolean;
-    // how many commits in the commit history a prebuild is good (undefined and 0 means every commit is prebuilt)
+    /**
+     * how many commits in the commit history a prebuild is good (undefined and 0 means every commit is prebuilt)
+     *
+     * @deprecated see `Project.settings.prebuilds.intervall` instead.
+     */
     prebuildEveryNthCommit?: number;
     // preferred workspace classes
     workspaceClasses?: WorkspaceClasses;
 }
-export namespace ProjectSettings {
-    export type PrebuildBranchStrategy = "defaultBranch" | "allBranches" | "selectedBranches";
+export namespace PrebuildSettings {
+    export type BranchStrategy = "default-banch" | "all-branches" | "matched-branches";
+}
+
+export interface PrebuildSettings {
+    enable?: boolean;
+
+    /**
+     * Defines an interval of commits to run new prebuilds for. Defaults to 10
+     */
+    prebuildInterval?: number;
+
+    /**
+     * Which branches to consider to run new prebuilds on. Default to "all-branches"
+     */
+    branchStrategy?: PrebuildSettings.BranchStrategy;
+    /**
+     * If `branchStrategy` s set to "matched-branches", this should define a glob-pattern to be used
+     * to match the branch to run new prebuilds on. Defaults to "**"
+     */
+    branchMatchingPattern?: string;
+
+    /**
+     * Preferred workspace class for prebuilds.
+     */
+    workspaceClass?: string;
 }
 
 export interface Project {
@@ -92,23 +131,23 @@ export namespace Project {
         return !(typeof project.settings?.enablePrebuilds === "undefined");
     }
 
-    export function getPrebuildBranchStrategy(project: Project): ProjectSettings.PrebuildBranchStrategy {
+    export function getPrebuildBranchStrategy(project: Project): PrebuildSettings.BranchStrategy {
         if (!hasPrebuildSettings(project)) {
             // returning "all branches" to mimic the default value of projects which were added
             // before introduction of persisted settings for prebuilds.
-            return "allBranches";
+            return "all-branches";
         }
         if (typeof project.settings?.prebuildDefaultBranchOnly === "undefined") {
-            return "defaultBranch"; // default value for `settings.prebuildDefaultBranchOnly`
+            return "default-banch"; // default value for `settings.prebuildDefaultBranchOnly`
         }
         if (project.settings?.prebuildDefaultBranchOnly) {
-            return "defaultBranch";
+            return "default-banch";
         }
         const prebuildBranchPattern = project.settings?.prebuildBranchPattern?.trim();
         if (typeof prebuildBranchPattern === "string" && prebuildBranchPattern.length > 1) {
-            return "selectedBranches";
+            return "matched-branches";
         }
-        return "allBranches";
+        return "all-branches";
     }
 
     export interface Overview {

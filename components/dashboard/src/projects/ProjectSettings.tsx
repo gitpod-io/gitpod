@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Project, ProjectSettings } from "@gitpod/gitpod-protocol";
+import { Project, ProjectSettings, PrebuildSettings } from "@gitpod/gitpod-protocol";
 import { useCallback, useContext, useState, Fragment, useMemo, useEffect } from "react";
 import { useHistory } from "react-router";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
@@ -106,7 +106,7 @@ export default function ProjectSettingsView() {
     );
 
     const setPrebuildBranchStrategy = useCallback(
-        async (value: ProjectSettings.PrebuildBranchStrategy) => {
+        async (value: PrebuildSettings.BranchStrategy) => {
             if (!project) {
                 return;
             }
@@ -115,15 +115,15 @@ export default function ProjectSettingsView() {
                 return;
             }
             const update: ProjectSettings = {};
-            if (value === "defaultBranch") {
+            if (value === "default-banch") {
                 update.prebuildDefaultBranchOnly = true;
                 update.prebuildBranchPattern = "";
             }
-            if (value === "allBranches") {
+            if (value === "all-branches") {
                 update.prebuildDefaultBranchOnly = false;
                 update.prebuildBranchPattern = "";
             }
-            if (value === "selectedBranches") {
+            if (value === "matched-branches") {
                 update.prebuildDefaultBranchOnly = false;
                 update.prebuildBranchPattern = "**";
             }
@@ -230,13 +230,13 @@ export default function ProjectSettingsView() {
                             label="Build branches"
                             value={prebuildBranchStrategy}
                             containerClassName="max-w-md ml-6 text-sm"
-                            onChange={(val) => setPrebuildBranchStrategy(val as ProjectSettings.PrebuildBranchStrategy)}
+                            onChange={(val) => setPrebuildBranchStrategy(val as PrebuildSettings.BranchStrategy)}
                         >
                             <option value="defaultBranch">Default branch (e.g. main)</option>
                             <option value="allBranches">All branches</option>
                             <option value="selectedBranches">Matched by pattern</option>
                         </SelectInputField>
-                        {prebuildBranchStrategy === "selectedBranches" && (
+                        {prebuildBranchStrategy === "matched-branches" && (
                             <div className="flex flex-col ml-6 mt-4">
                                 <label
                                     htmlFor="selectedBranches"
@@ -253,7 +253,7 @@ export default function ProjectSettingsView() {
                                     type="text"
                                     id="selectedBranches"
                                     className="mt-2"
-                                    disabled={prebuildBranchStrategy !== "selectedBranches"}
+                                    disabled={prebuildBranchStrategy !== "matched-branches"}
                                     value={prebuildBranchPattern}
                                     onChange={({ target }) => updatePrebuildBranchPattern(target.value)}
                                 />

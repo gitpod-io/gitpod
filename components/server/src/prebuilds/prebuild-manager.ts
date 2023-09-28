@@ -358,11 +358,11 @@ export class PrebuildManager {
         }
 
         const strategy = Project.getPrebuildBranchStrategy(project);
-        if (strategy === "allBranches") {
+        if (strategy === "all-branches") {
             return { shouldRun: true, reason: "all-branches-selected" };
         }
 
-        if (strategy === "defaultBranch") {
+        if (strategy === "default-banch") {
             const defaultBranch = context.repository.defaultBranch;
             if (!defaultBranch) {
                 log.debug("CommitContext is missing the default branch. Ignoring request.", { context });
@@ -375,7 +375,7 @@ export class PrebuildManager {
             return { shouldRun: false, reason: "default-branch-unmatched" };
         }
 
-        if (strategy === "selectedBranches") {
+        if (strategy === "matched-branches") {
             const branchName = context.ref;
             if (!branchName) {
                 log.debug("CommitContext is missing the branch name. Ignoring request.", { context });
