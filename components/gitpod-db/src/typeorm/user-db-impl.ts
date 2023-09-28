@@ -665,4 +665,19 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
         }
         return this.mapDBUserToUser(result);
     }
+
+    async findUserIdsNotYetMigratedToFgaVersion(fgaRelationshipsVersion: number, limit: number): Promise<string[]> {
+        const userRepo = await this.getUserRepo();
+        const ids = (await userRepo
+            .createQueryBuilder("user")
+            .select(["id"])
+            .where({
+                fgaRelationshipsVersion: Not(Equal(fgaRelationshipsVersion)),
+                markedDeleted: Equal(false),
+            })
+            .orderBy("_lastModified", "DESC")
+            .limit(limit)
+            .getMany()) as Pick<DBUser, "id">[];
+        return ids.map(({ id }) => id);
+    }
 }

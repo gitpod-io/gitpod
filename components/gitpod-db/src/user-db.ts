@@ -150,6 +150,8 @@ export interface UserDB extends OAuthUserRepository, OAuthTokenRepository, Trans
     isBlockedPhoneNumber(phoneNumber: string): Promise<boolean>;
 
     findOrgOwnedUser(organizationId: string, email: string): Promise<MaybeUser>;
+
+    findUserIdsNotYetMigratedToFgaVersion(fgaRelationshipsVersion: number, limit: number): Promise<string[]>;
 }
 export type PartialUserUpdate = Partial<Omit<User, "identities">> & Pick<User, "id">;
 

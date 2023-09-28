@@ -254,13 +254,7 @@ export class UserController {
             }
 
             // reset the FGA state
-            await this.userService.updateUser(user.id, {
-                id: user.id,
-                additionalData: {
-                    ...(user.additionalData || {}),
-                    fgaRelationshipsVersion: undefined,
-                },
-            });
+            await this.userService.resetFgaVersion(user.id, user.id);
 
             const redirectToUrl = this.getSafeReturnToParam(req) || this.config.hostUrl.toString();
 

@@ -58,6 +58,9 @@ export interface User {
 
     // The phone number used for the last phone verification.
     verificationPhoneNumber?: string;
+
+    // The FGA relationships version of this user
+    fgaRelationshipsVersion?: number;
 }
 
 export namespace User {
@@ -268,8 +271,6 @@ export interface AdditionalUserData extends Partial<WorkspaceTimeoutSetting> {
     // additional user profile data
     profile?: ProfileDetails;
     shouldSeeMigrationMessage?: boolean;
-    // fgaRelationshipsVersion is the version of the spicedb relationships
-    fgaRelationshipsVersion?: number;
     // remembered workspace auto start options
     workspaceAutostartOptions?: WorkspaceAutostartOption[];
 }

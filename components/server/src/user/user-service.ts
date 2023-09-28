@@ -220,4 +220,10 @@ export class UserService {
             throw error;
         }
     }
+
+    async resetFgaVersion(subjectId: string, userId: string) {
+        await this.authorizer.checkPermissionOnUser(subjectId, "write_info", userId);
+
+        await this.userDb.updateUserPartial({ id: userId, fgaRelationshipsVersion: undefined });
+    }
 }
