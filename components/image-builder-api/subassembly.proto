@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package builder;
+option go_package = "github.com/gitpod-io/gitpod/image-builder/api";
+
+service SubassemblyService {
+    // CreateSubassembly creates a subassembly from an OCI image
+    rpc CreateSubassembly(CreateSubassemblyRequest) returns (CreateSubassemblyResponse) {};
+
+    // GetSubassembly returns the status and URL for a subassembly
+    rpc GetSubassembly(GetSubassemblyRequest) returns (GetSubassemblyResponse) {};
+}
+
+message CreateSubassemblyRequest {
+    string oci_reference = 1;
+}
+message CreateSubassemblyResponse {
+    SubassemblyStatus status = 1;
+}
+
+message GetSubassemblyRequest {
+    string oci_reference = 1;
+}
+message GetSubassemblyResponse {
+    SubassemblyStatus status = 1;
+}
+
+message SubassemblyStatus {
+    // phase describes the state of the subassembly.
+    SubassemblyPhase phase = 1;
+
+    // message details the subassembly's state
+    string message = 2;
+
+    // digest is the digest of the subassembly file
+    // Expect this field to only be present when the phase is "available".
+    string digest = 3;
+
+    // URL is a URL from which the subassembly can be downloaded.
+    // Expect this field to only be present when the phase is "available".
+    string url = 4;
+}
+
+enum SubassemblyPhase {
+    SUBASSEMBLY_PHASE_UNSPECIFIED = 0;
+    SUBASSEMBLY_PHASE_CREATING = 1;
+    SUBASSEMBLY_PHASE_AVAILABLE = 2;
+    SUBASSEMBLY_PHASE_UNAVAILABLE = 3;
+}
