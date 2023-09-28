@@ -10,14 +10,14 @@ import { columnExists } from "./helper/helper";
 export class CostCenterDropDeleted1695735203768 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         if (await columnExists(queryRunner, "d_b_cost_center", "deleted")) {
-            await queryRunner.query("ALTER TABLE `d_b_cost_center` DROP COLUMN `deleted`, ALGORITHM=INSTANT");
+            await queryRunner.query("ALTER TABLE `d_b_cost_center` DROP COLUMN `deleted`");
         }
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         if (!(await columnExists(queryRunner, "d_b_cost_center", "deleted"))) {
             await queryRunner.query(
-                "ALTER TABLE `d_b_cost_center` ADD COLUMN `deleted` tinyint(4) NOT NULL DEFAULT '0', ALGORITHM=INSTANT",
+                "ALTER TABLE `d_b_cost_center` ADD COLUMN `deleted` tinyint(4) NOT NULL DEFAULT '0'",
             );
         }
     }
