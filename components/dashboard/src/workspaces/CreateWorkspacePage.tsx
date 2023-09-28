@@ -128,29 +128,6 @@ export function CreateWorkspacePage() {
         }
     }, [project, selectedProjectID]);
 
-    // Apply project ws class settings
-    useEffect(() => {
-        // If URL has a ws class set, we don't override it w/ project settings
-        if (props.workspaceClass) {
-            return;
-        }
-
-        if (!project) {
-            // If no project and user hasn't changed ws class, reset it to default value
-            // Empty value causes SelectWorkspaceClassComponent to use the default ws class
-            if (!selectedWsClassIsDirty) {
-                setSelectedWsClass(defaultWorkspaceClass, false);
-            }
-            return;
-        }
-        const wsClass = project.settings?.workspaceClasses;
-
-        // only set if user hasn't changed the value themselves, and project has a vaue
-        if (wsClass?.regular && !selectedWsClassIsDirty) {
-            setSelectedWsClass(wsClass?.regular, false);
-        }
-    }, [defaultWorkspaceClass, project, props.workspaceClass, selectedWsClassIsDirty, setSelectedWsClass]);
-
     // In addition to updating state, we want to update the url hash as well
     // This allows the contextURL to persist if user changes orgs, or copies/shares url
     const handleContextURLChange = useCallback(
@@ -276,6 +253,9 @@ export function CreateWorkspacePage() {
 
     // when workspaceContext is available, we look up if options are remembered
     useEffect(() => {
+        if (!workspaceContext.data || !user || !currentOrg) {
+            return;
+        }
         const cloneURL = CommitContext.is(workspaceContext.data) && workspaceContext.data.repository.cloneUrl;
         if (!cloneURL) {
             return undefined;
@@ -299,13 +279,14 @@ export function CreateWorkspacePage() {
                 setUseLatestIde(defaultLatestIde);
             }
             if (!selectedWsClassIsDirty) {
-                setSelectedWsClass(defaultWorkspaceClass, false);
+                const projectWsClass = project?.settings?.workspaceClasses?.regular;
+                setSelectedWsClass(projectWsClass || defaultWorkspaceClass, false);
             }
         }
         setOptionsLoaded(true);
         // we only update the remembered options when the workspaceContext changes
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [workspaceContext.data, setOptionsLoaded]);
+    }, [workspaceContext.data, setOptionsLoaded, project]);
 
     // Need a wrapper here so we call createWorkspace w/o any arguments
     const onClickCreate = useCallback(() => createWorkspace(), [createWorkspace]);
