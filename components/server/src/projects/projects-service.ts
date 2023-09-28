@@ -18,19 +18,31 @@ import {
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { PartialProject, ProjectSettings, ProjectUsage } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
+import {
+    PartialProject,
+    PrebuildSettings,
+    ProjectSettings,
+    ProjectUsage,
+} from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { URL } from "url";
-import { Authorizer } from "../authorization/authorizer";
+import { Authorizer, SYSTEM_USER } from "../authorization/authorizer";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
 import { ScmService } from "./scm-service";
+import { daysBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 
 @injectable()
 export class ProjectsService {
     public static PROJECT_SETTINGS_DEFAULTS: ProjectSettings = {
         enablePrebuilds: false,
         prebuildDefaultBranchOnly: true,
+        prebuilds: {
+            enable: false,
+            branchMatchingPattern: "**",
+            prebuildInterval: 10,
+            branchStrategy: "all-branches",
+        },
     };
 
     constructor(
@@ -49,13 +61,14 @@ export class ProjectsService {
         if (!project) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
         }
-        return project;
+        return this.migratePrebuildSettingsOnDemand(project);
     }
 
     async getProjects(userId: string, orgId: string): Promise<Project[]> {
         await this.auth.checkPermissionOnOrganization(userId, "read_info", orgId);
         const projects = await this.projectDB.findProjects(orgId);
-        return await this.filterByReadAccess(userId, projects);
+        const filteredProjects = await this.filterByReadAccess(userId, projects);
+        return Promise.all(filteredProjects.map(this.migratePrebuildSettingsOnDemand));
     }
 
     async findProjects(
@@ -79,7 +92,7 @@ export class ProjectsService {
         const total = projects.total;
         return {
             total,
-            rows,
+            rows: await Promise.all(rows.map(this.migratePrebuildSettingsOnDemand)),
         };
     }
 
@@ -109,7 +122,7 @@ export class ProjectsService {
                 result.push(project);
             }
         }
-        return result;
+        return Promise.all(result.map(this.migratePrebuildSettingsOnDemand));
     }
 
     async markActive(
@@ -403,5 +416,42 @@ export class ProjectsService {
             status: we.prebuildStatus || we.status,
             message: we.message,
         }));
+    }
+
+    async migratePrebuildSettingsOnDemand(project: Project): Promise<Project> {
+        if (typeof project.settings?.prebuilds !== "undefined") {
+            return project; // already migrated
+        }
+
+        const newSettings = { ...project.settings };
+        const newPrebuildSettings: PrebuildSettings = { enable: false };
+
+        // if workspaces were running in the past week
+        const isInactive = await this.isProjectConsideredInactive(SYSTEM_USER, project.id);
+        if (!isInactive) {
+            const numberOfPrebuilds30days = await this.workspaceDb
+                .trace({})
+                .countUnabortedPrebuildsSince(project.id, new Date(daysBefore(new Date().toISOString(), 30)));
+
+            if (numberOfPrebuilds30days > 0) {
+                const defaults = ProjectsService.PROJECT_SETTINGS_DEFAULTS.prebuilds!;
+                newPrebuildSettings.enable = true;
+                newPrebuildSettings.prebuildInterval = newSettings.prebuildEveryNthCommit || defaults.prebuildInterval;
+                newPrebuildSettings.branchStrategy = defaults.branchStrategy;
+                newPrebuildSettings.branchMatchingPattern = defaults.branchMatchingPattern;
+                newPrebuildSettings.workspaceClass = newSettings.workspaceClasses?.prebuild;
+            }
+        }
+
+        // update new settings
+        project.settings = newSettings;
+        project.settings.prebuilds = newPrebuildSettings;
+        delete newSettings.enablePrebuilds;
+        delete newSettings.prebuildBranchPattern;
+        delete newSettings.prebuildDefaultBranchOnly;
+        delete newSettings.prebuildEveryNthCommit;
+        await this.projectDB.updateProject(project);
+
+        return project;
     }
 }
