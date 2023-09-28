@@ -9,6 +9,7 @@ import { useSearchRepositories } from "./search-repositories-query";
 import { useSuggestedRepositories } from "./suggested-repositories-query";
 import { useMemo } from "react";
 
+// Combines the suggested repositories and the search repositories query into one hook
 export const useUnifiedRepositorySearch = ({ searchString }: { searchString: string }) => {
     const suggestedQuery = useSuggestedRepositories();
     const searchQuery = useSearchRepositories({ searchString });
@@ -35,7 +36,7 @@ export const useUnifiedRepositorySearch = ({ searchString }: { searchString: str
     };
 };
 
-const filterRepos = (searchString: string, suggestedRepos: SuggestedRepository[]) => {
+export const filterRepos = (searchString: string, suggestedRepos: SuggestedRepository[]) => {
     let results = suggestedRepos;
     const normalizedSearchString = searchString.trim().toLowerCase();
 

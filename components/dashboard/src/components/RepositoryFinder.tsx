@@ -12,7 +12,7 @@ import { ReactComponent as RepositoryIcon } from "../icons/RepositoryWithColor.s
 import { useFeatureFlag } from "../data/featureflag-query";
 import { SuggestedRepository } from "@gitpod/gitpod-protocol";
 import { MiddleDot } from "./typography/MiddleDot";
-import { useUnifiedRepositorySearch } from "../data/git-providers/unified-repositories-search-query";
+import { filterRepos, useUnifiedRepositorySearch } from "../data/git-providers/unified-repositories-search-query";
 
 // TODO: Remove this once we've fully enabled `includeProjectsOnCreateWorkspace`
 // flag (caches w/ react-query instead of local storage)
@@ -46,7 +46,6 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
             );
         }
 
-        // return suggestedRepos || [];
         return repos;
     }, [includeProjectsOnCreateWorkspace, repos, suggestedContextURLs]);
 
@@ -157,7 +156,7 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
             onSelectionChange={handleSelectionChange}
             disabled={props.disabled}
             // Only consider the isLoading prop if we're including projects in list
-            loading={includeProjectsOnCreateWorkspace && (isLoading || isSearching)}
+            loading={(isLoading || isSearching) && includeProjectsOnCreateWorkspace}
             searchPlaceholder="Paste repository URL or type to find suggestions"
             onSearchChange={setSearchString}
         >
@@ -179,7 +178,7 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
                         ? displayContextUrl(selectedSuggestion?.url)
                         : undefined
                 }
-                loading={includeProjectsOnCreateWorkspace && isLoading}
+                loading={isLoading && includeProjectsOnCreateWorkspace}
             />
         </DropDown2>
     );
@@ -207,7 +206,6 @@ const SuggestedRepositoryOption: FC<SuggestedRepositoryOptionProps> = ({ repo })
                 </>
             )}
 
-            {/* TODO: refine some Text* components a bit to make it easy to set the right colors for dark/light mode */}
             <span className="text-sm whitespace-nowrap truncate overflow-ellipsis text-gray-500 dark:text-gray-400">
                 {stripOffProtocol(repo.url)}
             </span>
@@ -242,29 +240,6 @@ function saveSearchData(searchData: string[]): void {
     } catch (error) {
         console.warn("Could not save search data into local storage", error);
     }
-}
-
-// TODO: remove this and import from unified-repositories-search-query
-function filterRepos(searchString: string, suggestedRepos: SuggestedRepository[]) {
-    let results = suggestedRepos;
-    const normalizedSearchString = searchString.trim().toLowerCase();
-
-    if (normalizedSearchString.length > 1) {
-        results = suggestedRepos.filter((r) => {
-            return `${r.url}${r.projectName || ""}`.toLowerCase().includes(normalizedSearchString);
-        });
-
-        if (results.length === 0) {
-            try {
-                // If the normalizedSearchString is a URL, and it's not present in the proposed results, "artificially" add it here.
-                new URL(normalizedSearchString);
-                results.push({ url: normalizedSearchString });
-            } catch {}
-        }
-    }
-
-    // Limit what we show to 200 results
-    return results.length > 200 ? results.slice(0, 200) : results;
 }
 
 function stripOffProtocol(url: string): string {

@@ -14,19 +14,18 @@ export const useSearchRepositories = ({ searchString }: { searchString: string }
     const debouncedSearchString = useDebounce(searchString);
 
     return useQuery(
-        ["searchRepositories", { organizationId: org?.id || "", searchString: debouncedSearchString }],
+        ["search-repositories", { organizationId: org?.id || "", searchString: debouncedSearchString }],
         async () => {
-            const result = await getGitpodService().server.searchRepositories({
+            return await getGitpodService().server.searchRepositories({
                 searchString,
                 organizationId: org?.id ?? "",
             });
-            return result;
         },
         {
-            enabled: searchString.length >= 3 && !!org,
+            enabled: !!org && searchString.length >= 3,
             // Need this to keep previous results while we wait for a new search to complete since debouncedSearchString changes and updates the key
             keepPreviousData: true,
-            // We intentionally don't want to trigger refetches here
+            // We intentionally don't want to trigger refetches here to avoid a loading state side effect of focusing
             refetchOnWindowFocus: false,
             refetchOnReconnect: false,
         },

@@ -7,12 +7,22 @@
 import { useEffect, useMemo, useState } from "react";
 import debounce from "lodash.debounce";
 
-export const useDebounce = <T>(value: T, delay = 500): T => {
+type DebounceOptions = {
+    leading?: boolean;
+    trailing?: boolean;
+    maxWait?: number;
+};
+
+export const useDebounce = <T>(value: T, delay = 500, options?: DebounceOptions): T => {
     const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
     const debouncedSetValue = useMemo(() => {
-        return debounce(setDebouncedValue, delay);
-    }, [delay]);
+        return debounce(setDebouncedValue, delay, {
+            leading: options?.leading || false,
+            trailing: options?.trailing || true,
+            maxWait: options?.maxWait ?? undefined,
+        });
+    }, [delay, options?.leading, options?.maxWait, options?.trailing]);
 
     useEffect(() => {
         debouncedSetValue(value);

@@ -243,24 +243,6 @@ export class GithubRepositoryProvider implements RepositoryProvider {
             });
         });
 
-        // const queryString = `"${searchString}" in:name user:@me sort:updated`;
-        // const userSearch2 = this.githubQueryApi.runQuery(
-        //     user,
-        //     `query {
-        //         search(query: ${queryString}, type: REPOSITORY, first: 10) {
-        //             repos: edges {
-        //                 repo: node {
-        //                     ... on Repository {
-        //                         url
-        //                         name
-        //                         updatedAt
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //     }`,
-        // );
-
         // Attach an error handler to log error and not throw
         userSearch.catch((err) => {
             log.warn(logCtx, "Error searching user repos", err);
@@ -273,8 +255,7 @@ export class GithubRepositoryProvider implements RepositoryProvider {
             .run(user, async (api) => {
                 return api.orgs.listMembershipsForAuthenticatedUser({
                     state: "active",
-                    // limit to 5 orgs
-                    per_page: 10,
+                    per_page: 5,
                 });
             })
             .catch((err) => {
@@ -282,9 +263,6 @@ export class GithubRepositoryProvider implements RepositoryProvider {
             });
 
         const orgLogins = orgs?.data.map((org) => org.organization.login) ?? [];
-
-        // TODO: remove this
-        log.debug(logCtx, "Searching org repos", { orgs: orgLogins.join(",") });
 
         const orgSearches = orgLogins.map((org) => {
             const orgSearch = this.github.run(user, async (api) => {

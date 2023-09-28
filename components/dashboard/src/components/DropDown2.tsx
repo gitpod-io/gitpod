@@ -17,7 +17,7 @@ import React, {
 } from "react";
 import Arrow from "./Arrow";
 import classNames from "classnames";
-import { SpinnerLoader } from "./Loader";
+import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 
 export interface DropDown2Element {
     id: string;
@@ -208,7 +208,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
             {showDropDown && (
                 <div className="absolute w-full top-12 bg-gray-100 dark:bg-gray-800 rounded-b-lg mt-3 z-50 p-2 filter drop-shadow-xl">
                     {!disableSearch && (
-                        <div className="h-12">
+                        <div className="relative mb-2">
                             <input
                                 type="text"
                                 autoFocus
@@ -219,7 +219,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                             />
                             {showInputLoadingIndicator && (
                                 <div className="absolute top-0 right-0 h-full flex items-center pr-2">
-                                    <SpinnerLoader />
+                                    <Spinner className="h-4 w-4 opacity-25 animate-spin" />
                                 </div>
                             )}
                         </div>

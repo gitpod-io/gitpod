@@ -1917,16 +1917,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             }),
         );
 
-        const repos: SuggestedRepository[] = providerRepos.flat().map((repo) => {
-            return {
+        const sortedRepos = sortSuggestedRepositories(providerRepos.flat());
+
+        return sortedRepos.map(
+            (repo): SuggestedRepository => ({
                 url: repo.url,
                 repositoryName: repo.repositoryName,
-            };
-        });
-
-        // TODO: consider how we want to sort these results
-
-        return repos;
+            }),
+        );
     }
 
     public async setWorkspaceTimeout(
