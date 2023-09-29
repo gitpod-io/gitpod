@@ -242,7 +242,7 @@ export class GithubRepositoryProvider implements RepositoryProvider {
 
         // TODO: determine if there's a maximum # of orgs we can include in a single query and split into multiple calls if necessary
         // A string of org query filters, i.e. "org:org1 org:org2 org:org3"
-        const orgFilters = orgs?.data.map((org) => `org:${org}`).join(" ");
+        const orgFilters = orgs?.data.map((org) => `org:${org.organization.login}`).join(" ");
 
         const repoSearchQuery = `
             query SearchRepos($search: String!, $orgs: String! ) {
