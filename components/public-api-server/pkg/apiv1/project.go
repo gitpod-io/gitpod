@@ -169,13 +169,13 @@ func projectSettingsToAPIResponse(s *protocol.ProjectSettings) *v1.ProjectSettin
 
 	return &v1.ProjectSettings{
 		Prebuild: &v1.PrebuildSettings{
-			EnablePrebuilds:              s.EnablePrebuilds,
-			PrebuildDefaultBranchOnly:    s.PrebuildDefaultBranchOnly,
-			PrebuildBranchPattern:        s.PrebuildBranchPattern,
+			EnablePrebuilds:              s.PrebuildSettings.Enable,
+			PrebuildBranchStrategy:       s.PrebuildSettings.BranchStrategy,
+			PrebuildBranchPattern:        s.PrebuildSettings.PrebuildBranchPattern,
+			PrebuildInterval:             s.PrebuildSettings.PrebuildInterval,
 			EnableIncrementalPrebuilds:   s.UseIncrementalPrebuilds,
 			KeepOutdatedPrebuildsRunning: s.KeepOutdatedPrebuildsRunning,
 			UsePreviousPrebuilds:         s.AllowUsingPreviousPrebuilds,
-			PrebuildEveryNth:             int32(s.PrebuildEveryNthCommit),
 		},
 		Workspace: &v1.WorkspaceSettings{
 			EnablePersistentVolumeClaim: s.UsePersistentVolumeClaim,

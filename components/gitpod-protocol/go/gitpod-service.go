@@ -2291,15 +2291,19 @@ type Project struct {
 }
 
 type ProjectSettings struct {
-	EnablePrebuilds              *bool                     `json:"enablePrebuilds,omitempty"`
-	PrebuildDefaultBranchOnly    *bool                     `json:"prebuildDefaultBranchOnly,omitempty"`
-	PrebuildBranchPattern        *string                   `json:"prebuildBranchPattern,omitempty"`
 	UseIncrementalPrebuilds      bool                      `json:"useIncrementalPrebuilds,omitempty"`
 	UsePersistentVolumeClaim     bool                      `json:"usePersistentVolumeClaim,omitempty"`
 	KeepOutdatedPrebuildsRunning bool                      `json:"keepOutdatedPrebuildsRunning,omitempty"`
 	AllowUsingPreviousPrebuilds  bool                      `json:"allowUsingPreviousPrebuilds,omitempty"`
-	PrebuildEveryNthCommit       int                       `json:"prebuildEveryNthCommit,omitempty"`
 	WorkspaceClasses             *WorkspaceClassesSettings `json:"workspaceClasses,omitempty"`
+	PrebuildSettings             *PrebuildSettings         `json:"prebuilds,omitempty"`
+}
+type PrebuildSettings struct {
+	Enable                *bool   `json:"enable,omitempty"`
+	PrebuildInterval      *int32  `json:"prebuildInterval,omitempty"`
+	BranchStrategy        *string `json:"branchStrategy,omitempty"`
+	PrebuildBranchPattern *string `json:"prebuildBranchPattern,omitempty"`
+	WorkspaceClass        *string `json:"workspaceClass,omitempty"`
 }
 
 type WorkspaceClassesSettings struct {

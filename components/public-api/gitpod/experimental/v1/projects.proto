@@ -46,10 +46,13 @@ message PrebuildSettings {
     bool enable_incremental_prebuilds = 1;
     bool keep_outdated_prebuilds_running = 2;
     bool use_previous_prebuilds = 3;
-    int32 prebuild_every_nth = 4;
+    reserved 4; // was prebuild_every_nth
     optional bool enable_prebuilds = 5;
-    optional bool prebuild_default_branch_only = 6;
+    reserved 6; // was prebuild_default_branch_only
     optional string prebuild_branch_pattern = 7;
+    optional string prebuild_branch_strategy = 8;
+    optional int32 prebuild_interval = 9;
+    optional string workspace_class = 10;
 }
 
 message WorkspaceSettings {

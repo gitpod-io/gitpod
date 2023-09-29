@@ -160,24 +160,29 @@ export class PrebuildSettings extends Message<PrebuildSettings> {
   usePreviousPrebuilds = false;
 
   /**
-   * @generated from field: int32 prebuild_every_nth = 4;
-   */
-  prebuildEveryNth = 0;
-
-  /**
    * @generated from field: optional bool enable_prebuilds = 5;
    */
   enablePrebuilds?: boolean;
 
   /**
-   * @generated from field: optional bool prebuild_default_branch_only = 6;
-   */
-  prebuildDefaultBranchOnly?: boolean;
-
-  /**
    * @generated from field: optional string prebuild_branch_pattern = 7;
    */
   prebuildBranchPattern?: string;
+
+  /**
+   * @generated from field: optional string prebuild_branch_strategy = 8;
+   */
+  prebuildBranchStrategy?: string;
+
+  /**
+   * @generated from field: optional int32 prebuild_interval = 9;
+   */
+  prebuildInterval?: number;
+
+  /**
+   * @generated from field: optional string workspace_class = 10;
+   */
+  workspaceClass?: string;
 
   constructor(data?: PartialMessage<PrebuildSettings>) {
     super();
@@ -190,10 +195,11 @@ export class PrebuildSettings extends Message<PrebuildSettings> {
     { no: 1, name: "enable_incremental_prebuilds", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 2, name: "keep_outdated_prebuilds_running", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 3, name: "use_previous_prebuilds", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 4, name: "prebuild_every_nth", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 5, name: "enable_prebuilds", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
-    { no: 6, name: "prebuild_default_branch_only", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
     { no: 7, name: "prebuild_branch_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 8, name: "prebuild_branch_strategy", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 9, name: "prebuild_interval", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
+    { no: 10, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PrebuildSettings {

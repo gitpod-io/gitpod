@@ -107,16 +107,18 @@ export function projectToProtocol(project: Project): ProtocolProject {
         teamId: project.teamId,
         appInstallationId: "undefined",
         settings: {
-            enablePrebuilds: project.settings?.prebuild?.enablePrebuilds,
-            prebuildDefaultBranchOnly: project.settings?.prebuild?.prebuildDefaultBranchOnly,
-            prebuildBranchPattern: project.settings?.prebuild?.prebuildBranchPattern,
             allowUsingPreviousPrebuilds: project.settings?.prebuild?.usePreviousPrebuilds,
             keepOutdatedPrebuildsRunning: project.settings?.prebuild?.keepOutdatedPrebuildsRunning,
-            prebuildEveryNthCommit: project.settings?.prebuild?.prebuildEveryNth,
             useIncrementalPrebuilds: project.settings?.prebuild?.enableIncrementalPrebuilds,
             workspaceClasses: {
-                prebuild: project.settings?.workspace?.workspaceClass?.prebuild || "",
                 regular: project.settings?.workspace?.workspaceClass?.regular || "",
+            },
+            prebuilds: {
+                enable: project.settings?.prebuild?.enablePrebuilds,
+                branchStrategy: project.settings?.prebuild?.prebuildBranchStrategy as any,
+                branchMatchingPattern: project.settings?.prebuild?.prebuildBranchPattern,
+                prebuildInterval: project.settings?.prebuild?.prebuildInterval,
+                workspaceClass: project.settings?.prebuild?.workspaceClass,
             },
         },
     };
