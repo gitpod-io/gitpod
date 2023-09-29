@@ -5,7 +5,7 @@
  */
 
 import { ProjectDB, TeamDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { AdditionalUserData, Organization, User } from "@gitpod/gitpod-protocol";
+import { Organization, User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
 import { Authorizer, isFgaChecksEnabled, isFgaWritesEnabled } from "./authorizer";
@@ -38,14 +38,13 @@ export class RelationshipUpdater {
      * @param user
      * @returns
      */
-    public async migrate(user: User): Promise<User> {
+    public async migrate(user: User, forceAwait: boolean = false): Promise<User> {
         const isEnabled = await isFgaWritesEnabled(user.id);
         if (!isEnabled) {
-            if (user.additionalData?.fgaRelationshipsVersion !== undefined) {
+            if (user.fgaRelationshipsVersion !== undefined) {
                 log.info({ userId: user.id }, `User has been removed from FGA.`);
                 // reset the fgaRelationshipsVersion to undefined, so the migration is triggered again when the feature is enabled
-                AdditionalUserData.set(user, { fgaRelationshipsVersion: undefined });
-                return await this.userDB.storeUser(user);
+                await this.setFgaRelationshipsVersion(user, undefined);
             }
             return user;
         }
@@ -54,7 +53,7 @@ export class RelationshipUpdater {
         }
         const migrated = this.internalMigrate(user);
         // if checks are not enabled, we don't want to wait for the migration to finish
-        if (!(await isFgaChecksEnabled(user.id))) {
+        if (!forceAwait && !(await isFgaChecksEnabled(user.id))) {
             migrated.catch((err) => {
                 log.error({ userId: user.id }, "Error while migrating user", err);
             });
@@ -83,7 +82,7 @@ export class RelationshipUpdater {
                     return user;
                 }
                 log.info({ userId: user.id }, `Updating FGA relationships for user.`, {
-                    fromVersion: user?.additionalData?.fgaRelationshipsVersion,
+                    fromVersion: user?.fgaRelationshipsVersion,
                     toVersion: RelationshipUpdater.version,
                 });
                 const orgs = await this.findAffectedOrganizations(user.id);
@@ -94,13 +93,7 @@ export class RelationshipUpdater {
                     await this.updateOrganization(user.id, org);
                 }
                 await this.updateWorkspaces(user);
-                AdditionalUserData.set(user, {
-                    fgaRelationshipsVersion: RelationshipUpdater.version,
-                });
-                await this.userDB.updateUserPartial({
-                    id: user.id,
-                    additionalData: user.additionalData,
-                });
+                await this.setFgaRelationshipsVersion(user, RelationshipUpdater.version);
                 log.info({ userId: user.id }, `Finished updating relationships.`, {
                     duration: new Date().getTime() - before,
                 });
@@ -108,7 +101,7 @@ export class RelationshipUpdater {
                 // let's double check the migration worked.
                 if (!(await this.isMigrated(user))) {
                     log.error({ userId: user.id }, `User migration failed.`, {
-                        markedMigrated: user.additionalData?.fgaRelationshipsVersion === RelationshipUpdater.version,
+                        markedMigrated: user.fgaRelationshipsVersion === RelationshipUpdater.version,
                     });
                 }
                 return user;
@@ -119,18 +112,14 @@ export class RelationshipUpdater {
     }
 
     private async isMigrated(user: User) {
-        const isMigrated = user.additionalData?.fgaRelationshipsVersion === RelationshipUpdater.version;
+        const isMigrated = user.fgaRelationshipsVersion === RelationshipUpdater.version;
         if (isMigrated) {
             const hasSelfRelationship = await this.authorizer.find(rel.user(user.id).self.user(user.id));
             if (!hasSelfRelationship) {
                 log.warn({ userId: user.id }, `User is marked as migrated but doesn't have self relationship.`);
                 //TODO(se) this is an extra safety net to detect
                 // reset the fgaRelationshipsVersion to undefined, so the migration is triggered again when the feature is enabled
-                AdditionalUserData.set(user, { fgaRelationshipsVersion: undefined });
-                await this.userDB.updateUserPartial({
-                    id: user.id,
-                    additionalData: user.additionalData,
-                });
+                await this.setFgaRelationshipsVersion(user, undefined);
                 return false;
             }
         }
@@ -204,5 +193,13 @@ export class RelationshipUpdater {
             members,
             projects.map((p) => p.id),
         );
+    }
+
+    private async setFgaRelationshipsVersion(user: User, version: number | undefined): Promise<void> {
+        user.fgaRelationshipsVersion = version;
+        await this.userDB.updateUserPartial({
+            id: user.id,
+            fgaRelationshipsVersion: version,
+        });
     }
 }
