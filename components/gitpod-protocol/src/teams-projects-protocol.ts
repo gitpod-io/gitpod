@@ -108,46 +108,16 @@ export namespace Project {
         return p.name + "-" + p.id;
     }
 
-    /**
-     * If *no settings* are present on pre-existing projects, this defaults to `true` (enabled) for
-     * backwards compatibility. This allows to do any explicit migration of data or adjustment of
-     * the default behavior at a later point in time.
-     *
-     * Otherwise this returns the value of the `enablePrebuilds` settings persisted in the given
-     * project.
-     */
     export function isPrebuildsEnabled(project: Project): boolean {
-        // Defaulting to `true` for backwards compatibility. Ignoring non-boolean for `enablePrebuilds`
-        // for evaluation here allows to do any explicit migration of data or adjustment of the default
-        // behavior at a later point in time.
-        if (!hasPrebuildSettings(project)) {
-            return true;
-        }
-
-        return !!project.settings?.enablePrebuilds;
+        return !!project.settings?.prebuilds?.enable;
     }
 
     export function hasPrebuildSettings(project: Project) {
-        return !(typeof project.settings?.enablePrebuilds === "undefined");
+        return !(typeof project.settings?.prebuilds === "undefined");
     }
 
     export function getPrebuildBranchStrategy(project: Project): PrebuildSettings.BranchStrategy {
-        if (!hasPrebuildSettings(project)) {
-            // returning "all branches" to mimic the default value of projects which were added
-            // before introduction of persisted settings for prebuilds.
-            return "all-branches";
-        }
-        if (typeof project.settings?.prebuildDefaultBranchOnly === "undefined") {
-            return "default-banch"; // default value for `settings.prebuildDefaultBranchOnly`
-        }
-        if (project.settings?.prebuildDefaultBranchOnly) {
-            return "default-banch";
-        }
-        const prebuildBranchPattern = project.settings?.prebuildBranchPattern?.trim();
-        if (typeof prebuildBranchPattern === "string" && prebuildBranchPattern.length > 1) {
-            return "matched-branches";
-        }
-        return "all-branches";
+        return project.settings?.prebuilds?.branchStrategy || "all-branches";
     }
 
     export interface Overview {
