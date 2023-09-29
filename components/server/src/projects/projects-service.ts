@@ -442,7 +442,7 @@ export class ProjectsService {
                 newPrebuildSettings.branchStrategy = defaults.branchStrategy;
                 if (newPrebuildSettings.prebuildInterval! < defaults.prebuildInterval!) {
                     // limiting to default branch for short intervals, to avoid unwanted increase of costs.
-                    newPrebuildSettings.branchStrategy = "default-banch";
+                    newPrebuildSettings.branchStrategy = "default-branch";
                 }
                 newPrebuildSettings.branchMatchingPattern = defaults.branchMatchingPattern;
                 newPrebuildSettings.workspaceClass = project.settings?.workspaceClasses?.prebuild;

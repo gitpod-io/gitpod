@@ -51,7 +51,7 @@ export interface ProjectSettings {
     workspaceClasses?: WorkspaceClasses;
 }
 export namespace PrebuildSettings {
-    export type BranchStrategy = "default-banch" | "all-branches" | "matched-branches";
+    export type BranchStrategy = "default-branch" | "all-branches" | "matched-branches";
 }
 
 export interface PrebuildSettings {

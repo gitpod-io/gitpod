@@ -362,7 +362,7 @@ export class PrebuildManager {
             return { shouldRun: true, reason: "all-branches-selected" };
         }
 
-        if (strategy === "default-banch") {
+        if (strategy === "default-branch") {
             const defaultBranch = context.repository.defaultBranch;
             if (!defaultBranch) {
                 log.debug("CommitContext is missing the default branch. Ignoring request.", { context });
@@ -382,13 +382,8 @@ export class PrebuildManager {
                 return { shouldRun: false, reason: "branch-name-missing-in-commit-context" };
             }
 
-            const branchNamePattern = project.settings?.prebuildBranchPattern?.trim();
-            if (!branchNamePattern) {
-                // no pattern provided is treated as run on all branches
-                return { shouldRun: true, reason: "all-branches-selected" };
-            }
-
-            for (let pattern of branchNamePattern.split(",")) {
+            const branchMatchingPattern = project.settings?.prebuilds?.branchMatchingPattern?.trim() || "**";
+            for (let pattern of branchMatchingPattern.split(",")) {
                 // prepending `**/` as branch names can be 'refs/heads/something/feature-x'
                 // and we want to allow simple patterns like: `feature-*`
                 pattern = "**/" + pattern.trim();
@@ -398,7 +393,7 @@ export class PrebuildManager {
                     }
                 } catch (error) {
                     log.debug("Ignored error with attempt to match a branch by pattern.", {
-                        branchNamePattern,
+                        branchMatchingPattern,
                         error: error?.message,
                     });
                 }
