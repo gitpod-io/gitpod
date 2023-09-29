@@ -211,7 +211,6 @@ describe("ProjectsService", async () => {
         const project = await ps.getProject(owner.id, oldProject.id);
         expect(project.settings).to.deep.equal(<ProjectSettings>{
             prebuilds: {
-                _migration_note: "project is considered inactive",
                 enable: false,
             },
             workspaceClasses: {},
@@ -236,7 +235,6 @@ describe("ProjectsService", async () => {
         const project = await ps.getProject(owner.id, oldProject.id);
         expect(project.settings).to.deep.equal(<ProjectSettings>{
             prebuilds: {
-                _migration_note: "project is considered active; 0 prebuilds in past 30 days",
                 enable: false,
             },
             workspaceClasses: {},
@@ -261,7 +259,6 @@ describe("ProjectsService", async () => {
         const project = await ps.getProject(owner.id, oldProject.id);
         expect(project.settings).to.deep.equal(<ProjectSettings>{
             prebuilds: {
-                _migration_note: "project is considered active; 0 prebuilds in past 30 days",
                 enable: false,
             },
             workspaceClasses: {},

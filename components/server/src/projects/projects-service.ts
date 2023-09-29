@@ -418,46 +418,59 @@ export class ProjectsService {
         }));
     }
 
-    async migratePrebuildSettingsOnDemand(project: Project): Promise<Project> {
-        if (typeof project.settings?.prebuilds !== "undefined") {
+    private async migratePrebuildSettingsOnDemand(project: Project): Promise<Project> {
+        if (!!project.settings?.prebuilds) {
             return project; // already migrated
         }
 
-        const newSettings = { ...project.settings };
+        const logCtx: any = { oldSettings: { ...project.settings } };
+
         const newPrebuildSettings: PrebuildSettings = { enable: false };
-        let note = "project is considered inactive";
 
         // if workspaces were running in the past week
         const isInactive = await this.isProjectConsideredInactive(SYSTEM_USER, project.id);
-        console.log(`isInactive: ${isInactive}`);
+        logCtx.isInactive = isInactive;
         if (!isInactive) {
-            note = "project is considered active";
-            const numberOfPrebuilds30days = await this.workspaceDb
-                .trace({})
-                .countUnabortedPrebuildsSince(project.id, new Date(daysBefore(new Date().toISOString(), 30)));
-
-            note = note + `; ${numberOfPrebuilds30days} prebuilds in past 30 days`;
-
-            if (numberOfPrebuilds30days > 0) {
+            const sevenDaysAgo = new Date(daysBefore(new Date().toISOString(), 7));
+            const count = await this.workspaceDb.trace({}).countUnabortedPrebuildsSince(project.id, sevenDaysAgo);
+            logCtx.count = count;
+            if (count > 0) {
                 const defaults = ProjectsService.PROJECT_SETTINGS_DEFAULTS.prebuilds!;
                 newPrebuildSettings.enable = true;
-                newPrebuildSettings.prebuildInterval = newSettings.prebuildEveryNthCommit || defaults.prebuildInterval;
+                newPrebuildSettings.prebuildInterval =
+                    project.settings?.prebuildEveryNthCommit || defaults.prebuildInterval;
                 newPrebuildSettings.branchStrategy = defaults.branchStrategy;
+                if (newPrebuildSettings.prebuildInterval! < defaults.prebuildInterval!) {
+                    // limiting to default branch for short intervals, to avoid unwanted increase of costs.
+                    newPrebuildSettings.branchStrategy = "default-banch";
+                }
                 newPrebuildSettings.branchMatchingPattern = defaults.branchMatchingPattern;
-                newPrebuildSettings.workspaceClass = newSettings.workspaceClasses?.prebuild;
+                newPrebuildSettings.workspaceClass = project.settings?.workspaceClasses?.prebuild;
             }
         }
 
         // update new settings
+        project = (await this.projectDB.findProjectById(project.id))!;
+        if (!project) {
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "Not found");
+        }
+        if (!!project.settings?.prebuilds) {
+            return project; // already migrated
+        }
+        const newSettings = { ...project.settings };
         project.settings = newSettings;
-        (newPrebuildSettings as any)["_migration_note"] = note;
         project.settings.prebuilds = newPrebuildSettings;
         delete newSettings.enablePrebuilds;
         delete newSettings.prebuildBranchPattern;
         delete newSettings.prebuildDefaultBranchOnly;
         delete newSettings.prebuildEveryNthCommit;
         delete newSettings.workspaceClasses?.prebuild;
-        await this.projectDB.updateProject(project);
+        await this.projectDB.updateProject({
+            id: project.id,
+            settings: project.settings,
+        });
+        logCtx.newPrebuildSettings = newPrebuildSettings;
+        log.info("Prebuild settings migrated.", { projectId: project.id, logCtx });
 
         return project;
     }
