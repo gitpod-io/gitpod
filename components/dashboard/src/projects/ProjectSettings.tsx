@@ -63,7 +63,7 @@ export default function ProjectSettingsView() {
         if (!project) {
             return;
         }
-        setPrebuildBranchPattern(project?.settings?.prebuildBranchPattern || "");
+        setPrebuildBranchPattern(project?.settings?.prebuilds?.branchMatchingPattern || "");
     }, [project]);
 
     const setProjectName = useCallback(
@@ -114,18 +114,12 @@ export default function ProjectSettingsView() {
             if (oldValue === value) {
                 return;
             }
-            const update: ProjectSettings = {};
-            if (value === "default-banch") {
-                update.prebuildDefaultBranchOnly = true;
-                update.prebuildBranchPattern = "";
-            }
-            if (value === "all-branches") {
-                update.prebuildDefaultBranchOnly = false;
-                update.prebuildBranchPattern = "";
-            }
+            const update: ProjectSettings = { ...project.settings };
+            update.prebuilds = { ...update.prebuilds };
+            update.prebuilds.branchStrategy = value;
+
             if (value === "matched-branches") {
-                update.prebuildDefaultBranchOnly = false;
-                update.prebuildBranchPattern = "**";
+                update.prebuilds.branchMatchingPattern = update.prebuilds.branchMatchingPattern || "**";
             }
             await updateProjectSettings(update);
         },
@@ -133,10 +127,17 @@ export default function ProjectSettingsView() {
     );
 
     const debouncedUpdatePrebuildBranchPattern = useMemo(() => {
-        return debounce(async (prebuildBranchPattern) => {
-            await updateProjectSettings({ prebuildBranchPattern });
+        return debounce(async (prebuildBranchPattern: string) => {
+            if (!project) {
+                return;
+            }
+            const update: ProjectSettings = { ...project.settings };
+            update.prebuilds = { ...update.prebuilds };
+            update.prebuilds.branchMatchingPattern = prebuildBranchPattern;
+
+            await updateProjectSettings(update);
         }, 1500);
-    }, [updateProjectSettings]);
+    }, [updateProjectSettings, project]);
 
     const updatePrebuildBranchPattern = useCallback(
         async (value: string) => {
@@ -162,11 +163,28 @@ export default function ProjectSettingsView() {
     const setWorkspaceClassForPrebuild = useCallback(
         async (value: string) => {
             if (!project) {
-                return value;
+                return;
             }
-            const before = project.settings?.workspaceClasses?.prebuild;
-            updateProjectSettings({ workspaceClasses: { ...project.settings?.workspaceClasses, prebuild: value } });
-            return before;
+            const update: ProjectSettings = { ...project.settings };
+            update.prebuilds = { ...update.prebuilds };
+            update.prebuilds.workspaceClass = value;
+
+            await updateProjectSettings(update);
+        },
+        [project, updateProjectSettings],
+    );
+
+    const setPrebuildInterval = useCallback(
+        async (value: string) => {
+            if (!project) {
+                return;
+            }
+            const newInterval = Math.abs(Math.min(Number.parseInt(value), 100)) || 0;
+            const update: ProjectSettings = { ...project.settings };
+            update.prebuilds = { ...update.prebuilds };
+            update.prebuilds.prebuildInterval = newInterval;
+
+            await updateProjectSettings(update);
         },
         [project, updateProjectSettings],
     );
@@ -181,6 +199,8 @@ export default function ProjectSettingsView() {
     const enablePrebuilds = Project.isPrebuildsEnabled(project);
 
     const prebuildBranchStrategy = Project.getPrebuildBranchStrategy(project);
+
+    const prebuildInterval = project.settings?.prebuilds?.prebuildInterval || 10;
 
     return (
         <ProjectSettingsPage project={project}>
@@ -326,38 +346,29 @@ export default function ProjectSettingsView() {
                         <div className="flex mt-4 max-w-2xl">
                             <div className="flex flex-col ml-6">
                                 <label
-                                    htmlFor="prebuildNthCommit"
+                                    htmlFor="prebuildInterval"
                                     className={classNames(
                                         "text-sm font-semibold cursor-pointer tracking-wide",
-                                        !enablePrebuilds || !project.settings?.allowUsingPreviousPrebuilds
+                                        !enablePrebuilds
                                             ? "text-gray-400 dark:text-gray-400"
                                             : "text-gray-600 dark:text-gray-100",
                                     )}
                                 >
-                                    Skip Prebuilds
+                                    Prebuild interval
                                 </label>
                                 <input
                                     type="number"
-                                    id="prebuildNthCommit"
+                                    id="prebuildInterval"
                                     min="0"
                                     max="100"
                                     step="5"
                                     className="mt-2"
-                                    disabled={!project.settings?.allowUsingPreviousPrebuilds}
-                                    value={
-                                        project.settings?.prebuildEveryNthCommit === undefined
-                                            ? 0
-                                            : project.settings?.prebuildEveryNthCommit
-                                    }
-                                    onChange={({ target }) =>
-                                        updateProjectSettings({
-                                            prebuildEveryNthCommit:
-                                                Math.abs(Math.min(Number.parseInt(target.value), 100)) || 0,
-                                        })
-                                    }
+                                    disabled={!enablePrebuilds}
+                                    value={prebuildInterval}
+                                    onChange={({ target }) => setPrebuildInterval(target.value)}
                                 />
                                 <div className="text-gray-500 dark:text-gray-400 text-sm mt-2">
-                                    The number of commits that are skipped between prebuilds.
+                                    The number of commits to be skipped between prebuild runs.
                                 </div>
                             </div>
                         </div>
