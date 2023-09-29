@@ -647,7 +647,13 @@ type InfoService struct {
 	GitpodService serverapi.APIInterface
 
 	api.UnimplementedInfoServiceServer
+
+	cacheMu               sync.RWMutex
+	cacheTimestamp        time.Time
+	defaultWorkspaceImage string
 }
+
+var infoCacheDuration = 5 * time.Second
 
 // RegisterGRPC registers the gRPC info service.
 func (is *InfoService) RegisterGRPC(srv *grpc.Server) {
@@ -659,20 +665,34 @@ func (is *InfoService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) 
 	return api.RegisterInfoServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 }
 
-func (is *InfoService) getDefaultWorkspaceImage(ctx context.Context) (defaultWorkspaceImage string) {
-	defaultWorkspaceImage = is.cfg.DefaultWorkspaceImage
-	if defaultWorkspaceImage == "" {
-		// TODO: delete-me, added for compatibility before server is deployed / rollback
-		defaultWorkspaceImage = "gitpod/workspace-full:latest"
+func (is *InfoService) getDefaultWorkspaceImage(ctx context.Context) string {
+	is.cacheMu.RLock()
+
+	if time.Since(is.cacheTimestamp) < infoCacheDuration {
+		is.cacheMu.RUnlock()
+		return is.defaultWorkspaceImage
 	}
+	is.cacheMu.RUnlock()
+
+	is.cacheMu.Lock()
+	defer is.cacheMu.Unlock()
+	defer func() {
+		is.cacheTimestamp = time.Now()
+	}()
+
+	if time.Since(is.cacheTimestamp) < infoCacheDuration {
+		return is.defaultWorkspaceImage
+	}
+
+	is.defaultWorkspaceImage = is.cfg.DefaultWorkspaceImage
 	if is.GitpodService == nil {
-		return
+		return is.defaultWorkspaceImage
 	}
 	wsImage, err := is.GitpodService.GetDefaultWorkspaceImage(ctx)
 	if err == nil {
-		defaultWorkspaceImage = wsImage
+		is.defaultWorkspaceImage = wsImage
 	}
-	return
+	return is.defaultWorkspaceImage
 }
 
 // WorkspaceInfo provides information about the workspace.
