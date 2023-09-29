@@ -24,10 +24,10 @@ import {
 } from "./definitions";
 import { SpiceDBAuthorizer } from "./spicedb-authorizer";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { LogContext, log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 export function createInitializingAuthorizer(spiceDbAuthorizer: SpiceDBAuthorizer): Authorizer {
-    const target = new Authorizer(spiceDbAuthorizer);
+    const target = new Authorizer(spiceDbAuthorizer, new ZedTokenCache());
     const initialized = (async () => {
         await target.addInstallationAdminRole(BUILTIN_INSTLLATION_ADMIN_USER_ID);
         await target.addUser(BUILTIN_INSTLLATION_ADMIN_USER_ID);
@@ -48,6 +48,178 @@ export function createInitializingAuthorizer(spiceDbAuthorizer: SpiceDBAuthorize
     });
 }
 
+namespace InstallationPermission {
+    export function isWritePermission(permission: InstallationPermission): boolean {
+        switch (permission) {
+            case "configure":
+            case "create_organization":
+                return true;
+        }
+    }
+}
+
+namespace UserPermission {
+    export function isWritePermission(permission: UserPermission): boolean {
+        switch (permission) {
+            case "admin_control":
+            case "delete":
+            case "make_admin":
+            case "write_env_var":
+            case "write_info":
+            case "write_ssh":
+            case "write_tokens":
+                return true;
+            case "read_env_var":
+            case "read_info":
+            case "read_ssh":
+            case "read_tokens":
+                return false;
+        }
+    }
+}
+
+namespace OrganizationPermission {
+    export function isWritePermission(permission: OrganizationPermission): boolean {
+        switch (permission) {
+            case "installation_admin":
+            case "installation_member":
+            case "create_project":
+            case "create_workspace":
+            case "delete":
+            case "invite_members":
+            case "leave":
+            case "write_billing":
+            case "write_billing_admin":
+            case "write_git_provider":
+            case "write_info":
+            case "write_members":
+            case "write_settings":
+                return true;
+            case "read_billing":
+            case "read_git_provider":
+            case "read_info":
+            case "read_members":
+            case "read_settings":
+                return false;
+        }
+    }
+}
+
+namespace ProjectPermission {
+    export function isWritePermission(permission: ProjectPermission): boolean {
+        switch (permission) {
+            case "delete":
+            case "editor":
+            case "write_env_var":
+            case "write_info":
+            case "write_prebuild":
+                return true;
+            case "read_env_var":
+            case "read_info":
+            case "read_prebuild":
+                return false;
+        }
+    }
+}
+
+namespace WorkspacePermission {
+    export function isWritePermission(permission: WorkspacePermission): boolean {
+        switch (permission) {
+            case "delete":
+            case "create_snapshot":
+            case "admin_control":
+            case "access":
+            case "start":
+            case "stop":
+                return true;
+
+            case "read_info":
+                return false;
+        }
+    }
+}
+type AllPermissions =
+    | InstallationPermission
+    | UserPermission
+    | OrganizationPermission
+    | ProjectPermission
+    | WorkspacePermission;
+
+type ObjectId = {
+    kind: ObjectKind;
+    value: string;
+};
+type ObjectKind = keyof typeof ObjectKindNames;
+const ObjectKindNames = {
+    installation: "inst",
+    user: "user",
+    organization: "org",
+    project: "proj",
+    workspace: "ws",
+};
+const ObjectKindByShortName: ReadonlyMap<string, ObjectKind> = new Map(
+    Object.keys(ObjectKindNames).map((k) => {
+        return [ObjectKindNames[k as ObjectKind], k as ObjectKind];
+    }),
+);
+
+namespace ObjectId {
+    const SEPARATOR = "_";
+    export function create(kind: ObjectKind, value: string): ObjectId {
+        switch (kind) {
+            case "installation":
+                return { kind, value };
+            case "user":
+                return { kind, value };
+            case "organization":
+                return { kind, value };
+            case "project":
+                return { kind, value };
+            case "workspace":
+                return { kind, value };
+        }
+    }
+    export function isObjectKind(str: string): str is ObjectKind {
+        return !!ObjectKindNames[str as ObjectKind];
+    }
+    export function fromResource(resource: v1.ObjectReference): ObjectId {
+        if (!ObjectId.isObjectKind(resource.objectType)) {
+            throw new Error("Unknown object kind: " + resource.objectType);
+        }
+        return ObjectId.create(resource.objectType, resource.objectId);
+    }
+    export function toString(id: ObjectId): string {
+        const prefix = ObjectKindNames[id.kind];
+        return prefix + SEPARATOR + id.value;
+    }
+    export function tryParse(str: string): ObjectId {
+        const parts = str.split(SEPARATOR);
+        if (parts.length < 2) {
+            throw new Error(`Unable to parse ObjectId`);
+        }
+        const kind = ObjectKindByShortName.get(parts[0]);
+        if (!kind) {
+            throw new Error(`Unable to parse ObjectId: unknown objectKind!`);
+        }
+        const value = parts.slice(1).join();
+        return { kind, value };
+    }
+}
+
+class ZedTokenCache {
+    private readonly cache = new Map<string, string>();
+
+    constructor() {}
+
+    public async get(objectId: ObjectId): Promise<string | undefined> {
+        return this.cache.get(ObjectId.toString(objectId));
+    }
+
+    public async set(objectId: ObjectId, zedToken: string) {
+        this.cache.set(ObjectId.toString(objectId), zedToken);
+    }
+}
+
 /**
  * We need to call our internal API with system permissions in some cases.
  * As we don't have other ways to represent that (e.g. ServiceAccounts), we use this magic constant to designated it.
@@ -55,21 +227,21 @@ export function createInitializingAuthorizer(spiceDbAuthorizer: SpiceDBAuthorize
 export const SYSTEM_USER = "SYSTEM_USER";
 
 export class Authorizer {
-    constructor(private authorizer: SpiceDBAuthorizer) {}
+    constructor(private authorizer: SpiceDBAuthorizer, private tokenCache: ZedTokenCache) {}
 
     async hasPermissionOnInstallation(userId: string, permission: InstallationPermission): Promise<boolean> {
         if (userId === SYSTEM_USER) {
             return true;
         }
 
+        const objectId = ObjectId.create("installation", InstallationID);
         const req = v1.CheckPermissionRequest.create({
             subject: subject("user", userId),
             permission,
             resource: object("installation", InstallationID),
-            consistency,
         });
 
-        return this.authorizer.check(req, { userId });
+        return this.check(objectId, req, { userId });
     }
 
     async checkPermissionOnInstallation(userId: string, permission: InstallationPermission): Promise<void> {
@@ -91,14 +263,14 @@ export class Authorizer {
             return true;
         }
 
+        const objectId = ObjectId.create("organization", orgId);
         const req = v1.CheckPermissionRequest.create({
             subject: subject("user", userId),
             permission,
             resource: object("organization", orgId),
-            consistency,
         });
 
-        return this.authorizer.check(req, { userId });
+        return this.check(objectId, req, { userId });
     }
 
     async checkPermissionOnOrganization(userId: string, permission: OrganizationPermission, orgId: string) {
@@ -121,14 +293,14 @@ export class Authorizer {
             return true;
         }
 
+        const objectId = ObjectId.create("project", projectId);
         const req = v1.CheckPermissionRequest.create({
             subject: subject("user", userId),
             permission,
             resource: object("project", projectId),
-            consistency,
         });
 
-        return this.authorizer.check(req, { userId });
+        return this.check(objectId, req, { userId });
     }
 
     async checkPermissionOnProject(userId: string, permission: ProjectPermission, projectId: string) {
@@ -151,14 +323,14 @@ export class Authorizer {
             return true;
         }
 
+        const objectId = ObjectId.create("user", resourceUserId);
         const req = v1.CheckPermissionRequest.create({
             subject: subject("user", userId),
             permission,
             resource: object("user", resourceUserId),
-            consistency,
         });
 
-        return this.authorizer.check(req, { userId });
+        return this.check(objectId, req, { userId });
     }
 
     async checkPermissionOnUser(userId: string, permission: UserPermission, resourceUserId: string) {
@@ -185,14 +357,14 @@ export class Authorizer {
             return true;
         }
 
+        const objectId = ObjectId.create("workspace", workspaceId);
         const req = v1.CheckPermissionRequest.create({
             subject: subject("user", userId),
             permission,
             resource: object("workspace", workspaceId),
-            consistency,
         });
 
-        return this.authorizer.check(req, { userId }, forceEnablement);
+        return this.check(objectId, req, { userId }, forceEnablement);
     }
 
     async checkPermissionOnWorkspace(userId: string, permission: WorkspacePermission, workspaceId: string) {
@@ -214,7 +386,7 @@ export class Authorizer {
         if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
-        await this.authorizer.deleteRelationships(
+        const responses = await this.authorizer.deleteRelationships(
             v1.DeleteRelationshipsRequest.create({
                 relationshipFilter: {
                     resourceType: type,
@@ -222,6 +394,10 @@ export class Authorizer {
                 },
             }),
         );
+        const readAt = responses[0].readAt;
+        if (readAt) {
+            await this.tokenCache.set(ObjectId.create(type, id), readAt.token);
+        }
 
         // iterate over all resource types and remove by subject
         for (const resourcetype of AllResourceTypes as ResourceType[]) {
@@ -268,7 +444,14 @@ export class Authorizer {
             );
         }
 
-        await this.authorizer.writeRelationships(...updates);
+        const response = await this.authorizer.writeRelationships(...updates);
+        const writtenAt = response?.writtenAt;
+        if (writtenAt) {
+            const objectIds = updates
+                .map((r) => (r.relationship?.resource ? ObjectId.fromResource(r.relationship?.resource) : undefined))
+                .filter((id) => !!id) as ObjectId[];
+            await Promise.all(objectIds.map((id) => this.tokenCache.set(id, writtenAt.token)));
+        }
     }
 
     async removeUser(userId: string) {
@@ -288,7 +471,11 @@ export class Authorizer {
         } else {
             updates.push(remove(rel.organization(orgID).owner.user(userID)));
         }
-        await this.authorizer.writeRelationships(...updates);
+        const response = await this.authorizer.writeRelationships(...updates);
+        const writtenAt = response?.writtenAt;
+        if (writtenAt) {
+            await this.tokenCache.set(ObjectId.create("organization", orgID), writtenAt.token);
+        }
     }
 
     async removeOrganizationRole(orgID: string, userID: string, role: TeamMemberRole): Promise<void> {
@@ -299,14 +486,22 @@ export class Authorizer {
         if (role === "member") {
             updates.push(remove(rel.organization(orgID).member.user(userID)));
         }
-        await this.authorizer.writeRelationships(...updates);
+        const response = await this.authorizer.writeRelationships(...updates);
+        const writtenAt = response?.writtenAt;
+        if (writtenAt) {
+            await this.tokenCache.set(ObjectId.create("organization", orgID), writtenAt.token);
+        }
     }
 
     async addProjectToOrg(userId: string, orgID: string, projectID: string): Promise<void> {
         if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
-        await this.authorizer.writeRelationships(set(rel.project(projectID).org.organization(orgID)));
+        const response = await this.authorizer.writeRelationships(set(rel.project(projectID).org.organization(orgID)));
+        const writtenAt = response?.writtenAt;
+        if (writtenAt) {
+            await this.tokenCache.set(ObjectId.create("project", projectID), writtenAt.token);
+        }
     }
 
     async setProjectVisibility(
@@ -333,18 +528,26 @@ export class Authorizer {
                 updates.push(set(rel.project(projectID).viewer.anyUser));
                 break;
         }
-        await this.authorizer.writeRelationships(...updates);
+        const response = await this.authorizer.writeRelationships(...updates);
+        const writtenAt = response?.writtenAt;
+        if (writtenAt) {
+            await this.tokenCache.set(ObjectId.create("project", projectID), writtenAt.token);
+        }
     }
 
     async removeProjectFromOrg(userId: string, orgID: string, projectID: string): Promise<void> {
         if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
-        await this.authorizer.writeRelationships(
+        const response = await this.authorizer.writeRelationships(
             remove(rel.project(projectID).org.organization(orgID)), //
             remove(rel.project(projectID).viewer.anyUser),
             remove(rel.project(projectID).viewer.organization_member(orgID)),
         );
+        const writtenAt = response?.writtenAt;
+        if (writtenAt) {
+            await this.tokenCache.set(ObjectId.create("project", projectID), writtenAt.token);
+        }
     }
 
     async addOrganization(
@@ -360,10 +563,14 @@ export class Authorizer {
 
         await this.addOrganizationProjects(userId, orgId, projectIds);
 
-        await this.authorizer.writeRelationships(
+        const response = await this.authorizer.writeRelationships(
             set(rel.organization(orgId).installation.installation), //
             set(rel.organization(orgId).snapshoter.organization_member(orgId)), //TODO allow orgs to opt-out of snapshotting
         );
+        const writtenAt = response?.writtenAt;
+        if (writtenAt) {
+            await this.tokenCache.set(ObjectId.create("organization", orgId), writtenAt.token);
+        }
     }
 
     private async addOrganizationProjects(userId: string, orgID: string, projectIds: string[]): Promise<void> {
@@ -398,18 +605,26 @@ export class Authorizer {
         if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
-        await this.authorizer.writeRelationships(
+        const response = await this.authorizer.writeRelationships(
             set(rel.installation.admin.user(userId)), //
         );
+        const writtenAt = response?.writtenAt;
+        if (writtenAt) {
+            await this.tokenCache.set(ObjectId.create("user", userId), writtenAt.token);
+        }
     }
 
     async removeInstallationAdminRole(userId: string) {
         if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
-        await this.authorizer.writeRelationships(
+        const response = await this.authorizer.writeRelationships(
             remove(rel.installation.admin.user(userId)), //
         );
+        const writtenAt = response?.writtenAt;
+        if (writtenAt) {
+            await this.tokenCache.set(ObjectId.create("user", userId), writtenAt.token);
+        }
     }
 
     async addWorkspaceToOrg(orgID: string, userID: string, workspaceID: string, shared: boolean): Promise<void> {
@@ -422,7 +637,11 @@ export class Authorizer {
         if (shared) {
             rels.push(set(rel.workspace(workspaceID).shared.anyUser));
         }
-        await this.authorizer.writeRelationships(...rels);
+        const response = await this.authorizer.writeRelationships(...rels);
+        const writtenAt = response?.writtenAt;
+        if (writtenAt) {
+            await this.tokenCache.set(ObjectId.create("workspace", workspaceID), writtenAt.token);
+        }
 
         (async () => {
             //TODO(se) remove this double checking once we're confident that the above works
@@ -474,11 +693,15 @@ export class Authorizer {
         if (!(await isFgaWritesEnabled(userID))) {
             return;
         }
-        await this.authorizer.writeRelationships(
+        const response = await this.authorizer.writeRelationships(
             remove(rel.workspace(workspaceID).org.organization(orgID)),
             remove(rel.workspace(workspaceID).owner.user(userID)),
             remove(rel.workspace(workspaceID).shared.anyUser),
         );
+        const writtenAt = response?.writtenAt;
+        if (writtenAt) {
+            await this.tokenCache.set(ObjectId.create("workspace", workspaceID), writtenAt.token);
+        }
     }
 
     async setWorkspaceIsShared(userID: string, workspaceID: string, shared: boolean): Promise<void> {
@@ -486,7 +709,11 @@ export class Authorizer {
             return;
         }
         const op = shared ? set : remove;
-        await this.authorizer.writeRelationships(op(rel.workspace(workspaceID).shared.anyUser));
+        const response = await this.authorizer.writeRelationships(op(rel.workspace(workspaceID).shared.anyUser));
+        const writtenAt = response?.writtenAt;
+        if (writtenAt) {
+            await this.tokenCache.set(ObjectId.create("workspace", workspaceID), writtenAt.token);
+        }
     }
 
     public async find(relation: v1.Relationship): Promise<v1.Relationship | undefined> {
@@ -535,6 +762,77 @@ export class Authorizer {
         });
         return relationships.map((r) => r.relationship!);
     }
+
+    private async check(
+        objectId: ObjectId,
+        req: v1.CheckPermissionRequest,
+        experimentsFields: {
+            userId: string;
+        },
+        forceEnablement?: boolean,
+    ): Promise<boolean> {
+        function isWritePermission(permission: AllPermissions): boolean {
+            switch (objectId.kind) {
+                case "installation":
+                    return InstallationPermission.isWritePermission(permission as InstallationPermission);
+                case "user":
+                    return UserPermission.isWritePermission(permission as UserPermission);
+                case "organization":
+                    return OrganizationPermission.isWritePermission(permission as OrganizationPermission);
+                case "project":
+                    return ProjectPermission.isWritePermission(permission as ProjectPermission);
+                case "workspace":
+                    return WorkspacePermission.isWritePermission(permission as WorkspacePermission);
+            }
+        }
+        const isWrite = isWritePermission(req.permission as AllPermissions);
+
+        req.consistency = await this.consistency(objectId, isWrite);
+        const result = await this.authorizer.check(req, experimentsFields, forceEnablement);
+        if (result.checkedAt) {
+            if (isWrite) {
+                await this.tokenCache.set(objectId, result.checkedAt);
+            } else {
+                // if this is not a write, this is just an optimization, so we don't care to wait
+                this.tokenCache
+                    .set(objectId, result.checkedAt)
+                    .catch((err) =>
+                        log.warn(
+                            { objectId: ObjectId.toString(objectId) } as LogContext,
+                            "Error updating ZedToken",
+                            err,
+                        ),
+                    );
+            }
+        }
+        return result.result;
+    }
+
+    private async consistency(objectId: ObjectId, isWrite: boolean): Promise<v1.Consistency> {
+        function fullyConsistent() {
+            return v1.Consistency.create({
+                requirement: {
+                    oneofKind: "fullyConsistent",
+                    fullyConsistent: true,
+                },
+            });
+        }
+        if (isWrite) {
+            return fullyConsistent();
+        }
+        const zedToken = await this.tokenCache.get(objectId);
+        if (!zedToken) {
+            return fullyConsistent();
+        }
+        return v1.Consistency.create({
+            requirement: {
+                oneofKind: "atLeastAsFresh",
+                atLeastAsFresh: v1.ZedToken.create({
+                    token: zedToken,
+                }),
+            },
+        });
+    }
 }
 
 export async function isFgaChecksEnabled(userId: string): Promise<boolean> {
@@ -581,13 +879,6 @@ function subject(type: ResourceType, id?: string, relation?: Relation | Permissi
         optionalRelation: relation,
     });
 }
-
-const consistency = v1.Consistency.create({
-    requirement: {
-        oneofKind: "fullyConsistent",
-        fullyConsistent: true,
-    },
-});
 
 function asSet<T>(array: (T | undefined)[]): Set<T> {
     const result = new Set<T>();

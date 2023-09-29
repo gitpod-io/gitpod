@@ -14,6 +14,11 @@ import { SpiceDBClientProvider } from "./spicedb";
 import * as grpc from "@grpc/grpc-js";
 import { isFgaChecksEnabled, isFgaWritesEnabled } from "./authorizer";
 
+export interface CheckResult {
+    result: boolean;
+    checkedAt?: string;
+}
+
 async function tryThree<T>(errMessage: string, code: (attempt: number) => Promise<T>): Promise<T> {
     let attempt = 0;
     // we do sometimes see INTERNAL errors from SpiceDB, so we retry a few times
@@ -55,9 +60,9 @@ export class SpiceDBAuthorizer {
             userId: string;
         },
         forceEnablement?: boolean,
-    ): Promise<boolean> {
+    ): Promise<CheckResult> {
         if (!(await isFgaWritesEnabled(experimentsFields.userId))) {
-            return true;
+            return { result: true };
         }
         const featureEnabled = !!forceEnablement || (await isFgaChecksEnabled(experimentsFields.userId));
         const result = (async () => {
@@ -73,23 +78,23 @@ export class SpiceDBAuthorizer {
                         response: new TrustedValue(response),
                         request: new TrustedValue(req),
                     });
-                    return true;
+                    return { result: true, checkedAt: response.checkedAt?.token };
                 }
 
-                return permitted;
+                return { result: permitted, checkedAt: response.checkedAt?.token };
             } catch (err) {
                 error = err;
                 log.error("[spicedb] Failed to perform authorization check.", err, {
                     request: new TrustedValue(req),
                 });
-                return !featureEnabled;
+                return { result: !featureEnabled };
             } finally {
                 observeSpicedbClientLatency("check", error, timer());
             }
         })();
         // if the feature is not enabld, we don't await
         if (!featureEnabled) {
-            return true;
+            return { result: true };
         }
         return result;
     }
