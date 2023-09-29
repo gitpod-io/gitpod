@@ -108,7 +108,9 @@ export namespace Project {
         return p.name + "-" + p.id;
     }
 
-    export const PREBUILD_SETTINGS_DEFAULTS: PrebuildSettings = {
+    export type PrebuildSettingsWithDefaults = Required<Pick<PrebuildSettings, "prebuildInterval">> & PrebuildSettings;
+
+    export const PREBUILD_SETTINGS_DEFAULTS: PrebuildSettingsWithDefaults = {
         enable: false,
         branchMatchingPattern: "**",
         prebuildInterval: 10,
@@ -119,7 +121,7 @@ export namespace Project {
      * Returns effective prebuild settings for the given project. The resulting settings
      * contain default values for properties which are not set explicitly for this project.
      */
-    export function getPrebuildSettings(project: Project): PrebuildSettings {
+    export function getPrebuildSettings(project: Project): PrebuildSettingsWithDefaults {
         const effective = {
             ...PREBUILD_SETTINGS_DEFAULTS,
             ...project.settings?.prebuilds,
