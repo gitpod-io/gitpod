@@ -302,11 +302,7 @@ export class GithubApp {
                         context,
                     });
 
-                    const shouldRun = Project.hasPrebuildSettings(project)
-                        ? prebuildPrecondition.shouldRun
-                        : this.appRules.shouldRunPrebuild(config, CommitContext.isDefaultBranch(context), false, false);
-
-                    if (!shouldRun) {
+                    if (!prebuildPrecondition.shouldRun) {
                         const reason = `GitHub push event: No prebuild.`;
                         log.debug(logCtx, reason, { contextURL });
                         span.log({ "not-running": reason, config: config });
@@ -516,13 +512,18 @@ export class GithubApp {
         const contextURL = pr.html_url;
 
         const isFork = pr.head.repo.id !== pr.base.repo.id;
+        if (isFork) {
+            log.debug({ userId: user.id }, `GitHub PR event from fork.`, {
+                contextURL,
+                userId: user.id,
+                project,
+                isFork,
+            });
+            return;
+        }
+
         const prebuildPrecondition = this.prebuildManager.checkPrebuildPrecondition({ config, project, context });
-
-        const shouldRun = Project.hasPrebuildSettings(project)
-            ? prebuildPrecondition.shouldRun
-            : this.appRules.shouldRunPrebuild(config, false, true, isFork);
-
-        if (shouldRun) {
+        if (prebuildPrecondition.shouldRun) {
             const commitInfo = await this.getCommitInfo(user, ctx.payload.repository.html_url, pr.head.sha);
             const result = await this.prebuildManager.startPrebuild(tracecContext, {
                 user,

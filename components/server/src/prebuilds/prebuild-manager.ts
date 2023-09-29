@@ -186,7 +186,7 @@ export class PrebuildManager {
             const { commitHistory, additionalRepositoryCommitHistories } =
                 await this.incrementalPrebuildsService.getCommitHistoryForContext(context, user);
 
-            const prebuildEveryNthCommit = project?.settings?.prebuildEveryNthCommit || 0;
+            const prebuildEveryNthCommit = project?.settings?.prebuilds?.prebuildInterval || 0;
             if (!forcePrebuild && prebuildEveryNthCommit > 0) {
                 const history = {
                     commitHistory: commitHistory?.slice(0, prebuildEveryNthCommit),
