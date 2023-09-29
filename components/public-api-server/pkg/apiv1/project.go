@@ -183,6 +183,7 @@ func projectSettingsToAPIResponse(s *protocol.ProjectSettings) *v1.ProjectSettin
 		settings.Prebuild.PrebuildBranchStrategy = s.PrebuildSettings.BranchStrategy
 		settings.Prebuild.PrebuildBranchPattern = s.PrebuildSettings.PrebuildBranchPattern
 		settings.Prebuild.PrebuildInterval = s.PrebuildSettings.PrebuildInterval
+		settings.Prebuild.WorkspaceClass = s.PrebuildSettings.WorkspaceClass
 	}
 
 	return settings
