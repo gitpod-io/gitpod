@@ -47,10 +47,6 @@ export interface Usage {
     credits: number;
     effectiveTime?: number;
     kind: UsageKind;
-    /**
-     * @deprecated use `objectId` instead
-     */
-    workspaceInstanceId: string;
     objectId: string;
     draft: boolean;
     metadata: WorkspaceInstanceUsageData | InvoiceUsageData;

@@ -49,12 +49,11 @@ func TestUsageService_ReconcileUsage(t *testing.T) {
 
 	// usage drafts
 	dbtest.CreateUsageRecords(t, dbconn, dbtest.NewUsage(t, db.Usage{
-		ID:                  uuid.New(),
-		AttributionID:       attributionID,
-		WorkspaceInstanceID: &instance.ID,
-		ObjectID:            instance.ID.String(),
-		Kind:                db.WorkspaceInstanceUsageKind,
-		Draft:               true,
+		ID:            uuid.New(),
+		AttributionID: attributionID,
+		ObjectID:      instance.ID.String(),
+		Kind:          db.WorkspaceInstanceUsageKind,
+		Draft:         true,
 	}))
 
 	client := newUsageService(t, dbconn)
@@ -143,16 +142,15 @@ func TestReconcile(t *testing.T) {
 		require.Len(t, inserts, 1)
 		require.Len(t, updates, 0)
 		expectedUsage := db.Usage{
-			ID:                  inserts[0].ID,
-			AttributionID:       instance.UsageAttributionID,
-			Description:         usageDescriptionFromController,
-			CreditCents:         db.NewCreditCents(pricer.CreditsUsedByInstance(&instance, now)),
-			EffectiveTime:       db.NewVarCharTime(now),
-			Kind:                db.WorkspaceInstanceUsageKind,
-			WorkspaceInstanceID: &instance.ID,
-			ObjectID:            instance.ID.String(),
-			Draft:               true,
-			Metadata:            nil,
+			ID:            inserts[0].ID,
+			AttributionID: instance.UsageAttributionID,
+			Description:   usageDescriptionFromController,
+			CreditCents:   db.NewCreditCents(pricer.CreditsUsedByInstance(&instance, now)),
+			EffectiveTime: db.NewVarCharTime(now),
+			Kind:          db.WorkspaceInstanceUsageKind,
+			ObjectID:      instance.ID.String(),
+			Draft:         true,
+			Metadata:      nil,
 		}
 		require.NoError(t, expectedUsage.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
 			WorkspaceId:    instance.WorkspaceID,
@@ -185,16 +183,15 @@ func TestReconcile(t *testing.T) {
 		// the fields in the usage record deliberately do not match the instance, except for the Instance ID.
 		// we do this to test that the fields in the usage records get updated to reflect the true values from the source of truth - instances.
 		draft := dbtest.NewUsage(t, db.Usage{
-			ID:                  uuid.New(),
-			AttributionID:       db.NewTeamAttributionID(uuid.New().String()),
-			Description:         "Some description",
-			CreditCents:         1,
-			EffectiveTime:       db.VarcharTime{},
-			Kind:                db.WorkspaceInstanceUsageKind,
-			WorkspaceInstanceID: &instance.ID,
-			ObjectID:            instance.ID.String(),
-			Draft:               true,
-			Metadata:            nil,
+			ID:            uuid.New(),
+			AttributionID: db.NewTeamAttributionID(uuid.New().String()),
+			Description:   "Some description",
+			CreditCents:   1,
+			EffectiveTime: db.VarcharTime{},
+			Kind:          db.WorkspaceInstanceUsageKind,
+			ObjectID:      instance.ID.String(),
+			Draft:         true,
+			Metadata:      nil,
 		})
 
 		inserts, updates, err := reconcileUsage([]db.WorkspaceInstanceForUsage{instance}, []db.Usage{draft}, pricer, now)
@@ -203,16 +200,15 @@ func TestReconcile(t *testing.T) {
 		require.Len(t, updates, 1)
 
 		expectedUsage := db.Usage{
-			ID:                  draft.ID,
-			AttributionID:       instance.UsageAttributionID,
-			Description:         usageDescriptionFromController,
-			CreditCents:         db.NewCreditCents(pricer.CreditsUsedByInstance(&instance, now)),
-			EffectiveTime:       db.NewVarCharTime(now),
-			Kind:                db.WorkspaceInstanceUsageKind,
-			WorkspaceInstanceID: &instance.ID,
-			ObjectID:            instance.ID.String(),
-			Draft:               true,
-			Metadata:            nil,
+			ID:            draft.ID,
+			AttributionID: instance.UsageAttributionID,
+			Description:   usageDescriptionFromController,
+			CreditCents:   db.NewCreditCents(pricer.CreditsUsedByInstance(&instance, now)),
+			EffectiveTime: db.NewVarCharTime(now),
+			Kind:          db.WorkspaceInstanceUsageKind,
+			ObjectID:      instance.ID.String(),
+			Draft:         true,
+			Metadata:      nil,
 		}
 		require.NoError(t, expectedUsage.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
 			WorkspaceId:    instance.WorkspaceID,

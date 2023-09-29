@@ -122,11 +122,8 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 		kind := v1.Usage_KIND_WORKSPACE_INSTANCE
 		if usageRecord.Kind == db.InvoiceUsageKind {
 			kind = v1.Usage_KIND_INVOICE
-		}
-
-		var workspaceInstanceID string
-		if usageRecord.WorkspaceInstanceID != nil {
-			workspaceInstanceID = (*usageRecord.WorkspaceInstanceID).String()
+		} else if usageRecord.Kind == db.CreditNoteKind {
+			kind = v1.Usage_KIND_CREDIT_NOTE
 		}
 
 		usageDataEntry := &v1.Usage{
@@ -134,12 +131,11 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 			AttributionId: string(usageRecord.AttributionID),
 			EffectiveTime: timestamppb.New(usageRecord.EffectiveTime.Time()),
 			// convert cents back to full credits
-			Credits:             usageRecord.CreditCents.ToCredits(),
-			Kind:                kind,
-			WorkspaceInstanceId: workspaceInstanceID,
-			ObjectId:            usageRecord.ObjectID,
-			Draft:               usageRecord.Draft,
-			Metadata:            string(usageRecord.Metadata),
+			Credits:  usageRecord.CreditCents.ToCredits(),
+			Kind:     kind,
+			ObjectId: usageRecord.ObjectID,
+			Draft:    usageRecord.Draft,
+			Metadata: string(usageRecord.Metadata),
 		}
 		usageData = append(usageData, usageDataEntry)
 	}
@@ -356,13 +352,16 @@ func reconcileUsage(instances []db.WorkspaceInstanceForUsage, drafts []db.Usage,
 
 	instancesByID := dedupeWorkspaceInstancesForUsage(instances)
 
-	draftsByInstanceID := map[uuid.UUID]db.Usage{}
+	draftsByInstanceID := map[string]db.Usage{}
 	for _, draft := range drafts {
-		draftsByInstanceID[*draft.WorkspaceInstanceID] = draft
+		if draft.Kind != db.WorkspaceInstanceUsageKind {
+			continue
+		}
+		draftsByInstanceID[draft.ObjectID] = draft
 	}
 
 	for instanceID, instance := range instancesByID {
-		if usage, exists := draftsByInstanceID[instanceID]; exists {
+		if usage, exists := draftsByInstanceID[instanceID.String()]; exists {
 			updatedUsage, err := updateUsageFromInstance(instance, usage, pricer, now)
 			if err != nil {
 				return nil, nil, fmt.Errorf("failed to construct updated usage record: %w", err)
@@ -400,15 +399,14 @@ func newUsageFromInstance(instance db.WorkspaceInstanceForUsage, pricer *Workspa
 	}
 
 	usage := db.Usage{
-		ID:                  uuid.New(),
-		AttributionID:       instance.UsageAttributionID,
-		Description:         usageDescriptionFromController,
-		CreditCents:         db.NewCreditCents(pricer.CreditsUsedByInstance(&instance, now)),
-		EffectiveTime:       db.NewVarCharTime(effectiveTime),
-		Kind:                db.WorkspaceInstanceUsageKind,
-		ObjectID:            instance.ID.String(),
-		WorkspaceInstanceID: &instance.ID,
-		Draft:               draft,
+		ID:            uuid.New(),
+		AttributionID: instance.UsageAttributionID,
+		Description:   usageDescriptionFromController,
+		CreditCents:   db.NewCreditCents(pricer.CreditsUsedByInstance(&instance, now)),
+		EffectiveTime: db.NewVarCharTime(effectiveTime),
+		Kind:          db.WorkspaceInstanceUsageKind,
+		ObjectID:      instance.ID.String(),
+		Draft:         draft,
 	}
 
 	startedTime := ""
@@ -449,10 +447,10 @@ func updateUsageFromInstance(instance db.WorkspaceInstanceForUsage, usage db.Usa
 	return updated, nil
 }
 
-func collectWorkspaceInstanceIDs(usage []db.Usage) []uuid.UUID {
-	var ids []uuid.UUID
+func collectWorkspaceInstanceIDs(usage []db.Usage) []string {
+	var ids []string
 	for _, u := range usage {
-		ids = append(ids, *u.WorkspaceInstanceID)
+		ids = append(ids, u.ObjectID)
 	}
 	return ids
 }

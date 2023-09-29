@@ -20,14 +20,13 @@ func NewUsage(t *testing.T, record db.Usage) db.Usage {
 	workspaceInstanceId := uuid.New()
 
 	result := db.Usage{
-		ID:                  uuid.New(),
-		AttributionID:       db.NewTeamAttributionID(uuid.New().String()),
-		Description:         "some description",
-		CreditCents:         42,
-		EffectiveTime:       db.VarcharTime{},
-		Kind:                db.WorkspaceInstanceUsageKind,
-		WorkspaceInstanceID: &workspaceInstanceId,
-		ObjectID:            workspaceInstanceId.String(),
+		ID:            uuid.New(),
+		AttributionID: db.NewTeamAttributionID(uuid.New().String()),
+		Description:   "some description",
+		CreditCents:   42,
+		EffectiveTime: db.VarcharTime{},
+		Kind:          db.WorkspaceInstanceUsageKind,
+		ObjectID:      workspaceInstanceId.String(),
 	}
 
 	if record.ID.ID() != 0 {
@@ -44,9 +43,6 @@ func NewUsage(t *testing.T, record db.Usage) db.Usage {
 	}
 	if record.CreditCents != 0 {
 		result.CreditCents = record.CreditCents
-	}
-	if record.WorkspaceInstanceID != nil && (*record.WorkspaceInstanceID).ID() != 0 {
-		result.WorkspaceInstanceID = record.WorkspaceInstanceID
 	}
 	if record.ObjectID != "" {
 		result.ObjectID = record.ObjectID

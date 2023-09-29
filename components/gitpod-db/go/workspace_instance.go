@@ -98,10 +98,10 @@ func FindRunningWorkspaceInstances(ctx context.Context, conn *gorm.DB) ([]Worksp
 }
 
 // FindWorkspaceInstancesByIds finds WorkspaceInstanceForUsage by Id.
-func FindWorkspaceInstancesByIds(ctx context.Context, conn *gorm.DB, workspaceInstanceIds []uuid.UUID) ([]WorkspaceInstanceForUsage, error) {
+func FindWorkspaceInstancesByIds(ctx context.Context, conn *gorm.DB, workspaceInstanceIds []string) ([]WorkspaceInstanceForUsage, error) {
 	var instances []WorkspaceInstanceForUsage
 	var instancesInBatch []WorkspaceInstanceForUsage
-	var idChunks [][]uuid.UUID
+	var idChunks [][]string
 	chunkSize, totalSize := 1000, len(workspaceInstanceIds)
 	// explicit batching to reduce the lengths of the 'in'-part in the SELECT statement below
 	for i := 0; i < totalSize; i += chunkSize {

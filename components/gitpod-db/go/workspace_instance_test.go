@@ -193,7 +193,7 @@ func TestFindWorkspacesByInstanceId(t *testing.T) {
 		}),
 	}
 
-	twoIds := []uuid.UUID{all[0].ID, all[1].ID}
+	twoIds := []string{all[0].ID.String(), all[1].ID.String()}
 
 	dbtest.CreateWorkspaceInstances(t, conn, all...)
 

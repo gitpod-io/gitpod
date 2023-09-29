@@ -117,7 +117,6 @@ export interface Usage {
   credits: number;
   effectiveTime: Date | undefined;
   kind: Usage_Kind;
-  workspaceInstanceId: string;
   draft: boolean;
   metadata: string;
   objectId: string;
@@ -812,7 +811,6 @@ function createBaseUsage(): Usage {
     credits: 0,
     effectiveTime: undefined,
     kind: Usage_Kind.KIND_WORKSPACE_INSTANCE,
-    workspaceInstanceId: "",
     draft: false,
     metadata: "",
     objectId: "",
@@ -838,9 +836,6 @@ export const Usage = {
     }
     if (message.kind !== Usage_Kind.KIND_WORKSPACE_INSTANCE) {
       writer.uint32(48).int32(usage_KindToNumber(message.kind));
-    }
-    if (message.workspaceInstanceId !== "") {
-      writer.uint32(58).string(message.workspaceInstanceId);
     }
     if (message.draft === true) {
       writer.uint32(64).bool(message.draft);
@@ -903,13 +898,6 @@ export const Usage = {
 
           message.kind = usage_KindFromJSON(reader.int32());
           continue;
-        case 7:
-          if (tag !== 58) {
-            break;
-          }
-
-          message.workspaceInstanceId = reader.string();
-          continue;
         case 8:
           if (tag !== 64) {
             break;
@@ -948,7 +936,6 @@ export const Usage = {
       credits: isSet(object.credits) ? Number(object.credits) : 0,
       effectiveTime: isSet(object.effectiveTime) ? fromJsonTimestamp(object.effectiveTime) : undefined,
       kind: isSet(object.kind) ? usage_KindFromJSON(object.kind) : Usage_Kind.KIND_WORKSPACE_INSTANCE,
-      workspaceInstanceId: isSet(object.workspaceInstanceId) ? String(object.workspaceInstanceId) : "",
       draft: isSet(object.draft) ? Boolean(object.draft) : false,
       metadata: isSet(object.metadata) ? String(object.metadata) : "",
       objectId: isSet(object.objectId) ? String(object.objectId) : "",
@@ -975,9 +962,6 @@ export const Usage = {
     if (message.kind !== Usage_Kind.KIND_WORKSPACE_INSTANCE) {
       obj.kind = usage_KindToJSON(message.kind);
     }
-    if (message.workspaceInstanceId !== "") {
-      obj.workspaceInstanceId = message.workspaceInstanceId;
-    }
     if (message.draft === true) {
       obj.draft = message.draft;
     }
@@ -1001,7 +985,6 @@ export const Usage = {
     message.credits = object.credits ?? 0;
     message.effectiveTime = object.effectiveTime ?? undefined;
     message.kind = object.kind ?? Usage_Kind.KIND_WORKSPACE_INSTANCE;
-    message.workspaceInstanceId = object.workspaceInstanceId ?? "";
     message.draft = object.draft ?? false;
     message.metadata = object.metadata ?? "";
     message.objectId = object.objectId ?? "";

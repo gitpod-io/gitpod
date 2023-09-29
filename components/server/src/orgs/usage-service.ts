@@ -121,7 +121,6 @@ export class UsageService {
                     credits: u.credits,
                     description: u.description,
                     draft: u.draft,
-                    workspaceInstanceId: u.workspaceInstanceId,
                     objectId: u.objectId,
                     kind: mapUsageKind(u.kind),
                     metadata: !!u.metadata ? JSON.parse(u.metadata) : undefined,
