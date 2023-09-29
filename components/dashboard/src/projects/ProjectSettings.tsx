@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Project, ProjectSettings, PrebuildSettings } from "@gitpod/gitpod-protocol";
+import { PrebuildSettings, Project, ProjectSettings } from "@gitpod/gitpod-protocol";
 import { useCallback, useContext, useState, Fragment, useMemo, useEffect } from "react";
 import { useHistory } from "react-router";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
@@ -263,9 +263,9 @@ export default function ProjectSettingsView() {
                             containerClassName="max-w-md ml-6 text-sm"
                             onChange={(val) => setPrebuildBranchStrategy(val as PrebuildSettings.BranchStrategy)}
                         >
-                            <option value="defaultBranch">Default branch (e.g. main)</option>
-                            <option value="allBranches">All branches</option>
-                            <option value="selectedBranches">Matched by pattern</option>
+                            <option value="default-branch">Default branch</option>
+                            <option value="all-branches">All branches</option>
+                            <option value="matched-branches">Matched by pattern</option>
                         </SelectInputField>
                         {prebuildSettings.branchStrategy === "matched-branches" && (
                             <div className="flex flex-col ml-6 mt-4">
