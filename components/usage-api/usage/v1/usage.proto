@@ -93,11 +93,13 @@ message Usage {
     enum Kind {
         KIND_WORKSPACE_INSTANCE = 0;
         KIND_INVOICE = 1;
+        KIND_CREDIT_NOTE = 2;
     }
 	Kind kind = 6;
 	string workspace_instance_id = 7;
 	bool draft = 8;
 	string metadata = 9;
+	string object_id = 10;
 }
 
 message SetCostCenterRequest {

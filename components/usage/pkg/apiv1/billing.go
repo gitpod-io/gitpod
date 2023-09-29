@@ -473,6 +473,7 @@ func InternalComputeInvoiceUsage(ctx context.Context, invoice *stripe_api.Invoic
 		CreditCents:   db.NewCreditCents(float64(-creditsOnInvoice)),
 		EffectiveTime: db.NewVarCharTime(finalizedAt),
 		Kind:          db.InvoiceUsageKind,
+		ObjectID:      invoice.ID,
 		Draft:         false,
 		Metadata:      nil,
 	}, nil

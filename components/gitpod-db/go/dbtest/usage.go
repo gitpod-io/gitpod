@@ -27,6 +27,7 @@ func NewUsage(t *testing.T, record db.Usage) db.Usage {
 		EffectiveTime:       db.VarcharTime{},
 		Kind:                db.WorkspaceInstanceUsageKind,
 		WorkspaceInstanceID: &workspaceInstanceId,
+		ObjectID:            workspaceInstanceId.String(),
 	}
 
 	if record.ID.ID() != 0 {
@@ -46,6 +47,9 @@ func NewUsage(t *testing.T, record db.Usage) db.Usage {
 	}
 	if record.WorkspaceInstanceID != nil && (*record.WorkspaceInstanceID).ID() != 0 {
 		result.WorkspaceInstanceID = record.WorkspaceInstanceID
+	}
+	if record.ObjectID != "" {
+		result.ObjectID = record.ObjectID
 	}
 	if record.Kind != "" {
 		result.Kind = record.Kind

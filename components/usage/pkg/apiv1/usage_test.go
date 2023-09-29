@@ -52,6 +52,7 @@ func TestUsageService_ReconcileUsage(t *testing.T) {
 		ID:                  uuid.New(),
 		AttributionID:       attributionID,
 		WorkspaceInstanceID: &instance.ID,
+		ObjectID:            instance.ID.String(),
 		Kind:                db.WorkspaceInstanceUsageKind,
 		Draft:               true,
 	}))
@@ -149,6 +150,7 @@ func TestReconcile(t *testing.T) {
 			EffectiveTime:       db.NewVarCharTime(now),
 			Kind:                db.WorkspaceInstanceUsageKind,
 			WorkspaceInstanceID: &instance.ID,
+			ObjectID:            instance.ID.String(),
 			Draft:               true,
 			Metadata:            nil,
 		}
@@ -190,6 +192,7 @@ func TestReconcile(t *testing.T) {
 			EffectiveTime:       db.VarcharTime{},
 			Kind:                db.WorkspaceInstanceUsageKind,
 			WorkspaceInstanceID: &instance.ID,
+			ObjectID:            instance.ID.String(),
 			Draft:               true,
 			Metadata:            nil,
 		})
@@ -207,6 +210,7 @@ func TestReconcile(t *testing.T) {
 			EffectiveTime:       db.NewVarCharTime(now),
 			Kind:                db.WorkspaceInstanceUsageKind,
 			WorkspaceInstanceID: &instance.ID,
+			ObjectID:            instance.ID.String(),
 			Draft:               true,
 			Metadata:            nil,
 		}

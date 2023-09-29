@@ -37,15 +37,20 @@ func (cc CreditCents) ToCredits() float64 {
 }
 
 type Usage struct {
-	ID                  uuid.UUID      `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
-	AttributionID       AttributionID  `gorm:"column:attributionId;type:varchar;size:255;" json:"attributionId"`
-	Description         string         `gorm:"column:description;type:varchar;size:255;" json:"description"`
-	CreditCents         CreditCents    `gorm:"column:creditCents;type:bigint;" json:"creditCents"`
-	EffectiveTime       VarcharTime    `gorm:"column:effectiveTime;type:varchar;size:255;" json:"effectiveTime"`
-	Kind                UsageKind      `gorm:"column:kind;type:char;size:10;" json:"kind"`
-	WorkspaceInstanceID *uuid.UUID     `gorm:"column:workspaceInstanceId;type:char;size:36;" json:"workspaceInstanceId"`
-	Draft               bool           `gorm:"column:draft;type:boolean;" json:"draft"`
-	Metadata            datatypes.JSON `gorm:"column:metadata;type:text;size:65535" json:"metadata"`
+	ID            uuid.UUID     `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
+	AttributionID AttributionID `gorm:"column:attributionId;type:varchar;size:255;" json:"attributionId"`
+	Description   string        `gorm:"column:description;type:varchar;size:255;" json:"description"`
+	CreditCents   CreditCents   `gorm:"column:creditCents;type:bigint;" json:"creditCents"`
+	EffectiveTime VarcharTime   `gorm:"column:effectiveTime;type:varchar;size:255;" json:"effectiveTime"`
+	Kind          UsageKind     `gorm:"column:kind;type:char;size:10;" json:"kind"`
+	// WorkspaceInstanceID contains the ID of the workspace instance in case "Kind" is "workspaceinstance".
+	//
+	// Deprecated: Use ObjectID instead.
+	WorkspaceInstanceID *uuid.UUID `gorm:"column:workspaceInstanceId;type:char;size:36;" json:"workspaceInstanceId"`
+	// ObjectID contains the ID of this usage entry is related to. The type of the object is defined by the "Kind" field.
+	ObjectID string         `gorm:"column:objectId;type:varchar;size:60;" json:"objectId"`
+	Draft    bool           `gorm:"column:draft;type:boolean;" json:"draft"`
+	Metadata datatypes.JSON `gorm:"column:metadata;type:text;size:65535" json:"metadata"`
 }
 
 func (u *Usage) SetMetadataWithWorkspaceInstance(data WorkspaceInstanceUsageData) error {

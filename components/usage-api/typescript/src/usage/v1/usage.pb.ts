@@ -120,11 +120,13 @@ export interface Usage {
   workspaceInstanceId: string;
   draft: boolean;
   metadata: string;
+  objectId: string;
 }
 
 export enum Usage_Kind {
   KIND_WORKSPACE_INSTANCE = "KIND_WORKSPACE_INSTANCE",
   KIND_INVOICE = "KIND_INVOICE",
+  KIND_CREDIT_NOTE = "KIND_CREDIT_NOTE",
   UNRECOGNIZED = "UNRECOGNIZED",
 }
 
@@ -136,6 +138,9 @@ export function usage_KindFromJSON(object: any): Usage_Kind {
     case 1:
     case "KIND_INVOICE":
       return Usage_Kind.KIND_INVOICE;
+    case 2:
+    case "KIND_CREDIT_NOTE":
+      return Usage_Kind.KIND_CREDIT_NOTE;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -149,6 +154,8 @@ export function usage_KindToJSON(object: Usage_Kind): string {
       return "KIND_WORKSPACE_INSTANCE";
     case Usage_Kind.KIND_INVOICE:
       return "KIND_INVOICE";
+    case Usage_Kind.KIND_CREDIT_NOTE:
+      return "KIND_CREDIT_NOTE";
     case Usage_Kind.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
@@ -161,6 +168,8 @@ export function usage_KindToNumber(object: Usage_Kind): number {
       return 0;
     case Usage_Kind.KIND_INVOICE:
       return 1;
+    case Usage_Kind.KIND_CREDIT_NOTE:
+      return 2;
     case Usage_Kind.UNRECOGNIZED:
     default:
       return -1;
@@ -806,6 +815,7 @@ function createBaseUsage(): Usage {
     workspaceInstanceId: "",
     draft: false,
     metadata: "",
+    objectId: "",
   };
 }
 
@@ -837,6 +847,9 @@ export const Usage = {
     }
     if (message.metadata !== "") {
       writer.uint32(74).string(message.metadata);
+    }
+    if (message.objectId !== "") {
+      writer.uint32(82).string(message.objectId);
     }
     return writer;
   },
@@ -911,6 +924,13 @@ export const Usage = {
 
           message.metadata = reader.string();
           continue;
+        case 10:
+          if (tag !== 82) {
+            break;
+          }
+
+          message.objectId = reader.string();
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -931,6 +951,7 @@ export const Usage = {
       workspaceInstanceId: isSet(object.workspaceInstanceId) ? String(object.workspaceInstanceId) : "",
       draft: isSet(object.draft) ? Boolean(object.draft) : false,
       metadata: isSet(object.metadata) ? String(object.metadata) : "",
+      objectId: isSet(object.objectId) ? String(object.objectId) : "",
     };
   },
 
@@ -963,6 +984,9 @@ export const Usage = {
     if (message.metadata !== "") {
       obj.metadata = message.metadata;
     }
+    if (message.objectId !== "") {
+      obj.objectId = message.objectId;
+    }
     return obj;
   },
 
@@ -980,6 +1004,7 @@ export const Usage = {
     message.workspaceInstanceId = object.workspaceInstanceId ?? "";
     message.draft = object.draft ?? false;
     message.metadata = object.metadata ?? "";
+    message.objectId = object.objectId ?? "";
     return message;
   },
 };

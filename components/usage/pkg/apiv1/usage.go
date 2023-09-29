@@ -137,6 +137,7 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 			Credits:             usageRecord.CreditCents.ToCredits(),
 			Kind:                kind,
 			WorkspaceInstanceId: workspaceInstanceID,
+			ObjectId:            usageRecord.ObjectID,
 			Draft:               usageRecord.Draft,
 			Metadata:            string(usageRecord.Metadata),
 		}
@@ -405,6 +406,7 @@ func newUsageFromInstance(instance db.WorkspaceInstanceForUsage, pricer *Workspa
 		CreditCents:         db.NewCreditCents(pricer.CreditsUsedByInstance(&instance, now)),
 		EffectiveTime:       db.NewVarCharTime(effectiveTime),
 		Kind:                db.WorkspaceInstanceUsageKind,
+		ObjectID:            instance.ID.String(),
 		WorkspaceInstanceID: &instance.ID,
 		Draft:               draft,
 	}
