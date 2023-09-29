@@ -115,8 +115,8 @@ export function projectToProtocol(project: Project): ProtocolProject {
             },
             prebuilds: {
                 enable: project.settings?.prebuild?.enablePrebuilds,
-                branchStrategy: project.settings?.prebuild?.prebuildBranchStrategy as any,
-                branchMatchingPattern: project.settings?.prebuild?.prebuildBranchPattern,
+                branchStrategy: project.settings?.prebuild?.branchStrategy as any,
+                branchMatchingPattern: project.settings?.prebuild?.branchMatchingPattern,
                 prebuildInterval: project.settings?.prebuild?.prebuildInterval,
                 workspaceClass: project.settings?.prebuild?.workspaceClass,
             },

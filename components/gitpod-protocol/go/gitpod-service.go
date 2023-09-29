@@ -2302,7 +2302,7 @@ type PrebuildSettings struct {
 	Enable                *bool   `json:"enable,omitempty"`
 	PrebuildInterval      *int32  `json:"prebuildInterval,omitempty"`
 	BranchStrategy        *string `json:"branchStrategy,omitempty"`
-	PrebuildBranchPattern *string `json:"prebuildBranchPattern,omitempty"`
+	BranchMatchingPattern *string `json:"branchMatchingPattern,omitempty"`
 	WorkspaceClass        *string `json:"workspaceClass,omitempty"`
 }
 

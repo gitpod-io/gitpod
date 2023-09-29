@@ -165,14 +165,14 @@ export class PrebuildSettings extends Message<PrebuildSettings> {
   enablePrebuilds?: boolean;
 
   /**
-   * @generated from field: optional string prebuild_branch_pattern = 7;
+   * @generated from field: optional string branch_matching_pattern = 7;
    */
-  prebuildBranchPattern?: string;
+  branchMatchingPattern?: string;
 
   /**
-   * @generated from field: optional string prebuild_branch_strategy = 8;
+   * @generated from field: optional string branch_strategy = 8;
    */
-  prebuildBranchStrategy?: string;
+  branchStrategy?: string;
 
   /**
    * @generated from field: optional int32 prebuild_interval = 9;
@@ -196,8 +196,8 @@ export class PrebuildSettings extends Message<PrebuildSettings> {
     { no: 2, name: "keep_outdated_prebuilds_running", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 3, name: "use_previous_prebuilds", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 5, name: "enable_prebuilds", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
-    { no: 7, name: "prebuild_branch_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 8, name: "prebuild_branch_strategy", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 7, name: "branch_matching_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 8, name: "branch_strategy", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 9, name: "prebuild_interval", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
     { no: 10, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
   ]);

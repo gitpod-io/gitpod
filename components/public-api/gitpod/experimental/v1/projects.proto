@@ -49,8 +49,8 @@ message PrebuildSettings {
     reserved 4; // was prebuild_every_nth
     optional bool enable_prebuilds = 5;
     reserved 6; // was prebuild_default_branch_only
-    optional string prebuild_branch_pattern = 7;
-    optional string prebuild_branch_strategy = 8;
+    optional string branch_matching_pattern = 7;
+    optional string branch_strategy = 8;
     optional int32 prebuild_interval = 9;
     optional string workspace_class = 10;
 }

@@ -180,8 +180,8 @@ func projectSettingsToAPIResponse(s *protocol.ProjectSettings) *v1.ProjectSettin
 	}
 	if s.PrebuildSettings != nil {
 		settings.Prebuild.EnablePrebuilds = s.PrebuildSettings.Enable
-		settings.Prebuild.PrebuildBranchStrategy = s.PrebuildSettings.BranchStrategy
-		settings.Prebuild.PrebuildBranchPattern = s.PrebuildSettings.PrebuildBranchPattern
+		settings.Prebuild.BranchStrategy = s.PrebuildSettings.BranchStrategy
+		settings.Prebuild.BranchMatchingPattern = s.PrebuildSettings.BranchMatchingPattern
 		settings.Prebuild.PrebuildInterval = s.PrebuildSettings.PrebuildInterval
 		settings.Prebuild.WorkspaceClass = s.PrebuildSettings.WorkspaceClass
 	}
