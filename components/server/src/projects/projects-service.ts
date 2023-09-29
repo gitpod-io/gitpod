@@ -30,7 +30,7 @@ import { URL } from "url";
 import { Authorizer, SYSTEM_USER } from "../authorization/authorizer";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
 import { ScmService } from "./scm-service";
-import { daysBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { daysBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 
 @injectable()
 export class ProjectsService {
@@ -224,7 +224,7 @@ export class ProjectsService {
 
         const parsedUrl = RepoURL.parseRepoUrl(cloneUrl);
         if (!parsedUrl) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Clone URL must be a valid URL.");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Clone URL must be a repository URL.");
         }
 
         const project = Project.create({
@@ -391,15 +391,15 @@ export class ProjectsService {
     }
 
     async isProjectConsideredInactive(userId: string, projectId: string): Promise<boolean> {
+        const isOlderThan7Days = (d1: string) => isDateSmaller(d1, daysBefore(new Date().toISOString(), 7));
+
         await this.auth.checkPermissionOnProject(userId, "read_info", projectId);
         const usage = await this.projectDB.getProjectUsage(projectId);
         if (!usage?.lastWorkspaceStart) {
-            return false;
+            const project = await this.projectDB.findProjectById(projectId);
+            return !project || isOlderThan7Days(project.creationTime);
         }
-        const now = Date.now();
-        const lastUse = new Date(usage.lastWorkspaceStart).getTime();
-        const inactiveProjectTime = 1000 * 60 * 60 * 24 * 7 * 1; // 1 week
-        return now - lastUse > inactiveProjectTime;
+        return isOlderThan7Days(usage.lastWorkspaceStart);
     }
 
     async getPrebuildEvents(userId: string, projectId: string): Promise<PrebuildEvent[]> {
@@ -425,13 +425,18 @@ export class ProjectsService {
 
         const newSettings = { ...project.settings };
         const newPrebuildSettings: PrebuildSettings = { enable: false };
+        let note = "project is considered inactive";
 
         // if workspaces were running in the past week
         const isInactive = await this.isProjectConsideredInactive(SYSTEM_USER, project.id);
+        console.log(`isInactive: ${isInactive}`);
         if (!isInactive) {
+            note = "project is considered active";
             const numberOfPrebuilds30days = await this.workspaceDb
                 .trace({})
                 .countUnabortedPrebuildsSince(project.id, new Date(daysBefore(new Date().toISOString(), 30)));
+
+            note = note + `; ${numberOfPrebuilds30days} prebuilds in past 30 days`;
 
             if (numberOfPrebuilds30days > 0) {
                 const defaults = ProjectsService.PROJECT_SETTINGS_DEFAULTS.prebuilds!;
@@ -445,11 +450,13 @@ export class ProjectsService {
 
         // update new settings
         project.settings = newSettings;
+        (newPrebuildSettings as any)["_migration_note"] = note;
         project.settings.prebuilds = newPrebuildSettings;
         delete newSettings.enablePrebuilds;
         delete newSettings.prebuildBranchPattern;
         delete newSettings.prebuildDefaultBranchOnly;
         delete newSettings.prebuildEveryNthCommit;
+        delete newSettings.workspaceClasses?.prebuild;
         await this.projectDB.updateProject(project);
 
         return project;
