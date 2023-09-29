@@ -156,6 +156,9 @@ export default function ProjectSettingsView() {
 
     const updatePrebuildBranchPattern = useCallback(
         async (value: string) => {
+            if (!value) {
+                return;
+            }
             setPrebuildBranchPattern(value);
 
             debouncedUpdatePrebuildBranchPattern(value);
