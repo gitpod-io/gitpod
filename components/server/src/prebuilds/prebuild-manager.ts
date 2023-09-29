@@ -186,13 +186,13 @@ export class PrebuildManager {
             const { commitHistory, additionalRepositoryCommitHistories } =
                 await this.incrementalPrebuildsService.getCommitHistoryForContext(context, user);
 
-            const prebuildEveryNthCommit = project?.settings?.prebuilds?.prebuildInterval || 0;
-            if (!forcePrebuild && prebuildEveryNthCommit > 0) {
+            const prebuildInterval = project?.settings?.prebuilds?.prebuildInterval || 0;
+            if (!forcePrebuild && prebuildInterval > 0) {
                 const history = {
-                    commitHistory: commitHistory?.slice(0, prebuildEveryNthCommit),
+                    commitHistory: commitHistory?.slice(0, prebuildInterval),
                     additionalRepositoryCommitHistories: additionalRepositoryCommitHistories?.map((repoHist) => ({
                         cloneUrl: repoHist.cloneUrl,
-                        commitHistory: repoHist.commitHistory.slice(0, prebuildEveryNthCommit),
+                        commitHistory: repoHist.commitHistory.slice(0, prebuildInterval),
                     })),
                 };
                 const prebuild = await this.incrementalPrebuildsService.findGoodBaseForIncrementalBuild(
