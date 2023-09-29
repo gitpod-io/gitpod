@@ -167,12 +167,8 @@ func projectSettingsToAPIResponse(s *protocol.ProjectSettings) *v1.ProjectSettin
 		return &v1.ProjectSettings{}
 	}
 
-	return &v1.ProjectSettings{
+	settings := &v1.ProjectSettings{
 		Prebuild: &v1.PrebuildSettings{
-			EnablePrebuilds:              s.PrebuildSettings.Enable,
-			PrebuildBranchStrategy:       s.PrebuildSettings.BranchStrategy,
-			PrebuildBranchPattern:        s.PrebuildSettings.PrebuildBranchPattern,
-			PrebuildInterval:             s.PrebuildSettings.PrebuildInterval,
 			EnableIncrementalPrebuilds:   s.UseIncrementalPrebuilds,
 			KeepOutdatedPrebuildsRunning: s.KeepOutdatedPrebuildsRunning,
 			UsePreviousPrebuilds:         s.AllowUsingPreviousPrebuilds,
@@ -182,6 +178,14 @@ func projectSettingsToAPIResponse(s *protocol.ProjectSettings) *v1.ProjectSettin
 			WorkspaceClass:              workspaceClassesToAPIResponse(s.WorkspaceClasses),
 		},
 	}
+	if s.PrebuildSettings != nil {
+		settings.Prebuild.EnablePrebuilds = s.PrebuildSettings.Enable
+		settings.Prebuild.PrebuildBranchStrategy = s.PrebuildSettings.BranchStrategy
+		settings.Prebuild.PrebuildBranchPattern = s.PrebuildSettings.PrebuildBranchPattern
+		settings.Prebuild.PrebuildInterval = s.PrebuildSettings.PrebuildInterval
+	}
+
+	return settings
 }
 
 func workspaceClassesToAPIResponse(s *protocol.WorkspaceClassesSettings) *v1.WorkspaceClassSettings {
