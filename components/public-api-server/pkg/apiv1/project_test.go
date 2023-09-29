@@ -339,7 +339,6 @@ func newProject(p *protocol.Project) *protocol.Project {
 			UsePersistentVolumeClaim:     true,
 			KeepOutdatedPrebuildsRunning: true,
 			AllowUsingPreviousPrebuilds:  true,
-			PrebuildEveryNthCommit:       5,
 			WorkspaceClasses: &protocol.WorkspaceClassesSettings{
 				Regular:  "default",
 				Prebuild: "default",
