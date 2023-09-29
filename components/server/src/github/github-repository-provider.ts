@@ -231,72 +231,55 @@ export class GithubRepositoryProvider implements RepositoryProvider {
     }
 
     public async searchRepos(user: User, searchString: string): Promise<RepositoryInfo[]> {
-        const logCtx = { userId: user.id, searchString };
+        const logCtx = { userId: user.id };
 
-        // TODO: look to try graphql api to reduce response payload size
-        // search personal repos
-        const userSearch = this.github.run(user, async (api) => {
-            return api.search.repos({
-                q: `"${searchString}" in:name user:@me sort:updated`,
-                sort: "updated",
-                per_page: 10,
+        // graphql api only returns public orgs, so we need to use the rest api to get both public & private orgs
+        const orgs = await this.github.run(user, async (api) => {
+            return api.orgs.listMembershipsForAuthenticatedUser({
+                state: "active",
             });
         });
 
-        // Attach an error handler to log error and not throw
-        userSearch.catch((err) => {
-            log.warn(logCtx, "Error searching user repos", err);
-        });
+        // TODO: determine if there's a maximum # of orgs we can include in a single query and split into multiple calls if necessary
+        // A string of org query filters, i.e. "org:org1 org:org2 org:org3"
+        const orgFilters = orgs?.data.map((org) => `org:${org}`).join(" ");
 
-        // TODO: Look at using graphql query to grab all orgs w/ some kind of latest activity date
-        // We could then sort in memory and grab the 5 most recent orgs
-        // Find all orgs user belongs to
-        const orgs = await this.github
-            .run(user, async (api) => {
-                return api.orgs.listMembershipsForAuthenticatedUser({
-                    state: "active",
-                    per_page: 5,
-                });
-            })
-            .catch((err) => {
-                log.warn(logCtx, "Error listing orgs", err);
+        const repoSearchQuery = `
+            query SearchRepos($search: String!, $orgs: String! ) {
+                search (type:REPOSITORY, first:10, query:"$search in:name user:@me $orgs"){
+                    edges {
+                        node {
+                            ... on Repository {
+                                name
+                                url
+                                owner {
+                                    login
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            variables {
+                "search": "${searchString}",
+                "orgs": "${orgFilters}"
+            }`;
+
+        let repos: RepositoryInfo[] = [];
+
+        try {
+            const result = await this.githubQueryApi.runQuery<SearchReposQueryResponse>(user, repoSearchQuery);
+            repos = result.data.search.edges.map((edge) => {
+                return {
+                    name: edge.node.name,
+                    url: edge.node.url,
+                };
             });
+        } catch (e) {
+            log.warn(logCtx, "Error searching repos", e, { orgCount: orgFilters.length });
 
-        const orgLogins = orgs?.data.map((org) => org.organization.login) ?? [];
-
-        const orgSearches = orgLogins.map((org) => {
-            const orgSearch = this.github.run(user, async (api) => {
-                return api.search.repos({
-                    q: `"${searchString}" in:name org:${org} sort:updated`,
-                    sort: "updated",
-                    per_page: 5,
-                });
-            });
-
-            // Attach an error handler to log error and not throw
-            orgSearch.catch((err) => {
-                log.warn(logCtx, "Error searching org repos", err);
-            });
-
-            return orgSearch;
-        });
-
-        const responses = await Promise.allSettled([userSearch, ...orgSearches]);
-
-        // collect successful results
-        const results = responses
-            .map((result) => {
-                return result.status === "fulfilled" ? result.value?.data.items : [];
-            })
-            .flat();
-
-        // transform to correct format
-        const repos = results.map((repo): RepositoryInfo => {
-            return {
-                name: repo.name,
-                url: repo.html_url,
-            };
-        });
+            throw e;
+        }
 
         return repos;
     }
@@ -322,3 +305,14 @@ export class GithubRepositoryProvider implements RepositoryProvider {
         }
     }
 }
+
+type SearchReposQueryResponse = {
+    search: {
+        edges: {
+            node: {
+                name: string;
+                url: string;
+            };
+        }[];
+    };
+};

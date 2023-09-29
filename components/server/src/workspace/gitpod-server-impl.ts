@@ -1910,7 +1910,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                         }),
                     );
                 } catch (error) {
-                    log.debug(logCtx, "Could not search repositories from host " + p.host, error);
+                    log.warn(logCtx, "Could not search repositories from host " + p.host, error);
                 }
 
                 return [];
