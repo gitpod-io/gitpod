@@ -105,6 +105,21 @@ export default function ProjectSettingsView() {
         [project, setProject, toast, projectName],
     );
 
+    const setPrebuildsEnabled = useCallback(
+        async (value: boolean) => {
+            if (!project) {
+                return;
+            }
+
+            await updateProjectSettings({
+                prebuilds: {
+                    enable: value,
+                },
+            });
+        },
+        [project, updateProjectSettings],
+    );
+
     const setPrebuildBranchStrategy = useCallback(
         async (value: PrebuildSettings.BranchStrategy) => {
             if (!project) {
@@ -241,7 +256,7 @@ export default function ProjectSettingsView() {
                         </span>
                     }
                     checked={enablePrebuilds}
-                    onChange={(checked) => updateProjectSettings({ enablePrebuilds: checked })}
+                    onChange={setPrebuildsEnabled}
                 />
                 {enablePrebuilds && (
                     <>
