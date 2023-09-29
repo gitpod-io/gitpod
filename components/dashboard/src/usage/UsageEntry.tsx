@@ -27,7 +27,7 @@ export const UsageEntry: FC<Props> = ({ usage }) => {
 
     return (
         <div
-            key={usage.workspaceInstanceId}
+            key={`${usage.kind}_${usage.objectId || usage.workspaceInstanceId}`}
             className="flex p-3 grid grid-cols-12 gap-x-3 justify-between transition ease-in-out rounded-xl"
         >
             <div className="flex flex-col col-span-2 my-auto">

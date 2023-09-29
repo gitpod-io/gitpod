@@ -16,7 +16,7 @@ import {
 import { inject, injectable } from "inversify";
 import { Authorizer } from "../authorization/authorizer";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { CostCenterJSON, ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
+import { CostCenterJSON, ListUsageRequest, ListUsageResponse, UsageKind } from "@gitpod/gitpod-protocol/lib/usage";
 import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 
 @injectable()
@@ -99,6 +99,19 @@ export class UsageService {
                 perPage: req.pagination?.perPage,
             },
         });
+        function mapUsageKind(kind: Usage_Kind): UsageKind {
+            switch (kind) {
+                case Usage_Kind.KIND_WORKSPACE_INSTANCE:
+                    return "workspaceinstance";
+                case Usage_Kind.KIND_INVOICE:
+                    return "invoice";
+                case Usage_Kind.KIND_CREDIT_NOTE:
+                    return "creditnote";
+                case Usage_Kind.UNRECOGNIZED:
+                    return undefined;
+            }
+        }
+
         return {
             usageEntriesList: response.usageEntries.map((u) => {
                 return {
@@ -109,7 +122,8 @@ export class UsageService {
                     description: u.description,
                     draft: u.draft,
                     workspaceInstanceId: u.workspaceInstanceId,
-                    kind: u.kind === Usage_Kind.KIND_WORKSPACE_INSTANCE ? "workspaceinstance" : "invoice",
+                    objectId: u.objectId,
+                    kind: mapUsageKind(u.kind),
                     metadata: !!u.metadata ? JSON.parse(u.metadata) : undefined,
                 };
             }),

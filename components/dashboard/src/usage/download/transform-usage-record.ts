@@ -21,7 +21,7 @@ export const transformUsageRecord = (usage: Usage): UsageCSVRow | undefined => {
         credits: `${usage.credits ?? 0}`,
         description: usage.description,
         draft: usage.draft ? "true" : "false",
-        workspaceInstanceId: usage.workspaceInstanceId,
+        workspaceInstanceId: usage.objectId || usage.workspaceInstanceId,
         kind: usage.kind,
         userId: metadata.userId,
         endTime: metadata.endTime ?? "",

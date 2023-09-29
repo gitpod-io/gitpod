@@ -39,7 +39,7 @@ export interface PaginationResponse {
     page: number;
 }
 
-export type UsageKind = "workspaceinstance" | "invoice";
+export type UsageKind = "workspaceinstance" | "invoice" | "creditnote" | undefined;
 export interface Usage {
     id: string;
     attributionId: string;
@@ -47,7 +47,11 @@ export interface Usage {
     credits: number;
     effectiveTime?: number;
     kind: UsageKind;
+    /**
+     * @deprecated use `objectId` instead
+     */
     workspaceInstanceId: string;
+    objectId: string;
     draft: boolean;
     metadata: WorkspaceInstanceUsageData | InvoiceUsageData;
 }
