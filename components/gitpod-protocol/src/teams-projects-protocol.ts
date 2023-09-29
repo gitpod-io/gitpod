@@ -108,16 +108,27 @@ export namespace Project {
         return p.name + "-" + p.id;
     }
 
-    export function isPrebuildsEnabled(project: Project): boolean {
-        return !!project.settings?.prebuilds?.enable;
+    export const PREBUILD_SETTINGS_DEFAULTS: PrebuildSettings = {
+        enable: false,
+        branchMatchingPattern: "**",
+        prebuildInterval: 10,
+        branchStrategy: "all-branches",
+    };
+
+    /**
+     * Returns effective prebuild settings for the given project. The resulting settings
+     * contain default values for properties which are not set explicitly for this project.
+     */
+    export function getPrebuildSettings(project: Project): PrebuildSettings {
+        const effective = {
+            ...PREBUILD_SETTINGS_DEFAULTS,
+            ...project.settings?.prebuilds,
+        };
+        return effective;
     }
 
     export function hasPrebuildSettings(project: Project) {
         return !(typeof project.settings?.prebuilds === "undefined");
-    }
-
-    export function getPrebuildBranchStrategy(project: Project): PrebuildSettings.BranchStrategy {
-        return project.settings?.prebuilds?.branchStrategy || "all-branches";
     }
 
     export interface Overview {

@@ -34,17 +34,6 @@ import { daysBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/time
 
 @injectable()
 export class ProjectsService {
-    public static PROJECT_SETTINGS_DEFAULTS: ProjectSettings = {
-        enablePrebuilds: false,
-        prebuildDefaultBranchOnly: true,
-        prebuilds: {
-            enable: false,
-            branchMatchingPattern: "**",
-            prebuildInterval: 10,
-            branchStrategy: "all-branches",
-        },
-    };
-
     constructor(
         @inject(ProjectDB) private readonly projectDB: ProjectDB,
         @inject(TracedWorkspaceDB) private readonly workspaceDb: DBWithTracing<WorkspaceDB>,
@@ -208,7 +197,7 @@ export class ProjectsService {
     async createProject(
         { name, slug, cloneUrl, teamId, appInstallationId }: CreateProjectParams,
         installer: User,
-        projectSettingsDefaults: ProjectSettings = ProjectsService.PROJECT_SETTINGS_DEFAULTS,
+        projectSettingsDefaults: ProjectSettings = { prebuilds: Project.PREBUILD_SETTINGS_DEFAULTS },
     ): Promise<Project> {
         await this.auth.checkPermissionOnOrganization(installer.id, "create_project", teamId);
 
@@ -424,7 +413,6 @@ export class ProjectsService {
         }
 
         const logCtx: any = { oldSettings: { ...project.settings } };
-
         const newPrebuildSettings: PrebuildSettings = { enable: false };
 
         // if workspaces were running in the past week
@@ -435,16 +423,19 @@ export class ProjectsService {
             const count = await this.workspaceDb.trace({}).countUnabortedPrebuildsSince(project.id, sevenDaysAgo);
             logCtx.count = count;
             if (count > 0) {
-                const defaults = ProjectsService.PROJECT_SETTINGS_DEFAULTS.prebuilds!;
+                const defaults = Project.PREBUILD_SETTINGS_DEFAULTS;
                 newPrebuildSettings.enable = true;
                 newPrebuildSettings.prebuildInterval =
                     project.settings?.prebuildEveryNthCommit || defaults.prebuildInterval;
-                newPrebuildSettings.branchStrategy = defaults.branchStrategy;
+                newPrebuildSettings.branchStrategy = !!project.settings?.prebuildBranchPattern
+                    ? "matched-branches"
+                    : defaults.branchStrategy;
                 if (newPrebuildSettings.prebuildInterval! < defaults.prebuildInterval!) {
                     // limiting to default branch for short intervals, to avoid unwanted increase of costs.
                     newPrebuildSettings.branchStrategy = "default-branch";
                 }
-                newPrebuildSettings.branchMatchingPattern = defaults.branchMatchingPattern;
+                newPrebuildSettings.branchMatchingPattern =
+                    project.settings?.prebuildBranchPattern || defaults.branchMatchingPattern;
                 newPrebuildSettings.workspaceClass = project.settings?.workspaceClasses?.prebuild;
             }
         }

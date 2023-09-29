@@ -125,7 +125,7 @@ export default function ProjectSettingsView() {
             if (!project) {
                 return;
             }
-            const oldValue = Project.getPrebuildBranchStrategy(project);
+            const oldValue = Project.getPrebuildSettings(project).branchStrategy;
             if (oldValue === value) {
                 return;
             }
@@ -211,11 +211,7 @@ export default function ProjectSettingsView() {
     // TODO: Render a generic error screen for when an entity isn't found
     if (!project) return null;
 
-    const enablePrebuilds = Project.isPrebuildsEnabled(project);
-
-    const prebuildBranchStrategy = Project.getPrebuildBranchStrategy(project);
-
-    const prebuildInterval = project.settings?.prebuilds?.prebuildInterval || 10;
+    const prebuildSettings = Project.getPrebuildSettings(project);
 
     return (
         <ProjectSettingsPage project={project}>
@@ -238,7 +234,7 @@ export default function ProjectSettingsView() {
                     label="Enable prebuilds"
                     hint={
                         <span>
-                            {enablePrebuilds ? (
+                            {prebuildSettings.enable ? (
                                 <Fragment>
                                     Prebuilds will run for any <code>before</code> or <code>init</code> tasks.
                                 </Fragment>
@@ -255,15 +251,15 @@ export default function ProjectSettingsView() {
                             </a>
                         </span>
                     }
-                    checked={enablePrebuilds}
+                    checked={!!prebuildSettings.enable}
                     onChange={setPrebuildsEnabled}
                 />
-                {enablePrebuilds && (
+                {prebuildSettings.enable && (
                     <>
                         <SelectInputField
-                            disabled={!enablePrebuilds}
+                            disabled={!prebuildSettings.enable}
                             label="Build branches"
-                            value={prebuildBranchStrategy}
+                            value={prebuildSettings.branchStrategy || ""}
                             containerClassName="max-w-md ml-6 text-sm"
                             onChange={(val) => setPrebuildBranchStrategy(val as PrebuildSettings.BranchStrategy)}
                         >
@@ -271,13 +267,13 @@ export default function ProjectSettingsView() {
                             <option value="allBranches">All branches</option>
                             <option value="selectedBranches">Matched by pattern</option>
                         </SelectInputField>
-                        {prebuildBranchStrategy === "matched-branches" && (
+                        {prebuildSettings.branchStrategy === "matched-branches" && (
                             <div className="flex flex-col ml-6 mt-4">
                                 <label
                                     htmlFor="selectedBranches"
                                     className={classNames(
                                         "text-sm font-semibold cursor-pointer tracking-wide",
-                                        !enablePrebuilds
+                                        !prebuildSettings.enable
                                             ? "text-gray-400 dark:text-gray-400"
                                             : "text-gray-600 dark:text-gray-100",
                                     )}
@@ -288,7 +284,7 @@ export default function ProjectSettingsView() {
                                     type="text"
                                     id="selectedBranches"
                                     className="mt-2"
-                                    disabled={prebuildBranchStrategy !== "matched-branches"}
+                                    disabled={prebuildSettings.branchStrategy !== "matched-branches"}
                                     value={prebuildBranchPattern}
                                     onChange={({ target }) => updatePrebuildBranchPattern(target.value)}
                                 />
@@ -300,11 +296,11 @@ export default function ProjectSettingsView() {
                         <InputField
                             className="max-w-md ml-6 text-sm"
                             label="Workspace machine type"
-                            disabled={!enablePrebuilds}
+                            disabled={!prebuildSettings.enable}
                         >
                             <SelectWorkspaceClassComponent
-                                disabled={!enablePrebuilds}
-                                selectedWorkspaceClass={project.settings?.workspaceClasses?.prebuild}
+                                disabled={!prebuildSettings.enable}
+                                selectedWorkspaceClass={prebuildSettings.workspaceClass}
                                 onSelectionChange={setWorkspaceClassForPrebuild}
                             />
                         </InputField>
@@ -325,14 +321,14 @@ export default function ProjectSettingsView() {
                                     </a>
                                 </span>
                             }
-                            disabled={!enablePrebuilds}
+                            disabled={!prebuildSettings.enable}
                             checked={project.settings?.useIncrementalPrebuilds ?? false}
                             onChange={(checked) => updateProjectSettings({ useIncrementalPrebuilds: checked })}
                         />
                         <CheckboxInputField
                             label="Cancel Prebuilds on Outdated Commits"
                             hint="Cancel pending or running prebuilds on the same branch when new commits are pushed."
-                            disabled={!enablePrebuilds}
+                            disabled={!prebuildSettings.enable}
                             checked={!project.settings?.keepOutdatedPrebuildsRunning}
                             onChange={(checked) => updateProjectSettings({ keepOutdatedPrebuildsRunning: !checked })}
                         />
@@ -347,7 +343,7 @@ export default function ProjectSettingsView() {
                             }
                             hint="Skip waiting for prebuilds in progress and use the last successful prebuild from previous
                     commits on the same branch."
-                            disabled={!enablePrebuilds}
+                            disabled={!prebuildSettings.enable}
                             checked={!!project.settings?.allowUsingPreviousPrebuilds}
                             onChange={(checked) =>
                                 updateProjectSettings({
@@ -364,7 +360,7 @@ export default function ProjectSettingsView() {
                                     htmlFor="prebuildInterval"
                                     className={classNames(
                                         "text-sm font-semibold cursor-pointer tracking-wide",
-                                        !enablePrebuilds
+                                        !prebuildSettings.enable
                                             ? "text-gray-400 dark:text-gray-400"
                                             : "text-gray-600 dark:text-gray-100",
                                     )}
@@ -378,8 +374,8 @@ export default function ProjectSettingsView() {
                                     max="100"
                                     step="5"
                                     className="mt-2"
-                                    disabled={!enablePrebuilds}
-                                    value={prebuildInterval}
+                                    disabled={!prebuildSettings.enable}
+                                    value={prebuildSettings.prebuildInterval}
                                     onChange={({ target }) => setPrebuildInterval(target.value)}
                                 />
                                 <div className="text-gray-500 dark:text-gray-400 text-sm mt-2">

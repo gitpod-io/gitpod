@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { ProjectDB, TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
+import { ProjectDB, TypeORM, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import { Organization, Project, ProjectSettings, User } from "@gitpod/gitpod-protocol";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
@@ -146,7 +146,7 @@ describe("ProjectsService", async () => {
             await ps.updateProject(owner, {
                 id: project.id,
                 settings: {
-                    enablePrebuilds: true,
+                    prebuilds: { enable: true },
                 },
             });
             expect(webhooks).to.contain(project.cloneUrl);
@@ -165,7 +165,7 @@ describe("ProjectsService", async () => {
             await ps.updateProject(owner, {
                 id: project.id,
                 settings: {
-                    enablePrebuilds: true,
+                    prebuilds: { enable: true },
                 },
             });
             expect(webhooks).to.contain(project.cloneUrl);
@@ -193,7 +193,7 @@ describe("ProjectsService", async () => {
         await expectError(ErrorCodes.NOT_FOUND, () => ps.getProjects(stranger.id, org.id));
     });
 
-    it("should migrate prebuild settings of inactive project (1)", async () => {
+    it("prebuild settings migration / old and inactive project / uses defaults", async () => {
         const ps = container.get(ProjectsService);
         const cloneUrl = "https://github.com/gitpod-io/gitpod.git";
         const oldProject = await createTestProject(ps, org, owner, {
@@ -211,13 +211,13 @@ describe("ProjectsService", async () => {
         const project = await ps.getProject(owner.id, oldProject.id);
         expect(project.settings).to.deep.equal(<ProjectSettings>{
             prebuilds: {
+                ...Project.PREBUILD_SETTINGS_DEFAULTS,
                 enable: false,
             },
-            workspaceClasses: {},
         });
     });
 
-    it("should migrate prebuild settings of inactive project (2)", async () => {
+    it("prebuild settings migration / inactive project / uses defaults", async () => {
         const ps = container.get(ProjectsService);
         const cloneUrl = "https://github.com/gitpod-io/gitpod.git";
         const oldProject = await createTestProject(ps, org, owner, {
@@ -235,13 +235,13 @@ describe("ProjectsService", async () => {
         const project = await ps.getProject(owner.id, oldProject.id);
         expect(project.settings).to.deep.equal(<ProjectSettings>{
             prebuilds: {
+                ...Project.PREBUILD_SETTINGS_DEFAULTS,
                 enable: false,
             },
-            workspaceClasses: {},
         });
     });
 
-    it("should migrate prebuild settings of inactive project (2)", async () => {
+    it.only("prebuild settings migration / new and active project / updated settings", async () => {
         const ps = container.get(ProjectsService);
         const cloneUrl = "https://github.com/gitpod-io/gitpod.git";
         const oldProject = await createTestProject(ps, org, owner, {
@@ -250,16 +250,21 @@ describe("ProjectsService", async () => {
             creationTime: daysBefore(new Date().toISOString(), 1),
             settings: {
                 enablePrebuilds: true,
-                prebuildEveryNthCommit: 3,
+                prebuildEveryNthCommit: 13,
                 workspaceClasses: { prebuild: "ultra" },
                 prebuildDefaultBranchOnly: false,
                 prebuildBranchPattern: "feature-*",
             },
         });
+        await createWorkspaceForProject(oldProject.id, 1);
         const project = await ps.getProject(owner.id, oldProject.id);
         expect(project.settings).to.deep.equal(<ProjectSettings>{
             prebuilds: {
-                enable: false,
+                enable: true,
+                prebuildInterval: 13,
+                workspaceClass: "ultra",
+                branchStrategy: "matched-branches",
+                branchMatchingPattern: "feature-*",
             },
             workspaceClasses: {},
         });
@@ -272,7 +277,9 @@ describe("ProjectsService", async () => {
         partial: Partial<Project> = {
             name: "my-project",
             cloneUrl: "https://github.com/gitpod-io/gitpod.git",
-            settings: ProjectsService.PROJECT_SETTINGS_DEFAULTS,
+            settings: {
+                prebuilds: Project.PREBUILD_SETTINGS_DEFAULTS,
+            },
         },
     ) {
         let project = await ps.createProject(
@@ -284,7 +291,7 @@ describe("ProjectsService", async () => {
                 appInstallationId: "noid",
             },
             owner,
-            partial.settings!,
+            partial.settings,
         );
 
         // need to patch `creationTime`?
@@ -295,5 +302,20 @@ describe("ProjectsService", async () => {
         }
 
         return project;
+    }
+
+    async function createWorkspaceForProject(projectId: string, daysAgo: number) {
+        const workspaceDB = container.get<WorkspaceDB>(WorkspaceDB);
+
+        await workspaceDB.storePrebuiltWorkspace({
+            projectId,
+            id: "prebuild123",
+            buildWorkspaceId: "12345",
+            creationTime: daysBefore(new Date().toISOString(), daysAgo),
+            cloneURL: "",
+            commit: "",
+            state: "available",
+            statusVersion: 0,
+        });
     }
 });

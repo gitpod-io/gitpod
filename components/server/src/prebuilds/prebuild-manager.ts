@@ -352,17 +352,16 @@ export class PrebuildManager {
             return { shouldRun: false, reason: "no-tasks-in-gitpod-config" };
         }
 
-        const isPrebuildsEnabled = Project.isPrebuildsEnabled(project);
-        if (!isPrebuildsEnabled) {
+        const prebuildSettings = Project.getPrebuildSettings(project);
+        if (!prebuildSettings.enable) {
             return { shouldRun: false, reason: "prebuilds-not-enabled" };
         }
 
-        const strategy = Project.getPrebuildBranchStrategy(project);
-        if (strategy === "all-branches") {
+        if (prebuildSettings.branchStrategy === "all-branches") {
             return { shouldRun: true, reason: "all-branches-selected" };
         }
 
-        if (strategy === "default-branch") {
+        if (prebuildSettings.branchStrategy === "default-branch") {
             const defaultBranch = context.repository.defaultBranch;
             if (!defaultBranch) {
                 log.debug("CommitContext is missing the default branch. Ignoring request.", { context });
@@ -375,15 +374,14 @@ export class PrebuildManager {
             return { shouldRun: false, reason: "default-branch-unmatched" };
         }
 
-        if (strategy === "matched-branches") {
+        if (prebuildSettings.branchStrategy === "matched-branches" && !!prebuildSettings.branchMatchingPattern) {
             const branchName = context.ref;
             if (!branchName) {
                 log.debug("CommitContext is missing the branch name. Ignoring request.", { context });
                 return { shouldRun: false, reason: "branch-name-missing-in-commit-context" };
             }
 
-            const branchMatchingPattern = project.settings?.prebuilds?.branchMatchingPattern?.trim() || "**";
-            for (let pattern of branchMatchingPattern.split(",")) {
+            for (let pattern of prebuildSettings.branchMatchingPattern.split(",")) {
                 // prepending `**/` as branch names can be 'refs/heads/something/feature-x'
                 // and we want to allow simple patterns like: `feature-*`
                 pattern = "**/" + pattern.trim();
@@ -393,7 +391,7 @@ export class PrebuildManager {
                     }
                 } catch (error) {
                     log.debug("Ignored error with attempt to match a branch by pattern.", {
-                        branchMatchingPattern,
+                        prebuildSettings,
                         error: error?.message,
                     });
                 }
