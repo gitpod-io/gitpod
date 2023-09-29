@@ -28,6 +28,7 @@ const featureFlags = {
     enabledOrbitalDiscoveries: "",
     newProjectIncrementalRepoSearchBBS: false,
     includeProjectsOnCreateWorkspace: false,
+    repositoryFinderSearch: false,
 };
 
 type FeatureFlags = typeof featureFlags;

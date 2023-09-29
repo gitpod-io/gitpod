@@ -139,4 +139,9 @@ export class GitlabRepositoryProvider implements RepositoryProvider {
         }
         return result.slice(1).map((c: GitLab.Commit) => c.id);
     }
+
+    // TODO: implement repo search
+    public async searchRepos(user: User, searchString: string): Promise<RepositoryInfo[]> {
+        return [];
+    }
 }
