@@ -805,7 +805,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         const repo = await this.getPrebuiltWorkspaceRepo();
 
         let query = repo.createQueryBuilder("pws");
-        query = query.where("pws.projectId != :projectId", { projectId });
+        query = query.where("pws.projectId = :projectId", { projectId });
         query = query.andWhere("pws.creationTime >= :time", { time: date.toISOString() });
         query = query.andWhere("pws.state != :state", { state: abortedState });
         return query.getCount();
