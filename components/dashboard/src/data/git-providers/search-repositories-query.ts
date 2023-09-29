@@ -25,7 +25,7 @@ export const useSearchRepositories = ({ searchString }: { searchString: string }
             });
         },
         {
-            enabled: repositoryFinderSearchEnabled && !!org && searchString.length >= 3,
+            enabled: repositoryFinderSearchEnabled && !!org && debouncedSearchString.length >= 3,
             // Need this to keep previous results while we wait for a new search to complete since debouncedSearchString changes and updates the key
             keepPreviousData: true,
             // We intentionally don't want to trigger refetches here to avoid a loading state side effect of focusing
