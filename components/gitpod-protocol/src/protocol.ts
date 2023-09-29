@@ -340,6 +340,9 @@ export type IDESettings = {
 
 export interface WorkspaceClasses {
     regular?: string;
+    /**
+     * @deprecated see Project.settings.prebuilds.workspaceClass
+     */
     prebuild?: string;
 }
 
