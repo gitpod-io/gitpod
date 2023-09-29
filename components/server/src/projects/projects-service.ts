@@ -371,13 +371,13 @@ export class ProjectsService {
     }
 
     private async handleEnablePrebuild(user: User, partialProject: PartialProject): Promise<void> {
-        const enablePrebuildsNew = partialProject?.settings?.enablePrebuilds;
+        const enablePrebuildsNew = partialProject?.settings?.prebuilds?.enable;
         if (typeof enablePrebuildsNew === "boolean") {
             const project = await this.projectDB.findProjectById(partialProject.id);
             if (!project) {
                 return;
             }
-            const enablePrebuildsPrev = !!project.settings?.enablePrebuilds;
+            const enablePrebuildsPrev = !!project.settings?.prebuilds?.enable;
             const installWebhook = enablePrebuildsNew && !enablePrebuildsPrev;
             const uninstallWebhook = !enablePrebuildsNew && enablePrebuildsPrev;
             if (installWebhook) {

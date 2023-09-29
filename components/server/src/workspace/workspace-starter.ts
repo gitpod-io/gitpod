@@ -160,7 +160,7 @@ export async function getWorkspaceClassForInstance(
         if (!workspaceClass) {
             switch (workspace.type) {
                 case "prebuild":
-                    workspaceClass = project?.settings?.workspaceClasses?.prebuild;
+                    workspaceClass = project?.settings?.prebuilds?.workspaceClass;
                     break;
                 case "regular":
                     workspaceClass = project?.settings?.workspaceClasses?.regular;
