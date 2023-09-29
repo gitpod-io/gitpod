@@ -244,10 +244,10 @@ export class GithubRepositoryProvider implements RepositoryProvider {
         // A string of org query filters, i.e. "org:org1 org:org2 org:org3"
         const orgFilters = orgs?.data.map((org) => `org:${org.organization.login}`).join(" ");
 
-        const query = `${searchString} in:name user:@me ${orgFilters}`;
+        const query = JSON.stringify(`${searchString} in:name user:@me ${orgFilters}`);
         const repoSearchQuery = `
             query SearchRepos {
-                search (type:REPOSITORY, first:10, query:"${query}"){
+                search (type: REPOSITORY, first: 10, query: ${query}){
                     edges {
                         node {
                             ... on Repository {
