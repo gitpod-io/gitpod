@@ -143,24 +143,22 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	volumes := make([]corev1.Volume, 0)
 	volumeMounts := make([]corev1.VolumeMount, 0)
 
-	if len(ctx.Config.AuthProviders) > 0 {
-		for i, provider := range ctx.Config.AuthProviders {
-			volumeName := fmt.Sprintf("auth-provider-%d", i)
-			volumes = append(volumes, corev1.Volume{
-				Name: volumeName,
-				VolumeSource: corev1.VolumeSource{
-					Secret: &corev1.SecretVolumeSource{
-						SecretName: provider.Name,
-					},
+	for i, provider := range ctx.Config.AuthProviders {
+		volumeName := fmt.Sprintf("auth-provider-%d", i)
+		volumes = append(volumes, corev1.Volume{
+			Name: volumeName,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: provider.Name,
 				},
-			})
+			},
+		})
 
-			volumeMounts = append(volumeMounts, corev1.VolumeMount{
-				Name:      volumeName,
-				MountPath: fmt.Sprintf("%s/%s", authProviderFilePath, provider.Name),
-				ReadOnly:  true,
-			})
-		}
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      volumeName,
+			MountPath: fmt.Sprintf("%s/%s", authProviderFilePath, provider.Name),
+			ReadOnly:  true,
+		})
 	}
 
 	// mount the optional twilio secret

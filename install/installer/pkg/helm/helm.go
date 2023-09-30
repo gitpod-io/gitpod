@@ -237,12 +237,10 @@ func ImportTemplate(chart *charts.Chart, templateCfg TemplateConfig, pkgConfig P
 // CustomizeAnnotation check for customized annotations and output in Helm format
 func CustomizeAnnotation(registryValues []string, prefix string, ctx *common.RenderContext, component string, typeMeta metav1.TypeMeta, existingAnnotations ...func() map[string]string) []string {
 	annotations := common.CustomizeAnnotation(ctx, component, typeMeta, existingAnnotations...)
-	if len(annotations) > 0 {
-		for k, v := range annotations {
-			// Escape any dots in the keys so they're not expanded
-			key := strings.Replace(k, ".", "\\.", -1)
-			registryValues = append(registryValues, KeyValue(fmt.Sprintf("%s.%s", prefix, key), v))
-		}
+	for k, v := range annotations {
+		// Escape any dots in the keys so they're not expanded
+		key := strings.Replace(k, ".", "\\.", -1)
+		registryValues = append(registryValues, KeyValue(fmt.Sprintf("%s.%s", prefix, key), v))
 	}
 
 	return registryValues
@@ -257,12 +255,10 @@ func CustomizeLabel(registryValues []string, prefix string, ctx *common.RenderCo
 		delete(labels, k)
 	}
 
-	if len(labels) > 0 {
-		for k, v := range labels {
-			// Escape any dots in the keys so they're not expanded
-			key := strings.Replace(k, ".", "\\.", -1)
-			registryValues = append(registryValues, KeyValue(fmt.Sprintf("%s.%s", prefix, key), v))
-		}
+	for k, v := range labels {
+		// Escape any dots in the keys so they're not expanded
+		key := strings.Replace(k, ".", "\\.", -1)
+		registryValues = append(registryValues, KeyValue(fmt.Sprintf("%s.%s", prefix, key), v))
 	}
 
 	return registryValues
@@ -281,11 +277,9 @@ func CustomizeEnvvar(registryValues []string, prefix string, ctx *common.RenderC
 		return envs
 	}())
 
-	if len(envvars) > 0 {
-		for k, v := range envvars {
-			registryValues = append(registryValues, KeyValue(fmt.Sprintf("%s[%d].name", prefix, k), v.Name))
-			registryValues = append(registryValues, KeyValue(fmt.Sprintf("%s[%d].value", prefix, k), v.Value))
-		}
+	for k, v := range envvars {
+		registryValues = append(registryValues, KeyValue(fmt.Sprintf("%s[%d].name", prefix, k), v.Name))
+		registryValues = append(registryValues, KeyValue(fmt.Sprintf("%s[%d].value", prefix, k), v.Value))
 	}
 
 	return registryValues

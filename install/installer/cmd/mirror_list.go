@@ -271,23 +271,21 @@ func getGenericImages(k8sObj string) []string {
 	re := regexp.MustCompile(fmt.Sprintf("%s(.*)|%s(.*)", "docker.io", common.GitpodContainerRegistry))
 	img := re.FindAllString(k8sObj, -1)
 
-	if len(img) > 0 {
-		for _, i := range img {
-			// Remove whitespace
-			i = strings.TrimSpace(i)
-			// Remove end commas
-			i = strings.TrimRight(i, ",")
-			// Remove wrapping quotes
-			i = strings.Trim(i, "\"")
-			// Validate the image - assumes images are already fully qualified names
-			_, err := reference.ParseNamed(i)
-			if err != nil {
-				// Invalid - ignore
-				continue
-			}
-
-			images = append(images, i)
+	for _, i := range img {
+		// Remove whitespace
+		i = strings.TrimSpace(i)
+		// Remove end commas
+		i = strings.TrimRight(i, ",")
+		// Remove wrapping quotes
+		i = strings.Trim(i, "\"")
+		// Validate the image - assumes images are already fully qualified names
+		_, err := reference.ParseNamed(i)
+		if err != nil {
+			// Invalid - ignore
+			continue
 		}
+
+		images = append(images, i)
 	}
 
 	return images
@@ -301,17 +299,15 @@ func getPodImages(k8sObj string) []string {
 	re := regexp.MustCompile("image:(.*)")
 	img := re.FindAllString(k8sObj, -1)
 
-	if len(img) > 0 {
-		for _, i := range img {
-			// Remove "image":
-			i = re.ReplaceAllString(i, "$1")
-			// Remove whitespace
-			i = strings.TrimSpace(i)
-			// Remove wrapping quotes
-			i = strings.Trim(i, "\"")
+	for _, i := range img {
+		// Remove "image":
+		i = re.ReplaceAllString(i, "$1")
+		// Remove whitespace
+		i = strings.TrimSpace(i)
+		// Remove wrapping quotes
+		i = strings.Trim(i, "\"")
 
-			images = append(images, i)
-		}
+		images = append(images, i)
 	}
 
 	return images
