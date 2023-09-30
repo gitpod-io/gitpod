@@ -16,12 +16,14 @@ import {
 } from "./entity/db-code-sync-resource";
 import { DBCodeSyncCollection } from "./entity/db-code-sync-collection";
 import { TypeORM } from "./typeorm";
+import { span } from "@gitpod/gitpod-protocol/lib/util/tracing-ot";
 
 export interface CodeSyncInsertOptions {
     revLimit?: number;
     overwrite?: boolean;
 }
 
+@span
 @injectable()
 export class CodeSyncResourceDB {
     @inject(TypeORM)

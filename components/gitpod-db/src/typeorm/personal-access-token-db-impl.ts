@@ -9,7 +9,9 @@ import { TypeORM } from "./typeorm";
 import { Repository } from "typeorm";
 import { PersonalAccessTokenDB } from "../personal-access-token-db";
 import { DBPersonalAccessToken } from "./entity/db-personal-access-token";
+import { span } from "@gitpod/gitpod-protocol/lib/util/tracing-ot";
 
+@span
 @injectable()
 export class PersonalAccessTokenDBImpl implements PersonalAccessTokenDB {
     @inject(TypeORM) typeORM: TypeORM;

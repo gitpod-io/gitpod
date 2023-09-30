@@ -1,0 +1,14 @@
+{
+    "mochaExplorer.files": [
+        "lib/**/*.spec.js"
+    ],
+    "mochaExplorer.require": [
+        "source-map-support/register",
+        "reflect-metadata/Reflect"
+    ],
+    "mochaExplorer.watch": [
+        "lib/**/*.spec.js"
+    ],
+    "mochaExplorer.exit": true,
+    "mochaExplorer.timeout": 60000
+}

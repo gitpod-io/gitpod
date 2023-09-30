@@ -16,6 +16,7 @@ import { DBProjectInfo } from "./entity/db-project-info";
 import { DBProjectUsage } from "./entity/db-project-usage";
 import { TransactionalDBImpl } from "./transactional-db-impl";
 import { TypeORM } from "./typeorm";
+import { span } from "@gitpod/gitpod-protocol/lib/util/tracing-ot";
 
 function toProjectEnvVar(envVarWithValue: DBProjectEnvVar): ProjectEnvVar {
     const envVar = { ...envVarWithValue };
@@ -23,6 +24,7 @@ function toProjectEnvVar(envVarWithValue: DBProjectEnvVar): ProjectEnvVar {
     return envVar;
 }
 
+@span
 @injectable()
 export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements ProjectDB {
     constructor(

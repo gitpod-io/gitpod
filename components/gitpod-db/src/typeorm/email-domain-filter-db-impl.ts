@@ -11,7 +11,9 @@ import { EmailDomainFilterEntry } from "@gitpod/gitpod-protocol";
 import { TypeORM } from "../typeorm/typeorm";
 import { EmailDomainFilterDB } from "../email-domain-filter-db";
 import { DBEmailDomainFilterEntry } from "./entity/db-email-domain-filter-entry";
+import { span } from "@gitpod/gitpod-protocol/lib/util/tracing-ot";
 
+@span
 @injectable()
 export class EmailDomainFilterDBImpl implements EmailDomainFilterDB {
     @inject(TypeORM) typeorm: TypeORM;

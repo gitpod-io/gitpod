@@ -12,7 +12,9 @@ import { TypeORM } from "./typeorm";
 import { WebhookEventDB } from "../webhook-event-db";
 import { DBWebhookEvent } from "./entity/db-webhook-event";
 import { WebhookEvent } from "@gitpod/gitpod-protocol";
+import { span } from "@gitpod/gitpod-protocol/lib/util/tracing-ot";
 
+@span
 @injectable()
 export class WebhookEventDBImpl implements WebhookEventDB {
     @inject(TypeORM) protected readonly typeORM: TypeORM;

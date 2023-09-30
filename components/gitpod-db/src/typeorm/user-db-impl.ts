@@ -49,6 +49,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { DataCache } from "../data-cache";
 import { TransactionalDBImpl } from "./transactional-db-impl";
 import { TypeORM } from "./typeorm";
+import { span } from "@gitpod/gitpod-protocol/lib/util/tracing-ot";
 
 // OAuth token expiry
 const tokenExpiryInFuture = new DateInterval("7d");
@@ -58,6 +59,7 @@ function getUserCacheKey(id: string): string {
     return userCacheKeyPrefix + id;
 }
 
+@span
 @injectable()
 export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements UserDB {
     constructor(

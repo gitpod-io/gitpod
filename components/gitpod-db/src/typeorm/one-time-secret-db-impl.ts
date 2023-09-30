@@ -10,7 +10,9 @@ import { v4 as uuidv4 } from "uuid";
 import { TypeORM } from "./typeorm";
 import { OneTimeSecretDB } from "../one-time-secret-db";
 import { DBOneTimeSecret } from "./entity/db-one-time-secret";
+import { span } from "@gitpod/gitpod-protocol/lib/util/tracing-ot";
 
+@span
 @injectable()
 export class TypeORMOneTimeSecretDBImpl implements OneTimeSecretDB {
     @inject(TypeORM) protected readonly typeorm: TypeORM;

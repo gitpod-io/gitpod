@@ -14,7 +14,7 @@
  * cpu profiles are written to tmp folder and have `.cpuprofile` extension.
  * Check server logs for the concrete filename.
  */
-
+import { NodeSDK } from "@opentelemetry/sdk-node";
 import { Session } from "inspector";
 import * as fs from "fs";
 import * as os from "os";
@@ -59,6 +59,7 @@ import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { TypeORM } from "@gitpod/gitpod-db/lib";
 import { dbConnectionsEnqueued, dbConnectionsFree, dbConnectionsTotal } from "./prometheus-metrics";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { ConsoleSpanExporter } from "@opentelemetry/sdk-trace-node";
 if (process.env.NODE_ENV === "development") {
     require("longjohn");
 }
@@ -129,10 +130,16 @@ export async function start(container: Container) {
         log.error("Error registering pool listener", error);
     }
 
+    const opentelementrySDK = new NodeSDK({
+        traceExporter: new ConsoleSpanExporter(),
+    });
+    opentelementrySDK.start();
+
     process.on("SIGTERM", async () => {
         log.info("SIGTERM received, stopping");
         clearInterval(interval);
         await server.stop();
+        await opentelementrySDK.shutdown();
         process.exit(0);
     });
 

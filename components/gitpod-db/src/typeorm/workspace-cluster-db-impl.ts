@@ -14,7 +14,9 @@ import {
     WorkspaceClusterFilter,
     WorkspaceClusterWoTLS,
 } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import { span } from "@gitpod/gitpod-protocol/lib/util/tracing-ot";
 
+@span
 @injectable()
 export class WorkspaceClusterDBImpl implements WorkspaceClusterDB {
     @inject(TypeORM) typeORM: TypeORM;

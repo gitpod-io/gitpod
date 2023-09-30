@@ -11,7 +11,9 @@ import { v4 as uuidv4 } from "uuid";
 import { LinkedInProfileDB } from "../linked-in-profile-db";
 import { DBLinkedInProfile } from "./entity/db-linked-in-profile";
 import { TypeORM } from "./typeorm";
+import { span } from "@gitpod/gitpod-protocol/lib/util/tracing-ot";
 
+@span
 @injectable()
 export class LinkedInProfileDBImpl implements LinkedInProfileDB {
     @inject(TypeORM) typeORM: TypeORM;

@@ -26,7 +26,9 @@ import { DBOrgSettings } from "./entity/db-team-settings";
 import { DBUser } from "./entity/db-user";
 import { TransactionalDBImpl } from "./transactional-db-impl";
 import { TypeORM } from "./typeorm";
+import { span } from "@gitpod/gitpod-protocol/lib/util/tracing-ot";
 
+@span
 @injectable()
 export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
     constructor(@inject(TypeORM) typeorm: TypeORM, @optional() transactionalEM?: EntityManager) {

@@ -41,8 +41,8 @@
         "build": "yarn lint && tsc",
         "lint": "yarn eslint src/*.ts src/**/*.ts",
         "lint:fix": "yarn eslint src/*.ts src/**/*.ts --fix",
-        "test": "mocha './**/*.spec.ts' --exclude './node_modules/**'",
-        "test-debug": "mocha --inspect-brk './**/*.spec.ts' --exclude './node_modules/**' --exit",
+        "test": "mocha './**/*.spec.js' --exclude './node_modules/**' --exit",
+        "test-debug": "mocha --inspect-brk './**/*.spec.js' --exclude './node_modules/**' --exit",
         "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput"
     },
     "mocha": {
@@ -57,6 +57,11 @@
         "exit": true
     },
     "dependencies": {
+        "@opentelemetry/api": "^1.6.0",
+        "@opentelemetry/resources": "^1.17.0",
+        "@opentelemetry/sdk-node": "^0.43.0",
+        "@opentelemetry/sdk-trace-node": "^1.17.0",
+        "@opentelemetry/semantic-conventions": "^1.17.0",
         "@types/react": "17.0.32",
         "abort-controller-x": "^0.4.0",
         "ajv": "^6.5.4",
