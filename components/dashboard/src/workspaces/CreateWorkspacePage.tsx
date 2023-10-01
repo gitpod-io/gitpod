@@ -442,7 +442,7 @@ export function CreateWorkspacePage() {
                     </div>
                 )}
             </div>
-            <BrowserExtensionBanner />
+            {!autostart && <BrowserExtensionBanner />}
         </div>
     );
 }
