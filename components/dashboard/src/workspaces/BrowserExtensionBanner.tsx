@@ -28,16 +28,14 @@ interface BrowserExtensionBannerProps {
 }
 
 export function BrowserExtensionBanner({ parser = new UAParser() }: BrowserExtensionBannerProps) {
-    const [isVisible, setIsVisible] = useState(true);
+    const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
         const persistedDisabled =
             sessionStorage.getItem("browser-extension-installed") ||
             localStorage.getItem("browser-extension-banner-dismissed");
 
-        if (persistedDisabled) {
-            setIsVisible(false);
-        }
+        setIsVisible(!persistedDisabled);
     }, []);
 
     const handleClose = () => {
