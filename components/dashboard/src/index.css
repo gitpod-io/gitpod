@@ -69,7 +69,7 @@
         @apply cursor-default opacity-50 pointer-events-none;
     }
     button.reset {
-        @apply bg-transparent border-none p-0 m-0 text-inherit font-inherit cursor-pointer focus:outline-none focus:ring;
+        @apply bg-transparent border-none p-0 m-0 text-inherit cursor-pointer focus:outline-none focus:ring;
     }
 
     button.gp-link {
