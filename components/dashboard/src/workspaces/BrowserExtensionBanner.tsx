@@ -9,6 +9,7 @@ import UAParser from "ua-parser-js";
 import flashIcon from "../icons/Flash.svg";
 
 interface BrowserOption {
+    aliases?: string[];
     url: string;
 }
 
@@ -17,9 +18,7 @@ const installationOptions: Record<string, BrowserOption> = {
         url: "https://addons.mozilla.org/en-US/firefox/addon/gitpod/",
     },
     chrome: {
-        url: "https://chrome.google.com/webstore/detail/gitpod-always-ready-to-co/dodmmooeoklaejobgleioelladacbeki",
-    },
-    edge: {
+        aliases: ["edge", "brave", "chromium", "vivaldi", "opera"],
         url: "https://chrome.google.com/webstore/detail/gitpod-always-ready-to-co/dodmmooeoklaejobgleioelladacbeki",
     },
 };
@@ -55,9 +54,14 @@ export function BrowserExtensionBanner({ parser = new UAParser() }: BrowserExten
         return null;
     }
 
-    const browserOption = installationOptions[browserName];
+    let browserOption: BrowserOption | undefined = installationOptions[browserName];
     if (!browserOption) {
-        return null;
+        browserOption = Object.values(installationOptions).find(
+            (opt) => opt.aliases && opt.aliases.includes(browserName),
+        );
+        if (!browserOption) {
+            return null;
+        }
     }
 
     return (
