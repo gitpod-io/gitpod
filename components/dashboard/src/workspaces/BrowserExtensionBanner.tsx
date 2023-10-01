@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from "react";
 import UAParser from "ua-parser-js";
-import flashIcon from "../icons/search.svg";
+import flashIcon from "../icons/Flash.svg";
 
 interface BrowserOption {
     url: string;
