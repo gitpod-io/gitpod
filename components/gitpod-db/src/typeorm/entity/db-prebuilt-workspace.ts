@@ -53,6 +53,7 @@ export class DBPrebuiltWorkspace implements PrebuiltWorkspace {
         default: () => "CURRENT_TIMESTAMP(6)",
         transformer: Transformer.MAP_ISO_STRING_TO_TIMESTAMP_DROP,
     })
+    @Index("ind_creationTime")
     creationTime: string;
 
     @Column(TypeORM.WORKSPACE_ID_COLUMN_TYPE)

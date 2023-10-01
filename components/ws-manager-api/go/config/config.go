@@ -133,6 +133,8 @@ type Configuration struct {
 	TimeoutMaxConcurrentReconciles int `json:"timeoutMaxConcurrentReconciles,omitempty"`
 	// EnableCustomSSLCertificate controls if we need to support custom SSL certificates for git operations
 	EnableCustomSSLCertificate bool `json:"enableCustomSSLCertificate"`
+	// WorkspacekitImage points to the default workspacekit image
+	WorkspacekitImage string `json:"workspacekitImage,omitempty"`
 }
 
 type WorkspaceClass struct {

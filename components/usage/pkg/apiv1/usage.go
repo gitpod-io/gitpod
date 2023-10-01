@@ -355,13 +355,13 @@ func reconcileUsage(instances []db.WorkspaceInstanceForUsage, drafts []db.Usage,
 
 	instancesByID := dedupeWorkspaceInstancesForUsage(instances)
 
-	draftsByWorkspaceID := map[uuid.UUID]db.Usage{}
+	draftsByInstanceID := map[uuid.UUID]db.Usage{}
 	for _, draft := range drafts {
-		draftsByWorkspaceID[*draft.WorkspaceInstanceID] = draft
+		draftsByInstanceID[*draft.WorkspaceInstanceID] = draft
 	}
 
 	for instanceID, instance := range instancesByID {
-		if usage, exists := draftsByWorkspaceID[instanceID]; exists {
+		if usage, exists := draftsByInstanceID[instanceID]; exists {
 			updatedUsage, err := updateUsageFromInstance(instance, usage, pricer, now)
 			if err != nil {
 				return nil, nil, fmt.Errorf("failed to construct updated usage record: %w", err)

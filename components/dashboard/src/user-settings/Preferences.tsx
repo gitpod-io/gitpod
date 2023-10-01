@@ -81,14 +81,14 @@ export default function Preferences() {
         [toast, setUser, workspaceTimeout, billingMode],
     );
 
-    const clearAutostartWorkspaceOptions = useCallback(async () => {
+    const clearCreateWorkspaceOptions = useCallback(async () => {
         if (!user) {
             return;
         }
         AdditionalUserData.set(user, { workspaceAutostartOptions: [] });
         setUser(user);
         await getGitpodService().server.updateLoggedInUser(user);
-        toast("Your autostart options were cleared.");
+        toast("Workspace options have been cleared.");
     }, [setUser, toast, user]);
 
     return (
@@ -107,9 +107,9 @@ export default function Preferences() {
                     </a>
                 </Subheading>
                 <SelectIDE location="preferences" />
-                <Heading3 className="mt-12">Autostart Options</Heading3>
-                <Subheading>Forget any saved autostart options for all repositories.</Subheading>
-                <Button className="mt-4" type="secondary" onClick={clearAutostartWorkspaceOptions}>
+                <Heading3 className="mt-12">Workspace Options</Heading3>
+                <Subheading>Clear last used options for creating workspaces.</Subheading>
+                <Button className="mt-4" type="secondary" onClick={clearCreateWorkspaceOptions}>
                     Reset Options
                 </Button>
 

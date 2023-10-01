@@ -70,6 +70,7 @@ import {
     SuggestedRepository,
     GetDefaultWorkspaceImageParams,
     GetDefaultWorkspaceImageResult,
+    SearchRepositoriesParams,
 } from "@gitpod/gitpod-protocol";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import {
@@ -1874,6 +1875,53 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 url: repo.url,
                 projectId: repo.projectId,
                 projectName: repo.projectName,
+                repositoryName: repo.repositoryName,
+            }),
+        );
+    }
+
+    public async searchRepositories(
+        ctx: TraceContext,
+        params: SearchRepositoriesParams,
+    ): Promise<SuggestedRepository[]> {
+        const user = await this.checkAndBlockUser("searchRepositories");
+
+        const logCtx: LogContext = { userId: user.id };
+
+        // Search repos across scm providers for this user
+        // Will search personal, and org repos
+        const authProviders = await this.getAuthProviders(ctx);
+
+        const providerRepos = await Promise.all(
+            authProviders.map(async (p): Promise<SuggestedRepositoryWithSorting[]> => {
+                try {
+                    const hostContext = this.hostContextProvider.get(p.host);
+                    const services = hostContext?.services;
+                    if (!services) {
+                        log.error(logCtx, "Unsupported repository host: " + p.host);
+                        return [];
+                    }
+                    const repos = await services.repositoryProvider.searchRepos(user, params.searchString);
+
+                    return repos.map((r) =>
+                        suggestionFromUserRepo({
+                            url: r.url.replace(/\.git$/, ""),
+                            repositoryName: r.name,
+                        }),
+                    );
+                } catch (error) {
+                    log.warn(logCtx, "Could not search repositories from host " + p.host, error);
+                }
+
+                return [];
+            }),
+        );
+
+        const sortedRepos = sortSuggestedRepositories(providerRepos.flat());
+
+        return sortedRepos.map(
+            (repo): SuggestedRepository => ({
+                url: repo.url,
                 repositoryName: repo.repositoryName,
             }),
         );

@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/common-go
 
-go 1.20
+go 1.21
 
 require (
 	github.com/configcat/go-sdk/v7 v7.6.0

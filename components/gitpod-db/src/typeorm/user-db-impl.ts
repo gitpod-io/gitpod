@@ -29,7 +29,7 @@ import {
     OAuthUser,
 } from "@jmondi/oauth2-server";
 import { inject, injectable, optional } from "inversify";
-import { EntityManager, Equal, Not, Repository } from "typeorm";
+import { EntityManager, Equal, FindOperator, Not, Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
 import {
     BUILTIN_WORKSPACE_PROBE_USER_ID,
@@ -256,27 +256,12 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
 
     public async deleteGitpodToken(tokenHash: string): Promise<void> {
         const repo = await this.getGitpodTokenRepo();
-        await repo.query(
-            `
-                UPDATE d_b_gitpod_token AS gt
-                SET gt.deleted = TRUE
-                WHERE tokenHash = ?;
-            `,
-            [tokenHash],
-        );
+        await repo.delete({ tokenHash });
     }
 
     public async deleteGitpodTokensNamedLike(userId: string, namePattern: string): Promise<void> {
         const repo = await this.getGitpodTokenRepo();
-        await repo.query(
-            `
-            UPDATE d_b_gitpod_token AS gt
-            SET gt.deleted = TRUE
-            WHERE userId = ?
-              AND name LIKE ?
-        `,
-            [userId, namePattern],
-        );
+        await repo.delete({ userId, name: new FindOperator("like", namePattern) });
     }
 
     public async storeSingleToken(identity: Identity, token: Token): Promise<TokenEntry> {
@@ -309,16 +294,14 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
 
     public async deleteExpiredTokenEntries(date: string): Promise<void> {
         const repo = await this.getTokenRepo();
-        await repo.query(
-            `
-            UPDATE d_b_token_entry AS te
-                SET te.deleted = TRUE
-                WHERE te.expiryDate != ''
-                    AND te.refreshable != 1
-                    AND te.expiryDate <= ?;
-            `,
-            [date],
-        );
+        await repo
+            .createQueryBuilder()
+            .delete()
+            .from(DBTokenEntry)
+            .where("expiryDate != ''")
+            .andWhere("refreshable != 1")
+            .andWhere("expiryDate <= :date", { date })
+            .execute();
     }
 
     public async updateTokenEntry(tokenEntry: Partial<TokenEntry> & Pick<TokenEntry, "uid">): Promise<void> {
@@ -331,8 +314,7 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
         const repo = await this.getTokenRepo();
         for (const existing of existingTokens) {
             if (!shouldDelete || shouldDelete(existing)) {
-                existing.deleted = true;
-                await repo.save(existing);
+                await repo.delete(existing.uid);
             }
         }
     }
@@ -481,7 +463,7 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
 
     public async deleteSSHPublicKey(userId: string, id: string): Promise<void> {
         const repo = await this.getSSHPublicKeyRepo();
-        await repo.update({ userId, id }, { deleted: true });
+        await repo.delete({ userId, id });
     }
 
     public async findAllUsers(
@@ -664,5 +646,20 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
             return undefined;
         }
         return this.mapDBUserToUser(result);
+    }
+
+    async findUserIdsNotYetMigratedToFgaVersion(fgaRelationshipsVersion: number, limit: number): Promise<string[]> {
+        const userRepo = await this.getUserRepo();
+        const ids = (await userRepo
+            .createQueryBuilder("user")
+            .select(["id"])
+            .where({
+                fgaRelationshipsVersion: Not(Equal(fgaRelationshipsVersion)),
+                markedDeleted: Equal(false),
+            })
+            .orderBy("_lastModified", "DESC")
+            .limit(limit)
+            .getMany()) as Pick<DBUser, "id">[];
+        return ids.map(({ id }) => id);
     }
 }

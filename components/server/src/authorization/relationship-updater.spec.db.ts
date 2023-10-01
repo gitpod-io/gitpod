@@ -13,7 +13,7 @@ import {
     WorkspaceDB,
 } from "@gitpod/gitpod-db/lib";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
-import { AdditionalUserData, User, Workspace } from "@gitpod/gitpod-protocol";
+import { User, Workspace } from "@gitpod/gitpod-protocol";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import * as chai from "chai";
 import { Container } from "inversify";
@@ -72,21 +72,21 @@ describe("RelationshipUpdater", async () => {
         let user = await userDB.newUser();
 
         user = await migrator.migrate(user);
-        expect(user.additionalData?.fgaRelationshipsVersion).to.not.be.undefined;
+        expect(user.fgaRelationshipsVersion).to.not.be.undefined;
 
         Experiments.configureTestingClient({
             centralizedPermissions: false,
         });
 
         user = await migrator.migrate(user);
-        expect(user.additionalData?.fgaRelationshipsVersion).to.be.undefined;
+        expect(user.fgaRelationshipsVersion).to.be.undefined;
 
         Experiments.configureTestingClient({
             centralizedPermissions: true,
         });
 
         user = await migrator.migrate(user);
-        expect(user.additionalData?.fgaRelationshipsVersion).to.not.be.undefined;
+        expect(user.fgaRelationshipsVersion).to.not.be.undefined;
     });
 
     it("should correctly update a simple user after it moves between org and installation level", async () => {
@@ -286,7 +286,7 @@ describe("RelationshipUpdater", async () => {
     it("should create relationships for all user workspaces", async function () {
         const user = await userDB.newUser();
         const org = await orgDB.createTeam(user.id, "MyOrg");
-        const totalWorkspaces = 20;
+        const totalWorkspaces = 50;
         const expectedWorkspaces: Workspace[] = [];
         for (let i = 0; i < totalWorkspaces; i++) {
             const workspace = await workspaceDB.store({
@@ -329,15 +329,18 @@ describe("RelationshipUpdater", async () => {
 
     async function notExpected(relation: v1.Relationship): Promise<void> {
         const rs = await authorizer.find(relation);
-        expect(rs).to.be.undefined;
+        expect(
+            rs,
+            `Unexpected relation: ${rs?.subject?.object?.objectType}:${rs?.subject?.object?.objectId}#${rs?.relation}@${rs?.resource?.objectType}:${rs?.resource?.objectId}`,
+        ).to.be.undefined;
     }
 
     async function migrate(user: User): Promise<User> {
         // reset fgaRelationshipsVersion to force update
-        AdditionalUserData.set(user, { fgaRelationshipsVersion: undefined });
-        user = await userDB.storeUser(user);
-        user = await migrator.migrate(user);
-        expect(user.additionalData?.fgaRelationshipsVersion).to.equal(RelationshipUpdater.version);
+        user.fgaRelationshipsVersion = undefined;
+        await userDB.updateUserPartial({ id: user.id, fgaRelationshipsVersion: user.fgaRelationshipsVersion });
+        user = await migrator.migrate(user, true);
+        expect(user.fgaRelationshipsVersion).to.equal(RelationshipUpdater.version);
         return user;
     }
 });

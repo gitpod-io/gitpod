@@ -214,6 +214,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
                 "ws.id = wsiRunning.workspaceId",
             )
             .where("ws.ownerId = :userId", { userId: options.userId })
+            .andWhere("ws.softDeletedTime = ''") // enables usage of: ind_softDeletion
             .andWhere("ws.softDeleted IS NULL")
             .andWhere("ws.deleted != TRUE")
             .orderBy("wsiRunning.workspaceId", "DESC")
@@ -517,6 +518,8 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
 
     public async findWorkspacesForGarbageCollection(minAgeInDays: number, limit: number): Promise<WorkspaceAndOwner[]> {
         const workspaceRepo = await this.getWorkspaceRepo();
+
+        // AND ws.softDeletedTime = ''    // enables usage of: ind_softDeletion
         const dbResults = await workspaceRepo.query(
             `
                 SELECT ws.id AS id,
@@ -525,6 +528,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
                     LEFT OUTER JOIN d_b_workspace_instance AS wsi ON ws.id=wsi.workspaceid
                     WHERE	ws.deleted = 0
                         AND ws.type='regular'
+                        AND ws.softDeletedTime = ''
                         AND ws.softDeleted IS NULL
                         AND ws.pinned = 0
                         AND ws.creationTime < NOW() - INTERVAL ? DAY
@@ -593,6 +597,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
                 LEFT OUTER JOIN d_b_workspace AS usages ON usages.basedOnPrebuildId = pb.id
                 WHERE
                         pb.buildworkspaceId = ws.id
+                    AND ws.type = 'prebuild'
                     AND ws.contentDeletedTime = ''
                     AND ws.pinned = 0
                     AND ws.creationTime < NOW() - INTERVAL ? DAY

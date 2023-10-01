@@ -156,4 +156,9 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
         }
         return commits.map((v: Schema.Commit) => v.hash!);
     }
+
+    // TODO: implement repo search
+    public async searchRepos(user: User, searchString: string): Promise<RepositoryInfo[]> {
+        return [];
+    }
 }

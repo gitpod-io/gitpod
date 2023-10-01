@@ -236,6 +236,7 @@ func (s *Server) HandleConn(c net.Conn) {
 	if err != nil {
 		c.Close()
 		ReportSSHAttemptMetrics(err)
+		log.WithError(err).Error("failed to create new server connection")
 		return
 	}
 	defer clientConn.Close()
@@ -248,6 +249,7 @@ func (s *Server) HandleConn(c net.Conn) {
 	wsInfo, err := s.GetWorkspaceInfo(workspaceId)
 	if err != nil {
 		ReportSSHAttemptMetrics(err)
+		log.WithField("workspaceId", workspaceId).WithError(err).Error("failed to get workspace info")
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)

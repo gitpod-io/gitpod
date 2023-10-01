@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/ws-daemon/api
 
-go 1.20
+go 1.21
 
 require (
 	github.com/fatih/gomodifytags v1.14.0

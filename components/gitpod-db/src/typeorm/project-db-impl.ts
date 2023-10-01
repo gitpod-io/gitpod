@@ -118,10 +118,7 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
             await projectInfoRepo.update(projectId, { deleted: true });
         }
         const projectUsageRepo = await this.getProjectUsageRepo();
-        const usage = await projectUsageRepo.findOne({ projectId, deleted: false });
-        if (usage) {
-            await projectUsageRepo.update(projectId, { deleted: true });
-        }
+        await projectUsageRepo.delete({ projectId });
     }
 
     public async findProjectEnvironmentVariable(

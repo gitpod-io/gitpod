@@ -14,7 +14,7 @@ import {
 import { QueryCache, QueryClient, QueryKey } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { FunctionComponent } from "react";
-import pThrottle from "p-throttle";
+import debounce from "lodash.debounce";
 
 // This is used to version the cache
 // If data we cache changes in a non-backwards compatible way, increment this version
@@ -78,15 +78,22 @@ function createIDBPersister(idbValidKey: IDBValidKey = "gitpodQueryClient"): Per
     // If we get an error performing an operation, we'll disable persistance and assume it's not supported
     let persistanceActive = true;
 
-    const throttle = pThrottle({
-        interval: 500,
-        limit: 1,
-        strict: true,
-    });
-
-    const throttledSet = throttle(async (client: PersistedClient) => {
-        await set(idbValidKey, client);
-    });
+    // Ensure we don't persist the client too frequently
+    // Important to debounce (not throttle) this so we aren't queuing up a bunch of writes
+    // but instead, only persist the latest state
+    const debouncedSet = debounce(
+        async (client: PersistedClient) => {
+            await set(idbValidKey, client);
+        },
+        500,
+        {
+            leading: true,
+            // important so we always persist the latest state when debouncing calls
+            trailing: true,
+            // ensure
+            maxWait: 1000,
+        },
+    );
 
     return {
         persistClient: async (client: PersistedClient) => {
@@ -94,10 +101,12 @@ function createIDBPersister(idbValidKey: IDBValidKey = "gitpodQueryClient"): Per
                 return;
             }
 
-            throttledSet(client).catch((e) => {
+            try {
+                await debouncedSet(client);
+            } catch (e) {
                 console.error("unable to persist query client");
                 persistanceActive = false;
-            });
+            }
         },
         restoreClient: async () => {
             try {

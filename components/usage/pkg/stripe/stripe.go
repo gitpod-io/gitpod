@@ -335,6 +335,26 @@ func (c *Client) GetInvoiceWithCustomer(ctx context.Context, invoiceID string) (
 	return invoice, nil
 }
 
+func (c *Client) ListInvoices(ctx context.Context, customerId string) (invoices []*stripe.Invoice, err error) {
+	if customerId == "" {
+		return nil, fmt.Errorf("no customer ID specified")
+	}
+
+	now := time.Now()
+	reportStripeRequestStarted("invoice_list")
+	defer func() {
+		reportStripeRequestCompleted("invoice_list", err, time.Since(now))
+	}()
+
+	invoicesResponse := c.sc.Invoices.List(&stripe.InvoiceListParams{
+		Customer: stripe.String(customerId),
+	})
+	if invoicesResponse.Err() != nil {
+		return nil, fmt.Errorf("failed to get invoices for customer %s: %w", customerId, invoicesResponse.Err())
+	}
+	return invoicesResponse.InvoiceList().Data, nil
+}
+
 func (c *Client) GetSubscriptionWithCustomer(ctx context.Context, subscriptionID string) (subscription *stripe.Subscription, err error) {
 	if subscriptionID == "" {
 		return nil, fmt.Errorf("no subscriptionID specified")

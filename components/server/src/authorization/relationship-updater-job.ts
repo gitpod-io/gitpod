@@ -8,14 +8,13 @@ import { injectable, inject } from "inversify";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Job } from "../jobs/runner";
 import { RelationshipUpdater } from "./relationship-updater";
-import { TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
+import { UserDB } from "@gitpod/gitpod-db/lib";
 
 @injectable()
 export class RelationshipUpdateJob implements Job {
     constructor(
         @inject(RelationshipUpdater) private relationshipUpdater: RelationshipUpdater,
         @inject(UserDB) private readonly userDB: UserDB,
-        @inject(TypeORM) private readonly db: TypeORM,
     ) {}
 
     public name = "relationship-update-job";
@@ -23,25 +22,17 @@ export class RelationshipUpdateJob implements Job {
 
     public async run(): Promise<void> {
         try {
-            const connection = await this.db.getConnection();
-            const results = await connection.query(`
-                SELECT id FROM d_b_user
-                WHERE
-                    (additionalData->"$.fgaRelationshipsVersion" != ${RelationshipUpdater.version} OR
-                    additionalData->"$.fgaRelationshipsVersion" IS NULL) AND
-                    markedDeleted = 0
-                ORDER BY _lastModified DESC
-                LIMIT 50;`);
+            const ids = await this.userDB.findUserIdsNotYetMigratedToFgaVersion(RelationshipUpdater.version, 50);
             const now = Date.now();
             let migrated = 0;
-            for (const result of results) {
-                const user = await this.userDB.findUserById(result.id);
+            for (const userId of ids) {
+                const user = await this.userDB.findUserById(userId);
                 if (!user) {
                     continue;
                 }
                 try {
                     const resultingUser = await this.relationshipUpdater.migrate(user);
-                    if (resultingUser.additionalData?.fgaRelationshipsVersion === RelationshipUpdater.version) {
+                    if (resultingUser.fgaRelationshipsVersion === RelationshipUpdater.version) {
                         migrated++;
                     }
                 } catch (error) {

@@ -90,7 +90,12 @@ func createAndRunc(runcPath string, log *logrus.Logger) error {
 	// See here for more details on why retries are necessary.
 	// https://github.com/gitpod-io/gitpod/issues/12365
 	for i := 0; i <= RETRY; i++ {
-		err = exec.Command(runcPath, os.Args[1:]...).Run()
+
+		cmd := exec.Command(runcPath, os.Args[1:]...)
+		cmd.Stdin = os.Stdin
+		cmd.Stderr = os.Stderr
+		cmd.Stdout = os.Stdout
+		err = cmd.Run()
 
 		if err != nil {
 			log.WithError(err).Warn("runc failed")

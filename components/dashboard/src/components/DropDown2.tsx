@@ -17,6 +17,7 @@ import React, {
 } from "react";
 import Arrow from "./Arrow";
 import classNames from "classnames";
+import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 
 export interface DropDown2Element {
     id: string;
@@ -32,6 +33,8 @@ export interface DropDown2Props {
     disableSearch?: boolean;
     expanded?: boolean;
     onSelectionChange: (id: string) => void;
+    // Meant to allow consumers to react to search changes even though state is managed internally
+    onSearchChange?: (searchString: string) => void;
     allOptions?: string;
 }
 
@@ -45,6 +48,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
     disableSearch,
     children,
     onSelectionChange,
+    onSearchChange,
 }) => {
     const [showDropDown, setShowDropDown] = useState<boolean>(!disabled && !!expanded);
     const nodeRef: RefObject<HTMLDivElement> = useRef(null);
@@ -61,7 +65,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
 
     // reset search when the drop down is expanded or closed
     useEffect(() => {
-        setSearch("");
+        updateSearch("");
         if (allOptions) {
             setSelectedElementTemp(allOptions);
         }
@@ -71,6 +75,16 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
         // we only want this behavior when showDropDown changes to true.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [showDropDown]);
+
+    const updateSearch = useCallback(
+        (value: string) => {
+            setSearch(value);
+            if (onSearchChange) {
+                onSearchChange(value);
+            }
+        },
+        [onSearchChange],
+    );
 
     const toggleDropDown = useCallback(() => {
         if (disabled) {
@@ -158,6 +172,9 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
         [setShowDropDown],
     );
 
+    const showInputLoadingIndicator = filteredOptions.length > 0 && loading;
+    const showResultsLoadingIndicator = filteredOptions.length === 0 && loading;
+
     return (
         <div
             onKeyDown={onKeyDown}
@@ -191,25 +208,30 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
             {showDropDown && (
                 <div className="absolute w-full top-12 bg-gray-100 dark:bg-gray-800 rounded-b-lg mt-3 z-50 p-2 filter drop-shadow-xl">
                     {!disableSearch && (
-                        <div className="h-12">
+                        <div className="relative mb-2">
                             <input
                                 type="text"
                                 autoFocus
                                 className={"w-full focus rounded-lg"}
                                 placeholder={searchPlaceholder}
                                 value={search}
-                                onChange={(e) => setSearch(e.target.value)}
+                                onChange={(e) => updateSearch(e.target.value)}
                             />
+                            {showInputLoadingIndicator && (
+                                <div className="absolute top-0 right-0 h-full flex items-center pr-2">
+                                    <Spinner className="h-4 w-4 opacity-25 animate-spin" />
+                                </div>
+                            )}
                         </div>
                     )}
                     <ul className="max-h-60 overflow-auto">
-                        {loading && (
+                        {showResultsLoadingIndicator && (
                             <div className="flex-col space-y-2 animate-pulse">
                                 <div className="bg-gray-300 dark:bg-gray-500 h-4 rounded" />
                                 <div className="bg-gray-300 dark:bg-gray-500 h-4 rounded" />
                             </div>
                         )}
-                        {!loading && filteredOptions.length > 0 ? (
+                        {!showResultsLoadingIndicator && filteredOptions.length > 0 ? (
                             filteredOptions.map((element) => {
                                 let selectionClasses = `dark:bg-gray-800 cursor-pointer`;
                                 if (element.id === selectedElementTemp) {
@@ -237,7 +259,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                                     </li>
                                 );
                             })
-                        ) : !loading ? (
+                        ) : !showResultsLoadingIndicator ? (
                             <li key="no-elements" className={"rounded-md "}>
                                 <div className="h-12 pl-8 py-3 text-gray-800 dark:text-gray-200">No results</div>
                             </li>

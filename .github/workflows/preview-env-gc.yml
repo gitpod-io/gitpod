@@ -15,12 +15,12 @@ jobs:
     runs-on: ${{ needs.create-runner.outputs.label }}
     needs: [create-runner]
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:at-node-18-17-1-gha.15610
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-update-image-gha.17642
     outputs:
       names: ${{ steps.set-matrix.outputs.names }}
       count: ${{ steps.set-matrix.outputs.count }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Compute matrix
@@ -57,7 +57,7 @@ jobs:
       matrix:
         name: ${{ fromJSON(needs.stale.outputs.names) }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Delete preview environment ${{ matrix.name }}
         uses: ./.github/actions/delete-preview
         with:

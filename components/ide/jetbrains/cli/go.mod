@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/jetbrains/cli
 
-go 1.20
+go 1.21
 
 require github.com/spf13/cobra v1.4.0
 

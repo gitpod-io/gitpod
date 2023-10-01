@@ -98,6 +98,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getFeaturedRepositories(): Promise<WhitelistedRepository[]>;
     getSuggestedContextURLs(): Promise<string[]>;
     getSuggestedRepositories(organizationId: string): Promise<SuggestedRepository[]>;
+    searchRepositories(params: SearchRepositoriesParams): Promise<SuggestedRepository[]>;
     /**
      * **Security:**
      * Sensitive information like an owner token is erased, since it allows access for all team members.
@@ -313,6 +314,10 @@ export interface GetProviderRepositoriesParams {
     searchString?: string;
     limit?: number;
     maxPages?: number;
+}
+export interface SearchRepositoriesParams {
+    organizationId: string;
+    searchString: string;
 }
 export interface ProviderRepository {
     name: string;

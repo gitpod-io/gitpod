@@ -12,7 +12,7 @@ import { inject, injectable } from "inversify";
 import { observeSpicedbClientLatency, spicedbClientLatency } from "../prometheus-metrics";
 import { SpiceDBClientProvider } from "./spicedb";
 import * as grpc from "@grpc/grpc-js";
-import { isFgaChecksEnabled } from "./authorizer";
+import { isFgaChecksEnabled, isFgaWritesEnabled } from "./authorizer";
 
 async function tryThree<T>(errMessage: string, code: (attempt: number) => Promise<T>): Promise<T> {
     let attempt = 0;
@@ -56,32 +56,42 @@ export class SpiceDBAuthorizer {
         },
         forceEnablement?: boolean,
     ): Promise<boolean> {
+        if (!(await isFgaWritesEnabled(experimentsFields.userId))) {
+            return true;
+        }
         const featureEnabled = !!forceEnablement || (await isFgaChecksEnabled(experimentsFields.userId));
-        const timer = spicedbClientLatency.startTimer();
-        let error: Error | undefined;
-        try {
-            const response = await tryThree("[spicedb] Failed to perform authorization check.", () =>
-                this.client.checkPermission(req, this.callOptions),
-            );
-            const permitted = response.permissionship === v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION;
-            if (!permitted && !featureEnabled) {
-                log.info("[spicedb] Permission denied.", {
-                    response: new TrustedValue(response),
+        const result = (async () => {
+            const timer = spicedbClientLatency.startTimer();
+            let error: Error | undefined;
+            try {
+                const response = await tryThree("[spicedb] Failed to perform authorization check.", () =>
+                    this.client.checkPermission(req, this.callOptions),
+                );
+                const permitted = response.permissionship === v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION;
+                if (!permitted && !featureEnabled) {
+                    log.info("[spicedb] Permission denied.", {
+                        response: new TrustedValue(response),
+                        request: new TrustedValue(req),
+                    });
+                    return true;
+                }
+
+                return permitted;
+            } catch (err) {
+                error = err;
+                log.error("[spicedb] Failed to perform authorization check.", err, {
                     request: new TrustedValue(req),
                 });
-                return true;
+                return !featureEnabled;
+            } finally {
+                observeSpicedbClientLatency("check", error, timer());
             }
-
-            return permitted;
-        } catch (err) {
-            error = err;
-            log.error("[spicedb] Failed to perform authorization check.", err, {
-                request: new TrustedValue(req),
-            });
-            return !featureEnabled;
-        } finally {
-            observeSpicedbClientLatency("check", error, timer());
+        })();
+        // if the feature is not enabld, we don't await
+        if (!featureEnabled) {
+            return true;
         }
+        return result;
     }
 
     async writeRelationships(...updates: v1.RelationshipUpdate[]): Promise<v1.WriteRelationshipsResponse | undefined> {

@@ -416,21 +416,58 @@ export class Authorizer {
         if (!(await isFgaWritesEnabled(userID))) {
             return;
         }
-        return this.bulkAddWorkspaceToOrg([{ orgID, userID, workspaceID, shared }]);
-    }
-
-    async bulkAddWorkspaceToOrg(
-        ids: { orgID: string; userID: string; workspaceID: string; shared: boolean }[],
-    ): Promise<void> {
         const rels: v1.RelationshipUpdate[] = [];
-        for (const { orgID, userID, workspaceID, shared } of ids) {
-            rels.push(set(rel.workspace(workspaceID).org.organization(orgID)));
-            rels.push(set(rel.workspace(workspaceID).owner.user(userID)));
-            if (shared) {
-                rels.push(set(rel.workspace(workspaceID).shared.anyUser));
-            }
+        rels.push(set(rel.workspace(workspaceID).org.organization(orgID)));
+        rels.push(set(rel.workspace(workspaceID).owner.user(userID)));
+        if (shared) {
+            rels.push(set(rel.workspace(workspaceID).shared.anyUser));
         }
         await this.authorizer.writeRelationships(...rels);
+
+        (async () => {
+            //TODO(se) remove this double checking once we're confident that the above works
+            // check if the relationships were written
+            try {
+                const wsToOrgRel = await this.find(rel.workspace(workspaceID).org.organization(orgID));
+                if (!wsToOrgRel) {
+                    log.error("Failed to write workspace to org relationship", {
+                        orgID,
+                        userID,
+                        workspaceID,
+
+                        shared,
+                    });
+                }
+                const wsToOwnerRel = await this.find(rel.workspace(workspaceID).owner.user(userID));
+                if (!wsToOwnerRel) {
+                    log.error("Failed to write workspace to owner relationship", {
+                        orgID,
+                        userID,
+                        workspaceID,
+                        shared,
+                    });
+                }
+                if (shared) {
+                    const wsSharedRel = await this.find(rel.workspace(workspaceID).shared.anyUser);
+                    if (!wsSharedRel) {
+                        log.error("Failed to write workspace shared relationship", {
+                            orgID,
+                            userID,
+                            workspaceID,
+                            shared,
+                        });
+                    }
+                }
+            } catch (error) {
+                log.error("Failed to check workspace relationships", {
+                    orgID,
+                    userID,
+                    workspaceID,
+                    shared,
+                    error,
+                });
+            }
+        })().catch((error) => log.error({ userId: userID }, "Failed to check workspace relationships", { error }));
     }
 
     async removeWorkspaceFromOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {

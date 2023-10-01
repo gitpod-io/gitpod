@@ -326,12 +326,77 @@ func (s *BillingService) ReconcileInvoices(ctx context.Context, in *v1.Reconcile
 		log.WithError(err).Errorf("Failed to udpate usage in stripe.")
 		return nil, status.Errorf(codes.Internal, "Failed to update usage in stripe")
 	}
+	err = s.ReconcileStripeCustomers(ctx)
+	if err != nil {
+		log.WithError(err).Errorf("Failed to reconcile stripe customers.")
+	}
 
 	return &v1.ReconcileInvoicesResponse{}, nil
 }
 
+func (s *BillingService) ReconcileStripeCustomers(ctx context.Context) error {
+	log.Info("Reconciling stripe customers")
+	var costCenters []db.CostCenter
+	result := s.conn.Raw("SELECT * from d_b_cost_center where creationTime in (SELECT max(creationTime) from d_b_cost_center group by id) and nextBillingTime < creationTime and billingStrategy='stripe'").Scan(&costCenters)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	log.Infof("Found %d cost centers to reconcile", len(costCenters))
+
+	for _, costCenter := range costCenters {
+		log.Infof("Reconciling stripe invoices for cost center %s", costCenter.ID)
+		err := s.reconcileStripeInvoices(ctx, costCenter.ID)
+		if err != nil {
+			log.WithError(err).Errorf("Failed to reconcile stripe invoices for cost center %s", costCenter.ID)
+			continue
+		}
+		_, err = s.ccManager.IncrementBillingCycle(ctx, costCenter.ID)
+		if err != nil {
+			// we are just logging at this point, so that we don't see the event again as the usage has been recorded.
+			log.WithError(err).Errorf("Failed to increment billing cycle.")
+		}
+	}
+	return nil
+}
+
+func (s *BillingService) reconcileStripeInvoices(ctx context.Context, id db.AttributionID) error {
+	cust, err := s.stripeClient.GetCustomerByAttributionID(ctx, string(id))
+	if err != nil {
+		return err
+	}
+	invoices, err := s.stripeClient.ListInvoices(ctx, cust.ID)
+	if err != nil {
+		return err
+	}
+	for _, invoice := range invoices {
+		if invoice.Status == "paid" {
+			usage, err := InternalComputeInvoiceUsage(ctx, invoice, cust)
+			if err != nil {
+				return err
+			}
+			// check if a usage entry exists for this invoice
+			var existingUsage db.Usage
+			result := s.conn.First(&existingUsage, "description = ?", usage.Description)
+			if result.Error != nil {
+				if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+					log.Infof("No usage entry found for invoice %s. Inserting one now.", invoice.ID)
+					err = db.InsertUsage(ctx, s.conn, usage)
+					if err != nil {
+						return err
+					}
+				} else {
+					return result.Error
+				}
+			}
+		}
+	}
+	return nil
+}
+
 func (s *BillingService) FinalizeInvoice(ctx context.Context, in *v1.FinalizeInvoiceRequest) (*v1.FinalizeInvoiceResponse, error) {
 	logger := log.WithField("invoice_id", in.GetInvoiceId())
+	logger.Info("Invoice finalized. Recording usage.")
 
 	if in.GetInvoiceId() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "Missing InvoiceID")
@@ -342,7 +407,7 @@ func (s *BillingService) FinalizeInvoice(ctx context.Context, in *v1.FinalizeInv
 		logger.WithError(err).Error("Failed to retrieve invoice from Stripe.")
 		return nil, status.Errorf(codes.NotFound, "Failed to get invoice with ID %s: %s", in.GetInvoiceId(), err.Error())
 	}
-	usage, err := InternalComputeInvoiceUsage(ctx, invoice)
+	usage, err := InternalComputeInvoiceUsage(ctx, invoice, invoice.Customer)
 	if err != nil {
 		return nil, err
 	}
@@ -376,9 +441,9 @@ func (s *BillingService) FinalizeInvoice(ctx context.Context, in *v1.FinalizeInv
 	return &v1.FinalizeInvoiceResponse{}, nil
 }
 
-func InternalComputeInvoiceUsage(ctx context.Context, invoice *stripe_api.Invoice) (db.Usage, error) {
+func InternalComputeInvoiceUsage(ctx context.Context, invoice *stripe_api.Invoice, customer *stripe_api.Customer) (db.Usage, error) {
 	logger := log.WithField("invoice_id", invoice.ID)
-	attributionID, err := stripe.GetAttributionID(ctx, invoice.Customer)
+	attributionID, err := stripe.GetAttributionID(ctx, customer)
 	if err != nil {
 		return db.Usage{}, err
 	}

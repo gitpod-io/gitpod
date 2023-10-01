@@ -13,7 +13,7 @@ import (
 )
 
 func TestHasUser(t *testing.T) {
-	gitpodUser := user.User{Username: gitpodUserName, Uid: strconv.Itoa(gitpodUID), HomeDir: "/home/gitpod", Gid: strconv.Itoa(gitpodGID)}
+	gitpodUser := user.User{Username: legacyGitpodUserName, Uid: strconv.Itoa(legacyGitpodUID), HomeDir: "/home/gitpod", Gid: strconv.Itoa(legacyGitpodGID)}
 	mod := func(u user.User, m func(u *user.User)) *user.User {
 		m(&u)
 		return &u
@@ -39,15 +39,15 @@ func TestHasUser(t *testing.T) {
 		{
 			Name: "does not exist",
 			Ops: ops{
-				RLookup:   opsResult{Err: user.UnknownUserError(gitpodUserName)},
-				RLookupId: opsResult{Err: user.UnknownUserIdError(gitpodUID)},
+				RLookup:   opsResult{Err: user.UnknownUserError(legacyGitpodUserName)},
+				RLookupId: opsResult{Err: user.UnknownUserIdError(legacyGitpodUID)},
 			},
 		},
 		{
 			Name: "different UID",
 			Ops: ops{
 				RLookup:   opsResult{User: mod(gitpodUser, func(u *user.User) { u.Uid = "1000" })},
-				RLookupId: opsResult{Err: user.UnknownUserIdError(gitpodUID)},
+				RLookupId: opsResult{Err: user.UnknownUserIdError(legacyGitpodUID)},
 			},
 			Expectation: Expectation{
 				Exists: true,
@@ -57,7 +57,7 @@ func TestHasUser(t *testing.T) {
 		{
 			Name: "different name",
 			Ops: ops{
-				RLookup:   opsResult{Err: user.UnknownUserError(gitpodUserName)},
+				RLookup:   opsResult{Err: user.UnknownUserError(legacyGitpodUserName)},
 				RLookupId: opsResult{User: mod(gitpodUser, func(u *user.User) { u.Username = "foobar" })},
 			},
 			Expectation: Expectation{
@@ -107,7 +107,7 @@ func TestHasUser(t *testing.T) {
 }
 
 func TestHasGroup(t *testing.T) {
-	gitpodGroup := user.Group{Name: gitpodGroupName, Gid: strconv.Itoa(gitpodGID)}
+	gitpodGroup := user.Group{Name: legacyGitpodGroupName, Gid: strconv.Itoa(legacyGitpodGID)}
 	mod := func(u user.Group, m func(u *user.Group)) *user.Group {
 		m(&u)
 		return &u
@@ -133,7 +133,7 @@ func TestHasGroup(t *testing.T) {
 		{
 			Name: "does not exist",
 			Ops: ops{
-				RLookupGroup:   opsResult{Err: user.UnknownGroupError(gitpodGroupName)},
+				RLookupGroup:   opsResult{Err: user.UnknownGroupError(legacyGitpodGroupName)},
 				RLookupGroupId: opsResult{Err: user.UnknownGroupIdError(gitpodGroup.Gid)},
 			},
 		},
@@ -151,7 +151,7 @@ func TestHasGroup(t *testing.T) {
 		{
 			Name: "different name",
 			Ops: ops{
-				RLookupGroup:   opsResult{Err: user.UnknownGroupError(gitpodGroupName)},
+				RLookupGroup:   opsResult{Err: user.UnknownGroupError(legacyGitpodGroupName)},
 				RLookupGroupId: opsResult{Group: mod(gitpodGroup, func(u *user.Group) { u.Name = "foobar" })},
 			},
 			Expectation: Expectation{
@@ -164,7 +164,7 @@ func TestHasGroup(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			defaultLookup = test.Ops
-			exists, err := hasGroup(gitpodGroupName, gitpodGID)
+			exists, err := hasGroup(legacyGitpodGroupName, legacyGitpodGID)
 			var act Expectation
 			act.Exists = exists
 			if err != nil {

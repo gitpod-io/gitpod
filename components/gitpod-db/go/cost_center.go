@@ -209,17 +209,23 @@ func (c *CostCenterManager) IncrementBillingCycle(ctx context.Context, attributi
 		log.Infof("Cost center %s is not yet expired. Skipping increment.", attributionId)
 		return cc, nil
 	}
-	billingCycleStart := NewVarCharTime(now)
+	billingCycleStart := now
 	if cc.NextBillingTime.IsSet() {
-		billingCycleStart = cc.NextBillingTime
+		billingCycleStart = cc.NextBillingTime.Time()
+	}
+	nextBillingTime := billingCycleStart.AddDate(0, 1, 0)
+	for nextBillingTime.Before(now) {
+		log.Warnf("Billing cycle for %s is lagging behind. Incrementing by one month.", attributionId)
+		billingCycleStart = billingCycleStart.AddDate(0, 1, 0)
+		nextBillingTime = billingCycleStart.AddDate(0, 1, 0)
 	}
 	// All fields on the new cost center remain the same, except for BillingCycleStart, NextBillingTime, and CreationTime
 	newCostCenter := CostCenter{
 		ID:                cc.ID,
 		SpendingLimit:     cc.SpendingLimit,
 		BillingStrategy:   cc.BillingStrategy,
-		BillingCycleStart: billingCycleStart,
-		NextBillingTime:   NewVarCharTime(billingCycleStart.Time().AddDate(0, 1, 0)),
+		BillingCycleStart: NewVarCharTime(billingCycleStart),
+		NextBillingTime:   NewVarCharTime(nextBillingTime),
 		CreationTime:      NewVarCharTime(now),
 	}
 	err = c.conn.Save(&newCostCenter).Error

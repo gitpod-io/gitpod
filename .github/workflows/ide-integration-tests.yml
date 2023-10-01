@@ -31,7 +31,7 @@ jobs:
     runs-on: ${{ needs.create-runner.outputs.label }}
     needs: [create-runner]
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:at-node-18-17-1-gha.15610
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-update-image-gha.17642
     outputs:
       name: ${{ steps.configuration.outputs.name }}
       version: ${{ steps.configuration.outputs.version }}
@@ -77,7 +77,7 @@ jobs:
     concurrency:
       group: ${{ needs.configuration.outputs.name }}-infrastructure
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Create preview environment infrastructure
         id: create
         uses: ./.github/actions/preview-create
@@ -100,12 +100,12 @@ jobs:
     needs: [configuration, infrastructure, create-runner]
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:at-node-18-17-1-gha.15610
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-update-image-gha.17642
       volumes:
         - /var/tmp:/var/tmp
         - /tmp:/tmp
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Integration Test
         shell: bash
         env:
@@ -189,7 +189,7 @@ jobs:
     if: github.event.inputs.skip_delete != 'true' && always()
     runs-on: ${{ needs.create-runner.outputs.label }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Delete preview environment
         uses: ./.github/actions/delete-preview
         with:

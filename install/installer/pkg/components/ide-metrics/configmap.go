@@ -336,6 +336,22 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 		},
+		{
+			Name:   "supervisor_ssh_tunnel_opened_total",
+			Help:   "Total number of SSH tunnels opened by the supervisor",
+			Labels: []config.LabelAllowList{},
+		},
+		{
+			Name: "supervisor_ssh_tunnel_closed_total",
+			Help: "Total number of SSH tunnels closed by the supervisor",
+			Labels: []config.LabelAllowList{
+				{
+					Name:         "code",
+					AllowValues:  []string{"*"},
+					DefaultValue: "unknown",
+				},
+			},
+		},
 	}
 
 	histogramMetrics := []config.HistogramMetricsConfiguration{

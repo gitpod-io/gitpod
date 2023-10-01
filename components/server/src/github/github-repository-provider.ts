@@ -230,6 +230,57 @@ export class GithubRepositoryProvider implements RepositoryProvider {
         return repos;
     }
 
+    public async searchRepos(user: User, searchString: string): Promise<RepositoryInfo[]> {
+        const logCtx = { userId: user.id };
+
+        // graphql api only returns public orgs, so we need to use the rest api to get both public & private orgs
+        const orgs = await this.github.run(user, async (api) => {
+            return api.orgs.listMembershipsForAuthenticatedUser({
+                state: "active",
+            });
+        });
+
+        // TODO: determine if there's a maximum # of orgs we can include in a single query and split into multiple calls if necessary
+        // A string of org query filters, i.e. "org:org1 org:org2 org:org3"
+        const orgFilters = orgs?.data.map((org) => `org:${org.organization.login}`).join(" ");
+
+        const query = JSON.stringify(`${searchString} in:name user:@me ${orgFilters}`);
+        const repoSearchQuery = `
+            query SearchRepos {
+                search (type: REPOSITORY, first: 10, query: ${query}){
+                    edges {
+                        node {
+                            ... on Repository {
+                                name
+                                url
+                                owner {
+                                    login
+                                }
+                            }
+                        }
+                    }
+                }
+            }`;
+
+        let repos: RepositoryInfo[] = [];
+
+        try {
+            const result = await this.githubQueryApi.runQuery<SearchReposQueryResponse>(user, repoSearchQuery);
+            repos = result.data.search.edges.map((edge) => {
+                return {
+                    name: edge.node.name,
+                    url: edge.node.url,
+                };
+            });
+        } catch (e) {
+            log.warn(logCtx, "Error searching repos", e, { orgCount: orgFilters.length });
+
+            throw e;
+        }
+
+        return repos;
+    }
+
     async hasReadAccess(user: User, owner: string, repo: string): Promise<boolean> {
         try {
             // If you have no "viewerPermission" on a repository you may not read it
@@ -251,3 +302,14 @@ export class GithubRepositoryProvider implements RepositoryProvider {
         }
     }
 }
+
+type SearchReposQueryResponse = {
+    search: {
+        edges: {
+            node: {
+                name: string;
+                url: string;
+            };
+        }[];
+    };
+};
