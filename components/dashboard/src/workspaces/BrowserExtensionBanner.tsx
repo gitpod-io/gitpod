@@ -76,7 +76,7 @@ export function BrowserExtensionBanner({ parser = new UAParser() }: BrowserExten
                         Faster workflows directly from your repository.
                     </p>
                 </div>
-                <div className="col-span-1 flex justify-end items-start h-full pt -1">
+                <div className="col-span-1 flex justify-end items-start h-full pt-1">
                     <button className="reset right-8 top-6 text-gray-500 dark:text-gray-200" onClick={handleClose}>
                         &#10005;
                     </button>
