@@ -63,21 +63,19 @@ export function BrowserExtensionBanner({ parser = new UAParser() }: BrowserExten
     return (
         <section className="hidden p-4 sm:block sm:absolute sm:bottom-2 sm:left-2">
             <div className="grid h-28 w-72 grid-cols-6 items-end gap-x-2 rounded-xl border-2 border-dashed border-[#dadada] bg-[#fafaf9] dark:bg-gray-800 dark:border-gray-600 p-4">
-                <button
-                    className="absolute reset right-[2.1rem] top-[2.4rem] text-gray-500 dark:text-gray-200"
-                    onClick={handleClose}
-                >
-                    &#10005;
-                </button>
-
                 <div className="col-span-1">
                     <img src={flashIcon} alt="" className="h-8 w-8" />
                 </div>
 
-                <div className="col-span-5">
+                <div className="col-span-4">
                     <p className="text-sm font-medium leading-5 text-[#666564]">
                         Faster workflows directly from your repository.
                     </p>
+                </div>
+                <div className="col-span-1 flex justify-end items-start h-full pt -1">
+                    <button className="reset right-8 top-6 text-gray-500 dark:text-gray-200" onClick={handleClose}>
+                        &#10005;
+                    </button>
                 </div>
                 <div className="col-span-1"></div>
 
