@@ -6,23 +6,21 @@
 
 import { useEffect, useState } from "react";
 import UAParser from "ua-parser-js";
+import flashIcon from "../icons/search.svg";
+
 interface BrowserOption {
     url: string;
-    icon: string;
 }
 
 const installationOptions: Record<string, BrowserOption> = {
     firefox: {
         url: "https://addons.mozilla.org/en-US/firefox/addon/gitpod/",
-        icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Firefox_logo%2C_2019.svg/1920px-Firefox_logo%2C_2019.svg.png",
     },
     chrome: {
         url: "https://chrome.google.com/webstore/detail/gitpod-always-ready-to-co/dodmmooeoklaejobgleioelladacbeki",
-        icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Google_Chrome_icon_%28February_2022%29.svg/1920px-Google_Chrome_icon_%28February_2022%29.svg.png",
     },
     edge: {
         url: "https://chrome.google.com/webstore/detail/gitpod-always-ready-to-co/dodmmooeoklaejobgleioelladacbeki",
-        icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Edge_Logo_2019.svg/1920px-Edge_Logo_2019.svg.png",
     },
 };
 
@@ -73,7 +71,7 @@ export function BrowserExtensionBanner({ parser = new UAParser() }: BrowserExten
                 </button>
 
                 <div className="col-span-1">
-                    <img src={browserOption.icon} alt="" className="h-8 w-8" />
+                    <img src={flashIcon} alt="" className="h-8 w-8" />
                 </div>
 
                 <div className="col-span-5">
