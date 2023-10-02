@@ -157,8 +157,57 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
         return commits.map((v: Schema.Commit) => v.hash!);
     }
 
-    // TODO: implement repo search
+    //
+    // Searching Bitbucket requires a workspace to be specified
+    // This results in a two step process:
+    // 1. Get all workspaces for the user
+    // 2. Fan out and search each workspace for the repos
+    //
     public async searchRepos(user: User, searchString: string): Promise<RepositoryInfo[]> {
-        return [];
+        const api = await this.apiFactory.create(user);
+
+        const workspaces = await api.workspaces.getWorkspaces({});
+
+        const workspaceSlugs: string[] = (
+            workspaces.data.values?.map((w) => {
+                return w.slug || "";
+            }) ?? []
+        ).filter(Boolean);
+
+        if (workspaceSlugs.length === 0) {
+            return [];
+        }
+
+        // Array of promises searching for repos in each workspace
+        const workspaceSearches = workspaceSlugs.map((workspaceSlug) => {
+            return api.repositories.list({
+                workspace: workspaceSlug,
+                q: `name ~ "${searchString}"`,
+                sort: "-updated_on",
+                // limit to the first 10 results per workspace
+                pagelen: 10,
+            });
+        });
+
+        const results = await Promise.allSettled(workspaceSearches);
+
+        const values = results
+            .map((result) => {
+                return result.status === "fulfilled" ? result.value.data.values ?? [] : [];
+            })
+            .flat();
+
+        // Convert into RepositoryInfo
+        const repos: RepositoryInfo[] = [];
+
+        values.forEach((repo) => {
+            const name = repo.name;
+            const url = repo.links?.html?.href;
+            if (name && url) {
+                repos.push({ name, url });
+            }
+        });
+
+        return repos;
     }
 }
