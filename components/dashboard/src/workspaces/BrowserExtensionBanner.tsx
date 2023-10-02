@@ -71,7 +71,7 @@ export function BrowserExtensionBanner({ parser = new UAParser() }: BrowserExten
 
                 <div className="col-span-9">
                     <p className="text-sm font-medium leading-5 text-[#666564]">
-                        Faster workflows directly from your repository.
+                        Open workspaces directly from your source control repository.
                     </p>
                 </div>
                 <div className="col-span-1 flex justify-end items-start h-full pt-1">
