@@ -104,10 +104,11 @@ export class API {
         return {
             get(target, prop) {
                 return (...args: any[]) => {
+                    const startedAt = performance.now();
                     const method = type.methods[prop as any];
                     if (!method) {
                         // Increment metrics for unknown method attempts
-                        console.warn("public api: unknown method", grpc_service, prop);
+                        log.warn("public api: unknown method", grpc_service, prop);
                         const code = Code.Unimplemented;
                         grpcServerStarted.labels(grpc_service, "unknown", "unknown").inc();
                         grpcServerHandled.labels(grpc_service, "unknown", "unknown", Code[code]).inc();
@@ -134,11 +135,24 @@ export class API {
                         const grpc_code = err ? Code[err.code] : "OK";
                         grpcServerHandled.labels(grpc_service, grpc_method, grpc_type, grpc_code).inc();
                         stopTimer({ grpc_code });
+                        let callDuration;
+                        if (callStartedAt) {
+                            callDuration = performance.now() - callStartedAt;
+                        }
+                        withRequestContext(log.debug, log, [
+                            "public api: done",
+                            {
+                                grpc_code,
+                                duration: performance.now() - startedAt,
+                                verifyDuration,
+                                callDuration,
+                            },
+                        ]);
                     };
                     const handleError = (reason: unknown) => {
                         let err = ConnectError.from(reason, Code.Internal);
                         if (reason != err && err.code === Code.Internal) {
-                            console.error("public api: unexpected internal error", reason);
+                            withRequestContext(log.error, log, [`public api: unexpected internal error`, reason]);
                             err = ConnectError.from(
                                 `Oops! Something went wrong. Please quote the request ID ${requestId} when reaching out to Gitpod Support.`,
                                 Code.Internal,
@@ -149,6 +163,7 @@ export class API {
                     };
 
                     let verifyDuration: number | undefined;
+                    let callStartedAt: number | undefined;
                     const context = args[1] as HandlerContext;
                     function withRequestContext<T>(
                         target: Function,
@@ -162,7 +177,6 @@ export class API {
                                 requestId,
                                 grpc_service,
                                 grpc_method,
-                                verifyDuration,
                             },
                             () => Reflect.apply(target, thisArgument, argumentsList),
                         );
@@ -174,6 +188,7 @@ export class API {
                         verifyDuration = performance.now() - verifyStartedAt;
                         context.user = user;
 
+                        callStartedAt = performance.now();
                         if (grpc_type === "unary" || grpc_type === "client_stream") {
                             return withRequestContext(target[prop as any], target, args);
                         }
