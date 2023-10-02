@@ -11,6 +11,7 @@ import { URL } from "url";
 import { RepoURL } from "../repohost/repo-url";
 import { RepositoryProvider } from "../repohost/repository-provider";
 import { BitbucketApiFactory } from "./bitbucket-api-factory";
+import asyncBatch from "async-batch";
 
 @injectable()
 export class BitbucketRepositoryProvider implements RepositoryProvider {
@@ -166,7 +167,7 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
     public async searchRepos(user: User, searchString: string): Promise<RepositoryInfo[]> {
         const api = await this.apiFactory.create(user);
 
-        const workspaces = await api.workspaces.getWorkspaces({});
+        const workspaces = await api.workspaces.getWorkspaces({ pagelen: 25 });
 
         const workspaceSlugs: string[] = (
             workspaces.data.values?.map((w) => {
@@ -178,37 +179,41 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
             return [];
         }
 
-        // Array of promises searching for repos in each workspace
-        const workspaceSearches = workspaceSlugs.map((workspaceSlug) => {
-            return api.repositories.list({
-                workspace: workspaceSlug,
-                // name includes searchString
-                q: `name ~ "${searchString}"`,
-                // sort by most recently updatd first
-                sort: "-updated_on",
-                // limit to the first 10 results per workspace
-                pagelen: 10,
-            });
-        });
-
-        const results = await Promise.allSettled(workspaceSearches);
-
-        const values = results
-            .map((result) => {
-                return result.status === "fulfilled" ? result.value.data.values ?? [] : [];
-            })
-            .flat();
+        // Batch our requests to the api so we only make up to 5 calls in parallel
+        const results = await asyncBatch(
+            workspaceSlugs,
+            async (workspaceSlug) => {
+                return api.repositories.list({
+                    workspace: workspaceSlug,
+                    // name includes searchString
+                    q: `name ~ "${searchString}"`,
+                    // sort by most recently updatd first
+                    sort: "-updated_on",
+                    // limit to the first 10 results per workspace
+                    pagelen: 10,
+                });
+            },
+            // 5 calls in parallel
+            5,
+        );
 
         // Convert into RepositoryInfo
         const repos: RepositoryInfo[] = [];
 
-        values.forEach((repo) => {
-            const name = repo.name;
-            const url = repo.links?.html?.href;
-            if (name && url) {
-                repos.push({ name, url });
-            }
-        });
+        results
+            .map((result) => {
+                return result.data.values ?? [];
+            })
+            // flatten out the array of arrays
+            .flat()
+            // convert into the format we want to return
+            .forEach((repo) => {
+                const name = repo.name;
+                const url = repo.links?.html?.href;
+                if (name && url) {
+                    repos.push({ name, url });
+                }
+            });
 
         return repos;
     }

@@ -4424,6 +4424,11 @@ ast-types-flow@^0.0.7:
   resolved "https://registry.npmjs.org/ast-types-flow/-/ast-types-flow-0.0.7.tgz"
   integrity sha1-9wtzXGvKGlycItmCw+Oef+ujva0=
 
+async-batch@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/async-batch/-/async-batch-1.1.2.tgz#ecac7dee0f02a1a3a846438ba7d3f96746239d79"
+  integrity sha512-tBR4YIKi7s1cCtNHuguyXVBdRSkS6N8OhM1czrpE0W2j2yovj/IAxXD187cNX0d+kGxBbZLPwW5ASonYuZJprA==
+
 async@^3.2.3:
   version "3.2.4"
   resolved "https://registry.yarnpkg.com/async/-/async-3.2.4.tgz#2d22e00f8cddeb5fde5dd33522b56d1cf569a81c"
