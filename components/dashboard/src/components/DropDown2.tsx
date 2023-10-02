@@ -301,7 +301,7 @@ export const DropDown2SelectedElement: FC<DropDown2SelectedElementProps> = ({
                     <>{icon}</>
                 )}
             </div>
-            <div className="flex-col ml-1 flex-grow">
+            <div className="flex-col ml-1 flex-grow max-w-xs">
                 {loading ? (
                     <div className="flex-col space-y-2">
                         <div className="bg-gray-300 dark:bg-gray-500 h-4 w-24 rounded" />
@@ -310,7 +310,7 @@ export const DropDown2SelectedElement: FC<DropDown2SelectedElementProps> = ({
                 ) : (
                     <>
                         <div className="text-gray-700 dark:text-gray-300 font-semibold">{title}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{subtitle}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{subtitle}</div>
                     </>
                 )}
             </div>
