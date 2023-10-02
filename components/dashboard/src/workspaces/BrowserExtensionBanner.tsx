@@ -78,7 +78,7 @@ export function BrowserExtensionBanner() {
                         className={classNames(
                             "cursor-pointer p-2 ml-2 -mt-1",
                             "bg-transparent hover:bg-transparent",
-                            "text-white hover:text-gray-300 dark:text-gray-800 dark:hover:text-gray-600",
+                            "text-gray-500 hover:text-gray-300 dark:text-gray-200 dark:hover:text-gray-600",
                         )}
                         onClick={handleClose}
                     >
