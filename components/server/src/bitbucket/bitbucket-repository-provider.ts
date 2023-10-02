@@ -166,7 +166,7 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
     public async searchRepos(user: User, searchString: string): Promise<RepositoryInfo[]> {
         const api = await this.apiFactory.create(user);
 
-        const workspaces = await api.workspaces.getWorkspaces({ fields: "workspace.slug" });
+        const workspaces = await api.workspaces.getWorkspaces({});
 
         const workspaceSlugs: string[] = (
             workspaces.data.values?.map((w) => {
@@ -181,8 +181,6 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
         // Array of promises searching for repos in each workspace
         const workspaceSearches = workspaceSlugs.map((workspaceSlug) => {
             return api.repositories.list({
-                // limit to just the fields we need
-                fields: "name,links.html.href",
                 workspace: workspaceSlug,
                 // name includes searchString
                 q: `name ~ "${searchString}"`,
