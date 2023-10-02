@@ -17,7 +17,7 @@ RUN curl -OsSL https://github.com/peak/s5cmd/releases/download/v2.2.2/s5cmd_2.2.
 FROM ubuntu:22.04
 
 # trigger manual rebuild increasing the value
-ENV TRIGGER_REBUILD=1
+ENV TRIGGER_REBUILD=2
 
 ## Installing coreutils is super important here as otherwise the loopback device creation fails!
 ARG CLOUD_SDK_VERSION=437.0.1

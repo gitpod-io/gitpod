@@ -362,6 +362,8 @@ func RunInitializerChild() (err error) {
 
 var _ storage.DirectAccess = &remoteContentStorage{}
 
+// implements storage.DirectDownloader, this is used by the content-init container
+// implements storage.DirectAccess, the interface is largely unimplemented
 type remoteContentStorage struct {
 	RemoteContent map[string]storage.DownloadInfo
 }
@@ -374,6 +376,41 @@ func (rs *remoteContentStorage) Init(ctx context.Context, owner, workspace, inst
 // EnsureExists does nothing
 func (rs *remoteContentStorage) EnsureExists(ctx context.Context) error {
 	return nil
+}
+
+// download content from object storage using s5cmd
+func (rs *remoteContentStorage) s5cmdDownload(info storage.DownloadInfo) (*os.File, error) {
+	tempFile, err := os.CreateTemp("", "temporal-s3-file")
+	if err != nil {
+		return nil, xerrors.Errorf("creating temporal file: %s", err.Error())
+	}
+	tempFile.Close()
+
+	args := []string{
+		"cp",
+		// # of file parts to download at once
+		"--concurrency", "20",
+		// size in MB of each part
+		"--part-size", "25",
+		info.URL,
+		tempFile.Name(),
+	}
+	cmd := exec.Command("s5cmd", args...)
+	downloadStart := time.Now()
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.WithError(err).WithField("out", string(out)).Error("unexpected error downloading file")
+		return nil, xerrors.Errorf("unexpected error downloading file")
+	}
+	downloadDuration := time.Since(downloadStart)
+	log.WithField("downloadDuration", downloadDuration.String()).Info("S3 download duration")
+
+	tempFile, err = os.Open(tempFile.Name())
+	if err != nil {
+		return nil, xerrors.Errorf("unexpected error opening downloaded file")
+	}
+
+	return tempFile, nil
 }
 
 // Download always returns false and does nothing
@@ -390,32 +427,18 @@ func (rs *remoteContentStorage) Download(ctx context.Context, destination string
 
 	span.SetTag("URL", info.URL)
 
-	// create a temporal file to download the content
-	tempFile, err := os.CreateTemp("", "remote-content-*")
-	if err != nil {
-		return true, xerrors.Errorf("cannot create temporal file: %w", err)
-	}
-	tempFile.Close()
+	var tempFile *os.File
 
-	args := []string{
-		"-s10", "-x16", "-j12",
-		"--retry-wait=5",
-		"--log-level=error",
-		"--allow-overwrite=true", // rewrite temporal empty file
-		info.URL,
-		"-o", tempFile.Name(),
+	// check the download URL to decide how to download
+	// this is run from the content-init container, and lacks access to the ws-daemon config
+	if strings.Contains(info.URL, "amazonaws.com") {
+		tempFile, err = rs.s5cmdDownload(info)
+	} else {
+		tempFile, err = rs.aria2cDownload(info)
 	}
 
-	cmd := exec.Command("aria2c", args...)
-	out, err := cmd.CombinedOutput()
 	if err != nil {
-		log.WithError(err).WithField("out", string(out)).Error("unexpected error downloading file")
-		return true, xerrors.Errorf("unexpected error downloading file")
-	}
-
-	tempFile, err = os.Open(tempFile.Name())
-	if err != nil {
-		return true, xerrors.Errorf("unexpected error downloading file")
+		return true, err
 	}
 
 	defer os.Remove(tempFile.Name())
@@ -427,6 +450,41 @@ func (rs *remoteContentStorage) Download(ctx context.Context, destination string
 	}
 
 	return true, nil
+}
+
+// download content from object storage using aria2c
+func (rs *remoteContentStorage) aria2cDownload(info storage.DownloadInfo) (*os.File, error) {
+	tempFile, err := os.CreateTemp("", "remote-content-*")
+	if err != nil {
+		return nil, xerrors.Errorf("cannot create temporal file: %w", err)
+	}
+	tempFile.Close()
+
+	downloadStart := time.Now()
+
+	args := []string{
+		"-s10", "-x16", "-j12",
+		"--retry-wait=5",
+		"--log-level=error",
+		"--allow-overwrite=true",
+		info.URL,
+		"-o", tempFile.Name(),
+	}
+
+	cmd := exec.Command("aria2c", args...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.WithError(err).WithField("out", string(out)).Error("unexpected error downloading file")
+		return nil, xerrors.Errorf("unexpected error downloading file")
+	}
+	downloadDuration := time.Since(downloadStart)
+	log.WithField("downloadDuration", downloadDuration.String()).Info("aria2c download duration")
+
+	tempFile, err = os.Open(tempFile.Name())
+	if err != nil {
+		return nil, xerrors.Errorf("unexpected error downloading file")
+	}
+	return tempFile, nil
 }
 
 // DownloadSnapshot always returns false and does nothing
