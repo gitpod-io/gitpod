@@ -13,7 +13,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
@@ -94,12 +93,8 @@ type Client struct {
 	// UpstreamCloneURI is the fork upstream of a repository
 	UpstreamRemoteURI string
 
-	// RunAs runs the Git commands as a particular user - if not nil
-	RunAs *User
-}
-
-type User struct {
-	UID, GID uint32
+	// if true will run git command as gitpod user (should be executed as root that has access to sudo in this case)
+	RunAsGitpodUser bool
 }
 
 // Status describes the status of a Git repo/working copy akin to "git status"
@@ -183,6 +178,8 @@ func (c *Client) GitWithOutput(ctx context.Context, ignoreErr *string, subcomman
 		env = append(env, fmt.Sprintf("GIT_AUTH_PASSWORD=%s", pwd))
 	}
 
+	env = append(env, "HOME=/home/gitpod")
+
 	fullArgs = append(fullArgs, subcommand)
 	fullArgs = append(fullArgs, args...)
 
@@ -204,19 +201,13 @@ func (c *Client) GitWithOutput(ctx context.Context, ignoreErr *string, subcomman
 	span.LogKV("args", fullArgs)
 
 	cmdName := "git"
+	if c.RunAsGitpodUser {
+		cmdName = "sudo"
+		fullArgs = append([]string{"-u", "gitpod", "git"}, fullArgs...)
+	}
 	cmd := exec.Command(cmdName, fullArgs...)
 	cmd.Dir = c.Location
 	cmd.Env = env
-	if c.RunAs != nil {
-		if cmd.SysProcAttr == nil {
-			cmd.SysProcAttr = &syscall.SysProcAttr{}
-		}
-		if cmd.SysProcAttr.Credential == nil {
-			cmd.SysProcAttr.Credential = &syscall.Credential{}
-		}
-		cmd.SysProcAttr.Credential.Uid = c.RunAs.UID
-		cmd.SysProcAttr.Credential.Gid = c.RunAs.UID
-	}
 
 	res, err := cmd.CombinedOutput()
 	if err != nil {

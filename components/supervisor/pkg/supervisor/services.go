@@ -741,7 +741,7 @@ func (is *InfoService) WorkspaceInfo(ctx context.Context, req *api.WorkspaceInfo
 		}
 	}
 
-	resp.UserHome = os.Getenv("HOME")
+	resp.UserHome = "/home/gitpod"
 
 	endpoint, host, err := is.cfg.GitpodAPIEndpoint()
 	if err != nil {
@@ -763,8 +763,6 @@ type ControlService struct {
 	publicKey  string
 	hostKey    *api.SSHPublicKey
 
-	uid, gid int
-
 	api.UnimplementedControlServiceServer
 }
 
@@ -785,15 +783,15 @@ func (c *ControlService) ExposePort(ctx context.Context, req *api.ExposePortRequ
 }
 
 // CreateSSHKeyPair create a ssh key pair for the workspace.
-func (c *ControlService) CreateSSHKeyPair(ctx context.Context, req *api.CreateSSHKeyPairRequest) (response *api.CreateSSHKeyPairResponse, err error) {
-	home := os.Getenv("HOME")
-	if c.privateKey != "" && c.publicKey != "" {
+func (ss *ControlService) CreateSSHKeyPair(ctx context.Context, req *api.CreateSSHKeyPairRequest) (response *api.CreateSSHKeyPairResponse, err error) {
+	home := "/home/gitpod/"
+	if ss.privateKey != "" && ss.publicKey != "" {
 		checkKey := func() error {
 			data, err := os.ReadFile(filepath.Join(home, ".ssh/authorized_keys"))
 			if err != nil {
 				return xerrors.Errorf("cannot read file ~/.ssh/authorized_keys: %w", err)
 			}
-			if !bytes.Contains(data, []byte(c.publicKey)) {
+			if !bytes.Contains(data, []byte(ss.publicKey)) {
 				return xerrors.Errorf("not found special publickey")
 			}
 			return nil
@@ -801,8 +799,8 @@ func (c *ControlService) CreateSSHKeyPair(ctx context.Context, req *api.CreateSS
 		err := checkKey()
 		if err == nil {
 			return &api.CreateSSHKeyPairResponse{
-				PrivateKey: c.privateKey,
-				HostKey:    c.hostKey,
+				PrivateKey: ss.privateKey,
+				HostKey:    ss.hostKey,
 			}, nil
 		}
 		log.WithError(err).Error("check authorized_keys failed, will recreate")
@@ -813,7 +811,7 @@ func (c *ControlService) CreateSSHKeyPair(ctx context.Context, req *api.CreateSS
 		if err != nil {
 			return nil, xerrors.Errorf("cannot create tmpfile: %w", err)
 		}
-		err = prepareSSHKey(ctx, filepath.Join(dir, "ssh"), c.uid, c.gid)
+		err = prepareSSHKey(ctx, filepath.Join(dir, "ssh"))
 		if err != nil {
 			return nil, xerrors.Errorf("cannot create ssh key pair: %w", err)
 		}
@@ -837,7 +835,7 @@ func (c *ControlService) CreateSSHKeyPair(ctx context.Context, req *api.CreateSS
 		if err != nil {
 			return nil, xerrors.Errorf("cannot write file ~.ssh/authorized_keys: %w", err)
 		}
-		err = os.Chown(filepath.Join(home, ".ssh/authorized_keys"), c.uid, c.gid)
+		err = os.Chown(filepath.Join(home, ".ssh/authorized_keys"), gitpodUID, gitpodGID)
 		if err != nil {
 			return nil, xerrors.Errorf("cannot chown SSH authorized_keys file: %w", err)
 		}
@@ -847,8 +845,8 @@ func (c *ControlService) CreateSSHKeyPair(ctx context.Context, req *api.CreateSS
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot create ssh key pair: %v", err)
 	}
-	c.privateKey = string(generated.PrivateKey)
-	c.publicKey = string(generated.PublicKey)
+	ss.privateKey = string(generated.PrivateKey)
+	ss.publicKey = string(generated.PublicKey)
 
 	hostKey, err := os.ReadFile("/.supervisor/ssh/sshkey.pub")
 	if err != nil {
@@ -856,7 +854,7 @@ func (c *ControlService) CreateSSHKeyPair(ctx context.Context, req *api.CreateSS
 	} else {
 		hostKeyParts := strings.Split(string(hostKey), " ")
 		if len(hostKeyParts) >= 2 {
-			c.hostKey = &api.SSHPublicKey{
+			ss.hostKey = &api.SSHPublicKey{
 				Type:  hostKeyParts[0],
 				Value: hostKeyParts[1],
 			}
@@ -864,8 +862,8 @@ func (c *ControlService) CreateSSHKeyPair(ctx context.Context, req *api.CreateSS
 	}
 
 	return &api.CreateSSHKeyPairResponse{
-		PrivateKey: c.privateKey,
-		HostKey:    c.hostKey,
+		PrivateKey: ss.privateKey,
+		HostKey:    ss.hostKey,
 	}, err
 }
 
