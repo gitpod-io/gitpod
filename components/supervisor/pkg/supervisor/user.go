@@ -35,33 +35,26 @@ func (osLookup) LookupId(id string) (grp *user.User, err error)       { return u
 
 var defaultLookup lookup = osLookup{}
 
-const (
-	legacyGitpodUID       = 33333
-	legacyGitpodGID       = 33333
-	legacyGitpodUserName  = "gitpod"
-	legacyGitpodGroupName = "gitpod"
-)
-
 func AddGitpodUserIfNotExists() error {
-	ok, err := hasGroup(legacyGitpodGroupName, legacyGitpodGID)
+	ok, err := hasGroup(gitpodGroupName, gitpodGID)
 	if err != nil {
 		return err
 	}
 	if !ok {
-		err = addGroup(legacyGitpodGroupName, legacyGitpodGID)
+		err = addGroup(gitpodGroupName, gitpodGID)
 		if err != nil {
 			return err
 		}
 	}
-	if err := addSudoer(legacyGitpodGroupName); err != nil {
+	if err := addSudoer(gitpodGroupName); err != nil {
 		log.WithError(err).Error("add gitpod sudoers")
 	}
 
 	targetUser := &user.User{
-		Uid:      strconv.Itoa(legacyGitpodUID),
-		Gid:      strconv.Itoa(legacyGitpodGID),
-		Username: legacyGitpodUserName,
-		HomeDir:  "/home/" + legacyGitpodUserName,
+		Uid:      strconv.Itoa(gitpodUID),
+		Gid:      strconv.Itoa(gitpodGID),
+		Username: gitpodUserName,
+		HomeDir:  "/home/" + gitpodUserName,
 	}
 	ok, err = hasUser(targetUser)
 	if err != nil {
@@ -100,7 +93,7 @@ func hasGroup(name string, gid int) (bool, error) {
 	}
 	if grpByID == nil && grpByName != nil {
 		// a group with this name already exists, but has a different GID
-		return true, xerrors.Errorf("group named %s exists but uses different GID %s, should be: %d", name, grpByName.Gid, gid)
+		return true, xerrors.Errorf("group named %s exists but uses different GID %s, should be: %d", name, grpByName.Gid, gitpodGID)
 	}
 
 	// group exists and all is well
@@ -134,7 +127,7 @@ func hasUser(u *user.User) (bool, error) {
 	}
 	if userByID == nil && userByName != nil {
 		// a user with this name already exists, but has a different GID
-		return true, xerrors.Errorf("user named %s exists but uses different UID %s, should be: %s", u.Username, userByName.Uid, u.Uid)
+		return true, xerrors.Errorf("user named %s exists but uses different UID %s, should be: %d", u.Username, userByName.Uid, gitpodUID)
 	}
 
 	// at this point it doesn't matter if we use userByID or byName - they're likely the same

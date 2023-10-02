@@ -92,7 +92,7 @@ func (p *GitTokenProvider) openAccessControl() error {
 		return err
 	}
 	gpCmd := exec.Command(gpPath, "preview", "--external", p.workspaceConfig.GitpodHost+"/access-control")
-	runAsUser(gpCmd, p.workspaceConfig.WorkspaceLinuxUID, p.workspaceConfig.WorkspaceLinuxGID)
+	runAsGitpodUser(gpCmd)
 	if b, err := gpCmd.CombinedOutput(); err != nil {
 		log.WithField("Stdout", string(b)).WithError(err).Error("failed to exec gp preview to open access control")
 		return err
