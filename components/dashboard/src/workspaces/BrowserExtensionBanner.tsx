@@ -7,7 +7,7 @@
 import { useEffect, useMemo, useState } from "react";
 import UAParser from "ua-parser-js";
 import flashIcon from "../icons/Flash.svg";
-import { ReactComponent as CloseIcon } from "../../images/x.svg";
+import { ReactComponent as CloseIcon } from "../images/x.svg";
 import classNames from "classnames";
 
 interface BrowserOption {
