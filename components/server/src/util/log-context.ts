@@ -30,11 +30,11 @@ const augmenter: LogContext.Augmenter = (ctx) => {
 };
 LogContext.setAugmenter(augmenter);
 
-export async function runWithContext<T>(
+export function runWithContext<T>(
     contextKind: string,
     context: LogContext & { contextId?: string } & any,
     fun: () => T,
-): Promise<T> {
+): T {
     return asyncLocalStorage.run(
         {
             ...context,

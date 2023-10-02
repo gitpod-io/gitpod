@@ -24,6 +24,9 @@ import { APIStatsService } from "./stats";
 import { APITeamsService } from "./teams";
 import { APIUserService } from "./user";
 import { APIWorkspacesService } from "./workspaces";
+import { runWithContext } from "../util/log-context";
+import { v4 } from "uuid";
+import { performance } from "perf_hooks";
 
 function service<T extends ServiceType>(type: T, impl: ServiceImpl<T>): [T, ServiceImpl<T>] {
     return [type, impl];
@@ -90,9 +93,9 @@ export class API {
      * intercept handles cross-cutting concerns for all calls:
      * - authentication
      * - server-side observability
+     * - logging context
      * TODO(ak):
      * - rate limitting
-     * - logging context
      * - tracing
      */
     private interceptService<T extends ServiceType>(type: T): ProxyHandler<ServiceImpl<T>> {
@@ -123,6 +126,8 @@ export class API {
                         grpc_type = "bidi_stream";
                     }
 
+                    const requestId = v4();
+
                     grpcServerStarted.labels(grpc_service, grpc_method, grpc_type).inc();
                     const stopTimer = grpcServerHandling.startTimer({ grpc_service, grpc_method, grpc_type });
                     const done = (err?: ConnectError) => {
@@ -134,25 +139,59 @@ export class API {
                         let err = ConnectError.from(reason, Code.Internal);
                         if (reason != err && err.code === Code.Internal) {
                             console.error("public api: unexpected internal error", reason);
-                            // don't leak internal errors to a user
-                            // TODO(ak) instead surface request id
-                            err = ConnectError.from(`please check server logs`, Code.Internal);
+                            err = ConnectError.from(
+                                `Oops! Something went wrong. Please quote the request ID ${requestId} when reaching out to Gitpod Support.`,
+                                Code.Internal,
+                            );
                         }
                         done(err);
                         throw err;
                     };
 
+                    let verifyDuration: number | undefined;
                     const context = args[1] as HandlerContext;
-                    async function call<T>(): Promise<T> {
+                    function withRequestContext<T>(
+                        target: Function,
+                        thisArgument: any,
+                        argumentsList: ArrayLike<any>,
+                    ): T {
+                        return runWithContext(
+                            "public-api",
+                            {
+                                userId: context.user?.id,
+                                requestId,
+                                grpc_service,
+                                grpc_method,
+                                verifyDuration,
+                            },
+                            () => Reflect.apply(target, thisArgument, argumentsList),
+                        );
+                    }
+
+                    async function apply<T>(): Promise<T> {
+                        const verifyStartedAt = performance.now();
                         const user = await self.verify(context);
+                        verifyDuration = performance.now() - verifyStartedAt;
                         context.user = user;
 
-                        return (target[prop as any] as Function).apply(target, args);
+                        if (grpc_type === "unary" || grpc_type === "client_stream") {
+                            return withRequestContext(target[prop as any], target, args);
+                        }
+                        const generator = withRequestContext(target[prop as any], target, args) as AsyncGenerator<any>;
+                        return (<AsyncGenerator<any>>{
+                            next: () => withRequestContext(generator.next, generator, []),
+                            return: (value) => withRequestContext(generator.return, generator, [value]),
+                            throw: (e) => withRequestContext(generator.throw, generator, [e]),
+
+                            [Symbol.asyncIterator]() {
+                                return this;
+                            },
+                        }) as any as T;
                     }
                     if (grpc_type === "unary" || grpc_type === "client_stream") {
                         return (async () => {
                             try {
-                                const promise = await call<Promise<any>>();
+                                const promise = await apply<Promise<any>>();
                                 const result = await promise;
                                 done();
                                 return result;
@@ -163,7 +202,7 @@ export class API {
                     }
                     return (async function* () {
                         try {
-                            const generator = await call<AsyncGenerator<any>>();
+                            const generator = await apply<AsyncGenerator<any>>();
                             for await (const item of generator) {
                                 yield item;
                             }

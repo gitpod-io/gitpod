@@ -144,7 +144,7 @@ export class Server {
         app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
                 const userId = req.user ? req.user.id : undefined;
-                await runWithContext("http", { userId, requestPath: req.path }, () => next());
+                runWithContext("http", { userId, requestPath: req.path }, () => next());
             } catch (err) {
                 next(err);
             }
