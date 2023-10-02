@@ -34,7 +34,7 @@ export function localizedTime(dateStr: string): JSX.Element {
     return <time dateTime={dateStr}>{formatted}</time>;
 }
 
-function formatDate(dateString: string): JSX.Element {
+export function formatDate(dateString: string): JSX.Element {
     const formatted = dayjs.utc(dateString).local().format("MMMM D, YYYY");
     return <time dateTime={dateString}>{formatted}</time>;
 }
@@ -44,19 +44,15 @@ const UPDATED_PRIVACY_POLICY: Notification = {
     type: "info",
     preventDismiss: true,
     onClose: async () => {
-        console.error("Well... happy for you");
         const userUpdates = { additionalData: { profile: { acceptedPrivacyPolicyDate: dayjs().toISOString() } } };
         const previousUser = await getGitpodService().server.getLoggedInUser();
-        const user = await getGitpodService().server.updateLoggedInUser(deepMerge(previousUser, userUpdates));
-
-        console.log(user);
+        await getGitpodService().server.updateLoggedInUser(deepMerge(previousUser, userUpdates));
     },
     message: (
         <span className="text-md">
-            We've updated the Gitpod Privacy Policy on{" "}
-            <span className="font-semibold">{formatDate(PRIVACY_POLICY_LAST_UPDATED)}</span>.{" "}
+            We've updated our Privacy Policy.It is available{" "}
             <a className="gp-link" href="https://www.gitpod.io/privacy" target="_blank" rel="noreferrer">
-                Review Privacy Policy
+                here
             </a>
         </span>
     ),
