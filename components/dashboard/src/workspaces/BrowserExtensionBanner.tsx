@@ -63,8 +63,8 @@ export function BrowserExtensionBanner() {
 
     return (
         <section className="hidden p-4 sm:block sm:absolute sm:bottom-2 sm:left-2">
-            <div className="grid h-28 w-72 grid-cols-12 items-end gap-x-2 rounded-xl border-2 border-dashed border-[#dadada] bg-[#fafaf9] dark:bg-gray-800 dark:border-gray-600 p-4">
-                <div className="col-span-2">
+            <div className="grid h-28 w-72 grid-cols-12 items-end content-center gap-x-2 rounded-xl border-2 border-dashed border-[#dadada] bg-[#fafaf9] dark:bg-gray-800 dark:border-gray-600 p-4">
+                <div className="col-span-2 self-center">
                     <img src={flashIcon} alt="" className="h-8 w-8" />
                 </div>
 
