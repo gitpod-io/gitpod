@@ -54,6 +54,7 @@ const UPDATED_PRIVACY_POLICY: Notification = {
             <a className="gp-link" href="https://www.gitpod.io/privacy" target="_blank" rel="noreferrer">
                 here
             </a>
+            .
         </span>
     ),
 };
