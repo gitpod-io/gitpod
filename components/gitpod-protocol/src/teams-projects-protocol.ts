@@ -122,11 +122,15 @@ export namespace Project {
      * contain default values for properties which are not set explicitly for this project.
      */
     export function getPrebuildSettings(project: Project): PrebuildSettingsWithDefaults {
-        const effective = {
+        // ignoring persisted properties with `undefined` values to exclude them from the override.
+        const overrides = Object.fromEntries(
+            Object.entries(project.settings?.prebuilds ?? {}).filter(([_, value]) => value !== undefined),
+        );
+
+        return {
             ...PREBUILD_SETTINGS_DEFAULTS,
-            ...project.settings?.prebuilds,
+            ...overrides,
         };
-        return effective;
     }
 
     export function hasPrebuildSettings(project: Project) {
