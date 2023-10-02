@@ -142,23 +142,6 @@ export class GitlabRepositoryProvider implements RepositoryProvider {
 
     // TODO: implement repo search
     public async searchRepos(user: User, searchString: string): Promise<RepositoryInfo[]> {
-        const projects = await this.gitlab.run<GitLab.Project[]>(user, async (g) => {
-            return g.Projects.search(searchString, {
-                orderBy: "last_activity_at",
-                sort: "desc",
-            });
-        });
-        if (GitLab.ApiError.is(projects)) {
-            throw projects;
-        }
-
-        const repos: RepositoryInfo[] = projects.map((project) => {
-            return {
-                name: project.name,
-                url: project.http_url_to_repo,
-            };
-        });
-
-        return repos;
+        return [];
     }
 }
