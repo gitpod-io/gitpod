@@ -21,8 +21,8 @@ export const useSuggestedRepositories = () => {
             return await getGitpodService().server.getSuggestedRepositories(org.id);
         },
         {
-            // Keeps data in cache for 24h - will still refresh though
-            cacheTime: 1000 * 60 * 60 * 24,
+            // Keeps data in cache for 7 days - will still refresh though
+            cacheTime: 1000 * 60 * 60 * 24 * 7,
         },
     );
 };
