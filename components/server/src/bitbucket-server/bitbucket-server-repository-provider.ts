@@ -188,8 +188,21 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
         return commits.map((c) => c.id);
     }
 
-    // TODO: implement repo search
     public async searchRepos(user: User, searchString: string): Promise<RepositoryInfo[]> {
-        return [];
+        // Only load 1 page of 10 results for our searchString
+        const results = await this.api.getRepos(user, { maxPages: 1, limit: 10, searchString });
+
+        const repos: RepositoryInfo[] = [];
+        results.forEach((r) => {
+            const cloneUrl = r.links.clone.find((u) => u.name === "http")?.href;
+            if (cloneUrl) {
+                repos.push({
+                    url: cloneUrl.replace("http://", "https://"),
+                    name: r.name,
+                });
+            }
+        });
+
+        return repos;
     }
 }
