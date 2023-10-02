@@ -4,9 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import UAParser from "ua-parser-js";
 import flashIcon from "../icons/Flash.svg";
+import { ReactComponent as CloseIcon } from "../../images/x.svg";
+import classNames from "classnames";
 
 interface BrowserOption {
     aliases?: string[];
@@ -23,11 +25,8 @@ const installationOptions: Record<string, BrowserOption> = {
     },
 };
 
-interface BrowserExtensionBannerProps {
-    parser?: UAParser;
-}
-
-export function BrowserExtensionBanner({ parser = new UAParser() }: BrowserExtensionBannerProps) {
+export function BrowserExtensionBanner() {
+    const parser = useMemo(() => new UAParser(), []);
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
@@ -75,8 +74,15 @@ export function BrowserExtensionBanner({ parser = new UAParser() }: BrowserExten
                     </p>
                 </div>
                 <div className="col-span-1 flex justify-end items-start h-full pt-1">
-                    <button className="reset right-8 top-6 text-gray-500 dark:text-gray-200" onClick={handleClose}>
-                        &#10005;
+                    <button
+                        className={classNames(
+                            "cursor-pointer p-2 ml-2 -mt-1",
+                            "bg-transparent hover:bg-transparent",
+                            "text-white hover:text-gray-300 dark:text-gray-800 dark:hover:text-gray-600",
+                        )}
+                        onClick={handleClose}
+                    >
+                        <CloseIcon />
                     </button>
                 </div>
                 <div className="col-span-2"></div>
