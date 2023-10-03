@@ -25,6 +25,10 @@ import {
     StreamWorkspaceStatusRequest,
     UpdatePortRequest,
     UpdatePortResponse,
+    ListWorkspaceClassesRequest,
+    ListWorkspaceClassesResponse,
+    GetDefaultWorkspaceImageRequest,
+    GetDefaultWorkspaceImageResponse,
 } from "@gitpod/public-api/lib/gitpod/experimental/v1";
 
 @injectable()
@@ -63,6 +67,14 @@ export class APIWorkspacesService implements ServiceImpl<typeof WorkspacesServic
     }
 
     async updatePort(req: UpdatePortRequest): Promise<UpdatePortResponse> {
+        throw new ConnectError("unimplemented", Code.Unimplemented);
+    }
+
+    async listWorkspaceClasses(req: ListWorkspaceClassesRequest): Promise<ListWorkspaceClassesResponse> {
+        throw new ConnectError("unimplemented", Code.Unimplemented);
+    }
+
+    async getDefaultWorkspaceImage(req: GetDefaultWorkspaceImageRequest): Promise<GetDefaultWorkspaceImageResponse> {
         throw new ConnectError("unimplemented", Code.Unimplemented);
     }
 }

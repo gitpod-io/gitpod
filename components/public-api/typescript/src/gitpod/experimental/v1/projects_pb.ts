@@ -34,28 +34,12 @@ export class Project extends Message<Project> {
   teamId = "";
 
   /**
-   * User ID is the User this Project belongs to.
-   * user_id will be empty if the Project belongs to a Team, in which case team_id will be set.
-   *
-   * @generated from field: string user_id = 3;
-   */
-  userId = "";
-
-  /**
    * Name is the name of the Project.
    * Required.
    *
    * @generated from field: string name = 4;
    */
   name = "";
-
-  /**
-   * Slug is a short-hand identifier for a project.
-   * Read-only.
-   *
-   * @generated from field: string slug = 5;
-   */
-  slug = "";
 
   /**
    * Clone URL is the clone URL on which this Project is based.
@@ -90,9 +74,7 @@ export class Project extends Message<Project> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "team_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 5, name: "slug", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 6, name: "clone_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 7, name: "creation_time", kind: "message", T: Timestamp },
     { no: 8, name: "settings", kind: "message", T: ProjectSettings },
@@ -182,6 +164,21 @@ export class PrebuildSettings extends Message<PrebuildSettings> {
    */
   prebuildEveryNth = 0;
 
+  /**
+   * @generated from field: optional bool enable_prebuilds = 5;
+   */
+  enablePrebuilds?: boolean;
+
+  /**
+   * @generated from field: optional bool prebuild_default_branch_only = 6;
+   */
+  prebuildDefaultBranchOnly?: boolean;
+
+  /**
+   * @generated from field: optional string prebuild_branch_pattern = 7;
+   */
+  prebuildBranchPattern?: string;
+
   constructor(data?: PartialMessage<PrebuildSettings>) {
     super();
     proto3.util.initPartial(data, this);
@@ -194,6 +191,9 @@ export class PrebuildSettings extends Message<PrebuildSettings> {
     { no: 2, name: "keep_outdated_prebuilds_running", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 3, name: "use_previous_prebuilds", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 4, name: "prebuild_every_nth", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 5, name: "enable_prebuilds", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 6, name: "prebuild_default_branch_only", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 7, name: "prebuild_branch_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PrebuildSettings {
@@ -452,13 +452,6 @@ export class GetProjectResponse extends Message<GetProjectResponse> {
  */
 export class ListProjectsRequest extends Message<ListProjectsRequest> {
   /**
-   * User ID filters Projects owned by user_id
-   *
-   * @generated from field: string user_id = 1;
-   */
-  userId = "";
-
-  /**
    * Team ID filters Projects owned by team_id
    *
    * @generated from field: string team_id = 2;
@@ -480,7 +473,6 @@ export class ListProjectsRequest extends Message<ListProjectsRequest> {
   static readonly runtime = proto3;
   static readonly typeName = "gitpod.experimental.v1.ListProjectsRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "team_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "pagination", kind: "message", T: Pagination },
   ]);
@@ -612,4 +604,3 @@ export class DeleteProjectResponse extends Message<DeleteProjectResponse> {
     return proto3.util.equals(DeleteProjectResponse, a, b);
   }
 }
-

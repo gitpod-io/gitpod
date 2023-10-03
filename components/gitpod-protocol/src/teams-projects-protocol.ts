@@ -14,6 +14,18 @@ export interface ProjectConfig {
 }
 
 export interface ProjectSettings {
+    enablePrebuilds?: boolean;
+    /**
+     * Wether prebuilds (if enabled) should only be started on the default branch.
+     * Defaults to `true` on project creation.
+     */
+    prebuildDefaultBranchOnly?: boolean;
+    /**
+     * Use this pattern to match branch names to run prebuilds on.
+     * The pattern matching will only be applied if prebuilds are enabled and
+     * they are not limited to the default branch.
+     */
+    prebuildBranchPattern?: string;
     useIncrementalPrebuilds?: boolean;
     keepOutdatedPrebuildsRunning?: boolean;
     // whether new workspaces can start on older prebuilds and incrementally update
@@ -23,14 +35,15 @@ export interface ProjectSettings {
     // preferred workspace classes
     workspaceClasses?: WorkspaceClasses;
 }
+export namespace ProjectSettings {
+    export type PrebuildBranchStrategy = "defaultBranch" | "allBranches" | "selectedBranches";
+}
 
 export interface Project {
     id: string;
     name: string;
-    slug?: string;
     cloneUrl: string;
-    teamId?: string;
-    userId?: string;
+    teamId: string;
     appInstallationId: string;
     settings?: ProjectSettings;
     creationTime: string;
@@ -40,6 +53,10 @@ export interface Project {
 }
 
 export namespace Project {
+    export function is(data?: any): data is Project {
+        return typeof data === "object" && ["id", "name", "cloneUrl", "teamId"].every((p) => p in data);
+    }
+
     export const create = (project: Omit<Project, "id" | "creationTime">): Project => {
         return {
             ...project,
@@ -49,7 +66,49 @@ export namespace Project {
     };
 
     export function slug(p: Project): string {
-        return p.slug || p.name || p.id;
+        return p.name + "-" + p.id;
+    }
+
+    /**
+     * If *no settings* are present on pre-existing projects, this defaults to `true` (enabled) for
+     * backwards compatibility. This allows to do any explicit migration of data or adjustment of
+     * the default behavior at a later point in time.
+     *
+     * Otherwise this returns the value of the `enablePrebuilds` settings persisted in the given
+     * project.
+     */
+    export function isPrebuildsEnabled(project: Project): boolean {
+        // Defaulting to `true` for backwards compatibility. Ignoring non-boolean for `enablePrebuilds`
+        // for evaluation here allows to do any explicit migration of data or adjustment of the default
+        // behavior at a later point in time.
+        if (!hasPrebuildSettings(project)) {
+            return true;
+        }
+
+        return !!project.settings?.enablePrebuilds;
+    }
+
+    export function hasPrebuildSettings(project: Project) {
+        return !(typeof project.settings?.enablePrebuilds === "undefined");
+    }
+
+    export function getPrebuildBranchStrategy(project: Project): ProjectSettings.PrebuildBranchStrategy {
+        if (!hasPrebuildSettings(project)) {
+            // returning "all branches" to mimic the default value of projects which were added
+            // before introduction of persisted settings for prebuilds.
+            return "allBranches";
+        }
+        if (typeof project.settings?.prebuildDefaultBranchOnly === "undefined") {
+            return "defaultBranch"; // default value for `settings.prebuildDefaultBranchOnly`
+        }
+        if (project.settings?.prebuildDefaultBranchOnly) {
+            return "defaultBranch";
+        }
+        const prebuildBranchPattern = project.settings?.prebuildBranchPattern?.trim();
+        if (typeof prebuildBranchPattern === "string" && prebuildBranchPattern.length > 1) {
+            return "selectedBranches";
+        }
+        return "allBranches";
     }
 
     export interface Overview {
@@ -77,6 +136,8 @@ export namespace Project {
         changeUrl?: string;
         changeHash: string;
     }
+
+    export type Visibility = "public" | "org-public" | "private";
 }
 
 export type PartialProject = DeepPartial<Project> & Pick<Project, "id">;
@@ -144,6 +205,7 @@ export interface Organization {
 
 export interface OrganizationSettings {
     workspaceSharingDisabled?: boolean;
+    defaultWorkspaceImage?: string | null;
 }
 
 export type TeamMemberRole = OrgMemberRole;

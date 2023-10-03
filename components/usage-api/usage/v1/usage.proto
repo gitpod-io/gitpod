@@ -55,6 +55,9 @@ message PaginatedResponse {
 message ListUsageRequest {
     string attribution_id = 1;
 
+    // optional user_id can be used to filter the results to only include instances created by the given user
+    string user_id = 6;
+
     // from specifies the starting time range for this request.
     // All instances which existed starting at from will be returned.
     google.protobuf.Timestamp from = 2;

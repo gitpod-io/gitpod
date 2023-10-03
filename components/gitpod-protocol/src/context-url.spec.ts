@@ -5,7 +5,7 @@
  */
 
 import * as chai from "chai";
-import { suite, test } from "mocha-typescript";
+import { suite, test } from "@testdeck/mocha";
 import { Workspace } from ".";
 import { ContextURL } from "./context-url";
 const expect = chai.expect;

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/go-logr/logr"
 	lru "github.com/hashicorp/golang-lru"
@@ -18,6 +19,7 @@ import (
 )
 
 const (
+	maintenanceEnabled            string = "maintenance_enabled"
 	workspaceStartupSeconds       string = "workspace_startup_seconds"
 	workspaceStartFailuresTotal   string = "workspace_starts_failure_total"
 	workspaceFailuresTotal        string = "workspace_failure_total"
@@ -132,7 +134,6 @@ func (m *controllerMetrics) recordWorkspaceStartupTime(log *logr.Logger, ws *wor
 	}
 
 	duration := time.Since(ws.CreationTimestamp.Time)
-	log.Info("workspace startup time", "ws", ws.Name, "duration", duration)
 	hist.Observe(float64(duration.Seconds()))
 }
 
@@ -140,24 +141,14 @@ func (m *controllerMetrics) countWorkspaceStartFailures(log *logr.Logger, ws *wo
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalStartsFailureCounterVec.GetMetricWithLabelValues(tpe, class)
-	if err != nil {
-		log.Error(err, "could not count workspace startup failure", "type", tpe, "class", class)
-	}
-
-	counter.Inc()
+	m.totalStartsFailureCounterVec.WithLabelValues(tpe, class).Inc()
 }
 
 func (m *controllerMetrics) countWorkspaceFailure(log *logr.Logger, ws *workspacev1.Workspace) {
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalFailuresCounterVec.GetMetricWithLabelValues(tpe, class)
-	if err != nil {
-		log.Error(err, "could not count workspace failure", "type", tpe, "class", class)
-	}
-
-	counter.Inc()
+	m.totalFailuresCounterVec.WithLabelValues(tpe, class).Inc()
 }
 
 func (m *controllerMetrics) countWorkspaceStop(log *logr.Logger, ws *workspacev1.Workspace) {
@@ -183,60 +174,35 @@ func (m *controllerMetrics) countWorkspaceStop(log *logr.Logger, ws *workspacev1
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalStopsCounterVec.GetMetricWithLabelValues(reason, tpe, class)
-	if err != nil {
-		log.Error(err, "could not count workspace stop", "reason", "unknown", "type", tpe, "class", class)
-	}
-
-	counter.Inc()
+	m.totalStopsCounterVec.WithLabelValues(reason, tpe, class).Inc()
 }
 
 func (m *controllerMetrics) countTotalBackups(log *logr.Logger, ws *workspacev1.Workspace) {
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalBackupCounterVec.GetMetricWithLabelValues(tpe, class)
-	if err != nil {
-		log.Error(err, "could not count workspace backup", "type", tpe, "class", class)
-	}
-
-	counter.Inc()
+	m.totalBackupCounterVec.WithLabelValues(tpe, class).Inc()
 }
 
 func (m *controllerMetrics) countTotalBackupFailures(log *logr.Logger, ws *workspacev1.Workspace) {
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalBackupFailureCounterVec.GetMetricWithLabelValues(tpe, class)
-	if err != nil {
-		log.Error(err, "could not count workspace backup failure", "type", tpe, "class", class)
-	}
-
-	counter.Inc()
+	m.totalBackupFailureCounterVec.WithLabelValues(tpe, class).Inc()
 }
 
 func (m *controllerMetrics) countTotalRestores(log *logr.Logger, ws *workspacev1.Workspace) {
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalRestoreCounterVec.GetMetricWithLabelValues(tpe, class)
-	if err != nil {
-		log.Error(err, "could not count workspace restore", "type", tpe, "class", class)
-	}
-
-	counter.Inc()
+	m.totalRestoreCounterVec.WithLabelValues(tpe, class).Inc()
 }
 
 func (m *controllerMetrics) countTotalRestoreFailures(log *logr.Logger, ws *workspacev1.Workspace) {
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalRestoreFailureCounterVec.GetMetricWithLabelValues(tpe, class)
-	if err != nil {
-		log.Error(err, "could not count workspace restore failure", "type", tpe, "class", class)
-	}
-
-	counter.Inc()
+	m.totalRestoreFailureCounterVec.WithLabelValues(tpe, class).Inc()
 }
 
 func (m *controllerMetrics) containsWorkspace(ws *workspacev1.Workspace) bool {
@@ -434,4 +400,37 @@ func (tsv *timeoutSettingsVec) Collect(ch chan<- prometheus.Metric) {
 
 		ch <- metric
 	}
+}
+
+type maintenanceEnabledGauge struct {
+	name        string
+	desc        *prometheus.Desc
+	maintenance maintenance.Maintenance
+}
+
+func newMaintenanceEnabledGauge(m maintenance.Maintenance) *maintenanceEnabledGauge {
+	name := prometheus.BuildFQName(metricsNamespace, metricsWorkspaceSubsystem, maintenanceEnabled)
+	return &maintenanceEnabledGauge{
+		name:        name,
+		desc:        prometheus.NewDesc(name, "Whether the cluster is in maintenance mode", nil, prometheus.Labels(map[string]string{})),
+		maintenance: m,
+	}
+}
+
+func (m *maintenanceEnabledGauge) Describe(ch chan<- *prometheus.Desc) {
+	ch <- m.desc
+}
+
+func (m *maintenanceEnabledGauge) Collect(ch chan<- prometheus.Metric) {
+	var value float64
+	if m.maintenance.IsEnabled(context.Background()) {
+		value = 1
+	}
+
+	metric, err := prometheus.NewConstMetric(m.desc, prometheus.GaugeValue, value)
+	if err != nil {
+		return
+	}
+
+	ch <- metric
 }

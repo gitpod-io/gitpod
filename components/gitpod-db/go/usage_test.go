@@ -54,6 +54,60 @@ func TestFindUsageInRange(t *testing.T) {
 	require.Equal(t, []db.Usage{entryInside}, listResult)
 }
 
+func TestFindUsageInRangeByUser(t *testing.T) {
+	conn := dbtest.ConnectForTests(t)
+
+	start := time.Date(2022, 7, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(2022, 8, 1, 0, 0, 0, 0, time.UTC)
+	userID := uuid.New()
+
+	attributionID := db.NewTeamAttributionID(uuid.New().String())
+
+	entryBefore := dbtest.NewUsage(t, withUserId(userID, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarCharTime(start.Add(-1 * 23 * time.Hour)),
+		Draft:         true,
+	}))
+
+	entryInside := dbtest.NewUsage(t, withUserId(userID, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarCharTime(start.Add(2 * time.Minute)),
+	}))
+
+	entryInsideOtherUser := dbtest.NewUsage(t, withUserId(uuid.New(), db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarCharTime(start.Add(2 * time.Minute)),
+	}))
+
+	entryAfter := dbtest.NewUsage(t, withUserId(userID, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarCharTime(end.Add(2 * time.Hour)),
+	}))
+
+	usageEntries := []db.Usage{entryBefore, entryInside, entryInsideOtherUser, entryAfter}
+	dbtest.CreateUsageRecords(t, conn, usageEntries...)
+	listResult, err := db.FindUsage(context.Background(), conn, &db.FindUsageParams{
+		AttributionId: attributionID,
+		UserID:        userID,
+		From:          start,
+		To:            end,
+	})
+	require.NoError(t, err)
+
+	require.Equal(t, 1, len(listResult))
+	require.Equal(t, entryInside.ID, listResult[0].ID)
+
+	summary, err := db.GetUsageSummary(context.Background(), conn, db.GetUsageSummaryParams{
+		AttributionId: attributionID,
+		UserID:        userID,
+		From:          start,
+		To:            end,
+	})
+	require.NoError(t, err)
+	require.Equal(t, entryInside.CreditCents, summary.CreditCentsUsed)
+
+}
+
 func TestGetUsageSummary(t *testing.T) {
 	conn := dbtest.ConnectForTests(t)
 
@@ -300,7 +354,7 @@ func TestCreditCents(t *testing.T) {
 
 func TestListBalance(t *testing.T) {
 	teamAttributionID := db.NewTeamAttributionID(uuid.New().String())
-	userAttributionID := db.NewUserAttributionID(uuid.New().String())
+	teamAttributionID2 := db.NewTeamAttributionID(uuid.New().String())
 
 	conn := dbtest.ConnectForTests(t)
 	dbtest.CreateUsageRecords(t, conn,
@@ -313,11 +367,11 @@ func TestListBalance(t *testing.T) {
 			CreditCents:   900,
 		}),
 		dbtest.NewUsage(t, db.Usage{
-			AttributionID: userAttributionID,
+			AttributionID: teamAttributionID2,
 			CreditCents:   450,
 		}),
 		dbtest.NewUsage(t, db.Usage{
-			AttributionID: userAttributionID,
+			AttributionID: teamAttributionID2,
 			CreditCents:   -500,
 			Kind:          db.InvoiceUsageKind,
 		}),
@@ -330,15 +384,22 @@ func TestListBalance(t *testing.T) {
 		CreditCents:   1000,
 	})
 	require.Contains(t, balances, db.Balance{
-		AttributionID: userAttributionID,
+		AttributionID: teamAttributionID2,
 		CreditCents:   -50,
 	})
 }
 
+func withUserId(id uuid.UUID, usage db.Usage) db.Usage {
+	usage.SetCreditNoteMetaData(db.CreditNoteMetaData{
+		UserID: id.String(),
+	})
+	return usage
+}
+
 func TestGetBalance(t *testing.T) {
 	teamAttributionID := db.NewTeamAttributionID(uuid.New().String())
-	userAttributionID := db.NewUserAttributionID(uuid.New().String())
-	noUsageAttributionID := db.NewUserAttributionID(uuid.New().String())
+	teamAttributionID2 := db.NewTeamAttributionID(uuid.New().String())
+	noUsageAttributionID := db.NewTeamAttributionID(uuid.New().String())
 
 	conn := dbtest.ConnectForTests(t)
 	dbtest.CreateUsageRecords(t, conn,
@@ -351,11 +412,11 @@ func TestGetBalance(t *testing.T) {
 			CreditCents:   900,
 		}),
 		dbtest.NewUsage(t, db.Usage{
-			AttributionID: userAttributionID,
+			AttributionID: teamAttributionID2,
 			CreditCents:   450,
 		}),
 		dbtest.NewUsage(t, db.Usage{
-			AttributionID: userAttributionID,
+			AttributionID: teamAttributionID2,
 			CreditCents:   -500,
 			Kind:          db.InvoiceUsageKind,
 		}),
@@ -365,7 +426,7 @@ func TestGetBalance(t *testing.T) {
 	require.NoError(t, err)
 	require.EqualValues(t, 1000, int(teamBalance))
 
-	userBalance, err := db.GetBalance(context.Background(), conn, userAttributionID)
+	userBalance, err := db.GetBalance(context.Background(), conn, teamAttributionID2)
 	require.NoError(t, err)
 	require.EqualValues(t, -50, int(userBalance))
 

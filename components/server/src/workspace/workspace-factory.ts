@@ -5,7 +5,7 @@
  */
 
 import { v4 as uuidv4 } from "uuid";
-import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB, ProjectDB, TeamDB } from "@gitpod/gitpod-db/lib";
+import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB, TeamDB } from "@gitpod/gitpod-db/lib";
 import {
     AdditionalContentContext,
     CommitContext,
@@ -14,7 +14,6 @@ import {
     PrebuiltWorkspaceContext,
     Project,
     PullRequestContext,
-    Repository,
     SnapshotContext,
     StartPrebuildContext,
     User,
@@ -23,42 +22,43 @@ import {
     Workspace,
     WorkspaceContext,
 } from "@gitpod/gitpod-protocol";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { generateWorkspaceID } from "@gitpod/gitpod-protocol/lib/util/generate-workspace-id";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { inject, injectable } from "inversify";
-import { ResponseError } from "vscode-jsonrpc";
 import { RepoURL } from "../repohost";
 import { ConfigProvider } from "./config-provider";
 import { ImageSourceProvider } from "./image-source-provider";
 import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 import { IncrementalPrebuildsService } from "../prebuilds/incremental-prebuilds-service";
 import { increasePrebuildsStartedCounter } from "../prometheus-metrics";
+import { Authorizer } from "../authorization/authorizer";
 
 @injectable()
 export class WorkspaceFactory {
-    @inject(TracedWorkspaceDB) protected readonly db: DBWithTracing<WorkspaceDB>;
-    @inject(ProjectDB) protected readonly projectDB: ProjectDB;
-    @inject(TeamDB) protected readonly teamDB: TeamDB;
-    @inject(ConfigProvider) protected configProvider: ConfigProvider;
-    @inject(ImageSourceProvider) protected imageSourceProvider: ImageSourceProvider;
-    @inject(IncrementalPrebuildsService) protected readonly incrementalPrebuildsService: IncrementalPrebuildsService;
+    constructor(
+        @inject(TracedWorkspaceDB) private readonly db: DBWithTracing<WorkspaceDB>,
+        @inject(TeamDB) private readonly teamDB: TeamDB,
+        @inject(ConfigProvider) private configProvider: ConfigProvider,
+        @inject(ImageSourceProvider) private imageSourceProvider: ImageSourceProvider,
+        @inject(IncrementalPrebuildsService) private readonly incrementalPrebuildsService: IncrementalPrebuildsService,
+        @inject(Authorizer) private readonly authorizer: Authorizer,
+    ) {}
 
     public async createForContext(
         ctx: TraceContext,
         user: User,
-        organizationId: string | undefined,
+        organizationId: string,
         project: Project | undefined,
         context: WorkspaceContext,
         normalizedContextURL: string,
     ): Promise<Workspace> {
-        if (user.additionalData?.isMigratedToTeamOnlyAttribution && !organizationId) {
-            throw new ResponseError(ErrorCodes.INVALID_VALUE, "Cannot create workspace without organization.");
-        }
-
         if (StartPrebuildContext.is(context)) {
-            return this.createForStartPrebuild(ctx, user, organizationId, context, normalizedContextURL);
+            if (!project) {
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Cannot start prebuild without a project.");
+            }
+            return this.createForStartPrebuild(ctx, user, project?.id, organizationId, context, normalizedContextURL);
         } else if (PrebuiltWorkspaceContext.is(context)) {
             return this.createForPrebuiltWorkspace(ctx, user, organizationId, project, context, normalizedContextURL);
         }
@@ -72,10 +72,11 @@ export class WorkspaceFactory {
         throw new Error("Couldn't create workspace for context");
     }
 
-    protected async createForStartPrebuild(
+    private async createForStartPrebuild(
         ctx: TraceContext,
         user: User,
-        organizationId: string | undefined,
+        projectId: string,
+        organizationId: string,
         context: StartPrebuildContext,
         normalizedContextURL: string,
     ): Promise<Workspace> {
@@ -93,10 +94,7 @@ export class WorkspaceFactory {
             const assertNoPrebuildIsRunningForSameCommit = async () => {
                 const existingPWS = await this.db
                     .trace({ span })
-                    .findPrebuiltWorkspaceByCommit(
-                        commitContext.repository.cloneUrl,
-                        CommitContext.computeHash(commitContext),
-                    );
+                    .findPrebuiltWorkspaceByCommit(projectId, CommitContext.computeHash(commitContext));
                 if (!existingPWS) {
                     return;
                 }
@@ -113,7 +111,7 @@ export class WorkspaceFactory {
 
             await assertNoPrebuildIsRunningForSameCommit();
 
-            const { config } = await this.configProvider.fetchConfig({ span }, user, context.actual);
+            const { config } = await this.configProvider.fetchConfig({ span }, user, context.actual, organizationId);
 
             // If an incremental prebuild was requested, see if we can find a recent prebuild to act as a base.
             let ws;
@@ -122,6 +120,7 @@ export class WorkspaceFactory {
                 config,
                 context,
                 user,
+                projectId,
             );
             if (recentPrebuild) {
                 const loggedContext = filterForLogging(context);
@@ -209,16 +208,15 @@ export class WorkspaceFactory {
         }
     }
 
-    protected async createForPrebuiltWorkspace(
+    private async createForPrebuiltWorkspace(
         ctx: TraceContext,
         user: User,
-        organizationId: string | undefined,
+        organizationId: string,
         project: Project | undefined,
         context: PrebuiltWorkspaceContext,
         normalizedContextURL: string,
     ): Promise<Workspace> {
         const span = TraceContext.startSpan("createForPrebuiltWorkspace", ctx);
-
         try {
             const buildWorkspaceID = context.prebuiltWorkspace.buildWorkspaceId;
             const buildWorkspace = await this.db.trace({ span }).findById(buildWorkspaceID);
@@ -245,15 +243,12 @@ export class WorkspaceFactory {
             };
 
             let projectId: string | undefined;
-            // associate with a project, if it's the personal project of the current user
-            if (project?.userId && project?.userId === user.id) {
-                projectId = project.id;
-            }
             // associate with a project, if the current user is a team member
-            if (project?.teamId) {
+            if (project) {
                 const teams = await this.teamDB.findTeamsByUser(user.id);
-                if (teams.some((t) => t.id === project?.teamId)) {
+                if (teams.some((t) => t.id === project.teamId)) {
                     projectId = project.id;
+                    await this.authorizer.checkPermissionOnProject(user.id, "read_prebuild", projectId);
                 }
             }
 
@@ -308,10 +303,10 @@ export class WorkspaceFactory {
         }
     }
 
-    protected async createForSnapshot(
+    private async createForSnapshot(
         ctx: TraceContext,
         user: User,
-        organizationId: string | undefined,
+        organizationId: string,
         context: SnapshotContext,
     ): Promise<Workspace> {
         const span = TraceContext.startSpan("createForSnapshot", ctx);
@@ -319,7 +314,7 @@ export class WorkspaceFactory {
         try {
             const snapshot = await this.db.trace({ span }).findSnapshotById(context.snapshotId);
             if (!snapshot) {
-                throw new ResponseError(
+                throw new ApplicationError(
                     ErrorCodes.NOT_FOUND,
                     "No snapshot with id '" + context.snapshotId + "' found.",
                 );
@@ -367,10 +362,10 @@ export class WorkspaceFactory {
         }
     }
 
-    protected async createForCommit(
+    private async createForCommit(
         ctx: TraceContext,
         user: User,
-        organizationId: string | undefined,
+        organizationId: string,
         project: Project | undefined,
         context: CommitContext,
         normalizedContextURL: string,
@@ -378,21 +373,22 @@ export class WorkspaceFactory {
         const span = TraceContext.startSpan("createForCommit", ctx);
 
         try {
-            const { config, literalConfig } = await this.configProvider.fetchConfig({ span }, user, context);
+            const { config, literalConfig } = await this.configProvider.fetchConfig(
+                { span },
+                user,
+                context,
+                organizationId,
+            );
             const imageSource = await this.imageSourceProvider.getImageSource(ctx, user, context, config);
             if (config._origin === "derived" && literalConfig) {
                 (context as any as AdditionalContentContext).additionalFiles = { ...literalConfig };
             }
 
             let projectId: string | undefined;
-            // associate with a project, if it's the personal project of the current user
-            if (project?.userId && project?.userId === user.id) {
-                projectId = project.id;
-            }
             // associate with a project, if the current user is a team member
-            if (project?.teamId) {
+            if (project) {
                 const teams = await this.teamDB.findTeamsByUser(user.id);
-                if (teams.some((t) => t.id === project?.teamId)) {
+                if (teams.some((t) => t.id === project.teamId)) {
                     projectId = project.id;
                 }
             }
@@ -421,25 +417,14 @@ export class WorkspaceFactory {
         }
     }
 
-    protected async isRepositoryOrSourceWhitelisted(repository: Repository): Promise<boolean> {
-        const repoIsWhiteListed = await this.db.trace({}).isWhitelisted(repository.cloneUrl);
-        if (repoIsWhiteListed) {
-            return true;
-        } else if (repository.fork) {
-            return this.isRepositoryOrSourceWhitelisted(repository.fork.parent);
-        } else {
-            return false;
-        }
-    }
-
-    protected getDescription(context: WorkspaceContext): string {
+    private getDescription(context: WorkspaceContext): string {
         if (PullRequestContext.is(context) || IssueContext.is(context)) {
             return `#${context.nr}: ${context.title}`;
         }
         return context.title;
     }
 
-    protected async generateWorkspaceID(context: WorkspaceContext): Promise<string> {
+    private async generateWorkspaceID(context: WorkspaceContext): Promise<string> {
         let ctx = context;
         if (PrebuiltWorkspaceContext.is(context)) {
             ctx = context.originalContext;

@@ -4,8 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { IDESettings, TaskConfig, User, Workspace } from "@gitpod/gitpod-protocol";
-import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { IDESettings, User, Workspace } from "@gitpod/gitpod-protocol";
 import { IDEClient, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import * as IdeServiceApi from "@gitpod/ide-service-api/lib/ide.pb";
 import {
@@ -28,9 +27,6 @@ export class IDEService {
 
     @inject(AuthorizationService)
     protected readonly authService: AuthorizationService;
-
-    @inject(ConfigCatClientFactory)
-    protected readonly configCatClientFactory: ConfigCatClientFactory;
 
     private cacheConfig?: IDEConfig;
 
@@ -105,21 +101,5 @@ export class IDEService {
             }
         }
         throw new Error("failed to resolve workspace IDE configuration");
-    }
-
-    resolveGitpodTasks(ws: Workspace, ideConfig: ResolveWorkspaceConfigResponse): TaskConfig[] {
-        const tasks: TaskConfig[] = [];
-        if (ws.config.tasks) {
-            tasks.push(...ws.config.tasks);
-        }
-        if (ideConfig.tasks) {
-            try {
-                let ideTasks: TaskConfig[] = JSON.parse(ideConfig.tasks);
-                tasks.push(...ideTasks);
-            } catch (e) {
-                console.error("failed get tasks from ide config:", e);
-            }
-        }
-        return tasks;
     }
 }

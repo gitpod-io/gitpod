@@ -4,12 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { suite, test } from "mocha-typescript";
+import { suite, test } from "@testdeck/mocha";
 import { APIUserService } from "./user";
 import { Container } from "inversify";
 import { testContainer } from "@gitpod/gitpod-db/lib";
-import { WorkspaceStarter } from "../workspace/workspace-starter";
-import { UserService } from "../user/user-service";
+import { UserAuthentication } from "../user/user-authentication";
 import { BlockUserRequest, BlockUserResponse } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_pb";
 import { User } from "@gitpod/gitpod-protocol";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
@@ -18,35 +17,37 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { v4 as uuidv4 } from "uuid";
 import { ConnectError, Code } from "@bufbuild/connect";
 import * as chai from "chai";
+import { WorkspaceService } from "../workspace/workspace-service";
 
 const expect = chai.expect;
 
 @suite()
 export class APIUserServiceSpec {
     private container: Container;
-    private workspaceStarterMock: WorkspaceStarter = {
+    private workspaceStarterMock: WorkspaceService = {
         stopRunningWorkspacesForUser: async (
             ctx: TraceContext,
-            userID: string,
+            userId: string,
+            userIdToStop: string,
             reason: string,
             policy?: StopWorkspacePolicy,
         ): Promise<Workspace[]> => {
             return [];
         },
-    } as WorkspaceStarter;
-    private userServiceMock: UserService = {
-        blockUser: async (targetUserId: string, block: boolean): Promise<User> => {
+    } as WorkspaceService;
+    private userServiceMock: UserAuthentication = {
+        blockUser: async (userId: string, targetUserId: string, block: boolean): Promise<User> => {
             return {
                 id: targetUserId,
             } as User;
         },
-    } as UserService;
+    } as UserAuthentication;
 
     async before() {
         this.container = testContainer.createChild();
 
-        this.container.bind(WorkspaceStarter).toConstantValue(this.workspaceStarterMock);
-        this.container.bind(UserService).toConstantValue(this.userServiceMock);
+        this.container.bind(WorkspaceService).toConstantValue(this.workspaceStarterMock);
+        this.container.bind(UserAuthentication).toConstantValue(this.userServiceMock);
         this.container.bind(APIUserService).toSelf().inSingletonScope();
     }
 
@@ -59,7 +60,7 @@ export class APIUserServiceSpec {
 
         const sut = this.container.get<APIUserService>(APIUserService);
 
-        for (let scenario of scenarios) {
+        for (const scenario of scenarios) {
             try {
                 await sut.blockUser(scenario);
                 expect.fail("blockUser did not throw an exception");

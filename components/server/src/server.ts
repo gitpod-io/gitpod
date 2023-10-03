@@ -5,21 +5,19 @@
  */
 
 import * as http from "http";
-import * as express from "express";
-import * as ws from "ws";
+import express from "express";
+import WebSocket from "ws";
 import * as bodyParser from "body-parser";
-import * as cookieParser from "cookie-parser";
+import cookieParser from "cookie-parser";
 import { injectable, inject } from "inversify";
 import * as prom from "prom-client";
 import { SessionHandler } from "./session-handler";
 import { Authenticator } from "./auth/authenticator";
 import { UserController } from "./user/user-controller";
 import { EventEmitter } from "events";
-import { toIWebSocket } from "@gitpod/gitpod-protocol/lib/messaging/node/connection";
+import { createWebSocketConnection, toIWebSocket } from "@gitpod/gitpod-protocol/lib/messaging/node/connection";
 import { WsExpressHandler, WsRequestHandler } from "./express/ws-handler";
 import { isAllowedWebsocketDomain, bottomErrorHandler, unhandledToError } from "./express-util";
-import { createWebSocketConnection } from "vscode-ws-jsonrpc/lib";
-import { MessageBusIntegration } from "./workspace/messagebus-integration";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { AddressInfo } from "net";
 import { WorkspaceDownloadService } from "./workspace/workspace-download-service";
@@ -27,79 +25,39 @@ import { MonitoringEndpointsApp } from "./monitoring-endpoints";
 import { WebsocketConnectionManager } from "./websocket/websocket-connection-manager";
 import { TypeORM } from "@gitpod/gitpod-db/lib";
 import { OneTimeSecretServer } from "./one-time-secret-server";
-import { Disposable, DisposableCollection, GitpodClient, GitpodServer } from "@gitpod/gitpod-protocol";
+import { Disposable, DisposableCollection } from "@gitpod/gitpod-protocol";
 import { BearerAuth, isBearerAuthError } from "./auth/bearer-authenticator";
 import { HostContextProvider } from "./auth/host-context-provider";
 import { CodeSyncService } from "./code-sync/code-sync-service";
 import { increaseHttpRequestCounter, observeHttpRequestDuration, setGitpodVersion } from "./prometheus-metrics";
 import { OAuthController } from "./oauth-server/oauth-controller";
-import {
-    HeadlessLogController,
-    HEADLESS_LOGS_PATH_PREFIX,
-    HEADLESS_LOG_DOWNLOAD_PATH_PREFIX,
-} from "./workspace/headless-log-controller";
+import { HeadlessLogController } from "./workspace/headless-log-controller";
 import { NewsletterSubscriptionController } from "./user/newsletter-subscription-controller";
 import { Config } from "./config";
 import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
-import { LocalMessageBroker } from "./messaging/local-message-broker";
 import { WsConnectionHandler } from "./express/ws-connection-handler";
 import { LivenessController } from "./liveness/liveness-controller";
 import { IamSessionApp } from "./iam/iam-session-app";
 import { API } from "./api/server";
-import { SnapshotService } from "./workspace/snapshot-service";
 import { GithubApp } from "./prebuilds/github-app";
 import { GitLabApp } from "./prebuilds/gitlab-app";
 import { BitbucketApp } from "./prebuilds/bitbucket-app";
 import { BitbucketServerApp } from "./prebuilds/bitbucket-server-app";
 import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
-import { RedisMutex } from "./redis/mutex";
 import { JobRunner } from "./jobs/runner";
+import { RedisSubscriber } from "./messaging/redis-subscriber";
+import { HEADLESS_LOGS_PATH_PREFIX, HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from "./workspace/headless-log-service";
+import { runWithContext } from "./util/log-context";
 
 @injectable()
-export class Server<C extends GitpodClient, S extends GitpodServer> {
+export class Server {
     static readonly EVENT_ON_START = "start";
 
-    @inject(Config) protected readonly config: Config;
-    @inject(TypeORM) protected readonly typeOrm: TypeORM;
-    @inject(SessionHandler) protected sessionHandler: SessionHandler;
-    @inject(Authenticator) protected authenticator: Authenticator;
-    @inject(UserController) protected readonly userController: UserController;
-    @inject(WebsocketConnectionManager) protected websocketConnectionHandler: WebsocketConnectionManager;
-    @inject(MessageBusIntegration) protected readonly messagebus: MessageBusIntegration;
-    @inject(LocalMessageBroker) protected readonly localMessageBroker: LocalMessageBroker;
-    @inject(WorkspaceDownloadService) protected readonly workspaceDownloadService: WorkspaceDownloadService;
-    @inject(LivenessController) protected readonly livenessController: LivenessController;
-    @inject(MonitoringEndpointsApp) protected readonly monitoringEndpointsApp: MonitoringEndpointsApp;
-    @inject(CodeSyncService) private readonly codeSyncService: CodeSyncService;
-    @inject(HeadlessLogController) protected readonly headlessLogController: HeadlessLogController;
-    @inject(DebugApp) protected readonly debugApp: DebugApp;
-
-    @inject(GithubApp) protected readonly githubApp: GithubApp;
-    @inject(GitLabApp) protected readonly gitLabApp: GitLabApp;
-    @inject(BitbucketApp) protected readonly bitbucketApp: BitbucketApp;
-    @inject(BitbucketServerApp) protected readonly bitbucketServerApp: BitbucketServerApp;
-    @inject(GitHubEnterpriseApp) protected readonly gitHubEnterpriseApp: GitHubEnterpriseApp;
-
-    @inject(JobRunner) protected readonly jobRunner: JobRunner;
-
-    @inject(OneTimeSecretServer) protected readonly oneTimeSecretServer: OneTimeSecretServer;
-    @inject(SnapshotService) protected readonly snapshotService: SnapshotService;
-
-    @inject(BearerAuth) protected readonly bearerAuth: BearerAuth;
-
-    @inject(RedisMutex) protected readonly mutex: RedisMutex;
-
-    @inject(HostContextProvider) protected readonly hostCtxProvider: HostContextProvider;
-    @inject(OAuthController) protected readonly oauthController: OAuthController;
-    @inject(NewsletterSubscriptionController)
-    protected readonly newsletterSubscriptionController: NewsletterSubscriptionController;
-
-    @inject(IamSessionApp) protected readonly iamSessionAppCreator: IamSessionApp;
     protected iamSessionApp?: express.Application;
     protected iamSessionAppServer?: http.Server;
 
-    @inject(API) protected readonly api: API;
-    protected apiServer?: http.Server;
+    protected publicApiServer?: http.Server;
+    protected privateApiServer?: http.Server;
 
     protected readonly eventEmitter = new EventEmitter();
     protected app?: express.Application;
@@ -107,6 +65,36 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     protected monitoringApp?: express.Application;
     protected monitoringHttpServer?: http.Server;
     protected disposables = new DisposableCollection();
+
+    constructor(
+        @inject(Config) private readonly config: Config,
+        @inject(TypeORM) private readonly typeOrm: TypeORM,
+        @inject(SessionHandler) private readonly sessionHandler: SessionHandler,
+        @inject(Authenticator) private readonly authenticator: Authenticator,
+        @inject(UserController) private readonly userController: UserController,
+        @inject(WebsocketConnectionManager) private readonly websocketConnectionHandler: WebsocketConnectionManager,
+        @inject(WorkspaceDownloadService) private readonly workspaceDownloadService: WorkspaceDownloadService,
+        @inject(LivenessController) private readonly livenessController: LivenessController,
+        @inject(MonitoringEndpointsApp) private readonly monitoringEndpointsApp: MonitoringEndpointsApp,
+        @inject(CodeSyncService) private readonly codeSyncService: CodeSyncService,
+        @inject(HeadlessLogController) private readonly headlessLogController: HeadlessLogController,
+        @inject(DebugApp) private readonly debugApp: DebugApp,
+        @inject(GithubApp) private readonly githubApp: GithubApp,
+        @inject(GitLabApp) private readonly gitLabApp: GitLabApp,
+        @inject(BitbucketApp) private readonly bitbucketApp: BitbucketApp,
+        @inject(BitbucketServerApp) private readonly bitbucketServerApp: BitbucketServerApp,
+        @inject(GitHubEnterpriseApp) private readonly gitHubEnterpriseApp: GitHubEnterpriseApp,
+        @inject(JobRunner) private readonly jobRunner: JobRunner,
+        @inject(OneTimeSecretServer) private readonly oneTimeSecretServer: OneTimeSecretServer,
+        @inject(BearerAuth) private readonly bearerAuth: BearerAuth,
+        @inject(HostContextProvider) private readonly hostCtxProvider: HostContextProvider,
+        @inject(OAuthController) private readonly oauthController: OAuthController,
+        @inject(NewsletterSubscriptionController)
+        private readonly newsletterSubscriptionController: NewsletterSubscriptionController,
+        @inject(IamSessionApp) private readonly iamSessionAppCreator: IamSessionApp,
+        @inject(API) private readonly api: API,
+        @inject(RedisSubscriber) private readonly redisSubscriber: RedisSubscriber,
+    ) {}
 
     public async init(app: express.Application) {
         log.setVersion(this.config.version);
@@ -152,6 +140,16 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         // Install passport
         await this.authenticator.init(app);
 
+        // log context
+        app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+            try {
+                const userId = req.user ? req.user.id : undefined;
+                await runWithContext("http", { userId, requestPath: req.path }, () => next());
+            } catch (err) {
+                next(err);
+            }
+        });
+
         // Ensure that host contexts of dynamic auth providers are initialized.
         await this.hostCtxProvider.init();
 
@@ -175,7 +173,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             /**
              * Verify the web socket handshake request.
              */
-            const verifyClient: ws.VerifyClientCallbackAsync = async (info, callback) => {
+            const verifyClient: WebSocket.VerifyClientCallbackAsync = async (info, callback) => {
                 let authenticatedUsingBearerToken = false;
                 if (info.req.url === "/v1") {
                     // Connection attempt with Bearer-Token: be less strict for now
@@ -220,6 +218,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
 
             const wsPingPongHandler = new WsConnectionHandler();
             const wsHandler = new WsExpressHandler(httpServer, verifyClient);
+            this.disposables.push(wsHandler);
             wsHandler.ws(
                 websocketConnectionHandler.path,
                 (ws, request) => {
@@ -229,7 +228,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                 this.sessionHandler.websocket(),
                 ...initSessionHandlers,
                 wsPingPongHandler.handler(),
-                (ws: ws, req: express.Request) => {
+                (ws: WebSocket, req: express.Request) => {
                     websocketConnectionHandler.onConnection((req as any).wsConnection, req);
                 },
             );
@@ -240,7 +239,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                     (request as any).wsConnection = createWebSocketConnection(websocket, console);
                 },
                 wsPingPongHandler.handler(),
-                (ws: ws, req: express.Request) => {
+                (ws: WebSocket, req: express.Request) => {
                     websocketConnectionHandler.onConnection((req as any).wsConnection, req);
                 },
             );
@@ -275,15 +274,11 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         this.installWebsocketConnectionGauge();
         this.installWebsocketClientContextGauge();
 
-        // Connect to message bus
-        await this.messagebus.connect();
-
-        // Start local message broker
-        await this.localMessageBroker.start();
-        this.disposables.push(Disposable.create(() => this.localMessageBroker.stop().catch(log.error)));
+        await this.redisSubscriber.start();
+        this.disposables.push(Disposable.create(() => this.redisSubscriber.stop().catch(log.error)));
 
         // Start periodic jobs
-        this.jobRunner.start();
+        this.disposables.push(this.jobRunner.start());
 
         this.app = app;
 
@@ -352,18 +347,42 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             });
         }
 
-        this.apiServer = this.api.listen();
+        this.publicApiServer = this.api.listen();
+        this.privateApiServer = this.api.listenPrivate();
 
         this.debugApp.start();
     }
 
     public async stop() {
-        await this.debugApp.stop();
-        await this.stopServer(this.iamSessionAppServer);
-        await this.stopServer(this.monitoringHttpServer);
-        await this.stopServer(this.httpServer);
-        await this.stopServer(this.apiServer);
-        this.disposables.dispose();
+        // run each stop with a timeout of 30s
+        async function race(workLoad: Promise<any>, task: string, ms: number = 30 * 1000): Promise<void> {
+            const before = Date.now();
+            let timedOut = false;
+            const timeout = new Promise<void>((resolve) =>
+                setTimeout(() => {
+                    timedOut = true;
+                    resolve();
+                }, ms),
+            );
+            await Promise.race([workLoad.catch((e) => log.error("error running " + task, e)), timeout]).then(() => {
+                const duration = Date.now() - before;
+                if (timedOut) {
+                    log.error(`task ${task} timed out after ${duration}ms`);
+                } else {
+                    log.info(`task ${task} took ${duration}ms`);
+                }
+            });
+        }
+        await Promise.all([
+            race(this.debugApp.stop(), "debugapp"),
+            race(this.stopServer(this.iamSessionAppServer), "stop iamsessionapp"),
+            race(this.stopServer(this.monitoringHttpServer), "stop monitoringapp"),
+            race(this.stopServer(this.httpServer), "stop httpserver"),
+            race(this.stopServer(this.privateApiServer), "stop private api server"),
+            race(this.stopServer(this.publicApiServer), "stop public api server"),
+            race((async () => this.disposables.dispose())(), "dispose disposables"),
+        ]);
+
         log.info("server stopped.");
     }
 

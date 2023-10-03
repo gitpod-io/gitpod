@@ -14,7 +14,6 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/components/minio"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/proxy"
 	public_api_server "github.com/gitpod-io/gitpod/installer/pkg/components/public-api-server"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/rabbitmq"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/redis"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/spicedb"
@@ -29,7 +28,6 @@ var Objects = common.CompositeRenderFunc(
 	migrations.Objects,
 	minio.Objects,
 	proxy.Objects,
-	rabbitmq.Objects,
 	server.Objects,
 	wsmanagerbridge.Objects,
 	public_api_server.Objects,
@@ -42,5 +40,4 @@ var Objects = common.CompositeRenderFunc(
 var Helm = common.CompositeHelmFunc(
 	database.Helm,
 	minio.Helm,
-	rabbitmq.Helm,
 )

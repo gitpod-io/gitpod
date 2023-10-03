@@ -31,13 +31,14 @@ import { WorkspaceInstanceController } from "./workspace-instance-controller";
  */
 @injectable()
 export class AppClusterWorkspaceInstancesController implements Disposable {
-    @inject(Configuration) protected readonly config: Configuration;
+    constructor(
+        @inject(Configuration) private readonly config: Configuration,
+        @inject(WorkspaceDB) private readonly workspaceDb: WorkspaceDB,
+        @inject(WorkspaceInstanceController)
+        private readonly workspaceInstanceController: WorkspaceInstanceController,
+    ) {}
 
-    @inject(WorkspaceDB) protected readonly workspaceDb: WorkspaceDB;
-
-    @inject(WorkspaceInstanceController) protected readonly workspaceInstanceController: WorkspaceInstanceController;
-
-    protected readonly dispoables = new DisposableCollection();
+    private readonly dispoables = new DisposableCollection();
 
     public async start() {
         const disposable = repeat(
@@ -47,7 +48,7 @@ export class AppClusterWorkspaceInstancesController implements Disposable {
         this.dispoables.push(disposable);
     }
 
-    protected async controlAppClusterManagedWorkspaceInstances() {
+    private async controlAppClusterManagedWorkspaceInstances() {
         const appClusterInstallation = this.config.installation;
 
         const span = TraceContext.startSpan("controlAppClusterManagedWorkspaceInstances");

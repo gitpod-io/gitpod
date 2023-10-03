@@ -8,12 +8,13 @@ import { UserDB, PersonalAccessTokenDB } from "@gitpod/gitpod-db/lib";
 import { GitpodTokenType, User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import * as crypto from "crypto";
-import * as express from "express";
+import express from "express";
 import { IncomingHttpHeaders } from "http";
 import { inject, injectable } from "inversify";
 import { Config } from "../config";
 import { AllAccessFunctionGuard, ExplicitFunctionAccessGuard, WithFunctionAccessGuard } from "./function-access";
 import { TokenResourceGuard, WithResourceAccessGuard } from "./resource-access";
+import { UserService } from "../user/user-service";
 
 export function getBearerToken(headers: IncomingHttpHeaders): string | undefined {
     const authorizationHeader = headers["authorization"];
@@ -40,9 +41,12 @@ function createBearerAuthError(message: string): BearerAuthError {
 
 @injectable()
 export class BearerAuth {
-    @inject(Config) protected readonly config: Config;
-    @inject(UserDB) protected readonly userDB: UserDB;
-    @inject(PersonalAccessTokenDB) protected readonly personalAccessTokenDB: PersonalAccessTokenDB;
+    constructor(
+        @inject(Config) private readonly config: Config,
+        @inject(UserDB) private readonly userDB: UserDB,
+        @inject(UserService) private readonly userService: UserService,
+        @inject(PersonalAccessTokenDB) private readonly personalAccessTokenDB: PersonalAccessTokenDB,
+    ) {}
 
     get restHandler(): express.RequestHandler {
         return async (req, res, next) => {
@@ -123,11 +127,7 @@ export class BearerAuth {
                     throw new Error("Failed to find PAT by hash");
                 }
 
-                const userByID = await this.userDB.findUserById(pat.userId);
-                if (!userByID) {
-                    throw new Error("Failed to find user referenced by PAT");
-                }
-
+                const userByID = await this.userService.findUserById(pat.userId, pat.userId);
                 return { user: userByID, scopes: pat.scopes };
             } catch (e) {
                 log.error("Failed to authenticate using PAT", e);
@@ -142,9 +142,8 @@ export class BearerAuth {
             throw createBearerAuthError("invalid Bearer token");
         }
 
-        // hack: load the user again to get ahold of all identities
-        // TODO(cw): instead of re-loading the user, we should properly join the identities in findUserByGitpodToken
-        const user = (await this.userDB.findUserById(userAndToken.user.id))!;
+        // load the user through user-service again to get ahold of all identities
+        const user = await this.userService.findUserById(userAndToken.user.id, userAndToken.user.id);
         return { user, scopes: userAndToken.token.scopes };
     }
 }

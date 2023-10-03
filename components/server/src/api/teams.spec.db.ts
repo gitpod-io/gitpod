@@ -3,27 +3,24 @@
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
-import { suite, test, timeout } from "mocha-typescript";
-import { APIUserService } from "./user";
-import { Container } from "inversify";
-import { TeamDB, TypeORM, UserDB, testContainer } from "@gitpod/gitpod-db/lib";
-import { API } from "./server";
-import * as http from "http";
-import { createConnectTransport } from "@bufbuild/connect-node";
 import { Code, ConnectError, PromiseClient, createPromiseClient } from "@bufbuild/connect";
-import { AddressInfo } from "net";
-import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
-import { WorkspaceStarter } from "../workspace/workspace-starter";
-import { UserService } from "../user/user-service";
-import { APITeamsService } from "./teams";
-import { v4 as uuidv4 } from "uuid";
-import * as chai from "chai";
-import { GetTeamRequest, Team, TeamMember, TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
-import { DBTeam } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team";
-import { Connection } from "typeorm";
+import { createConnectTransport } from "@bufbuild/connect-node";
 import { Timestamp } from "@bufbuild/protobuf";
-import { APIWorkspacesService } from "./workspaces";
-import { APIStatsService } from "./stats";
+import { TeamDB, TypeORM, UserDB, testContainer } from "@gitpod/gitpod-db/lib";
+import { DBTeam } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team";
+import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
+import { GetTeamRequest, Team, TeamMember, TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
+import { suite, test, timeout } from "@testdeck/mocha";
+import * as chai from "chai";
+import * as http from "http";
+import { Container } from "inversify";
+import { AddressInfo } from "net";
+import { Connection } from "typeorm";
+import { v4 as uuidv4 } from "uuid";
+import { UserAuthentication } from "../user/user-authentication";
+import { WorkspaceService } from "../workspace/workspace-service";
+import { API } from "./server";
+import { SessionHandler } from "../session-handler";
 
 const expect = chai.expect;
 
@@ -37,14 +34,11 @@ export class APITeamsServiceSpec {
 
     async before() {
         this.container = testContainer.createChild();
-        this.container.bind(API).toSelf().inSingletonScope();
-        this.container.bind(APIUserService).toSelf().inSingletonScope();
-        this.container.bind(APITeamsService).toSelf().inSingletonScope();
-        this.container.bind(APIWorkspacesService).toSelf().inSingletonScope();
-        this.container.bind(APIStatsService).toSelf().inSingletonScope();
+        API.bindAPI(this.container.bind.bind(this.container));
 
-        this.container.bind(WorkspaceStarter).toConstantValue({} as WorkspaceStarter);
-        this.container.bind(UserService).toConstantValue({} as UserService);
+        this.container.bind(WorkspaceService).toConstantValue({} as WorkspaceService);
+        this.container.bind(UserAuthentication).toConstantValue({} as UserAuthentication);
+        this.container.bind(SessionHandler).toConstantValue({} as SessionHandler);
 
         // Clean-up database
         const typeorm = testContainer.get<TypeORM>(TypeORM);
@@ -52,7 +46,7 @@ export class APITeamsServiceSpec {
         await this.dbConn.getRepository(DBTeam).delete({});
 
         // Start an actual server for tests
-        this.server = this.container.get<API>(API).listen();
+        this.server = this.container.get<API>(API).listenPrivate();
 
         // Construct a client to point against our server
         const address = this.server.address() as AddressInfo;
@@ -85,7 +79,7 @@ export class APITeamsServiceSpec {
             new GetTeamRequest({ teamId: "foo-bar" }), // not a valid UUID
         ];
 
-        for (let payload of payloads) {
+        for (const payload of payloads) {
             try {
                 await this.client.getTeam(payload);
                 expect.fail("get team did not throw an exception");

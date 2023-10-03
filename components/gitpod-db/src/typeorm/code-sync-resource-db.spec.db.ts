@@ -6,10 +6,12 @@
 
 import uuid = require("uuid");
 import * as chai from "chai";
-import { suite, test, timeout } from "mocha-typescript";
+import { suite, test, timeout } from "@testdeck/mocha";
 import { testContainer } from "../test-container";
 import { CodeSyncResourceDB } from "./code-sync-resource-db";
 import { IUserDataManifest, SyncResource } from "./entity/db-code-sync-resource";
+import { resetDB } from "../test/reset-db";
+import { TypeORM } from "./typeorm";
 const expect = chai.expect;
 
 @suite(timeout(10000))
@@ -23,8 +25,7 @@ export class CodeSyncResourceDBSpec {
     }
 
     async after(): Promise<void> {
-        await this.db.deleteSettingsSyncResources(this.userId, () => Promise.resolve());
-        await this.db.deleteCollection(this.userId, undefined, () => Promise.resolve());
+        await resetDB(testContainer.get<TypeORM>(TypeORM));
     }
 
     @test()
@@ -103,7 +104,7 @@ export class CodeSyncResourceDBSpec {
             },
         });
 
-        let extensionsRev = await this.db.insert(
+        const extensionsRev = await this.db.insert(
             this.userId,
             SyncResource.Extensions,
             undefined,
@@ -141,7 +142,7 @@ export class CodeSyncResourceDBSpec {
                 return;
             }
 
-            for (let rev of oldRevs) {
+            for (const rev of oldRevs) {
                 await this.db.deleteResource(this.userId, kind, rev, undefined, async () => {});
             }
         };
@@ -310,7 +311,7 @@ export class CodeSyncResourceDBSpec {
             },
         });
 
-        let extensionsRev = await this.db.insert(
+        const extensionsRev = await this.db.insert(
             this.userId,
             SyncResource.Extensions,
             collection1,
@@ -354,7 +355,7 @@ export class CodeSyncResourceDBSpec {
 
         const collection2 = await this.db.createCollection(this.userId);
 
-        let keybindingsRev = await this.db.insert(
+        const keybindingsRev = await this.db.insert(
             this.userId,
             SyncResource.Keybindings,
             collection2,

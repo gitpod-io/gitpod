@@ -79,7 +79,7 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
             segments.splice(0, lenghtOfRelativePath);
         }
 
-        let firstSegment = segments[0];
+        const firstSegment = segments[0];
         let owner: string = segments[1];
         let repoKind: "users" | "projects";
         let repoName;
@@ -160,23 +160,60 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
                 more.ref = more.ref || repository.defaultBranch;
             }
             more.refType = more.refType || "branch";
-
             if (!more.revision) {
-                const tipCommitOnDefaultBranch = await this.api.getCommits(user, {
-                    repoKind,
-                    owner,
-                    repositorySlug: repoName,
-                    query: { limit: 1 },
-                });
-                const commits = tipCommitOnDefaultBranch?.values || [];
-                if (commits.length === 0) {
+                switch (more.refType) {
+                    case "branch": {
+                        if (!more.ref) {
+                            break;
+                        }
+                        const info = await this.api.getBranchLatestCommit(user, {
+                            repoKind,
+                            owner,
+                            repositorySlug: repoName,
+                            branch: more.ref!,
+                        });
+                        if (info) {
+                            more.revision = info.latestCommit;
+                        }
+                        break;
+                    }
+                    case "tag": {
+                        if (!more.ref) {
+                            break;
+                        }
+                        const info = await this.api.getTagLatestCommit(user, {
+                            repoKind,
+                            owner,
+                            repositorySlug: repoName,
+                            tag: more.ref!,
+                        });
+                        if (info) {
+                            more.revision = info.latestCommit;
+                        }
+                        break;
+                    }
+                    case "revision":
+                    default: {
+                        const tipCommitOnDefaultBranch = await this.api.getCommits(user, {
+                            repoKind,
+                            owner,
+                            repositorySlug: repoName,
+                            query: { limit: 1 },
+                        });
+                        const commits = tipCommitOnDefaultBranch?.values || [];
+                        if (commits.length === 0) {
+                            break;
+                        } else {
+                            more.revision = commits[0].id;
+                            // more.refType = "revision";
+                        }
+                    }
+                }
+                if (!more.revision) {
                     // empty repo
                     more.ref = undefined;
                     more.revision = "";
                     more.refType = undefined;
-                } else {
-                    more.revision = commits[0].id;
-                    // more.refType = "revision";
                 }
             }
 

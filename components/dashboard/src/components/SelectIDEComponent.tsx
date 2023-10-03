@@ -5,10 +5,10 @@
  */
 
 import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { getGitpodService } from "../service/service";
-import { DropDown2, DropDown2Element } from "./DropDown2";
+import { FC, useCallback, useEffect, useMemo } from "react";
+import { DropDown2, DropDown2Element, DropDown2SelectedElement } from "./DropDown2";
 import Editor from "../icons/Editor.svg";
+import { useIDEOptions } from "../data/ide-options/ide-options-query";
 
 interface SelectIDEComponentProps {
     selectedIdeOption?: string;
@@ -16,6 +16,7 @@ interface SelectIDEComponentProps {
     onSelectionChange: (ide: string, latest: boolean) => void;
     setError?: (error?: string) => void;
     disabled?: boolean;
+    loading?: boolean;
 }
 
 function filteredIdeOptions(ideOptions: IDEOptions) {
@@ -40,12 +41,15 @@ function sortedIdeOptions(ideOptions: IDEOptions) {
     });
 }
 
-export default function SelectIDEComponent(props: SelectIDEComponentProps) {
-    const [ideOptions, setIdeOptions] = useState<IDEOptions>();
-
-    useEffect(() => {
-        getGitpodService().server.getIDEOptions().then(setIdeOptions);
-    }, []);
+export default function SelectIDEComponent({
+    selectedIdeOption,
+    useLatest,
+    disabled = false,
+    loading = false,
+    setError,
+    onSelectionChange,
+}: SelectIDEComponentProps) {
+    const { data: ideOptions, isLoading: ideOptionsLoading } = useIDEOptions();
 
     const options = useMemo(() => (ideOptions ? sortedIdeOptions(ideOptions) : undefined), [ideOptions]);
 
@@ -58,7 +62,7 @@ export default function SelectIDEComponent(props: SelectIDEComponentProps) {
             for (const ide of options.filter((ide) =>
                 `${ide.label}${ide.title}${ide.notes}${ide.id}`.toLowerCase().includes(search.toLowerCase()),
             )) {
-                if (!props.useLatest) {
+                if (!useLatest) {
                     result.push({
                         id: ide.id,
                         element: <IdeOptionElementInDropDown option={ide} useLatest={false} />,
@@ -74,34 +78,38 @@ export default function SelectIDEComponent(props: SelectIDEComponentProps) {
             }
             return result;
         },
-        [options, props.useLatest],
+        [options, useLatest],
     );
     const internalOnSelectionChange = (id: string) => {
         const { ide, useLatest } = parseId(id);
-        props.onSelectionChange(ide, useLatest);
-        if (props.setError) {
-            props.setError(undefined);
+        onSelectionChange(ide, useLatest);
+        if (setError) {
+            setError(undefined);
         }
     };
-    const ide = props.selectedIdeOption || ideOptions?.defaultIde || "";
+    const ide = selectedIdeOption || ideOptions?.defaultIde || "";
     useEffect(() => {
         if (!ideOptions) {
             return;
         }
         const option = ideOptions.options[ide];
         if (!option) {
-            props.setError?.(`The editor '${ide}' is not supported.`);
+            setError?.(`The editor '${ide}' is not supported.`);
         }
-    }, [ide, ideOptions, props]);
+    }, [ide, ideOptions, setError]);
     return (
         <DropDown2
             getElements={getElements}
             onSelectionChange={internalOnSelectionChange}
             searchPlaceholder={"Select Editor"}
             allOptions={ide}
-            disabled={props.disabled}
+            disabled={disabled || ideOptionsLoading || loading}
         >
-            <IdeOptionElementSelected option={ideOptions?.options[ide]} useLatest={!!props.useLatest} />
+            <IdeOptionElementSelected
+                option={ideOptions?.options[ide]}
+                useLatest={!!useLatest}
+                loading={ideOptionsLoading || loading}
+            />
         </DropDown2>
     );
 }
@@ -115,13 +123,14 @@ function parseId(id: string): { ide: string; useLatest: boolean } {
 interface IdeOptionElementProps {
     option: IDEOption | undefined;
     useLatest: boolean;
+    loading?: boolean;
 }
 
 function capitalize(label?: string) {
     return label && label[0].toLocaleUpperCase() + label.slice(1);
 }
 
-function IdeOptionElementSelected({ option, useLatest }: IdeOptionElementProps): JSX.Element {
+const IdeOptionElementSelected: FC<IdeOptionElementProps> = ({ option, useLatest, loading = false }) => {
     let version: string | undefined, label: string | undefined, title: string;
     if (!option) {
         title = "Select Editor";
@@ -132,12 +141,12 @@ function IdeOptionElementSelected({ option, useLatest }: IdeOptionElementProps):
     }
 
     return (
-        <div className="flex" title={title}>
-            <div className="mx-2 my-2">
-                <img className="w-8 filter-grayscale self-center" src={Editor} alt="logo" />
-            </div>
-            <div className="flex-col ml-1 mt-1 flex-grow">
-                <div className="text-gray-700 dark:text-gray-300 font-semibold">
+        <DropDown2SelectedElement
+            icon={Editor}
+            loading={loading}
+            htmlTitle={title}
+            title={
+                <div>
                     {title} <span className="text-gray-300 dark:text-gray-600 font-normal">&middot;</span>{" "}
                     <span className="text-gray-400 dark:text-gray-500 font-normal">{version}</span>{" "}
                     {useLatest && (
@@ -146,7 +155,9 @@ function IdeOptionElementSelected({ option, useLatest }: IdeOptionElementProps):
                         </div>
                     )}
                 </div>
-                <div className="flex text-xs text-gray-500 dark:text-gray-400">
+            }
+            subtitle={
+                <div className="flex">
                     <div className="font-semibold">Editor</div>
                     {label && (
                         <>
@@ -155,10 +166,10 @@ function IdeOptionElementSelected({ option, useLatest }: IdeOptionElementProps):
                         </>
                     )}
                 </div>
-            </div>
-        </div>
+            }
+        />
     );
-}
+};
 
 function IdeOptionElementInDropDown(p: IdeOptionElementProps): JSX.Element {
     const { option, useLatest } = p;

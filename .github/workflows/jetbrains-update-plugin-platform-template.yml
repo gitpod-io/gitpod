@@ -32,7 +32,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout Repository
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
             - name: Get Current Platform Version
               id: current-version
               run: |
@@ -106,13 +106,13 @@ jobs:
                       - [x] /werft with-gce-vm
                       - [x] with-integration-tests=jetbrains
                       - [x] latest-ide-version=${{ contains(inputs.pluginId, 'latest') }}
-                      - [x] with-ws-manager-mk2
 
                       _This PR was created automatically with GitHub Actions using [this](https://github.com/gitpod-io/gitpod/blob/main/.github/workflows/jetbrains-update-plugin-platform-template.yml) template._
                   commit-message: "Update Platform Version of ${{ inputs.pluginName }} to ${{ steps.latest-version.outputs.result }}"
                   branch: "jetbrains/${{ inputs.pluginId }}-platform"
                   labels: "team: IDE,editor: jetbrains"
-                  team-reviewers: "engineering-ide"
+                  team-reviewers: |
+                    team-experience
                   token: ${{ secrets.roboquatRepoPat }}
                   committer: Robo Quat <roboquat@gitpod.io>
                   author: Robo Quat <roboquat@gitpod.io>
@@ -155,7 +155,8 @@ jobs:
                   commit-message: "Update Platform Version of ${{ inputs.pluginName }} to ${{ steps.latest-version.outputs.result }}"
                   branch: "jetbrains/${{ inputs.pluginId }}-platform"
                   labels: "team: IDE,editor: jetbrains"
-                  team-reviewers: "engineering-ide"
+                  team-reviewers: |
+                    team-experience
                   token: ${{ secrets.roboquatRepoPat }}
                   committer: Robo Quat <roboquat@gitpod.io>
                   author: Robo Quat <roboquat@gitpod.io>
@@ -169,3 +170,4 @@ jobs:
                   SLACK_WEBHOOK: ${{ secrets.slackWebhook }}
                   SLACK_COLOR: ${{ job.status }}
                   SLACK_TITLE: ${{ inputs.productName }}
+                  SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"

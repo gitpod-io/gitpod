@@ -7,6 +7,7 @@
 import { User } from "@gitpod/gitpod-protocol";
 import { useQueryClient } from "@tanstack/react-query";
 import React, { createContext, useState, useContext, useMemo, useCallback } from "react";
+import { updateCommonErrorDetails } from "./service/metrics";
 
 const UserContext = createContext<{
     user?: User;
@@ -18,11 +19,19 @@ const UserContext = createContext<{
 const UserContextProvider: React.FC = ({ children }) => {
     const [user, setUser] = useState<User>();
 
+    const updateErrorUserDetails = (user?: User) => {
+        updateCommonErrorDetails({ userId: user?.id });
+    };
+    updateErrorUserDetails(user);
+
     const client = useQueryClient();
 
     const doSetUser = useCallback(
         (updatedUser: User) => {
-            if (user?.id !== updatedUser.id) {
+            updateErrorUserDetails(updatedUser);
+            // If user has changed clear cache
+            // Ignore the case where user hasn't been set yet - initial load
+            if (user && user?.id !== updatedUser.id) {
                 client.clear();
             }
             setUser(updatedUser);
@@ -46,7 +55,7 @@ const UserContextProvider: React.FC = ({ children }) => {
                 }, frequencyMs);
             }
         },
-        [user?.id, setUser, client],
+        [user, client],
     );
 
     // Wrap value in useMemo to avoid unnecessary re-renders

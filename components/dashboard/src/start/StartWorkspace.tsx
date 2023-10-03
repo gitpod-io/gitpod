@@ -344,7 +344,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             return;
         }
 
-        if (workspaceInstance.status.phase === "building" || workspaceInstance.status.phase === "preparing") {
+        if (workspaceInstance.status.phase === "building") {
             this.setState({ hasImageBuildLogs: true });
         }
 
@@ -408,7 +408,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             }
             if (code !== 200) {
                 // getting workspace auth didn't work as planned
-                console.error("Unable to retrieve workspace-auth cookie! Quitting.", {
+                console.warn("Unable to retrieve workspace-auth cookie.", {
                     instanceID,
                     code,
                     attempt,
@@ -447,7 +447,8 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         const withPrebuild = WithPrebuild.is(this.state.workspace?.context);
         let phase: StartPhase | undefined = StartPhase.Preparing;
         let title = undefined;
-        let isTimedOut = false;
+        let isStoppingOrStoppedPhase = false;
+        let isError = error ? true : false;
         let statusMessage = !!error ? undefined : <p className="text-base text-gray-400">Preparing workspace …</p>;
         const contextURL = ContextURL.getNormalizedURL(this.state.workspace)?.toString();
         const useLatest = !!this.state.workspaceInstance?.configuration?.ideConfig?.useLatest;
@@ -460,7 +461,10 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             // Preparing means that we haven't actually started the workspace instance just yet, but rather
             // are still preparing for launch.
             case "preparing":
-            // falls through
+                phase = StartPhase.Preparing;
+                statusMessage = <p className="text-base text-gray-400">Starting workspace …</p>;
+                break;
+
             case "building":
                 // Building means we're building the Docker image for the workspace.
                 return <ImageBuildView workspaceId={this.state.workspaceInstance.workspaceId} />;
@@ -497,7 +501,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             case "running":
                 if (isPrebuild) {
                     return (
-                        <StartPage title="Prebuild in Progress">
+                        <StartPage title="Prebuild in Progress" workspaceId={this.props.workspaceId}>
                             <div className="mt-6 w-11/12 lg:w-3/5">
                                 {/* TODO(gpl) These classes are copied around in Start-/CreateWorkspace. This should properly go somewhere central. */}
                                 <PrebuildLogs workspaceId={this.props.workspaceId} />
@@ -620,9 +624,10 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
             // Stopping means that the workspace is currently shutting down. It could go to stopped every moment.
             case "stopping":
+                isStoppingOrStoppedPhase = true;
                 if (isPrebuild) {
                     return (
-                        <StartPage title="Prebuild in Progress">
+                        <StartPage title="Prebuild in Progress" workspaceId={this.props.workspaceId}>
                             <div className="mt-6 w-11/12 lg:w-3/5">
                                 {/* TODO(gpl) These classes are copied around in Start-/CreateWorkspace. This should properly go somewhere central. */}
                                 <PrebuildLogs workspaceId={this.props.workspaceId} />
@@ -634,7 +639,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 statusMessage = (
                     <div>
                         <div className="flex space-x-3 items-center text-left rounded-xl m-auto px-4 h-16 w-72 mt-4 bg-gray-100 dark:bg-gray-800">
-                            <div className="rounded-full w-3 h-3 text-sm bg-gitpod-kumquat">&nbsp;</div>
+                            <div className="rounded-full w-3 h-3 text-sm bg-kumquat-ripe">&nbsp;</div>
                             <div>
                                 <p className="text-gray-700 dark:text-gray-200 font-semibold w-56 truncate">
                                     {this.state.workspaceInstance.workspaceId}
@@ -657,6 +662,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
             // Stopped means the workspace ended regularly because it was shut down.
             case "stopped":
+                isStoppingOrStoppedPhase = true;
                 phase = StartPhase.Stopped;
                 if (this.state.hasImageBuildLogs) {
                     const restartWithDefaultImage = (event: React.MouseEvent) => {
@@ -674,7 +680,6 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 }
                 if (!isPrebuild && this.state.workspaceInstance.status.conditions.timeout) {
                     title = "Timed Out";
-                    isTimedOut = true;
                 }
                 statusMessage = (
                     <div>
@@ -708,7 +713,13 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 break;
         }
         return (
-            <StartPage phase={phase} error={error} title={title} showLatestIdeWarning={!isTimedOut && useLatest}>
+            <StartPage
+                phase={phase}
+                error={error}
+                title={title}
+                showLatestIdeWarning={useLatest && (isError || !isStoppingOrStoppedPhase)}
+                workspaceId={this.props.workspaceId}
+            >
                 {statusMessage}
             </StartPage>
         );
@@ -768,7 +779,7 @@ function ImageBuildView(props: ImageBuildViewProps) {
     }, []);
 
     return (
-        <StartPage title="Building Image" phase={props.phase}>
+        <StartPage title="Building Image" phase={props.phase} workspaceId={props.workspaceId}>
             <Suspense fallback={<div />}>
                 <WorkspaceLogs logsEmitter={logsEmitter} errorMessage={props.error?.message} />
             </Suspense>

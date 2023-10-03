@@ -16,7 +16,6 @@ type Versioned struct {
 type Components struct {
 	AgentSmith      Versioned `json:"agentSmith"`
 	Blobserve       Versioned `json:"blobserve"`
-	CAUpdater       Versioned `json:"caUpdater"`
 	ContentService  Versioned `json:"contentService"`
 	Dashboard       Versioned `json:"dashboard"`
 	DBMigrations    Versioned `json:"dbMigrations"`
@@ -30,17 +29,15 @@ type Components struct {
 		Versioned
 		BuilderImage Versioned `json:"builderImage"`
 	} `json:"imageBuilderMk3"`
-	InstallationTelemetry Versioned `json:"installationTelemetry"`
-	IntegrationTests      Versioned `json:"integrationTests"`
-	OpenVSXProxy          Versioned `json:"openVSXProxy"`
-	Proxy                 Versioned `json:"proxy"`
-	PublicAPIServer       Versioned `json:"public-api-server"`
-	RefreshCredential     Versioned `json:"refreshCredential"`
-	RegistryFacade        Versioned `json:"registryFacade"`
-	Server                Versioned `json:"server"`
-	ServiceWaiter         Versioned `json:"serviceWaiter"`
-	Usage                 Versioned `json:"usage"`
-	Workspace             struct {
+	OpenVSXProxy      Versioned `json:"openVSXProxy"`
+	Proxy             Versioned `json:"proxy"`
+	PublicAPIServer   Versioned `json:"public-api-server"`
+	RefreshCredential Versioned `json:"refreshCredential"`
+	RegistryFacade    Versioned `json:"registryFacade"`
+	Server            Versioned `json:"server"`
+	ServiceWaiter     Versioned `json:"serviceWaiter"`
+	Usage             Versioned `json:"usage"`
+	Workspace         struct {
 		CodeImage        Versioned `json:"codeImage"`
 		CodeHelperImage  Versioned `json:"codeHelperImage"`
 		DockerUp         Versioned `json:"dockerUp"`
@@ -83,8 +80,6 @@ type Components struct {
 	WSProxy         Versioned `json:"wsProxy"`
 	NodeLabeler     Versioned `json:"node-labeler"`
 }
-
-// var embedded embed.FS
 
 func Embedded() (*Manifest, error) {
 	return loadEmbedded()

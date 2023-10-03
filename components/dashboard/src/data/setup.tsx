@@ -14,6 +14,7 @@ import {
 import { QueryCache, QueryClient, QueryKey } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { FunctionComponent } from "react";
+import debounce from "lodash.debounce";
 
 // This is used to version the cache
 // If data we cache changes in a non-backwards compatible way, increment this version
@@ -29,6 +30,12 @@ export function isNoPersistence(queryKey: QueryKey): boolean {
 
 export const setupQueryClientProvider = () => {
     const client = new QueryClient({
+        defaultOptions: {
+            queries: {
+                // Default stale time to help avoid re-fetching data too frequently
+                staleTime: 1000 * 5, // 5 seconds
+            },
+        },
         queryCache: new QueryCache({
             // log any errors our queries throw
             onError: (error) => {
@@ -71,6 +78,23 @@ function createIDBPersister(idbValidKey: IDBValidKey = "gitpodQueryClient"): Per
     // If we get an error performing an operation, we'll disable persistance and assume it's not supported
     let persistanceActive = true;
 
+    // Ensure we don't persist the client too frequently
+    // Important to debounce (not throttle) this so we aren't queuing up a bunch of writes
+    // but instead, only persist the latest state
+    const debouncedSet = debounce(
+        async (client: PersistedClient) => {
+            await set(idbValidKey, client);
+        },
+        500,
+        {
+            leading: true,
+            // important so we always persist the latest state when debouncing calls
+            trailing: true,
+            // ensure
+            maxWait: 1000,
+        },
+    );
+
     return {
         persistClient: async (client: PersistedClient) => {
             if (!persistanceActive) {
@@ -78,7 +102,7 @@ function createIDBPersister(idbValidKey: IDBValidKey = "gitpodQueryClient"): Per
             }
 
             try {
-                await set(idbValidKey, client);
+                await debouncedSet(client);
             } catch (e) {
                 console.error("unable to persist query client");
                 persistanceActive = false;

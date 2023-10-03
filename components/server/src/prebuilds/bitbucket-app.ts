@@ -4,29 +4,35 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import * as express from "express";
+import express from "express";
 import { postConstruct, injectable, inject } from "inversify";
-import { ProjectDB, TeamDB, UserDB, WebhookEventDB } from "@gitpod/gitpod-db/lib";
-import { User, StartPrebuildResult, CommitContext, CommitInfo, Project, WebhookEvent } from "@gitpod/gitpod-protocol";
+import { TeamDB, WebhookEventDB } from "@gitpod/gitpod-db/lib";
+import { User, CommitContext, CommitInfo, Project, WebhookEvent } from "@gitpod/gitpod-protocol";
 import { PrebuildManager } from "./prebuild-manager";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { TokenService } from "../user/token-service";
 import { ContextParser } from "../workspace/context-parser-service";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { UserService } from "../user/user-service";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { URL } from "url";
+import { ProjectsService } from "../projects/projects-service";
 
 @injectable()
 export class BitbucketApp {
-    @inject(UserDB) protected readonly userDB: UserDB;
-    @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
-    @inject(TokenService) protected readonly tokenService: TokenService;
-    @inject(ProjectDB) protected readonly projectDB: ProjectDB;
-    @inject(TeamDB) protected readonly teamDB: TeamDB;
-    @inject(ContextParser) protected readonly contextParser: ContextParser;
-    @inject(HostContextProvider) protected readonly hostCtxProvider: HostContextProvider;
-    @inject(WebhookEventDB) protected readonly webhookEvents: WebhookEventDB;
+    constructor(
+        @inject(UserService) private readonly userService: UserService,
+        @inject(PrebuildManager) private readonly prebuildManager: PrebuildManager,
+        @inject(TeamDB) private readonly teamDB: TeamDB,
+        @inject(ContextParser) private readonly contextParser: ContextParser,
+        @inject(HostContextProvider) private readonly hostCtxProvider: HostContextProvider,
+        @inject(WebhookEventDB) private readonly webhookEvents: WebhookEventDB,
+        @inject(ProjectsService) private readonly projectService: ProjectsService,
+    ) {}
 
-    protected _router = express.Router();
+    private _router = express.Router();
     public static path = "/apps/bitbucket/";
 
     @postConstruct()
@@ -78,12 +84,12 @@ export class BitbucketApp {
         });
     }
 
-    protected async findUser(ctx: TraceContext, secretToken: string): Promise<User> {
+    private async findUser(ctx: TraceContext, secretToken: string): Promise<User> {
         const span = TraceContext.startSpan("BitbucketApp.findUser", ctx);
         try {
             span.setTag("secret-token", secretToken);
             const [userid, tokenValue] = secretToken.split("|");
-            const user = await this.userDB.findUserById(userid);
+            const user = await this.userService.findUserById(userid, userid);
             if (!user) {
                 throw new Error("No user found for " + secretToken + " found.");
             } else if (!!user.blocked) {
@@ -93,7 +99,7 @@ export class BitbucketApp {
             if (!identity) {
                 throw new Error(`User ${user.id} has no identity for '${TokenService.GITPOD_AUTH_PROVIDER_ID}'.`);
             }
-            const tokens = await this.userDB.findTokensForIdentity(identity);
+            const tokens = await this.userService.findTokensForIdentity(userid, identity);
             const token = tokens.find((t) => t.token.value === tokenValue);
             if (!token) {
                 throw new Error(`User ${user.id} has no token with given value.`);
@@ -104,65 +110,77 @@ export class BitbucketApp {
         }
     }
 
-    protected async handlePushHook(
+    private async handlePushHook(
         ctx: TraceContext,
         data: ParsedRequestData,
         user: User,
         event: WebhookEvent,
-    ): Promise<StartPrebuildResult | undefined> {
+    ): Promise<void> {
         const span = TraceContext.startSpan("Bitbucket.handlePushHook", ctx);
         try {
-            const projectAndOwner = await this.findProjectAndOwner(data.gitCloneUrl, user);
-            if (projectAndOwner.project) {
-                /* tslint:disable-next-line */
-                /** no await */ this.projectDB.updateProjectUsage(projectAndOwner.project.id, {
-                    lastWebhookReceived: new Date().toISOString(),
-                });
-            }
+            const cloneURL = data.gitCloneUrl;
+            const projects = await this.projectService.findProjectsByCloneUrl(user.id, cloneURL);
+            for (const project of projects) {
+                try {
+                    const projectOwner = await this.findProjectOwner(project, user);
 
-            const contextURL = this.createContextUrl(data);
-            span.setTag("contextURL", contextURL);
-            const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
-            await this.webhookEvents.updateEvent(event.id, {
-                authorizedUserId: user.id,
-                projectId: projectAndOwner?.project?.id,
-                cloneUrl: context.repository.cloneUrl,
-                branch: context.ref,
-                commit: context.revision,
-            });
-            const config = await this.prebuildManager.fetchConfig({ span }, user, context);
-            if (!this.prebuildManager.shouldPrebuild(config)) {
-                console.log("Bitbucket push event: No config. No prebuild.");
-                await this.webhookEvents.updateEvent(event.id, {
-                    prebuildStatus: "ignored_unconfigured",
-                    status: "processed",
-                });
-                return undefined;
-            }
+                    const contextURL = this.createContextUrl(data);
+                    span.setTag("contextURL", contextURL);
+                    const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
+                    await this.webhookEvents.updateEvent(event.id, {
+                        authorizedUserId: user.id,
+                        projectId: project?.id,
+                        cloneUrl: context.repository.cloneUrl,
+                        branch: context.ref,
+                        commit: context.revision,
+                    });
+                    const config = await this.prebuildManager.fetchConfig({ span }, user, context, project?.teamId);
+                    const prebuildPrecondition = this.prebuildManager.checkPrebuildPrecondition({
+                        config,
+                        project,
+                        context,
+                    });
+                    if (!prebuildPrecondition.shouldRun) {
+                        log.info("Bitbucket push event: No prebuild.", { config, context });
+                        await this.webhookEvents.updateEvent(event.id, {
+                            prebuildStatus: "ignored_unconfigured",
+                            status: "processed",
+                            message: prebuildPrecondition.reason,
+                        });
+                        continue;
+                    }
 
-            console.log("Starting prebuild.", { contextURL });
-            const { host, owner, repo } = RepoURL.parseRepoUrl(data.repoUrl)!;
-            const hostCtx = this.hostCtxProvider.get(host);
-            let commitInfo: CommitInfo | undefined;
-            if (hostCtx?.services?.repositoryProvider) {
-                commitInfo = await hostCtx.services.repositoryProvider.getCommitInfo(
-                    user,
-                    owner,
-                    repo,
-                    data.commitHash,
-                );
-            }
-            const ws = await this.prebuildManager.startPrebuild(
-                { span },
-                { user, project: projectAndOwner.project, context, commitInfo },
-            );
-            if (!ws.done) {
-                await this.webhookEvents.updateEvent(event.id, {
-                    prebuildStatus: "prebuild_triggered",
-                    status: "processed",
-                    prebuildId: ws.prebuildId,
-                });
-                return ws;
+                    log.info("Starting prebuild.", { contextURL });
+                    const { host, owner, repo } = RepoURL.parseRepoUrl(data.repoUrl)!;
+                    const hostCtx = this.hostCtxProvider.get(host);
+                    let commitInfo: CommitInfo | undefined;
+                    if (hostCtx?.services?.repositoryProvider) {
+                        commitInfo = await hostCtx.services.repositoryProvider.getCommitInfo(
+                            user,
+                            owner,
+                            repo,
+                            data.commitHash,
+                        );
+                    }
+                    const ws = await this.prebuildManager.startPrebuild(
+                        { span },
+                        {
+                            user: projectOwner,
+                            project,
+                            context,
+                            commitInfo,
+                        },
+                    );
+                    if (!ws.done) {
+                        await this.webhookEvents.updateEvent(event.id, {
+                            prebuildStatus: "prebuild_triggered",
+                            status: "processed",
+                            prebuildId: ws.prebuildId,
+                        });
+                    }
+                } catch (error) {
+                    log.error("Error processing Bitbucket Server webhook event", error);
+                }
             }
         } catch (e) {
             console.error("Error processing Bitbucket webhook event", e);
@@ -187,34 +205,30 @@ export class BitbucketApp {
      * @param webhookInstaller the user account known from the webhook installation
      * @returns a promise which resolves to a user account and an optional project.
      */
-    protected async findProjectAndOwner(
-        cloneURL: string,
-        webhookInstaller: User,
-    ): Promise<{ user: User; project?: Project }> {
-        const project = await this.projectDB.findProjectByCloneUrl(cloneURL);
-        if (project) {
-            if (project.userId) {
-                const user = await this.userDB.findUserById(project.userId);
-                if (user) {
-                    return { user, project };
-                }
-            } else if (project.teamId) {
-                const teamMembers = await this.teamDB.findMembersByTeam(project.teamId || "");
-                if (teamMembers.some((t) => t.userId === webhookInstaller.id)) {
-                    return { user: webhookInstaller, project };
-                }
-                for (const teamMember of teamMembers) {
-                    const user = await this.userDB.findUserById(teamMember.userId);
-                    if (user && user.identities.some((i) => i.authProviderId === "Public-Bitbucket")) {
-                        return { user, project };
-                    }
+    private async findProjectOwner(project: Project, webhookInstaller: User): Promise<User> {
+        try {
+            if (!project.teamId) {
+                throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "Project has no teamId");
+            }
+            const teamMembers = await this.teamDB.findMembersByTeam(project.teamId);
+            if (teamMembers.some((t) => t.userId === webhookInstaller.id)) {
+                return webhookInstaller;
+            }
+            const hostContext = this.hostCtxProvider.get(new URL(project.cloneUrl).host);
+            const authProviderId = hostContext?.authProvider.authProviderId;
+            for (const teamMember of teamMembers) {
+                const user = await this.userService.findUserById(teamMember.userId, teamMember.userId);
+                if (user && user.identities.some((i) => i.authProviderId === authProviderId)) {
+                    return user;
                 }
             }
+        } catch (err) {
+            log.info({ userId: webhookInstaller.id }, "Failed to find project and owner", err);
         }
-        return { user: webhookInstaller };
+        return webhookInstaller;
     }
 
-    protected createContextUrl(data: ParsedRequestData) {
+    private createContextUrl(data: ParsedRequestData) {
         const contextUrl = `${data.repoUrl}/src/${data.commitHash}/?at=${encodeURIComponent(data.branchName)}`;
         return contextUrl;
     }

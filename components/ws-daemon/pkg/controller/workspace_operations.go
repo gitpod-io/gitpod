@@ -97,11 +97,10 @@ type InitOptions struct {
 }
 
 type BackupOptions struct {
-	Meta              WorkspaceMeta
-	WorkspaceLocation string
-	BackupLogs        bool
-	UpdateGitStatus   bool
-	SnapshotName      string
+	Meta            WorkspaceMeta
+	BackupLogs      bool
+	UpdateGitStatus bool
+	SnapshotName    string
 }
 
 func NewWorkspaceOperations(config content.Config, provider *WorkspaceProvider, reg prometheus.Registerer) (WorkspaceOperations, error) {
@@ -169,12 +168,12 @@ func (wso *DefaultWorkspaceOperations) InitWorkspace(ctx context.Context, option
 
 	err = ensureCleanSlate(ws.Location)
 	if err != nil {
-		glog.Warnf("cannot ensure clean slate for workspace %s (this might break content init): %v", ws.InstanceID, err)
+		glog.WithFields(ws.OWI()).Warnf("cannot ensure clean slate for workspace %s (this might break content init): %v", ws.InstanceID, err)
 	}
 
 	err = content.RunInitializer(ctx, ws.Location, options.Initializer, remoteContent, opts)
 	if err != nil {
-		glog.Infof("error running initializer %v", err)
+		glog.WithFields(ws.OWI()).Infof("error running initializer %v", err)
 		return err.Error(), err
 	}
 
@@ -231,10 +230,10 @@ func (wso *DefaultWorkspaceOperations) BackupWorkspace(ctx context.Context, opts
 	}
 
 	if opts.BackupLogs {
-		err := wso.uploadWorkspaceLogs(ctx, opts)
+		err := wso.uploadWorkspaceLogs(ctx, opts, ws.Location)
 		if err != nil {
 			// we do not fail the workspace yet because we still might succeed with its content!
-			glog.WithError(err).Error("log backup failed")
+			glog.WithError(err).WithFields(ws.OWI()).Error("log backup failed")
 		}
 	}
 
@@ -253,7 +252,7 @@ func (wso *DefaultWorkspaceOperations) BackupWorkspace(ctx context.Context, opts
 			// which can happen for various reasons, including user corrupting his .git folder somehow
 			// instead we log the error and continue cleaning up workspace
 			// todo(pavel): it would be great if we can somehow bubble this up to user without failing workspace
-			glog.WithError(err).Warn("cannot get git status")
+			glog.WithError(err).WithFields(ws.OWI()).Warn("cannot get git status")
 		}
 	}
 
@@ -267,13 +266,13 @@ func (wso *DefaultWorkspaceOperations) DeleteWorkspace(ctx context.Context, inst
 	}
 
 	if err = ws.Dispose(ctx, wso.provider.hooks[session.WorkspaceDisposed]); err != nil {
-		glog.WithError(err).Error("cannot dispose session")
+		glog.WithError(err).WithFields(ws.OWI()).Error("cannot dispose session")
 		return err
 	}
 
 	// remove workspace daemon directory in the node
 	if err := os.RemoveAll(ws.ServiceLocDaemon); err != nil {
-		glog.WithError(err).Error("cannot delete workspace daemon directory")
+		glog.WithError(err).WithFields(ws.OWI()).Error("cannot delete workspace daemon directory")
 		return err
 	}
 	wso.provider.Remove(ctx, instanceID)
@@ -345,9 +344,9 @@ func ensureCleanSlate(location string) error {
 	return nil
 }
 
-func (wso *DefaultWorkspaceOperations) uploadWorkspaceLogs(ctx context.Context, opts BackupOptions) (err error) {
+func (wso *DefaultWorkspaceOperations) uploadWorkspaceLogs(ctx context.Context, opts BackupOptions, location string) (err error) {
 	// currently we're only uploading prebuild log files
-	logFiles, err := logs.ListPrebuildLogFiles(ctx, opts.WorkspaceLocation)
+	logFiles, err := logs.ListPrebuildLogFiles(ctx, location)
 	if err != nil {
 		return err
 	}
@@ -369,12 +368,13 @@ func (wso *DefaultWorkspaceOperations) uploadWorkspaceLogs(ctx context.Context, 
 
 	for _, absLogPath := range logFiles {
 		taskID, parseErr := logs.ParseTaskIDFromPrebuildLogFilePath(absLogPath)
+		owi := glog.OWI(opts.Meta.Owner, opts.Meta.WorkspaceID, opts.Meta.InstanceID)
 		if parseErr != nil {
-			glog.WithError(parseErr).Warn("cannot parse headless workspace log file name")
+			glog.WithError(parseErr).WithFields(owi).Warn("cannot parse headless workspace log file name")
 			continue
 		}
 
-		err = retryIfErr(ctx, 5, glog.WithField("op", "upload log"), func(ctx context.Context) (err error) {
+		err = retryIfErr(ctx, 5, glog.WithField("op", "upload log").WithFields(owi), func(ctx context.Context) (err error) {
 			_, _, err = rs.UploadInstance(ctx, absLogPath, logs.UploadedHeadlessLogPath(taskID))
 			if err != nil {
 				return

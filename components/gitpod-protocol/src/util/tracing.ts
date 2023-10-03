@@ -9,11 +9,13 @@ import { TracingConfig, initTracerFromEnv } from "jaeger-client";
 import { Sampler, SamplingDecision } from "./jaeger-client-types";
 import { initGlobalTracer } from "opentracing";
 import { injectable } from "inversify";
-import { ResponseError } from "vscode-jsonrpc";
 import { log, LogContext } from "./logging";
 
 export interface TraceContext {
     span?: opentracing.Span;
+    // TODO(gpl) We are missing this method from type opentracing.SpanContext, which breaks our code under some circumstances (testing).
+    // We should add it, but I won't add right now because of different focus, and it's unclear how we want to use tracing going forward
+    isDebugIDContainerOnly?: () => boolean;
 }
 export type TraceContextWithSpan = TraceContext & {
     span: opentracing.Span;
@@ -92,7 +94,7 @@ export namespace TraceContext {
     export function setJsonRPCError(
         ctx: TraceContext,
         method: string,
-        err: ResponseError<any>,
+        err: Error & { code: number },
         withStatusCode: boolean = false,
     ) {
         if (!ctx.span) {
@@ -249,7 +251,7 @@ export class PerOperationSampler implements Sampler {
     }
 
     isSampled(operation: string, tags: any): boolean {
-        let shouldSample = this.strategies[operation];
+        const shouldSample = this.strategies[operation];
         if (shouldSample === undefined) {
             if (!this.fallback.isSampled) {
                 return false;

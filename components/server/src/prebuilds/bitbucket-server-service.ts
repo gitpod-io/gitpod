@@ -13,6 +13,7 @@ import { BitbucketServerContextParser } from "../bitbucket-server/bitbucket-serv
 import { Config } from "../config";
 import { TokenService } from "../user/token-service";
 import { BitbucketServerApp } from "./bitbucket-server-app";
+import { CancellationToken } from "vscode-jsonrpc";
 
 @injectable()
 export class BitbucketServerService extends RepositoryService {
@@ -24,9 +25,12 @@ export class BitbucketServerService extends RepositoryService {
     @inject(TokenService) protected tokenService: TokenService;
     @inject(BitbucketServerContextParser) protected contextParser: BitbucketServerContextParser;
 
-    async getRepositoriesForAutomatedPrebuilds(user: User): Promise<ProviderRepository[]> {
-        const repos = await this.api.getRepos(user, { limit: 100, permission: "REPO_ADMIN" });
-        return (repos.values || []).map((r) => {
+    async getRepositoriesForAutomatedPrebuilds(
+        user: User,
+        params: { searchString: string; limit?: number; maxPages?: number; cancellationToken?: CancellationToken },
+    ): Promise<ProviderRepository[]> {
+        const repos = await this.api.getRepos(user, { permission: "REPO_ADMIN", ...params });
+        return repos.map((r) => {
             const cloneUrl = r.links.clone.find((u) => u.name === "http")?.href!;
             // const webUrl = r.links?.self[0]?.href?.replace("/browse", "");
             const accountAvatarUrl = this.api.getAvatarUrl(r.project.key);
@@ -59,29 +63,8 @@ export class BitbucketServerService extends RepositoryService {
             console.log(`BBS: could not read webhooks.`, error, { error, cloneUrl });
             return false;
         }
-
-        if (repoKind === "users") {
-            const ownProfile = await this.api.getUserProfile(user, identity.authName);
-            if (owner === ownProfile.slug) {
-                return true;
-            }
-        }
-
-        let permission = await this.api.getPermission(user, { username: identity.authName, repoKind, owner, repoName });
-        if (!permission && repoKind === "projects") {
-            permission = await this.api.getPermission(user, { username: identity.authName, repoKind, owner });
-        }
-
-        if (this.hasPermissionToCreateWebhooks(permission)) {
-            return true;
-        }
-
-        console.log(`BBS: Not allowed to install webhooks.`, { permission });
-        return false;
-    }
-
-    protected hasPermissionToCreateWebhooks(permission: string | undefined) {
-        return permission && ["REPO_ADMIN", "PROJECT_ADMIN"].indexOf(permission) !== -1;
+        // return true once it can get webhooks, fallback to let SCM itself to check permission
+        return true;
     }
 
     async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<void> {
@@ -124,6 +107,7 @@ export class BitbucketServerService extends RepositoryService {
 
     protected getHookUrl() {
         return this.config.hostUrl
+            .asPublicServices()
             .with({
                 pathname: BitbucketServerApp.path,
             })

@@ -34,12 +34,10 @@ import { Blocked } from "./Blocked";
 // TODO: Can we bundle-split/lazy load these like other pages?
 import { BlockedRepositories } from "../admin/BlockedRepositories";
 import { Heading1, Subheading } from "../components/typography/headings";
-import { useQueryParams } from "../hooks/use-query-params";
 import { useCurrentUser } from "../user-context";
 import PersonalAccessTokenCreateView from "../user-settings/PersonalAccessTokensCreateView";
 import { CreateWorkspacePage } from "../workspaces/CreateWorkspacePage";
 import { WebsocketClients } from "./WebsocketClients";
-import { LinkedInCallback } from "react-linkedin-login-oauth2";
 import { BlockedEmailDomains } from "../admin/BlockedEmailDomains";
 
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
@@ -83,7 +81,6 @@ export const AppRoutes = () => {
     const user = useCurrentUser();
     const [isWhatsNewShown, setWhatsNewShown] = useState(user && shouldSeeWhatsNew(user));
     const location = useLocation();
-    const search = useQueryParams();
 
     // TODO: Add a Route for this instead of inspecting location manually
     if (location.pathname.startsWith("/blocked")) {
@@ -97,10 +94,6 @@ export const AppRoutes = () => {
 
     if (isWhatsNewShown) {
         return <WhatsNew onClose={() => setWhatsNewShown(false)} />;
-    }
-
-    if (location.pathname === "/linkedin" && search.get("code") && search.get("state")) {
-        return <LinkedInCallback />;
     }
 
     // TODO: Try and encapsulate this in a route for "/" (check for hash in route component, render or redirect accordingly)

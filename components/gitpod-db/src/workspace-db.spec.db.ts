@@ -6,18 +6,17 @@
 
 import * as chai from "chai";
 const expect = chai.expect;
-import { suite, test, timeout } from "mocha-typescript";
+import { suite, test, timeout } from "@testdeck/mocha";
 import { fail } from "assert";
-import { v4 as uuidv4 } from "uuid";
 
 import { WorkspaceInstance, Workspace, PrebuiltWorkspace, CommitContext } from "@gitpod/gitpod-protocol";
 import { testContainer } from "./test-container";
 import { TypeORMWorkspaceDBImpl } from "./typeorm/workspace-db-impl";
 import { TypeORM } from "./typeorm/typeorm";
-import { DBWorkspace } from "./typeorm/entity/db-workspace";
 import { DBPrebuiltWorkspace } from "./typeorm/entity/db-prebuilt-workspace";
-import { DBWorkspaceInstance } from "./typeorm/entity/db-workspace-instance";
 import { secondsBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { resetDB } from "./test/reset-db";
+import { v4 } from "uuid";
 
 @suite
 class WorkspaceDBSpec {
@@ -186,31 +185,7 @@ class WorkspaceDBSpec {
     }
 
     async wipeRepo() {
-        const mnr = await this.typeorm.getConnection();
-        await mnr.getRepository(DBWorkspace).delete({});
-        await mnr.getRepository(DBWorkspaceInstance).delete({});
-        await mnr.getRepository(DBPrebuiltWorkspace).delete({});
-    }
-
-    @test(timeout(10000))
-    public async testStoreUndefinedOrganizationId() {
-        const workspace: Workspace = {
-            ...this.ws,
-            organizationId: undefined,
-        };
-        const instance = {
-            ...this.wsi1,
-        };
-
-        await this.db.store(workspace);
-        await this.db.storeInstance(instance);
-        let fetchedWs = await this.db.findWorkspaceAndInstance(workspace.id);
-        expect(fetchedWs).to.not.be.undefined;
-        expect(fetchedWs!.organizationId).to.be.undefined;
-        workspace.organizationId = uuidv4();
-        await this.db.store(workspace);
-        fetchedWs = await this.db.findWorkspaceAndInstance(workspace.id);
-        expect(fetchedWs?.organizationId).to.eq(workspace.organizationId);
+        await resetDB(this.typeorm);
     }
 
     @test(timeout(10000))
@@ -273,6 +248,7 @@ class WorkspaceDBSpec {
             description: "something",
             contextURL: "https://github.com/foo/bar",
             ownerId: "1221423",
+            organizationId: "org123",
             context: {
                 title: "my title",
             },
@@ -297,6 +273,7 @@ class WorkspaceDBSpec {
                 description: "something",
                 contextURL: "https://github.com/foo/bar",
                 ownerId: "1221423",
+                organizationId: "org123",
                 context: {
                     title: "my title",
                 },
@@ -329,13 +306,6 @@ class WorkspaceDBSpec {
         await Promise.all([this.db.store(this.ws), this.db.storeInstance(this.wsi1), this.db.storeInstance(this.wsi2)]);
         const dbResult = await this.db.findWorkspacesForGarbageCollection(14, 10);
         expect(dbResult.length).to.eq(0);
-    }
-
-    @test(timeout(10000))
-    public async testFindAllWorkspaces_contextUrl() {
-        await Promise.all([this.db.store(this.ws)]);
-        const dbResult = await this.db.findAllWorkspaces(0, 10, "contextURL", "DESC", undefined, this.ws.contextURL);
-        expect(dbResult.total).to.eq(1);
     }
 
     @test(timeout(10000))
@@ -539,6 +509,7 @@ class WorkspaceDBSpec {
     public async testCountUnabortedPrebuildsSince() {
         const now = new Date();
         const cloneURL = "https://github.com/gitpod-io/gitpod";
+        const projectId = v4();
 
         await Promise.all([
             // Created now, and queued
@@ -547,6 +518,7 @@ class WorkspaceDBSpec {
                 buildWorkspaceId: "apples",
                 creationTime: now.toISOString(),
                 cloneURL: cloneURL,
+                projectId,
                 commit: "",
                 state: "queued",
                 statusVersion: 0,
@@ -557,6 +529,7 @@ class WorkspaceDBSpec {
                 buildWorkspaceId: "bananas",
                 creationTime: now.toISOString(),
                 cloneURL: cloneURL,
+                projectId,
                 commit: "",
                 state: "aborted",
                 statusVersion: 0,
@@ -567,14 +540,26 @@ class WorkspaceDBSpec {
                 buildWorkspaceId: "oranges",
                 creationTime: secondsBefore(now.toISOString(), 62),
                 cloneURL: cloneURL,
+                projectId,
                 commit: "",
                 state: "available",
+                statusVersion: 0,
+            }),
+            // different project now and queued
+            this.storePrebuiltWorkspace({
+                id: "prebuild123-other",
+                buildWorkspaceId: "apples",
+                creationTime: now.toISOString(),
+                cloneURL: cloneURL,
+                projectId: "other-projectId",
+                commit: "",
+                state: "queued",
                 statusVersion: 0,
             }),
         ]);
 
         const minuteAgo = secondsBefore(now.toISOString(), 60);
-        const unabortedCount = await this.db.countUnabortedPrebuildsSince(cloneURL, new Date(minuteAgo));
+        const unabortedCount = await this.db.countUnabortedPrebuildsSince(projectId, new Date(minuteAgo));
         expect(unabortedCount).to.eq(1);
     }
 
@@ -592,6 +577,7 @@ class WorkspaceDBSpec {
                 description: "something",
                 contextURL: "http://github.com/myorg/inactive",
                 ownerId: "1221423",
+                organizationId: "org123",
                 context: <CommitContext>{
                     title: "my title",
                     repository: {
@@ -607,6 +593,7 @@ class WorkspaceDBSpec {
                 description: "something",
                 contextURL: "http://github.com/myorg/active",
                 ownerId: "1221423",
+                organizationId: "org123",
                 context: <CommitContext>{
                     title: "my title",
                     repository: {
@@ -692,6 +679,7 @@ class WorkspaceDBSpec {
     public async findWorkspacesForPurging() {
         const creationTime = "2018-01-01T00:00:00.000Z";
         const ownerId = "1221423";
+        const organizationId = "org123";
         const purgeDate = new Date("2019-02-01T00:00:00.000Z");
         const d20180202 = "2018-02-02T00:00:00.000Z";
         const d20180201 = "2018-02-01T00:00:00.000Z";
@@ -703,6 +691,7 @@ class WorkspaceDBSpec {
                 description: "something",
                 contextURL: "http://github.com/myorg/inactive",
                 ownerId,
+                organizationId,
                 context: {
                     title: "my title",
                 },
@@ -716,6 +705,7 @@ class WorkspaceDBSpec {
                 description: "something",
                 contextURL: "http://github.com/myorg/active",
                 ownerId,
+                organizationId,
                 context: {
                     title: "my title",
                 },
@@ -729,6 +719,7 @@ class WorkspaceDBSpec {
                 description: "something",
                 contextURL: "http://github.com/myorg/active",
                 ownerId,
+                organizationId,
                 context: {
                     title: "my title",
                 },
@@ -742,6 +733,7 @@ class WorkspaceDBSpec {
                 description: "something",
                 contextURL: "http://github.com/myorg/active",
                 ownerId,
+                organizationId,
                 context: {
                     title: "my title",
                 },
@@ -803,6 +795,26 @@ class WorkspaceDBSpec {
         await this.db.hardDeleteWorkspace(this.ws.id);
         result = await this.db.findInstances(this.ws.id);
         expect(result.length).to.eq(0);
+    }
+
+    @test()
+    public async storeAndUpdateGitStatus() {
+        const inst = {
+            ...this.wsi1,
+            gitstatus: undefined,
+        };
+
+        await this.db.storeInstance(inst);
+        let result = await this.db.findInstances(inst.workspaceId);
+        expect(!result[0].gitStatus).to.be.true;
+
+        inst.gitStatus = {
+            branch: "my/branch",
+        };
+        await this.db.storeInstance(inst);
+
+        result = await this.db.findInstances(inst.workspaceId);
+        expect(result[0].gitStatus?.branch).to.eq("my/branch");
     }
 }
 module.exports = new WorkspaceDBSpec();

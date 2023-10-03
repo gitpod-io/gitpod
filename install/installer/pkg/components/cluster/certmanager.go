@@ -23,6 +23,36 @@ func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
 	issuerName := "gitpod-self-signed-issuer"
 	secretCAName := "gitpod-identity-trust-root"
 
+	gitpodCaBundleSources := []trust.BundleSource{
+		{
+			UseDefaultCAs: pointer.Bool(true),
+		},
+		{
+			Secret: &trust.SourceObjectKeySelector{
+				Name:        secretCAName,
+				KeySelector: trust.KeySelector{Key: "ca.crt"},
+			},
+		},
+	}
+
+	gitpodCustomCertificateBundleSource := []trust.BundleSource{}
+
+	if ctx.Config.CustomCACert != nil {
+		gitpodCaBundleSources = append(gitpodCaBundleSources, trust.BundleSource{
+			Secret: &trust.SourceObjectKeySelector{
+				Name:        ctx.Config.CustomCACert.Name,
+				KeySelector: trust.KeySelector{Key: "ca.crt"},
+			},
+		})
+
+		gitpodCustomCertificateBundleSource = append(gitpodCustomCertificateBundleSource, trust.BundleSource{
+			Secret: &trust.SourceObjectKeySelector{
+				Name:        ctx.Config.CustomCACert.Name,
+				KeySelector: trust.KeySelector{Key: "ca.crt"},
+			},
+		})
+	}
+
 	// TODO (gpl): This is a workaround to untangle the refactoring of existing infrastructure from
 	// moving forward with this change
 	caCertificateNamespace := "cert-manager" // this is the default we want to converge on, eventually
@@ -33,7 +63,7 @@ func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
-	return []runtime.Object{
+	objects := []runtime.Object{
 		// Define a self-signed issuer so we can generate a CA
 		&v1.ClusterIssuer{
 			TypeMeta: common.TypeMetaCertificateClusterIssuer,
@@ -129,17 +159,7 @@ func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Name: "gitpod-ca-bundle",
 			},
 			Spec: trust.BundleSpec{
-				Sources: []trust.BundleSource{
-					{
-						UseDefaultCAs: pointer.Bool(true),
-					},
-					{
-						Secret: &trust.SourceObjectKeySelector{
-							Name:        secretCAName,
-							KeySelector: trust.KeySelector{Key: "ca.crt"},
-						},
-					},
-				},
+				Sources: gitpodCaBundleSources,
 				Target: trust.BundleTarget{
 					ConfigMap: &trust.KeySelector{
 						Key: "ca-certificates.crt",
@@ -169,5 +189,26 @@ func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 		},
-	}, nil
+	}
+
+	if ctx.Config.CustomCACert != nil {
+		objects = append(objects,
+			// trust Bundle for custom SSL certificates
+			&trust.Bundle{
+				TypeMeta: common.TypeMetaBundle,
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "gitpod-customer-certificate-bundle",
+				},
+				Spec: trust.BundleSpec{
+					Sources: gitpodCustomCertificateBundleSource,
+					Target: trust.BundleTarget{
+						ConfigMap: &trust.KeySelector{
+							Key: "ca-certificates.crt",
+						},
+					},
+				},
+			})
+	}
+
+	return objects, nil
 }

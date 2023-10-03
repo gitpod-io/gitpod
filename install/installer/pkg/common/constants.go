@@ -20,14 +20,13 @@ const (
 	DockerRegistryName          = "registry"
 	GitpodContainerRegistry     = "eu.gcr.io/gitpod-core-dev/build"
 	InClusterDbSecret           = "mysql"
-	InClusterMessageQueueName   = "rabbitmq"
-	InClusterMessageQueueTLS    = "messagebus-certificates-secret-core"
 	KubeRBACProxyRepo           = "quay.io"
 	KubeRBACProxyImage          = "brancz/kube-rbac-proxy"
-	KubeRBACProxyTag            = "v0.12.0"
+	KubeRBACProxyTag            = "v0.14.2"
 	MinioServiceAPIPort         = 9000
 	MonitoringChart             = "monitoring"
 	ProxyComponent              = "proxy"
+	ProxyConfigcatPort          = 9547
 	ProxyContainerHTTPPort      = 80
 	ProxyContainerHTTPName      = "http"
 	ProxyContainerHTTPSPort     = 443
@@ -41,10 +40,10 @@ const (
 	ServerIAMSessionPort        = 9876
 	ServerInstallationAdminPort = 9000
 	ServerGRPCAPIPort           = 9877
+	ServerPublicAPIPort         = 3001
 	SystemNodeCritical          = "system-node-critical"
 	PublicApiComponent          = "public-api-server"
 	UsageComponent              = "usage"
-	WSManagerComponent          = "ws-manager"
 	WSManagerMk2Component       = "ws-manager-mk2"
 	WSManagerBridgeComponent    = "ws-manager-bridge"
 	WSProxyComponent            = "ws-proxy"
@@ -61,6 +60,8 @@ const (
 	AnnotationConfigChecksum    = "gitpod.io/checksum_config"
 	DatabaseConfigMountPath     = "/secrets/database-config"
 	AuthPKISecretName           = "auth-pki"
+	IDEServiceComponent         = "ide-service"
+	OpenVSXProxyComponent       = "openvsx-proxy"
 )
 
 var (

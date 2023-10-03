@@ -5,7 +5,7 @@
  */
 
 import * as chai from "chai";
-import { suite, test } from "mocha-typescript";
+import { suite, test } from "@testdeck/mocha";
 import { DataCacheRedis } from "./data-cache";
 import * as IORedis from "ioredis";
 
@@ -16,7 +16,7 @@ const client: IORedis.Redis = new Redis();
 class DataCacheRedisMock extends DataCacheRedis {
     constructor() {
         super();
-        this.redis = { get: () => client } as any;
+        this.redis = client as any;
     }
 }
 

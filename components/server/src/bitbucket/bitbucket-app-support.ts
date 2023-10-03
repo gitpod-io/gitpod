@@ -72,7 +72,7 @@ export class BitbucketAppSupport {
 
         const repos = (await Promise.all(workspaces.map((workspace) => fetchAllRepos(workspace)))).flat();
 
-        for (let repo of repos) {
+        for (const repo of repos) {
             let cloneUrl = repo.links!.clone.find((x: any) => x.name === "https").href;
             if (cloneUrl) {
                 const url = new URL(cloneUrl);

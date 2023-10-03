@@ -4,36 +4,46 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useState } from "react";
+import { FC, useCallback } from "react";
 import Tooltip from "../components/Tooltip";
-import copy from "../images/copy.svg";
+import { ReactComponent as CopyIcon } from "../images/copy.svg";
+import { ReactComponent as CheckIcon } from "../images/check-currentColor.svg";
 import { copyToClipboard } from "../utils";
+import { Button } from "./Button";
+import { TextInput } from "./forms/TextInputField";
+import { useTemporaryState } from "../hooks/use-temporary-value";
 
-export function InputWithCopy(props: { value: string; tip?: string; className?: string }) {
-    const [copied, setCopied] = useState<boolean>(false);
-    const handleCopyToClipboard = (text: string) => {
-        copyToClipboard(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-    const tip = props.tip ?? "Click to copy";
+type Props = { value: string; tip?: string; className?: string };
+
+export const InputWithCopy: FC<Props> = ({ value, tip = "Click to copy", className }) => {
+    const [copied, setCopied] = useTemporaryState(false, 2000);
+
+    const handleCopyToClipboard = useCallback(
+        (e) => {
+            e.preventDefault();
+
+            copyToClipboard(value);
+            setCopied(true);
+        },
+        [setCopied, value],
+    );
+
     return (
-        <div className={`w-full relative ${props.className ?? ""}`}>
-            <input
-                disabled={true}
-                readOnly={true}
-                autoFocus
-                className="w-full pr-8 overscroll-none"
-                type="text"
-                value={props.value}
-            />
-            <div className="cursor-pointer" onClick={() => handleCopyToClipboard(props.value)}>
-                <div className="absolute top-1/3 right-3">
-                    <Tooltip content={copied ? "Copied" : tip}>
-                        <img src={copy} alt="copy icon" title={tip} />
-                    </Tooltip>
-                </div>
-            </div>
+        // max-w-lg is to mirror width of TextInput so Tooltip is positioned correctly
+        <div className={`w-full relative max-w-lg ${className ?? ""}`}>
+            <TextInput value={value} disabled className="w-full pr-8 overscoll-none" />
+
+            <Tooltip content={tip} className="absolute top-1.5 right-1">
+                <Button
+                    type="transparent"
+                    htmlType="button"
+                    spacing="compact"
+                    icon={
+                        copied ? <CheckIcon className="text-green-500 w-5 h-5" /> : <CopyIcon className="w-3.5 h-3.5" />
+                    }
+                    onClick={handleCopyToClipboard}
+                />
+            </Tooltip>
         </div>
     );
-}
+};

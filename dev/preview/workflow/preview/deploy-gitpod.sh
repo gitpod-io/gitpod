@@ -131,19 +131,6 @@ EOF
   rm -f ${GITPOD_IMAGE_PULL_SECRET_NAME}
 }
 
-function installRookCeph {
-  diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" "$ROOT/.werft/vm/manifests/rook-ceph/crds.yaml"
-
-  kubectl \
-    --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-    --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-    wait --for condition=established --timeout=120s crd/cephclusters.ceph.rook.io
-
-  for file in common operator cluster-test storageclass-test snapshotclass;do
-      diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" "$ROOT/.werft/vm/manifests/rook-ceph/$file.yaml"
-  done
-}
-
 # Install Fluent-Bit sending logs to GCP
 function installFluentBit {
     kubectl \
@@ -175,7 +162,7 @@ function installFluentBit {
     helm3 \
       --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
       --kube-context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-      upgrade --install fluent-bit fluent/fluent-bit --version 0.21.6 -n "${PREVIEW_NAMESPACE}" -f "$ROOT/.werft/vm/charts/fluentbit/values.yaml"
+      upgrade --install fluent-bit fluent/fluent-bit --version 0.37.1 -n "${PREVIEW_NAMESPACE}" -f "$SCRIPT_PATH/../vm/charts/fluentbit/values.yaml"
 }
 
 # ====================================
@@ -198,7 +185,6 @@ while ! copyCachedCertificate; do
 done
 
 copyImagePullSecret
-installRookCeph
 installFluentBit
 
 # ========
@@ -255,8 +241,11 @@ CONTAINERD_RUNTIME_DIR="/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io
 yq w -i "${INSTALLER_CONFIG_PATH}" workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}
 yq w -i "${INSTALLER_CONFIG_PATH}" workspace.resources.requests.cpu "100m"
 yq w -i "${INSTALLER_CONFIG_PATH}" workspace.resources.requests.memory "256Mi"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.procLimit 1000
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.ioLimits.writeBandwidthPerSecond "250Mi"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.ioLimits.readBandwidthPerSecond "300Mi"
 
-# create two workspace classes (default and small) in server-config configmap
+# create two workspace classes (g1-standard and g1-small) in server-config configmap
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[+].id "g1-standard"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[0].category "GENERAL PURPOSE"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[0].displayName "Standard"
@@ -272,16 +261,18 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].descr
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].powerups "2"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].credits.perMinute "0.1666666667"
 
-# create two workspace classes (default and small) in ws-manager configmap
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["default"].name "g1-standard"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["default"].resources.requests.cpu "100m"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["default"].resources.requests.memory "128Mi"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["default"].resources.limits.storage "10Gi"
+# create two workspace classes (g1-standard and g1-small) in ws-manager configmap
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-standard"].name "g1-standard"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-standard"].resources.requests.cpu "100m"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-standard"].resources.requests.memory "128Mi"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-standard"].resources.limits.storage "10Gi"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-standard"].resources.limits.ephemeral-storage "10Gi"
 
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["small"].name "g1-small"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["small"].resources.requests.cpu "100m"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["small"].resources.requests.memory "128Mi"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["small"].resources.limits.storage "5Gi"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-small"].name "g1-small"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-small"].resources.requests.cpu "100m"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-small"].resources.requests.memory "128Mi"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-small"].resources.limits.storage "5Gi"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-small"].resources.limits.ephemeral-storage "5Gi"
 
 #
 # configureObjectStorage
@@ -297,8 +288,8 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.ide.ideMetrics.enabledErrorRepor
 #
 # configureObservability
 #
-TRACING_ENDPOINT="http://otel-collector.monitoring-satellite.svc.cluster.local:14268/api/traces"
-yq w -i "${INSTALLER_CONFIG_PATH}" observability.tracing.endpoint "${TRACING_ENDPOINT}"
+#TRACING_ENDPOINT="http://otel-collector.monitoring-satellite.svc.cluster.local:14268/api/traces"
+#yq w -i "${INSTALLER_CONFIG_PATH}" observability.tracing.endpoint "${TRACING_ENDPOINT}"
 
 #
 # configureAuthProviders
@@ -388,7 +379,7 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.enabled "true"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.schedule "1m"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.billInstancesAfter "2022-08-11T08:05:32.499Z"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.defaultSpendingLimit.forUsers "500"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.defaultSpendingLimit.forTeams "0"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.defaultSpendingLimit.forTeams "500"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.defaultSpendingLimit.minForUsersOnStripe "1000"
 
 # Configure Price IDs
@@ -417,13 +408,13 @@ yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers[
 yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_PREVENT_METADATA_ACCESS"
 yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_PREVENT_METADATA_ACCESS).value' "true"
 
-yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.default.templates.default.spec.containers[+].name' "workspace"
-yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.default.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_PREVENT_METADATA_ACCESS"
-yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.default.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_PREVENT_METADATA_ACCESS).value' "true"
+yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-standard.templates.default.spec.containers[+].name' "workspace"
+yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-standard.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_PREVENT_METADATA_ACCESS"
+yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-standard.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_PREVENT_METADATA_ACCESS).value' "true"
 
-yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templates.default.spec.containers[+].name' "workspace"
-yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_PREVENT_METADATA_ACCESS"
-yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_PREVENT_METADATA_ACCESS).value' "true"
+yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-small.templates.default.spec.containers[+].name' "workspace"
+yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-small.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_PREVENT_METADATA_ACCESS"
+yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-small.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_PREVENT_METADATA_ACCESS).value' "true"
 
 #
 # includeAnalytics
@@ -447,17 +438,17 @@ if [[ "${GITPOD_ANALYTICS}" == "segment" ]]; then
   yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_SEGMENT_ENDPOINT"
   yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_SEGMENT_ENDPOINT).value' "https://${DOMAIN}/analytics"
 
-  # add to default workspace class
-  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.default.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_WRITER"
-  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.default.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_WRITER).value' "segment"
-  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.default.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_SEGMENT_ENDPOINT"
-  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.default.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_SEGMENT_ENDPOINT).value' "https://${DOMAIN}/analytics"
+  # add to g1-standard workspace class
+  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-standard.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_WRITER"
+  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-standard.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_WRITER).value' "segment"
+  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-standard.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_SEGMENT_ENDPOINT"
+  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-standard.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_SEGMENT_ENDPOINT).value' "https://${DOMAIN}/analytics"
 
-  # add to small workspace class
-  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_WRITER"
-  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_WRITER).value' "segment"
-  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_SEGMENT_ENDPOINT"
-  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_SEGMENT_ENDPOINT).value' "https://${DOMAIN}/analytics"
+  # add to g1-small workspace class
+  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-small.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_WRITER"
+  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-small.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_WRITER).value' "segment"
+  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-small.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_SEGMENT_ENDPOINT"
+  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-small.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_SEGMENT_ENDPOINT).value' "https://${DOMAIN}/analytics"
 else
   yq w -i "${INSTALLER_CONFIG_PATH}" analytics.writer ""
 fi
@@ -543,7 +534,7 @@ done
 # Run post-process script
 #
 
-WITH_VM=true "$ROOT/.werft/jobs/build/installer/post-process.sh" "${PREVIEW_NAME}" "${GITPOD_AGENT_SMITH_TOKEN}"
+WITH_VM=true "$SCRIPT_PATH/post-process.sh" "${PREVIEW_NAME}" "${GITPOD_AGENT_SMITH_TOKEN}"
 
 #
 # Cleanup from post-processing
@@ -579,7 +570,7 @@ rm -f "${INSTALLER_RENDER_PATH}"
 # =========================
 # Wait for objects to be ready
 # =========================
-for item in deployment.apps/blobserve deployment.apps/content-service deployment.apps/dashboard deployment.apps/ide-metrics deployment.apps/ide-proxy deployment.apps/ide-service deployment.apps/image-builder-mk3 deployment.apps/minio deployment.apps/node-labeler deployment.apps/proxy deployment.apps/public-api-server deployment.apps/redis deployment.apps/server deployment.apps/spicedb deployment.apps/usage deployment.apps/ws-manager-mk2 deployment.apps/ws-manager-bridge deployment.apps/ws-proxy statefulset.apps/messagebus statefulset.apps/mysql statefulset.apps/openvsx-proxy daemonset.apps/agent-smith daemonset.apps/fluent-bit daemonset.apps/registry-facade daemonset.apps/ws-daemon; do
+for item in deployment.apps/blobserve deployment.apps/content-service deployment.apps/dashboard deployment.apps/ide-metrics deployment.apps/ide-proxy deployment.apps/ide-service deployment.apps/image-builder-mk3 deployment.apps/minio deployment.apps/node-labeler deployment.apps/proxy deployment.apps/public-api-server deployment.apps/redis deployment.apps/server deployment.apps/spicedb deployment.apps/usage deployment.apps/ws-manager-mk2 deployment.apps/ws-manager-bridge deployment.apps/ws-proxy statefulset.apps/mysql statefulset.apps/openvsx-proxy daemonset.apps/agent-smith daemonset.apps/registry-facade daemonset.apps/ws-daemon; do
   kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" rollout status "${item}" --namespace="${PREVIEW_NAMESPACE}"
 done
 

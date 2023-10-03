@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { ConnectError } from "@bufbuild/connect-web";
+import { ConnectError } from "@bufbuild/connect";
 import { FormEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { Heading1, Heading3, Subheading } from "../components/typography/headings";
@@ -27,7 +27,8 @@ export default function NewTeamPage() {
             const team = publicApiTeamToProtocol((await teamsService.createTeam({ name })).team!);
 
             invalidateOrgs();
-            history.push(`/?org=${team.id}`);
+            // Redirects to the new Org's dashboard
+            history.push(`/workspaces/?org=${team.id}`);
         } catch (error) {
             console.error(error);
             if (error instanceof ConnectError) {
@@ -38,7 +39,7 @@ export default function NewTeamPage() {
         }
     };
 
-    useDocumentTitle("New Organization — Gitpod");
+    useDocumentTitle("New Organization");
 
     return (
         <div className="flex flex-col w-96 mt-24 mx-auto items-center">

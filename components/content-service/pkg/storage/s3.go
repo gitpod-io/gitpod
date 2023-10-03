@@ -9,8 +9,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
@@ -289,36 +291,48 @@ func (s3st *s3Storage) DownloadSnapshot(ctx context.Context, destination string,
 	return s3st.download(ctx, destination, name, mappings)
 }
 
+// download object using s5cmd (prior to which we used aws sdk)
 func (s3st *s3Storage) download(ctx context.Context, destination string, obj string, mappings []archive.IDMapping) (found bool, err error) {
-	downloader := s3manager.NewDownloader(s3st.client, func(d *s3manager.Downloader) {
-		d.Concurrency = defaultCopyConcurrency
-		d.PartSize = defaultPartSize * megabytes
-		d.BufferProvider = s3manager.NewPooledBufferedWriterReadFromProvider(25 * megabytes)
-	})
-
-	s3File, err := os.CreateTemp("", "temporal-s3-file")
+	tempFile, err := os.CreateTemp("", "temporal-s3-file")
 	if err != nil {
 		return true, xerrors.Errorf("creating temporal file: %s", err.Error())
 	}
-	defer os.Remove(s3File.Name())
+	tempFile.Close()
 
-	_, err = downloader.Download(ctx, s3File, &s3.GetObjectInput{
-		Bucket: aws.String(s3st.Config.Bucket),
-		Key:    aws.String(obj),
-	})
+	args := []string{
+		"cp",
+		// # of file parts to download at once
+		"--concurrency", "20",
+		// size in MB of each part
+		"--part-size", "25",
+		destination,
+		tempFile.Name(),
+	}
+	cmd := exec.Command("s5cmd", args...)
+	downloadStart := time.Now()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return false, err
+		log.WithError(err).WithField("out", string(out)).Error("unexpected error downloading file")
+		return false, xerrors.Errorf("unexpected error downloading file")
+	}
+	downloadDuration := time.Since(downloadStart)
+	log.WithField("downloadDuration", downloadDuration.String()).Info("S3 download duration")
+
+	tempFile, err = os.Open(tempFile.Name())
+	if err != nil {
+		return true, xerrors.Errorf("unexpected error opening downloaded file")
 	}
 
-	_, err = s3File.Seek(0, 0)
-	if err != nil {
-		return false, err
-	}
+	defer os.Remove(tempFile.Name())
+	defer tempFile.Close()
 
-	err = archive.ExtractTarbal(ctx, s3File, destination, archive.WithUIDMapping(mappings), archive.WithGIDMapping(mappings))
+	extractStart := time.Now()
+	err = archive.ExtractTarbal(ctx, tempFile, destination, archive.WithUIDMapping(mappings), archive.WithGIDMapping(mappings))
 	if err != nil {
 		return true, xerrors.Errorf("tar %s: %s", destination, err.Error())
 	}
+	extractDuration := time.Since(extractStart)
+	log.WithField("extractdDuration", extractDuration.String()).Info("tarbar extraction duration")
 
 	return true, nil
 }

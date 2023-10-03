@@ -2,14 +2,13 @@ packages:
   - name: app
     type: yarn
     srcs:
-      - "ee/**/*.ts"
       - "src/**/*.ts"
+      - .eslintrc
       - package.json
       - mocha.opts
     deps:
       - components/content-service-api/typescript:lib
       - components/gitpod-db:lib
-      - components/gitpod-messagebus:lib
       - components/gitpod-protocol:lib
       - components/ws-daemon-api/typescript:lib
       - components/ws-manager-api/typescript:lib
@@ -46,4 +45,4 @@ scripts:
       telepresence --swap-deployment ws-manager-bridge \
                    --method inject-tcp \
                    --expose 18080:8080 \
-                   --run  yarn start-ee
+                   --run  yarn start

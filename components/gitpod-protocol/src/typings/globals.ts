@@ -4,6 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface Window {
     // gitpod is used by supervisor/frontend and vscode browser https://github.com/gitpod-io/openvscode-server/blob/dadd40deda5959c0efdaa0c7d02ab64b6f8b5ad0/src/vs/gitpod/browser/workbench/workbench.ts#L7
     gitpod: {

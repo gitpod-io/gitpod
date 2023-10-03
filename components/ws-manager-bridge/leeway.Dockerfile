@@ -2,19 +2,16 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM node:16.13.0-slim as builder
+FROM node:18.17.1-slim as builder
 COPY components-ws-manager-bridge--app /installer/
 
 WORKDIR /app
 RUN /installer/install.sh
 
-FROM node:16.13.0-slim
+FROM cgr.dev/chainguard/node:18.17.1@sha256:af073516c203b6bd0b55a77a806a0950b486f2e9ea7387a32b0f41ea72f20886
 ENV NODE_OPTIONS=--unhandled-rejections=warn
 EXPOSE 3000
-# '--no-log-init': see https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user
-RUN useradd --no-log-init --create-home --uid 31002 --home-dir /app/ unode
-COPY --from=builder /app /app/
-USER unode
+COPY --from=builder --chown=node:node /app /app/
 WORKDIR /app/node_modules/@gitpod/ws-manager-bridge
 
 ARG __GIT_COMMIT
@@ -22,4 +19,5 @@ ARG VERSION
 
 ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
 ENV GITPOD_BUILD_VERSION=${VERSION}
-CMD exec yarn start-ee
+
+CMD ["./dist/index.js"]

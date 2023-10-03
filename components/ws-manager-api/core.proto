@@ -328,11 +328,11 @@ message IDEImage {
     // web_ref is a reference to an OCI image used for serving the web-based IDE
     string web_ref = 1;
     // DEPRECATED desktop_ref is an optional reference to an OCI image used for serving desktop IDEs
-    string desktop_ref = 2;
+    reserved 2;
     // supervisor_ref is a reference to an OCI image used as supervisor
     string supervisor_ref = 3;
     // DEPRECATED desktop_plugin_ref is an optional reference to an OCI image used for serving desktop IDE plugin
-    string desktop_plugin_ref = 4;
+    reserved 4;
 }
 
 // WorkspaceSpec is the specification of a workspace at runtime
@@ -342,7 +342,7 @@ message WorkspaceSpec {
 
     // deprecated_ide_image is a field present for backwards compatibility and the same
     // as IDEImage.web_ref. If both fields are present, IDEImage.web_ref takes precedence.
-    string deprecated_ide_image = 2;
+    reserved 2;
 
     // headless marks this workspace a headless one - headless workspaces are not intended for users but for automation
     bool headless = 3;
@@ -559,7 +559,7 @@ message StartWorkspaceSpec {
 
     // deprecated_ide_image is a field present for backwards compatibility and the same
     // as IDEImage.web_ref. If both fields are present, IDEImage.web_ref takes precedence.
-    string deprecated_ide_image = 2;
+    reserved 2;
 
     // feature_flags provide a means for starting variants of workspaces (e.g. a privileged one)
     repeated WorkspaceFeatureFlag feature_flags = 3;

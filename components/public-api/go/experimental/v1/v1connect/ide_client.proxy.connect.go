@@ -38,3 +38,13 @@ func (s *ProxyIDEClientServiceHandler) SendDidClose(ctx context.Context, req *co
 
 	return connect_go.NewResponse(resp), nil
 }
+
+func (s *ProxyIDEClientServiceHandler) UpdateGitStatus(ctx context.Context, req *connect_go.Request[v1.UpdateGitStatusRequest]) (*connect_go.Response[v1.UpdateGitStatusResponse], error) {
+	resp, err := s.Client.UpdateGitStatus(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}

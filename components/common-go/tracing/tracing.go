@@ -21,6 +21,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/components/scrubber"
 )
 
 type tracingOptions struct {
@@ -160,7 +161,7 @@ func LogRequestSafe(span opentracing.Span, req proto.Message) {
 // LogMessageSafe logs a grpc message but redacts passwords and secrets
 func LogMessageSafe(span opentracing.Span, name string, req proto.Message) {
 	reqs, _ := protojson.Marshal(req)
-	safeReqs, err := log.RedactJSON(reqs)
+	safeReqs, err := scrubber.Default.JSON(reqs)
 
 	var msg string
 	if err != nil {

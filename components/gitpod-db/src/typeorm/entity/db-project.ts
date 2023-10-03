@@ -18,9 +18,6 @@ export class DBProject {
     @Column()
     name: string;
 
-    @Column()
-    slug?: string;
-
     @Index("ind_cloneUrl")
     @Column()
     cloneUrl: string;
@@ -30,14 +27,7 @@ export class DBProject {
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     @Index("ind_teamId")
-    teamId?: string;
-
-    @Column({
-        default: "",
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
-    })
-    @Index("ind_userId")
-    userId?: string;
+    teamId: string;
 
     @Column()
     appInstallationId: string;

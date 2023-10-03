@@ -40,7 +40,7 @@ export class EnvvarPrefixParser implements IPrefixContextParser {
         const envVarMap = new Map<string, string>();
         const prefix = splitBySlash[0];
         const kvCandidates = prefix.split(",");
-        for (let kvCandidate of kvCandidates) {
+        for (const kvCandidate of kvCandidates) {
             const kv = kvCandidate.split("=");
             if (kv.length !== 2 || !kv[0] || !kv[1] || !kv[0].match(/^[\w-_]+$/)) {
                 continue;

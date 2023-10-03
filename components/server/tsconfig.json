@@ -3,8 +3,7 @@
         "outDir": "dist",
         "experimentalDecorators": true,
         "lib": [
-            "es6",
-            "esnext.asynciterable"
+            "ES2021"
         ],
         "strict": true,
         "noEmitOnError": false,
@@ -14,15 +13,16 @@
         "downlevelIteration": true,
         "module": "commonjs",
         "moduleResolution": "node",
-        "target": "es6",
+        "target": "ES2021",
         "jsx": "react",
         "sourceMap": true,
         "declaration": true,
         "declarationMap": true,
         "skipLibCheck": true,
         "useUnknownInCatchVariables": false,
+        "esModuleInterop": true,
         "typeRoots": [
-            "../../node_modules/@types"
+            "./src/typings"
         ]
     },
     "include": [

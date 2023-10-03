@@ -50,9 +50,9 @@ func TestDiskActions(t *testing.T) {
 func runDiskTests(t *testing.T, tests []DiskTest) {
 	f := features.New("ResourceLimiting").
 		WithLabel("component", "workspace").
-		Assess("it can enforce disk limits", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it can enforce disk limits", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 
-			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*len(tests))*time.Minute)
+			ctx, cancel := context.WithTimeout(testCtx, time.Duration(5*len(tests))*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -108,7 +108,7 @@ func runDiskTests(t *testing.T, tests []DiskTest) {
 					t.Log("test finished successfully")
 				})
 			}
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

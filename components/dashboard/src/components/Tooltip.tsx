@@ -9,6 +9,7 @@ import { Portal } from "react-portal";
 import { usePopper } from "react-popper";
 
 export interface TooltipProps {
+    className?: string;
     children: ReactNode;
     content: string;
     allowWrap?: boolean;
@@ -31,14 +32,14 @@ function Tooltip(props: TooltipProps) {
     }, [update, props.content]);
 
     // Adds a 500ms delay to showing tooltip so we don't show them until user pauses a bit like native browser tooltips
-    const handleMouseEnter = useCallback(() => {
+    const handleShow = useCallback(() => {
         const timeout = setTimeout(() => {
             setExpanded(true);
         }, 500);
         setShowTooltipTimeout(timeout);
     }, []);
 
-    const handleMouseLeave = useCallback(() => {
+    const handleHide = useCallback(() => {
         if (showTooltipTimeout) {
             clearTimeout(showTooltipTimeout);
         }
@@ -47,7 +48,14 @@ function Tooltip(props: TooltipProps) {
     }, [showTooltipTimeout]);
 
     return (
-        <span onMouseLeave={handleMouseLeave} onMouseEnter={handleMouseEnter} ref={setTriggerEl}>
+        <span
+            onMouseEnter={handleShow}
+            onFocus={handleShow}
+            onMouseLeave={handleHide}
+            onBlur={handleHide}
+            ref={setTriggerEl}
+            className={props.className}
+        >
             {props.children}
             {expanded ? (
                 <Portal>

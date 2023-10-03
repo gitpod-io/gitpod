@@ -46,25 +46,9 @@ func TestProjectsService_CreateProject(t *testing.T) {
 				ExpectedError: "Name is a required argument.",
 			},
 			{
-				Name: "slug is required",
-				Spec: &v1.Project{
-					Name: "name",
-				},
-				ExpectedError: "Slug is a required argument.",
-			},
-			{
-				Name: "whitespace slug is rejected",
-				Spec: &v1.Project{
-					Name: "name",
-					Slug: " ",
-				},
-				ExpectedError: "Slug is a required argument.",
-			},
-			{
 				Name: "clone url is required",
 				Spec: &v1.Project{
 					Name: "name",
-					Slug: "slug",
 				},
 				ExpectedError: "Clone URL is a required argument.",
 			},
@@ -72,41 +56,18 @@ func TestProjectsService_CreateProject(t *testing.T) {
 				Name: "whitespace clone url is rejected",
 				Spec: &v1.Project{
 					Name:     "name",
-					Slug:     "slug",
 					CloneUrl: " ",
 				},
 				ExpectedError: "Clone URL is a required argument.",
 			},
 			{
-				Name: "user ID must be a valid UUID",
-				Spec: &v1.Project{
-					Name:     "name",
-					Slug:     "slug",
-					CloneUrl: "some.clone.url",
-					UserId:   "my-user",
-				},
-				ExpectedError: "User ID is not a valid UUID.",
-			},
-			{
 				Name: "team ID must be a valid UUID",
 				Spec: &v1.Project{
 					Name:     "name",
-					Slug:     "slug",
 					CloneUrl: "some.clone.url",
 					TeamId:   "my-user",
 				},
 				ExpectedError: "Team ID is not a valid UUID.",
-			},
-			{
-				Name: "specifying both user and team id is invalid",
-				Spec: &v1.Project{
-					Name:     "name",
-					Slug:     "slug",
-					CloneUrl: "some.clone.url",
-					TeamId:   uuid.New().String(),
-					UserId:   uuid.New().String(),
-				},
-				ExpectedError: "Specifying both User ID and Team ID is not allowed.",
 			},
 		} {
 			t.Run(s.Name, func(t *testing.T) {
@@ -130,19 +91,17 @@ func TestProjectsService_CreateProject(t *testing.T) {
 		})
 
 		projectsMock.EXPECT().CreateProject(gomock.Any(), &protocol.CreateProjectOptions{
-			UserID:            project.UserID,
+			TeamID:            project.TeamID,
 			Name:              project.Name,
-			Slug:              project.Slug,
 			CloneURL:          project.CloneURL,
 			AppInstallationID: "undefined",
 		}).Return(project, nil)
 
 		response, err := client.CreateProject(context.Background(), connect.NewRequest(&v1.CreateProjectRequest{
 			Project: &v1.Project{
-				UserId:   project.UserID,
 				Name:     project.Name,
-				Slug:     project.Slug,
 				CloneUrl: project.CloneURL,
+				TeamId:   project.TeamID,
 			},
 		}))
 		require.NoError(t, err)
@@ -155,7 +114,7 @@ func TestProjectsService_CreateProject(t *testing.T) {
 
 func TestProjectsService_ListProjects(t *testing.T) {
 
-	t.Run("invalid argument when both team id and project id are missing", func(t *testing.T) {
+	t.Run("invalid argument when org id is missing", func(t *testing.T) {
 		_, client := setupProjectsService(t)
 
 		_, err := client.ListProjects(context.Background(), connect.NewRequest(&v1.ListProjectsRequest{}))
@@ -163,28 +122,7 @@ func TestProjectsService_ListProjects(t *testing.T) {
 		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
-	t.Run("invalid argument when both team id and project id are set", func(t *testing.T) {
-		_, client := setupProjectsService(t)
-
-		_, err := client.ListProjects(context.Background(), connect.NewRequest(&v1.ListProjectsRequest{
-			UserId: "user-id",
-			TeamId: "team-id",
-		}))
-		require.Error(t, err)
-		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	})
-
-	t.Run("invalid argument when user ID is not a valid UUID", func(t *testing.T) {
-		_, client := setupProjectsService(t)
-
-		_, err := client.ListProjects(context.Background(), connect.NewRequest(&v1.ListProjectsRequest{
-			UserId: "some-id",
-		}))
-		require.Error(t, err)
-		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	})
-
-	t.Run("invalid argument when team ID is not a valid UUID", func(t *testing.T) {
+	t.Run("invalid argument when org ID is not a valid UUID", func(t *testing.T) {
 		_, client := setupProjectsService(t)
 
 		_, err := client.ListProjects(context.Background(), connect.NewRequest(&v1.ListProjectsRequest{
@@ -197,10 +135,11 @@ func TestProjectsService_ListProjects(t *testing.T) {
 	t.Run("no projects from server return empty list", func(t *testing.T) {
 		serverMock, client := setupProjectsService(t)
 
-		serverMock.EXPECT().GetUserProjects(gomock.Any()).Return(nil, nil)
+		teamID := uuid.New().String()
+		serverMock.EXPECT().GetTeamProjects(gomock.Any(), teamID).Return(nil, nil)
 
 		response, err := client.ListProjects(context.Background(), connect.NewRequest(&v1.ListProjectsRequest{
-			UserId: uuid.New().String(),
+			TeamId: teamID,
 		}))
 		require.NoError(t, err)
 		requireEqualProto(t, &v1.ListProjectsResponse{
@@ -209,7 +148,7 @@ func TestProjectsService_ListProjects(t *testing.T) {
 		}, response.Msg)
 	})
 
-	t.Run("retrieves projects for user, when user ID is specified and paginates", func(t *testing.T) {
+	t.Run("retrieves projects for team and paginates", func(t *testing.T) {
 		serverMock, client := setupProjectsService(t)
 
 		projects := []*protocol.Project{
@@ -220,10 +159,11 @@ func TestProjectsService_ListProjects(t *testing.T) {
 			newProject(&protocol.Project{}),
 		}
 
-		serverMock.EXPECT().GetUserProjects(gomock.Any()).Return(projects, nil).Times(3)
+		teamID := uuid.New().String()
+		serverMock.EXPECT().GetTeamProjects(gomock.Any(), teamID).Return(projects, nil).Times(3)
 
 		firstPage, err := client.ListProjects(context.Background(), connect.NewRequest(&v1.ListProjectsRequest{
-			UserId: uuid.New().String(),
+			TeamId: teamID,
 			Pagination: &v1.Pagination{
 				PageSize: 2,
 			},
@@ -235,7 +175,7 @@ func TestProjectsService_ListProjects(t *testing.T) {
 		}, firstPage.Msg)
 
 		secondPage, err := client.ListProjects(context.Background(), connect.NewRequest(&v1.ListProjectsRequest{
-			UserId: uuid.New().String(),
+			TeamId: teamID,
 			Pagination: &v1.Pagination{
 				PageSize: 2,
 				Page:     2,
@@ -248,7 +188,7 @@ func TestProjectsService_ListProjects(t *testing.T) {
 		}, secondPage.Msg)
 
 		thirdPage, err := client.ListProjects(context.Background(), connect.NewRequest(&v1.ListProjectsRequest{
-			UserId: uuid.New().String(),
+			TeamId: teamID,
 			Pagination: &v1.Pagination{
 				PageSize: 2,
 				Page:     3,
@@ -391,8 +331,7 @@ func newProject(p *protocol.Project) *protocol.Project {
 	result := &protocol.Project{
 		ID:                uuid.New().String(),
 		Name:              fmt.Sprintf("team-%d", r),
-		Slug:              fmt.Sprintf("team-%d", r),
-		UserID:            uuid.New().String(),
+		TeamID:            uuid.New().String(),
 		CloneURL:          "https://github.com/easyCZ/foobar",
 		AppInstallationID: "1337",
 		Settings: &protocol.ProjectSettings{
@@ -414,9 +353,6 @@ func newProject(p *protocol.Project) *protocol.Project {
 	}
 	if p.Name != "" {
 		result.Name = p.Name
-	}
-	if p.Slug != "" {
-		result.Slug = p.Slug
 	}
 	if p.UserID != "" {
 		result.UserID = p.UserID

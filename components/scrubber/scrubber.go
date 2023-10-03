@@ -14,6 +14,46 @@ import (
 	"github.com/mitchellh/reflectwalk"
 )
 
+/*
+TrustedValue defines a value that should be treated as trusted and not subjected to scrubbing.
+
+When a TrustedValue is encountered during the scrubbing process, it is skipped over.
+This allows specific values to be exempted from the scrubbing process when necessary.
+
+Example:
+
+	type Example struct {
+		Username string
+		Email    string
+		Password string
+	}
+
+	type TrustedExample struct {
+		Example
+	}
+
+	func (TrustedExample) IsTrustedValue() {}
+
+	func scrubExample(e *Example) *TrustedExample {
+		return &TrustedExample{
+			Example: Example{
+				Username: e.Username,
+				Email:    "trusted:" + Default.Value(e.Email),
+				Password: "trusted:" + Default.KeyValue("password", e.Password),
+			},
+		}
+	}
+*/
+type TrustedValue interface {
+	IsTrustedValue()
+}
+
+// Scrubber defines the interface for a scrubber, which can sanitise various types of data.
+// The scrubbing process involves removing or replacing sensitive data to prevent it from being exposed.
+//
+// The scrubbing process respects instances of TrustedValue. When a TrustedValue is encountered,
+// the scrubber does not attempt to scrub it and instead skips over it. This can be used to mark
+// specific values that should not be scrubbed.
 type Scrubber interface {
 	// Value scrubs a single value, by trying to detect the kind of data it may contain.
 	// This is an entirely heuristic effort with the lowest likelihood of success. Prefer
@@ -46,11 +86,6 @@ type Scrubber interface {
 	//   }
 	//
 	Struct(val any) error
-}
-
-// Scrub scrubs the implementing type from sensitive information
-type Scrub interface {
-	Scrub(scrubber Scrubber) error
 }
 
 // Default is the default scrubber consumers of this package should use
@@ -206,10 +241,23 @@ type structScrubber struct {
 }
 
 var (
-	_ reflectwalk.MapWalker       = &structScrubber{}
-	_ reflectwalk.StructWalker    = &structScrubber{}
-	_ reflectwalk.PrimitiveWalker = &structScrubber{}
+	_ reflectwalk.MapWalker          = &structScrubber{}
+	_ reflectwalk.StructWalker       = &structScrubber{}
+	_ reflectwalk.PrimitiveWalker    = &structScrubber{}
+	_ reflectwalk.PointerValueWalker = &structScrubber{}
 )
+
+// Pointer implements reflectwalk.PointerValueWalker
+func (s *structScrubber) Pointer(val reflect.Value) error {
+	if !val.CanInterface() {
+		return nil
+	}
+	value := val.Interface()
+	if _, ok := value.(TrustedValue); ok {
+		return reflectwalk.SkipEntry
+	}
+	return nil
+}
 
 // Primitive implements reflectwalk.PrimitiveWalker
 func (s *structScrubber) Primitive(val reflect.Value) error {

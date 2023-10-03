@@ -75,6 +75,18 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 		return
 	}
 
+	// https://github.blog/2019-11-03-highlights-from-git-2-24/
+	err = ws.Git(ctx, "config", "feature.manyFiles", "true")
+	if err != nil {
+		log.WithError(err).Error("cannot configure feature.manyFiles")
+	}
+
+	// commit-graph after every git fetch command that downloads a pack-file from a remote
+	err = ws.Git(ctx, "config", "fetch.writeCommitGraph", "true")
+	if err != nil {
+		log.WithError(err).Error("cannot configure fetch.writeCommitGraph")
+	}
+
 	gitClone := func() error {
 		if err := os.MkdirAll(ws.Location, 0775); err != nil {
 			log.WithError(err).WithField("location", ws.Location).Error("cannot create directory")

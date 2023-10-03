@@ -43,6 +43,8 @@ func NewGrpcMetricsReporter(gitpodHost string) *GrpcMetricsReporter {
 			"supervisor_initializer_bytes_second": true,
 			"supervisor_client_handled_total":     true,
 			"supervisor_client_handling_seconds":  true,
+			"supervisor_ssh_tunnel_opened_total":  true,
+			"supervisor_ssh_tunnel_closed_total":  true,
 		},
 		values: make(map[string]float64),
 		addCounter: func(name string, labels map[string]string, value uint64) {

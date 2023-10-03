@@ -1,8 +1,0 @@
-{
-    "compilerOptions": {
-        "target": "es2019",
-        "skipLibCheck": true,
-        "moduleResolution": "node",
-        "noUnusedLocals": true
-    }
-}

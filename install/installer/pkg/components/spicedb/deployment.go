@@ -34,7 +34,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, errors.New("missing configuration for spicedb.secretRef")
 	}
 
-	bootstrapVolume, bootstrapVolumeMount, bootstrapFiles, err := getBootstrapConfig(ctx)
+	bootstrapVolume, bootstrapVolumeMount, bootstrapFiles, contentHash, err := getBootstrapConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get bootstrap config: %w", err)
 	}
@@ -56,10 +56,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:        Component,
-						Namespace:   ctx.Namespace,
-						Labels:      labels,
-						Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment),
+						Name:      Component,
+						Namespace: ctx.Namespace,
+						Labels:    labels,
+						Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDeployment, func() map[string]string {
+							return map[string]string{
+								common.AnnotationConfigChecksum: contentHash,
+							}
+						}),
 					},
 					Spec: corev1.PodSpec{
 						Affinity:                      cluster.WithNodeAffinityHostnameAntiAffinity(Component, cluster.AffinityLabelMeta),
@@ -150,11 +154,13 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 											Command: []string{"grpc_health_probe", "-v", fmt.Sprintf("-addr=localhost:%d", ContainerGRPCPort)},
 										},
 									},
-									InitialDelaySeconds: 5,
-									PeriodSeconds:       30,
-									FailureThreshold:    5,
-									SuccessThreshold:    1,
-									TimeoutSeconds:      3,
+									InitialDelaySeconds: 1,
+									// try again every 2 seconds
+									PeriodSeconds: 2,
+									// fail after 30 * 2 + 1 = 61
+									FailureThreshold: 30,
+									SuccessThreshold: 1,
+									TimeoutSeconds:   1,
 								},
 								VolumeMounts: []v1.VolumeMount{
 									bootstrapVolumeMount,
@@ -177,7 +183,7 @@ func dbEnvVars(ctx *common.RenderContext) []corev1.EnvVar {
 }
 
 func dbWaiter(ctx *common.RenderContext) v1.Container {
-	databaseWaiter := common.DatabaseWaiterContainer(ctx)
+	databaseWaiter := common.DatabaseMigrationWaiterContainer(ctx)
 	// Use updated env-vars, which in the case cloud-sql-proxy override default db conf
 
 	databaseWaiter.Env = dbEnvVars(ctx)

@@ -4,13 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { LinkedInProfile, User } from "@gitpod/gitpod-protocol/lib/protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { LinkedInProfileDB } from "@gitpod/gitpod-db/lib";
 import { inject, injectable } from "inversify";
 import fetch from "node-fetch";
-import { ResponseError } from "vscode-jsonrpc";
 import { Config } from "./config";
 
 @injectable()
@@ -29,7 +28,7 @@ export class LinkedInService {
     private async getAccessToken(code: string) {
         const { clientId, clientSecret } = this.config.linkedInSecrets || {};
         if (!clientId || !clientSecret) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.INTERNAL_SERVER_ERROR,
                 "LinkedIn is not properly configured (no Client ID or Client Secret)",
             );

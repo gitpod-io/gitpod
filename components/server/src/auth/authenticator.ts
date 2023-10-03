@@ -4,33 +4,33 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import * as express from "express";
-import * as passport from "passport";
-import { injectable, postConstruct, inject } from "inversify";
+import { TeamDB } from "@gitpod/gitpod-db/lib";
 import { User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
+import express from "express";
+import { inject, injectable, postConstruct } from "inversify";
+import passport from "passport";
 import { Config } from "../config";
-import { HostContextProvider } from "./host-context-provider";
-import { AuthProvider } from "./auth-provider";
+import { reportLoginCompleted } from "../prometheus-metrics";
 import { TokenProvider } from "../user/token-provider";
-import { AuthProviderService } from "./auth-provider-service";
+import { UserAuthentication } from "../user/user-authentication";
 import { UserService } from "../user/user-service";
-import { increaseLoginCounter } from "../prometheus-metrics";
+import { AuthFlow, AuthProvider } from "./auth-provider";
+import { AuthProviderService } from "./auth-provider-service";
+import { HostContextProvider } from "./host-context-provider";
 import { SignInJWT } from "./jwt";
-import "../express"; // helps ts-loader to find the merged declarations in Express.User
 
 @injectable()
 export class Authenticator {
     protected passportInitialize: express.Handler;
 
     @inject(Config) protected readonly config: Config;
-    @inject(UserDB) protected userDb: UserDB;
+    @inject(UserService) protected userService: UserService;
     @inject(TeamDB) protected teamDb: TeamDB;
     @inject(HostContextProvider) protected hostContextProvider: HostContextProvider;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
-    @inject(UserService) protected readonly userService: UserService;
+    @inject(UserAuthentication) protected readonly userAuthentication: UserAuthentication;
     @inject(SignInJWT) protected readonly signInJWT: SignInJWT;
 
     @postConstruct()
@@ -46,13 +46,9 @@ export class Authenticator {
         });
         passport.deserializeUser(async (id, done) => {
             try {
-                let user = await this.userDb.findUserById(id as string);
-                if (user) {
-                    user = await this.userService.onAfterUserLoad(user);
-                    done(null, user);
-                } else {
-                    done(new Error("User not found."));
-                }
+                const userId = id as string;
+                const user = await this.userService.findUserById(userId, userId);
+                done(null, user);
             } catch (err) {
                 done(err);
             }
@@ -72,18 +68,59 @@ export class Authenticator {
         });
     }
     protected async authCallbackHandler(req: express.Request, res: express.Response, next: express.NextFunction) {
-        if (req.url.startsWith("/auth/")) {
-            const hostContexts = this.hostContextProvider.getAll();
-            for (const { authProvider } of hostContexts) {
-                const authCallbackPath = authProvider.authCallbackPath;
-                if (req.url.startsWith(authCallbackPath)) {
-                    log.info(`Auth Provider Callback. Path: ${authCallbackPath}`);
-                    await authProvider.callback(req, res, next);
-                    return;
+        // Should match:
+        // * /auth/callback
+        // * /auth/<host_of_git_provider>/callback
+        if (req.path.startsWith("/auth/") && req.path.endsWith("/callback")) {
+            const stateParam = req.query.state;
+            try {
+                const flowState = await this.parseState(`${stateParam}`);
+                const host = flowState.host;
+                if (!host) {
+                    throw new Error("Auth flow state is missing 'host' attribute.");
                 }
+                const hostContext = this.hostContextProvider.get(host);
+                if (!hostContext) {
+                    throw new Error("No host context found.");
+                }
+
+                // remember parsed state to be availble in the auth provider implementation
+                req.authFlow = flowState;
+
+                log.info(`Auth Provider Callback. Host: ${host}`);
+                await hostContext.authProvider.callback(req, res, next);
+            } catch (error) {
+                log.error(`Failed to handle callback.`, error, { url: req.url });
             }
+        } else {
+            // Otherwise proceed with other handlers
+            return next();
         }
-        return next();
+    }
+
+    private async parseState(state: string): Promise<AuthFlow> {
+        // In preview environments, we prepend the current development branch to the state, to allow
+        // our preview proxy to route the Auth callback appropriately.
+        // See https://github.com/gitpod-io/ops/pull/9398/files
+        //
+        // We need to strip the branch out of the state, if it's present
+        if (state.indexOf(",") >= 0) {
+            const [, actualState] = state.split(",", 2);
+            state = actualState;
+        }
+
+        return await this.signInJWT.verify(state as string);
+    }
+
+    private deriveAuthState(state: string): string {
+        // In preview environments, we prepend the current development branch to the state, to allow
+        // our preview proxy to route the Auth callback appropriately.
+        // See https://github.com/gitpod-io/ops/pull/9398/files
+        if (this.config.devBranch) {
+            return `${this.config.devBranch},${state}`;
+        }
+
+        return state;
     }
 
     protected async getAuthProviderForHost(host: string): Promise<AuthProvider | undefined> {
@@ -126,8 +163,8 @@ export class Authenticator {
         }
 
         if (!authProvider.info.verified) {
-            increaseLoginCounter("failed", authProvider.info.host);
-            log.info(`Login with "${host}" is not permitted.`, {
+            reportLoginCompleted("failed_client", "git");
+            log.warn(`Login with "${host}" is not permitted as the provider has not been verified.`, {
                 "login-flow": true,
                 ap: authProvider.info,
             });
@@ -141,7 +178,7 @@ export class Authenticator {
         });
 
         // authenticate user
-        authProvider.authorize(req, res, next, state);
+        authProvider.authorize(req, res, next, this.deriveAuthState(state));
     }
 
     async deauthorize(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -163,7 +200,7 @@ export class Authenticator {
         }
 
         try {
-            await this.userService.deauthorize(user, authProvider.authProviderId);
+            await this.userAuthentication.deauthorize(user, authProvider.authProviderId);
             res.redirect(returnTo);
         } catch (error) {
             next(error);
@@ -256,7 +293,7 @@ export class Authenticator {
         // authorize Gitpod
         log.info(`(doAuthorize) wanted scopes (${override ? "overriding" : "merging"}): ${wantedScopes.join(",")}`);
         const state = await this.signInJWT.sign({ host, returnTo, overrideScopes: override });
-        authProvider.authorize(req, res, next, state, wantedScopes);
+        authProvider.authorize(req, res, next, this.deriveAuthState(state), wantedScopes);
     }
     protected mergeScopes(a: string[], b: string[]) {
         const set = new Set(a);

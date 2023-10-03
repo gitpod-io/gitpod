@@ -11,11 +11,10 @@ import { Config } from "../config";
 import { Twilio } from "twilio";
 import { ServiceContext } from "twilio/lib/rest/verify/v2/service";
 import { TeamDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { ResponseError } from "vscode-ws-jsonrpc";
+import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { VerificationInstance } from "twilio/lib/rest/verify/v2/service/verification";
 import { v4 as uuidv4, validate as uuidValidate } from "uuid";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 @injectable()
 export class VerificationService {
@@ -23,7 +22,6 @@ export class VerificationService {
     @inject(WorkspaceDB) protected workspaceDB: WorkspaceDB;
     @inject(UserDB) protected userDB: UserDB;
     @inject(TeamDB) protected teamDB: TeamDB;
-    @inject(ConfigCatClientFactory) protected readonly configCatClientFactory: ConfigCatClientFactory;
 
     protected verifyService: ServiceContext;
 
@@ -46,7 +44,7 @@ export class VerificationService {
         if (user.creationDate < "2022-08-22") {
             return false;
         }
-        const isPhoneVerificationEnabled = await this.configCatClientFactory().getValueAsync(
+        const isPhoneVerificationEnabled = await getExperimentsClientForBackend().getValueAsync(
             "isPhoneVerificationEnabled",
             false,
             {
@@ -89,13 +87,13 @@ export class VerificationService {
         const isBlockedNumber = this.userDB.isBlockedPhoneNumber(phoneNumber);
         const usages = await this.userDB.countUsagesOfPhoneNumber(phoneNumber);
         if (usages > 3) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.INVALID_VALUE,
                 "The given phone number has been used more than three times.",
             );
         }
         if (await isBlockedNumber) {
-            throw new ResponseError(ErrorCodes.INVALID_VALUE, "The given phone number is blocked due to abuse.");
+            throw new ApplicationError(ErrorCodes.INVALID_VALUE, "The given phone number is blocked due to abuse.");
         }
         const verification = await this.verifyService.verifications.create({ to: phoneNumber, channel });
 
@@ -138,7 +136,7 @@ export class VerificationService {
             throw new Error("No verification service configured.");
         }
         if (!uuidValidate(verificationId)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Verification ID must be a valid UUID");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Verification ID must be a valid UUID");
         }
 
         const verification_check = await this.verifyService.verificationChecks.create({

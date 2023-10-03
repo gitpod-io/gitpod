@@ -51,8 +51,8 @@ export class WorkspaceManagerClientProvider implements Disposable {
      */
     public async getStartClusterSets(
         user: User,
-        workspace: Workspace,
-        instance: WorkspaceInstance,
+        workspace?: Workspace,
+        instance?: WorkspaceInstance,
         region?: WorkspaceRegion,
     ): Promise<IWorkspaceClusterStartSet> {
         const allClusters = await this.source.getAllWorkspaceClusters();

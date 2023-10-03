@@ -5,9 +5,9 @@
  */
 
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
-import { useCallback, useEffect, useMemo } from "react";
+import { FC, useCallback, useEffect, useMemo } from "react";
 import WorkspaceClass from "../icons/WorkspaceClass.svg";
-import { DropDown2, DropDown2Element } from "./DropDown2";
+import { DropDown2, DropDown2Element, DropDown2SelectedElement } from "./DropDown2";
 import { useWorkspaceClasses } from "../data/workspaces/workspace-classes-query";
 
 interface SelectWorkspaceClassProps {
@@ -15,90 +15,94 @@ interface SelectWorkspaceClassProps {
     onSelectionChange: (workspaceClass: string) => void;
     setError?: (error?: string) => void;
     disabled?: boolean;
+    loading?: boolean;
 }
 
-export default function SelectWorkspaceClassComponent(props: SelectWorkspaceClassProps) {
-    const workspaceClasses = useWorkspaceClasses();
-    const elements = useMemo(() => {
-        if (!workspaceClasses.data) {
-            return [];
-        }
-        return [
-            ...workspaceClasses.data?.map(
-                (c) =>
-                    ({
-                        id: c.id,
-                        element: <WorkspaceClassDropDownElement wsClass={c} />,
-                        isSelectable: true,
-                    } as DropDown2Element),
-            ),
-        ];
-    }, [workspaceClasses.data]);
+export default function SelectWorkspaceClassComponent({
+    selectedWorkspaceClass,
+    disabled,
+    loading,
+    setError,
+    onSelectionChange,
+}: SelectWorkspaceClassProps) {
+    const { data: workspaceClasses, isLoading: workspaceClassesLoading } = useWorkspaceClasses();
+
+    const getElements = useCallback((): DropDown2Element[] => {
+        return (workspaceClasses || [])?.map((c) => ({
+            id: c.id,
+            element: <WorkspaceClassDropDownElement wsClass={c} />,
+            isSelectable: true,
+        }));
+    }, [workspaceClasses]);
+
     useEffect(() => {
-        if (!workspaceClasses.data) {
+        if (!workspaceClasses) {
             return;
         }
         // if the selected workspace class is not supported, we set an error and ask the user to pick one
-        if (
-            props.selectedWorkspaceClass &&
-            !workspaceClasses.data?.find((c) => c.id === props.selectedWorkspaceClass)
-        ) {
-            props.setError?.(`The workspace class '${props.selectedWorkspaceClass}' is not supported.`);
+        if (selectedWorkspaceClass && !workspaceClasses?.find((c) => c.id === selectedWorkspaceClass)) {
+            setError?.(`The workspace class '${selectedWorkspaceClass}' is not supported.`);
         }
-    }, [workspaceClasses.data, props.selectedWorkspaceClass, props.setError, props]);
+    }, [workspaceClasses, selectedWorkspaceClass, setError]);
     const internalOnSelectionChange = useCallback(
         (id: string) => {
-            props.onSelectionChange(id);
-            if (props.setError) {
-                props.setError(undefined);
+            onSelectionChange(id);
+            if (setError) {
+                setError(undefined);
             }
         },
-        [props],
+        [onSelectionChange, setError],
     );
     const selectedWsClass = useMemo(() => {
-        if (!workspaceClasses.data) {
+        if (!workspaceClasses) {
             return undefined;
         }
-        const defaultClassId = workspaceClasses.data.find((ws) => ws.isDefault)?.id;
-        return workspaceClasses.data.find((ws) => ws.id === (props.selectedWorkspaceClass || defaultClassId));
-    }, [props.selectedWorkspaceClass, workspaceClasses.data]);
+        const defaultClassId = workspaceClasses.find((ws) => ws.isDefault)?.id;
+        return workspaceClasses.find((ws) => ws.id === (selectedWorkspaceClass || defaultClassId));
+    }, [selectedWorkspaceClass, workspaceClasses]);
     return (
         <DropDown2
-            getElements={() => elements}
+            getElements={getElements}
             onSelectionChange={internalOnSelectionChange}
             searchPlaceholder="Select class"
             disableSearch={true}
             allOptions={selectedWsClass?.id}
-            disabled={props.disabled}
+            disabled={workspaceClassesLoading || loading || disabled}
         >
-            <WorkspaceClassDropDownElementSelected wsClass={selectedWsClass} />
+            <WorkspaceClassDropDownElementSelected
+                wsClass={selectedWsClass}
+                loading={workspaceClassesLoading || loading}
+            />
         </DropDown2>
     );
 }
 
-function WorkspaceClassDropDownElementSelected(props: { wsClass?: SupportedWorkspaceClass }): JSX.Element {
-    const c = props.wsClass;
-    let title = "Select class";
-    if (c) {
-        title = c.displayName;
-    }
+type WorkspaceClassDropDownElementSelectedProps = {
+    wsClass?: SupportedWorkspaceClass;
+    loading?: boolean;
+};
+
+const WorkspaceClassDropDownElementSelected: FC<WorkspaceClassDropDownElementSelectedProps> = ({
+    wsClass,
+    loading = false,
+}) => {
+    const title = wsClass?.displayName ?? "Select class";
+
     return (
-        <div className="flex h-12" title={title}>
-            <div className="mx-2 my-2">
-                <img className="w-8 filter-grayscale self-center" src={WorkspaceClass} alt="logo" />
-            </div>
-            <div className="flex-col ml-1 mt-1 flex-grow">
-                <div className="text-gray-700 dark:text-gray-300 font-semibold truncate w-80">{title}</div>
-                <div className="flex text-xs text-gray-500 dark:text-gray-400">
-                    <div className="font-semibold">
-                        Class <span className="text-gray-300 dark:text-gray-600 font-normal">&middot;</span>{" "}
-                        <span className="text-gray-500 dark:text-gray-400 font-normal">{c?.description}</span>
-                    </div>
+        <DropDown2SelectedElement
+            icon={WorkspaceClass}
+            loading={loading}
+            htmlTitle={title}
+            title={<div className="truncate w-80">{title}</div>}
+            subtitle={
+                <div className="font-semibold">
+                    Class <span className="text-gray-300 dark:text-gray-600 font-normal">&middot;</span>{" "}
+                    <span className="text-gray-500 dark:text-gray-400 font-normal">{wsClass?.description ?? ""}</span>
                 </div>
-            </div>
-        </div>
+            }
+        />
     );
-}
+};
 
 function WorkspaceClassDropDownElement(props: { wsClass: SupportedWorkspaceClass }): JSX.Element {
     const c = props.wsClass;

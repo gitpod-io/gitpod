@@ -21,7 +21,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": 60,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -448,6 +447,112 @@
       "type": "timeseries"
     },
     {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 61,
+      "panels": [],
+      "title": "Updates Published",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "P4169E866C3094E38"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 62,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P4169E866C3094E38"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(gitpod_ws_manager_bridge_updates_published_total[1m])) by (type)",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Event updates by type published to Redis",
+      "type": "timeseries"
+    },
+    {
       "collapsed": true,
       "datasource": {
         "type": "datasource",
@@ -457,7 +562,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 17
+        "y": 26
       },
       "id": 16,
       "panels": [
@@ -505,8 +610,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -521,7 +625,7 @@
             "h": 7,
             "w": 10,
             "x": 0,
-            "y": 26
+            "y": 34
           },
           "id": 44,
           "options": {
@@ -567,7 +671,7 @@
             "h": 7,
             "w": 7,
             "x": 10,
-            "y": 26
+            "y": 34
           },
           "hiddenSeries": false,
           "id": 2,
@@ -657,7 +761,7 @@
             "h": 7,
             "w": 7,
             "x": 17,
-            "y": 26
+            "y": 34
           },
           "hiddenSeries": false,
           "id": 4,
@@ -758,7 +862,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 33
+            "y": 41
           },
           "hiddenSeries": false,
           "id": 6,
@@ -846,7 +950,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 33
+            "y": 41
           },
           "hiddenSeries": false,
           "id": 8,
@@ -933,7 +1037,7 @@
             "h": 7,
             "w": 8,
             "x": 0,
-            "y": 40
+            "y": 48
           },
           "hiddenSeries": false,
           "id": 10,
@@ -1029,7 +1133,7 @@
             "h": 7,
             "w": 8,
             "x": 8,
-            "y": 40
+            "y": 48
           },
           "hiddenSeries": false,
           "id": 40,
@@ -1127,7 +1231,7 @@
             "h": 7,
             "w": 8,
             "x": 16,
-            "y": 40
+            "y": 48
           },
           "hiddenSeries": false,
           "id": 42,
@@ -1226,7 +1330,7 @@
             "h": 9,
             "w": 8,
             "x": 0,
-            "y": 47
+            "y": 55
           },
           "hiddenSeries": false,
           "id": 32,
@@ -1315,7 +1419,7 @@
             "h": 9,
             "w": 8,
             "x": 8,
-            "y": 47
+            "y": 55
           },
           "hiddenSeries": false,
           "id": 38,
@@ -1422,7 +1526,7 @@
             "h": 9,
             "w": 8,
             "x": 16,
-            "y": 47
+            "y": 55
           },
           "hiddenSeries": false,
           "id": 36,
@@ -1559,8 +1663,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1575,7 +1678,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 56
+            "y": 64
           },
           "id": 54,
           "options": {
@@ -1653,7 +1756,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 18
+        "y": 27
       },
       "id": 22,
       "panels": [
@@ -1671,7 +1774,7 @@
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 27
+            "y": 35
           },
           "hiddenSeries": false,
           "id": 24,
@@ -1760,7 +1863,7 @@
             "h": 9,
             "w": 12,
             "x": 12,
-            "y": 27
+            "y": 35
           },
           "hiddenSeries": false,
           "id": 26,
@@ -1862,7 +1965,7 @@
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 36
+            "y": 44
           },
           "hiddenSeries": false,
           "id": 28,
@@ -1954,7 +2057,7 @@
             "h": 9,
             "w": 12,
             "x": 12,
-            "y": 36
+            "y": 44
           },
           "hiddenSeries": false,
           "id": 30,
@@ -2040,7 +2143,7 @@
     }
   ],
   "refresh": "30s",
-  "schemaVersion": 37,
+  "schemaVersion": 38,
   "style": "dark",
   "tags": [
     "gitpod-mixin"

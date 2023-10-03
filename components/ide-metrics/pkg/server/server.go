@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"runtime/debug"
 	"strings"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -18,7 +19,10 @@ import (
 	"github.com/gitpod-io/gitpod/ide-metrics/pkg/errorreporter"
 	"github.com/gitpod-io/gitpod/ide-metrics/pkg/metrics"
 	"github.com/gorilla/websocket"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/prometheus/client_golang/prometheus"
@@ -34,13 +38,15 @@ import (
 type IDEMetricsServer struct {
 	config *config.ServiceConfiguration
 
-	registry                 prometheus.Registerer
+	serviceRegistry          prometheus.Registerer
+	metricsRegistry          prometheus.Registerer
 	counterMap               map[string]*allowListCollector
 	histogramMap             map[string]*allowListCollector
 	aggregatedHistogramMap   map[string]*allowListCollector
 	reportedUnexpectedMetric map[string]struct{}
 
-	errorReporter errorreporter.ErrorReporter
+	errorReporter                    errorreporter.ErrorReporter
+	reportedUnexpectedErrorComponent map[string]struct{}
 
 	api.UnimplementedMetricsServiceServer
 }
@@ -244,6 +250,11 @@ func (s *IDEMetricsServer) ReportError(ctx context.Context, req *api.ReportError
 		}
 	}
 	if !allow {
+		_, reported := s.reportedUnexpectedErrorComponent[req.Component]
+		if !reported {
+			s.reportedUnexpectedErrorComponent[req.Component] = struct{}{}
+			log.WithField("component", req.Component).Error("errors: unexpected component")
+		}
 		return nil, errors.New("invalid component name")
 	}
 	s.errorReporter.Report(errorreporter.ReportedErrorEvent{
@@ -274,7 +285,7 @@ func (s *IDEMetricsServer) registerCounterMetrics() {
 		}, c.Labels)
 		c.Collector = counterVec
 		s.counterMap[m.Name] = c
-		err := s.registry.Register(counterVec)
+		err := s.serviceRegistry.Register(counterVec)
 		if err != nil {
 			log.WithError(err).WithField("name", m.Name).Warn("counter: failed to register metric")
 		}
@@ -294,7 +305,7 @@ func (s *IDEMetricsServer) registerHistogramMetrics() {
 		}, c.Labels)
 		c.Collector = histogramVec
 		s.histogramMap[m.Name] = c
-		err := s.registry.Register(histogramVec)
+		err := s.serviceRegistry.Register(histogramVec)
 		if err != nil {
 			log.WithError(err).WithField("name", m.Name).Warn("histogram: failed to register metric")
 		}
@@ -310,7 +321,7 @@ func (s *IDEMetricsServer) registerAggregatedHistogramMetrics() {
 		aggregatedHistograms := metrics.NewAggregatedHistograms(m.Name, m.Help, c.Labels, m.Buckets)
 		c.Collector = aggregatedHistograms
 		s.aggregatedHistogramMap[m.Name] = c
-		err := s.registry.Register(aggregatedHistograms)
+		err := s.serviceRegistry.Register(aggregatedHistograms)
 		if err != nil {
 			log.WithError(err).WithField("name", m.Name).Warn("aggregated histogram: failed to register metric")
 		}
@@ -333,16 +344,18 @@ func (s *IDEMetricsServer) ReloadConfig(cfg *config.ServiceConfiguration) {
 	s.prepareMetrics()
 }
 
-func NewMetricsServer(cfg *config.ServiceConfiguration, reg prometheus.Registerer) *IDEMetricsServer {
+func NewMetricsServer(cfg *config.ServiceConfiguration, srvReg prometheus.Registerer, metricsReg prometheus.Registerer) *IDEMetricsServer {
 	r := errorreporter.NewFromEnvironment()
 	s := &IDEMetricsServer{
-		registry:                 reg,
-		config:                   cfg,
-		counterMap:               make(map[string]*allowListCollector),
-		histogramMap:             make(map[string]*allowListCollector),
-		aggregatedHistogramMap:   make(map[string]*allowListCollector),
-		reportedUnexpectedMetric: make(map[string]struct{}),
-		errorReporter:            r,
+		serviceRegistry:                  srvReg,
+		metricsRegistry:                  metricsReg,
+		config:                           cfg,
+		counterMap:                       make(map[string]*allowListCollector),
+		histogramMap:                     make(map[string]*allowListCollector),
+		aggregatedHistogramMap:           make(map[string]*allowListCollector),
+		reportedUnexpectedMetric:         make(map[string]struct{}),
+		errorReporter:                    r,
+		reportedUnexpectedErrorComponent: make(map[string]struct{}),
 	}
 	s.prepareMetrics()
 	return s
@@ -364,12 +377,47 @@ func (s *IDEMetricsServer) Start() error {
 	}))
 
 	var opts []grpc.ServerOption
+	var unaryInterceptors []grpc.UnaryServerInterceptor
+	var streamInterceptors []grpc.StreamServerInterceptor
+
 	if s.config.Debug {
-		opts = append(opts,
-			grpc.UnaryInterceptor(grpc_logrus.UnaryServerInterceptor(log.Log)),
-			grpc.StreamInterceptor(grpc_logrus.StreamServerInterceptor(log.Log)),
-		)
+		unaryInterceptors = append(unaryInterceptors, grpc_logrus.UnaryServerInterceptor(log.Log))
+		streamInterceptors = append(streamInterceptors, grpc_logrus.StreamServerInterceptor(log.Log))
 	}
+
+	if s.metricsRegistry != nil {
+		grpcMetrics := grpc_prometheus.NewServerMetrics()
+		grpcMetrics.EnableHandlingTimeHistogram(
+			grpc_prometheus.WithHistogramBuckets([]float64{.005, .025, .05, .1, .5, 1, 2.5, 5, 30, 60, 120, 240, 600}),
+		)
+		unaryInterceptors = append(unaryInterceptors, grpcMetrics.UnaryServerInterceptor())
+		streamInterceptors = append(streamInterceptors, grpcMetrics.StreamServerInterceptor())
+
+		err = s.metricsRegistry.Register(grpcMetrics)
+		if err != nil {
+			log.WithError(err).Error("ide-metrics: failed to register grpc metrics")
+		}
+	}
+
+	// add gprc recover, must be last, to be executed first after the rpc handler, we want upstream interceptors to have a meaningful response to work with)
+	unaryInterceptors = append(unaryInterceptors, grpc_recovery.UnaryServerInterceptor(grpc_recovery.WithRecoveryHandlerContext(
+		func(ctx context.Context, p interface{}) error {
+			log.WithField("stack", string(debug.Stack())).Errorf("[PANIC] %s", p)
+			return status.Errorf(codes.Internal, "%s", p)
+		},
+	)))
+	streamInterceptors = append(streamInterceptors, grpc_recovery.StreamServerInterceptor(grpc_recovery.WithRecoveryHandlerContext(
+		func(ctx context.Context, p interface{}) error {
+			log.WithField("stack", string(debug.Stack())).Errorf("[PANIC] %s", p)
+			return status.Errorf(codes.Internal, "%s", p)
+		},
+	)))
+
+	opts = append(opts,
+		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptors...)),
+		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(streamInterceptors...)),
+	)
+
 	grpcServer := grpc.NewServer(opts...)
 	grpcEndpoint := fmt.Sprintf("localhost:%d", s.config.Server.Port)
 

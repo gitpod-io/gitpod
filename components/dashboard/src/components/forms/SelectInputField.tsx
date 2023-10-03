@@ -17,17 +17,39 @@ type Props = {
     error?: ReactNode;
     disabled?: boolean;
     required?: boolean;
+    topMargin?: boolean;
+    containerClassName?: string;
     onChange: (newValue: string) => void;
     onBlur?: () => void;
 };
 
 export const SelectInputField: FunctionComponent<Props> = memo(
-    ({ label, value, id, hint, error, disabled = false, required = false, children, onChange, onBlur }) => {
+    ({
+        label,
+        value,
+        id,
+        hint,
+        error,
+        disabled = false,
+        required = false,
+        topMargin,
+        containerClassName,
+        children,
+        onChange,
+        onBlur,
+    }) => {
         const maybeId = useId();
         const elementId = id || maybeId;
 
         return (
-            <InputField id={elementId} label={label} hint={hint} error={error}>
+            <InputField
+                id={elementId}
+                label={label}
+                hint={hint}
+                error={error}
+                topMargin={topMargin}
+                className={containerClassName}
+            >
                 <SelectInput
                     id={elementId}
                     value={value}

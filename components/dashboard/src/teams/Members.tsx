@@ -19,6 +19,7 @@ import searchIcon from "../icons/search.svg";
 import { teamsService } from "../service/public-api";
 import { useCurrentUser } from "../user-context";
 import { SpinnerLoader } from "../components/Loader";
+import { Delayed } from "../components/Delayed";
 import { InputField } from "../components/forms/InputField";
 import { InputWithCopy } from "../components/InputWithCopy";
 
@@ -69,6 +70,20 @@ export default function MembersPage() {
         return owners?.length === 1 && owners[0].userId === user?.id;
     }, [org.data?.members, user?.id]);
 
+    const isOwner = useMemo(() => {
+        const owners = org.data?.members.filter((m) => m.role === "owner");
+        return !!owners?.some((o) => o.userId === user?.id);
+    }, [org.data?.members, user?.id]);
+
+    // Note: We would hardly get here, but just in case. We should show a loader instead of blank section.
+    if (org.isLoading) {
+        return (
+            <Delayed>
+                <SpinnerLoader />
+            </Delayed>
+        );
+    }
+
     const filteredMembers =
         org.data?.members.filter((m) => {
             if (!!roleFilter && m.role !== roleFilter) {
@@ -83,7 +98,7 @@ export default function MembersPage() {
 
     return (
         <>
-            <Header title="Members" subtitle="Manage organization members." />
+            <Header title="Members" subtitle="Manage organization members and their permissions." />
             <div className="app-container">
                 <div className="flex mb-3 mt-3">
                     <div className="flex relative h-10 my-auto">
@@ -100,39 +115,42 @@ export default function MembersPage() {
                             onChange={(e) => setSearchText(e.target.value)}
                         />
                     </div>
-                    <div className="flex-1" />
-                    <div className="py-2 pl-3">
+                    <div className="py-2 pl-3 pr-1 border border-gray-100 dark:border-gray-800 ml-2 rounded-md">
                         <DropDown
-                            prefix="Role: "
                             customClasses="w-32"
-                            activeEntry={roleFilter === "owner" ? "Owner" : roleFilter === "member" ? "Member" : "All"}
+                            activeEntry={
+                                roleFilter === "owner" ? "Owners" : roleFilter === "member" ? "Members" : "All"
+                            }
                             entries={[
                                 {
                                     title: "All",
                                     onClick: () => setRoleFilter(undefined),
                                 },
                                 {
-                                    title: "Owner",
+                                    title: "Owners",
                                     onClick: () => setRoleFilter("owner"),
                                 },
                                 {
-                                    title: "Member",
+                                    title: "Members",
                                     onClick: () => setRoleFilter("member"),
                                 },
                             ]}
                         />
                     </div>
-                    <button
-                        onClick={() => {
-                            trackEvent("invite_url_requested", {
-                                invite_url: inviteUrl || "",
-                            });
-                            setShowInviteModal(true);
-                        }}
-                        className="ml-2"
-                    >
-                        Invite Members
-                    </button>
+                    <div className="flex-1" />
+                    {isOwner && (
+                        <button
+                            onClick={() => {
+                                trackEvent("invite_url_requested", {
+                                    invite_url: inviteUrl || "",
+                                });
+                                setShowInviteModal(true);
+                            }}
+                            className="ml-2"
+                        >
+                            Invite Members
+                        </button>
+                    )}
                 </div>
                 <ItemsList className="mt-2">
                     <Item header={true} className="grid grid-cols-3">
@@ -155,7 +173,7 @@ export default function MembersPage() {
                         </ItemField>
                     </Item>
                     {filteredMembers.length === 0 ? (
-                        <SpinnerLoader />
+                        <p className="pt-16 text-center">No members found</p>
                     ) : (
                         filteredMembers.map((m) => (
                             <Item className="grid grid-cols-3" key={m.userId}>

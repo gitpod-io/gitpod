@@ -49,11 +49,9 @@ export function createCookielessId(ip?: string, ua?: string): string | number | 
     if (!ip || !ua) {
         return "unidentified-user"; //use placeholder if we cannot resolve IP and user agent
     }
-    const date = new Date();
-    const today = `${date.getDate()}/${date.getMonth()}/${date.getFullYear()}`;
     return crypto
         .createHash("sha512")
-        .update(ip + ua + today)
+        .update(ip + ua)
         .digest("hex");
 }
 
@@ -104,7 +102,7 @@ function getAnonymousId(request: Request) {
 }
 
 function resolveIdentities(user: User) {
-    let identities: { github_slug?: String; gitlab_slug?: String; bitbucket_slug?: String } = {};
+    const identities: { github_slug?: String; gitlab_slug?: String; bitbucket_slug?: String } = {};
     user.identities.forEach((value) => {
         switch (value.authProviderId) {
             case "Public-GitHub": {

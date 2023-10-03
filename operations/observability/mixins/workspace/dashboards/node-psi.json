@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": 80,
+  "id": 86,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -60,6 +60,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
+        "type": "prometheus",
         "uid": "$datasource"
       },
       "description": "Nodes with a high normalized load average do not represent a real problem, it only means that pods should probably not be scheduled to them.\n\nIf you'd like to see more details about resource consumption of a particular node, you can do so by clicking at the node name.\n",
@@ -67,7 +68,7 @@
       "fillGradient": 5,
       "gridPos": {
         "h": 7,
-        "w": 6,
+        "w": 12,
         "x": 0,
         "y": 1
       },
@@ -92,7 +93,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.1.6",
+      "pluginVersion": "9.5.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -112,10 +113,12 @@
           "datasource": {
             "uid": "$datasource"
           },
-          "expr": "topk(5, sum(nodepool:node_load1:normalized{cluster=~\"$cluster\", nodepool=~\".*workspace.*\"}) by (node))\n",
+          "editorMode": "code",
+          "expr": "topk(5, sum(nodepool:node_load1:normalized{cluster=~\"$cluster\", nodepool=~\".*workspace.*\", node=~\"$node\"}) by (node))\n",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{node}}",
+          "range": true,
           "refId": "A"
         },
         {
@@ -169,7 +172,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 15
+        "y": 8
       },
       "id": 86,
       "panels": [],
@@ -236,9 +239,9 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
+        "w": 12,
         "x": 0,
-        "y": 16
+        "y": 9
       },
       "id": 49,
       "options": {
@@ -262,7 +265,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(5, rate(node_pressure_cpu_waiting_seconds_total{cluster=\"$cluster\"}[30s]))",
+          "expr": "topk(5, rate(node_pressure_cpu_waiting_seconds_total{cluster=\"$cluster\",node=~\"$node\"}[30s]))",
           "legendFormat": "{{node}}",
           "range": true,
           "refId": "A"
@@ -277,7 +280,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 32
+        "y": 17
       },
       "id": 165,
       "panels": [],
@@ -344,9 +347,9 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
+        "w": 12,
         "x": 0,
-        "y": 33
+        "y": 18
       },
       "id": 133,
       "options": {
@@ -370,7 +373,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(5, rate(node_pressure_memory_waiting_seconds_total{cluster=\"$cluster\"}[30s]))",
+          "expr": "topk(5, rate(node_pressure_memory_waiting_seconds_total{cluster=\"$cluster\",node=~\"$node\"}[30s]))",
           "legendFormat": "{{node}}",
           "range": true,
           "refId": "A"
@@ -385,7 +388,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 49
+        "y": 26
       },
       "id": 224,
       "panels": [],
@@ -452,9 +455,9 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
+        "w": 12,
         "x": 0,
-        "y": 50
+        "y": 27
       },
       "id": 197,
       "options": {
@@ -478,7 +481,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "topk(5, rate(node_pressure_io_waiting_seconds_total{cluster=\"$cluster\"}[30s]))",
+          "expr": "topk(5, rate(node_pressure_io_waiting_seconds_total{cluster=\"$cluster\",node=~\"$node\"}[30s]))",
           "legendFormat": "{{node}}",
           "range": true,
           "refId": "A"
@@ -489,7 +492,7 @@
     }
   ],
   "refresh": "30s",
-  "schemaVersion": 37,
+  "schemaVersion": 38,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -506,6 +509,7 @@
         "name": "datasource",
         "options": [],
         "query": "prometheus",
+        "queryValue": "",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -531,7 +535,7 @@
         "name": "cluster",
         "options": [],
         "query": {
-          "query": "label_values(gitpod_ws_manager_workspace_phase_total, cluster)",
+          "query": "label_values(gitpod_ws_manager_mk2_workspace_phase_total, cluster)",
           "refId": "VictoriaMetrics-cluster-Variable-Query"
         },
         "refresh": 2,
@@ -542,6 +546,36 @@
         "tagsQuery": "",
         "type": "query",
         "useTags": false
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "label_values(node_pressure_memory_waiting_seconds_total,node)",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "node",
+        "options": [],
+        "query": {
+          "query": "label_values(node_pressure_memory_waiting_seconds_total,node)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
       }
     ]
   },
@@ -577,6 +611,6 @@
   "timezone": "utc",
   "title": "Node Pressure Stall Information",
   "uid": "T7pAXoVVk",
-  "version": 2,
+  "version": 1,
   "weekStart": ""
 }

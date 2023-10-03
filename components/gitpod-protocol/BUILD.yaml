@@ -8,11 +8,12 @@ packages:
   - name: lib
     type: yarn
     srcs:
+      - "data/*.json"
       - "src/**"
       - "test/**"
-      - package.json
+      - .eslintrc
       - mocha.opts
-      - "data/*.json"
+      - package.json
     config:
       packaging: library
       yarnLock: ${coreYarnLockBase}/yarn.lock

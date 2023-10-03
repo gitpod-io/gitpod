@@ -5,14 +5,13 @@
  */
 
 import { PartialProject, Project, ProjectEnvVar, ProjectEnvVarWithValue, ProjectUsage } from "@gitpod/gitpod-protocol";
+import { TransactionalDB } from "./typeorm/transactional-db-impl";
 
 export const ProjectDB = Symbol("ProjectDB");
-export interface ProjectDB {
+export interface ProjectDB extends TransactionalDB<ProjectDB> {
     findProjectById(projectId: string): Promise<Project | undefined>;
-    findProjectByCloneUrl(cloneUrl: string): Promise<Project | undefined>;
-    findProjectsByCloneUrls(cloneUrls: string[]): Promise<(Project & { teamOwners?: string[] })[]>;
-    findTeamProjects(teamId: string): Promise<Project[]>;
-    findUserProjects(userId: string): Promise<Project[]>;
+    findProjectsByCloneUrl(cloneUrl: string): Promise<Project[]>;
+    findProjects(orgID: string): Promise<Project[]>;
     findProjectsBySearchTerm(
         offset: number,
         limit: number,
@@ -23,7 +22,12 @@ export interface ProjectDB {
     storeProject(project: Project): Promise<Project>;
     updateProject(partialProject: PartialProject): Promise<void>;
     markDeleted(projectId: string): Promise<void>;
-    setProjectEnvironmentVariable(projectId: string, name: string, value: string, censored: boolean): Promise<void>;
+    findProjectEnvironmentVariable(
+        projectId: string,
+        envVar: ProjectEnvVarWithValue,
+    ): Promise<ProjectEnvVar | undefined>;
+    addProjectEnvironmentVariable(projectId: string, envVar: ProjectEnvVarWithValue): Promise<void>;
+    updateProjectEnvironmentVariable(projectId: string, envVar: Required<ProjectEnvVarWithValue>): Promise<void>;
     getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]>;
     getProjectEnvironmentVariableById(variableId: string): Promise<ProjectEnvVar | undefined>;
     deleteProjectEnvironmentVariable(variableId: string): Promise<void>;

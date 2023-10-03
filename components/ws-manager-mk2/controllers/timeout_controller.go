@@ -20,13 +20,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/gitpod-io/gitpod/common-go/util"
-	wsactivity "github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
 
-func NewTimeoutReconciler(c client.Client, recorder record.EventRecorder, cfg config.Configuration, activity *wsactivity.WorkspaceActivity, maintenance maintenance.Maintenance) (*TimeoutReconciler, error) {
+func NewTimeoutReconciler(c client.Client, recorder record.EventRecorder, cfg config.Configuration, maintenance maintenance.Maintenance) (*TimeoutReconciler, error) {
 	if cfg.HeartbeatInterval == 0 {
 		return nil, fmt.Errorf("invalid heartbeat interval, must not be 0")
 	}
@@ -38,7 +38,6 @@ func NewTimeoutReconciler(c client.Client, recorder record.EventRecorder, cfg co
 	return &TimeoutReconciler{
 		Client:            c,
 		Config:            cfg,
-		activity:          activity,
 		reconcileInterval: reconcileInterval,
 		recorder:          recorder,
 		maintenance:       maintenance,
@@ -53,7 +52,6 @@ type TimeoutReconciler struct {
 	client.Client
 
 	Config            config.Configuration
-	activity          *wsactivity.WorkspaceActivity
 	reconcileInterval time.Duration
 	recorder          record.EventRecorder
 	maintenance       maintenance.Maintenance
@@ -106,7 +104,7 @@ func (r *TimeoutReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 	}
 
 	// Workspace timed out, set Timeout condition.
-	log.Info("Workspace timed out", "reason", timedout)
+	log.V(2).Info("Workspace timed out", "reason", timedout)
 	if err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		err := r.Get(ctx, types.NamespacedName{Name: workspace.Name, Namespace: workspace.Namespace}, &workspace)
 		if err != nil {
@@ -157,7 +155,7 @@ func (r *TimeoutReconciler) isWorkspaceTimedOut(ws *workspacev1.Workspace) (reas
 	}
 
 	start := ws.ObjectMeta.CreationTimestamp.Time
-	lastActivity := r.activity.GetLastActivity(ws)
+	lastActivity := activity.Last(ws)
 	isClosed := ws.IsConditionTrue(workspacev1.WorkspaceConditionClosed)
 
 	switch phase {

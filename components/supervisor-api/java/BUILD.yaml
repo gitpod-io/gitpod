@@ -1,8 +1,6 @@
 packages:
   - name: lib
     type: generic
-    deps:
-      - components/supervisor-api:java
     srcs:
       - "**/*.java"
       - "build.gradle"
@@ -12,5 +10,4 @@ packages:
       - "settings.gradle"
     config:
       commands:
-        - ["cp", "-r", "components-supervisor-api--java/java/src/main/java", "src/main"]
         - ["./gradlew", "build"]

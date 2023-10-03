@@ -178,34 +178,41 @@
         },
         "github": {
             "type": "object",
-            "description": "Configures Gitpod's GitHub app",
+            "description": "Configures Gitpod's GitHub app (deprecated)",
+            "deprecationMessage": "Deprecated. Please use the Project Settings to configure prebuilds.",
             "properties": {
                 "prebuilds": {
                     "type": [
                         "boolean",
                         "object"
                     ],
-                    "description": "Set to true to enable workspace prebuilds, false to disable them. Defaults to true.",
+                    "description": "Set to true to enable workspace prebuilds, false to disable them. Defaults to true. (deprecated)",
+                    "deprecationMessage": "Deprecated. Please use the Project Settings to configure prebuilds.",
                     "properties": {
                         "master": {
                             "type": "boolean",
-                            "description": "Enable prebuilds for the default branch (typically master). Defaults to true."
+                            "description": "Enable prebuilds for the default branch (typically master). Defaults to true.",
+                            "deprecationMessage": "Deprecated. Please use the Project Settings to configure prebuilds."
                         },
                         "branches": {
                             "type": "boolean",
-                            "description": "Enable prebuilds for all branches. Defaults to false."
+                            "description": "Enable prebuilds for all branches. Defaults to false.",
+                            "deprecationMessage": "Deprecated. Please use the Project Settings to configure prebuilds."
                         },
                         "pullRequests": {
                             "type": "boolean",
-                            "description": "Enable prebuilds for pull-requests from the original repo. Defaults to true."
+                            "description": "Enable prebuilds for pull-requests from the original repo. Defaults to true.",
+                            "deprecationMessage": "Deprecated. Please use the Project Settings to configure prebuilds."
                         },
                         "pullRequestsFromForks": {
                             "type": "boolean",
-                            "description": "Enable prebuilds for pull-requests from any repo (e.g. from forks). Defaults to false."
+                            "description": "Enable prebuilds for pull-requests from any repo (e.g. from forks). Defaults to false.",
+                            "deprecationMessage": "Deprecated. This feature is about to be removed."
                         },
                         "addBadge": {
                             "type": "boolean",
-                            "description": "Add a Review in Gitpod badge to pull requests. Defaults to true."
+                            "description": "Add a Review in Gitpod badge to pull requests. Defaults to true.",
+                            "deprecationMessage": "Deprecated. This feature is about to be removed."
                         },
                         "addCheck": {
                             "type": [
@@ -217,14 +224,16 @@
                                 false,
                                 "prevent-merge-on-error"
                             ],
-                            "description": "Add a commit check to pull requests. Set to 'fail-on-error' if you want broken prebuilds to block merging. Defaults to true."
+                            "description": "Add a commit check to pull requests. Set to 'fail-on-error' if you want broken prebuilds to block merging. Defaults to true.",
+                            "deprecationMessage": "Deprecated. This feature is about to be removed."
                         },
                         "addLabel": {
                             "type": [
                                 "boolean",
                                 "string"
                             ],
-                            "description": "Add a label to a PR when it's prebuilt. Set to true to use the default label (prebuilt-in-gitpod) or set to a string to use a different label name. This is a beta feature and may be unreliable. Defaults to false."
+                            "description": "Add a label to a PR when it's prebuilt. Set to true to use the default label (prebuilt-in-gitpod) or set to a string to use a different label name. This is a beta feature and may be unreliable. Defaults to false.",
+                            "deprecationMessage": "Deprecated. This feature is about to be removed."
                         }
                     }
                 }

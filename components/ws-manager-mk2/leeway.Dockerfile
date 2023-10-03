@@ -2,13 +2,11 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM alpine:3.15
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:ccc5551b5dd1fdcff5fc76ac1605b4c217f77f43410e0bd8a56599d6504dbbdd
 
 # Ensure latest packages are present, like security updates.
 RUN  apk upgrade --no-cache \
-  # bash: for devx
-  # tar: make kubectl cp work
-  && apk add --no-cache ca-certificates bash tar
+  && apk add --no-cache ca-certificates
 
 COPY components-ws-manager-mk2--app/ws-manager-mk2 /app/ws-manager
 

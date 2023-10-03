@@ -6,18 +6,15 @@
 
 import * as chai from "chai";
 const expect = chai.expect;
-import { suite, test, timeout } from "mocha-typescript";
+import { suite, test, timeout } from "@testdeck/mocha";
 import { v4 as uuidv4 } from "uuid";
 
 import { testContainer } from "./test-container";
 import { TeamDBImpl } from "./typeorm/team-db-impl";
 import { TypeORMUserDBImpl } from "./typeorm/user-db-impl";
 import { TypeORM } from "./typeorm/typeorm";
-import { DBTeam } from "./typeorm/entity/db-team";
-import { DBTeamMembership } from "./typeorm/entity/db-team-membership";
-import { DBUser } from "./typeorm/entity/db-user";
-import { DBIdentity } from "./typeorm/entity/db-identity";
 import { Connection } from "typeorm";
+import { resetDB } from "./test/reset-db";
 
 @suite
 class TeamDBSpec {
@@ -34,12 +31,7 @@ class TeamDBSpec {
 
     async wipeRepo() {
         const typeorm = testContainer.get<TypeORM>(TypeORM);
-        const manager = await typeorm.getConnection();
-        await manager.getRepository(DBTeam).delete({});
-        await manager.getRepository(DBTeamMembership).delete({});
-        await manager.getRepository(DBUser).delete({});
-        await manager.getRepository(DBIdentity).delete({});
-        await manager.query("delete from d_b_oidc_client_config;");
+        await resetDB(typeorm);
     }
 
     @test(timeout(10000))

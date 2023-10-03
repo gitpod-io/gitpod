@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Organization, Project, User } from "@gitpod/gitpod-protocol";
 import { useQuery } from "@tanstack/react-query";
 import { getExperimentsClient } from "../experiments/client";
 import { useCurrentProject } from "../projects/project-context";
@@ -12,7 +11,6 @@ import { useCurrentUser } from "../user-context";
 import { useCurrentOrg } from "./organizations/orgs-query";
 
 const featureFlags = {
-    start_with_options: false,
     showUseLastSuccessfulPrebuild: false,
     publicApiExperimentalWorkspaceService: false,
     personalAccessTokensEnabled: false,
@@ -22,31 +20,36 @@ const featureFlags = {
     userGitAuthProviders: false,
     linkedinConnectionForOnboarding: false,
     enableDedicatedOnboardingFlow: false,
-    usageDownload: false,
     phoneVerificationByCall: false,
+    doRetryUserLoader: true,
+    // Local SSH feature of VS Code Desktop Extension
+    gitpod_desktop_use_local_ssh_proxy: false,
+    supervisor_live_git_status: false,
+    enabledOrbitalDiscoveries: "",
+    newProjectIncrementalRepoSearchBBS: false,
+    includeProjectsOnCreateWorkspace: false,
+    repositoryFinderSearch: false,
 };
 
-export const useFeatureFlag = (featureFlag: keyof typeof featureFlags) => {
+type FeatureFlags = typeof featureFlags;
+
+export const useFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): FeatureFlags[K] | boolean => {
     const user = useCurrentUser();
     const org = useCurrentOrg().data;
     const project = useCurrentProject().project;
 
-    const query = useQuery<boolean>({
-        queryKey: queryKey(featureFlag, user, org, project),
-        queryFn: async () => {
-            const flagValue = await getExperimentsClient().getValueAsync(featureFlag, featureFlags[featureFlag], {
-                user,
-                projectId: project?.id,
-                teamId: org?.id,
-                teamName: org?.name,
-                gitpodHost: window.location.host,
-            });
-            return !!flagValue;
-        },
+    const queryKey = ["featureFlag", featureFlag, user?.id || "", org?.id || "", project?.id || ""];
+
+    const query = useQuery(queryKey, async () => {
+        const flagValue = await getExperimentsClient().getValueAsync(featureFlag, featureFlags[featureFlag], {
+            user,
+            projectId: project?.id,
+            teamId: org?.id,
+            teamName: org?.name,
+            gitpodHost: window.location.host,
+        });
+        return flagValue;
     });
+
     return query.data !== undefined ? query.data : featureFlags[featureFlag];
 };
-
-function queryKey(featureFlag: keyof typeof featureFlags, user?: User, org?: Organization, project?: Project) {
-    return ["featureFlag", featureFlag, user?.id || "", org?.id || "", project?.id || ""];
-}

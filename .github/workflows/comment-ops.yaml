@@ -2,7 +2,7 @@ name: comment-ops
 
 on:
   issue_comment:
-    types: [ created ]
+    types: [created]
 
 # This action *ALWAYS* runs on main.
 # Any changes done to it, will not have an effect, until said changes have landed on the main branch
@@ -17,7 +17,7 @@ jobs:
       (github.event.issue.author_association == 'OWNER' || github.event.issue.author_association == 'MEMBER') &&
       (github.event.issue.pull_request && contains(github.event.comment.body, '/gh run')) &&
       (contains(github.event.comment.body, 'recreate-vm'))
-    runs-on: [ self-hosted ]
+    runs-on: ubuntu-latest
     # Technically we don't need these here, as we don't reuse them between jobs, but it's good to have them in a single place
     outputs:
       branch: ${{ steps.comment-branch.outputs.head_ref }}
@@ -101,7 +101,7 @@ jobs:
   comment-fail:
     if: (always() && contains(needs.*.result, 'failure'))
     needs: [ configure ]
-    runs-on: [ self-hosted ]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v6
         with:

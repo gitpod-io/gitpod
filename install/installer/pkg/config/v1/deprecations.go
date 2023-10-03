@@ -58,13 +58,6 @@ var deprecatedFields = map[string]deprecatedField{
 			return nil
 		},
 	},
-	// No MapValue can exist as this requires a secret rather than passing in the value
-	"experimental.common.staticMessagebusPassword": {
-		Selector: func(cfg *Config) (bool, any) {
-			val := cfg.Experimental.Common.StaticMessagebusPassword
-			return val != "", "***" // Redact the password
-		},
-	},
 	"experimental.ide.resolveLatest": {
 		Selector: func(cfg *Config) (bool, any) {
 			val := cfg.Experimental.IDE.ResolveLatest
@@ -192,26 +185,6 @@ var deprecatedFields = map[string]deprecatedField{
 			}
 			cfg.ContainerRegistry.PrivateBaseImageAllowList = cfg.Experimental.WebApp.Server.DefaultBaseImageRegistryWhiteList
 
-			return nil
-		},
-	},
-	"experimental.telemetry.data.platform": {
-		Selector: func(cfg *Config) (bool, any) {
-			val := cfg.Experimental.Telemetry.Data.Platform
-			return val != "", val
-		},
-		MapValue: func(cfg *Config) error {
-			if cfg.Telemetry != nil && cfg.Telemetry.Data != nil && cfg.Telemetry.Data.Platform != "" {
-				return errors.New("cannot set telemetry platform in both telemetry and experimental")
-			}
-			if cfg.Telemetry == nil {
-				cfg.Telemetry = &TelemetryConfig{}
-			}
-			if cfg.Telemetry.Data == nil {
-				cfg.Telemetry.Data = &TelemetryData{}
-			}
-
-			cfg.Telemetry.Data.Platform = cfg.Experimental.Telemetry.Data.Platform
 			return nil
 		},
 	},

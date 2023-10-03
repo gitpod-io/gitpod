@@ -30,8 +30,8 @@ var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "init the supervisor",
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Init(ServiceName, Version, true, false)
-		log.Log.Logger.AddHook(fatalTerminationLogHook{})
+		logFile := initLog(true)
+		defer logFile.Close()
 
 		cfg, err := supervisor.GetConfig()
 		if err != nil {

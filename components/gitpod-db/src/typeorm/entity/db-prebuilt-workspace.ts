@@ -41,7 +41,9 @@ export class DBPrebuiltWorkspace implements PrebuiltWorkspace {
     })
     branch?: string;
 
-    @Column()
+    @Column({
+        type: "varchar",
+    })
     @Index("ind_6a04b7005d5ad0e664725f9f17")
     state: PrebuiltWorkspaceState;
 
@@ -51,6 +53,7 @@ export class DBPrebuiltWorkspace implements PrebuiltWorkspace {
         default: () => "CURRENT_TIMESTAMP(6)",
         transformer: Transformer.MAP_ISO_STRING_TO_TIMESTAMP_DROP,
     })
+    @Index("ind_creationTime")
     creationTime: string;
 
     @Column(TypeORM.WORKSPACE_ID_COLUMN_TYPE)

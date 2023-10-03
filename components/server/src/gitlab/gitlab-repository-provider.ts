@@ -6,7 +6,7 @@
 
 import { injectable, inject } from "inversify";
 
-import { User, Repository, Branch, CommitInfo } from "@gitpod/gitpod-protocol";
+import { User, Repository, Branch, CommitInfo, RepositoryInfo } from "@gitpod/gitpod-protocol";
 import { GitLabApi, GitLab } from "./api";
 import { RepositoryProvider } from "../repohost/repository-provider";
 import { RepoURL } from "../repohost/repo-url";
@@ -95,7 +95,7 @@ export class GitlabRepositoryProvider implements RepositoryProvider {
         };
     }
 
-    async getUserRepos(user: User): Promise<string[]> {
+    async getUserRepos(user: User): Promise<RepositoryInfo[]> {
         // FIXME(janx): Not implemented yet
         return [];
     }
@@ -126,8 +126,8 @@ export class GitlabRepositoryProvider implements RepositoryProvider {
         const projectId = `${owner}/${repo}`;
         const result = await this.gitlab.run<GitLab.Commit[]>(user, async (g) => {
             return g.Commits.all(projectId, {
-                ref_name: ref,
-                per_page: maxDepth,
+                refName: ref,
+                perPage: maxDepth,
                 page: 1,
             });
         });
@@ -138,5 +138,10 @@ export class GitlabRepositoryProvider implements RepositoryProvider {
             throw result;
         }
         return result.slice(1).map((c: GitLab.Commit) => c.id);
+    }
+
+    // TODO: implement repo search
+    public async searchRepos(user: User, searchString: string): Promise<RepositoryInfo[]> {
+        return [];
     }
 }

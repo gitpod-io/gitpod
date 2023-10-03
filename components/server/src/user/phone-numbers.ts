@@ -11,7 +11,7 @@
  * @returns formatted phone number
  */
 export function formatPhoneNumber(phoneNumber: string): string {
-    var cleanPhoneNumber = phoneNumber.trim();
+    let cleanPhoneNumber = phoneNumber.trim();
     if (cleanPhoneNumber.startsWith("+")) {
         cleanPhoneNumber = "00" + cleanPhoneNumber.substring(1);
     }

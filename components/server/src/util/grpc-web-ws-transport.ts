@@ -29,7 +29,7 @@ import {
     TransportFactory,
     TransportOptions,
 } from "@improbable-eng/grpc-web/dist/typings/transports/Transport";
-import * as WebSocket from "ws";
+import WebSocket from "ws";
 
 enum WebsocketSignal {
     FINISH_SEND = 1,
@@ -46,7 +46,7 @@ export function WebsocketTransport(): TransportFactory {
 function websocketRequest(options: TransportOptions): Transport {
     options.debug && debug("websocketRequest", options);
 
-    let webSocketAddress = constructWebSocketAddress(options.url);
+    const webSocketAddress = constructWebSocketAddress(options.url);
 
     const sendQueue: Array<Uint8Array | WebsocketSignal> = [];
     let ws: WebSocket;

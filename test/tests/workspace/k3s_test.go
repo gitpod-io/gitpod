@@ -25,10 +25,11 @@ const (
 func TestK3s(t *testing.T) {
 	f := features.New("k3s").
 		WithLabel("component", "workspace").
-		Assess("it should start a k3s when cgroup v2 enable", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it should start a k3s", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			t.Skip("k3s is currently not supported in workspaces")
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), TIME_OUT)
+			ctx, cancel := context.WithTimeout(testCtx, TIME_OUT)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -66,9 +67,11 @@ func TestK3s(t *testing.T) {
 			}
 
 			if !cgv2 {
-				t.Skip("This test only works for cgroup v2")
+				t.Fatalf("This test only works for cgroup v2")
 			}
 
+			k3sExit := make(chan error, 1)
+			waitForK3s := make(chan error, 1)
 			go func() {
 				var respReadyForK3s agent.ExecResponse
 				k3sUrl := fmt.Sprintf("https://github.com/k3s-io/k3s/releases/download/v%s%%2Bk3s1/k3s", K3S_VERSION)
@@ -77,9 +80,10 @@ func TestK3s(t *testing.T) {
 					Command: "bash",
 					Args: []string{
 						"-c",
-						fmt.Sprintf("curl -L %s -o /workspace/k3s && sudo chmod +x /workspace/k3s && sudo /workspace/k3s server -d /workspace/data --flannel-backend=host-gw > /dev/null 2>&1", k3sUrl),
+						fmt.Sprintf("curl -L %s -o /workspace/k3s && sudo chmod +x /workspace/k3s && sudo /workspace/k3s server -d /workspace/data --flannel-backend=host-gw", k3sUrl),
 					},
 				}, &respReadyForK3s)
+				k3sExit <- fmt.Errorf("k3s exited: %v\n%s\n%s", err, respReadyForK3s.Stdout, respReadyForK3s.Stderr)
 			}()
 
 			kubeEnv := []string{
@@ -87,21 +91,38 @@ func TestK3s(t *testing.T) {
 			}
 			var respWaitForK3s agent.ExecResponse
 			timeout := fmt.Sprintf("%.0fm", TIME_OUT.Minutes())
-			err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
-				Dir:     "/",
-				Command: "bash",
-				Env:     kubeEnv,
-				Args: []string{
-					"-c",
-					fmt.Sprintf("timeout %s bash -c 'while [ ! -e /etc/rancher/k3s/k3s.yaml ]; do sleep 1; done' && sudo chmod +r /etc/rancher/k3s/k3s.yaml && timeout %s bash -c 'until /workspace/k3s kubectl wait --for=condition=Ready nodes -l node-role.kubernetes.io/master=true --timeout %s; do sleep 1; done'", timeout, timeout, timeout),
-				},
-			}, &respWaitForK3s)
-			if err != nil {
-				t.Fatalf("failed to wait for starting k3s: %v\n%s\n%s", err, respWaitForK3s.Stdout, respWaitForK3s.Stderr)
-			}
+			go func() {
+				err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+					Dir:     "/",
+					Command: "bash",
+					Env:     kubeEnv,
+					Args: []string{
+						"-c",
+						fmt.Sprintf("timeout %s bash -c 'while [ ! -e /etc/rancher/k3s/k3s.yaml ]; do sleep 1; done' && sudo chmod 777 /etc/rancher/k3s/k3s.yaml && timeout %s bash -c 'until /workspace/k3s kubectl wait --for=condition=Ready nodes -l node-role.kubernetes.io/master=true --timeout %s; do sleep 1; done'", timeout, timeout, timeout),
+					},
+				}, &respWaitForK3s)
+				if err != nil {
+					waitForK3s <- fmt.Errorf("failed to wait for starting k3s: %v\n%s\n%s", err, respWaitForK3s.Stdout, respWaitForK3s.Stderr)
+					return
+				}
 
-			if respWaitForK3s.ExitCode != 0 {
-				t.Fatalf("failed to wait for starting k3s: %s\n%s", respWaitForK3s.Stdout, respWaitForK3s.Stderr)
+				if respWaitForK3s.ExitCode != 0 {
+					waitForK3s <- fmt.Errorf("failed to wait for starting k3s: %s\n%s", respWaitForK3s.Stdout, respWaitForK3s.Stderr)
+					return
+				}
+				waitForK3s <- nil
+			}()
+
+			select {
+			case err := <-waitForK3s:
+				if err != nil {
+					t.Fatalf("failed to wait for starting k3s: %v", err)
+				}
+				t.Logf("k3s is ready")
+			case err := <-k3sExit:
+				t.Fatalf("k3s exited: %v", err)
+			case <-time.After(TIME_OUT):
+				t.Fatalf("timeout waiting for k3s")
 			}
 
 			var respGetPods agent.ExecResponse
@@ -122,7 +143,7 @@ func TestK3s(t *testing.T) {
 				t.Fatalf("failed to get nodes: %s\n%s", respGetPods.Stdout, respGetPods.Stderr)
 			}
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

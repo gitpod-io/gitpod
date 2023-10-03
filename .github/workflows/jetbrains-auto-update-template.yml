@@ -55,6 +55,7 @@ jobs:
         if: ${{ steps.ide-version.outputs.ideBuildVersion }}
         env:
           LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE: "8388608"
+          LEEWAY_REMOTE_CACHE_BUCKET: '${{ needs.configuration.outputs.leeway_cache_bucket }}'
         run: |
           gcloud auth configure-docker --quiet
           export LEEWAY_WORKSPACE_ROOT=$(pwd)
@@ -70,3 +71,4 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.slackWebhook }}
           SLACK_COLOR: ${{ job.status }}
           SLACK_TITLE: ${{ inputs.productId }}
+          SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"

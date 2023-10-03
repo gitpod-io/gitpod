@@ -7,9 +7,10 @@
 import { WorkspaceContext } from "@gitpod/gitpod-protocol";
 import { useQuery } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
+import { StartWorkspaceError } from "../../start/StartPage";
 
 export function useWorkspaceContext(contextUrl?: string) {
-    const query = useQuery<WorkspaceContext | null, Error>(
+    const query = useQuery<WorkspaceContext | null, StartWorkspaceError>(
         ["workspace-context", contextUrl],
         () => {
             if (!contextUrl) {

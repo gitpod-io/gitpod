@@ -327,36 +327,6 @@ func (mr *MockAPIInterfaceMockRecorder) GetConfiguration(ctx interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfiguration", reflect.TypeOf((*MockAPIInterface)(nil).GetConfiguration), ctx)
 }
 
-// GetContentBlobDownloadURL mocks base method.
-func (m *MockAPIInterface) GetContentBlobDownloadURL(ctx context.Context, name string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetContentBlobDownloadURL", ctx, name)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetContentBlobDownloadURL indicates an expected call of GetContentBlobDownloadURL.
-func (mr *MockAPIInterfaceMockRecorder) GetContentBlobDownloadURL(ctx, name interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContentBlobDownloadURL", reflect.TypeOf((*MockAPIInterface)(nil).GetContentBlobDownloadURL), ctx, name)
-}
-
-// GetContentBlobUploadURL mocks base method.
-func (m *MockAPIInterface) GetContentBlobUploadURL(ctx context.Context, name string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetContentBlobUploadURL", ctx, name)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetContentBlobUploadURL indicates an expected call of GetContentBlobUploadURL.
-func (mr *MockAPIInterfaceMockRecorder) GetContentBlobUploadURL(ctx, name interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContentBlobUploadURL", reflect.TypeOf((*MockAPIInterface)(nil).GetContentBlobUploadURL), ctx, name)
-}
-
 // GetEnvVars mocks base method.
 func (m *MockAPIInterface) GetEnvVars(ctx context.Context) ([]*EnvVar, error) {
 	m.ctrl.T.Helper()
@@ -430,6 +400,21 @@ func (m *MockAPIInterface) GetGitpodTokens(ctx context.Context) ([]*APIToken, er
 func (mr *MockAPIInterfaceMockRecorder) GetGitpodTokens(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGitpodTokens", reflect.TypeOf((*MockAPIInterface)(nil).GetGitpodTokens), ctx)
+}
+
+// GetIDEOptions mocks base method.
+func (m *MockAPIInterface) GetIDEOptions(ctx context.Context) (*IDEOptions, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetIDEOptions", ctx)
+	ret0, _ := ret[0].(*IDEOptions)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetIDEOptions indicates an expected call of GetIDEOptions.
+func (mr *MockAPIInterfaceMockRecorder) GetIDEOptions(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetIDEOptions", reflect.TypeOf((*MockAPIInterface)(nil).GetIDEOptions), ctx)
 }
 
 // GetIDToken mocks base method.
@@ -536,6 +521,21 @@ func (mr *MockAPIInterfaceMockRecorder) GetSnapshots(ctx, workspaceID interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSnapshots", reflect.TypeOf((*MockAPIInterface)(nil).GetSnapshots), ctx, workspaceID)
 }
 
+// GetSuggestedContextURLs mocks base method.
+func (m *MockAPIInterface) GetSuggestedContextURLs(ctx context.Context) ([]*string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSuggestedContextURLs", ctx)
+	ret0, _ := ret[0].([]*string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSuggestedContextURLs indicates an expected call of GetSuggestedContextURLs.
+func (mr *MockAPIInterfaceMockRecorder) GetSuggestedContextURLs(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSuggestedContextURLs", reflect.TypeOf((*MockAPIInterface)(nil).GetSuggestedContextURLs), ctx)
+}
+
 // GetSupportedWorkspaceClasses mocks base method.
 func (m *MockAPIInterface) GetSupportedWorkspaceClasses(ctx context.Context) ([]*SupportedWorkspaceClass, error) {
 	m.ctrl.T.Helper()
@@ -624,36 +624,6 @@ func (m *MockAPIInterface) GetToken(ctx context.Context, query *GetTokenSearchOp
 func (mr *MockAPIInterfaceMockRecorder) GetToken(ctx, query interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetToken", reflect.TypeOf((*MockAPIInterface)(nil).GetToken), ctx, query)
-}
-
-// GetUserProjects mocks base method.
-func (m *MockAPIInterface) GetUserProjects(ctx context.Context) ([]*Project, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserProjects", ctx)
-	ret0, _ := ret[0].([]*Project)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetUserProjects indicates an expected call of GetUserProjects.
-func (mr *MockAPIInterfaceMockRecorder) GetUserProjects(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserProjects", reflect.TypeOf((*MockAPIInterface)(nil).GetUserProjects), ctx)
-}
-
-// GetUserStorageResource mocks base method.
-func (m *MockAPIInterface) GetUserStorageResource(ctx context.Context, options *GetUserStorageResourceOptions) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserStorageResource", ctx, options)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetUserStorageResource indicates an expected call of GetUserStorageResource.
-func (mr *MockAPIInterfaceMockRecorder) GetUserStorageResource(ctx, options interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserStorageResource", reflect.TypeOf((*MockAPIInterface)(nil).GetUserStorageResource), ctx, options)
 }
 
 // GetWorkspace mocks base method.
@@ -761,21 +731,6 @@ func (mr *MockAPIInterfaceMockRecorder) GuessGitTokenScopes(ctx, params interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GuessGitTokenScopes", reflect.TypeOf((*MockAPIInterface)(nil).GuessGitTokenScopes), ctx, params)
 }
 
-// HasPermission mocks base method.
-func (m *MockAPIInterface) HasPermission(ctx context.Context, permission *PermissionName) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasPermission", ctx, permission)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// HasPermission indicates an expected call of HasPermission.
-func (mr *MockAPIInterfaceMockRecorder) HasPermission(ctx, permission interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasPermission", reflect.TypeOf((*MockAPIInterface)(nil).HasPermission), ctx, permission)
-}
-
 // HasSSHPublicKey mocks base method.
 func (m *MockAPIInterface) HasSSHPublicKey(ctx context.Context) (bool, error) {
 	m.ctrl.T.Helper()
@@ -789,21 +744,6 @@ func (m *MockAPIInterface) HasSSHPublicKey(ctx context.Context) (bool, error) {
 func (mr *MockAPIInterfaceMockRecorder) HasSSHPublicKey(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasSSHPublicKey", reflect.TypeOf((*MockAPIInterface)(nil).HasSSHPublicKey), ctx)
-}
-
-// WorkspaceUpdates mocks base method.
-func (m *MockAPIInterface) WorkspaceUpdates(ctx context.Context, workspaceID string) (<-chan *WorkspaceInstance, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkspaceUpdates", ctx, workspaceID)
-	ret0, _ := ret[0].(<-chan *WorkspaceInstance)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WorkspaceUpdates indicates an expected call of WorkspaceUpdates.
-func (mr *MockAPIInterfaceMockRecorder) WorkspaceUpdates(ctx, workspaceID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkspaceUpdates", reflect.TypeOf((*MockAPIInterface)(nil).WorkspaceUpdates), ctx, workspaceID)
 }
 
 // IsPrebuildDone mocks base method.
@@ -892,6 +832,36 @@ func (m *MockAPIInterface) RemoveTeamMember(ctx context.Context, teamID, userID 
 func (mr *MockAPIInterfaceMockRecorder) RemoveTeamMember(ctx, teamID, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveTeamMember", reflect.TypeOf((*MockAPIInterface)(nil).RemoveTeamMember), ctx, teamID, userID)
+}
+
+// GetOrgSettings mocks base method.
+func (m *MockAPIInterface) GetOrgSettings(ctx context.Context, orgID string) (*OrganizationSettings, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOrgSettings", ctx, orgID)
+	ret0, _ := ret[0].(*OrganizationSettings)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOrgSettings indicates an expected call of GetOrgSettings.
+func (mr *MockAPIInterfaceMockRecorder) GetOrgSettings(ctx, orgID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrgSettings", reflect.TypeOf((*MockAPIInterface)(nil).GetOrgSettings), ctx, orgID)
+}
+
+// GetDefaultWorkspaceImage mocks base method.
+func (m *MockAPIInterface) GetDefaultWorkspaceImage(ctx context.Context, params *GetDefaultWorkspaceImageParams) (*GetDefaultWorkspaceImageResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDefaultWorkspaceImage", ctx)
+	ret0, _ := ret[0].(*GetDefaultWorkspaceImageResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDefaultWorkspaceImage indicates an expected call of GetDefaultWorkspaceImage.
+func (mr *MockAPIInterfaceMockRecorder) GetDefaultWorkspaceImage(ctx, params *GetDefaultWorkspaceImageParams) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDefaultWorkspaceImage", reflect.TypeOf((*MockAPIInterface)(nil).GetDefaultWorkspaceImage), ctx, params)
 }
 
 // ResetGenericInvite mocks base method.
@@ -1038,6 +1008,20 @@ func (mr *MockAPIInterfaceMockRecorder) TrackEvent(ctx, event interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TrackEvent", reflect.TypeOf((*MockAPIInterface)(nil).TrackEvent), ctx, event)
 }
 
+// UpdateGitStatus mocks base method.
+func (m *MockAPIInterface) UpdateGitStatus(ctx context.Context, workspaceID string, status *WorkspaceInstanceRepoStatus) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateGitStatus", ctx, workspaceID, status)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateGitStatus indicates an expected call of UpdateGitStatus.
+func (mr *MockAPIInterfaceMockRecorder) UpdateGitStatus(ctx, workspaceID, status interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGitStatus", reflect.TypeOf((*MockAPIInterface)(nil).UpdateGitStatus), ctx, workspaceID, status)
+}
+
 // UpdateLoggedInUser mocks base method.
 func (m *MockAPIInterface) UpdateLoggedInUser(ctx context.Context, user *User) (*User, error) {
 	m.ctrl.T.Helper()
@@ -1065,20 +1049,6 @@ func (m *MockAPIInterface) UpdateOwnAuthProvider(ctx context.Context, params *Up
 func (mr *MockAPIInterfaceMockRecorder) UpdateOwnAuthProvider(ctx, params interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOwnAuthProvider", reflect.TypeOf((*MockAPIInterface)(nil).UpdateOwnAuthProvider), ctx, params)
-}
-
-// UpdateUserStorageResource mocks base method.
-func (m *MockAPIInterface) UpdateUserStorageResource(ctx context.Context, options *UpdateUserStorageResourceOptions) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateUserStorageResource", ctx, options)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateUserStorageResource indicates an expected call of UpdateUserStorageResource.
-func (mr *MockAPIInterfaceMockRecorder) UpdateUserStorageResource(ctx, options interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserStorageResource", reflect.TypeOf((*MockAPIInterface)(nil).UpdateUserStorageResource), ctx, options)
 }
 
 // UpdateWorkspaceUserPin mocks base method.
@@ -1121,4 +1091,19 @@ func (m *MockAPIInterface) WatchWorkspaceImageBuildLogs(ctx context.Context, wor
 func (mr *MockAPIInterfaceMockRecorder) WatchWorkspaceImageBuildLogs(ctx, workspaceID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WatchWorkspaceImageBuildLogs", reflect.TypeOf((*MockAPIInterface)(nil).WatchWorkspaceImageBuildLogs), ctx, workspaceID)
+}
+
+// WorkspaceUpdates mocks base method.
+func (m *MockAPIInterface) WorkspaceUpdates(ctx context.Context, workspaceID string) (<-chan *WorkspaceInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkspaceUpdates", ctx, workspaceID)
+	ret0, _ := ret[0].(<-chan *WorkspaceInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkspaceUpdates indicates an expected call of WorkspaceUpdates.
+func (mr *MockAPIInterfaceMockRecorder) WorkspaceUpdates(ctx, workspaceID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkspaceUpdates", reflect.TypeOf((*MockAPIInterface)(nil).WorkspaceUpdates), ctx, workspaceID)
 }

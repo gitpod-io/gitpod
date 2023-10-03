@@ -181,11 +181,8 @@ func (tm *tasksManager) init(ctx context.Context) {
 		log.WithError(err).Error()
 		return
 	}
-	if tasks == nil && tm.config.isHeadless() {
+	if len(tasks) == 0 && tm.config.isHeadless() {
 		return
-	}
-	if tasks == nil {
-		tasks = &[]TaskConfig{{}}
 	}
 
 	select {
@@ -200,7 +197,7 @@ func (tm *tasksManager) init(ctx context.Context) {
 	// give 1s window between content and tasks for IDE to startup, i.e. no competition for resources
 	tm.waitForIde(ctx, 1*time.Second)
 
-	for i, config := range *tasks {
+	for i, config := range tasks {
 		id := strconv.Itoa(i)
 		presentation := &api.TaskPresentation{}
 		if config.Name != nil {

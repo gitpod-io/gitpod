@@ -103,8 +103,9 @@ func TestAttributionID_Values(t *testing.T) {
 		ExpectedEntity string
 		ExpectedID     string
 	}{
-		{Input: "team:123", ExpectedEntity: db.AttributionEntity_Team, ExpectedID: "123"},
-		{Input: "user:123", ExpectedEntity: db.AttributionEntity_User, ExpectedID: "123"},
+		{Input: "team:123", ExpectedEntity: "team", ExpectedID: "123"},
+		{Input: "user:123", ExpectedEntity: "", ExpectedID: ""},
+		{Input: "foo:123", ExpectedEntity: "", ExpectedID: ""},
 		{Input: "user:123:invalid", ExpectedEntity: "", ExpectedID: ""},
 		{Input: "invalid:123:", ExpectedEntity: "", ExpectedID: ""},
 		{Input: "", ExpectedEntity: "", ExpectedID: ""},
@@ -123,29 +124,36 @@ func TestFindRunningWorkspace(t *testing.T) {
 	conn := dbtest.ConnectForTests(t)
 
 	workspace := dbtest.CreateWorkspaces(t, conn, dbtest.NewWorkspace(t, db.Workspace{}))[0]
+	now := time.Now()
+	fiveMinAgo := now.Add(-5 * time.Minute)
+	tenMinAgo := now.Add(-10 * time.Minute)
+	moreThan10DaysAgo := now.Add(-11 * 24 * time.Hour)
 
 	all := []db.WorkspaceInstance{
 		// one stopped instance
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
 			WorkspaceID:  workspace.ID,
-			StartedTime:  db.NewVarCharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
-			StoppingTime: db.NewVarCharTime(time.Date(2022, 05, 15, 13, 00, 00, 00, time.UTC)),
+			StartedTime:  db.NewVarCharTime(tenMinAgo),
+			StoppingTime: db.NewVarCharTime(fiveMinAgo),
 		}),
-		// one before August 2022, excluded
+		// one unstopped before 10 days ago
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
-			WorkspaceID: workspace.ID,
-			StartedTime: db.NewVarCharTime(time.Date(2022, 05, 15, 12, 00, 00, 00, time.UTC)),
+			WorkspaceID:    workspace.ID,
+			StartedTime:    db.NewVarCharTime(moreThan10DaysAgo),
+			PhasePersisted: "running",
 		}),
 		// Two running instances
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
-			ID:          uuid.New(),
-			WorkspaceID: workspace.ID,
-			StartedTime: db.NewVarCharTime(time.Date(2022, 9, 1, 0, 00, 00, 00, time.UTC)),
+			ID:             uuid.New(),
+			WorkspaceID:    workspace.ID,
+			StartedTime:    db.NewVarCharTime(tenMinAgo),
+			PhasePersisted: "running",
 		}),
 		dbtest.NewWorkspaceInstance(t, db.WorkspaceInstance{
-			ID:          uuid.New(),
-			WorkspaceID: workspace.ID,
-			StartedTime: db.NewVarCharTime(time.Date(2022, 9, 30, 23, 00, 00, 00, time.UTC)),
+			ID:             uuid.New(),
+			WorkspaceID:    workspace.ID,
+			StartedTime:    db.NewVarCharTime(tenMinAgo),
+			PhasePersisted: "running",
 		}),
 	}
 

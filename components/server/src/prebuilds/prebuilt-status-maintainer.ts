@@ -18,8 +18,8 @@ import {
     WorkspaceConfig,
 } from "@gitpod/gitpod-protocol";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { LocalMessageBroker } from "../messaging/local-message-broker";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
+import { RedisSubscriber } from "../messaging/redis-subscriber";
 
 export interface CheckRunInfo {
     owner: string;
@@ -41,8 +41,11 @@ export type AuthenticatedGithubProvider = (
 
 @injectable()
 export class PrebuildStatusMaintainer implements Disposable {
-    @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
-    @inject(LocalMessageBroker) protected readonly localMessageBroker: LocalMessageBroker;
+    constructor(
+        @inject(TracedWorkspaceDB) private readonly workspaceDB: DBWithTracing<WorkspaceDB>,
+        @inject(RedisSubscriber) private readonly subscriber: RedisSubscriber,
+    ) {}
+
     protected githubApiProvider: AuthenticatedGithubProvider;
     protected readonly disposables = new DisposableCollection();
 
@@ -50,11 +53,9 @@ export class PrebuildStatusMaintainer implements Disposable {
         // set github before registering the msgbus listener - otherwise an incoming message and the github set might race
         this.githubApiProvider = githubApiProvider;
 
-        this.disposables.push(
-            this.localMessageBroker.listenForPrebuildUpdatableEvents((ctx, msg) =>
-                this.handlePrebuildFinished(ctx, msg),
-            ),
-        );
+        this.disposables.pushAll([
+            this.subscriber.listenForPrebuildUpdatableEvents((ctx, msg) => this.handlePrebuildFinished(ctx, msg)),
+        ]);
         this.disposables.push(repeat(this.periodicUpdatableCheck.bind(this), MAX_UPDATABLE_AGE / 2));
         log.debug("prebuild updatable status maintainer started");
     }

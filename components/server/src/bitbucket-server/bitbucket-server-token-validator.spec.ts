@@ -4,27 +4,31 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { skipIfEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
+import { ifEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
 import { Container, ContainerModule } from "inversify";
-import { retries, suite, test, timeout } from "mocha-typescript";
+import { retries, skip, suite, test, timeout } from "@testdeck/mocha";
 import { expect } from "chai";
 import { BitbucketServerApi } from "./bitbucket-server-api";
 import { BitbucketServerTokenValidator } from "./bitbucket-server-token-validator";
 import { AuthProviderParams } from "../auth/auth-provider";
 import { BitbucketServerTokenHelper } from "./bitbucket-server-token-handler";
 import { TokenProvider } from "../user/token-provider";
+import { IGitTokenValidatorParams } from "../workspace/git-token-validator";
 
-@suite(timeout(10000), retries(0), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER"))
+const shouldSkip =
+    ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER_READ") &&
+    ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER_WRITE") &&
+    ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER_ADMIN");
+
+@suite(timeout(10000), retries(0), skip(shouldSkip))
 class TestBitbucketServerTokenValidator {
-    protected validator: BitbucketServerTokenValidator;
-
     static readonly AUTH_HOST_CONFIG: Partial<AuthProviderParams> = {
         id: "MyBitbucketServer",
         type: "BitbucketServer",
         verified: true,
         description: "",
         icon: "",
-        host: "bitbucket.gitpod-self-hosted.com",
+        host: "bitbucket.gitpod-dev.com",
         oauth: {
             callBackUrl: "",
             clientId: "not-used",
@@ -35,7 +39,16 @@ class TestBitbucketServerTokenValidator {
         },
     };
 
-    public before() {
+    // https://bitbucket.gitpod-dev.com/projects/TES/repos/read-write-permission/permissions
+    readonly checkParams: IGitTokenValidatorParams = {
+        host: TestBitbucketServerTokenValidator.AUTH_HOST_CONFIG.host!,
+        owner: "TES",
+        repo: "read-write-permission",
+        repoKind: "projects",
+        token: "undefined",
+    };
+
+    private getValidator(token: string) {
         const container = new Container();
         container.load(
             new ContainerModule((bind, unbind, isBound, rebind) => {
@@ -45,7 +58,7 @@ class TestBitbucketServerTokenValidator {
                 bind(TokenProvider).toConstantValue(<TokenProvider>{
                     getTokenForHost: async () => {
                         return {
-                            value: process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"] || "undefined",
+                            value: token || "undefined",
                             scopes: [],
                         };
                     },
@@ -53,17 +66,12 @@ class TestBitbucketServerTokenValidator {
                 bind(BitbucketServerApi).toSelf().inSingletonScope();
             }),
         );
-        this.validator = container.get(BitbucketServerTokenValidator);
+        return container.get(BitbucketServerTokenValidator);
     }
 
-    @test async test_checkWriteAccess_read_only() {
-        const result = await this.validator.checkWriteAccess({
-            host: "bitbucket.gitpod-self-hosted.com",
-            owner: "mil",
-            repo: "gitpod-large-image",
-            repoKind: "projects",
-            token: process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"]!,
-        });
+    @test(skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER_READ"))) async test_checkWriteAccess_read_only() {
+        const token = process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER_READ"]!;
+        const result = await this.getValidator(token).checkWriteAccess(Object.assign({}, this.checkParams, { token }));
         expect(result).to.deep.equal({
             found: true,
             isPrivateRepo: true,
@@ -71,17 +79,24 @@ class TestBitbucketServerTokenValidator {
         });
     }
 
-    @test async test_checkWriteAccess_write_permissions() {
-        const result = await this.validator.checkWriteAccess({
-            host: "bitbucket.gitpod-self-hosted.com",
-            owner: "alextugarev",
-            repo: "yolo",
-            repoKind: "users",
-            token: process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"]!,
-        });
+    @test(skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER_WRITE")))
+    async test_checkWriteAccess_write_permissions() {
+        const token = process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER_WRITE"]!;
+        const result = await this.getValidator(token).checkWriteAccess(Object.assign({}, this.checkParams, { token }));
         expect(result).to.deep.equal({
             found: true,
-            isPrivateRepo: false,
+            isPrivateRepo: true,
+            writeAccessToRepo: true,
+        });
+    }
+
+    @test(skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER_ADMIN")))
+    async test_checkWriteAccess_admin_permissions() {
+        const token = process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER_ADMIN"]!;
+        const result = await this.getValidator(token).checkWriteAccess(Object.assign({}, this.checkParams, { token }));
+        expect(result).to.deep.equal({
+            found: true,
+            isPrivateRepo: true,
             writeAccessToRepo: true,
         });
     }

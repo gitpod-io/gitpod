@@ -9,17 +9,17 @@ import { FC, ForwardedRef, ReactNode, forwardRef } from "react";
 import { ReactComponent as SpinnerWhite } from "../icons/SpinnerWhite.svg";
 
 export type ButtonProps = {
-    // TODO: determine if we want danger.secondary
-    type?: "primary" | "secondary" | "danger" | "danger.secondary";
+    type?: "primary" | "secondary" | "danger" | "danger.secondary" | "transparent";
     // TODO: determine how to handle small/medium (block does w-full atm)
     size?: "small" | "medium" | "block";
+    spacing?: "compact" | "default";
     disabled?: boolean;
     loading?: boolean;
     className?: string;
     autoFocus?: boolean;
     htmlType?: "button" | "submit" | "reset";
     icon?: ReactNode;
-    children: ReactNode;
+    children?: ReactNode;
     onClick?: ButtonOnClickHandler;
 };
 
@@ -36,6 +36,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             loading = false,
             autoFocus = false,
             size,
+            spacing = "default",
             icon,
             children,
             onClick,
@@ -46,13 +47,15 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             <button
                 type={htmlType}
                 className={classNames(
-                    "cursor-pointer px-4 py-2 my-auto",
+                    "cursor-pointer my-auto",
                     "text-sm font-medium whitespace-nowrap",
-                    "rounded-md focus:outline-none focus:ring transition ease-in-out",
+                    "rounded-xl focus:outline-none focus:ring transition ease-in-out",
+                    spacing === "compact" ? ["px-1 py-1"] : null,
+                    spacing === "default" ? ["px-4 py-2"] : null,
                     type === "primary"
                         ? [
-                              "bg-green-600 dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-600",
-                              "text-gray-100 dark:text-green-100",
+                              "bg-gray-900 hover:bg-gray-800 dark:bg-kumquat-base dark:hover:bg-kumquat-ripe",
+                              "text-gray-50 dark:text-gray-900",
                           ]
                         : null,
                     type === "secondary"
@@ -66,6 +69,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                         ? [
                               "bg-red-50 dark:bg-red-300 hover:bg-red-100 dark:hover:bg-red-200",
                               "text-red-600 hover:text-red-700",
+                          ]
+                        : null,
+                    type === "transparent"
+                        ? [
+                              "bg-transparent hover:bg-gray-600 hover:bg-opacity-10 dark:hover:bg-gray-200 dark:hover:bg-opacity-10",
                           ]
                         : null,
                     {
@@ -99,10 +107,10 @@ const ButtonContent: FC<ButtonContentProps> = ({ loading, icon, children }) => {
 
     return (
         <div className="flex items-center justify-center space-x-2">
-            <span className="flex items-center w-5 h-5">
+            <span className="flex justify-center items-center w-5 h-5">
                 {loading ? <SpinnerWhite className="animate-spin" /> : icon ? icon : null}
             </span>
-            <span>{children}</span>
+            {children && <span>{children}</span>}
         </div>
     );
 };

@@ -13,6 +13,7 @@ var Objects = common.CompositeRenderFunc(
 	deployment,
 	networkpolicy,
 	rolebinding,
+	pdb,
 	service,
 	common.DefaultServiceAccount(Component),
 )

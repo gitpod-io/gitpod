@@ -9,32 +9,35 @@ const colors = require("tailwindcss/colors");
 
 module.exports = {
     jit: true,
-    purge: ["./public/**/*.html", "./src/**/*.{js,ts,tsx}"],
+    content: ["./public/**/*.html", "./src/**/*.{js,ts,tsx}"],
     important: true,
     darkMode: "class",
     theme: {
         extend: {
             colors: {
-                gray: colors.warmGray,
                 green: colors.lime,
                 orange: colors.amber,
-                blue: {
-                    light: "#75A9EC",
-                    DEFAULT: "#5C8DD6",
-                    dark: "#265583",
-                },
                 // TODO: figure out if we want to just pull in the specific gitpod-* colors
                 teal: colors.teal,
                 sky: colors.sky,
                 rose: colors.rose,
                 "gitpod-black": "#161616",
-                "gitpod-gray": "#8E8787",
                 "gitpod-red": "#CE4A3E",
-                "gitpod-kumquat-light": "#FFE4BC",
-                "gitpod-kumquat": "#FFB45B",
-                "gitpod-kumquat-dark": "#FF8A00",
-                "gitpod-kumquat-darker": "#f28300",
-                "gitpod-kumquat-gradient": "linear-gradient(137.41deg, #FFAD33 14.37%, #FF8A00 91.32%)",
+                "kumquat-dark": "#FF8A00",
+                "kumquat-base": "#FFAE33",
+                "kumquat-ripe": "#FFB45B",
+                "kumquat-light": "#FFE4BC",
+                "kumquat-gradient": "linear-gradient(137.41deg, #FFAD33 14.37%, #FF8A00 91.32%)",
+                "gray-900": "#12100C",
+                "gray-800": "#23211E",
+                "gray-700": "#514F4D",
+                "gray-600": "#565451",
+                "gray-500": "#666564",
+                "gray-400": "#999795",
+                "gray-300": "#DADADA",
+                "gray-200": "#ECE7E5",
+                "gray-100": "#F5F4F4",
+                "gray-50": "#F9F9F9",
             },
             container: {
                 center: true,
@@ -54,9 +57,14 @@ module.exports = {
                     from: { transform: "translateX(100%)" },
                     to: { transform: "translateX(0)" },
                 },
+                "fade-in": {
+                    "0%": { opacity: "0" },
+                    "100%": { opacity: "1" },
+                },
             },
             animation: {
                 "toast-in-right": "toast-in-right 0.3s ease-in-out",
+                "fade-in": "fade-in 3s linear",
             },
             transitionProperty: {
                 width: "width",

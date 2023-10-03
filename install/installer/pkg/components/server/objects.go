@@ -22,6 +22,7 @@ var Objects = common.CompositeRenderFunc(
 	func(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return Rolebinding(ctx, Component)
 	},
+	pdb,
 	common.GenerateService(Component, []common.ServicePort{
 		{
 			Name:          ContainerPortName,
@@ -57,6 +58,11 @@ var Objects = common.CompositeRenderFunc(
 			Name:          GRPCAPIName,
 			ContainerPort: GRPCAPIPort,
 			ServicePort:   GRPCAPIPort,
+		},
+		{
+			Name:          PublicAPIName,
+			ContainerPort: PublicAPIPort,
+			ServicePort:   PublicAPIPort,
 		},
 	}),
 	common.DefaultServiceAccount(Component),

@@ -19,6 +19,10 @@ import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url"
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/frontend-dashboard-service";
 import { RemoteTrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
+import { helloService } from "./public-api";
+import { getExperimentsClient } from "../experiments/client";
+import { ConnectError, Code } from "@bufbuild/connect";
+import { instrumentWebSocket } from "./metrics";
 
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
@@ -26,6 +30,7 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
     let host = gitpodHostUrl.asWebsocket().with({ pathname: GitpodServerPath }).withApi();
 
     const connectionProvider = new WebSocketConnectionProvider();
+    instrumentWebSocketConnection(connectionProvider);
     let numberOfErrors = 0;
     let onReconnect = () => {};
     const proxy = connectionProvider.createProxy<S>(host.toString(), undefined, {
@@ -49,6 +54,23 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
     return new GitpodServiceImpl<C, S>(proxy, { onReconnect });
 }
 
+function instrumentWebSocketConnection(connectionProvider: WebSocketConnectionProvider): void {
+    const originalCreateWebSocket = connectionProvider["createWebSocket"];
+    connectionProvider["createWebSocket"] = (url: string) => {
+        return originalCreateWebSocket.call(
+            connectionProvider,
+            url,
+            new Proxy(WebSocket, {
+                construct(target: any, argArray) {
+                    const webSocket = new target(...argArray);
+                    instrumentWebSocket(webSocket, "gitpod");
+                    return webSocket;
+                },
+            }),
+        );
+    };
+}
+
 export function getGitpodService(): GitpodService {
     const w = window as any;
     const _gp = w._gp || (w._gp = {});
@@ -56,10 +78,105 @@ export function getGitpodService(): GitpodService {
         const service = _gp.gitpodService || (_gp.gitpodService = require("./service-mock").gitpodServiceMock);
         return service;
     }
-    const service = _gp.gitpodService || (_gp.gitpodService = createGitpodService());
+    let service = _gp.gitpodService;
+    if (!service) {
+        service = _gp.gitpodService = createGitpodService();
+        testPublicAPI(service);
+    }
     return service;
 }
 
+/**
+ * Emulates getWorkspace calls and listen to workspace statuses with Public API.
+ * // TODO(ak): remove after reliability of Public API is confirmed
+ */
+function testPublicAPI(service: any): void {
+    let user: any;
+    service.server = new Proxy(service.server, {
+        get(target, propKey) {
+            return async function (...args: any[]) {
+                if (propKey === "getLoggedInUser") {
+                    user = await target[propKey](...args);
+                    return user;
+                }
+                if (propKey === "getWorkspace") {
+                    try {
+                        return await target[propKey](...args);
+                    } finally {
+                        const grpcType = "unary";
+                        // emulates frequent unary calls to public API
+                        const isTest = await getExperimentsClient().getValueAsync(
+                            "public_api_dummy_reliability_test",
+                            false,
+                            {
+                                user,
+                                gitpodHost: window.location.host,
+                            },
+                        );
+                        if (isTest) {
+                            helloService.sayHello({}).catch((e) => {
+                                console.error(e, {
+                                    userId: user?.id,
+                                    workspaceId: args[0],
+                                    grpcType,
+                                });
+                            });
+                        }
+                    }
+                }
+                return target[propKey](...args);
+            };
+        },
+    });
+    (async () => {
+        const grpcType = "server-stream";
+        const MAX_BACKOFF = 60000;
+        const BASE_BACKOFF = 3000;
+        let backoff = BASE_BACKOFF;
+
+        // emulates server side streaming with public API
+        while (true) {
+            const isTest =
+                !!user &&
+                (await getExperimentsClient().getValueAsync("public_api_dummy_reliability_test", false, {
+                    user,
+                    gitpodHost: window.location.host,
+                }));
+            if (isTest) {
+                try {
+                    let previousCount = 0;
+                    for await (const reply of helloService.lotsOfReplies(
+                        { previousCount },
+                        {
+                            // GCP timeout is 10 minutes, we timeout 3 mins earlier
+                            // to avoid unknown network errors
+                            timeoutMs: 7 * 60 * 1000,
+                        },
+                    )) {
+                        previousCount = reply.count;
+                        backoff = BASE_BACKOFF;
+                    }
+                } catch (e) {
+                    if (e instanceof ConnectError && e.code === Code.DeadlineExceeded) {
+                        // timeout is expected, continue as usual
+                        backoff = BASE_BACKOFF;
+                    } else {
+                        backoff = Math.min(2 * backoff, MAX_BACKOFF);
+                        console.error(e, {
+                            userId: user?.id,
+                            grpcType,
+                        });
+                    }
+                }
+            } else {
+                backoff = BASE_BACKOFF;
+            }
+            const jitter = Math.random() * 0.3 * backoff;
+            const delay = backoff + jitter;
+            await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+    })();
+}
 let ideFrontendService: IDEFrontendService | undefined;
 export function getIDEFrontendService(workspaceID: string, sessionId: string, service: GitpodService) {
     if (!ideFrontendService) {

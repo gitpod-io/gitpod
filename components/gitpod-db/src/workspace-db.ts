@@ -117,11 +117,10 @@ export interface WorkspaceDB {
         limit: number,
         orderBy: keyof Workspace,
         orderDir: "ASC" | "DESC",
-        ownerId?: string,
-        searchTerm?: string,
-        minCreationTime?: Date,
-        maxCreationDateTime?: Date,
-        type?: WorkspaceType,
+        opts: {
+            ownerId?: string;
+            type?: WorkspaceType;
+        },
     ): Promise<{ total: number; rows: Workspace[] }>;
     findAllWorkspaceAndInstances(
         offset: number,
@@ -131,23 +130,10 @@ export interface WorkspaceDB {
         query?: AdminGetWorkspacesQuery,
     ): Promise<{ total: number; rows: WorkspaceAndInstance[] }>;
     findWorkspaceAndInstance(id: string): Promise<WorkspaceAndInstance | undefined>;
-    findInstancesByPhaseAndRegion(phase: string, region: string): Promise<WorkspaceInstance[]>;
+    findInstancesByPhase(phases: string[]): Promise<WorkspaceInstance[]>;
 
     getWorkspaceCount(type?: String): Promise<Number>;
-    getWorkspaceCountByCloneURL(cloneURL: string, sinceLastDays?: number, type?: string): Promise<number>;
     getInstanceCount(type?: string): Promise<number>;
-
-    findAllWorkspaceInstances(
-        offset: number,
-        limit: number,
-        orderBy: keyof WorkspaceInstance,
-        orderDir: "ASC" | "DESC",
-        ownerId?: string,
-        minCreationTime?: Date,
-        maxCreationTime?: Date,
-        onlyRunning?: boolean,
-        type?: WorkspaceType,
-    ): Promise<{ total: number; rows: WorkspaceInstance[] }>;
 
     findRegularRunningInstances(userId?: string): Promise<WorkspaceInstance[]>;
     findRunningInstancesWithWorkspaces(
@@ -171,17 +157,15 @@ export interface WorkspaceDB {
     updateSnapshot(snapshot: DeepPartial<Snapshot> & Pick<Snapshot, "id">): Promise<void>;
 
     storePrebuiltWorkspace(pws: PrebuiltWorkspace): Promise<PrebuiltWorkspace>;
-    findPrebuiltWorkspaceByCommit(cloneURL: string, commit: string): Promise<PrebuiltWorkspace | undefined>;
+    findPrebuiltWorkspaceByCommit(projectId: string, commit: string): Promise<PrebuiltWorkspace | undefined>;
     findActivePrebuiltWorkspacesByBranch(
         projectId: string,
         branch: string,
     ): Promise<PrebuildWithWorkspaceAndInstances[]>;
-    findPrebuildsWithWorkpace(cloneURL: string): Promise<PrebuildWithWorkspace[]>;
+    findPrebuildsWithWorkspace(projectId: string): Promise<PrebuildWithWorkspace[]>;
     findPrebuildByWorkspaceID(wsid: string): Promise<PrebuiltWorkspace | undefined>;
     findPrebuildByID(pwsid: string): Promise<PrebuiltWorkspace | undefined>;
-    countRunningPrebuilds(cloneURL: string): Promise<number>;
-    countUnabortedPrebuildsSince(cloneURL: string, date: Date): Promise<number>;
-    findQueuedPrebuilds(cloneURL?: string): Promise<PrebuildWithWorkspace[]>;
+    countUnabortedPrebuildsSince(projectId: string, date: Date): Promise<number>;
     attachUpdatableToPrebuild(pwsid: string, update: PrebuiltWorkspaceUpdatable): Promise<void>;
     findUpdatablesForPrebuild(pwsid: string): Promise<PrebuiltWorkspaceUpdatable[]>;
     markUpdatableResolved(updatableId: string): Promise<void>;

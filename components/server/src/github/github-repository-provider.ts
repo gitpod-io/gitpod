@@ -10,7 +10,7 @@ import { User, Repository } from "@gitpod/gitpod-protocol";
 import { GitHubGraphQlEndpoint, GitHubRestApi } from "./api";
 import { RepositoryProvider } from "../repohost/repository-provider";
 import { RepoURL } from "../repohost/repo-url";
-import { Branch, CommitInfo } from "@gitpod/gitpod-protocol/lib/protocol";
+import { Branch, CommitInfo, RepositoryInfo } from "@gitpod/gitpod-protocol/lib/protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
@@ -171,29 +171,114 @@ export class GithubRepositoryProvider implements RepositoryProvider {
         }
     }
 
-    async getUserRepos(user: User): Promise<string[]> {
-        // Hint: Use this to get richer results:
-        //   node {
-        //       nameWithOwner
-        //       shortDescriptionHTML(limit: 120)
-        //       url
-        //   }
+    async getUserRepos(user: User): Promise<RepositoryInfo[]> {
         const result: any = await this.githubQueryApi.runQuery(
             user,
             `
-            query {
+            fragment Repos on RepositoryConnection {
+                nodes {
+                  url
+                  name
+                }
+              }
+
+              query topRepositories {
                 viewer {
-                    repositoriesContributedTo(includeUserRepositories: true, first: 100) {
-                        edges {
-                            node {
+                  contributedTo: repositoriesContributedTo(
+                    first: 100
+                    orderBy: {field: PUSHED_AT, direction: DESC}
+                    includeUserRepositories: true
+                    contributionTypes: [COMMIT]
+                  ) {
+                    ...Repos
+                  }
+                  original: repositories(
+                    first: 100
+                    ownerAffiliations: OWNER
+                    isFork: false
+                    isLocked: false
+                    orderBy: {field: UPDATED_AT, direction: DESC}
+                  ) {
+                    ...Repos
+                  }
+                  forked: repositories(
+                    first: 100
+                    ownerAffiliations: OWNER
+                    isFork: true
+                    isLocked: false
+                    orderBy: {field: UPDATED_AT, direction: DESC}
+                  ) {
+                    ...Repos
+                  }
+                }
+              }`,
+        );
+
+        let repos: RepositoryInfo[] = [];
+
+        for (const type of ["contributedTo", "original", "forked"]) {
+            const nodes = result.data.viewer[type]?.nodes;
+            if (nodes) {
+                repos = nodes.map((n: any): RepositoryInfo => {
+                    return {
+                        name: n.name,
+                        url: n.url,
+                    };
+                });
+            }
+        }
+        return repos;
+    }
+
+    public async searchRepos(user: User, searchString: string): Promise<RepositoryInfo[]> {
+        const logCtx = { userId: user.id };
+
+        // graphql api only returns public orgs, so we need to use the rest api to get both public & private orgs
+        const orgs = await this.github.run(user, async (api) => {
+            return api.orgs.listMembershipsForAuthenticatedUser({
+                state: "active",
+            });
+        });
+
+        // TODO: determine if there's a maximum # of orgs we can include in a single query and split into multiple calls if necessary
+        // A string of org query filters, i.e. "org:org1 org:org2 org:org3"
+        const orgFilters = orgs?.data.map((org) => `org:${org.organization.login}`).join(" ");
+
+        const query = JSON.stringify(`${searchString} in:name user:@me ${orgFilters}`);
+        const repoSearchQuery = `
+            query SearchRepos {
+                search (type: REPOSITORY, first: 10, query: ${query}){
+                    edges {
+                        node {
+                            ... on Repository {
+                                name
                                 url
+                                owner {
+                                    login
+                                }
                             }
                         }
                     }
                 }
-            }`,
-        );
-        return (result.data.viewer?.repositoriesContributedTo?.edges || []).map((edge: any) => edge.node.url);
+            }`;
+
+        let repos: RepositoryInfo[] = [];
+
+        try {
+            const result = await this.githubQueryApi.runQuery<SearchReposQueryResponse>(user, repoSearchQuery);
+            repos = result.data.search.edges.map((edge) => {
+                return {
+                    name: edge.node.name,
+                    url: edge.node.url,
+                };
+            });
+        } catch (e) {
+            log.warn(logCtx, "Error searching repos", e, { orgCount: orgFilters.length });
+
+            throw e;
+        }
+
+        return repos;
     }
 
     async hasReadAccess(user: User, owner: string, repo: string): Promise<boolean> {
@@ -217,3 +302,14 @@ export class GithubRepositoryProvider implements RepositoryProvider {
         }
     }
 }
+
+type SearchReposQueryResponse = {
+    search: {
+        edges: {
+            node: {
+                name: string;
+                url: string;
+            };
+        }[];
+    };
+};

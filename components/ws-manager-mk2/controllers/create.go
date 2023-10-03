@@ -22,7 +22,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
-	ctrl "sigs.k8s.io/controller-runtime"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -99,9 +98,7 @@ func (r *WorkspaceReconciler) createWorkspacePod(sctx *startWorkspaceContext) (*
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create definite workspace pod: %w", err)
 	}
-	if err := ctrl.SetControllerReference(sctx.Workspace, pod, r.Scheme); err != nil {
-		return nil, err
-	}
+
 	err = combineDefiniteWorkspacePodWithTemplate(pod, podTemplate)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
@@ -317,6 +314,17 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 		},
 	}
 
+	if sctx.Config.EnableCustomSSLCertificate {
+		volumes = append(volumes, corev1.Volume{
+			Name: "gitpod-ca-crt",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{Name: "gitpod-customer-certificate-bundle"},
+				},
+			},
+		})
+	}
+
 	workloadType := "regular"
 	if sctx.Headless {
 		workloadType = "headless"
@@ -335,18 +343,6 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 			Key:      "gitpod.io/registry-facade_ready_ns_" + sctx.Config.Namespace,
 			Operator: corev1.NodeSelectorOpExists,
 		},
-	}
-
-	if sctx.Config.ExperimentalMode {
-		matchExpressions = append(matchExpressions, corev1.NodeSelectorRequirement{
-			Key:      "gitpod.io/experimental",
-			Operator: corev1.NodeSelectorOpExists,
-		})
-	} else {
-		matchExpressions = append(matchExpressions, corev1.NodeSelectorRequirement{
-			Key:      "gitpod.io/experimental",
-			Operator: corev1.NodeSelectorOpDoesNotExist,
-		})
 	}
 
 	affinity := &corev1.Affinity{
@@ -463,6 +459,29 @@ func createWorkspaceContainer(sctx *startWorkspaceContext) (*corev1.Container, e
 
 	image := fmt.Sprintf("%s/%s/%s", sctx.Config.RegistryFacadeHost, regapi.ProviderPrefixRemote, sctx.Workspace.Name)
 
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:             workspaceVolumeName,
+			MountPath:        workspaceDir,
+			ReadOnly:         false,
+			MountPropagation: &mountPropagation,
+		},
+		{
+			MountPath:        "/.workspace",
+			Name:             "daemon-mount",
+			MountPropagation: &mountPropagation,
+		},
+	}
+
+	if sctx.Config.EnableCustomSSLCertificate {
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "gitpod-ca-crt",
+			MountPath: "/etc/ssl/certs/gitpod-ca.crt",
+			SubPath:   "ca-certificates.crt",
+			ReadOnly:  true,
+		})
+	}
+
 	return &corev1.Container{
 		Name:            "workspace",
 		Image:           image,
@@ -475,19 +494,7 @@ func createWorkspaceContainer(sctx *startWorkspaceContext) (*corev1.Container, e
 			Limits:   limits,
 			Requests: requests,
 		},
-		VolumeMounts: []corev1.VolumeMount{
-			{
-				Name:             workspaceVolumeName,
-				MountPath:        workspaceDir,
-				ReadOnly:         false,
-				MountPropagation: &mountPropagation,
-			},
-			{
-				MountPath:        "/.workspace",
-				Name:             "daemon-mount",
-				MountPropagation: &mountPropagation,
-			},
-		},
+		VolumeMounts:             volumeMounts,
 		ReadinessProbe:           readinessProbe,
 		Env:                      env,
 		Command:                  command,
@@ -551,6 +558,17 @@ func createWorkspaceEnvironment(sctx *startWorkspaceContext) ([]corev1.EnvVar, e
 	if sctx.Workspace.Spec.Git != nil {
 		result = append(result, corev1.EnvVar{Name: "GITPOD_GIT_USER_NAME", Value: sctx.Workspace.Spec.Git.Username})
 		result = append(result, corev1.EnvVar{Name: "GITPOD_GIT_USER_EMAIL", Value: sctx.Workspace.Spec.Git.Email})
+	}
+
+	if sctx.Config.EnableCustomSSLCertificate {
+		const (
+			customCAMountPath = "/etc/ssl/certs/gitpod-ca.crt"
+			certsMountPath    = "/etc/ssl/certs/"
+		)
+
+		result = append(result, corev1.EnvVar{Name: "NODE_EXTRA_CA_CERTS", Value: customCAMountPath})
+		result = append(result, corev1.EnvVar{Name: "GIT_SSL_CAPATH", Value: certsMountPath})
+		result = append(result, corev1.EnvVar{Name: "GIT_SSL_CAINFO", Value: customCAMountPath})
 	}
 
 	// System level env vars

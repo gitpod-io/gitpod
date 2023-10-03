@@ -12,15 +12,16 @@ import {
     OrganizationSettings,
 } from "@gitpod/gitpod-protocol";
 import { DBTeamMembership } from "./typeorm/entity/db-team-membership";
+import { TransactionalDB } from "./typeorm/transactional-db-impl";
 
 export const TeamDB = Symbol("TeamDB");
-export interface TeamDB {
+export interface TeamDB extends TransactionalDB<TeamDB> {
     findTeams(
         offset: number,
         limit: number,
         orderBy: keyof Team,
         orderDir: "ASC" | "DESC",
-        searchTerm: string,
+        searchTerm?: string,
     ): Promise<{ total: number; rows: Team[] }>;
     findTeamById(teamId: string): Promise<Team | undefined>;
     findTeamByMembershipId(membershipId: string): Promise<Team | undefined>;

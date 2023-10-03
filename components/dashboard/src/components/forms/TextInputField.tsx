@@ -21,6 +21,7 @@ type Props = {
     placeholder?: string;
     disabled?: boolean;
     required?: boolean;
+    topMargin?: boolean;
     containerClassName?: string;
     onChange: (newValue: string) => void;
     onBlur?: () => void;
@@ -37,6 +38,7 @@ export const TextInputField: FunctionComponent<Props> = memo(
         error,
         disabled = false,
         required = false,
+        topMargin,
         containerClassName,
         onChange,
         onBlur,
@@ -45,7 +47,14 @@ export const TextInputField: FunctionComponent<Props> = memo(
         const elementId = id || maybeId;
 
         return (
-            <InputField id={elementId} label={label} hint={hint} error={error} className={containerClassName}>
+            <InputField
+                id={elementId}
+                label={label}
+                hint={hint}
+                error={error}
+                topMargin={topMargin}
+                className={containerClassName}
+            >
                 <TextInput
                     id={elementId}
                     value={value}
@@ -70,7 +79,7 @@ type TextInputProps = {
     placeholder?: string;
     disabled?: boolean;
     required?: boolean;
-    onChange: (newValue: string) => void;
+    onChange?: (newValue: string) => void;
     onBlur?: () => void;
 };
 
@@ -78,7 +87,7 @@ export const TextInput: FunctionComponent<TextInputProps> = memo(
     ({ type = "text", value, className, id, placeholder, disabled = false, required = false, onChange, onBlur }) => {
         const handleChange = useCallback(
             (e) => {
-                onChange(e.target.value);
+                onChange && onChange(e.target.value);
             },
             [onChange],
         );

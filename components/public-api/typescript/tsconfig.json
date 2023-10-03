@@ -3,9 +3,11 @@
         "rootDir": "src",
         "experimentalDecorators": true,
         "outDir": "lib",
+        "declarationDir": "lib",
         "lib": [
             "es6",
-            "esnext.asynciterable"
+            "esnext.asynciterable",
+            "DOM"
         ],
         "strict": true,
         "noEmitOnError": false,
@@ -13,7 +15,7 @@
         "emitDecoratorMetadata": true,
         "strictPropertyInitialization": false,
         "downlevelIteration": true,
-        "module": "commonjs",
+        "module": "CommonJS",
         "moduleResolution": "node",
         "target": "es6",
         "jsx": "react",

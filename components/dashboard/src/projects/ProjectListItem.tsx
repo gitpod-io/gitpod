@@ -25,6 +25,8 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
     const [showRemoveModal, setShowRemoveModal] = useState(false);
     const { data: prebuild, isLoading } = useLatestProjectPrebuildQuery({ projectId: project.id });
 
+    const enablePrebuilds = Project.isPrebuildsEnabled(project);
+
     return (
         <div key={`project-${project.id}`} className="h-52">
             <div className="h-42 border border-gray-100 dark:border-gray-800 rounded-t-xl">
@@ -72,7 +74,16 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                 </div>
             </div>
             <div className="h-10 px-4 border rounded-b-xl dark:border-gray-800 bg-gray-100 border-gray-100 dark:bg-gray-800">
-                {prebuild ? (
+                {!enablePrebuilds ? (
+                    <div className="flex h-full text-sm">
+                        <Link
+                            to={`/projects/${Project.slug(project!)}/settings`}
+                            className="flex-shrink-0 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        >
+                            Enable Prebuilds &rarr;
+                        </Link>
+                    </div>
+                ) : prebuild ? (
                     <div className="flex flex-row h-full text-sm space-x-4">
                         <Link
                             to={`/projects/${Project.slug(project!)}/${prebuild?.info?.id}`}
@@ -100,11 +111,11 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                         </Link>
                     </div>
                 ) : isLoading ? (
-                    <div className="flex h-full text-md">
+                    <div className="flex h-full text-sm">
                         <p className="my-auto ">...</p>
                     </div>
                 ) : (
-                    <div className="flex h-full text-md">
+                    <div className="flex h-full text-sm">
                         <p className="my-auto ">No recent prebuilds</p>
                     </div>
                 )}

@@ -43,8 +43,8 @@ export type Constraint = (all: WorkspaceClusterWoTLS[], args: ConstraintArgs) =>
 
 export type ConstraintArgs = {
     user: User;
-    workspace: Workspace;
-    instance: WorkspaceInstance;
+    workspace?: Workspace;
+    instance?: WorkspaceInstance;
     region?: string;
 };
 

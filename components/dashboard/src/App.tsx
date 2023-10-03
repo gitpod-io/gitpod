@@ -12,8 +12,10 @@ import { useAnalyticsTracking } from "./hooks/use-analytics-tracking";
 import { useUserLoader } from "./hooks/use-user-loader";
 import { Login } from "./Login";
 import { AppBlockingFlows } from "./app/AppBlockingFlows";
-import { Route, Switch, useHistory } from "react-router";
+import { Route, Switch, useHistory, useLocation } from "react-router";
 import { ErrorPages } from "./error-pages/ErrorPages";
+import { LinkedInCallback } from "react-linkedin-login-oauth2";
+import { useQueryParams } from "./hooks/use-query-params";
 
 export const StartWorkspaceModalKeyBinding = `${/(Mac|iPhone|iPod|iPad)/i.test(navigator.platform) ? "⌘" : "Ctrl﹢"}O`;
 
@@ -22,6 +24,8 @@ const App: FC = () => {
     const { user, loading } = useUserLoader();
     const currentOrgQuery = useCurrentOrg();
     const history = useHistory();
+    const location = useLocation();
+    const search = useQueryParams();
 
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
@@ -38,6 +42,10 @@ const App: FC = () => {
 
     // Setup analytics/tracking
     useAnalyticsTracking();
+
+    if (location.pathname === "/linkedin" && search.get("code") && search.get("state")) {
+        return <LinkedInCallback />;
+    }
 
     if (loading) {
         return <AppLoading />;

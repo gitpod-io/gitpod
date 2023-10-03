@@ -20,7 +20,7 @@ import (
 	"github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/typeurl"
+	"github.com/containerd/typeurl/v2"
 	ocispecs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
@@ -38,7 +38,7 @@ const (
 )
 
 // NewContainerd creates a new containerd adapter
-func NewContainerd(cfg *ContainerdConfig, mounts *NodeMountsLookup, pathMapping PathMapping) (*Containerd, error) {
+func NewContainerd(cfg *ContainerdConfig, pathMapping PathMapping) (*Containerd, error) {
 	cc, err := containerd.New(cfg.SocketPath, containerd.WithDefaultNamespace(kubernetesNamespace))
 	if err != nil {
 		return nil, xerrors.Errorf("cannot connect to containerd at %s: %w", cfg.SocketPath, err)
@@ -52,7 +52,6 @@ func NewContainerd(cfg *ContainerdConfig, mounts *NodeMountsLookup, pathMapping 
 
 	res := &Containerd{
 		Client:  cc,
-		Mounts:  mounts,
 		Mapping: pathMapping,
 
 		cond:   sync.NewCond(&sync.Mutex{}),
@@ -68,7 +67,6 @@ func NewContainerd(cfg *ContainerdConfig, mounts *NodeMountsLookup, pathMapping 
 // Containerd implements the ws-daemon CRI for containerd
 type Containerd struct {
 	Client  *containerd.Client
-	Mounts  *NodeMountsLookup
 	Mapping PathMapping
 
 	cond   *sync.Cond
@@ -300,7 +298,7 @@ func (s *Containerd) handleNewTask(cid string, rootfs []*types.Mount, pid uint32
 		mnts, err := s.Client.SnapshotService(info.Snapshotter).Mounts(ctx, info.SnapshotKey)
 		cancel()
 		if err != nil {
-			log.WithError(err).Warnf("cannot get mounts for container %v", cid)
+			log.WithError(err).WithFields(log.OWI(info.OwnerID, info.WorkspaceID, info.InstanceID)).Warnf("cannot get mounts for container %v", cid)
 		}
 		for _, m := range mnts {
 			rootfs = append(rootfs, &types.Mount{
@@ -440,27 +438,18 @@ func (s *Containerd) ContainerExists(ctx context.Context, id ID) (exists bool, e
 
 // ContainerRootfs finds the workspace container's rootfs.
 func (s *Containerd) ContainerRootfs(ctx context.Context, id ID, opts OptsContainerRootfs) (loc string, err error) {
-	info, ok := s.cntIdx[string(id)]
+	_, ok := s.cntIdx[string(id)]
 	if !ok {
 		return "", ErrNotFound
 	}
 
-	// TODO(cw): make this less brittle
-	// We can't get the rootfs location on the node from containerd somehow.
-	// As a workaround we'll look at the node's mount table using the snapshotter key.
-	// This feels brittle and we should keep looking for a better way.
-	mnt, err := s.Mounts.GetMountpoint(func(mountPoint string) bool {
-		return strings.Contains(mountPoint, info.SnapshotKey)
-	})
-	if err != nil {
-		return
-	}
+	rootfs := fmt.Sprintf("/run/containerd/io.containerd.runtime.v2.task/k8s.io/%v/rootfs", id)
 
 	if opts.Unmapped {
-		return mnt, nil
+		return rootfs, nil
 	}
 
-	return s.Mapping.Translate(mnt)
+	return s.Mapping.Translate(rootfs)
 }
 
 // ContainerCGroupPath finds the container's cgroup path suffix
@@ -499,7 +488,7 @@ var kubepodsRegexp = regexp.MustCompile(`([^/]+)-pod`)
 // in a container's OCI spec.
 func ExtractCGroupPathFromContainer(container containers.Container) (cgroupPath string, err error) {
 	var spec ocispecs.Spec
-	err = json.Unmarshal(container.Spec.Value, &spec)
+	err = json.Unmarshal(container.Spec.GetValue(), &spec)
 	if err != nil {
 		return
 	}

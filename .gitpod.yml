@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-prebuild-jam-gha.5832
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-update-image-gha.17642
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
@@ -52,7 +52,6 @@ tasks:
           (cd install/installer && make deps)
           exit 0
     - name: Java
-      init: leeway run components/supervisor-api:generate-java
       command: |
           if [ -z "$RUN_GRADLE_TASK" ]; then
             read -r -p "Press enter to continue Java gradle task"
@@ -82,3 +81,4 @@ vscode:
         - dbaeumer.vscode-eslint
         - esbenp.prettier-vscode
         - akosyakov.gitpod-monitor
+        - hbenl.vscode-mocha-test-adapter

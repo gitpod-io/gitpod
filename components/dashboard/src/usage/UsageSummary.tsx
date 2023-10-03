@@ -8,12 +8,14 @@ import { FC } from "react";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { Subheading } from "../components/typography/headings";
 import { Link } from "react-router-dom";
+import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
 
 type Props = {
     creditsUsed?: number;
 };
 export const UsageSummaryData: FC<Props> = ({ creditsUsed }) => {
     const currentOrg = useCurrentOrg();
+    const { data: billingMode } = useOrgBillingMode();
 
     return (
         <div className="flex flex-row">
@@ -24,7 +26,7 @@ export const UsageSummaryData: FC<Props> = ({ creditsUsed }) => {
                         {creditsUsed !== undefined ? creditsUsed.toLocaleString() : "-"}
                     </span>
                 </div>
-                {currentOrg.data && currentOrg.data.isOwner && (
+                {currentOrg.data && currentOrg.data.isOwner && billingMode?.mode === "usage-based" && (
                     <div className="flex text-xs text-gray-600">
                         <span className="dark:text-gray-500 text-gray-400">
                             <Link to="/billing" className="gp-link">

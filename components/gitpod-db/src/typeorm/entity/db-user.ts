@@ -103,4 +103,10 @@ export class DBUser implements User {
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     verificationPhoneNumber?: string;
+
+    @Column({
+        default: 0,
+        transformer: Transformer.MAP_ZERO_TO_UNDEFINED,
+    })
+    fgaRelationshipsVersion?: number;
 }

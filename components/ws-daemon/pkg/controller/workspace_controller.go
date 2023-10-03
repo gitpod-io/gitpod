@@ -123,7 +123,7 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	glog.WithField("workspace", req.NamespacedName).WithField("phase", workspace.Status.Phase).Info("reconciling workspace")
+	glog.WithFields(workspace.OWI()).WithField("workspace", req.NamespacedName).WithField("phase", workspace.Status.Phase).Info("reconciling workspace")
 
 	if workspace.Status.Phase == workspacev1.WorkspacePhaseCreating ||
 		workspace.Status.Phase == workspacev1.WorkspacePhaseInitializing {
@@ -155,7 +155,7 @@ func (wsc *WorkspaceController) latestWorkspace(ctx context.Context, ws *workspa
 
 	err := wsc.Client.Status().Update(ctx, ws)
 	if err != nil && !errors.IsConflict(err) {
-		glog.Warnf("could not refresh workspace: %v", err)
+		glog.WithFields(ws.OWI()).Warnf("could not refresh workspace: %v", err)
 	}
 
 	return err
@@ -293,10 +293,9 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 			WorkspaceID: ws.Spec.Ownership.WorkspaceID,
 			InstanceID:  ws.Name,
 		},
-		WorkspaceLocation: ws.Spec.WorkspaceLocation,
-		SnapshotName:      snapshotName,
-		BackupLogs:        ws.Spec.Type == workspacev1.WorkspaceTypePrebuild,
-		UpdateGitStatus:   ws.Spec.Type == workspacev1.WorkspaceTypeRegular,
+		SnapshotName:    snapshotName,
+		BackupLogs:      ws.Spec.Type == workspacev1.WorkspaceTypePrebuild,
+		UpdateGitStatus: ws.Spec.Type == workspacev1.WorkspaceTypeRegular,
 	})
 
 	err = retry.RetryOnConflict(retryParams, func() error {
@@ -409,7 +408,7 @@ func (m *workspaceMetrics) recordInitializeTime(duration float64, ws *workspacev
 
 	hist, err := m.initializeTimeHistVec.GetMetricWithLabelValues(tpe, class)
 	if err != nil {
-		glog.WithError(err).WithField("type", tpe).WithField("class", class).Infof("could not retrieve initialize metric")
+		glog.WithError(err).WithFields(ws.OWI()).WithField("type", tpe).WithField("class", class).Infof("could not retrieve initialize metric")
 	}
 
 	hist.Observe(duration)
@@ -421,7 +420,7 @@ func (m *workspaceMetrics) recordFinalizeTime(duration float64, ws *workspacev1.
 
 	hist, err := m.finalizeTimeHistVec.GetMetricWithLabelValues(tpe, class)
 	if err != nil {
-		glog.WithError(err).WithField("type", tpe).WithField("class", class).Infof("could not retrieve finalize metric")
+		glog.WithError(err).WithFields(ws.OWI()).WithField("type", tpe).WithField("class", class).Infof("could not retrieve finalize metric")
 	}
 
 	hist.Observe(duration)

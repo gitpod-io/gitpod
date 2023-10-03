@@ -17,17 +17,13 @@ message Project {
     // team_id will be empty if the Project belongs to a User, in which case user_id will be set.
     string team_id = 2;
 
-    // User ID is the User this Project belongs to.
-    // user_id will be empty if the Project belongs to a Team, in which case team_id will be set.
-    string user_id = 3;
+    reserved 3;
 
     // Name is the name of the Project.
     // Required.
     string name = 4;
 
-    // Slug is a short-hand identifier for a project.
-    // Read-only.
-    string slug = 5;
+    reserved 5;
 
     // Clone URL is the clone URL on which this Project is based.
     // Required.
@@ -51,6 +47,9 @@ message PrebuildSettings {
     bool keep_outdated_prebuilds_running = 2;
     bool use_previous_prebuilds = 3;
     int32 prebuild_every_nth = 4;
+    optional bool enable_prebuilds = 5;
+    optional bool prebuild_default_branch_only = 6;
+    optional string prebuild_branch_pattern = 7;
 }
 
 message WorkspaceSettings {
@@ -94,8 +93,7 @@ message GetProjectResponse {
 }
 
 message ListProjectsRequest {
-    // User ID filters Projects owned by user_id
-    string user_id = 1;
+    reserved 1;
 
     // Team ID filters Projects owned by team_id
     string team_id = 2;

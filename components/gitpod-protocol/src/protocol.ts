@@ -8,7 +8,6 @@ import { WorkspaceInstance, PortVisibility, PortProtocol } from "./workspace-ins
 import { RoleOrPermission } from "./permission";
 import { Project } from "./teams-projects-protocol";
 import { createHash } from "crypto";
-import { AttributionId } from "./attribution";
 import { WorkspaceRegion } from "./workspace-cluster";
 
 export interface UserInfo {
@@ -59,6 +58,9 @@ export interface User {
 
     // The phone number used for the last phone verification.
     verificationPhoneNumber?: string;
+
+    // The FGA relationships version of this user
+    fgaRelationshipsVersion?: number;
 }
 
 export namespace User {
@@ -209,17 +211,6 @@ export namespace User {
         return user;
     }
 
-    export function getDefaultAttributionId(user: User): AttributionId {
-        if (user.usageAttributionId) {
-            const result = AttributionId.parse(user.usageAttributionId);
-            if (!result) {
-                throw new Error("Invalid attribution ID: " + user.usageAttributionId);
-            }
-            return result;
-        }
-        return AttributionId.create(user);
-    }
-
     // TODO: refactor where this is referenced so it's more clearly tied to just analytics-tracking
     // Let other places rely on the ProfileDetails type since that's what we store
     // This is the profile data we send to our Segment analytics tracking pipeline
@@ -279,10 +270,7 @@ export interface AdditionalUserData extends Partial<WorkspaceTimeoutSetting> {
     workspaceClasses?: WorkspaceClasses;
     // additional user profile data
     profile?: ProfileDetails;
-    // whether the user has been migrated to team attribution.
-    isMigratedToTeamOnlyAttribution?: boolean;
     shouldSeeMigrationMessage?: boolean;
-
     // remembered workspace auto start options
     workspaceAutostartOptions?: WorkspaceAutostartOption[];
 }
@@ -409,12 +397,14 @@ export interface EnvVarWithValue {
 }
 
 export interface ProjectEnvVarWithValue extends EnvVarWithValue {
-    id: string;
-    projectId: string;
+    id?: string;
     censored: boolean;
 }
 
-export type ProjectEnvVar = Omit<ProjectEnvVarWithValue, "value">;
+export interface ProjectEnvVar extends Omit<ProjectEnvVarWithValue, "value"> {
+    id: string;
+    projectId: string;
+}
 
 export interface UserEnvVarValue extends EnvVarWithValue {
     id?: string;
@@ -661,7 +651,7 @@ export namespace SSHPublicKeyValue {
 
     export function getFingerprint(value: SSHPublicKeyValue) {
         const data = getData(value);
-        let buf = Buffer.from(data.key, "base64");
+        const buf = Buffer.from(data.key, "base64");
         // gitlab style
         // const hash = createHash("md5").update(buf).digest("hex");
         // github style
@@ -806,10 +796,7 @@ export type SnapshotState = "pending" | "available" | "error";
 export interface Workspace {
     id: string;
     creationTime: string;
-    /**
-     * undefined means it is owned by the user (legacy mode, soon to be removed)
-     */
-    organizationId?: string;
+    organizationId: string;
     contextURL: string;
     description: string;
     ownerId: string;
@@ -871,20 +858,6 @@ export type WorkspaceSoftDeletion = "user" | "gc";
 export type WorkspaceType = "regular" | "prebuild";
 
 export namespace Workspace {
-    export function getFullRepositoryName(ws: Workspace): string | undefined {
-        if (CommitContext.is(ws.context)) {
-            return ws.context.repository.owner + "/" + ws.context.repository.name;
-        }
-        return undefined;
-    }
-
-    export function getFullRepositoryUrl(ws: Workspace): string | undefined {
-        if (CommitContext.is(ws.context)) {
-            return `https://${ws.context.repository.host}/${getFullRepositoryName(ws)}`;
-        }
-        return undefined;
-    }
-
     export function getPullRequestNumber(ws: Workspace): number | undefined {
         if (PullRequestContext.is(ws.context)) {
             return ws.context.nr;
@@ -987,12 +960,11 @@ export interface WorkspaceConfig {
      * Where the config object originates from.
      *
      * repo - from the repository
-     * definitly-gp - from github.com/gitpod-io/definitely-gp
      * derived - computed based on analyzing the repository
      * additional-content - config comes from additional content, usually provided through the project's configuration
      * default - our static catch-all default config
      */
-    _origin?: "repo" | "definitely-gp" | "derived" | "additional-content" | "default";
+    _origin?: "repo" | "derived" | "additional-content" | "default";
 
     /**
      * Set of automatically infered feature flags. That's not something the user can set, but
@@ -1395,6 +1367,10 @@ export namespace CommitContext {
         }
         return hasher.digest("hex");
     }
+
+    export function isDefaultBranch(commitContext: CommitContext): boolean {
+        return commitContext.ref === commitContext.repository.defaultBranch;
+    }
 }
 
 export interface GitCheckoutInfo extends Commit {
@@ -1465,6 +1441,12 @@ export interface Repository {
         parent: Repository;
     };
 }
+
+export interface RepositoryInfo {
+    url: string;
+    name: string;
+}
+
 export interface Branch {
     name: string;
     commit: CommitInfo;
@@ -1644,3 +1626,10 @@ export interface LinkedInProfile {
     profilePicture: string;
     emailAddress: string;
 }
+
+export type SuggestedRepository = {
+    url: string;
+    projectId?: string;
+    projectName?: string;
+    repositoryName?: string;
+};

@@ -15,7 +15,7 @@ import { oauthUrls as gitlabUrls } from "../gitlab/gitlab-urls";
 import { oauthUrls as bbsUrls } from "../bitbucket-server/bitbucket-server-urls";
 import { oauthUrls as bbUrls } from "../bitbucket/bitbucket-urls";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import isReachable = require("is-reachable");
+import fetch from "node-fetch";
 
 @injectable()
 export class AuthProviderService {
@@ -122,8 +122,6 @@ export class AuthProviderService {
     }
 
     async updateOrgAuthProvider(entry: AuthProviderEntry.UpdateOrgEntry): Promise<AuthProviderEntry> {
-        let authProvider: AuthProviderEntry;
-
         const { id, organizationId } = entry;
         // TODO can we change this to query for the provider by id and org instead of loading all from org?
         const existing = (await this.authProviderDB.findByOrgId(organizationId)).find((p) => p.id === id);
@@ -144,7 +142,7 @@ export class AuthProviderService {
             clientId: entry.clientId,
             clientSecret: entry.clientSecret || existing.oauth.clientSecret, // FE may send empty ("") if not changed
         };
-        authProvider = {
+        const authProvider: AuthProviderEntry = {
             ...existing,
             oauth,
             status: "pending",
@@ -175,7 +173,7 @@ export class AuthProviderService {
         }
         const oauth: AuthProviderEntry["oauth"] = {
             ...urls,
-            callBackUrl: this.callbackUrl(host),
+            callBackUrl: this.callbackUrl(),
             clientId: clientId!,
             clientSecret: clientSecret!,
         };
@@ -239,13 +237,18 @@ export class AuthProviderService {
         }
     }
 
-    protected callbackUrl = (host: string) => {
-        const safeHost = host.replace(":", "_");
-        const pathname = `/auth/${safeHost}/callback`;
+    protected callbackUrl = () => {
+        const pathname = `/auth/callback`;
         return this.config.hostUrl.with({ pathname }).toString();
     };
 
-    async isHostReachable(host: string) {
-        return await isReachable(host, { timeout: 2000 });
+    async isHostReachable(host: string): Promise<boolean> {
+        try {
+            const resp = await fetch(`https://${host}`, { timeout: 2000 });
+            return resp.ok;
+        } catch (error) {
+            console.log(`Host is not reachable: ${host}`);
+        }
+        return false;
     }
 }

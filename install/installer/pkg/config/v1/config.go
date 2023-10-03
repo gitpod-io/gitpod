@@ -121,8 +121,6 @@ type Config struct {
 
 	Database Database `json:"database" validate:"required"`
 
-	MessageBus *MessageBus `json:"messageBus,omitempty"`
-
 	ObjectStorage ObjectStorage `json:"objectStorage" validate:"required"`
 
 	ContainerRegistry ContainerRegistry `json:"containerRegistry" validate:"required"`
@@ -151,8 +149,6 @@ type Config struct {
 	Customization *[]Customization `json:"customization,omitempty"`
 
 	Components *Components `json:"components,omitempty"`
-
-	Telemetry *TelemetryConfig `json:"telemetry,omitempty"`
 
 	Experimental *experimental.Config `json:"experimental,omitempty"`
 }
@@ -185,10 +181,6 @@ type Tracing struct {
 	// Name of the kubernetes secret to use for Jaeger authentication
 	// The secret should contains two definitions: JAEGER_USER and JAEGER_PASSWORD
 	SecretName *string `json:"secretName,omitempty"`
-}
-
-type MessageBus struct {
-	Credentials *ObjectRef `json:"credentials"`
 }
 
 type Database struct {
@@ -257,10 +249,12 @@ const (
 )
 
 type ContainerRegistry struct {
-	InCluster                 *bool                      `json:"inCluster,omitempty" validate:"required"`
-	External                  *ContainerRegistryExternal `json:"external,omitempty" validate:"required_if=InCluster false"`
-	S3Storage                 *S3Storage                 `json:"s3storage,omitempty"`
-	PrivateBaseImageAllowList []string                   `json:"privateBaseImageAllowList"`
+	InCluster *bool                      `json:"inCluster,omitempty" validate:"required"`
+	External  *ContainerRegistryExternal `json:"external,omitempty" validate:"required_if=InCluster false"`
+	S3Storage *S3Storage                 `json:"s3storage,omitempty"`
+
+	PrivateBaseImageAllowList []string `json:"privateBaseImageAllowList"`
+	EnableAdditionalECRAuth   bool     `json:"enableAdditionalECRAuth"`
 }
 
 type ContainerRegistryExternal struct {
@@ -368,7 +362,6 @@ type Proxy struct {
 type FSShiftMethod string
 
 const (
-	FSShiftFuseFS  FSShiftMethod = "fuse"
 	FSShiftShiftFS FSShiftMethod = "shiftfs"
 )
 
@@ -432,12 +425,4 @@ type ProxyComponent struct {
 
 type ComponentTypeService struct {
 	ServiceType *corev1.ServiceType `json:"serviceType,omitempty" validate:"omitempty,service_config_type"`
-}
-
-type TelemetryConfig struct {
-	Data *TelemetryData `json:"data,omitempty"`
-}
-
-type TelemetryData struct {
-	Platform string `json:"platform"`
 }

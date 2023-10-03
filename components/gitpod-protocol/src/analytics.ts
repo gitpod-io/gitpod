@@ -50,3 +50,15 @@ export interface IAnalyticsWriter {
 
     page(msg: PageMessage): void;
 }
+
+export const NullAnalyticsWriter: IAnalyticsWriter = {
+    identify(msg: IdentifyMessage): void {
+        // noop
+    },
+    track(msg: TrackMessage): void {
+        // noop
+    },
+    page(msg: PageMessage): void {
+        // noop
+    },
+};

@@ -48,9 +48,7 @@ export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
             <ModalHeader>Rename Workspace Description</ModalHeader>
             <ModalBody>
                 {errorMessage.length > 0 ? (
-                    <div className="bg-gitpod-kumquat-light rounded-md p-3 text-gitpod-red text-sm mb-2">
-                        {errorMessage}
-                    </div>
+                    <div className="bg-kumquat-light rounded-md p-3 text-gitpod-red text-sm mb-2">{errorMessage}</div>
                 ) : null}
                 <input
                     autoFocus

@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AuthProviderEntry, AuthProviderInfo } from "@gitpod/gitpod-protocol";
+import { AuthProviderEntry, AuthProviderInfo, User } from "@gitpod/gitpod-protocol";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import React, { useCallback, useContext, useEffect, useState } from "react";
@@ -98,10 +98,12 @@ function GitProviders() {
                     separator: true,
                 });
             }
-            const connectedWithSecondProvider = authProviders.data?.some(
-                (p) => p.authProviderId !== provider.authProviderId && isConnected(p.authProviderId),
-            );
-            if (connectedWithSecondProvider) {
+            const canDisconnect =
+                (user && User.isOrganizationOwned(user)) ||
+                authProviders.data?.some(
+                    (p) => p.authProviderId !== provider.authProviderId && isConnected(p.authProviderId),
+                );
+            if (canDisconnect) {
                 result.push({
                     title: "Disconnect",
                     customFontStyle: "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
@@ -463,7 +465,7 @@ function GitIntegrations() {
             </div>
 
             {providers && providers.length === 0 && (
-                <div className="w-full flex h-80 mt-2 rounded-xl bg-gray-100 dark:bg-gray-900">
+                <div className="w-full flex h-80 mt-2 rounded-xl bg-gray-100 dark:bg-gray-800">
                     <div className="m-auto text-center">
                         <Heading2 color="light" className="self-center mb-4">
                             No Git Integrations
@@ -504,13 +506,8 @@ export function GitIntegrationModal(
         onAuthorize?: (payload?: string) => void;
     },
 ) {
-    const callbackUrl = (host: string) => {
-        // Negative Lookahead (?!\/)
-        // `\/` matches the character `/`
-        // "https://foobar:80".replace(/:(?!\/)/, "_")
-        // => 'https://foobar_80'
-        host = host.replace(/:(?!\/)/, "_");
-        const pathname = `/auth/${host}/callback`;
+    const callbackUrl = () => {
+        const pathname = `/auth/callback`;
         return gitpodHostUrl.with({ pathname }).toString();
     };
 
@@ -519,7 +516,7 @@ export function GitIntegrationModal(
 
     const [type, setType] = useState<string>("GitLab");
     const [host, setHost] = useState<string>("");
-    const [redirectURI, setRedirectURI] = useState<string>(callbackUrl("gitlab.example.com"));
+    const [redirectURI, setRedirectURI] = useState<string>(callbackUrl());
     const [clientId, setClientId] = useState<string>("");
     const [clientSecret, setClientSecret] = useState<string>("");
     const [busy, setBusy] = useState<boolean>(false);
@@ -632,7 +629,6 @@ export function GitIntegrationModal(
             }
 
             setHost(newHostValue);
-            setRedirectURI(callbackUrl(newHostValue));
             setErrorMessage(undefined);
         }
     };

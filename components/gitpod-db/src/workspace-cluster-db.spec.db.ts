@@ -5,11 +5,12 @@
  */
 
 import * as chai from "chai";
-import { suite, test, timeout } from "mocha-typescript";
+import { suite, test, timeout } from "@testdeck/mocha";
 import { testContainer } from "./test-container";
 import { TypeORM } from "./typeorm/typeorm";
 import { WorkspaceCluster, WorkspaceClusterDB } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { DBWorkspaceCluster } from "./typeorm/entity/db-workspace-cluster";
+import { resetDB } from "./test/reset-db";
 const expect = chai.expect;
 
 @suite
@@ -27,9 +28,7 @@ export class WorkspaceClusterDBSpec {
     }
 
     protected async clear() {
-        const connection = await this.typeORM.getConnection();
-        const manager = connection.manager;
-        await manager.clear(DBWorkspaceCluster);
+        await resetDB(this.typeORM);
     }
 
     @test public async findByName() {
@@ -175,7 +174,7 @@ export class WorkspaceClusterDBSpec {
 
         await this.db.deleteByName("eu71");
 
-        let wscs = await this.db.findFiltered({});
+        const wscs = await this.db.findFiltered({});
         expect(wscs.length).to.equal(1);
     }
 

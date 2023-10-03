@@ -131,8 +131,10 @@ type Configuration struct {
 	// TimeoutMaxConcurrentReconciles configures the max amount of concurrent workspace reconciliations on
 	// the timeout controller.
 	TimeoutMaxConcurrentReconciles int `json:"timeoutMaxConcurrentReconciles,omitempty"`
-	// ExperimentalMode controls if experimental features are enabled
-	ExperimentalMode bool `json:"experimentalMode"`
+	// EnableCustomSSLCertificate controls if we need to support custom SSL certificates for git operations
+	EnableCustomSSLCertificate bool `json:"enableCustomSSLCertificate"`
+	// WorkspacekitImage points to the default workspacekit image
+	WorkspacekitImage string `json:"workspacekitImage,omitempty"`
 }
 
 type WorkspaceClass struct {

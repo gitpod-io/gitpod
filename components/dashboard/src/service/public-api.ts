@@ -4,13 +4,16 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { createConnectTransport, createPromiseClient } from "@bufbuild/connect-web";
+import { createPromiseClient } from "@bufbuild/connect";
+import { createConnectTransport } from "@bufbuild/connect-web";
 import { Project as ProtocolProject, Team as ProtocolTeam } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
+import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connectweb";
 import { TeamsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
 import { TokensService } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_connectweb";
 import { ProjectsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_connectweb";
 import { WorkspacesService } from "@gitpod/public-api/lib/gitpod/experimental/v1/workspaces_connectweb";
 import { OIDCService } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_connectweb";
+import { getMetricsInterceptor } from "@gitpod/public-api/lib/metrics";
 import { Team } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
 import { TeamMember, TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
@@ -18,8 +21,10 @@ import { Project } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_
 
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
+    interceptors: [getMetricsInterceptor()],
 });
 
+export const helloService = createPromiseClient(HelloService, transport);
 export const teamsService = createPromiseClient(TeamsService, transport);
 export const personalAccessTokensService = createPromiseClient(TokensService, transport);
 export const projectsService = createPromiseClient(ProjectsService, transport);
@@ -66,15 +71,14 @@ export function publicApiTeamRoleToProtocol(role: TeamRole): TeamMemberRole {
     }
 }
 
-export async function listAllProjects(opts: { userId?: string; teamId?: string }): Promise<ProtocolProject[]> {
+export async function listAllProjects(opts: { orgId: string }): Promise<ProtocolProject[]> {
     let pagination = {
         page: 1,
         pageSize: 100,
     };
 
     const response = await projectsService.listProjects({
-        teamId: opts.teamId,
-        userId: opts.userId,
+        teamId: opts.orgId,
         pagination,
     });
     const results = response.projects;
@@ -85,8 +89,7 @@ export async function listAllProjects(opts: { userId?: string; teamId?: string }
             page: 1 + pagination.page,
         };
         const response = await projectsService.listProjects({
-            teamId: opts.teamId,
-            userId: opts.userId,
+            teamId: opts.orgId,
             pagination,
         });
         results.push(...response.projects);
@@ -101,11 +104,12 @@ export function projectToProtocol(project: Project): ProtocolProject {
         name: project.name,
         cloneUrl: project.cloneUrl,
         creationTime: project.creationTime?.toDate().toISOString() || "",
-        slug: project.slug,
         teamId: project.teamId,
-        userId: project.userId,
         appInstallationId: "undefined",
         settings: {
+            enablePrebuilds: project.settings?.prebuild?.enablePrebuilds,
+            prebuildDefaultBranchOnly: project.settings?.prebuild?.prebuildDefaultBranchOnly,
+            prebuildBranchPattern: project.settings?.prebuild?.prebuildBranchPattern,
             allowUsingPreviousPrebuilds: project.settings?.prebuild?.usePreviousPrebuilds,
             keepOutdatedPrebuildsRunning: project.settings?.prebuild?.keepOutdatedPrebuildsRunning,
             prebuildEveryNthCommit: project.settings?.prebuild?.prebuildEveryNth,

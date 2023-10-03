@@ -20,10 +20,10 @@ import (
 func TestRunDocker(t *testing.T) {
 	f := features.New("docker").
 		WithLabel("component", "workspace").
-		Assess("it should start a container", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it should start a container", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -71,12 +71,12 @@ func TestRunDocker(t *testing.T) {
 			if resp.ExitCode != 0 {
 				if strings.Contains(resp.Stderr, "toomanyrequests") {
 					t.Skip("skip because we hit the rate limit of the dockerhub")
-					return ctx
+					return testCtx
 				}
 				t.Fatalf("docker run failed: %s\n%s", resp.Stdout, resp.Stderr)
 			}
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

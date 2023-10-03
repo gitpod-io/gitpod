@@ -62,7 +62,7 @@ spec:
                 for: 60m
                 annotations:
                     runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/NodePoolLoad.md
-                    summary: Node pool load is high
+                    summary: Node pool load has been high for too long for 4 or more nodes
                     description: Node pool {{ $labels.nodepool }} in cluster {{ $labels.cluster }} has high, sustained load
                 expr: |
-                    sum by(nodepool, cluster) (nodepool:node_load1:normalized{nodepool=~".*workspace.*",cluster!~"ephemeral.*"}) > 30
+                    sum by(nodepool, cluster) (count by(node, nodepool, cluster) (sum by(node, nodepool, cluster) (nodepool:node_load1:normalized{nodepool=~".*workspace.*", cluster!~"ephemeral.*"}) >= 1)) >= 4

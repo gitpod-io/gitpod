@@ -7,14 +7,13 @@
 import * as prometheusClient from "prom-client";
 
 export function registerServerMetrics(registry: prometheusClient.Registry) {
-    registry.registerMetric(loginCounter);
+    registry.registerMetric(loginCompletedTotal);
     registry.registerMetric(apiConnectionCounter);
     registry.registerMetric(apiConnectionClosedCounter);
     registry.registerMetric(apiCallCounter);
     registry.registerMetric(apiCallDurationHistogram);
     registry.registerMetric(httpRequestTotal);
     registry.registerMetric(httpRequestDuration);
-    registry.registerMetric(messagebusTopicReads);
     registry.registerMetric(gitpodVersionInfo);
     registry.registerMetric(instanceStartsSuccessTotal);
     registry.registerMetric(instanceStartsFailedTotal);
@@ -22,22 +21,62 @@ export function registerServerMetrics(registry: prometheusClient.Registry) {
     registry.registerMetric(stripeClientRequestsCompletedDurationSeconds);
     registry.registerMetric(imageBuildsStartedTotal);
     registry.registerMetric(imageBuildsCompletedTotal);
-    registry.registerMetric(centralizedPermissionsValidationsTotal);
     registry.registerMetric(spicedbClientLatency);
-    registry.registerMetric(dashboardErrorBoundary);
     registry.registerMetric(jwtCookieIssued);
     registry.registerMetric(jobStartedTotal);
     registry.registerMetric(jobsCompletedTotal);
     registry.registerMetric(jobsDurationSeconds);
     registry.registerMetric(redisCacheGetLatencyHistogram);
     registry.registerMetric(redisCacheRequestsTotal);
+    registry.registerMetric(redisUpdatesReceived);
+    registry.registerMetric(redisUpdatesCompletedTotal);
+    registry.registerMetric(updateSubscribersRegistered);
+    registry.registerMetric(dbConnectionsTotal);
+    registry.registerMetric(dbConnectionsFree);
+    registry.registerMetric(grpcServerStarted);
+    registry.registerMetric(grpcServerHandling);
 }
 
-const loginCounter = new prometheusClient.Counter({
-    name: "gitpod_server_login_requests_total",
-    help: "Total amount of login requests",
-    labelNames: ["status", "auth_host"],
+export const grpcServerStarted = new prometheusClient.Counter({
+    name: "grpc_server_started_total",
+    help: "Total number of RPCs started on the server.",
+    labelNames: ["grpc_service", "grpc_method", "grpc_type"],
 });
+export const grpcServerHandled = new prometheusClient.Counter({
+    name: "grpc_server_handled_total",
+    help: "Total number of RPCs completed on the server, regardless of success or failure.",
+    labelNames: ["grpc_service", "grpc_method", "grpc_type", "grpc_code"],
+});
+export const grpcServerHandling = new prometheusClient.Histogram({
+    name: "grpc_server_handling_seconds",
+    help: "Histogram of response latency (seconds) of gRPC that had been application-level handled by the server.",
+    labelNames: ["grpc_service", "grpc_method", "grpc_type", "grpc_code"],
+});
+
+export const dbConnectionsTotal = new prometheusClient.Gauge({
+    name: "gitpod_typeorm_total_connections",
+    help: "Total number of connections in TypeORM pool",
+});
+
+export const dbConnectionsFree = new prometheusClient.Gauge({
+    name: "gitpod_typeorm_free_connections",
+    help: "Number of free connections in TypeORM pool",
+});
+
+export const dbConnectionsEnqueued = new prometheusClient.Counter({
+    name: "gitpod_typeorm_enqueued_connections",
+    help: "Number of times requests put on the queue, because the pool was maxed out.",
+});
+
+const loginCompletedTotal = new prometheusClient.Counter({
+    name: "gitpod_login_completed_total",
+    help: "Total number of logins completed into gitpod, by status",
+    labelNames: ["status", "type"],
+});
+
+export function reportLoginCompleted(status: LoginCounterStatus, type: "git" | "sso") {
+    loginCompletedTotal.labels(status, type).inc();
+}
 
 type LoginCounterStatus =
     // The login attempt failed due to a system error (picked up by alerts)
@@ -46,13 +85,6 @@ type LoginCounterStatus =
     | "succeeded"
     // The login attempt failed, because the client failed to provide complete session information, for instance.
     | "failed_client";
-
-export function increaseLoginCounter(status: LoginCounterStatus, auth_host: string) {
-    loginCounter.inc({
-        status,
-        auth_host,
-    });
-}
 
 const apiConnectionCounter = new prometheusClient.Counter({
     name: "gitpod_server_api_connections_total",
@@ -138,18 +170,6 @@ export function observeHttpRequestDuration(
     httpRequestDuration.observe({ method, route, statusCode }, durationInSeconds);
 }
 
-const messagebusTopicReads = new prometheusClient.Counter({
-    name: "gitpod_server_topic_reads_total",
-    help: "The amount of reads from messagebus topics.",
-    labelNames: ["topic"],
-});
-
-export function increaseMessagebusTopicReads(topic: string) {
-    messagebusTopicReads.inc({
-        topic,
-    });
-}
-
 const gitpodVersionInfo = new prometheusClient.Gauge({
     name: "gitpod_version_info",
     help: "Gitpod's version",
@@ -180,6 +200,7 @@ export type FailedInstanceStartReason =
     | "clusterSelectionFailed"
     | "startOnClusterFailed"
     | "imageBuildFailed"
+    | "imageBuildFailedUser"
     | "resourceExhausted"
     | "workspaceClusterMaintenance"
     | "other";
@@ -225,41 +246,22 @@ export function increaseImageBuildsCompletedTotal(outcome: "succeeded" | "failed
     imageBuildsCompletedTotal.inc({ outcome });
 }
 
-const centralizedPermissionsValidationsTotal = new prometheusClient.Counter({
-    name: "gitpod_perms_centralized_validations_total",
-    help: "counter of centralized permission checks validations against existing system",
-    labelNames: ["operation", "matches_expectation"],
+export const fgaRelationsUpdateClientLatency = new prometheusClient.Histogram({
+    name: "gitpod_fga_relationship_update_seconds",
+    help: "Histogram of completed relationship updates",
 });
-
-export function reportCentralizedPermsValidation(operation: string, matches: boolean) {
-    centralizedPermissionsValidationsTotal.inc({ operation, matches_expectation: String(matches) });
-}
 
 export const spicedbClientLatency = new prometheusClient.Histogram({
     name: "gitpod_spicedb_client_requests_completed_seconds",
     help: "Histogram of completed spicedb client requests",
-    labelNames: ["operation", "permission", "outcome"],
+    labelNames: ["operation", "outcome"],
 });
 
-export function observespicedbClientLatency(
-    operation: string,
-    permission: string,
-    outcome: Error | undefined,
-    durationInSeconds: number,
-) {
+export function observeSpicedbClientLatency(operation: string, outcome: Error | undefined, durationInSeconds: number) {
     spicedbClientLatency.observe(
-        { operation, permission, outcome: outcome === undefined ? "success" : "error" },
+        { operation, outcome: outcome === undefined ? "success" : "error" },
         durationInSeconds,
     );
-}
-
-export const dashboardErrorBoundary = new prometheusClient.Counter({
-    name: "gitpod_dashboard_error_boundary_total",
-    help: "Total number of errors caught by an error boundary in the dashboard",
-});
-
-export function increaseDashboardErrorBoundaryCounter() {
-    dashboardErrorBoundary.inc();
 }
 
 export const jobStartedTotal = new prometheusClient.Counter({
@@ -313,3 +315,40 @@ export const redisCacheSetLatencyHistogram = new prometheusClient.Histogram({
     labelNames: ["cache_group"],
     buckets: [0.01, 0.1, 0.2, 0.5, 1, 2, 5, 10],
 });
+
+export const redisUpdatesReceived = new prometheusClient.Counter({
+    name: "gitpod_redis_updates_received_total",
+    help: "Counter of udpates recieved over Redis Pub/Sub",
+    labelNames: ["channel"],
+});
+
+export function reportRedisUpdateReceived(channel: string) {
+    redisUpdatesReceived.labels(channel).inc();
+}
+
+export const redisUpdatesCompletedTotal = new prometheusClient.Counter({
+    name: "gitpod_redis_updates_completed_total",
+    help: "Counter of udpates recieved over Redis Pub/Sub which completed",
+    labelNames: ["channel", "error"],
+});
+
+export function reportRedisUpdateCompleted(channel: string, err?: Error) {
+    redisUpdatesCompletedTotal.labels(channel, err ? "true" : "false").inc();
+}
+
+export const updateSubscribersRegistered = new prometheusClient.Gauge({
+    name: "gitpod_server_subscribers_registered",
+    help: "Gauge of subscribers registered",
+    labelNames: ["type"],
+});
+
+export const guardAccessChecksTotal = new prometheusClient.Counter({
+    name: "gitpod_guard_access_checks_total",
+    help: "Counter for the number of guard access checks we do by type",
+    labelNames: ["type"],
+});
+
+export type GuardAccessCheckType = "fga" | "resource-access";
+export function reportGuardAccessCheck(type: GuardAccessCheckType) {
+    guardAccessChecksTotal.labels(type).inc();
+}

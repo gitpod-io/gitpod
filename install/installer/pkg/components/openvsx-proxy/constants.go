@@ -4,8 +4,10 @@
 
 package openvsx_proxy
 
+import "github.com/gitpod-io/gitpod/installer/pkg/common"
+
 const (
-	Component     = "openvsx-proxy"
+	Component     = common.OpenVSXProxyComponent
 	ContainerPort = 8080
 	ServicePort   = 8080
 	PortName      = "http"

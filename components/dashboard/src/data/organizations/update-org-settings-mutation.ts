@@ -10,7 +10,9 @@ import { getGitpodService } from "../../service/service";
 import { getOrgSettingsQueryKey, OrgSettingsResult } from "./org-settings-query";
 import { useCurrentOrg } from "./orgs-query";
 
-type UpdateOrganizationSettingsArgs = Pick<OrganizationSettings, "workspaceSharingDisabled">;
+type UpdateOrganizationSettingsArgs = Partial<
+    Pick<OrganizationSettings, "workspaceSharingDisabled" | "defaultWorkspaceImage">
+>;
 
 export const useUpdateOrgSettingsMutation = () => {
     const queryClient = useQueryClient();
@@ -18,8 +20,11 @@ export const useUpdateOrgSettingsMutation = () => {
     const teamId = team?.id || "";
 
     return useMutation<OrganizationSettings, Error, UpdateOrganizationSettingsArgs>({
-        mutationFn: async ({ workspaceSharingDisabled }) => {
-            return await getGitpodService().server.updateOrgSettings(teamId, { workspaceSharingDisabled });
+        mutationFn: async ({ workspaceSharingDisabled, defaultWorkspaceImage }) => {
+            return await getGitpodService().server.updateOrgSettings(teamId, {
+                workspaceSharingDisabled,
+                defaultWorkspaceImage,
+            });
         },
         onSuccess: (newData, _) => {
             const queryKey = getOrgSettingsQueryKey(teamId);

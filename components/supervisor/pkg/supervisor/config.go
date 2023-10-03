@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math"
 	"net/http"
 	"net/url"
@@ -18,6 +19,7 @@ import (
 	env "github.com/Netflix/go-env"
 	"golang.org/x/xerrors"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
@@ -38,8 +40,8 @@ const supervisorConfigFile = "supervisor-config.json"
 // Config configures supervisor.
 type Config struct {
 	StaticConfig
-	IDE        IDEConfig
-	DesktopIDE *IDEConfig
+	IDE         IDEConfig
+	DesktopIDEs []*IDEConfig
 	WorkspaceConfig
 }
 
@@ -51,9 +53,9 @@ func (c Config) Validate() error {
 	if err := c.IDE.Validate(); err != nil {
 		return xerrors.Errorf("IDE config is invalid: %w", err)
 	}
-	if c.DesktopIDE != nil {
-		if err := c.DesktopIDE.Validate(); err != nil {
-			return xerrors.Errorf("Desktop IDE config is invalid: %w", err)
+	for _, desktopIde := range c.DesktopIDEs {
+		if err := desktopIde.Validate(); err != nil {
+			return xerrors.Errorf("Desktop IDE (%s): config is invalid: %w", desktopIde.Name, err)
 		}
 	}
 	if err := c.WorkspaceConfig.Validate(); err != nil {
@@ -77,8 +79,8 @@ type StaticConfig struct {
 	// IDEConfigLocation is a path in the filesystem where to find the IDE configuration
 	IDEConfigLocation string `json:"ideConfigLocation"`
 
-	// DesktopIDEConfigLocation is a path in the filesystem where to find the desktop IDE configuration
-	DesktopIDEConfigLocation string `json:"desktopIdeConfigLocation"`
+	// DesktopIDERoot is a path in the filesystem where to find desktop IDE configurations
+	DesktopIDERoot string `json:"desktopIdeRoot"`
 
 	// FrontendLocation is a path in the filesystem where to find supervisor's frontend assets
 	FrontendLocation string `json:"frontendLocation"`
@@ -121,6 +123,15 @@ const (
 
 // IDEConfig is the IDE specific configuration.
 type IDEConfig struct {
+	// Name is the unique identifier of the IDE.
+	Name string `json:"name"`
+
+	// DisplayName is the human readable name of the IDE.
+	DisplayName string `json:"displayName"`
+
+	// Version is the version of the IDE.
+	Version string `json:"version"`
+
 	// Entrypoint is the command that gets executed by supervisor to start
 	// the IDE process. If this command exits, supervisor will start it again.
 	// If this command exits right after it was started with a non-zero exit
@@ -160,6 +171,20 @@ type IDEConfig struct {
 	// A set of name-value pairs that sets or overrides environment variables for the workspace.
 	// Environment may be referenced in the values.
 	Env *orderedmap.OrderedMap
+
+	// Prebuild configures the prebuild IDE process.
+	Prebuild *struct {
+		// Entrypoint is an IDE prebuild entrypoint, if omitted then IDE entrypoint
+		Entrypoint string `json:"entrypoint"`
+		// Args is an IDE entrypoint args
+		Args []string `json:"args"`
+		// Env is an IDE prebuild environment variables
+		Env *map[string]interface{} `json:"env"`
+	} `json:"prebuild"`
+}
+
+func (c IDEConfig) PrebuildTaskName() string {
+	return "ide-prebuild-" + c.Name
 }
 
 // Validate validates this configuration.
@@ -217,6 +242,9 @@ type WorkspaceConfig struct {
 
 	// WorkspaceClassInfo denotes the detail of workspace class
 	WorkspaceClassInfo *WorkspaceClassInfo `env:"GITPOD_WORKSPACE_CLASS_INFO"`
+
+	// DefaultWorkspaceImage is the default image of current workspace
+	DefaultWorkspaceImage string `env:"GITPOD_DEFAULT_WORKSPACE_IMAGE"`
 
 	// IDEPort is the port at which the IDE will need to run on. This is not an IDE config
 	// because Gitpod determines this port, not the IDE.
@@ -346,6 +374,13 @@ func (c WorkspaceConfig) Validate() error {
 	return nil
 }
 
+func (c Config) GetDesktopIDE() *IDEConfig {
+	if len(c.DesktopIDEs) == 0 {
+		return nil
+	}
+	return c.DesktopIDEs[0]
+}
+
 // GetTokens parses tokens from GITPOD_TOKENS and possibly downloads OTS.
 func (c WorkspaceConfig) GetTokens(downloadOTS bool) ([]WorkspaceGitpodToken, error) {
 	if c.Tokens == "" {
@@ -429,13 +464,55 @@ func (c WorkspaceConfig) GetDebugWorkspaceContentSource() csapi.WorkspaceInitSou
 }
 
 // getGitpodTasks parses gitpod tasks.
-func (c WorkspaceConfig) getGitpodTasks() (tasks *[]TaskConfig, err error) {
-	if c.GitpodTasks == "" {
-		return
+func (c Config) getGitpodTasks() (tasks []TaskConfig, err error) {
+	if c.GitpodTasks != "" {
+		var configured *[]TaskConfig
+		err = json.Unmarshal([]byte(c.GitpodTasks), &configured)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot parse tasks: %w", err)
+		}
+		if configured != nil {
+			tasks = append(tasks, *configured...)
+		}
 	}
-	err = json.Unmarshal([]byte(c.GitpodTasks), &tasks)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot parse tasks: %w", err)
+
+	if c.isPrebuild() && c.isHeadless() {
+		// if prebuild with running IDEs then there is going to be a race condition
+		// between IDE itself and its prebuild
+		var prevTaskID string
+		for _, ideConfig := range c.DesktopIDEs {
+			if ideConfig == nil || ideConfig.Prebuild == nil {
+				continue
+			}
+			taskID := ideConfig.PrebuildTaskName()
+
+			var before string
+			if prevTaskID == "" {
+				before = "/.supervisor/supervisor prepare-ide-prebuild"
+			} else {
+				before = fmt.Sprintf("/usr/bin/gp sync-await %s", prevTaskID)
+			}
+			prevTaskID = taskID
+
+			entrypoint := ideConfig.Prebuild.Entrypoint
+			if entrypoint == "" {
+				entrypoint = ideConfig.Entrypoint
+			}
+
+			init := fmt.Sprintf("echo 'Prebuilding %s (%s)'; ", ideConfig.DisplayName, ideConfig.Version)
+			init += entrypoint
+			for _, arg := range ideConfig.Prebuild.Args {
+				init = init + " " + arg
+			}
+			init += fmt.Sprintf("; /usr/bin/gp sync-done %s", taskID)
+
+			tasks = append(tasks, TaskConfig{
+				Name:   &taskID,
+				Before: &before,
+				Init:   &init,
+				Env:    ideConfig.Prebuild.Env,
+			})
+		}
 	}
 	return
 }
@@ -471,15 +548,9 @@ func GetConfig() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	var desktopIde *IDEConfig
-	if static.DesktopIDEConfigLocation != "" {
-		if _, err := os.Stat(static.DesktopIDEConfigLocation); !os.IsNotExist((err)) {
-			desktopIde, err = loadIDEConfigFromFile(static.DesktopIDEConfigLocation)
-			if err != nil {
-				return nil, err
-			}
-		}
+	desktopIDEs, err := loadDesktopIDEs(static)
+	if err != nil {
+		return nil, err
 	}
 
 	workspace, err := loadWorkspaceConfigFromEnv()
@@ -490,9 +561,56 @@ func GetConfig() (*Config, error) {
 	return &Config{
 		StaticConfig:    *static,
 		IDE:             *ide,
-		DesktopIDE:      desktopIde,
+		DesktopIDEs:     desktopIDEs,
 		WorkspaceConfig: *workspace,
 	}, nil
+}
+
+func loadDesktopIDEs(static *StaticConfig) ([]*IDEConfig, error) {
+	if static.DesktopIDERoot == "" {
+		return nil, nil
+	}
+	if _, err := os.Stat(static.DesktopIDERoot); os.IsNotExist(err) {
+		return nil, nil
+	}
+
+	var desktopIDEs []*IDEConfig
+	uniqueDesktopIDEs := make(map[string]struct{})
+
+	// check root for backwards compatibility with older images, remove in the future
+	desktopIDE, err := loadIDEConfigFromPath(static.DesktopIDERoot)
+	if err != nil {
+		return nil, err
+	}
+	if desktopIDE != nil {
+		desktopIDEs = append(desktopIDEs, desktopIDE)
+		uniqueDesktopIDEs[desktopIDE.Name] = struct{}{}
+	}
+
+	files, err := ioutil.ReadDir(static.DesktopIDERoot)
+	if err != nil {
+		return nil, err
+	}
+	for _, f := range files {
+		if f.IsDir() {
+			desktopIDE, err = loadIDEConfigFromPath(filepath.Join(static.DesktopIDERoot, f.Name()))
+			if desktopIDE == nil {
+				continue
+			}
+			if err != nil {
+				return nil, err
+			}
+			_, alreadyPresent := uniqueDesktopIDEs[desktopIDE.Name]
+			if alreadyPresent {
+				log.WithField("name", desktopIDE.Name).Warn("ignoring duplicate desktop IDE")
+				continue
+			}
+			desktopIDEs = append(desktopIDEs, desktopIDE)
+			uniqueDesktopIDEs[desktopIDE.Name] = struct{}{}
+		}
+	}
+
+	return desktopIDEs, nil
 }
 
 // loadStaticConfigFromFile loads the static supervisor configuration from
@@ -519,6 +637,15 @@ func loadStaticConfigFromFile() (*StaticConfig, error) {
 	return &res, nil
 }
 
+// loadIDEConfigFromPath loads the IDE configuration from a directory.
+func loadIDEConfigFromPath(dirPath string) (*IDEConfig, error) {
+	ideConfigLocation := filepath.Join(dirPath, "supervisor-ide-config.json")
+	if _, err := os.Stat(ideConfigLocation); !os.IsNotExist(err) {
+		return loadIDEConfigFromFile(ideConfigLocation)
+	}
+	return nil, nil
+}
+
 // loadIDEConfigFromFile loads the IDE configuration from a JSON file.
 func loadIDEConfigFromFile(fn string) (*IDEConfig, error) {
 	f, err := os.Open(fn)
@@ -531,6 +658,12 @@ func loadIDEConfigFromFile(fn string) (*IDEConfig, error) {
 	err = json.NewDecoder(f).Decode(&res)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot unmarshal IDE config %s: %w", fn, err)
+	}
+	if res.Name == "" {
+		res.Name = filepath.Base(filepath.Dir(fn))
+	}
+	if res.DisplayName == "" {
+		res.DisplayName = res.Name
 	}
 
 	return &res, nil

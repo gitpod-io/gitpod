@@ -26,7 +26,7 @@ type Props = {
     onComplete: () => void;
 };
 const DedicatedSetup: FC<Props> = ({ onComplete }) => {
-    useDocumentTitle("Welcome - Gitpod");
+    useDocumentTitle("Welcome");
     const currentOrg = useCurrentOrg();
     const oidcClients = useOIDCClientsQuery();
 

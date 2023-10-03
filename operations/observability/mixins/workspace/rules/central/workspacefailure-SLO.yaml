@@ -17,9 +17,9 @@ spec:
       expr: |
         (
           (
-            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{reason="failed",type!~"PREBUILD", cluster!~"ephemeral.*"}[5m]))
+            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{reason="failed",type!~"Prebuild", cluster!~"ephemeral.*"}[5m]))
             /
-            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{type!~"PREBUILD", cluster!~"ephemeral.*"}[5m]))
+            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{type!~"Prebuild", cluster!~"ephemeral.*"}[5m]))
           )
         ) + (
           (
@@ -33,9 +33,9 @@ spec:
       expr: |
         (
           (
-            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{reason="failed",type!~"PREBUILD", cluster!~"ephemeral.*"}[30m]))
+            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{reason="failed",type!~"Prebuild", cluster!~"ephemeral.*"}[30m]))
             /
-            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{type!~"PREBUILD", cluster!~"ephemeral.*"}[30m]))
+            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{type!~"Prebuild", cluster!~"ephemeral.*"}[30m]))
           )
         ) + (
           (
@@ -49,9 +49,9 @@ spec:
       expr: |
         (
           (
-            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{reason="failed",type!~"PREBUILD", cluster!~"ephemeral.*"}[1h]))
+            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{reason="failed",type!~"Prebuild", cluster!~"ephemeral.*"}[1h]))
             /
-            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{type!~"PREBUILD", cluster!~"ephemeral.*"}[1h]))
+            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{type!~"Prebuild", cluster!~"ephemeral.*"}[1h]))
           )
         ) + (
           (
@@ -65,9 +65,9 @@ spec:
       expr: |
         (
           (
-            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{reason="failed",type!~"PREBUILD", cluster!~"ephemeral.*"}[2h]))
+            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{reason="failed",type!~"Prebuild", cluster!~"ephemeral.*"}[2h]))
             /
-            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{type!~"PREBUILD", cluster!~"ephemeral.*"}[2h]))
+            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{type!~"Prebuild", cluster!~"ephemeral.*"}[2h]))
           )
         ) + (
           (
@@ -81,9 +81,9 @@ spec:
       expr: |
         (
           (
-            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{reason="failed",type!~"PREBUILD", cluster!~"ephemeral.*"}[6h]))
+            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{reason="failed",type!~"Prebuild", cluster!~"ephemeral.*"}[6h]))
             /
-            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{type!~"PREBUILD", cluster!~"ephemeral.*"}[6h]))
+            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{type!~"Prebuild", cluster!~"ephemeral.*"}[6h]))
           )
         ) + (
           (
@@ -97,9 +97,9 @@ spec:
       expr: |
         (
           (
-            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{reason="failed",type!~"PREBUILD", cluster!~"ephemeral.*"}[1d]))
+            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{reason="failed",type!~"Prebuild", cluster!~"ephemeral.*"}[1d]))
             /
-            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{type!~"PREBUILD", cluster!~"ephemeral.*"}[1d]))
+            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{type!~"Prebuild", cluster!~"ephemeral.*"}[1d]))
           )
         ) + (
           (
@@ -113,9 +113,9 @@ spec:
       expr: |
         (
           (
-            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{reason="failed",type!~"PREBUILD", cluster!~"ephemeral.*"}[3d]))
+            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{reason="failed",type!~"Prebuild", cluster!~"ephemeral.*"}[3d]))
             /
-            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{type!~"PREBUILD", cluster!~"ephemeral.*"}[3d]))
+            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{type!~"Prebuild", cluster!~"ephemeral.*"}[3d]))
           )
         ) + (
           (
@@ -129,9 +129,9 @@ spec:
       expr: |
         (
           (
-            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{reason="failed",type!~"PREBUILD", cluster!~"ephemeral.*"}[30d]))
+            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{reason="failed",type!~"Prebuild", cluster!~"ephemeral.*"}[30d]))
             /
-            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{type!~"PREBUILD", cluster!~"ephemeral.*"}[30d]))
+            sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{type!~"Prebuild", cluster!~"ephemeral.*"}[30d]))
           )
         ) + (
           (

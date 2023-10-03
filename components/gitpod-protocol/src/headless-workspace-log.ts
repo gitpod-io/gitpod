@@ -26,7 +26,6 @@ export namespace HeadlessWorkspaceEventType {
 
 export interface HeadlessWorkspaceEvent {
     workspaceID: string;
-    text: string;
     type: HeadlessWorkspaceEventType;
 }
 

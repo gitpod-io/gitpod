@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 func TestValue(t *testing.T) {
@@ -53,6 +54,41 @@ func TestKeyValue(t *testing.T) {
 	}
 }
 
+var (
+	_ TrustedValue = &TrustedStructToTest{}
+)
+
+type StructToTest struct {
+	Username string
+	Email    string
+	Password string
+}
+
+type TrustedStructToTest struct {
+	StructToTest
+}
+
+type UnexportedStructToTest struct {
+	Exported      string
+	unexportedPtr *string
+}
+
+func (TrustedStructToTest) IsTrustedValue() {}
+
+func scrubStructToTestAsTrustedValue(v *StructToTest) TrustedValue {
+	return scrubStructToTest(v)
+}
+
+func scrubStructToTest(v *StructToTest) *TrustedStructToTest {
+	return &TrustedStructToTest{
+		StructToTest: StructToTest{
+			Username: v.Username,
+			Email:    "trusted:" + Default.Value(v.Email),
+			Password: "trusted:" + Default.KeyValue("password", v.Password),
+		},
+	}
+}
+
 func TestStruct(t *testing.T) {
 	type Expectation struct {
 		Error  string
@@ -62,6 +98,7 @@ func TestStruct(t *testing.T) {
 		Name        string
 		Struct      any
 		Expectation Expectation
+		CmpOpts     []cmp.Option
 	}{
 		{
 			Name: "basic happy path",
@@ -129,6 +166,54 @@ func TestStruct(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "trusted struct",
+			Struct: scrubStructToTest(&StructToTest{
+				Username: "foo",
+				Email:    "foo@bar.com",
+				Password: "foobar",
+			}),
+			Expectation: Expectation{
+				Result: &TrustedStructToTest{
+					StructToTest: StructToTest{
+						Username: "foo",
+						Email:    "trusted:[redacted:email]",
+						Password: "trusted:[redacted]",
+					},
+				},
+			},
+		},
+		{
+			Name: "trusted interface",
+			Struct: scrubStructToTestAsTrustedValue(&StructToTest{
+				Username: "foo",
+				Email:    "foo@bar.com",
+				Password: "foobar",
+			}),
+			Expectation: Expectation{
+				Result: &TrustedStructToTest{
+					StructToTest: StructToTest{
+						Username: "foo",
+						Email:    "trusted:[redacted:email]",
+						Password: "trusted:[redacted]",
+					},
+				},
+			},
+		},
+		{
+			Name: "contains unexported pointers",
+			Struct: UnexportedStructToTest{
+				Exported:      "foo",
+				unexportedPtr: nil,
+			},
+			Expectation: Expectation{
+				Result: UnexportedStructToTest{
+					Exported:      "foo",
+					unexportedPtr: nil,
+				},
+			},
+			CmpOpts: []cmp.Option{cmpopts.IgnoreUnexported(UnexportedStructToTest{})},
+		},
 	}
 
 	for _, test := range tests {
@@ -142,7 +227,7 @@ func TestStruct(t *testing.T) {
 				act.Result = test.Struct
 			}
 
-			if diff := cmp.Diff(test.Expectation, act); diff != "" {
+			if diff := cmp.Diff(test.Expectation, act, test.CmpOpts...); diff != "" {
 				t.Errorf("Struct() mismatch (-want +got):\n%s", diff)
 			}
 		})

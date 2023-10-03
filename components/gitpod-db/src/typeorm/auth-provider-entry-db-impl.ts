@@ -48,7 +48,7 @@ export class AuthProviderEntryDBImpl implements AuthProviderEntryDB {
 
         // 2. then mark as deleted
         const repo = await this.getAuthProviderRepo();
-        await repo.update({ id }, { deleted: true });
+        await repo.delete({ id });
     }
 
     async findAll(exceptOAuthRevisions: string[] = []): Promise<AuthProviderEntry[]> {

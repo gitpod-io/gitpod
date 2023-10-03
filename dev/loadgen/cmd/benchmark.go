@@ -67,7 +67,6 @@ var benchmarkCommand = &cobra.Command{
 			},
 			ServicePrefix: "will-be-overriden",
 			Spec: &api.StartWorkspaceSpec{
-				DeprecatedIdeImage: scenario.IDEImage,
 				IdeImage: &api.IDEImage{
 					WebRef: scenario.IDEImage,
 				},

@@ -36,6 +36,10 @@ func Networkpolicy(ctx *common.RenderContext, component string) ([]runtime.Objec
 								Protocol: common.TCPProtocol,
 								Port:     &intstr.IntOrString{IntVal: ContainerPort},
 							},
+							{
+								Protocol: common.TCPProtocol,
+								Port:     &intstr.IntOrString{IntVal: PublicAPIPort},
+							},
 						},
 						From: []networkingv1.NetworkPolicyPeer{
 							{

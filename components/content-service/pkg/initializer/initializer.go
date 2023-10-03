@@ -571,6 +571,8 @@ func PlaceWorkspaceReadyFile(ctx context.Context, wspath string, initsrc csapi.W
 		return xerrors.Errorf("cannot rename workspace ready file: %w", err)
 	}
 
+	log.WithField("content", string(fc)).WithField("destination", wspath).Info("ready file metrics")
+
 	return nil
 }
 

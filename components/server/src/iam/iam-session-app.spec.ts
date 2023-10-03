@@ -5,21 +5,23 @@
  */
 
 import { Container, ContainerModule } from "inversify";
-import { suite, test, timeout } from "mocha-typescript";
+import { suite, test, timeout } from "@testdeck/mocha";
 import { SessionHandler } from "../session-handler";
 import { IamSessionApp } from "./iam-session-app";
 import { Config } from "../config";
 import { Authenticator } from "../auth/authenticator";
-import { UserService } from "../user/user-service";
+import { UserAuthentication } from "../user/user-authentication";
 
-import * as passport from "passport";
-import * as express from "express";
-import * as request from "supertest";
+import passport from "passport";
+import express from "express";
+import request from "supertest";
 
 import * as chai from "chai";
 import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
-import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TeamDB } from "@gitpod/gitpod-db/lib";
-import { TeamMemberInfo, User } from "@gitpod/gitpod-protocol";
+import { TeamMemberInfo, TeamMemberRole, User } from "@gitpod/gitpod-protocol";
+import { OrganizationService } from "../orgs/organization-service";
+import { UserService } from "../user/user-service";
+import { TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
 const expect = chai.expect;
 
 @suite(timeout(10000))
@@ -40,7 +42,11 @@ class TestIamSessionApp {
         createUser: (params) => {
             return { id: "id-new-user" } as any;
         },
-
+        updateUser: (userId, update) => {
+            return {} as any;
+        },
+    };
+    protected userAuthenticationMock: Partial<UserAuthentication> = {
         findUserForLogin: async (params) => {
             if (params.candidate?.authId === this.knownSubjectID) {
                 return this.knownUser as any;
@@ -55,18 +61,13 @@ class TestIamSessionApp {
         },
     };
 
-    protected teamDbMock: Partial<TeamDB> & { memberships: Set<string> } = {
+    protected orgServiceMock: Partial<OrganizationService> & { memberships: Set<string> } = {
         memberships: new Set<string>(), // simply assuming single org here!
-        findMembersByTeam: async (teamId: string): Promise<TeamMemberInfo[]> => {
+        listMembers: async (teamId: string): Promise<TeamMemberInfo[]> => {
             return [];
         },
-        async addMemberToTeam(userId: string, teamId: string): Promise<"added" | "already_member"> {
-            this.memberships.add(userId);
-            return "added";
-        },
-        setTeamMemberRole: async (userId, teamId, role): Promise<void> => {},
-        async removeMemberFromTeam(userId, teamId): Promise<void> {
-            this.memberships.delete(userId);
+        async addOrUpdateMember(userId: string, teamId: string, memberId: string, role: TeamMemberRole): Promise<void> {
+            this.memberships.add(memberId);
         },
     };
 
@@ -90,7 +91,7 @@ class TestIamSessionApp {
     };
 
     public before() {
-        this.teamDbMock.memberships.clear();
+        this.orgServiceMock.memberships.clear();
         this.knownUser.identities = [];
 
         const container = new Container();
@@ -113,8 +114,15 @@ class TestIamSessionApp {
                 bind(IamSessionApp).toSelf().inSingletonScope();
                 bind(Authenticator).toConstantValue(<any>{}); // unused
                 bind(Config).toConstantValue(<any>{}); // unused
+                bind(UserAuthentication).toConstantValue(this.userAuthenticationMock as any);
                 bind(UserService).toConstantValue(this.userServiceMock as any);
-                bind(TeamDB).toConstantValue(this.teamDbMock as TeamDB);
+                bind(OrganizationService).toConstantValue(this.orgServiceMock as any);
+                bind(UserDB).toConstantValue(<any>{
+                    transaction: async (run: () => void) => {
+                        return run();
+                    },
+                }); // unused
+                bind(TeamDB).toConstantValue(<any>{}); // unused
             }),
         );
         this.app = container.get(IamSessionApp);
@@ -202,24 +210,6 @@ class TestIamSessionApp {
         expect(result.body?.message).to.equal("OIDC client config id missing");
     }
 
-    @test public async testSessionRequest_createUser_removes_admin() {
-        // assert only admin is member of the org
-        await this.teamDbMock.addMemberToTeam!(BUILTIN_INSTLLATION_ADMIN_USER_ID, "test-org");
-        expect(this.teamDbMock.memberships.has(BUILTIN_INSTLLATION_ADMIN_USER_ID)).to.be.true;
-        expect(this.teamDbMock.memberships.has("id-new-user")).to.be.false;
-
-        const result = await request(this.app.create())
-            .post("/session")
-            .set("Content-Type", "application/json")
-            .send(JSON.stringify(this.payload));
-
-        expect(result.statusCode, JSON.stringify(result.body)).to.equal(200);
-
-        // assert no admin is member of the org
-        expect(this.teamDbMock.memberships.has(BUILTIN_INSTLLATION_ADMIN_USER_ID)).to.be.false;
-        expect(this.teamDbMock.memberships.has("id-new-user")).to.be.true;
-    }
-
     @test public async testSessionRequest_updates_existing_user() {
         const payload: OIDCCreateSessionPayload = { ...this.payload };
         payload.claims.sub = this.knownSubjectID; // `userServiceMock.findUserForLogin` will match this value
@@ -234,7 +224,7 @@ class TestIamSessionApp {
         ];
 
         let newEmail: string | undefined;
-        this.userServiceMock.updateUserIdentity = async (user, updatedIdentity) => {
+        this.userAuthenticationMock.updateUserIdentity = async (user, updatedIdentity) => {
             newEmail = updatedIdentity.primaryEmail;
         };
 
@@ -259,7 +249,7 @@ class TestIamSessionApp {
         ];
 
         let updateUserIdentityCalled = false;
-        this.userServiceMock.updateUserIdentity = async () => {
+        this.userAuthenticationMock.updateUserIdentity = async () => {
             updateUserIdentityCalled = true;
         };
 

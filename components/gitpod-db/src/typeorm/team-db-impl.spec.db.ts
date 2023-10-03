@@ -4,16 +4,14 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { suite, test, timeout } from "mocha-typescript";
-import { testContainer } from "../test-container";
-import { UserDB } from "../user-db";
-import { TypeORM } from "./typeorm";
-import { DBUser } from "./entity/db-user";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { suite, test, timeout } from "@testdeck/mocha";
 import * as chai from "chai";
 import { TeamDB } from "../team-db";
-import { DBTeam } from "./entity/db-team";
-import { ResponseError } from "vscode-jsonrpc";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { testContainer } from "../test-container";
+import { resetDB } from "../test/reset-db";
+import { UserDB } from "../user-db";
+import { TypeORM } from "./typeorm";
 const expect = chai.expect;
 
 @suite(timeout(10000))
@@ -31,9 +29,7 @@ export class TeamDBSpec {
 
     async wipeRepo() {
         const typeorm = testContainer.get<TypeORM>(TypeORM);
-        const manager = await typeorm.getConnection();
-        await manager.getRepository(DBTeam).delete({});
-        await manager.getRepository(DBUser).delete({});
+        await resetDB(typeorm);
     }
 
     @test()
@@ -52,8 +48,8 @@ export class TeamDBSpec {
             await this.teamDB.createTeam(user.id, "X");
             expect.fail("Team name too short");
         } catch (error) {
-            if (error instanceof ResponseError && error.code === ErrorCodes.BAD_REQUEST) {
-                // expected ResponseError of code BAD_REQUEST
+            if (error instanceof ApplicationError && error.code === ErrorCodes.BAD_REQUEST) {
+                // expected ApplicationError of code BAD_REQUEST
             } else {
                 expect.fail("Unexpected error: " + error);
             }
@@ -65,13 +61,13 @@ export class TeamDBSpec {
             );
             expect.fail("Team name too long");
         } catch (error) {
-            if (error instanceof ResponseError && error.code === ErrorCodes.BAD_REQUEST) {
-                // expected ResponseError of code BAD_REQUEST
+            if (error instanceof ApplicationError && error.code === ErrorCodes.BAD_REQUEST) {
+                // expected ApplicationError of code BAD_REQUEST
             } else {
                 expect.fail("Unexpected error: " + error);
             }
         }
-        let team = await this.teamDB.createTeam(user.id, "      I ♥ gitpod        ");
+        const team = await this.teamDB.createTeam(user.id, "      I ♥ gitpod        ");
         expect(team.name).to.be.eq("I ♥ gitpod");
         expect(team.slug).to.be.eq("i-love-gitpod");
     }
@@ -87,5 +83,27 @@ export class TeamDBSpec {
         team2.name = "My Team";
         const team3 = await this.teamDB.updateTeam(team2.id, team2);
         expect(team3.slug).to.match(/^my-team-[a-zA-Z0-9_-]{8}$/);
+    }
+
+    @test()
+    async testNoSlugDuplicates(): Promise<void> {
+        const user = await this.userDB.newUser();
+
+        const team1 = await this.teamDB.createTeam(user.id, "My Team");
+        expect(team1.slug).to.be.eq("my-team");
+        const team2 = await this.teamDB.createTeam(user.id, "My Team");
+        expect(team2.slug).to.match(/my-team-[a-f0-9]{4}/);
+    }
+
+    @test()
+    async testNestedTransaction(): Promise<void> {
+        const user = await this.userDB.newUser();
+
+        const team1 = await this.teamDB.transaction(async (db) => {
+            return await db.transaction(async (db) => {
+                return await db.createTeam(user.id, "My Team");
+            });
+        });
+        expect(team1.slug).to.be.eq("my-team");
     }
 }

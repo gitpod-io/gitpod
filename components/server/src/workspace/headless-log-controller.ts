@@ -5,7 +5,7 @@
  */
 
 import { inject, injectable } from "inversify";
-import * as express from "express";
+import express from "express";
 import {
     HEADLESS_LOG_STREAM_STATUS_CODE,
     Queue,
@@ -20,11 +20,18 @@ import {
     OwnerResourceGuard,
     TeamMemberResourceGuard,
     RepositoryResourceGuard,
+    FGAResourceAccessGuard,
+    ResourceAccessGuard,
 } from "../auth/resource-access";
 import { DBWithTracing, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-db";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { TeamDB } from "@gitpod/gitpod-db/lib/team-db";
-import { HeadlessLogService, HeadlessLogEndpoint } from "./headless-log-service";
+import {
+    HeadlessLogService,
+    HeadlessLogEndpoint,
+    HEADLESS_LOGS_PATH_PREFIX,
+    HEADLESS_LOG_DOWNLOAD_PATH_PREFIX,
+} from "./headless-log-service";
 import * as opentracing from "opentracing";
 import { asyncHandler } from "../express-util";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
@@ -34,9 +41,7 @@ import { BearerAuth } from "../auth/bearer-authenticator";
 import { ProjectsService } from "../projects/projects-service";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-
-export const HEADLESS_LOGS_PATH_PREFIX = "/headless-logs";
-export const HEADLESS_LOG_DOWNLOAD_PATH_PREFIX = "/headless-log-download";
+import { ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 @injectable()
 export class HeadlessLogController {
@@ -214,18 +219,21 @@ export class HeadlessLogController {
 
         let teamMembers: TeamMemberInfo[] = [];
         if (workspace?.projectId) {
-            const p = await this.projectService.getProject(workspace.projectId);
+            const p = await ApplicationError.notFoundToUndefined(
+                this.projectService.getProject(user.id, workspace.projectId),
+            );
             if (p?.teamId) {
                 teamMembers = await this.teamDb.findMembersByTeam(p.teamId);
             }
         }
 
         // [gpl] It's a bit sad that we have to duplicate this access check... but that's due to the way our API code is written
-        const resourceGuard = new CompositeResourceAccessGuard([
+        let resourceGuard: ResourceAccessGuard = new CompositeResourceAccessGuard([
             new OwnerResourceGuard(user.id),
             new TeamMemberResourceGuard(user.id),
             new RepositoryResourceGuard(user, this.hostContextProvider),
         ]);
+        resourceGuard = new FGAResourceAccessGuard(user.id, resourceGuard);
         if (!(await resourceGuard.canAccess({ kind: "workspaceLog", subject: workspace, teamMembers }, "get"))) {
             res.sendStatus(403);
             log.warn(logCtx, "unauthenticated headless log access");

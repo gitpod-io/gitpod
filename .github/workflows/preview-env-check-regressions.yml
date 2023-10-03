@@ -1,180 +1,195 @@
 name: "Preview environment regression check"
 on:
-    workflow_run:
-        workflows: ["Build"]
-        types: [completed]
-        branches: ["main"]
-    workflow_dispatch:
-        inputs:
-            name:
-                required: true
-                description: "The name of the preview environment"
-            version:
-                required: true
-                description: "The version of Gitpod to install"
-            infrastructure_provider:
-                description: "The infrastructure provider to use. Valid options: harvester, gcp"
-                required: false
-                default: gcp
-            wsman_mk2:
-                required: false
-                type: boolean
-                default: true
-                description: "Run tests against ws-manager-mk2"
+  workflow_run:
+    workflows: ["Build"]
+    types: [completed]
+    branches: ["main"]
+  workflow_dispatch:
+    inputs:
+      name:
+        required: true
+        description: "The name of the preview environment"
+      version:
+        required: true
+        description: "The version of Gitpod to install"
+      infrastructure_provider:
+        description: "The infrastructure provider to use. Valid options: harvester, gcp"
+        required: false
+        default: gcp
 
 jobs:
-    configuration:
-        name: Configuration
-        runs-on: [self-hosted]
-        outputs:
-            skip: ${{ steps.configuration.outputs.skip }}
-            name: ${{ steps.configuration.outputs.name }}
-            version: ${{ steps.configuration.outputs.version }}
-            infrastructure_provider: ${{ steps.configuration.outputs.infrastructure_provider }}
-        steps:
-            - name: "Set outputs"
-              id: configuration
-              run: |
-                  if [[ '${{ github.event.inputs.name }}' != '' ]]; then
-                      # The workflow was triggered by workflow_dispatch
-                      {
-                          echo "version=${{ github.event.inputs.version }}"
-                          echo "name=${{ github.event.inputs.name }}"
-                          echo "infrastructure_provider=${{ github.event.inputs.infrastructure_provider }}"
-                          echo "skip=false"
-                      } >> $GITHUB_OUTPUT
-                  else
-                      # The workflow was triggered by workflow_run
-                      {
-                          echo "version=main-gha.${{ github.event.workflow_run.run_number }}"
-                          echo "name=preview-regression-check-main-${{ github.run_id }}-${{ github.run_attempt }}"
-                          echo "infrastructure_provider=harvester"
-                          echo "skip=${{ github.event.workflow_run.conclusion == 'failure' }}"
-                      } >> $GITHUB_OUTPUT
-                  fi
+  create-runner:
+    uses: gitpod-io/gce-github-runner/.github/workflows/create-vm.yml@main
+    secrets:
+      runner_token: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_TOKEN }}
+      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
 
-    infrastructure:
-        name: Create preview environment infrastructure
-        needs: [ configuration ]
-        runs-on: [ self-hosted ]
-        concurrency:
-            group: ${{ github.head_ref || github.ref_name }}-infrastructure
-        steps:
-            - uses: actions/checkout@v3
-            - name: Create preview environment infrastructure
-              id: create
-              uses: ./.github/actions/preview-create
-              with:
-                  name: ${{ needs.configuration.outputs.name }}
-                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
-                  infrastructure_provider: ${{ needs.configuration.outputs.infrastructure_provider }}
-                  large_vm: false
-            - name: Deploy Gitpod to the preview environment
-              id: deploy-gitpod
-              uses: ./.github/actions/deploy-gitpod
-              with:
-                  name: ${{ needs.configuration.outputs.name }}
-                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
-                  version: ${{ needs.configuration.outputs.version}}
-                  wsmanager_mk2: ${{ github.event.inputs.wsman_mk2 != 'false' }}
+  configuration:
+    needs: [create-runner]
+    name: Configuration
+    runs-on: ${{ needs.create-runner.outputs.label }}
+    outputs:
+      skip: ${{ steps.configuration.outputs.skip }}
+      name: ${{ steps.configuration.outputs.name }}
+      version: ${{ steps.configuration.outputs.version }}
+      infrastructure_provider: ${{ steps.configuration.outputs.infrastructure_provider }}
+    steps:
+      - name: "Set outputs"
+        id: configuration
+        run: |
+          if [[ '${{ github.event.inputs.name }}' != '' ]]; then
+              # The workflow was triggered by workflow_dispatch
+              {
+                  echo "version=${{ github.event.inputs.version }}"
+                  echo "name=${{ github.event.inputs.name }}"
+                  echo "infrastructure_provider=${{ github.event.inputs.infrastructure_provider }}"
+                  echo "skip=false"
+              } >> $GITHUB_OUTPUT
+          else
+              # The workflow was triggered by workflow_run
+              {
+                  echo "version=main-gha.${{ github.event.workflow_run.run_number }}"
+                  echo "name=preview-regression-check-main-${{ github.run_id }}-${{ github.run_attempt }}"
+                  echo "infrastructure_provider=harvester"
+                  echo "skip=${{ github.event.workflow_run.conclusion == 'failure' }}"
+              } >> $GITHUB_OUTPUT
+          fi
 
-    check:
-        name: Check for regressions
-        needs: [configuration, infrastructure]
-        if: ${{ needs.configuration.outputs.skip == 'false' }}
-        runs-on: [self-hosted]
-        container:
-            image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-prebuild-jam-gha.5832
-            volumes:
-                - /var/tmp:/var/tmp
-                - /tmp:/tmp
-        steps:
-            - uses: actions/checkout@v3
-            - name: Check
-              shell: bash
-              env:
-                  ROBOQUAT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  USERNAME: ${{ secrets.IDE_INTEGRATION_TEST_USERNAME }}
-                  USER_TOKEN: ${{ secrets.IDE_INTEGRATION_TEST_USER_TOKEN }}
-                  PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
-                  PREVIEW_NAME: ${{ needs.configuration.outputs.name }}
-              run: |
-                  set -euo pipefail
+  infrastructure:
+    name: Create preview environment infrastructure
+    needs: [configuration, create-runner]
+    runs-on: ${{ needs.create-runner.outputs.label }}
+    concurrency:
+      group: ${{ needs.configuration.outputs.name }}-infrastructure
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create preview environment infrastructure
+        id: create
+        uses: ./.github/actions/preview-create
+        with:
+          name: ${{ needs.configuration.outputs.name }}
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          infrastructure_provider: ${{ needs.configuration.outputs.infrastructure_provider }}
+          large_vm: false
+      - name: Deploy Gitpod to the preview environment
+        id: deploy-gitpod
+        uses: ./.github/actions/deploy-gitpod
+        with:
+          name: ${{ needs.configuration.outputs.name }}
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          version: ${{ needs.configuration.outputs.version}}
 
-                  export LEEWAY_WORKSPACE_ROOT="$(pwd)"
-                  export HOME="/home/gitpod"
-                  export PREVIEW_ENV_DEV_SA_KEY_PATH="/home/gitpod/.config/gcloud/preview-environment-dev-sa.json"
+  check:
+    name: Check for regressions
+    needs: [configuration, infrastructure, create-runner]
+    if: ${{ needs.configuration.outputs.skip == 'false' }}
+    runs-on: ${{ needs.create-runner.outputs.label }}
+    container:
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-update-image-gha.17642
+      volumes:
+        - /var/tmp:/var/tmp
+        - /tmp:/tmp
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check
+        shell: bash
+        env:
+          ROBOQUAT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          USERNAME: ${{ secrets.IDE_INTEGRATION_TEST_USERNAME }}
+          USER_TOKEN: ${{ secrets.IDE_INTEGRATION_TEST_USER_TOKEN }}
+          PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
+          PREVIEW_NAME: ${{ needs.configuration.outputs.name }}
+        run: |
+          set -euo pipefail
 
-                  echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-                  gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+          export LEEWAY_WORKSPACE_ROOT="$(pwd)"
+          export HOME="/home/gitpod"
+          export PREVIEW_ENV_DEV_SA_KEY_PATH="/home/gitpod/.config/gcloud/preview-environment-dev-sa.json"
 
-                  leeway run dev/preview/previewctl:install
+          echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+          gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
 
-                  echo "Setting up access to core-dev and harvester"
-                  previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+          leeway run dev/preview/previewctl:install
 
-                  previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 1m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+          echo "Setting up access to core-dev and harvester"
+          previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
 
-                  # start integration test
-                  args=()
-                  args+=( "-kubeconfig=/home/gitpod/.kube/config" )
-                  args+=( "-namespace=default" )
-                  [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
-                  args+=( "-timeout=60m" )
+          previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 1m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
 
-                  TESTS_DIR="$GITHUB_WORKSPACE/test/tests/smoke-test"
+          # start integration test
+          args=()
+          args+=( "-kubeconfig=/home/gitpod/.kube/config" )
+          args+=( "-namespace=default" )
+          [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
+          args+=( "-timeout=60m" )
 
-                  export WS_MANAGER_MK2="${{ github.event.inputs.wsman_mk2 != 'false' }}"
+          TESTS_DIR="$GITHUB_WORKSPACE/test/tests/smoke-test"
 
-                  go install github.com/jstemmer/go-junit-report/v2@latest
+          go install github.com/jstemmer/go-junit-report/v2@latest
 
-                  echo "running integration for smoke test"
+          echo "running integration for smoke test"
 
-                  cd "${TESTS_DIR}"
-                  set +e
-                  go test -v ./... "${args[@]}" 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST.xml" -iocopy
-                  RC=${PIPESTATUS[0]}
-                  set -e
+          cd "${TESTS_DIR}"
+          set +e
+          go test -v ./... "${args[@]}" 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST.xml" -iocopy
+          RC=${PIPESTATUS[0]}
+          set -e
 
-                  if [ "${RC}" -ne "0" ]; then
-                    exit ${RC}
-                  fi
-            - name: Test Summary
-              id: test_summary
-              uses: test-summary/action@v2
-              with:
-                  paths: "test/tests/**/TEST.xml"
-              if: always()
-            - id: auth
-              if: failure()
-              uses: google-github-actions/auth@v1
-              with:
-                  token_format: access_token
-                  credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-            - name: Get Secrets from GCP
-              if: failure()
-              id: 'secrets'
-              uses: 'google-github-actions/get-secretmanager-secrets@v1'
-              with:
-                  secrets: |-
-                      devx-slack-webhook:gitpod-core-dev/devx-alerts-slack-webhook
-            - name: Slack Notification
-              uses: rtCamp/action-slack-notify@v2
-              if: failure()
-              env:
-                  SLACK_WEBHOOK: '${{ steps.secrets.outputs.devx-slack-webhook }}'
-                  SLACK_COLOR: ${{ job.status }}
-                  SLACK_MESSAGE: "`${{ needs.configuration.outputs.version}}` smoke test failed"
-
-    delete:
-        name: Delete preview environment
-        needs: [ configuration, infrastructure, check ]
+          if [ "${RC}" -ne "0" ]; then
+            exit ${RC}
+          fi
+      - name: Test Summary
+        id: test_summary
+        uses: test-summary/action@v2
+        with:
+          paths: "test/tests/**/TEST.xml"
         if: always()
-        runs-on: [ self-hosted ]
-        steps:
-            - uses: actions/checkout@v3
-            - name: Delete preview environment
-              uses: ./.github/actions/delete-preview
-              with:
-                  name: ${{ needs.configuration.outputs.name }}
-                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
+      - id: auth
+        if: failure()
+        uses: google-github-actions/auth@v1
+        with:
+          token_format: access_token
+          credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+      - name: Get Secrets from GCP
+        if: failure()
+        id: "secrets"
+        uses: "google-github-actions/get-secretmanager-secrets@v1"
+        with:
+          secrets: |-
+            devx-slack-webhook:gitpod-core-dev/devx-alerts-slack-webhook
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        if: failure()
+        env:
+          SLACK_WEBHOOK: "${{ steps.secrets.outputs.devx-slack-webhook }}"
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_MESSAGE: "`${{ needs.configuration.outputs.version}}` smoke test failed"
+          SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
+
+  delete:
+    name: Delete preview environment
+    needs: [configuration, infrastructure, check, create-runner]
+    if: always()
+    runs-on: ${{ needs.create-runner.outputs.label }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Delete preview environment
+        uses: ./.github/actions/delete-preview
+        with:
+          name: ${{ needs.configuration.outputs.name }}
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+
+  delete-runner:
+    if: always()
+    needs:
+      - create-runner
+      - configuration
+      - infrastructure
+      - check
+      - delete
+    uses: gitpod-io/gce-github-runner/.github/workflows/delete-vm.yml@main
+    secrets:
+      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
+    with:
+      runner-label: ${{ needs.create-runner.outputs.label }}
+      machine-zone: ${{ needs.create-runner.outputs.machine-zone }}

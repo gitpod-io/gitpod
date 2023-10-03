@@ -6,12 +6,12 @@
 
 import * as chai from "chai";
 const expect = chai.expect;
-import { suite, test, timeout } from "mocha-typescript";
+import { suite, test, timeout } from "@testdeck/mocha";
 
 import { testContainer } from "./test-container";
 import { TypeORMBlockedRepositoryDBImpl } from "./typeorm/blocked-repository-db-impl";
 import { TypeORM } from "./typeorm/typeorm";
-import { DBBlockedRepository } from "./typeorm/entity/db-blocked-repository";
+import { resetDB } from "./test/reset-db";
 
 @suite
 class BlockedRepositoryDBSpec {
@@ -79,8 +79,7 @@ class BlockedRepositoryDBSpec {
 
     async wipeRepo() {
         const typeorm = testContainer.get<TypeORM>(TypeORM);
-        const manager = await typeorm.getConnection();
-        await manager.getRepository(DBBlockedRepository).delete({});
+        await resetDB(typeorm);
     }
 }
 

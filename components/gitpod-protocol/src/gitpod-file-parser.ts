@@ -6,7 +6,7 @@
 
 import { injectable } from "inversify";
 import * as yaml from "js-yaml";
-import * as Ajv from "ajv";
+import Ajv from "ajv";
 import { log } from "./util/logging";
 import { WorkspaceConfig, PortRangeConfig } from "./protocol";
 

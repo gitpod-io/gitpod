@@ -25,11 +25,11 @@ export interface TabEntry {
 
 export default function Header(p: HeaderProps) {
     const location = useLocation();
-    useDocumentTitle(`${p.title} — Gitpod`);
+    useDocumentTitle(`${p.title}`);
     return (
         <div className="app-container border-gray-200 dark:border-gray-800">
             <div className="flex pb-8 pt-6">
-                <div className="">
+                <div>
                     {p.complexTitle ? p.complexTitle : <Heading1 tracking="tight">{p.title}</Heading1>}
                     {typeof p.subtitle === "string" ? (
                         <Subheading tracking="wide">{p.subtitle}</Subheading>

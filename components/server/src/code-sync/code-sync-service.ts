@@ -7,19 +7,12 @@
 import { status } from "@grpc/grpc-js";
 import fetch from "node-fetch";
 import { User } from "@gitpod/gitpod-protocol/lib/protocol";
-import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import * as util from "util";
-import * as express from "express";
+import express from "express";
 import { inject, injectable } from "inversify";
 import { BearerAuth } from "../auth/bearer-authenticator";
 import { isWithFunctionAccessGuard } from "../auth/function-access";
-import {
-    CodeSyncResourceDB,
-    UserStorageResourcesDB,
-    ALL_SERVER_RESOURCES,
-    ServerResource,
-    SyncResource,
-} from "@gitpod/gitpod-db/lib";
+import { CodeSyncResourceDB, ALL_SERVER_RESOURCES, ServerResource, SyncResource } from "@gitpod/gitpod-db/lib";
 import {
     DeleteRequest,
     DeleteResponse,
@@ -76,18 +69,6 @@ function toObjectName(resource: ServerResource, rev: string, collection: string 
     return name;
 }
 
-const fromTheiaRev = "from-theia";
-interface ISyncData {
-    version: number;
-    machineId?: string;
-    content: string;
-}
-interface ISettingsSyncContent {
-    settings: string;
-}
-const userSettingsUri = "user_storage:settings.json";
-const userPluginsUri = "user-plugins://";
-
 @injectable()
 export class CodeSyncService {
     @inject(Config)
@@ -101,12 +82,6 @@ export class CodeSyncService {
 
     @inject(CodeSyncResourceDB)
     private readonly db: CodeSyncResourceDB;
-
-    @inject(UserStorageResourcesDB)
-    private readonly userStorageResourcesDB: UserStorageResourcesDB;
-
-    @inject(IAnalyticsWriter)
-    private readonly analytics: IAnalyticsWriter;
 
     get apiRouter(): express.Router {
         const config = this.config.codeSync;
@@ -148,13 +123,10 @@ export class CodeSyncService {
                 return;
             }
 
-            let manifest = await this.db.getManifest(req.user.id);
+            const manifest = await this.db.getManifest(req.user.id);
             if (!manifest) {
-                // Uncoment this after theia code is removed, check it also sends etag
-                // res.sendStatus(204);
-                // return;
-
-                manifest = { session: req.user.id, latest: { extensions: fromTheiaRev, settings: fromTheiaRev } };
+                res.sendStatus(204);
+                return;
             }
             res.json(manifest);
             return;
@@ -238,52 +210,6 @@ export class CodeSyncService {
         return router;
     }
 
-    private parseFullPluginName(fullPluginName: string): { name: string; version?: string } {
-        const idx = fullPluginName.lastIndexOf("@");
-        if (idx === -1) {
-            return {
-                name: fullPluginName.toLowerCase(),
-            };
-        }
-        const name = fullPluginName.substring(0, idx).toLowerCase();
-        const version = fullPluginName.substr(idx + 1);
-        return { name, version };
-    }
-
-    protected async getTheiaCodeSyncResource(userId: string) {
-        interface ISyncExtension {
-            identifier: {
-                id: string;
-            };
-            version?: string;
-            installed?: boolean;
-        }
-        const extensions: ISyncExtension[] = [];
-        const content = await this.userStorageResourcesDB.get(userId, userPluginsUri);
-        const json = content && JSON.parse(content);
-        const userPlugins = new Set<string>(json);
-        for (const userPlugin of userPlugins) {
-            const fullPluginName = (userPlugin.substring(0, userPlugin.lastIndexOf(":")) || userPlugin).toLowerCase(); // drop hash
-            const { name, version } = this.parseFullPluginName(fullPluginName);
-            extensions.push({
-                identifier: { id: name },
-                version,
-                installed: true,
-            });
-        }
-        if (extensions.length) {
-            this.analytics.track({
-                userId,
-                event: "vscode_sync_theia_migration",
-                properties: {
-                    resource: "extensions",
-                    totalExtensions: extensions.length,
-                },
-            });
-        }
-        return JSON.stringify(extensions);
-    }
-
     private async getResources(req: express.Request<{ resource: string; collection?: string }>, res: express.Response) {
         if (!User.is(req.user)) {
             res.sendStatus(400);
@@ -343,17 +269,7 @@ export class CodeSyncService {
             }
         }
 
-        let resourceRev: string | undefined = ref;
-        if (resourceRev !== fromTheiaRev) {
-            resourceRev = (await this.db.getResource(req.user.id, resourceKey, resourceRev, collection))?.rev;
-        }
-        if (
-            !resourceRev &&
-            !collection &&
-            (resourceKey === SyncResource.Extensions || resourceKey === SyncResource.Settings)
-        ) {
-            resourceRev = fromTheiaRev;
-        }
+        const resourceRev = (await this.db.getResource(req.user.id, resourceKey, ref, collection))?.rev;
         if (!resourceRev) {
             res.setHeader("etag", "0");
             res.sendStatus(204);
@@ -365,58 +281,34 @@ export class CodeSyncService {
         }
 
         let content: string;
-        if (resourceRev === fromTheiaRev) {
-            let version = 1;
-            let value = "";
-            if (resourceKey === SyncResource.Extensions) {
-                value = await this.getTheiaCodeSyncResource(req.user.id);
-                version = 5;
-            } else if (resourceKey === SyncResource.Settings) {
-                let settings = await this.userStorageResourcesDB.get(req.user.id, userSettingsUri);
-                if (settings) {
-                    this.analytics.track({
-                        userId: req.user.id,
-                        event: "vscode_sync_theia_migration",
-                        properties: {
-                            resource: "settings",
-                        },
-                    });
-                }
-                settings = settings === "" ? "{}" : settings;
-                value = JSON.stringify(<ISettingsSyncContent>{ settings });
-                version = 2;
+        const contentType = req.headers["content-type"] || "*/*";
+        const request = new DownloadUrlRequest();
+        request.setOwnerId(req.user.id);
+        request.setName(toObjectName(resourceKey, resourceRev, collection));
+        request.setContentType(contentType);
+        try {
+            const blobsClient = this.blobsProvider.getDefault();
+            const urlResponse = await util.promisify<DownloadUrlRequest, DownloadUrlResponse>(
+                blobsClient.downloadUrl.bind(blobsClient),
+            )(request);
+            const response = await fetch(urlResponse.getUrl(), {
+                timeout: 10000,
+                headers: {
+                    "content-type": contentType,
+                },
+            });
+            if (response.status !== 200) {
+                throw new Error(
+                    `code sync: blob service: download failed with ${response.status} ${response.statusText}`,
+                );
             }
-            content = JSON.stringify(<ISyncData>{ version, content: value });
-        } else {
-            const contentType = req.headers["content-type"] || "*/*";
-            const request = new DownloadUrlRequest();
-            request.setOwnerId(req.user.id);
-            request.setName(toObjectName(resourceKey, resourceRev, collection));
-            request.setContentType(contentType);
-            try {
-                const blobsClient = this.blobsProvider.getDefault();
-                const urlResponse = await util.promisify<DownloadUrlRequest, DownloadUrlResponse>(
-                    blobsClient.downloadUrl.bind(blobsClient),
-                )(request);
-                const response = await fetch(urlResponse.getUrl(), {
-                    timeout: 10000,
-                    headers: {
-                        "content-type": contentType,
-                    },
-                });
-                if (response.status !== 200) {
-                    throw new Error(
-                        `code sync: blob service: download failed with ${response.status} ${response.statusText}`,
-                    );
-                }
-                content = await response.text();
-            } catch (e) {
-                if (e.code === status.NOT_FOUND) {
-                    res.sendStatus(204);
-                    return;
-                }
-                throw e;
+            content = await response.text();
+        } catch (e) {
+            if (e.code === status.NOT_FOUND) {
+                res.sendStatus(204);
+                return;
             }
+            throw e;
         }
 
         res.setHeader("etag", resourceRev);
@@ -445,10 +337,7 @@ export class CodeSyncService {
             }
         }
 
-        let latestRev: string | undefined = req.headers["if-match"];
-        if (latestRev === fromTheiaRev) {
-            latestRev = undefined;
-        }
+        const latestRev: string | undefined = req.headers["if-match"];
 
         const revLimit =
             resourceKey === "machines"

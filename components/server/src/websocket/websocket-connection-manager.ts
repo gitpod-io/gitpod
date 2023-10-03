@@ -12,7 +12,7 @@ import {
     RateLimiterError,
     User,
 } from "@gitpod/gitpod-protocol";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ApplicationError, ErrorCode, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ConnectionHandler } from "@gitpod/gitpod-protocol/lib/messaging/handler";
 import {
     JsonRpcConnectionHandler,
@@ -21,7 +21,7 @@ import {
 } from "@gitpod/gitpod-protocol/lib/messaging/proxy-factory";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { EventEmitter } from "events";
-import * as express from "express";
+import express from "express";
 import { ErrorCodes as RPCErrorCodes, MessageConnection, ResponseError } from "vscode-jsonrpc";
 import { AllAccessFunctionGuard, FunctionAccessGuard, WithFunctionAccessGuard } from "../auth/function-access";
 import { HostContextProvider } from "../auth/host-context-provider";
@@ -34,6 +34,7 @@ import {
     TeamMemberResourceGuard,
     WithResourceAccessGuard,
     RepositoryResourceGuard,
+    FGAResourceAccessGuard,
 } from "../auth/resource-access";
 import { clientIp, takeFirst } from "../express-util";
 import {
@@ -48,6 +49,7 @@ import * as opentracing from "opentracing";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { maskIp } from "../analytics";
+import { runWithContext } from "../util/log-context";
 
 export type GitpodServiceFactory = () => GitpodServerImpl;
 
@@ -216,7 +218,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
         const gitpodServer = this.serverFactory();
 
         let resourceGuard: ResourceAccessGuard;
-        let explicitGuard = (expressReq as WithResourceAccessGuard).resourceGuard;
+        const explicitGuard = (expressReq as WithResourceAccessGuard).resourceGuard;
         if (!!explicitGuard) {
             resourceGuard = explicitGuard;
         } else if (!!user) {
@@ -226,6 +228,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
                 new SharedWorkspaceAccessGuard(),
                 new RepositoryResourceGuard(user, this.hostContextProvider),
             ]);
+            resourceGuard = new FGAResourceAccessGuard(user.id, resourceGuard);
         } else {
             resourceGuard = { canAccess: async () => false };
         }
@@ -372,8 +375,33 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
 
     protected async onRequest(method: string, ...args: any[]): Promise<any> {
         const span = TraceContext.startSpan(method, undefined);
-        const ctx = { span };
         const userId = this.clientMetadata.userId;
+        const requestId = span.context().toTraceId();
+        return runWithContext(
+            "request",
+            {
+                userId,
+                contextId: requestId,
+                method,
+            },
+            () => {
+                try {
+                    return this.internalOnRequest(span, requestId, method, ...args);
+                } finally {
+                    span.finish();
+                }
+            },
+        );
+    }
+
+    private async internalOnRequest(
+        span: opentracing.Span,
+        requestId: string,
+        method: string,
+        ...args: any[]
+    ): Promise<any> {
+        const userId = this.clientMetadata.userId;
+        const ctx = { span };
         const timer = apiCallDurationHistogram.startTimer();
         try {
             // generic tracing data
@@ -402,13 +430,13 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
 
             // explicitly guard against wrong method names
             if (!isValidFunctionName(method)) {
-                throw new ResponseError(ErrorCodes.BAD_REQUEST, `Unknown method '${method}'`);
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Unknown method '${method}'`);
             }
 
             // access guard
             if (!this.accessGuard.canAccess(method)) {
                 // logging/tracing is done in 'catch' clause
-                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `Request ${method} is not allowed`);
+                throw new ApplicationError(ErrorCodes.PERMISSION_DENIED, `Request ${method} is not allowed`);
             }
 
             // actual call
@@ -417,14 +445,13 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
             observeAPICallsDuration(method, 200, timer());
             return result;
         } catch (e) {
-            const traceID = span.context().toTraceId();
-
-            if (e instanceof ResponseError) {
+            const requestIdMessage = ` If this error is unexpected, please quote the request ID '${requestId}' when reaching out to Gitpod Support.`;
+            if (ApplicationError.hasErrorCode(e)) {
                 increaseApiCallCounter(method, e.code);
                 observeAPICallsDuration(method, e.code, timer());
                 TraceContext.setJsonRPCError(ctx, method, e);
 
-                const severityLogger = ErrorCodes.isUserError(e.code) ? log.info : log.error;
+                const severityLogger = ErrorCode.isUserError(e.code) ? log.info : log.error;
                 severityLogger(
                     { userId },
                     `JSON RPC Request ${method} failed with user error: ${e.code}/"${e.message}"`,
@@ -435,22 +462,21 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
                         message: e.message,
                     },
                 );
+                throw new ResponseError(e.code, e.message + requestIdMessage, e.data);
             } else {
                 TraceContext.setError(ctx, e); // this is a "real" error
 
-                const err = new ResponseError(
+                const err = new ApplicationError(
                     ErrorCodes.INTERNAL_SERVER_ERROR,
-                    `Internal server error. Please quote trace ID: '${traceID}' when reaching to Gitpod Support`,
+                    `Internal server error: '${e.message}'` + requestIdMessage,
                 );
                 increaseApiCallCounter(method, err.code);
                 observeAPICallsDuration(method, err.code, timer());
                 TraceContext.setJsonRPCError(ctx, method, err, true);
 
                 log.error({ userId }, `Request ${method} failed with internal server error`, e, { method, args });
+                throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.message);
             }
-            throw e;
-        } finally {
-            span.finish();
         }
     }
 

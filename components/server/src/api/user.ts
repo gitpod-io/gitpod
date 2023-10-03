@@ -23,16 +23,17 @@ import {
     GetGitTokenResponse,
     BlockUserResponse,
 } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_pb";
-import { WorkspaceStarter } from "../workspace/workspace-starter";
-import { UserService } from "../user/user-service";
+import { UserAuthentication } from "../user/user-authentication";
+import { WorkspaceService } from "../workspace/workspace-service";
+import { SYSTEM_USER } from "../authorization/authorizer";
 import { validate } from "uuid";
-import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
 
 @injectable()
 export class APIUserService implements ServiceImpl<typeof UserServiceInterface> {
-    @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
-    @inject(UserService) protected readonly userService: UserService;
+    @inject(WorkspaceService) protected readonly workspaceService: WorkspaceService;
+    @inject(UserAuthentication) protected readonly userService: UserAuthentication;
 
     public async getAuthenticatedUser(req: GetAuthenticatedUserRequest): Promise<GetAuthenticatedUserResponse> {
         throw new ConnectError("unimplemented", Code.Unimplemented);
@@ -73,14 +74,17 @@ export class APIUserService implements ServiceImpl<typeof UserServiceInterface> 
 
         // TODO: Once connect-node supports middlewares, lift the tracing into the middleware.
         const trace = {};
-        await this.userService.blockUser(userId, true);
+        // TODO for now we use SYSTEM_USER, since it is only called by internal componenets like usage
+        // and not exposed publically, but there should be better way to get an authenticated user
+        await this.userService.blockUser(SYSTEM_USER, userId, true);
         log.info(`Blocked user ${userId}.`, {
             userId,
             reason,
         });
 
-        const stoppedWorkspaces = await this.workspaceStarter.stopRunningWorkspacesForUser(
+        const stoppedWorkspaces = await this.workspaceService.stopRunningWorkspacesForUser(
             trace,
+            SYSTEM_USER,
             userId,
             reason,
             StopWorkspacePolicy.IMMEDIATELY,

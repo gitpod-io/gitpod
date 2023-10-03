@@ -81,6 +81,72 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 
 		requireEqualProto(t, workspaceTestData[0].API, resp.Msg.GetResult())
 	})
+
+	t.Run("returns a proper RecentFolders with when config.WorkspaceLocation exists", func(t *testing.T) {
+		serverMock, client := setupWorkspacesService(t)
+
+		wsInfo := workspaceTestData[0].Protocol
+		wsInfo.Workspace = nil
+		wsWorkspace := *workspaceTestData[0].Protocol.Workspace
+		wsWorkspace.Config = &protocol.WorkspaceConfig{
+			WorkspaceLocation: "gitpod/gitpod-ws.code-workspace",
+		}
+		wsInfo.Workspace = &wsWorkspace
+
+		serverMock.EXPECT().GetWorkspace(gomock.Any(), workspaceID).Return(&wsInfo, nil)
+
+		resp, err := client.GetWorkspace(context.Background(), connect.NewRequest(&v1.GetWorkspaceRequest{
+			WorkspaceId: workspaceID,
+		}))
+		require.NoError(t, err)
+
+		expectedWs := *workspaceTestData[0].API
+		expectedWs.Status = nil
+		expectedWsStatus := *workspaceTestData[0].API.Status
+		expectedWsStatus.Instance = nil
+		expectedInstance := *workspaceTestData[0].API.Status.Instance
+		expectedInstance.Status = nil
+		expectedInstanceStatus := *workspaceTestData[0].API.Status.Instance.Status
+		expectedInstanceStatus.RecentFolders = []string{"/workspace/gitpod/gitpod-ws.code-workspace"}
+		expectedInstance.Status = &expectedInstanceStatus
+		expectedWsStatus.Instance = &expectedInstance
+		expectedWs.Status = &expectedWsStatus
+
+		requireEqualProto(t, expectedWs, resp.Msg.GetResult())
+	})
+
+	t.Run("returns a proper RecentFolders with when config.CheckoutLocation exists", func(t *testing.T) {
+		serverMock, client := setupWorkspacesService(t)
+
+		wsInfo := workspaceTestData[0].Protocol
+		wsInfo.Workspace = nil
+		wsWorkspace := *workspaceTestData[0].Protocol.Workspace
+		wsWorkspace.Config = &protocol.WorkspaceConfig{
+			CheckoutLocation: "foo",
+		}
+		wsInfo.Workspace = &wsWorkspace
+
+		serverMock.EXPECT().GetWorkspace(gomock.Any(), workspaceID).Return(&wsInfo, nil)
+
+		resp, err := client.GetWorkspace(context.Background(), connect.NewRequest(&v1.GetWorkspaceRequest{
+			WorkspaceId: workspaceID,
+		}))
+		require.NoError(t, err)
+
+		expectedWs := *workspaceTestData[0].API
+		expectedWs.Status = nil
+		expectedWsStatus := *workspaceTestData[0].API.Status
+		expectedWsStatus.Instance = nil
+		expectedInstance := *workspaceTestData[0].API.Status.Instance
+		expectedInstance.Status = nil
+		expectedInstanceStatus := *workspaceTestData[0].API.Status.Instance.Status
+		expectedInstanceStatus.RecentFolders = []string{"/workspace/foo"}
+		expectedInstance.Status = &expectedInstanceStatus
+		expectedWsStatus.Instance = &expectedInstance
+		expectedWs.Status = &expectedWsStatus
+
+		requireEqualProto(t, expectedWs, resp.Msg.GetResult())
+	})
 }
 
 func TestWorkspaceService_StartWorkspace(t *testing.T) {
@@ -478,7 +544,7 @@ func TestClientServerStreamInterceptor(t *testing.T) {
 
 	svc := NewWorkspaceService(&FakeServerConnPool{
 		api: serverMock,
-	})
+	}, nil)
 
 	keyset := jwstest.GenerateKeySet(t)
 	rsa256, err := jws.NewRSA256(keyset)
@@ -504,6 +570,46 @@ func TestClientServerStreamInterceptor(t *testing.T) {
 	}))
 
 	resp.Close()
+}
+
+func TestWorkspaceService_ListWorkspaceClasses(t *testing.T) {
+
+	t.Run("proxies request to server", func(t *testing.T) {
+		serverMock, client := setupWorkspacesService(t)
+
+		serverMock.EXPECT().GetSupportedWorkspaceClasses(gomock.Any()).Return([]*protocol.SupportedWorkspaceClass{
+			{
+				ID:          "smol",
+				DisplayName: "Tiny",
+				Description: "The littlest there is",
+				IsDefault:   true,
+			},
+			{
+				ID:          "big",
+				DisplayName: "Huge",
+				Description: "The biggest there is",
+				IsDefault:   false,
+			}}, nil)
+
+		retrieved, err := client.ListWorkspaceClasses(context.Background(), connect.NewRequest(&v1.ListWorkspaceClassesRequest{}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.ListWorkspaceClassesResponse{
+			Result: []*v1.WorkspaceClass{
+				{
+					Id:          "smol",
+					DisplayName: "Tiny",
+					Description: "The littlest there is",
+					IsDefault:   true,
+				},
+				{
+					Id:          "big",
+					DisplayName: "Huge",
+					Description: "The biggest there is",
+					IsDefault:   false,
+				},
+			},
+		}, retrieved.Msg)
+	})
 }
 
 type TestInterceptor struct {
@@ -547,10 +653,14 @@ var workspaceTestData = []workspaceTestDataEntry{
 				BaseImageNameResolved: "foo:bar",
 				ID:                    "gitpodio-gitpod-isq6xj458lj",
 				OwnerID:               "fake-owner-id",
-				ContextURL:            "https://github.com/gitpod-io/gitpod",
+				ContextURL:            "open-prebuild/126ac54a-5922-4a45-9a18-670b057bf540/https://github.com/gitpod-io/gitpod/pull/18291",
 				Context: &protocol.WorkspaceContext{
-					NormalizedContextURL: "https://github.com/gitpod-io/protocol.git",
+					NormalizedContextURL: "https://github.com/gitpod-io/gitpod/pull/18291",
 					Title:                "tes ttitle",
+					Repository: &protocol.Repository{
+						Host: "github.com",
+						Name: "gitpod",
+					},
 				},
 				Description: "test description",
 			},
@@ -589,10 +699,13 @@ var workspaceTestData = []workspaceTestDataEntry{
 			WorkspaceId: "gitpodio-gitpod-isq6xj458lj",
 			OwnerId:     "fake-owner-id",
 			Context: &v1.WorkspaceContext{
-				ContextUrl: "https://github.com/gitpod-io/gitpod",
+				ContextUrl: "open-prebuild/126ac54a-5922-4a45-9a18-670b057bf540/https://github.com/gitpod-io/gitpod/pull/18291",
 				Details: &v1.WorkspaceContext_Git_{
 					Git: &v1.WorkspaceContext_Git{
-						NormalizedContextUrl: "https://github.com/gitpod-io/gitpod",
+						NormalizedContextUrl: "https://github.com/gitpod-io/gitpod/pull/18291",
+						Repository: &v1.WorkspaceContext_Repository{
+							Name: "gitpod",
+						},
 					},
 				},
 			},
@@ -627,6 +740,7 @@ var workspaceTestData = []workspaceTestDataEntry{
 								Protocol: v1.PortProtocol_PORT_PROTOCOL_HTTPS,
 							},
 						},
+						RecentFolders: []string{"/workspace/gitpod"},
 					},
 				},
 			},
@@ -657,7 +771,7 @@ func TestConvertWorkspaceInfo(t *testing.T) {
 				act Expectation
 				err error
 			)
-			act.Result, err = convertWorkspaceInfo(&test.Input)
+			act.Result, err = convertWorkspaceInfo(&test.Input, false)
 			if err != nil {
 				act.Error = err.Error()
 			}
@@ -678,7 +792,7 @@ func FuzzConvertWorkspaceInfo(f *testing.F) {
 		}
 
 		// we really just care for panics
-		_, _ = convertWorkspaceInfo(&nfo)
+		_, _ = convertWorkspaceInfo(&nfo, false)
 	})
 }
 
@@ -699,7 +813,7 @@ func setupWorkspacesService(t *testing.T) (*protocol.MockAPIInterface, v1connect
 
 	svc := NewWorkspaceService(&FakeServerConnPool{
 		api: serverMock,
-	})
+	}, nil)
 
 	keyset := jwstest.GenerateKeySet(t)
 	rsa256, err := jws.NewRSA256(keyset)

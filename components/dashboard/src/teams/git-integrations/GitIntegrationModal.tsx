@@ -42,19 +42,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
     const isNew = !savedProvider;
 
     // This is a readonly value to copy and plug into external oauth config
-    const redirectURL = useMemo(() => {
-        let url = "";
-
-        // Once it's saved, use what's stored
-        if (!isNew) {
-            url = savedProvider?.oauth.callBackUrl ?? url;
-        } else {
-            // Otherwise construct it w/ their provided host value or example
-            url = callbackUrl(host || getPlaceholderForIntegrationType(type));
-        }
-
-        return url;
-    }, [host, isNew, savedProvider?.oauth.callBackUrl, type]);
+    const redirectURL = callbackUrl();
 
     // "bitbucket.org" is set as host value whenever "Bitbucket" is selected
     useEffect(() => {
@@ -201,7 +189,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
     );
 
     return (
-        <Modal visible onClose={props.onClose} onSubmit={activate}>
+        <Modal visible onClose={props.onClose} onSubmit={activate} autoFocus={isNew}>
             <ModalHeader>{isNew ? "New Git Provider" : "Git Provider"}</ModalHeader>
             <ModalBody>
                 {isNew && (
@@ -215,6 +203,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                         disabled={!isNew}
                         label="Provider Type"
                         value={type}
+                        topMargin={false}
                         onChange={(val) => setType(val as ProviderType)}
                     >
                         <option value="GitHub">GitHub</option>
@@ -281,13 +270,8 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
     );
 };
 
-const callbackUrl = (host: string) => {
-    // Negative Lookahead (?!\/)
-    // `\/` matches the character `/`
-    // "https://foobar:80".replace(/:(?!\/)/, "_")
-    // => 'https://foobar_80'
-    host = host.replace(/:(?!\/)/, "_");
-    const pathname = `/auth/${host}/callback`;
+const callbackUrl = () => {
+    const pathname = `/auth/callback`;
     return gitpodHostUrl.with({ pathname }).toString();
 };
 

@@ -9,6 +9,9 @@ import { User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { AuthProviderParams } from "../auth/auth-provider";
 import { BitbucketServerTokenHelper } from "./bitbucket-server-token-handler";
+import { CancellationToken } from "vscode-jsonrpc";
+import { URLSearchParams } from "url";
+import * as qs from "node:querystring";
 
 @injectable()
 export class BitbucketServerApi {
@@ -119,29 +122,23 @@ export class BitbucketServerApi {
         return this.runQuery<BitbucketServer.Project>(userOrToken, `/projects/${projectSlug}`);
     }
 
-    async getPermission(
+    async hasRepoPermission(
         userOrToken: User | string,
-        params: { username: string; repoKind: BitbucketServer.RepoKind; owner: string; repoName?: string },
-    ): Promise<string | undefined> {
-        const { username, repoKind, owner, repoName } = params;
-        if (repoName) {
-            const repoPermissions = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.PermissionEntry>>(
-                userOrToken,
-                `/${repoKind}/${owner}/repos/${repoName}/permissions/users`,
-            );
-            const repoPermission = repoPermissions.values?.find((p) => p.user.name === username)?.permission;
-            if (repoPermission) {
-                return repoPermission;
-            }
-        }
-        if (repoKind === "projects") {
-            const projectPermissions = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.PermissionEntry>>(
-                userOrToken,
-                `/${repoKind}/${owner}/permissions/users`,
-            );
-            const projectPermission = projectPermissions.values?.find((p) => p.user.name === username)?.permission;
-            return projectPermission;
-        }
+        params: {
+            permission: "REPO_READ" | "REPO_WRITE" | "REPO_ADMIN";
+            projectKey?: string;
+            repoName: string;
+            repoId: number;
+        },
+    ): Promise<boolean> {
+        const { repoName, projectKey, permission, repoId } = params;
+
+        const repos = await this.getRepos(userOrToken, {
+            permission,
+            name: repoName,
+            projectKey,
+        });
+        return repos.findIndex((r) => r.id === repoId) >= 0;
     }
 
     protected get baseUrl(): string {
@@ -187,6 +184,51 @@ export class BitbucketServerApi {
             user,
             `/${params.repoKind}/${params.owner}/repos/${params.repositorySlug}/commits${q}`,
         );
+    }
+
+    async getBranchLatestCommit(
+        user: User,
+        params: {
+            repoKind: "projects" | "users" | string;
+            owner: string;
+            repositorySlug: string;
+            branch: string;
+        },
+    ): Promise<BitbucketServer.Branch | undefined> {
+        // @see https://developer.atlassian.com/server/bitbucket/rest/v811/api-group-repository/#api-api-latest-projects-projectkey-repos-repositoryslug-branches-get
+        // @see https://bitbucket.gitpod-dev.com/rest/api/1.0/users/huiwen/repos/mustard/branches?filterText=develop
+        const queryParam = qs.stringify({
+            filterText: params.branch,
+            boostMatches: true,
+        });
+        const q = "?" + queryParam;
+        const list = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.Branch>>(
+            user,
+            `/${params.repoKind}/${params.owner}/repos/${params.repositorySlug}/branches${q}`,
+        );
+        return list.values?.find((e) => e.displayId === params.branch);
+    }
+
+    async getTagLatestCommit(
+        user: User,
+        params: {
+            repoKind: "projects" | "users" | string;
+            owner: string;
+            repositorySlug: string;
+            tag: string;
+        },
+    ): Promise<BitbucketServer.Tag | undefined> {
+        // @see https://developer.atlassian.com/server/bitbucket/rest/v811/api-group-repository/#api-api-latest-projects-projectkey-repos-repositoryslug-tags-get
+        // @see https://bitbucket.gitpod-dev.com/rest/api/1.0/users/huiwen/repos/mustard/tags?filterText=11
+        const queryParam = qs.stringify({
+            filterText: params.tag,
+        });
+        const q = "?" + queryParam;
+        const list = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.Tag>>(
+            user,
+            `/${params.repoKind}/${params.owner}/repos/${params.repositorySlug}/tags${q}`,
+        );
+        return list.values?.find((e) => e.displayId === params.tag);
     }
 
     async getDefaultBranch(
@@ -279,27 +321,112 @@ export class BitbucketServerApi {
         );
     }
 
+    /**
+     * If `searchString` is provided, this tries to match projects and repositorys by name,
+     *  otherwise it returns the first n repositories.
+     *
+     * Based on:
+     * https://developer.atlassian.com/server/bitbucket/rest/v811/api-group-repository/#api-api-latest-repos-get
+     */
     async getRepos(
-        user: User,
+        userOrToken: User | string,
         query: {
             permission?: "REPO_READ" | "REPO_WRITE" | "REPO_ADMIN";
-            limit: number;
+            /**
+             * If projects and repositorys are matched by by name, otherwise it returns the first n repositories.
+             */
+            searchString?: string;
+            /**
+             * Maximum number of pagination request. Defaults to 10
+             */
+            maxPages?: number;
+            /**
+             * Limit or results per pagination request. Defaults to 1000
+             */
+            limit?: number;
+            /**
+             * projectKey is the original param of BBS APIs, will limit the resulting repository list to ones whose project's key matches this parameter's value
+             */
+            projectKey?: string;
+            /**
+             * name is the original param of BBS APIs, will limit the resulting repository list to ones whose name matches this parameter's value
+             */
+            name?: string;
+
+            cancellationToken?: CancellationToken;
         },
     ) {
-        let q = "";
-        if (query) {
-            const segments = [];
-            if (query.permission) {
-                segments.push(`permission=${query.permission}`);
-            }
-            if (query.limit) {
-                segments.push(`limit=${query.limit}`);
-            }
-            if (segments.length > 0) {
-                q = `?${segments.join("&")}`;
-            }
+        const isCancelled = () => query.cancellationToken?.isCancellationRequested;
+        if (isCancelled()) {
+            return [];
         }
-        return this.runQuery<BitbucketServer.Paginated<BitbucketServer.Repository>>(user, `/repos${q}`);
+
+        const fetchRepos = async (params: { [key: string]: string } = {}) => {
+            if (isCancelled()) {
+                return [];
+            }
+            // Ensure we only load as many pages as requested
+            let requestsLeft = query?.maxPages ?? 10;
+
+            const result: BitbucketServer.Repository[] = [];
+            let isLastPage = false;
+            let start = 0;
+            while (!isLastPage && requestsLeft > 0) {
+                if (isCancelled()) {
+                    return [];
+                }
+
+                const requestParams = new URLSearchParams({
+                    // Apply default params
+                    limit: `${query?.limit ?? 1000}`,
+                    permission: query.permission ?? "REPO_READ",
+                    start: `${start}`,
+                });
+                // Merge params from argument in
+                Object.keys(params).forEach((key) => {
+                    requestParams.set(key, params[key]);
+                });
+
+                const pageResult = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.Repository>>(
+                    userOrToken,
+                    `/repos?${requestParams.toString()}`,
+                );
+                requestsLeft = requestsLeft - 1;
+                if (pageResult.values) {
+                    result.push(...pageResult.values);
+                }
+                isLastPage =
+                    typeof pageResult.isLastPage === "undefined" || // a fuse to prevent infinite loop
+                    !!pageResult.isLastPage;
+                if (pageResult.nextPageStart) {
+                    start = pageResult.nextPageStart;
+                }
+            }
+            return result;
+        };
+
+        const baseParams: { [key: string]: string } = {};
+        if (query.projectKey) {
+            baseParams.projectkey = query.projectKey;
+        }
+        if (query.name) {
+            baseParams.name = query.name;
+        }
+        if (query.searchString?.trim()) {
+            const results: Map<number, BitbucketServer.Repository> = new Map();
+
+            // Query by name & projectname in series to reduce chances of hitting rate limits
+            const nameResults = await fetchRepos(Object.assign({}, baseParams, { name: query.searchString }));
+            const projectResults = await fetchRepos(Object.assign({}, baseParams, { projectname: query.searchString }));
+
+            for (const repo of [...nameResults, ...projectResults]) {
+                results.set(repo.id, repo);
+            }
+
+            return Array.from(results.values());
+        } else {
+            return await fetchRepos(baseParams);
+        }
     }
 
     async getPullRequest(
@@ -349,6 +476,13 @@ export namespace BitbucketServer {
         type: "BRANCH" | string;
         latestCommit: string;
         isDefault: boolean;
+    }
+
+    export interface Tag {
+        id: string;
+        displayId: string;
+        type: "TAG" | string;
+        latestCommit: string;
     }
 
     export interface BranchWithMeta extends Branch {
@@ -428,6 +562,7 @@ export namespace BitbucketServer {
 
     export interface Paginated<T> {
         isLastPage?: boolean;
+        nextPageStart?: number;
         limit?: number;
         size?: number;
         start?: number;

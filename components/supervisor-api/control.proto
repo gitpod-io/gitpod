@@ -6,6 +6,7 @@ syntax = "proto3";
 
 package supervisor;
 
+import "google/api/annotations.proto";
 import "status.proto";
 import "info.proto";
 
@@ -19,7 +20,11 @@ service ControlService {
   rpc ExposePort(ExposePortRequest) returns (ExposePortResponse) {}
 
   // CreateSSHKeyPair Create a pair of SSH Keys and put them in ~/.ssh/authorized_keys, this will only be generated once in the entire workspace lifecycle
-  rpc CreateSSHKeyPair(CreateSSHKeyPairRequest) returns (CreateSSHKeyPairResponse) {}
+  rpc CreateSSHKeyPair(CreateSSHKeyPairRequest) returns (CreateSSHKeyPairResponse) {
+    option (google.api.http) = {
+      get: "/v1/ssh_keys/create"
+  };
+  }
 
   // CreateDebugEnv creates a debug workspace envs
   rpc CreateDebugEnv(CreateDebugEnvRequest) returns (CreateDebugEnvResponse) {}
@@ -35,8 +40,15 @@ message ExposePortResponse {}
 
 message CreateSSHKeyPairRequest {}
 message CreateSSHKeyPairResponse {
-    // Return privateKey for ws-proxy
+    // Return privateKey for ws-proxy or web socket tunnels
     string private_key = 1;
+    // Return hostKey used by client to verify fingerprint
+    SSHPublicKey host_key = 2;
+}
+
+message SSHPublicKey {
+  string type = 1;
+  string value = 2;
 }
 
 message CreateDebugEnvRequest {

@@ -69,15 +69,12 @@ export function AddSSHKeyModal(props: AddModalProps) {
                     </Alert>
                 )}
                 <div className="text-gray-500 dark:text-gray-400 text-md">
-                    Add an SSH key for secure access workspaces via SSH.{" "}
-                    <a href="/docs/configure/ssh" target="gitpod-ssh-doc" className="gp-link">
-                        Learn more
-                    </a>
+                    Add an SSH key for secure access to workspaces via SSH.
                 </div>
                 <Alert type="info" className="mt-2">
                     SSH key are used to connect securely to workspaces.{" "}
                     <a
-                        href="https://www.gitpod.io/docs/configure/ssh#create-an-ssh-key"
+                        href="https://www.gitpod.io/docs/configure/user-settings/ssh#create-an-ssh-key"
                         target="gitpod-create-ssh-key-doc"
                         className="gp-link"
                     >

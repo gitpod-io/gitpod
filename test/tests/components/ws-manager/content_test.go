@@ -24,7 +24,7 @@ import (
 func TestBackup(t *testing.T) {
 	f := features.New("backup").
 		WithLabel("component", "ws-manager").
-		Assess("it should start a workspace, create a file and successfully create a backup", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it should start a workspace, create a file and successfully create a backup", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			tests := []struct {
 				Name             string
 				ContextURL       string
@@ -44,7 +44,7 @@ func TestBackup(t *testing.T) {
 				t.Run(test.Name, func(t *testing.T) {
 					t.Parallel()
 
-					ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10*len(tests))*time.Minute)
+					ctx, cancel := context.WithTimeout(testCtx, time.Duration(10*len(tests))*time.Minute)
 					defer cancel()
 
 					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -173,7 +173,7 @@ func TestBackup(t *testing.T) {
 					}
 				})
 			}
-			return ctx
+			return testCtx
 		}).
 		Feature()
 
@@ -185,8 +185,8 @@ func TestBackup(t *testing.T) {
 func TestMissingBackup(t *testing.T) {
 	f := features.New("CreateWorkspace").
 		WithLabel("component", "ws-manager").
-		Assess("it ensures workspace fail if they should have a backup but don't have one", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		Assess("it ensures workspace fail if they should have a backup but don't have one", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -242,7 +242,7 @@ func TestMissingBackup(t *testing.T) {
 						}
 						w.Spec.FeatureFlags = test.FF
 						return nil
-					}), integration.WithWaitWorkspaceForOpts(integration.WorkspaceCanFail))
+					}), integration.WithWaitWorkspaceForOpts(integration.WorkspaceCanFail, integration.WaitForStopped))
 					if err != nil {
 						t.Fatal(err)
 					}
@@ -270,7 +270,7 @@ func TestMissingBackup(t *testing.T) {
 
 				})
 			}
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

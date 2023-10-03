@@ -17,6 +17,7 @@ import { TextInputField } from "../components/forms/TextInputField";
 import isEmail from "validator/lib/isEmail";
 import { useToast } from "../components/toasts/Toasts";
 import { InputWithCopy } from "../components/InputWithCopy";
+import { InputField } from "../components/forms/InputField";
 
 export default function Account() {
     const { user, setUser } = useContext(UserContext);
@@ -159,12 +160,9 @@ function ProfileInformation(props: {
                         }}
                     />
                     {props.user && (
-                        <div className="flex flex-col space-y-2 mt-4">
-                            <label className={"text-md font-semibold dark:text-gray-400 text-gray-600"}>User ID</label>
-                            <p className={"text-sm text-gray-500 dark:text-gray-500"}>
-                                <InputWithCopy className="max-w-md w-32" value={props.user.id} tip="Copy Token" />
-                            </p>
-                        </div>
+                        <InputField label="User ID">
+                            <InputWithCopy value={props.user.id} tip="Copy User ID" />
+                        </InputField>
                     )}
                 </fieldset>
                 <div className="lg:pl-14">

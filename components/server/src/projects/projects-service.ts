@@ -12,46 +12,120 @@ import {
     CreateProjectParams,
     FindPrebuildsParams,
     Project,
-    ProjectEnvVar,
     User,
     PrebuildEvent,
 } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { PartialProject, ProjectUsage } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
-import { Config } from "../config";
+import { PartialProject, ProjectSettings, ProjectUsage } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
-import { ResponseError } from "vscode-ws-jsonrpc";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { URL } from "url";
+import { Authorizer } from "../authorization/authorizer";
+import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
+import { ScmService } from "./scm-service";
 
 @injectable()
 export class ProjectsService {
-    @inject(ProjectDB) protected readonly projectDB: ProjectDB;
-    @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
-    @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
-    @inject(Config) protected readonly config: Config;
-    @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
-    @inject(WebhookEventDB) protected readonly webhookEventDB: WebhookEventDB;
+    public static PROJECT_SETTINGS_DEFAULTS: ProjectSettings = {
+        enablePrebuilds: false,
+        prebuildDefaultBranchOnly: true,
+    };
 
-    async getProject(projectId: string): Promise<Project | undefined> {
-        return this.projectDB.findProjectById(projectId);
+    constructor(
+        @inject(ProjectDB) private readonly projectDB: ProjectDB,
+        @inject(TracedWorkspaceDB) private readonly workspaceDb: DBWithTracing<WorkspaceDB>,
+        @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
+        @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
+        @inject(WebhookEventDB) private readonly webhookEventDB: WebhookEventDB,
+        @inject(Authorizer) private readonly auth: Authorizer,
+        @inject(ScmService) private readonly scmService: ScmService,
+    ) {}
+
+    async getProject(userId: string, projectId: string): Promise<Project> {
+        await this.auth.checkPermissionOnProject(userId, "read_info", projectId);
+        const project = await this.projectDB.findProjectById(projectId);
+        if (!project) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
+        }
+        return project;
     }
 
-    async getTeamProjects(teamId: string): Promise<Project[]> {
-        return this.projectDB.findTeamProjects(teamId);
+    async getProjects(userId: string, orgId: string): Promise<Project[]> {
+        await this.auth.checkPermissionOnOrganization(userId, "read_info", orgId);
+        const projects = await this.projectDB.findProjects(orgId);
+        return await this.filterByReadAccess(userId, projects);
     }
 
-    async getUserProjects(userId: string): Promise<Project[]> {
-        return this.projectDB.findUserProjects(userId);
+    async findProjects(
+        userId: string,
+        searchOptions: {
+            offset?: number;
+            limit?: number;
+            orderBy?: keyof Project;
+            orderDir?: "ASC" | "DESC";
+            searchTerm?: string;
+        },
+    ): Promise<{ total: number; rows: Project[] }> {
+        const projects = await this.projectDB.findProjectsBySearchTerm(
+            searchOptions.offset || 0,
+            searchOptions.limit || 1000,
+            searchOptions.orderBy || "creationTime",
+            searchOptions.orderDir || "ASC",
+            searchOptions.searchTerm || "",
+        );
+        const rows = await this.filterByReadAccess(userId, projects.rows);
+        const total = projects.total;
+        return {
+            total,
+            rows,
+        };
     }
 
-    async getProjectsByCloneUrls(cloneUrls: string[]): Promise<(Project & { teamOwners?: string[] })[]> {
-        return this.projectDB.findProjectsByCloneUrls(cloneUrls);
+    private async filterByReadAccess(userId: string, projects: Project[]) {
+        const filteredProjects: Project[] = [];
+        const filter = async (project: Project) => {
+            if (await this.auth.hasPermissionOnProject(userId, "read_info", project.id)) {
+                return project;
+            }
+            return undefined;
+        };
+
+        for (const projectPromise of projects.map(filter)) {
+            const project = await projectPromise;
+            if (project) {
+                filteredProjects.push(project);
+            }
+        }
+        return filteredProjects;
     }
 
-    async getProjectOverviewCached(user: User, project: Project): Promise<Project.Overview | undefined> {
+    async findProjectsByCloneUrl(userId: string, cloneUrl: string): Promise<Project[]> {
+        const projects = await this.projectDB.findProjectsByCloneUrl(cloneUrl);
+        const result: Project[] = [];
+        for (const project of projects) {
+            if (await this.auth.hasPermissionOnProject(userId, "read_info", project.id)) {
+                result.push(project);
+            }
+        }
+        return result;
+    }
+
+    async markActive(
+        userId: string,
+        projectId: string,
+        kind: keyof ProjectUsage = "lastWorkspaceStart",
+    ): Promise<void> {
+        await this.auth.checkPermissionOnProject(userId, "read_info", projectId);
+        await this.projectDB.updateProjectUsage(projectId, {
+            [kind]: new Date().toISOString(),
+        });
+    }
+
+    async getProjectOverview(user: User, projectId: string): Promise<Project.Overview> {
+        const project = await this.getProject(user.id, projectId);
+        await this.auth.checkPermissionOnProject(user.id, "read_info", project.id);
         // Check for a cached project overview (fast!)
         const cachedPromise = this.projectDB.findCachedProjectOverview(project.id);
 
@@ -72,7 +146,7 @@ export class ProjectsService {
         return await refreshPromise;
     }
 
-    protected getRepositoryProvider(project: Project) {
+    private getRepositoryProvider(project: Project) {
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         const repositoryProvider =
             parsedUrl && this.hostContextProvider.get(parsedUrl.host)?.services?.repositoryProvider;
@@ -80,9 +154,11 @@ export class ProjectsService {
     }
 
     async getBranchDetails(user: User, project: Project, branchName?: string): Promise<Project.BranchDetails[]> {
+        await this.auth.checkPermissionOnProject(user.id, "read_info", project.id);
+
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         if (!parsedUrl) {
-            return [];
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `Invalid clone URL on project ${project.id}.`);
         }
         const { owner, repo } = parsedUrl;
         const repositoryProvider = this.getRepositoryProvider(project);
@@ -119,38 +195,44 @@ export class ProjectsService {
     async createProject(
         { name, slug, cloneUrl, teamId, appInstallationId }: CreateProjectParams,
         installer: User,
+        projectSettingsDefaults: ProjectSettings = ProjectsService.PROJECT_SETTINGS_DEFAULTS,
     ): Promise<Project> {
+        await this.auth.checkPermissionOnOrganization(installer.id, "create_project", teamId);
+
         if (cloneUrl.length >= 1000) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Clone URL must be less than 1k characters.");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Clone URL must be less than 1k characters.");
         }
 
         try {
             new URL(cloneUrl);
         } catch (err) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Clone URL must be a valid URL.");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Clone URL must be a valid URL.");
         }
 
-        const projects = await this.getProjectsByCloneUrls([cloneUrl]);
-        if (projects.length > 0) {
-            throw new Error("Project for repository already exists.");
+        const parsedUrl = RepoURL.parseRepoUrl(cloneUrl);
+        if (!parsedUrl) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Clone URL must be a valid URL.");
         }
-        // If the desired project slug already exists in this team or user account, add a unique suffix to avoid collisions.
-        let uniqueSlug = slug;
-        let uniqueSuffix = 0;
-        const existingProjects = await this.getTeamProjects(teamId!);
-        while (existingProjects.some((p) => p.slug === uniqueSlug)) {
-            uniqueSuffix++;
-            uniqueSlug = `${slug}-${uniqueSuffix}`;
-        }
+
         const project = Project.create({
             name,
-            slug: uniqueSlug,
             cloneUrl,
             teamId,
             appInstallationId,
+            settings: projectSettingsDefaults,
         });
-        await this.projectDB.storeProject(project);
-        await this.onDidCreateProject(project, installer);
+
+        try {
+            await this.projectDB.transaction(async (db) => {
+                await db.storeProject(project);
+
+                await this.auth.addProjectToOrg(installer.id, teamId, project.id);
+                await this.auth.setProjectVisibility(installer.id, project.id, teamId, "org-public");
+            });
+        } catch (err) {
+            await this.auth.removeProjectFromOrg(installer.id, teamId, project.id);
+            throw err;
+        }
 
         this.analytics.track({
             userId: installer.id,
@@ -167,55 +249,53 @@ export class ProjectsService {
         return project;
     }
 
-    protected async onDidCreateProject(project: Project, installer: User) {
-        // Pre-fetch project details in the background -- don't await
-        /** no await */ this.getProjectOverviewCached(installer, project).catch((err) => {
-            /** ignore */
-        });
+    public async setVisibility(userId: string, projectId: string, visibility: Project.Visibility): Promise<void> {
+        await this.auth.checkPermissionOnProject(userId, "write_info", projectId);
+        const project = await this.getProject(userId, projectId);
+        //TODO store this information in the DB
+        await this.auth.setProjectVisibility(userId, projectId, project.teamId, visibility);
+    }
 
-        // Install the prebuilds webhook if possible
-        let { userId, teamId, cloneUrl } = project;
-        const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
-        const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
-        const authProvider = hostContext && hostContext.authProvider.info;
-        const type = authProvider && authProvider.authProviderType;
-        if (
-            type === "GitLab" ||
-            type === "Bitbucket" ||
-            type === "BitbucketServer" ||
-            (type === "GitHub" && (authProvider?.host !== "github.com" || !this.config.githubApp?.enabled))
-        ) {
-            const repositoryService = hostContext?.services?.repositoryService;
-            if (repositoryService) {
-                // Note: For GitLab, we expect .canInstallAutomatedPrebuilds() to always return true, because earlier
-                // in the project creation flow, we only propose repositories where the user is actually allowed to
-                // install a webhook.
-                if (await repositoryService.canInstallAutomatedPrebuilds(installer, cloneUrl)) {
-                    log.info("Update prebuild installation for project.", {
-                        cloneUrl,
-                        teamId,
-                        userId,
-                        installerId: installer.id,
-                    });
-                    await repositoryService.installAutomatedPrebuilds(installer, cloneUrl);
+    async deleteProject(userId: string, projectId: string, transactionCtx?: TransactionalContext): Promise<void> {
+        await this.auth.checkPermissionOnProject(userId, "delete", projectId);
+
+        let orgId: string | undefined = undefined;
+        try {
+            await this.projectDB.transaction(transactionCtx, async (db) => {
+                const project = await db.findProjectById(projectId);
+                if (!project) {
+                    throw new Error("Project does not exist");
                 }
+                orgId = project.teamId;
+                await db.markDeleted(projectId);
+
+                await this.auth.removeProjectFromOrg(userId, orgId, projectId);
+            });
+            this.analytics.track({
+                userId,
+                event: "project_deleted",
+                properties: {
+                    project_id: projectId,
+                },
+            });
+        } catch (err) {
+            if (orgId) {
+                await this.auth.addProjectToOrg(userId, orgId, projectId);
             }
+            throw err;
         }
     }
 
-    async deleteProject(projectId: string): Promise<void> {
-        return this.projectDB.markDeleted(projectId);
-    }
-
-    async findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
+    async findPrebuilds(userId: string, params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
         const { projectId, prebuildId } = params;
+        await this.auth.checkPermissionOnProject(userId, "read_prebuild", projectId);
         const project = await this.projectDB.findProjectById(projectId);
         if (!project) {
-            return [];
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
         }
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         if (!parsedUrl) {
-            return [];
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `Invalid clone URL on project ${projectId}.`);
         }
         const result: PrebuildWithStatus[] = [];
 
@@ -234,7 +314,7 @@ export class ProjectsService {
             if (params.latest) {
                 limit = 1;
             }
-            let branch = params.branch;
+            const branch = params.branch;
             const prebuilds = await this.workspaceDb
                 .trace({})
                 .findPrebuiltWorkspacesByProject(project.id, branch, limit);
@@ -253,37 +333,53 @@ export class ProjectsService {
         return result;
     }
 
-    async updateProjectPartial(partialProject: PartialProject): Promise<void> {
+    async updateProject(user: User, partialProject: PartialProject): Promise<void> {
+        await this.auth.checkPermissionOnProject(user.id, "write_info", partialProject.id);
+
+        const partial: PartialProject = { id: partialProject.id };
+        if (partialProject.name) {
+            partialProject.name = partialProject.name.trim();
+            // check it is between 0 and 32 characters
+            if (partialProject.name.length > 32) {
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Project name must be less than 32 characters.");
+            }
+            if (partialProject.name.length === 0) {
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Project name must not be empty.");
+            }
+        }
+        const allowedFields: (keyof Project)[] = ["settings", "name"];
+        for (const f of allowedFields) {
+            if (f in partialProject) {
+                (partial as any)[f] = partialProject[f];
+            }
+        }
+        await this.handleEnablePrebuild(user, partialProject);
         return this.projectDB.updateProject(partialProject);
     }
 
-    async setProjectEnvironmentVariable(
-        projectId: string,
-        name: string,
-        value: string,
-        censored: boolean,
-    ): Promise<void> {
-        return this.projectDB.setProjectEnvironmentVariable(projectId, name, value, censored);
+    private async handleEnablePrebuild(user: User, partialProject: PartialProject): Promise<void> {
+        const enablePrebuildsNew = partialProject?.settings?.enablePrebuilds;
+        if (typeof enablePrebuildsNew === "boolean") {
+            const project = await this.projectDB.findProjectById(partialProject.id);
+            if (!project) {
+                return;
+            }
+            const enablePrebuildsPrev = !!project.settings?.enablePrebuilds;
+            const installWebhook = enablePrebuildsNew && !enablePrebuildsPrev;
+            const uninstallWebhook = !enablePrebuildsNew && enablePrebuildsPrev;
+            if (installWebhook) {
+                await this.scmService.installWebhookForPrebuilds(project, user);
+            }
+            if (uninstallWebhook) {
+                // TODO
+                // await this.scmService.uninstallWebhookForPrebuilds(project, user);
+            }
+        }
     }
 
-    async getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]> {
-        return this.projectDB.getProjectEnvironmentVariables(projectId);
-    }
-
-    async getProjectEnvironmentVariableById(variableId: string): Promise<ProjectEnvVar | undefined> {
-        return this.projectDB.getProjectEnvironmentVariableById(variableId);
-    }
-
-    async deleteProjectEnvironmentVariable(variableId: string): Promise<void> {
-        return this.projectDB.deleteProjectEnvironmentVariable(variableId);
-    }
-
-    async getProjectUsage(projectId: string): Promise<ProjectUsage | undefined> {
-        return this.projectDB.getProjectUsage(projectId);
-    }
-
-    async isProjectConsideredInactive(projectId: string): Promise<boolean> {
-        const usage = await this.getProjectUsage(projectId);
+    async isProjectConsideredInactive(userId: string, projectId: string): Promise<boolean> {
+        await this.auth.checkPermissionOnProject(userId, "read_info", projectId);
+        const usage = await this.projectDB.getProjectUsage(projectId);
         if (!usage?.lastWorkspaceStart) {
             return false;
         }
@@ -293,8 +389,9 @@ export class ProjectsService {
         return now - lastUse > inactiveProjectTime;
     }
 
-    async getPrebuildEvents(cloneUrl: string): Promise<PrebuildEvent[]> {
-        const events = await this.webhookEventDB.findByCloneUrl(cloneUrl, 100);
+    async getPrebuildEvents(userId: string, projectId: string): Promise<PrebuildEvent[]> {
+        const project = await this.getProject(userId, projectId);
+        const events = await this.webhookEventDB.findByCloneUrl(project.cloneUrl, 100);
         return events.map((we) => ({
             id: we.id,
             creationTime: we.creationTime,
@@ -304,6 +401,7 @@ export class ProjectsService {
             prebuildId: we.prebuildId,
             projectId: we.projectId,
             status: we.prebuildStatus || we.status,
+            message: we.message,
         }));
     }
 }

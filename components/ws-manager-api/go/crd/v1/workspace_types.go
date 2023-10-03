@@ -6,6 +6,8 @@ package v1
 
 import (
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -148,11 +150,27 @@ type PortSpec struct {
 	Protocol PortProtocol `json:"protocol"`
 }
 
+func (ps PortSpec) Equal(other PortSpec) bool {
+	if ps.Port != other.Port {
+		return false
+	}
+
+	if ps.Visibility != other.Visibility {
+		return false
+	}
+
+	if ps.Protocol != other.Protocol {
+		return false
+	}
+
+	return true
+}
+
 // WorkspaceStatus defines the observed state of Workspace
 type WorkspaceStatus struct {
 	PodStarts  int    `json:"podStarts"`
 	URL        string `json:"url,omitempty"`
-	OwnerToken string `json:"ownerToken,omitempty"`
+	OwnerToken string `json:"ownerToken,omitempty" scrub:"redact"`
 
 	// +kubebuilder:default=Unknown
 	Phase WorkspacePhase `json:"phase,omitempty"`
@@ -169,6 +187,8 @@ type WorkspaceStatus struct {
 
 	// +kubebuilder:validation:Optional
 	Runtime *WorkspaceRuntimeStatus `json:"runtime,omitempty"`
+
+	LastActivity *metav1.Time `json:"lastActivity,omitempty"`
 }
 
 func (s *WorkspaceStatus) SetCondition(cond metav1.Condition) {
@@ -435,6 +455,12 @@ func (w *Workspace) IsHeadless() bool {
 
 func (w *Workspace) IsConditionTrue(condition WorkspaceCondition) bool {
 	return wsk8s.ConditionPresentAndTrue(w.Status.Conditions, string(condition))
+}
+
+// OWI produces the owner, workspace, instance log metadata from the information
+// of this workspace.
+func (w *Workspace) OWI() logrus.Fields {
+	return log.OWI(w.Spec.Ownership.Owner, w.Spec.Ownership.WorkspaceID, w.Name)
 }
 
 func init() {

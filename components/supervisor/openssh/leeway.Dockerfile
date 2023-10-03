@@ -20,9 +20,9 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 # This Dockerfile was taken from https://github.com/ep76/docker-openssh-static and adapted.
-FROM alpine:3.17 AS builder
+FROM alpine:3.18 AS builder
 
-ARG openssh_url=https://github.com/openssh/openssh-portable/archive/refs/tags/V_9_2_P1.tar.gz
+ARG openssh_url=https://github.com/openssh/openssh-portable/archive/refs/tags/V_9_3_P2.tar.gz
 
 WORKDIR /build
 

@@ -4,13 +4,12 @@ packages:
     srcs:
       - "src/**"
       - "test/**"
+      - .eslintrc
       - package.json
       - mocha.opts
-      - tslint.yaml
     deps:
       - components/content-service-api/typescript:lib
       - components/gitpod-db:lib
-      - components/gitpod-messagebus:lib
       - components/gitpod-protocol:lib
       - components/image-builder-api/typescript:lib
       - components/ws-manager-api/typescript:lib
@@ -18,11 +17,15 @@ packages:
       - components/usage-api/typescript:lib
       - components/ide-service-api/typescript:lib
       - components/public-api/typescript:lib
-      - :dbtest
+      - components/gitpod-db:dbtest-init
+      - components/spicedb:lib
     config:
       packaging: offline-mirror
       yarnLock: ${coreYarnLockBase}/yarn.lock
       tsconfig: tsconfig.json
+      commands:
+        # leeway executes the build and test step in the wrong order, so we need to call a special script that builds before testing
+        test: ["yarn", "test:leeway"]
   - name: docker
     type: docker
     deps:
@@ -38,35 +41,3 @@ packages:
       image:
         - ${imageRepoBase}/server:${version}
         - ${imageRepoBase}/server:commit-${__git_commit}
-  - name: dbtest
-    type: yarn
-    srcs:
-      - "src/**"
-      - "test/**"
-      - package.json
-      - mocha.opts
-      - tslint.yaml
-    deps:
-      - components/gitpod-db:dbtest-init
-      - components/gitpod-db:lib
-      - components/content-service-api/typescript:lib
-      - components/gitpod-messagebus:lib
-      - components/gitpod-protocol:lib
-      - components/image-builder-api/typescript:lib
-      - components/ws-manager-api/typescript:lib
-      - components/supervisor-api/typescript-grpcweb:lib
-      - components/usage-api/typescript:lib
-      - components/ide-service-api/typescript:lib
-      - components/public-api/typescript:lib
-    config:
-      packaging: library
-      yarnLock: ${coreYarnLockBase}/yarn.lock
-      tsconfig: tsconfig.json
-      commands:
-        test: ["yarn", "db-test"]
-        build: ["yarn", "build"]
-scripts:
-  - name: telepresence
-    script: |
-      # Leave redirect for posterity
-      yarn telepresence

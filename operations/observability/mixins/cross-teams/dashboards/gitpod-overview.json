@@ -60,6 +60,74 @@
       },
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": []
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
+      "id": 19,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/value/",
+          "values": false
+        },
+        "text": {
+          "titleSize": 1
+        },
+        "textMode": "value"
+      },
+      "pluginVersion": "9.5.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max(gitpod_version_info{cell=\"$cell\"}) by (gitpod_version)",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Current Gitpod Version",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "rows"
+          }
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
           "decimals": 0,
           "links": [],
           "mappings": [],
@@ -73,8 +141,8 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 8,
-        "x": 0,
+        "w": 6,
+        "x": 4,
         "y": 1
       },
       "id": 2,
@@ -100,7 +168,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "avg_over_time(sum(gitpod_ws_manager_mk2_workspace_phase_total{phase=\"Running\"})[7d])",
+          "expr": "avg_over_time(sum(gitpod_ws_manager_mk2_workspace_phase_total{phase=\"Running\",cell=\"$cell\"})[7d:10m])",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "Avg",
@@ -112,7 +180,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "min_over_time(sum(gitpod_ws_manager_mk2_workspace_phase_total{phase=\"Running\"})[7d])",
+          "expr": "min_over_time(sum(gitpod_ws_manager_mk2_workspace_phase_total{phase=\"Running\",cell=\"$cell\"})[7d:10m])",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "Min",
@@ -124,7 +192,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "max_over_time(sum(gitpod_ws_manager_mk2_workspace_phase_total{phase=\"Running\"})[7d])",
+          "expr": "max_over_time(sum(gitpod_ws_manager_mk2_workspace_phase_total{phase=\"Running\",cell=\"$cell\"})[7d:10m])",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "Max",
@@ -157,8 +225,8 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 8,
-        "x": 8,
+        "w": 7,
+        "x": 10,
         "y": 1
       },
       "id": 3,
@@ -184,7 +252,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(gitpod_ws_manager_mk2_workspace_phase_total{}) by (phase)",
+          "expr": "sum(gitpod_ws_manager_mk2_workspace_phase_total{cell=\"$cell\"}) by (phase)",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{ label_name }}",
@@ -217,8 +285,8 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 8,
-        "x": 16,
+        "w": 7,
+        "x": 17,
         "y": 1
       },
       "id": 4,
@@ -244,7 +312,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(gitpod_ws_manager_mk2_workspace_phase_total{phase=\"Running\"}) by (cluster,type)",
+          "expr": "sum(gitpod_ws_manager_mk2_workspace_phase_total{phase=\"Running\",cell=\"$cell\"}) by (cluster,type)",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{cluster}}: {{type}}",
@@ -256,6 +324,100 @@
       "type": "bargauge"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisGridShow": true,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "max(gitpod_version_info{cell=\"$cell\"}) by (gitpod_version)",
+          "instant": false,
+          "legendFormat": "{{label_name}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Gitpod Version",
+      "transformations": [],
+      "type": "timeseries"
+    },
+    {
       "collapsed": false,
       "datasource": {
         "type": "datasource",
@@ -265,7 +427,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 8
+        "y": 12
       },
       "id": 12,
       "panels": [],
@@ -296,7 +458,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 13
       },
       "hiddenSeries": false,
       "id": 5,
@@ -361,7 +523,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(gitpod_ws_manager_mk2_workspace_phase_total{cluster=~\"$cluster\", phase=\"Running\"}) by (type)",
+          "expr": "sum(gitpod_ws_manager_mk2_workspace_phase_total{cluster=~\"$cluster\", phase=\"Running\", cell=\"$cell\"}) by (type)",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{ type }}",
@@ -373,7 +535,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(gitpod_ws_manager_mk2_workspace_activity_total{cluster=~\"$cluster\",active=\"false\"})",
+          "expr": "sum(gitpod_ws_manager_mk2_workspace_activity_total{cluster=~\"$cluster\",cell=\"$cell\",active=\"false\"})",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "Regular Not Active",
@@ -426,7 +588,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 65
+        "y": 503
       },
       "id": 13,
       "panels": [],
@@ -457,7 +619,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 66
+        "y": 504
       },
       "hiddenSeries": false,
       "id": 6,
@@ -499,7 +661,7 @@
           "datasource": {
             "uid": "$datasource"
           },
-          "expr": "topk(5, sum(nodepool:node_load1:normalized{cluster=~\"$cluster\", nodepool=~\".*workspace.*\"}) by (node))\n",
+          "expr": "topk(5, sum(nodepool:node_load1:normalized{cluster=~\"$cluster\", nodepool=~\".*workspace.*\",cell=\"$cell\"}) by (node))\n",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{node}}",
@@ -558,7 +720,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 122
+        "y": 994
       },
       "id": 14,
       "panels": [],
@@ -607,7 +769,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 123
+        "y": 995
       },
       "heatmap": {},
       "hideZeroBuckets": true,
@@ -653,7 +815,7 @@
           "unit": "s"
         }
       },
-      "pluginVersion": "9.4.7",
+      "pluginVersion": "9.5.1",
       "repeat": "cluster",
       "targets": [
         {
@@ -661,7 +823,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{cluster=~\"$cluster\",type=\"Regular\"}[$__rate_interval])) by (le)",
+          "expr": "sum(rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{cluster=~\"$cluster\",type=\"Regular\",cell=\"$cell\"}[$__rate_interval])) by (le)",
           "format": "heatmap",
           "intervalFactor": 2,
           "legendFormat": "{{le}}",
@@ -694,7 +856,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 179
+        "y": 1485
       },
       "id": 15,
       "panels": [],
@@ -725,7 +887,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 180
+        "y": 1486
       },
       "hiddenSeries": false,
       "id": 8,
@@ -748,50 +910,50 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.4.7",
+      "pluginVersion": "9.5.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
       "repeat": "cluster",
       "seriesOverrides": [
         {
-          "alias": "REGULAR - INITIALIZING",
+          "alias": "Regular - Initializing",
           "color": "#C8F2C2"
         },
         {
-          "alias": "REGULAR - CREATING",
+          "alias": "Regular - Creating",
           "color": "#96D98D"
         },
         {
-          "alias": "REGULAR - PENDING",
+          "alias": "Regular - Pending",
           "color": "#56A64B"
         },
         {
-          "alias": "REGULAR - STOPPING",
+          "alias": "Regular - Stopping",
           "color": "#37872D"
         },
         {
-          "alias": "REGULAR - STOPPED",
+          "alias": "Regular - Stopped",
           "color": "rgb(30, 80, 30)"
         },
         {
-          "alias": "PREBUILD - INITIALIZING",
+          "alias": "Prebuild - Initializing",
           "color": "#C0D8FF"
         },
         {
-          "alias": "PREBUILD - CREATING",
+          "alias": "Prebuild - Creating",
           "color": "#8AB8FF"
         },
         {
-          "alias": "PREBUILD - PENDING",
+          "alias": "Prebuild - Pending",
           "color": "#3274D9"
         },
         {
-          "alias": "PREBUILD - STOPPING",
+          "alias": "Prebuild - Stopping",
           "color": "#1F60C4"
         },
         {
-          "alias": "PREBUILD - STOPPED",
+          "alias": "Prebuild - Stopped",
           "color": "rgb(30, 30, 80)"
         }
       ],
@@ -804,7 +966,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum by (type, phase)(gitpod_ws_manager_mk2_workspace_phase_total{cluster=~\"$cluster\", phase!=\"Running\"})",
+          "expr": "sum by (type, phase)(gitpod_ws_manager_mk2_workspace_phase_total{cluster=~\"$cluster\",cell=\"$cell\",phase!=\"Running\"})",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{type}} - {{phase}}",
@@ -854,7 +1016,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 236
+        "y": 1976
       },
       "id": 16,
       "panels": [],
@@ -884,7 +1046,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 237
+        "y": 1977
       },
       "hiddenSeries": false,
       "id": 9,
@@ -907,18 +1069,18 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.4.7",
+      "pluginVersion": "9.5.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
       "repeat": "cluster",
       "seriesOverrides": [
         {
-          "alias": "REGULAR",
+          "alias": "Regular",
           "color": "#73BF69"
         },
         {
-          "alias": "PREBUILD",
+          "alias": "Prebuild",
           "color": "#5794F2"
         },
         {
@@ -934,7 +1096,7 @@
           "datasource": {
             "uid": "$datasource"
           },
-          "expr": "sum(\n  rate(gitpod_ws_manager_mk2_workspace_stops_total{cluster=~\"$cluster\", reason=\"failed\"}[5m])\n) by (cluster, type) OR on() vector(0)\n",
+          "expr": "sum(\n  rate(gitpod_ws_manager_mk2_workspace_stops_total{cluster=~\"$cluster\",cell=\"$cell\",reason=\"failed\"}[5m])\n) by (cluster, type) OR on() vector(0)\n",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{type}}",
@@ -983,7 +1145,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 293
+        "y": 2467
       },
       "id": 17,
       "panels": [],
@@ -1013,7 +1175,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 294
+        "y": 2468
       },
       "hiddenSeries": false,
       "id": 10,
@@ -1036,7 +1198,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.5.1",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1050,7 +1212,7 @@
           "datasource": {
             "uid": "$datasource"
           },
-          "expr": "count(kube_node_labels{cluster=~\"$cluster\"}) by (nodepool)",
+          "expr": "count(kube_node_labels{cluster=~\"$cluster\",cell=\"$cell\"}) by (nodepool)",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{nodepool}}",
@@ -1098,11 +1260,6 @@
   "templating": {
     "list": [
       {
-        "current": {
-          "selected": false,
-          "text": "VictoriaMetrics",
-          "value": "VictoriaMetrics"
-        },
         "hide": 0,
         "includeAll": false,
         "multi": false,
@@ -1146,6 +1303,33 @@
         "tagsQuery": "",
         "type": "query",
         "useTags": false
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [],
+          "value": []
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(cell)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Cell",
+        "multi": false,
+        "name": "cell",
+        "options": [],
+        "query": {
+          "query": "label_values(cell)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
       }
     ]
   },

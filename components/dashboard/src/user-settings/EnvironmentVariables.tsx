@@ -55,7 +55,7 @@ function AddEnvVarModal(p: EnvVarModalProps) {
             <ModalHeader>{isNew ? "New" : "Edit"} Variable</ModalHeader>
             <ModalBody>
                 {error ? (
-                    <div className="bg-gitpod-kumquat-light rounded-md p-3 text-gitpod-red text-sm mb-2">{error}</div>
+                    <div className="bg-kumquat-light rounded-md p-3 text-gitpod-red text-sm mb-2">{error}</div>
                 ) : null}
                 <div>
                     <h4>Name</h4>

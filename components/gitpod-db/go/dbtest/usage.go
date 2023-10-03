@@ -21,7 +21,7 @@ func NewUsage(t *testing.T, record db.Usage) db.Usage {
 
 	result := db.Usage{
 		ID:                  uuid.New(),
-		AttributionID:       db.NewUserAttributionID(uuid.New().String()),
+		AttributionID:       db.NewTeamAttributionID(uuid.New().String()),
 		Description:         "some description",
 		CreditCents:         42,
 		EffectiveTime:       db.VarcharTime{},

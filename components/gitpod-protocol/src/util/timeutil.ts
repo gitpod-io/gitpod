@@ -32,13 +32,11 @@ export const yearsLater = (fromDate: string, years: number): string =>
         return d.toISOString();
     });
 
-// tslint:disable-next-line:no-shadowed-variable
 export const addMillis = (d1: string, millis: number) =>
     liftDate1(d1, (d1) => new Date(d1.getTime() + millis).toISOString());
 export const durationInHours = (d1: string, d2: string) =>
     liftDate(d1, d2, (d1, d2) => millisecondsToHours(d1.getTime() - d2.getTime()));
 export const durationInMillis = (d1: string, d2: string) => liftDate(d1, d2, (d1, d2) => d1.getTime() - d2.getTime());
-// tslint:disable-next-line:no-shadowed-variable
 export const isDateGreaterOrEqual = (d1: string, d2: string): boolean =>
     liftDate(d1, d2, (d1, d2) => d1.getTime() >= d2.getTime());
 export const isDateSmallerOrEqual = (d1: string, d2: string | undefined) => !d2 || d1 <= d2;
@@ -77,6 +75,10 @@ export function rightAfter(date: string): string {
 
 export function rightBefore(date: string): string {
     return new Date(new Date(date).getTime() - 1).toISOString();
+}
+
+export function durationLongerThanSeconds(time: number, durationSeconds: number, now: number = Date.now()): boolean {
+    return (now - time) / 1000 > durationSeconds;
 }
 
 export function millisecondsToHours(milliseconds: number): number {

@@ -11,6 +11,7 @@
 
 import type {BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage} from "@bufbuild/protobuf";
 import {Message, proto3} from "@bufbuild/protobuf";
+import {GitStatus} from "./workspaces_pb.js";
 
 /**
  * @generated from message gitpod.experimental.v1.SendHeartbeatRequest
@@ -145,6 +146,80 @@ export class SendDidCloseResponse extends Message<SendDidCloseResponse> {
 
   static equals(a: SendDidCloseResponse | PlainMessage<SendDidCloseResponse> | undefined, b: SendDidCloseResponse | PlainMessage<SendDidCloseResponse> | undefined): boolean {
     return proto3.util.equals(SendDidCloseResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.UpdateGitStatusRequest
+ */
+export class UpdateGitStatusRequest extends Message<UpdateGitStatusRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: gitpod.experimental.v1.GitStatus status = 2;
+   */
+  status?: GitStatus;
+
+  constructor(data?: PartialMessage<UpdateGitStatusRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.UpdateGitStatusRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "status", kind: "message", T: GitStatus },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateGitStatusRequest {
+    return new UpdateGitStatusRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateGitStatusRequest {
+    return new UpdateGitStatusRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateGitStatusRequest {
+    return new UpdateGitStatusRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateGitStatusRequest | PlainMessage<UpdateGitStatusRequest> | undefined, b: UpdateGitStatusRequest | PlainMessage<UpdateGitStatusRequest> | undefined): boolean {
+    return proto3.util.equals(UpdateGitStatusRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.UpdateGitStatusResponse
+ */
+export class UpdateGitStatusResponse extends Message<UpdateGitStatusResponse> {
+  constructor(data?: PartialMessage<UpdateGitStatusResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.UpdateGitStatusResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateGitStatusResponse {
+    return new UpdateGitStatusResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateGitStatusResponse {
+    return new UpdateGitStatusResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateGitStatusResponse {
+    return new UpdateGitStatusResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateGitStatusResponse | PlainMessage<UpdateGitStatusResponse> | undefined, b: UpdateGitStatusResponse | PlainMessage<UpdateGitStatusResponse> | undefined): boolean {
+    return proto3.util.equals(UpdateGitStatusResponse, a, b);
   }
 }
 

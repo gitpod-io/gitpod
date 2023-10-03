@@ -6,10 +6,10 @@
 
 require("reflect-metadata");
 
-import * as ws from "ws";
-import * as express from "express";
+import ws from "ws";
+import express from "express";
 
-import { suite, test } from "mocha-typescript";
+import { suite, test } from "@testdeck/mocha";
 import * as chai from "chai";
 const expect = chai.expect;
 

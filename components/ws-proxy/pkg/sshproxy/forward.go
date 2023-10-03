@@ -20,7 +20,7 @@ func (s *Server) ChannelForward(ctx context.Context, session *Session, targetCon
 	targetChan, targetReqs, err := targetConn.OpenChannel(originChannel.ChannelType(), originChannel.ExtraData())
 	if err != nil {
 		log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).Error("open target channel error")
-		originChannel.Reject(ssh.ConnectionFailed, "open target channel error")
+		_ = originChannel.Reject(ssh.ConnectionFailed, "open target channel error")
 		return
 	}
 	defer targetChan.Close()
@@ -53,32 +53,48 @@ func (s *Server) ChannelForward(ctx context.Context, session *Session, targetCon
 		close(maskedReqs)
 	}()
 
-	go func() {
-		io.Copy(targetChan, originChan)
-		targetChan.CloseWrite()
-	}()
-
-	go func() {
-		io.Copy(originChan, targetChan)
-		originChan.CloseWrite()
-	}()
-
-	go func() {
-		io.Copy(targetChan.Stderr(), originChan.Stderr())
-	}()
-
-	go func() {
-		io.Copy(originChan.Stderr(), targetChan.Stderr())
-	}()
+	originChannelWg := sync.WaitGroup{}
+	originChannelWg.Add(3)
+	targetChannelWg := sync.WaitGroup{}
+	targetChannelWg.Add(3)
 
 	wg := sync.WaitGroup{}
-	forward := func(sourceReqs <-chan *ssh.Request, targetChan ssh.Channel) {
+	wg.Add(2)
+
+	go func() {
 		defer wg.Done()
+		_, _ = io.Copy(targetChan, originChan)
+		_ = targetChan.CloseWrite()
+		targetChannelWg.Done()
+		targetChannelWg.Wait()
+		_ = targetChan.Close()
+	}()
+
+	go func() {
+		defer wg.Done()
+		_, _ = io.Copy(originChan, targetChan)
+		_ = originChan.CloseWrite()
+		originChannelWg.Done()
+		originChannelWg.Wait()
+		_ = originChan.Close()
+	}()
+
+	go func() {
+		_, _ = io.Copy(targetChan.Stderr(), originChan.Stderr())
+		targetChannelWg.Done()
+	}()
+
+	go func() {
+		_, _ = io.Copy(originChan.Stderr(), targetChan.Stderr())
+		originChannelWg.Done()
+	}()
+
+	forward := func(sourceReqs <-chan *ssh.Request, targetChan ssh.Channel, channelWg *sync.WaitGroup) {
+		defer channelWg.Done()
 		for ctx.Err() == nil {
 			select {
 			case req, ok := <-sourceReqs:
 				if !ok {
-					targetChan.Close()
 					return
 				}
 				b, err := targetChan.SendRequest(req.Type, req.WantReply, req.Payload)
@@ -92,9 +108,8 @@ func (s *Server) ChannelForward(ctx context.Context, session *Session, targetCon
 		}
 	}
 
-	wg.Add(2)
-	go forward(maskedReqs, targetChan)
-	go forward(targetReqs, originChan)
+	go forward(maskedReqs, targetChan, &targetChannelWg)
+	go forward(targetReqs, originChan, &originChannelWg)
 
 	wg.Wait()
 	log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).Debug("session forward stop")

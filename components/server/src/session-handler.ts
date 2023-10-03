@@ -4,22 +4,23 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import * as express from "express";
-import * as websocket from "ws";
-import { injectable, inject } from "inversify";
+import express from "express";
+import { inject, injectable } from "inversify";
+import websocket from "ws";
 
+import { User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { Config } from "./config";
-import { reportJWTCookieIssued } from "./prometheus-metrics";
 import { AuthJWT } from "./auth/jwt";
-import { UserDB } from "@gitpod/gitpod-db/lib";
+import { Config } from "./config";
 import { WsNextFunction, WsRequestHandler } from "./express/ws-handler";
+import { reportJWTCookieIssued } from "./prometheus-metrics";
+import { UserService } from "./user/user-service";
 
 @injectable()
 export class SessionHandler {
     @inject(Config) protected readonly config: Config;
     @inject(AuthJWT) protected readonly authJWT: AuthJWT;
-    @inject(UserDB) protected userDb: UserDB;
+    @inject(UserService) protected userService: UserService;
 
     public jwtSessionConvertor(): express.Handler {
         return async (req, res) => {
@@ -90,41 +91,38 @@ export class SessionHandler {
     // On failure, the next handler is called and the `req.user` is not set. Some APIs/Websocket RPCs do
     // not require authentication, and as such we cannot fail the request at this stage.
     protected async handler(req: express.Request, next: express.NextFunction): Promise<void> {
-        const cookies = parseCookieHeader(req.headers.cookie || "");
+        const user = await this.verify(req.headers.cookie || "");
+        if (user) {
+            // We set the user object on the request to signal the user is authenticated.
+            // Passport uses the `user` property on the request to determine if the session
+            // is authenticated.
+            req.user = user;
+        }
+
+        next();
+    }
+
+    async verify(cookie: string): Promise<User | undefined> {
+        const cookies = parseCookieHeader(cookie);
         const jwtToken = cookies[this.getJWTCookieName(this.config)];
         if (!jwtToken) {
             log.debug("No JWT session present on request");
-            next();
-            return;
+            return undefined;
         }
-
         try {
             const claims = await this.authJWT.verify(jwtToken);
-            log.debug("JWT Session token verified", {
-                claims,
-            });
+            log.debug("JWT Session token verified", { claims });
 
             const subject = claims.sub;
             if (!subject) {
                 throw new Error("Subject is missing from JWT session claims");
             }
 
-            const user = await this.userDb.findUserById(subject);
-            if (!user) {
-                throw new Error("No user exists.");
-            }
-
-            // We set the user object on the request to signal the user is authenticated.
-            // Passport uses the `user` property on the request to determine if the session
-            // is authenticated.
-            req.user = user;
-
-            // Trigger the next middleware in the chain.
-            next();
+            return await this.userService.findUserById(subject, subject);
         } catch (err) {
             log.warn("Failed to authenticate user with JWT Session", err);
             // Remove the existing cookie, to force the user to re-sing in, and hence refresh it
-            next();
+            return undefined;
         }
     }
 

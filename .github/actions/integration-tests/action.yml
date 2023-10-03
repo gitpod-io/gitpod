@@ -1,0 +1,123 @@
+name: Run integration tests
+description: Runs an integration test suite against an existing preview environment
+
+inputs:
+  test_suite:
+    description: "Test suite to run"
+    default: workspace
+  notify_slack_webhook:
+    description: "Optional Slack webhook to notify on test success/failure"
+    default: ""
+  preview_name:
+    description: "Name of the preview environment to run the tests against"
+    required: true
+  sa_key:
+    description: "The service account key to use when authenticating with GCP"
+    required: true
+  github_token:
+    description: "The GitHub token to use when authenticating with GitHub"
+    required: true
+  latest_ide_version:
+    description: "Use the latest IDE version"
+    required: false
+    default: ""
+  test_build_id:
+    description: "The build ID of the test run. Used in the IDE integration tests."
+    required: false
+  test_build_url:
+    description: "The build URL of the test run. Used in the IDE integration tests."
+    required: false
+  test_build_ref:
+    description: "The build ref of the test run. Used in the IDE integration tests."
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - id: auth
+      uses: google-github-actions/auth@v1
+      with:
+        token_format: access_token
+        credentials_json: "${{ inputs.sa_key }}"
+    - name: Get Secrets from GCP
+      id: "secrets"
+      uses: "google-github-actions/get-secretmanager-secrets@v1"
+      with:
+        secrets: |-
+          WORKSPACE_INTEGRATION_TEST_USERNAME:gitpod-core-dev/workspace-integration-test-username
+          WORKSPACE_INTEGRATION_TEST_USER_TOKEN:gitpod-core-dev/workspace-integration-test-user-token
+    - name: Setup
+      shell: bash
+      env:
+        PREVIEW_ENV_DEV_SA_KEY: ${{ inputs.sa_key }}
+        PREVIEW_NAME: ${{ inputs.preview_name }}
+      run: |
+        export LEEWAY_WORKSPACE_ROOT="$(pwd)"
+        export HOME="/home/gitpod"
+        export PREVIEW_ENV_DEV_SA_KEY_PATH="/home/gitpod/.config/gcloud/preview-environment-dev-sa.json"
+
+        echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+        gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+
+        leeway run dev/preview/previewctl:install
+
+        echo "Setting up access to core-dev and harvester"
+        previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+
+        previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 1m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+
+    - name: Integration Test
+      id: integration-test
+      shell: bash
+      env:
+        ROBOQUAT_TOKEN: ${{ inputs.github_token }}
+        INTEGRATION_TEST_USERNAME: ${{ steps.secrets.outputs.WORKSPACE_INTEGRATION_TEST_USERNAME }}
+        INTEGRATION_TEST_USER_TOKEN: ${{ steps.secrets.outputs.WORKSPACE_INTEGRATION_TEST_USER_TOKEN }}
+        PREVIEW_ENV_DEV_SA_KEY: ${{ inputs.sa_key }}
+        PREVIEW_NAME: ${{ inputs.preview_name }}
+        TEST_USE_LATEST_VERSION: ${{ inputs.latest_ide_version }}
+        TEST_BUILD_ID: ${{ inputs.test_build_id }}
+        TEST_BUILD_URL: ${{ inputs.test_build_url }}
+        TEST_BUILD_REF: ${{ inputs.test_build_ref }}
+      run: |
+        set -euo pipefail
+
+        printf -v start_time '%(%s)T'
+
+        pushd test
+        set +e
+        ./run.sh -s "${{ inputs.test_suite }}"
+        RC=${PIPESTATUS[0]}
+        set -e
+        popd
+
+        printf -v end_time '%(%s)T'
+        duration_sec=$((end_time - start_time))
+        duration_min=$((duration_sec / 60))
+        duration_sec=$((duration_sec % 60))
+        duration="${duration_min}m${duration_sec}s"
+        echo "duration=${duration}" >> $GITHUB_OUTPUT
+
+        exit $RC
+    - uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: "test/**/TEST-*.xml"
+      if: always()
+    - name: Test Summary
+      id: test_summary
+      uses: test-summary/action@v2
+      with:
+        paths: "test/**/TEST-*.xml"
+        show: "all"
+      if: always()
+    - name: Slack Notification
+      uses: rtCamp/action-slack-notify@v2
+      if: ${{ (success() || failure()) && inputs.notify_slack_webhook != '' }}
+      env:
+        SLACK_WEBHOOK: ${{ inputs.notify_slack_webhook }}
+        SLACK_ICON_EMOJI: ":test_tube:"
+        SLACK_USERNAME: "Integration Tests: ${{ inputs.test_suite }}"
+        SLACK_COLOR: ${{ steps.integration-test.outcome }}
+        SLACK_MESSAGE: "${{ steps.test_summary.outputs.passed }} tests passed, ${{ steps.test_summary.outputs.failed }} tests failed, ${{ steps.test_summary.outputs.skipped }} tests skipped (took ${{ steps.integration-test.outputs.duration }})"
+        SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"

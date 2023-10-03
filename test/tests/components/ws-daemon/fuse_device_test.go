@@ -7,7 +7,9 @@ package wsdaemon
 import (
 	"context"
 	"testing"
+	"time"
 
+	"github.com/gitpod-io/gitpod/test/pkg/integration"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
@@ -15,26 +17,51 @@ import (
 func TestFuseDevice(t *testing.T) {
 	f := features.New("fuse devive").
 		WithLabel("component", "ws-daemon").
-		Assess("verify fuse device", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("verify fuse device", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			t.Parallel()
-			// TODO(toru): check if this code works fine
-			// #define _GNU_SOURCE
-			// #include <unistd.h>
 
-			// #include <sys/syscall.h>
-			// #include <linux/fs.h>
-			// #include <sys/types.h>
-			// #include <sys/stat.h>
-			// #include <fcntl.h>
-			// #include <stdio.h>
+			ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
+			defer cancel()
 
-			// int main() {
-			//   const char* src_path = "/dev/fuse";
-			//   unsigned int flags = O_RDWR;
-			//   printf("RET: %ld\n", syscall(SYS_openat, AT_FDCWD, src_path, flags));
-			// }
-			t.Skip("unimplemented")
-			return ctx
+			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+			t.Cleanup(func() {
+				api.Done(t)
+			})
+
+			ws, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api)
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() {
+				sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
+				defer scancel()
+
+				sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+				defer sapi.Done(t)
+
+				_, err = stopWs(true, sapi)
+				if err != nil {
+					t.Fatal(err)
+				}
+			})
+
+			rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(ws.Req.Id))
+			if err != nil {
+				t.Fatalf("unexpected error instrumenting workspace: %v", err)
+			}
+			defer rsa.Close()
+			integration.DeferCloser(t, closer)
+
+			t.Logf("checking fuse device")
+			hasFuse, err := integration.HasFuseDevice(rsa)
+			if err != nil {
+				t.Fatalf("unexpected error checking fuse device: %v", err)
+			}
+			if !hasFuse {
+				t.Fatalf("fuse device is not available: %v", err)
+			}
+
+			return testCtx
 		}).Feature()
 
 	testEnv.Test(t, f)

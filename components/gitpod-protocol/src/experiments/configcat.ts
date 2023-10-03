@@ -17,14 +17,17 @@ export const BILLING_TIER_ATTRIBUTE = "billing_tier";
 export const GITPOD_HOST = "gitpod_host";
 
 export class ConfigCatClient implements Client {
-    private client: IConfigCatClient;
-
-    constructor(cc: IConfigCatClient) {
-        this.client = cc;
-    }
+    constructor(private readonly client: IConfigCatClient, private readonly gitpodHost?: string) {}
 
     getValueAsync<T>(experimentName: string, defaultValue: T, attributes: Attributes): Promise<T> {
-        return this.client.getValueAsync(experimentName, defaultValue, attributesToUser(attributes));
+        return this.client.getValueAsync(
+            experimentName,
+            defaultValue,
+            attributesToUser({
+                gitpodHost: this.gitpodHost,
+                ...attributes,
+            }),
+        );
     }
 
     dispose(): void {

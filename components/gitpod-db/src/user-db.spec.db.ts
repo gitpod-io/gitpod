@@ -6,7 +6,7 @@
 
 import * as chai from "chai";
 const expect = chai.expect;
-import { suite, test, timeout } from "mocha-typescript";
+import { suite, test, timeout } from "@testdeck/mocha";
 
 import { GitpodTokenType, Identity, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { testContainer } from "./test-container";
@@ -14,10 +14,7 @@ import { DBIdentity } from "./typeorm/entity/db-identity";
 import { TypeORMUserDBImpl } from "./typeorm/user-db-impl";
 import { TypeORMWorkspaceDBImpl } from "./typeorm/workspace-db-impl";
 import { TypeORM } from "./typeorm/typeorm";
-import { DBUser } from "./typeorm/entity/db-user";
-import { DBWorkspace } from "./typeorm/entity/db-workspace";
-import { DBWorkspaceInstance } from "./typeorm/entity/db-workspace-instance";
-import { DBGitpodToken } from "./typeorm/entity/db-gitpod-token";
+import { resetDB } from "./test/reset-db";
 
 const _IDENTITY1: Identity = {
     authProviderId: "GitHub",
@@ -55,12 +52,7 @@ class UserDBSpec {
 
     async wipeRepos() {
         const typeorm = testContainer.get<TypeORM>(TypeORM);
-        const mnr = await typeorm.getConnection();
-        await mnr.getRepository(DBUser).delete({});
-        await mnr.getRepository(DBIdentity).delete({});
-        await mnr.getRepository(DBWorkspace).delete({});
-        await mnr.getRepository(DBWorkspaceInstance).delete({});
-        await mnr.getRepository(DBGitpodToken).delete({});
+        await resetDB(typeorm);
     }
 
     // Copy to avoid pollution
@@ -287,6 +279,7 @@ namespace TestData {
         deleted: false,
         readonly: false,
     };
+    export const organizationId: string = "org1";
     export const ID1: Identity = { ...DEFAULT, authId: "2345" };
     export const ID2: Identity = { ...DEFAULT, authId: "3456", authProviderId: "Public-GitLab" };
     export const ID3: Identity = { ...DEFAULT, authId: "4567", authProviderId: "ACME" };
@@ -301,6 +294,7 @@ namespace TestData {
             image: "",
             tasks: [],
         },
+        organizationId,
         context: { title: "example" },
         contextURL: "example.org",
         description: "blabla",

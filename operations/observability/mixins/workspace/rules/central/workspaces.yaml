@@ -24,7 +24,7 @@ spec:
         summary: Workspaces are stuck in STOPPED phase on cluster {{ $labels.cluster }}.
         description: '{{ printf "%.2f" $value }} regular workspaces are stuck on stopped for more than 20 minutes. Current status: {{ $labels.reason }}'
       expr: |
-        sum(gitpod_ws_manager_mk2_workspace_phase_total{phase="STOPPED", cluster!~"ephemeral.*"}) > 5
+        sum(gitpod_ws_manager_mk2_workspace_phase_total{phase="Stopped", cluster!~"ephemeral.*"}) > 5
 
     - alert: GitpodWorkspaceStuckOnStoppingMk2
       labels:
@@ -37,7 +37,7 @@ spec:
         description: '{{ printf "%.2f" $value }} {{ $labels.workspace_type }} workspaces are stuck on stopping for more than 20 minutes.'
       expr: |
         sum(
-          gitpod_ws_manager_mk2_workspace_phase_total{type="REGULAR", phase="STOPPING", cluster!~"ephemeral.*"}
+          gitpod_ws_manager_mk2_workspace_phase_total{type="Regular", phase="Stopping", cluster!~"ephemeral.*"}
         ) without(phase) > 15
 
     - alert: GitpodWorkspaceHighFailureRateMk2
@@ -49,7 +49,7 @@ spec:
         summary: Workspaces are failing in cluster {{ $labels.cluster }}.
         description: Multiple workspaces are failing for the last 5 minutes
       expr: |
-          rate(gitpod_ws_manager_mk2_workspace_stops_total{reason="failed", type="REGULAR", cluster!~"ephemeral.*"}[5m]) >= 1
+          rate(gitpod_ws_manager_mk2_workspace_stops_total{reason="failed", type="Regular", cluster!~"ephemeral.*"}[5m]) >= 1
 
     - alert: GitpodWorkspaceStatusUpdatesCeased
       labels:
@@ -71,7 +71,7 @@ spec:
         summary: workspaces are in pending phase
         description: regular workspaces are stuck in pending phase in cluster {{ $labels.cluster }}.
       expr: |
-        gitpod_ws_manager_mk2_workspace_phase_total{phase="PENDING", type="REGULAR", cluster!~"ephemeral.*"} > 20
+        gitpod_ws_manager_mk2_workspace_phase_total{phase="Pending", type="Regular", cluster!~"ephemeral.*"} > 20
 
     - alert: GitpodTooManyPrebuildsInPendingMk2
       labels:
@@ -83,7 +83,7 @@ spec:
         summary: workspaces are in pending phase
         description: prebuilds are stuck in pending phase in cluster {{ $labels.cluster }}.
       expr: |
-        gitpod_ws_manager_mk2_workspace_phase_total{phase="PENDING", type="PREBUILD", cluster!~"ephemeral.*"} > 20
+        gitpod_ws_manager_mk2_workspace_phase_total{phase="Pending", type="Prebuild", cluster!~"ephemeral.*"} > 20
 
     - alert: GitpodWorkspaceTooLongTerminating
       labels:
@@ -117,4 +117,4 @@ spec:
         summary: imagebuild start success rate is failing in cluster {{ $labels.cluster }}.
         description: imagebuild starts are failing at too high of a rate in cluster {{ $labels.cluster }}.
       expr: |
-        (1 - (sum(rate(gitpod_ws_manager_mk2_workspace_starts_failure_total{type="IMAGEBUILD",cluster!~"ephemeral.*"}[8h])) / sum(rate(gitpod_ws_manager_mk2_workspace_starts_total{type="IMAGEBUILD", cluster!~"ephemeral.*"}[4h])))) < 0.99
+        (1 - (sum(rate(gitpod_ws_manager_mk2_workspace_starts_failure_total{type="ImageBuild",cluster!~"ephemeral.*"}[8h])) / sum(rate(gitpod_ws_manager_mk2_workspace_starts_total{type="ImageBuild", cluster!~"ephemeral.*"}[4h])))) < 0.99

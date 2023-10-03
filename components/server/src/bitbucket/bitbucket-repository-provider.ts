@@ -4,13 +4,14 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Branch, CommitInfo, Repository, User } from "@gitpod/gitpod-protocol";
+import { Branch, CommitInfo, Repository, RepositoryInfo, User } from "@gitpod/gitpod-protocol";
 import { Schema } from "bitbucket";
 import { inject, injectable } from "inversify";
 import { URL } from "url";
 import { RepoURL } from "../repohost/repo-url";
 import { RepositoryProvider } from "../repohost/repository-provider";
 import { BitbucketApiFactory } from "./bitbucket-api-factory";
+import asyncBatch from "async-batch";
 
 @injectable()
 export class BitbucketRepositoryProvider implements RepositoryProvider {
@@ -59,24 +60,40 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
     async getBranches(user: User, owner: string, repo: string): Promise<Branch[]> {
         const branches: Branch[] = [];
         const api = await this.apiFactory.create(user);
-        const response = await api.repositories.listBranches({
-            workspace: owner,
-            repo_slug: repo,
-            sort: "target.date",
-        });
 
-        for (const branch of response.data.values!) {
-            branches.push({
-                htmlUrl: branch.links?.html?.href!,
-                name: branch.name!,
-                commit: {
-                    sha: branch.target?.hash!,
-                    author: branch.target?.author?.user?.display_name!,
-                    authorAvatarUrl: branch.target?.author?.user?.links?.avatar?.href,
-                    authorDate: branch.target?.date!,
-                    commitMessage: branch.target?.message || "missing commit message",
-                },
+        // Handle pagination.
+        let nextPage = 1;
+        let isMoreDataAvailable = true;
+
+        while (isMoreDataAvailable) {
+            const response = await api.repositories.listBranches({
+                workspace: owner,
+                repo_slug: repo,
+                sort: "target.date",
+                page: String(nextPage),
+                pagelen: 100,
             });
+
+            for (const branch of response.data.values!) {
+                branches.push({
+                    htmlUrl: branch.links?.html?.href!,
+                    name: branch.name!,
+                    commit: {
+                        sha: branch.target?.hash!,
+                        author: branch.target?.author?.user?.display_name!,
+                        authorAvatarUrl: branch.target?.author?.user?.links?.avatar?.href,
+                        authorDate: branch.target?.date!,
+                        commitMessage: branch.target?.message || "missing commit message",
+                    },
+                });
+            }
+
+            // If the response has a "next" property, it indicates there are more pages.
+            if (response.data.next) {
+                nextPage++;
+            } else {
+                isMoreDataAvailable = false;
+            }
         }
 
         return branches;
@@ -99,7 +116,7 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
         };
     }
 
-    async getUserRepos(user: User): Promise<string[]> {
+    async getUserRepos(user: User): Promise<RepositoryInfo[]> {
         // FIXME(janx): Not implemented yet
         return [];
     }
@@ -139,5 +156,65 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
             return [];
         }
         return commits.map((v: Schema.Commit) => v.hash!);
+    }
+
+    //
+    // Searching Bitbucket requires a workspace to be specified
+    // This results in a two step process:
+    // 1. Get all workspaces for the user
+    // 2. Fan out and search each workspace for the repos
+    //
+    public async searchRepos(user: User, searchString: string): Promise<RepositoryInfo[]> {
+        const api = await this.apiFactory.create(user);
+
+        const workspaces = await api.workspaces.getWorkspaces({ pagelen: 25 });
+
+        const workspaceSlugs: string[] = (
+            workspaces.data.values?.map((w) => {
+                return w.slug || "";
+            }) ?? []
+        ).filter(Boolean);
+
+        if (workspaceSlugs.length === 0) {
+            return [];
+        }
+
+        // Batch our requests to the api so we only make up to 5 calls in parallel
+        const results = await asyncBatch(
+            workspaceSlugs,
+            async (workspaceSlug) => {
+                return api.repositories.list({
+                    workspace: workspaceSlug,
+                    // name includes searchString
+                    q: `name ~ "${searchString}"`,
+                    // sort by most recently updatd first
+                    sort: "-updated_on",
+                    // limit to the first 10 results per workspace
+                    pagelen: 10,
+                });
+            },
+            // 5 calls in parallel
+            5,
+        );
+
+        // Convert into RepositoryInfo
+        const repos: RepositoryInfo[] = [];
+
+        results
+            .map((result) => {
+                return result.data.values ?? [];
+            })
+            // flatten out the array of arrays
+            .flat()
+            // convert into the format we want to return
+            .forEach((repo) => {
+                const name = repo.name;
+                const url = repo.links?.html?.href;
+                if (name && url) {
+                    repos.push({ name, url });
+                }
+            });
+
+        return repos;
     }
 }

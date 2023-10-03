@@ -30,6 +30,8 @@ type IDEClientServiceClient interface {
 	SendHeartbeat(ctx context.Context, in *SendHeartbeatRequest, opts ...grpc.CallOption) (*SendHeartbeatResponse, error)
 	// SendDidClose sends a client close signal for a running workspace.
 	SendDidClose(ctx context.Context, in *SendDidCloseRequest, opts ...grpc.CallOption) (*SendDidCloseResponse, error)
+	// UpdateGitStatus updates the status of a repository in a workspace.
+	UpdateGitStatus(ctx context.Context, in *UpdateGitStatusRequest, opts ...grpc.CallOption) (*UpdateGitStatusResponse, error)
 }
 
 type iDEClientServiceClient struct {
@@ -58,6 +60,15 @@ func (c *iDEClientServiceClient) SendDidClose(ctx context.Context, in *SendDidCl
 	return out, nil
 }
 
+func (c *iDEClientServiceClient) UpdateGitStatus(ctx context.Context, in *UpdateGitStatusRequest, opts ...grpc.CallOption) (*UpdateGitStatusResponse, error) {
+	out := new(UpdateGitStatusResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.IDEClientService/UpdateGitStatus", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IDEClientServiceServer is the server API for IDEClientService service.
 // All implementations must embed UnimplementedIDEClientServiceServer
 // for forward compatibility
@@ -66,6 +77,8 @@ type IDEClientServiceServer interface {
 	SendHeartbeat(context.Context, *SendHeartbeatRequest) (*SendHeartbeatResponse, error)
 	// SendDidClose sends a client close signal for a running workspace.
 	SendDidClose(context.Context, *SendDidCloseRequest) (*SendDidCloseResponse, error)
+	// UpdateGitStatus updates the status of a repository in a workspace.
+	UpdateGitStatus(context.Context, *UpdateGitStatusRequest) (*UpdateGitStatusResponse, error)
 	mustEmbedUnimplementedIDEClientServiceServer()
 }
 
@@ -78,6 +91,9 @@ func (UnimplementedIDEClientServiceServer) SendHeartbeat(context.Context, *SendH
 }
 func (UnimplementedIDEClientServiceServer) SendDidClose(context.Context, *SendDidCloseRequest) (*SendDidCloseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendDidClose not implemented")
+}
+func (UnimplementedIDEClientServiceServer) UpdateGitStatus(context.Context, *UpdateGitStatusRequest) (*UpdateGitStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateGitStatus not implemented")
 }
 func (UnimplementedIDEClientServiceServer) mustEmbedUnimplementedIDEClientServiceServer() {}
 
@@ -128,6 +144,24 @@ func _IDEClientService_SendDidClose_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IDEClientService_UpdateGitStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateGitStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IDEClientServiceServer).UpdateGitStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.experimental.v1.IDEClientService/UpdateGitStatus",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IDEClientServiceServer).UpdateGitStatus(ctx, req.(*UpdateGitStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IDEClientService_ServiceDesc is the grpc.ServiceDesc for IDEClientService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -142,6 +176,10 @@ var IDEClientService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendDidClose",
 			Handler:    _IDEClientService_SendDidClose_Handler,
+		},
+		{
+			MethodName: "UpdateGitStatus",
+			Handler:    _IDEClientService_UpdateGitStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

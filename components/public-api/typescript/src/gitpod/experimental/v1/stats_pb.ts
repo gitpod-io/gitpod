@@ -81,3 +81,4 @@ export class GetUserStatsResponse extends Message<GetUserStatsResponse> {
     return proto3.util.equals(GetUserStatsResponse, a, b);
   }
 }
+

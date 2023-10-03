@@ -7,7 +7,7 @@
 import { injectable, inject } from "inversify";
 import { User } from "@gitpod/gitpod-protocol";
 
-import { Gitlab } from "@gitbeaker/node";
+import { Gitlab } from "@gitbeaker/rest";
 import {
     Projects,
     Users,
@@ -19,10 +19,12 @@ import {
     MergeRequests,
     Issues,
     RepositoryFiles,
+    NamespaceSchema,
+    UserSchema,
+    ExpandedUserSchema,
+    ProjectSchema,
+    SimpleProjectSchema,
 } from "@gitbeaker/core";
-import { ProjectExtendedSchema } from "@gitbeaker/core/dist/types/resources/Projects";
-import { NamespaceSchema } from "@gitbeaker/core/dist/types/resources/Namespaces";
-import { UserExtendedSchema, UserSchema } from "@gitbeaker/core/dist/types/resources/Users";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { GitLabScope } from "./scopes";
 import { AuthProviderParams } from "../auth/auth-provider";
@@ -60,21 +62,11 @@ export class GitLabApi {
             const response = (await operation(userApi)) as R;
             return response as R;
         } catch (error) {
-            if (error && typeof error?.response?.status === "number" && error?.response?.status !== 200) {
-                return new GitLab.ApiError(`GitLab responded with code ${error.response.status}`, error);
-            }
-            if (error && error?.name === "HTTPError") {
-                // e.g.
-                //     {
-                //         "name": "HTTPError",
-                //         "timings": { },
-                //         "description": "404 Commit Not Found"
-                //     }
-
-                return new GitLab.ApiError(
-                    `GitLab Request Error: ${error?.description?.name || JSON.stringify(error?.description)}`,
-                    error,
-                );
+            const status = error?.cause?.response?.status;
+            const statusText = error?.cause?.response?.statusText;
+            if (error && typeof status === "number" && status !== 200) {
+                const description = error?.cause?.description || `${status} - ${statusText}`;
+                return new GitLab.ApiError(`GitLab responded: ${description}`, status);
             }
             throw error;
         } finally {
@@ -90,9 +82,7 @@ export class GitLabApi {
         path: string,
     ): Promise<string | undefined> {
         const projectId = `${org}/${name}`;
-        const result = await this.run<string>(user, (api) =>
-            api.RepositoryFiles.showRaw(projectId, path, { ref: commitish }),
-        );
+        const result = await this.run<string>(user, (api) => api.RepositoryFiles.showRaw(projectId, path, commitish));
         if (GitLab.ApiError.is(result)) {
             return undefined; // e.g. 404 error, because the file isn't found
         }
@@ -116,10 +106,8 @@ export namespace GitLab {
         RepositoryFiles: RepositoryFiles;
     }
     export class ApiError extends Error {
-        readonly httpError: { name: string; description: string } | undefined;
-        constructor(msg?: string, httpError?: any) {
+        constructor(msg?: string, readonly code?: number) {
             super(msg);
-            this.httpError = httpError;
             this.name = "GitLabApiError";
         }
     }
@@ -128,16 +116,16 @@ export namespace GitLab {
             return !!something && something.name === "GitLabApiError";
         }
         export function isNotFound(error: ApiError): boolean {
-            return !!error.httpError?.description.startsWith("404");
+            return error.code === 404;
         }
         export function isInternalServerError(error: ApiError): boolean {
-            return !!error.httpError?.description.startsWith("500");
+            return error.code === 500;
         }
     }
     /**
      * https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/projects.md#get-single-project
      */
-    export interface Project extends ProjectExtendedSchema {
+    interface ProjectFiltered extends Omit<ProjectSchema, "permissions"> {
         visibility: "public" | "private" | "internal";
         archived: boolean;
         path: string; // "diaspora-project-site"
@@ -148,15 +136,19 @@ export namespace GitLab {
             "id" | "name" | "path" | "kind" | "full_path" | "avatar_url" | "web_url" | "avatar_url" | "parent_id"
         >;
         owner: Pick<UserSchema, "id" | "name" | "created_at" | "avatar_url">;
+        permissions: Permissions;
         merge_requests_enabled: boolean;
         issues_enabled: boolean;
         open_issues_count: number;
         forks_count: number;
         star_count: number;
-        forked_from_project?: Project;
+        forked_from_project?: ProjectSchema;
         default_branch: string;
         web_url: string;
     }
+    // workaround for https://github.com/microsoft/TypeScript/issues/36981
+    export type Project = ProjectFiltered & SimpleProjectSchema;
+
     export interface TreeObject {
         id: string;
         mode: string;
@@ -227,7 +219,7 @@ export namespace GitLab {
         merge_requests_count: number;
     }
     // https://docs.gitlab.com/ee/api/users.html#list-current-user-for-normal-users
-    export interface User extends UserExtendedSchema {
+    export interface User extends ExpandedUserSchema {
         email: string;
         state: "active" | string;
     }

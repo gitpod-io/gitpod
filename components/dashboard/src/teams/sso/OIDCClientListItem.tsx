@@ -85,7 +85,7 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig, hasActiveConfig, o
                                 (clientConfig.active
                                     ? "bg-green-500"
                                     : clientConfig.verified
-                                    ? "bg-gitpod-kumquat"
+                                    ? "bg-kumquat-ripe"
                                     : "bg-gray-400")
                             }
                         >

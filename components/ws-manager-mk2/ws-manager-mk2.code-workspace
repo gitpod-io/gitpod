@@ -2,9 +2,9 @@
     "folders": [
        { "path": "../common-go" },
        { "path": "../ws-daemon" },
-       { "path": "../ws-manager" },
        { "path": "../ws-manager-api" },
        { "path": "../ws-manager-mk2" },
+       { "path": "../scrubber" },
        { "path": "../server" },
        { "path": "../../test" },
        { "path": "../../dev/gpctl" },

@@ -107,6 +107,7 @@ type ComponentAPI struct {
 	wsmanStatusMu          sync.Mutex
 	contentServiceStatusMu sync.Mutex
 	imgbldStatusMu         sync.Mutex
+	serverStatusMu         sync.Mutex
 }
 
 type EncryptionKeyMetadata struct {
@@ -285,7 +286,11 @@ func (c *ComponentAPI) GitpodServer(opts ...GitpodServerOpt) (gitpod.APIInterfac
 			if err != nil {
 				return err
 			}
-			c.serverStatus.Token[options.User] = tkn
+			func() {
+				c.serverStatusMu.Lock()
+				defer c.serverStatusMu.Unlock()
+				c.serverStatus.Token[options.User] = tkn
+			}()
 		}
 
 		var pods corev1.PodList
@@ -322,7 +327,12 @@ func (c *ComponentAPI) GitpodServer(opts ...GitpodServerOpt) (gitpod.APIInterfac
 			return err
 		}
 
-		c.serverStatus.Client[options.User] = cl
+		func() {
+			c.serverStatusMu.Lock()
+			defer c.serverStatusMu.Unlock()
+			c.serverStatus.Client[options.User] = cl
+		}()
+
 		res = cl
 		c.appendCloser(cl.Close)
 
@@ -660,11 +670,7 @@ func (c *ComponentAPI) WorkspaceManager() (wsmanapi.WorkspaceManagerClient, erro
 		return c.wsmanStatus.Client, nil
 	}
 
-	var wsman = ComponentWorkspaceManager
-	if UseWsmanMk2() {
-		wsman = ComponentWorkspaceManagerMK2
-	}
-
+	var wsman = ComponentWorkspaceManagerMK2
 	if c.wsmanStatus.Port == 0 {
 		c.wsmanStatusMu.Lock()
 		defer c.wsmanStatusMu.Unlock()
@@ -799,7 +805,7 @@ var (
 	// cachedDBs caches DB connections per database name, so we don't have to re-establish connections all the time,
 	// saving us a lot of time in integration tests.
 	// The cache gets cleaned up when the component is closed.
-	cachedDBs = make(map[string]*sql.DB)
+	cachedDBs = sync.Map{}
 )
 
 // DB provides access to the Gitpod database.
@@ -812,8 +818,9 @@ func (c *ComponentAPI) DB(options ...DBOpt) (*sql.DB, error) {
 		o(&opts)
 	}
 
-	if db, ok := cachedDBs[opts.Database]; ok {
-		return db, nil
+	if db, ok := cachedDBs.Load(opts.Database); ok {
+		actualDb := db.(*sql.DB)
+		return actualDb, nil
 	}
 
 	config, err := c.findDBConfig()
@@ -823,7 +830,7 @@ func (c *ComponentAPI) DB(options ...DBOpt) (*sql.DB, error) {
 
 	// if configured: setup local port-forward to DB pod
 	if config.ForwardPort != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
 		err = c.portFwdWithRetry(ctx, common.ForwardPortOfPod, config.ForwardPort.PodName, int(config.Port), int(config.ForwardPort.RemotePort))
 		if err != nil {
 			cancel()
@@ -836,10 +843,13 @@ func (c *ComponentAPI) DB(options ...DBOpt) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Hack: to fix new DB connections occasionally failing with `[mysql] packets.go:33: unexpected EOF` due
+	// to getting an idle connection from the pool which has for some reason been closed.
+	db.SetMaxIdleConns(0)
 
-	cachedDBs[opts.Database] = db
+	cachedDBs.Store(opts.Database, db)
 	c.appendCloser(func() error {
-		delete(cachedDBs, opts.Database)
+		cachedDBs.Delete(opts.Database)
 		return db.Close()
 	})
 	return db, nil
@@ -1107,6 +1117,7 @@ func (c *ComponentAPI) ClearImageBuilderClientCache() {
 type ContentService interface {
 	csapi.ContentServiceClient
 	csapi.WorkspaceServiceClient
+	csapi.HeadlessLogServiceClient
 }
 
 func (c *ComponentAPI) ContentService() (ContentService, error) {
@@ -1142,11 +1153,13 @@ func (c *ComponentAPI) ContentService() (ContentService, error) {
 	type cs struct {
 		csapi.ContentServiceClient
 		csapi.WorkspaceServiceClient
+		csapi.HeadlessLogServiceClient
 	}
 
 	c.contentServiceStatus.ContentService = cs{
-		ContentServiceClient:   csapi.NewContentServiceClient(conn),
-		WorkspaceServiceClient: csapi.NewWorkspaceServiceClient(conn),
+		ContentServiceClient:     csapi.NewContentServiceClient(conn),
+		WorkspaceServiceClient:   csapi.NewWorkspaceServiceClient(conn),
+		HeadlessLogServiceClient: csapi.NewHeadlessLogServiceClient(conn),
 	}
 
 	return c.contentServiceStatus.ContentService, nil
@@ -1166,6 +1179,17 @@ func (c *ComponentAPI) Done(t *testing.T) {
 		if err != nil {
 			t.Logf("cleanup failed: %q", err)
 		}
+	}
+
+	if t.Failed() {
+		// Log preview env status when test fails to help debug the failure.
+		ready, reason, err := isPreviewReady(c.client, c.namespace)
+		if err != nil {
+			t.Logf("failed to check preview status: %q", err)
+		} else {
+			t.Logf("preview status: ready=%v, reason=%s", ready, reason)
+		}
+		logGitpodStatus(t, c.client, c.namespace)
 	}
 }
 

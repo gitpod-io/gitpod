@@ -5,12 +5,9 @@
 package cmd
 
 import (
-	"os"
-
 	"github.com/spf13/cobra"
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/supervisor"
 )
 
@@ -23,8 +20,8 @@ var runCmd = &cobra.Command{
 	Short: "starts the supervisor",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Init(ServiceName, Version, !runOpts.RunGP, os.Getenv("SUPERVISOR_DEBUG_ENABLE") == "true")
-		log.Log.Logger.AddHook(fatalTerminationLogHook{})
+		logFile := initLog(!runOpts.RunGP)
+		defer logFile.Close()
 
 		common_grpc.SetupLogging()
 		supervisor.Version = Version

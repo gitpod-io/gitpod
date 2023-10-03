@@ -4,15 +4,15 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { suite, test, timeout } from "mocha-typescript";
+import { suite, test, timeout } from "@testdeck/mocha";
 import { testContainer } from "../test-container";
 import { AuthCodeRepositoryDB } from "./auth-code-repository-db";
 import { UserDB } from "../user-db";
 import { DBOAuthAuthCodeEntry } from "./entity/db-oauth-auth-code";
 import { TypeORM } from "./typeorm";
-import { DBUser } from "./entity/db-user";
 import * as chai from "chai";
 import { User } from "@gitpod/gitpod-protocol";
+import { resetDB } from "../test/reset-db";
 const expect = chai.expect;
 
 @suite(timeout(10000))
@@ -30,9 +30,7 @@ export class AuthCodeRepositoryDBSpec {
 
     async wipeRepo() {
         const typeorm = testContainer.get<TypeORM>(TypeORM);
-        const manager = await typeorm.getConnection();
-        await manager.getRepository(DBOAuthAuthCodeEntry).delete({});
-        await manager.getRepository(DBUser).delete({});
+        await resetDB(typeorm);
     }
 
     @test()

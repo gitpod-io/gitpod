@@ -19,7 +19,6 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -236,48 +235,6 @@ func AnalyticsEnv(cfg *config.Config) (res []corev1.EnvVar) {
 	}}
 }
 
-func MessageBusEnv(cfg *config.Config) (res []corev1.EnvVar) {
-	clusterObj := corev1.LocalObjectReference{Name: InClusterMessageQueueName}
-	tlsObj := corev1.LocalObjectReference{Name: InClusterMessageQueueTLS}
-
-	credsSecret := clusterObj
-	if cfg.MessageBus != nil && cfg.MessageBus.Credentials != nil {
-		credsSecret = corev1.LocalObjectReference{Name: cfg.MessageBus.Credentials.Name}
-	}
-
-	return []corev1.EnvVar{{
-		Name: "MESSAGEBUS_USERNAME",
-		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-			LocalObjectReference: clusterObj,
-			Key:                  "username",
-		}},
-	}, {
-		Name: "MESSAGEBUS_PASSWORD",
-		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-			LocalObjectReference: credsSecret,
-			Key:                  "rabbitmq-password",
-		}},
-	}, {
-		Name: "MESSAGEBUS_CA",
-		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-			LocalObjectReference: tlsObj,
-			Key:                  "ca.crt",
-		}},
-	}, {
-		Name: "MESSAGEBUS_CERT",
-		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-			LocalObjectReference: tlsObj,
-			Key:                  "tls.crt",
-		}},
-	}, {
-		Name: "MESSAGEBUS_KEY",
-		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-			LocalObjectReference: tlsObj,
-			Key:                  "tls.key",
-		}},
-	}}
-}
-
 func DatabaseEnv(cfg *config.Config) (res []corev1.EnvVar) {
 	var (
 		secretRef corev1.LocalObjectReference
@@ -431,7 +388,7 @@ func ConfigcatEnv(ctx *RenderContext) []corev1.EnvVar {
 		},
 		{
 			Name:  "CONFIGCAT_BASE_URL",
-			Value: "https://" + ctx.Config.Domain + "/configcat",
+			Value: ClusterURL("http", ProxyComponent, ctx.Namespace, ProxyConfigcatPort) + "/configcat",
 		},
 	}
 }
@@ -489,13 +446,25 @@ func ConfigcatProxyEnv(ctx *RenderContext) []corev1.EnvVar {
 }
 
 func DatabaseWaiterContainer(ctx *RenderContext) *corev1.Container {
+	return databaseWaiterContainer(ctx, false)
+}
+
+func DatabaseMigrationWaiterContainer(ctx *RenderContext) *corev1.Container {
+	return databaseWaiterContainer(ctx, true)
+}
+
+func databaseWaiterContainer(ctx *RenderContext, doMigrationCheck bool) *corev1.Container {
+	args := []string{
+		"-v",
+		"database",
+	}
+	if doMigrationCheck {
+		args = append(args, "--migration-check", "true")
+	}
 	return &corev1.Container{
 		Name:  "database-waiter",
 		Image: ctx.ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
-		Args: []string{
-			"-v",
-			"database",
-		},
+		Args:  args,
 		SecurityContext: &corev1.SecurityContext{
 			Privileged:               pointer.Bool(false),
 			AllowPrivilegeEscalation: pointer.Bool(false),
@@ -508,23 +477,19 @@ func DatabaseWaiterContainer(ctx *RenderContext) *corev1.Container {
 	}
 }
 
-func MessageBusWaiterContainer(ctx *RenderContext) *corev1.Container {
+func RedisWaiterContainer(ctx *RenderContext) *corev1.Container {
 	return &corev1.Container{
-		Name:  "msgbus-waiter",
+		Name:  "redis-waiter",
 		Image: ctx.ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
 		Args: []string{
 			"-v",
-			"messagebus",
+			"redis",
 		},
 		SecurityContext: &corev1.SecurityContext{
 			Privileged:               pointer.Bool(false),
 			AllowPrivilegeEscalation: pointer.Bool(false),
 			RunAsUser:                pointer.Int64(31001),
 		},
-		Env: MergeEnv(
-			MessageBusEnv(&ctx.Config),
-			ProxyEnv(&ctx.Config),
-		),
 	}
 }
 
@@ -631,25 +596,6 @@ var (
 		tcpProtocol := corev1.ProtocolTCP
 		return &tcpProtocol
 	}()
-	PrometheusIngressRule = networkingv1.NetworkPolicyIngressRule{
-		Ports: []networkingv1.NetworkPolicyPort{
-			{
-				Protocol: TCPProtocol,
-				Port:     &intstr.IntOrString{IntVal: baseserver.BuiltinMetricsPort},
-			},
-		},
-		From: []networkingv1.NetworkPolicyPeer{
-			{
-				// todo(sje): add these labels to the prometheus instance
-				PodSelector: &metav1.LabelSelector{
-					MatchLabels: map[string]string{
-						"app":       "prometheus",
-						"component": "server",
-					},
-				},
-			},
-		},
-	}
 )
 
 var DeploymentStrategy = appsv1.DeploymentStrategy{
@@ -745,6 +691,10 @@ var (
 	TypeMetaBundle = metav1.TypeMeta{
 		APIVersion: "trust.cert-manager.io/v1alpha1",
 		Kind:       "Bundle",
+	}
+	TypePodDisruptionBudget = metav1.TypeMeta{
+		APIVersion: "policy/v1",
+		Kind:       "PodDisruptionBudget",
 	}
 )
 

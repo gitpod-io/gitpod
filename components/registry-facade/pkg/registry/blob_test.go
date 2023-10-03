@@ -20,7 +20,7 @@ import (
 	"github.com/alicebob/miniredis/v2"
 	"github.com/containerd/containerd/remotes"
 	"github.com/containerd/containerd/remotes/docker"
-	httpapi "github.com/ipfs/go-ipfs-http-client"
+	httpapi "github.com/ipfs/kubo/client/rpc"
 	oldcmds "github.com/ipfs/kubo/commands"
 	config "github.com/ipfs/kubo/config"
 	"github.com/ipfs/kubo/core"

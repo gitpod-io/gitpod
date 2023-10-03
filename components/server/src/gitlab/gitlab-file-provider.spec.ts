@@ -5,10 +5,10 @@
  */
 
 import { User } from "@gitpod/gitpod-protocol";
-import { skipIfEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
+import { ifEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
 import { expect } from "chai";
 import { Container, ContainerModule } from "inversify";
-import { suite, retries, test, timeout } from "mocha-typescript";
+import { suite, retries, test, timeout, skip } from "@testdeck/mocha";
 import { AuthProviderParams } from "../auth/auth-provider";
 import { DevData } from "../dev/dev-data";
 import { TokenProvider } from "../user/token-provider";
@@ -16,7 +16,7 @@ import { GitLab, GitLabApi } from "./api";
 import { GitlabFileProvider } from "./file-provider";
 import { GitLabTokenHelper } from "./gitlab-token-helper";
 
-@suite(timeout(10000), retries(2), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_GITLAB"))
+@suite(timeout(10000), retries(2), skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_GITLAB")))
 class TestFileProvider {
     static readonly AUTH_HOST_CONFIG: Partial<AuthProviderParams> = {
         id: "Public-GitLab",
@@ -75,9 +75,8 @@ class TestFileProvider {
                 const project = await api.run<GitLab.Project>(this.user, (g) =>
                     g.Projects.create({
                         name: `test_project_${i}`,
-                        path: `test_project_${i}`,
-                        namespace_id: 57982169,
-                        initialize_with_readme: true,
+                        namespaceId: 57982169,
+                        initializeWithReadme: true,
                         description: "generated project to test pagination",
                     }),
                 );

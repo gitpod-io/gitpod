@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/bombsimon/logrusr/v2"
-	"github.com/gitpod-io/golang-crypto/ssh"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -36,6 +35,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/config"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/sshproxy"
+	"github.com/gitpod-io/golang-crypto/ssh"
 )
 
 var (
@@ -73,24 +73,14 @@ var runCmd = &cobra.Command{
 		}
 
 		var infoprov proxy.CompositeInfoProvider
-		podInfoProv := proxy.NewRemoteWorkspaceInfoProvider(mgr.GetClient(), mgr.GetScheme())
-		if err = podInfoProv.SetupWithManager(mgr); err != nil {
-			log.WithError(err).Fatal(err, "unable to create controller", "controller", "Pod")
+		crdInfoProv, err := proxy.NewCRDWorkspaceInfoProvider(mgr.GetClient(), mgr.GetScheme())
+		if err != nil {
+			log.WithError(err).Fatal("cannot create CRD-based info provider")
 		}
-		infoprov = append(infoprov, podInfoProv)
-
-		if cfg.EnableWorkspaceCRD {
-			crdInfoProv, err := proxy.NewCRDWorkspaceInfoProvider(mgr.GetClient(), mgr.GetScheme())
-			if err == nil {
-				if err = crdInfoProv.SetupWithManager(mgr); err != nil {
-					log.WithError(err).Warn(err, "unable to create CRD-based info provider", "controller", "Workspace")
-				} else {
-					infoprov = append(infoprov, crdInfoProv)
-				}
-			} else {
-				log.WithError(err).Warn("cannot create CRD-based info provider")
-			}
+		if err = crdInfoProv.SetupWithManager(mgr); err != nil {
+			log.WithError(err).Fatal(err, "unable to create CRD-based info provider", "controller", "Workspace")
 		}
+		infoprov = append(infoprov, crdInfoProv)
 
 		if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 			log.WithError(err).Fatal("unable to set up health check")
@@ -169,11 +159,15 @@ var runCmd = &cobra.Command{
 			}
 		}
 
-		go proxy.NewWorkspaceProxy(cfg.Ingress, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffixRegex), infoprov, signers).MustServe()
-		log.Infof("started proxying on %s", cfg.Ingress.HTTPAddress)
+		ctrlCtx := ctrl.SetupSignalHandler()
+
+		go func() {
+			log.Infof("startint proxying on %s", cfg.Ingress.HTTPAddress)
+			proxy.NewWorkspaceProxy(cfg.Ingress, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffixRegex), infoprov, signers).MustServe(ctrlCtx)
+		}()
 
 		log.Info("🚪 ws-proxy is up and running")
-		if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+		if err := mgr.Start(ctrlCtx); err != nil {
 			log.WithError(err).Fatal(err, "problem starting ws-proxy")
 		}
 

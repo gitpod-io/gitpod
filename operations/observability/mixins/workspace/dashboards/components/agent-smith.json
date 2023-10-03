@@ -800,7 +800,7 @@
             "uid": "P1809F7CD0C75ACF3"
           },
           "exemplar": true,
-          "expr": "sum(gitpod_ws_manager_workspace_phase_total{cluster=~\"()\", phase=\"RUNNING\", type=\"REGULAR\"})  by (cluster) - on (cluster) sum(gitpod_agent_smith_procfs_detector_workspace_count{cluster=~\"()\"}) by (cluster)",
+          "expr": "sum(gitpod_ws_manager_mk2_workspace_phase_total{cluster=~\"()\", phase=\"Running\", type=\"Regular\"})  by (cluster) - on (cluster) sum(gitpod_agent_smith_procfs_detector_workspace_count{cluster=~\"()\"}) by (cluster)",
           "interval": "",
           "legendFormat": "Difference",
           "refId": "A"
