@@ -59,7 +59,7 @@ const jetBrainsGateway: OAuthClient = {
 
 function createVSCodeClient(protocol: string, displayName: string): OAuthClient {
     return {
-        id: protocol + "-" + "gitpod",
+        id: `${protocol}-gitpod`,
         name: `${displayName}: Gitpod extension`,
         redirectUris: [protocol + "://gitpod.gitpod-desktop/complete-gitpod-auth"],
         allowedGrants: ["authorization_code"],
