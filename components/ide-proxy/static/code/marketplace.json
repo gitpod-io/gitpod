@@ -167,6 +167,15 @@
 				"displayName": "Vale VSCode"
 			}
 		},
+        "bungcip.better-toml": {
+			"disallowInstall": true,
+			"extension": {
+				"id": "tamasfe.even-better-toml",
+				"displayName": "Even Better TOML"
+			}
+		},
+        "iocave.customize-ui": true,
+		"iocave.monkey-patch": true,
         "pranaygp.vscode-css-peek": true,
         "redhat.vscode-wsdl2rest": true,
         "ms-vscode.node-debug2": true,
