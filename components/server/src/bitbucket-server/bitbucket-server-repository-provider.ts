@@ -146,7 +146,6 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
 
     async getUserRepos(user: User): Promise<RepositoryInfo[]> {
         try {
-            // TODO: implement incremental search
             const repos = await this.api.getRecentRepos(user, { limit: 25 });
 
             const result: RepositoryInfo[] = [];
