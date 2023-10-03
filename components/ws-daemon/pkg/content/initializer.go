@@ -9,7 +9,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -381,10 +383,18 @@ func (rs *remoteContentStorage) EnsureExists(ctx context.Context) error {
 // download content from object storage using s5cmd
 func (rs *remoteContentStorage) s5cmdDownload(info storage.DownloadInfo) (*os.File, error) {
 	tempFile, err := os.CreateTemp("", "temporal-s3-file")
+	msg := "unexpected error downloading snapshot from S3"
 	if err != nil {
-		return nil, xerrors.Errorf("creating temporal file: %s", err.Error())
+		log.WithError(err).Error("unexpected error creating temporal S3 file")
+		return nil, xerrors.Errorf(msg)
 	}
 	tempFile.Close()
+
+	s3URI, err := rs.parseS3URIFromPresignedUrl(info.URL)
+	if err != nil {
+		log.WithError(err).Error("unexpected error parsing S3 URI")
+		return nil, xerrors.Errorf(msg)
+	}
 
 	args := []string{
 		"cp",
@@ -392,25 +402,49 @@ func (rs *remoteContentStorage) s5cmdDownload(info storage.DownloadInfo) (*os.Fi
 		"--concurrency", "20",
 		// size in MB of each part
 		"--part-size", "25",
-		info.URL,
+		s3URI,
 		tempFile.Name(),
 	}
+
 	cmd := exec.Command("s5cmd", args...)
 	downloadStart := time.Now()
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		log.WithError(err).WithField("out", string(out)).Error("unexpected error downloading file")
-		return nil, xerrors.Errorf("unexpected error downloading file")
+		return nil, xerrors.Errorf(msg)
 	}
 	downloadDuration := time.Since(downloadStart)
 	log.WithField("downloadDuration", downloadDuration.String()).Info("S3 download duration")
 
 	tempFile, err = os.Open(tempFile.Name())
 	if err != nil {
-		return nil, xerrors.Errorf("unexpected error opening downloaded file")
+		log.WithError(err).Error("unexpected error opening temp file")
+		return nil, xerrors.Errorf(msg)
 	}
 
 	return tempFile, nil
+}
+
+func (rs *remoteContentStorage) parseS3URIFromPresignedUrl(presignedURL string) (string, error) {
+	if !strings.Contains(presignedURL, "X-Amz-Signature=") {
+		return "", fmt.Errorf("unexpected presigned URL format")
+	}
+
+	u, err := url.Parse(presignedURL)
+	if err != nil {
+		return "", xerrors.Errorf("error parsing S3 URL: %s", err.Error())
+	}
+
+	hostnameParts := strings.Split(u.Hostname(), ".")
+	var bucketName string
+
+	if len(hostnameParts) >= 1 {
+		bucketName = hostnameParts[0]
+	} else {
+		return "", xerrors.Errorf("unexpected hostname length: %s", u.Hostname())
+	}
+
+	return fmt.Sprintf("s3://%s/%s", bucketName, u.Path), nil
 }
 
 // Download always returns false and does nothing
