@@ -147,7 +147,8 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
     async getUserRepos(user: User): Promise<RepositoryInfo[]> {
         try {
             // TODO: implement incremental search
-            const repos = await this.api.getRepos(user, { maxPages: 10, permission: "REPO_READ" });
+            const repos = await this.api.getRecentRepos(user, { limit: 25 });
+
             const result: RepositoryInfo[] = [];
             repos.forEach((r) => {
                 const cloneUrl = r.links.clone.find((u) => u.name === "http")?.href;
