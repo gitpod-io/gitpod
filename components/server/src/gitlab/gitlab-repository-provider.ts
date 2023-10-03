@@ -140,8 +140,21 @@ export class GitlabRepositoryProvider implements RepositoryProvider {
         return result.slice(1).map((c: GitLab.Commit) => c.id);
     }
 
-    // TODO: implement repo search
     public async searchRepos(user: User, searchString: string): Promise<RepositoryInfo[]> {
-        return [];
+        const result = await this.gitlab.run<GitLab.Project[]>(user, async (gitlab) => {
+            return gitlab.Projects.all({
+                membership: true,
+                search: searchString,
+                simple: true,
+            });
+        });
+
+        if (GitLab.ApiError.is(result)) {
+            throw result;
+        }
+
+        return result.map((result) => {
+            return { url: result.web_url, name: result.name };
+        });
     }
 }
