@@ -142,36 +142,34 @@ export class API {
 
                     grpcServerStarted.labels(grpc_service, grpc_method, grpc_type).inc();
                     const stopTimer = grpcServerHandling.startTimer({ grpc_service, grpc_method, grpc_type });
-                    const done = (err?: ConnectError) =>
-                        withRequestContext<void>(() => {
-                            const grpc_code = err ? Code[err.code] : "OK";
-                            grpcServerHandled.labels(grpc_service, grpc_method, grpc_type, grpc_code).inc();
-                            stopTimer({ grpc_code });
-                            let callMs: number | undefined;
-                            if (callStartedAt) {
-                                callMs = performance.now() - callStartedAt;
-                            }
-                            log.debug("public api: done", { grpc_code, verifyMs, callMs });
-                            // right now p99 for getLoggetInUser is around 100ms, using it as a threshold for now
-                            const slowThreshold = 100;
-                            const totalMs = performance.now() - logContext.contextTimeMs;
-                            if (grpc_type === "unary" && totalMs > slowThreshold) {
-                                log.warn("public api: slow unary call", { grpc_code, callMs, verifyMs });
-                            }
-                        });
-                    const handleError = (reason: unknown) =>
-                        withRequestContext<void>(() => {
-                            let err = ConnectError.from(reason, Code.Internal);
-                            if (reason != err && err.code === Code.Internal) {
-                                log.error("public api: unexpected internal error", reason);
-                                err = ConnectError.from(
-                                    `Oops! Something went wrong. Please quote the request ID ${logContext.requestId} when reaching out to Gitpod Support.`,
-                                    Code.Internal,
-                                );
-                            }
-                            done(err);
-                            throw err;
-                        });
+                    const done = (err?: ConnectError) => {
+                        const grpc_code = err ? Code[err.code] : "OK";
+                        grpcServerHandled.labels(grpc_service, grpc_method, grpc_type, grpc_code).inc();
+                        stopTimer({ grpc_code });
+                        let callMs: number | undefined;
+                        if (callStartedAt) {
+                            callMs = performance.now() - callStartedAt;
+                        }
+                        log.debug("public api: done", { grpc_code, verifyMs, callMs });
+                        // right now p99 for getLoggetInUser is around 100ms, using it as a threshold for now
+                        const slowThreshold = 100;
+                        const totalMs = performance.now() - logContext.contextTimeMs;
+                        if (grpc_type === "unary" && totalMs > slowThreshold) {
+                            log.warn("public api: slow unary call", { grpc_code, callMs, verifyMs });
+                        }
+                    };
+                    const handleError = (reason: unknown) => {
+                        let err = ConnectError.from(reason, Code.Internal);
+                        if (reason != err && err.code === Code.Internal) {
+                            log.error("public api: unexpected internal error", reason);
+                            err = ConnectError.from(
+                                `Oops! Something went wrong. Please quote the request ID ${logContext.requestId} when reaching out to Gitpod Support.`,
+                                Code.Internal,
+                            );
+                        }
+                        done(err);
+                        throw err;
+                    };
 
                     let verifyMs: number | undefined;
                     let callStartedAt: number | undefined;
@@ -179,15 +177,15 @@ export class API {
 
                     const apply = async <T>(): Promise<T> => {
                         const verifyStartedAt = performance.now();
-                        const user = await withRequestContext(() => self.verify(context));
+                        const user = await self.verify(context);
                         verifyMs = performance.now() - verifyStartedAt;
                         context.user = user;
 
                         callStartedAt = performance.now();
-                        return withRequestContext(() => Reflect.apply(target[prop as any], target, args));
+                        return Reflect.apply(target[prop as any], target, args);
                     };
                     if (grpc_type === "unary" || grpc_type === "client_stream") {
-                        return (async () => {
+                        return withRequestContext(async () => {
                             try {
                                 const promise = await apply<Promise<any>>();
                                 const result = await promise;
@@ -196,20 +194,22 @@ export class API {
                             } catch (e) {
                                 handleError(e);
                             }
-                        })();
+                        });
                     }
-                    return (async function* () {
-                        try {
-                            let generator = await apply<AsyncGenerator<any>>();
-                            generator = wrapAsyncGenerator(generator, withRequestContext);
-                            for await (const item of generator) {
-                                yield item;
+                    return wrapAsyncGenerator(
+                        (async function* () {
+                            try {
+                                const generator = await apply<AsyncGenerator<any>>();
+                                for await (const item of generator) {
+                                    yield item;
+                                }
+                                done();
+                            } catch (e) {
+                                handleError(e);
                             }
-                            done();
-                        } catch (e) {
-                            handleError(e);
-                        }
-                    })();
+                        })(),
+                        withRequestContext,
+                    );
                 };
             },
         };
