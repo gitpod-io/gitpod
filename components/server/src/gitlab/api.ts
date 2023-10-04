@@ -230,7 +230,7 @@ export namespace GitLab {
              * 20 => Reporter access
              * 30 => Developer access
              * 40 => Maintainer access
-             * 50 => Owner accesss
+             * 50 => Owner access
             `*/
             access_level: number;
         };
@@ -240,7 +240,7 @@ export namespace GitLab {
              * 20 => Reporter access
              * 30 => Developer access
              * 40 => Maintainer access
-             * 50 => Owner accesss
+             * 50 => Owner access
             `*/
             access_level: number;
         };
