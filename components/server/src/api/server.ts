@@ -24,7 +24,7 @@ import { APIStatsService } from "./stats";
 import { APITeamsService } from "./teams";
 import { APIUserService } from "./user";
 import { APIWorkspacesService } from "./workspaces";
-import { runWithContext } from "../util/log-context";
+import { LogContextOptions, wrapAsyncGenerator, runWithContext } from "../util/log-context";
 import { v4 } from "uuid";
 import { performance } from "perf_hooks";
 
@@ -104,11 +104,22 @@ export class API {
         return {
             get(target, prop) {
                 return (...args: any[]) => {
-                    const startedAt = performance.now();
-                    const method = type.methods[prop as any];
+                    const logContext: LogContextOptions & {
+                        requestId?: string;
+                        contextTimeMs: number;
+                        grpc_service: string;
+                        grpc_method: string;
+                    } = {
+                        contextTimeMs: performance.now(),
+                        grpc_service,
+                        grpc_method: prop as string,
+                    };
+                    const withRequestContext = <T>(fn: () => T): T => runWithContext("public-api", logContext, fn);
+
+                    const method = type.methods[prop as string];
                     if (!method) {
                         // Increment metrics for unknown method attempts
-                        log.warn("public api: unknown method", grpc_service, prop);
+                        withRequestContext(() => log.warn("public api: unknown method"));
                         const code = Code.Unimplemented;
                         grpcServerStarted.labels(grpc_service, "unknown", "unknown").inc();
                         grpcServerHandled.labels(grpc_service, "unknown", "unknown", Code[code]).inc();
@@ -127,82 +138,54 @@ export class API {
                         grpc_type = "bidi_stream";
                     }
 
-                    const requestId = v4();
+                    logContext.requestId = v4();
 
                     grpcServerStarted.labels(grpc_service, grpc_method, grpc_type).inc();
                     const stopTimer = grpcServerHandling.startTimer({ grpc_service, grpc_method, grpc_type });
-                    const done = (err?: ConnectError) => {
-                        const grpc_code = err ? Code[err.code] : "OK";
-                        grpcServerHandled.labels(grpc_service, grpc_method, grpc_type, grpc_code).inc();
-                        stopTimer({ grpc_code });
-                        let callDuration;
-                        if (callStartedAt) {
-                            callDuration = performance.now() - callStartedAt;
-                        }
-                        withRequestContext(log.debug, log, [
-                            "public api: done",
-                            {
-                                grpc_code,
-                                duration: performance.now() - startedAt,
-                                verifyDuration,
-                                callDuration,
-                            },
-                        ]);
-                    };
-                    const handleError = (reason: unknown) => {
-                        let err = ConnectError.from(reason, Code.Internal);
-                        if (reason != err && err.code === Code.Internal) {
-                            withRequestContext(log.error, log, [`public api: unexpected internal error`, reason]);
-                            err = ConnectError.from(
-                                `Oops! Something went wrong. Please quote the request ID ${requestId} when reaching out to Gitpod Support.`,
-                                Code.Internal,
-                            );
-                        }
-                        done(err);
-                        throw err;
-                    };
+                    const done = (err?: ConnectError) =>
+                        withRequestContext<void>(() => {
+                            const grpc_code = err ? Code[err.code] : "OK";
+                            grpcServerHandled.labels(grpc_service, grpc_method, grpc_type, grpc_code).inc();
+                            stopTimer({ grpc_code });
+                            let callMs: number | undefined;
+                            if (callStartedAt) {
+                                callMs = performance.now() - callStartedAt;
+                            }
+                            log.debug("public api: done", { grpc_code, verifyMs, callMs });
+                            // right now p99 for getLoggetInUser is around 100ms, using it as a threshold for now
+                            const slowThreshold = 100;
+                            const totalMs = performance.now() - logContext.contextTimeMs;
+                            if (grpc_type === "unary" && totalMs > slowThreshold) {
+                                log.warn("public api: slow unary call", { grpc_code, callMs, verifyMs });
+                            }
+                        });
+                    const handleError = (reason: unknown) =>
+                        withRequestContext<void>(() => {
+                            let err = ConnectError.from(reason, Code.Internal);
+                            if (reason != err && err.code === Code.Internal) {
+                                log.error("public api: unexpected internal error", reason);
+                                err = ConnectError.from(
+                                    `Oops! Something went wrong. Please quote the request ID ${logContext.requestId} when reaching out to Gitpod Support.`,
+                                    Code.Internal,
+                                );
+                            }
+                            done(err);
+                            throw err;
+                        });
 
-                    let verifyDuration: number | undefined;
+                    let verifyMs: number | undefined;
                     let callStartedAt: number | undefined;
                     const context = args[1] as HandlerContext;
-                    function withRequestContext<T>(
-                        target: Function,
-                        thisArgument: any,
-                        argumentsList: ArrayLike<any>,
-                    ): T {
-                        return runWithContext(
-                            "public-api",
-                            {
-                                userId: context.user?.id,
-                                requestId,
-                                grpc_service,
-                                grpc_method,
-                            },
-                            () => Reflect.apply(target, thisArgument, argumentsList),
-                        );
-                    }
 
-                    async function apply<T>(): Promise<T> {
+                    const apply = async <T>(): Promise<T> => {
                         const verifyStartedAt = performance.now();
-                        const user = await self.verify(context);
-                        verifyDuration = performance.now() - verifyStartedAt;
+                        const user = await withRequestContext(() => self.verify(context));
+                        verifyMs = performance.now() - verifyStartedAt;
                         context.user = user;
 
                         callStartedAt = performance.now();
-                        if (grpc_type === "unary" || grpc_type === "client_stream") {
-                            return withRequestContext(target[prop as any], target, args);
-                        }
-                        const generator = withRequestContext(target[prop as any], target, args) as AsyncGenerator<any>;
-                        return (<AsyncGenerator<any>>{
-                            next: () => withRequestContext(generator.next, generator, []),
-                            return: (value) => withRequestContext(generator.return, generator, [value]),
-                            throw: (e) => withRequestContext(generator.throw, generator, [e]),
-
-                            [Symbol.asyncIterator]() {
-                                return this;
-                            },
-                        }) as any as T;
-                    }
+                        return withRequestContext(() => Reflect.apply(target[prop as any], target, args));
+                    };
                     if (grpc_type === "unary" || grpc_type === "client_stream") {
                         return (async () => {
                             try {
@@ -217,7 +200,8 @@ export class API {
                     }
                     return (async function* () {
                         try {
-                            const generator = await apply<AsyncGenerator<any>>();
+                            let generator = await apply<AsyncGenerator<any>>();
+                            generator = wrapAsyncGenerator(generator, withRequestContext);
                             for await (const item of generator) {
                                 yield item;
                             }
