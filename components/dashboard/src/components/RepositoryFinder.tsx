@@ -22,7 +22,9 @@ interface RepositoryFinderProps {
     selectedContextURL?: string;
     selectedProjectID?: string;
     maxDisplayItems?: number;
-    setSelection: (repoUrl: string, projectID?: string) => void;
+    // TODO: remove setSelection, use onChange
+    setSelection?: (repoUrl: string, projectID?: string) => void;
+    onChange?: (repo: SuggestedRepository) => void;
     onError?: (error: string) => void;
     disabled?: boolean;
 }
@@ -70,12 +72,17 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
                 return repo.url === selectedID;
             });
             if (matchingSuggestion) {
-                props.setSelection(matchingSuggestion.url, matchingSuggestion.projectId);
+                props.onChange?.(matchingSuggestion);
+                // TODO: remove this and replace with onChange
+                props.setSelection?.(matchingSuggestion.url, matchingSuggestion.projectId);
                 return;
             }
 
             // If we have no matching suggestion, it's a context URL they typed/pasted in, so just use that as the url
-            props.setSelection(selectedID);
+            props.setSelection?.(selectedID);
+            props.onChange?.({
+                url: selectedID,
+            });
         },
         [props, normalizedRepos],
     );
