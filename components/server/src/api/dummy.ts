@@ -24,7 +24,7 @@ export class APIHelloService implements ServiceImpl<typeof HelloService> {
     }
     async *lotsOfReplies(req: LotsOfRepliesRequest, context: HandlerContext): AsyncGenerator<LotsOfRepliesResponse> {
         let count = req.previousCount || 0;
-        while (true) {
+        while (!context.signal.aborted) {
             const response = new LotsOfRepliesResponse();
             response.reply = `Hello ${this.getSubject(context)} ${count}`;
             response.count = count;
