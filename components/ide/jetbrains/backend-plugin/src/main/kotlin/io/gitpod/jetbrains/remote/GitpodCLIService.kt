@@ -7,6 +7,7 @@ package io.gitpod.jetbrains.remote
 import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.CommandLineProcessor
+import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSession
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.service
@@ -124,10 +125,10 @@ class GitpodCLIService : RestService() {
         var session: ClientSession? = null
         while (session == null) {
             if (project != null) {
-                session = ClientSessionsManager.getProjectSessions(project, false).firstOrNull()
+                session = ClientSessionsManager.getProjectSessions(project, ClientKind.REMOTE).firstOrNull()
             }
             if (session == null) {
-                session = ClientSessionsManager.getAppSessions(false).firstOrNull()
+                session = ClientSessionsManager.getAppSessions(ClientKind.REMOTE).firstOrNull()
             }
             if (session == null) {
                 delay(1000L)

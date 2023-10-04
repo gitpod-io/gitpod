@@ -82,3 +82,6 @@ vscode:
         - esbenp.prettier-vscode
         - akosyakov.gitpod-monitor
         - hbenl.vscode-mocha-test-adapter
+jetbrains:
+  intellij:
+    vmoptions: -Xmx4g
