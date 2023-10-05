@@ -15,12 +15,16 @@ export const useUnifiedRepositorySearch = ({ searchString }: { searchString: str
     const searchQuery = useSearchRepositories({ searchString });
 
     const filteredRepos = useMemo(() => {
-        const repoMap = new Map<string, SuggestedRepository>((suggestedQuery.data || []).map((r) => [r.url, r]));
+        const repoMap = new Map<string, SuggestedRepository>(
+            (suggestedQuery.data || []).map((r) => [`${r.url}:${r.projectId || ""}`, r]),
+        );
 
         // Merge the search results into the suggested results
         for (const repo of searchQuery.data || []) {
-            if (!repoMap.has(repo.url)) {
-                repoMap.set(repo.url, repo);
+            const key = `${repo.url}:${repo.projectId || ""}`;
+
+            if (!repoMap.has(key)) {
+                repoMap.set(key, repo);
             }
         }
 

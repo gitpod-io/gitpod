@@ -398,7 +398,7 @@ export function CreateWorkspacePage() {
                             selectedIdeOption={selectedIde}
                             useLatest={useLatestIde}
                             disabled={createWorkspaceMutation.isStarting}
-                            loading={workspaceContext.isLoading || !optionsLoaded}
+                            loading={workspaceContext.isLoading}
                         />
                     </InputField>
 
@@ -408,7 +408,7 @@ export function CreateWorkspacePage() {
                             setError={setErrorWsClass}
                             selectedWorkspaceClass={selectedWsClass}
                             disabled={createWorkspaceMutation.isStarting}
-                            loading={workspaceContext.isLoading || !optionsLoaded}
+                            loading={workspaceContext.isLoading}
                         />
                     </InputField>
                 </div>
