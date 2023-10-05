@@ -2016,8 +2016,10 @@ type CreateWorkspaceOptions struct {
 	StartWorkspaceOptions
 	ContextURL                         string `json:"contextUrl,omitempty"`
 	OrganizationId                     string `json:"organizationId,omitempty"`
-	IgnoreRunningWorkspaceOnSameCommit bool   `json:"ignoreRunningWorkspaceOnSameCommit,omitemopty"`
-	ForceDefaultConfig                 bool   `json:"forceDefaultConfig,omitemopty"`
+	IgnoreRunningWorkspaceOnSameCommit bool   `json:"ignoreRunningWorkspaceOnSameCommit,omitempty"`
+	ForceDefaultConfig                 bool   `json:"forceDefaultConfig,omitempty"`
+	IgnoreRunningPrebuild              bool   `json:"ignoreRunningPrebuild,omitempty"`
+	AllowUsingPreviousPrebuilds        bool   `json:"allowUsingPreviousPrebuilds,omitempty"`
 }
 
 // DeleteOwnAuthProviderParams is the DeleteOwnAuthProviderParams message type
