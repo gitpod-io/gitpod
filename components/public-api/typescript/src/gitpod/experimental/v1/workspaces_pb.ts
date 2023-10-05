@@ -459,6 +459,26 @@ export class CreateAndStartWorkspaceRequest extends Message<CreateAndStartWorksp
    */
   organizationId = "";
 
+  /**
+   * @generated from field: bool ignore_running_workspace_on_same_commit = 7;
+   */
+  ignoreRunningWorkspaceOnSameCommit = false;
+
+  /**
+   * @generated from field: bool ignore_running_prebuild = 8;
+   */
+  ignoreRunningPrebuild = false;
+
+  /**
+   * @generated from field: bool allow_using_previous_prebuilds = 9;
+   */
+  allowUsingPreviousPrebuilds = false;
+
+  /**
+   * @generated from field: bool force_default_config = 10;
+   */
+  forceDefaultConfig = false;
+
   constructor(data?: PartialMessage<CreateAndStartWorkspaceRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -472,6 +492,10 @@ export class CreateAndStartWorkspaceRequest extends Message<CreateAndStartWorksp
     { no: 3, name: "prebuild_id", kind: "scalar", T: 9 /* ScalarType.STRING */, oneof: "source" },
     { no: 5, name: "start_spec", kind: "message", T: StartWorkspaceSpec },
     { no: 6, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "ignore_running_workspace_on_same_commit", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 8, name: "ignore_running_prebuild", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 9, name: "allow_using_previous_prebuilds", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 10, name: "force_default_config", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateAndStartWorkspaceRequest {

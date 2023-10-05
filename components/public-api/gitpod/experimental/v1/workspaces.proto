@@ -92,6 +92,11 @@ message CreateAndStartWorkspaceRequest {
     StartWorkspaceSpec start_spec = 5;
 
     string organization_id = 6;
+
+    bool ignore_running_workspace_on_same_commit = 7;
+    bool ignore_running_prebuild = 8;
+    bool allow_using_previous_prebuilds = 9;
+    bool force_default_config = 10;
 }
 message CreateAndStartWorkspaceResponse {
     string workspace_id = 1;
