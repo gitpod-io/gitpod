@@ -1678,19 +1678,9 @@ type Repository struct {
 
 // WorkspaceCreationResult is the WorkspaceCreationResult message type
 type WorkspaceCreationResult struct {
-	CreatedWorkspaceID         string                    `json:"createdWorkspaceId,omitempty"`
-	ExistingWorkspaces         []*WorkspaceInfo          `json:"existingWorkspaces,omitempty"`
-	RunningPrebuildWorkspaceID string                    `json:"runningPrebuildWorkspaceID,omitempty"`
-	RunningWorkspacePrebuild   *RunningWorkspacePrebuild `json:"runningWorkspacePrebuild,omitempty"`
-	WorkspaceURL               string                    `json:"workspaceURL,omitempty"`
-}
-
-// RunningWorkspacePrebuild is the RunningWorkspacePrebuild message type
-type RunningWorkspacePrebuild struct {
-	PrebuildID  string `json:"prebuildID,omitempty"`
-	SameCluster bool   `json:"sameCluster,omitempty"`
-	Starting    string `json:"starting,omitempty"`
-	WorkspaceID string `json:"workspaceID,omitempty"`
+	CreatedWorkspaceID string           `json:"createdWorkspaceId,omitempty"`
+	ExistingWorkspaces []*WorkspaceInfo `json:"existingWorkspaces,omitempty"`
+	WorkspaceURL       string           `json:"workspaceURL,omitempty"`
 }
 
 // Workspace is the Workspace message type
@@ -2027,8 +2017,6 @@ type CreateWorkspaceOptions struct {
 	ContextURL                         string `json:"contextUrl,omitempty"`
 	OrganizationId                     string `json:"organizationId,omitempty"`
 	IgnoreRunningWorkspaceOnSameCommit bool   `json:"ignoreRunningWorkspaceOnSameCommit,omitemopty"`
-	IgnoreRunningPrebuild              bool   `json:"ignoreRunningPrebuild,omitemopty"`
-	AllowUsingPreviousPrebuilds        bool   `json:"allowUsingPreviousPrebuilds,omitemopty"`
 	ForceDefaultConfig                 bool   `json:"forceDefaultConfig,omitemopty"`
 }
 
@@ -2291,12 +2279,9 @@ type Project struct {
 }
 
 type ProjectSettings struct {
-	UseIncrementalPrebuilds      bool                      `json:"useIncrementalPrebuilds,omitempty"`
-	UsePersistentVolumeClaim     bool                      `json:"usePersistentVolumeClaim,omitempty"`
-	KeepOutdatedPrebuildsRunning bool                      `json:"keepOutdatedPrebuildsRunning,omitempty"`
-	AllowUsingPreviousPrebuilds  bool                      `json:"allowUsingPreviousPrebuilds,omitempty"`
-	WorkspaceClasses             *WorkspaceClassesSettings `json:"workspaceClasses,omitempty"`
-	PrebuildSettings             *PrebuildSettings         `json:"prebuilds,omitempty"`
+	UsePersistentVolumeClaim bool                      `json:"usePersistentVolumeClaim,omitempty"`
+	WorkspaceClasses         *WorkspaceClassesSettings `json:"workspaceClasses,omitempty"`
+	PrebuildSettings         *PrebuildSettings         `json:"prebuilds,omitempty"`
 }
 type PrebuildSettings struct {
 	Enable                *bool   `json:"enable,omitempty"`

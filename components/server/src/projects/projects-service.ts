@@ -411,58 +411,64 @@ export class ProjectsService {
         if (!!project.settings?.prebuilds) {
             return project; // already migrated
         }
+        try {
+            const logCtx: any = { oldSettings: { ...project.settings } };
+            const newPrebuildSettings: PrebuildSettings = { enable: false, ...Project.PREBUILD_SETTINGS_DEFAULTS };
 
-        const logCtx: any = { oldSettings: { ...project.settings } };
-        const newPrebuildSettings: PrebuildSettings = { enable: false };
+            // if workspaces were running in the past week
+            const isInactive = await this.isProjectConsideredInactive(SYSTEM_USER, project.id);
+            logCtx.isInactive = isInactive;
+            if (!isInactive) {
+                const sevenDaysAgo = new Date(daysBefore(new Date().toISOString(), 7));
+                const count = await this.workspaceDb.trace({}).countUnabortedPrebuildsSince(project.id, sevenDaysAgo);
+                logCtx.count = count;
+                if (count > 0) {
+                    const defaults = Project.PREBUILD_SETTINGS_DEFAULTS;
+                    newPrebuildSettings.enable = true;
+                    newPrebuildSettings.prebuildInterval = Math.max(
+                        project.settings?.prebuildEveryNthCommit || 0,
+                        defaults.prebuildInterval,
+                    );
 
-        // if workspaces were running in the past week
-        const isInactive = await this.isProjectConsideredInactive(SYSTEM_USER, project.id);
-        logCtx.isInactive = isInactive;
-        if (!isInactive) {
-            const sevenDaysAgo = new Date(daysBefore(new Date().toISOString(), 7));
-            const count = await this.workspaceDb.trace({}).countUnabortedPrebuildsSince(project.id, sevenDaysAgo);
-            logCtx.count = count;
-            if (count > 0) {
-                const defaults = Project.PREBUILD_SETTINGS_DEFAULTS;
-                newPrebuildSettings.enable = true;
-                newPrebuildSettings.prebuildInterval =
-                    project.settings?.prebuildEveryNthCommit || defaults.prebuildInterval;
-                newPrebuildSettings.branchStrategy = !!project.settings?.prebuildBranchPattern
-                    ? "matched-branches"
-                    : defaults.branchStrategy;
-                if (newPrebuildSettings.prebuildInterval! < defaults.prebuildInterval!) {
-                    // limiting to default branch for short intervals, to avoid unwanted increase of costs.
-                    newPrebuildSettings.branchStrategy = "default-branch";
+                    newPrebuildSettings.branchStrategy = !!project.settings?.prebuildBranchPattern
+                        ? "matched-branches"
+                        : defaults.branchStrategy;
+                    newPrebuildSettings.branchMatchingPattern =
+                        project.settings?.prebuildBranchPattern || defaults.branchMatchingPattern;
+                    newPrebuildSettings.workspaceClass = project.settings?.workspaceClasses?.prebuild;
                 }
-                newPrebuildSettings.branchMatchingPattern =
-                    project.settings?.prebuildBranchPattern || defaults.branchMatchingPattern;
-                newPrebuildSettings.workspaceClass = project.settings?.workspaceClasses?.prebuild;
             }
-        }
 
-        // update new settings
-        project = (await this.projectDB.findProjectById(project.id))!;
-        if (!project) {
-            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "Not found");
-        }
-        if (!!project.settings?.prebuilds) {
-            return project; // already migrated
-        }
-        const newSettings = { ...project.settings };
-        project.settings = newSettings;
-        project.settings.prebuilds = newPrebuildSettings;
-        delete newSettings.enablePrebuilds;
-        delete newSettings.prebuildBranchPattern;
-        delete newSettings.prebuildDefaultBranchOnly;
-        delete newSettings.prebuildEveryNthCommit;
-        delete newSettings.workspaceClasses?.prebuild;
-        await this.projectDB.updateProject({
-            id: project.id,
-            settings: project.settings,
-        });
-        logCtx.newPrebuildSettings = newPrebuildSettings;
-        log.info("Prebuild settings migrated.", { projectId: project.id, logCtx });
+            // update new settings
+            project = (await this.projectDB.findProjectById(project.id))!;
+            if (!project) {
+                throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "Not found");
+            }
+            if (!!project.settings?.prebuilds) {
+                return project; // already migrated
+            }
+            const newSettings = { ...project.settings };
+            project.settings = newSettings;
+            project.settings.prebuilds = newPrebuildSettings;
+            delete newSettings.enablePrebuilds;
+            delete newSettings.prebuildBranchPattern;
+            delete newSettings.prebuildDefaultBranchOnly;
+            delete newSettings.prebuildEveryNthCommit;
+            delete newSettings.allowUsingPreviousPrebuilds;
+            delete newSettings.keepOutdatedPrebuildsRunning;
+            delete newSettings.useIncrementalPrebuilds;
+            delete newSettings.workspaceClasses?.prebuild;
+            await this.projectDB.updateProject({
+                id: project.id,
+                settings: project.settings,
+            });
+            logCtx.newPrebuildSettings = newPrebuildSettings;
+            log.info("Prebuild settings migrated.", { projectId: project.id, logCtx });
 
-        return project;
+            return project;
+        } catch (error) {
+            log.error("Prebuild settings migration failed.", { projectId: project.id, error });
+            return project;
+        }
     }
 }

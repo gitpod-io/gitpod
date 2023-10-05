@@ -149,11 +149,6 @@ export interface ConfigSerialized {
     /** maxConcurrentPrebuildsPerRef is the maximum number of prebuilds we allow per ref type at any given time */
     maxConcurrentPrebuildsPerRef: number;
 
-    incrementalPrebuilds: {
-        repositoryPasslist: string[];
-        commitHistory: number;
-    };
-
     blockNewUsers: {
         enabled: boolean;
         passlist: string[];

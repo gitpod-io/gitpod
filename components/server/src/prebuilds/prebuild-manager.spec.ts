@@ -14,7 +14,7 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { ConfigProvider } from "../workspace/config-provider";
 import { Config } from "../config";
 import { ProjectsService } from "../projects/projects-service";
-import { IncrementalPrebuildsService } from "./incremental-prebuilds-service";
+import { IncrementalWorkspaceService } from "./incremental-workspace-service";
 import { EntitlementService } from "../billing/entitlement-service";
 import { CommitContext, Project, ProjectSettings, Repository, WorkspaceConfig } from "@gitpod/gitpod-protocol";
 
@@ -30,7 +30,7 @@ const containerModule = new ContainerModule((bind) => {
     bind(ConfigProvider).toConstantValue({} as any);
     bind(Config).toConstantValue({} as any);
     bind(ProjectsService).toConstantValue({} as any);
-    bind(IncrementalPrebuildsService).toConstantValue({} as any);
+    bind(IncrementalWorkspaceService).toConstantValue({} as any);
     bind(EntitlementService).toConstantValue({} as any);
     // #endregion
 });

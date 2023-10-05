@@ -107,9 +107,6 @@ export function projectToProtocol(project: Project): ProtocolProject {
         teamId: project.teamId,
         appInstallationId: "undefined",
         settings: {
-            allowUsingPreviousPrebuilds: project.settings?.prebuild?.usePreviousPrebuilds,
-            keepOutdatedPrebuildsRunning: project.settings?.prebuild?.keepOutdatedPrebuildsRunning,
-            useIncrementalPrebuilds: project.settings?.prebuild?.enableIncrementalPrebuilds,
             workspaceClasses: {
                 regular: project.settings?.workspace?.workspaceClass?.regular || "",
             },

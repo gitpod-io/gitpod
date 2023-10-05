@@ -43,9 +43,9 @@ message ProjectSettings {
 }
 
 message PrebuildSettings {
-    bool enable_incremental_prebuilds = 1;
-    bool keep_outdated_prebuilds_running = 2;
-    bool use_previous_prebuilds = 3;
+    reserved 1; // enable_incremental_prebuilds
+    reserved 2; // keep_outdated_prebuilds_running
+    reserved 3; // use_previous_prebuilds
     reserved 4; // was prebuild_every_nth
     optional bool enable_prebuilds = 5;
     reserved 6; // was prebuild_default_branch_only

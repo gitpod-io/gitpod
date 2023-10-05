@@ -214,6 +214,7 @@ describe("ProjectsService", async () => {
                 ...Project.PREBUILD_SETTINGS_DEFAULTS,
                 enable: false,
             },
+            workspaceClasses: {},
         });
     });
 
@@ -238,10 +239,11 @@ describe("ProjectsService", async () => {
                 ...Project.PREBUILD_SETTINGS_DEFAULTS,
                 enable: false,
             },
+            workspaceClasses: {},
         });
     });
 
-    it.only("prebuild settings migration / new and active project / updated settings", async () => {
+    it("prebuild settings migration / new and active project / updated settings", async () => {
         const ps = container.get(ProjectsService);
         const cloneUrl = "https://github.com/gitpod-io/gitpod.git";
         const oldProject = await createTestProject(ps, org, owner, {
@@ -261,7 +263,7 @@ describe("ProjectsService", async () => {
         expect(project.settings).to.deep.equal(<ProjectSettings>{
             prebuilds: {
                 enable: true,
-                prebuildInterval: 13,
+                prebuildInterval: 20,
                 workspaceClass: "ultra",
                 branchStrategy: "matched-branches",
                 branchMatchingPattern: "feature-*",

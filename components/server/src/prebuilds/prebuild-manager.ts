@@ -28,9 +28,7 @@ import { secondsBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 
 import { inject, injectable } from "inversify";
 import * as opentracing from "opentracing";
-import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
-import { error } from "console";
-import { IncrementalPrebuildsService } from "./incremental-prebuilds-service";
+import { IncrementalWorkspaceService } from "./incremental-workspace-service";
 import { PrebuildRateLimiterConfig } from "../workspace/prebuild-rate-limiter";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
@@ -53,48 +51,16 @@ export interface StartPrebuildParams {
 
 @injectable()
 export class PrebuildManager {
-    @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
-    @inject(WorkspaceService) protected readonly workspaceService: WorkspaceService;
-    @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
-    @inject(ConfigProvider) protected readonly configProvider: ConfigProvider;
-    @inject(Config) protected readonly config: Config;
-    @inject(ProjectsService) protected readonly projectService: ProjectsService;
-    @inject(IncrementalPrebuildsService) protected readonly incrementalPrebuildsService: IncrementalPrebuildsService;
-    @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
-
-    async abortPrebuildsForBranch(ctx: TraceContext, project: Project, user: User, branch: string): Promise<void> {
-        const span = TraceContext.startSpan("abortPrebuildsForBranch", ctx);
-        try {
-            const prebuilds = await this.workspaceDB
-                .trace({ span })
-                .findActivePrebuiltWorkspacesByBranch(project.id, branch);
-            const results: Promise<any>[] = [];
-            for (const prebuild of prebuilds) {
-                try {
-                    log.info(
-                        { userId: user.id, workspaceId: prebuild.workspace.id },
-                        "Cancelling Prebuild workspace because a newer commit was pushed to the same branch.",
-                    );
-                    results.push(
-                        this.workspaceService.stopWorkspace(
-                            user.id,
-                            prebuild.workspace.id,
-                            "prebuild cancelled because a newer commit was pushed to the same branch",
-                            StopWorkspacePolicy.ABORT,
-                        ),
-                    );
-                    prebuild.prebuild.state = "aborted";
-                    prebuild.prebuild.error = "A newer commit was pushed to the same branch.";
-                    results.push(this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild.prebuild));
-                } catch (err) {
-                    error("Cannot cancel prebuild", { prebuildID: prebuild.prebuild.id }, err);
-                }
-            }
-            await Promise.all(results);
-        } finally {
-            span.finish();
-        }
-    }
+    constructor(
+        @inject(TracedWorkspaceDB) private readonly workspaceDB: DBWithTracing<WorkspaceDB>,
+        @inject(WorkspaceService) private readonly workspaceService: WorkspaceService,
+        @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
+        @inject(ConfigProvider) private readonly configProvider: ConfigProvider,
+        @inject(Config) private readonly config: Config,
+        @inject(ProjectsService) private readonly projectService: ProjectsService,
+        @inject(IncrementalWorkspaceService) private readonly incrementalPrebuildsService: IncrementalWorkspaceService,
+        @inject(EntitlementService) private readonly entitlementService: EntitlementService,
+    ) {}
 
     private async findNonFailedPrebuiltWorkspace(ctx: TraceContext, projectId: string, commitSHA: string) {
         const existingPB = await this.workspaceDB.trace(ctx).findPrebuiltWorkspaceByCommit(projectId, commitSHA);
@@ -167,13 +133,6 @@ export class PrebuildManager {
                     }
                 }
             }
-            if (context.ref && !project.settings?.keepOutdatedPrebuildsRunning) {
-                try {
-                    await this.abortPrebuildsForBranch({ span }, project, user, context.ref);
-                } catch (e) {
-                    console.error("Error aborting prebuilds", e);
-                }
-            }
 
             const prebuildContext: StartPrebuildContext = {
                 title: `Prebuild of "${context.title}"`,
@@ -205,15 +164,6 @@ export class PrebuildManager {
                 );
                 if (prebuild) {
                     return { prebuildId: prebuild.id, wsid: prebuild.buildWorkspaceId, done: true };
-                }
-            } else if (this.shouldPrebuildIncrementally(project)) {
-                // We store the commit histories in the `StartPrebuildContext` in order to pass them down to
-                // `WorkspaceFactoryEE.createForStartPrebuild`.
-                if (commitHistory) {
-                    prebuildContext.commitHistory = commitHistory;
-                }
-                if (additionalRepositoryCommitHistories) {
-                    prebuildContext.additionalRepositoryCommitHistories = additionalRepositoryCommitHistories;
                 }
             }
 
@@ -402,15 +352,6 @@ export class PrebuildManager {
 
         log.debug("Unknown prebuild branch strategy. Ignoring request.", { context, config });
         return { shouldRun: false, reason: "unknown-strategy" };
-    }
-
-    private shouldPrebuildIncrementally(project: Project): boolean {
-        if (project?.settings?.useIncrementalPrebuilds) {
-            return true;
-        }
-        const trimRepoUrl = (url: string) => url.replace(/\/$/, "").replace(/\.git$/, "");
-        const repoUrl = trimRepoUrl(project.cloneUrl);
-        return this.config.incrementalPrebuilds.repositoryPasslist.some((url) => trimRepoUrl(url) === repoUrl);
     }
 
     async fetchConfig(

@@ -36,17 +36,28 @@ export interface ProjectSettings {
      * @deprecated see `Project.settings.prebuilds.branchMatchingPattern` instead.
      */
     prebuildBranchPattern?: string;
-
-    useIncrementalPrebuilds?: boolean;
-    keepOutdatedPrebuildsRunning?: boolean;
-    // whether new workspaces can start on older prebuilds and incrementally update
-    allowUsingPreviousPrebuilds?: boolean;
     /**
      * how many commits in the commit history a prebuild is good (undefined and 0 means every commit is prebuilt)
      *
      * @deprecated see `Project.settings.prebuilds.intervall` instead.
      */
     prebuildEveryNthCommit?: number;
+
+    /**
+     * @deprecated always false
+     */
+    useIncrementalPrebuilds?: boolean;
+
+    /**
+     * @deprecated always true (we should kill dangling prebuilds)
+     */
+    keepOutdatedPrebuildsRunning?: boolean;
+    // whether new workspaces can start on older prebuilds and incrementally update
+    /**
+     * @deprecated always true
+     */
+    allowUsingPreviousPrebuilds?: boolean;
+
     // preferred workspace classes
     workspaceClasses?: WorkspaceClasses;
 }
@@ -58,7 +69,7 @@ export interface PrebuildSettings {
     enable?: boolean;
 
     /**
-     * Defines an interval of commits to run new prebuilds for. Defaults to 10
+     * Defines an interval of commits to run new prebuilds for. Defaults to 20
      */
     prebuildInterval?: number;
 
@@ -113,7 +124,7 @@ export namespace Project {
     export const PREBUILD_SETTINGS_DEFAULTS: PrebuildSettingsWithDefaults = {
         enable: false,
         branchMatchingPattern: "**",
-        prebuildInterval: 10,
+        prebuildInterval: 20,
         branchStrategy: "all-branches",
     };
 

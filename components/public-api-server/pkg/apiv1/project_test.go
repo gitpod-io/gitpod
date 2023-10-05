@@ -336,10 +336,7 @@ func newProject(p *protocol.Project) *protocol.Project {
 		CloneURL:          "https://github.com/easyCZ/foobar",
 		AppInstallationID: "1337",
 		Settings: &protocol.ProjectSettings{
-			UseIncrementalPrebuilds:      true,
-			UsePersistentVolumeClaim:     true,
-			KeepOutdatedPrebuildsRunning: true,
-			AllowUsingPreviousPrebuilds:  true,
+			UsePersistentVolumeClaim: true,
 			WorkspaceClasses: &protocol.WorkspaceClassesSettings{
 				Regular:  "default",
 				Prebuild: "default",

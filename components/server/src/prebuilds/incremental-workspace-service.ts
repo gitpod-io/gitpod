@@ -22,8 +22,10 @@ import { ConfigProvider } from "../workspace/config-provider";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { ImageSourceProvider } from "../workspace/image-source-provider";
 
+const MAX_HISTORY_DEPTH = 100;
+
 @injectable()
-export class IncrementalPrebuildsService {
+export class IncrementalWorkspaceService {
     @inject(Config) protected readonly config: Config;
     @inject(ConfigProvider) protected readonly configProvider: ConfigProvider;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
@@ -31,7 +33,7 @@ export class IncrementalPrebuildsService {
     @inject(WorkspaceDB) protected readonly workspaceDB: WorkspaceDB;
 
     public async getCommitHistoryForContext(context: CommitContext, user: User): Promise<WithCommitHistory> {
-        const maxDepth = this.config.incrementalPrebuilds.commitHistory;
+        const maxDepth = MAX_HISTORY_DEPTH;
         const hostContext = this.hostContextProvider.get(context.repository.host);
         const repoProvider = hostContext?.services?.repositoryProvider;
         if (!repoProvider) {
@@ -45,6 +47,7 @@ export class IncrementalPrebuildsService {
             context.revision,
             maxDepth,
         );
+        history.commitHistory.unshift(context.revision);
         if (context.additionalRepositoryCheckoutInfo && context.additionalRepositoryCheckoutInfo.length > 0) {
             const histories = context.additionalRepositoryCheckoutInfo.map(async (info) => {
                 const commitHistory = await repoProvider.getCommitHistory(
@@ -54,6 +57,7 @@ export class IncrementalPrebuildsService {
                     info.revision,
                     maxDepth,
                 );
+                commitHistory.unshift(info.revision);
                 return {
                     cloneUrl: info.repository.cloneUrl,
                     commitHistory,
@@ -75,14 +79,15 @@ export class IncrementalPrebuildsService {
             return;
         }
 
-        const imageSource = await this.imageSourceProvider.getImageSource({}, user, context, config);
+        const imageSourcePromise = this.imageSourceProvider.getImageSource({}, user, context, config);
 
         // Note: This query returns only not-garbage-collected prebuilds in order to reduce cardinality
         // (e.g., at the time of writing, the Gitpod repository has 16K+ prebuilds, but only ~300 not-garbage-collected)
         const recentPrebuilds = await this.workspaceDB.findPrebuildsWithWorkspace(projectId);
+        const imageSource = await imageSourcePromise;
         for (const recentPrebuild of recentPrebuilds) {
             if (
-                await this.isGoodBaseforIncrementalBuild(
+                this.isGoodBaseforIncrementalBuild(
                     history,
                     config,
                     imageSource,
@@ -93,15 +98,16 @@ export class IncrementalPrebuildsService {
                 return recentPrebuild.prebuild;
             }
         }
+        return undefined;
     }
 
-    protected async isGoodBaseforIncrementalBuild(
+    private isGoodBaseforIncrementalBuild(
         history: WithCommitHistory,
         config: WorkspaceConfig,
         imageSource: WorkspaceImageSource,
         candidatePrebuild: PrebuiltWorkspace,
         candidateWorkspace: Workspace,
-    ): Promise<boolean> {
+    ): boolean {
         if (!history.commitHistory || history.commitHistory.length === 0) {
             return false;
         }

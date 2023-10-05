@@ -424,8 +424,6 @@ export namespace GitpodServer {
         // whether running workspaces on the same context should be ignored. If false (default) users will be asked.
         //TODO(se) remove this option and let clients do that check if they like. The new create workspace page does it already
         ignoreRunningWorkspaceOnSameCommit?: boolean;
-        ignoreRunningPrebuild?: boolean;
-        allowUsingPreviousPrebuilds?: boolean;
         forceDefaultConfig?: boolean;
     }
 

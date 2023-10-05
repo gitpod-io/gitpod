@@ -168,14 +168,9 @@ func projectSettingsToAPIResponse(s *protocol.ProjectSettings) *v1.ProjectSettin
 	}
 
 	settings := &v1.ProjectSettings{
-		Prebuild: &v1.PrebuildSettings{
-			EnableIncrementalPrebuilds:   s.UseIncrementalPrebuilds,
-			KeepOutdatedPrebuildsRunning: s.KeepOutdatedPrebuildsRunning,
-			UsePreviousPrebuilds:         s.AllowUsingPreviousPrebuilds,
-		},
+		Prebuild: &v1.PrebuildSettings{},
 		Workspace: &v1.WorkspaceSettings{
-			EnablePersistentVolumeClaim: s.UsePersistentVolumeClaim,
-			WorkspaceClass:              workspaceClassesToAPIResponse(s.WorkspaceClasses),
+			WorkspaceClass: workspaceClassesToAPIResponse(s.WorkspaceClasses),
 		},
 	}
 	if s.PrebuildSettings != nil {

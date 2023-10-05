@@ -9,7 +9,6 @@ import { useCallback, useContext, useState, Fragment, useMemo, useEffect } from 
 import { useHistory } from "react-router";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import PillLabel from "../components/PillLabel";
 import { getGitpodService } from "../service/service";
 import { ProjectContext, useCurrentProject } from "./project-context";
 import { getProjectSettingsMenu, getProjectTabs } from "./projects.routes";
@@ -113,6 +112,7 @@ export default function ProjectSettingsView() {
 
             await updateProjectSettings({
                 prebuilds: {
+                    ...project.settings?.prebuilds,
                     enable: value,
                 },
             });
@@ -237,13 +237,12 @@ export default function ProjectSettingsView() {
                     label="Enable prebuilds"
                     hint={
                         <span>
-                            {prebuildSettings.enable ? (
-                                <Fragment>
-                                    Prebuilds will run for any <code>before</code> or <code>init</code> tasks.
-                                </Fragment>
-                            ) : (
-                                "Requires permissions to configure repository webhooks."
-                            )}{" "}
+                            <Fragment>
+                                Prebuilds reduce wait time for new workspaces.
+                                {!prebuildSettings.enable
+                                    ? " Enabling requires permissions to configure repository webhooks."
+                                    : ""}
+                            </Fragment>{" "}
                             <a
                                 className="gp-link"
                                 target="_blank"
@@ -259,17 +258,51 @@ export default function ProjectSettingsView() {
                 />
                 {prebuildSettings.enable && (
                     <>
-                        <SelectInputField
-                            disabled={!prebuildSettings.enable}
-                            label="Build branches"
-                            value={prebuildSettings.branchStrategy || ""}
-                            containerClassName="max-w-md ml-6 text-sm"
-                            onChange={(val) => setPrebuildBranchStrategy(val as PrebuildSettings.BranchStrategy)}
-                        >
-                            <option value="default-branch">Default branch</option>
-                            <option value="all-branches">All branches</option>
-                            <option value="matched-branches">Matched by pattern</option>
-                        </SelectInputField>
+                        <div className="flex mt-4 max-w-2xl">
+                            <div className="flex flex-col ml-6">
+                                <label
+                                    htmlFor="prebuildInterval"
+                                    className={classNames(
+                                        "text-sm font-semibold cursor-pointer tracking-wide",
+                                        !prebuildSettings.enable
+                                            ? "text-gray-400 dark:text-gray-400"
+                                            : "text-gray-600 dark:text-gray-100",
+                                    )}
+                                >
+                                    Commit Interval
+                                </label>
+                                <input
+                                    type="number"
+                                    id="prebuildInterval"
+                                    min="0"
+                                    max="100"
+                                    step="5"
+                                    className="mt-2"
+                                    disabled={!prebuildSettings.enable}
+                                    value={prebuildSettings.prebuildInterval}
+                                    onChange={({ target }) => setPrebuildInterval(target.value)}
+                                />
+                                <div className="text-gray-500 dark:text-gray-400 text-sm mt-2">
+                                    The number of commits to be skipped between prebuild runs.
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <SelectInputField
+                                disabled={!prebuildSettings.enable}
+                                label="Branch Filter"
+                                value={prebuildSettings.branchStrategy || ""}
+                                containerClassName="max-w-md ml-6 text-sm"
+                                onChange={(val) => setPrebuildBranchStrategy(val as PrebuildSettings.BranchStrategy)}
+                            >
+                                <option value="all-branches">All branches</option>
+                                <option value="default-branch">Default branch</option>
+                                <option value="matched-branches">Match branches by pattern</option>
+                            </SelectInputField>
+                            <div className="ml-6 text-gray-500 dark:text-gray-400 text-sm mt-2">
+                                Run prebuilds on the selected branches only.
+                            </div>
+                        </div>
                         {prebuildSettings.branchStrategy === "matched-branches" && (
                             <div className="flex flex-col ml-6 mt-4">
                                 <label
@@ -298,7 +331,7 @@ export default function ProjectSettingsView() {
                         )}
                         <InputField
                             className="max-w-md ml-6 text-sm"
-                            label="Workspace machine type"
+                            label="Machine type"
                             disabled={!prebuildSettings.enable}
                         >
                             <SelectWorkspaceClassComponent
@@ -306,86 +339,10 @@ export default function ProjectSettingsView() {
                                 selectedWorkspaceClass={prebuildSettings.workspaceClass}
                                 onSelectionChange={setWorkspaceClassForPrebuild}
                             />
-                        </InputField>
-                        <CheckboxInputField
-                            label="Enable Incremental Prebuilds"
-                            hint={
-                                <span>
-                                    When possible, use an earlier successful prebuild as a base to create new prebuilds.
-                                    This can make your prebuilds significantly faster, especially if they normally take
-                                    longer than 10 minutes.{" "}
-                                    <a
-                                        className="gp-link"
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        href="https://www.gitpod.io/changelog/faster-incremental-prebuilds"
-                                    >
-                                        Learn more
-                                    </a>
-                                </span>
-                            }
-                            disabled={!prebuildSettings.enable}
-                            checked={project.settings?.useIncrementalPrebuilds ?? false}
-                            onChange={(checked) => updateProjectSettings({ useIncrementalPrebuilds: checked })}
-                        />
-                        <CheckboxInputField
-                            label="Cancel Prebuilds on Outdated Commits"
-                            hint="Cancel pending or running prebuilds on the same branch when new commits are pushed."
-                            disabled={!prebuildSettings.enable}
-                            checked={!project.settings?.keepOutdatedPrebuildsRunning}
-                            onChange={(checked) => updateProjectSettings({ keepOutdatedPrebuildsRunning: !checked })}
-                        />
-                        <CheckboxInputField
-                            label={
-                                <span>
-                                    Use Last Successful Prebuild{" "}
-                                    <PillLabel type="warn" className="font-semibold mt-2 ml-2 py-0.5 px-2 self-center">
-                                        Alpha
-                                    </PillLabel>
-                                </span>
-                            }
-                            hint="Skip waiting for prebuilds in progress and use the last successful prebuild from previous
-                    commits on the same branch."
-                            disabled={!prebuildSettings.enable}
-                            checked={!!project.settings?.allowUsingPreviousPrebuilds}
-                            onChange={(checked) =>
-                                updateProjectSettings({
-                                    allowUsingPreviousPrebuilds: checked,
-                                    // we are disabling prebuild cancellation when incremental workspaces are enabled
-                                    keepOutdatedPrebuildsRunning:
-                                        checked || project?.settings?.keepOutdatedPrebuildsRunning,
-                                })
-                            }
-                        />
-                        <div className="flex mt-4 max-w-2xl">
-                            <div className="flex flex-col ml-6">
-                                <label
-                                    htmlFor="prebuildInterval"
-                                    className={classNames(
-                                        "text-sm font-semibold cursor-pointer tracking-wide",
-                                        !prebuildSettings.enable
-                                            ? "text-gray-400 dark:text-gray-400"
-                                            : "text-gray-600 dark:text-gray-100",
-                                    )}
-                                >
-                                    Prebuild interval
-                                </label>
-                                <input
-                                    type="number"
-                                    id="prebuildInterval"
-                                    min="0"
-                                    max="100"
-                                    step="5"
-                                    className="mt-2"
-                                    disabled={!prebuildSettings.enable}
-                                    value={prebuildSettings.prebuildInterval}
-                                    onChange={({ target }) => setPrebuildInterval(target.value)}
-                                />
-                                <div className="text-gray-500 dark:text-gray-400 text-sm mt-2">
-                                    The number of commits to be skipped between prebuild runs.
-                                </div>
+                            <div className="text-gray-500 dark:text-gray-400 text-sm mt-2">
+                                Use a smaller machine type for cost optimization.
                             </div>
-                        </div>
+                        </InputField>
                     </>
                 )}
                 <div>
