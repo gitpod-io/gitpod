@@ -10,6 +10,7 @@ import { RepoURL } from "../repohost";
 import { RepositoryProvider } from "../repohost/repository-provider";
 import { BitbucketServerApi } from "./bitbucket-server-api";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 @injectable()
 export class BitbucketServerRepositoryProvider implements RepositoryProvider {
@@ -145,9 +146,21 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
     }
 
     async getUserRepos(user: User): Promise<RepositoryInfo[]> {
+        const repoSearchEnabled = await getExperimentsClientForBackend().getValueAsync(
+            "repositoryFinderSearch",
+            false,
+            {
+                user,
+            },
+        );
+
         try {
-            // TODO: implement incremental search
-            const repos = await this.api.getRepos(user, { maxPages: 10, permission: "REPO_READ" });
+            const repos = repoSearchEnabled
+                ? // Get up to 100 of the most recent repos if repo searching is enabled
+                  await this.api.getRecentRepos(user, { limit: 100 })
+                : // Otherwise continue to get up to 10k repos
+                  await this.api.getRepos(user, { maxPages: 10, permission: "REPO_READ" });
+
             const result: RepositoryInfo[] = [];
             repos.forEach((r) => {
                 const cloneUrl = r.links.clone.find((u) => u.name === "http")?.href;
