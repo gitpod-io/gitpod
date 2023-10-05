@@ -44,24 +44,39 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
 }) => {
     const [triggerEl, setTriggerEl] = useState<HTMLElement | null>(null);
     const [dropdownEl, setDropdownEl] = useState<HTMLElement | null>(null);
+    const [inputEl, setInputEl] = useState<HTMLElement | null>(null);
+    const [showDropDown, setShowDropDown] = useState<boolean>(!disabled && !!expanded);
 
-    // this calculates the positioning for our tooltip
+    // this calculates the positioning for the dropdown since it's in a Portal and not a direct child of the trigger
     const { styles, attributes } = usePopper(triggerEl, dropdownEl, {
         placement: "bottom",
+        modifiers: [
+            {
+                name: "offset",
+                options: {
+                    offset: [0, -10],
+                },
+            },
+        ],
     });
 
-    const [showDropDown, setShowDropDown] = useState<boolean>(!disabled && !!expanded);
-    // const nodeRef: RefObject<HTMLDivElement> = useRef(null);
     const onSelected = useCallback(
         (elementId: string) => {
             onSelectionChange(elementId);
             setShowDropDown(false);
+            // Shift focus back to the trigger
+            triggerEl?.focus();
         },
-        [onSelectionChange],
+        [onSelectionChange, triggerEl],
     );
     const [search, setSearch] = useState<string>("");
     const filteredOptions = useMemo(() => getElements(search), [getElements, search]);
     const [selectedElementTemp, setSelectedElementTemp] = useState<string | undefined>(filteredOptions[0]?.id);
+
+    const triggerStyles = useMemo(
+        () => ({ ...styles.popper, width: triggerEl?.clientWidth }),
+        [styles.popper, triggerEl?.clientWidth],
+    );
 
     // reset search when the drop down is expanded or closed
     useEffect(() => {
@@ -85,6 +100,8 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
         },
         [onSearchChange],
     );
+
+    const handleInputChange = useCallback((e) => updateSearch(e.target.value), [updateSearch]);
 
     const toggleDropDown = useCallback(() => {
         if (disabled) {
@@ -119,6 +136,13 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
             if (showDropDown && e.key === "ArrowUp") {
                 e.preventDefault();
                 let idx = filteredOptions.findIndex((e) => e.id === selectedElementTemp);
+
+                // Shfit focus back to search input if we're at the top
+                if (idx === 0) {
+                    inputEl?.focus();
+                    return;
+                }
+
                 while (idx-- > 0) {
                     const candidate = filteredOptions[idx];
                     if (candidate.isSelectable) {
@@ -130,13 +154,13 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
             }
             if (showDropDown && e.key === "Escape") {
                 setShowDropDown(false);
+                triggerEl?.focus();
                 e.preventDefault();
             }
             if (e.key === "Enter") {
                 if (showDropDown && selectedElementTemp && filteredOptions.some((e) => e.id === selectedElementTemp)) {
                     e.preventDefault();
-                    onSelectionChange(selectedElementTemp);
-                    setShowDropDown(false);
+                    onSelected(selectedElementTemp);
                 }
                 if (!showDropDown) {
                     toggleDropDown();
@@ -150,27 +174,28 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
         },
         [
             filteredOptions,
-            onSelectionChange,
+            inputEl,
+            onSelected,
             search,
             selectedElementTemp,
             setFocussedElement,
             showDropDown,
             toggleDropDown,
+            triggerEl,
         ],
     );
 
     const handleBlur = useCallback(
         (e: React.FocusEvent) => {
-            setShowDropDown(false);
             // postpone a little, so it doesn't fire before a click event for the main element.
-            // setTimeout(() => {
-            //     // only close if the focussed element is not child
-            //     if (!triggerEl?.current?.contains(window.document.activeElement)) {
-            //         setShowDropDown(false);
-            //     }
-            // }, 100);
+            setTimeout(() => {
+                // only close if the focussed element is not child
+                if (!dropdownEl?.contains(window.document.activeElement)) {
+                    setShowDropDown(false);
+                }
+            }, 100);
         },
-        [setShowDropDown],
+        [dropdownEl],
     );
 
     const showInputLoadingIndicator = filteredOptions.length > 0 && loading;
@@ -179,11 +204,12 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
     return (
         <div
             onKeyDown={onKeyDown}
-            onBlur={handleBlur}
+            // This helps avoid automatically re-opening when clicking on the trigger el when already open
+            onMouseDown={(e) => e.preventDefault()}
             ref={setTriggerEl}
             tabIndex={0}
             className={classNames(
-                "relative flex flex-col rounded-lg  focus:outline-none focus:ring-2 focus:ring-blue-300",
+                "w-full relative flex flex-col rounded-lg  focus:outline-none focus:ring-2 focus:ring-blue-300",
             )}
         >
             <div
@@ -209,20 +235,23 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
             {showDropDown && (
                 <Portal>
                     <div
+                        tabIndex={0}
                         ref={setDropdownEl}
-                        className="absolute w-full top-12 bg-gray-100 dark:bg-gray-800 rounded-b-lg mt-3 z-50 p-2 filter drop-shadow-xl"
-                        style={styles.popper}
+                        className="bg-gray-100 dark:bg-gray-800 rounded-b-lg p-2 filter drop-shadow-xl"
+                        onBlur={handleBlur}
+                        style={triggerStyles}
                         {...attributes.popper}
                     >
                         {!disableSearch && (
                             <div className="relative mb-2">
                                 <input
+                                    ref={setInputEl}
                                     type="text"
                                     autoFocus
                                     className={"w-full focus rounded-lg"}
                                     placeholder={searchPlaceholder}
                                     value={search}
-                                    onChange={(e) => updateSearch(e.target.value)}
+                                    onChange={handleInputChange}
                                 />
                                 {showInputLoadingIndicator && (
                                     <div className="absolute top-0 right-0 h-full flex items-center pr-2">
