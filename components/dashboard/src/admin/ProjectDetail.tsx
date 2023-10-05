@@ -45,9 +45,6 @@ export default function ProjectDetail(props: { project: Project; owner: string |
                     </Property>
                 </div>
                 <div className="flex w-full mt-6">
-                    <Property name="Incremental Prebuilds">
-                        {props.project.settings?.useIncrementalPrebuilds ? "Yes" : "No"}
-                    </Property>
                     <Property name="Marked Deleted">{props.project.markedDeleted ? "Yes" : "No"}</Property>
                 </div>
             </div>

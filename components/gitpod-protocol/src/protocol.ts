@@ -340,6 +340,9 @@ export type IDESettings = {
 
 export interface WorkspaceClasses {
     regular?: string;
+    /**
+     * @deprecated see Project.settings.prebuilds.workspaceClass
+     */
     prebuild?: string;
 }
 
@@ -1497,16 +1500,7 @@ export interface WorkspaceCreationResult {
     createdWorkspaceId?: string;
     workspaceURL?: string;
     existingWorkspaces?: WorkspaceInfo[];
-    runningWorkspacePrebuild?: {
-        prebuildID: string;
-        workspaceID: string;
-        instanceID: string;
-        starting: RunningWorkspacePrebuildStarting;
-        sameCluster: boolean;
-    };
-    runningPrebuildWorkspaceID?: string;
 }
-export type RunningWorkspacePrebuildStarting = "queued" | "starting" | "running";
 
 export namespace WorkspaceCreationResult {
     export function is(data: any): data is WorkspaceCreationResult {

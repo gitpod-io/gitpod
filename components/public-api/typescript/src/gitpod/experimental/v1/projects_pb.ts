@@ -145,39 +145,29 @@ export class ProjectSettings extends Message<ProjectSettings> {
  */
 export class PrebuildSettings extends Message<PrebuildSettings> {
   /**
-   * @generated from field: bool enable_incremental_prebuilds = 1;
-   */
-  enableIncrementalPrebuilds = false;
-
-  /**
-   * @generated from field: bool keep_outdated_prebuilds_running = 2;
-   */
-  keepOutdatedPrebuildsRunning = false;
-
-  /**
-   * @generated from field: bool use_previous_prebuilds = 3;
-   */
-  usePreviousPrebuilds = false;
-
-  /**
-   * @generated from field: int32 prebuild_every_nth = 4;
-   */
-  prebuildEveryNth = 0;
-
-  /**
    * @generated from field: optional bool enable_prebuilds = 5;
    */
   enablePrebuilds?: boolean;
 
   /**
-   * @generated from field: optional bool prebuild_default_branch_only = 6;
+   * @generated from field: optional string branch_matching_pattern = 7;
    */
-  prebuildDefaultBranchOnly?: boolean;
+  branchMatchingPattern?: string;
 
   /**
-   * @generated from field: optional string prebuild_branch_pattern = 7;
+   * @generated from field: optional string branch_strategy = 8;
    */
-  prebuildBranchPattern?: string;
+  branchStrategy?: string;
+
+  /**
+   * @generated from field: optional int32 prebuild_interval = 9;
+   */
+  prebuildInterval?: number;
+
+  /**
+   * @generated from field: optional string workspace_class = 10;
+   */
+  workspaceClass?: string;
 
   constructor(data?: PartialMessage<PrebuildSettings>) {
     super();
@@ -187,13 +177,11 @@ export class PrebuildSettings extends Message<PrebuildSettings> {
   static readonly runtime = proto3;
   static readonly typeName = "gitpod.experimental.v1.PrebuildSettings";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "enable_incremental_prebuilds", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 2, name: "keep_outdated_prebuilds_running", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 3, name: "use_previous_prebuilds", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 4, name: "prebuild_every_nth", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 5, name: "enable_prebuilds", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
-    { no: 6, name: "prebuild_default_branch_only", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
-    { no: 7, name: "prebuild_branch_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 7, name: "branch_matching_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 8, name: "branch_strategy", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 9, name: "prebuild_interval", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
+    { no: 10, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PrebuildSettings {

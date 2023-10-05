@@ -68,7 +68,6 @@ func TestStartWorkspace(t *testing.T) {
 
 			resp, err := server.CreateWorkspace(ctx, &protocol.CreateWorkspaceOptions{
 				ContextURL:                         "github.com/gitpod-io/gitpod",
-				IgnoreRunningPrebuild:              true,
 				IgnoreRunningWorkspaceOnSameCommit: true,
 			})
 			if err != nil {

@@ -18,21 +18,22 @@ import {
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { PartialProject, ProjectSettings, ProjectUsage } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
+import {
+    PartialProject,
+    PrebuildSettings,
+    ProjectSettings,
+    ProjectUsage,
+} from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { URL } from "url";
-import { Authorizer } from "../authorization/authorizer";
+import { Authorizer, SYSTEM_USER } from "../authorization/authorizer";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
 import { ScmService } from "./scm-service";
+import { daysBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 
 @injectable()
 export class ProjectsService {
-    public static PROJECT_SETTINGS_DEFAULTS: ProjectSettings = {
-        enablePrebuilds: false,
-        prebuildDefaultBranchOnly: true,
-    };
-
     constructor(
         @inject(ProjectDB) private readonly projectDB: ProjectDB,
         @inject(TracedWorkspaceDB) private readonly workspaceDb: DBWithTracing<WorkspaceDB>,
@@ -49,13 +50,14 @@ export class ProjectsService {
         if (!project) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
         }
-        return project;
+        return this.migratePrebuildSettingsOnDemand(project);
     }
 
     async getProjects(userId: string, orgId: string): Promise<Project[]> {
         await this.auth.checkPermissionOnOrganization(userId, "read_info", orgId);
         const projects = await this.projectDB.findProjects(orgId);
-        return await this.filterByReadAccess(userId, projects);
+        const filteredProjects = await this.filterByReadAccess(userId, projects);
+        return Promise.all(filteredProjects.map(this.migratePrebuildSettingsOnDemand));
     }
 
     async findProjects(
@@ -79,7 +81,7 @@ export class ProjectsService {
         const total = projects.total;
         return {
             total,
-            rows,
+            rows: await Promise.all(rows.map(this.migratePrebuildSettingsOnDemand)),
         };
     }
 
@@ -109,7 +111,7 @@ export class ProjectsService {
                 result.push(project);
             }
         }
-        return result;
+        return Promise.all(result.map(this.migratePrebuildSettingsOnDemand));
     }
 
     async markActive(
@@ -195,7 +197,7 @@ export class ProjectsService {
     async createProject(
         { name, slug, cloneUrl, teamId, appInstallationId }: CreateProjectParams,
         installer: User,
-        projectSettingsDefaults: ProjectSettings = ProjectsService.PROJECT_SETTINGS_DEFAULTS,
+        projectSettingsDefaults: ProjectSettings = { prebuilds: Project.PREBUILD_SETTINGS_DEFAULTS },
     ): Promise<Project> {
         await this.auth.checkPermissionOnOrganization(installer.id, "create_project", teamId);
 
@@ -211,7 +213,7 @@ export class ProjectsService {
 
         const parsedUrl = RepoURL.parseRepoUrl(cloneUrl);
         if (!parsedUrl) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Clone URL must be a valid URL.");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Clone URL must be a repository URL.");
         }
 
         const project = Project.create({
@@ -358,13 +360,13 @@ export class ProjectsService {
     }
 
     private async handleEnablePrebuild(user: User, partialProject: PartialProject): Promise<void> {
-        const enablePrebuildsNew = partialProject?.settings?.enablePrebuilds;
+        const enablePrebuildsNew = partialProject?.settings?.prebuilds?.enable;
         if (typeof enablePrebuildsNew === "boolean") {
             const project = await this.projectDB.findProjectById(partialProject.id);
             if (!project) {
                 return;
             }
-            const enablePrebuildsPrev = !!project.settings?.enablePrebuilds;
+            const enablePrebuildsPrev = !!project.settings?.prebuilds?.enable;
             const installWebhook = enablePrebuildsNew && !enablePrebuildsPrev;
             const uninstallWebhook = !enablePrebuildsNew && enablePrebuildsPrev;
             if (installWebhook) {
@@ -378,15 +380,15 @@ export class ProjectsService {
     }
 
     async isProjectConsideredInactive(userId: string, projectId: string): Promise<boolean> {
+        const isOlderThan7Days = (d1: string) => isDateSmaller(d1, daysBefore(new Date().toISOString(), 7));
+
         await this.auth.checkPermissionOnProject(userId, "read_info", projectId);
         const usage = await this.projectDB.getProjectUsage(projectId);
         if (!usage?.lastWorkspaceStart) {
-            return false;
+            const project = await this.projectDB.findProjectById(projectId);
+            return !project || isOlderThan7Days(project.creationTime);
         }
-        const now = Date.now();
-        const lastUse = new Date(usage.lastWorkspaceStart).getTime();
-        const inactiveProjectTime = 1000 * 60 * 60 * 24 * 7 * 1; // 1 week
-        return now - lastUse > inactiveProjectTime;
+        return isOlderThan7Days(usage.lastWorkspaceStart);
     }
 
     async getPrebuildEvents(userId: string, projectId: string): Promise<PrebuildEvent[]> {
@@ -403,5 +405,70 @@ export class ProjectsService {
             status: we.prebuildStatus || we.status,
             message: we.message,
         }));
+    }
+
+    private async migratePrebuildSettingsOnDemand(project: Project): Promise<Project> {
+        if (!!project.settings?.prebuilds) {
+            return project; // already migrated
+        }
+        try {
+            const logCtx: any = { oldSettings: { ...project.settings } };
+            const newPrebuildSettings: PrebuildSettings = { enable: false, ...Project.PREBUILD_SETTINGS_DEFAULTS };
+
+            // if workspaces were running in the past week
+            const isInactive = await this.isProjectConsideredInactive(SYSTEM_USER, project.id);
+            logCtx.isInactive = isInactive;
+            if (!isInactive) {
+                const sevenDaysAgo = new Date(daysBefore(new Date().toISOString(), 7));
+                const count = await this.workspaceDb.trace({}).countUnabortedPrebuildsSince(project.id, sevenDaysAgo);
+                logCtx.count = count;
+                if (count > 0) {
+                    const defaults = Project.PREBUILD_SETTINGS_DEFAULTS;
+                    newPrebuildSettings.enable = true;
+                    newPrebuildSettings.prebuildInterval = Math.max(
+                        project.settings?.prebuildEveryNthCommit || 0,
+                        defaults.prebuildInterval,
+                    );
+
+                    newPrebuildSettings.branchStrategy = !!project.settings?.prebuildBranchPattern
+                        ? "matched-branches"
+                        : defaults.branchStrategy;
+                    newPrebuildSettings.branchMatchingPattern =
+                        project.settings?.prebuildBranchPattern || defaults.branchMatchingPattern;
+                    newPrebuildSettings.workspaceClass = project.settings?.workspaceClasses?.prebuild;
+                }
+            }
+
+            // update new settings
+            project = (await this.projectDB.findProjectById(project.id))!;
+            if (!project) {
+                throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "Not found");
+            }
+            if (!!project.settings?.prebuilds) {
+                return project; // already migrated
+            }
+            const newSettings = { ...project.settings };
+            project.settings = newSettings;
+            project.settings.prebuilds = newPrebuildSettings;
+            delete newSettings.enablePrebuilds;
+            delete newSettings.prebuildBranchPattern;
+            delete newSettings.prebuildDefaultBranchOnly;
+            delete newSettings.prebuildEveryNthCommit;
+            delete newSettings.allowUsingPreviousPrebuilds;
+            delete newSettings.keepOutdatedPrebuildsRunning;
+            delete newSettings.useIncrementalPrebuilds;
+            delete newSettings.workspaceClasses?.prebuild;
+            await this.projectDB.updateProject({
+                id: project.id,
+                settings: project.settings,
+            });
+            logCtx.newPrebuildSettings = newPrebuildSettings;
+            log.info("Prebuild settings migrated.", { projectId: project.id, logCtx });
+
+            return project;
+        } catch (error) {
+            log.error("Prebuild settings migration failed.", { projectId: project.id, error });
+            return project;
+        }
     }
 }

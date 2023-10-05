@@ -25,7 +25,7 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
     const [showRemoveModal, setShowRemoveModal] = useState(false);
     const { data: prebuild, isLoading } = useLatestProjectPrebuildQuery({ projectId: project.id });
 
-    const enablePrebuilds = Project.isPrebuildsEnabled(project);
+    const enablePrebuilds = Project.getPrebuildSettings(project).enable;
 
     return (
         <div key={`project-${project.id}`} className="h-52">
