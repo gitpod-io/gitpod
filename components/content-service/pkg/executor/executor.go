@@ -44,7 +44,7 @@ func Prepare(req *csapi.WorkspaceInitializer, urls map[string]string) ([]byte, e
 
 // Execute runs an initializer to place content in destination based on the configuration read
 // from the cfgin stream.
-func Execute(ctx context.Context, destination string, cfgin io.Reader, forceGitUser bool, opts ...initializer.InitializeOpt) (src csapi.WorkspaceInitSource, err error) {
+func Execute(ctx context.Context, destination string, cfgin io.Reader, runAs *initializer.User, opts ...initializer.InitializeOpt) (src csapi.WorkspaceInitSource, err error) {
 	var cfg config
 	err = json.NewDecoder(cfgin).Decode(&cfg)
 	if err != nil {
@@ -64,7 +64,7 @@ func Execute(ctx context.Context, destination string, cfgin io.Reader, forceGitU
 
 		rs = &storage.NamedURLDownloader{URLs: cfg.URLs}
 		ilr, err = initializer.NewFromRequest(ctx, destination, rs, &req, initializer.NewFromRequestOpts{
-			ForceGitpodUserForGit: forceGitUser,
+			RunAs: runAs,
 		})
 		if err != nil {
 			return "", err

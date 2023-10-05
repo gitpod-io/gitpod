@@ -708,7 +708,7 @@ func (is *InfoService) WorkspaceInfo(ctx context.Context, req *api.WorkspaceInfo
 		}
 	}
 
-	resp.UserHome = "/home/gitpod"
+	resp.UserHome = os.Getenv("HOME")
 
 	endpoint, host, err := is.cfg.GitpodAPIEndpoint()
 	if err != nil {
@@ -729,6 +729,8 @@ type ControlService struct {
 	privateKey string
 	publicKey  string
 	hostKey    *api.SSHPublicKey
+
+	uid, gid int
 
 	api.UnimplementedControlServiceServer
 }
@@ -780,7 +782,7 @@ func (ss *ControlService) CreateSSHKeyPair(ctx context.Context, req *api.CreateS
 		if err != nil {
 			return nil, xerrors.Errorf("cannot create tmpfile: %w", err)
 		}
-		err = prepareSSHKey(ctx, filepath.Join(dir, "ssh"))
+		err = prepareSSHKey(ctx, filepath.Join(dir, "ssh"), ss.uid, ss.gid)
 		if err != nil {
 			return nil, xerrors.Errorf("cannot create ssh key pair: %w", err)
 		}
@@ -804,7 +806,7 @@ func (ss *ControlService) CreateSSHKeyPair(ctx context.Context, req *api.CreateS
 		if err != nil {
 			return nil, xerrors.Errorf("cannot write file ~.ssh/authorized_keys: %w", err)
 		}
-		err = os.Chown(filepath.Join(home, ".ssh/authorized_keys"), gitpodUID, gitpodGID)
+		err = os.Chown(filepath.Join(home, ".ssh/authorized_keys"), ss.uid, ss.gid)
 		if err != nil {
 			return nil, xerrors.Errorf("cannot chown SSH authorized_keys file: %w", err)
 		}
