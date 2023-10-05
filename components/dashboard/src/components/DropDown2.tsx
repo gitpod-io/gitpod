@@ -4,20 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, {
-    FC,
-    FunctionComponent,
-    ReactNode,
-    RefObject,
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-} from "react";
+import React, { FC, FunctionComponent, ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import Arrow from "./Arrow";
 import classNames from "classnames";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
+import { usePopper } from "react-popper";
+import { Portal } from "react-portal";
 
 export interface DropDown2Element {
     id: string;
@@ -50,8 +42,16 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
     onSelectionChange,
     onSearchChange,
 }) => {
+    const [triggerEl, setTriggerEl] = useState<HTMLElement | null>(null);
+    const [dropdownEl, setDropdownEl] = useState<HTMLElement | null>(null);
+
+    // this calculates the positioning for our tooltip
+    const { styles, attributes } = usePopper(triggerEl, dropdownEl, {
+        placement: "bottom",
+    });
+
     const [showDropDown, setShowDropDown] = useState<boolean>(!disabled && !!expanded);
-    const nodeRef: RefObject<HTMLDivElement> = useRef(null);
+    // const nodeRef: RefObject<HTMLDivElement> = useRef(null);
     const onSelected = useCallback(
         (elementId: string) => {
             onSelectionChange(elementId);
@@ -161,13 +161,14 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
 
     const handleBlur = useCallback(
         (e: React.FocusEvent) => {
+            setShowDropDown(false);
             // postpone a little, so it doesn't fire before a click event for the main element.
-            setTimeout(() => {
-                // only close if the focussed element is not child
-                if (!nodeRef?.current?.contains(window.document.activeElement)) {
-                    setShowDropDown(false);
-                }
-            }, 100);
+            // setTimeout(() => {
+            //     // only close if the focussed element is not child
+            //     if (!triggerEl?.current?.contains(window.document.activeElement)) {
+            //         setShowDropDown(false);
+            //     }
+            // }, 100);
         },
         [setShowDropDown],
     );
@@ -179,7 +180,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
         <div
             onKeyDown={onKeyDown}
             onBlur={handleBlur}
-            ref={nodeRef}
+            ref={setTriggerEl}
             tabIndex={0}
             className={classNames(
                 "relative flex flex-col rounded-lg  focus:outline-none focus:ring-2 focus:ring-blue-300",
@@ -206,66 +207,75 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                 </div>
             </div>
             {showDropDown && (
-                <div className="absolute w-full top-12 bg-gray-100 dark:bg-gray-800 rounded-b-lg mt-3 z-50 p-2 filter drop-shadow-xl">
-                    {!disableSearch && (
-                        <div className="relative mb-2">
-                            <input
-                                type="text"
-                                autoFocus
-                                className={"w-full focus rounded-lg"}
-                                placeholder={searchPlaceholder}
-                                value={search}
-                                onChange={(e) => updateSearch(e.target.value)}
-                            />
-                            {showInputLoadingIndicator && (
-                                <div className="absolute top-0 right-0 h-full flex items-center pr-2">
-                                    <Spinner className="h-4 w-4 opacity-25 animate-spin" />
-                                </div>
-                            )}
-                        </div>
-                    )}
-                    <ul className="max-h-60 overflow-auto">
-                        {showResultsLoadingIndicator && (
-                            <div className="flex-col space-y-2 animate-pulse">
-                                <div className="bg-gray-300 dark:bg-gray-500 h-4 rounded" />
-                                <div className="bg-gray-300 dark:bg-gray-500 h-4 rounded" />
+                <Portal>
+                    <div
+                        ref={setDropdownEl}
+                        className="absolute w-full top-12 bg-gray-100 dark:bg-gray-800 rounded-b-lg mt-3 z-50 p-2 filter drop-shadow-xl"
+                        style={styles.popper}
+                        {...attributes.popper}
+                    >
+                        {!disableSearch && (
+                            <div className="relative mb-2">
+                                <input
+                                    type="text"
+                                    autoFocus
+                                    className={"w-full focus rounded-lg"}
+                                    placeholder={searchPlaceholder}
+                                    value={search}
+                                    onChange={(e) => updateSearch(e.target.value)}
+                                />
+                                {showInputLoadingIndicator && (
+                                    <div className="absolute top-0 right-0 h-full flex items-center pr-2">
+                                        <Spinner className="h-4 w-4 opacity-25 animate-spin" />
+                                    </div>
+                                )}
                             </div>
                         )}
-                        {!showResultsLoadingIndicator && filteredOptions.length > 0 ? (
-                            filteredOptions.map((element) => {
-                                let selectionClasses = `dark:bg-gray-800 cursor-pointer`;
-                                if (element.id === selectedElementTemp) {
-                                    selectionClasses = `bg-gray-200 dark:bg-gray-700 cursor-pointer  focus:outline-none focus:ring-0`;
-                                }
-                                if (!element.isSelectable) {
-                                    selectionClasses = ``;
-                                }
-                                return (
-                                    <li
-                                        key={element.id}
-                                        id={element.id}
-                                        tabIndex={0}
-                                        className={"h-min rounded-lg flex items-center px-2 py-1.5 " + selectionClasses}
-                                        onMouseDown={() => {
-                                            if (element.isSelectable) {
-                                                setFocussedElement(element.id);
-                                                onSelected(element.id);
+                        <ul className="max-h-60 overflow-auto">
+                            {showResultsLoadingIndicator && (
+                                <div className="flex-col space-y-2 animate-pulse">
+                                    <div className="bg-gray-300 dark:bg-gray-500 h-4 rounded" />
+                                    <div className="bg-gray-300 dark:bg-gray-500 h-4 rounded" />
+                                </div>
+                            )}
+                            {!showResultsLoadingIndicator && filteredOptions.length > 0 ? (
+                                filteredOptions.map((element) => {
+                                    let selectionClasses = `dark:bg-gray-800 cursor-pointer`;
+                                    if (element.id === selectedElementTemp) {
+                                        selectionClasses = `bg-gray-200 dark:bg-gray-700 cursor-pointer  focus:outline-none focus:ring-0`;
+                                    }
+                                    if (!element.isSelectable) {
+                                        selectionClasses = ``;
+                                    }
+                                    return (
+                                        <li
+                                            key={element.id}
+                                            id={element.id}
+                                            tabIndex={0}
+                                            className={
+                                                "h-min rounded-lg flex items-center px-2 py-1.5 " + selectionClasses
                                             }
-                                        }}
-                                        onMouseOver={() => setFocussedElement(element.id)}
-                                        onFocus={() => setFocussedElement(element.id)}
-                                    >
-                                        {element.element}
-                                    </li>
-                                );
-                            })
-                        ) : !showResultsLoadingIndicator ? (
-                            <li key="no-elements" className={"rounded-md "}>
-                                <div className="h-12 pl-8 py-3 text-gray-800 dark:text-gray-200">No results</div>
-                            </li>
-                        ) : null}
-                    </ul>
-                </div>
+                                            onMouseDown={() => {
+                                                if (element.isSelectable) {
+                                                    setFocussedElement(element.id);
+                                                    onSelected(element.id);
+                                                }
+                                            }}
+                                            onMouseOver={() => setFocussedElement(element.id)}
+                                            onFocus={() => setFocussedElement(element.id)}
+                                        >
+                                            {element.element}
+                                        </li>
+                                    );
+                                })
+                            ) : !showResultsLoadingIndicator ? (
+                                <li key="no-elements" className={"rounded-md "}>
+                                    <div className="h-12 pl-8 py-3 text-gray-800 dark:text-gray-200">No results</div>
+                                </li>
+                            ) : null}
+                        </ul>
+                    </div>
+                </Portal>
             )}
         </div>
     );
