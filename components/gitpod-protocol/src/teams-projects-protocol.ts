@@ -97,8 +97,6 @@ export interface Project {
     appInstallationId: string;
     settings?: ProjectSettings;
     creationTime: string;
-    /** This is a flag that triggers the HARD DELETION of this entity */
-    deleted?: boolean;
     markedDeleted?: boolean;
 }
 
@@ -236,8 +234,6 @@ export interface Organization {
     slug?: string;
     creationTime: string;
     markedDeleted?: boolean;
-    /** This is a flag that triggers the HARD DELETION of this entity */
-    deleted?: boolean;
 }
 
 export interface OrganizationSettings {

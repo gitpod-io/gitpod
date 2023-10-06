@@ -221,7 +221,6 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
         } else {
             qBuilder.where("gitpodToken.tokenHash = :tokenHash", { tokenHash });
         }
-        qBuilder.andWhere("gitpodToken.deleted <> TRUE");
         const token = await qBuilder.getOne();
         if (!token) {
             return;
@@ -340,10 +339,10 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
         }
     }
 
-    public async findTokensForIdentity(identity: Identity, includeDeleted?: boolean): Promise<TokenEntry[]> {
+    public async findTokensForIdentity(identity: Identity): Promise<TokenEntry[]> {
         const repo = await this.getTokenRepo();
         const entry = await repo.find({ authProviderId: identity.authProviderId, authId: identity.authId });
-        return entry.filter((te) => includeDeleted || !te.deleted);
+        return entry;
     }
 
     private mapUserToDBUser(user: User): DBUser {
@@ -426,18 +425,18 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
 
     public async hasSSHPublicKey(userId: string): Promise<boolean> {
         const repo = await this.getSSHPublicKeyRepo();
-        return !!(await repo.findOne({ where: { userId, deleted: false } }));
+        return !!(await repo.findOne({ where: { userId } }));
     }
 
     public async getSSHPublicKeys(userId: string): Promise<UserSSHPublicKey[]> {
         const repo = await this.getSSHPublicKeyRepo();
-        return repo.find({ where: { userId, deleted: false }, order: { creationTime: "ASC" } });
+        return repo.find({ where: { userId }, order: { creationTime: "ASC" } });
     }
 
     public async addSSHPublicKey(userId: string, value: SSHPublicKeyValue): Promise<UserSSHPublicKey> {
         const repo = await this.getSSHPublicKeyRepo();
         const fingerprint = SSHPublicKeyValue.getFingerprint(value);
-        const allKeys = await repo.find({ where: { userId, deleted: false } });
+        const allKeys = await repo.find({ where: { userId } });
         const prevOne = allKeys.find((e) => e.fingerprint === fingerprint);
         if (!!prevOne) {
             throw new Error(`Key already in use`);

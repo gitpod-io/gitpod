@@ -683,9 +683,6 @@ export interface GitpodToken {
 
     /** Created timestamp */
     created: string;
-
-    // token is deleted on the database and about to be collected by periodic deleter
-    deleted?: boolean;
 }
 
 export enum GitpodTokenType {
@@ -754,8 +751,6 @@ export interface TokenEntry {
     token: Token;
     expiryDate?: string;
     refreshable?: boolean;
-    /** This is a flag that triggers the HARD DELETION of this entity */
-    deleted?: boolean;
 }
 
 export interface EmailDomainFilterEntry {
