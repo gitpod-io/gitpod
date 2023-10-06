@@ -25,8 +25,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
-const GitpodUsername = "gitpod"
-
 // This is copy from proxy/workspacerouter.go
 const workspaceIDRegex = "([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-z]{2,16}-[0-9a-z]{2,16}-[0-9a-z]{8,11})"
 
@@ -257,7 +255,7 @@ func (s *Server) HandleConn(c net.Conn) {
 	if debugWorkspace {
 		supervisorPort = "24999"
 	}
-	key, err := s.GetWorkspaceSSHKey(ctx, wsInfo.IPAddress, supervisorPort)
+	key, userName, err := s.GetWorkspaceSSHKey(ctx, wsInfo.IPAddress, supervisorPort)
 	if err != nil {
 		cancel()
 		s.TrackSSHConnection(wsInfo, "connect", ErrCreateSSHKey)
@@ -290,7 +288,7 @@ func (s *Server) HandleConn(c net.Conn) {
 
 	workspaceConn, workspaceChans, workspaceReqs, err := ssh.NewClientConn(conn, remoteAddr, &ssh.ClientConfig{
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		User:            GitpodUsername,
+		User:            userName,
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeysCallback(func() (signers []ssh.Signer, err error) {
 				return []ssh.Signer{key}, nil
@@ -404,21 +402,25 @@ func (s *Server) VerifyPublicKey(ctx context.Context, wsInfo *proxy.WorkspaceInf
 	return false, nil
 }
 
-func (s *Server) GetWorkspaceSSHKey(ctx context.Context, workspaceIP string, supervisorPort string) (ssh.Signer, error) {
+func (s *Server) GetWorkspaceSSHKey(ctx context.Context, workspaceIP string, supervisorPort string) (ssh.Signer, string, error) {
 	supervisorConn, err := grpc.Dial(workspaceIP+":"+supervisorPort, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return nil, xerrors.Errorf("failed connecting to supervisor: %w", err)
+		return nil, "", xerrors.Errorf("failed connecting to supervisor: %w", err)
 	}
 	defer supervisorConn.Close()
 	keyInfo, err := supervisor.NewControlServiceClient(supervisorConn).CreateSSHKeyPair(ctx, &supervisor.CreateSSHKeyPairRequest{})
 	if err != nil {
-		return nil, xerrors.Errorf("failed getting ssh key pair info from supervisor: %w", err)
+		return nil, "", xerrors.Errorf("failed getting ssh key pair info from supervisor: %w", err)
 	}
 	key, err := ssh.ParsePrivateKey([]byte(keyInfo.PrivateKey))
 	if err != nil {
-		return nil, xerrors.Errorf("failed parse private key: %w", err)
+		return nil, "", xerrors.Errorf("failed parse private key: %w", err)
 	}
-	return key, nil
+	userName := keyInfo.UserName
+	if userName == "" {
+		userName = "gitpod"
+	}
+	return key, userName, nil
 }
 
 func (s *Server) Serve(l net.Listener) error {

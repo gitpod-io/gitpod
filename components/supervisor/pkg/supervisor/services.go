@@ -785,6 +785,7 @@ func (c *ControlService) ExposePort(ctx context.Context, req *api.ExposePortRequ
 // CreateSSHKeyPair create a ssh key pair for the workspace.
 func (ss *ControlService) CreateSSHKeyPair(ctx context.Context, req *api.CreateSSHKeyPairRequest) (response *api.CreateSSHKeyPairResponse, err error) {
 	home := "/home/gitpod/"
+	userName := "gitpod"
 	if ss.privateKey != "" && ss.publicKey != "" {
 		checkKey := func() error {
 			data, err := os.ReadFile(filepath.Join(home, ".ssh/authorized_keys"))
@@ -864,6 +865,7 @@ func (ss *ControlService) CreateSSHKeyPair(ctx context.Context, req *api.CreateS
 	return &api.CreateSSHKeyPairResponse{
 		PrivateKey: ss.privateKey,
 		HostKey:    ss.hostKey,
+		UserName:   userName,
 	}, err
 }
 
