@@ -729,7 +729,8 @@ proto.builder.SubassemblyStatus.toObject = function(includeInstance, msg) {
     phase: jspb.Message.getFieldWithDefault(msg, 1, 0),
     message: jspb.Message.getFieldWithDefault(msg, 2, ""),
     digest: jspb.Message.getFieldWithDefault(msg, 3, ""),
-    url: jspb.Message.getFieldWithDefault(msg, 4, "")
+    url: jspb.Message.getFieldWithDefault(msg, 4, ""),
+    manifest: msg.getManifest_asB64()
   };
 
   if (includeInstance) {
@@ -781,6 +782,10 @@ proto.builder.SubassemblyStatus.deserializeBinaryFromReader = function(msg, read
     case 4:
       var value = /** @type {string} */ (reader.readString());
       msg.setUrl(value);
+      break;
+    case 5:
+      var value = /** @type {!Uint8Array} */ (reader.readBytes());
+      msg.setManifest(value);
       break;
     default:
       reader.skipField();
@@ -836,6 +841,13 @@ proto.builder.SubassemblyStatus.serializeBinaryToWriter = function(message, writ
   if (f.length > 0) {
     writer.writeString(
       4,
+      f
+    );
+  }
+  f = message.getManifest_asU8();
+  if (f.length > 0) {
+    writer.writeBytes(
+      5,
       f
     );
   }
@@ -911,6 +923,48 @@ proto.builder.SubassemblyStatus.prototype.getUrl = function() {
  */
 proto.builder.SubassemblyStatus.prototype.setUrl = function(value) {
   return jspb.Message.setProto3StringField(this, 4, value);
+};
+
+
+/**
+ * optional bytes manifest = 5;
+ * @return {!(string|Uint8Array)}
+ */
+proto.builder.SubassemblyStatus.prototype.getManifest = function() {
+  return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
+};
+
+
+/**
+ * optional bytes manifest = 5;
+ * This is a type-conversion wrapper around `getManifest()`
+ * @return {string}
+ */
+proto.builder.SubassemblyStatus.prototype.getManifest_asB64 = function() {
+  return /** @type {string} */ (jspb.Message.bytesAsB64(
+      this.getManifest()));
+};
+
+
+/**
+ * optional bytes manifest = 5;
+ * Note that Uint8Array is not supported on all browsers.
+ * @see http://caniuse.com/Uint8Array
+ * This is a type-conversion wrapper around `getManifest()`
+ * @return {!Uint8Array}
+ */
+proto.builder.SubassemblyStatus.prototype.getManifest_asU8 = function() {
+  return /** @type {!Uint8Array} */ (jspb.Message.bytesAsU8(
+      this.getManifest()));
+};
+
+
+/**
+ * @param {!(string|Uint8Array)} value
+ * @return {!proto.builder.SubassemblyStatus} returns this
+ */
+proto.builder.SubassemblyStatus.prototype.setManifest = function(value) {
+  return jspb.Message.setProto3BytesField(this, 5, value);
 };
 
 

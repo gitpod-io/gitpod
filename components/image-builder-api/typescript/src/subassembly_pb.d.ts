@@ -107,6 +107,10 @@ export class SubassemblyStatus extends jspb.Message {
     setDigest(value: string): SubassemblyStatus;
     getUrl(): string;
     setUrl(value: string): SubassemblyStatus;
+    getManifest(): Uint8Array | string;
+    getManifest_asU8(): Uint8Array;
+    getManifest_asB64(): string;
+    setManifest(value: Uint8Array | string): SubassemblyStatus;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): SubassemblyStatus.AsObject;
@@ -124,6 +128,7 @@ export namespace SubassemblyStatus {
         message: string,
         digest: string,
         url: string,
+        manifest: Uint8Array | string,
     }
 }
 
