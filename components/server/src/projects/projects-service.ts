@@ -31,7 +31,6 @@ import { Authorizer, SYSTEM_USER } from "../authorization/authorizer";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
 import { ScmService } from "./scm-service";
 import { daysBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/timeutil";
-import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 
 @injectable()
 export class ProjectsService {
@@ -58,7 +57,7 @@ export class ProjectsService {
         await this.auth.checkPermissionOnOrganization(userId, "read_info", orgId);
         const projects = await this.projectDB.findProjects(orgId);
         const filteredProjects = await this.filterByReadAccess(userId, projects);
-        return Promise.all(filteredProjects.map(this.migratePrebuildSettingsOnDemand));
+        return Promise.all(filteredProjects.map((p) => this.migratePrebuildSettingsOnDemand(p)));
     }
 
     async findProjects(
@@ -82,7 +81,7 @@ export class ProjectsService {
         const total = projects.total;
         return {
             total,
-            rows: await Promise.all(rows.map(this.migratePrebuildSettingsOnDemand)),
+            rows: await Promise.all(rows.map((p) => this.migratePrebuildSettingsOnDemand(p))),
         };
     }
 
@@ -112,7 +111,7 @@ export class ProjectsService {
                 result.push(project);
             }
         }
-        return Promise.all(result.map(this.migratePrebuildSettingsOnDemand));
+        return Promise.all(result.map((p) => this.migratePrebuildSettingsOnDemand(p)));
     }
 
     async markActive(
@@ -468,9 +467,8 @@ export class ProjectsService {
 
             return project;
         } catch (error) {
-            log.error("Prebuild settings migration failed: " + error, {
+            log.error("Prebuild settings migration failed", error, {
                 projectId: project.id,
-                error: new TrustedValue(error),
             });
             return project;
         }
