@@ -13,6 +13,7 @@ import RepositoryFinder from "../../components/RepositoryFinder";
 import { useToast } from "../../components/toasts/Toasts";
 import { InputField } from "../../components/forms/InputField";
 import { Subheading } from "../../components/typography/headings";
+import { AuthorizeGit, useNeedsGitAuthorization } from "../../components/AuthorizeGit";
 
 type Props = {
     onCreated: (project: Project) => void;
@@ -20,6 +21,7 @@ type Props = {
 };
 
 export const CreateProjectModal: FC<Props> = ({ onClose, onCreated }) => {
+    const needsGitAuth = useNeedsGitAuthorization();
     const [selectedRepo, setSelectedRepo] = useState<SuggestedRepository>();
     const createProject = useCreateProject();
     const { toast } = useToast();
@@ -30,12 +32,12 @@ export const CreateProjectModal: FC<Props> = ({ onClose, onCreated }) => {
             return;
         }
 
-        const projectName = selectedRepo?.repositoryName ?? selectedRepo.url;
+        const projectName = selectedRepo.repositoryName || selectedRepo.projectName || selectedRepo.url;
 
         const newProjectArgs: CreateProjectArgs = {
             name: projectName,
             slug: projectName,
-            cloneUrl: selectedRepo?.url,
+            cloneUrl: selectedRepo.url,
             // TODO: do we still need this?
             appInstallationId: "",
         };
@@ -49,21 +51,27 @@ export const CreateProjectModal: FC<Props> = ({ onClose, onCreated }) => {
         <Modal visible onClose={onClose} onSubmit={handleSubmit}>
             <ModalHeader>New Project</ModalHeader>
             <ModalBody>
-                <Subheading className="text-center">
-                    Projects allow you to manage prebuilds and workspaces for your repository.{" "}
-                    <a
-                        href="https://www.gitpod.io/docs/configure/projects"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="gp-link"
-                    >
-                        Learn more
-                    </a>
-                </Subheading>
-
-                <InputField label="Repository">
-                    <RepositoryFinder onChange={setSelectedRepo} selectedContextURL={selectedRepo?.url} />
-                </InputField>
+                {/* TODO: encapsulate this into a sub component */}
+                {needsGitAuth ? (
+                    <AuthorizeGit />
+                ) : (
+                    <>
+                        <Subheading className="text-center">
+                            Projects allow you to manage prebuilds and workspaces for your repository.{" "}
+                            <a
+                                href="https://www.gitpod.io/docs/configure/projects"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="gp-link"
+                            >
+                                Learn more
+                            </a>
+                        </Subheading>
+                        <InputField label="Repository">
+                            <RepositoryFinder onChange={setSelectedRepo} selectedContextURL={selectedRepo?.url} />
+                        </InputField>
+                    </>
+                )}
             </ModalBody>
             <ModalFooter
                 alert={
