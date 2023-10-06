@@ -7,6 +7,8 @@
     "@bufbuild/connect-web": "^0.13.0",
     "@gitpod/gitpod-protocol": "0.1.5",
     "@gitpod/public-api": "0.1.5",
+    "@radix-ui/react-popover": "^1.0.7",
+    "@radix-ui/react-tooltip": "^1.0.7",
     "@stripe/react-stripe-js": "^1.7.2",
     "@stripe/stripe-js": "^1.29.0",
     "@tanstack/query-async-storage-persister": "^4.29.19",
@@ -83,6 +85,7 @@
   },
   "scripts": {
     "start": "BROWSER=none HMR_HOST=`gp url 3001` craco start",
+    "podkit": "BROWSER=none HMR_HOST=`gp url 3001` craco start --config craco.podkit.config.js",
     "build": "craco build --verbose",
     "lint": "eslint --max-warnings=0 --ext=.jsx,.js,.tsx,.ts ./src",
     "test": "yarn test:unit",
