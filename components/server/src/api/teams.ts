@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Code, ConnectError, ServiceImpl } from "@bufbuild/connect";
+import { Code, ConnectError, ServiceImpl } from "@connectrpc/connect";
 import { inject, injectable } from "inversify";
 import { TeamsService as TeamServiceInterface } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
 import {

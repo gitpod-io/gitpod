@@ -6,7 +6,7 @@
 
 import { User } from "@gitpod/gitpod-protocol";
 
-declare module "@bufbuild/connect" {
+declare module "@connectrpc/connect" {
     interface HandlerContext {
         user: User;
     }

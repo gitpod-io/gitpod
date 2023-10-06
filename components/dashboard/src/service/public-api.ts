@@ -4,8 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { createPromiseClient } from "@bufbuild/connect";
-import { createConnectTransport } from "@bufbuild/connect-web";
+import { createPromiseClient } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-web";
 import { Project as ProtocolProject, Team as ProtocolTeam } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connectweb";
 import { TeamsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";

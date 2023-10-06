@@ -3,8 +3,8 @@
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
-import { Code, ConnectError, PromiseClient, createPromiseClient } from "@bufbuild/connect";
-import { createConnectTransport } from "@bufbuild/connect-node";
+import { Code, ConnectError, PromiseClient, createPromiseClient } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-node";
 import { Timestamp } from "@bufbuild/protobuf";
 import { TeamDB, TypeORM, UserDB, testContainer } from "@gitpod/gitpod-db/lib";
 import { DBTeam } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team";

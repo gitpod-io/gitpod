@@ -45,7 +45,8 @@
   ],
   "dependencies": {
     "@authzed/authzed-node": "^0.12.1",
-    "@bufbuild/connect-express": "^0.13.0",
+    "@connectrpc/connect-express": "1.1.2",
+    "@connectrpc/connect": "1.1.2",
     "@gitbeaker/rest": "^39.12.0",
     "@gitpod/content-service": "0.1.5",
     "@gitpod/gitpod-db": "0.1.5",

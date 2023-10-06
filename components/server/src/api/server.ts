@@ -4,8 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Code, ConnectError, ConnectRouter, HandlerContext, ServiceImpl } from "@bufbuild/connect";
-import { expressConnectMiddleware } from "@bufbuild/connect-express";
+import { Code, ConnectError, ConnectRouter, HandlerContext, ServiceImpl } from "@connectrpc/connect";
+import { expressConnectMiddleware } from "@connectrpc/connect-express";
 import { MethodKind, ServiceType } from "@bufbuild/protobuf";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connectweb";

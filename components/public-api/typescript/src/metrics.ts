@@ -29,7 +29,7 @@ import {
     Interceptor,
     StreamRequest,
     UnaryRequest,
-} from "@bufbuild/connect";
+} from "@connectrpc/connect";
 
 type GrpcMethodType = "unary" | "client_stream" | "server_stream" | "bidi_stream";
 
@@ -272,7 +272,7 @@ export class MetricsReporter {
     ) {
         this.metricsHost = `ide.${new URL(options.gitpodUrl).hostname}`;
         if (typeof window !== "undefined") {
-            this.options.commonErrorDetails["userAgent"] = window.navigator.userAgent
+            this.options.commonErrorDetails["userAgent"] = window.navigator.userAgent;
         }
     }
 

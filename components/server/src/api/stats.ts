@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { ServiceImpl } from "@bufbuild/connect";
+import { ServiceImpl } from "@connectrpc/connect";
 import { UserDB } from "@gitpod/gitpod-db/lib";
 import { StatsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/stats_connectweb";
 import { GetUserStatsRequest, GetUserStatsResponse } from "@gitpod/public-api/lib/gitpod/experimental/v1/stats_pb";
