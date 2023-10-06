@@ -30,7 +30,7 @@ import {
     WorkspaceTimeoutDuration,
 } from "@gitpod/gitpod-protocol";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { Authorizer } from "../authorization/authorizer";
+import { Authorizer, projectIdFrom } from "../authorization/authorizer";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { WorkspaceFactory } from "./workspace-factory";
 import {
@@ -123,9 +123,7 @@ export class WorkspaceService {
 
     async getWorkspace(userId: string, workspaceId: string): Promise<WorkspaceInfo> {
         const workspace = await this.doGetWorkspace(userId, workspaceId);
-
-        const latestInstancePromise = this.db.findCurrentInstance(workspaceId);
-        const latestInstance = await latestInstancePromise;
+        const latestInstance = await this.db.findCurrentInstance(workspaceId);
 
         return {
             workspace,
@@ -144,20 +142,11 @@ export class WorkspaceService {
         const filtered = (
             await Promise.all(
                 res.map(async (info) =>
-                    (await this.auth.hasPermissionOnWorkspace(userId, "access", info.workspace.id)) ? info : undefined,
+                    (await this.auth.hasPermissionOnWorkspace(userId, "access", info.workspace)) ? info : undefined,
                 ),
             )
         ).filter((info) => !!info) as WorkspaceInfo[];
         return filtered;
-    }
-
-    async getCurrentInstance(userId: string, workspaceId: string): Promise<WorkspaceInstance> {
-        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
-        const result = await this.db.findCurrentInstance(workspaceId);
-        if (!result) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "No workspace instance found.", { workspaceId });
-        }
-        return result;
     }
 
     // Internal method for allowing for additional DBs to be passed in
@@ -165,9 +154,12 @@ export class WorkspaceService {
         const workspace = await db.findById(workspaceId);
 
         if (workspace?.type === "prebuild" && workspace.projectId) {
-            await this.auth.checkPermissionOnProject(userId, "read_prebuild", workspace.projectId);
+            await this.auth.checkPermissionOnProject(userId, "read_prebuild", projectIdFrom(workspace));
         } else {
-            await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+            await this.auth.checkPermissionOnWorkspace(userId, "access", {
+                id: workspaceId,
+                organizationId: workspace?.organizationId,
+            });
         }
 
         // TODO(gpl) We might want to add || !!workspace.softDeleted here in the future, but we were unsure how that would affect existing clients
@@ -179,12 +171,9 @@ export class WorkspaceService {
     }
 
     async getOwnerToken(userId: string, workspaceId: string): Promise<string> {
-        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+        const { workspace, latestInstance } = await this.getWorkspace(userId, workspaceId);
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspace);
 
-        // Check: is deleted?
-        await this.getWorkspace(userId, workspaceId);
-
-        const latestInstance = await this.db.findCurrentInstance(workspaceId);
         const ownerToken = latestInstance?.status.ownerToken;
         if (!ownerToken) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "owner token not found");
@@ -193,9 +182,9 @@ export class WorkspaceService {
     }
 
     async getIDECredentials(userId: string, workspaceId: string): Promise<string> {
-        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
-
         const ws = await this.doGetWorkspace(userId, workspaceId);
+        await this.auth.checkPermissionOnWorkspace(userId, "access", ws);
+
         if (ws.config.ideCredentials) {
             return ws.config.ideCredentials;
         }
@@ -218,9 +207,9 @@ export class WorkspaceService {
         reason: string,
         policy?: StopWorkspacePolicy,
     ): Promise<void> {
-        await this.auth.checkPermissionOnWorkspace(userId, "stop", workspaceId);
-
         const workspace = await this.doGetWorkspace(userId, workspaceId);
+        await this.auth.checkPermissionOnWorkspace(userId, "stop", workspace);
+
         const instance = await this.db.findRunningInstance(workspace.id);
         if (!instance) {
             // there's no instance running - we're done
@@ -239,7 +228,7 @@ export class WorkspaceService {
         const infos = await this.db.findRunningInstancesWithWorkspaces(undefined, targetUserId);
         await Promise.all(
             infos.map(async (info) => {
-                await this.auth.checkPermissionOnWorkspace(userId, "stop", info.workspace.id);
+                await this.auth.checkPermissionOnWorkspace(userId, "stop", info.workspace);
                 await this.workspaceStarter.stopWorkspaceInstance(
                     ctx,
                     info.latestInstance.id,
@@ -264,7 +253,8 @@ export class WorkspaceService {
         workspaceId: string,
         softDeleted: WorkspaceSoftDeletion = "user",
     ): Promise<void> {
-        await this.auth.checkPermissionOnWorkspace(userId, "delete", workspaceId);
+        const workspace = await this.doGetWorkspace(userId, workspaceId);
+        await this.auth.checkPermissionOnWorkspace(userId, "delete", workspace);
 
         await this.stopWorkspace(userId, workspaceId, "deleted via WorkspaceService");
         await this.db.updatePartial(workspaceId, {
@@ -282,12 +272,16 @@ export class WorkspaceService {
      * @param workspaceId
      */
     public async hardDeleteWorkspace(userId: string, workspaceId: string): Promise<void> {
-        await this.auth.checkPermissionOnWorkspace(userId, "delete", workspaceId);
-
         const workspace = await this.db.findById(workspaceId);
+        await this.auth.checkPermissionOnWorkspace(userId, "delete", {
+            id: workspaceId,
+            organizationId: workspace?.organizationId,
+        });
+
         if (!workspace) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Workspace not found.");
         }
+
         const orgId = workspace.organizationId;
         const ownerId = workspace.ownerId;
         try {
@@ -307,9 +301,10 @@ export class WorkspaceService {
     }
 
     public async getOpenPorts(userId: string, workspaceId: string): Promise<WorkspaceInstancePort[]> {
-        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+        const { workspace, latestInstance } = await this.getWorkspace(userId, workspaceId);
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspace);
+        const instance = instanceNotFound(workspaceId, latestInstance);
 
-        const instance = await this.getCurrentInstance(userId, workspaceId);
         const req = new DescribeWorkspaceRequest();
         req.setId(instance.id);
         const client = await this.clientProvider.get(instance.region);
@@ -342,9 +337,10 @@ export class WorkspaceService {
         workspaceId: string,
         port: WorkspaceInstancePort,
     ): Promise<WorkspaceInstancePort | undefined> {
-        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+        const { workspace, latestInstance } = await this.getWorkspace(userId, workspaceId);
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspace);
+        const instance = instanceNotFound(workspaceId, latestInstance);
 
-        const instance = await this.getCurrentInstance(userId, workspaceId);
         if (instance.status.phase !== "running") {
             log.debug({ userId, workspaceId }, "Cannot open port for workspace with no running instance", {
                 port,
@@ -370,9 +366,10 @@ export class WorkspaceService {
     }
 
     public async closePort(userId: string, workspaceId: string, port: number) {
-        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+        const { workspace, latestInstance } = await this.getWorkspace(userId, workspaceId);
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspace);
+        const instance = instanceNotFound(workspaceId, latestInstance);
 
-        const instance = await this.getCurrentInstance(userId, workspaceId);
         if (instance.status.phase !== "running") {
             log.debug({ userId, workspaceId }, "Cannot close a port for workspace with no running instance", {
                 port,
@@ -438,9 +435,9 @@ export class WorkspaceService {
         options: StartWorkspaceOptions = {},
         restrictToRegular = true,
     ): Promise<StartWorkspaceResult> {
-        await this.auth.checkPermissionOnWorkspace(user.id, "start", workspaceId);
-
         const { workspace, latestInstance } = await this.getWorkspace(user.id, workspaceId);
+        await this.auth.checkPermissionOnWorkspace(user.id, "start", workspace);
+
         if (latestInstance) {
             if (latestInstance.status.phase !== "stopped") {
                 // We already have a running workspace instance
@@ -583,12 +580,15 @@ export class WorkspaceService {
     }
 
     public async setPinned(userId: string, workspaceId: string, pinned: boolean): Promise<void> {
-        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+        const workspace = await this.doGetWorkspace(userId, workspaceId);
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspace);
+
         await this.db.updatePartial(workspaceId, { pinned });
     }
 
     public async setDescription(userId: string, workspaceId: string, description: string) {
-        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+        const workspace = await this.doGetWorkspace(userId, workspaceId);
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspace);
         await this.db.updatePartial(workspaceId, { description });
     }
 
@@ -597,17 +597,17 @@ export class WorkspaceService {
         workspaceId: string,
         gitStatus: Required<WorkspaceInstanceRepoStatus> | undefined,
     ) {
-        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+        const { workspace, latestInstance } = await this.getWorkspace(userId, workspaceId);
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspace);
+        const instance = instanceNotFound(workspaceId, latestInstance);
 
-        let instance = await this.getCurrentInstance(userId, workspaceId);
         if (WorkspaceInstanceRepoStatus.equals(instance.gitStatus, gitStatus)) {
             return;
         }
 
-        const workspace = await this.doGetWorkspace(userId, workspaceId);
-        instance = await this.db.updateInstancePartial(instance.id, { gitStatus });
+        const updatedInstance = await this.db.updateInstancePartial(instance.id, { gitStatus });
         await this.publisher.publishInstanceUpdate({
-            instanceID: instance.id,
+            instanceID: updatedInstance.id,
             ownerID: workspace.ownerId,
             workspaceID: workspace.id,
         });
@@ -638,9 +638,9 @@ export class WorkspaceService {
         workspaceId: string,
         check: (instance: WorkspaceInstance, workspace: Workspace) => Promise<void> = async () => {},
     ): Promise<GetWorkspaceTimeoutResult> {
-        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
-
         const workspace = await this.doGetWorkspace(userId, workspaceId);
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspace);
+
         const canChange = await this.entitlementService.maySetTimeout(userId, workspace.organizationId);
 
         const instance = await this.db.findCurrentInstance(workspaceId);
@@ -666,7 +666,8 @@ export class WorkspaceService {
         duration: WorkspaceTimeoutDuration,
         check: (instance: WorkspaceInstance, workspace: Workspace) => Promise<void> = async () => {},
     ): Promise<SetWorkspaceTimeoutResult> {
-        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+        const { workspace, latestInstance } = await this.getWorkspace(userId, workspaceId);
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspace);
 
         let validatedDuration;
         try {
@@ -675,12 +676,11 @@ export class WorkspaceService {
             throw new ApplicationError(ErrorCodes.INVALID_VALUE, "Invalid duration : " + err.message);
         }
 
-        const workspace = await this.doGetWorkspace(userId, workspaceId);
         if (!(await this.entitlementService.maySetTimeout(userId, workspace.organizationId))) {
             throw new ApplicationError(ErrorCodes.PLAN_PROFESSIONAL_REQUIRED, "Plan upgrade is required");
         }
 
-        const instance = await this.getCurrentInstance(userId, workspaceId);
+        const instance = instanceNotFound(workspaceId, latestInstance);
         if (instance.status.phase !== "running" || workspace.type !== "regular") {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Can only set keep-alive for regular, running workspaces");
         }
@@ -712,7 +712,7 @@ export class WorkspaceService {
             throw new ApplicationError(ErrorCodes.CONFLICT, `Workspace is not a prebuild`);
         }
 
-        await this.auth.checkPermissionOnProject(userId, "read_prebuild", workspace.projectId);
+        await this.auth.checkPermissionOnProject(userId, "read_prebuild", projectIdFrom(workspace));
 
         const wsiPromise = this.db.findInstanceById(instanceId);
         await check(workspace);
@@ -821,15 +821,11 @@ export class WorkspaceService {
         check: (instance: WorkspaceInstance, workspace: Workspace) => Promise<void> = async () => {},
     ): Promise<void> {
         const instanceId = options.instanceId;
-        const instance = await this.db.findInstanceById(instanceId);
-        if (!instance) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "workspace does not exist");
-        }
-        const workspaceId = instance.workspaceId;
-        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+        const { workspace, latestInstance } = await this.getWorkspace(userId, instanceId);
+        const instance = instanceNotFound(workspace.id, latestInstance);
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspace);
 
         try {
-            const workspace = await this.doGetWorkspace(userId, workspaceId);
             await check(instance, workspace);
 
             const wasClosed = !!(options && options.wasClosed);
@@ -858,8 +854,6 @@ export class WorkspaceService {
         level: "owner" | "everyone",
         check: (workspace: Workspace, instance?: WorkspaceInstance) => Promise<void> = async () => {},
     ): Promise<void> {
-        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
-
         const lvlmap = new Map<string, AdmissionLevel>();
         lvlmap.set("owner", AdmissionLevel.ADMIT_OWNER_ONLY);
         lvlmap.set("everyone", AdmissionLevel.ADMIT_EVERYONE);
@@ -868,6 +862,7 @@ export class WorkspaceService {
         }
 
         const workspace = await this.doGetWorkspace(userId, workspaceId);
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspace);
         await check(workspace);
 
         if (level !== "owner" && workspace.organizationId) {
@@ -908,6 +903,20 @@ export class WorkspaceService {
             throw ApplicationError.fromGRPCError(e);
         }
     }
+}
+
+/**
+ * Throws NOT_FOUND error in case WorkspaceInstance is undefined.
+ * TODO(gpl) make private after FGA rollout
+ * @param workspaceId
+ * @param instance
+ * @returns instance
+ */
+export function instanceNotFound(workspaceId: string, instance: WorkspaceInstance | undefined): WorkspaceInstance {
+    if (!instance) {
+        throw new ApplicationError(ErrorCodes.NOT_FOUND, "No workspace instance found.", { workspaceId });
+    }
+    return instance;
 }
 
 // TODO(gpl) Make private after FGA rollout

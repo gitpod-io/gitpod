@@ -8,6 +8,7 @@ import { ProjectDB, UserDB } from "@gitpod/gitpod-db/lib";
 import {
     CommitContext,
     EnvVar,
+    Project,
     ProjectEnvVar,
     ProjectEnvVarWithValue,
     UserEnvVar,
@@ -21,6 +22,7 @@ import { Authorizer } from "../authorization/authorizer";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Config } from "../config";
+import { ProjectPermission } from "../authorization/definitions";
 
 export interface ResolvedEnvVars {
     // all project env vars, censored included always
@@ -44,7 +46,8 @@ export class EnvVarService {
         userId: string,
         oldPermissionCheck?: (envvar: UserEnvVar) => Promise<boolean>, // @deprecated
     ): Promise<UserEnvVarValue[]> {
-        await this.auth.checkPermissionOnUser(requestorId, "read_env_var", userId);
+        const user = await this.userDB.findUserById(userId);
+        await this.auth.checkPermissionOnUser(requestorId, "read_env_var", userId, user);
         const result: UserEnvVarValue[] = [];
         for (const value of await this.userDB.getEnvVars(userId)) {
             if (oldPermissionCheck && !(await oldPermissionCheck(value))) {
@@ -66,7 +69,8 @@ export class EnvVarService {
         variable: UserEnvVarValue,
         oldPermissionCheck?: (envvar: UserEnvVar) => Promise<void>, // @deprecated
     ): Promise<void> {
-        await this.auth.checkPermissionOnUser(requestorId, "write_env_var", userId);
+        const user = await this.userDB.findUserById(userId);
+        await this.auth.checkPermissionOnUser(requestorId, "write_env_var", userId, user);
         const validationError = UserEnvVar.validate(variable);
         if (validationError) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, validationError);
@@ -103,7 +107,8 @@ export class EnvVarService {
         variable: UserEnvVarValue,
         oldPermissionCheck?: (envvar: UserEnvVar) => Promise<void>, // @deprecated
     ): Promise<void> {
-        await this.auth.checkPermissionOnUser(requestorId, "write_env_var", userId);
+        const user = await this.userDB.findUserById(userId);
+        await this.auth.checkPermissionOnUser(requestorId, "write_env_var", userId, user);
         const validationError = UserEnvVar.validate(variable);
         if (validationError) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, validationError);
@@ -131,7 +136,8 @@ export class EnvVarService {
         variable: UserEnvVarValue,
         oldPermissionCheck?: (envvar: UserEnvVar) => Promise<void>, // @deprecated
     ): Promise<void> {
-        await this.auth.checkPermissionOnUser(requestorId, "write_env_var", userId);
+        const user = await this.userDB.findUserById(userId);
+        await this.auth.checkPermissionOnUser(requestorId, "write_env_var", userId, user);
         let envVarId = variable.id;
         if (!variable.id && variable.name && variable.repositoryPattern) {
             variable.repositoryPattern = UserEnvVar.normalizeRepoPattern(variable.repositoryPattern);
@@ -160,7 +166,8 @@ export class EnvVarService {
     }
 
     async listProjectEnvVars(requestorId: string, projectId: string): Promise<ProjectEnvVar[]> {
-        await this.auth.checkPermissionOnProject(requestorId, "read_env_var", projectId);
+        await this.checkPermissionOnProject(requestorId, "read_env_var", projectId);
+
         return this.projectDB.getProjectEnvironmentVariables(projectId);
     }
 
@@ -170,7 +177,7 @@ export class EnvVarService {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Environment Variable ${variableId} not found.`);
         }
         try {
-            await this.auth.checkPermissionOnProject(requestorId, "read_env_var", result.projectId);
+            await this.checkPermissionOnProject(requestorId, "read_env_var", result.projectId);
         } catch (err) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Environment Variable ${variableId} not found.`);
         }
@@ -178,7 +185,7 @@ export class EnvVarService {
     }
 
     async addProjectEnvVar(requestorId: string, projectId: string, envVar: ProjectEnvVarWithValue): Promise<void> {
-        await this.auth.checkPermissionOnProject(requestorId, "write_env_var", projectId);
+        await this.checkPermissionOnProject(requestorId, "write_env_var", projectId);
 
         if (!envVar.name) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Variable name cannot be empty");
@@ -199,7 +206,7 @@ export class EnvVarService {
     }
 
     async updateProjectEnvVar(requestorId: string, projectId: string, envVar: ProjectEnvVarWithValue): Promise<void> {
-        await this.auth.checkPermissionOnProject(requestorId, "write_env_var", projectId);
+        await this.checkPermissionOnProject(requestorId, "write_env_var", projectId);
 
         if (!envVar.name) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Variable name cannot be empty");
@@ -221,7 +228,7 @@ export class EnvVarService {
 
     async deleteProjectEnvVar(requestorId: string, variableId: string): Promise<void> {
         const variable = await this.getProjectEnvVarById(requestorId, variableId);
-        await this.auth.checkPermissionOnProject(requestorId, "write_env_var", variable.projectId);
+        await this.checkPermissionOnProject(requestorId, "write_env_var", variable.projectId);
         return this.projectDB.deleteProjectEnvironmentVariable(variableId);
     }
 
@@ -231,9 +238,10 @@ export class EnvVarService {
         wsType: WorkspaceType,
         wsContext: WorkspaceContext,
     ): Promise<ResolvedEnvVars> {
-        await this.auth.checkPermissionOnUser(requestorId, "read_env_var", requestorId);
+        const requestor = await this.userDB.findUserById(requestorId);
+        await this.auth.checkPermissionOnUser(requestorId, "read_env_var", requestorId, requestor);
         if (projectId) {
-            await this.auth.checkPermissionOnProject(requestorId, "read_env_var", projectId);
+            await this.checkPermissionOnProject(requestorId, "read_env_var", projectId);
         }
 
         const workspaceEnvVars = new Map<String, EnvVar>();
@@ -284,5 +292,15 @@ export class EnvVarService {
             project: projectEnvVars,
             workspace: [...workspaceEnvVars.values()],
         };
+    }
+
+    private async checkPermissionOnProject(
+        subjectId: string,
+        permission: ProjectPermission,
+        projectId: string,
+    ): Promise<Project> {
+        const project = await this.projectDB.findProjectById(projectId);
+        await this.auth.checkPermissionOnProject(subjectId, permission, { id: projectId, teamId: project?.teamId });
+        return project!;
     }
 }

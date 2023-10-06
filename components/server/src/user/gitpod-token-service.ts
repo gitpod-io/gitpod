@@ -19,7 +19,8 @@ export class GitpodTokenService {
     ) {}
 
     async getGitpodTokens(requestorId: string, userId: string): Promise<GitpodToken[]> {
-        await this.auth.checkPermissionOnUser(requestorId, "read_tokens", userId);
+        const user = await this.userDB.findUserById(userId);
+        await this.auth.checkPermissionOnUser(requestorId, "read_tokens", userId, user);
         const gitpodTokens = await this.userDB.findAllGitpodTokensOfUser(userId);
         return gitpodTokens.filter((v) => !v.deleted);
     }
@@ -30,7 +31,8 @@ export class GitpodTokenService {
         options: { name?: string; type: GitpodTokenType; scopes?: string[] },
         oldPermissionCheck?: (dbToken: DBGitpodToken) => Promise<void>, // @deprecated
     ): Promise<string> {
-        await this.auth.checkPermissionOnUser(requestorId, "write_tokens", userId);
+        const user = await this.userDB.findUserById(userId);
+        await this.auth.checkPermissionOnUser(requestorId, "write_tokens", userId, user);
         const token = crypto.randomBytes(30).toString("hex");
         const tokenHash = crypto.createHash("sha256").update(token, "utf8").digest("hex");
         const dbToken: DBGitpodToken = {
@@ -49,7 +51,8 @@ export class GitpodTokenService {
     }
 
     async findGitpodToken(requestorId: string, userId: string, tokenHash: string): Promise<GitpodToken | undefined> {
-        await this.auth.checkPermissionOnUser(requestorId, "read_tokens", userId);
+        const user = await this.userDB.findUserById(userId);
+        await this.auth.checkPermissionOnUser(requestorId, "read_tokens", userId, user);
         let token: GitpodToken | undefined;
         try {
             token = await this.userDB.findGitpodTokensOfUser(userId, tokenHash);
@@ -68,7 +71,8 @@ export class GitpodTokenService {
         tokenHash: string,
         oldPermissionCheck?: (token: GitpodToken) => Promise<void>, // @deprecated
     ): Promise<void> {
-        await this.auth.checkPermissionOnUser(requestorId, "write_tokens", userId);
+        const user = await this.userDB.findUserById(userId);
+        await this.auth.checkPermissionOnUser(requestorId, "write_tokens", userId, user);
         const existingTokens = await this.getGitpodTokens(requestorId, userId);
         const tkn = existingTokens.find((token) => token.tokenHash === tokenHash);
         if (!tkn) {

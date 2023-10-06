@@ -44,11 +44,12 @@ export class ProjectsService {
     ) {}
 
     async getProject(userId: string, projectId: string): Promise<Project> {
-        await this.auth.checkPermissionOnProject(userId, "read_info", projectId);
         const project = await this.projectDB.findProjectById(projectId);
         if (!project) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
         }
+        await this.auth.checkPermissionOnProject(userId, "read_info", project);
+
         return project;
     }
 
@@ -86,7 +87,7 @@ export class ProjectsService {
     private async filterByReadAccess(userId: string, projects: Project[]) {
         const filteredProjects: Project[] = [];
         const filter = async (project: Project) => {
-            if (await this.auth.hasPermissionOnProject(userId, "read_info", project.id)) {
+            if (await this.auth.hasPermissionOnProject(userId, "read_info", project)) {
                 return project;
             }
             return undefined;
@@ -105,7 +106,7 @@ export class ProjectsService {
         const projects = await this.projectDB.findProjectsByCloneUrl(cloneUrl);
         const result: Project[] = [];
         for (const project of projects) {
-            if (await this.auth.hasPermissionOnProject(userId, "read_info", project.id)) {
+            if (await this.auth.hasPermissionOnProject(userId, "read_info", project)) {
                 result.push(project);
             }
         }
@@ -117,7 +118,9 @@ export class ProjectsService {
         projectId: string,
         kind: keyof ProjectUsage = "lastWorkspaceStart",
     ): Promise<void> {
-        await this.auth.checkPermissionOnProject(userId, "read_info", projectId);
+        const project = await this.projectDB.findProjectById(projectId);
+        await this.auth.checkPermissionOnProject(userId, "read_info", { id: projectId, teamId: project?.teamId });
+
         await this.projectDB.updateProjectUsage(projectId, {
             [kind]: new Date().toISOString(),
         });
@@ -125,7 +128,8 @@ export class ProjectsService {
 
     async getProjectOverview(user: User, projectId: string): Promise<Project.Overview> {
         const project = await this.getProject(user.id, projectId);
-        await this.auth.checkPermissionOnProject(user.id, "read_info", project.id);
+        await this.auth.checkPermissionOnProject(user.id, "read_info", project);
+
         // Check for a cached project overview (fast!)
         const cachedPromise = this.projectDB.findCachedProjectOverview(project.id);
 
@@ -154,7 +158,7 @@ export class ProjectsService {
     }
 
     async getBranchDetails(user: User, project: Project, branchName?: string): Promise<Project.BranchDetails[]> {
-        await this.auth.checkPermissionOnProject(user.id, "read_info", project.id);
+        await this.auth.checkPermissionOnProject(user.id, "read_info", project);
 
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         if (!parsedUrl) {
@@ -250,15 +254,14 @@ export class ProjectsService {
     }
 
     public async setVisibility(userId: string, projectId: string, visibility: Project.Visibility): Promise<void> {
-        await this.auth.checkPermissionOnProject(userId, "write_info", projectId);
         const project = await this.getProject(userId, projectId);
+        await this.auth.checkPermissionOnProject(userId, "write_info", { id: projectId, teamId: project?.teamId });
+
         //TODO store this information in the DB
         await this.auth.setProjectVisibility(userId, projectId, project.teamId, visibility);
     }
 
     async deleteProject(userId: string, projectId: string, transactionCtx?: TransactionalContext): Promise<void> {
-        await this.auth.checkPermissionOnProject(userId, "delete", projectId);
-
         let orgId: string | undefined = undefined;
         try {
             await this.projectDB.transaction(transactionCtx, async (db) => {
@@ -266,6 +269,8 @@ export class ProjectsService {
                 if (!project) {
                     throw new Error("Project does not exist");
                 }
+                await this.auth.checkPermissionOnProject(userId, "delete", project);
+
                 orgId = project.teamId;
                 await db.markDeleted(projectId);
 
@@ -288,11 +293,12 @@ export class ProjectsService {
 
     async findPrebuilds(userId: string, params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
         const { projectId, prebuildId } = params;
-        await this.auth.checkPermissionOnProject(userId, "read_prebuild", projectId);
         const project = await this.projectDB.findProjectById(projectId);
         if (!project) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
         }
+        await this.auth.checkPermissionOnProject(userId, "read_prebuild", project);
+
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         if (!parsedUrl) {
             throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `Invalid clone URL on project ${projectId}.`);
@@ -334,7 +340,7 @@ export class ProjectsService {
     }
 
     async updateProject(user: User, partialProject: PartialProject): Promise<void> {
-        await this.auth.checkPermissionOnProject(user.id, "write_info", partialProject.id);
+        await this.auth.checkPermissionOnProject(user.id, "write_info", partialProject);
 
         const partial: PartialProject = { id: partialProject.id };
         if (partialProject.name) {
@@ -378,7 +384,9 @@ export class ProjectsService {
     }
 
     async isProjectConsideredInactive(userId: string, projectId: string): Promise<boolean> {
-        await this.auth.checkPermissionOnProject(userId, "read_info", projectId);
+        const project = await this.getProject(userId, projectId);
+        await this.auth.checkPermissionOnProject(userId, "read_info", project);
+
         const usage = await this.projectDB.getProjectUsage(projectId);
         if (!usage?.lastWorkspaceStart) {
             return false;

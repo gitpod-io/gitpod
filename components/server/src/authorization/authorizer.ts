@@ -7,7 +7,7 @@
 import { v1 } from "@authzed/authzed-node";
 
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib";
-import { Project, TeamMemberRole } from "@gitpod/gitpod-protocol";
+import { Project, TeamMemberRole, User, Workspace } from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import {
     AllResourceTypes,
@@ -69,7 +69,8 @@ export class Authorizer {
             consistency,
         });
 
-        return this.authorizer.check(req, { userId });
+        const result = await this.authorizer.check(undefined, req, { userId });
+        return result.permitted;
     }
 
     async checkPermissionOnInstallation(userId: string, permission: InstallationPermission): Promise<void> {
@@ -98,7 +99,8 @@ export class Authorizer {
             consistency,
         });
 
-        return this.authorizer.check(req, { userId });
+        const result = await this.authorizer.check(orgId, req, { userId });
+        return result.permitted;
     }
 
     async checkPermissionOnOrganization(userId: string, permission: OrganizationPermission, orgId: string) {
@@ -116,40 +118,61 @@ export class Authorizer {
         );
     }
 
-    async hasPermissionOnProject(userId: string, permission: ProjectPermission, projectId: string): Promise<boolean> {
+    async hasPermissionOnProject(
+        userId: string,
+        permission: ProjectPermission,
+        project: { id: string; teamId?: string },
+    ): Promise<boolean> {
         if (userId === SYSTEM_USER) {
             return true;
+        }
+        if (!project.teamId) {
+            return false;
         }
 
         const req = v1.CheckPermissionRequest.create({
             subject: subject("user", userId),
             permission,
-            resource: object("project", projectId),
+            resource: object("project", project.id),
             consistency,
         });
 
-        return this.authorizer.check(req, { userId });
+        const result = await this.authorizer.check(project.teamId, req, { userId });
+        return result.permitted;
     }
 
-    async checkPermissionOnProject(userId: string, permission: ProjectPermission, projectId: string) {
-        if (await this.hasPermissionOnProject(userId, permission, projectId)) {
+    async checkPermissionOnProject(
+        userId: string,
+        permission: ProjectPermission,
+        project: { id: string; teamId?: string },
+    ) {
+        if (await this.hasPermissionOnProject(userId, permission, project)) {
             return;
         }
         // check if the user has read permission
-        if ("read_info" === permission || !(await this.hasPermissionOnProject(userId, "read_info", projectId))) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
+        if ("read_info" === permission || !(await this.hasPermissionOnProject(userId, "read_info", project))) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${project.id} not found.`);
         }
 
         throw new ApplicationError(
             ErrorCodes.PERMISSION_DENIED,
-            `You do not have ${permission} on project ${projectId}`,
+            `You do not have ${permission} on project ${project.id}`,
         );
     }
 
-    async hasPermissionOnUser(userId: string, permission: UserPermission, resourceUserId: string): Promise<boolean> {
+    async hasPermissionOnUser(
+        userId: string,
+        permission: UserPermission,
+        resourceUserId: string,
+        resourceUser: Pick<User, "organizationId"> | undefined,
+    ): Promise<boolean> {
         if (userId === SYSTEM_USER) {
             return true;
         }
+        if (!resourceUser) {
+            return false;
+        }
+        // resourceUser.organizationId may very well be undefined here, if this is an installation-owned user
 
         const req = v1.CheckPermissionRequest.create({
             subject: subject("user", userId),
@@ -158,14 +181,23 @@ export class Authorizer {
             consistency,
         });
 
-        return this.authorizer.check(req, { userId });
+        const result = await this.authorizer.check(resourceUser.organizationId, req, { userId });
+        return result.permitted;
     }
 
-    async checkPermissionOnUser(userId: string, permission: UserPermission, resourceUserId: string) {
-        if (await this.hasPermissionOnUser(userId, permission, resourceUserId)) {
+    async checkPermissionOnUser(
+        userId: string,
+        permission: UserPermission,
+        resourceUserId: string,
+        resourceUser: Pick<User, "organizationId"> | undefined,
+    ) {
+        if (await this.hasPermissionOnUser(userId, permission, resourceUserId, resourceUser)) {
             return;
         }
-        if ("read_info" === permission || !(await this.hasPermissionOnUser(userId, "read_info", resourceUserId))) {
+        if (
+            "read_info" === permission ||
+            !(await this.hasPermissionOnUser(userId, "read_info", resourceUserId, resourceUser))
+        ) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `User ${resourceUserId} not found.`);
         }
 
@@ -178,34 +210,42 @@ export class Authorizer {
     async hasPermissionOnWorkspace(
         userId: string,
         permission: WorkspacePermission,
-        workspaceId: string,
+        workspace: { id: string; organizationId: string | undefined },
         forceEnablement?: boolean, // temporary to find an issue with workspace sharing
     ): Promise<boolean> {
         if (userId === SYSTEM_USER) {
             return true;
         }
+        if (!workspace.organizationId) {
+            return false;
+        }
 
         const req = v1.CheckPermissionRequest.create({
             subject: subject("user", userId),
             permission,
-            resource: object("workspace", workspaceId),
+            resource: object("workspace", workspace.id),
             consistency,
         });
 
-        return this.authorizer.check(req, { userId }, forceEnablement);
+        const result = await this.authorizer.check(workspace.organizationId, req, { userId }, forceEnablement);
+        return result.permitted;
     }
 
-    async checkPermissionOnWorkspace(userId: string, permission: WorkspacePermission, workspaceId: string) {
-        if (await this.hasPermissionOnWorkspace(userId, permission, workspaceId)) {
+    async checkPermissionOnWorkspace(
+        userId: string,
+        permission: WorkspacePermission,
+        workspace: { id: string; organizationId: string | undefined },
+    ) {
+        if (await this.hasPermissionOnWorkspace(userId, permission, workspace)) {
             return;
         }
-        if ("read_info" === permission || !(await this.hasPermissionOnWorkspace(userId, "read_info", workspaceId))) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} not found.`);
+        if ("read_info" === permission || !(await this.hasPermissionOnWorkspace(userId, "read_info", workspace))) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${workspace.id} not found.`);
         }
 
         throw new ApplicationError(
             ErrorCodes.PERMISSION_DENIED,
-            `You do not have ${permission} on workspace ${workspaceId}`,
+            `You do not have ${permission} on workspace ${workspace.id}`,
         );
     }
 
@@ -598,3 +638,16 @@ function asSet<T>(array: (T | undefined)[]): Set<T> {
     }
     return result;
 }
+
+export function projectIdFrom(
+    workspace: Pick<Workspace, "projectId" | "organizationId">,
+): Pick<Project, "id" | "teamId"> {
+    return { id: workspace.projectId!, teamId: workspace.organizationId };
+}
+
+// function fromResource(resource: v1.ObjectReference): ObjectId {
+//     if (!ObjectId.isObjectKind(resource.objectType)) {
+//         throw new Error("Unknown object kind: " + resource.objectType);
+//     }
+//     return ObjectId.create(resource.objectType, resource.objectId);
+// }

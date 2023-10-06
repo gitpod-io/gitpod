@@ -77,17 +77,19 @@ describe("UserService", async () => {
     });
 
     it("createUser", async () => {
-        expect(await auth.hasPermissionOnUser(user.id, "read_info", user.id)).to.be.true;
-        expect(await auth.hasPermissionOnUser(user.id, "write_info", user.id)).to.be.true;
+        expect(await auth.hasPermissionOnUser(user.id, "read_info", user.id, user)).to.be.true;
+        expect(await auth.hasPermissionOnUser(user.id, "write_info", user.id, user)).to.be.true;
 
-        expect(await auth.hasPermissionOnUser(user2.id, "read_info", user.id)).to.be.true;
-        expect(await auth.hasPermissionOnUser(user2.id, "write_info", user.id)).to.be.false;
+        expect(await auth.hasPermissionOnUser(user2.id, "read_info", user.id, user)).to.be.true;
+        expect(await auth.hasPermissionOnUser(user2.id, "write_info", user.id, user)).to.be.false;
 
-        expect(await auth.hasPermissionOnUser(nonOrgUser.id, "read_info", user.id)).to.be.false;
-        expect(await auth.hasPermissionOnUser(nonOrgUser.id, "write_info", user.id)).to.be.false;
+        expect(await auth.hasPermissionOnUser(nonOrgUser.id, "read_info", user.id, user)).to.be.false;
+        expect(await auth.hasPermissionOnUser(nonOrgUser.id, "write_info", user.id, user)).to.be.false;
 
-        expect(await auth.hasPermissionOnUser(BUILTIN_INSTLLATION_ADMIN_USER_ID, "read_info", user.id)).to.be.true;
-        expect(await auth.hasPermissionOnUser(BUILTIN_INSTLLATION_ADMIN_USER_ID, "write_info", user.id)).to.be.false;
+        expect(await auth.hasPermissionOnUser(BUILTIN_INSTLLATION_ADMIN_USER_ID, "read_info", user.id, user)).to.be
+            .true;
+        expect(await auth.hasPermissionOnUser(BUILTIN_INSTLLATION_ADMIN_USER_ID, "write_info", user.id, user)).to.be
+            .false;
     });
 
     it("updateLoggedInUser_avatarUrlNotUpdatable", async () => {

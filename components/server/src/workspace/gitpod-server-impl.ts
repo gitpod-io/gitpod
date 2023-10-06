@@ -160,13 +160,13 @@ import {
 } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 import { ClientError } from "nice-grpc-common";
 import { BillingModes } from "../billing/billing-mode";
-import { Authorizer, SYSTEM_USER, isFgaChecksEnabled } from "../authorization/authorizer";
+import { Authorizer, SYSTEM_USER, isFgaChecksEnabled, projectIdFrom } from "../authorization/authorizer";
 import { OrganizationService } from "../orgs/organization-service";
 import { RedisSubscriber } from "../messaging/redis-subscriber";
 import { UsageService } from "../orgs/usage-service";
 import { UserService } from "../user/user-service";
 import { SSHKeyService } from "../user/sshkey-service";
-import { StartWorkspaceOptions, WorkspaceService } from "./workspace-service";
+import { StartWorkspaceOptions, WorkspaceService, instanceNotFound } from "./workspace-service";
 import { GitpodTokenService } from "../user/gitpod-token-service";
 import { EnvVarService } from "../user/env-var-service";
 import { ScmService } from "../projects/scm-service";
@@ -177,8 +177,6 @@ import {
     suggestionFromRecentWorkspace,
     suggestionFromUserRepo,
 } from "./suggested-repos-sorter";
-import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
-import { rel } from "../authorization/definitions";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -392,7 +390,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             }
 
             // check if the user has access to the project
-            if (!(await this.auth.hasPermissionOnProject(user.id, "read_prebuild", prebuiltWorkspace.projectId))) {
+            const project = await this.projectsService.getProject(user.id, prebuiltWorkspace.projectId);
+            if (!(await this.auth.hasPermissionOnProject(user.id, "read_prebuild", project))) {
                 return undefined;
             }
             if (prebuiltWorkspace.state === "available") {
@@ -564,23 +563,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 ErrorCodes.PERMISSION_DENIED,
                 `operation not permitted: missing ${op} permission on ${resource.kind}`,
             );
-        }
-        if (resource.kind === "workspace" && op === "get") {
-            // access to workspaces is granted. Let's verify that this is also thecase with FGA
-            const result = await this.auth.hasPermissionOnWorkspace(
-                this.userID!,
-                "read_info",
-                resource.subject.id,
-                true,
-            );
-            if (!result) {
-                const isShared = await this.auth.find(rel.workspace(resource.subject.id).shared.anyUser);
-                log.error("user has access to workspace, but not through FGA", {
-                    userId: this.userID,
-                    workspace: new TrustedValue(resource.subject),
-                    sharedRelationship: isShared && new TrustedValue(isShared),
-                });
-            }
         }
     }
 
@@ -893,11 +875,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("getOwnerToken");
 
         //TODO this requests are only here to populate the resource guard check
-        const { workspace } = await this.workspaceService.getWorkspace(user.id, workspaceId);
+        const { workspace, latestInstance } = await this.workspaceService.getWorkspace(user.id, workspaceId);
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
-
-        const latestInstance = await this.workspaceService.getCurrentInstance(user.id, workspaceId);
-        await this.guardAccess({ kind: "workspaceInstance", subject: latestInstance, workspace }, "get");
+        const instance = instanceNotFound(workspaceId, latestInstance);
+        await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "get");
 
         return await this.workspaceService.getOwnerToken(user.id, workspaceId);
     }
@@ -1229,7 +1210,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             return true;
         }
 
-        await this.auth.checkPermissionOnProject(user.id, "read_prebuild", pws.projectId);
+        const project = await this.projectsService.getProject(user.id, pws.projectId);
+        await this.auth.checkPermissionOnProject(user.id, "read_prebuild", project);
 
         return PrebuiltWorkspace.isDone(pws);
     }
@@ -1515,7 +1497,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const project = await this.projectsService.getProject(user.id, projectId);
         await this.guardProjectOperation(user, projectId, "get");
-        await this.auth.checkPermissionOnProject(user.id, "read_prebuild", projectId);
+        await this.auth.checkPermissionOnProject(user.id, "read_prebuild", project);
 
         const events = await this.projectsService.getPrebuildEvents(user.id, project.id);
         return events;
@@ -1532,7 +1514,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const project = await this.projectsService.getProject(user.id, projectId);
         await this.guardProjectOperation(user, projectId, "update");
-        await this.auth.checkPermissionOnProject(user.id, "write_prebuild", projectId);
+        await this.auth.checkPermissionOnProject(user.id, "write_prebuild", project);
 
         const branchDetails = !!branchName
             ? await this.projectsService.getBranchDetails(user, project, branchName)
@@ -1932,8 +1914,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("updateGitStatus");
 
-        const { workspace } = await this.workspaceService.getWorkspace(user.id, workspaceId);
-        const instance = await this.workspaceService.getCurrentInstance(user.id, workspaceId);
+        const { workspace, latestInstance } = await this.workspaceService.getWorkspace(user.id, workspaceId);
+        const instance = instanceNotFound(workspaceId, latestInstance);
         traceWI(ctx, { instanceId: instance.id });
         await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "update");
 
@@ -2061,7 +2043,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("takeSnapshot");
 
         const workspace = await this.guardSnaphotAccess(ctx, user.id, workspaceId);
-        await this.auth.checkPermissionOnWorkspace(user.id, "create_snapshot", workspaceId);
+        await this.auth.checkPermissionOnWorkspace(user.id, "create_snapshot", workspace);
 
         const instance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
         if (!instance) {
@@ -2567,7 +2549,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const teamMembers = await this.organizationService.listMembers(user.id, workspace.organizationId);
         await this.guardAccess({ kind: "prebuild", subject: pbws, workspace, teamMembers }, "get");
-        await this.auth.checkPermissionOnProject(user.id, "read_prebuild", workspace.projectId!);
+        await this.auth.checkPermissionOnProject(user.id, "read_prebuild", projectIdFrom(workspace));
         const result: PrebuildWithStatus = { info, status: pbws.state };
         if (pbws.error) {
             result.error = pbws.error;
@@ -2586,13 +2568,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             this.workspaceDb.trace(ctx).findPrebuildByWorkspaceID(workspaceId),
             this.workspaceDb.trace(ctx).findById(workspaceId),
         ]);
-        if (!pbws || !workspace) {
+        if (!pbws || !workspace || !workspace.projectId) {
             return undefined;
         }
 
         const teamMembers = await this.organizationService.listMembers(user.id, workspace.organizationId);
         await this.guardAccess({ kind: "prebuild", subject: pbws, workspace, teamMembers }, "get");
-        await this.auth.checkPermissionOnProject(user.id, "read_prebuild", workspace.projectId!);
+        await this.auth.checkPermissionOnProject(user.id, "read_prebuild", projectIdFrom(workspace));
         return pbws;
     }
 
@@ -2630,9 +2612,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("cancelPrebuild");
 
-        await this.projectsService.getProject(user.id, projectId);
+        const project = await this.projectsService.getProject(user.id, projectId);
         await this.guardProjectOperation(user, projectId, "update");
-        await this.auth.checkPermissionOnProject(user.id, "write_prebuild", projectId);
+        await this.auth.checkPermissionOnProject(user.id, "write_prebuild", project);
 
         const prebuild = await this.workspaceDb.trace(ctx).findPrebuildByID(prebuildId);
         if (!prebuild) {
@@ -2886,8 +2868,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     async adminVerifyUser(ctx: TraceContext, userId: string): Promise<User> {
         const admin = await this.guardAdminAccess("adminVerifyUser", { id: userId }, Permission.ADMIN_USERS);
-        await this.auth.checkPermissionOnUser(admin.id, "admin_control", userId);
         const user = await this.userService.findUserById(admin.id, userId);
+        await this.auth.checkPermissionOnUser(admin.id, "admin_control", userId, user);
 
         this.verificationService.markVerified(user);
         await this.userDB.updateUserPartial(user);
@@ -2927,9 +2909,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             { req },
             Permission.ADMIN_USERS,
         );
-        await this.auth.checkPermissionOnUser(admin.id, "admin_control", req.id);
 
         const target = await this.userService.findUserById(admin.id, req.id);
+        await this.auth.checkPermissionOnUser(admin.id, "admin_control", target.id, target);
 
         const featureSettings: UserFeatureSettings = target.featureFlags || {};
         const featureFlags = new Set(featureSettings.permanentWSFeatureFlags || []);
@@ -2967,7 +2949,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         await Promise.all(
             wss.rows.map(async (row) => {
-                if (!(await this.auth.hasPermissionOnWorkspace(admin.id, "access", row.workspaceId))) {
+                if (
+                    !(await this.auth.hasPermissionOnWorkspace(admin.id, "access", {
+                        id: row.workspaceId,
+                        organizationId: row.organizationId,
+                    }))
+                ) {
                     wss.total--;
                     wss.rows = wss.rows.filter((ws) => ws.workspaceId !== row.workspaceId);
                 }
@@ -2984,13 +2971,20 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             { id: workspaceId },
             Permission.ADMIN_WORKSPACES,
         );
-        await this.auth.checkPermissionOnWorkspace(admin.id, "access", workspaceId);
 
-        const result = await this.workspaceDb.trace(ctx).findWorkspaceAndInstance(workspaceId);
-        if (!result) {
+        const { workspace, latestInstance } = await this.workspaceService.getWorkspace(admin.id, workspaceId);
+        if (!latestInstance) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
         }
-        return result;
+        return {
+            ...workspace,
+            ...latestInstance,
+            workspaceId: workspace.id,
+            workspaceCreationTime: workspace.creationTime,
+            instanceId: latestInstance.id,
+            instanceCreationTime: latestInstance.creationTime,
+            phase: latestInstance.status.phase,
+        };
     }
 
     async adminGetWorkspaceInstances(ctx: TraceContext, workspaceId: string): Promise<WorkspaceInstance[]> {
@@ -3001,7 +2995,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             { id: workspaceId },
             Permission.ADMIN_WORKSPACES,
         );
-        await this.auth.checkPermissionOnWorkspace(admin.id, "access", workspaceId);
+        const { workspace } = await this.workspaceService.getWorkspace(admin.id, workspaceId);
+        await this.auth.checkPermissionOnWorkspace(admin.id, "access", workspace);
 
         const result = await this.workspaceDb.trace(ctx).findInstances(workspaceId);
         return result || [];
@@ -3015,7 +3010,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             { id: workspaceId },
             Permission.ADMIN_WORKSPACES,
         );
-        await this.auth.checkPermissionOnWorkspace(admin.id, "admin_control", workspaceId);
 
         const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
         if (workspace) {
@@ -3038,9 +3032,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             { id: workspaceId },
             Permission.ADMIN_WORKSPACES,
         );
-        await this.auth.checkPermissionOnWorkspace(admin.id, "admin_control", workspaceId);
 
         const ws = await this.workspaceDb.trace(ctx).findById(workspaceId);
+        await this.auth.checkPermissionOnWorkspace(admin.id, "admin_control", {
+            id: workspaceId,
+            organizationId: ws?.organizationId,
+        });
         if (!ws) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `No workspace with id '${workspaceId}' found.`);
         }

@@ -41,8 +41,9 @@ export class UserAuthentication {
     ) {}
 
     async blockUser(userId: string, targetUserId: string, block: boolean): Promise<User> {
-        await this.authorizer.checkPermissionOnUser(userId, "admin_control", targetUserId);
         const target = await this.userService.findUserById(userId, targetUserId);
+        await this.authorizer.checkPermissionOnUser(userId, "admin_control", targetUserId, target);
+
         target.blocked = !!block;
         return await this.userDb.storeUser(target);
     }

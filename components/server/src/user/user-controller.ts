@@ -254,7 +254,7 @@ export class UserController {
             }
 
             // reset the FGA state
-            await this.userService.resetFgaVersion(user.id, user.id);
+            await this.userService.resetFgaVersion(user.id, user);
 
             const redirectToUrl = this.getSafeReturnToParam(req) || this.config.hostUrl.toString();
 

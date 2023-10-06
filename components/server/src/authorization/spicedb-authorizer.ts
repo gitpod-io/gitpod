@@ -38,8 +38,33 @@ async function tryThree<T>(errMessage: string, code: (attempt: number) => Promis
     throw new Error("unreachable");
 }
 
+export const SpiceDBAuthorizer = Symbol("SpiceDBAuthorizer");
+export interface SpiceDBAuthorizer {
+    check(
+        resourceOrgId: string | undefined,
+        req: v1.CheckPermissionRequest,
+        experimentsFields: {
+            userId: string;
+        },
+        forceEnablement?: boolean,
+    ): Promise<CheckResult>;
+    writeRelationships(...updates: v1.RelationshipUpdate[]): Promise<v1.WriteRelationshipsResponse | undefined>;
+    deleteRelationships(req: v1.DeleteRelationshipsRequest): Promise<DeletionResult>;
+    readRelationships(req: v1.ReadRelationshipsRequest): Promise<v1.ReadRelationshipsResponse[]>;
+}
+
+export interface CheckResult {
+    permitted: boolean;
+    checkedAt?: string;
+}
+
+export interface DeletionResult {
+    relationships: v1.ReadRelationshipsResponse[];
+    deletedAt?: string;
+}
+
 @injectable()
-export class SpiceDBAuthorizer {
+export class SpiceDBAuthorizerImpl implements SpiceDBAuthorizer {
     constructor(
         @inject(SpiceDBClientProvider)
         private readonly clientProvider: SpiceDBClientProvider,
@@ -50,14 +75,15 @@ export class SpiceDBAuthorizer {
     }
 
     async check(
+        resourceOrgId: string | undefined,
         req: v1.CheckPermissionRequest,
         experimentsFields: {
             userId: string;
         },
         forceEnablement?: boolean,
-    ): Promise<boolean> {
+    ): Promise<CheckResult> {
         if (!(await isFgaWritesEnabled(experimentsFields.userId))) {
-            return true;
+            return { permitted: true };
         }
         const featureEnabled = !!forceEnablement || (await isFgaChecksEnabled(experimentsFields.userId));
         const result = (async () => {
@@ -73,23 +99,23 @@ export class SpiceDBAuthorizer {
                         response: new TrustedValue(response),
                         request: new TrustedValue(req),
                     });
-                    return true;
+                    return { permitted: true, checkedAt: response.checkedAt?.token };
                 }
 
-                return permitted;
+                return { permitted, checkedAt: response.checkedAt?.token };
             } catch (err) {
                 error = err;
                 log.error("[spicedb] Failed to perform authorization check.", err, {
                     request: new TrustedValue(req),
                 });
-                return !featureEnabled;
+                return { permitted: !featureEnabled };
             } finally {
                 observeSpicedbClientLatency("check", error, timer());
             }
         })();
         // if the feature is not enabld, we don't await
         if (!featureEnabled) {
-            return true;
+            return { permitted: true };
         }
         return result;
     }
@@ -114,10 +140,11 @@ export class SpiceDBAuthorizer {
         }
     }
 
-    async deleteRelationships(req: v1.DeleteRelationshipsRequest): Promise<v1.ReadRelationshipsResponse[]> {
+    async deleteRelationships(req: v1.DeleteRelationshipsRequest): Promise<DeletionResult> {
         const timer = spicedbClientLatency.startTimer();
         let error: Error | undefined;
         try {
+            let deletedAt: string | undefined = undefined;
             const existing = await tryThree("readRelationships before deleteRelationships failed.", () =>
                 this.client.readRelationships(v1.ReadRelationshipsRequest.create(req), this.callOptions),
             );
@@ -125,6 +152,7 @@ export class SpiceDBAuthorizer {
                 const response = await tryThree("deleteRelationships failed.", () =>
                     this.client.deleteRelationships(req, this.callOptions),
                 );
+                deletedAt = response.deletedAt?.token;
                 const after = await tryThree("readRelationships failed.", () =>
                     this.client.readRelationships(v1.ReadRelationshipsRequest.create(req), this.callOptions),
                 );
@@ -137,13 +165,16 @@ export class SpiceDBAuthorizer {
                     existing,
                 });
             }
-            return existing;
+            return {
+                relationships: existing,
+                deletedAt,
+            };
         } catch (err) {
             error = err;
             // While in we're running two authorization systems in parallel, we do not hard fail on writes.
             //TODO throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "Failed to delete relationships.");
             log.error("[spicedb] Failed to delete relationships.", err, { request: new TrustedValue(req) });
-            return [];
+            return { relationships: [] };
         } finally {
             observeSpicedbClientLatency("delete", error, timer());
         }
@@ -163,4 +194,111 @@ export class SpiceDBAuthorizer {
             deadline: Date.now() + 8000,
         }) as any as grpc.Metadata;
     }
+}
+
+export class CachingSpiceDBAuthorizer implements SpiceDBAuthorizer {
+    constructor(private readonly impl: SpiceDBAuthorizerImpl, private readonly tokenCache: HierachicalZedTokenCache) {}
+
+    async check(
+        resourceOrgId: string | undefined,
+        req: v1.CheckPermissionRequest,
+        experimentsFields: { userId: string },
+        forceEnablement?: boolean | undefined,
+    ): Promise<CheckResult> {
+        req.consistency = await this.consistency(resourceOrgId, req.resource);
+        return this.impl.check(resourceOrgId, req, experimentsFields, forceEnablement);
+    }
+
+    async writeRelationships(...updates: v1.RelationshipUpdate[]): Promise<v1.WriteRelationshipsResponse | undefined> {
+        const result = await this.impl.writeRelationships(...updates);
+        const writtenAt = result?.writtenAt?.token;
+        await this.tokenCache.set(
+            ...updates.map<ZedTokenCacheKV>((u) => [
+                u.relationship?.resource,
+                writtenAt, // Make sure that in case we don't get a writtenAt token here, we at least invalidate the cache!
+            ]),
+        );
+        return result;
+    }
+
+    async deleteRelationships(req: v1.DeleteRelationshipsRequest): Promise<DeletionResult> {
+        const result = await this.impl.deleteRelationships(req);
+        log.info(`[spicedb] Deletion result`, { result });
+        const deletedAt = result?.deletedAt;
+        if (deletedAt) {
+            // Only if we really deleted something we can actually update the cache.
+            await this.tokenCache.set(
+                ...result.relationships.map<ZedTokenCacheKV>((r) => [r.relationship?.resource, deletedAt]),
+            );
+        }
+        return result;
+    }
+
+    async readRelationships(req: v1.ReadRelationshipsRequest): Promise<v1.ReadRelationshipsResponse[]> {
+        // pass through with given consistency/caching for now
+        return this.impl.readRelationships(req);
+    }
+
+    private async consistency(
+        orgId: string | undefined,
+        resourceRef: v1.ObjectReference | undefined,
+    ): Promise<v1.Consistency> {
+        function fullyConsistent() {
+            return v1.Consistency.create({
+                requirement: {
+                    oneofKind: "fullyConsistent",
+                    fullyConsistent: true,
+                },
+            });
+        }
+
+        if (!resourceRef) {
+            return fullyConsistent();
+        }
+
+        const zedToken = await this.tokenCache.get(orgId, resourceRef);
+        if (!zedToken) {
+            return fullyConsistent();
+        }
+        return v1.Consistency.create({
+            requirement: {
+                oneofKind: "atLeastAsFresh",
+                atLeastAsFresh: v1.ZedToken.create({
+                    token: zedToken,
+                }),
+            },
+        });
+    }
+}
+
+type ZedTokenCacheKV = [objectRef: v1.ObjectReference | undefined, token: string | undefined];
+
+/**
+ * The entities in SpiceDB form a hierarchy, with "installation" at the top, and "workspace" and "user" at the bottom, for instance.
+ * This cache guarantees that for every requested entity, it always returns the _most recent ZedToken along the path to the bottom_.
+ */
+export class HierachicalZedTokenCache {
+    // private readonly cache = new Map<string, string>();
+
+    async get(orgId: string | undefined, objectRef: v1.ObjectReference): Promise<string | undefined> {
+        return "token";
+    }
+
+    async set(...kvs: ZedTokenCacheKV[]) {
+        // TODO
+        return undefined;
+    }
+
+    async setIfUndefined(orgId: string | undefined, objectRef: v1.ObjectReference) {}
+
+    // private buildPath(objectRef: v1.ObjectReference): string {
+    //     const theInstallation = v1.ObjectReference.create({ objectType: "installation", objectId: InstallationID });
+    //     switch (objectRef.objectType) {
+    //         case "installation":
+    //             return `installation:${objectRef.objectId}`;
+    //         case "user":
+    //             // TODO(gpl): depends on orgId!
+    //             return `${this.buildPath(theInstallation)}/user:${objectRef.objectId}`;
+    //     }
+    // }
 }

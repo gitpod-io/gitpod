@@ -23,12 +23,14 @@ export class SSHKeyService {
     ) {}
 
     async hasSSHPublicKey(requestorId: string, userId: string): Promise<boolean> {
-        await this.auth.checkPermissionOnUser(requestorId, "read_ssh", userId);
+        const user = await this.userDB.findUserById(userId);
+        await this.auth.checkPermissionOnUser(requestorId, "read_ssh", userId, user);
         return this.userDB.hasSSHPublicKey(userId);
     }
 
     async getSSHPublicKeys(requestorId: string, userId: string): Promise<UserSSHPublicKeyValue[]> {
-        await this.auth.checkPermissionOnUser(requestorId, "read_ssh", userId);
+        const user = await this.userDB.findUserById(userId);
+        await this.auth.checkPermissionOnUser(requestorId, "read_ssh", userId, user);
         const list = await this.userDB.getSSHPublicKeys(userId);
         return list.map((e) => ({
             id: e.id,
@@ -45,7 +47,9 @@ export class SSHKeyService {
         userId: string,
         value: SSHPublicKeyValue,
     ): Promise<UserSSHPublicKeyValue> {
-        await this.auth.checkPermissionOnUser(requestorId, "write_ssh", userId);
+        const user = await this.userDB.findUserById(userId);
+        await this.auth.checkPermissionOnUser(requestorId, "write_ssh", userId, user);
+
         const data = await this.userDB.addSSHPublicKey(userId, value);
         this.updateSSHKeysForRegularRunningInstances(userId).catch((err) => {
             log.error("Failed to update ssh keys on running instances.", err);
@@ -61,7 +65,9 @@ export class SSHKeyService {
     }
 
     async deleteSSHPublicKey(requestorId: string, userId: string, id: string): Promise<void> {
-        await this.auth.checkPermissionOnUser(requestorId, "write_ssh", userId);
+        const user = await this.userDB.findUserById(userId);
+        await this.auth.checkPermissionOnUser(requestorId, "write_ssh", userId, user);
+
         await this.userDB.deleteSSHPublicKey(userId, id);
         this.updateSSHKeysForRegularRunningInstances(userId).catch((err) => {
             log.error("Failed to update ssh keys on running instances.", err);

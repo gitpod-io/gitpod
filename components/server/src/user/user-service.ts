@@ -74,18 +74,19 @@ export class UserService {
         }
     }
 
-    async findUserById(userId: string, id: string): Promise<User> {
-        if (userId !== id) {
-            await this.authorizer.checkPermissionOnUser(userId, "read_info", id);
+    async findUserById(userId: string, targetId: string): Promise<User> {
+        const result = await this.userDb.findUserById(targetId);
+        if (userId !== targetId) {
+            await this.authorizer.checkPermissionOnUser(userId, "read_info", targetId, result);
         }
-        const result = await this.userDb.findUserById(id);
         if (!result) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
         }
+
         try {
             return await this.relationshipUpdater.migrate(result);
         } catch (error) {
-            log.error({ userId: id }, "Failed to migrate user", error);
+            log.error({ userId: targetId }, "Failed to migrate user", error);
             return result;
         }
     }
@@ -96,35 +97,34 @@ export class UserService {
     }
 
     async updateUser(userId: string, update: Partial<User> & { id: string }): Promise<User> {
-        const user = await this.findUserById(userId, update.id);
-        await this.authorizer.checkPermissionOnUser(userId, "write_info", user.id);
+        const targetUser = await this.findUserById(userId, update.id);
+        await this.authorizer.checkPermissionOnUser(userId, "write_info", update.id, targetUser);
 
         //hang on to user profile before it's overwritten for analytics below
-        const oldProfile = User.getProfile(user);
-
+        const oldProfile = User.getProfile(targetUser);
         const allowedFields: (keyof User)[] = ["fullName", "additionalData"];
         for (const p of allowedFields) {
             if (p in update) {
-                (user[p] as any) = update[p];
+                (targetUser[p] as any) = update[p];
             }
         }
 
-        await this.userDb.updateUserPartial(user);
+        await this.userDb.updateUserPartial(targetUser);
 
         //track event and user profile if profile of partialUser changed
-        const newProfile = User.getProfile(user);
+        const newProfile = User.getProfile(targetUser);
         if (User.Profile.hasChanges(oldProfile, newProfile)) {
             this.analytics.track({
-                userId: user.id,
+                userId: targetUser.id,
                 event: "profile_changed",
                 properties: { new: newProfile, old: oldProfile },
             });
             this.analytics.identify({
-                userId: user.id,
+                userId: targetUser.id,
                 traits: { email: newProfile.email, company: newProfile.company, name: newProfile.name },
             });
         }
-        return user;
+        return targetUser;
     }
 
     async updateWorkspaceTimeoutSetting(
@@ -132,8 +132,6 @@ export class UserService {
         targetUserId: string,
         setting: Partial<WorkspaceTimeoutSetting>,
     ): Promise<void> {
-        await this.authorizer.checkPermissionOnUser(userId, "write_info", targetUserId);
-
         if (setting.workspaceTimeout) {
             try {
                 WorkspaceTimeoutDuration.validate(setting.workspaceTimeout);
@@ -142,9 +140,11 @@ export class UserService {
             }
         }
 
-        const user = await this.findUserById(userId, targetUserId);
-        AdditionalUserData.set(user, setting);
-        await this.userDb.updateUserPartial(user);
+        const target = await this.findUserById(userId, targetUserId);
+        await this.authorizer.checkPermissionOnUser(userId, "write_info", targetUserId, target);
+
+        AdditionalUserData.set(target, setting);
+        await this.userDb.updateUserPartial(target);
     }
 
     async listUsers(
@@ -168,7 +168,7 @@ export class UserService {
             );
             const result = { total: res.total, rows: [] as User[] };
             for (const user of res.rows) {
-                if (await this.authorizer.hasPermissionOnUser(userId, "read_info", user.id)) {
+                if (await this.authorizer.hasPermissionOnUser(userId, "read_info", user.id, user)) {
                     result.rows.push(user);
                 } else {
                     result.total--;
@@ -185,8 +185,9 @@ export class UserService {
         targetUserId: string,
         modifications: { role: RoleOrPermission; add?: boolean }[],
     ): Promise<void> {
-        await this.authorizer.checkPermissionOnUser(userId, "make_admin", targetUserId);
         const target = await this.findUserById(userId, targetUserId);
+        await this.authorizer.checkPermissionOnUser(userId, "make_admin", targetUserId, target);
+
         const rolesOrPermissions = new Set((target.rolesOrPermissions || []) as string[]);
         const adminBefore = rolesOrPermissions.has("admin");
         modifications.forEach((e) => {
@@ -221,9 +222,9 @@ export class UserService {
         }
     }
 
-    async resetFgaVersion(subjectId: string, userId: string) {
-        await this.authorizer.checkPermissionOnUser(subjectId, "write_info", userId);
+    async resetFgaVersion(subjectId: string, user: User) {
+        await this.authorizer.checkPermissionOnUser(subjectId, "write_info", user.id, user);
 
-        await this.userDb.updateUserPartial({ id: userId, fgaRelationshipsVersion: undefined });
+        await this.userDb.updateUserPartial({ id: user.id, fgaRelationshipsVersion: undefined });
     }
 }

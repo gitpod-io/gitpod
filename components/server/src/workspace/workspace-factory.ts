@@ -248,7 +248,7 @@ export class WorkspaceFactory {
                 const teams = await this.teamDB.findTeamsByUser(user.id);
                 if (teams.some((t) => t.id === project.teamId)) {
                     projectId = project.id;
-                    await this.authorizer.checkPermissionOnProject(user.id, "read_prebuild", projectId);
+                    await this.authorizer.checkPermissionOnProject(user.id, "read_prebuild", project);
                 }
             }
 

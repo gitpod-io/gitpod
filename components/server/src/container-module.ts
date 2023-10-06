@@ -51,7 +51,12 @@ import { Authorizer, createInitializingAuthorizer } from "./authorization/author
 import { RelationshipUpdater } from "./authorization/relationship-updater";
 import { RelationshipUpdateJob } from "./authorization/relationship-updater-job";
 import { SpiceDBClientProvider, spiceDBConfigFromEnv } from "./authorization/spicedb";
-import { SpiceDBAuthorizer } from "./authorization/spicedb-authorizer";
+import {
+    CachingSpiceDBAuthorizer,
+    HierachicalZedTokenCache,
+    SpiceDBAuthorizer,
+    SpiceDBAuthorizerImpl,
+} from "./authorization/spicedb-authorizer";
 import { BillingModes } from "./billing/billing-mode";
 import { EntitlementService, EntitlementServiceImpl } from "./billing/entitlement-service";
 import { EntitlementServiceUBP } from "./billing/entitlement-service-ubp";
@@ -317,7 +322,13 @@ export const productionContainerModule = new ContainerModule(
                 );
             })
             .inSingletonScope();
-        bind(SpiceDBAuthorizer).toSelf().inSingletonScope();
+        bind(SpiceDBAuthorizerImpl).toSelf().inSingletonScope();
+        bind(SpiceDBAuthorizer)
+            .toDynamicValue((ctx) => {
+                const spiceDBAuthorizer = ctx.container.get(SpiceDBAuthorizerImpl);
+                return new CachingSpiceDBAuthorizer(spiceDBAuthorizer, new HierachicalZedTokenCache());
+            })
+            .inSingletonScope();
         bind(Authorizer)
             .toDynamicValue((ctx) => {
                 const authorizer = ctx.container.get<SpiceDBAuthorizer>(SpiceDBAuthorizer);

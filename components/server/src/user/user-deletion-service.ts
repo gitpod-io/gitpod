@@ -36,8 +36,8 @@ export class UserDeletionService {
      * we anonymize data that might contain user related/relatable data and keep the entities itself (incl. ids).
      */
     async deleteUser(userId: string, targetUserId: string): Promise<void> {
-        await this.authorizer.checkPermissionOnUser(userId, "delete", targetUserId);
         const user = await this.db.findUserById(targetUserId);
+        await this.authorizer.checkPermissionOnUser(userId, "delete", targetUserId, user);
         if (!user) {
             throw new Error(`No user with id ${targetUserId} found!`);
         }
