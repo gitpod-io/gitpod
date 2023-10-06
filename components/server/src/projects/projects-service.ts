@@ -31,6 +31,7 @@ import { Authorizer, SYSTEM_USER } from "../authorization/authorizer";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
 import { ScmService } from "./scm-service";
 import { daysBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 
 @injectable()
 export class ProjectsService {
@@ -467,7 +468,10 @@ export class ProjectsService {
 
             return project;
         } catch (error) {
-            log.error("Prebuild settings migration failed.", { projectId: project.id, error });
+            log.error("Prebuild settings migration failed: " + error, {
+                projectId: project.id,
+                error: new TrustedValue(error),
+            });
             return project;
         }
     }
