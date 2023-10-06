@@ -6,7 +6,7 @@
 
 import { ServiceImpl } from "@connectrpc/connect";
 import { UserDB } from "@gitpod/gitpod-db/lib";
-import { StatsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/stats_connectweb";
+import { StatsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/stats_connect";
 import { GetUserStatsRequest, GetUserStatsResponse } from "@gitpod/public-api/lib/gitpod/experimental/v1/stats_pb";
 import { inject, injectable } from "inversify";
 

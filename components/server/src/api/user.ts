@@ -6,7 +6,7 @@
 
 import { inject, injectable } from "inversify";
 import { ServiceImpl, ConnectError, Code } from "@connectrpc/connect";
-import { UserService as UserServiceInterface } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_connectweb";
+import { UserService as UserServiceInterface } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_connect";
 import {
     GetAuthenticatedUserRequest,
     ListSSHKeysRequest,

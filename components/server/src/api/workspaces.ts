@@ -6,7 +6,7 @@
 
 import { Code, ConnectError, ServiceImpl } from "@connectrpc/connect";
 import { injectable } from "inversify";
-import { WorkspacesService as WorkspacesServiceInterface } from "@gitpod/public-api/lib/gitpod/experimental/v1/workspaces_connectweb";
+import { WorkspacesService as WorkspacesServiceInterface } from "@gitpod/public-api/lib/gitpod/experimental/v1/workspaces_connect";
 import {
     CreateAndStartWorkspaceRequest,
     CreateAndStartWorkspaceResponse,

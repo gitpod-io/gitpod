@@ -6,4 +6,4 @@
 
 export * from "./pagination_pb";
 export * from "./workspaces_pb";
-export * from "./workspaces_connectweb";
+export * from "./workspaces_connect";

@@ -8,11 +8,11 @@ import { Code, ConnectError, ConnectRouter, HandlerContext, ServiceImpl } from "
 import { expressConnectMiddleware } from "@connectrpc/connect-express";
 import { MethodKind, ServiceType } from "@bufbuild/protobuf";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connectweb";
-import { StatsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/stats_connectweb";
-import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
-import { UserService as UserServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_connectweb";
-import { WorkspacesService as WorkspacesServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/workspaces_connectweb";
+import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connect";
+import { StatsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/stats_connect";
+import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connect";
+import { UserService as UserServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_connect";
+import { WorkspacesService as WorkspacesServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/workspaces_connect";
 import express from "express";
 import * as http from "http";
 import { inject, injectable, interfaces } from "inversify";

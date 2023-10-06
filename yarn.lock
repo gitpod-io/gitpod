@@ -1282,36 +1282,26 @@
   resolved "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@bufbuild/protobuf@0.1.1":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-0.1.1.tgz#163dee03af49e82d300dfa2bf60c8c0f04c80b4c"
-  integrity sha512-HAs82bdlN5aUsoTaJNsPd8driezDenOtAh7dVpO5xKEmyB6ibmRIV08MTlIVudnMYbFc1qw7RxhFHoQy0rSvgg==
-
-"@bufbuild/protobuf@^1.3.3":
+"@bufbuild/protobuf@1.3.3", "@bufbuild/protobuf@^1.3.3":
   version "1.3.3"
   resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.3.3.tgz#814562a5db0233a1ececda97b930c2dde5897de8"
   integrity sha512-AoHSiIpTFF97SQgmQni4c+Tyr0CDhkaRaR2qGEJTEbauqQwLRpLrd9yVv//wVHOSxr/b4FJcL54VchhY6710xA==
 
-"@bufbuild/protoc-gen-connect-web@^0.2.1":
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-connect-web/-/protoc-gen-connect-web-0.2.1.tgz#0b29d583f46bec759592aacc2f21604552c2cc2b"
-  integrity sha512-A/M/tXRe5LsdD8xeUBEBxhe8TCqzD6eqKbld9j0KNgsRbrRlYQEMtIBarXXb+dADg+dwcTGS9W/DcfdO9R+Icg==
+"@bufbuild/protoc-gen-es@1.3.3":
+  version "1.3.3"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-es/-/protoc-gen-es-1.3.3.tgz#77f1d9a6f6f93aa06205192138b3d1aafe008306"
+  integrity sha512-waqpvdFyqcrrmoAW9c8VCtDmT4+NYDQg/W8DAsMC2/+rXKGQYy3YbxobOuwVm3g/MJC1Gvv6ON/arxq4gYHXYw==
   dependencies:
-    "@bufbuild/protoplugin" "0.1.1"
+    "@bufbuild/protoplugin" "1.3.3"
 
-"@bufbuild/protoc-gen-es@^0.1.1":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-es/-/protoc-gen-es-0.1.1.tgz#526aa846dd14d4515e5c67f9f0619a5df8b8d7e9"
-  integrity sha512-FFY8GfbMgcgN/nt4DtB+IiLvLmfGjQ7dKYVb6ciKCMymXx5MsRxs4xnJXHtpEv2rDVpDYCOhPkjri8o4AYeSPQ==
+"@bufbuild/protoplugin@1.3.3", "@bufbuild/protoplugin@^1.3.3":
+  version "1.3.3"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoplugin/-/protoplugin-1.3.3.tgz#64ca3e1db5694992144835b929b21a63d3f80865"
+  integrity sha512-sxalYoj+fWxUakknePKfqRpcGlxz45Gcjpth2M274ZvQN+XKwMLVLevArsZWFzGcPoAkiDWMFHhfeQXfjsu+uA==
   dependencies:
-    "@bufbuild/protoplugin" "0.1.1"
-
-"@bufbuild/protoplugin@0.1.1":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protoplugin/-/protoplugin-0.1.1.tgz#b51e68b5219d1f66a4ea91e248cb6c3b7af09542"
-  integrity sha512-+zCwqiq6xbeM6OG02+eNCd4Rinu1Mtn+HsjMF8U8h5FazOj1fEP9SnXEabOfImOR83vHfk2jocqzrB4IkSZV2Q==
-  dependencies:
-    "@bufbuild/protobuf" "0.1.1"
+    "@bufbuild/protobuf" "1.3.3"
+    "@typescript/vfs" "^1.4.0"
+    typescript "4.5.2"
 
 "@connectrpc/connect-express@1.1.2":
   version "1.1.2"
@@ -1336,6 +1326,14 @@
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@connectrpc/connect/-/connect-1.1.2.tgz#d1b5fa1dcec310a8210c1523c99abdc227643f4b"
   integrity sha512-oDuKJFRORtzyH4IhZyNgIQ5DKjlDnbP72AH55Aabpc0fwApyus/h4cmYU1KDvahVbqsvUOpd5qUTyMH8IhMmLA==
+
+"@connectrpc/protoc-gen-connect-es@1.1.2":
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/@connectrpc/protoc-gen-connect-es/-/protoc-gen-connect-es-1.1.2.tgz#afe39fb4a9b8cfded40397ee2cb106c720d6a792"
+  integrity sha512-TvA6Z4EOtZRXi0QbPcRUgM8RHQueIy83TmWq80WdfxZ+Yy5NLT4HVYBRWo0/x+HmPCVoT0FJeLI0iHV6C9UiDQ==
+  dependencies:
+    "@bufbuild/protobuf" "^1.3.3"
+    "@bufbuild/protoplugin" "^1.3.3"
 
 "@craco/craco@^7.1.0":
   version "7.1.0"
@@ -3818,6 +3816,13 @@
   dependencies:
     "@typescript-eslint/types" "5.62.0"
     eslint-visitor-keys "^3.3.0"
+
+"@typescript/vfs@^1.4.0":
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/@typescript/vfs/-/vfs-1.5.0.tgz#ed942922724f9ace8c07c80b006c47e5e3833218"
+  integrity sha512-AJS307bPgbsZZ9ggCT3wwpg3VbTKMFNHfaY/uF0ahSkYYrPF2dSSKDNIDIQAHm9qJqbLvCsSJH7yN4Vs/CsMMg==
+  dependencies:
+    debug "^4.1.1"
 
 "@useorbital/client-types@^1.6.0":
   version "1.6.0"
@@ -14541,6 +14546,11 @@ typescript-parser@^2.6.1:
     lodash-es "^4.17.10"
     tslib "^1.9.3"
     typescript "^3.0.3"
+
+typescript@4.5.2:
+  version "4.5.2"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.5.2.tgz#8ac1fba9f52256fdb06fb89e4122fa6a346c2998"
+  integrity sha512-5BlMof9H1yGt0P8/WF+wPNw6GfctgGjXp5hkblpyT+8rkASSmkUKMXrxR0Xg8ThVCi/JnHQiKXeBaEwCeQwMFw==
 
 typescript@^3.0.3:
   version "3.9.10"
