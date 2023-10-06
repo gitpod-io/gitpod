@@ -374,10 +374,15 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                 hostKeys = listOf(SSHHostKey(keyPair.hostKey.type, keyPair.hostKey.value))
             }
 
+            var userName = keyPair.userName
+            if (userName == null) {
+                userName = "gitpod"
+            }
+
             return resolveCredentials(
                 "localhost",
                 sshWebSocketServer.port,
-                "gitpod",
+                userName,
                 null,
                 privateKeyFile.absolutePathString(),
                 hostKeys
@@ -637,5 +642,5 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
 
     private data class SSHPublicKey(val type: String, val value: String)
 
-    private data class CreateSSHKeyPairResponse(val privateKey: String, val hostKey: SSHPublicKey?)
+    private data class CreateSSHKeyPairResponse(val privateKey: String, val hostKey: SSHPublicKey?, val userName: String?)
 }
