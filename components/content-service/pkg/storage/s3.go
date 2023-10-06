@@ -127,7 +127,7 @@ func (rs *PresignedS3Storage) DeleteObject(ctx context.Context, bucket string, q
 		return nil
 	}
 
-	_, err := rs.client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+	resp, err := rs.client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
 		Bucket: &rs.Config.Bucket,
 		Delete: &types.Delete{
 			Objects: objects,
@@ -136,6 +136,13 @@ func (rs *PresignedS3Storage) DeleteObject(ctx context.Context, bucket string, q
 	})
 	if err != nil {
 		return err
+	}
+	if len(resp.Errors) > 0 {
+		var errs []string
+		for _, e := range resp.Errors {
+			errs = append(errs, fmt.Sprintf("%s: %s", aws.ToString(e.Key), aws.ToString(e.Message)))
+		}
+		return xerrors.Errorf("cannot delete objects: %s", strings.Join(errs, ", "))
 	}
 
 	return nil
