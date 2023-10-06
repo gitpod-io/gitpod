@@ -25,8 +25,8 @@ const featureFlags = {
     supervisor_live_git_status: false,
     enabledOrbitalDiscoveries: "",
     newProjectIncrementalRepoSearchBBS: false,
-    includeProjectsOnCreateWorkspace: false,
     repositoryFinderSearch: false,
+    createProjectModal: false,
 };
 
 type FeatureFlags = typeof featureFlags;

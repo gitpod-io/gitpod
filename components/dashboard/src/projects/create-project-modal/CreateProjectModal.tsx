@@ -11,6 +11,8 @@ import { CreateProjectArgs, useCreateProject } from "../../data/projects/create-
 import { Project, SuggestedRepository } from "@gitpod/gitpod-protocol";
 import RepositoryFinder from "../../components/RepositoryFinder";
 import { useToast } from "../../components/toasts/Toasts";
+import { InputField } from "../../components/forms/InputField";
+import { Subheading } from "../../components/typography/headings";
 
 type Props = {
     onCreated: (project: Project) => void;
@@ -45,9 +47,23 @@ export const CreateProjectModal: FC<Props> = ({ onClose, onCreated }) => {
 
     return (
         <Modal visible onClose={onClose} onSubmit={handleSubmit}>
-            <ModalHeader>Create a Project</ModalHeader>
+            <ModalHeader>New Project</ModalHeader>
             <ModalBody>
-                <RepositoryFinder onChange={setSelectedRepo} />
+                <Subheading className="text-center">
+                    Projects allow you to manage prebuilds and workspaces for your repository.{" "}
+                    <a
+                        href="https://www.gitpod.io/docs/configure/projects"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="gp-link"
+                    >
+                        Learn more
+                    </a>
+                </Subheading>
+
+                <InputField label="Repository">
+                    <RepositoryFinder onChange={setSelectedRepo} selectedContextURL={selectedRepo?.url} />
+                </InputField>
             </ModalBody>
             <ModalFooter
                 alert={

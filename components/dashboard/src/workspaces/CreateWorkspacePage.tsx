@@ -4,7 +4,13 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AdditionalUserData, CommitContext, GitpodServer, WithReferrerContext } from "@gitpod/gitpod-protocol";
+import {
+    AdditionalUserData,
+    CommitContext,
+    GitpodServer,
+    SuggestedRepository,
+    WithReferrerContext,
+} from "@gitpod/gitpod-protocol";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
@@ -131,12 +137,15 @@ export function CreateWorkspacePage() {
     // In addition to updating state, we want to update the url hash as well
     // This allows the contextURL to persist if user changes orgs, or copies/shares url
     const handleContextURLChange = useCallback(
-        (newContextURL: string, projectID?: string) => {
+        // (newContextURL: string, projectID?: string) => {
+        (repo: SuggestedRepository) => {
             // we disable auto start if the user changes the context URL
             setAutostart(false);
-            setContextURL(newContextURL);
-            setSelectedProjectID(projectID);
-            history.replace(`#${newContextURL}`);
+            // TODO: consider storing SuggestedRepository as state vs. discrete props
+            setContextURL(repo?.url);
+            setSelectedProjectID(repo?.projectId);
+            // TOOD: consider dropping this - it's a lossy conversion
+            history.replace(`#${repo?.url}`);
         },
         [history],
     );
@@ -383,9 +392,10 @@ export function CreateWorkspacePage() {
 
                     <InputField>
                         <RepositoryFinder
-                            setSelection={handleContextURLChange}
+                            onChange={handleContextURLChange}
                             selectedContextURL={contextURL}
                             selectedProjectID={selectedProjectID}
+                            expanded={!contextURL}
                             disabled={createWorkspaceMutation.isStarting}
                         />
                     </InputField>

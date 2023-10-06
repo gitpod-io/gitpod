@@ -237,7 +237,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                     <div
                         tabIndex={0}
                         ref={setDropdownEl}
-                        className="bg-gray-100 dark:bg-gray-800 rounded-b-lg p-2 filter drop-shadow-xl"
+                        className="bg-gray-100 dark:bg-gray-800 rounded-b-lg p-2 filter drop-shadow-xl z-50"
                         onBlur={handleBlur}
                         style={triggerStyles}
                         {...attributes.popper}
