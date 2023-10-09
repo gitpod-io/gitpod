@@ -19,45 +19,6 @@ export interface ProjectSettings {
      */
     prebuilds?: PrebuildSettings;
 
-    /** @deprecated see `Project.settings.prebuilds.enabled` instead. */
-    enablePrebuilds?: boolean;
-    /**
-     * Wether prebuilds (if enabled) should only be started on the default branch.
-     * Defaults to `true` on project creation.
-     *
-     * @deprecated see `Project.settings.prebuilds.branchStrategy` instead.
-     */
-    prebuildDefaultBranchOnly?: boolean;
-    /**
-     * Use this pattern to match branch names to run prebuilds on.
-     * The pattern matching will only be applied if prebuilds are enabled and
-     * they are not limited to the default branch.
-     *
-     * @deprecated see `Project.settings.prebuilds.branchMatchingPattern` instead.
-     */
-    prebuildBranchPattern?: string;
-    /**
-     * how many commits in the commit history a prebuild is good (undefined and 0 means every commit is prebuilt)
-     *
-     * @deprecated see `Project.settings.prebuilds.intervall` instead.
-     */
-    prebuildEveryNthCommit?: number;
-
-    /**
-     * @deprecated always false
-     */
-    useIncrementalPrebuilds?: boolean;
-
-    /**
-     * @deprecated always true (we should kill dangling prebuilds)
-     */
-    keepOutdatedPrebuildsRunning?: boolean;
-    // whether new workspaces can start on older prebuilds and incrementally update
-    /**
-     * @deprecated always true
-     */
-    allowUsingPreviousPrebuilds?: boolean;
-
     // preferred workspace classes
     workspaceClasses?: WorkspaceClasses;
 }

@@ -15,7 +15,7 @@ import "mocha";
 import { OrganizationService } from "../orgs/organization-service";
 import { expectError } from "../test/expect-utils";
 import { createTestContainer } from "../test/service-testing-container-module";
-import { ProjectsService } from "./projects-service";
+import { OldProjectSettings, ProjectsService } from "./projects-service";
 import { daysBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 
 const expect = chai.expect;
@@ -200,7 +200,7 @@ describe("ProjectsService", async () => {
             name: "my-project",
             cloneUrl,
             creationTime: daysBefore(new Date().toISOString(), 20),
-            settings: {
+            settings: <OldProjectSettings>{
                 enablePrebuilds: true,
                 prebuildEveryNthCommit: 3,
                 workspaceClasses: { prebuild: "ultra" },
@@ -225,7 +225,7 @@ describe("ProjectsService", async () => {
             name: "my-project",
             cloneUrl,
             creationTime: daysBefore(new Date().toISOString(), 1),
-            settings: {
+            settings: <OldProjectSettings>{
                 enablePrebuilds: true,
                 prebuildEveryNthCommit: 3,
                 workspaceClasses: { prebuild: "ultra" },
@@ -250,7 +250,7 @@ describe("ProjectsService", async () => {
             name: "my-project",
             cloneUrl,
             creationTime: daysBefore(new Date().toISOString(), 1),
-            settings: {
+            settings: <OldProjectSettings>{
                 enablePrebuilds: true,
                 prebuildEveryNthCommit: 13,
                 workspaceClasses: { prebuild: "ultra" },
