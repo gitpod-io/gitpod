@@ -69,7 +69,8 @@ export class Authorizer {
             consistency,
         });
 
-        return this.authorizer.check(req, { userId });
+        const result = await this.authorizer.check(req, { userId });
+        return result.permitted;
     }
 
     async checkPermissionOnInstallation(userId: string, permission: InstallationPermission): Promise<void> {
@@ -98,7 +99,8 @@ export class Authorizer {
             consistency,
         });
 
-        return this.authorizer.check(req, { userId });
+        const result = await this.authorizer.check(req, { userId });
+        return result.permitted;
     }
 
     async checkPermissionOnOrganization(userId: string, permission: OrganizationPermission, orgId: string) {
@@ -128,7 +130,8 @@ export class Authorizer {
             consistency,
         });
 
-        return this.authorizer.check(req, { userId });
+        const result = await this.authorizer.check(req, { userId });
+        return result.permitted;
     }
 
     async checkPermissionOnProject(userId: string, permission: ProjectPermission, projectId: string) {
@@ -158,7 +161,8 @@ export class Authorizer {
             consistency,
         });
 
-        return this.authorizer.check(req, { userId });
+        const result = await this.authorizer.check(req, { userId });
+        return result.permitted;
     }
 
     async checkPermissionOnUser(userId: string, permission: UserPermission, resourceUserId: string) {
@@ -192,7 +196,8 @@ export class Authorizer {
             consistency,
         });
 
-        return this.authorizer.check(req, { userId }, forceEnablement);
+        const result = await this.authorizer.check(req, { userId }, forceEnablement);
+        return result.permitted;
     }
 
     async checkPermissionOnWorkspace(userId: string, permission: WorkspacePermission, workspaceId: string) {
