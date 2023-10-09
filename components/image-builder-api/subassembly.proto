@@ -39,6 +39,10 @@ message SubassemblyStatus {
     // URL is a URL from which the subassembly can be downloaded.
     // Expect this field to only be present when the phase is "available".
     string url = 4;
+
+    // manifest describes the requirements of the subassembly
+    // Expect this field to only be present when the phase is "available".
+    bytes manifest = 5;
 }
 
 enum SubassemblyPhase {
