@@ -4,15 +4,15 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { createPromiseClient } from "@bufbuild/connect";
-import { createConnectTransport } from "@bufbuild/connect-web";
+import { createPromiseClient } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-web";
 import { Project as ProtocolProject, Team as ProtocolTeam } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
-import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connectweb";
-import { TeamsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
-import { TokensService } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_connectweb";
-import { ProjectsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_connectweb";
-import { WorkspacesService } from "@gitpod/public-api/lib/gitpod/experimental/v1/workspaces_connectweb";
-import { OIDCService } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_connectweb";
+import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connect";
+import { TeamsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connect";
+import { TokensService } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_connect";
+import { ProjectsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_connect";
+import { WorkspacesService } from "@gitpod/public-api/lib/gitpod/experimental/v1/workspaces_connect";
+import { OIDCService } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_connect";
 import { getMetricsInterceptor } from "@gitpod/public-api/lib/metrics";
 import { Team } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";

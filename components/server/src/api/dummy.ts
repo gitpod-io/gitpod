@@ -4,9 +4,9 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { HandlerContext, ServiceImpl } from "@bufbuild/connect";
+import { HandlerContext, ServiceImpl } from "@connectrpc/connect";
 import { User } from "@gitpod/gitpod-protocol";
-import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connectweb";
+import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connect";
 import {
     LotsOfRepliesRequest,
     LotsOfRepliesResponse,

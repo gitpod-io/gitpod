@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "private": true,
   "dependencies": {
-    "@bufbuild/connect-web": "^0.13.0",
+    "@connectrpc/connect-web": "1.1.2",
+    "@connectrpc/connect": "1.1.2",
     "@gitpod/gitpod-protocol": "0.1.5",
     "@gitpod/public-api": "0.1.5",
     "@stripe/react-stripe-js": "^1.7.2",

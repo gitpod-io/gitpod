@@ -22,7 +22,7 @@ plugins:
     out: typescript/src
     opt: target=ts
     path: typescript/node_modules/.bin/protoc-gen-es
-  - name: connect-web
+  - name: connect-es
     out: typescript/src
     opt: target=ts
-    path: typescript/node_modules/.bin/protoc-gen-connect-web
+    path: typescript/node_modules/.bin/protoc-gen-connect-es

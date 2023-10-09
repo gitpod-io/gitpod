@@ -21,7 +21,7 @@ import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/fronten
 import { RemoteTrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
 import { helloService } from "./public-api";
 import { getExperimentsClient } from "../experiments/client";
-import { ConnectError, Code } from "@bufbuild/connect";
+import { ConnectError, Code } from "@connectrpc/connect";
 import { instrumentWebSocket } from "./metrics";
 
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());

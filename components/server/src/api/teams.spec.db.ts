@@ -3,12 +3,12 @@
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
-import { Code, ConnectError, PromiseClient, createPromiseClient } from "@bufbuild/connect";
-import { createConnectTransport } from "@bufbuild/connect-node";
+import { Code, ConnectError, PromiseClient, createPromiseClient } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-node";
 import { Timestamp } from "@bufbuild/protobuf";
 import { TeamDB, TypeORM, UserDB, testContainer } from "@gitpod/gitpod-db/lib";
 import { DBTeam } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team";
-import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
+import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connect";
 import { GetTeamRequest, Team, TeamMember, TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { suite, test, timeout } from "@testdeck/mocha";
 import * as chai from "chai";
