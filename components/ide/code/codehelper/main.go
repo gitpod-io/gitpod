@@ -5,7 +5,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -49,10 +48,6 @@ func main() {
 	log.Info("codehelper started")
 	startTime := time.Now()
 
-	if err := replaceOpenVSXUrl(); err != nil {
-		log.WithError(err).Error("failed to replace OpenVSX URL")
-	}
-
 	phaseDone := phaseLogging("ResolveWsInfo")
 	cstate, wsInfo, err := resolveWorkspaceInfo(context.Background())
 	if err != nil || wsInfo == nil {
@@ -67,18 +62,6 @@ func main() {
 		return
 	}
 	domain := url.Hostname()
-
-	if wsInfo.DebugWorkspaceType != supervisor.DebugWorkspaceType_noDebug {
-		// TODO actually should be performed always
-		// the better way would be to apply replacements during a workspace start
-		// to aling with content in blobserve
-		if err := prepareWebWorkbenchMain(domain); err != nil {
-			log.WithError(err).Error("failed to prepare web workbench")
-		}
-		if err := prepareServerMain(domain); err != nil {
-			log.WithError(err).Error("failed to prepare server")
-		}
-	}
 
 	// code server args install extension with id
 	args := []string{}
@@ -236,61 +219,4 @@ func phaseLogging(phase string) context.CancelFunc {
 		log.WithField("phase", phase).WithField("duration", duration).Info("phase end")
 	}()
 	return cancel
-}
-
-func replaceOpenVSXUrl() error {
-	phase := phaseLogging("ReplaceOpenVSXUrl")
-	defer phase()
-	b, err := os.ReadFile(ProductJsonLocation)
-	if err != nil {
-		return errors.New("failed to read product.json: " + err.Error())
-	}
-	b = replaceOpenVSX(b)
-	if err := os.WriteFile(ProductJsonLocation, b, 0644); err != nil {
-		return errors.New("failed to write product.json: " + err.Error())
-	}
-	return nil
-}
-
-// TODO it is be applied as well by blobserve if served for regular workspace location
-// reconsider how to configure in all modes, i.e. regular, debug, dev
-func prepareWebWorkbenchMain(domain string) error {
-	phase := phaseLogging("prepareWebWorkbenchMain")
-	defer phase()
-	b, err := os.ReadFile(WebWorkbenchMainLocation)
-	if err != nil {
-		return errors.New("failed to read " + WebWorkbenchMainLocation + ": " + err.Error())
-	}
-	b = bytes.ReplaceAll(b, []byte("vscode-cdn.net"), []byte(domain))
-	b = bytes.ReplaceAll(b, []byte("ide.gitpod.io/code/markeplace.json"), []byte(fmt.Sprintf("ide.%s/code/marketplace.json", domain)))
-
-	b = replaceOpenVSX(b)
-
-	if err := os.WriteFile(WebWorkbenchMainLocation, b, 0644); err != nil {
-		return errors.New("failed to write " + WebWorkbenchMainLocation + ": " + err.Error())
-	}
-	return nil
-}
-
-func prepareServerMain(domain string) error {
-	phase := phaseLogging("prepareServerMain")
-	defer phase()
-	b, err := os.ReadFile(ServerMainLocation)
-	if err != nil {
-		return errors.New("failed to read " + ServerMainLocation + ": " + err.Error())
-	}
-	b = bytes.ReplaceAll(b, []byte("https://*.vscode-cdn.net"), []byte(fmt.Sprintf("https://%s https://*.%s", domain, domain)))
-	if err := os.WriteFile(ServerMainLocation, b, 0644); err != nil {
-		return errors.New("failed to write " + ServerMainLocation + ": " + err.Error())
-	}
-	return nil
-}
-
-func replaceOpenVSX(b []byte) []byte {
-	registryUrl := os.Getenv("VSX_REGISTRY_URL")
-	if registryUrl != "" {
-		b = bytes.ReplaceAll(b, []byte("https://open-vsx.org"), []byte(registryUrl))
-	}
-	b = bytes.ReplaceAll(b, []byte("{{extensionsGalleryItemUrl}}"), []byte("https://open-vsx.org/vscode/item"))
-	return bytes.ReplaceAll(b, []byte("{{trustedDomain}}"), []byte("https://open-vsx.org"))
 }
