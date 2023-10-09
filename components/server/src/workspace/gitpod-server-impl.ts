@@ -2571,20 +2571,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             if (!host) {
                 throw Error("Unknown host: " + parsedUrl?.host);
             }
-            if (host === "github.com" && this.config.githubApp?.enabled) {
-                const availableRepositories = await this.githubAppSupport.getProviderRepositoriesForUser({
-                    user: currentUser,
-                    provider: "github.com",
-                });
-                return availableRepositories.some(
-                    (r) => r?.cloneUrl?.toLocaleLowerCase() === cloneURL?.toLocaleLowerCase(),
-                );
-            } else {
-                return await this.scmService.canInstallWebhook(currentUser, cloneURL);
 
-                // note: the GitHub App based check is not included in the ProjectService due
-                // to a circular dependency problem which would otherwise occur.
-            }
+            // TODO: do we still need this check?
+            return await this.scmService.canInstallWebhook(currentUser, cloneURL);
+            // note: the GitHub App based check is not included in the ProjectService due
+            // to a circular dependency problem which would otherwise occur.
         } catch (error) {
             log.error("Failed to check precondition for creating a project.");
         }
