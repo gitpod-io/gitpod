@@ -148,7 +148,7 @@ scripts:
     srcs:
       - components/**/*
     script: |
-      GO_COMPONENTS=( local-app-api content-service-api image-builder-api registry-facade-api supervisor-api ws-daemon-api ws-manager-api ws-manager-bridge-api usage-api )
+      GO_COMPONENTS=( local-app-api content-service-api image-builder-api registry-facade-api supervisor-api ws-daemon-api ws-manager-api ws-manager-bridge-api usage-api spicedb )
 
       for COMPONENT in "${GO_COMPONENTS[@]}";do
         echo "Generating code for component $COMPONENT..."
@@ -157,7 +157,7 @@ scripts:
         popd > /dev/null
       done
 
-      WEB_COMPONENTS=( local-app-api/typescript-grpcweb supervisor-api/typescript-grpc supervisor-api/typescript-grpcweb )
+      WEB_COMPONENTS=( local-app-api/typescript-grpcweb supervisor-api/typescript-grpc supervisor-api/typescript-grpcweb spicedb/typescript )
       for COMPONENT in "${WEB_COMPONENTS[@]}";do
         echo "Generating code for component $COMPONENT..."
         pushd $COMPONENT > /dev/null

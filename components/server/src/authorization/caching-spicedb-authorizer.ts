@@ -7,8 +7,10 @@
 import { v1 } from "@authzed/authzed-node";
 import { CheckResult, DeletionResult, SpiceDBAuthorizer, SpiceDBAuthorizerImpl } from "./spicedb-authorizer";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { clearZedTokenOnContext, getZedTokenFromContext, setZedTokenToContext } from "../util/log-context";
+import { base64decode } from "@jmondi/oauth2-server";
+import { DecodedZedToken } from "@gitpod/spicedb-impl/lib/impl/v1/impl.pb";
 
 export type ZedTokenCacheKV = [objectRef: v1.ObjectReference | undefined, token: string | undefined];
 export const ZedTokenCache = Symbol("ZedTokenCache");
@@ -21,8 +23,12 @@ export interface ZedTokenCache {
 /**
  * Works as a caching decorator for SpiceDBAuthorizerImpl. Delegates the actual caching strategy to ZedTokenCache.
  */
+@injectable()
 export class CachingSpiceDBAuthorizer implements SpiceDBAuthorizer {
-    constructor(private readonly impl: SpiceDBAuthorizerImpl, private readonly tokenCache: ZedTokenCache) {}
+    constructor(
+        @inject(SpiceDBAuthorizerImpl) private readonly impl: SpiceDBAuthorizerImpl,
+        @inject(ZedTokenCache) private readonly tokenCache: ZedTokenCache,
+    ) {}
 
     async check(
         req: v1.CheckPermissionRequest,
@@ -148,6 +154,17 @@ namespace StoredZedToken {
     }
 
     export function fromToken(token: string): StoredZedToken | undefined {
-        return undefined;
+        // following https://github.com/authzed/spicedb/blob/786555c24af98abfe3f832c94dbae5ca518dcf50/pkg/zedtoken/zedtoken.go#L64-L100
+        const decodedBytes = base64decode(token);
+        const decodedToken = DecodedZedToken.decode(Buffer.from(decodedBytes, "utf8")).v1;
+        if (!decodedToken) {
+            return undefined;
+        }
+
+        // for MySQL:
+        //  - https://github.com/authzed/spicedb/blob/main/internal/datastore/mysql/revisions.go#L182C1-L189C2
+        //  - https://github.com/authzed/spicedb/blob/786555c24af98abfe3f832c94dbae5ca518dcf50/pkg/datastore/revision/decimal.go#L53
+        const timestamp = parseInt(decodedToken.revision, 10);
+        return { token, timestamp };
     }
 }
