@@ -68,7 +68,11 @@ export const CreateProjectModal: FC<Props> = ({ onClose, onCreated }) => {
                             </a>
                         </Subheading>
                         <InputField label="Repository">
-                            <RepositoryFinder onChange={setSelectedRepo} selectedContextURL={selectedRepo?.url} />
+                            <RepositoryFinder
+                                onChange={setSelectedRepo}
+                                selectedContextURL={selectedRepo?.url}
+                                selectedProjectID={selectedRepo?.projectId}
+                            />
                         </InputField>
                     </>
                 )}
