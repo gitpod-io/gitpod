@@ -155,11 +155,21 @@ export default function ProjectsPage() {
                                 key="new-project"
                                 className="h-52 border-dashed border-2 border-gray-100 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl focus:bg-kumquat-light transition ease-in-out group"
                             >
-                                <Link to={projectsPathNew} data-analytics='{"button_type":"card"}'>
-                                    <div className="flex h-full">
+                                {createProjectModal ? (
+                                    // We should be using a button here, but will handle it with the new projects list work
+                                    <div
+                                        className="cursor-pointer flex h-full"
+                                        onClick={() => setShowCreateProjectModal(true)}
+                                    >
                                         <div className="m-auto text-gray-400 dark:text-gray-600">New Project</div>
                                     </div>
-                                </Link>
+                                ) : (
+                                    <Link to={projectsPathNew} data-analytics='{"button_type":"card"}'>
+                                        <div className="flex h-full">
+                                            <div className="m-auto text-gray-400 dark:text-gray-600">New Project</div>
+                                        </div>
+                                    </Link>
+                                )}
                             </div>
                         )}
                     </div>

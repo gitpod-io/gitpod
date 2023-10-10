@@ -10,10 +10,10 @@ import { Button } from "../../components/Button";
 import { CreateProjectArgs, useCreateProject } from "../../data/projects/create-project-mutation";
 import { Project, SuggestedRepository } from "@gitpod/gitpod-protocol";
 import RepositoryFinder from "../../components/RepositoryFinder";
-import { useToast } from "../../components/toasts/Toasts";
 import { InputField } from "../../components/forms/InputField";
 import { Subheading } from "../../components/typography/headings";
 import { AuthorizeGit, useNeedsGitAuthorization } from "../../components/AuthorizeGit";
+import { useTemporaryState } from "../../hooks/use-temporary-value";
 
 type Props = {
     onCreated: (project: Project) => void;
@@ -24,11 +24,11 @@ export const CreateProjectModal: FC<Props> = ({ onClose, onCreated }) => {
     const needsGitAuth = useNeedsGitAuthorization();
     const [selectedRepo, setSelectedRepo] = useState<SuggestedRepository>();
     const createProject = useCreateProject();
-    const { toast } = useToast();
+    const [createErrorMsg, setCreateErrorMsg] = useTemporaryState("", 3000);
 
     const handleSubmit = useCallback(() => {
         if (!selectedRepo) {
-            toast("Please select a repository");
+            setCreateErrorMsg("Please select a repository");
             return;
         }
 
@@ -38,14 +38,17 @@ export const CreateProjectModal: FC<Props> = ({ onClose, onCreated }) => {
             name: projectName,
             slug: projectName,
             cloneUrl: selectedRepo.url,
-            // TODO: do we still need this?
             appInstallationId: "",
         };
 
         createProject.mutate(newProjectArgs, {
             onSuccess: onCreated,
         });
-    }, [createProject, onCreated, selectedRepo, toast]);
+    }, [createProject, onCreated, selectedRepo, setCreateErrorMsg]);
+
+    const errorMessage =
+        createErrorMsg ||
+        (createProject.isError && (createProject.error?.message ?? "There was a problem creating your project"));
 
     return (
         <Modal visible onClose={onClose} onSubmit={handleSubmit}>
@@ -56,7 +59,7 @@ export const CreateProjectModal: FC<Props> = ({ onClose, onCreated }) => {
                     <AuthorizeGit />
                 ) : (
                     <>
-                        <Subheading className="text-center">
+                        <Subheading className="text-center mb-8">
                             Projects allow you to manage prebuilds and workspaces for your repository.{" "}
                             <a
                                 href="https://www.gitpod.io/docs/configure/projects"
@@ -67,7 +70,7 @@ export const CreateProjectModal: FC<Props> = ({ onClose, onCreated }) => {
                                 Learn more
                             </a>
                         </Subheading>
-                        <InputField label="Repository">
+                        <InputField label="Repository" className="mb-8">
                             <RepositoryFinder
                                 selectedContextURL={selectedRepo?.url}
                                 selectedProjectID={selectedRepo?.projectId}
@@ -78,15 +81,7 @@ export const CreateProjectModal: FC<Props> = ({ onClose, onCreated }) => {
                     </>
                 )}
             </ModalBody>
-            <ModalFooter
-                alert={
-                    createProject.isError && (
-                        <ModalFooterAlert type="danger">
-                            {createProject.error.message || "There was a problem creating your project"}
-                        </ModalFooterAlert>
-                    )
-                }
-            >
+            <ModalFooter alert={errorMessage && <ModalFooterAlert type="danger">{errorMessage}</ModalFooterAlert>}>
                 <Button type="secondary" onClick={onClose}>
                     Cancel
                 </Button>

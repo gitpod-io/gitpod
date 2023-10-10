@@ -137,7 +137,6 @@ export function CreateWorkspacePage() {
     // In addition to updating state, we want to update the url hash as well
     // This allows the contextURL to persist if user changes orgs, or copies/shares url
     const handleContextURLChange = useCallback(
-        // (newContextURL: string, projectID?: string) => {
         (repo: SuggestedRepository) => {
             // we disable auto start if the user changes the context URL
             setAutostart(false);
