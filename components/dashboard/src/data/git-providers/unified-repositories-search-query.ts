@@ -9,27 +9,52 @@ import { useSearchRepositories } from "./search-repositories-query";
 import { useSuggestedRepositories } from "./suggested-repositories-query";
 import { useMemo } from "react";
 
+type UnifiedRepositorySearchArgs = {
+    searchString: string;
+    // If true, excludes projects and only shows 1 entry per repo
+    excludeProjects?: boolean;
+};
 // Combines the suggested repositories and the search repositories query into one hook
-export const useUnifiedRepositorySearch = ({ searchString }: { searchString: string }) => {
+export const useUnifiedRepositorySearch = ({ searchString, excludeProjects = false }: UnifiedRepositorySearchArgs) => {
     const suggestedQuery = useSuggestedRepositories();
     const searchQuery = useSearchRepositories({ searchString });
 
     const filteredRepos = useMemo(() => {
-        const repoMap = new Map<string, SuggestedRepository>(
-            (suggestedQuery.data || []).map((r) => [`${r.url}:${r.projectId || ""}`, r]),
-        );
+        const repoMap = new Map<string, SuggestedRepository>();
+
+        // Add suggested results to map
+        for (const repo of suggestedQuery.data || []) {
+            const key = excludeProjects ? repo.url : `${repo.url}:${repo.projectId || ""}`;
+
+            const newEntry = {
+                ...(repoMap.get(key) || {}),
+                ...repo,
+            };
+            if (excludeProjects) {
+                // TODO: would be great if we can always include repositoryName on SuggestedRepository entities, then we could remove this
+                newEntry.repositoryName = newEntry.repositoryName || newEntry.projectName;
+                newEntry.projectName = undefined;
+            }
+            repoMap.set(key, newEntry);
+        }
 
         // Merge the search results into the suggested results
         for (const repo of searchQuery.data || []) {
-            const key = `${repo.url}:${repo.projectId || ""}`;
+            const key = excludeProjects ? repo.url : `${repo.url}:${repo.projectId || ""}`;
 
-            if (!repoMap.has(key)) {
-                repoMap.set(key, repo);
+            const newEntry = {
+                ...(repoMap.get(key) || {}),
+                ...repo,
+            };
+            if (excludeProjects) {
+                newEntry.repositoryName = newEntry.repositoryName || newEntry.projectName;
+                newEntry.projectName = undefined;
             }
+            repoMap.set(key, newEntry);
         }
 
         return filterRepos(searchString, Array.from(repoMap.values()));
-    }, [searchQuery.data, searchString, suggestedQuery.data]);
+    }, [excludeProjects, searchQuery.data, searchString, suggestedQuery.data]);
 
     return {
         data: filteredRepos,

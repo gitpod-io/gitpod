@@ -17,6 +17,7 @@ interface RepositoryFinderProps {
     selectedProjectID?: string;
     disabled?: boolean;
     expanded?: boolean;
+    excludeProjects?: boolean;
     onChange?: (repo: SuggestedRepository) => void;
 }
 
@@ -25,10 +26,11 @@ export default function RepositoryFinder({
     selectedProjectID,
     disabled,
     expanded,
+    excludeProjects = false,
     onChange,
 }: RepositoryFinderProps) {
     const [searchString, setSearchString] = useState("");
-    const { data: repos, isLoading, isSearching } = useUnifiedRepositorySearch({ searchString });
+    const { data: repos, isLoading, isSearching } = useUnifiedRepositorySearch({ searchString, excludeProjects });
 
     const handleSelectionChange = useCallback(
         (selectedID: string) => {
@@ -144,7 +146,7 @@ const SuggestedRepositoryOption: FC<SuggestedRepositoryOptionProps> = ({ repo })
             aria-label={`${repo.projectId ? "Project" : "Repo"}: ${repo.url}`}
         >
             <span className={"pr-2"}>
-                <RepositoryIcon className={"w-5 h-5 text-gray-400"} />
+                <RepositoryIcon className={`w-5 h-5 ${repo.projectId ? "text-gray-400" : "text-gray-400/50"}`} />
             </span>
 
             {name && (
