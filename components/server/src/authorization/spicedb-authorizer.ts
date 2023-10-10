@@ -130,7 +130,10 @@ export class SpiceDBAuthorizerImpl implements SpiceDBAuthorizer {
                     this.callOptions,
                 ),
             );
-            log.info("[spicedb] Successfully wrote relationships.", { response, updates });
+            log.info("[spicedb] Successfully wrote relationships.", {
+                response: new TrustedValue(response),
+                updates: new TrustedValue(updates),
+            });
 
             return response;
         } finally {
