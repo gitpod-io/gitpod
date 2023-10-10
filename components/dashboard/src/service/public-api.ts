@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Code, ConnectError, Interceptor, createPromiseClient } from "@connectrpc/connect";
+import { Interceptor, createPromiseClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { Project as ProtocolProject, Team as ProtocolTeam } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connect";
@@ -19,23 +19,45 @@ import { TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
 import { TeamMember, TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { Project } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_pb";
 
+class WrapError extends Error {
+    constructor(msg: string, readonly cause: any, readonly code?: string) {
+        super();
+
+        let originalMessage = cause?.message;
+        if (!originalMessage) {
+            if (cause instanceof Error) {
+                originalMessage = cause?.toString();
+            } else {
+                try {
+                    originalMessage = JSON.stringify(cause);
+                } catch {}
+            }
+        }
+        this.message = `${msg}: ${originalMessage}`;
+
+        if (cause instanceof Error) {
+            this.name = cause.name;
+            this.stack = this.stack + "\n\n" + cause.stack;
+        }
+
+        this.code ??= cause?.code;
+    }
+}
+
 function getLogErrorInterceptor(): Interceptor {
     return (next) => async (req) => {
         try {
             const resp = await next(req);
             return resp;
         } catch (e) {
-            // TODO: wrap error with method?
-            const err = ConnectError.from(e);
-            console.error(`failed to call papi: ${req.method}, code: ${Code[err.code]}`, e);
-            throw e;
+            throw new WrapError(`failed to call papi: ${req.method}`, e);
         }
     };
 }
 
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
-    interceptors: [getMetricsInterceptor(), getLogErrorInterceptor()],
+    interceptors: [getLogErrorInterceptor(), getMetricsInterceptor()],
     defaultTimeoutMs: 4000,
 });
 
