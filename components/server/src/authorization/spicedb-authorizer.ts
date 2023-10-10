@@ -212,7 +212,8 @@ export class SpiceDBAuthorizer {
     }
 
     async readRelationships(req: v1.ReadRelationshipsRequest): Promise<v1.ReadRelationshipsResponse[]> {
-        // pass through with given consistency/caching for now, as we only use it for reflection so far
+        req.consistency = await this.tokenCache.consistency(undefined);
+        incSpiceDBRequestsCheckTotal(req.consistency?.requirement?.oneofKind || "undefined");
         return tryThree("readRelationships failed.", () => this.client.readRelationships(req, this.callOptions));
     }
 
@@ -247,7 +248,7 @@ function getContext(): ContextWithZedToken {
 export class RequestLocalZedTokenCache implements ZedTokenCache {
     constructor() {}
 
-    async get(objectRef: v1.ObjectReference): Promise<string | undefined> {
+    async get(objectRef: v1.ObjectReference | undefined): Promise<string | undefined> {
         return getContext().zedToken?.token;
     }
 
@@ -285,9 +286,6 @@ export class RequestLocalZedTokenCache implements ZedTokenCache {
                     fullyConsistent: true,
                 },
             });
-        }
-        if (!resourceRef) {
-            return fullyConsistent();
         }
 
         const zedToken = await this.get(resourceRef);
