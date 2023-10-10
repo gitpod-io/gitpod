@@ -17,7 +17,7 @@ import { ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { OrganizationService } from "../orgs/organization-service";
 import { UserService } from "../user/user-service";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
-import { SYSTEM_USER } from "../authorization/authorizer";
+import { SYSTEM_USER } from "../authorization/definitions";
 
 @injectable()
 export class IamSessionApp {

@@ -41,7 +41,7 @@ import { RepoURL } from "../repohost";
 import { ApplicationError, ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UserService } from "../user/user-service";
 import { ProjectsService } from "../projects/projects-service";
-import { SYSTEM_USER } from "../authorization/authorizer";
+import { SYSTEM_USER } from "../authorization/definitions";
 
 /**
  * GitHub app urls:

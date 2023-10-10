@@ -18,6 +18,7 @@ import {
     ProjectPermission,
     Relation,
     ResourceType,
+    SYSTEM_USER,
     UserPermission,
     WorkspacePermission,
     rel,
@@ -47,12 +48,6 @@ export function createInitializingAuthorizer(spiceDbAuthorizer: SpiceDBAuthorize
         },
     });
 }
-
-/**
- * We need to call our internal API with system permissions in some cases.
- * As we don't have other ways to represent that (e.g. ServiceAccounts), we use this magic constant to designated it.
- */
-export const SYSTEM_USER = "SYSTEM_USER";
 
 export class Authorizer {
     constructor(private authorizer: SpiceDBAuthorizer) {}

@@ -18,8 +18,8 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { Config } from "../config";
 import { Job } from "./runner";
 import { WorkspaceService } from "../workspace/workspace-service";
-import { SYSTEM_USER } from "../authorization/authorizer";
 import { StorageClient } from "../storage/storage-client";
+import { SYSTEM_USER } from "../authorization/definitions";
 
 /**
  * The WorkspaceGarbageCollector has two tasks:

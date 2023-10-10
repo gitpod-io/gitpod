@@ -11,7 +11,7 @@ import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
 import { createTestContainer } from "../test/service-testing-container-module";
-import { Authorizer, SYSTEM_USER } from "./authorizer";
+import { Authorizer } from "./authorizer";
 import { OrganizationService } from "../orgs/organization-service";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { UserService } from "../user/user-service";
@@ -19,6 +19,7 @@ import { ZedTokenCache } from "./caching-spicedb-authorizer";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { ConfigProvider } from "../workspace/config-provider";
 import { runWithContext } from "../util/log-context";
+import { SYSTEM_USER } from "./definitions";
 
 const expect = chai.expect;
 

@@ -22,7 +22,7 @@ import { RepoURL } from "../repohost";
 import { UserService } from "../user/user-service";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ProjectsService } from "../projects/projects-service";
-import { SYSTEM_USER } from "../authorization/authorizer";
+import { SYSTEM_USER } from "../authorization/definitions";
 
 @injectable()
 export class GitHubEnterpriseApp {

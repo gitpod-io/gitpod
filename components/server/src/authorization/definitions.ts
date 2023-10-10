@@ -10,6 +10,12 @@ import { v1 } from "@authzed/authzed-node";
 
 export const InstallationID = "1";
 
+/**
+ * We need to call our internal API with system permissions in some cases.
+ * As we don't have other ways to represent that (e.g. ServiceAccounts), we use this magic constant to designated it.
+ */
+export const SYSTEM_USER = "SYSTEM_USER";
+
 export type ResourceType =
     | UserResourceType
     | InstallationResourceType

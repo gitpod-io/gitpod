@@ -160,7 +160,7 @@ import {
 } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 import { ClientError } from "nice-grpc-common";
 import { BillingModes } from "../billing/billing-mode";
-import { Authorizer, SYSTEM_USER, isFgaChecksEnabled } from "../authorization/authorizer";
+import { Authorizer, isFgaChecksEnabled } from "../authorization/authorizer";
 import { OrganizationService } from "../orgs/organization-service";
 import { RedisSubscriber } from "../messaging/redis-subscriber";
 import { UsageService } from "../orgs/usage-service";
@@ -178,7 +178,7 @@ import {
     suggestionFromUserRepo,
 } from "./suggested-repos-sorter";
 import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
-import { rel } from "../authorization/definitions";
+import { rel, SYSTEM_USER } from "../authorization/definitions";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager

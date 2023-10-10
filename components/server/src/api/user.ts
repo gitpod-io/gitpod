@@ -25,10 +25,10 @@ import {
 } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_pb";
 import { UserAuthentication } from "../user/user-authentication";
 import { WorkspaceService } from "../workspace/workspace-service";
-import { SYSTEM_USER } from "../authorization/authorizer";
 import { validate } from "uuid";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
+import { SYSTEM_USER } from "../authorization/definitions";
 
 @injectable()
 export class APIUserService implements ServiceImpl<typeof UserServiceInterface> {
