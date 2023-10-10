@@ -24,6 +24,7 @@ var idpLoginAwsOpts struct {
 	RoleARN         string
 	Profile         string
 	DurationSeconds int
+	Audience        []string
 }
 
 var idpLoginAwsCmd = &cobra.Command{
@@ -42,7 +43,7 @@ var idpLoginAwsCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
 		defer cancel()
 
-		tkn, err := idpToken(ctx, []string{idpAudienceAWS})
+		tkn, err := idpToken(ctx, idpLoginAwsOpts.Audience)
 		if err != nil {
 			return err
 		}
@@ -96,6 +97,7 @@ func init() {
 	idpLoginCmd.AddCommand(idpLoginAwsCmd)
 
 	idpLoginAwsCmd.Flags().StringVar(&idpLoginAwsOpts.RoleARN, "role-arn", os.Getenv("IDP_AWS_ROLE_ARN"), "AWS role to assume (defaults to IDP_AWS_ROLE_ARN env var)")
+	idpLoginAwsCmd.Flags().StringArrayVar(&idpLoginAwsOpts.Audience, "audience", []string{idpAudienceAWS}, "audience of the ID token")
 	idpLoginAwsCmd.Flags().StringVarP(&idpLoginAwsOpts.Profile, "profile", "p", "default", "AWS profile to configure")
 	idpLoginAwsCmd.Flags().IntVarP(&idpLoginAwsOpts.DurationSeconds, "duration-seconds", "d", 3600, "Duration in seconds for which the credentials will be valid (defaults to 3600), upper bound is controlled by the AWS maximum session duration. See https://docs.aws.amazon.com/cli/latest/reference/sts/assume-role-with-web-identity.html")
 	_ = idpLoginAwsCmd.MarkFlagFilename("profile")
