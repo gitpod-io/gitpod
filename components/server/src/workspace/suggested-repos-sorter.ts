@@ -46,6 +46,9 @@ export const sortSuggestedRepositories = (repos: SuggestedRepositoryWithSorting[
                 if ((entry.lastUse ?? 0) > (projectEntry.lastUse ?? 0)) {
                     projectEntry.lastUse = entry.lastUse;
                 }
+
+                // Fill in the repositoryName if it's missing
+                projectEntry.repositoryName = projectEntry.repositoryName || entry.repositoryName;
             }
 
             uniqueRepositories.push(projectEntry);
