@@ -66,7 +66,7 @@ export default function SelectWorkspaceClassComponent({
             onSelectionChange={internalOnSelectionChange}
             searchPlaceholder="Select class"
             disableSearch={true}
-            allOptions={selectedWsClass?.id}
+            initialValue={selectedWsClass?.id}
             disabled={workspaceClassesLoading || loading || disabled}
         >
             <WorkspaceClassDropDownElementSelected

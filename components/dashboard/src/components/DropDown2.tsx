@@ -8,8 +8,7 @@ import React, { FC, FunctionComponent, ReactNode, useCallback, useEffect, useMem
 import Arrow from "./Arrow";
 import classNames from "classnames";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
-import { usePopper } from "react-popper";
-import { Portal } from "react-portal";
+import * as RadixPopover from "@radix-ui/react-popover";
 
 export interface DropDown2Element {
     id: string;
@@ -18,6 +17,7 @@ export interface DropDown2Element {
 }
 
 export interface DropDown2Props {
+    initialValue?: string;
     getElements: (searchString: string) => DropDown2Element[];
     disabled?: boolean;
     loading?: boolean;
@@ -27,15 +27,14 @@ export interface DropDown2Props {
     onSelectionChange: (id: string) => void;
     // Meant to allow consumers to react to search changes even though state is managed internally
     onSearchChange?: (searchString: string) => void;
-    allOptions?: string;
 }
 
 export const DropDown2: FunctionComponent<DropDown2Props> = ({
+    initialValue = "",
     disabled = false,
     loading = false,
     expanded = false,
     searchPlaceholder,
-    allOptions,
     getElements,
     disableSearch,
     children,
@@ -43,85 +42,65 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
     onSearchChange,
 }) => {
     const [triggerEl, setTriggerEl] = useState<HTMLElement | null>(null);
-    const [dropdownEl, setDropdownEl] = useState<HTMLElement | null>(null);
     const [inputEl, setInputEl] = useState<HTMLElement | null>(null);
     const [showDropDown, setShowDropDown] = useState<boolean>(!disabled && !!expanded);
+    const [search, setSearch] = useState<string>("");
+    const filteredOptions = useMemo(() => getElements(search), [getElements, search]);
+    const [selectedElementTemp, setSelectedElementTemp] = useState<string | undefined>(
+        initialValue || filteredOptions[0]?.id,
+    );
 
-    // this calculates the positioning for the dropdown since it's in a Portal and not a direct child of the trigger
-    const { styles, attributes } = usePopper(triggerEl, dropdownEl, {
-        placement: "bottom",
-        modifiers: [
-            {
-                name: "offset",
-                options: {
-                    offset: [0, -10],
-                },
-            },
-        ],
-    });
+    const contentStyles = useMemo(() => ({ width: triggerEl?.clientWidth }), [triggerEl?.clientWidth]);
 
     const onSelected = useCallback(
         (elementId: string) => {
             onSelectionChange(elementId);
             setShowDropDown(false);
-            // Shift focus back to the trigger
-            triggerEl?.focus();
         },
-        [onSelectionChange, triggerEl],
-    );
-    const [search, setSearch] = useState<string>("");
-    const filteredOptions = useMemo(() => getElements(search), [getElements, search]);
-    const [selectedElementTemp, setSelectedElementTemp] = useState<string | undefined>(filteredOptions[0]?.id);
-
-    const triggerStyles = useMemo(
-        () => ({ ...styles.popper, width: triggerEl?.clientWidth }),
-        [styles.popper, triggerEl?.clientWidth],
+        [onSelectionChange],
     );
 
-    // reset search when the drop down is expanded or closed
+    // scroll to selected item when opened
     useEffect(() => {
-        updateSearch("");
-        if (allOptions) {
-            setSelectedElementTemp(allOptions);
-        }
         if (showDropDown && selectedElementTemp) {
-            document.getElementById(selectedElementTemp)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            setTimeout(() => {
+                document.getElementById(selectedElementTemp)?.scrollIntoView({ block: "nearest" });
+            }, 0);
         }
-        // we only want this behavior when showDropDown changes to true.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [showDropDown]);
 
     const updateSearch = useCallback(
         (value: string) => {
             setSearch(value);
-            if (onSearchChange) {
-                onSearchChange(value);
-            }
+            onSearchChange?.(value);
         },
         [onSearchChange],
     );
 
     const handleInputChange = useCallback((e) => updateSearch(e.target.value), [updateSearch]);
 
-    const toggleDropDown = useCallback(() => {
-        if (disabled) {
-            return;
-        }
-        setShowDropDown(!showDropDown);
-    }, [disabled, showDropDown]);
-
     const setFocussedElement = useCallback(
         (element: string) => {
             setSelectedElementTemp(element);
-            document.getElementById(element)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-            document.getElementById(element)?.focus();
+            const el = document.getElementById(element);
+            el?.scrollIntoView({ block: "nearest" });
+            el?.focus();
         },
         [setSelectedElementTemp],
     );
 
+    const handleOpenChange = useCallback(
+        (open: boolean) => {
+            updateSearch("");
+            setShowDropDown(open);
+        },
+        [updateSearch],
+    );
+
     const onKeyDown = useCallback(
         (e: React.KeyboardEvent) => {
-            if (showDropDown && e.key === "ArrowDown") {
+            if (e.key === "ArrowDown") {
                 e.preventDefault();
                 let idx = filteredOptions.findIndex((e) => e.id === selectedElementTemp);
                 while (idx++ < filteredOptions.length - 1) {
@@ -133,7 +112,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                 }
                 return;
             }
-            if (showDropDown && e.key === "ArrowUp") {
+            if (e.key === "ArrowUp") {
                 e.preventDefault();
                 let idx = filteredOptions.findIndex((e) => e.id === selectedElementTemp);
 
@@ -152,71 +131,46 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                 }
                 return;
             }
-            if (showDropDown && e.key === "Escape") {
+            if (e.key === "Escape") {
                 setShowDropDown(false);
                 triggerEl?.focus();
                 e.preventDefault();
             }
             if (e.key === "Enter") {
-                if (showDropDown && selectedElementTemp && filteredOptions.some((e) => e.id === selectedElementTemp)) {
+                if (selectedElementTemp && filteredOptions.some((e) => e.id === selectedElementTemp)) {
                     e.preventDefault();
                     onSelected(selectedElementTemp);
                 }
-                if (!showDropDown) {
-                    toggleDropDown();
-                    e.preventDefault();
-                }
             }
             if (e.key === " " && search === "") {
-                toggleDropDown();
+                handleOpenChange(false);
                 e.preventDefault();
             }
         },
         [
             filteredOptions,
+            handleOpenChange,
             inputEl,
             onSelected,
             search,
             selectedElementTemp,
             setFocussedElement,
-            showDropDown,
-            toggleDropDown,
             triggerEl,
         ],
-    );
-
-    const handleBlur = useCallback(
-        (e: React.FocusEvent) => {
-            // postpone a little, so it doesn't fire before a click event for the main element.
-            setTimeout(() => {
-                // only close if the focussed element is not child
-                if (!dropdownEl?.contains(window.document.activeElement)) {
-                    setShowDropDown(false);
-                }
-            }, 100);
-        },
-        [dropdownEl],
     );
 
     const showInputLoadingIndicator = filteredOptions.length > 0 && loading;
     const showResultsLoadingIndicator = filteredOptions.length === 0 && loading;
 
     return (
-        <div
-            onKeyDown={onKeyDown}
-            // This helps avoid automatically re-opening when clicking on the trigger el when already open
-            onMouseDown={(e) => e.preventDefault()}
-            ref={setTriggerEl}
-            tabIndex={0}
-            className={classNames(
-                "w-full relative flex flex-col rounded-lg  focus:outline-none focus:ring-2 focus:ring-blue-300",
-            )}
-        >
-            <div
+        <RadixPopover.Root defaultOpen={expanded} open={showDropDown} onOpenChange={handleOpenChange}>
+            <RadixPopover.Trigger
+                ref={setTriggerEl}
+                // TODO: cleanup classes
                 className={classNames(
-                    "h-16 bg-gray-100 dark:bg-gray-800 flex items-center px-2",
+                    "h-16 bg-gray-100 dark:bg-gray-800 flex flex-row items-center justify-start px-2 text-left",
                     // when open, just have border radius on top
-                    showDropDown ? "rounded-t-lg" : "rounded-lg",
+                    showDropDown ? "rounded-none rounded-t-lg" : "rounded-lg",
                     // Dropshadow when expanded
                     showDropDown && "filter drop-shadow-xl",
                     // hover when not disabled or expanded
@@ -224,89 +178,65 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                     // opacity when disabled
                     disabled && "opacity-70",
                 )}
-                onClick={toggleDropDown}
             >
                 {children}
                 <div className="flex-grow" />
                 <div className="mr-2">
                     <Arrow direction={showDropDown ? "up" : "down"} />
                 </div>
-            </div>
-            {showDropDown && (
-                <Portal>
-                    <div
-                        tabIndex={0}
-                        ref={setDropdownEl}
-                        className="bg-gray-100 dark:bg-gray-800 rounded-b-lg p-2 filter drop-shadow-xl z-50"
-                        onBlur={handleBlur}
-                        style={triggerStyles}
-                        {...attributes.popper}
-                    >
-                        {!disableSearch && (
-                            <div className="relative mb-2">
-                                <input
-                                    ref={setInputEl}
-                                    type="text"
-                                    autoFocus
-                                    className={"w-full focus rounded-lg"}
-                                    placeholder={searchPlaceholder}
-                                    value={search}
-                                    onChange={handleInputChange}
-                                />
-                                {showInputLoadingIndicator && (
-                                    <div className="absolute top-0 right-0 h-full flex items-center pr-2">
-                                        <Spinner className="h-4 w-4 opacity-25 animate-spin" />
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                        <ul className="max-h-60 overflow-auto">
-                            {showResultsLoadingIndicator && (
-                                <div className="flex-col space-y-2 animate-pulse">
-                                    <div className="bg-gray-300 dark:bg-gray-500 h-4 rounded" />
-                                    <div className="bg-gray-300 dark:bg-gray-500 h-4 rounded" />
+            </RadixPopover.Trigger>
+            <RadixPopover.Portal>
+                <RadixPopover.Content
+                    style={contentStyles}
+                    className="bg-gray-100 dark:bg-gray-800 rounded-b-lg p-2 filter drop-shadow-xl z-50"
+                    onKeyDown={onKeyDown}
+                >
+                    {!disableSearch && (
+                        <div className="relative mb-2">
+                            <input
+                                ref={setInputEl}
+                                type="text"
+                                autoFocus
+                                className={"w-full focus rounded-lg"}
+                                placeholder={searchPlaceholder}
+                                value={search}
+                                onChange={handleInputChange}
+                            />
+                            {showInputLoadingIndicator && (
+                                <div className="absolute top-0 right-0 h-full flex items-center pr-2">
+                                    <Spinner className="h-4 w-4 opacity-25 animate-spin" />
                                 </div>
                             )}
-                            {!showResultsLoadingIndicator && filteredOptions.length > 0 ? (
-                                filteredOptions.map((element) => {
-                                    let selectionClasses = `dark:bg-gray-800 cursor-pointer`;
-                                    if (element.id === selectedElementTemp) {
-                                        selectionClasses = `bg-gray-200 dark:bg-gray-700 cursor-pointer  focus:outline-none focus:ring-0`;
-                                    }
-                                    if (!element.isSelectable) {
-                                        selectionClasses = ``;
-                                    }
-                                    return (
-                                        <li
-                                            key={element.id}
-                                            id={element.id}
-                                            tabIndex={0}
-                                            className={
-                                                "h-min rounded-lg flex items-center px-2 py-1.5 " + selectionClasses
-                                            }
-                                            onMouseDown={() => {
-                                                if (element.isSelectable) {
-                                                    setFocussedElement(element.id);
-                                                    onSelected(element.id);
-                                                }
-                                            }}
-                                            onMouseOver={() => setFocussedElement(element.id)}
-                                            onFocus={() => setFocussedElement(element.id)}
-                                        >
-                                            {element.element}
-                                        </li>
-                                    );
-                                })
-                            ) : !showResultsLoadingIndicator ? (
-                                <li key="no-elements" className={"rounded-md "}>
-                                    <div className="h-12 pl-8 py-3 text-gray-800 dark:text-gray-200">No results</div>
-                                </li>
-                            ) : null}
-                        </ul>
-                    </div>
-                </Portal>
-            )}
-        </div>
+                        </div>
+                    )}
+                    <ul className="max-h-60 overflow-auto">
+                        {showResultsLoadingIndicator && (
+                            <div className="flex-col space-y-2 animate-pulse">
+                                <div className="bg-gray-300 dark:bg-gray-500 h-4 rounded" />
+                                <div className="bg-gray-300 dark:bg-gray-500 h-4 rounded" />
+                            </div>
+                        )}
+                        {!showResultsLoadingIndicator && filteredOptions.length > 0 ? (
+                            filteredOptions.map((element) => {
+                                return (
+                                    <Dropdown2Element
+                                        key={element.id}
+                                        element={element}
+                                        isActive={element.id === selectedElementTemp}
+                                        onSelected={onSelected}
+                                        onFocused={setFocussedElement}
+                                    />
+                                );
+                            })
+                        ) : !showResultsLoadingIndicator ? (
+                            <li key="no-elements" className={"rounded-md "}>
+                                <div className="h-12 pl-8 py-3 text-gray-800 dark:text-gray-200">No results</div>
+                            </li>
+                        ) : null}
+                    </ul>
+                </RadixPopover.Content>
+            </RadixPopover.Portal>
+        </RadixPopover.Root>
     );
 };
 
@@ -354,5 +284,38 @@ export const DropDown2SelectedElement: FC<DropDown2SelectedElementProps> = ({
                 )}
             </div>
         </div>
+    );
+};
+
+type Dropdown2ElementProps = {
+    element: DropDown2Element;
+    isActive: boolean;
+    onSelected: (id: string) => void;
+    onFocused: (id: string) => void;
+};
+
+export const Dropdown2Element: FC<Dropdown2ElementProps> = ({ element, isActive, onSelected, onFocused }) => {
+    let selectionClasses = `dark:bg-gray-800 cursor-pointer`;
+    if (isActive) {
+        selectionClasses = `bg-gray-200 dark:bg-gray-700 cursor-pointer focus:outline-none focus:ring-0`;
+    }
+    if (!element.isSelectable) {
+        selectionClasses = ``;
+    }
+    return (
+        <li
+            id={element.id}
+            tabIndex={0}
+            className={"h-min rounded-lg flex items-center px-2 py-1.5 " + selectionClasses}
+            onMouseDown={() => {
+                if (element.isSelectable) {
+                    onSelected(element.id);
+                }
+            }}
+            onMouseOver={() => onFocused(element.id)}
+            onFocus={() => onFocused(element.id)}
+        >
+            {element.element}
+        </li>
     );
 };
