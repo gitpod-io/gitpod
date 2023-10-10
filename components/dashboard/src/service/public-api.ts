@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { createPromiseClient } from "@connectrpc/connect";
+import { Code, ConnectError, Interceptor, createPromiseClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { Project as ProtocolProject, Team as ProtocolTeam } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connect";
@@ -19,9 +19,23 @@ import { TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
 import { TeamMember, TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { Project } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_pb";
 
+function getLogErrorInterceptor(): Interceptor {
+    return (next) => async (req) => {
+        try {
+            const resp = await next(req);
+            return resp;
+        } catch (e) {
+            // TODO: wrap error with method?
+            const err = ConnectError.from(e);
+            console.error(`failed to call papi: ${req.method}, code: ${Code[err.code]}`, e);
+            throw e;
+        }
+    };
+}
+
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
-    interceptors: [getMetricsInterceptor()],
+    interceptors: [getMetricsInterceptor(), getLogErrorInterceptor()],
     defaultTimeoutMs: 4000,
 });
 

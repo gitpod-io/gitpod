@@ -73,6 +73,7 @@ export function useCurrentOrg(): { data?: OrganizationInfo; isLoading: boolean }
     const orgs = useOrganizations();
     const user = useCurrentUser();
 
+    console.log("======useCurrentOrg", orgs.isLoading, user);
     if (orgs.isLoading || !orgs.data || !user) {
         return { data: undefined, isLoading: true };
     }
@@ -81,6 +82,7 @@ export function useCurrentOrg(): { data?: OrganizationInfo; isLoading: boolean }
     if (orgIdParam) {
         orgId = orgIdParam;
     }
+    console.log("======useCurrentOrg.2", orgId);
     let org = orgs.data.find((org) => org.id === orgId);
     if (!org) {
         org = orgs.data[0];
