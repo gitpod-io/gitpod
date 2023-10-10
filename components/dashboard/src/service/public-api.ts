@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Interceptor, createPromiseClient } from "@connectrpc/connect";
+import { createPromiseClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { Project as ProtocolProject, Team as ProtocolTeam } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connect";
@@ -44,29 +44,36 @@ class WrapError extends Error {
     }
 }
 
-function getLogErrorInterceptor(): Interceptor {
-    return (next) => async (req) => {
-        try {
-            const resp = await next(req);
-            return resp;
-        } catch (e) {
-            throw new WrapError(`failed to call papi: ${req.method}`, e);
-        }
-    };
-}
-
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
-    interceptors: [getLogErrorInterceptor(), getMetricsInterceptor()],
+    interceptors: [getMetricsInterceptor()],
     defaultTimeoutMs: 4000,
 });
 
-export const helloService = createPromiseClient(HelloService, transport);
-export const teamsService = createPromiseClient(TeamsService, transport);
-export const personalAccessTokensService = createPromiseClient(TokensService, transport);
-export const projectsService = createPromiseClient(ProjectsService, transport);
-export const workspacesService = createPromiseClient(WorkspacesService, transport);
-export const oidcService = createPromiseClient(OIDCService, transport);
+export const helloService = wrapServiceError(createPromiseClient(HelloService, transport));
+export const teamsService = wrapServiceError(createPromiseClient(TeamsService, transport));
+export const personalAccessTokensService = wrapServiceError(createPromiseClient(TokensService, transport));
+export const projectsService = wrapServiceError(createPromiseClient(ProjectsService, transport));
+export const workspacesService = wrapServiceError(createPromiseClient(WorkspacesService, transport));
+export const oidcService = wrapServiceError(createPromiseClient(OIDCService, transport));
+
+// We use Proxy here instead of add interceptor to transport
+// that's because AbortError is out of interceptor, connect-es will be force convert to deadline_exceeded
+// @see https://github.com/connectrpc/connect-es/blob/e0bffbab4e75e19fd7eeb9eadabe050941d39e5f/packages/connect/src/protocol/run-call.ts#L174-L181
+function wrapServiceError<T extends object>(service: T): T {
+    return new Proxy(service, {
+        get: (target, prop) => {
+            return async (...args: any[]) => {
+                try {
+                    // @ts-ignore
+                    return await target[prop](...args);
+                } catch (e) {
+                    throw new WrapError(`failed to call papi: ${String(prop)}`, e);
+                }
+            };
+        },
+    });
+}
 
 export function publicApiTeamToProtocol(team: Team): ProtocolTeam {
     return {
