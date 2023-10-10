@@ -411,8 +411,9 @@ export class ProjectsService {
         if (!!project.settings?.prebuilds) {
             return project; // already migrated
         }
+        const projectSettings = project.settings as OldProjectSettings | undefined;
         try {
-            const logCtx: any = { oldSettings: { ...project.settings } };
+            const logCtx: any = { oldSettings: { ...projectSettings } };
             const newPrebuildSettings: PrebuildSettings = { enable: false, ...Project.PREBUILD_SETTINGS_DEFAULTS };
 
             // if workspaces were running in the past week
@@ -426,16 +427,16 @@ export class ProjectsService {
                     const defaults = Project.PREBUILD_SETTINGS_DEFAULTS;
                     newPrebuildSettings.enable = true;
                     newPrebuildSettings.prebuildInterval = Math.max(
-                        project.settings?.prebuildEveryNthCommit || 0,
+                        projectSettings?.prebuildEveryNthCommit || 0,
                         defaults.prebuildInterval,
                     );
 
-                    newPrebuildSettings.branchStrategy = !!project.settings?.prebuildBranchPattern
+                    newPrebuildSettings.branchStrategy = !!projectSettings?.prebuildBranchPattern
                         ? "matched-branches"
                         : defaults.branchStrategy;
                     newPrebuildSettings.branchMatchingPattern =
-                        project.settings?.prebuildBranchPattern || defaults.branchMatchingPattern;
-                    newPrebuildSettings.workspaceClass = project.settings?.workspaceClasses?.prebuild;
+                        projectSettings?.prebuildBranchPattern || defaults.branchMatchingPattern;
+                    newPrebuildSettings.workspaceClass = projectSettings?.workspaceClasses?.prebuild;
                 }
             }
 
@@ -444,12 +445,11 @@ export class ProjectsService {
             if (!project) {
                 throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "Not found");
             }
-            if (!!project.settings?.prebuilds) {
+            if (!!projectSettings?.prebuilds) {
                 return project; // already migrated
             }
-            const newSettings = { ...project.settings };
-            project.settings = newSettings;
-            project.settings.prebuilds = newPrebuildSettings;
+            const newSettings = { ...projectSettings };
+            newSettings.prebuilds = newPrebuildSettings;
             delete newSettings.enablePrebuilds;
             delete newSettings.prebuildBranchPattern;
             delete newSettings.prebuildDefaultBranchOnly;
@@ -460,8 +460,9 @@ export class ProjectsService {
             delete newSettings.workspaceClasses?.prebuild;
             await this.projectDB.updateProject({
                 id: project.id,
-                settings: project.settings,
+                settings: newSettings,
             });
+            project.settings = newSettings;
             logCtx.newPrebuildSettings = newPrebuildSettings;
             log.info("Prebuild settings migrated.", { projectId: project.id, logCtx });
 
@@ -473,4 +474,48 @@ export class ProjectsService {
             return project;
         }
     }
+}
+
+/**
+ * @deprecated
+ */
+export interface OldProjectSettings extends ProjectSettings {
+    /** @deprecated see `Project.settings.prebuilds.enabled` instead. */
+    enablePrebuilds?: boolean;
+    /**
+     * Wether prebuilds (if enabled) should only be started on the default branch.
+     * Defaults to `true` on project creation.
+     *
+     * @deprecated see `Project.settings.prebuilds.branchStrategy` instead.
+     */
+    prebuildDefaultBranchOnly?: boolean;
+    /**
+     * Use this pattern to match branch names to run prebuilds on.
+     * The pattern matching will only be applied if prebuilds are enabled and
+     * they are not limited to the default branch.
+     *
+     * @deprecated see `Project.settings.prebuilds.branchMatchingPattern` instead.
+     */
+    prebuildBranchPattern?: string;
+    /**
+     * how many commits in the commit history a prebuild is good (undefined and 0 means every commit is prebuilt)
+     *
+     * @deprecated see `Project.settings.prebuilds.intervall` instead.
+     */
+    prebuildEveryNthCommit?: number;
+
+    /**
+     * @deprecated always false
+     */
+    useIncrementalPrebuilds?: boolean;
+
+    /**
+     * @deprecated always true (we should kill dangling prebuilds)
+     */
+    keepOutdatedPrebuildsRunning?: boolean;
+    // whether new workspaces can start on older prebuilds and incrementally update
+    /**
+     * @deprecated always true
+     */
+    allowUsingPreviousPrebuilds?: boolean;
 }
