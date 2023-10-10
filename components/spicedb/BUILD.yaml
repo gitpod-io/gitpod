@@ -59,4 +59,4 @@ scripts:
     description: "Generate definition in typescript."
     deps: []
     script: |
-      (cd codegen && go run .)
+      (cd codegen && go run . ts)

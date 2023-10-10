@@ -4,6 +4,7 @@ go 1.21
 
 require (
 	github.com/authzed/spicedb v1.24.0
+	github.com/spf13/cobra v1.7.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -35,6 +36,7 @@ require (
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-memdb v1.3.4 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jzelinskie/stringz v0.0.2 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
@@ -50,6 +52,7 @@ require (
 	github.com/samber/lo v1.38.1 // indirect
 	github.com/scylladb/go-set v1.0.2 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
 	go.opentelemetry.io/otel v1.16.0 // indirect
