@@ -352,3 +352,19 @@ export type GuardAccessCheckType = "fga" | "resource-access";
 export function reportGuardAccessCheck(type: GuardAccessCheckType) {
     guardAccessChecksTotal.labels(type).inc();
 }
+
+export const spicedbCheckRequestsTotal = new prometheusClient.Counter({
+    name: "gitpod_spicedb_requests_check_total",
+    help: "Counter for the number of check requests against SpiceDB",
+    labelNames: ["consistency"],
+});
+
+export type SpiceDBCheckConsistency =
+    | "minimizeLatency"
+    | "atLeastAsFresh"
+    | "atExactSnapshot"
+    | "fullyConsistent"
+    | "undefined";
+export function incSpiceDBRequestsCheckTotal(consistency: SpiceDBCheckConsistency) {
+    spicedbCheckRequestsTotal.labels(consistency).inc();
+}
