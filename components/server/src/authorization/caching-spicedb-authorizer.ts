@@ -11,6 +11,7 @@ import { inject, injectable } from "inversify";
 import { clearZedTokenOnContext, getZedTokenFromContext, setZedTokenToContext } from "../util/log-context";
 import { base64decode } from "@jmondi/oauth2-server";
 import { DecodedZedToken } from "@gitpod/spicedb-impl/lib/impl/v1/impl.pb";
+import { incSpiceDBRequestsCheckTotal } from "../prometheus-metrics";
 
 export type ZedTokenCacheKV = [objectRef: v1.ObjectReference | undefined, token: string | undefined];
 export const ZedTokenCache = Symbol("ZedTokenCache");
@@ -36,6 +37,8 @@ export class CachingSpiceDBAuthorizer implements SpiceDBAuthorizer {
         forceEnablement?: boolean | undefined,
     ): Promise<CheckResult> {
         req.consistency = await this.tokenCache.consistency(req.resource);
+        incSpiceDBRequestsCheckTotal(req.consistency?.requirement?.oneofKind || "undefined");
+
         const result = await this.impl.check(req, experimentsFields, forceEnablement);
         if (result.checkedAt) {
             await this.tokenCache.set([req.resource, result.checkedAt]);
@@ -139,7 +142,7 @@ export class RequestLocalZedTokenCache implements ZedTokenCache {
             if (!prev || prev.timestamp < curr.timestamp) {
                 return curr;
             }
-            return curr;
+            return prev;
         }, undefined);
     }
 }
