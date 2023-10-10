@@ -32,9 +32,17 @@ export default function ProjectsPage() {
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
     const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
 
+    // TODO: remove this once we enable createProjectModal
     const onNewProject = useCallback(() => {
         history.push(projectsPathNew);
     }, [history]);
+
+    const handleProjectCreated = useCallback(
+        (project: Project) => {
+            history.push(`/projects/${Project.slug(project)}/settings`);
+        },
+        [history],
+    );
 
     const filteredProjects = useMemo(() => {
         const filter = (project: Project) => {
@@ -158,7 +166,7 @@ export default function ProjectsPage() {
                 </div>
             )}
             {createProjectModal && showCreateProjectModal && (
-                <CreateProjectModal onClose={() => setShowCreateProjectModal(false)} onCreated={() => {}} />
+                <CreateProjectModal onClose={() => setShowCreateProjectModal(false)} onCreated={handleProjectCreated} />
             )}
         </>
     );
