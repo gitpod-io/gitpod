@@ -2197,6 +2197,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkUser("getOrganizations");
         const orgs = await this.organizationService.listOrganizationsByMember(user.id, user.id);
 
+        const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+        await sleep(5000);
+
         const filterOrg = async (org: Organization): Promise<Organization | undefined> => {
             const members = await this.organizationService.listMembers(user.id, org.id);
             if (!(await this.resourceAccessGuard.canAccess({ kind: "team", subject: org, members }, "get"))) {
