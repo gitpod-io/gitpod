@@ -16,18 +16,18 @@ import (
 	implv1 "github.com/authzed/spicedb/pkg/proto/impl/v1"
 )
 
-// codegenTypescript represents the codegenTypescript command
-var codegenTypescript = &cobra.Command{
-	Use:     "codegen ts",
-	Aliases: []string{"ts"},
-	Short:   "Generates SpiceDB API code for TypeScript",
+// codegenGo represents the codegenGo command
+var codegenGo = &cobra.Command{
+	Use:     "codegen go",
+	Aliases: []string{"go"},
+	Short:   "Generates SpiceDB API code for Go",
 	Run: func(cmd *cobra.Command, args []string) {
 		schema := GetCompiledSchema()
-		fmt.Print(generateTypeScriptDefinitions(schema))
+		fmt.Print(GenerateDefinition(schema))
 	},
 }
 
-func generateTypeScriptDefinitions(schema *compiler.CompiledSchema) string {
+func GenerateDefinition(schema *compiler.CompiledSchema) string {
 
 	resource := "export type ResourceType ="
 	resourceTypes := "export const AllResourceTypes: ResourceType[] = ["
@@ -44,7 +44,7 @@ func generateTypeScriptDefinitions(schema *compiler.CompiledSchema) string {
 		resource += "\n  | " + resourceTypeName + ""
 		resourceTypes += "\n  \"" + def.Name + "\","
 		other += "\nexport type " + resourceTypeName + " = \"" + def.Name + "\";\n"
-		fluentApi += "\n" + generateTsFluentAPI(def)
+		fluentApi += "\n" + generateFluentAPI(def)
 		// check if relations exists
 		hasRelations := false
 		for _, rel := range def.Relation {
@@ -114,7 +114,7 @@ func generateTypeScriptDefinitions(schema *compiler.CompiledSchema) string {
 		`
 }
 
-func generateTsFluentAPI(def *corev1.NamespaceDefinition) string {
+func generateFluentAPI(def *corev1.NamespaceDefinition) string {
 	ifElse := func(cond bool, ifTrue string, ifFalse string) string {
 		if cond {
 			return ifTrue
@@ -196,5 +196,5 @@ func generateTsFluentAPI(def *corev1.NamespaceDefinition) string {
 }
 
 func init() {
-	rootCmd.AddCommand(codegenTypescript)
+	rootCmd.AddCommand(codegenGo)
 }
