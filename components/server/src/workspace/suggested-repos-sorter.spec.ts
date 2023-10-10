@@ -65,11 +65,15 @@ class TestSuggestedReposSorter {
 
     @test
     public testProjectsOnly() {
-        const entry = suggestionFromUserRepo({
+        const entry = suggestionFromProject({
             url: "https://github.com/repo1",
+            projectId: "1",
+            projectName: "Project A",
         });
         const repo2 = suggestionFromUserRepo({
             url: "https://github.com/repo2",
+            projectId: "2",
+            projectName: "Project B",
         });
         const sortedRepos = sortSuggestedRepositories([entry, repo2]);
         expect(sortedRepos[0].url).equals(entry.url);
@@ -80,24 +84,30 @@ class TestSuggestedReposSorter {
     public testAlphaSortingWithNames() {
         const repo1 = suggestionFromProject({
             url: "https://github.com/repo1",
+            projectId: "1",
             projectName: "Project A",
             repositoryName: "Repo 1",
         });
         const repo2 = suggestionFromProject({
             url: "https://github.com/repo2",
+            projectId: "2",
             projectName: "Project B",
             repositoryName: "Repo 2",
         });
         const repo3 = suggestionFromProject({
             url: "https://github.com/repo3",
+            projectId: "3",
             projectName: "Project C",
         });
         const repo4 = suggestionFromProject({
             url: "https://github.com/repo4",
-            repositoryName: "A Great Repo",
+            projectId: "4",
+            projectName: "A Great Repo",
         });
         const repo5 = suggestionFromProject({
             url: "https://github.com/repo5",
+            projectId: "5",
+            projectName: "B Project",
         });
         const repos = sortSuggestedRepositories([repo1, repo2, repo3, repo4, repo5]);
         expect(repos[0].url).equals(repo4.url);
@@ -111,6 +121,7 @@ class TestSuggestedReposSorter {
     public testWithAllEntryTypes() {
         const entry1 = suggestionFromProject({
             url: "https://github.com/repo1",
+            projectId: "1",
             projectName: "Project A",
         });
         const entry2 = suggestionFromUserRepo({
@@ -144,11 +155,13 @@ class TestSuggestedReposSorter {
         // represents a project
         const entry1 = suggestionFromProject({
             url: "https://github.com/repo1",
+            projectId: "1",
             projectName: "Project A",
         });
         // represents another project
         const entry2 = suggestionFromProject({
             url: "https://github.com/repo2",
+            projectId: "2",
             projectName: "Project B",
         });
         // represents a workspace started for project2 (same url)
@@ -170,10 +183,12 @@ class TestSuggestedReposSorter {
     public testRecentWorkspaceEntryBeforeUnusedProjects() {
         const entry1 = suggestionFromProject({
             url: "https://github.com/repo1",
+            projectId: "1",
             projectName: "Project A",
         });
         const entry2 = suggestionFromProject({
             url: "https://github.com/repo2",
+            projectId: "2",
             projectName: "Project B",
         });
 
