@@ -57,6 +57,7 @@
     "@gitpod/supervisor-api-grpcweb": "0.1.5",
     "@gitpod/usage-api": "0.1.5",
     "@gitpod/ws-manager": "0.1.5",
+    "@gitpod/spicedb-impl": "0.1.5",
     "@google-cloud/profiler": "^6.0.0",
     "@improbable-eng/grpc-web-node-http-transport": "^0.14.0",
     "@jmondi/oauth2-server": "^2.6.1",

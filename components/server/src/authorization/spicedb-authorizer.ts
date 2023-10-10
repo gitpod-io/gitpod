@@ -38,8 +38,32 @@ async function tryThree<T>(errMessage: string, code: (attempt: number) => Promis
     throw new Error("unreachable");
 }
 
+export const SpiceDBAuthorizer = Symbol("SpiceDBAuthorizer");
+export interface SpiceDBAuthorizer {
+    check(
+        req: v1.CheckPermissionRequest,
+        experimentsFields: {
+            userId: string;
+        },
+        forceEnablement?: boolean,
+    ): Promise<CheckResult>;
+    writeRelationships(...updates: v1.RelationshipUpdate[]): Promise<v1.WriteRelationshipsResponse | undefined>;
+    deleteRelationships(req: v1.DeleteRelationshipsRequest): Promise<DeletionResult>;
+    readRelationships(req: v1.ReadRelationshipsRequest): Promise<v1.ReadRelationshipsResponse[]>;
+}
+
+export interface CheckResult {
+    permitted: boolean;
+    checkedAt?: string;
+}
+
+export interface DeletionResult {
+    relationships: v1.ReadRelationshipsResponse[];
+    deletedAt?: string;
+}
+
 @injectable()
-export class SpiceDBAuthorizer {
+export class SpiceDBAuthorizerImpl implements SpiceDBAuthorizer {
     constructor(
         @inject(SpiceDBClientProvider)
         private readonly clientProvider: SpiceDBClientProvider,
@@ -55,9 +79,9 @@ export class SpiceDBAuthorizer {
             userId: string;
         },
         forceEnablement?: boolean,
-    ): Promise<boolean> {
+    ): Promise<CheckResult> {
         if (!(await isFgaWritesEnabled(experimentsFields.userId))) {
-            return true;
+            return { permitted: true };
         }
         const featureEnabled = !!forceEnablement || (await isFgaChecksEnabled(experimentsFields.userId));
         const result = (async () => {
@@ -73,23 +97,23 @@ export class SpiceDBAuthorizer {
                         response: new TrustedValue(response),
                         request: new TrustedValue(req),
                     });
-                    return true;
+                    return { permitted: true, checkedAt: response.checkedAt?.token };
                 }
 
-                return permitted;
+                return { permitted, checkedAt: response.checkedAt?.token };
             } catch (err) {
                 error = err;
                 log.error("[spicedb] Failed to perform authorization check.", err, {
                     request: new TrustedValue(req),
                 });
-                return !featureEnabled;
+                return { permitted: !featureEnabled };
             } finally {
                 observeSpicedbClientLatency("check", error, timer());
             }
         })();
         // if the feature is not enabld, we don't await
         if (!featureEnabled) {
-            return true;
+            return { permitted: true };
         }
         return result;
     }
@@ -114,10 +138,11 @@ export class SpiceDBAuthorizer {
         }
     }
 
-    async deleteRelationships(req: v1.DeleteRelationshipsRequest): Promise<v1.ReadRelationshipsResponse[]> {
+    async deleteRelationships(req: v1.DeleteRelationshipsRequest): Promise<DeletionResult> {
         const timer = spicedbClientLatency.startTimer();
         let error: Error | undefined;
         try {
+            let deletedAt: string | undefined = undefined;
             const existing = await tryThree("readRelationships before deleteRelationships failed.", () =>
                 this.client.readRelationships(v1.ReadRelationshipsRequest.create(req), this.callOptions),
             );
@@ -125,6 +150,7 @@ export class SpiceDBAuthorizer {
                 const response = await tryThree("deleteRelationships failed.", () =>
                     this.client.deleteRelationships(req, this.callOptions),
                 );
+                deletedAt = response.deletedAt?.token;
                 const after = await tryThree("readRelationships failed.", () =>
                     this.client.readRelationships(v1.ReadRelationshipsRequest.create(req), this.callOptions),
                 );
@@ -137,13 +163,16 @@ export class SpiceDBAuthorizer {
                     existing,
                 });
             }
-            return existing;
+            return {
+                relationships: existing,
+                deletedAt,
+            };
         } catch (err) {
             error = err;
             // While in we're running two authorization systems in parallel, we do not hard fail on writes.
             //TODO throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "Failed to delete relationships.");
             log.error("[spicedb] Failed to delete relationships.", err, { request: new TrustedValue(req) });
-            return [];
+            return { relationships: [] };
         } finally {
             observeSpicedbClientLatency("delete", error, timer());
         }

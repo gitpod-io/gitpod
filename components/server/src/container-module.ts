@@ -51,7 +51,7 @@ import { Authorizer, createInitializingAuthorizer } from "./authorization/author
 import { RelationshipUpdater } from "./authorization/relationship-updater";
 import { RelationshipUpdateJob } from "./authorization/relationship-updater-job";
 import { SpiceDBClientProvider, spiceDBConfigFromEnv } from "./authorization/spicedb";
-import { SpiceDBAuthorizer } from "./authorization/spicedb-authorizer";
+import { SpiceDBAuthorizer, SpiceDBAuthorizerImpl } from "./authorization/spicedb-authorizer";
 import { BillingModes } from "./billing/billing-mode";
 import { EntitlementService, EntitlementServiceImpl } from "./billing/entitlement-service";
 import { EntitlementServiceUBP } from "./billing/entitlement-service-ubp";
@@ -129,6 +129,11 @@ import { WorkspaceFactory } from "./workspace/workspace-factory";
 import { WorkspaceService } from "./workspace/workspace-service";
 import { WorkspaceStartController } from "./workspace/workspace-start-controller";
 import { WorkspaceStarter } from "./workspace/workspace-starter";
+import {
+    CachingSpiceDBAuthorizer,
+    RequestLocalZedTokenCache,
+    ZedTokenCache,
+} from "./authorization/caching-spicedb-authorizer";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -317,7 +322,11 @@ export const productionContainerModule = new ContainerModule(
                 );
             })
             .inSingletonScope();
-        bind(SpiceDBAuthorizer).toSelf().inSingletonScope();
+        bind(SpiceDBAuthorizerImpl).toSelf().inSingletonScope();
+        bind(CachingSpiceDBAuthorizer).toSelf().inSingletonScope();
+        bind(RequestLocalZedTokenCache).toSelf().inSingletonScope();
+        bind(ZedTokenCache).to(RequestLocalZedTokenCache).inSingletonScope();
+        bind(SpiceDBAuthorizer).to(CachingSpiceDBAuthorizer).inSingletonScope();
         bind(Authorizer)
             .toDynamicValue((ctx) => {
                 const authorizer = ctx.container.get<SpiceDBAuthorizer>(SpiceDBAuthorizer);

@@ -8,6 +8,7 @@ import { LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { performance } from "node:perf_hooks";
 import { v4 } from "uuid";
+import { StoredZedToken } from "../authorization/caching-spicedb-authorizer";
 
 export type LogContextOptions = LogContext & {
     contextId?: string;
@@ -21,6 +22,8 @@ type EnhancedLogContext = LogContextOptions & {
     contextKind: string;
     contextId: string;
     contextTimeMs: number;
+} & {
+    zedToken?: StoredZedToken;
 };
 
 const asyncLocalStorage = new AsyncLocalStorage<EnhancedLogContext>();
@@ -63,4 +66,20 @@ export function wrapAsyncGenerator<T>(
             return this;
         },
     };
+}
+
+export function getZedTokenFromContext(): StoredZedToken | undefined {
+    return asyncLocalStorage.getStore()?.zedToken;
+}
+export function setZedTokenToContext(zedToken: StoredZedToken) {
+    const ctx = asyncLocalStorage.getStore();
+    if (ctx) {
+        ctx.zedToken = zedToken;
+    }
+}
+export function clearZedTokenOnContext() {
+    const ctx = asyncLocalStorage.getStore();
+    if (ctx) {
+        ctx.zedToken = undefined;
+    }
 }
