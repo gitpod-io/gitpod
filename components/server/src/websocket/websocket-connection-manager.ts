@@ -49,7 +49,7 @@ import * as opentracing from "opentracing";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { maskIp } from "../analytics";
-import { runWithContext } from "../util/log-context";
+import { runWithLogContext } from "../util/log-context";
 
 export type GitpodServiceFactory = () => GitpodServerImpl;
 
@@ -377,7 +377,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
         const span = TraceContext.startSpan(method, undefined);
         const userId = this.clientMetadata.userId;
         const requestId = span.context().toTraceId();
-        return runWithContext(
+        return runWithLogContext(
             "request",
             {
                 userId,

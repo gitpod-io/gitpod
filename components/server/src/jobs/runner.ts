@@ -17,8 +17,8 @@ import { WebhookEventGarbageCollector } from "./webhook-gc";
 import { WorkspaceGarbageCollector } from "./workspace-gc";
 import { SnapshotsJob } from "./snapshots";
 import { RelationshipUpdateJob } from "../authorization/relationship-updater-job";
-import { runWithContext } from "../util/log-context";
 import { WorkspaceStartController } from "../workspace/workspace-start-controller";
+import { runWithContext } from "../util/request-context";
 
 export const Job = Symbol("Job");
 

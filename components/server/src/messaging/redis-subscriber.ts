@@ -29,7 +29,7 @@ import {
 } from "../prometheus-metrics";
 import { Redis } from "ioredis";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { runWithContext } from "../util/log-context";
+import { runWithContext } from "../util/request-context";
 
 const UNDEFINED_KEY = "undefined";
 
