@@ -22,7 +22,7 @@ import { Project } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
     interceptors: [getMetricsInterceptor()],
-    // defaultTimeoutMs: 4000,
+    defaultTimeoutMs: 4000,
 });
 
 export const helloService = createPromiseClient(HelloService, transport);
