@@ -15,10 +15,11 @@ import { Authorizer, SYSTEM_USER } from "./authorizer";
 import { OrganizationService } from "../orgs/organization-service";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { UserService } from "../user/user-service";
-import { ZedTokenCache } from "./caching-spicedb-authorizer";
+import { RequestLocalZedTokenCache, ZedTokenCache } from "./caching-spicedb-authorizer";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { ConfigProvider } from "../workspace/config-provider";
 import { runWithContext } from "../util/log-context";
+import { v1 } from "@authzed/authzed-node";
 
 const expect = chai.expect;
 
@@ -230,5 +231,76 @@ describe("CachingSpiceDBAuthorizer", async () => {
             await withCtx(authorizer.hasPermissionOnWorkspace(userC.id, "read_info", ws1.id)),
             "userC should have read_info after removal of userB",
         ).to.be.true;
+    });
+});
+
+describe("RequestLocalZedTokenCache", async () => {
+    let cache: RequestLocalZedTokenCache;
+
+    const rawToken1 = "GhUKEzE2OTY0MjI3NzY1Njc3Mzc0MjQ=";
+    const rawToken2 = "GhUKEzE2OTY5Mjg1Nzg1NjIyNjYzMTE=";
+    const rawToken3 = "GhUKEzE2OTY5Mjg1Nzg1NjgwMTE3MzM=";
+    const ws1 = v1.ObjectReference.create({
+        objectType: "workspace",
+        objectId: "ws1",
+    });
+
+    function fullyConsistent() {
+        return v1.Consistency.create({
+            requirement: {
+                oneofKind: "fullyConsistent",
+                fullyConsistent: true,
+            },
+        });
+    }
+
+    function atLeastAsFreshAs(zedToken: string) {
+        return v1.Consistency.create({
+            requirement: {
+                oneofKind: "atLeastAsFresh",
+                atLeastAsFresh: v1.ZedToken.create({
+                    token: zedToken,
+                }),
+            },
+        });
+    }
+
+    beforeEach(async () => {
+        cache = new RequestLocalZedTokenCache();
+    });
+
+    it("should store token", async () => {
+        await runWithContext("test", {}, async () => {
+            expect(await cache.get(ws1)).to.be.undefined;
+            await cache.set([ws1, rawToken1]);
+            expect(await cache.get(ws1)).to.equal(rawToken1);
+        });
+    });
+
+    it("should return newest token", async () => {
+        await runWithContext("test", {}, async () => {
+            await cache.set([ws1, rawToken1]);
+            await cache.set([ws1, rawToken2]);
+            expect(await cache.get(ws1)).to.equal(rawToken2);
+            await cache.set([ws1, rawToken3]);
+            expect(await cache.get(ws1)).to.equal(rawToken3);
+        });
+    });
+
+    it("should return proper consistency", async () => {
+        await runWithContext("test", {}, async () => {
+            expect(await cache.consistency(ws1)).to.deep.equal(fullyConsistent());
+            await cache.set([ws1, rawToken1]);
+            expect(await cache.consistency(ws1)).to.deep.equal(atLeastAsFreshAs(rawToken1));
+        });
+    });
+
+    it("should clear cache", async () => {
+        await runWithContext("test", {}, async () => {
+            await cache.set([ws1, rawToken1]);
+            expect(await cache.get(ws1)).to.equal(rawToken1);
+            await cache.set([ws1, undefined]); // this should trigger a clear
+            expect(await cache.get(ws1)).to.be.undefined;
+        });
     });
 });

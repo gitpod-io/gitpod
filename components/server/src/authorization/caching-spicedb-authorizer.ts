@@ -139,7 +139,7 @@ export class RequestLocalZedTokenCache implements ZedTokenCache {
             if (!prev || prev.timestamp < curr.timestamp) {
                 return curr;
             }
-            return curr;
+            return prev;
         }, undefined);
     }
 }
