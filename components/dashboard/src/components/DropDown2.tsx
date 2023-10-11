@@ -78,12 +78,11 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
 
     const handleInputChange = useCallback((e) => updateSearch(e.target.value), [updateSearch]);
 
-    const setFocussedElement = useCallback(
+    const setActiveElement = useCallback(
         (element: string) => {
             setSelectedElementTemp(element);
             const el = document.getElementById(element);
             el?.scrollIntoView({ block: "nearest" });
-            el?.focus();
         },
         [setSelectedElementTemp],
     );
@@ -96,36 +95,48 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
         [updateSearch],
     );
 
+    const focusNextElement = useCallback(() => {
+        let idx = filteredOptions.findIndex((e) => e.id === selectedElementTemp);
+        while (idx++ < filteredOptions.length - 1) {
+            const candidate = filteredOptions[idx];
+            if (candidate.isSelectable) {
+                setActiveElement(candidate.id);
+                return;
+            }
+        }
+    }, [filteredOptions, selectedElementTemp, setActiveElement]);
+
+    const focusPreviousElement = useCallback(() => {
+        let idx = filteredOptions.findIndex((e) => e.id === selectedElementTemp);
+
+        while (idx-- > 0) {
+            const candidate = filteredOptions[idx];
+            if (candidate.isSelectable) {
+                setActiveElement(candidate.id);
+                return;
+            }
+        }
+    }, [filteredOptions, selectedElementTemp, setActiveElement]);
+
     const onKeyDown = useCallback(
         (e: React.KeyboardEvent) => {
             if (e.key === "ArrowDown") {
                 e.preventDefault();
-                let idx = filteredOptions.findIndex((e) => e.id === selectedElementTemp);
-                while (idx++ < filteredOptions.length - 1) {
-                    const candidate = filteredOptions[idx];
-                    if (candidate.isSelectable) {
-                        setFocussedElement(candidate.id);
-                        return;
-                    }
-                }
+                focusNextElement();
                 return;
             }
             if (e.key === "ArrowUp") {
                 e.preventDefault();
-                let idx = filteredOptions.findIndex((e) => e.id === selectedElementTemp);
-
-                // Shfit focus back to search input if we're at the top
-                if (idx === 0) {
-                    inputEl.current?.focus();
-                    return;
-                }
-
-                while (idx-- > 0) {
-                    const candidate = filteredOptions[idx];
-                    if (candidate.isSelectable) {
-                        setFocussedElement(candidate.id);
-                        return;
-                    }
+                focusPreviousElement();
+                return;
+            }
+            if (e.key === "Tab") {
+                e.preventDefault();
+                if (e.shiftKey) {
+                    focusPreviousElement();
+                    e.stopPropagation();
+                } else {
+                    focusNextElement();
                 }
                 return;
             }
@@ -145,7 +156,15 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                 e.preventDefault();
             }
         },
-        [filteredOptions, handleOpenChange, inputEl, onSelected, search, selectedElementTemp, setFocussedElement],
+        [
+            filteredOptions,
+            focusNextElement,
+            focusPreviousElement,
+            handleOpenChange,
+            onSelected,
+            search,
+            selectedElementTemp,
+        ],
     );
 
     const showInputLoadingIndicator = filteredOptions.length > 0 && loading;
@@ -215,7 +234,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                                         element={element}
                                         isActive={element.id === selectedElementTemp}
                                         onSelected={onSelected}
-                                        onFocused={setFocussedElement}
+                                        onFocused={setActiveElement}
                                     />
                                 );
                             })
@@ -296,7 +315,6 @@ export const Dropdown2Element: FC<Dropdown2ElementProps> = ({ element, isActive,
     return (
         <li
             id={element.id}
-            tabIndex={0}
             className={"h-min rounded-lg flex items-center px-2 py-1.5 " + selectionClasses}
             onMouseDown={() => {
                 if (element.isSelectable) {
