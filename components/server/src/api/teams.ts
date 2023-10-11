@@ -14,16 +14,19 @@ import {
     DeleteTeamMemberResponse,
     DeleteTeamRequest,
     DeleteTeamResponse,
+    GetTeamInvitationRequest,
+    GetTeamInvitationResponse,
     GetTeamRequest,
     GetTeamResponse,
     JoinTeamRequest,
     JoinTeamResponse,
+    ListTeamMembersRequest,
+    ListTeamMembersResponse,
     ListTeamsRequest,
     ListTeamsResponse,
     ResetTeamInvitationRequest,
     ResetTeamInvitationResponse,
     Team,
-    TeamInvitation,
     TeamMember,
     TeamRole,
     UpdateTeamMemberRequest,
@@ -81,6 +84,13 @@ export class APITeamsService implements ServiceImpl<typeof TeamServiceInterface>
     public async deleteTeamMember(req: DeleteTeamMemberRequest): Promise<DeleteTeamMemberResponse> {
         throw new ConnectError("unimplemented", Code.Unimplemented);
     }
+    public async getTeamInvitation(req: GetTeamInvitationRequest): Promise<GetTeamInvitationResponse> {
+        throw new ConnectError("unimplemented", Code.Unimplemented);
+    }
+
+    public async listTeamMembers(req: ListTeamMembersRequest): Promise<ListTeamMembersResponse> {
+        throw new ConnectError("unimplemented", Code.Unimplemented);
+    }
 }
 
 export function toAPITeam(team: Organization, members: OrgMemberInfo[], invite: TeamMembershipInvite): Team {
@@ -88,10 +98,6 @@ export function toAPITeam(team: Organization, members: OrgMemberInfo[], invite: 
         id: team.id,
         name: team.name,
         slug: team.slug,
-        teamInvitation: new TeamInvitation({
-            id: invite.id,
-        }),
-        members: members.map(memberToAPI),
     });
 }
 

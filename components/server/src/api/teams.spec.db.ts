@@ -5,11 +5,10 @@
  */
 import { Code, ConnectError, PromiseClient, createPromiseClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-node";
-import { Timestamp } from "@bufbuild/protobuf";
 import { TeamDB, TypeORM, UserDB, testContainer } from "@gitpod/gitpod-db/lib";
 import { DBTeam } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team";
 import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connect";
-import { GetTeamRequest, Team, TeamMember, TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
+import { GetTeamRequest, Team } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { suite, test, timeout } from "@testdeck/mocha";
 import * as chai from "chai";
 import * as http from "http";
@@ -109,7 +108,6 @@ export class APITeamsServiceSpec {
         const userDB = this.container.get<UserDB>(UserDB);
         const user = await userDB.storeUser(await userDB.newUser());
         const team = await teamDB.createTeam(user.id, "myteam");
-        const invite = await teamDB.resetGenericInvite(team.id);
 
         const response = await this.client.getTeam(
             new GetTeamRequest({
@@ -121,18 +119,6 @@ export class APITeamsServiceSpec {
                 id: team.id,
                 slug: team.slug,
                 name: team.name,
-                members: [
-                    new TeamMember({
-                        userId: user.id,
-                        avatarUrl: user.avatarUrl,
-                        fullName: user.fullName,
-                        role: TeamRole.OWNER,
-                        memberSince: Timestamp.fromDate(new Date(team.creationTime)),
-                    }),
-                ],
-                teamInvitation: {
-                    id: invite.id,
-                },
             }),
         );
     }

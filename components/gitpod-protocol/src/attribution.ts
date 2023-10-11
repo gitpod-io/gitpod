@@ -21,7 +21,7 @@ export namespace AttributionId {
         return { kind: "team", teamId: organizationId };
     }
 
-    export function create(organization: Organization): AttributionId {
+    export function create(organization: Pick<Organization, "id">): AttributionId {
         return createFromOrganizationId(organization.id);
     }
 

@@ -4,27 +4,30 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Organization, OrgMemberInfo, User } from "@gitpod/gitpod-protocol";
+import { Organization, User } from "@gitpod/gitpod-protocol";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useLocation } from "react-router";
-import { publicApiTeamMembersToProtocol, publicApiTeamToProtocol, teamsService } from "../../service/public-api";
+import { teamsService } from "../../service/public-api";
 import { useCurrentUser } from "../../user-context";
 import { noPersistence } from "../setup";
+import { getOrgInvitationQueryKey } from "./org-invitation-query";
+import { getOrgMembersInfoQueryKey } from "./org-members-info-query";
 
-export interface OrganizationInfo extends Organization {
-    members: OrgMemberInfo[];
-    isOwner: boolean;
-    invitationId?: string;
-}
+export type OrganizationInfo = Pick<Organization, "id" | "name" | "slug">;
 
 export function useOrganizationsInvalidator() {
     const user = useCurrentUser();
+    const org = useCurrentOrg();
     const queryClient = useQueryClient();
     return useCallback(() => {
         console.log("Invalidating orgs... " + JSON.stringify(getQueryKey(user)));
         queryClient.invalidateQueries(getQueryKey(user));
-    }, [user, queryClient]);
+        if (org.data?.id && user?.id) {
+            queryClient.invalidateQueries(getOrgInvitationQueryKey(org.data.id));
+            queryClient.invalidateQueries(getOrgMembersInfoQueryKey(org.data.id, user.id));
+        }
+    }, [user, org.data, queryClient]);
 }
 
 export function useOrganizations() {
@@ -39,18 +42,7 @@ export function useOrganizations() {
             }
 
             const response = await teamsService.listTeams({});
-            const result: OrganizationInfo[] = [];
-            for (const org of response.teams) {
-                const members = publicApiTeamMembersToProtocol(org.members || []);
-                const isOwner = members.some((m) => m.role === "owner" && m.userId === user?.id);
-                result.push({
-                    ...publicApiTeamToProtocol(org),
-                    members,
-                    isOwner,
-                    invitationId: org.teamInvitation?.id,
-                });
-            }
-            return result;
+            return response.teams;
         },
         {
             enabled: !!user,

@@ -22,10 +22,14 @@ import { SpinnerLoader } from "../components/Loader";
 import { Delayed } from "../components/Delayed";
 import { InputField } from "../components/forms/InputField";
 import { InputWithCopy } from "../components/InputWithCopy";
+import { useOrgMembersInfoQuery } from "../data/organizations/org-members-info-query";
+import { useOrgInvitationQuery } from "../data/organizations/org-invitation-query";
 
 export default function MembersPage() {
     const user = useCurrentUser();
     const org = useCurrentOrg();
+    const orgInvitation = useOrgInvitationQuery();
+    const orgMembersInfo = useOrgMembersInfoQuery();
     const invalidateOrgs = useOrganizationsInvalidator();
 
     const [showInviteModal, setShowInviteModal] = useState<boolean>(false);
@@ -38,14 +42,14 @@ export default function MembersPage() {
         }
         // orgs without an invitation id invite members through their own login page
         const link = new URL(window.location.href);
-        if (!org.data.invitationId) {
+        if (!orgInvitation.data?.invitationId) {
             link.pathname = "/login/" + org.data.slug;
         } else {
             link.pathname = "/orgs/join";
-            link.search = "?inviteId=" + org.data.invitationId;
+            link.search = "?inviteId=" + orgInvitation.data.invitationId;
         }
         return link.href;
-    }, [org.data]);
+    }, [org.data, orgInvitation.data]);
 
     const resetInviteLink = async () => {
         await teamsService.resetTeamInvitation({ teamId: org.data?.id });
@@ -66,17 +70,17 @@ export default function MembersPage() {
     };
 
     const isRemainingOwner = useMemo(() => {
-        const owners = org.data?.members.filter((m) => m.role === "owner");
+        const owners = orgMembersInfo.data?.members.filter((m) => m.role === "owner");
         return owners?.length === 1 && owners[0].userId === user?.id;
-    }, [org.data?.members, user?.id]);
+    }, [orgMembersInfo.data?.members, user?.id]);
 
     const isOwner = useMemo(() => {
-        const owners = org.data?.members.filter((m) => m.role === "owner");
+        const owners = orgMembersInfo.data?.members.filter((m) => m.role === "owner");
         return !!owners?.some((o) => o.userId === user?.id);
-    }, [org.data?.members, user?.id]);
+    }, [orgMembersInfo.data?.members, user?.id]);
 
     // Note: We would hardly get here, but just in case. We should show a loader instead of blank section.
-    if (org.isLoading) {
+    if (org.isLoading || orgMembersInfo.isLoading) {
         return (
             <Delayed>
                 <SpinnerLoader />
@@ -85,7 +89,7 @@ export default function MembersPage() {
     }
 
     const filteredMembers =
-        org.data?.members.filter((m) => {
+        orgMembersInfo.data?.members.filter((m) => {
             if (!!roleFilter && m.role !== roleFilter) {
                 return false;
             }
@@ -204,7 +208,7 @@ export default function MembersPage() {
                                 </ItemField>
                                 <ItemField className="flex items-center my-auto">
                                     <span className="text-gray-400 capitalize">
-                                        {org.data?.isOwner ? (
+                                        {orgMembersInfo.data?.isOwner ? (
                                             <DropDown
                                                 customClasses="w-32"
                                                 activeEntry={m.role}
@@ -239,7 +243,7 @@ export default function MembersPage() {
                                                               !isRemainingOwner && removeTeamMember(m.userId),
                                                       },
                                                   ]
-                                                : org.data?.isOwner
+                                                : orgMembersInfo.data?.isOwner
                                                 ? [
                                                       {
                                                           title: "Remove",
@@ -267,7 +271,7 @@ export default function MembersPage() {
                         </InputField>
                     </ModalBody>
                     <ModalFooter>
-                        {!!org?.data?.invitationId && (
+                        {!!orgInvitation?.data?.invitationId && (
                             <button className="secondary" onClick={() => resetInviteLink()}>
                                 Reset Invite Link
                             </button>

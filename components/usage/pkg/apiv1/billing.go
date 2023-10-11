@@ -542,14 +542,14 @@ func (s *BillingService) OnChargeDispute(ctx context.Context, req *v1.OnChargeDi
 
 	var userIDsToBlock []string
 	_, id := attributionID.Values()
-	team, err := s.teamsService.GetTeam(ctx, connect.NewRequest(&experimental_v1.GetTeamRequest{
+	members, err := s.teamsService.ListTeamMembers(ctx, connect.NewRequest(&experimental_v1.ListTeamMembersRequest{
 		TeamId: id,
 	}))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to lookup team details for team ID: %s", id)
 	}
 
-	for _, member := range team.Msg.GetTeam().GetMembers() {
+	for _, member := range members.Msg.GetMembers() {
 		if member.GetRole() != experimental_v1.TeamRole_TEAM_ROLE_OWNER {
 			continue
 		}

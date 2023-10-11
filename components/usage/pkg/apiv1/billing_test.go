@@ -80,10 +80,8 @@ func (s *StubTeamsService) CreateTeam(context.Context, *connect.Request[experime
 	return nil, nil
 }
 
-func (s *StubTeamsService) GetTeam(ctx context.Context, req *connect.Request[experimental_v1.GetTeamRequest]) (*connect.Response[experimental_v1.GetTeamResponse], error) {
-	// generate a stub which returns a team
-	team := &experimental_v1.Team{
-		Id: req.Msg.GetTeamId(),
+func (s *StubTeamsService) ListTeamMembers(ctx context.Context, req *connect.Request[experimental_v1.ListTeamMembersRequest]) (*connect.Response[experimental_v1.ListTeamMembersResponse], error) {
+	return connect.NewResponse(&experimental_v1.ListTeamMembersResponse{
 		Members: []*experimental_v1.TeamMember{
 			{
 				UserId: "owner_id",
@@ -94,10 +92,6 @@ func (s *StubTeamsService) GetTeam(ctx context.Context, req *connect.Request[exp
 				Role:   experimental_v1.TeamRole_TEAM_ROLE_MEMBER,
 			},
 		},
-	}
-
-	return connect.NewResponse(&experimental_v1.GetTeamResponse{
-		Team: team,
 	}), nil
 }
 
