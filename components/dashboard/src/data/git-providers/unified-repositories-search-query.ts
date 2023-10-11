@@ -21,9 +21,10 @@ export const useUnifiedRepositorySearch = ({ searchString, excludeProjects = fal
 
     const filteredRepos = useMemo(() => {
         const repoMap = new Map<string, SuggestedRepository>();
+        // combine & flatten suggestions and search results, then merge them into a map
+        const flattenedRepos = [suggestedQuery.data || [], searchQuery.data || []].flat();
 
-        // Add suggested results to map
-        for (const repo of suggestedQuery.data || []) {
+        for (const repo of flattenedRepos) {
             const key = excludeProjects ? repo.url : `${repo.url}:${repo.projectId || ""}`;
 
             const newEntry = {
@@ -32,21 +33,6 @@ export const useUnifiedRepositorySearch = ({ searchString, excludeProjects = fal
             };
             if (excludeProjects) {
                 // TODO: would be great if we can always include repositoryName on SuggestedRepository entities, then we could remove this
-                newEntry.repositoryName = newEntry.repositoryName || newEntry.projectName;
-                newEntry.projectName = undefined;
-            }
-            repoMap.set(key, newEntry);
-        }
-
-        // Merge the search results into the suggested results
-        for (const repo of searchQuery.data || []) {
-            const key = excludeProjects ? repo.url : `${repo.url}:${repo.projectId || ""}`;
-
-            const newEntry = {
-                ...(repoMap.get(key) || {}),
-                ...repo,
-            };
-            if (excludeProjects) {
                 newEntry.repositoryName = newEntry.repositoryName || newEntry.projectName;
                 newEntry.projectName = undefined;
             }
