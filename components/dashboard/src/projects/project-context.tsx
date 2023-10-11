@@ -27,50 +27,14 @@ export const ProjectContextProvider: React.FC = ({ children }) => {
     return <ProjectContext.Provider value={ctx}>{children}</ProjectContext.Provider>;
 };
 
-interface ProjectInfo {
-    id: string;
-    name?: string;
-}
-
-export function useProjectInfo(): ProjectInfo | undefined {
-    const projectsRouteMatch = useRouteMatch<{ projectSlug?: string }>("/projects/:projectSlug");
-
-    return useMemo(() => {
-        const projectSlug = projectsRouteMatch?.params.projectSlug;
-        if (!projectSlug) {
-            return undefined;
-        }
-        const result = parseProjectSlug(projectSlug);
-        if (!result) {
-            return undefined;
-        }
-        return result;
-    }, [projectsRouteMatch?.params.projectSlug]);
-}
-
-const pattern: RegExp = /^((.+)-)?([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$/;
-function parseProjectSlug(slug: string): ProjectInfo | undefined {
-    const match = slug.match(pattern);
-
-    if (match) {
-        const name = match[2];
-        const id = match[3];
-        return {
-            name,
-            id,
-        };
-    } else {
-        return undefined;
-    }
-}
-
 export function useCurrentProject(): { project: Project | undefined; loading: boolean } {
     const { project, setProject } = useContext(ProjectContext);
     const [loading, setLoading] = useState(true);
     const user = useCurrentUser();
     const org = useCurrentOrg();
     const orgs = useOrganizations();
-    const projectInfo = useProjectInfo();
+    // TODO: we should utilize route params for this in our router
+    const projectIdFromRoute = useRouteMatch<{ projectId?: string }>("/projects/:projectId")?.params.projectId;
     const location = useLocation();
     const history = useHistory();
     const listProjects = useListProjectsQuery();
@@ -82,7 +46,7 @@ export function useCurrentProject(): { project: Project | undefined; loading: bo
             // without a user we are still consider this loading
             return;
         }
-        if (!projectInfo) {
+        if (!projectIdFromRoute) {
             setProject(undefined);
             setLoading(false);
             return;
@@ -97,7 +61,7 @@ export function useCurrentProject(): { project: Project | undefined; loading: bo
             const projects = listProjects.data?.projects || [];
 
             // Find project matching with slug, otherwise with name
-            const project = projects.find((p) => p.id === projectInfo.id);
+            const project = projects.find((p) => p.id === projectIdFromRoute);
             if (!project && orgs.data) {
                 // check other orgs
                 for (const t of orgs.data || []) {
@@ -105,7 +69,7 @@ export function useCurrentProject(): { project: Project | undefined; loading: bo
                         continue;
                     }
                     const projects = await listAllProjects({ orgId: t.id });
-                    const project = projects.find((p) => p.id === projectInfo.id);
+                    const project = projects.find((p) => p.id === projectIdFromRoute);
                     if (project) {
                         // redirect to the other org
                         history.push(location.pathname + "?org=" + t.id);
@@ -115,7 +79,7 @@ export function useCurrentProject(): { project: Project | undefined; loading: bo
             setProject(project);
             setLoading(false);
         })();
-    }, [setProject, org.data, user, orgs.data, location, history, projectInfo, listProjects.data]);
+    }, [setProject, org.data, user, orgs.data, location, history, listProjects.data, projectIdFromRoute]);
 
     return { project, loading };
 }

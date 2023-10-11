@@ -74,8 +74,9 @@ export namespace Project {
         };
     };
 
+    // TODO: Could remove this fn since it's just an id now
     export function slug(p: Project): string {
-        return p.name + "-" + p.id;
+        return p.id;
     }
 
     export type PrebuildSettingsWithDefaults = Required<Pick<PrebuildSettings, "prebuildInterval">> & PrebuildSettings;
