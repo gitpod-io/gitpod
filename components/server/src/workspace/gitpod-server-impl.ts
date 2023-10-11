@@ -169,7 +169,6 @@ import { SSHKeyService } from "../user/sshkey-service";
 import { StartWorkspaceOptions, WorkspaceService } from "./workspace-service";
 import { GitpodTokenService } from "../user/gitpod-token-service";
 import { EnvVarService } from "../user/env-var-service";
-import { ScmService } from "../projects/scm-service";
 import {
     SuggestedRepositoryWithSorting,
     sortSuggestedRepositories,
@@ -234,7 +233,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(GitTokenScopeGuesser) private readonly gitTokenScopeGuesser: GitTokenScopeGuesser,
 
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
-        @inject(ScmService) private readonly scmService: ScmService,
 
         @inject(IDEService) private readonly ideService: IDEService,
 
