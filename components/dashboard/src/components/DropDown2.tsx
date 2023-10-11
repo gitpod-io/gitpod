@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, { FC, FunctionComponent, ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import React, { FC, FunctionComponent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Arrow from "./Arrow";
 import classNames from "classnames";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
@@ -41,16 +41,14 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
     onSelectionChange,
     onSearchChange,
 }) => {
-    const [triggerEl, setTriggerEl] = useState<HTMLElement | null>(null);
-    const [inputEl, setInputEl] = useState<HTMLElement | null>(null);
+    const triggerEl = useRef<HTMLButtonElement>(null);
+    const inputEl = useRef<HTMLInputElement>(null);
     const [showDropDown, setShowDropDown] = useState<boolean>(!disabled && !!expanded);
     const [search, setSearch] = useState<string>("");
     const filteredOptions = useMemo(() => getElements(search), [getElements, search]);
     const [selectedElementTemp, setSelectedElementTemp] = useState<string | undefined>(
         initialValue || filteredOptions[0]?.id,
     );
-
-    const contentStyles = useMemo(() => ({ width: triggerEl?.clientWidth }), [triggerEl?.clientWidth]);
 
     const onSelected = useCallback(
         (elementId: string) => {
@@ -118,7 +116,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
 
                 // Shfit focus back to search input if we're at the top
                 if (idx === 0) {
-                    inputEl?.focus();
+                    inputEl.current?.focus();
                     return;
                 }
 
@@ -133,7 +131,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
             }
             if (e.key === "Escape") {
                 setShowDropDown(false);
-                triggerEl?.focus();
+                triggerEl.current?.focus();
                 e.preventDefault();
             }
             if (e.key === "Enter") {
@@ -147,16 +145,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                 e.preventDefault();
             }
         },
-        [
-            filteredOptions,
-            handleOpenChange,
-            inputEl,
-            onSelected,
-            search,
-            selectedElementTemp,
-            setFocussedElement,
-            triggerEl,
-        ],
+        [filteredOptions, handleOpenChange, inputEl, onSelected, search, selectedElementTemp, setFocussedElement],
     );
 
     const showInputLoadingIndicator = filteredOptions.length > 0 && loading;
@@ -165,8 +154,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
     return (
         <RadixPopover.Root defaultOpen={expanded} open={showDropDown} onOpenChange={handleOpenChange}>
             <RadixPopover.Trigger
-                ref={setTriggerEl}
-                // TODO: cleanup classes
+                ref={triggerEl}
                 className={classNames(
                     "h-16 bg-gray-100 dark:bg-gray-800 flex flex-row items-center justify-start px-2 text-left",
                     // when open, just have border radius on top
@@ -187,14 +175,17 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
             </RadixPopover.Trigger>
             <RadixPopover.Portal>
                 <RadixPopover.Content
-                    style={contentStyles}
-                    className="bg-gray-100 dark:bg-gray-800 rounded-b-lg p-2 filter drop-shadow-xl z-50"
+                    className={classNames(
+                        "rounded-b-lg p-2 filter drop-shadow-xl z-50",
+                        "bg-gray-100 dark:bg-gray-800 ",
+                        "w-[--radix-popover-trigger-width]",
+                    )}
                     onKeyDown={onKeyDown}
                 >
                     {!disableSearch && (
                         <div className="relative mb-2">
                             <input
-                                ref={setInputEl}
+                                ref={inputEl}
                                 type="text"
                                 autoFocus
                                 className={"w-full focus rounded-lg"}
