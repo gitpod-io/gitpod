@@ -56,22 +56,7 @@ func TestTeamsService_CreateTeam(t *testing.T) {
 		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
-	t.Run("returns team with members and invite", func(t *testing.T) {
-		teamMembers := []*protocol.TeamMemberInfo{
-			newTeamMember(&protocol.TeamMemberInfo{
-				FullName: "Alice Alice",
-				Role:     protocol.TeamMember_Owner,
-			}),
-			newTeamMember(&protocol.TeamMemberInfo{
-				FullName: "Bob Bob",
-				Role:     protocol.TeamMember_Member,
-			}),
-		}
-		inviteID := uuid.New().String()
-		invite := &protocol.TeamMembershipInvite{
-			ID:     inviteID,
-			TeamID: id,
-		}
+	t.Run("returns team", func(t *testing.T) {
 		team := newTeam(&protocol.Team{
 			ID: id,
 		})
@@ -79,65 +64,24 @@ func TestTeamsService_CreateTeam(t *testing.T) {
 		serverMock, client := setupTeamService(t)
 
 		serverMock.EXPECT().CreateTeam(gomock.Any(), name).Return(team, nil)
-		serverMock.EXPECT().GetTeamMembers(gomock.Any(), id).Return(teamMembers, nil)
-		serverMock.EXPECT().GetGenericInvite(gomock.Any(), id).Return(&protocol.TeamMembershipInvite{
-			ID:     inviteID,
-			TeamID: id,
-		}, nil)
 
 		response, err := client.CreateTeam(context.Background(), connect.NewRequest(&v1.CreateTeamRequest{Name: name}))
 		require.NoError(t, err)
 
 		requireEqualProto(t, &v1.CreateTeamResponse{
-			Team: teamToAPIResponse(team, teamMembers, invite),
-		}, response.Msg)
-	})
-
-	t.Run("returns team with members and no invite", func(t *testing.T) {
-		teamMembers := []*protocol.TeamMemberInfo{
-			newTeamMember(&protocol.TeamMemberInfo{
-				FullName: "Alice Alice",
-				Role:     protocol.TeamMember_Owner,
-			}),
-			newTeamMember(&protocol.TeamMemberInfo{
-				FullName: "Bob Bob",
-				Role:     protocol.TeamMember_Member,
-			}),
-		}
-		team := newTeam(&protocol.Team{
-			ID: id,
-		})
-
-		serverMock, client := setupTeamService(t)
-
-		serverMock.EXPECT().CreateTeam(gomock.Any(), name).Return(team, nil)
-		serverMock.EXPECT().GetTeamMembers(gomock.Any(), id).Return(teamMembers, nil)
-		serverMock.EXPECT().GetGenericInvite(gomock.Any(), id).Return(nil, &jsonrpc2.Error{Code: 404, Message: "not found"})
-
-		response, err := client.CreateTeam(context.Background(), connect.NewRequest(&v1.CreateTeamRequest{Name: name}))
-		require.NoError(t, err)
-
-		requireEqualProto(t, &v1.CreateTeamResponse{
-			Team: teamToAPIResponse(team, teamMembers, nil),
+			Team: &v1.Team{
+				Id:   team.ID,
+				Name: team.Name,
+			},
 		}, response.Msg)
 	})
 }
 
 func TestTeamsService_ListTeams(t *testing.T) {
-	t.Run("returns teams with members and invite", func(t *testing.T) {
+	t.Run("returns teams with members", func(t *testing.T) {
 		ctx := context.Background()
 		serverMock, client := setupTeamService(t)
 
-		teamMembers := []*protocol.TeamMemberInfo{
-			newTeamMember(&protocol.TeamMemberInfo{
-				FullName: "Alice Alice",
-				Role:     protocol.TeamMember_Owner,
-			}),
-			newTeamMember(&protocol.TeamMemberInfo{
-				FullName: "Bob Bob",
-				Role:     protocol.TeamMember_Member,
-			}),
-		}
 		teams := []*protocol.Team{
 			newTeam(&protocol.Team{
 				Name: "Team A",
@@ -146,62 +90,21 @@ func TestTeamsService_ListTeams(t *testing.T) {
 				Name: "Team B",
 			}),
 		}
-		inviteID := uuid.New().String()
-		invite := &protocol.TeamMembershipInvite{
-			ID:     inviteID,
-			TeamID: teams[1].ID,
-		}
 
 		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
 
-		// Mocks for populating team A details
-		serverMock.EXPECT().GetTeamMembers(gomock.Any(), teams[0].ID).Return(teamMembers, nil)
-		serverMock.EXPECT().GetGenericInvite(gomock.Any(), teams[0].ID).Return(&protocol.TeamMembershipInvite{
-			ID:     inviteID,
-			TeamID: teams[0].ID,
-		}, nil)
-		// Mock for populating team B details
-		serverMock.EXPECT().GetTeamMembers(gomock.Any(), teams[1].ID).Return(teamMembers, nil)
-		serverMock.EXPECT().GetGenericInvite(gomock.Any(), teams[1].ID).Return(invite, nil)
-
 		response, err := client.ListTeams(ctx, connect.NewRequest(&v1.ListTeamsRequest{}))
 		require.NoError(t, err)
 		requireEqualProto(t, &v1.ListTeamsResponse{
 			Teams: []*v1.Team{
-				teamToAPIResponse(teams[0], teamMembers, invite),
-				teamToAPIResponse(teams[1], teamMembers, invite),
-			},
-		}, response.Msg)
-	})
-
-	t.Run("returns team with members and no invite for non-owner", func(t *testing.T) {
-		ctx := context.Background()
-		serverMock, client := setupTeamService(t)
-
-		teamMembers := []*protocol.TeamMemberInfo{
-			newTeamMember(&protocol.TeamMemberInfo{
-				FullName: "Alice Alice",
-				Role:     protocol.TeamMember_Owner,
-			}),
-			newTeamMember(&protocol.TeamMemberInfo{
-				FullName: "Bob Bob",
-				Role:     protocol.TeamMember_Member,
-			}),
-		}
-		team := newTeam(&protocol.Team{
-			Name: "Team A",
-		})
-		serverMock.EXPECT().GetTeams(gomock.Any()).Return([]*protocol.Team{team}, nil)
-
-		// Mock for populating team details
-		serverMock.EXPECT().GetTeamMembers(gomock.Any(), team.ID).Return(teamMembers, nil)
-		serverMock.EXPECT().GetGenericInvite(gomock.Any(), team.ID).Return(nil, &jsonrpc2.Error{Code: 403, Message: "not access"})
-
-		response, err := client.ListTeams(ctx, connect.NewRequest(&v1.ListTeamsRequest{}))
-		require.NoError(t, err)
-		requireEqualProto(t, &v1.ListTeamsResponse{
-			Teams: []*v1.Team{
-				teamToAPIResponse(team, teamMembers, nil),
+				{
+					Id:   teams[0].ID,
+					Name: teams[0].Name,
+				},
+				{
+					Id:   teams[1].ID,
+					Name: teams[1].Name,
+				},
 			},
 		}, response.Msg)
 	})
@@ -240,7 +143,10 @@ func TestTeamService_GetTeam(t *testing.T) {
 		}))
 		require.NoError(t, err)
 		requireEqualProto(t, &v1.GetTeamResponse{
-			Team: teamToAPIResponse(team, members, invite),
+			Team: &v1.Team{
+				Id:   team.ID,
+				Name: team.Name,
+			},
 		}, retrieved.Msg)
 	})
 }
@@ -266,86 +172,73 @@ func TestTeamsService_JoinTeam(t *testing.T) {
 		serverMock, client := setupTeamService(t)
 
 		team := newTeam(&protocol.Team{ID: teamID})
-		teamMembers := []*protocol.TeamMemberInfo{newTeamMember(&protocol.TeamMemberInfo{})}
-		invite := &protocol.TeamMembershipInvite{
-			ID: uuid.New().String(),
-		}
 
 		serverMock.EXPECT().JoinTeam(gomock.Any(), inviteID).Return(team, nil)
-		serverMock.EXPECT().GetTeamMembers(gomock.Any(), teamID).Return(teamMembers, nil)
-		serverMock.EXPECT().GetGenericInvite(gomock.Any(), teamID).Return(invite, nil)
 
 		response, err := client.JoinTeam(context.Background(), connect.NewRequest(&v1.JoinTeamRequest{
 			InvitationId: inviteID,
 		}))
 		require.NoError(t, err)
 		requireEqualProto(t, &v1.JoinTeamResponse{
-			Team: teamToAPIResponse(team, teamMembers, invite),
+			Team: &v1.Team{
+				Id:   team.ID,
+				Name: team.Name,
+			},
 		}, response.Msg)
 	})
 }
 
-func TestTeamToAPIResponse(t *testing.T) {
-	// Here, we're deliberately not using our helpers newTeam, newTeamMembers because
-	// we want to assert from first principles
-	team := &protocol.Team{
-		ID:           uuid.New().String(),
-		Name:         "New Team",
-		CreationTime: "2022-09-09T09:09:09.000Z",
-	}
-	members := []*protocol.TeamMemberInfo{
-		{
-			UserId:       uuid.New().String(),
-			FullName:     "First Last",
-			PrimaryEmail: "email1@gitpod.io",
-			AvatarUrl:    "https://avatars.com/foo",
-			Role:         protocol.TeamMember_Member,
-			MemberSince:  "2022-09-09T09:09:09.000Z",
-		},
-		{
-			UserId:       uuid.New().String(),
-			FullName:     "Second Last",
-			PrimaryEmail: "email2@gitpod.io",
-			AvatarUrl:    "https://avatars.com/bar",
-			Role:         protocol.TeamMember_Owner,
-			MemberSince:  "2022-09-09T09:09:09.000Z",
-		},
-	}
-	invite := &protocol.TeamMembershipInvite{
-		ID:               uuid.New().String(),
-		TeamID:           uuid.New().String(),
-		Role:             protocol.TeamMember_Member,
-		CreationTime:     "2022-08-08T08:08:08.000Z",
-		InvalidationTime: "2022-11-11T11:11:11.000Z",
-		InvitedEmail:     "nope@gitpod.io",
-	}
+func TestTeamsService_ListTeamMembers(t *testing.T) {
+	t.Run("missing team ID returns invalid argument", func(t *testing.T) {
+		_, client := setupTeamService(t)
 
-	response := teamToAPIResponse(team, members, invite)
-	requireEqualProto(t, &v1.Team{
-		Id:   team.ID,
-		Name: team.Name,
-		Members: []*v1.TeamMember{
-			{
-				UserId:       members[0].UserId,
-				Role:         teamRoleToAPIResponse(members[0].Role),
-				MemberSince:  parseGitpodTimeStampOrDefault(members[0].MemberSince),
-				AvatarUrl:    members[0].AvatarUrl,
-				FullName:     members[0].FullName,
-				PrimaryEmail: members[0].PrimaryEmail,
-			},
-			{
-				UserId:       members[1].UserId,
-				Role:         teamRoleToAPIResponse(members[1].Role),
-				MemberSince:  parseGitpodTimeStampOrDefault(members[1].MemberSince),
-				AvatarUrl:    members[1].AvatarUrl,
-				FullName:     members[1].FullName,
-				PrimaryEmail: members[1].PrimaryEmail,
-			},
-		},
-		TeamInvitation: &v1.TeamInvitation{
-			Id: invite.ID,
-		},
-	}, response)
+		_, err := client.ListTeamMembers(context.Background(), connect.NewRequest(&v1.ListTeamMembersRequest{}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("returns permission denied for non-owner", func(t *testing.T) {
+		ctx := context.Background()
+		serverMock, client := setupTeamService(t)
+
+		team := newTeam(&protocol.Team{
+			Name: "Team A",
+		})
+		serverMock.EXPECT().GetTeamMembers(gomock.Any(), team.ID).Return(nil, &jsonrpc2.Error{Code: 403, Message: "not access"})
+
+		_, err := client.ListTeamMembers(ctx, connect.NewRequest(&v1.ListTeamMembersRequest{
+			TeamId: team.ID,
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
+	})
+
+	t.Run("returns members", func(t *testing.T) {
+		teamMembers := []*protocol.TeamMemberInfo{
+			newTeamMember(&protocol.TeamMemberInfo{
+				FullName: "Alice Alice",
+				Role:     protocol.TeamMember_Owner,
+			}),
+			newTeamMember(&protocol.TeamMemberInfo{
+				FullName: "Bob Bob",
+				Role:     protocol.TeamMember_Member,
+			}),
+		}
+		team := newTeam(&protocol.Team{
+			ID: uuid.New().String(),
+		})
+
+		serverMock, client := setupTeamService(t)
+
+		serverMock.EXPECT().GetTeamMembers(gomock.Any(), team.ID).Return(teamMembers, nil)
+
+		response, err := client.ListTeamMembers(context.Background(), connect.NewRequest(&v1.ListTeamMembersRequest{TeamId: team.ID}))
+		require.NoError(t, err)
+
+		requireEqualProto(t, &v1.ListTeamMembersResponse{
+			Members: teamMembersToAPIResponse(teamMembers),
+		}, response.Msg)
+	})
 }
 
 func TestTeamsService_UpdateTeamMember(t *testing.T) {
@@ -473,6 +366,52 @@ func TestTeamService_ResetTeamInvitation(t *testing.T) {
 		requireEqualProto(t, &v1.ResetTeamInvitationResponse{
 			TeamInvitation: teamInviteToAPIResponse(invite),
 		}, response.Msg)
+	})
+}
+
+func TestTeamService_GetTeamInvitation(t *testing.T) {
+	t.Run("missing team ID returns invalid argument", func(t *testing.T) {
+		_, client := setupTeamService(t)
+
+		_, err := client.GetTeamInvitation(context.Background(), connect.NewRequest(&v1.GetTeamInvitationRequest{}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("proxies request to server", func(t *testing.T) {
+		teamID := uuid.New().String()
+
+		serverMock, client := setupTeamService(t)
+
+		invite := &protocol.TeamMembershipInvite{
+			ID: uuid.New().String(),
+		}
+
+		serverMock.EXPECT().GetGenericInvite(gomock.Any(), teamID).Return(invite, nil)
+
+		response, err := client.GetTeamInvitation(context.Background(), connect.NewRequest(&v1.GetTeamInvitationRequest{
+			TeamId: teamID,
+		}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.GetTeamInvitationResponse{
+			TeamInvitation: teamInviteToAPIResponse(invite),
+		}, response.Msg)
+	})
+
+	t.Run("returns permission denied for non-owner", func(t *testing.T) {
+		ctx := context.Background()
+		serverMock, client := setupTeamService(t)
+
+		team := newTeam(&protocol.Team{
+			Name: "Team A",
+		})
+		serverMock.EXPECT().GetGenericInvite(gomock.Any(), team.ID).Return(nil, &jsonrpc2.Error{Code: 403, Message: "not access"})
+
+		_, err := client.GetTeamInvitation(ctx, connect.NewRequest(&v1.GetTeamInvitationRequest{
+			TeamId: team.ID,
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
 	})
 }
 
