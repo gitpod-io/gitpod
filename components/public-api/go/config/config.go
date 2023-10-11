@@ -6,6 +6,7 @@ package config
 
 import (
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
+	usage_config "github.com/gitpod-io/gitpod/usage-api/config"
 )
 
 type Configuration struct {
@@ -24,6 +25,8 @@ type Configuration struct {
 
 	// Path to file which contains personal access token singing key
 	PersonalAccessTokenSigningKeyPath string `json:"personalAccessTokenSigningKeyPath"`
+
+	UsageConfiguration usage_config.Config `json:"usage"`
 
 	// Path to directory containing database configuration files
 	DatabaseConfigPath string `json:"databaseConfigPath"`

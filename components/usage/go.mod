@@ -6,9 +6,10 @@ require (
 	github.com/alicebob/miniredis/v2 v2.30.2
 	github.com/bufbuild/connect-go v1.10.0
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/components/gitpod-db/go v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/components/gitpod-db/go v0.0.0-20231010172218-3eb86ff8b745
 	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/usage-api v0.0.0-00010101000000-000000000000
+	github.com/go-chi/chi/v5 v5.0.10
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/go-redsync/redsync/v4 v4.8.1
 	github.com/google/go-cmp v0.5.9

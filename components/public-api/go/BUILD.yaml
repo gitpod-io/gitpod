@@ -3,6 +3,7 @@ packages:
     type: go
     deps:
       - components/common-go:lib
+      - components/usage-api/go:lib
     srcs:
       - "**/*.go"
       - "go.mod"

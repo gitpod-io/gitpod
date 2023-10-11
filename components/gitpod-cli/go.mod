@@ -23,9 +23,9 @@ require (
 	github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37
 	github.com/spf13/cobra v1.6.1
 	golang.org/x/sync v0.2.0
-	golang.org/x/term v0.6.0
+	golang.org/x/term v0.8.0
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f
-	google.golang.org/grpc v1.52.3
+	google.golang.org/grpc v1.55.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -40,7 +40,7 @@ require (
 	github.com/onsi/gomega v1.24.2 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 // indirect
 	golang.org/x/sys v0.11.0 // indirect
-	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6 // indirect
+	google.golang.org/genproto v0.0.0-20230306155012-7f2fa6fef1f4 // indirect
 )
 
 require (
@@ -56,8 +56,8 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
-	golang.org/x/net v0.8.0 // indirect
-	golang.org/x/text v0.8.0 // indirect
+	golang.org/x/net v0.10.0 // indirect
+	golang.org/x/text v0.9.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0 // indirect
 )

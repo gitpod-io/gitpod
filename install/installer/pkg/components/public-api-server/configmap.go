@@ -86,6 +86,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 		},
+		UsageConfiguration: usage.Config(ctx),
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{

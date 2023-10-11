@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/components/redis"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/google/go-cmp/cmp"
 
@@ -71,6 +72,7 @@ func TestConfigMap(t *testing.T) {
 				},
 			},
 		},
+		UsageConfiguration: usage.Config(ctx),
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{

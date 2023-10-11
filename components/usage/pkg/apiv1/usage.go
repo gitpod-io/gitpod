@@ -15,11 +15,15 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
+	config "github.com/gitpod-io/gitpod/usage-api/config"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
+
+	connect "github.com/bufbuild/connect-go"
+	"github.com/gitpod-io/gitpod/usage-api/v1/v1connect"
 )
 
 var _ v1.UsageServiceServer = (*UsageService)(nil)
@@ -519,3 +523,50 @@ func (s *UsageService) AddUsageCreditNote(ctx context.Context, req *v1.AddUsageC
 	}
 	return &v1.AddUsageCreditNoteResponse{}, nil
 }
+
+// UsageServiceConnect is a wrapper around UsageService that implements the connect interface
+// TODO(gpl): We need this while we do the transition of the usage API to public-api-server; afterwards we should be able to drop it.
+type UsageServiceConnect struct {
+	svc *UsageService
+}
+
+func NewUsageServiceConnect(conn *gorm.DB, cfg *config.Config) (*UsageServiceConnect, error) {
+	ccManager := db.NewCostCenterManager(conn, cfg.DefaultSpendingLimit)
+	pricer, err := NewWorkspacePricer(cfg.CreditsPerMinuteByWorkspaceClass)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create workspace pricer: %w", err)
+	}
+	return &UsageServiceConnect{
+		svc: NewUsageService(conn, pricer, ccManager),
+	}, nil
+}
+
+func (u *UsageServiceConnect) GetCostCenter(ctx context.Context, req *connect.Request[v1.GetCostCenterRequest]) (*connect.Response[v1.GetCostCenterResponse], error) {
+	return wrap(u.svc.GetCostCenter(ctx, req.Msg))
+}
+func (u *UsageServiceConnect) SetCostCenter(ctx context.Context, req *connect.Request[v1.SetCostCenterRequest]) (*connect.Response[v1.SetCostCenterResponse], error) {
+	return wrap(u.svc.SetCostCenter(ctx, req.Msg))
+}
+func (u *UsageServiceConnect) ReconcileUsage(ctx context.Context, req *connect.Request[v1.ReconcileUsageRequest]) (*connect.Response[v1.ReconcileUsageResponse], error) {
+	return wrap(u.svc.ReconcileUsage(ctx, req.Msg))
+}
+func (u *UsageServiceConnect) ResetUsage(ctx context.Context, req *connect.Request[v1.ResetUsageRequest]) (*connect.Response[v1.ResetUsageResponse], error) {
+	return wrap(u.svc.ResetUsage(ctx, req.Msg))
+}
+func (u *UsageServiceConnect) ListUsage(ctx context.Context, req *connect.Request[v1.ListUsageRequest]) (*connect.Response[v1.ListUsageResponse], error) {
+	return wrap(u.svc.ListUsage(ctx, req.Msg))
+}
+func (u *UsageServiceConnect) GetBalance(ctx context.Context, req *connect.Request[v1.GetBalanceRequest]) (*connect.Response[v1.GetBalanceResponse], error) {
+	return wrap(u.svc.GetBalance(ctx, req.Msg))
+}
+func (u *UsageServiceConnect) AddUsageCreditNote(ctx context.Context, req *connect.Request[v1.AddUsageCreditNoteRequest]) (*connect.Response[v1.AddUsageCreditNoteResponse], error) {
+	return wrap(u.svc.AddUsageCreditNote(ctx, req.Msg))
+}
+
+func wrap[T interface{}](resp *T, err error) (*connect.Response[T], error) {
+	return &connect.Response[T]{
+		Msg: resp,
+	}, err
+}
+
+var _ v1connect.UsageServiceHandler = ((*UsageServiceConnect)(nil))

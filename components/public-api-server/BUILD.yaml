@@ -9,6 +9,7 @@ packages:
       - components/common-go:lib
       - components/public-api/go:lib
       - components/usage-api/go:lib
+      - components/usage:lib
       - components/gitpod-protocol/go:lib
       - components/gitpod-db/go:lib
       - components/gitpod-db/go:init-testdb

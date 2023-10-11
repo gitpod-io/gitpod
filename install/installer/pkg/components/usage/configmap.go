@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
+	"github.com/gitpod-io/gitpod/usage-api/config"
 	"github.com/gitpod-io/gitpod/usage/pkg/server"
-	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -21,22 +21,29 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	cfg := server.Config{
+func Config(ctx *common.RenderContext) config.Config {
+	return config.Config{
 		LedgerSchedule:     "", // By default controller is disabled
 		ResetUsageSchedule: time.Duration(15 * time.Minute).String(),
+		DefaultSpendingLimit: db.DefaultSpendingLimit{
+			// because we only want spending limits in SaaS, if not configured we go with a very high (i.e. no) spending limit
+			ForTeams:            1_000_000_000,
+			ForUsers:            1_000_000_000,
+			MinForUsersOnStripe: 0,
+		},
+	}
+}
+
+func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
+	svcConfig := Config(ctx)
+	cfg := server.Config{
+		Config: svcConfig,
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{
 					Address: fmt.Sprintf("0.0.0.0:%d", gRPCContainerPort),
 				},
 			},
-		},
-		DefaultSpendingLimit: db.DefaultSpendingLimit{
-			// because we only want spending limits in SaaS, if not configured we go with a very high (i.e. no) spending limit
-			ForTeams:            1_000_000_000,
-			ForUsers:            1_000_000_000,
-			MinForUsersOnStripe: 0,
 		},
 		Redis: server.RedisConfiguration{
 			Address: common.ClusterAddress(redis.Component, ctx.Namespace, redis.Port),
@@ -46,12 +53,12 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	expWebAppConfig := common.ExperimentalWebappConfig(ctx)
 	if expWebAppConfig != nil && expWebAppConfig.Stripe != nil {
-		cfg.StripePrices = stripe.StripePrices{
-			IndividualUsagePriceIDs: stripe.PriceConfig{
+		cfg.StripePrices = config.StripePrices{
+			IndividualUsagePriceIDs: config.PriceConfig{
 				EUR: expWebAppConfig.Stripe.IndividualUsagePriceIDs.EUR,
 				USD: expWebAppConfig.Stripe.IndividualUsagePriceIDs.USD,
 			},
-			TeamUsagePriceIDs: stripe.PriceConfig{
+			TeamUsagePriceIDs: config.PriceConfig{
 				EUR: expWebAppConfig.Stripe.TeamUsagePriceIDs.EUR,
 				USD: expWebAppConfig.Stripe.TeamUsagePriceIDs.USD,
 			},

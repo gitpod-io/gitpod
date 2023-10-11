@@ -8,6 +8,10 @@ plugins:
     out: go
     opt:
       - module=github.com/gitpod-io/gitpod/usage-api
+  - name: connect-go
+    out: go
+    opt:
+     - module=github.com/gitpod-io/gitpod/usage-api
 
   - name: ts_proto
     out: typescript/src

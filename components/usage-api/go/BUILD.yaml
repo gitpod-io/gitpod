@@ -1,6 +1,8 @@
 packages:
   - name: lib
     type: go
+    deps:
+     - components/gitpod-db/go:lib
     srcs:
       - "**/*.go"
       - "go.mod"

@@ -24,6 +24,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/components/public-api/go/config"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
+	usage_v1connect "github.com/gitpod-io/gitpod/usage-api/v1/v1connect"
 	"github.com/gorilla/handlers"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
@@ -38,6 +39,7 @@ import (
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/origin"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/webhooks"
+	usage_apiv1 "github.com/gitpod-io/gitpod/usage/pkg/apiv1"
 	"github.com/sirupsen/logrus"
 )
 
@@ -148,7 +150,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 		idpService:      idpService,
 		authCfg:         cfg.Auth,
 		sessionVerifier: rsa256,
-	}); registerErr != nil {
+	}, cfg); registerErr != nil {
 		return fmt.Errorf("failed to register services: %w", registerErr)
 	}
 
@@ -172,7 +174,7 @@ type registerDependencies struct {
 	authCfg         config.AuthConfiguration
 }
 
-func register(srv *baseserver.Server, deps *registerDependencies) error {
+func register(srv *baseserver.Server, deps *registerDependencies, cfg *config.Configuration) error {
 	proxy.RegisterMetrics(srv.MetricsRegistry())
 	oidc.RegisterMetrics(srv.MetricsRegistry())
 
@@ -204,6 +206,12 @@ func register(srv *baseserver.Server, deps *registerDependencies) error {
 	rootHandler.Mount(v1connect.NewProjectsServiceHandler(apiv1.NewProjectsService(deps.connPool), handlerOptions...))
 	rootHandler.Mount(v1connect.NewOIDCServiceHandler(apiv1.NewOIDCService(deps.connPool, deps.expClient, deps.dbConn, deps.cipher), handlerOptions...))
 	rootHandler.Mount(v1connect.NewIdentityProviderServiceHandler(apiv1.NewIdentityProviderService(deps.connPool, deps.idpService), handlerOptions...))
+
+	usageService, err := usage_apiv1.NewUsageServiceConnect(deps.dbConn, &cfg.UsageConfiguration)
+	if err != nil {
+		return fmt.Errorf("cannot create usage service handler: %w", err)
+	}
+	rootHandler.Mount(usage_v1connect.NewUsageServiceHandler(usageService, handlerOptions...))
 
 	if deps.signer != nil {
 		rootHandler.Mount(v1connect.NewTokensServiceHandler(apiv1.NewTokensService(deps.connPool, deps.expClient, deps.dbConn, deps.signer), handlerOptions...))

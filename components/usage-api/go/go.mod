@@ -57,9 +57,10 @@ replace k8s.io/mount-utils => k8s.io/mount-utils v0.27.3 // leeway indirect from
 replace k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.27.3 // leeway indirect from components/common-go:lib
 
 require (
+	github.com/bufbuild/connect-go v1.10.0
 	github.com/gitpod-io/gitpod/components/gitpod-db/go v0.0.0-20231010172218-3eb86ff8b745
 	google.golang.org/grpc v1.55.0
-	google.golang.org/protobuf v1.30.0
+	google.golang.org/protobuf v1.31.0
 )
 
 require (
