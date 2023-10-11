@@ -41,7 +41,6 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
     onSelectionChange,
     onSearchChange,
 }) => {
-    const triggerEl = useRef<HTMLButtonElement>(null);
     const inputEl = useRef<HTMLInputElement>(null);
     const [showDropDown, setShowDropDown] = useState<boolean>(!disabled && !!expanded);
     const [search, setSearch] = useState<string>("");
@@ -140,9 +139,10 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                 }
                 return;
             }
+            // Capture escape ourselves instead of letting radix do it
+            // allows us to close the dropdown and preventDefault on event
             if (e.key === "Escape") {
                 setShowDropDown(false);
-                triggerEl.current?.focus();
                 e.preventDefault();
             }
             if (e.key === "Enter") {
@@ -173,7 +173,6 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
     return (
         <RadixPopover.Root defaultOpen={expanded} open={showDropDown} onOpenChange={handleOpenChange}>
             <RadixPopover.Trigger
-                ref={triggerEl}
                 className={classNames(
                     "h-16 bg-gray-100 dark:bg-gray-800 flex flex-row items-center justify-start px-2 text-left",
                     // when open, just have border radius on top

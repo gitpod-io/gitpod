@@ -32,11 +32,11 @@ export const CreateProjectModal: FC<Props> = ({ onClose, onCreated }) => {
             return;
         }
 
-        const projectName = selectedRepo.repositoryName || selectedRepo.projectName || selectedRepo.url;
-
         const newProjectArgs: CreateProjectArgs = {
-            name: projectName,
-            slug: projectName,
+            // leave the name empty to let the backend generate the name
+            name: "",
+            // deprecated
+            slug: "",
             cloneUrl: selectedRepo.url,
             appInstallationId: "",
         };
