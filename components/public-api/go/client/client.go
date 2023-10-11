@@ -5,7 +5,6 @@
 package client
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -29,16 +28,21 @@ func New(options ...Option) (*Gitpod, error) {
 		return nil, fmt.Errorf("failed to evaluate client options: %w", err)
 	}
 
-	if opts.credentials == "" {
-		return nil, errors.New("no authentication credentials specified")
-	}
-
 	client := opts.client
 	url := opts.url
 
+	var interceptors []connect.Interceptor
+
+	if opts.credentials != "" {
+		interceptors = append(interceptors, AuthorizationInterceptor(opts.credentials))
+	}
+
+	// TODO(mads): Test to write: That it works with no intercepts, and with X interceptors
+	interceptors = append(interceptors, opts.interceptors...)
+
 	serviceOpts := []connect.ClientOption{
 		connect.WithInterceptors(
-			AuthorizationInterceptor(opts.credentials),
+			interceptors...,
 		),
 	}
 
@@ -81,10 +85,18 @@ func WithHTTPClient(client *http.Client) Option {
 	}
 }
 
+func WithInterceptor(i connect.Interceptor) Option {
+	return func(opts *options) error {
+		opts.interceptors = append(opts.interceptors, i)
+		return nil
+	}
+}
+
 type options struct {
-	url         string
-	client      *http.Client
-	credentials string
+	url          string
+	client       *http.Client
+	credentials  string
+	interceptors []connect.Interceptor
 }
 
 func defaultOptions() *options {
