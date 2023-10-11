@@ -146,7 +146,7 @@ const SuggestedRepositoryOption: FC<SuggestedRepositoryOptionProps> = ({ repo })
             aria-label={`${repo.projectId ? "Project" : "Repo"}: ${repo.url}`}
         >
             <span className={"pr-2"}>
-                <RepositoryIcon className={`w-5 h-5 ${repo.projectId ? "text-gray-400" : "text-gray-400/50"}`} />
+                <RepositoryIcon className={`w-5 h-5 text-gray-400`} />
             </span>
 
             {name && (
