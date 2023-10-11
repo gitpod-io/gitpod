@@ -177,8 +177,6 @@ import {
     suggestionFromRecentWorkspace,
     suggestionFromUserRepo,
 } from "./suggested-repos-sorter";
-import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
-import { rel } from "../authorization/definitions";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -444,23 +442,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 ErrorCodes.PERMISSION_DENIED,
                 `operation not permitted: missing ${op} permission on ${resource.kind}`,
             );
-        }
-        if (resource.kind === "workspace" && op === "get") {
-            // access to workspaces is granted. Let's verify that this is also thecase with FGA
-            const result = await this.auth.hasPermissionOnWorkspace(
-                this.userID!,
-                "read_info",
-                resource.subject.id,
-                true,
-            );
-            if (!result) {
-                const isShared = await this.auth.find(rel.workspace(resource.subject.id).shared.anyUser);
-                log.error("user has access to workspace, but not through FGA", {
-                    userId: this.userID,
-                    workspace: new TrustedValue(resource.subject),
-                    sharedRelationship: isShared && new TrustedValue(isShared),
-                });
-            }
         }
     }
 

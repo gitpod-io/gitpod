@@ -13,11 +13,10 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 import { v1 } from "@authzed/authzed-node";
 import { fgaRelationsUpdateClientLatency } from "../prometheus-metrics";
 import { RedisMutex } from "../redis/mutex";
-import { rel } from "./definitions";
 
 @injectable()
 export class RelationshipUpdater {
-    public static readonly version = 3;
+    public static readonly version = 4;
 
     constructor(
         @inject(UserDB) private readonly userDB: UserDB,
@@ -112,18 +111,7 @@ export class RelationshipUpdater {
     }
 
     private async isMigrated(user: User) {
-        const isMigrated = user.fgaRelationshipsVersion === RelationshipUpdater.version;
-        if (isMigrated) {
-            const hasSelfRelationship = await this.authorizer.find(rel.user(user.id).self.user(user.id));
-            if (!hasSelfRelationship) {
-                log.warn({ userId: user.id }, `User is marked as migrated but doesn't have self relationship.`);
-                //TODO(se) this is an extra safety net to detect
-                // reset the fgaRelationshipsVersion to undefined, so the migration is triggered again when the feature is enabled
-                await this.setFgaRelationshipsVersion(user, undefined);
-                return false;
-            }
-        }
-        return isMigrated;
+        return user.fgaRelationshipsVersion === RelationshipUpdater.version;
     }
 
     private async findAffectedOrganizations(userId: string): Promise<Organization[]> {
