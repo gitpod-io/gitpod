@@ -173,8 +173,9 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
     return (
         <RadixPopover.Root defaultOpen={expanded} open={showDropDown} onOpenChange={handleOpenChange}>
             <RadixPopover.Trigger
+                disabled={disabled}
                 className={classNames(
-                    "h-16 bg-gray-100 dark:bg-gray-800 flex flex-row items-center justify-start px-2 text-left",
+                    "w-full h-16 bg-gray-100 dark:bg-gray-800 flex flex-row items-center justify-start px-2 text-left",
                     // when open, just have border radius on top
                     showDropDown ? "rounded-none rounded-t-lg" : "rounded-lg",
                     // Dropshadow when expanded
@@ -194,7 +195,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
             <RadixPopover.Portal>
                 <RadixPopover.Content
                     className={classNames(
-                        "rounded-b-lg p-2 filter drop-shadow-xl z-50",
+                        "rounded-b-lg p-2 filter drop-shadow-xl z-50 outline-none",
                         "bg-gray-100 dark:bg-gray-800 ",
                         "w-[--radix-popover-trigger-width]",
                     )}
