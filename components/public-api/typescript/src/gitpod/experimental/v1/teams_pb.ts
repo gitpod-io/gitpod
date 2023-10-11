@@ -70,20 +70,6 @@ export class Team extends Message<Team> {
    */
   slug = "";
 
-  /**
-   * members are the team members of this Team
-   *
-   * @generated from field: repeated gitpod.experimental.v1.TeamMember members = 4;
-   */
-  members: TeamMember[] = [];
-
-  /**
-   * team_invitation is the team invitation.
-   *
-   * @generated from field: gitpod.experimental.v1.TeamInvitation team_invitation = 5;
-   */
-  teamInvitation?: TeamInvitation;
-
   constructor(data?: PartialMessage<Team>) {
     super();
     proto3.util.initPartial(data, this);
@@ -95,8 +81,6 @@ export class Team extends Message<Team> {
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "slug", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 4, name: "members", kind: "message", T: TeamMember, repeated: true },
-    { no: 5, name: "team_invitation", kind: "message", T: TeamInvitation },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Team {
@@ -535,6 +519,82 @@ export class DeleteTeamResponse extends Message<DeleteTeamResponse> {
 }
 
 /**
+ * @generated from message gitpod.experimental.v1.GetTeamInvitationRequest
+ */
+export class GetTeamInvitationRequest extends Message<GetTeamInvitationRequest> {
+  /**
+   * @generated from field: string team_id = 1;
+   */
+  teamId = "";
+
+  constructor(data?: PartialMessage<GetTeamInvitationRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.experimental.v1.GetTeamInvitationRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "team_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetTeamInvitationRequest {
+    return new GetTeamInvitationRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetTeamInvitationRequest {
+    return new GetTeamInvitationRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetTeamInvitationRequest {
+    return new GetTeamInvitationRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetTeamInvitationRequest | PlainMessage<GetTeamInvitationRequest> | undefined, b: GetTeamInvitationRequest | PlainMessage<GetTeamInvitationRequest> | undefined): boolean {
+    return proto3.util.equals(GetTeamInvitationRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.GetTeamInvitationResponse
+ */
+export class GetTeamInvitationResponse extends Message<GetTeamInvitationResponse> {
+  /**
+   * team_invitation is the invitation for the team.
+   *
+   * @generated from field: gitpod.experimental.v1.TeamInvitation team_invitation = 1;
+   */
+  teamInvitation?: TeamInvitation;
+
+  constructor(data?: PartialMessage<GetTeamInvitationResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.experimental.v1.GetTeamInvitationResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "team_invitation", kind: "message", T: TeamInvitation },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetTeamInvitationResponse {
+    return new GetTeamInvitationResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetTeamInvitationResponse {
+    return new GetTeamInvitationResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetTeamInvitationResponse {
+    return new GetTeamInvitationResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetTeamInvitationResponse | PlainMessage<GetTeamInvitationResponse> | undefined, b: GetTeamInvitationResponse | PlainMessage<GetTeamInvitationResponse> | undefined): boolean {
+    return proto3.util.equals(GetTeamInvitationResponse, a, b);
+  }
+}
+
+/**
  * @generated from message gitpod.experimental.v1.JoinTeamRequest
  */
 export class JoinTeamRequest extends Message<JoinTeamRequest> {
@@ -685,6 +745,84 @@ export class ResetTeamInvitationResponse extends Message<ResetTeamInvitationResp
 
   static equals(a: ResetTeamInvitationResponse | PlainMessage<ResetTeamInvitationResponse> | undefined, b: ResetTeamInvitationResponse | PlainMessage<ResetTeamInvitationResponse> | undefined): boolean {
     return proto3.util.equals(ResetTeamInvitationResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.ListTeamMembersRequest
+ */
+export class ListTeamMembersRequest extends Message<ListTeamMembersRequest> {
+  /**
+   * team_id is the ID of the team that contains the members to list
+   *
+   * @generated from field: string team_id = 1;
+   */
+  teamId = "";
+
+  constructor(data?: PartialMessage<ListTeamMembersRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.experimental.v1.ListTeamMembersRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "team_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListTeamMembersRequest {
+    return new ListTeamMembersRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListTeamMembersRequest {
+    return new ListTeamMembersRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListTeamMembersRequest {
+    return new ListTeamMembersRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListTeamMembersRequest | PlainMessage<ListTeamMembersRequest> | undefined, b: ListTeamMembersRequest | PlainMessage<ListTeamMembersRequest> | undefined): boolean {
+    return proto3.util.equals(ListTeamMembersRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.ListTeamMembersResponse
+ */
+export class ListTeamMembersResponse extends Message<ListTeamMembersResponse> {
+  /**
+   * members are the team members of this Team
+   *
+   * @generated from field: repeated gitpod.experimental.v1.TeamMember members = 1;
+   */
+  members: TeamMember[] = [];
+
+  constructor(data?: PartialMessage<ListTeamMembersResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.experimental.v1.ListTeamMembersResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "members", kind: "message", T: TeamMember, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListTeamMembersResponse {
+    return new ListTeamMembersResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListTeamMembersResponse {
+    return new ListTeamMembersResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListTeamMembersResponse {
+    return new ListTeamMembersResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListTeamMembersResponse | PlainMessage<ListTeamMembersResponse> | undefined, b: ListTeamMembersResponse | PlainMessage<ListTeamMembersResponse> | undefined): boolean {
+    return proto3.util.equals(ListTeamMembersResponse, a, b);
   }
 }
 
