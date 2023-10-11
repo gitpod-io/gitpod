@@ -2524,14 +2524,23 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardTeamOperation(params.teamId || "", "get");
         await this.auth.checkPermissionOnOrganization(user.id, "create_project", params.teamId);
 
-        // Check if provided clone URL is accessible for the current user, and user has admin permissions.
-        try {
-            new URL(params.cloneUrl);
-        } catch (err) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Clone URL must be a valid URL.");
+        // Ensure we can parse the provided url ok
+        const { host, owner, repo } = RepoURL.parseRepoUrl(params.cloneUrl) || {};
+        if (!host || !owner || !repo) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid repository URL.");
         }
-        const canCreateProject = await this.canCreateProject(user, params.cloneUrl);
-        if (!canCreateProject) {
+
+        // Verify current user can reach the provided repo
+        const hostContext = this.hostContextProvider.get(host);
+        if (!hostContext || !hostContext.services) {
+            throw new ApplicationError(
+                ErrorCodes.BAD_REQUEST,
+                "No GIT provider has been configured for the provided repository.",
+            );
+        }
+        const repoProvider = hostContext.services.repositoryProvider;
+        const canRead = await repoProvider.hasReadAccess(user, owner, repo);
+        if (!canRead) {
             throw new ApplicationError(
                 ErrorCodes.BAD_REQUEST,
                 "Repository URL seems to be inaccessible, or admin permissions are missing.",
@@ -2558,28 +2567,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         return project;
-    }
-
-    /**
-     * Checks if a project can be created, i.e. the current user has the required permissions
-     * to install webhooks for the given repository.
-     */
-    private async canCreateProject(currentUser: User, cloneURL: string) {
-        try {
-            const parsedUrl = RepoURL.parseRepoUrl(cloneURL);
-            const host = parsedUrl?.host;
-            if (!host) {
-                throw Error("Unknown host: " + parsedUrl?.host);
-            }
-
-            // TODO: do we still need this check?
-            return await this.scmService.canInstallWebhook(currentUser, cloneURL);
-            // note: the GitHub App based check is not included in the ProjectService due
-            // to a circular dependency problem which would otherwise occur.
-        } catch (error) {
-            log.error("Failed to check precondition for creating a project.");
-        }
-        return false;
     }
 
     public async updateProjectPartial(ctx: TraceContext, partialProject: PartialProject): Promise<void> {
