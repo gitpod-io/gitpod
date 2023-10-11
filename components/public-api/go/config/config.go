@@ -44,8 +44,9 @@ type RedisConfiguration struct {
 }
 
 type AuthConfiguration struct {
-	PKI     AuthPKIConfiguration `json:"pki"`
-	Session SessionConfig        `json:"session"`
+	PKI     AuthPKIConfiguration     `json:"pki"`
+	Session SessionConfig            `json:"session"`
+	SpiceDB *SpiceDbAuthorizerConfig `json:"spicedb"`
 }
 
 type SessionConfig struct {
@@ -71,4 +72,8 @@ type KeyPair struct {
 	ID             string `json:"id"`
 	PublicKeyPath  string `json:"publicKeyPath"`
 	PrivateKeyPath string `json:"privateKeyPath"`
+}
+
+type SpiceDbAuthorizerConfig struct {
+	Address string `json:"address"`
 }
