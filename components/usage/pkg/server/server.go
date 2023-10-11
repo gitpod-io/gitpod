@@ -20,6 +20,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
+	api "github.com/gitpod-io/gitpod/usage-api/config"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"github.com/gitpod-io/gitpod/usage/pkg/apiv1"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
@@ -31,24 +32,9 @@ import (
 )
 
 type Config struct {
-	// LedgerSchedule determines how frequently to run the Usage/Billing controller.
-	// When LedgerSchedule is empty, the background controller is disabled.
-	LedgerSchedule string `json:"controllerSchedule,omitempty"`
-
-	// ResetUsageSchedule determines how frequently to run the Usage Reset job.
-	// When empty, the job is disabled.
-	ResetUsageSchedule string `json:"resetUsageSchedule,omitempty"`
-
-	CreditsPerMinuteByWorkspaceClass map[string]float64 `json:"creditsPerMinuteByWorkspaceClass,omitempty"`
-
-	StripeCredentialsFile string `json:"stripeCredentialsFile,omitempty"`
+	api.Config
 
 	Server *baseserver.Configuration `json:"server,omitempty"`
-
-	DefaultSpendingLimit db.DefaultSpendingLimit `json:"defaultSpendingLimit"`
-
-	// StripePrices configure which Stripe Price IDs should be used
-	StripePrices stripe.StripePrices `json:"stripePrices"`
 
 	// Redis configures the connection to Redis
 	Redis RedisConfiguration `json:"redis"`

@@ -31,7 +31,7 @@ type Configuration struct {
 	// Redis configures the connection to Redis
 	Redis RedisConfiguration `json:"redis"`
 
-	// Authentication configuration
+	// AuthN configuration
 	Auth AuthConfiguration `json:"auth"`
 
 	Server *baseserver.Configuration `json:"server,omitempty"`

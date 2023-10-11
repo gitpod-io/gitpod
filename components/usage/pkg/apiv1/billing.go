@@ -17,6 +17,7 @@ import (
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	experimental_v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
+	"github.com/gitpod-io/gitpod/usage-api/config"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"github.com/google/uuid"
@@ -26,7 +27,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewBillingService(stripeClient *stripe.Client, conn *gorm.DB, ccManager *db.CostCenterManager, stripePrices stripe.StripePrices, teamsService v1connect.TeamsServiceClient, userService v1connect.UserServiceClient) *BillingService {
+func NewBillingService(stripeClient *stripe.Client, conn *gorm.DB, ccManager *db.CostCenterManager, stripePrices config.StripePrices, teamsService v1connect.TeamsServiceClient, userService v1connect.UserServiceClient) *BillingService {
 	return &BillingService{
 		stripeClient: stripeClient,
 		conn:         conn,
@@ -42,7 +43,7 @@ type BillingService struct {
 	conn         *gorm.DB
 	stripeClient *stripe.Client
 	ccManager    *db.CostCenterManager
-	stripePrices stripe.StripePrices
+	stripePrices config.StripePrices
 
 	teamsService v1connect.TeamsServiceClient
 	userService  v1connect.UserServiceClient

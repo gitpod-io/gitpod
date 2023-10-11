@@ -38,16 +38,6 @@ type ClientConfig struct {
 	SecretKey      string `json:"secretKey"`
 }
 
-type PriceConfig struct {
-	EUR string `json:"eur"`
-	USD string `json:"usd"`
-}
-
-type StripePrices struct {
-	IndividualUsagePriceIDs PriceConfig `json:"individualUsagePriceIds"`
-	TeamUsagePriceIDs       PriceConfig `json:"teamUsagePriceIds"`
-}
-
 func ReadConfigFromFile(path string) (ClientConfig, error) {
 	bytes, err := os.ReadFile(path)
 	if err != nil {
