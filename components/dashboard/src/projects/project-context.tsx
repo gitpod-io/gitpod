@@ -33,7 +33,6 @@ export function useCurrentProject(): { project: Project | undefined; loading: bo
     const user = useCurrentUser();
     const org = useCurrentOrg();
     const orgs = useOrganizations();
-    // TODO: we should utilize route params for this in our router
     const projectIdFromRoute = useRouteMatch<{ projectId?: string }>("/projects/:projectId")?.params.projectId;
     const location = useLocation();
     const history = useHistory();
