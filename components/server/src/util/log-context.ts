@@ -5,30 +5,18 @@
  */
 
 import { LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { AsyncLocalStorage } from "node:async_hooks";
 import { performance } from "node:perf_hooks";
-import { v4 } from "uuid";
-import { StoredZedToken } from "../authorization/caching-spicedb-authorizer";
+import { RequestContext, getGlobalContext, runWithContext } from "./request-context";
 
 export type LogContextOptions = LogContext & {
-    contextId?: string;
-    contextTimeMs?: number;
     [p: string]: any;
 };
 
 // we are installing a special augmenter that enhances the log context if executed within `runWithContext`
 // with a contextId and a contextTimeMs, which denotes the amount of milliseconds since the context was created.
-type EnhancedLogContext = LogContextOptions & {
-    contextKind: string;
-    contextId: string;
-    contextTimeMs: number;
-} & {
-    zedToken?: StoredZedToken;
-};
-
-const asyncLocalStorage = new AsyncLocalStorage<EnhancedLogContext>();
+export type EnhancedLogContext = RequestContext & LogContextOptions;
 const augmenter: LogContext.Augmenter = (ctx) => {
-    const globalContext = asyncLocalStorage.getStore();
+    const globalContext = getGlobalContext();
     const contextTimeMs = globalContext?.contextTimeMs ? performance.now() - globalContext.contextTimeMs : undefined;
     const result = {
         ...globalContext,
@@ -40,46 +28,6 @@ const augmenter: LogContext.Augmenter = (ctx) => {
 };
 LogContext.setAugmenter(augmenter);
 
-export function runWithContext<T>(contextKind: string, context: LogContextOptions, fun: () => T): T {
-    return asyncLocalStorage.run(
-        {
-            ...context,
-            contextKind,
-            contextId: context.contextId || v4(),
-            contextTimeMs: context.contextTimeMs || performance.now(),
-        },
-        fun,
-    );
-}
-
-export type AsyncGeneratorDecorator<T> = (f: () => T) => T;
-export function wrapAsyncGenerator<T>(
-    generator: AsyncGenerator<T>,
-    decorator: AsyncGeneratorDecorator<any>,
-): AsyncGenerator<T> {
-    return <AsyncGenerator<T>>{
-        next: () => decorator(() => generator.next()),
-        return: (value?: any) => decorator(() => generator.return(value)),
-        throw: (e?: any) => decorator(() => generator.throw(e)),
-
-        [Symbol.asyncIterator]() {
-            return this;
-        },
-    };
-}
-
-export function getZedTokenFromContext(): StoredZedToken | undefined {
-    return asyncLocalStorage.getStore()?.zedToken;
-}
-export function setZedTokenToContext(zedToken: StoredZedToken) {
-    const ctx = asyncLocalStorage.getStore();
-    if (ctx) {
-        ctx.zedToken = zedToken;
-    }
-}
-export function clearZedTokenOnContext() {
-    const ctx = asyncLocalStorage.getStore();
-    if (ctx) {
-        ctx.zedToken = undefined;
-    }
+export function runWithLogContext<T>(contextKind: string, context: EnhancedLogContext, fun: () => T): T {
+    return runWithContext<EnhancedLogContext, T>(contextKind, context, fun);
 }

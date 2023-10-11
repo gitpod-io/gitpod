@@ -24,9 +24,10 @@ import { APIStatsService } from "./stats";
 import { APITeamsService } from "./teams";
 import { APIUserService } from "./user";
 import { APIWorkspacesService } from "./workspaces";
-import { LogContextOptions, wrapAsyncGenerator, runWithContext } from "../util/log-context";
+import { LogContextOptions, runWithLogContext } from "../util/log-context";
 import { v4 } from "uuid";
 import { performance } from "perf_hooks";
+import { wrapAsyncGenerator } from "../util/request-context";
 
 function service<T extends ServiceType>(type: T, impl: ServiceImpl<T>): [T, ServiceImpl<T>] {
     return [type, impl];
@@ -114,7 +115,7 @@ export class API {
                         grpc_service,
                         grpc_method: prop as string,
                     };
-                    const withRequestContext = <T>(fn: () => T): T => runWithContext("public-api", logContext, fn);
+                    const withRequestContext = <T>(fn: () => T): T => runWithLogContext("public-api", logContext, fn);
 
                     const method = type.methods[prop as string];
                     if (!method) {

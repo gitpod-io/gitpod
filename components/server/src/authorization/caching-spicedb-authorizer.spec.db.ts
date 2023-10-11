@@ -15,11 +15,10 @@ import { Authorizer, SYSTEM_USER } from "./authorizer";
 import { OrganizationService } from "../orgs/organization-service";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { UserService } from "../user/user-service";
-import { RequestLocalZedTokenCache, ZedTokenCache } from "./caching-spicedb-authorizer";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { ConfigProvider } from "../workspace/config-provider";
-import { runWithContext } from "../util/log-context";
 import { v1 } from "@authzed/authzed-node";
+import { runWithContext } from "../util/request-context";
+import { RequestLocalZedTokenCache } from "./spicedb-authorizer";
 
 const expect = chai.expect;
 
@@ -31,7 +30,6 @@ describe("CachingSpiceDBAuthorizer", async () => {
     let orgSvc: OrganizationService;
     let workspaceSvc: WorkspaceService;
     let authorizer: Authorizer;
-    let zedTokenCache: ZedTokenCache;
 
     beforeEach(async () => {
         container = createTestContainer();
@@ -50,7 +48,6 @@ describe("CachingSpiceDBAuthorizer", async () => {
         orgSvc = container.get<OrganizationService>(OrganizationService);
         workspaceSvc = container.get<WorkspaceService>(WorkspaceService);
         authorizer = container.get<Authorizer>(Authorizer);
-        zedTokenCache = container.get<ZedTokenCache>(ZedTokenCache);
     });
 
     afterEach(async () => {
@@ -115,22 +112,8 @@ describe("CachingSpiceDBAuthorizer", async () => {
             "userC should have read_info after removal of userB",
         ).to.be.true;
 
-        // INTERNALS
-        async function printTokens(): Promise<{ ws1Token: string | undefined; org1Token: string | undefined }> {
-            const ws1Token = await zedTokenCache.get({ objectType: "workspace", objectId: ws1.id });
-            log.info("ws1Token", ws1Token);
-            const org1Token = await zedTokenCache.get({ objectType: "organization", objectId: org1.id });
-            log.info("org1Token", org1Token);
-            return { ws1Token, org1Token };
-        }
-        const { org1Token: org1TokenT1 } = await printTokens();
-
         // userB is removed from the org
         await withCtx(orgSvc.removeOrganizationMember(SYSTEM_USER, org1.id, userB.id));
-
-        // INTERNALS
-        const { org1Token: org1TokenT2 } = await printTokens();
-        expect(org1TokenT1 === org1TokenT2 && org1TokenT1 !== undefined && org1TokenT2 !== undefined).to.be.false;
 
         expect(
             await withCtx(authorizer.hasPermissionOnWorkspace(userB.id, "read_info", ws1.id)),
