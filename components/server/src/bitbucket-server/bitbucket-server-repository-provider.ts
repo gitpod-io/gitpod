@@ -180,8 +180,15 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
     }
 
     async hasReadAccess(user: User, owner: string, repo: string): Promise<boolean> {
-        // TODO(janx): Not implemented yet
-        return false;
+        let canRead = false;
+
+        try {
+            const repository = await this.getRepo(user, owner, repo);
+            canRead = !!repository;
+            // errors are expected here in the case that user does not have read access
+        } catch (e) {}
+
+        return canRead;
     }
 
     async getCommitHistory(user: User, owner: string, repo: string, ref: string, maxDepth: number): Promise<string[]> {
