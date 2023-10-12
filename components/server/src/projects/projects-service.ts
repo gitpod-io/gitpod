@@ -229,6 +229,12 @@ export class ProjectsService {
             );
         }
         const repoProvider = hostContext.services.repositoryProvider;
+        if (!repoProvider) {
+            throw new ApplicationError(
+                ErrorCodes.BAD_REQUEST,
+                "No GIT provider has been configured for the provided repository.",
+            );
+        }
         const canRead = await repoProvider.hasReadAccess(installer, parsedUrl.owner, parsedUrl.repo);
         if (!canRead) {
             throw new ApplicationError(
