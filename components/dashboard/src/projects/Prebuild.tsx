@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
+import { PrebuildWithStatus } from "@gitpod/gitpod-protocol";
 import dayjs from "dayjs";
 import { useEffect, useMemo, useState } from "react";
 import { Redirect, useHistory, useParams } from "react-router";
@@ -108,7 +108,9 @@ export default function PrebuildPage() {
             setIsRerunningPrebuild(true);
             await getGitpodService().server.triggerPrebuild(prebuild.info.projectId, prebuild.info.branch);
             // TODO: Open a Prebuilds page that's specific to `prebuild.info.branch`?
-            history.push(`/projects/${Project.slug(project!)}/prebuilds`);
+            if (project) {
+                history.push(`/projects/${project.id}/prebuilds`);
+            }
         } catch (error) {
             console.error("Could not rerun prebuild", error);
         } finally {

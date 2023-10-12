@@ -74,10 +74,6 @@ export namespace Project {
         };
     };
 
-    export function slug(p: Project): string {
-        return p.name + "-" + p.id;
-    }
-
     export type PrebuildSettingsWithDefaults = Required<Pick<PrebuildSettings, "prebuildInterval">> & PrebuildSettings;
 
     export const PREBUILD_SETTINGS_DEFAULTS: PrebuildSettingsWithDefaults = {

@@ -151,7 +151,7 @@ export default function ProjectsPage() {
         try {
             setIsLoading(true);
             const prebuildResult = await getGitpodService().server.triggerPrebuild(project.id, branch.name);
-            history.push(`/projects/${Project.slug(project!)}/${prebuildResult.prebuildId}`);
+            history.push(`/projects/${project.id}/${prebuildResult.prebuildId}`);
         } finally {
             setIsLoading(false);
         }
@@ -176,7 +176,7 @@ export default function ProjectsPage() {
             setIsResuming(true);
             const response = await getGitpodService().server.triggerPrebuild(project.id, null);
             setIsConsideredInactive(false);
-            history.push(`/projects/${Project.slug(project!)}/${response.prebuildId}`);
+            history.push(`/projects/${project.id}/${response.prebuildId}`);
         } catch (error) {
             console.error(error);
         } finally {
@@ -352,9 +352,7 @@ export default function ProjectsPage() {
                                                         className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1 cursor-pointer"
                                                         href={
                                                             prebuild
-                                                                ? `/projects/${Project.slug(project!)}/${
-                                                                      prebuild.info.id
-                                                                  }`
+                                                                ? `/projects/${project.id}/${prebuild.info.id}`
                                                                 : ""
                                                         }
                                                     >

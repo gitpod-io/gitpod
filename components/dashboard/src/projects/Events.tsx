@@ -5,7 +5,7 @@
  */
 
 import dayjs from "dayjs";
-import { PrebuildEvent, Project } from "@gitpod/gitpod-protocol";
+import { PrebuildEvent } from "@gitpod/gitpod-protocol";
 import { useCallback, useEffect, useState } from "react";
 import Header from "../components/Header";
 import { ItemsList, Item, ItemField } from "../components/ItemsList";
@@ -209,7 +209,7 @@ export default function EventsPage() {
                                                 {event.prebuildId && (
                                                     <a
                                                         className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1 cursor-pointer"
-                                                        href={`/projects/${Project.slug(project!)}/${event.prebuildId}`}
+                                                        href={`/projects/${project?.id || ""}/${event.prebuildId}`}
                                                     >
                                                         {status}
                                                     </a>

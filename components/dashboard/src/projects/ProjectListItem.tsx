@@ -44,7 +44,7 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                                     },
                                     {
                                         title: "Settings",
-                                        link: `/projects/${Project.slug(project)}/settings`,
+                                        link: `/projects/${project.id}/settings`,
                                         separator: true,
                                     },
                                     {
@@ -65,11 +65,11 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                 </div>
                 <div className="h-10 px-6 py-1 text-gray-400 text-sm">
                     <span className="hover:text-gray-600 dark:hover:text-gray-300">
-                        <Link to={`/projects/${Project.slug(project!)}`}>Branches</Link>
+                        <Link to={`/projects/${project.id}`}>Branches</Link>
                     </span>
                     <span className="mx-2 my-auto">·</span>
                     <span className="hover:text-gray-600 dark:hover:text-gray-300">
-                        <Link to={`/projects/${Project.slug(project!)}/prebuilds`}>Prebuilds</Link>
+                        <Link to={`/projects/${project.id}/prebuilds`}>Prebuilds</Link>
                     </span>
                 </div>
             </div>
@@ -77,7 +77,7 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                 {!enablePrebuilds ? (
                     <div className="flex h-full text-sm">
                         <Link
-                            to={`/projects/${Project.slug(project!)}/settings`}
+                            to={`/projects/${project.id}/settings`}
                             className="flex-shrink-0 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                         >
                             Enable Prebuilds &rarr;
@@ -86,7 +86,7 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                 ) : prebuild ? (
                     <div className="flex flex-row h-full text-sm space-x-4">
                         <Link
-                            to={`/projects/${Project.slug(project!)}/${prebuild?.info?.id}`}
+                            to={`/projects/${project.id}/${prebuild?.info?.id}`}
                             className="flex-grow flex items-center group space-x-2 truncate"
                         >
                             {prebuildStatusIcon(prebuild)}
@@ -104,7 +104,7 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                             </Tooltip>
                         </Link>
                         <Link
-                            to={`/projects/${Project.slug(project!)}/prebuilds`}
+                            to={`/projects/${project.id}/prebuilds`}
                             className="flex-shrink-0 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                         >
                             View All &rarr;
@@ -136,7 +136,7 @@ type ProjectLinkProps = {
 };
 const ProjectLink: FunctionComponent<ProjectLinkProps> = ({ project }) => {
     return (
-        <Link to={`/projects/${Project.slug(project)}`}>
+        <Link to={`/projects/${project.id}`}>
             <span className="text-xl font-semibold">{project.name}</span>
         </Link>
     );
