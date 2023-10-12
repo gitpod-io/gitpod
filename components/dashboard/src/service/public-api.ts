@@ -58,7 +58,7 @@ export const workspacesService = wrapServiceError(createPromiseClient(Workspaces
 export const oidcService = wrapServiceError(createPromiseClient(OIDCService, transport));
 
 // We use Proxy here instead of add interceptor to transport
-// that's because AbortError is out of interceptor, connect-es will be force convert to deadline_exceeded
+// that's because AbortError is out of interceptor, connect-es will force convert error to deadline_exceeded
 // @see https://github.com/connectrpc/connect-es/blob/e0bffbab4e75e19fd7eeb9eadabe050941d39e5f/packages/connect/src/protocol/run-call.ts#L174-L181
 function wrapServiceError<T extends object>(service: T): T {
     return new Proxy(service, {
@@ -68,7 +68,7 @@ function wrapServiceError<T extends object>(service: T): T {
                     // @ts-ignore
                     return await target[prop](...args);
                 } catch (e) {
-                    throw new WrapError(`failed to call papi: ${String(prop)}`, e);
+                    throw new WrapError(`failed to call API [${String(prop)}]`, e);
                 }
             };
         },
