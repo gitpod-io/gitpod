@@ -33,7 +33,7 @@ export function useCurrentProject(): { project: Project | undefined; loading: bo
     const user = useCurrentUser();
     const org = useCurrentOrg();
     const orgs = useOrganizations();
-    const projectIdFromRoute = useRouteMatch<{ projectId?: string }>("/projects/:projectId")?.params.projectId;
+    const projectIdFromRoute = useRouteMatch<{ projectId?: string }>("/projects/:projectId")?.params?.projectId;
     const location = useLocation();
     const history = useHistory();
     const listProjects = useListProjectsQuery();
