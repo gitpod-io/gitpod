@@ -241,6 +241,17 @@ func TestRoutes(t *testing.T) {
 			},
 		},
 		{
+			Desc: "/health",
+			Request: modifyRequest(httptest.NewRequest("GET", "/health", nil),
+				addHostHeader,
+			),
+			Expectation: Expectation{
+				Status: http.StatusOK,
+				Header: nil,
+				Body:   "",
+			},
+		},
+		{
 			Desc:   "blobserve IDE unauthorized GET /",
 			Config: &config,
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL, nil),
