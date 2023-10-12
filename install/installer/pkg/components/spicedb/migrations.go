@@ -33,12 +33,13 @@ func migrations(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Labels:    common.CustomizeLabel(ctx, Component, common.TypeMetaBatchJob),
 		Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaBatchJob, func() map[string]string {
 			// Because we are using ArgoCD to deploy, we need to add these annotations so:
-			// 1. it knows when to apply it (during the "Sync" hook, the same phase the all other manifests are applied)
+			// 1. it knows when to apply it (during the "PreSync" hook, before other manifests are applied)
 			// 2. that it should remove it once it is done
 			//   - this is necessary so it does not show up as "ouf of sync" once the "TTLSecondsAfterFinished" option kicks in
 			//   - if we would not remove the job at all, we would have a name clash an future updates ("field is immutable")
+			// docs: https://argo-cd.readthedocs.io/en/stable/user-guide/resource_hooks/#usage
 			return map[string]string{
-				"argocd.argoproj.io/hook":               "Sync",
+				"argocd.argoproj.io/hook":               "PreSync",
 				"argocd.argoproj.io/hook-delete-policy": "HookSucceeded",
 			}
 		}),
