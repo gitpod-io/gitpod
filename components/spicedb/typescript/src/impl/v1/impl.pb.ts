@@ -57,6 +57,8 @@ export interface V1Cursor {
    * parameters, including limits and zedtoken, to ensure no inputs changed when using this cursor.
    */
   callAndParametersHash: string;
+  /** dispatch_version is the version of the dispatcher which created the cursor. */
+  dispatchVersion: number;
 }
 
 export interface DocComment {
@@ -662,7 +664,7 @@ export const DecodedCursor = {
 };
 
 function createBaseV1Cursor(): V1Cursor {
-  return { revision: "", sections: [], callAndParametersHash: "" };
+  return { revision: "", sections: [], callAndParametersHash: "", dispatchVersion: 0 };
 }
 
 export const V1Cursor = {
@@ -675,6 +677,9 @@ export const V1Cursor = {
     }
     if (message.callAndParametersHash !== "") {
       writer.uint32(26).string(message.callAndParametersHash);
+    }
+    if (message.dispatchVersion !== 0) {
+      writer.uint32(32).uint32(message.dispatchVersion);
     }
     return writer;
   },
@@ -707,6 +712,13 @@ export const V1Cursor = {
 
           message.callAndParametersHash = reader.string();
           continue;
+        case 4:
+          if (tag !== 32) {
+            break;
+          }
+
+          message.dispatchVersion = reader.uint32();
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -721,6 +733,7 @@ export const V1Cursor = {
       revision: isSet(object.revision) ? String(object.revision) : "",
       sections: Array.isArray(object?.sections) ? object.sections.map((e: any) => String(e)) : [],
       callAndParametersHash: isSet(object.callAndParametersHash) ? String(object.callAndParametersHash) : "",
+      dispatchVersion: isSet(object.dispatchVersion) ? Number(object.dispatchVersion) : 0,
     };
   },
 
@@ -735,6 +748,9 @@ export const V1Cursor = {
     if (message.callAndParametersHash !== "") {
       obj.callAndParametersHash = message.callAndParametersHash;
     }
+    if (message.dispatchVersion !== 0) {
+      obj.dispatchVersion = Math.round(message.dispatchVersion);
+    }
     return obj;
   },
 
@@ -746,6 +762,7 @@ export const V1Cursor = {
     message.revision = object.revision ?? "";
     message.sections = object.sections?.map((e) => e) || [];
     message.callAndParametersHash = object.callAndParametersHash ?? "";
+    message.dispatchVersion = object.dispatchVersion ?? 0;
     return message;
   },
 };
