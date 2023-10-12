@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM caddy:2.7.5-builder-alpine AS builder
+FROM caddy:2.7.5-builder AS builder
 
 WORKDIR /plugins
 
