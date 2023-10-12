@@ -22,7 +22,7 @@ export const useCreateProject = () => {
         }
 
         // ensure a .git suffix
-        const normalizedCloneURL = /\.git$/.test(cloneUrl) ? cloneUrl : `${cloneUrl}.git`;
+        const normalizedCloneURL = cloneUrl.endsWith(".git") ? cloneUrl : `${cloneUrl}.git`;
 
         const newProject = await getGitpodService().server.createProject({
             name,
