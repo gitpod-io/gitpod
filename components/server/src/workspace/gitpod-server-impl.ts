@@ -2522,45 +2522,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardTeamOperation(params.teamId || "", "get");
         await this.auth.checkPermissionOnOrganization(user.id, "create_project", params.teamId);
 
-        if ((params.name || "").length > 32) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "A project name cannot be longer than 32 characters.");
-        }
-
-        // Ensure we can parse the provided url ok
-        const { host, owner, repo } = RepoURL.parseRepoUrl(params.cloneUrl) || {};
-        if (!host || !owner || !repo) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid repository URL.");
-        }
-
-        // Verify current user can reach the provided repo
-        const hostContext = this.hostContextProvider.get(host);
-        if (!hostContext || !hostContext.services) {
-            throw new ApplicationError(
-                ErrorCodes.BAD_REQUEST,
-                "No GIT provider has been configured for the provided repository.",
-            );
-        }
-        const repoProvider = hostContext.services.repositoryProvider;
-        const canRead = await repoProvider.hasReadAccess(user, owner, repo);
-        if (!canRead) {
-            throw new ApplicationError(
-                ErrorCodes.BAD_REQUEST,
-                "Repository URL seems to be inaccessible, or admin permissions are missing.",
-            );
-        }
-
-        const newProjectParams: CreateProjectParams = {
-            cloneUrl: params.cloneUrl,
-            teamId: params.teamId,
-            // Default to repo name (capped at 32 chars) if name is not provided
-            name: params.name || repo.substring(0, 32),
-            // TODO: we should be able to remove this - field deprecated
-            slug: "",
-            // TODO: we should be able to remove this since we don't use it anymore
-            appInstallationId: params.appInstallationId,
-        };
-
-        const project = await this.projectsService.createProject(newProjectParams, user);
+        const project = await this.projectsService.createProject(params, user);
 
         // update client registration for the logged in user
         if (this.client && !this.disposables.disposed) {
