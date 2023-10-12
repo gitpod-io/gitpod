@@ -8,15 +8,11 @@ import { Project, User } from "@gitpod/gitpod-protocol";
 import { RepoURL } from "../repohost";
 import { inject, injectable } from "inversify";
 import { HostContextProvider } from "../auth/host-context-provider";
-import { Config } from "../config";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class ScmService {
-    constructor(
-        @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
-        @inject(Config) private readonly config: Config,
-    ) {}
+    constructor(@inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider) {}
 
     async canInstallWebhook(currentUser: User, cloneURL: string) {
         try {
@@ -28,18 +24,10 @@ export class ScmService {
             if (!type || !host) {
                 throw Error("Unknown host: " + parsedUrl?.host);
             }
-            if (
-                type === "GitLab" ||
-                type === "Bitbucket" ||
-                type === "BitbucketServer" ||
-                (type === "GitHub" && (host !== "github.com" || !this.config.githubApp?.enabled))
-            ) {
-                const repositoryService = hostContext?.services?.repositoryService;
-                if (repositoryService) {
-                    return await repositoryService.canInstallAutomatedPrebuilds(currentUser, cloneURL);
-                }
+            const repositoryService = hostContext?.services?.repositoryService;
+            if (repositoryService) {
+                return await repositoryService.canInstallAutomatedPrebuilds(currentUser, cloneURL);
             }
-            // The GitHub App case isn't handled here due to a circular dependency problem.
         } catch (error) {
             log.error("Failed to check precondition for creating a project.");
         }
@@ -51,13 +39,6 @@ export class ScmService {
         const { teamId, cloneUrl } = project;
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
-        const authProvider = hostContext && hostContext.authProvider.info;
-        const isGitHubAppInUse = authProvider?.host === "github.com" && !!this.config.githubApp?.enabled;
-        if (isGitHubAppInUse) {
-            // Silently returning here, as the configuration of the GH App is on a different code path
-            // and this check will become just obsolete on the departure of the GH App.
-            return;
-        }
         const repositoryService = hostContext?.services?.repositoryService;
         if (repositoryService) {
             log.info({ organizationId: teamId, userId: installer.id }, "Update prebuild installation for project.");
