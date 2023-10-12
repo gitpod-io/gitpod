@@ -21,6 +21,7 @@ import (
 const (
 	maintenanceEnabled            string = "maintenance_enabled"
 	workspaceStartupSeconds       string = "workspace_startup_seconds"
+	workspaceCreatingSeconds      string = "workspace_creating_seconds"
 	workspaceStartFailuresTotal   string = "workspace_starts_failure_total"
 	workspaceFailuresTotal        string = "workspace_failure_total"
 	workspaceStopsTotal           string = "workspace_stops_total"
@@ -44,6 +45,7 @@ const (
 
 type controllerMetrics struct {
 	startupTimeHistVec           *prometheus.HistogramVec
+	creatingTimeHistVec          *prometheus.HistogramVec
 	totalStartsFailureCounterVec *prometheus.CounterVec
 	totalFailuresCounterVec      *prometheus.CounterVec
 	totalStopsCounterVec         *prometheus.CounterVec
@@ -72,6 +74,13 @@ func newControllerMetrics(r *WorkspaceReconciler) (*controllerMetrics, error) {
 			Subsystem: metricsWorkspaceSubsystem,
 			Name:      workspaceStartupSeconds,
 			Help:      "time it took for workspace pods to reach the running phase",
+			Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
+		}, []string{"type", "class"}),
+		creatingTimeHistVec: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      workspaceCreatingSeconds,
+			Help:      "time the workspace spent in creation",
 			Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
 		}, []string{"type", "class"}),
 		totalStartsFailureCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -135,6 +144,19 @@ func (m *controllerMetrics) recordWorkspaceStartupTime(log *logr.Logger, ws *wor
 
 	duration := time.Since(ws.CreationTimestamp.Time)
 	hist.Observe(float64(duration.Seconds()))
+}
+
+func (m *controllerMetrics) recordWorkspaceCreatingTime(log *logr.Logger, ws *workspacev1.Workspace) {
+	class := ws.Spec.Class
+	tpe := string(ws.Spec.Type)
+
+	hist, err := m.creatingTimeHistVec.GetMetricWithLabelValues(tpe, class)
+	if err != nil {
+		log.Error(err, "could not record workspace creating time", "type", tpe, "class", class)
+	}
+
+	duration := time.Since(ws.CreationTimestamp.Time)
+	hist.Observe(duration.Seconds())
 }
 
 func (m *controllerMetrics) countWorkspaceStartFailures(log *logr.Logger, ws *workspacev1.Workspace) {
@@ -225,14 +247,16 @@ func (m *controllerMetrics) forgetWorkspace(ws *workspacev1.Workspace) {
 
 // metricState is used to track which metrics have been recorded for a workspace.
 type metricState struct {
-	phase                   workspacev1.WorkspacePhase
-	recordedStartTime       bool
-	recordedInitFailure     bool
-	recordedStartFailure    bool
-	recordedFailure         bool
-	recordedContentReady    bool
-	recordedBackupFailed    bool
-	recordedBackupCompleted bool
+	phase                     workspacev1.WorkspacePhase
+	recordedCreatingTimeStart bool
+	recordedCreatingTimeEnd   bool
+	recordedStartTime         bool
+	recordedInitFailure       bool
+	recordedStartFailure      bool
+	recordedFailure           bool
+	recordedContentReady      bool
+	recordedBackupFailed      bool
+	recordedBackupCompleted   bool
 }
 
 func newMetricState(ws *workspacev1.Workspace) metricState {
@@ -241,13 +265,15 @@ func newMetricState(ws *workspacev1.Workspace) metricState {
 		// Here we assume that we've recorded metrics for the following states already if their conditions already exist.
 		// This is to prevent these from being re-recorded after the controller restarts and clears the metric state for
 		// each workspace.
-		recordedStartTime:       ws.Status.Phase == workspacev1.WorkspacePhaseRunning,
-		recordedInitFailure:     wsk8s.ConditionWithStatusAndReason(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, workspacev1.ReasonInitializationFailure),
-		recordedStartFailure:    ws.Status.Phase == workspacev1.WorkspacePhaseStopped && isStartFailure(ws),
-		recordedFailure:         ws.IsConditionTrue(workspacev1.WorkspaceConditionFailed),
-		recordedContentReady:    ws.IsConditionTrue(workspacev1.WorkspaceConditionContentReady),
-		recordedBackupFailed:    ws.IsConditionTrue(workspacev1.WorkspaceConditionBackupFailure),
-		recordedBackupCompleted: ws.IsConditionTrue(workspacev1.WorkspaceConditionBackupComplete),
+		recordedCreatingTimeStart: ws.Status.Phase == workspacev1.WorkspacePhaseCreating,
+		recordedCreatingTimeEnd:   ws.Status.Phase == workspacev1.WorkspacePhaseInitializing || ws.Status.Phase == workspacev1.WorkspacePhaseRunning,
+		recordedStartTime:         ws.Status.Phase == workspacev1.WorkspacePhaseRunning,
+		recordedInitFailure:       wsk8s.ConditionWithStatusAndReason(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, workspacev1.ReasonInitializationFailure),
+		recordedStartFailure:      ws.Status.Phase == workspacev1.WorkspacePhaseStopped && isStartFailure(ws),
+		recordedFailure:           ws.IsConditionTrue(workspacev1.WorkspaceConditionFailed),
+		recordedContentReady:      ws.IsConditionTrue(workspacev1.WorkspaceConditionContentReady),
+		recordedBackupFailed:      ws.IsConditionTrue(workspacev1.WorkspaceConditionBackupFailure),
+		recordedBackupCompleted:   ws.IsConditionTrue(workspacev1.WorkspaceConditionBackupComplete),
 	}
 }
 
@@ -264,6 +290,7 @@ func (m *controllerMetrics) getWorkspace(log *logr.Logger, ws *workspacev1.Works
 // Describe implements Collector. It will send exactly one Desc to the provided channel.
 func (m *controllerMetrics) Describe(ch chan<- *prometheus.Desc) {
 	m.startupTimeHistVec.Describe(ch)
+	m.creatingTimeHistVec.Describe(ch)
 	m.totalStopsCounterVec.Describe(ch)
 	m.totalStartsFailureCounterVec.Describe(ch)
 	m.totalFailuresCounterVec.Describe(ch)
@@ -280,6 +307,7 @@ func (m *controllerMetrics) Describe(ch chan<- *prometheus.Desc) {
 // Collect implements Collector.
 func (m *controllerMetrics) Collect(ch chan<- prometheus.Metric) {
 	m.startupTimeHistVec.Collect(ch)
+	m.creatingTimeHistVec.Collect(ch)
 	m.totalStopsCounterVec.Collect(ch)
 	m.totalStartsFailureCounterVec.Collect(ch)
 	m.totalFailuresCounterVec.Collect(ch)
