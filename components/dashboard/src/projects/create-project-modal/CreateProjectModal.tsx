@@ -81,7 +81,15 @@ export const CreateProjectModal: FC<Props> = ({ onClose, onCreated }) => {
                     </>
                 )}
             </ModalBody>
-            <ModalFooter alert={errorMessage && <ModalFooterAlert type="danger">{errorMessage}</ModalFooterAlert>}>
+            <ModalFooter
+                alert={
+                    errorMessage && (
+                        <ModalFooterAlert type="danger" onClose={() => setCreateErrorMsg("")}>
+                            {errorMessage}
+                        </ModalFooterAlert>
+                    )
+                }
+            >
                 <Button type="secondary" onClick={onClose}>
                     Cancel
                 </Button>

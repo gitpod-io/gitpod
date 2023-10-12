@@ -111,7 +111,7 @@ export default function Alert(props: AlertProps) {
     return (
         <div
             className={classNames(
-                "flex relative whitespace-pre-wrap p-4",
+                "flex items-center relative whitespace-pre-wrap p-4",
                 info.txtCls,
                 props.className,
                 light ? "" : info.bgCls,
@@ -121,7 +121,7 @@ export default function Alert(props: AlertProps) {
             {showIcon && <span className={`mt-1 mr-4 h-4 w-4 ${info.iconColor}`}>{props.icon ?? info.icon}</span>}
             <span className="flex-1 text-left">{props.children}</span>
             {props.closable && (
-                <span className={`mt-1 ml-4`}>
+                <span className={`ml-4`}>
                     {/* Use an IconButton component once we make it */}
                     <Button
                         type="secondary"
@@ -129,7 +129,7 @@ export default function Alert(props: AlertProps) {
                         onClick={handleClose}
                         autoFocus={autoFocusClose}
                     >
-                        <XSvg className="w-3 h-4 cursor-pointer" />
+                        <XSvg className="w-3 h-4 cursor-pointer text-white" />
                     </Button>
                 </span>
             )}
