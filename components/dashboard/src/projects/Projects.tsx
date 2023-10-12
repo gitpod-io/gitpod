@@ -39,7 +39,7 @@ export default function ProjectsPage() {
 
     const handleProjectCreated = useCallback(
         (project: Project) => {
-            history.push(`/projects/${Project.slug(project)}/settings`);
+            history.push(`/projects/${project.id}/settings`);
         },
         [history],
     );
