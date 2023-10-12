@@ -16,7 +16,7 @@ import { RedisMutex } from "../redis/mutex";
 
 @injectable()
 export class RelationshipUpdater {
-    public static readonly version = 4;
+    public static readonly version = 5;
 
     constructor(
         @inject(UserDB) private readonly userDB: UserDB,

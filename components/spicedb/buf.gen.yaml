@@ -1,4 +1,4 @@
-#!/usr/bin/env -S buf generate --template buf.gen.yaml https://github.com/authzed/spicedb.git#tag=v1.22.2 --path proto/internal/impl/v1/impl.proto
+#!/usr/bin/env -S buf generate https://github.com/authzed/spicedb.git#tag=v1.25.0 --path=proto/internal/impl/v1/impl.proto --template
 # The version refers to the version of the SpiceDB image/binary that we are running
 version: v1
 plugins:
