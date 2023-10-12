@@ -64,7 +64,7 @@ export default function NewProject() {
                 <Heading1>Project Created</Heading1>
                 <Subheading className="mt-2 text-center">
                     Created{" "}
-                    <a className="gp-link" href={`/projects/${Project.slug(project)}/settings`}>
+                    <a className="gp-link" href={`/projects/${project.id}/settings`}>
                         {project.name}
                     </a>{" "}
                     {!currentTeam ? (
@@ -81,7 +81,7 @@ export default function NewProject() {
                 </Subheading>
 
                 <div className="mt-12 flex space-x-2">
-                    <a href={`/projects/${Project.slug(project)}/settings`}>
+                    <a href={`/projects/${project.id}/settings`}>
                         <Button type="secondary" onClick={onNewWorkspace}>
                             Go to Project Settings
                         </Button>

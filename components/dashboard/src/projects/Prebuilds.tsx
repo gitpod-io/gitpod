@@ -198,7 +198,7 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
                         .filter(filter)
                         .sort(prebuildSorter)
                         .map((p, index) => (
-                            <Link to={`/projects/${Project.slug(project!)}/${p.info.id}`} className="cursor-pointer">
+                            <Link to={`/projects/${project?.id ?? ""}/${p.info.id}`} className="cursor-pointer">
                                 <Item key={`prebuild-${p.info.id}`}>
                                     <ItemField
                                         className={`flex items-center my-auto md:w-3/12 xl:w-4/12 ${
