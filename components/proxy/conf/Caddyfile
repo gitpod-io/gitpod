@@ -195,6 +195,7 @@ https://{$GITPOD_DOMAIN} {
 	import ssl_configuration
 	import security_headers
 
+	# Make it possible to get an exposed healthcheck, for example for HTTP(s) NLBs
 	handle /api/health {
 		respond 200
 	}
