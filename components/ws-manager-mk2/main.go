@@ -23,6 +23,7 @@ import (
 	"github.com/bombsimon/logrusr/v4"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -43,6 +44,7 @@ import (
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 
+	"github.com/gitpod-io/gitpod/components/scrubber"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/controllers"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	imgproxy "github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/proxy"
@@ -77,7 +79,12 @@ func main() {
 	flag.Parse()
 
 	log.Init(ServiceName, Version, jsonLog, verbose)
-	baseLogger := logrusr.New(log.Log)
+
+	l := log.WithFields(logrus.Fields{})
+	l.Logger.SetReportCaller(false)
+	baseLogger := logrusr.New(l, logrusr.WithFormatter(func(i interface{}) interface{} {
+		return &log.TrustedValueWrap{Value: scrubber.Default.DeepCopyStruct(i)}
+	}))
 	ctrl.SetLogger(baseLogger)
 	// Set the logger used by k8s (e.g. client-go).
 	klog.SetLogger(baseLogger)
