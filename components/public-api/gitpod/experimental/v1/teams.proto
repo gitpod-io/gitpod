@@ -76,11 +76,17 @@ service TeamsService {
     // DeleteTeam deletes the specified team.
     rpc DeleteTeam(DeleteTeamRequest) returns (DeleteTeamResponse) {};
 
+    // GetTeamInvitation retrieves the invitation for a Team.
+    rpc GetTeamInvitation(GetTeamInvitationRequest) returns (GetTeamInvitationResponse) {};
+
     // JoinTeam makes the caller a TeamMember of the Team.
     rpc JoinTeam(JoinTeamRequest) returns (JoinTeamResponse) {};
 
     // ResetTeamInvitation resets the invitation_id for a Team.
     rpc ResetTeamInvitation(ResetTeamInvitationRequest) returns (ResetTeamInvitationResponse) {};
+
+    // ListTeamMembers lists the members of a Team.
+    rpc ListTeamMembers(ListTeamMembersRequest) returns (ListTeamMembersResponse) {};
 
     // UpdateTeamMember updates team membership properties.
     rpc UpdateTeamMember(UpdateTeamMemberRequest) returns (UpdateTeamMemberResponse) {};
@@ -123,6 +129,15 @@ message DeleteTeamRequest {
 message DeleteTeamResponse {
 }
 
+message GetTeamInvitationRequest {
+    string team_id = 1;
+}
+
+message GetTeamInvitationResponse {
+    // team_invitation is the invitation for the team.
+    TeamInvitation team_invitation = 1;
+}
+
 message JoinTeamRequest {
     // invitation_id is the invitation ID for a Team
     string invitation_id = 1;
@@ -140,6 +155,16 @@ message ResetTeamInvitationRequest {
 message ResetTeamInvitationResponse {
     // team_invitation is the new invitation for the team.
     TeamInvitation team_invitation = 1;
+}
+
+message ListTeamMembersRequest {
+    // team_id is the ID of the team that contains the members to list
+    string team_id = 1;
+}
+
+message ListTeamMembersResponse {
+    // members are the team members of this Team
+    repeated TeamMember members = 1;
 }
 
 message UpdateTeamMemberRequest {
