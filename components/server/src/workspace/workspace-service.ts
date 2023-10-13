@@ -167,7 +167,7 @@ export class WorkspaceService {
         if (workspace?.type === "prebuild" && workspace.projectId) {
             await this.auth.checkPermissionOnProject(userId, "read_prebuild", workspace.projectId);
         } else {
-            await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+            await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId, workspace); // passing workspace.organizationId allows for better permission caching
         }
 
         // TODO(gpl) We might want to add || !!workspace.softDeleted here in the future, but we were unsure how that would affect existing clients
@@ -826,10 +826,10 @@ export class WorkspaceService {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "workspace does not exist");
         }
         const workspaceId = instance.workspaceId;
-        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+        const workspace = await this.doGetWorkspace(userId, workspaceId);
+        await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId, workspace); // passing workspace.organizationId allows for better permission caching
 
         try {
-            const workspace = await this.doGetWorkspace(userId, workspaceId);
             await check(instance, workspace);
 
             const wasClosed = !!(options && options.wasClosed);
@@ -895,7 +895,7 @@ export class WorkspaceService {
         await this.db.transaction(async (db) => {
             const shareable = level === "everyone";
             await db.updatePartial(workspaceId, { shareable });
-            await this.auth.setWorkspaceIsShared(userId, workspaceId, shareable);
+            await this.auth.setWorkspaceIsShared(userId, workspaceId, workspace.organizationId, shareable);
         });
     }
 
