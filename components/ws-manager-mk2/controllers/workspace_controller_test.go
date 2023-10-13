@@ -90,16 +90,6 @@ var _ = Describe("WorkspaceController", func() {
 				}}
 			})
 
-			// Transition Pod to running, and expect workspace to reach Running phase.
-			// This should also cause e.g. startup time metrics to be recorded.
-			updateObjWithRetries(k8sClient, pod, true, func(pod *corev1.Pod) {
-				pod.Status.Phase = corev1.PodRunning
-				pod.Status.ContainerStatuses = []corev1.ContainerStatus{{
-					Name:  "workspace",
-					Ready: true,
-				}}
-			})
-
 			updateObjWithRetries(k8sClient, ws, true, func(ws *workspacev1.Workspace) {
 				ws.Status.SetCondition(workspacev1.NewWorkspaceConditionContentReady(metav1.ConditionTrue, workspacev1.ReasonInitializationSuccess, ""))
 			})
