@@ -64,6 +64,22 @@ var _ = Describe("WorkspaceController", func() {
 				g.Expect(ws.Status.URL).ToNot(BeEmpty())
 			}, timeout, interval).Should(Succeed())
 
+			// Transition Pod to pending, and expect workspace to reach Creating  phase.
+			// This should also cause create time metrics to be recorded.
+			updateObjWithRetries(k8sClient, pod, true, func(pod *corev1.Pod) {
+				pod.Status.Phase = corev1.PodPending
+				pod.Status.ContainerStatuses = []corev1.ContainerStatus{{
+					State: corev1.ContainerState{
+						Waiting: &corev1.ContainerStateWaiting{
+							Reason: "ContainerCreating",
+						},
+					},
+					Name: "workspace",
+				}}
+			})
+
+			expectPhaseEventually(ws, workspacev1.WorkspacePhaseCreating)
+
 			// Transition Pod to running, and expect workspace to reach Running phase.
 			// This should also cause e.g. startup time metrics to be recorded.
 			updateObjWithRetries(k8sClient, pod, true, func(pod *corev1.Pod) {
@@ -96,10 +112,11 @@ var _ = Describe("WorkspaceController", func() {
 			}, duration, interval).Should(Succeed(), "pod came back")
 
 			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
-				starts:   1,
-				restores: 1,
-				stops:    map[StopReason]int{StopReasonRegular: 1},
-				backups:  1,
+				starts:         1,
+				creatingCounts: 1,
+				restores:       1,
+				stops:          map[StopReason]int{StopReasonRegular: 1},
+				backups:        1,
 			})
 		})
 
@@ -799,6 +816,7 @@ func createSecret(name, namespace string) *corev1.Secret {
 
 type metricCounts struct {
 	starts          int
+	creatingCounts  int
 	startFailures   int
 	failures        int
 	stops           map[StopReason]int
@@ -823,12 +841,14 @@ func collectMetricCounts(wsMetrics *controllerMetrics, ws *workspacev1.Workspace
 	tpe := string(ws.Spec.Type)
 	cls := ws.Spec.Class
 	startHist := wsMetrics.startupTimeHistVec.WithLabelValues(tpe, cls).(prometheus.Histogram)
+	creatingHist := wsMetrics.creatingTimeHistVec.WithLabelValues(tpe, cls).(prometheus.Histogram)
 	stopCounts := make(map[StopReason]int)
 	for _, reason := range stopReasons {
 		stopCounts[reason] = int(testutil.ToFloat64(wsMetrics.totalStopsCounterVec.WithLabelValues(string(reason), tpe, cls)))
 	}
 	return metricCounts{
 		starts:          int(collectHistCount(startHist)),
+		creatingCounts:  int(collectHistCount(creatingHist)),
 		startFailures:   int(testutil.ToFloat64(wsMetrics.totalStartsFailureCounterVec.WithLabelValues(tpe, cls))),
 		failures:        int(testutil.ToFloat64(wsMetrics.totalFailuresCounterVec.WithLabelValues(tpe, cls))),
 		stops:           stopCounts,
@@ -843,6 +863,7 @@ func expectMetricsDelta(initial metricCounts, cur metricCounts, expectedDelta me
 	GinkgoHelper()
 	By("checking metrics have been recorded")
 	Expect(cur.starts-initial.starts).To(Equal(expectedDelta.starts), "expected metric count delta for starts")
+	Expect(cur.creatingCounts-initial.creatingCounts).To(Equal(expectedDelta.creatingCounts), "expected metric count delta for creating count")
 	Expect(cur.startFailures-initial.startFailures).To(Equal(expectedDelta.startFailures), "expected metric count delta for startFailures")
 	Expect(cur.failures-initial.failures).To(Equal(expectedDelta.failures), "expected metric count delta for failures")
 	for _, reason := range stopReasons {

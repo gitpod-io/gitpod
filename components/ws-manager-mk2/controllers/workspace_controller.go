@@ -329,6 +329,13 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 		lastState.recordedFailure = true
 	}
 
+	if lastState.creatingStartTime.IsZero() && workspace.Status.Phase == workspacev1.WorkspacePhaseCreating {
+		lastState.creatingStartTime = time.Now()
+	} else if !lastState.creatingStartTime.IsZero() && workspace.Status.Phase != workspacev1.WorkspacePhaseCreating {
+		r.metrics.recordWorkspaceCreatingTime(&log, workspace, lastState.creatingStartTime)
+		lastState.creatingStartTime = time.Time{}
+	}
+
 	if !lastState.recordedContentReady && workspace.IsConditionTrue(workspacev1.WorkspaceConditionContentReady) {
 		r.metrics.countTotalRestores(&log, workspace)
 		lastState.recordedContentReady = true
