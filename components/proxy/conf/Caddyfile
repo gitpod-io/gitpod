@@ -195,6 +195,11 @@ https://{$GITPOD_DOMAIN} {
 	import ssl_configuration
 	import security_headers
 
+	# Make it possible to get an exposed healthcheck, for example for HTTP(s) NLBs
+	handle /api/health {
+		respond 200
+	}
+
 	@proxy_server_public_api path /public-api/gitpod.experimental.v1.HelloService*
 	handle @proxy_server_public_api {
 		uri strip_prefix /public-api

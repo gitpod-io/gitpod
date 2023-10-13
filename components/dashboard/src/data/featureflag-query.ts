@@ -27,6 +27,7 @@ const featureFlags = {
     newProjectIncrementalRepoSearchBBS: false,
     repositoryFinderSearch: false,
     createProjectModal: false,
+    repoConfigListAndDetail: false,
 };
 
 type FeatureFlags = typeof featureFlags;

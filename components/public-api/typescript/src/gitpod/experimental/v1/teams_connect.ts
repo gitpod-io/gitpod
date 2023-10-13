@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateTeamRequest, CreateTeamResponse, DeleteTeamMemberRequest, DeleteTeamMemberResponse, DeleteTeamRequest, DeleteTeamResponse, GetTeamRequest, GetTeamResponse, JoinTeamRequest, JoinTeamResponse, ListTeamsRequest, ListTeamsResponse, ResetTeamInvitationRequest, ResetTeamInvitationResponse, UpdateTeamMemberRequest, UpdateTeamMemberResponse } from "./teams_pb.js";
+import { CreateTeamRequest, CreateTeamResponse, DeleteTeamMemberRequest, DeleteTeamMemberResponse, DeleteTeamRequest, DeleteTeamResponse, GetTeamInvitationRequest, GetTeamInvitationResponse, GetTeamRequest, GetTeamResponse, JoinTeamRequest, JoinTeamResponse, ListTeamMembersRequest, ListTeamMembersResponse, ListTeamsRequest, ListTeamsResponse, ResetTeamInvitationRequest, ResetTeamInvitationResponse, UpdateTeamMemberRequest, UpdateTeamMemberResponse } from "./teams_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -63,6 +63,17 @@ export const TeamsService = {
       kind: MethodKind.Unary,
     },
     /**
+     * GetTeamInvitation retrieves the invitation for a Team.
+     *
+     * @generated from rpc gitpod.experimental.v1.TeamsService.GetTeamInvitation
+     */
+    getTeamInvitation: {
+      name: "GetTeamInvitation",
+      I: GetTeamInvitationRequest,
+      O: GetTeamInvitationResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
      * JoinTeam makes the caller a TeamMember of the Team.
      *
      * @generated from rpc gitpod.experimental.v1.TeamsService.JoinTeam
@@ -82,6 +93,17 @@ export const TeamsService = {
       name: "ResetTeamInvitation",
       I: ResetTeamInvitationRequest,
       O: ResetTeamInvitationResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListTeamMembers lists the members of a Team.
+     *
+     * @generated from rpc gitpod.experimental.v1.TeamsService.ListTeamMembers
+     */
+    listTeamMembers: {
+      name: "ListTeamMembers",
+      I: ListTeamMembersRequest,
+      O: ListTeamMembersResponse,
       kind: MethodKind.Unary,
     },
     /**
