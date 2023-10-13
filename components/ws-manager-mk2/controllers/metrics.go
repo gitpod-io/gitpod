@@ -248,7 +248,6 @@ func (m *controllerMetrics) forgetWorkspace(ws *workspacev1.Workspace) {
 type metricState struct {
 	phase                   workspacev1.WorkspacePhase
 	creatingStartTime       time.Time
-	recordedCreatingTimeEnd bool
 	recordedStartTime       bool
 	recordedInitFailure     bool
 	recordedStartFailure    bool
