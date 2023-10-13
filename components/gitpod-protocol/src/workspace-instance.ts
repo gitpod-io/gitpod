@@ -91,14 +91,6 @@ export interface WorkspaceInstanceStatus {
     // exposedPorts is the list of currently exposed ports
     exposedPorts?: WorkspaceInstancePort[];
 
-    /**
-     * repo contains information about the Git working copy inside the workspace
-     * @deprecated use WorkspaceInstance.gitStatus instead if supervisor_live_git_status feature flag is enabled
-     *
-     * TODO(ak) remove after migration to live git status
-     */
-    repo?: WorkspaceInstanceRepoStatus;
-
     // timeout is a non-default timeout value configured for a workspace
     timeout?: string;
 

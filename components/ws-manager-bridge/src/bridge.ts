@@ -269,22 +269,6 @@ export class WorkspaceManagerBridge implements Disposable {
             instance.status.nodeIp = instance.status.nodeIp || status.runtime?.nodeIp;
             instance.status.ownerToken = status.auth!.ownerToken;
 
-            if (status.repo) {
-                const r = status.repo;
-                const undefinedIfEmpty = <T>(l: T[]) => (l.length > 0 ? l : undefined);
-
-                instance.status.repo = {
-                    branch: r.branch,
-                    latestCommit: r.latestCommit,
-                    uncommitedFiles: undefinedIfEmpty(r.uncommitedFilesList),
-                    totalUncommitedFiles: r.totalUncommitedFiles,
-                    unpushedCommits: undefinedIfEmpty(r.unpushedCommitsList),
-                    totalUntrackedFiles: r.totalUntrackedFiles,
-                    untrackedFiles: undefinedIfEmpty(r.untrackedFilesList),
-                    totalUnpushedCommits: r.totalUnpushedCommits,
-                };
-            }
-
             let lifecycleHandler: (() => Promise<void>) | undefined;
             switch (status.phase) {
                 case WorkspacePhase.PENDING:
