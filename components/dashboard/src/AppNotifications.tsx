@@ -12,7 +12,7 @@ import timezone from "dayjs/plugin/timezone";
 import advancedFormat from "dayjs/plugin/advancedFormat";
 import { useUserLoader } from "./hooks/use-user-loader";
 import { getGitpodService } from "./service/service";
-import { deepMerge } from "./utils";
+import deepMerge from "deepmerge";
 
 const KEY_APP_DISMISSED_NOTIFICATIONS = "gitpod-app-notifications-dismissed";
 const PRIVACY_POLICY_LAST_UPDATED = "2023-09-26";
@@ -28,16 +28,6 @@ interface Notification {
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.extend(advancedFormat);
-
-export function localizedTime(dateStr: string): JSX.Element {
-    const formatted = dayjs.utc(dateStr).local().format("dddd, MMM. D, HH:mm (z)");
-    return <time dateTime={dateStr}>{formatted}</time>;
-}
-
-export function formatDate(dateString: string): JSX.Element {
-    const formatted = dayjs.utc(dateString).local().format("MMMM D, YYYY");
-    return <time dateTime={dateString}>{formatted}</time>;
-}
 
 const UPDATED_PRIVACY_POLICY: Notification = {
     id: "privacy-policy-update",

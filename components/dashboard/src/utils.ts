@@ -89,27 +89,6 @@ export type DeepPartial<T> = {
     [P in keyof T]?: DeepPartial<T[P]> | T[P];
 };
 
-function isObject(item: any): item is Record<string, any> {
-    return item && typeof item === "object" && !Array.isArray(item);
-}
-
-export function deepMerge<T>(target: T, source: DeepPartial<T>): T {
-    for (let key in source) {
-        if (source.hasOwnProperty(key)) {
-            const currentKey = key as keyof T;
-            if (isObject(source[currentKey]) && isObject(target[currentKey])) {
-                target[currentKey] = deepMerge(
-                    target[currentKey],
-                    source[currentKey] as DeepPartial<T[keyof T]>,
-                ) as T[keyof T];
-            } else {
-                target[currentKey] = source[currentKey] as T[keyof T];
-            }
-        }
-    }
-    return target;
-}
-
 export function isWebsiteSlug(pathName: string) {
     const slugs = [
         "about",

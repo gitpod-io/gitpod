@@ -74,7 +74,7 @@ export class UserService {
         }
         if (newUser.additionalData) {
             // When a user is created, it does not have `additionalData.profile` set, so it's ok to rewrite it here.
-            // newUser.additionalData.profile = { acceptedPrivacyPolicyDate: new Date().toISOString() };
+            newUser.additionalData.profile = { acceptedPrivacyPolicyDate: new Date().toISOString() };
         }
     }
 
