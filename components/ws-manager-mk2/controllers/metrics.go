@@ -146,7 +146,7 @@ func (m *controllerMetrics) recordWorkspaceStartupTime(log *logr.Logger, ws *wor
 	hist.Observe(float64(duration.Seconds()))
 }
 
-func (m *controllerMetrics) recordWorkspaceCreatingTime(log *logr.Logger, ws *workspacev1.Workspace) {
+func (m *controllerMetrics) recordWorkspaceCreatingTime(log *logr.Logger, ws *workspacev1.Workspace, creatingTs time.Time) {
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
@@ -155,8 +155,7 @@ func (m *controllerMetrics) recordWorkspaceCreatingTime(log *logr.Logger, ws *wo
 		log.Error(err, "could not record workspace creating time", "type", tpe, "class", class)
 	}
 
-	duration := time.Since(ws.CreationTimestamp.Time)
-	hist.Observe(duration.Seconds())
+	hist.Observe(time.Since(creatingTs).Seconds())
 }
 
 func (m *controllerMetrics) countWorkspaceStartFailures(log *logr.Logger, ws *workspacev1.Workspace) {
@@ -247,16 +246,16 @@ func (m *controllerMetrics) forgetWorkspace(ws *workspacev1.Workspace) {
 
 // metricState is used to track which metrics have been recorded for a workspace.
 type metricState struct {
-	phase                     workspacev1.WorkspacePhase
-	recordedCreatingTimeStart bool
-	recordedCreatingTimeEnd   bool
-	recordedStartTime         bool
-	recordedInitFailure       bool
-	recordedStartFailure      bool
-	recordedFailure           bool
-	recordedContentReady      bool
-	recordedBackupFailed      bool
-	recordedBackupCompleted   bool
+	phase                   workspacev1.WorkspacePhase
+	creatingStartTime       time.Time
+	recordedCreatingTimeEnd bool
+	recordedStartTime       bool
+	recordedInitFailure     bool
+	recordedStartFailure    bool
+	recordedFailure         bool
+	recordedContentReady    bool
+	recordedBackupFailed    bool
+	recordedBackupCompleted bool
 }
 
 func newMetricState(ws *workspacev1.Workspace) metricState {
@@ -265,15 +264,13 @@ func newMetricState(ws *workspacev1.Workspace) metricState {
 		// Here we assume that we've recorded metrics for the following states already if their conditions already exist.
 		// This is to prevent these from being re-recorded after the controller restarts and clears the metric state for
 		// each workspace.
-		recordedCreatingTimeStart: ws.Status.Phase == workspacev1.WorkspacePhaseCreating,
-		recordedCreatingTimeEnd:   ws.Status.Phase == workspacev1.WorkspacePhaseInitializing || ws.Status.Phase == workspacev1.WorkspacePhaseRunning,
-		recordedStartTime:         ws.Status.Phase == workspacev1.WorkspacePhaseRunning,
-		recordedInitFailure:       wsk8s.ConditionWithStatusAndReason(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, workspacev1.ReasonInitializationFailure),
-		recordedStartFailure:      ws.Status.Phase == workspacev1.WorkspacePhaseStopped && isStartFailure(ws),
-		recordedFailure:           ws.IsConditionTrue(workspacev1.WorkspaceConditionFailed),
-		recordedContentReady:      ws.IsConditionTrue(workspacev1.WorkspaceConditionContentReady),
-		recordedBackupFailed:      ws.IsConditionTrue(workspacev1.WorkspaceConditionBackupFailure),
-		recordedBackupCompleted:   ws.IsConditionTrue(workspacev1.WorkspaceConditionBackupComplete),
+		recordedStartTime:       ws.Status.Phase == workspacev1.WorkspacePhaseRunning,
+		recordedInitFailure:     wsk8s.ConditionWithStatusAndReason(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, workspacev1.ReasonInitializationFailure),
+		recordedStartFailure:    ws.Status.Phase == workspacev1.WorkspacePhaseStopped && isStartFailure(ws),
+		recordedFailure:         ws.IsConditionTrue(workspacev1.WorkspaceConditionFailed),
+		recordedContentReady:    ws.IsConditionTrue(workspacev1.WorkspaceConditionContentReady),
+		recordedBackupFailed:    ws.IsConditionTrue(workspacev1.WorkspaceConditionBackupFailure),
+		recordedBackupCompleted: ws.IsConditionTrue(workspacev1.WorkspaceConditionBackupComplete),
 	}
 }
 
