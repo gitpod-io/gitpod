@@ -64,10 +64,10 @@ var _ = Describe("WorkspaceController", func() {
 				g.Expect(ws.Status.URL).ToNot(BeEmpty())
 			}, timeout, interval).Should(Succeed())
 
-			// Transition Pod to running, and expect workspace to reach Creating  phase.
+			// Transition Pod to pending, and expect workspace to reach Creating  phase.
 			// This should also cause create time metrics to be recorded.
 			updateObjWithRetries(k8sClient, pod, true, func(pod *corev1.Pod) {
-				pod.Status.Phase = corev1.PodRunning
+				pod.Status.Phase = corev1.PodPending
 				pod.Status.ContainerStatuses = []corev1.ContainerStatus{{
 					State: corev1.ContainerState{
 						Waiting: &corev1.ContainerStateWaiting{
