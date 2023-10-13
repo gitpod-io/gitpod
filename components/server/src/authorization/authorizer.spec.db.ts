@@ -41,7 +41,7 @@ describe("Authorizer", async () => {
         await expected(rel.user(userId).self.user(userId));
         await expected(rel.installation.member.user(userId));
 
-        await authorizer.removeUser(userId, undefined);
+        await authorizer.removeUser(userId);
         await notExpected(rel.user(userId).installation.installation);
         await notExpected(rel.user(userId).self.user(userId));
         await notExpected(rel.installation.member.user(userId));

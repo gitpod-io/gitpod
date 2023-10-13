@@ -895,7 +895,7 @@ export class WorkspaceService {
         await this.db.transaction(async (db) => {
             const shareable = level === "everyone";
             await db.updatePartial(workspaceId, { shareable });
-            await this.auth.setWorkspaceIsShared(userId, workspaceId, workspace.organizationId, shareable);
+            await this.auth.setWorkspaceIsShared(userId, workspaceId, shareable);
         });
     }
 

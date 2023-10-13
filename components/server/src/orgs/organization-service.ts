@@ -19,7 +19,6 @@ import { inject, injectable } from "inversify";
 import { Authorizer } from "../authorization/authorizer";
 import { ProjectsService } from "../projects/projects-service";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
-import { InstallationID } from "../authorization/definitions";
 
 @injectable()
 export class OrganizationService {
@@ -142,10 +141,7 @@ export class OrganizationService {
 
                 await db.deleteTeam(orgId);
 
-                await this.auth.removeAllRelationships(userId, "organization", orgId, {
-                    type: "installation",
-                    id: InstallationID,
-                });
+                await this.auth.removeAllRelationships(userId, "organization", orgId);
             });
             return this.analytics.track({
                 userId: userId,

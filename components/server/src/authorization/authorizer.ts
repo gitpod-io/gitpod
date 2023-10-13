@@ -253,18 +253,11 @@ export class Authorizer {
     }
 
     // write operations below
-    public async removeAllRelationships(
-        userId: string,
-        type: ResourceType,
-        id: string,
-        parentObject: { type: ResourceType; id: string | undefined },
-    ) {
+    public async removeAllRelationships(userId: string, type: ResourceType, id: string) {
         if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
-        const parentObjectRef = object(parentObject.type, parentObject.id);
         await this.authorizer.deleteRelationships(
-            parentObjectRef,
             v1.DeleteRelationshipsRequest.create({
                 relationshipFilter: {
                     resourceType: type,
@@ -276,7 +269,6 @@ export class Authorizer {
         // iterate over all resource types and remove by subject
         for (const resourcetype of AllResourceTypes as ResourceType[]) {
             await this.authorizer.deleteRelationships(
-                parentObjectRef,
                 v1.DeleteRelationshipsRequest.create({
                     relationshipFilter: {
                         resourceType: resourcetype,
@@ -319,14 +311,14 @@ export class Authorizer {
             );
         }
 
-        await this.authorizer.writeRelationships(parentObjectRef(owningOrgId), ...updates);
+        await this.authorizer.writeRelationships(...updates);
     }
 
-    async removeUser(userId: string, orgID: string | undefined) {
+    async removeUser(userId: string) {
         if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
-        await this.removeAllRelationships(userId, "user", userId, { type: "organization", id: orgID });
+        await this.removeAllRelationships(userId, "user", userId);
     }
 
     async addOrganizationRole(orgID: string, userID: string, role: TeamMemberRole): Promise<void> {
@@ -339,7 +331,7 @@ export class Authorizer {
         } else {
             updates.push(remove(rel.organization(orgID).owner.user(userID)));
         }
-        await this.authorizer.writeRelationships(parentObjectRef(orgID), ...updates);
+        await this.authorizer.writeRelationships(...updates);
     }
 
     async removeOrganizationRole(orgID: string, userID: string, role: TeamMemberRole): Promise<void> {
@@ -350,17 +342,14 @@ export class Authorizer {
         if (role === "member") {
             updates.push(remove(rel.organization(orgID).member.user(userID)));
         }
-        await this.authorizer.writeRelationships(parentObjectRef(orgID), ...updates);
+        await this.authorizer.writeRelationships(...updates);
     }
 
     async addProjectToOrg(userId: string, orgID: string, projectID: string): Promise<void> {
         if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
-        await this.authorizer.writeRelationships(
-            parentObjectRef(orgID),
-            set(rel.project(projectID).org.organization(orgID)),
-        );
+        await this.authorizer.writeRelationships(set(rel.project(projectID).org.organization(orgID)));
     }
 
     async setProjectVisibility(
@@ -387,7 +376,7 @@ export class Authorizer {
                 updates.push(set(rel.project(projectID).viewer.anyUser));
                 break;
         }
-        await this.authorizer.writeRelationships(parentObjectRef(organizationId), ...updates);
+        await this.authorizer.writeRelationships(...updates);
     }
 
     async removeProjectFromOrg(userId: string, orgID: string, projectID: string): Promise<void> {
@@ -395,7 +384,6 @@ export class Authorizer {
             return;
         }
         await this.authorizer.writeRelationships(
-            parentObjectRef(orgID),
             remove(rel.project(projectID).org.organization(orgID)), //
             remove(rel.project(projectID).viewer.anyUser),
             remove(rel.project(projectID).viewer.organization_member(orgID)),
@@ -416,7 +404,6 @@ export class Authorizer {
         await this.addOrganizationProjects(userId, orgId, projectIds);
 
         await this.authorizer.writeRelationships(
-            object("installation", InstallationID),
             set(rel.organization(orgId).installation.installation), //
             set(rel.organization(orgId).snapshoter.organization_member(orgId)), //TODO allow orgs to opt-out of snapshotting
         );
@@ -454,9 +441,7 @@ export class Authorizer {
         if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
-        const parentObjectRef = object("installation", InstallationID);
         await this.authorizer.writeRelationships(
-            parentObjectRef,
             set(rel.installation.admin.user(userId)), //
         );
     }
@@ -465,9 +450,7 @@ export class Authorizer {
         if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
-        const parentObjectRef = object("installation", InstallationID);
         await this.authorizer.writeRelationships(
-            parentObjectRef,
             remove(rel.installation.admin.user(userId)), //
         );
     }
@@ -482,7 +465,7 @@ export class Authorizer {
         if (shared) {
             rels.push(set(rel.workspace(workspaceID).shared.anyUser));
         }
-        await this.authorizer.writeRelationships(parentObjectRef(orgID), ...rels);
+        await this.authorizer.writeRelationships(...rels);
     }
 
     async removeWorkspaceFromOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {
@@ -490,20 +473,18 @@ export class Authorizer {
             return;
         }
         await this.authorizer.writeRelationships(
-            parentObjectRef(orgID),
             remove(rel.workspace(workspaceID).org.organization(orgID)),
             remove(rel.workspace(workspaceID).owner.user(userID)),
             remove(rel.workspace(workspaceID).shared.anyUser),
         );
     }
 
-    async setWorkspaceIsShared(userID: string, workspaceID: string, orgID: string, shared: boolean): Promise<void> {
+    async setWorkspaceIsShared(userID: string, workspaceID: string, shared: boolean): Promise<void> {
         if (!(await isFgaWritesEnabled(userID))) {
             return;
         }
-        const parentObjectRef = object("organization", orgID);
         if (shared) {
-            await this.authorizer.writeRelationships(parentObjectRef, set(rel.workspace(workspaceID).shared.anyUser));
+            await this.authorizer.writeRelationships(set(rel.workspace(workspaceID).shared.anyUser));
 
             // verify the relationship is there
             const rs = await this.find(rel.workspace(workspaceID).shared.anyUser);
@@ -513,10 +494,7 @@ export class Authorizer {
                 log.info("Successfully set workspace as shared", { workspaceID, userID });
             }
         } else {
-            await this.authorizer.writeRelationships(
-                parentObjectRef,
-                remove(rel.workspace(workspaceID).shared.anyUser),
-            );
+            await this.authorizer.writeRelationships(remove(rel.workspace(workspaceID).shared.anyUser));
         }
     }
 
@@ -611,14 +589,6 @@ function subject(type: ResourceType, id?: string, relation?: Relation | Permissi
         object: object(type, id),
         optionalRelation: relation,
     });
-}
-
-function parentObjectRef(orgId: string | undefined): v1.ObjectReference {
-    if (orgId) {
-        return object("organization", orgId);
-    } else {
-        return object("installation", InstallationID);
-    }
 }
 
 const consistency = v1.Consistency.create({

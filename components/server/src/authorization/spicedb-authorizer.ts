@@ -82,7 +82,7 @@ export class SpiceDBAuthorizer {
 
         const result = await this.checkInternal(req, experimentsFields, forceEnablement);
         if (result.checkedAt) {
-            await this.tokenCache.set(parentObjectRef, "read", [req.resource, result.checkedAt]);
+            await this.tokenCache.set([req.resource, result.checkedAt]);
         }
         return result.permitted;
     }
@@ -132,15 +132,10 @@ export class SpiceDBAuthorizer {
         return result;
     }
 
-    async writeRelationships(
-        parentObjectRef: v1.ObjectReference,
-        ...updates: v1.RelationshipUpdate[]
-    ): Promise<v1.WriteRelationshipsResponse | undefined> {
+    async writeRelationships(...updates: v1.RelationshipUpdate[]): Promise<v1.WriteRelationshipsResponse | undefined> {
         const result = await this.writeRelationshipsInternal(...updates);
         const writtenAt = result?.writtenAt?.token;
         await this.tokenCache.set(
-            parentObjectRef,
-            "write",
             ...updates.map<ZedTokenCacheKV>((u) => [
                 u.relationship?.resource,
                 writtenAt, // Make sure that in case we don't get a writtenAt token here, we at least invalidate the cache
@@ -174,17 +169,12 @@ export class SpiceDBAuthorizer {
         }
     }
 
-    async deleteRelationships(
-        parentObjectRef: v1.ObjectReference,
-        req: v1.DeleteRelationshipsRequest,
-    ): Promise<v1.ReadRelationshipsResponse[]> {
+    async deleteRelationships(req: v1.DeleteRelationshipsRequest): Promise<v1.ReadRelationshipsResponse[]> {
         const result = await this.deleteRelationshipsInternal(req);
         log.info(`[spicedb] Deletion result`, { result });
         const deletedAt = result?.deletedAt;
         if (deletedAt) {
             await this.tokenCache.set(
-                parentObjectRef,
-                "write",
                 ...result.relationships.map<ZedTokenCacheKV>((r) => [r.relationship?.resource, deletedAt]),
             );
         }
@@ -283,11 +273,7 @@ interface ZedTokenCache {
         parentObjectRef: v1.ObjectReference | undefined,
         objectRef: v1.ObjectReference | undefined,
     ): Promise<string | undefined>;
-    set(
-        parentObjectRef: v1.ObjectReference | undefined,
-        op: "read" | "write",
-        ...kvs: ZedTokenCacheKV[]
-    ): Promise<boolean>;
+    set(...kvs: ZedTokenCacheKV[]): Promise<boolean>;
 }
 
 export interface StoredZedToken {
@@ -378,11 +364,7 @@ export class RequestLocalZedTokenCache implements ZedTokenCache {
         return getContext().zedToken?.token;
     }
 
-    async set(
-        parentObjectRef: v1.ObjectReference | undefined,
-        op: "read" | "write",
-        ...kvs: ZedTokenCacheKV[]
-    ): Promise<boolean> {
+    async set(...kvs: ZedTokenCacheKV[]): Promise<boolean> {
         function clearZedTokenOnContext() {
             getContext().zedToken = undefined;
         }
@@ -412,16 +394,23 @@ export class RequestLocalZedTokenCache implements ZedTokenCache {
 }
 
 /**
- * HierachicalZedTokenCache guarantees caching with full consistency, as long as we provide resourceOrgId on every request.
+ * HierachicalZedTokenCache guarantees caching with full consistency in a restricted set of scenarios, and if we provide resourceOrgId on
+ * a get() request.
  * It does that by understanding the hierachy of our resource/relationship model and caching ZedTokens in redis:
- *  1. When adding or removing a relationship (or a resource, we don't distinguish), we require a ParentResource to be provided and:
- *   - update the resource itself
- *   - as well as update the
- *  2. When reading a resource, we always read all tokens for the full hierachy:
- *     - if there is any token missing: we fall back to fullyConsistent
- *     - if all tokens are present: use the most-recent one to query the resource
- *
- * This model relies on the fact that we store all updates to redis. If that is not guaranteed, e.g. in case redis is not available for some time and afterwards comes up with an outdated state, we might end up with inconsistent results.
+ *  1. When adding or removing a relationship (or a resource, we don't distinguish), we::
+ *   - update the resource itself in redis
+ *  2. When reading a resource, we always read all tokens for the full hierachy, and:
+ *   - require the child tokens to not be fresher than the parent tokens (to make sure we propagate membership changes)
+ *   - if the leaf token is the freshest: use that to perform the actual query
+ *   Reasoning:
+ *    - we only use the cache for the cases we are really sure we can guarantee strong consistency without much hassle
+ *    - if we have to "deoptimize" that's not that big of a problem in a READ-heavy environment (with very flat hierachies) like ours,
+ *      because after that singley fullyConsistent check is done we will we ready to serve all subsequent requests for that resource
+ * Known limitations:
+ *   - This model relies on the fact that we store all updates to redis. If that is not guaranteed, e.g. in case redis is not available for some time and afterwards comes up with an outdated state, we might end up with inconsistent results.
+ *   - We need a `setIfGreater` operation in redis to make sure we don't override ourselves. There are plugins for redis, we just need to install them (redis-if: https://github.com/nodeca/redis-if)
+ *   - On gitpod.io, the "installation#member" relation is set very often, which in the current implementation would effectively disable the cache.
+ *    - We could think about ways to avoid this
  */
 @injectable()
 export class HierachicalZedTokenCache implements ZedTokenCache {
@@ -446,6 +435,7 @@ export class HierachicalZedTokenCache implements ZedTokenCache {
                 // iterate over all values, from root to leaf (keys are ordered that way)
                 if (!v) {
                     // We are looking for the most recent value in the hierarchy...
+                    // TODO(gpl) Do we need to invalidate here as well? I don't think so.
                     continue;
                 }
                 const parsed = StoredZedToken.fromRedisValue(v);
@@ -468,19 +458,11 @@ export class HierachicalZedTokenCache implements ZedTokenCache {
         }
     }
 
-    async set(
-        parentObjectRef: v1.ObjectReference | undefined,
-        op: "read" | "write",
-        ...kvs: ZedTokenCacheKV[]
-    ): Promise<boolean> {
-        // // If we can't guarantee to update the parent on a write operation, we can't guarantee consistency.
-        // // We take whatever data we get anyway
-        // let failed = op === "write" && !parentObjectRef;
+    async set(...kvs: ZedTokenCacheKV[]): Promise<boolean> {
         let failed = false;
 
         try {
             let multi = this.redis.multi();
-            // const keysToClear: string[] = [];
             for (const [k, v] of kvs) {
                 if (!k) {
                     // This should never happen, but let's see
@@ -500,33 +482,13 @@ export class HierachicalZedTokenCache implements ZedTokenCache {
                         continue;
                     }
                 }
-                // // clear cache for that single resource
-                // keysToClear.push(this.key(k));
+
+                // should never happen, let's make it visible it does nonetheless
                 log.warn("[spicedb] HierachicalZedTokenCache: missing token, should clear the cache", {
                     k: new TrustedValue(k),
                     v,
                 });
             }
-
-            // let's see if we see the warning above at all and then decide if we need this
-            // if (keysToClear.length > 0) {
-            //     // TODO(gpl) Find out if this happens at all!
-            //     log.warn("[spicedb] HierachicalZedTokenCache: keysToClear", {
-            //         keysToClear: new TrustedValue(keysToClear),
-            //     });
-            //     if (op === "write") {
-            //         if (parentObjectRef) {
-            //             multi = multi.set(this.key(parentObjectRef), "fullyConsistent");
-            //             log.warn("[spicedb] HierachicalZedTokenCache: reset", {
-            //                 parentObjectRef: new TrustedValue(parentObjectRef),
-            //             });
-            //         } else {
-            //             // If we have to invalidate keys, and can't do so, we can't guarantee consistency
-            //             failed = true;
-            //         }
-            //     }
-            //     multi = multi.mset(keysToClear.map((k) => [k, "fullyConsistent"]).reduce((a, b) => a.concat(b)));
-            // }
 
             await multi.exec();
             return !failed;
@@ -608,15 +570,11 @@ export class PerObjectBestEffortZedTokenCache implements ZedTokenCache {
         return this.requestLocalCache.get(parentObjectRef, objectRef);
     }
 
-    async set(
-        parentObjectRef: v1.ObjectReference | undefined,
-        op: "read" | "write",
-        ...kvs: ZedTokenCacheKV[]
-    ): Promise<boolean> {
+    async set(...kvs: ZedTokenCacheKV[]): Promise<boolean> {
         const strategy = getStrategy();
 
         // Always try to keep the per-object cache up-to-date, even if we are not using it for this request.
-        const result = this.perObjectCache.set(parentObjectRef, op, ...kvs).catch(log.error);
+        const result = this.perObjectCache.set(...kvs).catch(log.error);
         if (strategy === "per-object" && (await result) === true) {
             return true;
         }
@@ -624,6 +582,6 @@ export class PerObjectBestEffortZedTokenCache implements ZedTokenCache {
 
         setStrategy("request-local"); // make our decision sticky for this request
         // Not filling the request-local cache before switching away from "per-object" ensures that start with a clean slate, which is needed to maintain our consistency guarantees.
-        return await this.requestLocalCache.set(parentObjectRef, op, ...kvs);
+        return await this.requestLocalCache.set(...kvs);
     }
 }

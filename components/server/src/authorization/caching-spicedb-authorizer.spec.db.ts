@@ -237,26 +237,26 @@ describe("RequestLocalZedTokenCache", async () => {
     it("should store token", async () => {
         await runWithContext("test", {}, async () => {
             expect(await cache.get(undefined, ws1)).to.be.undefined;
-            await cache.set(undefined, "read", [ws1, rawToken1]);
+            await cache.set([ws1, rawToken1]);
             expect(await cache.get(undefined, ws1)).to.equal(rawToken1);
         });
     });
 
     it("should return newest token", async () => {
         await runWithContext("test", {}, async () => {
-            await cache.set(undefined, "read", [ws1, rawToken1]);
-            await cache.set(undefined, "read", [ws1, rawToken2]);
+            await cache.set([ws1, rawToken1]);
+            await cache.set([ws1, rawToken2]);
             expect(await cache.get(undefined, ws1)).to.equal(rawToken2);
-            await cache.set(undefined, "read", [ws1, rawToken3]);
+            await cache.set([ws1, rawToken3]);
             expect(await cache.get(undefined, ws1)).to.equal(rawToken3);
         });
     });
 
     it("should clear cache", async () => {
         await runWithContext("test", {}, async () => {
-            await cache.set(undefined, "read", [ws1, rawToken1]);
+            await cache.set([ws1, rawToken1]);
             expect(await cache.get(undefined, ws1)).to.equal(rawToken1);
-            await cache.set(undefined, "read", [ws1, undefined]); // this should trigger a clear
+            await cache.set([ws1, undefined]); // this should trigger a clear
             expect(await cache.get(undefined, ws1)).to.be.undefined;
         });
     });
@@ -306,39 +306,39 @@ describe("HierachicalZedTokenCache", async () => {
     });
 
     it("should store token with proper consistency guarantee", async () => {
-        expect(await cut.set(org1, "read", [ws1, rawToken1])).to.be.true;
-        expect(await cut.set(org1, "write", [ws2, rawToken2])).to.be.true;
-        expect(await cut.set(undefined, "read", [ws3, rawToken3])).to.be.true;
-        expect(await cut.set(undefined, "write", [ws4, rawToken3])).to.be.true;
+        expect(await cut.set([ws1, rawToken1])).to.be.true;
+        expect(await cut.set([ws2, rawToken2])).to.be.true;
+        expect(await cut.set([ws3, rawToken3])).to.be.true;
+        expect(await cut.set([ws4, rawToken3])).to.be.true;
     });
 
     it("should not return a token if consistency is not guaranteed", async () => {
-        await cut.set(undefined, "read", [ws1, rawToken1]);
+        await cut.set([ws1, rawToken1]);
         expect(await cut.get(undefined, org1)).to.be.undefined;
-        await cut.set(undefined, "write", [ws1, rawToken1]);
+        await cut.set([ws1, rawToken1]);
         expect(await cut.get(undefined, org1)).to.be.undefined;
     });
 
     it("should return a token only if consistency is guaranteed", async () => {
         // prep the cache to the fully hierarchy is known
-        await cut.set(undefined, "read", [installation1, rawToken1]);
-        await cut.set(undefined, "read", [org1, rawToken2]);
-        await cut.set(undefined, "read", [ws1, rawToken3]);
+        await cut.set([installation1, rawToken1]);
+        await cut.set([org1, rawToken2]);
+        await cut.set([ws1, rawToken3]);
 
         expect(await cut.get(undefined, ws1), "unqualified get must always fail").to.be.undefined;
         expect(await cut.get(org1, ws1), "qualified read should succeed now").to.eq(rawToken3);
     });
 
     it("should handle member added", async () => {
-        await cut.set(undefined, "read", [installation1, rawToken1]);
-        await cut.set(undefined, "read", [org1, rawToken1]);
-        await cut.set(undefined, "read", [ws1, rawToken1]);
+        await cut.set([installation1, rawToken1]);
+        await cut.set([org1, rawToken1]);
+        await cut.set([ws1, rawToken1]);
 
         // can read ws1? Yes.
         expect(await cut.get(org1, ws1)).to.eq(rawToken1);
 
         // member list is updated: this should make sure we never access child resources with rawToken1 again
-        await cut.set(undefined, "write", [org1, rawToken2]);
+        await cut.set([org1, rawToken2]);
         expect(await cut.get(org1, ws1)).to.not.eq(rawToken1);
     });
 });
