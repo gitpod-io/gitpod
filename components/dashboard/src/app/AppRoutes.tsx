@@ -39,6 +39,7 @@ import PersonalAccessTokenCreateView from "../user-settings/PersonalAccessTokens
 import { CreateWorkspacePage } from "../workspaces/CreateWorkspacePage";
 import { WebsocketClients } from "./WebsocketClients";
 import { BlockedEmailDomains } from "../admin/BlockedEmailDomains";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Account"));
@@ -75,12 +76,17 @@ const WorkspacesSearch = React.lazy(() => import(/* webpackPrefetch: true */ "..
 const ProjectsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "../admin/ProjectsSearch"));
 const TeamsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "../admin/TeamsSearch"));
 const Usage = React.lazy(() => import(/* webpackPrefetch: true */ "../Usage"));
+const RepositoryListPage = React.lazy(() => import(/* webpackPrefetch: true */ "../repositories/list/RepositoryList"));
+const RepositoryDetailPage = React.lazy(
+    () => import(/* webpackPrefetch: true */ "../repositories/detail/RepositoryDetail"),
+);
 
 export const AppRoutes = () => {
     const hash = getURLHash();
     const user = useCurrentUser();
     const [isWhatsNewShown, setWhatsNewShown] = useState(user && shouldSeeWhatsNew(user));
     const location = useLocation();
+    const repoConfigListAndDetail = useFeatureFlag("repoConfigListAndDetail");
 
     // TODO: Add a Route for this instead of inspecting location manually
     if (location.pathname.startsWith("/blocked")) {
@@ -207,6 +213,13 @@ export const AppRoutes = () => {
                     <Route exact path={`/projects/:projectSlug/settings`} component={ProjectSettings} />
                     <Route exact path={`/projects/:projectSlug/variables`} component={ProjectVariables} />
                     <Route exact path={`/projects/:projectSlug/:prebuildId`} component={Prebuild} />
+
+                    {repoConfigListAndDetail && (
+                        <>
+                            <Route exact path="/repositories" component={RepositoryListPage} />
+                            <Route exact path="/repositories/:id" component={RepositoryDetailPage} />
+                        </>
+                    )}
                     {/* basic redirect for old team slugs */}
                     <Route path={["/t/"]} exact>
                         <Redirect to="/projects" />
