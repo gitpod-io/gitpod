@@ -8,7 +8,6 @@ import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useContext } from "react";
 import { Link } from "react-router-dom";
 import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
-import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { openAuthorizeWindow } from "../provider-utils";
 import { getGitpodService } from "../service/service";
 import { UserContext, useCurrentUser } from "../user-context";
@@ -16,6 +15,7 @@ import { Button } from "./Button";
 import { Heading2, Heading3, Subheading } from "./typography/headings";
 import classNames from "classnames";
 import { iconForAuthProvider, simplifyProviderName } from "../provider-utils";
+import { useOrgMembersInfoQuery } from "../data/organizations/org-members-info-query";
 
 export function useNeedsGitAuthorization() {
     const authProviders = useAuthProviders();
@@ -28,7 +28,7 @@ export function useNeedsGitAuthorization() {
 
 export const AuthorizeGit: FC<{ className?: string }> = ({ className }) => {
     const { setUser } = useContext(UserContext);
-    const org = useCurrentOrg();
+    const orgMembersInfo = useOrgMembersInfoQuery();
     const authProviders = useAuthProviders();
     const updateUser = useCallback(() => {
         getGitpodService().server.getLoggedInUser().then(setUser);
@@ -57,7 +57,7 @@ export const AuthorizeGit: FC<{ className?: string }> = ({ className }) => {
             {verifiedProviders.length === 0 ? (
                 <>
                     <Heading3 className="pb-2">No Git integrations</Heading3>
-                    {!!org.data?.isOwner ? (
+                    {!!orgMembersInfo.data?.isOwner ? (
                         <div className="px-6">
                             <Subheading>You need to configure at least one Git integration.</Subheading>
                             <Link to="/settings/git">

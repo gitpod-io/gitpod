@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Team } from "@gitpod/gitpod-protocol";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { useMemo } from "react";
 import { Redirect } from "react-router";
@@ -12,15 +11,15 @@ import Header from "../components/Header";
 import { SpinnerLoader } from "../components/Loader";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
-import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { useOrgMembersInfoQuery } from "../data/organizations/org-members-info-query";
 
 export interface OrgSettingsPageProps {
     children: React.ReactNode;
 }
 
 export function OrgSettingsPage({ children }: OrgSettingsPageProps) {
-    const org = useCurrentOrg();
+    const orgMembersInfo = useOrgMembersInfoQuery();
     const orgBillingMode = useOrgBillingMode();
     const oidcServiceEnabled = useFeatureFlag("oidcServiceEnabled");
     const orgGitAuthProviders = useFeatureFlag("orgGitAuthProviders");
@@ -28,20 +27,19 @@ export function OrgSettingsPage({ children }: OrgSettingsPageProps) {
     const menu = useMemo(
         () =>
             getTeamSettingsMenu({
-                team: org.data,
                 billingMode: orgBillingMode.data,
                 ssoEnabled: oidcServiceEnabled,
                 orgGitAuthProviders,
-                isOwner: org.data?.isOwner,
+                isOwner: orgMembersInfo.data?.isOwner,
             }),
-        [org.data, orgBillingMode.data, oidcServiceEnabled, orgGitAuthProviders],
+        [orgMembersInfo.data, orgBillingMode.data, oidcServiceEnabled, orgGitAuthProviders],
     );
 
     const title = "Organization Settings";
     const subtitle = "Manage your organization's settings.";
 
     // Render as much of the page as we can in a loading state to avoid content shift
-    if (org.isLoading || orgBillingMode.isLoading) {
+    if (orgMembersInfo.isLoading || orgBillingMode.isLoading) {
         return (
             <div className="w-full">
                 <Header title={title} subtitle={subtitle} />
@@ -56,7 +54,7 @@ export function OrgSettingsPage({ children }: OrgSettingsPageProps) {
     const onlyForOwner = false;
 
     // After we've loaded, ensure user is an owner, if not, redirect
-    if (onlyForOwner && !org.data?.isOwner) {
+    if (onlyForOwner && !orgMembersInfo.data?.isOwner) {
         return <Redirect to={"/"} />;
     }
 
@@ -68,7 +66,6 @@ export function OrgSettingsPage({ children }: OrgSettingsPageProps) {
 }
 
 function getTeamSettingsMenu(params: {
-    team?: Team;
     billingMode?: BillingMode;
     ssoEnabled?: boolean;
     orgGitAuthProviders: boolean;

@@ -12,11 +12,13 @@ import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-quer
 import { useLocation } from "react-router";
 import { User } from "@gitpod/gitpod-protocol";
 import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
+import { useOrgMembersInfoQuery } from "../data/organizations/org-members-info-query";
 
 export default function OrganizationSelector() {
     const user = useCurrentUser();
     const orgs = useOrganizations();
     const currentOrg = useCurrentOrg();
+    const orgMembersInfo = useOrgMembersInfoQuery().data;
     const { data: billingMode } = useOrgBillingMode();
     const getOrgURL = useGetOrgURL();
 
@@ -39,9 +41,9 @@ export default function OrganizationSelector() {
                   <CurrentOrgEntry
                       title={currentOrg.data.name}
                       subtitle={
-                          !!currentOrg.data.members
-                              ? `${currentOrg.data.members.length} member${
-                                    currentOrg.data.members.length === 1 ? "" : "s"
+                          !!orgMembersInfo?.members
+                              ? `${orgMembersInfo.members.length} member${
+                                    orgMembersInfo.members.length === 1 ? "" : "s"
                                 }`
                               : "..."
                       }
@@ -71,7 +73,7 @@ export default function OrganizationSelector() {
             link: "/usage",
         });
         // Show billing if user is an owner of current org
-        if (currentOrg.data.isOwner) {
+        if (orgMembersInfo?.isOwner) {
             if (billingMode?.mode === "usage-based") {
                 linkEntries.push({
                     title: "Billing",
@@ -107,7 +109,9 @@ export default function OrganizationSelector() {
                     id={org.id}
                     title={org.name}
                     subtitle={
-                        !!org.members ? `${org.members.length} member${org.members.length === 1 ? "" : "s"}` : "..."
+                        !!orgMembersInfo?.members
+                            ? `${orgMembersInfo.members.length} member${orgMembersInfo.members.length === 1 ? "" : "s"}`
+                            : "..."
                     }
                 />
             ),

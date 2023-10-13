@@ -26,10 +26,12 @@ import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal"
 import { InputField } from "../components/forms/InputField";
 import { InputWithCopy } from "../components/InputWithCopy";
 import { ReactComponent as Stack } from "../icons/Stack.svg";
+import { OrgMembersInfo, useOrgMembersInfoQuery } from "../data/organizations/org-members-info-query";
 
 export default function TeamSettingsPage() {
     const user = useCurrentUser();
     const org = useCurrentOrg().data;
+    const orgMembersInfo = useOrgMembersInfoQuery().data;
     const invalidateOrgs = useOrganizationsInvalidator();
     const [modal, setModal] = useState(false);
     const [teamNameToDelete, setTeamNameToDelete] = useState("");
@@ -50,7 +52,7 @@ export default function TeamSettingsPage() {
 
     const updateTeamInformation = useCallback(
         async (e: React.FormEvent) => {
-            if (!org?.isOwner) {
+            if (!orgMembersInfo?.isOwner) {
                 return;
             }
             e.preventDefault();
@@ -67,7 +69,7 @@ export default function TeamSettingsPage() {
                 console.error(error);
             }
         },
-        [orgFormIsValid, updateOrg, teamName, org],
+        [orgFormIsValid, updateOrg, teamName, orgMembersInfo?.isOwner],
     );
 
     const deleteTeam = useCallback(async () => {
@@ -104,20 +106,20 @@ export default function TeamSettingsPage() {
                         value={teamName}
                         error={teamNameError.message}
                         onChange={setTeamName}
-                        disabled={!org?.isOwner}
+                        disabled={!orgMembersInfo?.isOwner}
                         onBlur={teamNameError.onBlur}
                     />
 
-                    {org?.isOwner && (
+                    {orgMembersInfo?.isOwner && (
                         <Button className="mt-4" htmlType="submit" disabled={org?.name === teamName || !orgFormIsValid}>
                             Update Organization
                         </Button>
                     )}
                 </form>
 
-                <OrgSettingsForm org={org} />
+                <OrgSettingsForm org={org} orgMembersInfo={orgMembersInfo} />
 
-                {user?.organizationId !== org?.id && org?.isOwner && (
+                {user?.organizationId !== org?.id && orgMembersInfo?.isOwner && (
                     <>
                         <Heading2 className="pt-12">Delete Organization</Heading2>
                         <Subheading className="pb-4 max-w-2xl">
@@ -170,8 +172,8 @@ export default function TeamSettingsPage() {
     );
 }
 
-function OrgSettingsForm(props: { org?: OrganizationInfo }) {
-    const { org } = props;
+function OrgSettingsForm(props: { org?: OrganizationInfo; orgMembersInfo?: OrgMembersInfo }) {
+    const { org, orgMembersInfo } = props;
     const { data: settings, isLoading } = useOrgSettingsQuery();
     const { data: imageInfo } = useDefaultWorkspaceImageQuery();
     const updateTeamSettings = useUpdateOrgSettingsMutation();
@@ -183,7 +185,7 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
             if (!org?.id) {
                 throw new Error("no organization selected");
             }
-            if (!org.isOwner) {
+            if (!orgMembersInfo?.isOwner) {
                 throw new Error("no organization settings change permission");
             }
             try {
@@ -195,7 +197,7 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
                 console.error(error);
             }
         },
-        [updateTeamSettings, org?.id, org?.isOwner, settings],
+        [updateTeamSettings, org?.id, orgMembersInfo?.isOwner, settings],
     );
 
     return (
@@ -225,7 +227,7 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
                 hint="Allow workspaces created within an Organization to share the workspace with any authenticated user."
                 checked={!settings?.workspaceSharingDisabled}
                 onChange={(checked) => handleUpdateTeamSettings({ workspaceSharingDisabled: !checked })}
-                disabled={isLoading || !org?.isOwner}
+                disabled={isLoading || !orgMembersInfo?.isOwner}
             />
 
             <Heading2 className="pt-12">Workspace Images</Heading2>
@@ -234,7 +236,7 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
             </Subheading>
 
             <WorkspaceImageButton
-                disabled={!org?.isOwner}
+                disabled={!orgMembersInfo?.isOwner}
                 settings={settings}
                 defaultWorkspaceImage={imageInfo?.image}
                 onClick={() => setShowImageEditModal(true)}
