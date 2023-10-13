@@ -114,7 +114,7 @@ export default function RepositoryFinder({
                 icon={RepositorySVG}
                 htmlTitle={displayContextUrl(selectedContextURL) || "Repository"}
                 title={
-                    <div className="truncate w-80">
+                    <div className="truncate">
                         {displayContextUrl(
                             selectedSuggestion?.projectName ||
                                 selectedSuggestion?.repositoryName ||

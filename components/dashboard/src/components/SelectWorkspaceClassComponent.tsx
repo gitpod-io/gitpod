@@ -93,11 +93,13 @@ const WorkspaceClassDropDownElementSelected: FC<WorkspaceClassDropDownElementSel
             icon={WorkspaceClass}
             loading={loading}
             htmlTitle={title}
-            title={<div className="truncate w-80">{title}</div>}
+            title={<div className="truncate">{title}</div>}
             subtitle={
-                <div className="font-semibold">
+                <div className="font-semibold truncate">
                     Class <span className="text-gray-300 dark:text-gray-600 font-normal">&middot;</span>{" "}
-                    <span className="text-gray-500 dark:text-gray-400 font-normal">{wsClass?.description ?? ""}</span>
+                    <span className="text-gray-500 dark:text-gray-400 font-normal truncate">
+                        {wsClass?.description ?? ""}
+                    </span>
                 </div>
             }
         />

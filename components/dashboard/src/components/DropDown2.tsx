@@ -268,7 +268,7 @@ export const DropDown2SelectedElement: FC<DropDown2SelectedElementProps> = ({
 }) => {
     return (
         <div
-            className={classNames("flex items-center", loading && "animate-pulse")}
+            className={classNames("flex items-center truncate", loading && "animate-pulse")}
             title={htmlTitle}
             aria-live="polite"
             aria-busy={loading}
@@ -280,7 +280,7 @@ export const DropDown2SelectedElement: FC<DropDown2SelectedElementProps> = ({
                     <>{icon}</>
                 )}
             </div>
-            <div className="flex-col ml-1 flex-grow max-w-xs">
+            <div className="flex-col ml-1 flex-grow truncate">
                 {loading ? (
                     <div className="flex-col space-y-2">
                         <div className="bg-gray-300 dark:bg-gray-500 h-4 w-24 rounded" />

@@ -11,7 +11,6 @@ import { CreateProjectArgs, useCreateProject } from "../../data/projects/create-
 import { Project, SuggestedRepository } from "@gitpod/gitpod-protocol";
 import RepositoryFinder from "../../components/RepositoryFinder";
 import { InputField } from "../../components/forms/InputField";
-import { Subheading } from "../../components/typography/headings";
 import { AuthorizeGit, useNeedsGitAuthorization } from "../../components/AuthorizeGit";
 import { useTemporaryState } from "../../hooks/use-temporary-value";
 
@@ -54,32 +53,22 @@ export const CreateProjectModal: FC<Props> = ({ onClose, onCreated }) => {
         <Modal visible onClose={onClose} onSubmit={handleSubmit}>
             <ModalHeader>New Project</ModalHeader>
             <ModalBody>
-                {/* TODO: encapsulate this into a sub component */}
-                {needsGitAuth ? (
-                    <AuthorizeGit />
-                ) : (
-                    <>
-                        <Subheading className="text-center mb-8">
-                            Projects allow you to manage prebuilds and workspaces for your repository.{" "}
-                            <a
-                                href="https://www.gitpod.io/docs/configure/projects"
-                                target="_blank"
-                                rel="noreferrer"
-                                className="gp-link"
-                            >
-                                Learn more
-                            </a>
-                        </Subheading>
-                        <InputField label="Repository" className="mb-8">
-                            <RepositoryFinder
-                                selectedContextURL={selectedRepo?.url}
-                                selectedProjectID={selectedRepo?.projectId}
-                                onChange={setSelectedRepo}
-                                excludeProjects
-                            />
-                        </InputField>
-                    </>
-                )}
+                <div className="w-112 max-w-full">
+                    {needsGitAuth ? (
+                        <AuthorizeGit />
+                    ) : (
+                        <>
+                            <InputField label="Repository" className="mb-8 w-full">
+                                <RepositoryFinder
+                                    selectedContextURL={selectedRepo?.url}
+                                    selectedProjectID={selectedRepo?.projectId}
+                                    onChange={setSelectedRepo}
+                                    excludeProjects
+                                />
+                            </InputField>
+                        </>
+                    )}
+                </div>
             </ModalBody>
             <ModalFooter
                 alert={
