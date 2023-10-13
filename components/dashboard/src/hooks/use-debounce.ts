@@ -20,7 +20,8 @@ export const useDebounce = <T>(value: T, delay = 500, options?: DebounceOptions)
         return debounce(setDebouncedValue, delay, {
             leading: options?.leading || false,
             trailing: options?.trailing || true,
-            maxWait: options?.maxWait ?? undefined,
+            // ensures debounced value is updated at least every 1s
+            maxWait: options?.maxWait ?? 1000,
         });
     }, [delay, options?.leading, options?.maxWait, options?.trailing]);
 
