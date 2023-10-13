@@ -234,7 +234,6 @@ func (s *Server) HandleConn(c net.Conn) {
 	if err != nil {
 		c.Close()
 		ReportSSHAttemptMetrics(err)
-		log.WithError(err).Error("failed to create new server connection")
 		return
 	}
 	defer clientConn.Close()
