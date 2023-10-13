@@ -18,7 +18,9 @@ import { UserService } from "../user/user-service";
 import { ConfigProvider } from "../workspace/config-provider";
 import { v1 } from "@authzed/authzed-node";
 import { runWithContext } from "../util/request-context";
-import { RequestLocalZedTokenCache } from "./spicedb-authorizer";
+import { HierachicalZedTokenCache, RequestLocalZedTokenCache } from "./spicedb-authorizer";
+import { Redis } from "ioredis";
+import { InstallationID } from "./definitions";
 
 const expect = chai.expect;
 
@@ -228,62 +230,115 @@ describe("RequestLocalZedTokenCache", async () => {
         objectId: "ws1",
     });
 
-    function fullyConsistent() {
-        return v1.Consistency.create({
-            requirement: {
-                oneofKind: "fullyConsistent",
-                fullyConsistent: true,
-            },
-        });
-    }
-
-    function atLeastAsFreshAs(zedToken: string) {
-        return v1.Consistency.create({
-            requirement: {
-                oneofKind: "atLeastAsFresh",
-                atLeastAsFresh: v1.ZedToken.create({
-                    token: zedToken,
-                }),
-            },
-        });
-    }
-
     beforeEach(async () => {
         cache = new RequestLocalZedTokenCache();
     });
 
     it("should store token", async () => {
         await runWithContext("test", {}, async () => {
-            expect(await cache.get(ws1)).to.be.undefined;
-            await cache.set([ws1, rawToken1]);
-            expect(await cache.get(ws1)).to.equal(rawToken1);
+            expect(await cache.get(undefined, ws1)).to.be.undefined;
+            await cache.set(undefined, "read", [ws1, rawToken1]);
+            expect(await cache.get(undefined, ws1)).to.equal(rawToken1);
         });
     });
 
     it("should return newest token", async () => {
         await runWithContext("test", {}, async () => {
-            await cache.set([ws1, rawToken1]);
-            await cache.set([ws1, rawToken2]);
-            expect(await cache.get(ws1)).to.equal(rawToken2);
-            await cache.set([ws1, rawToken3]);
-            expect(await cache.get(ws1)).to.equal(rawToken3);
-        });
-    });
-
-    it("should return proper consistency", async () => {
-        await runWithContext("test", {}, async () => {
-            expect(await cache.consistency(ws1)).to.deep.equal(fullyConsistent());
-            await cache.set([ws1, rawToken1]);
-            expect(await cache.consistency(ws1)).to.deep.equal(atLeastAsFreshAs(rawToken1));
+            await cache.set(undefined, "read", [ws1, rawToken1]);
+            await cache.set(undefined, "read", [ws1, rawToken2]);
+            expect(await cache.get(undefined, ws1)).to.equal(rawToken2);
+            await cache.set(undefined, "read", [ws1, rawToken3]);
+            expect(await cache.get(undefined, ws1)).to.equal(rawToken3);
         });
     });
 
     it("should clear cache", async () => {
         await runWithContext("test", {}, async () => {
-            await cache.set([ws1, rawToken1]);
-            expect(await cache.get(ws1)).to.equal(rawToken1);
-            await cache.set([ws1, undefined]); // this should trigger a clear
-            expect(await cache.get(ws1)).to.be.undefined;
+            await cache.set(undefined, "read", [ws1, rawToken1]);
+            expect(await cache.get(undefined, ws1)).to.equal(rawToken1);
+            await cache.set(undefined, "read", [ws1, undefined]); // this should trigger a clear
+            expect(await cache.get(undefined, ws1)).to.be.undefined;
         });
+    });
+});
+
+describe("HierachicalZedTokenCache", async () => {
+    let container: Container;
+    let cut: HierachicalZedTokenCache;
+
+    const rawToken1 = "GhUKEzE2OTY0MjI3NzY1Njc3Mzc0MjQ=";
+    const rawToken2 = "GhUKEzE2OTY5Mjg1Nzg1NjIyNjYzMTE=";
+    const rawToken3 = "GhUKEzE2OTY5Mjg1Nzg1NjgwMTE3MzM=";
+
+    const installation1 = v1.ObjectReference.create({
+        objectType: "installation",
+        objectId: InstallationID,
+    });
+    const org1 = v1.ObjectReference.create({
+        objectType: "organization",
+        objectId: "org1",
+    });
+    const ws1 = v1.ObjectReference.create({
+        objectType: "workspace",
+        objectId: "ws1",
+    });
+    const ws2 = v1.ObjectReference.create({
+        objectType: "workspace",
+        objectId: "ws2",
+    });
+    const ws3 = v1.ObjectReference.create({
+        objectType: "workspace",
+        objectId: "ws3",
+    });
+    const ws4 = v1.ObjectReference.create({
+        objectType: "workspace",
+        objectId: "ws4",
+    });
+
+    beforeEach(async () => {
+        container = createTestContainer();
+        const redis = container.get<Redis>(Redis);
+        cut = new HierachicalZedTokenCache(redis);
+    });
+
+    afterEach(async () => {
+        container.unbindAll();
+    });
+
+    it("should store token with proper consistency guarantee", async () => {
+        expect(await cut.set(org1, "read", [ws1, rawToken1])).to.be.true;
+        expect(await cut.set(org1, "write", [ws2, rawToken2])).to.be.true;
+        expect(await cut.set(undefined, "read", [ws3, rawToken3])).to.be.true;
+        expect(await cut.set(undefined, "write", [ws4, rawToken3])).to.be.true;
+    });
+
+    it("should not return a token if consistency is not guaranteed", async () => {
+        await cut.set(undefined, "read", [ws1, rawToken1]);
+        expect(await cut.get(undefined, org1)).to.be.undefined;
+        await cut.set(undefined, "write", [ws1, rawToken1]);
+        expect(await cut.get(undefined, org1)).to.be.undefined;
+    });
+
+    it("should return a token only if consistency is guaranteed", async () => {
+        // prep the cache to the fully hierarchy is known
+        await cut.set(undefined, "read", [installation1, rawToken1]);
+        await cut.set(undefined, "read", [org1, rawToken2]);
+        await cut.set(undefined, "read", [ws1, rawToken3]);
+
+        expect(await cut.get(undefined, ws1), "unqualified get must always fail").to.be.undefined;
+        expect(await cut.get(org1, ws1), "qualified read should succeed now").to.eq(rawToken3);
+    });
+
+    it("should handle member added", async () => {
+        await cut.set(undefined, "read", [installation1, rawToken1]);
+        await cut.set(undefined, "read", [org1, rawToken1]);
+        await cut.set(undefined, "read", [ws1, rawToken1]);
+
+        // can read ws1? Yes.
+        expect(await cut.get(org1, ws1)).to.eq(rawToken1);
+
+        // member list is updated: this should make sure we never access child resources with rawToken1 again
+        await cut.set(undefined, "write", [org1, rawToken2]);
+        expect(await cut.get(org1, ws1)).to.not.eq(rawToken1);
     });
 });

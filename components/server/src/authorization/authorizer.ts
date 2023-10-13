@@ -7,7 +7,7 @@
 import { v1 } from "@authzed/authzed-node";
 
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib";
-import { Project, TeamMemberRole } from "@gitpod/gitpod-protocol";
+import { Project, TeamMemberRole, User, Workspace } from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import {
     AllResourceTypes,
@@ -69,7 +69,7 @@ export class Authorizer {
             consistency,
         });
 
-        return await this.authorizer.check(req, { userId });
+        return await this.authorizer.check(req, { userId }, undefined);
     }
 
     async checkPermissionOnInstallation(userId: string, permission: InstallationPermission): Promise<void> {
@@ -98,7 +98,7 @@ export class Authorizer {
             consistency,
         });
 
-        return await this.authorizer.check(req, { userId });
+        return await this.authorizer.check(req, { userId }, undefined); // passing undefined for now to not bother with expanding the API here
     }
 
     async checkPermissionOnOrganization(userId: string, permission: OrganizationPermission, orgId: string) {
@@ -128,7 +128,7 @@ export class Authorizer {
             consistency,
         });
 
-        return await this.authorizer.check(req, { userId });
+        return await this.authorizer.check(req, { userId }, undefined); // passing undefined for now to not bother with expanding the API here
     }
 
     async checkPermissionOnProject(userId: string, permission: ProjectPermission, projectId: string) {
@@ -146,9 +146,19 @@ export class Authorizer {
         );
     }
 
-    async hasPermissionOnUser(userId: string, permission: UserPermission, resourceUserId: string): Promise<boolean> {
+    async hasPermissionOnUser(
+        userId: string,
+        permission: UserPermission,
+        resourceUserId: string,
+        resource?: Pick<User, "id" | "organizationId">,
+    ): Promise<boolean> {
         if (userId === SYSTEM_USER) {
             return true;
+        }
+
+        if (resource && resource.id !== resourceUserId) {
+            log.error({ userId }, "invalid request for permission on user", { resourceUserId, resource });
+            return false;
         }
 
         const req = v1.CheckPermissionRequest.create({
@@ -158,14 +168,28 @@ export class Authorizer {
             consistency,
         });
 
-        return await this.authorizer.check(req, { userId });
+        let parentObjectRef: v1.ObjectReference | undefined;
+        if (resource) {
+            const objectType = resource.organizationId ? "organization" : "installation";
+            parentObjectRef = object(objectType, resource.organizationId || InstallationID);
+        }
+
+        return await this.authorizer.check(req, { userId }, parentObjectRef);
     }
 
-    async checkPermissionOnUser(userId: string, permission: UserPermission, resourceUserId: string) {
-        if (await this.hasPermissionOnUser(userId, permission, resourceUserId)) {
+    async checkPermissionOnUser(
+        userId: string,
+        permission: UserPermission,
+        resourceUserId: string,
+        resource?: Pick<User, "id" | "organizationId">,
+    ) {
+        if (await this.hasPermissionOnUser(userId, permission, resourceUserId, resource)) {
             return;
         }
-        if ("read_info" === permission || !(await this.hasPermissionOnUser(userId, "read_info", resourceUserId))) {
+        if (
+            "read_info" === permission ||
+            !(await this.hasPermissionOnUser(userId, "read_info", resourceUserId, resource))
+        ) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `User ${resourceUserId} not found.`);
         }
 
@@ -179,10 +203,16 @@ export class Authorizer {
         userId: string,
         permission: WorkspacePermission,
         workspaceId: string,
+        resource?: Pick<Workspace, "id" | "organizationId">,
         forceEnablement?: boolean, // temporary to find an issue with workspace sharing
     ): Promise<boolean> {
         if (userId === SYSTEM_USER) {
             return true;
+        }
+
+        if (resource && resource.id !== workspaceId) {
+            log.error({ userId }, "invalid request for permission on workspace", { workspaceId, resource });
+            return false;
         }
 
         const req = v1.CheckPermissionRequest.create({
@@ -192,14 +222,27 @@ export class Authorizer {
             consistency,
         });
 
-        return await this.authorizer.check(req, { userId }, forceEnablement);
+        let parentObjectRef: v1.ObjectReference | undefined;
+        if (resource?.organizationId) {
+            parentObjectRef = object("organization", resource.organizationId);
+        }
+
+        return await this.authorizer.check(req, { userId }, parentObjectRef, forceEnablement);
     }
 
-    async checkPermissionOnWorkspace(userId: string, permission: WorkspacePermission, workspaceId: string) {
-        if (await this.hasPermissionOnWorkspace(userId, permission, workspaceId)) {
+    async checkPermissionOnWorkspace(
+        userId: string,
+        permission: WorkspacePermission,
+        workspaceId: string,
+        resource?: Pick<Workspace, "id" | "organizationId">,
+    ) {
+        if (await this.hasPermissionOnWorkspace(userId, permission, workspaceId, resource)) {
             return;
         }
-        if ("read_info" === permission || !(await this.hasPermissionOnWorkspace(userId, "read_info", workspaceId))) {
+        if (
+            "read_info" === permission ||
+            !(await this.hasPermissionOnWorkspace(userId, "read_info", workspaceId, resource))
+        ) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} not found.`);
         }
 
@@ -210,11 +253,18 @@ export class Authorizer {
     }
 
     // write operations below
-    public async removeAllRelationships(userId: string, type: ResourceType, id: string) {
+    public async removeAllRelationships(
+        userId: string,
+        type: ResourceType,
+        id: string,
+        parentObject: { type: ResourceType; id: string | undefined },
+    ) {
         if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
+        const parentObjectRef = object(parentObject.type, parentObject.id);
         await this.authorizer.deleteRelationships(
+            parentObjectRef,
             v1.DeleteRelationshipsRequest.create({
                 relationshipFilter: {
                     resourceType: type,
@@ -226,6 +276,7 @@ export class Authorizer {
         // iterate over all resource types and remove by subject
         for (const resourcetype of AllResourceTypes as ResourceType[]) {
             await this.authorizer.deleteRelationships(
+                parentObjectRef,
                 v1.DeleteRelationshipsRequest.create({
                     relationshipFilter: {
                         resourceType: resourcetype,
@@ -268,14 +319,14 @@ export class Authorizer {
             );
         }
 
-        await this.authorizer.writeRelationships(...updates);
+        await this.authorizer.writeRelationships(parentObjectRef(owningOrgId), ...updates);
     }
 
-    async removeUser(userId: string) {
+    async removeUser(userId: string, orgID: string | undefined) {
         if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
-        await this.removeAllRelationships(userId, "user", userId);
+        await this.removeAllRelationships(userId, "user", userId, { type: "organization", id: orgID });
     }
 
     async addOrganizationRole(orgID: string, userID: string, role: TeamMemberRole): Promise<void> {
@@ -288,7 +339,7 @@ export class Authorizer {
         } else {
             updates.push(remove(rel.organization(orgID).owner.user(userID)));
         }
-        await this.authorizer.writeRelationships(...updates);
+        await this.authorizer.writeRelationships(parentObjectRef(orgID), ...updates);
     }
 
     async removeOrganizationRole(orgID: string, userID: string, role: TeamMemberRole): Promise<void> {
@@ -299,14 +350,17 @@ export class Authorizer {
         if (role === "member") {
             updates.push(remove(rel.organization(orgID).member.user(userID)));
         }
-        await this.authorizer.writeRelationships(...updates);
+        await this.authorizer.writeRelationships(parentObjectRef(orgID), ...updates);
     }
 
     async addProjectToOrg(userId: string, orgID: string, projectID: string): Promise<void> {
         if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
-        await this.authorizer.writeRelationships(set(rel.project(projectID).org.organization(orgID)));
+        await this.authorizer.writeRelationships(
+            parentObjectRef(orgID),
+            set(rel.project(projectID).org.organization(orgID)),
+        );
     }
 
     async setProjectVisibility(
@@ -333,7 +387,7 @@ export class Authorizer {
                 updates.push(set(rel.project(projectID).viewer.anyUser));
                 break;
         }
-        await this.authorizer.writeRelationships(...updates);
+        await this.authorizer.writeRelationships(parentObjectRef(organizationId), ...updates);
     }
 
     async removeProjectFromOrg(userId: string, orgID: string, projectID: string): Promise<void> {
@@ -341,6 +395,7 @@ export class Authorizer {
             return;
         }
         await this.authorizer.writeRelationships(
+            parentObjectRef(orgID),
             remove(rel.project(projectID).org.organization(orgID)), //
             remove(rel.project(projectID).viewer.anyUser),
             remove(rel.project(projectID).viewer.organization_member(orgID)),
@@ -361,6 +416,7 @@ export class Authorizer {
         await this.addOrganizationProjects(userId, orgId, projectIds);
 
         await this.authorizer.writeRelationships(
+            object("installation", InstallationID),
             set(rel.organization(orgId).installation.installation), //
             set(rel.organization(orgId).snapshoter.organization_member(orgId)), //TODO allow orgs to opt-out of snapshotting
         );
@@ -398,7 +454,9 @@ export class Authorizer {
         if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
+        const parentObjectRef = object("installation", InstallationID);
         await this.authorizer.writeRelationships(
+            parentObjectRef,
             set(rel.installation.admin.user(userId)), //
         );
     }
@@ -407,7 +465,9 @@ export class Authorizer {
         if (!(await isFgaWritesEnabled(userId))) {
             return;
         }
+        const parentObjectRef = object("installation", InstallationID);
         await this.authorizer.writeRelationships(
+            parentObjectRef,
             remove(rel.installation.admin.user(userId)), //
         );
     }
@@ -422,7 +482,7 @@ export class Authorizer {
         if (shared) {
             rels.push(set(rel.workspace(workspaceID).shared.anyUser));
         }
-        await this.authorizer.writeRelationships(...rels);
+        await this.authorizer.writeRelationships(parentObjectRef(orgID), ...rels);
     }
 
     async removeWorkspaceFromOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {
@@ -430,18 +490,20 @@ export class Authorizer {
             return;
         }
         await this.authorizer.writeRelationships(
+            parentObjectRef(orgID),
             remove(rel.workspace(workspaceID).org.organization(orgID)),
             remove(rel.workspace(workspaceID).owner.user(userID)),
             remove(rel.workspace(workspaceID).shared.anyUser),
         );
     }
 
-    async setWorkspaceIsShared(userID: string, workspaceID: string, shared: boolean): Promise<void> {
+    async setWorkspaceIsShared(userID: string, workspaceID: string, orgID: string, shared: boolean): Promise<void> {
         if (!(await isFgaWritesEnabled(userID))) {
             return;
         }
+        const parentObjectRef = object("organization", orgID);
         if (shared) {
-            await this.authorizer.writeRelationships(set(rel.workspace(workspaceID).shared.anyUser));
+            await this.authorizer.writeRelationships(parentObjectRef, set(rel.workspace(workspaceID).shared.anyUser));
 
             // verify the relationship is there
             const rs = await this.find(rel.workspace(workspaceID).shared.anyUser);
@@ -451,7 +513,10 @@ export class Authorizer {
                 log.info("Successfully set workspace as shared", { workspaceID, userID });
             }
         } else {
-            await this.authorizer.writeRelationships(remove(rel.workspace(workspaceID).shared.anyUser));
+            await this.authorizer.writeRelationships(
+                parentObjectRef,
+                remove(rel.workspace(workspaceID).shared.anyUser),
+            );
         }
     }
 
@@ -546,6 +611,14 @@ function subject(type: ResourceType, id?: string, relation?: Relation | Permissi
         object: object(type, id),
         optionalRelation: relation,
     });
+}
+
+function parentObjectRef(orgId: string | undefined): v1.ObjectReference {
+    if (orgId) {
+        return object("organization", orgId);
+    } else {
+        return object("installation", InstallationID);
+    }
 }
 
 const consistency = v1.Consistency.create({

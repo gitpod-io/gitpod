@@ -320,7 +320,8 @@ export const productionContainerModule = new ContainerModule(
         bind(Authorizer)
             .toDynamicValue((ctx) => {
                 const clientProvider = ctx.container.get<SpiceDBClientProvider>(SpiceDBClientProvider);
-                const authorizer = createSpiceDBAuthorizer(clientProvider);
+                const redis = ctx.container.get<Redis>(Redis);
+                const authorizer = createSpiceDBAuthorizer(clientProvider, redis);
                 return createInitializingAuthorizer(authorizer);
             })
             .inSingletonScope();
