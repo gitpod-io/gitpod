@@ -51,7 +51,7 @@ import { Authorizer, createInitializingAuthorizer } from "./authorization/author
 import { RelationshipUpdater } from "./authorization/relationship-updater";
 import { RelationshipUpdateJob } from "./authorization/relationship-updater-job";
 import { SpiceDBClientProvider, spiceDBConfigFromEnv } from "./authorization/spicedb";
-import { SpiceDBAuthorizer } from "./authorization/spicedb-authorizer";
+import { createSpiceDBAuthorizer } from "./authorization/spicedb-authorizer";
 import { BillingModes } from "./billing/billing-mode";
 import { EntitlementService, EntitlementServiceImpl } from "./billing/entitlement-service";
 import { EntitlementServiceUBP } from "./billing/entitlement-service-ubp";
@@ -85,7 +85,7 @@ import { GithubApp } from "./prebuilds/github-app";
 import { GithubAppRules } from "./prebuilds/github-app-rules";
 import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
 import { GitLabApp } from "./prebuilds/gitlab-app";
-import { IncrementalPrebuildsService } from "./prebuilds/incremental-prebuilds-service";
+import { IncrementalWorkspaceService } from "./prebuilds/incremental-workspace-service";
 import { PrebuildManager } from "./prebuilds/prebuild-manager";
 import { PrebuildStatusMaintainer } from "./prebuilds/prebuilt-status-maintainer";
 import { ProjectsService } from "./projects/projects-service";
@@ -317,10 +317,10 @@ export const productionContainerModule = new ContainerModule(
                 );
             })
             .inSingletonScope();
-        bind(SpiceDBAuthorizer).toSelf().inSingletonScope();
         bind(Authorizer)
             .toDynamicValue((ctx) => {
-                const authorizer = ctx.container.get<SpiceDBAuthorizer>(SpiceDBAuthorizer);
+                const clientProvider = ctx.container.get<SpiceDBClientProvider>(SpiceDBClientProvider);
+                const authorizer = createSpiceDBAuthorizer(clientProvider);
                 return createInitializingAuthorizer(authorizer);
             })
             .inSingletonScope();
@@ -343,7 +343,7 @@ export const productionContainerModule = new ContainerModule(
         bind(BitbucketAppSupport).toSelf().inSingletonScope();
         bind(GitHubEnterpriseApp).toSelf().inSingletonScope();
         bind(BitbucketServerApp).toSelf().inSingletonScope();
-        bind(IncrementalPrebuildsService).toSelf().inSingletonScope();
+        bind(IncrementalWorkspaceService).toSelf().inSingletonScope();
 
         // payment/billing
         bind(StripeService).toSelf().inSingletonScope();

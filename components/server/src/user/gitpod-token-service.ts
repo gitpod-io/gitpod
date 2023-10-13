@@ -21,7 +21,7 @@ export class GitpodTokenService {
     async getGitpodTokens(requestorId: string, userId: string): Promise<GitpodToken[]> {
         await this.auth.checkPermissionOnUser(requestorId, "read_tokens", userId);
         const gitpodTokens = await this.userDB.findAllGitpodTokensOfUser(userId);
-        return gitpodTokens.filter((v) => !v.deleted);
+        return gitpodTokens;
     }
 
     async generateNewGitpodToken(
@@ -55,9 +55,6 @@ export class GitpodTokenService {
             token = await this.userDB.findGitpodTokensOfUser(userId, tokenHash);
         } catch (error) {
             log.error({ userId }, "failed to resolve gitpod token: ", error);
-        }
-        if (token?.deleted) {
-            token = undefined;
         }
         return token;
     }

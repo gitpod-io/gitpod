@@ -83,7 +83,6 @@ import {
     WorkspaceAndInstance,
 } from "@gitpod/gitpod-protocol/lib/admin-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { Cancelable } from "@gitpod/gitpod-protocol/lib/util/cancelable";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import {
     InterfaceWithTraceContext,
@@ -148,7 +147,7 @@ import { createCookielessId, maskIp } from "../analytics";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { LinkedInService } from "../linkedin-service";
 import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
-import { IncrementalPrebuildsService } from "../prebuilds/incremental-prebuilds-service";
+import { IncrementalWorkspaceService } from "../prebuilds/incremental-workspace-service";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { GitHubAppSupport } from "../github/github-app-support";
 import { GitLabAppSupport } from "../gitlab/gitlab-app-support";
@@ -178,8 +177,6 @@ import {
     suggestionFromRecentWorkspace,
     suggestionFromUserRepo,
 } from "./suggested-repos-sorter";
-import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
-import { rel } from "../authorization/definitions";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -206,7 +203,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(BitbucketAppSupport) private readonly bitbucketAppSupport: BitbucketAppSupport,
 
         @inject(PrebuildManager) private readonly prebuildManager: PrebuildManager,
-        @inject(IncrementalPrebuildsService) private readonly incrementalPrebuildsService: IncrementalPrebuildsService,
+        @inject(IncrementalWorkspaceService) private readonly incrementalPrebuildsService: IncrementalWorkspaceService,
         @inject(ConfigProvider) private readonly configProvider: ConfigProvider,
         @inject(WorkspaceService) private readonly workspaceService: WorkspaceService,
         @inject(SnapshotService) private readonly snapshotService: SnapshotService,
@@ -341,9 +338,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         projectId: string,
         context: WorkspaceContext,
         organizationId?: string,
-        ignoreRunningPrebuild?: boolean,
-        allowUsingPreviousPrebuilds?: boolean,
-    ): Promise<WorkspaceCreationResult | PrebuiltWorkspaceContext | undefined> {
+    ): Promise<PrebuiltWorkspaceContext | undefined> {
         const ctx = TraceContext.childContext("findPrebuiltWorkspace", parentCtx);
         try {
             if (!(CommitContext.is(context) && context.repository.cloneUrl && context.revision)) {
@@ -356,162 +351,44 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             const cloneUrl = context.repository.cloneUrl;
             let prebuiltWorkspace: PrebuiltWorkspace | undefined;
             const logPayload = {
-                allowUsingPreviousPrebuilds,
-                ignoreRunningPrebuild,
                 cloneUrl,
                 commit: commitSHAs,
                 prebuiltWorkspace,
             };
             if (OpenPrebuildContext.is(context)) {
                 prebuiltWorkspace = await this.workspaceDb.trace(ctx).findPrebuildByID(context.openPrebuildID);
-                if (
-                    prebuiltWorkspace?.cloneURL !== cloneUrl &&
-                    (ignoreRunningPrebuild || prebuiltWorkspace?.state === "available")
-                ) {
+                if (prebuiltWorkspace?.cloneURL !== cloneUrl) {
                     // prevent users from opening arbitrary prebuilds this way - they must match the clone URL so that the resource guards are correct.
-                    return;
+                    return undefined;
                 }
             } else {
                 log.debug(logCtx, "Looking for prebuilt workspace: ", logPayload);
-                prebuiltWorkspace = await this.workspaceDb
-                    .trace(ctx)
-                    .findPrebuiltWorkspaceByCommit(projectId, commitSHAs);
-                if (!prebuiltWorkspace && allowUsingPreviousPrebuilds) {
-                    const { config } = await this.configProvider.fetchConfig({}, user, context, organizationId);
-                    const history = await this.incrementalPrebuildsService.getCommitHistoryForContext(context, user);
-                    prebuiltWorkspace = await this.incrementalPrebuildsService.findGoodBaseForIncrementalBuild(
-                        context,
-                        config,
-                        history,
-                        user,
-                        projectId,
-                    );
-                }
+                const configPromise = this.configProvider.fetchConfig({}, user, context, organizationId);
+                const history = await this.incrementalPrebuildsService.getCommitHistoryForContext(context, user);
+                const { config } = await configPromise;
+                prebuiltWorkspace = await this.incrementalPrebuildsService.findGoodBaseForIncrementalBuild(
+                    context,
+                    config,
+                    history,
+                    user,
+                    projectId,
+                );
             }
             if (!prebuiltWorkspace?.projectId) {
-                return;
+                return undefined;
             }
 
             // check if the user has access to the project
             if (!(await this.auth.hasPermissionOnProject(user.id, "read_prebuild", prebuiltWorkspace.projectId))) {
                 return undefined;
             }
-            if (prebuiltWorkspace.state === "available") {
-                log.info(logCtx, `Found prebuilt workspace for ${cloneUrl}:${commitSHAs}`, logPayload);
-                const result: PrebuiltWorkspaceContext = {
-                    title: context.title,
-                    originalContext: context,
-                    prebuiltWorkspace,
-                };
-                return result;
-            } else if (prebuiltWorkspace.state === "queued") {
-                // waiting for a prebuild that has not even started yet, doesn't make sense.
-                // starting a workspace from git will be faster anyway
-                return;
-            } else if (prebuiltWorkspace.state === "building") {
-                if (ignoreRunningPrebuild) {
-                    // in force mode we ignore running prebuilds as we want to start a workspace as quickly as we can.
-                    return;
-                }
-
-                const workspaceID = prebuiltWorkspace.buildWorkspaceId;
-                const makeResult = (instanceID: string): WorkspaceCreationResult => {
-                    return <WorkspaceCreationResult>{
-                        runningWorkspacePrebuild: {
-                            prebuildID: prebuiltWorkspace!.id,
-                            workspaceID,
-                            instanceID,
-                            starting: "queued",
-                            sameCluster: false,
-                        },
-                    };
-                };
-
-                const wsi = await this.workspaceDb.trace(ctx).findCurrentInstance(workspaceID);
-                if (!wsi || wsi.stoppedTime !== undefined) {
-                    return;
-                }
-
-                // (AT) At this point we found a running/building prebuild, which might also include
-                // image build in current state.
-                //
-                // The owner's client connection is automatically registered to listen on instance updates.
-                // For the remaining client connections which would handle `createWorkspace` and end up here, it
-                // also would be reasonable to listen on the instance updates of a running prebuild, or image build.
-                //
-                // We need to be forwarded the WorkspaceInstanceUpdates in the frontend, because we do not have
-                // any other means to reliably learn about the status about image builds, yet.
-                // Once we have those, we should remove this.
-                //
-                const ws = await this.workspaceDb.trace(ctx).findById(workspaceID);
-                const relatedPrebuildFound = !!ws && !!wsi && ws.ownerId !== this.userID;
-                if (relatedPrebuildFound && !this.disposables.disposed) {
-                    const resetListenerFromRedis = this.subscriber.listenForWorkspaceInstanceUpdates(
-                        ws.ownerId,
-                        (ctx, instance) => {
-                            if (instance.id === wsi.id) {
-                                this.forwardInstanceUpdateToClient(ctx, instance);
-                                if (instance.status.phase === "stopped") {
-                                    resetListenerFromRedis.dispose();
-                                }
-                            }
-                        },
-                    );
-                    this.disposables.push(resetListenerFromRedis);
-                }
-
-                const result = makeResult(wsi.id);
-
-                const inSameCluster = wsi.region === this.config.installationShortname;
-                if (!inSameCluster) {
-                    /* We need to wait for this prebuild to finish before we return from here.
-                     * This creation mode is meant to be used once we have gone through default mode, have confirmation from the
-                     * message bus that the prebuild is done, and now only have to wait for dbsync to come through. Thus,
-                     * in this mode we'll poll the database until the prebuild is ready (or we time out).
-                     *
-                     * Note: This polling mechanism only makes sense if the prebuild runs in cluster different from ours.
-                     *       Otherwise there's no dbsync inbetween that we might have to wait for.
-                     *
-                     * DB sync interval is 2 seconds at the moment, we wait ten "ticks" for the data to be synchronized.
-                     */
-                    const finishedPrebuiltWorkspace = await this.pollDatabaseUntilPrebuildIsAvailable(
-                        ctx,
-                        prebuiltWorkspace.id,
-                        20000,
-                    );
-                    if (!finishedPrebuiltWorkspace) {
-                        log.warn(
-                            logCtx,
-                            "did not find a finished prebuild in the database despite waiting long enough after msgbus confirmed that the prebuild had finished",
-                            logPayload,
-                        );
-                        return;
-                    } else {
-                        return {
-                            title: context.title,
-                            originalContext: context,
-                            prebuiltWorkspace: finishedPrebuiltWorkspace,
-                        } as PrebuiltWorkspaceContext;
-                    }
-                }
-
-                /* This is the default mode behaviour: we present the running prebuild to the user so that they can see the logs
-                 * or choose to force the creation of a workspace.
-                 */
-                if (wsi.status.phase != "running") {
-                    result.runningWorkspacePrebuild!.starting = "starting";
-                } else {
-                    result.runningWorkspacePrebuild!.starting = "running";
-                }
-                log.info(
-                    logCtx,
-                    `Found prebuilding (starting=${
-                        result.runningWorkspacePrebuild!.starting
-                    }) workspace for ${cloneUrl}:${commitSHAs}`,
-                    logPayload,
-                );
-                return result;
-            }
+            log.info(logCtx, `Found prebuilt workspace for ${cloneUrl}:${commitSHAs}`, logPayload);
+            const result: PrebuiltWorkspaceContext = {
+                title: context.title,
+                originalContext: context,
+                prebuiltWorkspace,
+            };
+            return result;
         } catch (e) {
             TraceContext.setError(ctx, e);
             throw e;
@@ -565,23 +442,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 ErrorCodes.PERMISSION_DENIED,
                 `operation not permitted: missing ${op} permission on ${resource.kind}`,
             );
-        }
-        if (resource.kind === "workspace" && op === "get") {
-            // access to workspaces is granted. Let's verify that this is also thecase with FGA
-            const result = await this.auth.hasPermissionOnWorkspace(
-                this.userID!,
-                "read_info",
-                resource.subject.id,
-                true,
-            );
-            if (!result) {
-                const isShared = await this.auth.find(rel.workspace(resource.subject.id).shared.anyUser);
-                log.error("user has access to workspace, but not through FGA", {
-                    userId: this.userID,
-                    workspace: new TrustedValue(resource.subject),
-                    sharedRelationship: isShared && new TrustedValue(isShared),
-                });
-            }
         }
     }
 
@@ -1370,22 +1230,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 runningInstancesPromise,
             );
 
-            // TODO (se) findPrebuiltWorkspace also needs the organizationId once we limit prebuild reuse to the same org
-            const prebuiltWorkspace =
-                project &&
-                (await this.findPrebuiltWorkspace(
-                    ctx,
-                    user,
-                    project.id,
-                    context,
-                    options.organizationId,
-                    options.ignoreRunningPrebuild,
-                    options.allowUsingPreviousPrebuilds || project.settings?.allowUsingPreviousPrebuilds,
-                ));
-            if (WorkspaceCreationResult.is(prebuiltWorkspace)) {
-                ctx.span?.log({ prebuild: "running" });
-                return prebuiltWorkspace as WorkspaceCreationResult;
-            }
+            const prebuiltWorkspace = project?.settings?.prebuilds?.enable
+                ? await this.findPrebuiltWorkspace(ctx, user, project.id, context, options.organizationId)
+                : undefined;
             if (WorkspaceContext.is(prebuiltWorkspace)) {
                 ctx.span?.log({ prebuild: "available" });
                 context = prebuiltWorkspace;
@@ -1587,28 +1434,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             } catch {}
         }
         return undefined;
-    }
-
-    private async pollDatabaseUntilPrebuildIsAvailable(
-        ctx: TraceContext,
-        prebuildID: string,
-        timeoutMS: number,
-    ): Promise<PrebuiltWorkspace | undefined> {
-        const pollPrebuildAvailable = new Cancelable(async (cancel) => {
-            const prebuild = await this.workspaceDb.trace(ctx).findPrebuildByID(prebuildID);
-            if (prebuild && PrebuiltWorkspace.isAvailable(prebuild)) {
-                return prebuild;
-            }
-            return;
-        });
-
-        const result = await Promise.race([
-            pollPrebuildAvailable.run(),
-            new Promise<undefined>((resolve, reject) => setTimeout(() => resolve(undefined), timeoutMS)),
-        ]);
-        pollPrebuildAvailable.cancel();
-
-        return result;
     }
 
     public async getFeaturedRepositories(ctx: TraceContext): Promise<WhitelistedRepository[]> {

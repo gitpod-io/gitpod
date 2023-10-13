@@ -23,7 +23,6 @@ var projectJSON = map[string]interface{}{
 	"teamId":            "0e433063-1358-4892-9ed2-68e273d17d07",
 	"appInstallationId": "20446411",
 	"creationTime":      "2021-11-01T19:36:07.532Z",
-	"deleted":           0,
 	"_lastModified":     "2021-11-02 10:49:12.473658",
 	"name":              "gptest1-repo1-private",
 	"markedDeleted":     1,
@@ -49,7 +48,7 @@ func TestProject_ReadExistingRecords(t *testing.T) {
 
 func insertRawProject(t *testing.T, conn *gorm.DB, obj map[string]interface{}) uuid.UUID {
 	columns := []string{
-		"id", "cloneUrl", "teamId", "appInstallationId", "creationTime", "deleted", "_lastModified", "name", "markedDeleted", "userId", "slug", "settings",
+		"id", "cloneUrl", "teamId", "appInstallationId", "creationTime", "_lastModified", "name", "markedDeleted", "userId", "slug", "settings",
 	}
 	statement := fmt.Sprintf(`INSERT INTO d_b_project (%s) VALUES ?;`, strings.Join(columns, ", "))
 	id := uuid.MustParse(obj["id"].(string))

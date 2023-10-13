@@ -2,7 +2,7 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "lib",
-    "module": "commonjs",
+    "module": "ES6",
     "target": "ES2021",
     "lib": [
       "es6",
@@ -11,8 +11,8 @@
     "strict": true,
     "skipLibCheck": true,
     "sourceMap": true,
-    "downlevelIteration": true,
-    "useUnknownInCatchVariables": false
+    "useUnknownInCatchVariables": false,
+    "moduleResolution": "Node"
   },
   "include": [
     "src"

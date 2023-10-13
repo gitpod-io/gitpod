@@ -11,8 +11,6 @@ import { useCurrentUser } from "../user-context";
 import { useCurrentOrg } from "./organizations/orgs-query";
 
 const featureFlags = {
-    showUseLastSuccessfulPrebuild: false,
-    publicApiExperimentalWorkspaceService: false,
     personalAccessTokensEnabled: false,
     oidcServiceEnabled: false,
     // Default to true to enable on gitpod dedicated until ff support is added for dedicated
@@ -29,6 +27,7 @@ const featureFlags = {
     newProjectIncrementalRepoSearchBBS: false,
     includeProjectsOnCreateWorkspace: false,
     repositoryFinderSearch: false,
+    repoConfigListAndDetail: false,
 };
 
 type FeatureFlags = typeof featureFlags;

@@ -495,7 +495,7 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 	}
 
 	var authId string
-	err = db.QueryRow(`SELECT authId FROM d_b_identity WHERE userId = ? and deleted != 1`, userId).Scan(&authId)
+	err = db.QueryRow(`SELECT authId FROM d_b_identity WHERE userId = ?`, userId).Scan(&authId)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return "", err
 	}
@@ -513,7 +513,7 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 	}
 
 	var cnt int
-	err = db.QueryRow(`SELECT COUNT(1) AS cnt FROM d_b_token_entry WHERE authId = ? and deleted != 1`, authId).Scan(&cnt)
+	err = db.QueryRow(`SELECT COUNT(1) AS cnt FROM d_b_token_entry WHERE authId = ?`, authId).Scan(&cnt)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return "", err
 	}

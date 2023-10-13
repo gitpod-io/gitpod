@@ -69,7 +69,7 @@ export class Authorizer {
             consistency,
         });
 
-        return this.authorizer.check(req, { userId });
+        return await this.authorizer.check(req, { userId });
     }
 
     async checkPermissionOnInstallation(userId: string, permission: InstallationPermission): Promise<void> {
@@ -98,7 +98,7 @@ export class Authorizer {
             consistency,
         });
 
-        return this.authorizer.check(req, { userId });
+        return await this.authorizer.check(req, { userId });
     }
 
     async checkPermissionOnOrganization(userId: string, permission: OrganizationPermission, orgId: string) {
@@ -128,7 +128,7 @@ export class Authorizer {
             consistency,
         });
 
-        return this.authorizer.check(req, { userId });
+        return await this.authorizer.check(req, { userId });
     }
 
     async checkPermissionOnProject(userId: string, permission: ProjectPermission, projectId: string) {
@@ -158,7 +158,7 @@ export class Authorizer {
             consistency,
         });
 
-        return this.authorizer.check(req, { userId });
+        return await this.authorizer.check(req, { userId });
     }
 
     async checkPermissionOnUser(userId: string, permission: UserPermission, resourceUserId: string) {
@@ -192,7 +192,7 @@ export class Authorizer {
             consistency,
         });
 
-        return this.authorizer.check(req, { userId }, forceEnablement);
+        return await this.authorizer.check(req, { userId }, forceEnablement);
     }
 
     async checkPermissionOnWorkspace(userId: string, permission: WorkspacePermission, workspaceId: string) {
@@ -423,51 +423,6 @@ export class Authorizer {
             rels.push(set(rel.workspace(workspaceID).shared.anyUser));
         }
         await this.authorizer.writeRelationships(...rels);
-
-        (async () => {
-            //TODO(se) remove this double checking once we're confident that the above works
-            // check if the relationships were written
-            try {
-                const wsToOrgRel = await this.find(rel.workspace(workspaceID).org.organization(orgID));
-                if (!wsToOrgRel) {
-                    log.error("Failed to write workspace to org relationship", {
-                        orgID,
-                        userID,
-                        workspaceID,
-
-                        shared,
-                    });
-                }
-                const wsToOwnerRel = await this.find(rel.workspace(workspaceID).owner.user(userID));
-                if (!wsToOwnerRel) {
-                    log.error("Failed to write workspace to owner relationship", {
-                        orgID,
-                        userID,
-                        workspaceID,
-                        shared,
-                    });
-                }
-                if (shared) {
-                    const wsSharedRel = await this.find(rel.workspace(workspaceID).shared.anyUser);
-                    if (!wsSharedRel) {
-                        log.error("Failed to write workspace shared relationship", {
-                            orgID,
-                            userID,
-                            workspaceID,
-                            shared,
-                        });
-                    }
-                }
-            } catch (error) {
-                log.error("Failed to check workspace relationships", {
-                    orgID,
-                    userID,
-                    workspaceID,
-                    shared,
-                    error,
-                });
-            }
-        })().catch((error) => log.error({ userId: userID }, "Failed to check workspace relationships", { error }));
     }
 
     async removeWorkspaceFromOrg(orgID: string, userID: string, workspaceID: string): Promise<void> {
@@ -485,8 +440,19 @@ export class Authorizer {
         if (!(await isFgaWritesEnabled(userID))) {
             return;
         }
-        const op = shared ? set : remove;
-        await this.authorizer.writeRelationships(op(rel.workspace(workspaceID).shared.anyUser));
+        if (shared) {
+            await this.authorizer.writeRelationships(set(rel.workspace(workspaceID).shared.anyUser));
+
+            // verify the relationship is there
+            const rs = await this.find(rel.workspace(workspaceID).shared.anyUser);
+            if (!rs) {
+                log.error("Failed to set workspace as shared", { workspaceID, userID });
+            } else {
+                log.info("Successfully set workspace as shared", { workspaceID, userID });
+            }
+        } else {
+            await this.authorizer.writeRelationships(remove(rel.workspace(workspaceID).shared.anyUser));
+        }
     }
 
     public async find(relation: v1.Relationship): Promise<v1.Relationship | undefined> {

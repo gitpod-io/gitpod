@@ -5,21 +5,19 @@
  */
 
 import { LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { AsyncLocalStorage } from "node:async_hooks";
-import { v4 } from "uuid";
+import { performance } from "node:perf_hooks";
+import { RequestContext, getGlobalContext, runWithContext } from "./request-context";
+
+export type LogContextOptions = LogContext & {
+    [p: string]: any;
+};
 
 // we are installing a special augmenter that enhances the log context if executed within `runWithContext`
 // with a contextId and a contextTimeMs, which denotes the amount of milliseconds since the context was created.
-type EnhancedLogContext = LogContext & {
-    contextId?: string;
-    contextTimeMs: number;
-    contextKind: string;
-};
-
-const asyncLocalStorage = new AsyncLocalStorage<EnhancedLogContext>();
+export type EnhancedLogContext = RequestContext & LogContextOptions;
 const augmenter: LogContext.Augmenter = (ctx) => {
-    const globalContext = asyncLocalStorage.getStore();
-    const contextTimeMs = globalContext?.contextTimeMs ? Date.now() - globalContext.contextTimeMs : undefined;
+    const globalContext = getGlobalContext();
+    const contextTimeMs = globalContext?.contextTimeMs ? performance.now() - globalContext.contextTimeMs : undefined;
     const result = {
         ...globalContext,
         contextTimeMs,
@@ -30,18 +28,6 @@ const augmenter: LogContext.Augmenter = (ctx) => {
 };
 LogContext.setAugmenter(augmenter);
 
-export async function runWithContext<T>(
-    contextKind: string,
-    context: LogContext & { contextId?: string } & any,
-    fun: () => T,
-): Promise<T> {
-    return asyncLocalStorage.run(
-        {
-            ...context,
-            contextKind,
-            contextId: context.contextId || v4(),
-            contextTimeMs: Date.now(),
-        },
-        fun,
-    );
+export function runWithLogContext<T>(contextKind: string, context: EnhancedLogContext, fun: () => T): T {
+    return runWithContext<EnhancedLogContext, T>(contextKind, context, fun);
 }

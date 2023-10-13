@@ -38,7 +38,6 @@ describe("AuthProviderEntryDBSpec", async () => {
             status: "verified",
             type: "GitHub",
             oauthRevision: undefined,
-            deleted: false,
             ...ap,
             oauth: {
                 callBackUrl: "example.org/some/callback",
@@ -74,7 +73,7 @@ describe("AuthProviderEntryDBSpec", async () => {
         await db.storeAuthProvider(ap2, false);
 
         const all = await db.findAllHosts();
-        expect(all, "findAllHosts([])").to.deep.equal(["foo", "bar"]);
+        expect(all.sort(), "findAllHosts([])").to.deep.equal(["foo", "bar"].sort());
     });
 
     it("should oauthRevision", async () => {

@@ -28,6 +28,7 @@ type Props = {
     autoFocus?: boolean;
     disableFocusLock?: boolean;
     className?: string;
+    disabled?: boolean;
     onClose: () => void;
     onSubmit?: () => void | Promise<void>;
 };
@@ -42,6 +43,7 @@ export const Modal: FC<Props> = ({
     autoFocus = false,
     disableFocusLock = false,
     className,
+    disabled = false,
     onClose,
     onSubmit,
 }) => {
@@ -103,7 +105,7 @@ export const Modal: FC<Props> = ({
                             aria-labelledby="modal-header"
                             tabIndex={-1}
                         >
-                            <MaybeWithForm onSubmit={onSubmit}>
+                            <MaybeWithForm onSubmit={onSubmit} disabled={disabled}>
                                 {closeable && <ModalCloseIcon onClose={() => closeModal("x")} />}
                                 {title ? (
                                     <>
@@ -127,8 +129,9 @@ export default Modal;
 
 type MaybeWithFormProps = {
     onSubmit: Props["onSubmit"];
+    disabled: Props["disabled"];
 };
-const MaybeWithForm: FC<MaybeWithFormProps> = ({ onSubmit, children }) => {
+const MaybeWithForm: FC<MaybeWithFormProps> = ({ onSubmit, disabled, children }) => {
     const handleSubmit = useCallback(
         (e: FormEvent) => {
             e.preventDefault();
@@ -147,7 +150,7 @@ const MaybeWithForm: FC<MaybeWithFormProps> = ({ onSubmit, children }) => {
     return (
         <form onSubmit={handleSubmit}>
             {/* including a hidden submit button ensures submit on enter works despite a button w/ type="submit" existing or not */}
-            <input type="submit" className="hidden" hidden />
+            <input type="submit" className="hidden" hidden disabled={disabled} />
             {children}
         </form>
     );

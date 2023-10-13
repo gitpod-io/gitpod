@@ -172,7 +172,6 @@ export function CreateWorkspacePage() {
 
             // we already have shown running workspaces to the user
             opts.ignoreRunningWorkspaceOnSameCommit = true;
-            opts.ignoreRunningPrebuild = true;
 
             // if user received an INVALID_GITPOD_YML yml for their contextURL they can choose to proceed using default configuration
             if (workspaceContext.error?.code === ErrorCodes.INVALID_GITPOD_YML) {
@@ -398,7 +397,7 @@ export function CreateWorkspacePage() {
                             selectedIdeOption={selectedIde}
                             useLatest={useLatestIde}
                             disabled={createWorkspaceMutation.isStarting}
-                            loading={workspaceContext.isLoading || !optionsLoaded}
+                            loading={workspaceContext.isLoading}
                         />
                     </InputField>
 
@@ -408,7 +407,7 @@ export function CreateWorkspacePage() {
                             setError={setErrorWsClass}
                             selectedWorkspaceClass={selectedWsClass}
                             disabled={createWorkspaceMutation.isStarting}
-                            loading={workspaceContext.isLoading || !optionsLoaded}
+                            loading={workspaceContext.isLoading}
                         />
                     </InputField>
                 </div>

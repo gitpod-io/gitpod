@@ -129,7 +129,6 @@ import { WorkspaceClassesConfig } from "./workspace-classes";
 import { SYSTEM_USER } from "../authorization/authorizer";
 import { EnvVarService, ResolvedEnvVars } from "../user/env-var-service";
 import { RedlockAbortSignal } from "redlock";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { ConfigProvider } from "./config-provider";
 import { isGrpcError } from "@gitpod/gitpod-protocol/lib/util/grpc";
 
@@ -160,7 +159,10 @@ export async function getWorkspaceClassForInstance(
         if (!workspaceClass) {
             switch (workspace.type) {
                 case "prebuild":
-                    workspaceClass = project?.settings?.workspaceClasses?.prebuild;
+                    if (project) {
+                        const prebuildSettings = Project.getPrebuildSettings(project);
+                        workspaceClass = prebuildSettings.workspaceClass;
+                    }
                     break;
                 case "regular":
                     workspaceClass = project?.settings?.workspaceClasses?.regular;
@@ -378,17 +380,6 @@ export class WorkspaceStarter {
                 ctx.span.finish();
             }
         };
-
-        const runWithMutex = await getExperimentsClientForBackend().getValueAsync("workspace_start_controller", false, {
-            user,
-            projectId: workspace.projectId,
-        });
-        ctx.span.setTag("runWithMutex", runWithMutex);
-        if (!runWithMutex) {
-            const abortController = new AbortController();
-            await doReconcileWorkspaceStart(abortController.signal);
-            return;
-        }
 
         // We try to acquire a mutex here, which we intend to hold until the workspace start request is sent to ws-manager.
         // In case this container dies for whatever reason, the mutex is eventually released, and the instance can be picked up

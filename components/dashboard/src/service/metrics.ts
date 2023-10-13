@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { MetricsReporter } from "@gitpod/public-api/lib/metrics";
 import { getExperimentsClient } from "../experiments/client";
 import { v4 } from "uuid";
@@ -13,7 +12,7 @@ const commit = require("./config.json").commit;
 const originalConsoleError = console.error;
 
 const metricsReporter = new MetricsReporter({
-    gitpodUrl: new GitpodHostUrl(window.location.href).withoutWorkspacePrefix().toString(),
+    gitpodUrl: window.location.href,
     clientName: "dashboard",
     clientVersion: commit,
     log: {

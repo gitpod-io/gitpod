@@ -15,7 +15,7 @@ import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
 import { Workspace } from "@gitpod/gitpod-protocol/lib/protocol";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { v4 as uuidv4 } from "uuid";
-import { ConnectError, Code } from "@bufbuild/connect";
+import { ConnectError, Code } from "@connectrpc/connect";
 import * as chai from "chai";
 import { WorkspaceService } from "../workspace/workspace-service";
 

@@ -42,8 +42,12 @@ func (s *WorkspaceService) CreateAndStartWorkspace(ctx context.Context, req *con
 	}
 
 	ws, err := conn.CreateWorkspace(ctx, &protocol.CreateWorkspaceOptions{
-		ContextURL:     req.Msg.GetContextUrl(),
-		OrganizationId: req.Msg.GetOrganizationId(),
+		ContextURL:                         req.Msg.GetContextUrl(),
+		OrganizationId:                     req.Msg.GetOrganizationId(),
+		IgnoreRunningWorkspaceOnSameCommit: req.Msg.GetIgnoreRunningWorkspaceOnSameCommit(),
+		IgnoreRunningPrebuild:              req.Msg.GetIgnoreRunningPrebuild(),
+		AllowUsingPreviousPrebuilds:        req.Msg.GetAllowUsingPreviousPrebuilds(),
+		ForceDefaultConfig:                 req.Msg.GetForceDefaultConfig(),
 		StartWorkspaceOptions: protocol.StartWorkspaceOptions{
 			WorkspaceClass: req.Msg.GetStartSpec().GetWorkspaceClass(),
 			Region:         req.Msg.GetStartSpec().GetRegion(),

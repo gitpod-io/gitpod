@@ -19,7 +19,6 @@ import { GitHubService } from "./github-service";
 import { URL } from "url";
 import { ContextParser } from "../workspace/context-parser-service";
 import { RepoURL } from "../repohost";
-import { GithubAppRules } from "./github-app-rules";
 import { UserService } from "../user/user-service";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ProjectsService } from "../projects/projects-service";
@@ -34,7 +33,6 @@ export class GitHubEnterpriseApp {
         @inject(TeamDB) private readonly teamDB: TeamDB,
         @inject(ContextParser) private readonly contextParser: ContextParser,
         @inject(WebhookEventDB) private readonly webhookEvents: WebhookEventDB,
-        @inject(GithubAppRules) private readonly appRules: GithubAppRules,
         @inject(ProjectsService) private readonly projectService: ProjectsService,
     ) {}
 
@@ -174,10 +172,7 @@ export class GitHubEnterpriseApp {
                         context,
                     });
 
-                    const shouldRun = Project.hasPrebuildSettings(project)
-                        ? prebuildPrecondition.shouldRun
-                        : this.appRules.shouldRunPrebuild(config, CommitContext.isDefaultBranch(context), false, false);
-                    if (!shouldRun) {
+                    if (!prebuildPrecondition.shouldRun) {
                         log.info("GitHub Enterprise push event: No prebuild.", { config, context });
 
                         await this.webhookEvents.updateEvent(event.id, {

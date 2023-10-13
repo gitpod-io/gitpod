@@ -4,15 +4,15 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Code, ConnectError, ConnectRouter, HandlerContext, ServiceImpl } from "@bufbuild/connect";
-import { expressConnectMiddleware } from "@bufbuild/connect-express";
+import { Code, ConnectError, ConnectRouter, HandlerContext, ServiceImpl } from "@connectrpc/connect";
+import { expressConnectMiddleware } from "@connectrpc/connect-express";
 import { MethodKind, ServiceType } from "@bufbuild/protobuf";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connectweb";
-import { StatsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/stats_connectweb";
-import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
-import { UserService as UserServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_connectweb";
-import { WorkspacesService as WorkspacesServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/workspaces_connectweb";
+import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connect";
+import { StatsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/stats_connect";
+import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connect";
+import { UserService as UserServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_connect";
+import { WorkspacesService as WorkspacesServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/workspaces_connect";
 import express from "express";
 import * as http from "http";
 import { inject, injectable, interfaces } from "inversify";
@@ -24,6 +24,10 @@ import { APIStatsService } from "./stats";
 import { APITeamsService } from "./teams";
 import { APIUserService } from "./user";
 import { APIWorkspacesService } from "./workspaces";
+import { LogContextOptions, runWithLogContext } from "../util/log-context";
+import { v4 } from "uuid";
+import { performance } from "perf_hooks";
+import { wrapAsyncGenerator } from "../util/request-context";
 
 function service<T extends ServiceType>(type: T, impl: ServiceImpl<T>): [T, ServiceImpl<T>] {
     return [type, impl];
@@ -90,9 +94,9 @@ export class API {
      * intercept handles cross-cutting concerns for all calls:
      * - authentication
      * - server-side observability
+     * - logging context
      * TODO(ak):
      * - rate limitting
-     * - logging context
      * - tracing
      */
     private interceptService<T extends ServiceType>(type: T): ProxyHandler<ServiceImpl<T>> {
@@ -101,10 +105,22 @@ export class API {
         return {
             get(target, prop) {
                 return (...args: any[]) => {
-                    const method = type.methods[prop as any];
+                    const logContext: LogContextOptions & {
+                        requestId?: string;
+                        contextTimeMs: number;
+                        grpc_service: string;
+                        grpc_method: string;
+                    } = {
+                        contextTimeMs: performance.now(),
+                        grpc_service,
+                        grpc_method: prop as string,
+                    };
+                    const withRequestContext = <T>(fn: () => T): T => runWithLogContext("public-api", logContext, fn);
+
+                    const method = type.methods[prop as string];
                     if (!method) {
                         // Increment metrics for unknown method attempts
-                        console.warn("public api: unknown method", grpc_service, prop);
+                        withRequestContext(() => log.warn("public api: unknown method"));
                         const code = Code.Unimplemented;
                         grpcServerStarted.labels(grpc_service, "unknown", "unknown").inc();
                         grpcServerHandled.labels(grpc_service, "unknown", "unknown", Code[code]).inc();
@@ -123,55 +139,78 @@ export class API {
                         grpc_type = "bidi_stream";
                     }
 
+                    logContext.requestId = v4();
+
                     grpcServerStarted.labels(grpc_service, grpc_method, grpc_type).inc();
                     const stopTimer = grpcServerHandling.startTimer({ grpc_service, grpc_method, grpc_type });
                     const done = (err?: ConnectError) => {
                         const grpc_code = err ? Code[err.code] : "OK";
                         grpcServerHandled.labels(grpc_service, grpc_method, grpc_type, grpc_code).inc();
                         stopTimer({ grpc_code });
+                        let callMs: number | undefined;
+                        if (callStartedAt) {
+                            callMs = performance.now() - callStartedAt;
+                        }
+                        log.debug("public api: done", { grpc_code, verifyMs, callMs });
+                        // right now p99 for getLoggetInUser is around 100ms, using it as a threshold for now
+                        const slowThreshold = 100;
+                        const totalMs = performance.now() - logContext.contextTimeMs;
+                        if (grpc_type === "unary" && totalMs > slowThreshold) {
+                            log.warn("public api: slow unary call", { grpc_code, callMs, verifyMs });
+                        }
                     };
                     const handleError = (reason: unknown) => {
                         let err = ConnectError.from(reason, Code.Internal);
                         if (reason != err && err.code === Code.Internal) {
-                            console.error("public api: unexpected internal error", reason);
-                            // don't leak internal errors to a user
-                            // TODO(ak) instead surface request id
-                            err = ConnectError.from(`please check server logs`, Code.Internal);
+                            log.error("public api: unexpected internal error", reason);
+                            err = ConnectError.from(
+                                `Oops! Something went wrong. Please quote the request ID ${logContext.requestId} when reaching out to Gitpod Support.`,
+                                Code.Internal,
+                            );
                         }
                         done(err);
                         throw err;
                     };
 
+                    let verifyMs: number | undefined;
+                    let callStartedAt: number | undefined;
                     const context = args[1] as HandlerContext;
-                    async function call<T>(): Promise<T> {
+
+                    const apply = async <T>(): Promise<T> => {
+                        const verifyStartedAt = performance.now();
                         const user = await self.verify(context);
+                        verifyMs = performance.now() - verifyStartedAt;
                         context.user = user;
 
-                        return (target[prop as any] as Function).apply(target, args);
-                    }
+                        callStartedAt = performance.now();
+                        return Reflect.apply(target[prop as any], target, args);
+                    };
                     if (grpc_type === "unary" || grpc_type === "client_stream") {
-                        return (async () => {
+                        return withRequestContext(async () => {
                             try {
-                                const promise = await call<Promise<any>>();
+                                const promise = await apply<Promise<any>>();
                                 const result = await promise;
                                 done();
                                 return result;
                             } catch (e) {
                                 handleError(e);
                             }
-                        })();
+                        });
                     }
-                    return (async function* () {
-                        try {
-                            const generator = await call<AsyncGenerator<any>>();
-                            for await (const item of generator) {
-                                yield item;
+                    return wrapAsyncGenerator(
+                        (async function* () {
+                            try {
+                                const generator = await apply<AsyncGenerator<any>>();
+                                for await (const item of generator) {
+                                    yield item;
+                                }
+                                done();
+                            } catch (e) {
+                                handleError(e);
                             }
-                            done();
-                        } catch (e) {
-                            handleError(e);
-                        }
-                    })();
+                        })(),
+                        withRequestContext,
+                    );
                 };
             },
         };

@@ -1,0 +1,31 @@
+{
+    "compilerOptions": {
+        "outDir": "lib",
+        "experimentalDecorators": true,
+        "lib": [
+            "ES2021"
+        ],
+        "strict": true,
+        "noEmitOnError": false,
+        "noUnusedLocals": true,
+        "emitDecoratorMetadata": true,
+        "strictPropertyInitialization": false,
+        "downlevelIteration": true,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "target": "ES2021",
+        "jsx": "react",
+        "sourceMap": true,
+        "declaration": true,
+        "declarationMap": true,
+        "skipLibCheck": true,
+        "useUnknownInCatchVariables": false,
+        "esModuleInterop": true,
+        "typeRoots": [
+            "./src/typings"
+        ]
+    },
+    "include": [
+        "src"
+    ]
+}

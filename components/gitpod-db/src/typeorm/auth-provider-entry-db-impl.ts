@@ -46,7 +46,7 @@ export class AuthProviderEntryDBImpl implements AuthProviderEntryDB {
             [id],
         );
 
-        // 2. then mark as deleted
+        // 2. then delete
         const repo = await this.getAuthProviderRepo();
         await repo.delete({ id });
     }
@@ -55,7 +55,7 @@ export class AuthProviderEntryDBImpl implements AuthProviderEntryDB {
         exceptOAuthRevisions = exceptOAuthRevisions.filter((r) => r !== ""); // never filter out '' which means "undefined" in the DB
 
         const repo = await this.getAuthProviderRepo();
-        let query = repo.createQueryBuilder("auth_provider").where("auth_provider.deleted != true");
+        let query = repo.createQueryBuilder("auth_provider");
         if (exceptOAuthRevisions.length > 0) {
             query = query.andWhere("auth_provider.oauthRevision NOT IN (:...exceptOAuthRevisions)", {
                 exceptOAuthRevisions,
@@ -68,7 +68,7 @@ export class AuthProviderEntryDBImpl implements AuthProviderEntryDB {
         const hostField: keyof DBAuthProviderEntry = "host";
 
         const repo = await this.getAuthProviderRepo();
-        const query = repo.createQueryBuilder("auth_provider").select(hostField).where("auth_provider.deleted != true");
+        const query = repo.createQueryBuilder("auth_provider").select(hostField);
         const result = (await query.execute()) as Pick<DBAuthProviderEntry, "host">[];
         // HINT: host is expected to be lower case
         return result.map((r) => r.host?.toLowerCase()).filter((h) => !!h);
@@ -76,10 +76,7 @@ export class AuthProviderEntryDBImpl implements AuthProviderEntryDB {
 
     async findByHost(host: string): Promise<AuthProviderEntry | undefined> {
         const repo = await this.getAuthProviderRepo();
-        const query = repo
-            .createQueryBuilder("auth_provider")
-            .where(`auth_provider.host = :host`, { host })
-            .andWhere("auth_provider.deleted != true");
+        const query = repo.createQueryBuilder("auth_provider").where(`auth_provider.host = :host`, { host });
         return query.getOne();
     }
 
@@ -93,8 +90,7 @@ export class AuthProviderEntryDBImpl implements AuthProviderEntryDB {
         const query = repo
             .createQueryBuilder("auth_provider")
             .where(`auth_provider.ownerId = :ownerId`, { ownerId })
-            .andWhere("(auth_provider.organizationId IS NULL OR auth_provider.organizationId = '')")
-            .andWhere("auth_provider.deleted != true");
+            .andWhere("(auth_provider.organizationId IS NULL OR auth_provider.organizationId = '')");
         return query.getMany();
     }
 
@@ -102,8 +98,7 @@ export class AuthProviderEntryDBImpl implements AuthProviderEntryDB {
         const repo = await this.getAuthProviderRepo();
         const query = repo
             .createQueryBuilder("auth_provider")
-            .where(`auth_provider.organizationId = :organizationId`, { organizationId })
-            .andWhere("auth_provider.deleted != true");
+            .where(`auth_provider.organizationId = :organizationId`, { organizationId });
         return query.getMany();
     }
 
