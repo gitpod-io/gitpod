@@ -53,12 +53,7 @@ export const AuthorizeGit: FC<{ className?: string }> = ({ className }) => {
     const verifiedProviders = authProviders.data.filter((ap) => ap.verified);
 
     return (
-        <div
-            className={classNames(
-                "w-full text-center border-2 border-gray-100 dark:border-gray-800 p-4 m-4 rounded-lg py-10",
-                className,
-            )}
-        >
+        <div className={classNames("text-center p-4 m-4 py-10", className)}>
             {verifiedProviders.length === 0 ? (
                 <>
                     <Heading3 className="pb-2">No Git integrations</Heading3>

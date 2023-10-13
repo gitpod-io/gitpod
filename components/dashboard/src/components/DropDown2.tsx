@@ -4,20 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, {
-    FC,
-    FunctionComponent,
-    ReactNode,
-    RefObject,
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-} from "react";
+import React, { FC, FunctionComponent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Arrow from "./Arrow";
 import classNames from "classnames";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
+import * as RadixPopover from "@radix-ui/react-popover";
 
 export interface DropDown2Element {
     id: string;
@@ -26,6 +17,7 @@ export interface DropDown2Element {
 }
 
 export interface DropDown2Props {
+    initialValue?: string;
     getElements: (searchString: string) => DropDown2Element[];
     disabled?: boolean;
     loading?: boolean;
@@ -35,23 +27,28 @@ export interface DropDown2Props {
     onSelectionChange: (id: string) => void;
     // Meant to allow consumers to react to search changes even though state is managed internally
     onSearchChange?: (searchString: string) => void;
-    allOptions?: string;
 }
 
 export const DropDown2: FunctionComponent<DropDown2Props> = ({
+    initialValue = "",
     disabled = false,
     loading = false,
     expanded = false,
     searchPlaceholder,
-    allOptions,
     getElements,
     disableSearch,
     children,
     onSelectionChange,
     onSearchChange,
 }) => {
+    const inputEl = useRef<HTMLInputElement>(null);
     const [showDropDown, setShowDropDown] = useState<boolean>(!disabled && !!expanded);
-    const nodeRef: RefObject<HTMLDivElement> = useRef(null);
+    const [search, setSearch] = useState<string>("");
+    const filteredOptions = useMemo(() => getElements(search), [getElements, search]);
+    const [selectedElementTemp, setSelectedElementTemp] = useState<string | undefined>(
+        initialValue || filteredOptions[0]?.id,
+    );
+
     const onSelected = useCallback(
         (elementId: string) => {
             onSelectionChange(elementId);
@@ -59,137 +56,128 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
         },
         [onSelectionChange],
     );
-    const [search, setSearch] = useState<string>("");
-    const filteredOptions = useMemo(() => getElements(search), [getElements, search]);
-    const [selectedElementTemp, setSelectedElementTemp] = useState<string | undefined>(filteredOptions[0]?.id);
 
-    // reset search when the drop down is expanded or closed
+    // scroll to selected item when opened
     useEffect(() => {
-        updateSearch("");
-        if (allOptions) {
-            setSelectedElementTemp(allOptions);
-        }
         if (showDropDown && selectedElementTemp) {
-            document.getElementById(selectedElementTemp)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            setTimeout(() => {
+                document.getElementById(selectedElementTemp)?.scrollIntoView({ block: "nearest" });
+            }, 0);
         }
-        // we only want this behavior when showDropDown changes to true.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [showDropDown]);
 
     const updateSearch = useCallback(
         (value: string) => {
             setSearch(value);
-            if (onSearchChange) {
-                onSearchChange(value);
-            }
+            onSearchChange?.(value);
         },
         [onSearchChange],
     );
 
-    const toggleDropDown = useCallback(() => {
-        if (disabled) {
-            return;
-        }
-        setShowDropDown(!showDropDown);
-    }, [disabled, showDropDown]);
+    const handleInputChange = useCallback((e) => updateSearch(e.target.value), [updateSearch]);
 
-    const setFocussedElement = useCallback(
+    const setActiveElement = useCallback(
         (element: string) => {
             setSelectedElementTemp(element);
-            document.getElementById(element)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-            document.getElementById(element)?.focus();
+            const el = document.getElementById(element);
+            el?.scrollIntoView({ block: "nearest" });
         },
         [setSelectedElementTemp],
     );
 
+    const handleOpenChange = useCallback(
+        (open: boolean) => {
+            updateSearch("");
+            setShowDropDown(open);
+        },
+        [updateSearch],
+    );
+
+    const focusNextElement = useCallback(() => {
+        let idx = filteredOptions.findIndex((e) => e.id === selectedElementTemp);
+        while (idx++ < filteredOptions.length - 1) {
+            const candidate = filteredOptions[idx];
+            if (candidate.isSelectable) {
+                setActiveElement(candidate.id);
+                return;
+            }
+        }
+    }, [filteredOptions, selectedElementTemp, setActiveElement]);
+
+    const focusPreviousElement = useCallback(() => {
+        let idx = filteredOptions.findIndex((e) => e.id === selectedElementTemp);
+
+        while (idx-- > 0) {
+            const candidate = filteredOptions[idx];
+            if (candidate.isSelectable) {
+                setActiveElement(candidate.id);
+                return;
+            }
+        }
+    }, [filteredOptions, selectedElementTemp, setActiveElement]);
+
     const onKeyDown = useCallback(
         (e: React.KeyboardEvent) => {
-            if (showDropDown && e.key === "ArrowDown") {
+            if (e.key === "ArrowDown") {
                 e.preventDefault();
-                let idx = filteredOptions.findIndex((e) => e.id === selectedElementTemp);
-                while (idx++ < filteredOptions.length - 1) {
-                    const candidate = filteredOptions[idx];
-                    if (candidate.isSelectable) {
-                        setFocussedElement(candidate.id);
-                        return;
-                    }
+                focusNextElement();
+                return;
+            }
+            if (e.key === "ArrowUp") {
+                e.preventDefault();
+                focusPreviousElement();
+                return;
+            }
+            if (e.key === "Tab") {
+                e.preventDefault();
+                if (e.shiftKey) {
+                    focusPreviousElement();
+                    e.stopPropagation();
+                } else {
+                    focusNextElement();
                 }
                 return;
             }
-            if (showDropDown && e.key === "ArrowUp") {
-                e.preventDefault();
-                let idx = filteredOptions.findIndex((e) => e.id === selectedElementTemp);
-                while (idx-- > 0) {
-                    const candidate = filteredOptions[idx];
-                    if (candidate.isSelectable) {
-                        setFocussedElement(candidate.id);
-                        return;
-                    }
-                }
-                return;
-            }
-            if (showDropDown && e.key === "Escape") {
+            // Capture escape ourselves instead of letting radix do it
+            // allows us to close the dropdown and preventDefault on event
+            if (e.key === "Escape") {
                 setShowDropDown(false);
                 e.preventDefault();
             }
             if (e.key === "Enter") {
-                if (showDropDown && selectedElementTemp && filteredOptions.some((e) => e.id === selectedElementTemp)) {
+                if (selectedElementTemp && filteredOptions.some((e) => e.id === selectedElementTemp)) {
                     e.preventDefault();
-                    onSelectionChange(selectedElementTemp);
-                    setShowDropDown(false);
-                }
-                if (!showDropDown) {
-                    toggleDropDown();
-                    e.preventDefault();
+                    onSelected(selectedElementTemp);
                 }
             }
             if (e.key === " " && search === "") {
-                toggleDropDown();
+                handleOpenChange(false);
                 e.preventDefault();
             }
         },
         [
             filteredOptions,
-            onSelectionChange,
+            focusNextElement,
+            focusPreviousElement,
+            handleOpenChange,
+            onSelected,
             search,
             selectedElementTemp,
-            setFocussedElement,
-            showDropDown,
-            toggleDropDown,
         ],
-    );
-
-    const handleBlur = useCallback(
-        (e: React.FocusEvent) => {
-            // postpone a little, so it doesn't fire before a click event for the main element.
-            setTimeout(() => {
-                // only close if the focussed element is not child
-                if (!nodeRef?.current?.contains(window.document.activeElement)) {
-                    setShowDropDown(false);
-                }
-            }, 100);
-        },
-        [setShowDropDown],
     );
 
     const showInputLoadingIndicator = filteredOptions.length > 0 && loading;
     const showResultsLoadingIndicator = filteredOptions.length === 0 && loading;
 
     return (
-        <div
-            onKeyDown={onKeyDown}
-            onBlur={handleBlur}
-            ref={nodeRef}
-            tabIndex={0}
-            className={classNames(
-                "relative flex flex-col rounded-lg  focus:outline-none focus:ring-2 focus:ring-blue-300",
-            )}
-        >
-            <div
+        <RadixPopover.Root defaultOpen={expanded} open={showDropDown} onOpenChange={handleOpenChange}>
+            <RadixPopover.Trigger
+                disabled={disabled}
                 className={classNames(
-                    "h-16 bg-gray-100 dark:bg-gray-800 flex items-center px-2",
+                    "w-full h-16 bg-gray-100 dark:bg-gray-800 flex flex-row items-center justify-start px-2 text-left",
                     // when open, just have border radius on top
-                    showDropDown ? "rounded-t-lg" : "rounded-lg",
+                    showDropDown ? "rounded-none rounded-t-lg" : "rounded-lg",
                     // Dropshadow when expanded
                     showDropDown && "filter drop-shadow-xl",
                     // hover when not disabled or expanded
@@ -197,25 +185,32 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                     // opacity when disabled
                     disabled && "opacity-70",
                 )}
-                onClick={toggleDropDown}
             >
                 {children}
                 <div className="flex-grow" />
                 <div className="mr-2">
                     <Arrow direction={showDropDown ? "up" : "down"} />
                 </div>
-            </div>
-            {showDropDown && (
-                <div className="absolute w-full top-12 bg-gray-100 dark:bg-gray-800 rounded-b-lg mt-3 z-50 p-2 filter drop-shadow-xl">
+            </RadixPopover.Trigger>
+            <RadixPopover.Portal>
+                <RadixPopover.Content
+                    className={classNames(
+                        "rounded-b-lg p-2 filter drop-shadow-xl z-50 outline-none",
+                        "bg-gray-100 dark:bg-gray-800 ",
+                        "w-[--radix-popover-trigger-width]",
+                    )}
+                    onKeyDown={onKeyDown}
+                >
                     {!disableSearch && (
                         <div className="relative mb-2">
                             <input
+                                ref={inputEl}
                                 type="text"
                                 autoFocus
                                 className={"w-full focus rounded-lg"}
                                 placeholder={searchPlaceholder}
                                 value={search}
-                                onChange={(e) => updateSearch(e.target.value)}
+                                onChange={handleInputChange}
                             />
                             {showInputLoadingIndicator && (
                                 <div className="absolute top-0 right-0 h-full flex items-center pr-2">
@@ -233,30 +228,14 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                         )}
                         {!showResultsLoadingIndicator && filteredOptions.length > 0 ? (
                             filteredOptions.map((element) => {
-                                let selectionClasses = `dark:bg-gray-800 cursor-pointer`;
-                                if (element.id === selectedElementTemp) {
-                                    selectionClasses = `bg-gray-200 dark:bg-gray-700 cursor-pointer  focus:outline-none focus:ring-0`;
-                                }
-                                if (!element.isSelectable) {
-                                    selectionClasses = ``;
-                                }
                                 return (
-                                    <li
+                                    <Dropdown2Element
                                         key={element.id}
-                                        id={element.id}
-                                        tabIndex={0}
-                                        className={"h-min rounded-lg flex items-center px-2 py-1.5 " + selectionClasses}
-                                        onMouseDown={() => {
-                                            if (element.isSelectable) {
-                                                setFocussedElement(element.id);
-                                                onSelected(element.id);
-                                            }
-                                        }}
-                                        onMouseOver={() => setFocussedElement(element.id)}
-                                        onFocus={() => setFocussedElement(element.id)}
-                                    >
-                                        {element.element}
-                                    </li>
+                                        element={element}
+                                        isActive={element.id === selectedElementTemp}
+                                        onSelected={onSelected}
+                                        onFocused={setActiveElement}
+                                    />
                                 );
                             })
                         ) : !showResultsLoadingIndicator ? (
@@ -265,9 +244,9 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                             </li>
                         ) : null}
                     </ul>
-                </div>
-            )}
-        </div>
+                </RadixPopover.Content>
+            </RadixPopover.Portal>
+        </RadixPopover.Root>
     );
 };
 
@@ -289,7 +268,7 @@ export const DropDown2SelectedElement: FC<DropDown2SelectedElementProps> = ({
 }) => {
     return (
         <div
-            className={classNames("flex items-center", loading && "animate-pulse")}
+            className={classNames("flex items-center truncate", loading && "animate-pulse")}
             title={htmlTitle}
             aria-live="polite"
             aria-busy={loading}
@@ -301,7 +280,7 @@ export const DropDown2SelectedElement: FC<DropDown2SelectedElementProps> = ({
                     <>{icon}</>
                 )}
             </div>
-            <div className="flex-col ml-1 flex-grow max-w-xs">
+            <div className="flex-col ml-1 flex-grow truncate">
                 {loading ? (
                     <div className="flex-col space-y-2">
                         <div className="bg-gray-300 dark:bg-gray-500 h-4 w-24 rounded" />
@@ -315,5 +294,37 @@ export const DropDown2SelectedElement: FC<DropDown2SelectedElementProps> = ({
                 )}
             </div>
         </div>
+    );
+};
+
+type Dropdown2ElementProps = {
+    element: DropDown2Element;
+    isActive: boolean;
+    onSelected: (id: string) => void;
+    onFocused: (id: string) => void;
+};
+
+export const Dropdown2Element: FC<Dropdown2ElementProps> = ({ element, isActive, onSelected, onFocused }) => {
+    let selectionClasses = `dark:bg-gray-800 cursor-pointer`;
+    if (isActive) {
+        selectionClasses = `bg-gray-200 dark:bg-gray-700 cursor-pointer focus:outline-none focus:ring-0`;
+    }
+    if (!element.isSelectable) {
+        selectionClasses = ``;
+    }
+    return (
+        <li
+            id={element.id}
+            className={"h-min rounded-lg flex items-center px-2 py-1.5 " + selectionClasses}
+            onMouseDown={() => {
+                if (element.isSelectable) {
+                    onSelected(element.id);
+                }
+            }}
+            onMouseOver={() => onFocused(element.id)}
+            onFocus={() => onFocused(element.id)}
+        >
+            {element.element}
+        </li>
     );
 };

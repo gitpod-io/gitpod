@@ -42,13 +42,13 @@ export const useRefreshProjects = () => {
     const queryClient = useQueryClient();
 
     return useCallback(
-        (orgId: string) => {
+        async (orgId: string) => {
             // Don't refetch if no org is provided
             if (!orgId) {
                 return;
             }
 
-            queryClient.refetchQueries({
+            return await queryClient.refetchQueries({
                 queryKey: getListProjectsQueryKey(orgId),
             });
         },

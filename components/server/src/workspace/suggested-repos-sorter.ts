@@ -19,27 +19,72 @@ export const sortSuggestedRepositories = (repos: SuggestedRepositoryWithSorting[
     // First we need to make a unique list and merge properties for entries with the same repo url
     // This allows us to consider the lastUse of a recently used project when sorting
     // as it will may have an entry for the project (no lastUse), and another for recent workspaces (w/ lastUse)
-    const uniqueRepositories = new Map<string, SuggestedRepositoryWithSorting>();
+
+    const projectURLs: string[] = [];
+    let uniqueRepositories: SuggestedRepositoryWithSorting[] = [];
+
     for (const repo of repos) {
-        const key = (repo: SuggestedRepositoryWithSorting) => {
-            return repo.url + (repo.projectId ? "|" + repo.projectId : "");
-        };
-        const existingRepo = uniqueRepositories.get(key(repo));
+        const sameURLEntries = uniqueRepositories.filter((r) => r.url === repo.url);
 
-        const mergedEntry = {
-            ...(existingRepo || repo),
-            priority: existingRepo?.priority === undefined ? repo.priority : existingRepo.priority + repo.priority,
-            lastUse: existingRepo?.lastUse || repo.lastUse,
-            repositoryName: existingRepo?.repositoryName || repo.repositoryName,
-        };
-
-        uniqueRepositories.set(key(repo), mergedEntry);
-    }
-    // remove every non-project entry when there is at least one with a project id
-    uniqueRepositories.forEach((repo, _) => {
+        // If this is a project look for non-project entries and merge in priority/lastUse
         if (repo.projectId) {
-            uniqueRepositories.delete(repo.url);
+            // keep track of any urls that have at least one project so we can filter out non-project entries later
+            projectURLs.push(repo.url);
+            const projectEntry = { ...repo };
+
+            for (const entry of sameURLEntries) {
+                // Don't consider other projects
+                if (entry.projectId) {
+                    continue;
+                }
+
+                // Add priority to project entry to bump it up
+                projectEntry.priority += entry.priority;
+
+                // Use the most recent lastUse entry for this url
+                // TODO: once we track projectId on recent workspaces, we can avoid this
+                if ((entry.lastUse ?? 0) > (projectEntry.lastUse ?? 0)) {
+                    projectEntry.lastUse = entry.lastUse;
+                }
+
+                // Fill in the repositoryName if it's missing
+                projectEntry.repositoryName = projectEntry.repositoryName || entry.repositoryName;
+            }
+
+            uniqueRepositories.push(projectEntry);
+        } else {
+            // If no entries exist for this url yet, just add it
+            if (sameURLEntries.length === 0) {
+                uniqueRepositories.push(repo);
+                continue;
+            }
+
+            // Look for any projects for this url and update their priority/lastUse
+            for (const entry of sameURLEntries) {
+                if (!entry.projectId) {
+                    continue;
+                }
+
+                entry.priority += repo.priority;
+                if ((repo.lastUse ?? "") > (entry.lastUse ?? "")) {
+                    entry.lastUse = repo.lastUse;
+                }
+            }
         }
+    }
+
+    // Filter out any non-projects that already have a project entry for their url
+    uniqueRepositories = uniqueRepositories.filter((repo) => {
+        // Keep any project entries
+        if (repo.projectId) {
+            return true;
+        }
+        // Exclude any non-projects that already have a project entry for their url
+        if (projectURLs.includes(repo.url)) {
+            return false;
+        }
+
+        return true;
     });
 
     const sortedRepos = Array.from(uniqueRepositories.values()).sort((a, b) => {

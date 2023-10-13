@@ -102,7 +102,7 @@ export default function SelectIDEComponent({
             getElements={getElements}
             onSelectionChange={internalOnSelectionChange}
             searchPlaceholder={"Select Editor"}
-            allOptions={ide}
+            initialValue={ide}
             disabled={disabled || ideOptionsLoading || loading}
         >
             <IdeOptionElementSelected
