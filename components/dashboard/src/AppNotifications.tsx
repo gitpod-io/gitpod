@@ -7,9 +7,6 @@
 import { useCallback, useEffect, useState } from "react";
 import Alert, { AlertType } from "./components/Alert";
 import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
-import advancedFormat from "dayjs/plugin/advancedFormat";
 import { useUserLoader } from "./hooks/use-user-loader";
 import { getGitpodService } from "./service/service";
 import deepMerge from "deepmerge";
@@ -24,10 +21,6 @@ interface Notification {
     preventDismiss?: boolean;
     onClose?: () => void;
 }
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
-dayjs.extend(advancedFormat);
 
 const UPDATED_PRIVACY_POLICY: Notification = {
     id: "privacy-policy-update",
