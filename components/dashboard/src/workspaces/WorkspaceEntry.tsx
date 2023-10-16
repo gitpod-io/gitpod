@@ -4,13 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import {
-    CommitContext,
-    Workspace,
-    WorkspaceInfo,
-    ContextURL,
-    WorkspaceInstanceRepoStatus,
-} from "@gitpod/gitpod-protocol";
+import { CommitContext, Workspace, WorkspaceInfo, ContextURL } from "@gitpod/gitpod-protocol";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { FunctionComponent, useMemo, useState } from "react";
 import { Item, ItemField, ItemFieldIcon } from "../components/ItemsList";
@@ -19,7 +13,6 @@ import Tooltip from "../components/Tooltip";
 import dayjs from "dayjs";
 import { WorkspaceEntryOverflowMenu } from "./WorkspaceOverflowMenu";
 import { WorkspaceStatusIndicator } from "./WorkspaceStatusIndicator";
-import { useFeatureFlag } from "../data/featureflag-query";
 
 type Props = {
     info: WorkspaceInfo;
@@ -29,13 +22,7 @@ type Props = {
 export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion }) => {
     const [menuActive, setMenuActive] = useState(false);
 
-    const liveGitStatus = useFeatureFlag("supervisor_live_git_status");
-    let repo: WorkspaceInstanceRepoStatus | undefined;
-    if (liveGitStatus) {
-        repo = info.latestInstance?.gitStatus;
-    } else {
-        repo = info.latestInstance?.status.repo;
-    }
+    const repo = info.latestInstance?.gitStatus;
 
     const workspace = info.workspace;
     const currentBranch = repo?.branch || Workspace.getBranchName(info.workspace) || "<unknown>";

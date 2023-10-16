@@ -28,10 +28,3 @@ func SupervisorPersistServerAPIChannelWhenStart(ctx context.Context, client Clie
 func SupervisorUsePublicAPI(ctx context.Context, client Client, attributes Attributes) bool {
 	return client.GetBoolValue(ctx, SupervisorUsePublicAPIFlag, false, attributes)
 }
-
-func SupervisorLiveGitStatus(ctx context.Context, client Client, attributes Attributes) bool {
-	if client == nil {
-		return false
-	}
-	return client.GetBoolValue(ctx, "supervisor_live_git_status", false, attributes)
-}
