@@ -39,10 +39,10 @@ var repos = []struct {
 		CheckoutLocation: "gitpod",
 	},
 	{
-		RemoteUri:        "https://github.com/gitpod-io/website",
+		RemoteUri:        "https://github.com/gitpod-io/workspace-images",
 		CloneTarget:      "main",
 		ExpectedBranch:   "main",
-		CheckoutLocation: "website",
+		CheckoutLocation: "workspace-images",
 	},
 	{
 		RemoteUri:        "https://github.com/gitpod-io/dazzle",
