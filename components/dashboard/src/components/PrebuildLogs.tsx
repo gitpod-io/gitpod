@@ -7,7 +7,6 @@
 import EventEmitter from "events";
 import React, { Suspense, useCallback, useEffect, useState } from "react";
 import {
-    WorkspaceInstance,
     DisposableCollection,
     WorkspaceImageBuild,
     HEADLESS_LOG_STREAM_STATUS_CODE_REGEX,
@@ -16,6 +15,8 @@ import {
 } from "@gitpod/gitpod-protocol";
 import { getGitpodService } from "../service/service";
 import { PrebuildStatus } from "../projects/Prebuilds";
+import { converter, workspaceClient } from "../service/public-api";
+import { GetWorkspaceRequest, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/experimental/v2/workspace_pb";
 
 const WorkspaceLogs = React.lazy(() => import("./WorkspaceLogs"));
 
@@ -27,7 +28,13 @@ export interface PrebuildLogsProps {
 }
 
 export default function PrebuildLogs(props: PrebuildLogsProps) {
-    const [workspaceInstance, setWorkspaceInstance] = useState<WorkspaceInstance | undefined>();
+    const [workspace, setWorkspace] = useState<
+        | {
+              phase?: WorkspacePhase_Phase;
+              instanceId?: string;
+          }
+        | undefined
+    >();
     const [error, setError] = useState<Error | undefined>();
     const [logsEmitter] = useState(new EventEmitter());
     const [prebuild, setPrebuild] = useState<PrebuildWithStatus | undefined>();
@@ -54,13 +61,18 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
             if (!props.workspaceId) {
                 return;
             }
-            setWorkspaceInstance(undefined);
+            setWorkspace(undefined);
             setPrebuild(undefined);
 
             // Try get hold of a recent WorkspaceInfo
             try {
-                const info = await getGitpodService().server.getWorkspace(props.workspaceId);
-                setWorkspaceInstance(info?.latestInstance);
+                const request = new GetWorkspaceRequest();
+                request.id = props.workspaceId;
+                const response = await workspaceClient.getWorkspace(request);
+                setWorkspace({
+                    instanceId: response.item?.status?.instanceId,
+                    phase: response.item?.status?.phase?.name,
+                });
             } catch (err) {
                 console.error(err);
                 setError(err);
@@ -85,7 +97,10 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
                 getGitpodService().registerClient({
                     onInstanceUpdate: (instance) => {
                         if (props.workspaceId === instance.workspaceId) {
-                            setWorkspaceInstance(instance);
+                            setWorkspace({
+                                instanceId: instance.id,
+                                phase: converter.toPhase(instance),
+                            });
                         }
                     },
                     onWorkspaceImageBuildLogs: (
@@ -112,24 +127,24 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
 
     useEffect(() => {
         const workspaceId = props.workspaceId;
-        if (!workspaceId || !workspaceInstance?.status.phase) {
+        if (!workspaceId || !workspace?.phase) {
             return;
         }
 
         const disposables = new DisposableCollection();
-        switch (workspaceInstance.status.phase) {
+        switch (workspace.phase) {
             // "building" means we're building the Docker image for the prebuild's workspace so the workspace hasn't started yet.
-            case "building":
+            case WorkspacePhase_Phase.IMAGEBUILD:
                 // Try to grab image build logs
                 disposables.push(retryWatchWorkspaceImageBuildLogs(workspaceId));
                 break;
             // When we're "running" we want to switch to the logs from the actual prebuild workspace, instead
             // When the prebuild has "stopped", we still want to go for the logs
-            case "running":
-            case "stopped":
+            case WorkspacePhase_Phase.RUNNING:
+            case WorkspacePhase_Phase.STOPPED:
                 disposables.push(
                     watchHeadlessLogs(
-                        workspaceInstance.id,
+                        workspace.instanceId!,
                         (chunk) => {
                             logsEmitter.emit("logs", chunk);
                         },
@@ -140,7 +155,7 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
         return function cleanup() {
             disposables.dispose();
         };
-    }, [logsEmitter, props.workspaceId, workspaceInstance?.id, workspaceInstance?.status.phase]);
+    }, [logsEmitter, props.workspaceId, workspace?.instanceId, workspace?.phase]);
 
     return (
         <div className="rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex flex-col mb-8">
