@@ -5,6 +5,7 @@
  */
 
 import { injectable } from "inversify";
+import { reportGuardAccessCheck } from "../prometheus-metrics";
 
 export interface FunctionAccessGuard {
     canAccess(name: string): boolean;
@@ -28,6 +29,7 @@ export class ExplicitFunctionAccessGuard {
     constructor(protected readonly allowedCalls: string[]) {}
 
     canAccess(name: string): boolean {
+        reportGuardAccessCheck("function-access");
         return this.allowedCalls.some((c) => c === name);
     }
 }

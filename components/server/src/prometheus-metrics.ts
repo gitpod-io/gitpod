@@ -348,7 +348,7 @@ export const guardAccessChecksTotal = new prometheusClient.Counter({
     labelNames: ["type"],
 });
 
-export type GuardAccessCheckType = "fga" | "resource-access";
+export type GuardAccessCheckType = "fga" | "resource-access" | "function-access";
 export function reportGuardAccessCheck(type: GuardAccessCheckType) {
     guardAccessChecksTotal.labels(type).inc();
 }
