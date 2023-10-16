@@ -10,7 +10,7 @@ import { useHistory, useLocation, useRouteMatch } from "react-router";
 import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
 import { listAllProjects } from "../service/public-api";
 import { useCurrentUser } from "../user-context";
-import { useListProjectsQuery } from "../data/projects/list-projects-query";
+import { useListAllProjectsQuery } from "../data/projects/list-projects-query";
 
 export const ProjectContext = createContext<{
     project?: Project;
@@ -36,7 +36,7 @@ export function useCurrentProject(): { project: Project | undefined; loading: bo
     const projectIdFromRoute = useRouteMatch<{ projectId?: string }>("/projects/:projectId")?.params?.projectId;
     const location = useLocation();
     const history = useHistory();
-    const listProjects = useListProjectsQuery();
+    const listProjects = useListAllProjectsQuery();
 
     useEffect(() => {
         setLoading(true);

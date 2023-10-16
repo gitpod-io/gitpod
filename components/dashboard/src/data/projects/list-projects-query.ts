@@ -14,7 +14,7 @@ export type ListProjectsQueryResults = {
     projects: Project[];
 };
 
-export const useListProjectsQuery = () => {
+export const useListAllProjectsQuery = () => {
     const org = useCurrentOrg().data;
     const orgId = org?.id;
     return useQuery<ListProjectsQueryResults>({
