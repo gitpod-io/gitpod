@@ -5,7 +5,7 @@
  */
 
 import { FC, useCallback, useMemo, useState } from "react";
-import { DropDown2, DropDown2Element, DropDown2SelectedElement } from "./DropDown2";
+import { Combobox, ComboboxElement, ComboboxSelectedItem } from "./podkit/combobox/Combobox";
 import RepositorySVG from "../icons/Repository.svg";
 import { ReactComponent as RepositoryIcon } from "../icons/RepositoryWithColor.svg";
 import { SuggestedRepository } from "@gitpod/gitpod-protocol";
@@ -92,14 +92,14 @@ export default function RepositoryFinder({
                     id: repo.projectId || repo.url,
                     element: <SuggestedRepositoryOption repo={repo} />,
                     isSelectable: true,
-                } as DropDown2Element;
+                } as ComboboxElement;
             });
         },
         [repos],
     );
 
     return (
-        <DropDown2
+        <Combobox
             getElements={getElements}
             expanded={expanded}
             // we use this to track the search string so we can search for repos via the api and filter in useUnifiedRepositorySearch
@@ -110,7 +110,7 @@ export default function RepositoryFinder({
             searchPlaceholder="Paste repository URL or type to find suggestions"
             onSearchChange={setSearchString}
         >
-            <DropDown2SelectedElement
+            <ComboboxSelectedItem
                 icon={RepositorySVG}
                 htmlTitle={displayContextUrl(selectedContextURL) || "Repository"}
                 title={
@@ -130,7 +130,7 @@ export default function RepositoryFinder({
                 }
                 loading={isLoading}
             />
-        </DropDown2>
+        </Combobox>
     );
 }
 

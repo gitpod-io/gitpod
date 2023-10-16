@@ -10374,6 +10374,11 @@ lru_map@^0.3.3:
   resolved "https://registry.npmjs.org/lru_map/-/lru_map-0.3.3.tgz"
   integrity sha1-tcg1G5Rky9dQM1p5ZQoOwOVhGN0=
 
+lucide-react@^0.287.0:
+  version "0.287.0"
+  resolved "https://registry.yarnpkg.com/lucide-react/-/lucide-react-0.287.0.tgz#efa49872a91fa97b7ef650c4b40396b6880d0088"
+  integrity sha512-auxP2bTGiMoELzX+6ItTeNzLmhGd/O+PHBsrXV2YwPXYCxarIFJhiMOSzFT9a1GWeYPSZtnWdLr79IVXr/5JqQ==
+
 lz-string@^1.4.4:
   version "1.4.4"
   resolved "https://registry.npmjs.org/lz-string/-/lz-string-1.4.4.tgz"
