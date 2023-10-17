@@ -85,10 +85,6 @@ export function getURLHash() {
     return window.location.hash.replace(/^[#/]+/, "");
 }
 
-export type DeepPartial<T> = {
-    [P in keyof T]?: DeepPartial<T[P]> | T[P];
-};
-
 export function isWebsiteSlug(pathName: string) {
     const slugs = [
         "about",
