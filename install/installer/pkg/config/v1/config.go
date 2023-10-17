@@ -255,6 +255,8 @@ type ContainerRegistry struct {
 
 	PrivateBaseImageAllowList []string `json:"privateBaseImageAllowList"`
 	EnableAdditionalECRAuth   bool     `json:"enableAdditionalECRAuth"`
+
+	SubassemblyBucket string `json:"subassemblyBucket"`
 }
 
 type ContainerRegistryExternal struct {
