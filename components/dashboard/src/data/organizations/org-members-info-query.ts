@@ -10,6 +10,7 @@ import { useCurrentOrg } from "./orgs-query";
 import { publicApiTeamMembersToProtocol, teamsService } from "../../service/public-api";
 import { useCurrentUser } from "../../user-context";
 import { TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
+import { Code, ConnectError } from "@connectrpc/connect";
 
 export interface OrgMembersInfo {
     members: OrgMemberInfo[];
@@ -22,18 +23,30 @@ export const useOrgMembersInfoQuery = () => {
 
     return useQuery<OrgMembersInfo>({
         queryKey: getOrgMembersInfoQueryKey(org?.id ?? "", user?.id ?? ""),
-        staleTime: 1000 * 60 * 5, // 5 minute
+        staleTime: 1000 * 60 * 1, // 1 minute
         queryFn: async () => {
             if (!org) {
                 throw new Error("No org selected.");
             }
-            const resp = await teamsService.listTeamMembers({ teamId: org.id });
-            return {
-                members: publicApiTeamMembersToProtocol(resp.members),
-                isOwner:
-                    resp.members.findIndex((member) => member.userId === user?.id && member.role === TeamRole.OWNER) >=
-                    0,
-            };
+            try {
+                const resp = await teamsService.listTeamMembers({ teamId: org.id });
+                return {
+                    members: publicApiTeamMembersToProtocol(resp.members),
+                    isOwner:
+                        resp.members.findIndex(
+                            (member) => member.userId === user?.id && member.role === TeamRole.OWNER,
+                        ) >= 0,
+                };
+            } catch (err) {
+                const e = ConnectError.from(err);
+                if (e.code === Code.Unimplemented) {
+                    return {
+                        members: org.members,
+                        isOwner: org.isOwner,
+                    };
+                }
+                throw err;
+            }
         },
         enabled: !!org && !!user,
     });

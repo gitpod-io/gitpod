@@ -4,17 +4,21 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Organization, User } from "@gitpod/gitpod-protocol";
+import { Organization, OrgMemberInfo, User } from "@gitpod/gitpod-protocol";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useLocation } from "react-router";
-import { teamsService } from "../../service/public-api";
+import { publicApiTeamMembersToProtocol, publicApiTeamToProtocol, teamsService } from "../../service/public-api";
 import { useCurrentUser } from "../../user-context";
 import { noPersistence } from "../setup";
 import { getOrgInvitationQueryKey } from "./org-invitation-query";
 import { getOrgMembersInfoQueryKey } from "./org-members-info-query";
 
-export type OrganizationInfo = Pick<Organization, "id" | "name" | "slug">;
+export interface OrganizationInfo extends Organization {
+    members: OrgMemberInfo[];
+    isOwner: boolean;
+    invitationId?: string;
+}
 
 export function useOrganizationsInvalidator() {
     const user = useCurrentUser();
@@ -42,7 +46,18 @@ export function useOrganizations() {
             }
 
             const response = await teamsService.listTeams({});
-            return response.teams;
+            const result: OrganizationInfo[] = [];
+            for (const org of response.teams) {
+                const members = publicApiTeamMembersToProtocol(org.members || []);
+                const isOwner = members.some((m) => m.role === "owner" && m.userId === user?.id);
+                result.push({
+                    ...publicApiTeamToProtocol(org),
+                    members,
+                    isOwner,
+                    invitationId: org.teamInvitation?.id,
+                });
+            }
+            return result;
         },
         {
             enabled: !!user,
