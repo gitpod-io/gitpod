@@ -22,7 +22,7 @@ export const RepositoryNameForm: FC<Props> = ({ project }) => {
     const updateProject = useUpdateProject();
     const [projectName, setProjectName] = useState(project.name);
 
-    const nameError = useOnBlurError("Sorry, this name is too long.", projectName.length > 32);
+    const nameError = useOnBlurError("Sorry, this name is too long.", projectName.length <= 32);
 
     const updateName = useCallback(
         async (e: React.FormEvent) => {
@@ -54,7 +54,12 @@ export const RepositoryNameForm: FC<Props> = ({ project }) => {
             />
 
             {/* Don't disable button, just handle error and message */}
-            <Button className="mt-4" htmlType="submit" disabled={project.name === projectName || !nameError.isValid}>
+            <Button
+                className="mt-4"
+                htmlType="submit"
+                disabled={project.name === projectName || !nameError.isValid}
+                loading={updateProject.isLoading}
+            >
                 Update Name
             </Button>
         </form>
