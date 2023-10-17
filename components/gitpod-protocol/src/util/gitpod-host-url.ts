@@ -120,7 +120,7 @@ export class GitpodHostUrl {
     }
 
     asStart(workspaceId = this.workspaceId): GitpodHostUrl {
-        return this.withoutWorkspacePrefix().with({
+        return this.with({
             pathname: "/start/",
             hash: "#" + workspaceId,
         });
