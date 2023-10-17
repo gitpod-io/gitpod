@@ -12,7 +12,7 @@ import { getGitpodService } from "./service/service";
 import deepMerge from "deepmerge";
 
 const KEY_APP_DISMISSED_NOTIFICATIONS = "gitpod-app-notifications-dismissed";
-const PRIVACY_POLICY_LAST_UPDATED = "2023-09-26";
+const PRIVACY_POLICY_LAST_UPDATED = "2023-10-17";
 
 interface Notification {
     id: string;
