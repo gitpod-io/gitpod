@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
+    "paths": {
+      "@podkit/*": ["./src/components/podkit/*"]
+    },
     "target": "es6",
     "lib": [
       "dom",

@@ -4,6 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 const { when } = require("@craco/craco");
+const path = require("path");
 const webpack = require("webpack");
 
 module.exports = {
@@ -18,6 +19,9 @@ module.exports = {
     webpack: {
         configure: {
             resolve: {
+                alias: {
+                    "@podkit": path.resolve(__dirname, "./src/components/podkit/"),
+                },
                 fallback: {
                     crypto: require.resolve("crypto-browserify"),
                     stream: require.resolve("stream-browserify"),

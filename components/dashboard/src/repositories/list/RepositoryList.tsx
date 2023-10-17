@@ -4,27 +4,48 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC } from "react";
+import { FC, useCallback, useState } from "react";
 import Header from "../../components/Header";
 import { useListProjectsQuery } from "../../data/projects/list-projects-query";
 import { Loader2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useHistory } from "react-router-dom";
+import { Project } from "@gitpod/gitpod-protocol";
+import { CreateProjectModal } from "../../projects/create-project-modal/CreateProjectModal";
+import { Button } from "../../components/Button";
+import { RepositoryListItem } from "./RepoListItem";
 
 const RepositoryListPage: FC = () => {
+    const history = useHistory();
     const { data, isLoading } = useListProjectsQuery({ page: 1, pageSize: 10 });
+    const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
+
+    const handleProjectCreated = useCallback(
+        (project: Project) => {
+            history.push(`/repositories/${project.id}`);
+        },
+        [history],
+    );
 
     return (
         <>
             <Header title="Repositories" subtitle="" />
 
-            {isLoading && <Loader2 className="animate-spin" />}
-            {!isLoading &&
-                data?.projects.map((project) => (
-                    <div key={project.id}>
-                        <span>{project.name}</span>
-                        <Link to={`/repositories/${project.id}`}>View</Link>
-                    </div>
-                ))}
+            <div className="app-container">
+                <div className="py-4 text-right">
+                    <Button onClick={() => setShowCreateProjectModal(true)}>Configure Repository</Button>
+                </div>
+
+                {isLoading && <Loader2 className="animate-spin" />}
+
+                <ul className="space-y-2 mt-8">
+                    {!isLoading &&
+                        data?.projects.map((project) => <RepositoryListItem key={project.id} project={project} />)}
+                </ul>
+            </div>
+
+            {showCreateProjectModal && (
+                <CreateProjectModal onClose={() => setShowCreateProjectModal(false)} onCreated={handleProjectCreated} />
+            )}
         </>
     );
 };

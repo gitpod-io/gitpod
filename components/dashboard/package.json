@@ -44,6 +44,7 @@
     "react-router-dom": "^5.2.0",
     "setimmediate": "^1.0.5",
     "stream-browserify": "^2.0.1",
+    "tailwind-merge": "^1.14.0",
     "url": "^0.11.1",
     "util": "^0.11.1",
     "validator": "^13.9.0",
