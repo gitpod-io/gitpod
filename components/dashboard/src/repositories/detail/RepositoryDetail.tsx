@@ -7,7 +7,7 @@
 import { FC } from "react";
 import Header from "../../components/Header";
 import { useParams } from "react-router";
-import { useProject } from "../../data/projects/project-query";
+import { useProject } from "../../data/projects/project-queries";
 import { Button } from "../../components/Button";
 import { RepositoryNameForm } from "./RepositoryName";
 import { Loader2 } from "lucide-react";

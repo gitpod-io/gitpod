@@ -7,9 +7,11 @@
 import { Project } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
-import { listAllProjects } from "../../service/public-api";
+import { listAllProjects, projectsService } from "../../service/public-api";
 import { PartialProject } from "@gitpod/gitpod-protocol";
 import { getGitpodService } from "../../service/service";
+
+const BASE_KEY = "projects";
 
 type UseProjectArgs = {
     id: string;
@@ -38,7 +40,39 @@ export const useProject = ({ id }: UseProjectArgs) => {
 };
 
 const getProjectQueryKey = (orgId: string, id: string) => {
-    return ["project", { orgId, id }];
+    return [BASE_KEY, { orgId, id }];
+};
+
+type ListProjectsQueryArgs = {
+    page: number;
+    pageSize: number;
+};
+
+export const useListProjectsQuery = ({ page, pageSize }: ListProjectsQueryArgs) => {
+    const { data: org } = useCurrentOrg();
+
+    return useQuery(
+        getListProjectsQueryKey(org?.id || "", { page, pageSize }),
+        async () => {
+            if (!org) {
+                throw new Error("No org currently selected");
+            }
+
+            return projectsService.listProjects({ teamId: org.id, pagination: { page, pageSize } });
+        },
+        {
+            enabled: !!org,
+        },
+    );
+};
+
+export const getListProjectsQueryKey = (orgId: string, args?: ListProjectsQueryArgs) => {
+    const key: any[] = [BASE_KEY, "list", { orgId }];
+    if (args) {
+        key.push(args);
+    }
+
+    return key;
 };
 
 export const useUpdateProject = () => {
@@ -46,11 +80,15 @@ export const useUpdateProject = () => {
     const client = useQueryClient();
 
     return useMutation<void, Error, PartialProject>(async ({ id, name }) => {
+        if (!org) {
+            throw new Error("No org currently selected");
+        }
+
         await getGitpodService().server.updateProjectPartial({ id, name });
 
         // Invalidate project
-        await client.invalidateQueries(getProjectQueryKey(org?.id || "", id));
-
-        // TODO: Invalidate new list projects query once https://github.com/gitpod-io/gitpod/pull/18935 is merged
+        client.invalidateQueries(getProjectQueryKey(org.id, id));
+        // Invalidate project list queries
+        client.invalidateQueries(getListProjectsQueryKey(org.id));
     });
 };

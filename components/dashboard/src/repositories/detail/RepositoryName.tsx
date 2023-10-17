@@ -9,7 +9,7 @@ import { Project } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { Button } from "../../components/Button";
 import { TextInputField } from "../../components/forms/TextInputField";
 import { FC, useCallback, useState } from "react";
-import { useUpdateProject } from "../../data/projects/project-query";
+import { useUpdateProject } from "../../data/projects/project-queries";
 import { useToast } from "../../components/toasts/Toasts";
 import { useOnBlurError } from "../../hooks/use-onblur-error";
 
