@@ -24,6 +24,8 @@ import { InputField } from "../components/forms/InputField";
 import { SelectInputField } from "../components/forms/SelectInputField";
 import debounce from "lodash.debounce";
 
+const MAX_PROJECT_NAME_LENGTH = 100;
+
 export function ProjectSettingsPage(props: { project?: Project; children?: React.ReactNode }) {
     return (
         <PageWithSubMenu
@@ -49,8 +51,8 @@ export default function ProjectSettingsView() {
     let badProjectName: string | undefined;
     if (project) {
         badProjectName = projectName.length > 0 ? undefined : "Project name can not be blank.";
-        if (projectName.length > 32) {
-            badProjectName = "Project name can not be longer than 32 characters.";
+        if (projectName.length > MAX_PROJECT_NAME_LENGTH) {
+            badProjectName = `Project name can not be longer than ${MAX_PROJECT_NAME_LENGTH} characters.`;
         }
     }
     const history = useHistory();
@@ -221,7 +223,7 @@ export default function ProjectSettingsView() {
             <Heading2>Project Name</Heading2>
             <form onSubmit={updateProjectName}>
                 <TextInputField
-                    hint="The name can be up to 32 characters long."
+                    hint={`The name can be up to ${MAX_PROJECT_NAME_LENGTH} characters long.`}
                     value={projectName}
                     error={badProjectName}
                     onChange={setProjectName}
