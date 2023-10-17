@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -22,7 +23,10 @@ type MD struct {
 }
 
 func main() {
-	produceManifest(os.Stdout, os.DirFS("."))
+	err := produceManifest(os.Stdout, os.DirFS("."))
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func produceManifest(out io.Writer, dir fs.FS) error {
@@ -82,38 +86,62 @@ func produceManifest(out io.Writer, dir fs.FS) error {
 		}
 	}
 
-	// It's not clear how to maintain a stable order of keys using the YAML serializer.
-	// If it were, we could just through this map at the YAML serializer and call it a day.
-	// Right now, we have to produce the YAML ourselves.
-	var print func(m map[string]interface{}, indent int) error
-	print = func(m map[string]interface{}, indent int) error {
-		keys := make([]string, 0, len(m))
-		for v := range m {
-			keys = append(keys, v)
+	vers, err := fs.Glob(dir, "**/versions.yaml")
+	if err != nil {
+		return err
+	}
+	for _, md := range vers {
+		b, err := fs.ReadFile(dir, md)
+		if err != nil {
+			return err
 		}
-		sort.Strings(keys)
-
-		for _, k := range keys {
-			v := m[k]
-			fmt.Fprintf(out, "%s%s:", strings.Repeat("  ", indent), k)
-			if c, ok := v.(map[string]interface{}); ok {
-				fmt.Fprintln(out)
-				err := print(c, indent+1)
-				if err != nil {
-					return err
-				}
-				continue
-			}
-			if c, ok := v.(string); ok {
-				fmt.Fprintf(out, " %s\n", c)
-				fmt.Fprintln(out)
-				continue
-			}
-
-			return xerrors.Errorf("unknown value type - this should never happen")
+		var versions struct {
+			Commit     string                 `yaml:"commit"`
+			Version    string                 `yaml:"version"`
+			Components map[string]interface{} `yaml:"components"`
 		}
-		return nil
+		err = yaml.Unmarshal(b, &versions)
+		if err != nil {
+			return xerrors.Errorf("cannot unmarshal %s: %w", md, err)
+		}
+
+		for k, v := range versions.Components {
+			res["components"].(map[string]interface{})[k] = v
+		}
 	}
 
-	return print(res, 0)
+	return print(out, res, 0)
+}
+
+// print serializes the given map to YAML.
+// It's not clear how to maintain a stable order of keys using the YAML serializer.
+// If it were, we could just through this map at the YAML serializer and call it a day.
+// Right now, we have to produce the YAML ourselves.
+func print(out io.Writer, m map[string]interface{}, indent int) error {
+	keys := make([]string, 0, len(m))
+	for v := range m {
+		keys = append(keys, v)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		v := m[k]
+		fmt.Fprintf(out, "%s%s:", strings.Repeat("  ", indent), k)
+		if c, ok := v.(map[string]interface{}); ok {
+			fmt.Fprintln(out)
+			err := print(out, c, indent+1)
+			if err != nil {
+				return err
+			}
+			continue
+		}
+		if c, ok := v.(string); ok {
+			fmt.Fprintf(out, " %s\n", c)
+			fmt.Fprintln(out)
+			continue
+		}
+
+		return xerrors.Errorf("unknown value type - this should never happen")
+	}
+	return nil
 }
