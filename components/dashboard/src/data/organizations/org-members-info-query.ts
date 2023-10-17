@@ -5,8 +5,8 @@
  */
 
 import { OrgMemberInfo } from "@gitpod/gitpod-protocol";
-import { useQuery } from "@tanstack/react-query";
-import { useCurrentOrg } from "./orgs-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { OldOrganizationInfo, getOldQueryKey, useCurrentOrg } from "./orgs-query";
 import { publicApiTeamMembersToProtocol, teamsService } from "../../service/public-api";
 import { useCurrentUser } from "../../user-context";
 import { TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
@@ -20,6 +20,7 @@ export interface OrgMembersInfo {
 export const useOrgMembersInfoQuery = () => {
     const user = useCurrentUser();
     const org = useCurrentOrg().data;
+    const queryClient = useQueryClient();
 
     return useQuery<OrgMembersInfo>({
         queryKey: getOrgMembersInfoQueryKey(org?.id ?? "", user?.id ?? ""),
@@ -40,9 +41,11 @@ export const useOrgMembersInfoQuery = () => {
             } catch (err) {
                 const e = ConnectError.from(err);
                 if (e.code === Code.Unimplemented) {
+                    const data = queryClient.getQueryData<OldOrganizationInfo[]>(getOldQueryKey(user));
+                    const foundOrg = data?.find((orgInfo) => orgInfo.id === org.id);
                     return {
-                        members: org.members,
-                        isOwner: org.isOwner,
+                        members: foundOrg?.members ?? [],
+                        isOwner: foundOrg?.isOwner ?? false,
                     };
                 }
                 throw err;
