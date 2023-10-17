@@ -51,6 +51,6 @@ export const useUpdateProject = () => {
         // Invalidate project
         await client.invalidateQueries(getProjectQueryKey(org?.id || "", id));
 
-        // TODO: Invalidate new list projects query
+        // TODO: Invalidate new list projects query once https://github.com/gitpod-io/gitpod/pull/18935 is merged
     });
 };
