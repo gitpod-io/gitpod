@@ -49,6 +49,16 @@ func (s *ProxyTeamsServiceHandler) ListTeams(ctx context.Context, req *connect_g
 	return connect_go.NewResponse(resp), nil
 }
 
+func (s *ProxyTeamsServiceHandler) GetTeamList(ctx context.Context, req *connect_go.Request[v1.GetTeamListRequest]) (*connect_go.Response[v1.GetTeamListResponse], error) {
+	resp, err := s.Client.GetTeamList(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
 func (s *ProxyTeamsServiceHandler) DeleteTeam(ctx context.Context, req *connect_go.Request[v1.DeleteTeamRequest]) (*connect_go.Response[v1.DeleteTeamResponse], error) {
 	resp, err := s.Client.DeleteTeam(ctx, req.Msg)
 	if err != nil {

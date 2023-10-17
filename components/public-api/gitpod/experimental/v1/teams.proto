@@ -23,6 +23,17 @@ message Team {
     TeamInvitation team_invitation = 5;
 }
 
+message TeamMeta {
+    // id is a UUID of the Team
+    string id = 1;
+
+    // name is the name of the Team
+    string name = 2;
+
+    // slug is the slug of the Team
+    string slug = 3;
+}
+
 message TeamMember {
     // user_id is the identifier of the user
     string user_id = 1;
@@ -73,6 +84,9 @@ service TeamsService {
     // ListTeams lists the caller has access to.
     rpc ListTeams(ListTeamsRequest) returns (ListTeamsResponse) {};
 
+    // GetTeamList lists teams that the caller has access to.
+    rpc GetTeamList(GetTeamListRequest) returns (GetTeamListResponse) {};
+
     // DeleteTeam deletes the specified team.
     rpc DeleteTeam(DeleteTeamRequest) returns (DeleteTeamResponse) {};
 
@@ -119,6 +133,12 @@ message ListTeamsRequest {
 
 message ListTeamsResponse {
     repeated Team teams = 1;
+}
+
+message GetTeamListRequest {}
+
+message GetTeamListResponse {
+    repeated TeamMeta teams = 1;
 }
 
 message DeleteTeamRequest {

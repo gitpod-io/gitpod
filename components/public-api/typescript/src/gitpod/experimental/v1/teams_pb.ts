@@ -117,6 +117,61 @@ export class Team extends Message<Team> {
 }
 
 /**
+ * @generated from message gitpod.experimental.v1.TeamMeta
+ */
+export class TeamMeta extends Message<TeamMeta> {
+  /**
+   * id is a UUID of the Team
+   *
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * name is the name of the Team
+   *
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * slug is the slug of the Team
+   *
+   * @generated from field: string slug = 3;
+   */
+  slug = "";
+
+  constructor(data?: PartialMessage<TeamMeta>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.experimental.v1.TeamMeta";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "slug", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): TeamMeta {
+    return new TeamMeta().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): TeamMeta {
+    return new TeamMeta().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): TeamMeta {
+    return new TeamMeta().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: TeamMeta | PlainMessage<TeamMeta> | undefined, b: TeamMeta | PlainMessage<TeamMeta> | undefined): boolean {
+    return proto3.util.equals(TeamMeta, a, b);
+  }
+}
+
+/**
  * @generated from message gitpod.experimental.v1.TeamMember
  */
 export class TeamMember extends Message<TeamMember> {
@@ -461,6 +516,74 @@ export class ListTeamsResponse extends Message<ListTeamsResponse> {
 
   static equals(a: ListTeamsResponse | PlainMessage<ListTeamsResponse> | undefined, b: ListTeamsResponse | PlainMessage<ListTeamsResponse> | undefined): boolean {
     return proto3.util.equals(ListTeamsResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.GetTeamListRequest
+ */
+export class GetTeamListRequest extends Message<GetTeamListRequest> {
+  constructor(data?: PartialMessage<GetTeamListRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.experimental.v1.GetTeamListRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetTeamListRequest {
+    return new GetTeamListRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetTeamListRequest {
+    return new GetTeamListRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetTeamListRequest {
+    return new GetTeamListRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetTeamListRequest | PlainMessage<GetTeamListRequest> | undefined, b: GetTeamListRequest | PlainMessage<GetTeamListRequest> | undefined): boolean {
+    return proto3.util.equals(GetTeamListRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.GetTeamListResponse
+ */
+export class GetTeamListResponse extends Message<GetTeamListResponse> {
+  /**
+   * @generated from field: repeated gitpod.experimental.v1.TeamMeta teams = 1;
+   */
+  teams: TeamMeta[] = [];
+
+  constructor(data?: PartialMessage<GetTeamListResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.experimental.v1.GetTeamListResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "teams", kind: "message", T: TeamMeta, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetTeamListResponse {
+    return new GetTeamListResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetTeamListResponse {
+    return new GetTeamListResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetTeamListResponse {
+    return new GetTeamListResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetTeamListResponse | PlainMessage<GetTeamListResponse> | undefined, b: GetTeamListResponse | PlainMessage<GetTeamListResponse> | undefined): boolean {
+    return proto3.util.equals(GetTeamListResponse, a, b);
   }
 }
 

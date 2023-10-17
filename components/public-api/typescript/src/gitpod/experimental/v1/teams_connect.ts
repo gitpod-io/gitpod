@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateTeamRequest, CreateTeamResponse, DeleteTeamMemberRequest, DeleteTeamMemberResponse, DeleteTeamRequest, DeleteTeamResponse, GetTeamInvitationRequest, GetTeamInvitationResponse, GetTeamRequest, GetTeamResponse, JoinTeamRequest, JoinTeamResponse, ListTeamMembersRequest, ListTeamMembersResponse, ListTeamsRequest, ListTeamsResponse, ResetTeamInvitationRequest, ResetTeamInvitationResponse, UpdateTeamMemberRequest, UpdateTeamMemberResponse } from "./teams_pb.js";
+import { CreateTeamRequest, CreateTeamResponse, DeleteTeamMemberRequest, DeleteTeamMemberResponse, DeleteTeamRequest, DeleteTeamResponse, GetTeamInvitationRequest, GetTeamInvitationResponse, GetTeamListRequest, GetTeamListResponse, GetTeamRequest, GetTeamResponse, JoinTeamRequest, JoinTeamResponse, ListTeamMembersRequest, ListTeamMembersResponse, ListTeamsRequest, ListTeamsResponse, ResetTeamInvitationRequest, ResetTeamInvitationResponse, UpdateTeamMemberRequest, UpdateTeamMemberResponse } from "./teams_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -49,6 +49,17 @@ export const TeamsService = {
       name: "ListTeams",
       I: ListTeamsRequest,
       O: ListTeamsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetTeamList lists teams that the caller has access to.
+     *
+     * @generated from rpc gitpod.experimental.v1.TeamsService.GetTeamList
+     */
+    getTeamList: {
+      name: "GetTeamList",
+      I: GetTeamListRequest,
+      O: GetTeamListResponse,
       kind: MethodKind.Unary,
     },
     /**

@@ -207,6 +207,40 @@ func TestTeamsService_ListTeams(t *testing.T) {
 	})
 }
 
+func TestTeamsService_GetTeamList(t *testing.T) {
+	t.Run("returns teams", func(t *testing.T) {
+		ctx := context.Background()
+		serverMock, client := setupTeamService(t)
+		teams := []*protocol.Team{
+			newTeam(&protocol.Team{
+				Name: "Team A",
+			}),
+			newTeam(&protocol.Team{
+				Name: "Team B",
+			}),
+		}
+
+		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
+
+		response, err := client.GetTeamList(ctx, connect.NewRequest(&v1.GetTeamListRequest{}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.GetTeamListResponse{
+			Teams: []*v1.TeamMeta{
+				{
+					Id:   teams[0].ID,
+					Name: teams[0].Name,
+					Slug: teams[0].Slug,
+				},
+				{
+					Id:   teams[1].ID,
+					Name: teams[1].Name,
+					Slug: teams[1].Slug,
+				},
+			},
+		}, response.Msg)
+	})
+}
+
 func TestTeamService_GetTeam(t *testing.T) {
 	var (
 		teamID = uuid.New().String()

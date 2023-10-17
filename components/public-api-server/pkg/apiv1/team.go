@@ -142,6 +142,32 @@ func (s *TeamService) ListTeams(ctx context.Context, req *connect.Request[v1.Lis
 	}), nil
 }
 
+func (s *TeamService) GetTeamList(ctx context.Context, req *connect.Request[v1.GetTeamListRequest]) (*connect.Response[v1.GetTeamListResponse], error) {
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+
+	teams, err := conn.GetTeams(ctx)
+	if err != nil {
+		log.Extract(ctx).WithError(err).Error("Failed to list teams from server.")
+		return nil, proxy.ConvertError(err)
+	}
+
+	results := []*v1.TeamMeta{}
+
+	for _, team := range teams {
+		results = append(results, &v1.TeamMeta{
+			Id:   team.ID,
+			Name: team.Name,
+			Slug: team.Slug,
+		})
+	}
+	return connect.NewResponse(&v1.GetTeamListResponse{
+		Teams: results,
+	}), nil
+}
+
 func (s *TeamService) DeleteTeam(ctx context.Context, req *connect.Request[v1.DeleteTeamRequest]) (*connect.Response[v1.DeleteTeamResponse], error) {
 	teamID, err := validateTeamID(ctx, req.Msg.GetTeamId())
 	if err != nil {
