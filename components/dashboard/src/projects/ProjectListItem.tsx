@@ -136,7 +136,7 @@ type ProjectLinkProps = {
 };
 const ProjectLink: FunctionComponent<ProjectLinkProps> = ({ project }) => {
     return (
-        <Link to={`/projects/${project.id}`}>
+        <Link to={`/projects/${project.id}`} className="truncate">
             <span className="text-xl font-semibold">{project.name}</span>
         </Link>
     );
