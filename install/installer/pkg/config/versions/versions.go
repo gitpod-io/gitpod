@@ -24,7 +24,6 @@ type Components struct {
 	IDEProxy        Versioned `json:"ideProxy"`
 	IDEMetrics      Versioned `json:"ideMetrics"`
 	IDEService      Versioned `json:"ideService"`
-	ImageBuilder    Versioned `json:"imageBuilder"`
 	ImageBuilderMk3 struct {
 		Versioned
 		BuilderImage Versioned `json:"builderImage"`
@@ -79,6 +78,10 @@ type Components struct {
 	WSManagerBridge Versioned `json:"wsManagerBridge"`
 	WSProxy         Versioned `json:"wsProxy"`
 	NodeLabeler     Versioned `json:"node-labeler"`
+
+	ImageBuilderNG Versioned `json:"imageBuilderNG"`
+	WSManagerNG    Versioned `json:"wsManagerNG"`
+	WorkspacekitNG Versioned `json:"workspacekitNG"`
 }
 
 func Embedded() (*Manifest, error) {
