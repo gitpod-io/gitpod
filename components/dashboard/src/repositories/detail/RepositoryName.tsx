@@ -28,6 +28,11 @@ export const RepositoryNameForm: FC<Props> = ({ project }) => {
         async (e: React.FormEvent) => {
             e.preventDefault();
 
+            if (!nameError.isValid) {
+                toast("Please correct the errors with the name.");
+                return;
+            }
+
             updateProject.mutate(
                 {
                     id: project.id,
@@ -40,7 +45,7 @@ export const RepositoryNameForm: FC<Props> = ({ project }) => {
                 },
             );
         },
-        [updateProject, project.id, projectName, toast],
+        [nameError.isValid, updateProject, project.id, projectName, toast],
     );
 
     return (
@@ -53,11 +58,10 @@ export const RepositoryNameForm: FC<Props> = ({ project }) => {
                 onBlur={nameError.onBlur}
             />
 
-            {/* Don't disable button, just handle error and message */}
             <Button
                 className="mt-4"
                 htmlType="submit"
-                disabled={project.name === projectName || !nameError.isValid}
+                disabled={project.name === projectName}
                 loading={updateProject.isLoading}
             >
                 Update Name
