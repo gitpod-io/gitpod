@@ -17,7 +17,7 @@ import { RemoveProjectModal } from "./RemoveProjectModal";
 import SelectWorkspaceClassComponent from "../components/SelectWorkspaceClassComponent";
 import { TextInputField } from "../components/forms/TextInputField";
 import { Button } from "../components/Button";
-import { useRefreshProjects } from "../data/projects/list-projects-query";
+import { useRefreshAllProjects } from "../data/projects/list-all-projects-query";
 import { useToast } from "../components/toasts/Toasts";
 import classNames from "classnames";
 import { InputField } from "../components/forms/InputField";
@@ -54,7 +54,7 @@ export default function ProjectSettingsView() {
         }
     }
     const history = useHistory();
-    const refreshProjects = useRefreshProjects();
+    const refreshProjects = useRefreshAllProjects();
     const { toast } = useToast();
     const [prebuildBranchPattern, setPrebuildBranchPattern] = useState("");
 

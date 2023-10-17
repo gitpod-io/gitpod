@@ -10,16 +10,16 @@ import { useCallback } from "react";
 import { listAllProjects } from "../../service/public-api";
 import { useCurrentOrg } from "../organizations/orgs-query";
 
-export type ListProjectsQueryResults = {
+export type ListAllProjectsQueryResults = {
     projects: Project[];
 };
 
 export const useListAllProjectsQuery = () => {
     const org = useCurrentOrg().data;
     const orgId = org?.id;
-    return useQuery<ListProjectsQueryResults>({
+    return useQuery<ListAllProjectsQueryResults>({
         enabled: !!orgId,
-        queryKey: getListProjectsQueryKey(orgId || ""),
+        queryKey: getListAllProjectsQueryKey(orgId || ""),
         cacheTime: 1000 * 60 * 60 * 1, // 1 hour
         queryFn: async () => {
             if (!orgId) {
@@ -38,7 +38,7 @@ export const useListAllProjectsQuery = () => {
 };
 
 // helper to force a refresh of the list projects query
-export const useRefreshProjects = () => {
+export const useRefreshAllProjects = () => {
     const queryClient = useQueryClient();
 
     return useCallback(
@@ -49,13 +49,13 @@ export const useRefreshProjects = () => {
             }
 
             return await queryClient.refetchQueries({
-                queryKey: getListProjectsQueryKey(orgId),
+                queryKey: getListAllProjectsQueryKey(orgId),
             });
         },
         [queryClient],
     );
 };
 
-export const getListProjectsQueryKey = (orgId: string) => {
-    return ["projects", "list", { orgId }];
+export const getListAllProjectsQueryKey = (orgId: string) => {
+    return ["projects", "list-all", { orgId }];
 };

@@ -7,13 +7,13 @@
 import { useMutation } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
 import { useCurrentOrg } from "../organizations/orgs-query";
-import { useRefreshProjects } from "./list-projects-query";
+import { useRefreshAllProjects } from "./list-all-projects-query";
 import { CreateProjectParams, Project } from "@gitpod/gitpod-protocol";
 
 export type CreateProjectArgs = Omit<CreateProjectParams, "teamId">;
 
 export const useCreateProject = () => {
-    const refreshProjects = useRefreshProjects();
+    const refreshProjects = useRefreshAllProjects();
     const { data: org } = useCurrentOrg();
 
     return useMutation<Project, Error, CreateProjectArgs>(async ({ name, slug, cloneUrl, appInstallationId }) => {

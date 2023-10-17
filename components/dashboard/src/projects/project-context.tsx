@@ -10,7 +10,7 @@ import { useHistory, useLocation, useRouteMatch } from "react-router";
 import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
 import { listAllProjects } from "../service/public-api";
 import { useCurrentUser } from "../user-context";
-import { useListAllProjectsQuery } from "../data/projects/list-projects-query";
+import { useListAllProjectsQuery } from "../data/projects/list-all-projects-query";
 
 export const ProjectContext = createContext<{
     project?: Project;

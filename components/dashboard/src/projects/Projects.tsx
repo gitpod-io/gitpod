@@ -12,7 +12,7 @@ import Alert from "../components/Alert";
 import Header from "../components/Header";
 import { SpinnerLoader } from "../components/Loader";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
-import { useListAllProjectsQuery } from "../data/projects/list-projects-query";
+import { useListAllProjectsQuery } from "../data/projects/list-all-projects-query";
 import search from "../icons/search.svg";
 import { Heading2 } from "../components/typography/headings";
 import projectsEmptyDark from "../images/projects-empty-dark.svg";

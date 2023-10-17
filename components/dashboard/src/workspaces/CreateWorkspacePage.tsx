@@ -29,7 +29,7 @@ import { InputField } from "../components/forms/InputField";
 import { Heading1 } from "../components/typography/headings";
 import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
-import { useListAllProjectsQuery } from "../data/projects/list-projects-query";
+import { useListAllProjectsQuery } from "../data/projects/list-all-projects-query";
 import { useCreateWorkspaceMutation } from "../data/workspaces/create-workspace-mutation";
 import { useListWorkspacesQuery } from "../data/workspaces/list-workspaces-query";
 import { useWorkspaceContext } from "../data/workspaces/resolve-context-query";
