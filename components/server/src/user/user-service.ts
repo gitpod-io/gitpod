@@ -72,6 +72,10 @@ export class UserService {
             // blocked = if user already blocked OR is not allowed to pass
             newUser.blocked = newUser.blocked || !canPass;
         }
+        if (newUser.additionalData) {
+            // When a user is created, it does not have `additionalData.profile` set, so it's ok to rewrite it here.
+            newUser.additionalData.profile = { acceptedPrivacyPolicyDate: new Date().toISOString() };
+        }
     }
 
     async findUserById(userId: string, id: string): Promise<User> {
