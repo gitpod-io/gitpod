@@ -4,58 +4,33 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Project } from "@gitpod/gitpod-protocol";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
-import { listAllProjects } from "../../service/public-api";
+import { useQuery } from "@tanstack/react-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
+import { projectsService } from "../../service/public-api";
 
-export type ListProjectsQueryResults = {
-    projects: Project[];
+type ListProjectsQueryArgs = {
+    page: number;
+    pageSize: number;
 };
 
-export const useListProjectsQuery = () => {
-    const org = useCurrentOrg().data;
-    const orgId = org?.id;
-    return useQuery<ListProjectsQueryResults>({
-        enabled: !!orgId,
-        queryKey: getListProjectsQueryKey(orgId || ""),
-        cacheTime: 1000 * 60 * 60 * 1, // 1 hour
-        queryFn: async () => {
-            if (!orgId) {
-                return {
-                    projects: [],
-                    latestPrebuilds: new Map(),
-                };
+export const useListProjectsQuery = ({ page, pageSize }: ListProjectsQueryArgs) => {
+    const { data: org } = useCurrentOrg();
+
+    return useQuery(
+        getListProjectsQueryKey(org?.id || "", { page, pageSize }),
+        async () => {
+            if (!org) {
+                throw new Error("No org currently selected");
             }
 
-            const projects = await listAllProjects({ orgId });
-            return {
-                projects,
-            };
+            return projectsService.listProjects({ teamId: org.id, pagination: { page, pageSize } });
         },
-    });
-};
-
-// helper to force a refresh of the list projects query
-export const useRefreshProjects = () => {
-    const queryClient = useQueryClient();
-
-    return useCallback(
-        async (orgId: string) => {
-            // Don't refetch if no org is provided
-            if (!orgId) {
-                return;
-            }
-
-            return await queryClient.refetchQueries({
-                queryKey: getListProjectsQueryKey(orgId),
-            });
+        {
+            enabled: !!org,
         },
-        [queryClient],
     );
 };
 
-export const getListProjectsQueryKey = (orgId: string) => {
-    return ["projects", "list", { orgId }];
+export const getListProjectsQueryKey = (orgId: string, { page, pageSize }: ListProjectsQueryArgs) => {
+    return ["projects", "list", { orgId, page, pageSize }];
 };
