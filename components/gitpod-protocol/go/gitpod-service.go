@@ -1835,7 +1835,6 @@ type WorkspaceInstanceStatus struct {
 	NodeName     string                       `json:"nodeName,omitempty"`
 	OwnerToken   string                       `json:"ownerToken,omitempty"`
 	Phase        string                       `json:"phase,omitempty"`
-	Repo         *WorkspaceInstanceRepoStatus `json:"repo,omitempty"`
 	Timeout      string                       `json:"timeout,omitempty"`
 	Version      int                          `json:"version,omitempty"`
 }

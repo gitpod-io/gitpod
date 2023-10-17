@@ -24,6 +24,8 @@ export const useTemporaryState = <ValueType>(
 
     const setTemporaryValue = useCallback(
         (tempValue: ValueType, revertValue?: ValueType) => {
+            timeoutRef.current && clearTimeout(timeoutRef.current);
+
             setValue(tempValue);
 
             timeoutRef.current = setTimeout(() => {

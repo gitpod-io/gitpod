@@ -169,7 +169,6 @@ import { SSHKeyService } from "../user/sshkey-service";
 import { StartWorkspaceOptions, WorkspaceService } from "./workspace-service";
 import { GitpodTokenService } from "../user/gitpod-token-service";
 import { EnvVarService } from "../user/env-var-service";
-import { ScmService } from "../projects/scm-service";
 import {
     SuggestedRepositoryWithSorting,
     sortSuggestedRepositories,
@@ -234,7 +233,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(GitTokenScopeGuesser) private readonly gitTokenScopeGuesser: GitTokenScopeGuesser,
 
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
-        @inject(ScmService) private readonly scmService: ScmService,
 
         @inject(IDEService) private readonly ideService: IDEService,
 
@@ -2524,20 +2522,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardTeamOperation(params.teamId || "", "get");
         await this.auth.checkPermissionOnOrganization(user.id, "create_project", params.teamId);
 
-        // Check if provided clone URL is accessible for the current user, and user has admin permissions.
-        try {
-            new URL(params.cloneUrl);
-        } catch (err) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Clone URL must be a valid URL.");
-        }
-        const canCreateProject = await this.canCreateProject(user, params.cloneUrl);
-        if (!canCreateProject) {
-            throw new ApplicationError(
-                ErrorCodes.BAD_REQUEST,
-                "Repository URL seems to be inaccessible, or admin permissions are missing.",
-            );
-        }
-
         const project = await this.projectsService.createProject(params, user);
 
         // update client registration for the logged in user
@@ -2558,37 +2542,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         return project;
-    }
-
-    /**
-     * Checks if a project can be created, i.e. the current user has the required permissions
-     * to install webhooks for the given repository.
-     */
-    private async canCreateProject(currentUser: User, cloneURL: string) {
-        try {
-            const parsedUrl = RepoURL.parseRepoUrl(cloneURL);
-            const host = parsedUrl?.host;
-            if (!host) {
-                throw Error("Unknown host: " + parsedUrl?.host);
-            }
-            if (host === "github.com" && this.config.githubApp?.enabled) {
-                const availableRepositories = await this.githubAppSupport.getProviderRepositoriesForUser({
-                    user: currentUser,
-                    provider: "github.com",
-                });
-                return availableRepositories.some(
-                    (r) => r?.cloneUrl?.toLocaleLowerCase() === cloneURL?.toLocaleLowerCase(),
-                );
-            } else {
-                return await this.scmService.canInstallWebhook(currentUser, cloneURL);
-
-                // note: the GitHub App based check is not included in the ProjectService due
-                // to a circular dependency problem which would otherwise occur.
-            }
-        } catch (error) {
-            log.error("Failed to check precondition for creating a project.");
-        }
-        return false;
     }
 
     public async updateProjectPartial(ctx: TraceContext, partialProject: PartialProject): Promise<void> {

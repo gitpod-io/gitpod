@@ -48,7 +48,7 @@ RUN cd /usr/bin && curl -fsSL https://github.com/cert-manager/cert-manager/relea
 RUN cd /usr/bin && curl -fsSL https://github.com/praetorian-inc/gokart/releases/download/v0.4.0/gokart_0.4.0_linux_x86_64.tar.gz | tar xzv --no-anchored gokart
 
 # leeway
-ARG LEEWAY_VERSION=0.7.8
+ARG LEEWAY_VERSION=0.7.9
 ENV LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE=8388608
 ENV LEEWAY_WORKSPACE_ROOT=/workspace/gitpod
 ENV LEEWAY_REMOTE_CACHE_BUCKET=gitpod-core-leeway-cache-branch
@@ -265,3 +265,5 @@ RUN curl -fsSL https://github.com/csweichel/oci-tool/releases/download/v0.2.0/oc
 
 # Install golangci-lint
 RUN go install -v github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+RUN sudo install-packages pigz

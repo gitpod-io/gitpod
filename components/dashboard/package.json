@@ -4,10 +4,11 @@
   "version": "0.0.0",
   "private": true,
   "dependencies": {
-    "@connectrpc/connect-web": "1.1.2",
     "@connectrpc/connect": "1.1.2",
+    "@connectrpc/connect-web": "1.1.2",
     "@gitpod/gitpod-protocol": "0.1.5",
     "@gitpod/public-api": "0.1.5",
+    "@radix-ui/react-popover": "^1.0.7",
     "@stripe/react-stripe-js": "^1.7.2",
     "@stripe/stripe-js": "^1.29.0",
     "@tanstack/query-async-storage-persister": "^4.29.19",
@@ -25,6 +26,7 @@
     "idb-keyval": "^6.2.0",
     "js-cookie": "^3.0.1",
     "lodash.debounce": "^4.0.8",
+    "lucide-react": "^0.287.0",
     "monaco-editor": "^0.25.2",
     "pretty-bytes": "^6.1.0",
     "process": "^0.11.10",
@@ -84,6 +86,7 @@
   },
   "scripts": {
     "start": "BROWSER=none HMR_HOST=`gp url 3001` craco start",
+    "start-local": "BROWSER=none HMR_HOST=`gp url 3000` craco start",
     "build": "craco build --verbose",
     "lint": "eslint --max-warnings=0 --ext=.jsx,.js,.tsx,.ts ./src",
     "test": "yarn test:unit",

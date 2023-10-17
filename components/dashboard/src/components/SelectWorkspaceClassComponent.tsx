@@ -7,7 +7,7 @@
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 import { FC, useCallback, useEffect, useMemo } from "react";
 import WorkspaceClass from "../icons/WorkspaceClass.svg";
-import { DropDown2, DropDown2Element, DropDown2SelectedElement } from "./DropDown2";
+import { Combobox, ComboboxElement, ComboboxSelectedItem } from "./podkit/combobox/Combobox";
 import { useWorkspaceClasses } from "../data/workspaces/workspace-classes-query";
 
 interface SelectWorkspaceClassProps {
@@ -27,7 +27,7 @@ export default function SelectWorkspaceClassComponent({
 }: SelectWorkspaceClassProps) {
     const { data: workspaceClasses, isLoading: workspaceClassesLoading } = useWorkspaceClasses();
 
-    const getElements = useCallback((): DropDown2Element[] => {
+    const getElements = useCallback((): ComboboxElement[] => {
         return (workspaceClasses || [])?.map((c) => ({
             id: c.id,
             element: <WorkspaceClassDropDownElement wsClass={c} />,
@@ -61,19 +61,19 @@ export default function SelectWorkspaceClassComponent({
         return workspaceClasses.find((ws) => ws.id === (selectedWorkspaceClass || defaultClassId));
     }, [selectedWorkspaceClass, workspaceClasses]);
     return (
-        <DropDown2
+        <Combobox
             getElements={getElements}
             onSelectionChange={internalOnSelectionChange}
             searchPlaceholder="Select class"
             disableSearch={true}
-            allOptions={selectedWsClass?.id}
+            initialValue={selectedWsClass?.id}
             disabled={workspaceClassesLoading || loading || disabled}
         >
             <WorkspaceClassDropDownElementSelected
                 wsClass={selectedWsClass}
                 loading={workspaceClassesLoading || loading}
             />
-        </DropDown2>
+        </Combobox>
     );
 }
 
@@ -89,15 +89,17 @@ const WorkspaceClassDropDownElementSelected: FC<WorkspaceClassDropDownElementSel
     const title = wsClass?.displayName ?? "Select class";
 
     return (
-        <DropDown2SelectedElement
+        <ComboboxSelectedItem
             icon={WorkspaceClass}
             loading={loading}
             htmlTitle={title}
-            title={<div className="truncate w-80">{title}</div>}
+            title={<div className="truncate">{title}</div>}
             subtitle={
-                <div className="font-semibold">
+                <div className="font-semibold truncate">
                     Class <span className="text-gray-300 dark:text-gray-600 font-normal">&middot;</span>{" "}
-                    <span className="text-gray-500 dark:text-gray-400 font-normal">{wsClass?.description ?? ""}</span>
+                    <span className="text-gray-500 dark:text-gray-400 font-normal truncate">
+                        {wsClass?.description ?? ""}
+                    </span>
                 </div>
             }
         />

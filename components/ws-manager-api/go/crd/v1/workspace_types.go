@@ -169,7 +169,7 @@ func (ps PortSpec) Equal(other PortSpec) bool {
 // WorkspaceStatus defines the observed state of Workspace
 type WorkspaceStatus struct {
 	PodStarts  int    `json:"podStarts"`
-	URL        string `json:"url,omitempty"`
+	URL        string `json:"url,omitempty" scrub:"redact"`
 	OwnerToken string `json:"ownerToken,omitempty" scrub:"redact"`
 
 	// +kubebuilder:default=Unknown

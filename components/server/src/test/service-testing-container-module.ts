@@ -66,6 +66,11 @@ const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound,
                             throw "not expected to be called";
                         },
                     },
+                    repositoryProvider: {
+                        hasReadAccess: async (user: any, owner: string, repo: string) => {
+                            return true;
+                        },
+                    },
                 },
             };
         },

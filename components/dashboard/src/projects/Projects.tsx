@@ -20,17 +20,29 @@ import projectsEmpty from "../images/projects-empty.svg";
 import { ThemeContext } from "../theme-context";
 import { ProjectListItem } from "./ProjectListItem";
 import { projectsPathNew } from "./projects.routes";
+import { useFeatureFlag } from "../data/featureflag-query";
+import { CreateProjectModal } from "./create-project-modal/CreateProjectModal";
 
 export default function ProjectsPage() {
+    const createProjectModal = useFeatureFlag("createProjectModal");
     const history = useHistory();
     const team = useCurrentOrg().data;
     const { data, isLoading, isError, refetch } = useListProjectsQuery();
     const { isDark } = useContext(ThemeContext);
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
+    const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
 
+    // TODO: remove this once we enable createProjectModal
     const onNewProject = useCallback(() => {
         history.push(projectsPathNew);
     }, [history]);
+
+    const handleProjectCreated = useCallback(
+        (project: Project) => {
+            history.push(`/projects/${project.id}/settings`);
+        },
+        [history],
+    );
 
     const filteredProjects = useMemo(() => {
         const filter = (project: Project) => {
@@ -82,9 +94,15 @@ export default function ProjectsPage() {
                         </a>
                     </p>
                     <div className="flex space-x-2 justify-center mt-7">
-                        <Link to={projectsPathNew}>
-                            <button>New Project</button>
-                        </Link>
+                        {createProjectModal ? (
+                            <button className="ml-2" onClick={() => setShowCreateProjectModal(true)}>
+                                New Project
+                            </button>
+                        ) : (
+                            <Link to={projectsPathNew}>
+                                <button>New Project</button>
+                            </Link>
+                        )}
                         {team && (
                             <Link to="./members">
                                 <button className="secondary">Invite Members</button>
@@ -117,28 +135,48 @@ export default function ProjectsPage() {
                                 <button className="ml-2 secondary">Invite Members</button>
                             </Link>
                         )}
-                        <button className="ml-2" onClick={() => onNewProject()}>
-                            New Project
-                        </button>
+                        {createProjectModal ? (
+                            <button className="ml-2" onClick={() => setShowCreateProjectModal(true)}>
+                                New Project
+                            </button>
+                        ) : (
+                            <button className="ml-2" onClick={() => onNewProject()}>
+                                New Project
+                            </button>
+                        )}
                     </div>
                     <div className="mt-4 grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-4 pb-40">
                         {filteredProjects.map((p) => (
                             <ProjectListItem project={p} key={p.id} onProjectRemoved={refetch} />
                         ))}
                         {!searchFilter && (
+                            // TODO: handle opening create project modal here as well
                             <div
                                 key="new-project"
                                 className="h-52 border-dashed border-2 border-gray-100 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl focus:bg-kumquat-light transition ease-in-out group"
                             >
-                                <Link to={projectsPathNew} data-analytics='{"button_type":"card"}'>
-                                    <div className="flex h-full">
+                                {createProjectModal ? (
+                                    // We should be using a button here, but will handle it with the new projects list work
+                                    <div
+                                        className="cursor-pointer flex h-full"
+                                        onClick={() => setShowCreateProjectModal(true)}
+                                    >
                                         <div className="m-auto text-gray-400 dark:text-gray-600">New Project</div>
                                     </div>
-                                </Link>
+                                ) : (
+                                    <Link to={projectsPathNew} data-analytics='{"button_type":"card"}'>
+                                        <div className="flex h-full">
+                                            <div className="m-auto text-gray-400 dark:text-gray-600">New Project</div>
+                                        </div>
+                                    </Link>
+                                )}
                             </div>
                         )}
                     </div>
                 </div>
+            )}
+            {createProjectModal && showCreateProjectModal && (
+                <CreateProjectModal onClose={() => setShowCreateProjectModal(false)} onCreated={handleProjectCreated} />
             )}
         </>
     );

@@ -205,6 +205,10 @@ export class ProjectsService {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Clone URL must be less than 1k characters.");
         }
 
+        if (name.length > 32) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Project name cannot be longer than 32 characters.");
+        }
+
         try {
             new URL(cloneUrl);
         } catch (err) {
@@ -216,8 +220,32 @@ export class ProjectsService {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Clone URL must be a repository URL.");
         }
 
+        // Verify current user can reach the provided repo
+        const hostContext = this.hostContextProvider.get(parsedUrl.host);
+        if (!hostContext || !hostContext.services) {
+            throw new ApplicationError(
+                ErrorCodes.BAD_REQUEST,
+                "No GIT provider has been configured for the provided repository.",
+            );
+        }
+        const repoProvider = hostContext.services.repositoryProvider;
+        if (!repoProvider) {
+            throw new ApplicationError(
+                ErrorCodes.BAD_REQUEST,
+                "No GIT provider has been configured for the provided repository.",
+            );
+        }
+        const canRead = await repoProvider.hasReadAccess(installer, parsedUrl.owner, parsedUrl.repo);
+        if (!canRead) {
+            throw new ApplicationError(
+                ErrorCodes.BAD_REQUEST,
+                "Repository URL seems to be inaccessible, or admin permissions are missing.",
+            );
+        }
+
         const project = Project.create({
-            name,
+            // Default to repository name
+            name: name || parsedUrl.repo.substring(0, 32),
             cloneUrl,
             teamId,
             appInstallationId,

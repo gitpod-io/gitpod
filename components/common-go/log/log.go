@@ -231,3 +231,15 @@ type jsonEntry struct {
 	Msg     string       `json:"msg,omitempty"`
 	Time    *time.Time   `json:"time,omitempty"`
 }
+
+// TrustedValueWrap is a simple wrapper that treats the entire value as trusted, which are not processed by the scrubber.
+// During JSON marshal, only the Value itself will be processed, without including Wrap.
+type TrustedValueWrap struct {
+	Value any
+}
+
+func (TrustedValueWrap) IsTrustedValue() {}
+
+func (t TrustedValueWrap) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.Value)
+}

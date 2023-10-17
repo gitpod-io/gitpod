@@ -182,12 +182,6 @@ func (s *GitStatusService) Run(ctx context.Context, wg *sync.WaitGroup) {
 }
 
 func (s *GitStatusService) update(ctx context.Context, updateContext *gitStatusUpdateContext) {
-	liveGitStatus := experiments.SupervisorLiveGitStatus(ctx, s.experiments, experiments.Attributes{
-		UserID: s.cfg.OwnerId,
-	})
-	if !liveGitStatus {
-		return
-	}
 	status, err := s.git.Status(ctx)
 	if err != nil {
 		log.WithError(err).Error("git: error getting status")

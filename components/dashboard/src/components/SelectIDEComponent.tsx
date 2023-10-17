@@ -6,7 +6,7 @@
 
 import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { FC, useCallback, useEffect, useMemo } from "react";
-import { DropDown2, DropDown2Element, DropDown2SelectedElement } from "./DropDown2";
+import { Combobox, ComboboxElement, ComboboxSelectedItem } from "./podkit/combobox/Combobox";
 import Editor from "../icons/Editor.svg";
 import { useIDEOptions } from "../data/ide-options/ide-options-query";
 
@@ -58,7 +58,7 @@ export default function SelectIDEComponent({
             if (!options) {
                 return [];
             }
-            const result: DropDown2Element[] = [];
+            const result: ComboboxElement[] = [];
             for (const ide of options.filter((ide) =>
                 `${ide.label}${ide.title}${ide.notes}${ide.id}`.toLowerCase().includes(search.toLowerCase()),
             )) {
@@ -98,11 +98,11 @@ export default function SelectIDEComponent({
         }
     }, [ide, ideOptions, setError]);
     return (
-        <DropDown2
+        <Combobox
             getElements={getElements}
             onSelectionChange={internalOnSelectionChange}
             searchPlaceholder={"Select Editor"}
-            allOptions={ide}
+            initialValue={ide}
             disabled={disabled || ideOptionsLoading || loading}
         >
             <IdeOptionElementSelected
@@ -110,7 +110,7 @@ export default function SelectIDEComponent({
                 useLatest={!!useLatest}
                 loading={ideOptionsLoading || loading}
             />
-        </DropDown2>
+        </Combobox>
     );
 }
 
@@ -141,7 +141,7 @@ const IdeOptionElementSelected: FC<IdeOptionElementProps> = ({ option, useLatest
     }
 
     return (
-        <DropDown2SelectedElement
+        <ComboboxSelectedItem
             icon={Editor}
             loading={loading}
             htmlTitle={title}

@@ -1,0 +1,260 @@
+syntax = "proto3";
+
+package gitpod.experimental.v2;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v2";
+
+service WorkspaceService {
+  // GetWorkspace returns a single workspace.
+  //
+  // +return NOT_FOUND User does not have access to a workspace with the given
+  // ID +return NOT_FOUND Workspace does not exist
+  rpc GetWorkspace(GetWorkspaceRequest) returns (GetWorkspaceResponse) {}
+}
+
+message GetWorkspaceRequest { string id = 1; }
+
+message GetWorkspaceResponse { Workspace item = 1; }
+
+// +resource get workspace
+message Workspace {
+  string id = 1;
+  // prebuild indicates it is a prebuild
+  // TODO(ak) model prebuilds as a separate resource
+  bool prebuild = 2;
+
+  string organization_id = 3;
+
+  string name = 4;
+  bool pinned = 5;
+
+  WorkspaceStatus status = 6;
+
+  // additional_environment_variables provide additional environment variables
+  // which take precedence over environment variables provided by the project
+  // and user.
+  //
+  // +optional
+  repeated WorkspaceEnvironmentVariable additional_environment_variables = 7;
+
+  // region specifies the region in which the workspace will be created.
+  // Obtain available regions using the ListRegions operation.
+  //
+  // +optional defaults to the user's default region
+  optional string region = 8;
+
+  // workspace_class specifies the workspace class with which to create the
+  // workspace. Obtain available workspace classes using the ListWorkspaceClass
+  // operation.
+  //
+  // +optional defaults to the class configured on the project or the cluster's
+  // default class.
+  optional string workspace_class = 9;
+
+  // editor specifies the editor that will be used with this workspace.
+  // Obtain available editors using the EditorService.ListEditors operation.
+  //
+  // +optional defaults to the default editor of the user
+  optional EditorReference editor = 10;
+
+  // context_url is the normalized URL from which the workspace was created
+  // TODO(ak) replace with resolveContextURL API
+  string context_url = 11;
+
+  // Prebuild ID is the unique identifier of the prebuild
+  // from which this workspace was created
+  // +optional if empty then this workspace was not created from a prebuild
+  optional string prebuild_id = 12;
+}
+
+message WorkspaceStatus {
+  // Phase is a simple, high-level summary of where the workspace is in its
+  // lifecycle. The phase is not intended to be a comprehensive rollup of
+  // observations of the workspace state, nor is it intended to be a
+  // comprehensive state machine.
+  WorkspacePhase phase = 1;
+
+  // message is an optional human-readable message detailing the current phase
+  optional string message = 2;
+
+  // workspace_url is the URL of the workspace. Only present when the phase is
+  // running.
+  string workspace_url = 3;
+
+  // git_status details the Git working copy status of the workspace.
+  // Note: this is a best-effort field and more often than not will not be
+  // present. Its absence does not indicate the absence of a working copy.
+  WorkspaceGitStatus git_status = 4;
+
+  // ports lists the network ports currently available/known of this workspace
+  repeated WorkspacePort ports = 5;
+
+  // Admission describes who can access a workspace instance and its ports.
+  AdmissionLevel admission = 6;
+
+  // Instance ID is the unique identifier of the workspace instance
+  string instance_id = 7;
+
+  // Conditions contains observations of the workspace's current phase.
+  WorkspaceConditions conditions = 8;
+}
+
+message WorkspaceConditions {
+  // failed contains technical details for the failure of the workspace.
+  // +optional If this field is empty, the workspace has not failed.
+  optional string failed = 1;
+
+  // timeout contains the reason the workspace has timed out.
+  // +optional If this field is empty, the workspace has not timed out.
+  optional string timeout = 2;
+}
+
+// Admission level describes who can access a workspace instance and its ports.
+enum AdmissionLevel {
+  ADMISSION_LEVEL_UNSPECIFIED = 0;
+
+  // ADMISSION_LEVEL_OWNER_ONLY means the workspace can only be accessed using
+  // the owner token
+  ADMISSION_LEVEL_OWNER_ONLY = 1;
+
+  // ADMISSION_LEVEL_EVERYONE means the workspace (including ports) can be
+  // accessed by everyone.
+  ADMISSION_LEVEL_EVERYONE = 2;
+}
+
+message WorkspacePort {
+  // Policy defines the accssbility policy of a workspace port is guarded by an
+  // authentication in the proxy
+  enum Policy {
+    POLICY_UNSPECIFIED = 0;
+
+    // Private means the port is accessible by the workspace owner only using
+    // the workspace port URL
+    POLICY_PRIVATE = 1;
+
+    // Public means the port is accessible by everybody using the workspace port
+    // URL
+    POLICY_PUBLIC = 2;
+  }
+
+  // Protocol defines the backend protocol of port
+  enum Protocol {
+    PROTOCOL_UNSPECIFIED = 0;
+
+    // Http means the port backend is http
+    PROTOCOL_HTTP = 1;
+
+    // Https means the port backend is https
+    PROTOCOL_HTTPS = 2;
+  }
+
+  // port number
+  uint64 port = 1;
+
+  // policy of this port
+  Policy policy = 2;
+
+  // url that can be used to access the port
+  string url = 3;
+
+  // backend protocol of this port
+  Protocol protocol = 4;
+}
+
+message WorkspaceGitStatus {
+  // clone_url is the repository url as you would pass it to "git clone".
+  // Only HTTPS clone URLs are supported.
+  string clone_url = 1;
+
+  // branch is branch we're currently on
+  string branch = 2;
+
+  // latest_commit is the most recent commit on the current branch
+  string latest_commit = 3;
+
+  // uncommited_files is an array of uncommitted files, possibly truncated
+  repeated string uncommited_files = 4;
+
+  // the total number of uncommited files
+  int32 total_uncommited_files = 5;
+
+  // untracked_files is an array of untracked files in the workspace, possibly
+  // truncated
+  repeated string untracked_files = 6;
+
+  // the total number of untracked files
+  int32 total_untracked_files = 7;
+
+  // unpushed_commits is an array of unpushed changes in the workspace, possibly
+  // truncated
+  repeated string unpushed_commits = 8;
+
+  // the total number of unpushed changes
+  int32 total_unpushed_commits = 9;
+}
+
+message WorkspacePhase {
+  enum Phase {
+    // Unknown indicates an issue within the workspace manager in that it cannot
+    // determine the actual phase of a workspace. This phase is usually
+    // accompanied by an error.
+    PHASE_UNSPECIFIED = 0;
+
+    // Preparing means that we haven't actually started the workspace instance
+    // just yet, but rather are still preparing for launch.
+    PHASE_PREPARING = 1;
+
+    // ImageBuild indicates that there's an image build running for this
+    // workspace.
+    PHASE_IMAGEBUILD = 2;
+
+    // Pending means the workspace does not yet consume resources in the
+    // cluster, but rather is looking for some space within the cluster. If for
+    // example the cluster needs to scale up to accomodate the workspace, the
+    // workspace will be in Pending state until that happened.
+    PHASE_PENDING = 3;
+
+    // Creating means the workspace is currently being created. That includes
+    // downloading the images required to run the workspace over the network.
+    // The time spent in this phase varies widely and depends on the current
+    // network speed, image size and cache states.
+    PHASE_CREATING = 4;
+
+    // Initializing is the phase in which the workspace is executing the
+    // appropriate workspace initializer (e.g. Git clone or backup download).
+    // After this phase one can expect the workspace to either be Running or
+    // Failed.
+    PHASE_INITIALIZING = 5;
+
+    // Running means the workspace is able to actively perform work, either by
+    // serving a user through Theia, or as a headless workspace.
+    PHASE_RUNNING = 6;
+
+    // Interrupted is an exceptional state where the container should be running
+    // but is temporarily unavailable. When in this state, we expect it to
+    // become running or stopping anytime soon.
+    PHASE_INTERRUPTED = 7;
+
+    // Stopping means that the workspace is currently shutting down. It could go
+    // to stopped every moment.
+    PHASE_STOPPING = 8;
+
+    // Stopped means the workspace ended regularly because it was shut down.
+    PHASE_STOPPED = 9;
+  }
+
+  Phase name = 1;
+  google.protobuf.Timestamp last_transition_time = 2;
+}
+
+message EditorReference {
+  string name = 1;
+  string version = 2;
+}
+
+message WorkspaceEnvironmentVariable {
+  string name = 1;
+  optional string value = 2;
+}

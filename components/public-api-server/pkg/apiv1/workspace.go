@@ -124,10 +124,7 @@ func (s *WorkspaceService) StreamWorkspaceStatus(ctx context.Context, req *conne
 	}
 
 	for update := range ch {
-		liveGitStatus := experiments.SupervisorLiveGitStatus(ctx, s.expClient, experiments.Attributes{
-			UserID: workspace.Workspace.OwnerID,
-		})
-		instance, err := convertWorkspaceInstance(update, workspace.Workspace.Context, workspace.Workspace.Config, workspace.Workspace.Shareable, liveGitStatus)
+		instance, err := convertWorkspaceInstance(update, workspace.Workspace.Context, workspace.Workspace.Config, workspace.Workspace.Shareable)
 		if err != nil {
 			log.Extract(ctx).WithError(err).Error("Failed to convert workspace instance.")
 			return proxy.ConvertError(err)
@@ -407,15 +404,12 @@ func getLimitFromPagination(pagination *v1.Pagination) (int, error) {
 }
 
 func (s *WorkspaceService) convertWorkspaceInfo(ctx context.Context, input *protocol.WorkspaceInfo) (*v1.Workspace, error) {
-	liveGitStatus := experiments.SupervisorLiveGitStatus(ctx, s.expClient, experiments.Attributes{
-		UserID: input.Workspace.OwnerID,
-	})
-	return convertWorkspaceInfo(input, liveGitStatus)
+	return convertWorkspaceInfo(input)
 }
 
 // convertWorkspaceInfo converts a "protocol workspace" to a "public API workspace". Returns gRPC errors if things go wrong.
-func convertWorkspaceInfo(input *protocol.WorkspaceInfo, liveGitStatus bool) (*v1.Workspace, error) {
-	instance, err := convertWorkspaceInstance(input.LatestInstance, input.Workspace.Context, input.Workspace.Config, input.Workspace.Shareable, liveGitStatus)
+func convertWorkspaceInfo(input *protocol.WorkspaceInfo) (*v1.Workspace, error) {
+	instance, err := convertWorkspaceInstance(input.LatestInstance, input.Workspace.Context, input.Workspace.Config, input.Workspace.Shareable)
 	if err != nil {
 		return nil, err
 	}
@@ -440,7 +434,7 @@ func convertWorkspaceInfo(input *protocol.WorkspaceInfo, liveGitStatus bool) (*v
 	}, nil
 }
 
-func convertWorkspaceInstance(wsi *protocol.WorkspaceInstance, wsCtx *protocol.WorkspaceContext, config *protocol.WorkspaceConfig, shareable bool, liveGitStatus bool) (*v1.WorkspaceInstance, error) {
+func convertWorkspaceInstance(wsi *protocol.WorkspaceInstance, wsCtx *protocol.WorkspaceContext, config *protocol.WorkspaceConfig, shareable bool) (*v1.WorkspaceInstance, error) {
 	if wsi == nil {
 		return nil, nil
 	}
@@ -525,12 +519,7 @@ func convertWorkspaceInstance(wsi *protocol.WorkspaceInstance, wsCtx *protocol.W
 	}
 	recentFolders = append(recentFolders, filepath.Join("/workspace", location))
 
-	var gitStatus *v1.GitStatus
-	if liveGitStatus {
-		gitStatus = convertGitStatus(wsi.GitStatus)
-	} else {
-		gitStatus = convertGitStatus(wsi.Status.Repo)
-	}
+	gitStatus := convertGitStatus(wsi.GitStatus)
 
 	return &v1.WorkspaceInstance{
 		InstanceId:  wsi.ID,

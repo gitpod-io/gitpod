@@ -4,19 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceInstance, WorkspaceInstanceRepoStatus } from "@gitpod/gitpod-protocol";
+import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import ContextMenu, { ContextMenuEntry } from "./ContextMenu";
 import CaretDown from "../icons/CaretDown.svg";
-import { useFeatureFlag } from "../data/featureflag-query";
 
 export default function PendingChangesDropdown(props: { workspaceInstance?: WorkspaceInstance }) {
-    const liveGitStatus = useFeatureFlag("supervisor_live_git_status");
-    let repo: WorkspaceInstanceRepoStatus | undefined;
-    if (liveGitStatus) {
-        repo = props.workspaceInstance?.gitStatus;
-    } else {
-        repo = props.workspaceInstance?.status?.repo;
-    }
+    const repo = props.workspaceInstance?.gitStatus;
     const headingStyle = "text-gray-500 dark:text-gray-400 text-left";
     const itemStyle = "text-gray-400 dark:text-gray-500 text-left -mt-5";
     const menuEntries: ContextMenuEntry[] = [];

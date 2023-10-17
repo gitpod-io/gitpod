@@ -29,7 +29,7 @@ export default function Open() {
         <div className="mt-24 mx-auto w-96 flex flex-col items-stretch">
             <h1 className="text-center">Open in Gitpod</h1>
             <div className="mt-8">
-                <RepositoryFinder selectedContextURL={initialQuery} setSelection={() => {}} />
+                <RepositoryFinder selectedContextURL={initialQuery} expanded={!initialQuery} />
             </div>
         </div>
     );
