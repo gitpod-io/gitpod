@@ -16,6 +16,8 @@ import {
     DeleteTeamResponse,
     GetTeamInvitationRequest,
     GetTeamInvitationResponse,
+    GetTeamListRequest,
+    GetTeamListResponse,
     GetTeamRequest,
     GetTeamResponse,
     JoinTeamRequest,
@@ -89,6 +91,9 @@ export class APITeamsService implements ServiceImpl<typeof TeamServiceInterface>
         throw new ConnectError("unimplemented", Code.Unimplemented);
     }
     public async listTeamMembers(req: ListTeamMembersRequest): Promise<ListTeamMembersResponse> {
+        throw new ConnectError("unimplemented", Code.Unimplemented);
+    }
+    public async getTeamList(req: GetTeamListRequest): Promise<GetTeamListResponse> {
         throw new ConnectError("unimplemented", Code.Unimplemented);
     }
 }
