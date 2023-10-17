@@ -45,7 +45,7 @@ export function useOldOrganizationsQuery() {
         async () => {
             console.log("Fetching orgs with old api... " + JSON.stringify(getOldQueryKey(user)));
             if (!user) {
-                console.log("useOrganizations with empty user");
+                console.log("useOldOrganizationsQuery with empty user");
                 return [];
             }
 
@@ -92,11 +92,13 @@ export function useOrganizations() {
                 const e = ConnectError.from(err);
                 if (e.code === Code.Unimplemented) {
                     const data = queryClient.getQueryData<OldOrganizationInfo[]>(getOldQueryKey(user));
-                    return data?.map((org) => ({
-                        id: org.id,
-                        name: org.name,
-                        slug: org.slug,
-                    }));
+                    return (
+                        data?.map((org) => ({
+                            id: org.id,
+                            name: org.name,
+                            slug: org.slug,
+                        })) ?? []
+                    );
                 }
                 throw err;
             }
