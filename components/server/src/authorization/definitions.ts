@@ -12,14 +12,28 @@ export const InstallationID = "1";
 
 export type ResourceType =
     | UserResourceType
+    | ApitokenResourceType
     | InstallationResourceType
     | OrganizationResourceType
     | ProjectResourceType
     | WorkspaceResourceType;
 
-export const AllResourceTypes: ResourceType[] = ["user", "installation", "organization", "project", "workspace"];
+export const AllResourceTypes: ResourceType[] = [
+    "user",
+    "apitoken",
+    "installation",
+    "organization",
+    "project",
+    "workspace",
+];
 
-export type Relation = UserRelation | InstallationRelation | OrganizationRelation | ProjectRelation | WorkspaceRelation;
+export type Relation =
+    | UserRelation
+    | ApitokenRelation
+    | InstallationRelation
+    | OrganizationRelation
+    | ProjectRelation
+    | WorkspaceRelation;
 
 export type Permission =
     | UserPermission
@@ -30,7 +44,7 @@ export type Permission =
 
 export type UserResourceType = "user";
 
-export type UserRelation = "self" | "organization" | "installation";
+export type UserRelation = "self" | "apitoken" | "organization" | "installation";
 
 export type UserPermission =
     | "read_info"
@@ -44,6 +58,10 @@ export type UserPermission =
     | "write_tokens"
     | "read_env_var"
     | "write_env_var";
+
+export type ApitokenResourceType = "apitoken";
+
+export type ApitokenRelation = "user_write" | "user_read";
 
 export type InstallationResourceType = "installation";
 
@@ -131,6 +149,26 @@ export const rel = {
                 };
             },
 
+            get apitoken() {
+                const result2 = {
+                    ...result,
+                    relation: "apitoken",
+                };
+                return {
+                    apitoken(objectId: string) {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "apitoken",
+                                    objectId: objectId,
+                                },
+                            },
+                        } as v1.Relationship;
+                    },
+                };
+            },
+
             get organization() {
                 const result2 = {
                     ...result,
@@ -164,6 +202,56 @@ export const rel = {
                                 object: {
                                     objectType: "installation",
                                     objectId: InstallationID,
+                                },
+                            },
+                        } as v1.Relationship;
+                    },
+                };
+            },
+        };
+    },
+
+    apitoken(id: string) {
+        const result: Partial<v1.Relationship> = {
+            resource: {
+                objectType: "apitoken",
+                objectId: id,
+            },
+        };
+        return {
+            get user_write() {
+                const result2 = {
+                    ...result,
+                    relation: "user_write",
+                };
+                return {
+                    get anyUser() {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "user",
+                                    objectId: "*",
+                                },
+                            },
+                        } as v1.Relationship;
+                    },
+                };
+            },
+
+            get user_read() {
+                const result2 = {
+                    ...result,
+                    relation: "user_read",
+                };
+                return {
+                    get anyUser() {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "user",
+                                    objectId: "*",
                                 },
                             },
                         } as v1.Relationship;
@@ -427,6 +515,17 @@ export const rel = {
                             subject: {
                                 object: {
                                     objectType: "user",
+                                    objectId: objectId,
+                                },
+                            },
+                        } as v1.Relationship;
+                    },
+                    apitoken(objectId: string) {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "apitoken",
                                     objectId: objectId,
                                 },
                             },

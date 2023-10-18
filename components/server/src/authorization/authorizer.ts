@@ -25,6 +25,8 @@ import {
 import { SpiceDBAuthorizer } from "./spicedb-authorizer";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { ApiTokenScope } from "../auth/api-token";
+import { SubjectId, toUserId } from "../auth/subject-id";
 
 export function createInitializingAuthorizer(spiceDbAuthorizer: SpiceDBAuthorizer): Authorizer {
     const target = new Authorizer(spiceDbAuthorizer);
@@ -57,19 +59,22 @@ export const SYSTEM_USER = "SYSTEM_USER";
 export class Authorizer {
     constructor(private authorizer: SpiceDBAuthorizer) {}
 
-    async hasPermissionOnInstallation(userId: string, permission: InstallationPermission): Promise<boolean> {
-        if (userId === SYSTEM_USER) {
+    async hasPermissionOnInstallation(
+        subjectId: string | SubjectId,
+        permission: InstallationPermission,
+    ): Promise<boolean> {
+        if (subjectId === SYSTEM_USER) {
             return true;
         }
 
         const req = v1.CheckPermissionRequest.create({
-            subject: subject("user", userId),
+            subject: subject(subjectId),
             permission,
             resource: object("installation", InstallationID),
             consistency,
         });
 
-        return await this.authorizer.check(req, { userId });
+        return await this.authorizer.check(req, { userId: toUserId(subjectId) });
     }
 
     async checkPermissionOnInstallation(userId: string, permission: InstallationPermission): Promise<void> {
@@ -83,22 +88,22 @@ export class Authorizer {
     }
 
     async hasPermissionOnOrganization(
-        userId: string,
+        subjectId: string | SubjectId,
         permission: OrganizationPermission,
         orgId: string,
     ): Promise<boolean> {
-        if (userId === SYSTEM_USER) {
+        if (subjectId === SYSTEM_USER) {
             return true;
         }
 
         const req = v1.CheckPermissionRequest.create({
-            subject: subject("user", userId),
+            subject: subject(subjectId),
             permission,
             resource: object("organization", orgId),
             consistency,
         });
 
-        return await this.authorizer.check(req, { userId });
+        return await this.authorizer.check(req, { userId: toUserId(subjectId) });
     }
 
     async checkPermissionOnOrganization(userId: string, permission: OrganizationPermission, orgId: string) {
@@ -116,19 +121,23 @@ export class Authorizer {
         );
     }
 
-    async hasPermissionOnProject(userId: string, permission: ProjectPermission, projectId: string): Promise<boolean> {
-        if (userId === SYSTEM_USER) {
+    async hasPermissionOnProject(
+        subjectId: string | SubjectId,
+        permission: ProjectPermission,
+        projectId: string,
+    ): Promise<boolean> {
+        if (subjectId === SYSTEM_USER) {
             return true;
         }
 
         const req = v1.CheckPermissionRequest.create({
-            subject: subject("user", userId),
+            subject: subject(subjectId),
             permission,
             resource: object("project", projectId),
             consistency,
         });
 
-        return await this.authorizer.check(req, { userId });
+        return await this.authorizer.check(req, { userId: toUserId(subjectId) });
     }
 
     async checkPermissionOnProject(userId: string, permission: ProjectPermission, projectId: string) {
@@ -146,19 +155,19 @@ export class Authorizer {
         );
     }
 
-    async hasPermissionOnUser(userId: string, permission: UserPermission, resourceUserId: string): Promise<boolean> {
-        if (userId === SYSTEM_USER) {
+    async hasPermissionOnUser(subjectId: string, permission: UserPermission, resourceUserId: string): Promise<boolean> {
+        if (subjectId === SYSTEM_USER) {
             return true;
         }
 
         const req = v1.CheckPermissionRequest.create({
-            subject: subject("user", userId),
+            subject: subject(subjectId),
             permission,
             resource: object("user", resourceUserId),
             consistency,
         });
 
-        return await this.authorizer.check(req, { userId });
+        return await this.authorizer.check(req, { userId: toUserId(subjectId) });
     }
 
     async checkPermissionOnUser(userId: string, permission: UserPermission, resourceUserId: string) {
@@ -176,23 +185,23 @@ export class Authorizer {
     }
 
     async hasPermissionOnWorkspace(
-        userId: string,
+        subjectId: string | SubjectId,
         permission: WorkspacePermission,
         workspaceId: string,
         forceEnablement?: boolean, // temporary to find an issue with workspace sharing
     ): Promise<boolean> {
-        if (userId === SYSTEM_USER) {
+        if (subjectId === SYSTEM_USER) {
             return true;
         }
 
         const req = v1.CheckPermissionRequest.create({
-            subject: subject("user", userId),
+            subject: subject(subjectId),
             permission,
             resource: object("workspace", workspaceId),
             consistency,
         });
 
-        return await this.authorizer.check(req, { userId }, forceEnablement);
+        return await this.authorizer.check(req, { userId: toUserId(subjectId) }, forceEnablement);
     }
 
     async checkPermissionOnWorkspace(userId: string, permission: WorkspacePermission, workspaceId: string) {
@@ -210,8 +219,8 @@ export class Authorizer {
     }
 
     // write operations below
-    public async removeAllRelationships(userId: string, type: ResourceType, id: string) {
-        if (!(await isFgaWritesEnabled(userId))) {
+    public async removeAllRelationships(subjectId: string | SubjectId, type: ResourceType, id: string) {
+        if (!(await isFgaWritesEnabled(toUserId(subjectId) || ""))) {
             return;
         }
         await this.authorizer.deleteRelationships(
@@ -455,6 +464,32 @@ export class Authorizer {
         }
     }
 
+    public async addApiToken(tokenId: string, scopes: ApiTokenScope[]): Promise<void> {
+        const relations = scopes
+            .map((s) => {
+                switch (s.permission) {
+                    case "user_read":
+                        return [
+                            set(rel.apitoken(tokenId).user_read.anyUser),
+                            set(rel.user(s.targetId).apitoken.apitoken(tokenId)),
+                        ];
+                    case "user_write":
+                        return [
+                            set(rel.apitoken(tokenId).user_write.anyUser),
+                            set(rel.user(s.targetId).apitoken.apitoken(tokenId)),
+                        ];
+                    case "workspace":
+                        return [set(rel.workspace(s.targetId).owner.apitoken(tokenId))];
+                }
+            })
+            .flat();
+        await this.authorizer.writeRelationships(...relations);
+    }
+
+    public async removeApiToken(tokenId: string): Promise<void> {
+        await this.removeAllRelationships("SYSTEM_USER", "apitoken", tokenId);
+    }
+
     public async find(relation: v1.Relationship): Promise<v1.Relationship | undefined> {
         const relationships = await this.authorizer.readRelationships({
             consistency: v1.Consistency.create({
@@ -541,9 +576,13 @@ function object(type: ResourceType, id?: string): v1.ObjectReference {
     });
 }
 
-function subject(type: ResourceType, id?: string, relation?: Relation | Permission): v1.SubjectReference {
+function subject(id: string | SubjectId, relation?: Relation | Permission): v1.SubjectReference {
+    let subjectId = id;
+    if (typeof subjectId === "string") {
+        subjectId = SubjectId.fromUserId(subjectId);
+    }
     return v1.SubjectReference.create({
-        object: object(type, id),
+        object: object(subjectId.kind, subjectId.value),
         optionalRelation: relation,
     });
 }

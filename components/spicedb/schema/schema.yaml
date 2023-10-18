@@ -6,13 +6,15 @@ schema: |-
   definition user {
     relation self: user
 
+    relation apitoken: apitoken
+
     // Only ONE of the following relations is ever present for a given user (XOR)
     relation organization: organization
     relation installation: installation
 
     // permissions
-    permission read_info = self + organization->member + organization->owner + installation->admin
-    permission write_info = self
+    permission read_info = self + organization->member + organization->owner + installation->admin + apitoken->user_read
+    permission write_info = self + apitoken->user_write
     permission delete = self
 
     permission make_admin = installation->admin + organization->installation_admin
@@ -20,14 +22,20 @@ schema: |-
     // administrate is for changes such as blocking or verifiying, i.e. things that only admins can do on user
     permission admin_control = installation->admin + organization->installation_admin
 
-    permission read_ssh = self
-    permission write_ssh = self
+    permission read_ssh = self + apitoken->user_read
+    permission write_ssh = self + apitoken->user_write
 
-    permission read_tokens = self
-    permission write_tokens = self
+    permission read_tokens = self + apitoken->user_read
+    permission write_tokens = self + apitoken->user_write
 
-    permission read_env_var = self
-    permission write_env_var = self
+    permission read_env_var = self + apitoken->user_read
+    permission write_env_var = self + apitoken->user_write
+  }
+
+  definition apitoken {
+    // TODO(gpl) This style limits the apitokens to be restricted to a single user only, but the alternatives look too complicated
+    relation user_write: user:*
+    relation user_read: user:*
   }
 
   // There's only one global installation
@@ -114,7 +122,7 @@ schema: |-
   definition workspace {
     relation org: organization
     // The user that created the workspace
-    relation owner: user
+    relation owner: user | apitoken
     // Whether this workspace is shared (globally)
     relation shared: user:*
 

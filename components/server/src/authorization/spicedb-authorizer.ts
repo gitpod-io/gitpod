@@ -64,7 +64,7 @@ export class SpiceDBAuthorizer {
 
     public async check(
         req: v1.CheckPermissionRequest,
-        experimentsFields: { userId: string },
+        experimentsFields: { userId?: string },
         forceEnablement?: boolean,
     ): Promise<boolean> {
         req.consistency = await this.tokenCache.consistency(req.resource);
@@ -80,14 +80,14 @@ export class SpiceDBAuthorizer {
     private async checkInternal(
         req: v1.CheckPermissionRequest,
         experimentsFields: {
-            userId: string;
+            userId?: string;
         },
         forceEnablement?: boolean,
     ): Promise<CheckResult> {
-        if (!(await isFgaWritesEnabled(experimentsFields.userId))) {
+        if (!(await isFgaWritesEnabled(experimentsFields.userId || ""))) {
             return { permitted: true };
         }
-        const featureEnabled = !!forceEnablement || (await isFgaChecksEnabled(experimentsFields.userId));
+        const featureEnabled = !!forceEnablement || (await isFgaChecksEnabled(experimentsFields.userId || ""));
         const result = (async () => {
             const timer = spicedbClientLatency.startTimer();
             let error: Error | undefined;

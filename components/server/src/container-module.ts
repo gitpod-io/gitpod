@@ -129,6 +129,7 @@ import { WorkspaceFactory } from "./workspace/workspace-factory";
 import { WorkspaceService } from "./workspace/workspace-service";
 import { WorkspaceStartController } from "./workspace/workspace-start-controller";
 import { WorkspaceStarter } from "./workspace/workspace-starter";
+import { ApiTokenRepository } from "./oauth-server/api-token-repository";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -251,6 +252,7 @@ export const productionContainerModule = new ContainerModule(
         bind(IAnalyticsWriter).toDynamicValue(newAnalyticsWriterFromEnv).inSingletonScope();
 
         bind(OAuthController).toSelf().inSingletonScope();
+        bind(ApiTokenRepository).toSelf().inSingletonScope();
 
         bind(HeadlessLogService).toSelf().inSingletonScope();
         bind(HeadlessLogController).toSelf().inSingletonScope();

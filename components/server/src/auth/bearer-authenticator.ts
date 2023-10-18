@@ -15,6 +15,9 @@ import { Config } from "../config";
 import { AllAccessFunctionGuard, ExplicitFunctionAccessGuard, WithFunctionAccessGuard } from "./function-access";
 import { TokenResourceGuard, WithResourceAccessGuard } from "./resource-access";
 import { UserService } from "../user/user-service";
+import { AuthJWT } from "./jwt";
+import { SubjectId } from "./subject-id";
+import { ApiAccessToken } from "./api-token";
 
 export function getBearerToken(headers: IncomingHttpHeaders): string | undefined {
     const authorizationHeader = headers["authorization"];
@@ -46,6 +49,7 @@ export class BearerAuth {
         @inject(UserDB) private readonly userDB: UserDB,
         @inject(UserService) private readonly userService: UserService,
         @inject(PersonalAccessTokenDB) private readonly personalAccessTokenDB: PersonalAccessTokenDB,
+        @inject(AuthJWT) private readonly authJWT: AuthJWT,
     ) {}
 
     get restHandler(): express.RequestHandler {
@@ -85,25 +89,28 @@ export class BearerAuth {
             throw createBearerAuthError("missing Bearer token");
         }
 
-        const { user, scopes } = await this.userAndScopesFromToken(token);
-
-        const resourceGuard = new TokenResourceGuard(user.id, scopes);
-        (req as WithResourceAccessGuard).resourceGuard = resourceGuard;
-
-        const functionScopes = scopes
-            .filter((s) => s.startsWith("function:"))
-            .map((s) => s.substring("function:".length));
-        if (functionScopes.length === 1 && functionScopes[0] === "*") {
-            (req as WithFunctionAccessGuard).functionGuard = new AllAccessFunctionGuard();
+        const subject = await this.subjectFromToken(token);
+        if (SubjectId.is(subject)) {
+            req.user = subject;
         } else {
-            // We always install a function access guard. If the token has no scopes, it's not allowed to do anything.
-            (req as WithFunctionAccessGuard).functionGuard = new ExplicitFunctionAccessGuard(functionScopes);
-        }
+            const { user, scopes } = subject;
+            const resourceGuard = new TokenResourceGuard(user.id, scopes);
+            (req as WithResourceAccessGuard).resourceGuard = resourceGuard;
 
-        req.user = user;
+            const functionScopes = scopes
+                .filter((s) => s.startsWith("function:"))
+                .map((s) => s.substring("function:".length));
+            if (functionScopes.length === 1 && functionScopes[0] === "*") {
+                (req as WithFunctionAccessGuard).functionGuard = new AllAccessFunctionGuard();
+            } else {
+                // We always install a function access guard. If the token has no scopes, it's not allowed to do anything.
+                (req as WithFunctionAccessGuard).functionGuard = new ExplicitFunctionAccessGuard(functionScopes);
+            }
+            req.user = user;
+        }
     }
 
-    private async userAndScopesFromToken(token: string): Promise<{ user: User; scopes: string[] }> {
+    private async subjectFromToken(token: string): Promise<{ user: User; scopes: string[] } | SubjectId> {
         // We handle two types of Bearer tokens:
         //  1. Personal Access Tokens which are prefixed with `gitpod_pat_`
         //  2. Old(er) access tokens which do not have any specific prefix.
@@ -121,7 +128,6 @@ export class BearerAuth {
                 }
 
                 const hash = parsed.hash();
-
                 const pat = await this.personalAccessTokenDB.getByHash(hash);
                 if (!pat) {
                     throw new Error("Failed to find PAT by hash");
@@ -129,6 +135,17 @@ export class BearerAuth {
 
                 const userByID = await this.userService.findUserById(pat.userId, pat.userId);
                 return { user: userByID, scopes: pat.scopes };
+            } catch (e) {
+                log.error("Failed to authenticate using PAT", e);
+                // We must not leak error details to the user.
+                throw createBearerAuthError("Invalid personal access token");
+            }
+        }
+
+        if (ApiAccessToken.validatePrefix(token)) {
+            try {
+                const parsed = await ApiAccessToken.parse(token, this.authJWT);
+                return parsed.subjectId();
             } catch (e) {
                 log.error("Failed to authenticate using PAT", e);
                 // We must not leak error details to the user.

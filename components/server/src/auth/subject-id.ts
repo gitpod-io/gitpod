@@ -68,6 +68,12 @@ export namespace SubjectId {
         const value = parts.slice(1).join();
         return { kind, value };
     }
+    export function userId(id: SubjectId): string | undefined {
+        if (id.kind === "user") {
+            return id.value;
+        }
+        return undefined;
+    }
 }
 
 // The following codes is meant for backwards-compatibility with the existing express types, or other code, that relis on
@@ -103,22 +109,14 @@ export namespace Subject {
         }
         return { userId, subjectId };
     }
-    /**
-     * Meant for backwards-compatibility
-     * @param subject
-     * @returns
-     * @deprecated
-     */
-    export function toIdStr(subject: Subject | undefined): string | undefined {
-        if (subject === undefined) {
-            return undefined;
-        }
-        if (SubjectId.is(subject)) {
-            if (subject.kind === "user") {
-                return subject.value;
-            }
-            return SubjectId.toString(subject);
-        }
-        return subject.id;
+}
+
+export function toUserId(subjectId: string | SubjectId | undefined): string | undefined {
+    if (!subjectId) {
+        return undefined;
     }
+    if (typeof subjectId === "string") {
+        return subjectId;
+    }
+    return SubjectId.userId(subjectId);
 }
