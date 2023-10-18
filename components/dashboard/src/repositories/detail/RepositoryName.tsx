@@ -13,6 +13,8 @@ import { useUpdateProject } from "../../data/projects/project-queries";
 import { useToast } from "../../components/toasts/Toasts";
 import { useOnBlurError } from "../../hooks/use-onblur-error";
 
+const MAX_LENGTH = 100;
+
 type Props = {
     project: Project;
 };
@@ -22,7 +24,7 @@ export const RepositoryNameForm: FC<Props> = ({ project }) => {
     const updateProject = useUpdateProject();
     const [projectName, setProjectName] = useState(project.name);
 
-    const nameError = useOnBlurError("Sorry, this name is too long.", projectName.length <= 32);
+    const nameError = useOnBlurError("Sorry, this name is too long.", projectName.length <= MAX_LENGTH);
 
     const updateName = useCallback(
         async (e: React.FormEvent) => {
@@ -51,7 +53,7 @@ export const RepositoryNameForm: FC<Props> = ({ project }) => {
     return (
         <form onSubmit={updateName}>
             <TextInputField
-                hint="The name can be up to 32 characters long."
+                hint={`The name can be up to ${MAX_LENGTH} characters long.`}
                 value={projectName}
                 error={nameError.message}
                 onChange={setProjectName}
