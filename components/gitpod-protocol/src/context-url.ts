@@ -41,7 +41,7 @@ export namespace ContextURL {
         return undefined;
     }
 
-    function normalize(ws: Pick<Workspace, "context" | "contextURL"> | undefined): string | undefined {
+    export function normalize(ws: Pick<Workspace, "context" | "contextURL"> | undefined): string | undefined {
         if (!ws) {
             return undefined;
         }
