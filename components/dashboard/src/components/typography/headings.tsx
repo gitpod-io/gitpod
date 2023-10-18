@@ -18,7 +18,12 @@ export const Heading1: FC<HeadingProps> = ({ id, color, tracking, className, chi
     return (
         <h1
             id={id}
-            className={classNames(getHeadingColor(color), getTracking(tracking), "font-bold text-4xl", className)}
+            className={classNames(
+                getHeadingColor(color),
+                getTracking(tracking),
+                "font-bold text-4xl truncate",
+                className,
+            )}
         >
             {children}
         </h1>
