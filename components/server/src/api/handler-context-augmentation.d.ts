@@ -4,10 +4,10 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/gitpod-protocol";
+import { SubjectId } from "../auth/subject-id";
 
 declare module "@connectrpc/connect" {
     interface HandlerContext {
-        user: User;
+        subjectId: SubjectId;
     }
 }

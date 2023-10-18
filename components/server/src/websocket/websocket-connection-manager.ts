@@ -50,6 +50,7 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { maskIp } from "../analytics";
 import { runWithLogContext } from "../util/log-context";
+import { Subject, SubjectId } from "../auth/subject-id";
 
 export type GitpodServiceFactory = () => GitpodServerImpl;
 
@@ -93,7 +94,7 @@ namespace WebsocketClientType {
         return result;
     }
 }
-export type WebsocketAuthenticationLevel = "user" | "session" | "anonymous";
+export type WebsocketAuthenticationLevel = "user" | "apitoken" | "session" | "anonymous";
 
 export interface ClientMetadata {
     id: string;
@@ -109,22 +110,31 @@ interface ClientOrigin {
     instanceId?: string;
 }
 export namespace ClientMetadata {
-    export function from(
+    export function fromUserId(
         userId: string | undefined,
+        data?: Omit<ClientMetadata, "id" | "sessionId" | "authLevel">,
+    ): ClientMetadata {
+        return from(userId ? SubjectId.fromUserId(userId) : undefined, data);
+    }
+
+    export function from(
+        subjectId: SubjectId | undefined,
         data?: Omit<ClientMetadata, "id" | "sessionId" | "authLevel">,
     ): ClientMetadata {
         let id = "anonymous";
         let authLevel: WebsocketAuthenticationLevel = "anonymous";
-        if (userId) {
-            id = userId;
-            authLevel = "user";
+        let logIds = {};
+        if (SubjectId.is(subjectId)) {
+            id = SubjectId.toString(subjectId);
+            authLevel = subjectId.kind;
+            logIds = Subject.toLogIds(subjectId);
         }
-        return { id, authLevel, userId, ...data, origin: data?.origin || {} };
+        return { id, authLevel, ...logIds, ...data, origin: data?.origin || {} };
     }
 
     export function fromRequest(req: any) {
         const expressReq = req as express.Request;
-        const user = expressReq.user;
+        const subject = Subject.wrap(expressReq.user);
         const type = WebsocketClientType.getClientType(expressReq);
         const version = takeFirst(expressReq.headers["x-client-version"]);
         const userAgent = takeFirst(expressReq.headers["user-agent"]);
@@ -134,7 +144,7 @@ export namespace ClientMetadata {
             instanceId,
             workspaceId,
         };
-        return ClientMetadata.from(user?.id, { type, origin, version, userAgent });
+        return ClientMetadata.from(subject ? Subject.toId(subject) : subject, { type, origin, version, userAgent });
     }
 
     function getOriginWorkspaceId(req: express.Request): string | undefined {
@@ -212,7 +222,8 @@ export class WebsocketConnectionManager implements ConnectionHandler {
         connectionCtx?: TraceContext,
     ): GitpodServerImpl {
         const expressReq = request as express.Request;
-        const user: User | undefined = expressReq.user;
+        const subject: Subject | undefined = Subject.wrap(expressReq.user);
+        const user = User.is(subject) ? subject : undefined; // we don't serve websocket connections not tied to a user
 
         const clientContext = this.getOrCreateClientContext(expressReq);
         const gitpodServer = this.serverFactory();

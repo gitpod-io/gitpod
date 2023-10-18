@@ -48,6 +48,7 @@ import { JobRunner } from "./jobs/runner";
 import { RedisSubscriber } from "./messaging/redis-subscriber";
 import { HEADLESS_LOGS_PATH_PREFIX, HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from "./workspace/headless-log-service";
 import { runWithLogContext } from "./util/log-context";
+import { Subject } from "./auth/subject-id";
 
 @injectable()
 export class Server {
@@ -143,8 +144,8 @@ export class Server {
         // log context
         app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
-                const userId = req.user ? req.user.id : undefined;
-                runWithLogContext("http", { userId, requestPath: req.path }, () => next());
+                const ids = Subject.toLogIds(Subject.wrap(req.user));
+                runWithLogContext("http", { ...ids, requestPath: req.path }, () => next());
             } catch (err) {
                 next(err);
             }

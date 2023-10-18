@@ -8,7 +8,8 @@ export const IAnalyticsWriter = Symbol("IAnalyticsWriter");
 
 type Identity =
     | { userId: string | number; anonymousId?: string | number }
-    | { userId?: string | number; anonymousId: string | number };
+    | { userId?: string | number; anonymousId: string | number }
+    | { userId?: string | number; subjectId?: string; anonymousId?: string | number };
 
 interface Message {
     messageId?: string;

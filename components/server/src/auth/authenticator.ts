@@ -37,11 +37,14 @@ export class Authenticator {
     protected setup() {
         // Setup passport
         this.passportInitialize = passport.initialize();
-        passport.serializeUser<string>((user: User, done) => {
-            if (user) {
+        passport.serializeUser<string>((subject: Express.User, done) => {
+            if (!subject) {
+                log.error("(Authenticator) serializeUser called with undefined user.");
+            } else if (User.is(subject)) {
+                const user = subject;
                 done(null, user.id);
             } else {
-                log.error("(Authenticator) serializeUser called with undefined user.");
+                log.error("(Authenticator) serializeUser called with invalid shape.");
             }
         });
         passport.deserializeUser(async (id, done) => {

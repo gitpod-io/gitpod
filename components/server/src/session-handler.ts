@@ -15,6 +15,7 @@ import { Config } from "./config";
 import { WsNextFunction, WsRequestHandler } from "./express/ws-handler";
 import { reportJWTCookieIssued } from "./prometheus-metrics";
 import { UserService } from "./user/user-service";
+import { Subject, SubjectId } from "./auth/subject-id";
 
 @injectable()
 export class SessionHandler {
@@ -25,7 +26,7 @@ export class SessionHandler {
     public jwtSessionConvertor(): express.Handler {
         return async (req, res) => {
             const user = req.user;
-            if (!user) {
+            if (!user || !User.is(user)) {
                 res.status(401);
                 res.send("User has no valid session.");
                 return;
@@ -102,7 +103,7 @@ export class SessionHandler {
         next();
     }
 
-    async verify(cookie: string): Promise<User | undefined> {
+    async verify(cookie: string): Promise<Subject | undefined> {
         const cookies = parseCookieHeader(cookie);
         const jwtToken = cookies[this.getJWTCookieName(this.config)];
         if (!jwtToken) {
@@ -116,6 +117,11 @@ export class SessionHandler {
             const subject = claims.sub;
             if (!subject) {
                 throw new Error("Subject is missing from JWT session claims");
+            }
+
+            const subjectId = SubjectId.parse(subject);
+            if (subjectId) {
+                return subjectId;
             }
 
             return await this.userService.findUserById(subject, subject);

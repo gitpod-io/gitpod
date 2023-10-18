@@ -28,6 +28,7 @@ import { LogContextOptions, runWithLogContext } from "../util/log-context";
 import { v4 } from "uuid";
 import { performance } from "perf_hooks";
 import { wrapAsyncGenerator } from "../util/request-context";
+import { Subject } from "../auth/subject-id";
 
 function service<T extends ServiceType>(type: T, impl: ServiceImpl<T>): [T, ServiceImpl<T>] {
     return [type, impl];
@@ -178,9 +179,9 @@ export class API {
 
                     const apply = async <T>(): Promise<T> => {
                         const verifyStartedAt = performance.now();
-                        const user = await self.verify(context);
+                        const subjectId = await self.verify(context);
                         verifyMs = performance.now() - verifyStartedAt;
-                        context.user = user;
+                        context.subjectId = subjectId;
 
                         callStartedAt = performance.now();
                         return Reflect.apply(target[prop as any], target, args);
@@ -217,11 +218,11 @@ export class API {
     }
 
     private async verify(context: HandlerContext) {
-        const user = await this.sessionHandler.verify(context.requestHeader.get("cookie") || "");
-        if (!user) {
+        const subject = await this.sessionHandler.verify(context.requestHeader.get("cookie") || "");
+        if (!subject) {
             throw new ConnectError("unauthenticated", Code.Unauthenticated);
         }
-        return user;
+        return Subject.toId(subject);
     }
 
     static bindAPI(bind: interfaces.Bind): void {

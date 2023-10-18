@@ -16,6 +16,7 @@ let version: string | undefined;
 export interface LogContext {
     organizationId?: string;
     sessionId?: string;
+    subjectId?: string;
     userId?: string;
     workspaceId?: string;
     instanceId?: string;

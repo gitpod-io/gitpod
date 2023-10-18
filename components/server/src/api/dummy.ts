@@ -5,7 +5,6 @@
  */
 
 import { HandlerContext, ServiceImpl } from "@connectrpc/connect";
-import { User } from "@gitpod/gitpod-protocol";
 import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connect";
 import {
     LotsOfRepliesRequest,
@@ -14,6 +13,7 @@ import {
     SayHelloResponse,
 } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_pb";
 import { injectable } from "inversify";
+import { SubjectId } from "../auth/subject-id";
 
 @injectable()
 export class APIHelloService implements ServiceImpl<typeof HelloService> {
@@ -35,6 +35,6 @@ export class APIHelloService implements ServiceImpl<typeof HelloService> {
     }
 
     private getSubject(context: HandlerContext): string {
-        return User.getName(context.user) || "World";
+        return SubjectId.toString(context.subjectId) || "World";
     }
 }
