@@ -22,6 +22,8 @@ import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/experimental/v2/
 import { getMetricsInterceptor } from "@gitpod/public-api/lib/metrics";
 import { getExperimentsClient } from "../experiments/client";
 import { JsonRpcWorkspaceClient } from "./json-rpc-workspace-client";
+import { JsonRpcOrganizationClient } from "./json-rpc-organization-client";
+import { OrganizationService } from "@gitpod/public-api/lib/gitpod/experimental/v2/organization_connect";
 
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
@@ -41,6 +43,7 @@ export const workspacesService = createPromiseClient(WorkspaceV1Service, transpo
 export const oidcService = createPromiseClient(OIDCService, transport);
 
 export const workspaceClient = createServiceClient(WorkspaceService, new JsonRpcWorkspaceClient());
+export const organizationClient = createServiceClient(OrganizationService, new JsonRpcOrganizationClient());
 
 export function publicApiTeamToProtocol(team: Team): ProtocolTeam {
     return {
