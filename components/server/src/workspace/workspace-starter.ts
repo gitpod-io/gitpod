@@ -33,8 +33,6 @@ import {
     DisposableCollection,
     GitCheckoutInfo,
     GitpodServer,
-    GitpodToken,
-    GitpodTokenType,
     HeadlessWorkspaceEventType,
     IDESettings,
     ImageBuildLogInfo,
@@ -108,7 +106,6 @@ import { inject, injectable } from "inversify";
 import * as path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { HostContextProvider } from "../auth/host-context-provider";
-import { ScopedResourceGuard } from "../auth/resource-access";
 import { EntitlementService } from "../billing/entitlement-service";
 import { Config } from "../config";
 import { IDEService } from "../ide-service";
@@ -131,6 +128,8 @@ import { EnvVarService, ResolvedEnvVars } from "../user/env-var-service";
 import { RedlockAbortSignal } from "redlock";
 import { ConfigProvider } from "./config-provider";
 import { isGrpcError } from "@gitpod/gitpod-protocol/lib/util/grpc";
+import { ApiAccessToken, ApiTokenScope } from "../auth/api-token";
+import { AuthJWT } from "../auth/jwt";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
@@ -222,6 +221,7 @@ export class WorkspaceStarter {
         @inject(RedisMutex) private readonly redisMutex: RedisMutex,
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
         @inject(EnvVarService) private readonly envVarService: EnvVarService,
+        @inject(AuthJWT) private readonly authJWT: AuthJWT,
     ) {}
 
     public async startWorkspace(
@@ -1386,18 +1386,31 @@ export class WorkspaceStarter {
         }
 
         const createGitpodTokenPromise = (async () => {
-            const scopes = this.createDefaultGitpodAPITokenScopes(workspace, instance);
-            const token = crypto.randomBytes(30).toString("hex");
-            const tokenHash = crypto.createHash("sha256").update(token, "utf8").digest("hex");
-            const dbToken: GitpodToken = {
-                tokenHash,
-                name: `${instance.id}-default`,
-                type: GitpodTokenType.MACHINE_AUTH_TOKEN,
-                userId: user.id,
-                scopes,
-                created: new Date().toISOString(),
-            };
-            await this.userDB.trace(traceCtx).storeGitpodToken(dbToken);
+            // const scopes = this.createDefaultGitpodAPITokenScopes(workspace, instance);
+            // const token = crypto.randomBytes(30).toString("hex");
+            // const tokenHash = crypto.createHash("sha256").update(token, "utf8").digest("hex");
+            // const dbToken: GitpodToken = {
+            //     tokenHash,
+            //     name: `${instance.id}-default`,
+            //     type: GitpodTokenType.MACHINE_AUTH_TOKEN,
+            //     userId: user.id,
+            //     scopes,
+            //     created: new Date().toISOString(),
+            // };
+            // await this.userDB.trace(traceCtx).storeGitpodToken(dbToken);
+
+            const scopes: ApiTokenScope[] = [
+                {
+                    permission: "workspace",
+                    targetId: workspace.id,
+                },
+                {
+                    permission: "user_read",
+                    targetId: user.id,
+                },
+            ];
+            const apiAccessToken = ApiAccessToken.create(scopes);
+            const token = await apiAccessToken.encode(this.authJWT);
 
             const tokenExpirationTime = new Date();
             tokenExpirationTime.setMinutes(tokenExpirationTime.getMinutes() + 24 * 60);
@@ -1537,93 +1550,93 @@ export class WorkspaceStarter {
         return spec;
     }
 
-    private createDefaultGitpodAPITokenScopes(workspace: Workspace, instance: WorkspaceInstance): string[] {
-        const scopes = [
-            "function:getWorkspace",
-            "function:getLoggedInUser",
-            "function:getWorkspaceOwner",
-            "function:getWorkspaceUsers",
-            "function:isWorkspaceOwner",
-            "function:controlAdmission",
-            "function:setWorkspaceTimeout",
-            "function:getWorkspaceTimeout",
-            "function:sendHeartBeat",
-            "function:getOpenPorts",
-            "function:openPort",
-            "function:closePort",
-            "function:generateNewGitpodToken",
-            "function:takeSnapshot",
-            "function:waitForSnapshot",
-            "function:stopWorkspace",
-            "function:getToken",
-            "function:getGitpodTokenScopes",
-            "function:accessCodeSyncStorage",
-            "function:guessGitTokenScopes",
-            "function:updateGitStatus",
-            "function:getWorkspaceEnvVars",
-            "function:getEnvVars", // TODO remove this after new gitpod-cli is deployed
-            "function:setEnvVar",
-            "function:deleteEnvVar",
-            "function:getTeams",
-            "function:trackEvent",
-            "function:getSupportedWorkspaceClasses",
-            // getIDToken is used by Gitpod's OIDC Identity Provider to check for authorisation.
-            // Without this scope the workspace cannot produce ID tokens.
-            "function:getIDToken",
-            "function:getDefaultWorkspaceImage",
+    // private createDefaultGitpodAPITokenScopes(workspace: Workspace, instance: WorkspaceInstance): string[] {
+    //     const scopes = [
+    //         "function:getWorkspace",
+    //         "function:getLoggedInUser",
+    //         "function:getWorkspaceOwner",
+    //         "function:getWorkspaceUsers",
+    //         "function:isWorkspaceOwner",
+    //         "function:controlAdmission",
+    //         "function:setWorkspaceTimeout",
+    //         "function:getWorkspaceTimeout",
+    //         "function:sendHeartBeat",
+    //         "function:getOpenPorts",
+    //         "function:openPort",
+    //         "function:closePort",
+    //         "function:generateNewGitpodToken",
+    //         "function:takeSnapshot",
+    //         "function:waitForSnapshot",
+    //         "function:stopWorkspace",
+    //         "function:getToken",
+    //         "function:getGitpodTokenScopes",
+    //         "function:accessCodeSyncStorage",
+    //         "function:guessGitTokenScopes",
+    //         "function:updateGitStatus",
+    //         "function:getWorkspaceEnvVars",
+    //         "function:getEnvVars", // TODO remove this after new gitpod-cli is deployed
+    //         "function:setEnvVar",
+    //         "function:deleteEnvVar",
+    //         "function:getTeams",
+    //         "function:trackEvent",
+    //         "function:getSupportedWorkspaceClasses",
+    //         // getIDToken is used by Gitpod's OIDC Identity Provider to check for authorisation.
+    //         // Without this scope the workspace cannot produce ID tokens.
+    //         "function:getIDToken",
+    //         "function:getDefaultWorkspaceImage",
 
-            "resource:" +
-                ScopedResourceGuard.marshalResourceScope({
-                    kind: "workspace",
-                    subjectID: workspace.id,
-                    operations: ["get", "update"],
-                }),
-            "resource:" +
-                ScopedResourceGuard.marshalResourceScope({
-                    kind: "workspaceInstance",
-                    subjectID: instance.id,
-                    operations: ["get", "update", "delete"],
-                }),
-            "resource:" +
-                ScopedResourceGuard.marshalResourceScope({
-                    kind: "snapshot",
-                    subjectID: ScopedResourceGuard.SNAPSHOT_WORKSPACE_SUBJECT_ID_PREFIX + workspace.id,
-                    operations: ["create"],
-                }),
-            "resource:" +
-                ScopedResourceGuard.marshalResourceScope({
-                    kind: "gitpodToken",
-                    subjectID: "*",
-                    operations: ["create"],
-                }),
-            "resource:" +
-                ScopedResourceGuard.marshalResourceScope({
-                    kind: "userStorage",
-                    subjectID: "*",
-                    operations: ["create", "get", "update"],
-                }),
-            "resource:" +
-                ScopedResourceGuard.marshalResourceScope({ kind: "token", subjectID: "*", operations: ["get"] }),
-            "resource:" +
-                ScopedResourceGuard.marshalResourceScope({
-                    kind: "contentBlob",
-                    subjectID: "*",
-                    operations: ["create", "get"],
-                }),
-        ];
-        if (CommitContext.is(workspace.context)) {
-            const subjectID = workspace.context.repository.owner + "/" + workspace.context.repository.name;
-            scopes.push(
-                "resource:" +
-                    ScopedResourceGuard.marshalResourceScope({
-                        kind: "envVar",
-                        subjectID,
-                        operations: ["create", "get", "update", "delete"],
-                    }),
-            );
-        }
-        return scopes;
-    }
+    //         "resource:" +
+    //             ScopedResourceGuard.marshalResourceScope({
+    //                 kind: "workspace",
+    //                 subjectID: workspace.id,
+    //                 operations: ["get", "update"],
+    //             }),
+    //         "resource:" +
+    //             ScopedResourceGuard.marshalResourceScope({
+    //                 kind: "workspaceInstance",
+    //                 subjectID: instance.id,
+    //                 operations: ["get", "update", "delete"],
+    //             }),
+    //         "resource:" +
+    //             ScopedResourceGuard.marshalResourceScope({
+    //                 kind: "snapshot",
+    //                 subjectID: ScopedResourceGuard.SNAPSHOT_WORKSPACE_SUBJECT_ID_PREFIX + workspace.id,
+    //                 operations: ["create"],
+    //             }),
+    //         "resource:" +
+    //             ScopedResourceGuard.marshalResourceScope({
+    //                 kind: "gitpodToken",
+    //                 subjectID: "*",
+    //                 operations: ["create"],
+    //             }),
+    //         "resource:" +
+    //             ScopedResourceGuard.marshalResourceScope({
+    //                 kind: "userStorage",
+    //                 subjectID: "*",
+    //                 operations: ["create", "get", "update"],
+    //             }),
+    //         "resource:" +
+    //             ScopedResourceGuard.marshalResourceScope({ kind: "token", subjectID: "*", operations: ["get"] }),
+    //         "resource:" +
+    //             ScopedResourceGuard.marshalResourceScope({
+    //                 kind: "contentBlob",
+    //                 subjectID: "*",
+    //                 operations: ["create", "get"],
+    //             }),
+    //     ];
+    //     if (CommitContext.is(workspace.context)) {
+    //         const subjectID = workspace.context.repository.owner + "/" + workspace.context.repository.name;
+    //         scopes.push(
+    //             "resource:" +
+    //                 ScopedResourceGuard.marshalResourceScope({
+    //                     kind: "envVar",
+    //                     subjectID,
+    //                     operations: ["create", "get", "update", "delete"],
+    //                 }),
+    //         );
+    //     }
+    //     return scopes;
+    // }
 
     private createGitSpec(workspace: Workspace, user: User): GitSpec {
         const context = workspace.context;
