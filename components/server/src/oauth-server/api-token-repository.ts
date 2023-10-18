@@ -35,11 +35,15 @@ export class ApiTokenRepository implements OAuthTokenRepository {
             // this would otherwise break persisting of an DBOAuthAuthCodeEntry in AuthCodeRepositoryDB
             throw new Error("Cannot issue auth code for unknown user.");
         }
-        log.info("issuing token", { userId: user?.id, scopes });
 
         const expiry = tokenExpiryInFuture.getEndDate();
         const apiToken = ApiAccessToken.create(scopes.map((s) => ApiTokenScope.decode(s.name)));
         const accessToken = await apiToken.encode(this.authJWT);
+        log.info("issuing token", {
+            userId: user?.id,
+            scopes: new TrustedValue(scopes),
+            accessToken: new TrustedValue(accessToken),
+        });
         return <OAuthToken>{
             accessToken,
             accessTokenExpiresAt: expiry,
