@@ -13,6 +13,7 @@ import Tooltip from "../components/Tooltip";
 import dayjs from "dayjs";
 import { WorkspaceEntryOverflowMenu } from "./WorkspaceOverflowMenu";
 import { WorkspaceStatusIndicator } from "./WorkspaceStatusIndicator";
+import { converter } from "../service/public-api";
 
 type Props = {
     info: WorkspaceInfo;
@@ -22,10 +23,10 @@ type Props = {
 export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion }) => {
     const [menuActive, setMenuActive] = useState(false);
 
-    const repo = info.latestInstance?.gitStatus;
+    const gitStatus = converter.toGitStatus(info);
 
     const workspace = info.workspace;
-    const currentBranch = repo?.branch || Workspace.getBranchName(info.workspace) || "<unknown>";
+    const currentBranch = gitStatus?.branch || "<unknown>";
     const project = getProjectPath(workspace);
     const normalizedContextUrl = ContextURL.getNormalizedURL(workspace)?.toString();
     const normalizedContextUrlDescription = normalizedContextUrl || workspace.contextURL; // Instead of showing nothing, we prefer to show the raw content instead
@@ -82,7 +83,7 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
                             <Tooltip content={currentBranch}>{currentBranch}</Tooltip>
                         </div>
                         <div className="mr-auto">
-                            <PendingChangesDropdown workspaceInstance={info.latestInstance} />
+                            <PendingChangesDropdown gitStatus={gitStatus} />
                         </div>
                     </ItemField>
                     <ItemField className="w-2/12 flex my-auto">

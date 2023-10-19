@@ -126,6 +126,16 @@
 	}
 }
 
+(server_public_api) {
+	uri strip_prefix /public-api
+	# TODO(ak) verify that it only enabled for json content-type, not grpc
+	import compression
+
+	reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3001 {
+		import upstream_connection
+	}
+}
+
 # Kubernetes health-check
 :8003 {
 	respond /live 200
@@ -202,13 +212,12 @@ https://{$GITPOD_DOMAIN} {
 
 	@proxy_server_public_api path /public-api/gitpod.experimental.v1.HelloService*
 	handle @proxy_server_public_api {
-		uri strip_prefix /public-api
-		# TODO(ak) verify that it only enabled for json content-type, not grpc
-		import compression
+		import server_public_api
+	}
 
-		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3001 {
-			import upstream_connection
-		}
+	@proxy_server_public_api_2 path /public-api/gitpod.experimental.v2.*
+	handle @proxy_server_public_api_2 {
+		import server_public_api
 	}
 
 	@proxy_public_api path /public-api*

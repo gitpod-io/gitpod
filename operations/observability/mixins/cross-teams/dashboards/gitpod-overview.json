@@ -95,7 +95,7 @@
         },
         "textMode": "value"
       },
-      "pluginVersion": "9.5.1",
+      "pluginVersion": "9.5.3",
       "targets": [
         {
           "datasource": {
@@ -161,7 +161,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "9.5.1",
+      "pluginVersion": "9.5.3",
       "targets": [
         {
           "datasource": {
@@ -245,7 +245,7 @@
         "showUnfilled": true,
         "valueMode": "color"
       },
-      "pluginVersion": "9.5.1",
+      "pluginVersion": "9.5.3",
       "targets": [
         {
           "datasource": {
@@ -305,7 +305,7 @@
         "showUnfilled": true,
         "valueMode": "color"
       },
-      "pluginVersion": "9.5.1",
+      "pluginVersion": "9.5.3",
       "targets": [
         {
           "datasource": {
@@ -456,7 +456,7 @@
       "fillGradient": 5,
       "gridPos": {
         "h": 7,
-        "w": 24,
+        "w": 12,
         "x": 0,
         "y": 13
       },
@@ -481,7 +481,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.5.1",
+      "pluginVersion": "9.5.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -580,6 +580,118 @@
     },
     {
       "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "id": 28,
+      "panels": [],
+      "title": "IPFS Storage",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Amount of available storage remaining for IPFS in the workspace clusters. This storage is used as workspace image cache. Clusters must get recreated before this gets too low.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 214748364800
+              },
+              {
+                "color": "#EAB839",
+                "value": 644245094410
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "id": 35,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "min(node_filesystem_avail_bytes{device=\"/dev/mapper/lvm--disk-ipfs\", node=~\"services-.*\", cluster=~\"$cluster\"}) by (cluster)",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "IPFS Storage Remaining",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
       "datasource": {
         "type": "datasource",
         "uid": "grafana"
@@ -588,7 +700,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 503
+        "y": 28
       },
       "id": 13,
       "panels": [],
@@ -617,9 +729,9 @@
       "fillGradient": 5,
       "gridPos": {
         "h": 7,
-        "w": 24,
+        "w": 12,
         "x": 0,
-        "y": 504
+        "y": 29
       },
       "hiddenSeries": false,
       "id": 6,
@@ -642,7 +754,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.5.1",
+      "pluginVersion": "9.5.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -720,7 +832,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 994
+        "y": 36
       },
       "id": 14,
       "panels": [],
@@ -767,9 +879,9 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 24,
+        "w": 12,
         "x": 0,
-        "y": 995
+        "y": 37
       },
       "heatmap": {},
       "hideZeroBuckets": true,
@@ -815,7 +927,7 @@
           "unit": "s"
         }
       },
-      "pluginVersion": "9.5.1",
+      "pluginVersion": "9.5.3",
       "repeat": "cluster",
       "targets": [
         {
@@ -856,7 +968,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 1485
+        "y": 44
       },
       "id": 15,
       "panels": [],
@@ -885,9 +997,9 @@
       "fillGradient": 5,
       "gridPos": {
         "h": 7,
-        "w": 24,
+        "w": 12,
         "x": 0,
-        "y": 1486
+        "y": 45
       },
       "hiddenSeries": false,
       "id": 8,
@@ -910,7 +1022,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.5.1",
+      "pluginVersion": "9.5.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1016,7 +1128,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 1976
+        "y": 52
       },
       "id": 16,
       "panels": [],
@@ -1044,9 +1156,9 @@
       "fillGradient": 5,
       "gridPos": {
         "h": 7,
-        "w": 24,
+        "w": 12,
         "x": 0,
-        "y": 1977
+        "y": 53
       },
       "hiddenSeries": false,
       "id": 9,
@@ -1069,7 +1181,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.5.1",
+      "pluginVersion": "9.5.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1145,7 +1257,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 2467
+        "y": 60
       },
       "id": 17,
       "panels": [],
@@ -1173,9 +1285,9 @@
       "fillGradient": 5,
       "gridPos": {
         "h": 7,
-        "w": 24,
+        "w": 12,
         "x": 0,
-        "y": 2468
+        "y": 61
       },
       "hiddenSeries": false,
       "id": 10,
@@ -1198,7 +1310,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.5.1",
+      "pluginVersion": "9.5.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",

@@ -46,6 +46,7 @@ interface AlertInfo {
     txtCls: string;
     icon: React.ReactNode;
     iconColor?: string;
+    closeIconColor?: string;
 }
 
 const infoMap: Record<AlertType, AlertInfo> = {
@@ -84,6 +85,7 @@ const infoMap: Record<AlertType, AlertInfo> = {
         txtCls: "text-white",
         icon: <Exclamation className="w-4 h-4"></Exclamation>,
         iconColor: "filter-brightness-10",
+        closeIconColor: "text-white",
     },
 };
 
@@ -124,12 +126,17 @@ export default function Alert(props: AlertProps) {
                 <span className={`ml-4`}>
                     {/* Use an IconButton component once we make it */}
                     <Button
-                        type="secondary"
-                        className="bg-transparent hover:bg-transparent"
+                        type="transparent"
+                        className="hover:bg-transparent"
                         onClick={handleClose}
                         autoFocus={autoFocusClose}
                     >
-                        <XSvg className="w-3 h-4 cursor-pointer text-white" />
+                        <XSvg
+                            className={classNames(
+                                "w-3 h-4 cursor-pointer dark:text-white",
+                                info.closeIconColor || "text-gray-700",
+                            )}
+                        />
                     </Button>
                 </span>
             )}
