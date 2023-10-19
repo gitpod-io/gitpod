@@ -113,7 +113,7 @@ export class SessionHandler {
             if (!subject) {
                 throw new Error("Subject is missing from JWT session claims");
             }
-            return await this.userService.findUserById(subject, subject);
+            return await this.userService.findUserById(claims.subject, claims.subject);
         } catch (err) {
             log.warn("Failed to authenticate user with JWT Session", err);
             // Remove the existing cookie, to force the user to re-sing in, and hence refresh it
