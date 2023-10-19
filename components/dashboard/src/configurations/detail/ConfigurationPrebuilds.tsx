@@ -13,8 +13,8 @@ import { CheckboxInputField } from "../../components/forms/CheckboxInputField";
 import { InputField } from "../../components/forms/InputField";
 import { SelectInputField } from "../../components/forms/SelectInputField";
 import { useToast } from "../../components/toasts/Toasts";
-import { Heading2 } from "../../components/typography/headings";
 import { useUpdateProject } from "../../data/projects/project-queries";
+import { Heading2 } from "@podkit/typography/headings";
 
 interface RepositoryPrebuildsSettingsProps {
     repository: Project;
