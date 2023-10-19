@@ -188,7 +188,7 @@ export class OrganizationService {
         return this.teamDB.resetGenericInvite(orgId);
     }
 
-    public async joinOrganization(subject: MaybeSubject, userId: string, inviteId: string): Promise<string> {
+    public async joinOrganization(userId: string, inviteId: string): Promise<string> {
         // Invites can be used by anyone, as long as they know the invite ID, hence needs no resource guard
         const invite = await this.teamDB.findTeamMembershipInviteById(inviteId);
         if (!invite || invite.invalidationTime !== "") {

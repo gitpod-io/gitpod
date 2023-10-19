@@ -99,7 +99,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
     }
 
     async joinOrganization(req: JoinOrganizationRequest, _: HandlerContext): Promise<JoinOrganizationResponse> {
-        const orgId = await this.orgService.joinOrganization(undefined, req.joineeId, req.invitationId);
+        const orgId = await this.orgService.joinOrganization(req.joineeId, req.invitationId);
         const result = new JoinOrganizationResponse();
         result.organizationId = orgId;
         return result;

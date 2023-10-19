@@ -27,7 +27,7 @@ const withCtx = <T>(subject: Subject | User, p: Promise<T> | (() => Promise<T>))
     runWithRequestContext(
         Subject.toId(User.is(subject) ? subject.id : subject),
         {
-            contextKind: "test",
+            requestKind: "test",
             signal: new AbortSignal(),
         },
         () => {

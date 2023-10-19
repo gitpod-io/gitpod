@@ -21,8 +21,14 @@ import { AddressInfo } from "net";
 import { isFgaChecksEnabled } from "../authorization/authorizer";
 import { grpcServerHandled, grpcServerHandling, grpcServerStarted } from "../prometheus-metrics";
 import { SessionHandler } from "../session-handler";
-import { LogContextOptions } from "../util/log-context";
-import { runWithRequestContext, setAbortSignal, setSubjectId, wrapAsyncGenerator } from "../util/request-context";
+import {
+    RequestContext,
+    runWithChildContext,
+    runWithRequestContext,
+    setAbortSignal,
+    setSubjectId,
+    wrapAsyncGenerator,
+} from "../util/request-context";
 import { HelloServiceAPI as HelloServiceAPI } from "./hello-service-api";
 import { APIStatsService as StatsServiceAPI } from "./stats";
 import { APITeamsService as TeamsServiceAPI } from "./teams";
@@ -30,6 +36,7 @@ import { APIUserService as UserServiceAPI } from "./user";
 import { WorkspaceServiceAPI } from "./workspace-service-api";
 import { SubjectId } from "../auth/subject-id";
 import { performance } from "perf_hooks";
+import { v4 } from "uuid";
 
 decorate(injectable(), PublicAPIConverter);
 
@@ -113,20 +120,18 @@ export class API {
         return {
             get(target, prop) {
                 return (...args: any[]) => {
-                    const logContext: LogContextOptions & {
-                        contextKind: string;
-                        contextTimeMs: number;
-                        signal: AbortSignal;
-                        grpc_service: string;
-                        grpc_method: string;
-                    } = {
-                        contextKind: "public-api",
+                    const requestContext: RequestContext = {
+                        requestId: v4(),
+                        requestKind: "public-api",
                         contextTimeMs: performance.now(),
                         signal: new AbortSignal(),
-                        grpc_service,
-                        grpc_method: prop as string,
+                        logContext: {
+                            grpc_service,
+                            grpc_method: prop as string,
+                        },
                     };
-                    const withRequestContext = <T>(fn: () => T): T => runWithRequestContext(undefined, logContext, fn);
+                    const withRequestContext = <T>(fn: () => T): T =>
+                        runWithRequestContext(undefined, requestContext, fn);
 
                     const method = type.methods[prop as string];
                     if (!method) {
@@ -163,7 +168,7 @@ export class API {
                         if (reason != err && err.code === Code.Internal) {
                             log.error("public api: unexpected internal error", reason);
                             err = new ConnectError(
-                                `Oops! Something went wrong. Please quote the request ID ${logContext.requestId} when reaching out to Gitpod Support.`,
+                                `Oops! Something went wrong. Please quote the request ID ${requestContext.requestId} when reaching out to Gitpod Support.`,
                                 Code.Internal,
                                 // pass metadata to preserve the application error
                                 err.metadata,
@@ -186,7 +191,7 @@ export class API {
                             return Reflect.apply(target[prop as any], target, args);
                         };
                         if (grpc_type === "unary" || grpc_type === "client_stream") {
-                            return withRequestContext(async () => {
+                            return runWithChildContext(async () => {
                                 try {
                                     const promise = await apply<Promise<any>>();
                                     const result = await promise;
@@ -209,7 +214,7 @@ export class API {
                                     handleError(e);
                                 }
                             })(),
-                            withRequestContext,
+                            runWithChildContext,
                         );
                     });
                 };

@@ -12,22 +12,15 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 import { IAnalyticsWriter, IdentifyMessage, PageMessage, TrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
 
 export interface RequestContext {
-    readonly contextKind: string;
+    readonly requestKind: string;
     readonly requestId: string;
     readonly signal: AbortSignal;
-    readonly contextId: string;
     readonly contextTimeMs?: number;
     readonly subjectId?: SubjectId;
+    readonly logContext?: { [key: string]: any };
 }
 
 const asyncLocalStorage = new AsyncLocalStorage<RequestContext>();
-/**
- * !!! Only to be used by selected internal code !!!
- * @returns
- */
-export function getGlobalContext(): RequestContext | undefined {
-    return asyncLocalStorage.getStore();
-}
 
 export function ctx(): RequestContext {
     const ctx = asyncLocalStorage.getStore();
@@ -37,12 +30,12 @@ export function ctx(): RequestContext {
     return ctx;
 }
 
-function tryGetRequestContext(): RequestContext | undefined {
+export function tryCtx(): RequestContext | undefined {
     return asyncLocalStorage.getStore() || undefined;
 }
 
 export function setSubjectId(subjectId: SubjectId): void {
-    const ctx = tryGetRequestContext();
+    const ctx = tryCtx();
     if (!ctx) {
         throw new Error("setSubjectId: No request context available");
     }
@@ -50,7 +43,7 @@ export function setSubjectId(subjectId: SubjectId): void {
 }
 
 export function getSubjectId(): SubjectId {
-    const ctx = tryGetRequestContext();
+    const ctx = tryCtx();
     if (!ctx) {
         throw new Error("getSubjectId: No request context available");
     }
@@ -65,12 +58,12 @@ export function getSubjectId(): SubjectId {
  * @deprecated Only used during the rollout period. Use `getSubjectId` instead
  */
 export function tryGetSubjectId(): SubjectId | undefined {
-    const ctx = tryGetRequestContext();
+    const ctx = tryCtx();
     return ctx?.subjectId;
 }
 
 export function setAbortSignal(signal: AbortSignal): void {
-    const ctx = tryGetRequestContext();
+    const ctx = tryCtx();
     if (!ctx) {
         throw new Error("setAbortSignal: No request context available");
     }
@@ -87,24 +80,28 @@ export function setAbortSignal(signal: AbortSignal): void {
  * @param fun
  * @returns
  */
-export function runWithRequestContext<C extends Omit<RequestContext, "requestId" | "contextId">, T>(
+export function runWithRequestContext<T>(
     subjectId: SubjectId | undefined,
-    context: C,
+    context: Omit<RequestContext, "requestId"> & { requestId?: string },
     fun: () => T,
 ): T {
-    const parent = ctx();
-    const requestId = parent?.requestId || v4();
-    const contextId = v4();
-    const subject = subjectId ? { id: subjectId } : context.subjectId;
-    return runWithContext(context.contextKind, { ...context, requestId, contextId, subject }, fun);
+    const requestId = context.requestId || v4();
+    return runWithContext({ ...context, requestId, subjectId }, fun);
 }
 
-export function runWithContext<C extends RequestContext, T>(contextKind: string, context: C, fun: () => T): T {
+export function runWithChildContext<T>(fun: () => T): T {
+    const parent = ctx();
+    if (!parent) {
+        throw new Error("runWithChildContext: No parent context available");
+    }
+    // TODO(gpl) Here we'll want to create a new span, maybe? For now it'
+    return runWithContext({ ...parent }, fun);
+}
+
+function runWithContext<C extends RequestContext, T>(context: C, fun: () => T): T {
     return asyncLocalStorage.run(
         {
             ...context,
-            contextKind,
-            contextId: context.contextId || v4(),
             contextTimeMs: context.contextTimeMs || performance.now(),
         },
         fun,

@@ -36,7 +36,7 @@ describe("OrganizationService", async () => {
         os = container.get(OrganizationService);
         const userDB = container.get<UserDB>(UserDB);
         owner = await userDB.newUser();
-        org = await os.createOrganization(owner.id, "myorg");
+        org = await os.createOrganization(owner.id, owner.id, "myorg");
         const invite = await os.getOrCreateInvite(owner.id, org.id);
 
         member = await userDB.newUser();
@@ -136,8 +136,8 @@ describe("OrganizationService", async () => {
     });
 
     it("should listOrganizationsByMember", async () => {
-        await os.createOrganization(owner.id, "org1");
-        await os.createOrganization(owner.id, "org2");
+        await os.createOrganization(owner.id, owner.id, "org1");
+        await os.createOrganization(owner.id, owner.id, "org2");
         let orgs = await os.listOrganizationsByMember(owner.id, owner.id);
         expect(orgs.length).to.eq(3);
         orgs = await os.listOrganizationsByMember(member.id, owner.id);
@@ -192,7 +192,11 @@ describe("OrganizationService", async () => {
     });
 
     it("should remove the admin on first join", async () => {
-        const myOrg = await os.createOrganization(BUILTIN_INSTLLATION_ADMIN_USER_ID, "My Org");
+        const myOrg = await os.createOrganization(
+            BUILTIN_INSTLLATION_ADMIN_USER_ID,
+            BUILTIN_INSTLLATION_ADMIN_USER_ID,
+            "My Org",
+        );
         expect((await os.listMembers(BUILTIN_INSTLLATION_ADMIN_USER_ID, myOrg.id)).length).to.eq(1);
 
         // add a another member which should become owner
@@ -204,7 +208,7 @@ describe("OrganizationService", async () => {
     });
 
     it("should listOrganizations", async () => {
-        const strangerOrg = await os.createOrganization(stranger.id, "stranger-org");
+        const strangerOrg = await os.createOrganization(stranger.id, stranger.id, "stranger-org");
         let orgs = await os.listOrganizations(owner.id, {});
         expect(orgs.rows[0].id).to.eq(org.id);
         expect(orgs.total).to.eq(1);

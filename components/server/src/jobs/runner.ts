@@ -82,7 +82,7 @@ export class JobRunner {
 
         try {
             await this.mutex.using([job.name, ...(job.lockedResources || [])], job.frequencyMs, async (signal) => {
-                const ctx = { signal, contextKind: job.name };
+                const ctx = { signal, requestKind: job.name };
                 await runWithRequestContext(SYSTEM_USER, ctx, async () => {
                     log.info(`Acquired lock for job ${job.name}.`, logCtx);
                     // we want to hold the lock for the entire duration of the job, so we return earliest after frequencyMs

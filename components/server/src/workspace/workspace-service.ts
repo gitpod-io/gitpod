@@ -61,6 +61,7 @@ import { HeadlessLogEndpoint, HeadlessLogService } from "./headless-log-service"
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { OrganizationService } from "../orgs/organization-service";
 import { isGrpcError } from "@gitpod/gitpod-protocol/lib/util/grpc";
+import { MaybeSubject, Subject } from "../auth/subject-id";
 
 export interface StartWorkspaceOptions extends StarterStartWorkspaceOptions {
     /**
@@ -121,8 +122,8 @@ export class WorkspaceService {
         return workspace;
     }
 
-    async getWorkspace(userId: string, workspaceId: string): Promise<WorkspaceInfo> {
-        const workspace = await this.doGetWorkspace(userId, workspaceId);
+    async getWorkspace(subject: Subject | undefined, workspaceId: string): Promise<WorkspaceInfo> {
+        const workspace = await this.doGetWorkspace(subject, workspaceId);
 
         const latestInstancePromise = this.db.findCurrentInstance(workspaceId);
         const latestInstance = await latestInstancePromise;
@@ -161,13 +162,17 @@ export class WorkspaceService {
     }
 
     // Internal method for allowing for additional DBs to be passed in
-    private async doGetWorkspace(userId: string, workspaceId: string, db: WorkspaceDB = this.db): Promise<Workspace> {
+    private async doGetWorkspace(
+        subject: MaybeSubject,
+        workspaceId: string,
+        db: WorkspaceDB = this.db,
+    ): Promise<Workspace> {
         const workspace = await db.findById(workspaceId);
 
         if (workspace?.type === "prebuild" && workspace.projectId) {
-            await this.auth.checkPermissionOnProject(userId, "read_prebuild", workspace.projectId);
+            await this.auth.checkPermissionOnProject(subject, "read_prebuild", workspace.projectId);
         } else {
-            await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+            await this.auth.checkPermissionOnWorkspace(subject, "access", workspaceId);
         }
 
         // TODO(gpl) We might want to add || !!workspace.softDeleted here in the future, but we were unsure how that would affect existing clients

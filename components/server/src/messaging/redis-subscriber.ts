@@ -56,7 +56,7 @@ export class RedisSubscriber {
         }
 
         this.redis.on("message", async (channel: string, message: string) => {
-            const ctx = { signal: new AbortSignal(), contextKind: "redis-subscriber" };
+            const ctx = { signal: new AbortSignal(), requestKind: "redis-subscriber" };
             await runWithRequestContext(SYSTEM_USER, ctx, async () => {
                 reportRedisUpdateReceived(channel);
 
