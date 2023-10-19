@@ -14,8 +14,8 @@ import * as grpc from "@grpc/grpc-js";
 import { isFgaChecksEnabled, isFgaWritesEnabled } from "./authorizer";
 import { base64decode } from "@jmondi/oauth2-server";
 import { DecodedZedToken } from "@gitpod/spicedb-impl/lib/impl/v1/impl.pb";
-import { RequestContext } from "node-fetch";
-import { getRequestContext } from "../util/request-context";
+import { RequestContext, getRequestContext } from "../util/request-context";
+import { Subject } from "../auth/subject-id";
 
 async function tryThree<T>(errMessage: string, code: (attempt: number) => Promise<T>): Promise<T> {
     let attempt = 0;
@@ -64,7 +64,7 @@ export class SpiceDBAuthorizer {
 
     public async check(
         req: v1.CheckPermissionRequest,
-        experimentsFields: { userId: string },
+        experimentsFields: { subjectId: Subject },
         forceEnablement?: boolean,
     ): Promise<boolean> {
         req.consistency = await this.tokenCache.consistency(req.resource);
@@ -80,14 +80,14 @@ export class SpiceDBAuthorizer {
     private async checkInternal(
         req: v1.CheckPermissionRequest,
         experimentsFields: {
-            userId: string;
+            subjectId: Subject;
         },
         forceEnablement?: boolean,
     ): Promise<CheckResult> {
-        if (!(await isFgaWritesEnabled(experimentsFields.userId))) {
+        if (!(await isFgaWritesEnabled(experimentsFields.subjectId))) {
             return { permitted: true };
         }
-        const featureEnabled = !!forceEnablement || (await isFgaChecksEnabled(experimentsFields.userId));
+        const featureEnabled = !!forceEnablement || (await isFgaChecksEnabled(experimentsFields.subjectId));
         const result = (async () => {
             const timer = spicedbClientLatency.startTimer();
             let error: Error | undefined;
