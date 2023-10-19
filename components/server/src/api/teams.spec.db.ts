@@ -21,9 +21,6 @@ import { UserAuthentication } from "../user/user-authentication";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { API } from "./server";
 import { SessionHandler } from "../session-handler";
-import { Redis } from "ioredis";
-import { UserService } from "../user/user-service";
-import { Config } from "../config";
 
 const expect = chai.expect;
 
@@ -42,9 +39,6 @@ export class APITeamsServiceSpec {
         this.container.bind(WorkspaceService).toConstantValue({} as WorkspaceService);
         this.container.bind(UserAuthentication).toConstantValue({} as UserAuthentication);
         this.container.bind(SessionHandler).toConstantValue({} as SessionHandler);
-        this.container.bind(Config).toConstantValue({} as Config);
-        this.container.bind(Redis).toConstantValue({} as Redis);
-        this.container.bind(UserService).toConstantValue({} as UserService);
 
         // Clean-up database
         const typeorm = testContainer.get<TypeORM>(TypeORM);

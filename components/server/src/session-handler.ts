@@ -15,7 +15,6 @@ import { Config } from "./config";
 import { WsNextFunction, WsRequestHandler } from "./express/ws-handler";
 import { reportJWTCookieIssued } from "./prometheus-metrics";
 import { UserService } from "./user/user-service";
-import { JwtPayload } from "jsonwebtoken";
 
 @injectable()
 export class SessionHandler {
@@ -104,39 +103,27 @@ export class SessionHandler {
     }
 
     async verify(cookie: string): Promise<User | undefined> {
-        try {
-            const claims = await this.verifyJWTCookie(cookie);
-            if (!claims) {
-                return undefined;
-            }
-            const subject = claims.sub;
-            if (!subject) {
-                throw new Error("Subject is missing from JWT session claims");
-            }
-            return await this.userService.findUserById(subject, subject);
-        } catch (err) {
-            log.warn("Failed to authenticate user with JWT Session", err);
-            // Remove the existing cookie, to force the user to re-sing in, and hence refresh it
-            return undefined;
-        }
-    }
-
-    /**
-     * Verify the JWT session cookie.
-     * @throws only in case of programming errors, if the cookie is invalid, undefined is returned
-     * @param cookie - the cookie header value to verify
-     * @returns returns the claims of the JWT session cookie or undefined if the cookie is not present or invalid
-     */
-    async verifyJWTCookie(cookie: string): Promise<JwtPayload | undefined> {
         const cookies = parseCookieHeader(cookie);
         const jwtToken = cookies[this.getJWTCookieName(this.config)];
         if (!jwtToken) {
             log.debug("No JWT session present on request");
             return undefined;
         }
-        const claims = await this.authJWT.verify(jwtToken);
-        log.debug("JWT Session token verified", { claims });
-        return claims;
+        try {
+            const claims = await this.authJWT.verify(jwtToken);
+            log.debug("JWT Session token verified", { claims });
+
+            const subject = claims.sub;
+            if (!subject) {
+                throw new Error("Subject is missing from JWT session claims");
+            }
+
+            return await this.userService.findUserById(subject, subject);
+        } catch (err) {
+            log.warn("Failed to authenticate user with JWT Session", err);
+            // Remove the existing cookie, to force the user to re-sing in, and hence refresh it
+            return undefined;
+        }
     }
 
     public async createJWTSessionCookie(
