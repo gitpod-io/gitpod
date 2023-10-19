@@ -6,7 +6,7 @@
 
 import { FC, useCallback, useState } from "react";
 import Header from "../../components/Header";
-import { useListProjectsQuery } from "../../data/projects/list-projects-query";
+import { useListProjectsQuery } from "../../data/projects/project-queries";
 import { Loader2 } from "lucide-react";
 import { useHistory } from "react-router-dom";
 import { Project } from "@gitpod/gitpod-protocol";

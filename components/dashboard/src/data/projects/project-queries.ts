@@ -79,7 +79,7 @@ export const useUpdateProject = () => {
     const { data: org } = useCurrentOrg();
     const client = useQueryClient();
 
-    return useMutation<void, Error, PartialProject>(async (changes: PartialProject) => {
+    return useMutation<void, Error, PartialProject>(async (changes) => {
         if (!org) {
             throw new Error("No org currently selected");
         }

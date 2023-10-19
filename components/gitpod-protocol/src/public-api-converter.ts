@@ -20,6 +20,12 @@ import {
     WorkspacePort_Protocol,
     WorkspaceStatus,
 } from "@gitpod/public-api/lib/gitpod/experimental/v2/workspace_pb";
+import {
+    Organization,
+    OrganizationMember,
+    OrganizationRole,
+    OrganizationSettings,
+} from "@gitpod/public-api/lib/gitpod/experimental/v2/organization_pb";
 import { ApplicationError, ErrorCode, ErrorCodes } from "./messaging/error";
 import {
     CommitContext,
@@ -39,6 +45,12 @@ import {
 } from "./workspace-instance";
 import { ContextURL } from "./context-url";
 import { TrustedValue } from "./util/scrubbing";
+import {
+    Organization as ProtocolOrganization,
+    OrgMemberInfo,
+    OrgMemberRole,
+    OrganizationSettings as OrganizationSettingsProtocol,
+} from "./teams-projects-protocol";
 
 const applicationErrorCode = "application-error-code";
 const applicationErrorData = "application-error-data";
@@ -313,5 +325,54 @@ export class PublicAPIConverter {
             }
         }
         return WorkspacePhase_Phase.UNSPECIFIED;
+    }
+
+    toOrganization(org: ProtocolOrganization): Organization {
+        const result = new Organization();
+        result.id = org.id;
+        result.name = org.name;
+        result.creationTime = Timestamp.fromDate(new Date(org.creationTime));
+        return result;
+    }
+
+    toOrganizationMember(member: OrgMemberInfo): OrganizationMember {
+        const result = new OrganizationMember();
+        result.userId = member.userId;
+        result.fullName = member.fullName;
+        result.email = member.primaryEmail;
+        result.avatarUrl = member.avatarUrl;
+        result.role = this.toOrgMemberRole(member.role);
+        result.memberSince = Timestamp.fromDate(new Date(member.memberSince));
+        result.ownedByOrganization = member.ownedByOrganization;
+        return result;
+    }
+
+    toOrgMemberRole(role: OrgMemberRole): OrganizationRole {
+        switch (role) {
+            case "owner":
+                return OrganizationRole.OWNER;
+            case "member":
+                return OrganizationRole.MEMBER;
+            default:
+                return OrganizationRole.UNSPECIFIED;
+        }
+    }
+
+    fromOrgMemberRole(role: OrganizationRole): OrgMemberRole {
+        switch (role) {
+            case OrganizationRole.OWNER:
+                return "owner";
+            case OrganizationRole.MEMBER:
+                return "member";
+            default:
+                throw new Error(`unknown org member role ${role}`);
+        }
+    }
+
+    toOrganizationSettings(settings: OrganizationSettingsProtocol): OrganizationSettings {
+        const result = new OrganizationSettings();
+        result.workspaceSharingDisabled = !!settings.workspaceSharingDisabled;
+        result.defaultWorkspaceImage = settings.defaultWorkspaceImage || undefined;
+        return result;
     }
 }

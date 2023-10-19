@@ -653,7 +653,15 @@ type InfoService struct {
 	defaultWorkspaceImage string
 }
 
-var infoCacheDuration = 5 * time.Second
+var infoCacheDuration = 30 * time.Second
+
+func NewInfoService(cfg *Config, cstate ContentState, gitpodService serverapi.APIInterface) *InfoService {
+	svc := &InfoService{cfg: cfg, ContentState: cstate, GitpodService: gitpodService}
+	// it makes no sense to handle cancel here, just ignore the warning (find no way now to disable it)
+	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
+	go svc.getDefaultWorkspaceImage(ctx)
+	return svc
+}
 
 // RegisterGRPC registers the gRPC info service.
 func (is *InfoService) RegisterGRPC(srv *grpc.Server) {
@@ -675,11 +683,10 @@ func (is *InfoService) getDefaultWorkspaceImage(ctx context.Context) string {
 	is.cacheMu.RUnlock()
 
 	is.cacheMu.Lock()
-	defer is.cacheMu.Unlock()
 	defer func() {
 		is.cacheTimestamp = time.Now()
+		is.cacheMu.Unlock()
 	}()
-
 	if time.Since(is.cacheTimestamp) < infoCacheDuration {
 		return is.defaultWorkspaceImage
 	}
@@ -691,6 +698,8 @@ func (is *InfoService) getDefaultWorkspaceImage(ctx context.Context) string {
 	wsImage, err := is.GitpodService.GetDefaultWorkspaceImage(ctx)
 	if err == nil {
 		is.defaultWorkspaceImage = wsImage
+	} else {
+		log.WithError(err).Error("failed to get default workspace image")
 	}
 	return is.defaultWorkspaceImage
 }
