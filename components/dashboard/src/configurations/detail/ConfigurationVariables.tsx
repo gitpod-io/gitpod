@@ -104,10 +104,10 @@ function AddVariableModal(props: { configuration: Project; onClose: () => void }
     const [name, setName] = useState<string>("");
     const [value, setValue] = useState<string>("");
     const [censored, setCensored] = useState<boolean>(true);
-    const setProjectEnvVar = useSetProjectEnvVar();
+    const setConfigurationEnvVar = useSetProjectEnvVar();
 
     const addVariable = useCallback(async () => {
-        await setProjectEnvVar.mutateAsync(
+        await setConfigurationEnvVar.mutateAsync(
             {
                 projectId: props.configuration.id,
                 name,
@@ -116,14 +116,14 @@ function AddVariableModal(props: { configuration: Project; onClose: () => void }
             },
             { onSuccess: props.onClose },
         );
-    }, [censored, name, props.onClose, props.configuration, setProjectEnvVar, value]);
+    }, [censored, name, props.onClose, props.configuration, setConfigurationEnvVar, value]);
 
     return (
         <Modal visible onClose={props.onClose} onSubmit={addVariable}>
             <ModalHeader>New Variable</ModalHeader>
             <ModalBody>
                 <Alert type="warning">
-                    <strong>Project environment variables can be exposed.</strong>
+                    <strong>Configuration environment variables can be exposed.</strong>
                     <br />
                     Even if <strong>Hide Variable in Workspaces</strong> is enabled, anyone with read access to your
                     repository can access secret values if they are printed in the terminal, logged, or persisted to the
@@ -166,9 +166,12 @@ function AddVariableModal(props: { configuration: Project; onClose: () => void }
             </ModalBody>
             <ModalFooter
                 alert={
-                    setProjectEnvVar.isError ? (
+                    setConfigurationEnvVar.isError ? (
                         <ModalFooterAlert type="danger">
-                            {String(setProjectEnvVar.error).replace(/Error: Request \w+ failed with message: /, "")}
+                            {String(setConfigurationEnvVar.error).replace(
+                                /Error: Request \w+ failed with message: /,
+                                "",
+                            )}
                         </ModalFooterAlert>
                     ) : null
                 }
@@ -176,7 +179,7 @@ function AddVariableModal(props: { configuration: Project; onClose: () => void }
                 <Button type="secondary" onClick={props.onClose}>
                     Cancel
                 </Button>
-                <Button htmlType="submit" loading={setProjectEnvVar.isLoading}>
+                <Button htmlType="submit" loading={setConfigurationEnvVar.isLoading}>
                     Add Variable
                 </Button>
             </ModalFooter>
