@@ -12,23 +12,23 @@ import { useHistory } from "react-router-dom";
 import { Project } from "@gitpod/gitpod-protocol";
 import { CreateProjectModal } from "../../projects/create-project-modal/CreateProjectModal";
 import { Button } from "../../components/Button";
-import { RepositoryListItem } from "./RepoListItem";
+import { RepositoryListItem } from "./ConfigListItem";
 
 const RepositoryListPage: FC = () => {
     const history = useHistory();
     const { data, isLoading } = useListProjectsQuery({ page: 1, pageSize: 10 });
     const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
 
-    const handleProjectCreated = useCallback(
-        (project: Project) => {
-            history.push(`/repositories/${project.id}`);
+    const handleConfigurationCreated = useCallback(
+        (configuration: Project) => {
+            history.push(`/configurations/${configuration.id}`);
         },
         [history],
     );
 
     return (
         <>
-            <Header title="Repositories" subtitle="" />
+            <Header title="Configurations" subtitle="" />
 
             <div className="app-container">
                 <div className="py-4 text-right">
@@ -44,7 +44,10 @@ const RepositoryListPage: FC = () => {
             </div>
 
             {showCreateProjectModal && (
-                <CreateProjectModal onClose={() => setShowCreateProjectModal(false)} onCreated={handleProjectCreated} />
+                <CreateProjectModal
+                    onClose={() => setShowCreateProjectModal(false)}
+                    onCreated={handleConfigurationCreated}
+                />
             )}
         </>
     );
