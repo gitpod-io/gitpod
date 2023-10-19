@@ -28,7 +28,7 @@ const withCtx = <T>(subject: Subject | User, p: Promise<T> | (() => Promise<T>))
         Subject.toId(User.is(subject) ? subject.id : subject),
         {
             requestKind: "test",
-            signal: new AbortSignal(),
+            signal: new AbortController().signal,
         },
         () => {
             if (typeof p === "function") {

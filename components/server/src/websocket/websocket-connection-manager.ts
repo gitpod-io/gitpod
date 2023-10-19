@@ -378,7 +378,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
         const userId = this.clientMetadata.userId;
         const requestId = span.context().toTraceId();
         const rpcSignal = args[args.length - 1];
-        const signal = rpcSignal ? (rpcSignal as AbortSignal) : new AbortSignal();
+        const signal = rpcSignal ? (rpcSignal as AbortSignal) : new AbortController().signal;
         return runWithRequestContext(
             undefined, // TODO(gpl) I think we drop websocket support before finishing this, so don't use it for authorization!
             {

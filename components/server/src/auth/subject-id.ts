@@ -4,8 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-
 type ISubjectId = {
     kind: SubjectKind;
     /**
@@ -49,7 +47,6 @@ export class SubjectId implements ISubjectId {
         try {
             return SubjectId.tryParse(str);
         } catch (err) {
-            log.warn("Unable to parse SubjectId", err, str);
             return undefined;
         }
     }

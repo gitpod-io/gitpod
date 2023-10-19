@@ -150,7 +150,7 @@ export class Server {
                     {
                         requestKind: "http",
                         requestId: v4(),
-                        signal: new AbortSignal(),
+                        signal: new AbortController().signal,
                         logContext: { userId, requestPath: req.path },
                     },
                     () => next(),
