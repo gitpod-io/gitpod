@@ -4,11 +4,14 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Project, ProjectEnvVar } from "@gitpod/gitpod-protocol";
-import { useCallback, useEffect, useState } from "react";
-import { getGitpodService } from "../../service/service";
+import { Project } from "@gitpod/gitpod-protocol";
+import { useCallback, useState } from "react";
 import { Heading2, Subheading } from "@podkit/typography/headings";
-import { useSetProjectEnvVar } from "../../data/projects/set-project-env-var-mutation";
+import {
+    useDeleteProjectEnvironmentVariable,
+    useListProjectEnvironmentVariables,
+    useSetProjectEnvVar,
+} from "../../data/projects/set-project-env-var-mutation";
 import Modal, { ModalBody, ModalFooter, ModalFooterAlert, ModalHeader } from "../../components/Modal";
 import Alert from "../../components/Alert";
 import { CheckboxInputField } from "../../components/forms/CheckboxInputField";
@@ -21,24 +24,13 @@ interface ConfigurationVariablesProps {
 }
 
 export default function ConfigurationEnvironmentVariables({ configuration }: ConfigurationVariablesProps) {
-    const [envVars, setEnvVars] = useState<ProjectEnvVar[]>([]);
+    const { data: envVars, isLoading } = useListProjectEnvironmentVariables(configuration.id);
     const [showAddVariableModal, setShowAddVariableModal] = useState<boolean>(false);
+    const deleteEnvVarMutation = useDeleteProjectEnvironmentVariable(configuration.id);
 
-    const updateEnvVars = async () => {
-        const vars = await getGitpodService().server.getProjectEnvironmentVariables(configuration.id);
-        const sortedVars = vars.sort((a, b) => (a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1));
-        setEnvVars(sortedVars);
-    };
-
-    useEffect(() => {
-        updateEnvVars();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [configuration]);
-
-    const deleteEnvVar = async (variableId: string) => {
-        await getGitpodService().server.deleteProjectEnvironmentVariable(variableId);
-        updateEnvVars();
-    };
+    if (isLoading || !envVars) {
+        return null;
+    }
 
     return (
         <section>
@@ -46,7 +38,6 @@ export default function ConfigurationEnvironmentVariables({ configuration }: Con
                 <AddVariableModal
                     configuration={configuration}
                     onClose={() => {
-                        updateEnvVars();
                         setShowAddVariableModal(false);
                     }}
                 />
@@ -86,7 +77,9 @@ export default function ConfigurationEnvironmentVariables({ configuration }: Con
                                                 title: "Delete",
                                                 customFontStyle:
                                                     "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
-                                                onClick: () => deleteEnvVar(variable.id),
+                                                onClick: () => {
+                                                    deleteEnvVarMutation.mutate(variable.id);
+                                                },
                                             },
                                         ]}
                                     />
