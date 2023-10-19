@@ -5,10 +5,10 @@
  */
 
 import { Project, ProjectSettings } from "@gitpod/gitpod-protocol";
+import { Heading2, Subheading } from "@podkit/typography/headings";
 import { useCallback } from "react";
 import SelectWorkspaceClassComponent from "../../components/SelectWorkspaceClassComponent";
 import { useToast } from "../../components/toasts/Toasts";
-import { Heading2, Subheading } from "../../components/typography/headings";
 import { useUpdateProject } from "../../data/projects/project-queries";
 
 interface RepositoryPrebuildsSettingsProps {
