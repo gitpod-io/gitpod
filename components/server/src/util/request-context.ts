@@ -8,7 +8,6 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { performance } from "node:perf_hooks";
 import { v4 } from "uuid";
 import { SubjectId } from "../auth/subject-id";
-import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { IAnalyticsWriter, IdentifyMessage, PageMessage, TrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
 
 export interface RequestContext {
@@ -34,41 +33,12 @@ export function tryCtx(): RequestContext | undefined {
     return asyncLocalStorage.getStore() || undefined;
 }
 
-export function setSubjectId(subjectId: SubjectId): void {
-    const ctx = tryCtx();
-    if (!ctx) {
-        throw new Error("setSubjectId: No request context available");
-    }
-    (ctx as any).subject = { id: subjectId };
-}
-
-export function getSubjectId(): SubjectId {
-    const ctx = tryCtx();
-    if (!ctx) {
-        throw new Error("getSubjectId: No request context available");
-    }
-    const subjectId = ctx.subjectId;
-    if (!subjectId) {
-        throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, "Not authenticated");
-    }
-    return subjectId;
-}
-
 /**
  * @deprecated Only used during the rollout period. Use `getSubjectId` instead
  */
 export function tryGetSubjectId(): SubjectId | undefined {
     const ctx = tryCtx();
     return ctx?.subjectId;
-}
-
-export function setAbortSignal(signal: AbortSignal): void {
-    const ctx = tryCtx();
-    if (!ctx) {
-        throw new Error("setAbortSignal: No request context available");
-    }
-    // TODO(gpl) Should we ensure that the signal is not overwritten?
-    (ctx as any).signal = signal;
 }
 
 /**
@@ -89,13 +59,13 @@ export function runWithRequestContext<T>(
     return runWithContext({ ...context, requestId, subjectId }, fun);
 }
 
-export function runWithChildContext<T>(fun: () => T): T {
+export function runWithChildContext<T>(subjectId: SubjectId | undefined, fun: () => T): T {
     const parent = ctx();
     if (!parent) {
         throw new Error("runWithChildContext: No parent context available");
     }
-    // TODO(gpl) Here we'll want to create a new span, maybe? For now it'
-    return runWithContext({ ...parent }, fun);
+    // TODO(gpl) Here we'll want to create a new spanID for tracing
+    return runWithContext({ ...parent, subjectId }, fun);
 }
 
 function runWithContext<C extends RequestContext, T>(context: C, fun: () => T): T {

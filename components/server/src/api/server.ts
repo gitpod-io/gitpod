@@ -25,8 +25,6 @@ import {
     RequestContext,
     runWithChildContext,
     runWithRequestContext,
-    setAbortSignal,
-    setSubjectId,
     wrapAsyncGenerator,
 } from "../util/request-context";
 import { HelloServiceAPI as HelloServiceAPI } from "./hello-service-api";
@@ -120,16 +118,18 @@ export class API {
         return {
             get(target, prop) {
                 return (...args: any[]) => {
+                    const connectContext = args[1] as HandlerContext;
                     const requestContext: RequestContext = {
                         requestId: v4(),
                         requestKind: "public-api",
                         contextTimeMs: performance.now(),
-                        signal: new AbortSignal(),
+                        signal: connectContext.signal,
                         logContext: {
                             grpc_service,
                             grpc_method: prop as string,
                         },
                     };
+
                     const withRequestContext = <T>(fn: () => T): T =>
                         runWithRequestContext(undefined, requestContext, fn);
 
@@ -178,20 +178,15 @@ export class API {
                         throw err;
                     };
 
-                    const connectContext = args[1] as HandlerContext;
-
                     return withRequestContext(async () => {
-                        setAbortSignal(connectContext.signal);
-
                         const user = await self.verify(connectContext);
                         const subjectId = SubjectId.fromUserId(user.id);
-                        setSubjectId(subjectId);
 
                         const apply = async <T>(): Promise<T> => {
                             return Reflect.apply(target[prop as any], target, args);
                         };
                         if (grpc_type === "unary" || grpc_type === "client_stream") {
-                            return runWithChildContext(async () => {
+                            return runWithChildContext(subjectId, async () => {
                                 try {
                                     const promise = await apply<Promise<any>>();
                                     const result = await promise;
@@ -214,7 +209,7 @@ export class API {
                                     handleError(e);
                                 }
                             })(),
-                            runWithChildContext,
+                            (f) => runWithChildContext(subjectId, f),
                         );
                     });
                 };
