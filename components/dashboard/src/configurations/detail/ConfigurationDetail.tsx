@@ -25,7 +25,7 @@ const ConfigurationDetailPage: FC = () => {
 
     return (
         <>
-            <Header title="Repository Detail" subtitle="" />
+            <Header title="Configuration Detail" subtitle="" />
             <div className="app-container">
                 {isLoading && <Loader2 className="animate-spin" />}
                 {error && (
