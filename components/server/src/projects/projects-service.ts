@@ -27,10 +27,11 @@ import {
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { URL } from "url";
-import { Authorizer, SYSTEM_USER } from "../authorization/authorizer";
+import { Authorizer, SYSTEM_USER_ID } from "../authorization/authorizer";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
 import { ScmService } from "./scm-service";
 import { daysBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { MaybeSubject } from "../auth/subject-id";
 
 const MAX_PROJECT_NAME_LENGTH = 100;
 
@@ -55,10 +56,10 @@ export class ProjectsService {
         return this.migratePrebuildSettingsOnDemand(project);
     }
 
-    async getProjects(userId: string, orgId: string): Promise<Project[]> {
-        await this.auth.checkPermissionOnOrganization(userId, "read_info", orgId);
+    async getProjects(subject: MaybeSubject, orgId: string): Promise<Project[]> {
+        await this.auth.checkPermissionOnOrganization(subject, "read_info", orgId);
         const projects = await this.projectDB.findProjects(orgId);
-        const filteredProjects = await this.filterByReadAccess(userId, projects);
+        const filteredProjects = await this.filterByReadAccess(subject, projects);
         return Promise.all(filteredProjects.map((p) => this.migratePrebuildSettingsOnDemand(p)));
     }
 
@@ -87,10 +88,10 @@ export class ProjectsService {
         };
     }
 
-    private async filterByReadAccess(userId: string, projects: Project[]) {
+    private async filterByReadAccess(subject: MaybeSubject, projects: Project[]) {
         const filteredProjects: Project[] = [];
         const filter = async (project: Project) => {
-            if (await this.auth.hasPermissionOnProject(userId, "read_info", project.id)) {
+            if (await this.auth.hasPermissionOnProject(subject, "read_info", project.id)) {
                 return project;
             }
             return undefined;
@@ -291,8 +292,12 @@ export class ProjectsService {
         await this.auth.setProjectVisibility(userId, projectId, project.teamId, visibility);
     }
 
-    async deleteProject(userId: string, projectId: string, transactionCtx?: TransactionalContext): Promise<void> {
-        await this.auth.checkPermissionOnProject(userId, "delete", projectId);
+    async deleteProject(
+        subject: MaybeSubject,
+        projectId: string,
+        transactionCtx?: TransactionalContext,
+    ): Promise<void> {
+        await this.auth.checkPermissionOnProject(subject, "delete", projectId);
 
         let orgId: string | undefined = undefined;
         try {
@@ -304,10 +309,9 @@ export class ProjectsService {
                 orgId = project.teamId;
                 await db.markDeleted(projectId);
 
-                await this.auth.removeProjectFromOrg(userId, orgId, projectId);
+                await this.auth.removeProjectFromOrg(subject, orgId, projectId);
             });
             this.analytics.track({
-                userId,
                 event: "project_deleted",
                 properties: {
                     project_id: projectId,
@@ -315,7 +319,7 @@ export class ProjectsService {
             });
         } catch (err) {
             if (orgId) {
-                await this.auth.addProjectToOrg(userId, orgId, projectId);
+                await this.auth.addProjectToOrg(subject, orgId, projectId);
             }
             throw err;
         }
@@ -452,7 +456,7 @@ export class ProjectsService {
             const newPrebuildSettings: PrebuildSettings = { enable: false, ...Project.PREBUILD_SETTINGS_DEFAULTS };
 
             // if workspaces were running in the past week
-            const isInactive = await this.isProjectConsideredInactive(SYSTEM_USER, project.id);
+            const isInactive = await this.isProjectConsideredInactive(SYSTEM_USER_ID, project.id);
             logCtx.isInactive = isInactive;
             if (!isInactive) {
                 const sevenDaysAgo = new Date(daysBefore(new Date().toISOString(), 7));

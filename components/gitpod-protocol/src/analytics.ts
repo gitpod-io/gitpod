@@ -6,9 +6,7 @@
 
 export const IAnalyticsWriter = Symbol("IAnalyticsWriter");
 
-type Identity =
-    | { userId: string | number; anonymousId?: string | number }
-    | { userId?: string | number; anonymousId: string | number };
+type Identity = { userId?: string | number; anonymousId?: string | number; subjectId?: string };
 
 interface Message {
     messageId?: string;

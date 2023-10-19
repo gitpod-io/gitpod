@@ -9,6 +9,7 @@ import { performance } from "node:perf_hooks";
 import { v4 } from "uuid";
 import { SubjectId } from "../auth/subject-id";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { IAnalyticsWriter, IdentifyMessage, PageMessage, TrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
 
 export interface RequestContext {
     readonly contextKind: string;
@@ -16,9 +17,7 @@ export interface RequestContext {
     readonly signal: AbortSignal;
     readonly contextId: string;
     readonly contextTimeMs?: number;
-    readonly subject?: {
-        readonly id: SubjectId;
-    };
+    readonly subjectId?: SubjectId;
 }
 
 const asyncLocalStorage = new AsyncLocalStorage<RequestContext>();
@@ -30,7 +29,7 @@ export function getGlobalContext(): RequestContext | undefined {
     return asyncLocalStorage.getStore();
 }
 
-export function getRequestContext(): RequestContext {
+export function ctx(): RequestContext {
     const ctx = asyncLocalStorage.getStore();
     if (!ctx) {
         throw new Error("getRequestContext: No request context available");
@@ -55,11 +54,19 @@ export function getSubjectId(): SubjectId {
     if (!ctx) {
         throw new Error("getSubjectId: No request context available");
     }
-    const subjectId = ctx.subject?.id;
+    const subjectId = ctx.subjectId;
     if (!subjectId) {
         throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, "Not authenticated");
     }
     return subjectId;
+}
+
+/**
+ * @deprecated Only used during the rollout period. Use `getSubjectId` instead
+ */
+export function tryGetSubjectId(): SubjectId | undefined {
+    const ctx = tryGetRequestContext();
+    return ctx?.subjectId;
 }
 
 export function setAbortSignal(signal: AbortSignal): void {
@@ -85,10 +92,10 @@ export function runWithRequestContext<C extends Omit<RequestContext, "requestId"
     context: C,
     fun: () => T,
 ): T {
-    const parent = getRequestContext();
+    const parent = ctx();
     const requestId = parent?.requestId || v4();
     const contextId = v4();
-    const subject = subjectId ? { id: subjectId } : context.subject?.id;
+    const subject = subjectId ? { id: subjectId } : context.subjectId;
     return runWithContext(context.contextKind, { ...context, requestId, contextId, subject }, fun);
 }
 
@@ -118,4 +125,32 @@ export function wrapAsyncGenerator<T>(
             return this;
         },
     };
+}
+
+export class ContextAwareAnalyticsWriter implements IAnalyticsWriter {
+    constructor(readonly writer: IAnalyticsWriter) {}
+
+    identify(msg: IdentifyMessage): void {}
+
+    track(msg: TrackMessage): void {}
+
+    page(msg: PageMessage): void {
+        const traceIds = this.getTraceIds();
+        this.writer.page({
+            ...msg,
+            userId: msg.userId || traceIds.userId,
+            subjectId: msg.subjectId || traceIds.subjectId,
+        });
+    }
+
+    private getTraceIds(): { userId?: string; subjectId?: string } {
+        const subjectId = ctx().subjectId;
+        if (!subjectId) {
+            return {};
+        }
+        return {
+            userId: subjectId.userId(),
+            subjectId: subjectId.toString(),
+        };
+    }
 }
