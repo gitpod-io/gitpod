@@ -26,7 +26,7 @@ export const RepositoryListItem: FC<Props> = ({ project }) => {
             </div>
 
             <div>
-                <Link to={`/repositories/${project.id}`}>
+                <Link to={`/configurations/${project.id}`}>
                     <Button type="secondary">View</Button>
                 </Link>
             </div>
