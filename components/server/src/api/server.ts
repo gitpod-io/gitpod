@@ -30,13 +30,6 @@ import { APIStatsService as StatsServiceAPI } from "./stats";
 import { APITeamsService as TeamsServiceAPI } from "./teams";
 import { APIUserService as UserServiceAPI } from "./user";
 import { WorkspaceServiceAPI } from "./workspace-service-api";
-import { IRateLimiterOptions, RateLimiterMemory, RateLimiterRedis, RateLimiterRes } from "rate-limiter-flexible";
-import { Redis } from "ioredis";
-import { RateLimited } from "./rate-limited";
-import { Config } from "../config";
-import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { UserService } from "../user/user-service";
-import { User } from "@gitpod/gitpod-protocol";
 
 decorate(injectable(), PublicAPIConverter);
 
@@ -53,9 +46,6 @@ export class API {
     @inject(HelloServiceAPI) private readonly helloServiceApi: HelloServiceAPI;
     @inject(SessionHandler) private readonly sessionHandler: SessionHandler;
     @inject(PublicAPIConverter) private readonly apiConverter: PublicAPIConverter;
-    @inject(Redis) private readonly redis: Redis;
-    @inject(Config) private readonly config: Config;
-    @inject(UserService) private readonly userService: UserService;
 
     listenPrivate(): http.Server {
         const app = express();
@@ -184,30 +174,9 @@ export class API {
 
                     const context = args[1] as HandlerContext;
 
-                    const rateLimit = async (subjectId: string) => {
-                        const key = `${grpc_service}/${grpc_method}`;
-                        const options = self.config.rateLimits?.[key] || RateLimited.getOptions(target, prop);
-                        try {
-                            await self.getRateLimitter(options).consume(`${subjectId}_${key}`);
-                        } catch (e) {
-                            if (e instanceof RateLimiterRes) {
-                                throw new ConnectError("rate limit exceeded", Code.ResourceExhausted, {
-                                    // http compatibility, can be respected by gRPC clients as well
-                                    // instead of doing an ad-hoc retry, the client can wait for the given amount of seconds
-                                    "Retry-After": e.msBeforeNext / 1000,
-                                    "X-RateLimit-Limit": options.points,
-                                    "X-RateLimit-Remaining": e.remainingPoints,
-                                    "X-RateLimit-Reset": new Date(Date.now() + e.msBeforeNext),
-                                });
-                            }
-                            throw e;
-                        }
-                    };
-
                     const apply = async <T>(): Promise<T> => {
-                        const subjectId = await self.verify(context);
-                        await rateLimit(subjectId);
-                        context.user = await self.ensureFgaMigration(subjectId);
+                        const user = await self.verify(context);
+                        context.user = user;
 
                         return Reflect.apply(target[prop as any], target, args);
                     };
@@ -242,49 +211,16 @@ export class API {
         };
     }
 
-    private async verify(context: HandlerContext): Promise<string> {
-        const claims = await this.sessionHandler.verifyJWTCookie(context.requestHeader.get("cookie") || "");
-        const subjectId = claims?.sub;
-        if (!subjectId) {
+    private async verify(context: HandlerContext) {
+        const user = await this.sessionHandler.verify(context.requestHeader.get("cookie") || "");
+        if (!user) {
             throw new ConnectError("unauthenticated", Code.Unauthenticated);
         }
-        return subjectId;
-    }
-
-    private async ensureFgaMigration(userId: string): Promise<User> {
-        const fgaChecksEnabled = await isFgaChecksEnabled(userId);
+        const fgaChecksEnabled = await isFgaChecksEnabled(user.id);
         if (!fgaChecksEnabled) {
             throw new ConnectError("unauthorized", Code.PermissionDenied);
         }
-        try {
-            return await this.userService.findUserById(userId, userId);
-        } catch (e) {
-            if (e instanceof ApplicationError && e.code === ErrorCodes.NOT_FOUND) {
-                throw new ConnectError("unauthorized", Code.PermissionDenied);
-            }
-            throw e;
-        }
-    }
-
-    private readonly rateLimiters = new Map<string, RateLimiterRedis>();
-    private getRateLimitter(options: IRateLimiterOptions): RateLimiterRedis {
-        const sortedKeys = Object.keys(options).sort();
-        const sortedObject: { [key: string]: any } = {};
-        for (const key of sortedKeys) {
-            sortedObject[key] = options[key as keyof IRateLimiterOptions];
-        }
-        const key = JSON.stringify(sortedObject);
-
-        let rateLimiter = this.rateLimiters.get(key);
-        if (!rateLimiter) {
-            rateLimiter = new RateLimiterRedis({
-                storeClient: this.redis,
-                ...options,
-                insuranceLimiter: new RateLimiterMemory(options),
-            });
-            this.rateLimiters.set(key, rateLimiter);
-        }
-        return rateLimiter;
+        return user;
     }
 
     static bindAPI(bind: interfaces.Bind): void {
