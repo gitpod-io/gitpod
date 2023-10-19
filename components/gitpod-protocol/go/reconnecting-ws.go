@@ -166,7 +166,9 @@ func (rc *ReconnectingWebsocket) Dial(ctx context.Context) error {
 		case connCh := <-rc.connCh:
 			connCh <- conn
 		case <-rc.errCh:
-			conn.Close()
+			if conn != nil {
+				conn.Close()
+			}
 
 			time.Sleep(1 * time.Second)
 			conn = rc.connect(ctx)
