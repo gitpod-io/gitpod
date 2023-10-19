@@ -15,6 +15,7 @@ import Alert from "../../components/Alert";
 import RepositoryPrebuildsSettings from "./ConfigurationPrebuilds";
 import RepositoryWorkspacesSettings from "./ConfigurationWorkspaces";
 import DeleteConfiguration from "./ConfigurationDelete";
+import ConfigurationEnvironmentVariables from "./ConfigurationVariables";
 
 type PageRouteParams = {
     id: string;
@@ -49,6 +50,7 @@ const ConfigurationDetailPage: FC = () => {
                             <ConfigurationNameForm configuration={data} />
                             <RepositoryPrebuildsSettings repository={data} />
                             <RepositoryWorkspacesSettings repository={data} />
+                            <ConfigurationEnvironmentVariables configuration={data} />
                             <DeleteConfiguration configuration={data} />
                         </>
                     ))}
