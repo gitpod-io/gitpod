@@ -26,7 +26,7 @@ const ConfigurationDetailPage: FC = () => {
     return (
         <>
             <Header title="Configuration Detail" subtitle="" />
-            <div className="app-container">
+            <div className="app-container mb-16">
                 {isLoading && <Loader2 className="animate-spin" />}
                 {error && (
                     <div className="gap-4">
