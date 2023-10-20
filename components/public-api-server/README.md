@@ -19,11 +19,6 @@ from development environments and will enable richer integrations with Integrate
 The public API will initially be offered as a gRPC service. Clients for various languages will be available. At the moment, the API is in early stages and clients are not available.
 
 
-## Roadmap
-The roadmap and progress towards a stable release of the API is tracked in [Epic: Public Gitpod API](https://github.com/gitpod-io/gitpod/issues/7900).
-
-
 ## Architecture
-* The API will be exposed on `api.gitpod.io` or `api.<domain>` for self-hosted or managed installations.
+* The API will be exposed on `api.gitpod.io` or `api.<domain>` for Dedicated installations.
 * The API is structured into services with definitions available in [components/public-api/gitpod/](../public-api/gitpod) as protobuf definitions.
-
