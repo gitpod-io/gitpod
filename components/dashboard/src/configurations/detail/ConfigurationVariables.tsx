@@ -18,6 +18,7 @@ import { CheckboxInputField } from "../../components/forms/CheckboxInputField";
 import InfoBox from "../../components/InfoBox";
 import { Button } from "../../components/Button";
 import { ItemsList, Item, ItemField, ItemFieldContextMenu } from "../../components/ItemsList";
+import { Text } from "@podkit/typography/Text";
 
 interface ConfigurationVariablesProps {
     configuration: Project;
@@ -63,18 +64,9 @@ export default function ConfigurationEnvironmentVariables({ configuration }: Con
                 </div>
             </div>
             {envVars.length === 0 ? (
-                <>
-                    <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full py-28 flex flex-col items-center justify-center space-y-3">
-                        <Heading2 color="light">No Environment Variables</Heading2>
-                        <Subheading className="text-center w-96">
-                            All <strong>configuration-specific environment variables</strong> will be visible in
-                            prebuilds and optionally in workspaces for this Configuration.
-                        </Subheading>
-                    </div>
-                    <button aria-label="New Variable" onClick={() => setModalState({ open: true })}>
-                        Add a variable
-                    </button>
-                </>
+                <div className="bg-blue-50 dark:bg-blue-800 rounded-xl w-full py-4 px-2">
+                    <Text>No Environment Variables are set</Text>
+                </div>
             ) : (
                 <ItemsList>
                     <Item header={true} className="grid grid-cols-3 items-center">
@@ -84,8 +76,8 @@ export default function ConfigurationEnvironmentVariables({ configuration }: Con
                     </Item>
                     {envVars.map((variable) => {
                         return (
-                            <Item key={variable.id} className="grid grid-cols-3 items-center font-mono">
-                                <ItemField className="truncate">{variable.name}</ItemField>
+                            <Item key={variable.id} className="grid grid-cols-3 items-center">
+                                <ItemField className="truncate font-mono">{variable.name}</ItemField>
                                 <ItemField>{variable.censored ? "Hidden" : "Visible"}</ItemField>
                                 <ItemField className="flex justify-end">
                                     <ItemFieldContextMenu
@@ -112,7 +104,7 @@ export default function ConfigurationEnvironmentVariables({ configuration }: Con
                     })}
                 </ItemsList>
             )}
-            {envVars.length > 0 && <button onClick={() => showModal()}>New Variable</button>}
+            <button onClick={() => showModal()}>New Variable</button>
         </section>
     );
 }
