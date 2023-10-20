@@ -49,6 +49,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { DataCache } from "../data-cache";
 import { TransactionalDBImpl } from "./transactional-db-impl";
 import { TypeORM } from "./typeorm";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 // OAuth token expiry
 const tokenExpiryInFuture = new DateInterval("7d");
@@ -132,6 +133,9 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
     }
 
     public async findUserById(id: string): Promise<MaybeUser> {
+        if (!id || id.trim() === "") {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Cannot find user without id");
+        }
         return this.cache.get(getUserCacheKey(id), async () => {
             const userRepo = await this.getUserRepo();
             const result = await userRepo.findOne(id);
