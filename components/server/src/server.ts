@@ -47,7 +47,8 @@ import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
 import { JobRunner } from "./jobs/runner";
 import { RedisSubscriber } from "./messaging/redis-subscriber";
 import { HEADLESS_LOGS_PATH_PREFIX, HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from "./workspace/headless-log-service";
-import { runWithLogContext } from "./util/log-context";
+import { runWithRequestContext } from "./util/request-context";
+import { v4 } from "uuid";
 
 @injectable()
 export class Server {
@@ -144,7 +145,16 @@ export class Server {
         app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
                 const userId = req.user ? req.user.id : undefined;
-                runWithLogContext("http", { userId, requestPath: req.path }, () => next());
+                runWithRequestContext(
+                    undefined, // TODO(gpl) use for authorization!
+                    {
+                        requestKind: "http",
+                        requestId: v4(),
+                        signal: new AbortController().signal,
+                        logContext: { userId, requestPath: req.path },
+                    },
+                    () => next(),
+                );
             } catch (err) {
                 next(err);
             }

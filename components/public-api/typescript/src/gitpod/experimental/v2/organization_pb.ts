@@ -449,6 +449,13 @@ export class CreateOrganizationRequest extends Message<CreateOrganizationRequest
    */
   name = "";
 
+  /**
+   * the id of the owning user
+   *
+   * @generated from field: optional string owner_id = 2;
+   */
+  ownerId?: string;
+
   constructor(data?: PartialMessage<CreateOrganizationRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -458,6 +465,7 @@ export class CreateOrganizationRequest extends Message<CreateOrganizationRequest
   static readonly typeName = "gitpod.experimental.v2.CreateOrganizationRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "owner_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateOrganizationRequest {
@@ -827,6 +835,13 @@ export class JoinOrganizationRequest extends Message<JoinOrganizationRequest> {
    */
   invitationId = "";
 
+  /**
+   * the userId of the user to join the organization
+   *
+   * @generated from field: string joinee_id = 2;
+   */
+  joineeId = "";
+
   constructor(data?: PartialMessage<JoinOrganizationRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -836,6 +851,7 @@ export class JoinOrganizationRequest extends Message<JoinOrganizationRequest> {
   static readonly typeName = "gitpod.experimental.v2.JoinOrganizationRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "invitation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "joinee_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): JoinOrganizationRequest {

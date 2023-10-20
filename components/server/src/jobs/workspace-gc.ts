@@ -18,7 +18,7 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { Config } from "../config";
 import { Job } from "./runner";
 import { WorkspaceService } from "../workspace/workspace-service";
-import { SYSTEM_USER } from "../authorization/authorizer";
+import { SYSTEM_USER_ID } from "../authorization/authorizer";
 import { StorageClient } from "../storage/storage-client";
 
 /**
@@ -93,7 +93,7 @@ export class WorkspaceGarbageCollector implements Job {
             log.info(`workspace-gc: about to soft-delete ${workspaces.length} workspaces`);
             for (const ws of workspaces) {
                 try {
-                    await this.workspaceService.deleteWorkspace(SYSTEM_USER, ws.id, "gc");
+                    await this.workspaceService.deleteWorkspace(SYSTEM_USER_ID, ws.id, "gc");
                 } catch (err) {
                     log.error({ workspaceId: ws.id }, "workspace-gc: error during workspace soft-deletion", err);
                 }
@@ -165,7 +165,7 @@ export class WorkspaceGarbageCollector implements Job {
             log.info(`workspace-gc: about to purge ${workspaces.length} workspaces`);
             for (const ws of workspaces) {
                 try {
-                    await this.workspaceService.hardDeleteWorkspace(SYSTEM_USER, ws.id);
+                    await this.workspaceService.hardDeleteWorkspace(SYSTEM_USER_ID, ws.id);
                 } catch (err) {
                     log.error({ workspaceId: ws.id }, "workspace-gc: failed to purge workspace", err);
                 }

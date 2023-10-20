@@ -38,6 +38,7 @@ import {
 import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
 import { OrganizationService } from "../orgs/organization-service";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/experimental/v2/pagination_pb";
+import { ctx } from "../util/request-context";
 
 @injectable()
 export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationServiceInterface> {
@@ -48,38 +49,30 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         private readonly apiConverter: PublicAPIConverter,
     ) {}
 
-    async createOrganization(
-        req: CreateOrganizationRequest,
-        context: HandlerContext,
-    ): Promise<CreateOrganizationResponse> {
-        const org = await this.orgService.createOrganization(context.user.id, req.name);
+    async createOrganization(req: CreateOrganizationRequest, _: HandlerContext): Promise<CreateOrganizationResponse> {
+        const ownerId = req.ownerId || ctx().subjectId?.userId();
+        const org = await this.orgService.createOrganization(undefined, ownerId, req.name);
         const response = new CreateOrganizationResponse();
         response.organization = this.apiConverter.toOrganization(org);
         return response;
     }
 
-    async getOrganization(req: GetOrganizationRequest, context: HandlerContext): Promise<GetOrganizationResponse> {
-        const org = await this.orgService.getOrganization(context.user.id, req.organizationId);
+    async getOrganization(req: GetOrganizationRequest, _: HandlerContext): Promise<GetOrganizationResponse> {
+        const org = await this.orgService.getOrganization(undefined, req.organizationId);
         const response = new GetOrganizationResponse();
         response.organization = this.apiConverter.toOrganization(org);
         return response;
     }
 
-    async updateOrganization(
-        req: UpdateOrganizationRequest,
-        context: HandlerContext,
-    ): Promise<UpdateOrganizationResponse> {
-        await this.orgService.updateOrganization(context.user.id, req.organizationId, {
+    async updateOrganization(req: UpdateOrganizationRequest, _: HandlerContext): Promise<UpdateOrganizationResponse> {
+        await this.orgService.updateOrganization(undefined, req.organizationId, {
             name: req.name,
         });
         return new UpdateOrganizationResponse();
     }
 
-    async listOrganizations(
-        req: ListOrganizationsRequest,
-        context: HandlerContext,
-    ): Promise<ListOrganizationsResponse> {
-        const orgs = await this.orgService.listOrganizations(context.user.id, {
+    async listOrganizations(req: ListOrganizationsRequest, _: HandlerContext): Promise<ListOrganizationsResponse> {
+        const orgs = await this.orgService.listOrganizations(undefined, {
             limit: req.pagination?.pageSize || 100,
             offset: (req.pagination?.page || 0) * (req.pagination?.pageSize || 0),
         });
@@ -90,26 +83,23 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         return response;
     }
 
-    async deleteOrganization(
-        req: DeleteOrganizationRequest,
-        context: HandlerContext,
-    ): Promise<DeleteOrganizationResponse> {
-        await this.orgService.deleteOrganization(context.user.id, req.organizationId);
+    async deleteOrganization(req: DeleteOrganizationRequest, _: HandlerContext): Promise<DeleteOrganizationResponse> {
+        await this.orgService.deleteOrganization(undefined, req.organizationId);
         return new DeleteOrganizationResponse();
     }
 
     async getOrganizationInvitation(
         req: GetOrganizationInvitationRequest,
-        context: HandlerContext,
+        _: HandlerContext,
     ): Promise<GetOrganizationInvitationResponse> {
-        const invitation = await this.orgService.getOrCreateInvite(context.user.id, req.organizationId);
+        const invitation = await this.orgService.getOrCreateInvite(undefined, req.organizationId);
         const response = new GetOrganizationInvitationResponse();
         response.invitationId = invitation.id;
         return response;
     }
 
-    async joinOrganization(req: JoinOrganizationRequest, context: HandlerContext): Promise<JoinOrganizationResponse> {
-        const orgId = await this.orgService.joinOrganization(context.user.id, req.invitationId);
+    async joinOrganization(req: JoinOrganizationRequest, _: HandlerContext): Promise<JoinOrganizationResponse> {
+        const orgId = await this.orgService.joinOrganization(req.joineeId, req.invitationId);
         const result = new JoinOrganizationResponse();
         result.organizationId = orgId;
         return result;
@@ -117,9 +107,9 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
 
     async resetOrganizationInvitation(
         req: ResetOrganizationInvitationRequest,
-        context: HandlerContext,
+        _: HandlerContext,
     ): Promise<ResetOrganizationInvitationResponse> {
-        const inviteId = await this.orgService.resetInvite(context.user.id, req.organizationId);
+        const inviteId = await this.orgService.resetInvite(undefined, req.organizationId);
         const result = new ResetOrganizationInvitationResponse();
         result.invitationId = inviteId.id;
         return result;
@@ -127,9 +117,9 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
 
     async listOrganizationMembers(
         req: ListOrganizationMembersRequest,
-        context: HandlerContext,
+        _: HandlerContext,
     ): Promise<ListOrganizationMembersResponse> {
-        const members = await this.orgService.listMembers(context.user.id, req.organizationId);
+        const members = await this.orgService.listMembers(undefined, req.organizationId);
         //TODO pagination
         const response = new ListOrganizationMembersResponse();
         response.members = members.map((member) => this.apiConverter.toOrganizationMember(member));
@@ -140,10 +130,10 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
 
     async updateOrganizationMember(
         req: UpdateOrganizationMemberRequest,
-        context: HandlerContext,
+        _: HandlerContext,
     ): Promise<UpdateOrganizationMemberResponse> {
         await this.orgService.addOrUpdateMember(
-            context.user.id,
+            undefined,
             req.organizationId,
             req.userId,
             this.apiConverter.fromOrgMemberRole(req.role),
@@ -153,17 +143,17 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
 
     async deleteOrganizationMember(
         req: DeleteOrganizationMemberRequest,
-        context: HandlerContext,
+        _: HandlerContext,
     ): Promise<DeleteOrganizationMemberResponse> {
-        await this.orgService.removeOrganizationMember(context.user.id, req.organizationId, req.userId);
+        await this.orgService.removeOrganizationMember(undefined, req.organizationId, req.userId);
         return new DeleteOrganizationMemberResponse();
     }
 
     async getOrganizationSettings(
         req: GetOrganizationSettingsRequest,
-        context: HandlerContext,
+        _: HandlerContext,
     ): Promise<GetOrganizationSettingsResponse> {
-        const settings = await this.orgService.getSettings(context.user.id, req.organizationId);
+        const settings = await this.orgService.getSettings(undefined, req.organizationId);
         const response = new GetOrganizationSettingsResponse();
         response.settings = this.apiConverter.toOrganizationSettings(settings);
         return response;
@@ -171,9 +161,9 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
 
     async updateOrganizationSettings(
         req: UpdateOrganizationSettingsRequest,
-        context: HandlerContext,
+        _: HandlerContext,
     ): Promise<UpdateOrganizationSettingsResponse> {
-        await this.orgService.updateSettings(context.user.id, req.organizationId, {
+        await this.orgService.updateSettings(undefined, req.organizationId, {
             workspaceSharingDisabled: req.settings?.workspaceSharingDisabled,
             defaultWorkspaceImage: req.settings?.defaultWorkspaceImage,
         });

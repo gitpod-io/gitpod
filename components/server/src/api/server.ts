@@ -18,18 +18,23 @@ import express from "express";
 import * as http from "http";
 import { decorate, inject, injectable, interfaces } from "inversify";
 import { AddressInfo } from "net";
-import { performance } from "perf_hooks";
-import { v4 } from "uuid";
 import { isFgaChecksEnabled } from "../authorization/authorizer";
 import { grpcServerHandled, grpcServerHandling, grpcServerStarted } from "../prometheus-metrics";
 import { SessionHandler } from "../session-handler";
-import { LogContextOptions, runWithLogContext } from "../util/log-context";
-import { wrapAsyncGenerator } from "../util/request-context";
+import {
+    RequestContext,
+    runWithChildContext,
+    runWithRequestContext,
+    wrapAsyncGenerator,
+} from "../util/request-context";
 import { HelloServiceAPI as HelloServiceAPI } from "./hello-service-api";
 import { APIStatsService as StatsServiceAPI } from "./stats";
 import { APITeamsService as TeamsServiceAPI } from "./teams";
 import { APIUserService as UserServiceAPI } from "./user";
 import { WorkspaceServiceAPI } from "./workspace-service-api";
+import { SubjectId } from "../auth/subject-id";
+import { performance } from "perf_hooks";
+import { v4 } from "uuid";
 
 decorate(injectable(), PublicAPIConverter);
 
@@ -113,17 +118,20 @@ export class API {
         return {
             get(target, prop) {
                 return (...args: any[]) => {
-                    const logContext: LogContextOptions & {
-                        requestId?: string;
-                        contextTimeMs: number;
-                        grpc_service: string;
-                        grpc_method: string;
-                    } = {
+                    const connectContext = args[1] as HandlerContext;
+                    const requestContext: RequestContext = {
+                        requestId: v4(),
+                        requestKind: "public-api",
                         contextTimeMs: performance.now(),
-                        grpc_service,
-                        grpc_method: prop as string,
+                        signal: connectContext.signal,
+                        logContext: {
+                            grpc_service,
+                            grpc_method: prop as string,
+                        },
                     };
-                    const withRequestContext = <T>(fn: () => T): T => runWithLogContext("public-api", logContext, fn);
+
+                    const withRequestContext = <T>(fn: () => T): T =>
+                        runWithRequestContext(undefined, requestContext, fn);
 
                     const method = type.methods[prop as string];
                     if (!method) {
@@ -147,8 +155,6 @@ export class API {
                         grpc_type = "bidi_stream";
                     }
 
-                    logContext.requestId = v4();
-
                     grpcServerStarted.labels(grpc_service, grpc_method, grpc_type).inc();
                     const stopTimer = grpcServerHandling.startTimer({ grpc_service, grpc_method, grpc_type });
                     const done = (err?: ConnectError) => {
@@ -162,7 +168,7 @@ export class API {
                         if (reason != err && err.code === Code.Internal) {
                             log.error("public api: unexpected internal error", reason);
                             err = new ConnectError(
-                                `Oops! Something went wrong. Please quote the request ID ${logContext.requestId} when reaching out to Gitpod Support.`,
+                                `Oops! Something went wrong. Please quote the request ID ${requestContext.requestId} when reaching out to Gitpod Support.`,
                                 Code.Internal,
                                 // pass metadata to preserve the application error
                                 err.metadata,
@@ -172,47 +178,47 @@ export class API {
                         throw err;
                     };
 
-                    const context = args[1] as HandlerContext;
+                    return withRequestContext(async () => {
+                        const user = await self.verify(connectContext);
+                        const subjectId = SubjectId.fromUserId(user.id);
 
-                    const apply = async <T>(): Promise<T> => {
-                        const user = await self.verify(context);
-                        context.user = user;
-
-                        return Reflect.apply(target[prop as any], target, args);
-                    };
-                    if (grpc_type === "unary" || grpc_type === "client_stream") {
-                        return withRequestContext(async () => {
-                            try {
-                                const promise = await apply<Promise<any>>();
-                                const result = await promise;
-                                done();
-                                return result;
-                            } catch (e) {
-                                handleError(e);
-                            }
-                        });
-                    }
-                    return wrapAsyncGenerator(
-                        (async function* () {
-                            try {
-                                const generator = await apply<AsyncGenerator<any>>();
-                                for await (const item of generator) {
-                                    yield item;
+                        const apply = async <T>(): Promise<T> => {
+                            return Reflect.apply(target[prop as any], target, args);
+                        };
+                        if (grpc_type === "unary" || grpc_type === "client_stream") {
+                            return runWithChildContext(subjectId, async () => {
+                                try {
+                                    const promise = await apply<Promise<any>>();
+                                    const result = await promise;
+                                    done();
+                                    return result;
+                                } catch (e) {
+                                    handleError(e);
                                 }
-                                done();
-                            } catch (e) {
-                                handleError(e);
-                            }
-                        })(),
-                        withRequestContext,
-                    );
+                            });
+                        }
+                        return wrapAsyncGenerator(
+                            (async function* () {
+                                try {
+                                    const generator = await apply<AsyncGenerator<any>>();
+                                    for await (const item of generator) {
+                                        yield item;
+                                    }
+                                    done();
+                                } catch (e) {
+                                    handleError(e);
+                                }
+                            })(),
+                            (f) => runWithChildContext(subjectId, f),
+                        );
+                    });
                 };
             },
         };
     }
 
-    private async verify(context: HandlerContext) {
-        const user = await this.sessionHandler.verify(context.requestHeader.get("cookie") || "");
+    private async verify(connectContext: HandlerContext) {
+        const user = await this.sessionHandler.verify(connectContext.requestHeader.get("cookie") || "");
         if (!user) {
             throw new ConnectError("unauthenticated", Code.Unauthenticated);
         }
