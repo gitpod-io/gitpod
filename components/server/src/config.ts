@@ -37,28 +37,30 @@ export type Config = Omit<
         credentialsPath: string;
     };
 
-    auth: {
-        // Public/Private key for signing authenticated sessions
-        pki: {
-            signing: {
-                id: string;
-                privateKey: string;
-                publicKey: string;
-            };
-            validating: {
-                id: string;
-                privateKey: string;
-                publicKey: string;
-            }[];
-        };
-
-        session: {
-            lifetimeSeconds: number;
-            issuer: string;
-            cookie: CookieConfig;
-        };
-    };
+    auth: AuthConfig;
 };
+
+export interface AuthConfig {
+    // Public/Private key for signing authenticated sessions
+    pki: {
+        signing: {
+            id: string;
+            privateKey: string;
+            publicKey: string;
+        };
+        validating: {
+            id: string;
+            privateKey: string;
+            publicKey: string;
+        }[];
+    };
+
+    session: {
+        lifetimeSeconds: number;
+        issuer: string;
+        cookie: CookieConfig;
+    };
+}
 
 export interface WorkspaceDefaults {
     workspaceImage: string;

@@ -8,8 +8,8 @@ import { suite, test } from "@testdeck/mocha";
 import { AuthJWT, sign, verify } from "./jwt";
 import { Container } from "inversify";
 import { Config } from "../config";
-import * as crypto from "crypto";
 import * as chai from "chai";
+import { mockAuthConfig } from "../test/service-testing-container-module";
 
 const expect = chai.expect;
 
@@ -17,21 +17,8 @@ const expect = chai.expect;
 class TestAuthJWT {
     private container: Container;
 
-    private signingKeyPair = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
-    private validatingKeyPair1 = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
-    private validatingKeyPair2 = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
-
     private config: Config = {
-        auth: {
-            pki: {
-                signing: toKeyPair("0001", this.signingKeyPair),
-                validating: [toKeyPair("0002", this.validatingKeyPair1), toKeyPair("0003", this.validatingKeyPair2)],
-            },
-            session: {
-                issuer: "https://mp-server-d7650ec945.preview.gitpod-dev.com",
-                lifetimeSeconds: 7 * 24 * 60 * 60,
-            },
-        },
+        auth: mockAuthConfig,
     } as Config;
 
     async before() {
@@ -88,31 +75,6 @@ class TestAuthJWT {
         expect(decoded["sub"]).to.equal(subject);
         expect(decoded["iss"]).to.equal("https://mp-server-d7650ec945.preview.gitpod-dev.com");
     }
-}
-
-function toKeyPair(
-    id: string,
-    kp: crypto.KeyPairKeyObjectResult,
-): {
-    id: string;
-    privateKey: string;
-    publicKey: string;
-} {
-    return {
-        id,
-        privateKey: kp.privateKey
-            .export({
-                type: "pkcs1",
-                format: "pem",
-            })
-            .toString(),
-        publicKey: kp.publicKey
-            .export({
-                type: "pkcs1",
-                format: "pem",
-            })
-            .toString(),
-    };
 }
 
 module.exports = new TestAuthJWT();
