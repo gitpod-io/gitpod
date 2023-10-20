@@ -7,7 +7,7 @@
 import { v1 } from "@authzed/authzed-node";
 
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib";
-import { Project, TeamMemberRole } from "@gitpod/gitpod-protocol";
+import { Project, TeamMemberRole, User, Workspace } from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import {
     AllResourceTypes,
@@ -69,7 +69,7 @@ export class Authorizer {
             consistency,
         });
 
-        return await this.authorizer.check(req, { userId });
+        return await this.authorizer.check(req, { userId }, undefined);
     }
 
     async checkPermissionOnInstallation(userId: string, permission: InstallationPermission): Promise<void> {
@@ -98,7 +98,7 @@ export class Authorizer {
             consistency,
         });
 
-        return await this.authorizer.check(req, { userId });
+        return await this.authorizer.check(req, { userId }, undefined); // passing undefined for now to not bother with expanding the API here
     }
 
     async checkPermissionOnOrganization(userId: string, permission: OrganizationPermission, orgId: string) {
@@ -128,7 +128,7 @@ export class Authorizer {
             consistency,
         });
 
-        return await this.authorizer.check(req, { userId });
+        return await this.authorizer.check(req, { userId }, undefined); // passing undefined for now to not bother with expanding the API here
     }
 
     async checkPermissionOnProject(userId: string, permission: ProjectPermission, projectId: string) {
@@ -146,9 +146,19 @@ export class Authorizer {
         );
     }
 
-    async hasPermissionOnUser(userId: string, permission: UserPermission, resourceUserId: string): Promise<boolean> {
+    async hasPermissionOnUser(
+        userId: string,
+        permission: UserPermission,
+        resourceUserId: string,
+        resource?: Pick<User, "id" | "organizationId">,
+    ): Promise<boolean> {
         if (userId === SYSTEM_USER) {
             return true;
+        }
+
+        if (resource && resource.id !== resourceUserId) {
+            log.error({ userId }, "invalid request for permission on user", { resourceUserId, resource });
+            return false;
         }
 
         const req = v1.CheckPermissionRequest.create({
@@ -158,14 +168,28 @@ export class Authorizer {
             consistency,
         });
 
-        return await this.authorizer.check(req, { userId });
+        let parentObjectRef: v1.ObjectReference | undefined;
+        if (resource) {
+            const objectType = resource.organizationId ? "organization" : "installation";
+            parentObjectRef = object(objectType, resource.organizationId || InstallationID);
+        }
+
+        return await this.authorizer.check(req, { userId }, parentObjectRef);
     }
 
-    async checkPermissionOnUser(userId: string, permission: UserPermission, resourceUserId: string) {
-        if (await this.hasPermissionOnUser(userId, permission, resourceUserId)) {
+    async checkPermissionOnUser(
+        userId: string,
+        permission: UserPermission,
+        resourceUserId: string,
+        resource?: Pick<User, "id" | "organizationId">,
+    ) {
+        if (await this.hasPermissionOnUser(userId, permission, resourceUserId, resource)) {
             return;
         }
-        if ("read_info" === permission || !(await this.hasPermissionOnUser(userId, "read_info", resourceUserId))) {
+        if (
+            "read_info" === permission ||
+            !(await this.hasPermissionOnUser(userId, "read_info", resourceUserId, resource))
+        ) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `User ${resourceUserId} not found.`);
         }
 
@@ -179,10 +203,16 @@ export class Authorizer {
         userId: string,
         permission: WorkspacePermission,
         workspaceId: string,
+        resource?: Pick<Workspace, "id" | "organizationId">,
         forceEnablement?: boolean, // temporary to find an issue with workspace sharing
     ): Promise<boolean> {
         if (userId === SYSTEM_USER) {
             return true;
+        }
+
+        if (resource && resource.id !== workspaceId) {
+            log.error({ userId }, "invalid request for permission on workspace", { workspaceId, resource });
+            return false;
         }
 
         const req = v1.CheckPermissionRequest.create({
@@ -192,14 +222,27 @@ export class Authorizer {
             consistency,
         });
 
-        return await this.authorizer.check(req, { userId }, forceEnablement);
+        let parentObjectRef: v1.ObjectReference | undefined;
+        if (resource?.organizationId) {
+            parentObjectRef = object("organization", resource.organizationId);
+        }
+
+        return await this.authorizer.check(req, { userId }, parentObjectRef, forceEnablement);
     }
 
-    async checkPermissionOnWorkspace(userId: string, permission: WorkspacePermission, workspaceId: string) {
-        if (await this.hasPermissionOnWorkspace(userId, permission, workspaceId)) {
+    async checkPermissionOnWorkspace(
+        userId: string,
+        permission: WorkspacePermission,
+        workspaceId: string,
+        resource?: Pick<Workspace, "id" | "organizationId">,
+    ) {
+        if (await this.hasPermissionOnWorkspace(userId, permission, workspaceId, resource)) {
             return;
         }
-        if ("read_info" === permission || !(await this.hasPermissionOnWorkspace(userId, "read_info", workspaceId))) {
+        if (
+            "read_info" === permission ||
+            !(await this.hasPermissionOnWorkspace(userId, "read_info", workspaceId, resource))
+        ) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} not found.`);
         }
 
