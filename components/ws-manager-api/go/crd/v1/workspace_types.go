@@ -62,6 +62,9 @@ type WorkspaceSpec struct {
 
 	// the XFS quota to enforce on the workspace's /workspace folder
 	StorageQuota int `json:"storageQuota,omitempty"`
+
+	// Storage configures the backing storage for this workspace
+	Storage StorageSpec `json:"storageSpec,omitempty"`
 }
 
 type Ownership struct {
@@ -166,6 +169,11 @@ func (ps PortSpec) Equal(other PortSpec) bool {
 	return true
 }
 
+type StorageSpec struct {
+	Volume    string `json:"volume"`
+	MountPath string `json:"mountPath"`
+}
+
 // WorkspaceStatus defines the observed state of Workspace
 type WorkspaceStatus struct {
 	PodStarts  int    `json:"podStarts"`
@@ -187,6 +195,8 @@ type WorkspaceStatus struct {
 
 	// +kubebuilder:validation:Optional
 	Runtime *WorkspaceRuntimeStatus `json:"runtime,omitempty"`
+
+	VolumeDevice string `json:"volumeDevice,omitempty"`
 
 	LastActivity *metav1.Time `json:"lastActivity,omitempty"`
 }
@@ -244,8 +254,10 @@ const (
 	// NodeDisappeared is true if the workspace's node disappeared before the workspace was stopped
 	WorkspaceConditionNodeDisappeared WorkspaceCondition = "NodeDisappeared"
 
-	// ThroughputAdjusted is true if the throughput of the workspace volume has been adjusted
-	WorkspaceConditionThroughputAdjusted WorkspaceCondition = "ThroughputAdjusted"
+	// VolumeAttached is true if the workspace's volume has been attached to the node
+	VolumeAttached WorkspaceCondition = "VolumeAttached"
+	// VolumeMounted is true if the workspace's volume has been mounted on the node
+	VolumeMounted WorkspaceCondition = "VolumeMounted"
 )
 
 func NewWorkspaceConditionDeployed() metav1.Condition {
