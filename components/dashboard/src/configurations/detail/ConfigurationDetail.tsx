@@ -48,9 +48,9 @@ const ConfigurationDetailPage: FC = () => {
                     ) : (
                         <>
                             <ConfigurationNameForm configuration={data} />
+                            <ConfigurationEnvironmentVariables configuration={data} />
                             <RepositoryPrebuildsSettings repository={data} />
                             <RepositoryWorkspacesSettings repository={data} />
-                            <ConfigurationEnvironmentVariables configuration={data} />
                             <DeleteConfiguration configuration={data} />
                         </>
                     ))}

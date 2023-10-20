@@ -25,21 +25,35 @@ interface ConfigurationVariablesProps {
 
 export default function ConfigurationEnvironmentVariables({ configuration }: ConfigurationVariablesProps) {
     const { data: envVars, isLoading } = useListProjectEnvironmentVariables(configuration.id);
-    const [showAddVariableModal, setShowAddVariableModal] = useState<boolean>(false);
     const deleteEnvVarMutation = useDeleteProjectEnvironmentVariable(configuration.id);
+
+    const [modalState, setModalState] = useState<{
+        open: boolean;
+        action?: AddVariableModalProps["action"];
+        presetName?: AddVariableModalProps["presetName"];
+    }>({ open: false });
+
+    const showModal = useCallback(
+        (action?: AddVariableModalProps["action"], presetName?: AddVariableModalProps["presetName"]) => {
+            setModalState({ open: true, action, presetName });
+        },
+        [],
+    );
 
     if (isLoading || !envVars) {
         return null;
     }
 
     return (
-        <section>
-            {showAddVariableModal && (
-                <AddVariableModal
+        <section className="max-w-lg">
+            {modalState.open && (
+                <VariableModal
                     configuration={configuration}
                     onClose={() => {
-                        setShowAddVariableModal(false);
+                        setModalState({ open: false });
                     }}
+                    action={modalState.action}
+                    presetName={modalState.presetName}
                 />
             )}
             <div className="mb-2 flex mt-12">
@@ -47,17 +61,20 @@ export default function ConfigurationEnvironmentVariables({ configuration }: Con
                     <Heading2>Environment Variables</Heading2>
                     <Subheading>Manage configuration-specific environment variables.</Subheading>
                 </div>
-                {envVars.length > 0 && <button onClick={() => setShowAddVariableModal(true)}>New Variable</button>}
             </div>
             {envVars.length === 0 ? (
-                <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full py-28 flex flex-col items-center justify-center space-y-3">
-                    <Heading2 color="light">No Environment Variables</Heading2>
-                    <Subheading className="text-center w-96">
-                        All <strong>configuration-specific environment variables</strong> will be visible in prebuilds
-                        and optionally in workspaces for this Configuration.
-                    </Subheading>
-                    <button onClick={() => setShowAddVariableModal(true)}>New Variable</button>
-                </div>
+                <>
+                    <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full py-28 flex flex-col items-center justify-center space-y-3">
+                        <Heading2 color="light">No Environment Variables</Heading2>
+                        <Subheading className="text-center w-96">
+                            All <strong>configuration-specific environment variables</strong> will be visible in
+                            prebuilds and optionally in workspaces for this Configuration.
+                        </Subheading>
+                    </div>
+                    <button aria-label="New Variable" onClick={() => setModalState({ open: true })}>
+                        +
+                    </button>
+                </>
             ) : (
                 <ItemsList>
                     <Item header={true} className="grid grid-cols-3 items-center">
@@ -67,12 +84,18 @@ export default function ConfigurationEnvironmentVariables({ configuration }: Con
                     </Item>
                     {envVars.map((variable) => {
                         return (
-                            <Item key={variable.id} className="grid grid-cols-3 items-center">
+                            <Item key={variable.id} className="grid grid-cols-3 items-center font-mono">
                                 <ItemField className="truncate">{variable.name}</ItemField>
                                 <ItemField>{variable.censored ? "Hidden" : "Visible"}</ItemField>
                                 <ItemField className="flex justify-end">
                                     <ItemFieldContextMenu
                                         menuEntries={[
+                                            {
+                                                title: "Edit",
+                                                onClick: () => {
+                                                    showModal("update", variable.name);
+                                                },
+                                            },
                                             {
                                                 title: "Delete",
                                                 customFontStyle:
@@ -89,12 +112,20 @@ export default function ConfigurationEnvironmentVariables({ configuration }: Con
                     })}
                 </ItemsList>
             )}
+            {envVars.length > 0 && <button onClick={() => showModal()}>New Variable</button>}
         </section>
     );
 }
 
-function AddVariableModal(props: { configuration: Project; onClose: () => void }) {
-    const [name, setName] = useState<string>("");
+interface AddVariableModalProps {
+    configuration: Project;
+    onClose: () => void;
+    action?: "add" | "update";
+    presetName?: string;
+}
+
+function VariableModal({ configuration, onClose, action = "add", presetName }: AddVariableModalProps) {
+    const [name, setName] = useState<string>(presetName ?? "");
     const [value, setValue] = useState<string>("");
     const [censored, setCensored] = useState<boolean>(true);
     const setConfigurationEnvVar = useSetProjectEnvVar();
@@ -102,44 +133,49 @@ function AddVariableModal(props: { configuration: Project; onClose: () => void }
     const addVariable = useCallback(async () => {
         await setConfigurationEnvVar.mutateAsync(
             {
-                projectId: props.configuration.id,
+                projectId: configuration.id,
                 name,
                 value,
                 censored,
             },
-            { onSuccess: props.onClose },
+            { onSuccess: onClose },
         );
-    }, [censored, name, props.onClose, props.configuration, setConfigurationEnvVar, value]);
+    }, [censored, name, onClose, configuration, setConfigurationEnvVar, value]);
 
     return (
-        <Modal visible onClose={props.onClose} onSubmit={addVariable}>
-            <ModalHeader>New Variable</ModalHeader>
+        <Modal visible onClose={onClose} onSubmit={addVariable}>
+            <ModalHeader>{action === "add" ? "Add Variable" : "Update Variable"}</ModalHeader>
             <ModalBody>
-                <Alert type="warning">
-                    <strong>Configuration environment variables can be exposed.</strong>
-                    <br />
-                    Even if <strong>Hide Variable in Workspaces</strong> is enabled, anyone with read access to your
-                    repository can access secret values if they are printed in the terminal, logged, or persisted to the
-                    file system.
-                </Alert>
+                {action === "add" && (
+                    <Alert type="warning">
+                        <strong>Configuration environment variables can be exposed.</strong>
+                        <br />
+                        Even if <strong>Hide Variable in Workspaces</strong> is enabled, anyone with read access to your
+                        repository can access secret values if they are printed in the terminal, logged, or persisted to
+                        the file system.
+                    </Alert>
+                )}
                 <div className="mt-8">
                     <h4>Name</h4>
                     <input
-                        autoFocus
+                        autoFocus={action === "add"}
                         className="w-full"
                         type="text"
                         name="name"
                         value={name}
+                        readOnly={action === "update"}
                         onChange={(e) => setName(e.target.value)}
                     />
                 </div>
                 <div className="mt-4">
                     <h4>Value</h4>
                     <input
+                        autoFocus={action === "update"}
                         className="w-full"
                         type="text"
                         name="value"
                         value={value}
+                        placeholder={action === "update" ? "Existing value redacted" : ""}
                         onChange={(e) => setValue(e.target.value)}
                     />
                 </div>
@@ -152,7 +188,7 @@ function AddVariableModal(props: { configuration: Project; onClose: () => void }
                 {!censored && (
                     <div className="mt-4">
                         <InfoBox>
-                            This variable will be visible to anyone who starts a Gitpod workspace for your repository.
+                            This variable will be visible to anyone who starts a Gitpod Workspace for your repository.
                         </InfoBox>
                     </div>
                 )}
@@ -169,11 +205,11 @@ function AddVariableModal(props: { configuration: Project; onClose: () => void }
                     ) : null
                 }
             >
-                <Button type="secondary" onClick={props.onClose}>
+                <Button type="secondary" onClick={onClose}>
                     Cancel
                 </Button>
                 <Button htmlType="submit" loading={setConfigurationEnvVar.isLoading}>
-                    Add Variable
+                    Save
                 </Button>
             </ModalFooter>
         </Modal>
