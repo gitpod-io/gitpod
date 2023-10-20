@@ -72,7 +72,7 @@ export default function ConfigurationEnvironmentVariables({ configuration }: Con
                         </Subheading>
                     </div>
                     <button aria-label="New Variable" onClick={() => setModalState({ open: true })}>
-                        +
+                        Add a variable
                     </button>
                 </>
             ) : (
