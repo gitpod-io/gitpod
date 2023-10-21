@@ -64,7 +64,7 @@ export default function ConfigurationEnvironmentVariables({ configuration }: Con
                 </div>
             </div>
             {envVars.length === 0 ? (
-                <div className="bg-blue-50 dark:bg-blue-800 rounded-xl w-full py-4 px-2">
+                <div className="bg-blue-50 dark:bg-blue-800 rounded-xl w-full py-2 px-2">
                     <Text>No Environment Variables are set</Text>
                 </div>
             ) : (
@@ -104,7 +104,9 @@ export default function ConfigurationEnvironmentVariables({ configuration }: Con
                     })}
                 </ItemsList>
             )}
-            <button onClick={() => showModal()}>New Variable</button>
+            <button className="mt-2" onClick={() => showModal()}>
+                New Variable
+            </button>
         </section>
     );
 }
