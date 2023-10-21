@@ -98,6 +98,36 @@ class UserDBSpec {
     }
 
     @test(timeout(10000))
+    public async findUserById() {
+        const user = await this.db.newUser();
+        user.identities.push(this.IDENTITY1);
+        await this.db.storeUser(user);
+
+        const foundUser = await this.db.findUserById(user.id);
+        expect(foundUser!.id).to.eq(user.id);
+    }
+
+    @test(timeout(10000))
+    public async findUserById_undefined() {
+        const user = await this.db.newUser();
+        user.identities.push(this.IDENTITY1);
+        await this.db.storeUser(user);
+
+        try {
+            await this.db.findUserById(undefined!);
+            expect.fail("Should have failed");
+        } catch (error) {
+            expect(error.code).to.eq(400);
+        }
+        try {
+            await this.db.findUserById("");
+            expect.fail("Should have failed");
+        } catch (error) {
+            expect(error.code).to.eq(400);
+        }
+    }
+
+    @test(timeout(10000))
     public async findUsersByEmail_multiple_users_identities() {
         let user1 = await this.db.newUser();
         user1.name = "Old";
