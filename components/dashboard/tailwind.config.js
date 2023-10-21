@@ -127,6 +127,7 @@ module.exports = {
         require("@tailwindcss/forms"),
         require("tailwind-underline-utils"),
         require("tailwindcss-filters"),
+        require("tailwindcss-animate"),
         // ...
     ],
 };

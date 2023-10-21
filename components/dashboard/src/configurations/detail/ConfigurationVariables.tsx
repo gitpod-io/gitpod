@@ -19,6 +19,7 @@ import InfoBox from "../../components/InfoBox";
 import { Button } from "../../components/Button";
 import { ItemsList, Item, ItemField, ItemFieldContextMenu } from "../../components/ItemsList";
 import { Text } from "@podkit/typography/Text";
+import { QuestionTooltip } from "@podkit/tooltip/QuestionTooltip";
 
 interface ConfigurationVariablesProps {
     configuration: Project;
@@ -65,7 +66,13 @@ export default function ConfigurationEnvironmentVariables({ configuration }: Con
             </div>
             {envVars.length === 0 ? (
                 <div className="bg-blue-50 dark:bg-blue-800 rounded-xl w-full py-2 px-2">
-                    <Text>No Environment Variables are set</Text>
+                    <Text>
+                        No Environment Variables are set{" "}
+                        <QuestionTooltip>
+                            All <strong>configuration-specific environment variables</strong> will be visible in
+                            prebuilds and optionally in workspaces for this Configuration.
+                        </QuestionTooltip>
+                    </Text>
                 </div>
             ) : (
                 <ItemsList>
