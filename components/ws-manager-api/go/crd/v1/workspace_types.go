@@ -62,9 +62,6 @@ type WorkspaceSpec struct {
 
 	// the XFS quota to enforce on the workspace's /workspace folder
 	StorageQuota int `json:"storageQuota,omitempty"`
-
-	// Storage configures the backing storage for this workspace
-	Storage StorageSpec `json:"storageSpec,omitempty"`
 }
 
 type Ownership struct {
@@ -169,11 +166,6 @@ func (ps PortSpec) Equal(other PortSpec) bool {
 	return true
 }
 
-type StorageSpec struct {
-	Volume    string `json:"volume"`
-	MountPath string `json:"mountPath"`
-}
-
 // WorkspaceStatus defines the observed state of Workspace
 type WorkspaceStatus struct {
 	PodStarts  int    `json:"podStarts"`
@@ -196,13 +188,20 @@ type WorkspaceStatus struct {
 	// +kubebuilder:validation:Optional
 	Runtime *WorkspaceRuntimeStatus `json:"runtime,omitempty"`
 
-	VolumeDevice string `json:"volumeDevice,omitempty"`
+	Storage      StorageStatus `json:"storage,omitempty"`
+	VolumeDevice string        `json:"volumeDevice,omitempty"`
 
 	LastActivity *metav1.Time `json:"lastActivity,omitempty"`
 }
 
 func (s *WorkspaceStatus) SetCondition(cond metav1.Condition) {
 	s.Conditions = wsk8s.AddUniqueCondition(s.Conditions, cond)
+}
+
+type StorageStatus struct {
+	VolumeName     string `json:"volumeName"`
+	AttachedDevice string `json:"attachedDevice"`
+	MountPath      string `json:"mountPath"`
 }
 
 // +kubebuilder:validation:Enum=Deployed;Failed;Timeout;FirstUserActivity;Closed;HeadlessTaskFailed;StoppedByRequest;Aborted;ContentReady;EverReady;BackupComplete;BackupFailure;Refresh;NodeDisappeared;ThroughputAdjusted
