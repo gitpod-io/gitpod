@@ -66,7 +66,7 @@ export default function ConfigurationEnvironmentVariables({ configuration }: Con
             </div>
             {envVars.length === 0 ? (
                 <div className="bg-blue-50 dark:bg-blue-800 rounded-xl w-full py-2 px-2">
-                    <Text>
+                    <Text className="flex">
                         No Environment Variables are set{" "}
                         <QuestionTooltip>
                             All <strong>configuration-specific environment variables</strong> will be visible in
