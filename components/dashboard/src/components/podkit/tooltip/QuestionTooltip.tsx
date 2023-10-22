@@ -16,8 +16,8 @@ export const QuestionTooltip: FC<QuestionTooltipProps> = ({ className, children 
     return (
         <TooltipProvider>
             <Tooltip>
-                <TooltipTrigger className="py-0 px-1 bg-transparent text-black dark:text-white">
-                    <HelpCircle size={16} />
+                <TooltipTrigger className="p-0 mx-1 bg-transparent text-black dark:text-white">
+                    <HelpCircle className="text-blue-400" size={16} />
                 </TooltipTrigger>
                 <TooltipContent>{children}</TooltipContent>
             </Tooltip>
