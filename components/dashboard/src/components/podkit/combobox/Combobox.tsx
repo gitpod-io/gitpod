@@ -5,20 +5,19 @@
  */
 
 import React, { FC, FunctionComponent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Arrow from "./Arrow";
-import classNames from "classnames";
-import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import * as RadixPopover from "@radix-ui/react-popover";
+import { ChevronDown, CircleDashed } from "lucide-react";
+import classNames from "classnames";
 
-export interface DropDown2Element {
+export interface ComboboxElement {
     id: string;
     element: JSX.Element;
     isSelectable?: boolean;
 }
 
-export interface DropDown2Props {
+export interface ComboboxProps {
     initialValue?: string;
-    getElements: (searchString: string) => DropDown2Element[];
+    getElements: (searchString: string) => ComboboxElement[];
     disabled?: boolean;
     loading?: boolean;
     searchPlaceholder?: string;
@@ -29,7 +28,7 @@ export interface DropDown2Props {
     onSearchChange?: (searchString: string) => void;
 }
 
-export const DropDown2: FunctionComponent<DropDown2Props> = ({
+export const Combobox: FunctionComponent<ComboboxProps> = ({
     initialValue = "",
     disabled = false,
     loading = false,
@@ -188,8 +187,14 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
             >
                 {children}
                 <div className="flex-grow" />
-                <div className="mr-2">
-                    <Arrow direction={showDropDown ? "up" : "down"} />
+                <div
+                    className={classNames(
+                        // TODO: work on abstracting icon colors once we have a few places using lucide icons
+                        "mr-2 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400 transition-transform",
+                        showDropDown && "rotate-180 transition-all",
+                    )}
+                >
+                    <ChevronDown />
                 </div>
             </RadixPopover.Trigger>
             <RadixPopover.Portal>
@@ -213,8 +218,8 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                                 onChange={handleInputChange}
                             />
                             {showInputLoadingIndicator && (
-                                <div className="absolute top-0 right-0 h-full flex items-center pr-2">
-                                    <Spinner className="h-4 w-4 opacity-25 animate-spin" />
+                                <div className="absolute top-0 right-0 h-full flex items-center pr-2 animate-fade-in-fast">
+                                    <CircleDashed className="opacity-10 animate-spin-slow" />
                                 </div>
                             )}
                         </div>
@@ -229,7 +234,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                         {!showResultsLoadingIndicator && filteredOptions.length > 0 ? (
                             filteredOptions.map((element) => {
                                 return (
-                                    <Dropdown2Element
+                                    <ComboboxItem
                                         key={element.id}
                                         element={element}
                                         isActive={element.id === selectedElementTemp}
@@ -250,7 +255,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
     );
 };
 
-type DropDown2SelectedElementProps = {
+type ComboboxSelectedItemProps = {
     // Either a string of the icon source or an element
     icon: ReactNode;
     loading?: boolean;
@@ -259,7 +264,7 @@ type DropDown2SelectedElementProps = {
     htmlTitle?: string;
 };
 
-export const DropDown2SelectedElement: FC<DropDown2SelectedElementProps> = ({
+export const ComboboxSelectedItem: FC<ComboboxSelectedItemProps> = ({
     icon,
     loading = false,
     title,
@@ -297,14 +302,14 @@ export const DropDown2SelectedElement: FC<DropDown2SelectedElementProps> = ({
     );
 };
 
-type Dropdown2ElementProps = {
-    element: DropDown2Element;
+type ComboboxItemProps = {
+    element: ComboboxElement;
     isActive: boolean;
     onSelected: (id: string) => void;
     onFocused: (id: string) => void;
 };
 
-export const Dropdown2Element: FC<Dropdown2ElementProps> = ({ element, isActive, onSelected, onFocused }) => {
+export const ComboboxItem: FC<ComboboxItemProps> = ({ element, isActive, onSelected, onFocused }) => {
     let selectionClasses = `dark:bg-gray-800 cursor-pointer`;
     if (isActive) {
         selectionClasses = `bg-gray-200 dark:bg-gray-700 cursor-pointer focus:outline-none focus:ring-0`;

@@ -32,6 +32,8 @@ import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactiona
 import { ScmService } from "./scm-service";
 import { daysBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 
+const MAX_PROJECT_NAME_LENGTH = 100;
+
 @injectable()
 export class ProjectsService {
     constructor(
@@ -205,8 +207,11 @@ export class ProjectsService {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Clone URL must be less than 1k characters.");
         }
 
-        if (name.length > 32) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Project name cannot be longer than 32 characters.");
+        if (name.length > MAX_PROJECT_NAME_LENGTH) {
+            throw new ApplicationError(
+                ErrorCodes.BAD_REQUEST,
+                `Project name cannot be longer than ${MAX_PROJECT_NAME_LENGTH} characters.`,
+            );
         }
 
         try {
@@ -245,7 +250,7 @@ export class ProjectsService {
 
         const project = Project.create({
             // Default to repository name
-            name: name || parsedUrl.repo.substring(0, 32),
+            name: name || parsedUrl.repo.substring(0, MAX_PROJECT_NAME_LENGTH),
             cloneUrl,
             teamId,
             appInstallationId,
@@ -369,9 +374,11 @@ export class ProjectsService {
         const partial: PartialProject = { id: partialProject.id };
         if (partialProject.name) {
             partialProject.name = partialProject.name.trim();
-            // check it is between 0 and 32 characters
-            if (partialProject.name.length > 32) {
-                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Project name must be less than 32 characters.");
+            if (partialProject.name.length > MAX_PROJECT_NAME_LENGTH) {
+                throw new ApplicationError(
+                    ErrorCodes.BAD_REQUEST,
+                    `Project name must be less than ${MAX_PROJECT_NAME_LENGTH} characters.`,
+                );
             }
             if (partialProject.name.length === 0) {
                 throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Project name must not be empty.");

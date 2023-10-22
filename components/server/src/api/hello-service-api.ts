@@ -16,7 +16,7 @@ import {
 import { injectable } from "inversify";
 
 @injectable()
-export class APIHelloService implements ServiceImpl<typeof HelloService> {
+export class HelloServiceAPI implements ServiceImpl<typeof HelloService> {
     async sayHello(req: SayHelloRequest, context: HandlerContext): Promise<SayHelloResponse> {
         const response = new SayHelloResponse();
         response.reply = "Hello " + this.getSubject(context);

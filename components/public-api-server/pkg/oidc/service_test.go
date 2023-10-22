@@ -144,7 +144,7 @@ func TestGetClientConfigFromStartRequest(t *testing.T) {
 func TestGetClientConfigFromStartRequestSingleOrg(t *testing.T) {
 	issuer := newFakeIdP(t)
 	service, dbConn := setupOIDCServiceForTests(t)
-	// make sure no other teams are in the db anymore
+	// make sure no other organizations are in the db anymore
 	dbConn.Delete(&db.Organization{}, "1=1")
 	config, team := createConfig(t, dbConn, &ClientConfig{
 		Issuer:         issuer,

@@ -51,7 +51,7 @@ jobs:
     needs: [configuration,create-runner]
     if: ${{ needs.configuration.outputs.skip == 'false' }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-update-image-gha.17642
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-leeway-pigz-gha.18593
     steps:
       # Most of this is taken over from the Build workflow/preview-env-check-regressions workflow
       - uses: actions/checkout@v4

@@ -7,27 +7,31 @@
 import { Code, ConnectError, ConnectRouter, HandlerContext, ServiceImpl } from "@connectrpc/connect";
 import { expressConnectMiddleware } from "@connectrpc/connect-express";
 import { MethodKind, ServiceType } from "@bufbuild/protobuf";
+import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connect";
 import { StatsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/stats_connect";
 import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connect";
 import { UserService as UserServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_connect";
-import { WorkspacesService as WorkspacesServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/workspaces_connect";
+import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/experimental/v2/workspace_connect";
 import express from "express";
 import * as http from "http";
-import { inject, injectable, interfaces } from "inversify";
+import { decorate, inject, injectable, interfaces } from "inversify";
 import { AddressInfo } from "net";
+import { performance } from "perf_hooks";
+import { v4 } from "uuid";
+import { isFgaChecksEnabled } from "../authorization/authorizer";
 import { grpcServerHandled, grpcServerHandling, grpcServerStarted } from "../prometheus-metrics";
 import { SessionHandler } from "../session-handler";
-import { APIHelloService } from "./dummy";
-import { APIStatsService } from "./stats";
-import { APITeamsService } from "./teams";
-import { APIUserService } from "./user";
-import { APIWorkspacesService } from "./workspaces";
 import { LogContextOptions, runWithLogContext } from "../util/log-context";
-import { v4 } from "uuid";
-import { performance } from "perf_hooks";
 import { wrapAsyncGenerator } from "../util/request-context";
+import { HelloServiceAPI as HelloServiceAPI } from "./hello-service-api";
+import { APIStatsService as StatsServiceAPI } from "./stats";
+import { APITeamsService as TeamsServiceAPI } from "./teams";
+import { APIUserService as UserServiceAPI } from "./user";
+import { WorkspaceServiceAPI } from "./workspace-service-api";
+
+decorate(injectable(), PublicAPIConverter);
 
 function service<T extends ServiceType>(type: T, impl: ServiceImpl<T>): [T, ServiceImpl<T>] {
     return [type, impl];
@@ -35,12 +39,13 @@ function service<T extends ServiceType>(type: T, impl: ServiceImpl<T>): [T, Serv
 
 @injectable()
 export class API {
-    @inject(APIUserService) private readonly apiUserService: APIUserService;
-    @inject(APITeamsService) private readonly apiTeamService: APITeamsService;
-    @inject(APIWorkspacesService) private readonly apiWorkspacesService: APIWorkspacesService;
-    @inject(APIStatsService) private readonly apiStatsService: APIStatsService;
-    @inject(APIHelloService) private readonly apiHelloService: APIHelloService;
+    @inject(UserServiceAPI) private readonly userServiceApi: UserServiceAPI;
+    @inject(TeamsServiceAPI) private readonly teamServiceApi: TeamsServiceAPI;
+    @inject(WorkspaceServiceAPI) private readonly workspacesServiceApi: WorkspaceServiceAPI;
+    @inject(StatsServiceAPI) private readonly tatsServiceApi: StatsServiceAPI;
+    @inject(HelloServiceAPI) private readonly helloServiceApi: HelloServiceAPI;
     @inject(SessionHandler) private readonly sessionHandler: SessionHandler;
+    @inject(PublicAPIConverter) private readonly apiConverter: PublicAPIConverter;
 
     listenPrivate(): http.Server {
         const app = express();
@@ -68,10 +73,9 @@ export class API {
         app.use(
             expressConnectMiddleware({
                 routes: (router: ConnectRouter) => {
-                    router.service(UserServiceDefinition, this.apiUserService);
-                    router.service(TeamsServiceDefinition, this.apiTeamService);
-                    router.service(WorkspacesServiceDefinition, this.apiWorkspacesService);
-                    router.service(StatsService, this.apiStatsService);
+                    router.service(UserServiceDefinition, this.userServiceApi);
+                    router.service(TeamsServiceDefinition, this.teamServiceApi);
+                    router.service(StatsService, this.tatsServiceApi);
                 },
             }),
         );
@@ -81,7 +85,10 @@ export class API {
         app.use(
             expressConnectMiddleware({
                 routes: (router: ConnectRouter) => {
-                    for (const [type, impl] of [service(HelloService, this.apiHelloService)]) {
+                    for (const [type, impl] of [
+                        service(HelloService, this.helloServiceApi),
+                        service(WorkspaceService, this.workspacesServiceApi),
+                    ]) {
                         router.service(type, new Proxy(impl, this.interceptService(type)));
                     }
                 },
@@ -98,6 +105,7 @@ export class API {
      * TODO(ak):
      * - rate limitting
      * - tracing
+     * - cancellation
      */
     private interceptService<T extends ServiceType>(type: T): ProxyHandler<ServiceImpl<T>> {
         const grpc_service = type.typeName;
@@ -147,42 +155,29 @@ export class API {
                         const grpc_code = err ? Code[err.code] : "OK";
                         grpcServerHandled.labels(grpc_service, grpc_method, grpc_type, grpc_code).inc();
                         stopTimer({ grpc_code });
-                        let callMs: number | undefined;
-                        if (callStartedAt) {
-                            callMs = performance.now() - callStartedAt;
-                        }
-                        log.debug("public api: done", { grpc_code, verifyMs, callMs });
-                        // right now p99 for getLoggetInUser is around 100ms, using it as a threshold for now
-                        const slowThreshold = 100;
-                        const totalMs = performance.now() - logContext.contextTimeMs;
-                        if (grpc_type === "unary" && totalMs > slowThreshold) {
-                            log.warn("public api: slow unary call", { grpc_code, callMs, verifyMs });
-                        }
+                        log.debug("public api: done", { grpc_code });
                     };
                     const handleError = (reason: unknown) => {
-                        let err = ConnectError.from(reason, Code.Internal);
+                        let err = self.apiConverter.toError(reason);
                         if (reason != err && err.code === Code.Internal) {
                             log.error("public api: unexpected internal error", reason);
-                            err = ConnectError.from(
+                            err = new ConnectError(
                                 `Oops! Something went wrong. Please quote the request ID ${logContext.requestId} when reaching out to Gitpod Support.`,
                                 Code.Internal,
+                                // pass metadata to preserve the application error
+                                err.metadata,
                             );
                         }
                         done(err);
                         throw err;
                     };
 
-                    let verifyMs: number | undefined;
-                    let callStartedAt: number | undefined;
                     const context = args[1] as HandlerContext;
 
                     const apply = async <T>(): Promise<T> => {
-                        const verifyStartedAt = performance.now();
                         const user = await self.verify(context);
-                        verifyMs = performance.now() - verifyStartedAt;
                         context.user = user;
 
-                        callStartedAt = performance.now();
                         return Reflect.apply(target[prop as any], target, args);
                     };
                     if (grpc_type === "unary" || grpc_type === "client_stream") {
@@ -221,15 +216,20 @@ export class API {
         if (!user) {
             throw new ConnectError("unauthenticated", Code.Unauthenticated);
         }
+        const fgaChecksEnabled = await isFgaChecksEnabled(user.id);
+        if (!fgaChecksEnabled) {
+            throw new ConnectError("unauthorized", Code.PermissionDenied);
+        }
         return user;
     }
 
     static bindAPI(bind: interfaces.Bind): void {
-        bind(APIHelloService).toSelf().inSingletonScope();
-        bind(APIUserService).toSelf().inSingletonScope();
-        bind(APITeamsService).toSelf().inSingletonScope();
-        bind(APIWorkspacesService).toSelf().inSingletonScope();
-        bind(APIStatsService).toSelf().inSingletonScope();
+        bind(PublicAPIConverter).toSelf().inSingletonScope();
+        bind(HelloServiceAPI).toSelf().inSingletonScope();
+        bind(UserServiceAPI).toSelf().inSingletonScope();
+        bind(TeamsServiceAPI).toSelf().inSingletonScope();
+        bind(WorkspaceServiceAPI).toSelf().inSingletonScope();
+        bind(StatsServiceAPI).toSelf().inSingletonScope();
         bind(API).toSelf().inSingletonScope();
     }
 }

@@ -5,13 +5,10 @@
  */
 
 import {
-    ContextURL,
     DisposableCollection,
     GitpodServer,
     RateLimiterError,
     StartWorkspaceResult,
-    WithPrebuild,
-    Workspace,
     WorkspaceImageBuild,
     WorkspaceInstance,
 } from "@gitpod/gitpod-protocol";
@@ -29,7 +26,12 @@ import { getGitpodService, gitpodHostUrl, getIDEFrontendService, IDEFrontendServ
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
 import Alert from "../components/Alert";
-import { workspacesService } from "../service/public-api";
+import { converter, workspaceClient, workspacesService } from "../service/public-api";
+import {
+    GetWorkspaceRequest,
+    Workspace,
+    WorkspacePhase_Phase,
+} from "@gitpod/public-api/lib/gitpod/experimental/v2/workspace_pb";
 
 const sessionId = v4();
 
@@ -85,7 +87,6 @@ export interface StartWorkspaceState {
      * We only receive updates for this particular instance, or none if not set.
      */
     startedInstanceId?: string;
-    workspaceInstance?: WorkspaceInstance;
     workspace?: Workspace;
     hasImageBuildLogs?: boolean;
     error?: StartWorkspaceError;
@@ -157,16 +158,17 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     }
 
     componentDidUpdate(prevPros: StartWorkspaceProps, prevState: StartWorkspaceState) {
-        const newPhase = this.state?.workspaceInstance?.status.phase;
-        const oldPhase = prevState.workspaceInstance?.status.phase;
+        const newPhase = this.state?.workspace?.status?.phase?.name;
+        const oldPhase = prevState.workspace?.status?.phase?.name;
+        const type = !!this.state.workspace?.prebuild ? "prebuild" : "regular";
         if (newPhase !== oldPhase) {
             getGitpodService().server.trackEvent({
                 event: "status_rendered",
                 properties: {
                     sessionId,
-                    instanceId: this.state.workspaceInstance?.id,
+                    instanceId: this.state.workspace?.status?.instanceId,
                     workspaceId: this.props.workspaceId,
-                    type: this.state.workspace?.type,
+                    type,
                     phase: newPhase,
                 },
             });
@@ -177,9 +179,9 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 event: "error_rendered",
                 properties: {
                     sessionId,
-                    instanceId: this.state.workspaceInstance?.id,
-                    workspaceId: this.state?.workspace?.id,
-                    type: this.state.workspace?.type,
+                    instanceId: this.state.workspace?.status?.instanceId,
+                    workspaceId: this.props.workspaceId,
+                    type,
                     error: this.state.error,
                 },
             });
@@ -273,14 +275,15 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
         const { workspaceId } = this.props;
         try {
-            const info = await getGitpodService().server.getWorkspace(workspaceId);
-            if (info.latestInstance) {
-                const instance = info.latestInstance;
+            const request = new GetWorkspaceRequest();
+            request.id = workspaceId;
+            const response = await workspaceClient.getWorkspace(request);
+            if (response.item?.status?.instanceId) {
                 this.setState((s) => ({
-                    workspace: info.workspace,
-                    startedInstanceId: s.startedInstanceId || instance.id, // note: here's a potential mismatch between startedInstanceId and instance.id. TODO(gpl) How to handle this?
+                    workspace: response.item,
+                    startedInstanceId: s.startedInstanceId || response.item?.status?.instanceId, // note: here's a potential mismatch between startedInstanceId and instance.id. TODO(gpl) How to handle this?
                 }));
-                this.onInstanceUpdate(instance);
+                this.onWorkspaceUpdate(response.item);
             }
         } catch (error) {
             console.error(error);
@@ -299,64 +302,76 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         this.setState({ ideOptions });
     }
 
-    async onInstanceUpdate(workspaceInstance: WorkspaceInstance) {
-        if (workspaceInstance.workspaceId !== this.props.workspaceId) {
+    private async onInstanceUpdate(instance: WorkspaceInstance) {
+        const workspace = this.state.workspace;
+        if (!workspace || instance.workspaceId !== workspace?.id) {
             return;
         }
+        const newWorkspace = converter.toWorkspace(instance, workspace.clone());
+        this.onWorkspaceUpdate(newWorkspace);
+    }
 
+    private async onWorkspaceUpdate(workspace: Workspace) {
+        if (!workspace.status?.instanceId) {
+            return;
+        }
         // Here we filter out updates to instances we haven't started to avoid issues with updates coming in out-of-order
         // (e.g., multiple "stopped" events from the older instance, where we already started a fresh one after the first)
         // Only exception is when we do the switch from the "old" to the "new" one.
         const startedInstanceId = this.state?.startedInstanceId;
-        if (startedInstanceId !== workspaceInstance.id) {
+        if (startedInstanceId !== workspace.status.instanceId) {
             // do we want to switch to "new" instance we just received an update for?
             const switchToNewInstance =
-                this.state.workspaceInstance?.status.phase === "stopped" &&
-                workspaceInstance.status.phase !== "stopped";
+                this.state.workspace?.status?.phase?.name === WorkspacePhase_Phase.STOPPED &&
+                workspace.status?.phase?.name !== WorkspacePhase_Phase.STOPPED;
             if (!switchToNewInstance) {
                 return;
             }
             this.setState({
-                startedInstanceId: workspaceInstance.id,
-                workspaceInstance,
+                startedInstanceId: workspace.status.instanceId,
+                workspace,
             });
 
             // now we're listening to a new instance, which might have been started with other IDEoptions
             this.fetchIDEOptions();
         }
 
-        await this.ensureWorkspaceAuth(workspaceInstance.id, false); // Don't block the workspace auth retrieval, as it's guaranteed to get a seconds chance later on!
+        await this.ensureWorkspaceAuth(workspace.status.instanceId, false); // Don't block the workspace auth retrieval, as it's guaranteed to get a seconds chance later on!
 
         // Redirect to workspaceURL if we are not yet running in an iframe.
         // It happens this late if we were waiting for a docker build.
         if (
             !this.props.runsInIFrame &&
-            workspaceInstance.ideUrl &&
-            (!this.props.dontAutostart || workspaceInstance.status.phase === "running")
+            workspace.status.workspaceUrl &&
+            (!this.props.dontAutostart || workspace.status.phase?.name === WorkspacePhase_Phase.RUNNING)
         ) {
             (async () => {
                 // At this point we cannot be certain that we already have the relevant cookie in multi-cluster
                 // scenarios with distributed workspace bridges (control loops): We might receive the update, but the backend might not have the token, yet.
                 // So we have to ask again, and wait until we're actually successful (it returns immediately on the happy path)
-                await this.ensureWorkspaceAuth(workspaceInstance.id, true);
-                this.redirectTo(workspaceInstance.ideUrl);
+                await this.ensureWorkspaceAuth(workspace.status!.instanceId, true);
+                this.redirectTo(workspace.status!.workspaceUrl);
             })().catch(console.error);
             return;
         }
 
-        if (workspaceInstance.status.phase === "building") {
+        if (workspace.status.phase?.name === WorkspacePhase_Phase.IMAGEBUILD) {
             this.setState({ hasImageBuildLogs: true });
         }
 
         let error: StartWorkspaceError | undefined;
-        if (workspaceInstance.status.conditions.failed) {
-            error = { message: workspaceInstance.status.conditions.failed };
+        if (workspace.status.conditions?.failed) {
+            error = { message: workspace.status.conditions.failed };
         }
 
         // Successfully stopped and headless: the prebuild is done, let's try to use it!
-        if (!error && workspaceInstance.status.phase === "stopped" && this.state.workspace?.type !== "regular") {
+        if (
+            !error &&
+            workspace.status.phase?.name === WorkspacePhase_Phase.STOPPED &&
+            !!this.state.workspace?.prebuild
+        ) {
             // here we want to point to the original context, w/o any modifiers "workspace" was started with (as this might have been a manually triggered prebuild!)
-            const contextURL = ContextURL.getNormalizedURL(this.state.workspace);
+            const contextURL = this.state.workspace.contextUrl;
             if (contextURL) {
                 this.redirectTo(gitpodHostUrl.withContext(contextURL.toString()).toString());
             } else {
@@ -364,16 +379,10 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             }
         }
 
-        this.setState({ workspaceInstance, error });
+        this.setState({ workspace, error });
     }
 
     async ensureWorkspaceAuth(instanceID: string, retry: boolean) {
-        if (document.cookie.includes(`${instanceID}_owner_`)) {
-            // Cookie already present
-            return;
-        }
-
-        // TODO(gpl) Would be nice to track # of attempts once we have frontend error monitoring
         const MAX_ATTEMPTS = 10;
         const ATTEMPT_INTERVAL_MS = 2000;
         let attempt = 0;
@@ -443,36 +452,36 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
     render() {
         const { error } = this.state;
-        const isPrebuild = this.state.workspace?.type === "prebuild";
-        const withPrebuild = WithPrebuild.is(this.state.workspace?.context);
+        const isPrebuild = this.state.workspace?.prebuild;
+        const withPrebuild = !!this.state.workspace?.prebuildId;
         let phase: StartPhase | undefined = StartPhase.Preparing;
         let title = undefined;
         let isStoppingOrStoppedPhase = false;
         let isError = error ? true : false;
         let statusMessage = !!error ? undefined : <p className="text-base text-gray-400">Preparing workspace …</p>;
-        const contextURL = ContextURL.getNormalizedURL(this.state.workspace)?.toString();
-        const useLatest = !!this.state.workspaceInstance?.configuration?.ideConfig?.useLatest;
+        const contextURL = this.state.workspace?.contextUrl;
+        const useLatest = this.state.workspace?.editor?.version === "latest";
 
-        switch (this.state?.workspaceInstance?.status.phase) {
+        switch (this.state?.workspace?.status?.phase?.name) {
             // unknown indicates an issue within the system in that it cannot determine the actual phase of
             // a workspace. This phase is usually accompanied by an error.
-            case "unknown":
+            case WorkspacePhase_Phase.UNSPECIFIED:
                 break;
             // Preparing means that we haven't actually started the workspace instance just yet, but rather
             // are still preparing for launch.
-            case "preparing":
+            case WorkspacePhase_Phase.PREPARING:
                 phase = StartPhase.Preparing;
                 statusMessage = <p className="text-base text-gray-400">Starting workspace …</p>;
                 break;
 
-            case "building":
+            case WorkspacePhase_Phase.IMAGEBUILD:
                 // Building means we're building the Docker image for the workspace.
-                return <ImageBuildView workspaceId={this.state.workspaceInstance.workspaceId} />;
+                return <ImageBuildView workspaceId={this.state.workspace.id} />;
 
             // Pending means the workspace does not yet consume resources in the cluster, but rather is looking for
             // some space within the cluster. If for example the cluster needs to scale up to accomodate the
             // workspace, the workspace will be in Pending state until that happened.
-            case "pending":
+            case WorkspacePhase_Phase.PENDING:
                 phase = StartPhase.Preparing;
                 statusMessage = <p className="text-base text-gray-400">Allocating resources …</p>;
                 break;
@@ -480,14 +489,14 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             // Creating means the workspace is currently being created. That includes downloading the images required
             // to run the workspace over the network. The time spent in this phase varies widely and depends on the current
             // network speed, image size and cache states.
-            case "creating":
+            case WorkspacePhase_Phase.CREATING:
                 phase = StartPhase.Creating;
                 statusMessage = <p className="text-base text-gray-400">Pulling container image …</p>;
                 break;
 
             // Initializing is the phase in which the workspace is executing the appropriate workspace initializer (e.g. Git
             // clone or backup download). After this phase one can expect the workspace to either be Running or Failed.
-            case "initializing":
+            case WorkspacePhase_Phase.INITIALIZING:
                 phase = StartPhase.Starting;
                 statusMessage = (
                     <p className="text-base text-gray-400">
@@ -498,7 +507,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
             // Running means the workspace is able to actively perform work, either by serving a user through Theia,
             // or as a headless workspace.
-            case "running":
+            case WorkspacePhase_Phase.RUNNING:
                 if (isPrebuild) {
                     return (
                         <StartPage title="Prebuild in Progress" workspaceId={this.props.workspaceId}>
@@ -538,7 +547,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                 <div className="rounded-full w-3 h-3 text-sm bg-green-500">&nbsp;</div>
                                 <div>
                                     <p className="text-gray-700 dark:text-gray-200 font-semibold w-56 truncate">
-                                        {this.state.workspaceInstance.workspaceId}
+                                        {this.state.workspace.id}
                                     </p>
                                     <a target="_parent" href={contextURL}>
                                         <p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400">
@@ -605,7 +614,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                 <ConnectToSSHModal
                                     workspaceId={this.props.workspaceId}
                                     ownerToken={this.state.ownerToken}
-                                    ideUrl={this.state.workspaceInstance?.ideUrl.replaceAll("https://", "")}
+                                    ideUrl={this.state.workspace.status.workspaceUrl.replaceAll("https://", "")}
                                     onClose={() => this.setState({ isSSHModalVisible: false, ownerToken: "" })}
                                 />
                             )}
@@ -617,13 +626,13 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
             // Interrupted is an exceptional state where the container should be running but is temporarily unavailable.
             // When in this state, we expect it to become running or stopping anytime soon.
-            case "interrupted":
+            case WorkspacePhase_Phase.INTERRUPTED:
                 phase = StartPhase.Running;
                 statusMessage = <p className="text-base text-gray-400">Checking workspace …</p>;
                 break;
 
             // Stopping means that the workspace is currently shutting down. It could go to stopped every moment.
-            case "stopping":
+            case WorkspacePhase_Phase.STOPPING:
                 isStoppingOrStoppedPhase = true;
                 if (isPrebuild) {
                     return (
@@ -642,7 +651,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                             <div className="rounded-full w-3 h-3 text-sm bg-kumquat-ripe">&nbsp;</div>
                             <div>
                                 <p className="text-gray-700 dark:text-gray-200 font-semibold w-56 truncate">
-                                    {this.state.workspaceInstance.workspaceId}
+                                    {this.state.workspace.id}
                                 </p>
                                 <a target="_parent" href={contextURL}>
                                     <p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400">
@@ -661,7 +670,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 break;
 
             // Stopped means the workspace ended regularly because it was shut down.
-            case "stopped":
+            case WorkspacePhase_Phase.STOPPED:
                 isStoppingOrStoppedPhase = true;
                 phase = StartPhase.Stopped;
                 if (this.state.hasImageBuildLogs) {
@@ -671,14 +680,14 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                     };
                     return (
                         <ImageBuildView
-                            workspaceId={this.state.workspaceInstance.workspaceId}
+                            workspaceId={this.state.workspace.id}
                             onStartWithDefaultImage={restartWithDefaultImage}
                             phase={phase}
                             error={error}
                         />
                     );
                 }
-                if (!isPrebuild && this.state.workspaceInstance.status.conditions.timeout) {
+                if (!isPrebuild && this.state.workspace.status.conditions?.timeout) {
                     title = "Timed Out";
                 }
                 statusMessage = (
@@ -687,7 +696,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                             <div className="rounded-full w-3 h-3 text-sm bg-gray-300">&nbsp;</div>
                             <div>
                                 <p className="text-gray-700 dark:text-gray-200 font-semibold w-56 truncate">
-                                    {this.state.workspaceInstance.workspaceId}
+                                    {this.state.workspace.id}
                                 </p>
                                 <a target="_parent" href={contextURL}>
                                     <p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400">
@@ -696,15 +705,12 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                 </a>
                             </div>
                         </div>
-                        <PendingChangesDropdown workspaceInstance={this.state.workspaceInstance} />
+                        <PendingChangesDropdown gitStatus={this.state.workspace.status.gitStatus} />
                         <div className="mt-10 justify-center flex space-x-2">
                             <a target="_parent" href={gitpodHostUrl.asWorkspacePage().toString()}>
                                 <button className="secondary">Go to Dashboard</button>
                             </a>
-                            <a
-                                target="_parent"
-                                href={gitpodHostUrl.asStart(this.state.workspaceInstance?.workspaceId).toString()}
-                            >
+                            <a target="_parent" href={gitpodHostUrl.asStart(this.state.workspace.id).toString()}>
                                 <button>Open Workspace</button>
                             </a>
                         </div>

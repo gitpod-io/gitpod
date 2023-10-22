@@ -4,13 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import {
-    CommitContext,
-    Workspace,
-    WorkspaceInfo,
-    ContextURL,
-    WorkspaceInstanceRepoStatus,
-} from "@gitpod/gitpod-protocol";
+import { CommitContext, Workspace, WorkspaceInfo, ContextURL } from "@gitpod/gitpod-protocol";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { FunctionComponent, useMemo, useState } from "react";
 import { Item, ItemField, ItemFieldIcon } from "../components/ItemsList";
@@ -19,7 +13,7 @@ import Tooltip from "../components/Tooltip";
 import dayjs from "dayjs";
 import { WorkspaceEntryOverflowMenu } from "./WorkspaceOverflowMenu";
 import { WorkspaceStatusIndicator } from "./WorkspaceStatusIndicator";
-import { useFeatureFlag } from "../data/featureflag-query";
+import { converter } from "../service/public-api";
 
 type Props = {
     info: WorkspaceInfo;
@@ -29,16 +23,10 @@ type Props = {
 export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion }) => {
     const [menuActive, setMenuActive] = useState(false);
 
-    const liveGitStatus = useFeatureFlag("supervisor_live_git_status");
-    let repo: WorkspaceInstanceRepoStatus | undefined;
-    if (liveGitStatus) {
-        repo = info.latestInstance?.gitStatus;
-    } else {
-        repo = info.latestInstance?.status.repo;
-    }
+    const gitStatus = converter.toGitStatus(info);
 
     const workspace = info.workspace;
-    const currentBranch = repo?.branch || Workspace.getBranchName(info.workspace) || "<unknown>";
+    const currentBranch = gitStatus?.branch || "<unknown>";
     const project = getProjectPath(workspace);
     const normalizedContextUrl = ContextURL.getNormalizedURL(workspace)?.toString();
     const normalizedContextUrlDescription = normalizedContextUrl || workspace.contextURL; // Instead of showing nothing, we prefer to show the raw content instead
@@ -95,7 +83,7 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
                             <Tooltip content={currentBranch}>{currentBranch}</Tooltip>
                         </div>
                         <div className="mr-auto">
-                            <PendingChangesDropdown workspaceInstance={info.latestInstance} />
+                            <PendingChangesDropdown gitStatus={gitStatus} />
                         </div>
                     </ItemField>
                     <ItemField className="w-2/12 flex my-auto">

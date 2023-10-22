@@ -384,7 +384,7 @@ func Run(options ...RunOption) {
 		termMuxSrv,
 		RegistrableTokenService{Service: tokenService},
 		notificationService,
-		&InfoService{cfg: cfg, ContentState: cstate, GitpodService: gitpodService},
+		NewInfoService(cfg, cstate, gitpodService),
 		&ControlService{portsManager: portMgmt},
 		&portService{portsManager: portMgmt},
 	}

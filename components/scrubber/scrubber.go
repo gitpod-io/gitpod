@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"unsafe"
 
 	"github.com/mitchellh/reflectwalk"
 )
@@ -86,6 +87,12 @@ type Scrubber interface {
 	//   }
 	//
 	Struct(val any) error
+
+	// DeepCopyStruct scrubes a struct with a deep copy.
+	// The difference between `DeepCopyStruct` and `Struct`` is that DeepCopyStruct does not modify the structure directly,
+	// but creates a deep copy instead.
+	// Also, val can be a pointer or a structure.
+	DeepCopyStruct(val any) any
 }
 
 // Default is the default scrubber consumers of this package should use
@@ -187,6 +194,145 @@ func (s *scrubberImpl) Struct(val any) error {
 		return reflectwalk.Walk(val, s.Walker)
 	}
 	return nil
+}
+
+func (s *scrubberImpl) deepCopyStruct(fieldName string, src reflect.Value, scrubTag string, skipScrub bool) reflect.Value {
+	if src.Kind() == reflect.Ptr && src.IsNil() {
+		return reflect.New(src.Type()).Elem()
+	}
+
+	if src.CanInterface() {
+		value := src.Interface()
+		if _, ok := value.(TrustedValue); ok {
+			skipScrub = true
+		}
+	}
+
+	if src.Kind() == reflect.String && !skipScrub {
+		dst := reflect.New(src.Type())
+		var (
+			setExplicitValue bool
+			explicitValue    string
+		)
+		switch scrubTag {
+		case "ignore":
+			dst.Elem().SetString(src.String())
+			if !dst.CanInterface() {
+				return dst
+			}
+			return dst.Elem()
+		case "hash":
+			setExplicitValue = true
+			explicitValue = SanitiseHash(src.String())
+		case "redact":
+			setExplicitValue = true
+			explicitValue = SanitiseRedact(src.String())
+		}
+
+		if setExplicitValue {
+			dst.Elem().SetString(explicitValue)
+		} else {
+			sanitisatiser := s.getSanitisatiser(fieldName)
+			if sanitisatiser != nil {
+				dst.Elem().SetString(sanitisatiser(src.String()))
+			} else {
+				dst.Elem().SetString(s.Value(src.String()))
+			}
+		}
+		if !dst.CanInterface() {
+			return dst
+		}
+		return dst.Elem()
+	}
+
+	switch src.Kind() {
+	case reflect.Struct:
+		dst := reflect.New(src.Type())
+		t := src.Type()
+
+		for i := 0; i < t.NumField(); i++ {
+			f := t.Field(i)
+			srcValue := src.Field(i)
+			dstValue := dst.Elem().Field(i)
+
+			if !srcValue.CanInterface() {
+				dstValue = reflect.NewAt(dstValue.Type(), unsafe.Pointer(dstValue.UnsafeAddr())).Elem()
+
+				if !srcValue.CanAddr() {
+					switch {
+					case srcValue.CanInt():
+						dstValue.SetInt(srcValue.Int())
+					case srcValue.CanUint():
+						dstValue.SetUint(srcValue.Uint())
+					case srcValue.CanFloat():
+						dstValue.SetFloat(srcValue.Float())
+					case srcValue.CanComplex():
+						dstValue.SetComplex(srcValue.Complex())
+					case srcValue.Kind() == reflect.Bool:
+						dstValue.SetBool(srcValue.Bool())
+					}
+
+					continue
+				}
+
+				srcValue = reflect.NewAt(srcValue.Type(), unsafe.Pointer(srcValue.UnsafeAddr())).Elem()
+			}
+
+			tagValue := f.Tag.Get("scrub")
+			copied := s.deepCopyStruct(f.Name, srcValue, tagValue, skipScrub)
+			dstValue.Set(copied)
+		}
+		return dst.Elem()
+
+	case reflect.Map:
+		dst := reflect.MakeMap(src.Type())
+		keys := src.MapKeys()
+		for i := 0; i < src.Len(); i++ {
+			mValue := src.MapIndex(keys[i])
+			dst.SetMapIndex(keys[i], s.deepCopyStruct(keys[i].String(), mValue, "", skipScrub))
+		}
+		return dst
+
+	case reflect.Slice:
+		dst := reflect.MakeSlice(src.Type(), src.Len(), src.Cap())
+		for i := 0; i < src.Len(); i++ {
+			dst.Index(i).Set(s.deepCopyStruct(fieldName, src.Index(i), "", skipScrub))
+		}
+		return dst
+
+	case reflect.Array:
+		if src.Len() == 0 {
+			return src
+		}
+
+		dst := reflect.New(src.Type()).Elem()
+		for i := 0; i < src.Len(); i++ {
+			dst.Index(i).Set(s.deepCopyStruct(fieldName, src.Index(i), "", skipScrub))
+		}
+		return dst
+
+	case reflect.Interface:
+		dst := reflect.New(src.Elem().Type())
+		copied := s.deepCopyStruct(fieldName, src.Elem(), scrubTag, skipScrub)
+		dst.Elem().Set(copied)
+		return dst.Elem()
+
+	case reflect.Ptr:
+		dst := reflect.New(src.Elem().Type())
+		copied := s.deepCopyStruct(fieldName, src.Elem(), scrubTag, skipScrub)
+		dst.Elem().Set(copied)
+		return dst
+
+	default:
+		dst := reflect.New(src.Type())
+		dst.Elem().Set(src)
+		return dst.Elem()
+	}
+}
+
+// Struct implements Scrubber
+func (s *scrubberImpl) DeepCopyStruct(val any) any {
+	return s.deepCopyStruct("", reflect.ValueOf(val), "", false).Interface()
 }
 
 func (s *scrubberImpl) scrubJsonObject(val map[string]interface{}) error {

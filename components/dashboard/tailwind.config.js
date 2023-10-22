@@ -65,6 +65,8 @@ module.exports = {
             animation: {
                 "toast-in-right": "toast-in-right 0.3s ease-in-out",
                 "fade-in": "fade-in 3s linear",
+                "fade-in-fast": "fade-in .3s ease-in-out",
+                "spin-slow": "spin 2s linear infinite",
             },
             transitionProperty: {
                 width: "width",

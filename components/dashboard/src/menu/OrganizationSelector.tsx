@@ -12,6 +12,7 @@ import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-quer
 import { useLocation } from "react-router";
 import { User } from "@gitpod/gitpod-protocol";
 import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 export default function OrganizationSelector() {
     const user = useCurrentUser();
@@ -19,6 +20,7 @@ export default function OrganizationSelector() {
     const currentOrg = useCurrentOrg();
     const { data: billingMode } = useOrgBillingMode();
     const getOrgURL = useGetOrgURL();
+    const repoConfigListAndDetail = useFeatureFlag("repoConfigListAndDetail");
 
     // we should have an API to ask for permissions, until then we duplicate the logic here
     const canCreateOrgs = user && !User.isOrganizationOwned(user);
@@ -56,6 +58,15 @@ export default function OrganizationSelector() {
 
     // Show members if we have an org selected
     if (currentOrg.data) {
+        if (repoConfigListAndDetail) {
+            linkEntries.push({
+                title: "Repositories",
+                customContent: <LinkEntry>Repositories</LinkEntry>,
+                active: false,
+                separator: false,
+                link: "/repositories",
+            });
+        }
         linkEntries.push({
             title: "Members",
             customContent: <LinkEntry>Members</LinkEntry>,
