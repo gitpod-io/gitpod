@@ -14,7 +14,7 @@ import { AuthProvider, AuthProviderParams } from "../auth/auth-provider";
 import { HostContextProvider, HostContextProviderFactory } from "../auth/host-context-provider";
 import { HostContextProviderImpl } from "../auth/host-context-provider-impl";
 import { SpiceDBClientProvider } from "../authorization/spicedb";
-import { Config } from "../config";
+import { AuthConfig, Config } from "../config";
 import { StorageClient } from "../storage/storage-client";
 import { testContainer } from "@gitpod/gitpod-db/lib";
 import { productionContainerModule } from "../container-module";
@@ -36,6 +36,54 @@ import { IWorkspaceManagerClient, StartWorkspaceResponse } from "@gitpod/ws-mana
 import { TokenProvider } from "../user/token-provider";
 import { GitHubScope } from "../github/scopes";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
+import * as crypto from "crypto";
+
+const signingKeyPair = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
+const validatingKeyPair1 = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
+const validatingKeyPair2 = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
+
+export const mockAuthConfig: AuthConfig = {
+    pki: {
+        signing: toKeyPair("0001", signingKeyPair),
+        validating: [toKeyPair("0002", validatingKeyPair1), toKeyPair("0003", validatingKeyPair2)],
+    },
+    session: {
+        issuer: "https://mp-server-d7650ec945.preview.gitpod-dev.com",
+        lifetimeSeconds: 7 * 24 * 60 * 60,
+        cookie: {
+            name: "_gitpod_dev_jwt_",
+            secure: true,
+            httpOnly: true,
+            maxAge: 7 * 24 * 60 * 60,
+            sameSite: "strict",
+        },
+    },
+};
+
+function toKeyPair(
+    id: string,
+    kp: crypto.KeyPairKeyObjectResult,
+): {
+    id: string;
+    privateKey: string;
+    publicKey: string;
+} {
+    return {
+        id,
+        privateKey: kp.privateKey
+            .export({
+                type: "pkcs1",
+                format: "pem",
+            })
+            .toString(),
+        publicKey: kp.publicKey
+            .export({
+                type: "pkcs1",
+                format: "pem",
+            })
+            .toString(),
+    };
+}
 
 /**
  * Expects a fully configured production container and
@@ -200,6 +248,7 @@ const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound,
         ],
         authProviderConfigs: [],
         installationShortname: "gitpod",
+        auth: mockAuthConfig,
     });
     rebind(IAnalyticsWriter).toConstantValue(NullAnalyticsWriter);
     rebind(HostContextProviderFactory)
