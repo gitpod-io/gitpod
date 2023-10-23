@@ -50,6 +50,7 @@ class TestBitbucketServerRepositoryProvider {
                 bind(BitbucketServerContextParser).toSelf().inSingletonScope();
                 bind(AuthProviderParams).toConstantValue(TestBitbucketServerRepositoryProvider.AUTH_HOST_CONFIG);
                 bind(BitbucketServerTokenHelper).toSelf().inSingletonScope();
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 bind(TokenService).toConstantValue({
                     createGitpodToken: async () => ({ token: { value: "foobar123-token" } }),
                 } as any);

@@ -124,6 +124,7 @@ export class GitHubEnterpriseApp {
                     const sig =
                         "sha256=" +
                         createHmac("sha256", user.id + "|" + tokenEntry.token.value)
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                             .update(body)
                             .digest("hex");
                     return timingSafeEqual(Buffer.from(sig), Buffer.from(signature ?? ""));

@@ -121,6 +121,7 @@ export class GitHubAppSupport {
 
         // If hints contain an additional installationId, let's try to add the repos
         //
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         const installationId = parseInt((hints as any)?.installationId, 10);
         if (!isNaN(installationId)) {
             if (!result.some((r) => r.installationId === installationId)) {

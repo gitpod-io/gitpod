@@ -254,7 +254,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
         const orgSettings = await orgSettingsRepo.findOne({ where: { orgId } });
         if (orgSettings) {
             orgSettings.deleted = true;
-            orgSettingsRepo.save(orgSettings);
+            await orgSettingsRepo.save(orgSettings);
         }
     }
 

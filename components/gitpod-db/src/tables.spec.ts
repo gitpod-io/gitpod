@@ -19,11 +19,7 @@ class TablesSpec {
     @test(timeout(10000))
     public async createAndFindATeam() {
         const thing = new GitpodTableDescriptionProvider();
-        try {
-            thing.getSortedTables();
-        } catch (error) {
-            expect.fail(error);
-        }
+        expect(() => thing.getSortedTables()).to.not.throw();
     }
 }
 

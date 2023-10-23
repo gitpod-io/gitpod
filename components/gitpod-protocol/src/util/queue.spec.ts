@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-floating-promises */
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).

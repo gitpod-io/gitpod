@@ -60,7 +60,7 @@ export namespace TraceContext {
         }
     }
 
-    export function setError(ctx: TraceContext, err: Error) {
+    export function setError(ctx: TraceContext, err: any) {
         if (!ctx.span) {
             return;
         }
@@ -169,6 +169,7 @@ export namespace TraceContext {
             for (const k of Object.keys(keyValueMap)) {
                 const v = keyValueMap[k];
                 if (v instanceof Object) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                     addNestedTags(ctx, v, `${namespace}${k}`);
                 } else {
                     ctx.span.setTag(`${namespace}${k}`, v);
@@ -223,6 +224,7 @@ export class TracingManager {
 
         if (opts) {
             if (opts.perOpSampling) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 (t as any)._sampler = new PerOperationSampler((t as any)._sampler, opts.perOpSampling);
             }
         }
@@ -264,6 +266,7 @@ export class PerOperationSampler implements Sampler {
 
     onCreateSpan(span: opentracing.Span): SamplingDecision {
         const outTags = {};
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         const isSampled = this.isSampled((span as any).operationName, outTags);
         // NB: return retryable=true here since we can change decision after setOperationName().
         return { sample: isSampled, retryable: true, tags: outTags };
@@ -271,6 +274,7 @@ export class PerOperationSampler implements Sampler {
 
     onSetOperationName(span: opentracing.Span, operationName: string): SamplingDecision {
         const outTags = {};
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         const isSampled = this.isSampled((span as any).operationName, outTags);
         return { sample: isSampled, retryable: false, tags: outTags };
     }

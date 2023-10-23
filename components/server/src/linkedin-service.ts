@@ -45,7 +45,7 @@ export class LinkedInService {
         if (data.error) {
             throw new Error("Could not get LinkedIn access token: " + data.error_description);
         }
-        return data.access_token;
+        return data.access_token as string;
     }
 
     // Retrieve the user's profile from LinkedIn using the following API:
@@ -96,12 +96,10 @@ export class LinkedInService {
         };
 
         try {
-            if (
-                typeof profileData.firstName?.localized === "object" &&
-                Object.values(profileData.firstName?.localized).length > 0
-            ) {
+            const localized = profileData.firstName?.localized;
+            if (typeof localized === "object" && Object.values(localized as object).length > 0) {
                 // If there are multiple first name localizations, just pick the first one
-                profile.firstName = String(Object.values(profileData.firstName.localized)[0]);
+                profile.firstName = String(Object.values(localized as object)[0]);
             }
         } catch (error) {
             log.error("Error getting LinkedIn first name", error);
@@ -110,10 +108,10 @@ export class LinkedInService {
         try {
             if (
                 typeof profileData.lastName?.localized === "object" &&
-                Object.values(profileData.lastName?.localized).length > 0
+                Object.values(profileData.lastName?.localized as object).length > 0
             ) {
                 // If there are multiple last name localizations, just pick the first one
-                profile.lastName = String(Object.values(profileData.lastName.localized)[0]);
+                profile.lastName = String(Object.values(profileData.lastName.localized as object)[0]);
             }
         } catch (error) {
             log.error("Error getting LinkedIn last name", error);

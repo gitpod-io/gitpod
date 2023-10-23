@@ -146,11 +146,10 @@ export class RedisSubscriber {
             try {
                 l(ctx, prebuildWithStatus);
             } catch (err) {
-                log.error(
-                    "Failed to broadcast workspace instance update.",
-                    { projectId: update.projectID, workspaceId: update.workspaceID },
-                    err,
-                );
+                log.error("Failed to broadcast workspace instance update.", err, {
+                    projectId: update.projectID,
+                    workspaceId: update.workspaceID,
+                });
             }
         }
     }
@@ -172,7 +171,7 @@ export class RedisSubscriber {
             try {
                 l(ctx, update);
             } catch (err) {
-                log.error("Failed to broadcast headless update.", update, err);
+                log.error("Failed to broadcast headless update.", err, update);
             }
         }
     }

@@ -6,6 +6,7 @@
 
 import {
     AdminGetWorkspacesQuery,
+    CommitContext,
     PrebuildInfo,
     PrebuiltWorkspace,
     PrebuiltWorkspaceState,
@@ -143,9 +144,10 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
 
         // `cloneUrl` is stored redundandly to optimize for `getWorkspaceCountByCloneURL`.
         // As clone URLs are lesser constrained we want to shorten the value to work well with the indexed column.
-        const cloneUrl: string = this.toCloneUrl255((workspace as any).context?.repository?.cloneUrl || "");
-
-        dbWorkspace.cloneUrl = cloneUrl;
+        if (CommitContext.is(dbWorkspace.context)) {
+            const cloneUrl = this.toCloneUrl255(dbWorkspace.context.repository.cloneUrl);
+            dbWorkspace.cloneUrl = cloneUrl;
+        }
         return await workspaceRepo.save(dbWorkspace);
     }
 
@@ -167,17 +169,12 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
     }
 
     public async findByInstanceId(instanceId: string): Promise<MaybeWorkspace> {
-        const workspaceRepo = await this.getWorkspaceRepo();
-        const maybeRawWorkspaces = (await workspaceRepo.query(
-            `SELECT ws.* FROM d_b_workspace as ws
-                                LEFT OUTER JOIN d_b_workspace_instance as wsi ON wsi.workspaceId = ws.id
-                                WHERE wsi.id = ?;`,
-            [instanceId],
-        )) as object[];
-        if (!maybeRawWorkspaces || maybeRawWorkspaces.length !== 1) {
+        const instanceRepo = await this.getWorkspaceInstanceRepo();
+        const instance = await instanceRepo.findOne(instanceId);
+        if (!instance) {
             return undefined;
         }
-        return this.makeWorkspace(maybeRawWorkspaces[0]);
+        return this.findById(instance.workspaceId);
     }
 
     public async find(options: FindWorkspacesOptions): Promise<WorkspaceInfo[]> {
@@ -265,16 +262,6 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         });
     }
 
-    private makeWorkspace(raw: any): DBWorkspace | undefined {
-        if (!raw) return undefined;
-        return {
-            ...raw,
-            config: JSON.parse(raw.config),
-            context: JSON.parse(raw.context),
-            pinned: (raw.pinned && JSON.parse(raw.pinned)) || undefined,
-        };
-    }
-
     public async updateLastHeartbeat(
         instanceId: string,
         userId: string,
@@ -285,7 +272,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             "INSERT INTO d_b_workspace_instance_user(instanceId, userId, lastSeen) VALUES (?, ?, timestamp ?) ON DUPLICATE KEY UPDATE lastSeen = timestamp ?, wasClosed = ?";
         const lastSeen = this.toTimestampString(newHeartbeat);
         const workspaceInstanceUserRepo = await this.getWorkspaceInstanceUserRepo();
-        workspaceInstanceUserRepo.query(query, [instanceId, userId, lastSeen, lastSeen, wasClosed || false]);
+        await workspaceInstanceUserRepo.query(query, [instanceId, userId, lastSeen, lastSeen, wasClosed || false]);
     }
 
     private toTimestampString(date: Date) {
@@ -302,6 +289,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
 
         if (result && result.length > 0 && result[0].lastSeen) {
             return {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 lastSeen: new Date(result[0].lastSeen),
                 wasClosed: Boolean(result[0].wasClosed),
             };
@@ -401,7 +389,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         userId?: string,
         includeStopping: boolean = false,
     ): Promise<RunningWorkspaceInfo[]> {
-        const params: any = {};
+        const params: { region?: string } = {};
         const conditions = ["wsi.phasePersisted != 'stopped'", "wsi.deleted != TRUE"];
         if (!includeStopping) {
             // This excludes instances in a 'stopping' phase
@@ -411,7 +399,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             params.region = workspaceClusterName;
             conditions.push("wsi.region = :region");
         }
-        const joinParams: any = {};
+        const joinParams: { userId?: string } = {};
         const joinConditions = [];
         if (userId) {
             joinParams.userId = userId;
@@ -501,6 +489,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             resultSessions.push({
                 workspace: {
                     id: session.ws_id,
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                     context: JSON.parse(session.ws_context),
                     contextURL: session.ws_contextURL,
                     type: session.ws_type,
@@ -980,6 +969,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
                         : "wsi.id = (SELECT i.id FROM d_b_workspace_instance AS i WHERE i.workspaceId = ws.id ORDER BY i.creationTime DESC LIMIT 1)"
                 }`,
             )
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             .where(whereConditions.join(" AND "), whereConditionParams)
             .orderBy(orderField, orderDir)
             .take(limit)

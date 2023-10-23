@@ -313,7 +313,8 @@ export class OrganizationService {
                 await this.auth.addOrganizationRole(orgId, memberId, membership.role);
             }
             const code = ApplicationError.hasErrorCode(err) ? err.code : ErrorCodes.INTERNAL_SERVER_ERROR;
-            throw new ApplicationError(code, err);
+            const message = ApplicationError.hasErrorCode(err) ? err.message : "" + err;
+            throw new ApplicationError(code, message);
         }
         this.analytics.track({
             userId,

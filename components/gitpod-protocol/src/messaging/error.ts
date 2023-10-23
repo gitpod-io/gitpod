@@ -38,9 +38,11 @@ export namespace ApplicationError {
         }
     }
 
-    export function fromGRPCError(e: any & Error, data?: any): ApplicationError {
+    export function fromGRPCError(e: any, data?: any): ApplicationError {
         // Argument e should be ServerErrorResponse
         // But to reduce dependency requirement, we use Error here
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         return new ApplicationError(categorizeRPCError(e.code), e.message, data);
     }
 

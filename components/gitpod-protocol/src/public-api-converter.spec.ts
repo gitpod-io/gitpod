@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /**
  * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).

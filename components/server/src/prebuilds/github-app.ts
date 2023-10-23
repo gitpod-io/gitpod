@@ -570,7 +570,7 @@ export class GithubApp {
 
         const newBody = body + `\n\n${button}\n\n`;
         const updatePrPromise = ctx.octokit.pulls.update({ ...ctx.repo(), pull_number: pr.number, body: newBody });
-        updatePrPromise.catch((err) => log.error(err, "Error while updating PR body", { contextURL }));
+        updatePrPromise.catch((err) => log.error("Error while updating PR body", err, { contextURL }));
     }
 
     private async onPrAddComment(
@@ -594,7 +594,7 @@ export class GithubApp {
 
         const newComment = ctx.issue({ body: `\n\n${button}\n\n` });
         const newCommentPromise = ctx.octokit.issues.createComment(newComment);
-        newCommentPromise.catch((err) => log.error(err, "Error while adding new PR comment", { contextURL }));
+        newCommentPromise.catch((err) => log.error("Error while adding new PR comment", err, { contextURL }));
     }
 
     private getBadgeImageURL(): string {

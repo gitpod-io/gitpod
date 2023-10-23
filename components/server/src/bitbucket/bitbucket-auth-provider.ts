@@ -77,6 +77,7 @@ export class BitbucketAuthProvider extends GenericAuthProvider {
             const primaryEmail = emails.values.find((x: { is_primary: boolean; email: string }) => x.is_primary).email;
 
             const currentScopes = this.normalizeScopes(
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 (headers as any)["x-oauth-scopes"].split(",").map((s: string) => s.trim()),
             );
 

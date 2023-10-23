@@ -212,7 +212,8 @@ export class API {
     }
 
     private async verify(context: HandlerContext) {
-        const user = await this.sessionHandler.verify(context.requestHeader.get("cookie") || "");
+        const cookieHeader: string = context.requestHeader.get("cookie") || "";
+        const user = await this.sessionHandler.verify(cookieHeader);
         if (!user) {
             throw new ConnectError("unauthenticated", Code.Unauthenticated);
         }
