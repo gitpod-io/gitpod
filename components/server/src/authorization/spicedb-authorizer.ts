@@ -16,6 +16,7 @@ import { base64decode } from "@jmondi/oauth2-server";
 import { DecodedZedToken } from "@gitpod/spicedb-impl/lib/impl/v1/impl.pb";
 import { RequestContext } from "node-fetch";
 import { getRequestContext } from "../util/request-context";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 async function tryThree<T>(errMessage: string, code: (attempt: number) => Promise<T>): Promise<T> {
     let attempt = 0;
@@ -110,7 +111,10 @@ export class SpiceDBAuthorizer {
                 log.error("[spicedb] Failed to perform authorization check.", err, {
                     request: new TrustedValue(req),
                 });
-                return { permitted: !featureEnabled };
+                if (!featureEnabled) {
+                    return { permitted: true };
+                }
+                throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "Failed to perform authorization check.");
             } finally {
                 observeSpicedbClientLatency("check", error, timer());
             }
