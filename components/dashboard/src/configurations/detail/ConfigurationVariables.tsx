@@ -16,10 +16,12 @@ import Modal, { ModalBody, ModalFooter, ModalFooterAlert, ModalHeader } from "..
 import Alert from "../../components/Alert";
 import { CheckboxInputField } from "../../components/forms/CheckboxInputField";
 import InfoBox from "../../components/InfoBox";
-import { Button } from "../../components/Button";
-import { ItemsList, Item, ItemField, ItemFieldContextMenu } from "../../components/ItemsList";
+import { ItemsList, Item, ItemField } from "../../components/ItemsList";
 import { Text } from "@podkit/typography/Text";
 import { QuestionTooltip } from "@podkit/tooltip/QuestionTooltip";
+import { Button } from "@podkit/button/Button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@podkit/drop-down/DropDown";
+import { cn } from "@podkit/lib/cn";
 
 interface ConfigurationVariablesProps {
     configuration: Project;
@@ -87,24 +89,38 @@ export default function ConfigurationEnvironmentVariables({ configuration }: Con
                                 <ItemField className="truncate font-mono">{variable.name}</ItemField>
                                 <ItemField>{variable.censored ? "Hidden" : "Visible"}</ItemField>
                                 <ItemField className="flex justify-end">
-                                    <ItemFieldContextMenu
-                                        menuEntries={[
-                                            {
-                                                title: "Edit",
-                                                onClick: () => {
-                                                    showModal("update", variable.name);
-                                                },
-                                            },
-                                            {
-                                                title: "Delete",
-                                                customFontStyle:
-                                                    "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
-                                                onClick: () => {
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger>
+                                            <svg
+                                                className={cn(
+                                                    "w-8 h-8 p-1 rounded-md text-gray-600 dark:text-gray-300",
+                                                    "focus:bg-gray-200 dark:focus:bg-gray-700",
+                                                )}
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <title>Actions</title>
+                                                <g fill="currentColor" transform="rotate(90 12 12)">
+                                                    <circle cx="1" cy="1" r="2" transform="translate(5 11)" />
+                                                    <circle cx="1" cy="1" r="2" transform="translate(11 11)" />
+                                                    <circle cx="1" cy="1" r="2" transform="translate(17 11)" />
+                                                </g>
+                                            </svg>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent>
+                                            <DropdownMenuItem onClick={() => showModal("update", variable.name)}>
+                                                Edit
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                className="text-red-600 dark:text-red-400 focus:text-red-800 dark:focus:text-red-300"
+                                                onClick={() => {
                                                     deleteEnvVarMutation.mutate(variable.id);
-                                                },
-                                            },
-                                        ]}
-                                    />
+                                                }}
+                                            >
+                                                Delete
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </ItemField>
                             </Item>
                         );
@@ -206,10 +222,10 @@ function VariableModal({ configuration, onClose, action = "add", presetName }: A
                     ) : null
                 }
             >
-                <Button type="secondary" onClick={onClose}>
+                <Button variant="secondary" onClick={onClose}>
                     Cancel
                 </Button>
-                <Button htmlType="submit" loading={setConfigurationEnvVar.isLoading}>
+                <Button type="submit" loading={setConfigurationEnvVar.isLoading}>
                     Save
                 </Button>
             </ModalFooter>
