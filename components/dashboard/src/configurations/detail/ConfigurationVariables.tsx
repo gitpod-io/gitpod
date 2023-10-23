@@ -70,7 +70,7 @@ export default function ConfigurationEnvironmentVariables({ configuration }: Con
                         No Environment Variables are set{" "}
                         <QuestionTooltip>
                             All <strong>configuration-specific environment variables</strong> will be visible in
-                            prebuilds and optionally in workspaces for this Configuration.
+                            Prebuilds and optionally in Workspaces for this Configuration.
                         </QuestionTooltip>
                     </Text>
                 </div>
