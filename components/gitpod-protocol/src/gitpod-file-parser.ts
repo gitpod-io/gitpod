@@ -13,7 +13,7 @@ import { WorkspaceConfig, PortRangeConfig } from "./protocol";
 export type MaybeConfig = WorkspaceConfig | undefined;
 
 const schema = require("../data/gitpod-schema.json");
-const validate = new Ajv().compile(schema);
+const validate = new Ajv().compile(schema as object);
 const defaultParseOptions = {
     acceptPortRanges: false,
 };
@@ -33,6 +33,7 @@ export class GitpodFileParser {
         };
         try {
             const parsedConfig = yaml.safeLoad(content) as any;
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             validate(parsedConfig);
             const validationErrors = validate.errors ? validate.errors.map((e) => e.message || e.keyword) : undefined;
             if (validationErrors && validationErrors.length > 0) {

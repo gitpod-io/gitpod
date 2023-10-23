@@ -98,7 +98,7 @@ function getAnonymousId(request: Request) {
     if (!(request.cookies["gp-analytical"] === "true")) {
         return;
     }
-    return stripCookie(request.cookies.ajs_anonymous_id);
+    return stripCookie(request.cookies.ajs_anonymous_id as string);
 }
 
 function resolveIdentities(user: User) {

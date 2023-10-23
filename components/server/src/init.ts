@@ -108,8 +108,8 @@ export async function start(container: Container) {
         const pool: any = (connection.driver as any).pool;
         interval = setInterval(async () => {
             try {
-                const activeConnections = pool._allConnections.length;
-                const freeConnections = pool._freeConnections.length;
+                const activeConnections = pool._allConnections.length as number;
+                const freeConnections = pool._freeConnections.length as number;
 
                 dbConnectionsTotal.set(activeConnections);
                 dbConnectionsFree.set(freeConnections);

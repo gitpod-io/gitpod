@@ -179,7 +179,7 @@ export async function getWorkspaceClassForInstance(
 }
 
 class StartInstanceError extends Error {
-    constructor(public readonly reason: FailedInstanceStartReason, public readonly cause: Error) {
+    constructor(public readonly reason: FailedInstanceStartReason, public readonly cause: any) {
         super("Starting workspace instance failed: " + cause.message);
     }
 }
@@ -778,7 +778,7 @@ export class WorkspaceStarter {
      */
     private async failInstanceStart(
         ctx: TraceContext,
-        err: Error,
+        err: any,
         workspace: Workspace,
         instance: WorkspaceInstance,
         abortSignal: RedlockAbortSignal,
@@ -819,7 +819,7 @@ export class WorkspaceStarter {
         }
     }
 
-    private async failPrebuildWorkspace(ctx: TraceContext, err: Error, workspace: Workspace) {
+    private async failPrebuildWorkspace(ctx: TraceContext, err: any, workspace: Workspace) {
         const span = TraceContext.startSpan("failInstanceStart", ctx);
         try {
             if (workspace.type === "prebuild") {

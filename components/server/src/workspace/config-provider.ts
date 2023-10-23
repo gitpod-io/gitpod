@@ -312,7 +312,7 @@ export class InvalidGitpodYMLError extends Error {
 }
 
 export namespace InvalidGitpodYMLError {
-    export function is(obj: object): obj is InvalidGitpodYMLError {
+    export function is(obj: any): obj is InvalidGitpodYMLError {
         return "errorType" in obj && (obj as any).errorType === "invalidGitpodYML" && "validationErrors" in obj;
     }
 }

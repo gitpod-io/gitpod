@@ -62,6 +62,7 @@ export class BitbucketApp {
                         return;
                     }
                     try {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                         const data = toData(req.body);
                         if (data) {
                             await this.handlePushHook({ span }, data, user, event);

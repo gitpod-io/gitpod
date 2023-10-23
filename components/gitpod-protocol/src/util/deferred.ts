@@ -17,9 +17,9 @@ export class Deferred<T> {
     }
 
     promise = new Promise<T>((resolve, reject) => {
-        this.resolve = (o) => {
+        this.resolve = (o?: T) => {
             this.isResolved = true;
-            resolve(o as any);
+            resolve(o as T);
             clearTimeout(this.timer);
         };
         this.reject = (e) => {

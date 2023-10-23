@@ -22,6 +22,7 @@ export class MonitoringEndpointsApp {
         // Append redis metrics to default registry
         redisMetricsRegistry()
             .getMetricsAsArray()
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             .forEach((metric) => registry.registerMetric(metric as any));
 
         const monApp = express();

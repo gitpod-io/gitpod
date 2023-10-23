@@ -59,7 +59,7 @@ const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound,
                 },
                 services: {
                     repositoryService: {
-                        installAutomatedPrebuilds: async (user: any, cloneUrl: any) => {
+                        installAutomatedPrebuilds: async (user: any, cloneUrl: string) => {
                             webhooks.add(cloneUrl);
                         },
                         canInstallAutomatedPrebuilds: async () => {

@@ -142,7 +142,7 @@ export class UserService {
             try {
                 WorkspaceTimeoutDuration.validate(setting.workspaceTimeout);
             } catch (err) {
-                throw new ApplicationError(ErrorCodes.BAD_REQUEST, err.message);
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, String(err));
             }
         }
 
@@ -179,8 +179,8 @@ export class UserService {
                 }
             }
             return result;
-        } catch (e) {
-            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+        } catch (err) {
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, String(err));
         }
     }
 

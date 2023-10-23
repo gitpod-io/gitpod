@@ -1297,15 +1297,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ApplicationError(ErrorCodes.INVALID_GITPOD_YML, error.message);
         }
 
-        const errorCode = this.parseErrorCode(error);
-        if (errorCode) {
+        if (ApplicationError.hasErrorCode(error)) {
             // specific errors will be handled in create-workspace.tsx
             throw error;
         }
         log.debug(logContext, error);
         throw new ApplicationError(
             ErrorCodes.CONTEXT_PARSE_ERROR,
-            error && error.message ? error.message : `Cannot create workspace for URL: ${normalizedContextUrl}`,
+            error ? String(error) : `Cannot create workspace for URL: ${normalizedContextUrl}`,
         );
     }
 
@@ -1419,19 +1418,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         });
 
         return prebuild;
-    }
-
-    private parseErrorCode(error: any) {
-        const errorCode = error && error.code;
-        if (errorCode) {
-            try {
-                const code = parseInt(errorCode);
-                if (!isNaN(code)) {
-                    return code;
-                }
-            } catch {}
-        }
-        return undefined;
     }
 
     public async getFeaturedRepositories(ctx: TraceContext): Promise<WhitelistedRepository[]> {
@@ -2017,7 +2003,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             await this.snapshotService.waitForSnapshot(opts);
         } catch (err) {
             // wrap in SNAPSHOT_ERROR to signal this call should not be retried.
-            throw new ApplicationError(ErrorCodes.SNAPSHOT_ERROR, err.toString());
+            throw new ApplicationError(ErrorCodes.SNAPSHOT_ERROR, String(err));
         }
     }
 
@@ -2645,7 +2631,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             );
             return res;
         } catch (e) {
-            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, String(e));
         }
     }
 
@@ -2703,11 +2689,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const admin = await this.guardAdminAccess("adminDeleteUser", { id: userId }, Permission.ADMIN_PERMISSIONS);
 
-        try {
-            await this.userDeletionService.deleteUser(admin.id, userId);
-        } catch (e) {
-            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
-        }
+        await this.userDeletionService.deleteUser(admin.id, userId);
     }
 
     async adminVerifyUser(ctx: TraceContext, userId: string): Promise<User> {
@@ -2979,7 +2961,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             const result = await this.authProviderService.updateAuthProvider(safeProvider);
             return AuthProviderEntry.redact(result);
         } catch (error) {
-            const message = error && error.message ? error.message : "Failed to update the provider.";
+            if (ApplicationError.hasErrorCode(error)) {
+                throw error;
+            }
+            const message = error ? String(error) : "Failed to update the provider.";
             throw new ApplicationError(ErrorCodes.CONFLICT, message);
         }
     }
@@ -3011,12 +2996,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (!authProvider) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "User resource not found.");
         }
-        try {
-            await this.authProviderService.deleteAuthProvider(authProvider);
-        } catch (error) {
-            const message = error && error.message ? error.message : "Failed to delete the provider.";
-            throw new ApplicationError(ErrorCodes.CONFLICT, message);
-        }
+        await this.authProviderService.deleteAuthProvider(authProvider);
     }
 
     async createOrgAuthProvider(
@@ -3072,8 +3052,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             const result = await this.authProviderService.createOrgAuthProvider(newProvider);
             return AuthProviderEntry.redact(result);
         } catch (error) {
-            const message = error && error.message ? error.message : "Failed to create the provider.";
-            throw new ApplicationError(ErrorCodes.CONFLICT, message);
+            if (ApplicationError.hasErrorCode(error)) {
+                throw error;
+            }
+            const message = error ? String(error) : "Failed to create the provider.";
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, message);
         }
     }
 
@@ -3106,7 +3089,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             const result = await this.authProviderService.updateOrgAuthProvider(providerUpdate);
             return AuthProviderEntry.redact(result);
         } catch (error) {
-            const message = error && error.message ? error.message : "Failed to update the provider.";
+            if (ApplicationError.hasErrorCode(error)) {
+                throw error;
+            }
+            const message = error ? String(error) : "Failed to update the provider.";
             throw new ApplicationError(ErrorCodes.CONFLICT, message);
         }
     }
@@ -3128,8 +3114,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             const result = await this.authProviderService.getAuthProvidersOfOrg(params.organizationId);
             return result.map(AuthProviderEntry.redact.bind(AuthProviderEntry));
         } catch (error) {
-            const message =
-                error && error.message ? error.message : "Error retreiving auth providers for organization.";
+            if (ApplicationError.hasErrorCode(error)) {
+                throw error;
+            }
+            const message = error ? String(error) : "Error retreiving auth providers for organization.";
             throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, message);
         }
     }
@@ -3156,12 +3144,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Provider resource not found.");
         }
 
-        try {
-            await this.authProviderService.deleteAuthProvider(authProvider);
-        } catch (error) {
-            const message = error && error.message ? error.message : "Failed to delete the provider.";
-            throw new ApplicationError(ErrorCodes.CONFLICT, message);
-        }
+        await this.authProviderService.deleteAuthProvider(authProvider);
     }
 
     async getOnboardingState(ctx: TraceContext): Promise<GitpodServer.OnboardingState> {

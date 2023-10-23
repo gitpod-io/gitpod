@@ -12,7 +12,7 @@ export async function resetDB(typeorm: TypeORM) {
     const conn = await typeorm.getConnection();
     const users = await conn.getRepository(DBUser).find();
     // delete all users except the builtin users
-    conn.getRepository(DBUser).remove(users.filter((u) => !isBuiltinUser(u.id)));
+    await conn.getRepository(DBUser).remove(users.filter((u) => !isBuiltinUser(u.id)));
 
     const deletions = conn.entityMetadatas
         .filter((meta) => meta.tableName !== "d_b_user")

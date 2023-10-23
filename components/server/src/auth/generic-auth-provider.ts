@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /**
  * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
@@ -371,7 +372,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
          */
 
         const context = LogContext.from({
-            user: User.is(userOrIdentity) ? { userId: userOrIdentity.id } : undefined,
+            userId: User.is(userOrIdentity) ? userOrIdentity.id : undefined,
             request,
         });
 

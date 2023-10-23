@@ -17,6 +17,7 @@ export class DBWithTracing<T> {
     public trace(ctx: TraceContext): T {
         return new Proxy(this.db, {
             get: (_target: any, name: string) => {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 const f = Reflect.get(_target, name);
                 if (!f) {
                     return undefined;

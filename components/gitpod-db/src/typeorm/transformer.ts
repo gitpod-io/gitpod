@@ -64,6 +64,7 @@ export namespace Transformer {
         },
         from(value: any): any {
             // From TIMESTAMP to ISO string
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             return new Date(Date.parse(value)).toISOString();
         },
     };
@@ -74,6 +75,7 @@ export namespace Transformer {
                 return JSON.stringify(value || defaultValue);
             },
             from(value: any): any {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 return JSON.parse(value);
             },
         };
@@ -85,6 +87,7 @@ export namespace Transformer {
                 return encryptionServiceProvider().encrypt(value);
             },
             from(value: any): any {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 return encryptionServiceProvider().decrypt(value);
             },
         };
