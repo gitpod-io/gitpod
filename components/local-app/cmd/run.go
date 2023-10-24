@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -70,14 +71,14 @@ func init() {
 	}
 
 	runCmd.Flags().StringP("gitpod-host", "g", "https://gitpod.io", "URL of the Gitpod installation to connect to")
-	runCmd.Flags().BoolP("mock-keyring", "m", false, "Don't use system native keyring, but store Gitpod token in memory")
-	runCmd.Flags().BoolP("allow-cors-from-port", "c", false, "Allow CORS requests from workspace port location")
-	runCmd.Flags().IntP("api-port", "a", 63100, "Local App API endpoint's port")
-	runCmd.Flags().BoolP("auto-tunnel", "t", true, "Enable auto tunneling")
-	runCmd.Flags().StringP("auth-redirect-url", "r", "", "Auth redirect URL")
-	runCmd.Flags().BoolP("verbose", "v", false, "Enable verbose logging")
-	runCmd.Flags().DurationP("auth-timeout", "u", 30*time.Second, "Auth timeout in seconds")
-	runCmd.Flags().DurationP("timeout", "o", 0*time.Second, "How long the local app can run if last workspace was stopped")
+	runCmd.Flags().BoolVarP(&mockKeyring, "mock-keyring", "m", false, "Don't use system native keyring, but store Gitpod token in memory")
+	runCmd.Flags().BoolVarP(&allowCORSFromPort, "allow-cors-from-port", "c", false, "Allow CORS requests from workspace port location")
+	runCmd.Flags().IntVarP(&apiPort, "api-port", "a", 63100, "Local App API endpoint's port")
+	runCmd.Flags().BoolVarP(&autoTunnel, "auto-tunnel", "t", true, "Enable auto tunneling")
+	runCmd.Flags().StringVarP(&authRedirectURL, "auth-redirect-url", "r", "", "Auth redirect URL")
+	runCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose logging")
+	runCmd.Flags().DurationVarP(&authTimeout, "auth-timeout", "u", 30*time.Second, "Auth timeout in seconds")
+	runCmd.Flags().DurationVarP(&localAppTimeout, "timeout", "o", 0, "How long the local app can run if last workspace was stopped")
 	runCmd.Flags().StringVarP(&sshConfigPath, "ssh_config", "s", sshConfig, "produce and update an OpenSSH compatible ssh_config file (defaults to $GITPOD_LCA_SSH_CONFIG)")
 }
 
@@ -117,6 +118,7 @@ func run(opts runOptions) error {
 
 	var b *bastion.Bastion
 
+	fmt.Println(opts.authTimeout)
 	client, err := connectToServer(auth.LoginOpts{GitpodURL: origin, RedirectURL: opts.authRedirectURL, AuthTimeout: opts.authTimeout}, func() {
 		if b != nil {
 			b.FullUpdate()
