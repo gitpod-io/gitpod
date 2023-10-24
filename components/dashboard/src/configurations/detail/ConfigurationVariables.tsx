@@ -21,6 +21,7 @@ import { Text } from "@podkit/typography/Text";
 import { QuestionTooltip } from "@podkit/tooltip/QuestionTooltip";
 import { Button } from "@podkit/button/Button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@podkit/drop-down/DropDown";
+import { MoreVertical } from "lucide-react";
 import { cn } from "@podkit/lib/cn";
 
 interface ConfigurationVariablesProps {
@@ -91,21 +92,12 @@ export default function ConfigurationEnvironmentVariables({ configuration }: Con
                                 <ItemField className="flex justify-end">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger>
-                                            <svg
+                                            <MoreVertical
                                                 className={cn(
                                                     "w-8 h-8 p-1 rounded-md text-gray-600 dark:text-gray-300",
                                                     "focus:bg-gray-200 dark:focus:bg-gray-700",
                                                 )}
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <title>Actions</title>
-                                                <g fill="currentColor" transform="rotate(90 12 12)">
-                                                    <circle cx="1" cy="1" r="2" transform="translate(5 11)" />
-                                                    <circle cx="1" cy="1" r="2" transform="translate(11 11)" />
-                                                    <circle cx="1" cy="1" r="2" transform="translate(17 11)" />
-                                                </g>
-                                            </svg>
+                                            />
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent>
                                             <DropdownMenuItem onClick={() => showModal("update", variable.name)}>
