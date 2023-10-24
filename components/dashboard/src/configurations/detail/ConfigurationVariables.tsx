@@ -101,12 +101,12 @@ export default function ConfigurationEnvironmentVariables({ configuration }: Con
                                             />
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent>
-                                            <DropdownMenuItem onClick={() => showModal("update", variable.name)}>
+                                            <DropdownMenuItem onSelect={() => showModal("update", variable.name)}>
                                                 Edit
                                             </DropdownMenuItem>
                                             <DropdownMenuItem
                                                 className="text-red-600 dark:text-red-400 focus:text-red-800 dark:focus:text-red-300"
-                                                onClick={() => {
+                                                onSelect={() => {
                                                     deleteEnvVarMutation.mutate(variable.id);
                                                 }}
                                             >
