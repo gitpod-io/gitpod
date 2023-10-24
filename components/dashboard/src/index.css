@@ -53,7 +53,7 @@
 
 @layer components {
     /* TODO: deprecate button styles in favor of using <Button> component and handling there */
-    button {
+    button:not(.unstyled) {
         @apply cursor-pointer px-4 py-2 my-auto bg-gray-900 hover:bg-gray-800 dark:bg-kumquat-base dark:hover:bg-kumquat-ripe text-gray-50 dark:text-gray-900 text-sm font-medium rounded-xl focus:outline-none focus:ring transition ease-in-out;
     }
     button.secondary {

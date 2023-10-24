@@ -91,7 +91,8 @@ export default function ConfigurationEnvironmentVariables({ configuration }: Con
                                 <ItemField>{variable.censored ? "Hidden" : "Visible"}</ItemField>
                                 <ItemField className="flex justify-end">
                                     <DropdownMenu>
-                                        <DropdownMenuTrigger>
+                                        {/* Todo: finally move the styles out of index.css */}
+                                        <DropdownMenuTrigger className="unstyled">
                                             <MoreVertical
                                                 className={cn(
                                                     "w-8 h-8 p-1 rounded-md text-gray-600 dark:text-gray-300",
