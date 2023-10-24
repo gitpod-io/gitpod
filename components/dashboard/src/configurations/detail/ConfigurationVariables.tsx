@@ -96,7 +96,7 @@ export default function ConfigurationEnvironmentVariables({ configuration }: Con
                                             <MoreVertical
                                                 className={cn(
                                                     "w-8 h-8 p-1 rounded-md text-gray-600 dark:text-gray-300",
-                                                    "focus:bg-gray-200 dark:focus:bg-gray-700",
+                                                    "hover:bg-gray-200 dark:hover:bg-gray-700",
                                                 )}
                                             />
                                         </DropdownMenuTrigger>
