@@ -77,7 +77,7 @@ func init() {
 	runCmd.Flags().BoolVarP(&autoTunnel, "auto-tunnel", "t", true, "Enable auto tunneling")
 	runCmd.Flags().StringVarP(&authRedirectURL, "auth-redirect-url", "r", "", "Auth redirect URL")
 	runCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose logging")
-	runCmd.Flags().DurationVarP(&authTimeout, "auth-timeout", "u", 30*time.Second, "Auth timeout in seconds")
+	runCmd.Flags().DurationVarP(&authTimeout, "auth-timeout", "u", 30, "Auth timeout in seconds")
 	runCmd.Flags().DurationVarP(&localAppTimeout, "timeout", "o", 0, "How long the local app can run if last workspace was stopped")
 	runCmd.Flags().StringVarP(&sshConfigPath, "ssh_config", "s", sshConfig, "produce and update an OpenSSH compatible ssh_config file (defaults to $GITPOD_LCA_SSH_CONFIG)")
 }
@@ -118,7 +118,6 @@ func run(opts runOptions) error {
 
 	var b *bastion.Bastion
 
-	fmt.Println(opts.authTimeout)
 	client, err := connectToServer(auth.LoginOpts{GitpodURL: origin, RedirectURL: opts.authRedirectURL, AuthTimeout: opts.authTimeout}, func() {
 		if b != nil {
 			b.FullUpdate()
