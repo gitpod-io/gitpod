@@ -15,9 +15,6 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "gitpod",
 	Short: "A CLI for interacting with Gitpod",
-	Run: func(cmd *cobra.Command, args []string) {
-		// Do Stuff Here
-	},
 }
 
 func Execute() {
