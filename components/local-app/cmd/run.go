@@ -18,6 +18,7 @@ import (
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	appapi "github.com/gitpod-io/gitpod/local-app/api"
 
+	"github.com/gitpod-io/local-app/config"
 	"github.com/gitpod-io/local-app/pkg/auth"
 	"github.com/gitpod-io/local-app/pkg/bastion"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
@@ -28,14 +29,10 @@ import (
 )
 
 var (
-	gitpodHost        string
-	mockKeyring       bool
 	allowCORSFromPort bool
 	apiPort           int
 	autoTunnel        bool
-	authRedirectURL   string
 	verbose           bool
-	authTimeout       time.Duration
 	localAppTimeout   time.Duration
 	sshConfigPath     string
 )
@@ -49,7 +46,7 @@ var runCmd = &cobra.Command{
 			keyring.MockInit()
 		}
 		return run(runOptions{
-			origin:            gitpodHost,
+			origin:            config.GetString("host"),
 			sshConfigPath:     sshConfigPath,
 			apiPort:           apiPort,
 			allowCORSFromPort: allowCORSFromPort,
@@ -70,14 +67,10 @@ func init() {
 		sshConfig = filepath.Join(os.TempDir(), "gitpod_ssh_config")
 	}
 
-	runCmd.Flags().StringP("gitpod-host", "g", "https://gitpod.io", "URL of the Gitpod installation to connect to")
-	runCmd.Flags().BoolVarP(&mockKeyring, "mock-keyring", "m", false, "Don't use system native keyring, but store Gitpod token in memory")
 	runCmd.Flags().BoolVarP(&allowCORSFromPort, "allow-cors-from-port", "c", false, "Allow CORS requests from workspace port location")
 	runCmd.Flags().IntVarP(&apiPort, "api-port", "a", 63100, "Local App API endpoint's port")
 	runCmd.Flags().BoolVarP(&autoTunnel, "auto-tunnel", "t", true, "Enable auto tunneling")
-	runCmd.Flags().StringVarP(&authRedirectURL, "auth-redirect-url", "r", "", "Auth redirect URL")
 	runCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose logging")
-	runCmd.Flags().DurationVarP(&authTimeout, "auth-timeout", "u", 30, "Auth timeout in seconds")
 	runCmd.Flags().DurationVarP(&localAppTimeout, "timeout", "o", 0, "How long the local app can run if last workspace was stopped")
 	runCmd.Flags().StringVarP(&sshConfigPath, "ssh_config", "s", sshConfig, "produce and update an OpenSSH compatible ssh_config file (defaults to $GITPOD_LCA_SSH_CONFIG)")
 }
@@ -196,7 +189,7 @@ func connectToServer(loginOpts auth.LoginOpts, reconnectionHandler func(), close
 		logrus.WithError(err).WithField("origin", loginOpts.GitpodURL).Error()
 	}
 
-	tkn, err = Login(loginOpts)
+	tkn, err = Login(loginOpts, nil)
 	if err != nil {
 		return nil, err
 	}
