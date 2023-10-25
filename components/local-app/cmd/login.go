@@ -28,10 +28,10 @@ var loginCmd = &cobra.Command{
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) > 0 {
-			_, err := Login(auth.LoginOpts{GitpodURL: config.GetString("host"), RedirectURL: authRedirectURL, AuthTimeout: authTimeout}, &args[0])
+			err := storeToken(args[0])
 			return err
 		} else {
-			_, err := Login(auth.LoginOpts{GitpodURL: config.GetString("host"), RedirectURL: authRedirectURL, AuthTimeout: authTimeout}, nil)
+			_, err := Login(auth.LoginOpts{GitpodURL: config.GetGitpodUrl(), RedirectURL: authRedirectURL, AuthTimeout: authTimeout})
 			return err
 		}
 	},
@@ -40,29 +40,29 @@ var loginCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(loginCmd)
 
-	loginCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	runCmd.Flags().StringVarP(&authRedirectURL, "auth-redirect-url", "r", "", "Auth redirect URL")
-	runCmd.Flags().BoolVarP(&mockKeyring, "mock-keyring", "m", false, "Don't use system native keyring, but store Gitpod token in memory")
-	runCmd.Flags().DurationVarP(&authTimeout, "auth-timeout", "u", 30, "Auth timeout in seconds")
+	loginCmd.Flags().StringVarP(&authRedirectURL, "auth-redirect-url", "r", "", "Auth redirect URL")
+	loginCmd.Flags().BoolVarP(&mockKeyring, "mock-keyring", "m", false, "Don't use system native keyring, but store Gitpod token in memory")
+	loginCmd.Flags().DurationVarP(&authTimeout, "auth-timeout", "u", 30, "Auth timeout in seconds")
 }
 
-func Login(loginOpts auth.LoginOpts, userProvidedToken *string) (string, error) {
+func storeToken(token string) error {
 	var err error
-	tkn := userProvidedToken
-	if userProvidedToken == nil {
-		tempTkn, err := auth.Login(context.Background(), loginOpts)
-		if err != nil {
-			return "", err
-		}
-		tkn = &tempTkn
-	}
 
-	if *tkn != "" {
-		err = auth.SetToken(loginOpts.GitpodURL, *tkn)
+	if token != "" {
+		err = auth.SetToken(config.GetGitpodUrl(), token)
 		if err != nil {
-			logrus.WithField("origin", loginOpts.GitpodURL).Warnf("could not write token to keyring: %s", err)
+			logrus.WithField("origin", config.GetGitpodUrl()).Warnf("could not write token to keyring: %s", err)
+			// Allow to continue
 			err = nil
 		}
 	}
-	return *tkn, err
+	return err
+}
+
+func Login(loginOpts auth.LoginOpts) (string, error) {
+	tkn, err := auth.Login(context.Background(), loginOpts)
+	if tkn != "" {
+		err = storeToken(tkn)
+	}
+	return tkn, err
 }

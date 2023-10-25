@@ -189,7 +189,7 @@ func connectToServer(loginOpts auth.LoginOpts, reconnectionHandler func(), close
 		logrus.WithError(err).WithField("origin", loginOpts.GitpodURL).Error()
 	}
 
-	tkn, err = Login(loginOpts, nil)
+	tkn, err = Login(loginOpts)
 	if err != nil {
 		return nil, err
 	}

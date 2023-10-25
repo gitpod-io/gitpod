@@ -5,6 +5,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -42,6 +43,11 @@ func Init() {
 			panic("Failed to read config file: " + err.Error())
 		}
 	}
+}
+
+func GetGitpodUrl() string {
+	host := GetString("host")
+	return fmt.Sprintf("https://%s", host)
 }
 
 func Set(key string, value interface{}) error {
