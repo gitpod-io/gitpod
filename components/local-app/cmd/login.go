@@ -47,9 +47,9 @@ func storeToken(token string) error {
 	var err error
 
 	if token != "" {
-		err = auth.SetToken(config.GetGitpodUrl(), token)
+		err = auth.SetToken(config.GetString("host"), token)
 		if err != nil {
-			logrus.WithField("origin", config.GetGitpodUrl()).Warnf("could not write token to keyring: %s", err)
+			logrus.WithField("origin", config.GetString("host")).Warnf("could not write token to keyring: %s", err)
 			// Allow to continue
 			err = nil
 		}
