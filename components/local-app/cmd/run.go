@@ -1,11 +1,11 @@
-/*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-*/
+// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License.AGPL.txt in the project root for license information.
+
 package cmd
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/url"
 	"os"
