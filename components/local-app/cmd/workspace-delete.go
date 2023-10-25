@@ -31,8 +31,7 @@ var deleteWorkspaceCommand = &cobra.Command{
 			return err
 		}
 
-		// todo: verbose only
-		fmt.Println("Attempting to delete workspace...")
+		logger.Debug("Attempting to delete workspace...")
 		_, err = gitpod.Workspaces.DeleteWorkspace(ctx, connect.NewRequest(&v1.DeleteWorkspaceRequest{WorkspaceId: workspaceID}))
 
 		return err

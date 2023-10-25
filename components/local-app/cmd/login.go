@@ -15,7 +15,6 @@ import (
 )
 
 var (
-	mockKeyring     bool
 	authRedirectURL string
 	authTimeout     time.Duration
 )
@@ -41,7 +40,6 @@ func init() {
 	rootCmd.AddCommand(loginCmd)
 
 	loginCmd.Flags().StringVarP(&authRedirectURL, "auth-redirect-url", "r", "", "Auth redirect URL")
-	loginCmd.Flags().BoolVarP(&mockKeyring, "mock-keyring", "m", false, "Don't use system native keyring, but store Gitpod token in memory")
 	loginCmd.Flags().DurationVarP(&authTimeout, "auth-timeout", "u", 30, "Auth timeout in seconds")
 }
 

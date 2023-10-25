@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/gitpod-io/local-app/config"
@@ -24,6 +25,11 @@ func Execute() {
 	}
 }
 
+var logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelWarn}))
+
 func init() {
 	config.Init()
+	logger.Debug("Configured configuration and environment variables")
+
+	rootCmd.Flags().BoolP("verbose", "v", false, "Display verbose output for more detailed logging")
 }

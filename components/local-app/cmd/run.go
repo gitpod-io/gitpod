@@ -35,6 +35,7 @@ var (
 	verbose           bool
 	localAppTimeout   time.Duration
 	sshConfigPath     string
+	mockKeyring       bool
 )
 
 // runCmd represents the run command
@@ -73,6 +74,7 @@ func init() {
 	runCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose logging")
 	runCmd.Flags().DurationVarP(&localAppTimeout, "timeout", "o", 0, "How long the local app can run if last workspace was stopped")
 	runCmd.Flags().StringVarP(&sshConfigPath, "ssh_config", "s", sshConfig, "produce and update an OpenSSH compatible ssh_config file (defaults to $GITPOD_LCA_SSH_CONFIG)")
+	loginCmd.Flags().BoolVarP(&mockKeyring, "mock-keyring", "m", false, "Don't use system native keyring, but store Gitpod token in memory")
 }
 
 type runOptions struct {
