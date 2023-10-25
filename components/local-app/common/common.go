@@ -24,7 +24,6 @@ func GetToken() (string, error) {
 	token, err := keyring.Get("gitpod-cli", "token")
 
 	if err != nil {
-		config.Init()
 		configToken := config.GetString("token")
 		fmt.Println(configToken)
 		if configToken == "" {
@@ -80,7 +79,6 @@ func GetGitpodClient(ctx context.Context) (*client.Gitpod, error) {
 }
 
 func constructAPIEndpoint() (string, error) {
-	config.Init()
 	host := config.GetString("host")
 
 	u := &url.URL{

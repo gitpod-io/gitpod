@@ -6,7 +6,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/gitpod-io/local-app/pkg/auth"
 	"github.com/sirupsen/logrus"
@@ -18,9 +17,7 @@ var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Logs the user in to the CLI",
 	Long:  `Logs the user in and stores the token in the system keychain.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("login called")
-	},
+	Run:   func(cmd *cobra.Command, args []string) {},
 }
 
 func init() {

@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gitpod-io/local-app/config"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -57,9 +56,7 @@ The command works with a Gitpod host that can be specified in the configuration 
 
 		var urls []string
 		for _, remote := range remotes {
-			for _, url := range remote.Config().URLs {
-				urls = append(urls, url)
-			}
+			urls = append(urls, remote.Config().URLs...)
 		}
 
 		var repoURL string
@@ -81,7 +78,6 @@ The command works with a Gitpod host that can be specified in the configuration 
 			log.Fatal("No remote URLs found")
 		}
 
-		config.Init()
 		gitpodHost := viper.GetString("host")
 
 		if !strings.HasPrefix(gitpodHost, "http://") && !strings.HasPrefix(gitpodHost, "https://") {
