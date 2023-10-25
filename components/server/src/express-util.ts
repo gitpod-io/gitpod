@@ -73,7 +73,15 @@ export function unhandledToError(req: express.Request, res: express.Response, ne
     if (isAnsweredRequest(req, res)) {
         return next();
     }
-    return next(new Error("unhandled request: " + req.method + " " + req.originalUrl));
+    /* Handle unknown routes gracefully to improve user experience and security.
+     * - Use a 404 status to indicate a "Not Found" error.
+     * - Provide a clear and informative message to guide the user.
+     * - Avoid exposing stack traces to prevent potential security vulnerabilities.
+     * Note: Detailed error logging is delegated to the `bottomErrorHandler()` function.
+     */
+    res.status(404).send(
+        "Resource Not Accessible: The content you're attempting to access may have been removed, renamed, or is temporarily unavailable. Kindly verify the URL and retry.",
+    );
 }
 
 /**
