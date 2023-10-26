@@ -16,18 +16,19 @@ import (
 	"github.com/gitpod-io/gitpod/components/public-api/go/client"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/local-app/config"
+	"github.com/gitpod-io/local-app/pkg/auth"
 	"github.com/manifoldco/promptui"
-	"github.com/zalando/go-keyring"
 )
 
 func GetToken() (string, error) {
-	token, err := keyring.Get("gitpod-cli", "token")
+	host := config.GetString("host")
+	token, err := auth.GetToken(host)
 
 	if err != nil {
 		configToken := config.GetString("token")
 		fmt.Println(configToken)
 		if configToken == "" {
-			return "", fmt.Errorf("no token found in keychain, config file or the GITPOD_TOKEN environment variable. Please run `gitpod auth login` to login")
+			return "", fmt.Errorf("no token found in keychain for %s, config file or the GITPOD_TOKEN environment variable. Please run `gitpod auth login` to login", host)
 		}
 
 		return configToken, nil
