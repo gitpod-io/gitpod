@@ -20,7 +20,7 @@ export default function DeleteConfiguration({ configuration }: RepositoryPrebuil
     const history = useHistory();
 
     const onProjectRemoved = useCallback(() => {
-        history.push("/repositories");
+        history.push("/configurations");
     }, [history]);
 
     return (
