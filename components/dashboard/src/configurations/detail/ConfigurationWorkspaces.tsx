@@ -21,8 +21,6 @@ export default function ConfigurationWorkspacesSettings({ repository }: Reposito
 
     const updateRepositorySettings = useCallback(
         async (settings: ProjectSettings) => {
-            if (!repository) return;
-
             const newSettings = { ...repository.settings, ...settings };
             await updateRepository.mutateAsync(
                 { id: repository.id, settings: newSettings },
@@ -41,9 +39,6 @@ export default function ConfigurationWorkspacesSettings({ repository }: Reposito
 
     const setWorkspaceClass = useCallback(
         async (value: string) => {
-            if (!repository) {
-                return value;
-            }
             const before = repository.settings?.workspaceClasses?.regular;
             updateRepositorySettings({
                 workspaceClasses: { ...repository.settings?.workspaceClasses, regular: value },
