@@ -7,7 +7,7 @@
 import { PrebuildSettings, Project, ProjectSettings } from "@gitpod/gitpod-protocol";
 import { cn } from "@podkit/lib/cn";
 import debounce from "lodash.debounce";
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useMemo, useState } from "react";
 import SelectWorkspaceClassComponent from "../../components/SelectWorkspaceClassComponent";
 import { CheckboxInputField } from "../../components/forms/CheckboxInputField";
 import { InputField } from "../../components/forms/InputField";
@@ -24,14 +24,9 @@ export default function ConfigurationPrebuildsSettings({ repository }: Repositor
     const updateRepository = useUpdateProject();
 
     const { toast } = useToast();
-    const [prebuildBranchPattern, setPrebuildBranchPattern] = useState("");
-
-    useEffect(() => {
-        if (!repository) {
-            return;
-        }
-        setPrebuildBranchPattern(repository?.settings?.prebuilds?.branchMatchingPattern ?? "");
-    }, [repository]);
+    const [prebuildBranchPattern, setPrebuildBranchPattern] = useState(
+        repository?.settings?.prebuilds?.branchMatchingPattern ?? "",
+    );
 
     const updateRepositorySettings = useCallback(
         async (settings: ProjectSettings) => {
@@ -71,9 +66,6 @@ export default function ConfigurationPrebuildsSettings({ repository }: Repositor
 
     const setPrebuildBranchStrategy = useCallback(
         async (value: PrebuildSettings.BranchStrategy) => {
-            if (!repository) {
-                return;
-            }
             const oldValue = Project.getPrebuildSettings(repository).branchStrategy;
             if (oldValue === value) {
                 return;
@@ -92,9 +84,6 @@ export default function ConfigurationPrebuildsSettings({ repository }: Repositor
 
     const debouncedUpdatePrebuildBranchPattern = useMemo(() => {
         return debounce(async (prebuildBranchPattern: string) => {
-            if (!repository) {
-                return;
-            }
             const update: ProjectSettings = { ...repository.settings };
             update.prebuilds = { ...update.prebuilds };
             update.prebuilds.branchMatchingPattern = prebuildBranchPattern;
@@ -117,9 +106,6 @@ export default function ConfigurationPrebuildsSettings({ repository }: Repositor
 
     const setWorkspaceClassForPrebuild = useCallback(
         async (value: string) => {
-            if (!repository) {
-                return;
-            }
             const update: ProjectSettings = { ...repository.settings };
             update.prebuilds = { ...update.prebuilds };
             update.prebuilds.workspaceClass = value;
@@ -131,15 +117,12 @@ export default function ConfigurationPrebuildsSettings({ repository }: Repositor
 
     const setPrebuildInterval = useCallback(
         async (value: string) => {
-            if (!repository) {
-                return;
-            }
             const newInterval = Math.abs(Math.min(Number.parseInt(value), 100)) || 0;
             const update: ProjectSettings = { ...repository.settings };
             update.prebuilds = { ...update.prebuilds };
             update.prebuilds.prebuildInterval = newInterval;
 
-            await updateRepositorySettings(update);
+            updateRepositorySettings(update);
         },
         [repository, updateRepositorySettings],
     );
