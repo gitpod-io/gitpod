@@ -20,7 +20,7 @@ interface RepositoryPrebuildsSettingsProps {
     repository: Project;
 }
 
-export default function RepositoryPrebuildsSettings({ repository }: RepositoryPrebuildsSettingsProps) {
+export default function ConfigurationPrebuildsSettings({ repository }: RepositoryPrebuildsSettingsProps) {
     const updateRepository = useUpdateProject();
 
     const { toast } = useToast();

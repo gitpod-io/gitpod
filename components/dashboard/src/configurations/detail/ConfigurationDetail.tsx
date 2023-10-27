@@ -12,8 +12,8 @@ import { Button } from "../../components/Button";
 import { ConfigurationNameForm } from "./ConfigurationName";
 import { Loader2 } from "lucide-react";
 import Alert from "../../components/Alert";
-import RepositoryPrebuildsSettings from "./ConfigurationPrebuilds";
-import RepositoryWorkspacesSettings from "./ConfigurationWorkspaces";
+import ConfigurationPrebuildsSettings from "./ConfigurationPrebuilds";
+import ConfigurationWorkspacesSettings from "./ConfigurationWorkspaces";
 import DeleteConfiguration from "./ConfigurationDelete";
 import ConfigurationEnvironmentVariables from "./ConfigurationVariables";
 
@@ -49,8 +49,8 @@ const ConfigurationDetailPage: FC = () => {
                         <>
                             <ConfigurationNameForm configuration={data} />
                             <ConfigurationEnvironmentVariables configuration={data} />
-                            <RepositoryPrebuildsSettings repository={data} />
-                            <RepositoryWorkspacesSettings repository={data} />
+                            <ConfigurationPrebuildsSettings repository={data} />
+                            <ConfigurationWorkspacesSettings repository={data} />
                             <DeleteConfiguration configuration={data} />
                         </>
                     ))}
