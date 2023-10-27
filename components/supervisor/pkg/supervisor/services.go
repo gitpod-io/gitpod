@@ -811,6 +811,7 @@ func (ss *ControlService) CreateSSHKeyPair(ctx context.Context, req *api.CreateS
 			return &api.CreateSSHKeyPairResponse{
 				PrivateKey: ss.privateKey,
 				HostKey:    ss.hostKey,
+				UserName:   userName,
 			}, nil
 		}
 		log.WithError(err).Error("check authorized_keys failed, will recreate")
