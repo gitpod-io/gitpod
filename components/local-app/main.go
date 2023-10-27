@@ -6,13 +6,14 @@ package main
 
 import (
 	"github.com/gitpod-io/local-app/cmd"
-)
-
-var (
-	// Version - set during build
-	Version = "dev"
+	"github.com/gitpod-io/local-app/pkg/common"
+	"github.com/gitpod-io/local-app/pkg/localapp"
 )
 
 func main() {
-	cmd.Execute()
+	if common.Flavor == "gitpod-cli" {
+		cmd.Execute()
+	} else {
+		localapp.RunCommand()
+	}
 }

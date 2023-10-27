@@ -4,14 +4,23 @@ packages:
     config:
       commands: [["echo"]]
     deps:
-      - :app-linux-amd64
-      - :app-linux-arm64
-      - :app-darwin-amd64
-      - :app-darwin-arm64
-      - :app-windows-386
-      - :app-windows-amd64
-      - :app-windows-arm64
-  - name: app-linux-amd64
+      - :gitpod-cli-linux-amd64
+      - :gitpod-cli-linux-arm64
+      - :gitpod-cli-darwin-amd64
+      - :gitpod-cli-darwin-arm64
+      - :gitpod-cli-windows-386
+      - :gitpod-cli-windows-amd64
+      - :gitpod-cli-windows-arm64
+
+      - :local-app-linux-amd64
+      - :local-app-linux-arm64
+      - :local-app-darwin-amd64
+      - :local-app-darwin-arm64
+      - :local-app-windows-386
+      - :local-app-windows-amd64
+      - :local-app-windows-arm64
+
+  - name: gitpod-cli-linux-amd64
     type: go
     srcs:
       - go.mod
@@ -27,8 +36,8 @@ packages:
       - GOARCH=amd64
     config:
       packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app.Version=commit-${__git_commit}'"]
-  - name: app-linux-arm64
+      buildCommand: ["go", "build", "-o", "gitpod-cli", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=gitpod-cli'"]
+  - name: gitpod-cli-linux-arm64
     type: go
     srcs:
       - go.mod
@@ -44,8 +53,8 @@ packages:
       - GOARCH=arm64
     config:
       packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app.Version=commit-${__git_commit}'"]
-  - name: app-darwin-amd64
+      buildCommand: ["go", "build", "-o", "gitpod-cli", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=gitpod-cli'"]
+  - name: gitpod-cli-darwin-amd64
     type: go
     srcs:
       - go.mod
@@ -61,8 +70,8 @@ packages:
       - GOARCH=amd64
     config:
       packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app.Version=commit-${__git_commit}'"]
-  - name: app-darwin-arm64
+      buildCommand: ["go", "build", "-o", "gitpod-cli", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=gitpod-cli'"]
+  - name: gitpod-cli-darwin-arm64
     type: go
     srcs:
       - go.mod
@@ -78,8 +87,8 @@ packages:
       - GOARCH=arm64
     config:
       packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app.Version=commit-${__git_commit}'"]
-  - name: app-windows-amd64
+      buildCommand: ["go", "build", "-o", "gitpod-cli", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=gitpod-cli'"]
+  - name: gitpod-cli-windows-amd64
     type: go
     srcs:
       - go.mod
@@ -95,8 +104,8 @@ packages:
       - GOARCH=amd64
     config:
       packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app.Version=commit-${__git_commit}'"]
-  - name: app-windows-386
+      buildCommand: ["go", "build", "-o", "gitpod-cli", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=gitpod-cli'"]
+  - name: gitpod-cli-windows-386
     type: go
     srcs:
       - go.mod
@@ -112,8 +121,8 @@ packages:
       - GOARCH=386
     config:
       packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app.Version=commit-${__git_commit}'"]
-  - name: app-windows-arm64
+      buildCommand: ["go", "build", "-o", "gitpod-cli", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=gitpod-cli'"]
+  - name: gitpod-cli-windows-arm64
     type: go
     srcs:
       - go.mod
@@ -129,7 +138,126 @@ packages:
       - GOARCH=arm64
     config:
       packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app.Version=commit-${__git_commit}'"]
+      buildCommand: ["go", "build", "-o", "gitpod-cli", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=gitpod-cli'"]
+  - name: local-app-linux-amd64
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+    deps:
+      - components/supervisor-api/go:lib
+      - components/gitpod-protocol/go:lib
+      - components/local-app-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+      - GOARCH=amd64
+    config:
+      packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=local-app'"]
+  - name: local-app-linux-arm64
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+    deps:
+      - components/supervisor-api/go:lib
+      - components/gitpod-protocol/go:lib
+      - components/local-app-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+      - GOARCH=arm64
+    config:
+      packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=local-app'"]
+  - name: local-app-darwin-amd64
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+    deps:
+      - components/supervisor-api/go:lib
+      - components/gitpod-protocol/go:lib
+      - components/local-app-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=darwin
+      - GOARCH=amd64
+    config:
+      packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=local-app'"]
+  - name: local-app-darwin-arm64
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+    deps:
+      - components/supervisor-api/go:lib
+      - components/gitpod-protocol/go:lib
+      - components/local-app-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=darwin
+      - GOARCH=arm64
+    config:
+      packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=local-app'"]
+  - name: local-app-windows-amd64
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+    deps:
+      - components/supervisor-api/go:lib
+      - components/gitpod-protocol/go:lib
+      - components/local-app-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=windows
+      - GOARCH=amd64
+    config:
+      packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=local-app'"]
+  - name: local-app-windows-386
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+    deps:
+      - components/supervisor-api/go:lib
+      - components/gitpod-protocol/go:lib
+      - components/local-app-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=windows
+      - GOARCH=386
+    config:
+      packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=local-app'"]
+  - name: local-app-windows-arm64
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+    deps:
+      - components/supervisor-api/go:lib
+      - components/gitpod-protocol/go:lib
+      - components/local-app-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=windows
+      - GOARCH=arm64
+    config:
+      packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=local-app'"]
   - name: docker
     type: docker
     deps:

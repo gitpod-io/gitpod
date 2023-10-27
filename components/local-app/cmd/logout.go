@@ -5,8 +5,8 @@
 package cmd
 
 import (
-	"github.com/gitpod-io/local-app/config"
 	"github.com/gitpod-io/local-app/pkg/auth"
+	"github.com/gitpod-io/local-app/pkg/config"
 	"github.com/spf13/cobra"
 )
 

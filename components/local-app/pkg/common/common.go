@@ -15,9 +15,17 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/components/public-api/go/client"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
-	"github.com/gitpod-io/local-app/config"
 	"github.com/gitpod-io/local-app/pkg/auth"
+	"github.com/gitpod-io/local-app/pkg/config"
 	"github.com/manifoldco/promptui"
+)
+
+var (
+	// Version - set during build
+	Version = "dev"
+
+	// Flavor - set during build
+	Flavor = "gitpod-cli"
 )
 
 func GetToken() (string, error) {

@@ -14,7 +14,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
-	"github.com/gitpod-io/local-app/common"
+	"github.com/gitpod-io/local-app/pkg/common"
 	"github.com/spf13/cobra"
 )
 

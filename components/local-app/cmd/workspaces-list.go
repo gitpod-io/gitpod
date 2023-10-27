@@ -14,7 +14,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	humanize "github.com/dustin/go-humanize"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
-	"github.com/gitpod-io/local-app/common"
+	"github.com/gitpod-io/local-app/pkg/common"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )

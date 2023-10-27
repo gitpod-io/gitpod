@@ -2,79 +2,147 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
-package cmd
+package localapp
 
 import (
+	"path/filepath"
+	"strconv"
+	"time"
+
 	"context"
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
-	"time"
 
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	appapi "github.com/gitpod-io/gitpod/local-app/api"
-
-	"github.com/gitpod-io/local-app/config"
 	"github.com/gitpod-io/local-app/pkg/auth"
 	"github.com/gitpod-io/local-app/pkg/bastion"
+	"github.com/gitpod-io/local-app/pkg/common"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
+	"github.com/urfave/cli/v2"
 	"github.com/zalando/go-keyring"
 	"google.golang.org/grpc"
 )
 
-var (
-	allowCORSFromPort bool
-	apiPort           int
-	autoTunnel        bool
-	verbose           bool
-	localAppTimeout   time.Duration
-	sshConfigPath     string
-	mockKeyring       bool
-)
-
-// runCmd represents the run command
-var runCmd = &cobra.Command{
-	Use:   "run",
-	Short: "Runs port-forwarding",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if mockKeyring {
-			keyring.MockInit()
-		}
-		return run(runOptions{
-			origin:            config.GetString("host"),
-			sshConfigPath:     sshConfigPath,
-			apiPort:           apiPort,
-			allowCORSFromPort: allowCORSFromPort,
-			autoTunnel:        autoTunnel,
-			authRedirectURL:   authRedirectURL,
-			verbose:           verbose,
-			authTimeout:       authTimeout,
-			localAppTimeout:   localAppTimeout,
-		})
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(runCmd)
-
+func RunCommand() {
 	sshConfig := os.Getenv("GITPOD_LCA_SSH_CONFIG")
 	if sshConfig == "" {
 		sshConfig = filepath.Join(os.TempDir(), "gitpod_ssh_config")
 	}
 
-	runCmd.Flags().BoolVarP(&allowCORSFromPort, "allow-cors-from-port", "c", false, "Allow CORS requests from workspace port location")
-	runCmd.Flags().IntVarP(&apiPort, "api-port", "a", 63100, "Local App API endpoint's port")
-	runCmd.Flags().BoolVarP(&autoTunnel, "auto-tunnel", "t", true, "Enable auto tunneling")
-	runCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose logging")
-	runCmd.Flags().DurationVarP(&localAppTimeout, "timeout", "o", 0, "How long the local app can run if last workspace was stopped")
-	runCmd.Flags().StringVarP(&sshConfigPath, "ssh_config", "s", sshConfig, "produce and update an OpenSSH compatible ssh_config file (defaults to $GITPOD_LCA_SSH_CONFIG)")
-	loginCmd.Flags().BoolVarP(&mockKeyring, "mock-keyring", "m", false, "Don't use system native keyring, but store Gitpod token in memory")
+	app := cli.App{
+		Name:                 "gitpod-local-companion",
+		Usage:                "connect your Gitpod workspaces",
+		Action:               DefaultCommand("run"),
+		EnableBashCompletion: true,
+		Version:              common.Version,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "gitpod-host",
+				Usage: "URL of the Gitpod installation to connect to",
+				EnvVars: []string{
+					"GITPOD_HOST",
+				},
+				Value: "https://gitpod.io",
+			},
+			&cli.BoolFlag{
+				Name:  "mock-keyring",
+				Usage: "Don't use system native keyring, but store Gitpod token in memory",
+			},
+			&cli.BoolFlag{
+				Name:  "allow-cors-from-port",
+				Usage: "Allow CORS requests from workspace port location",
+			},
+			&cli.IntFlag{
+				Name:  "api-port",
+				Usage: "Local App API endpoint's port",
+				EnvVars: []string{
+					"GITPOD_LCA_API_PORT",
+				},
+				Value: 63100,
+			},
+			&cli.BoolFlag{
+				Name:  "auto-tunnel",
+				Usage: "Enable auto tunneling",
+				EnvVars: []string{
+					"GITPOD_LCA_AUTO_TUNNEL",
+				},
+				Value: true,
+			},
+			&cli.StringFlag{
+				Name: "auth-redirect-url",
+				EnvVars: []string{
+					"GITPOD_LCA_AUTH_REDIRECT_URL",
+				},
+			},
+			&cli.BoolFlag{
+				Name:  "verbose",
+				Usage: "Enable verbose logging",
+				EnvVars: []string{
+					"GITPOD_LCA_VERBOSE",
+				},
+				Value: false,
+			},
+			&cli.DurationFlag{
+				Name:  "auth-timeout",
+				Usage: "Auth timeout in seconds",
+				EnvVars: []string{
+					"GITPOD_LCA_AUTH_TIMEOUT",
+				},
+				Value: 30,
+			},
+			&cli.StringFlag{
+				Name:  "timeout",
+				Usage: "How long the local app can run if last workspace was stopped",
+				EnvVars: []string{
+					"GITPOD_LCA_TIMEOUT",
+				},
+				Value: "0",
+			},
+		},
+		Commands: []*cli.Command{
+			{
+				Name: "run",
+				Action: func(c *cli.Context) error {
+					if c.Bool("mock-keyring") {
+						keyring.MockInit()
+					}
+					return run(runOptions{
+						origin:            c.String("gitpod-host"),
+						sshConfigPath:     c.String("ssh_config"),
+						apiPort:           c.Int("api-port"),
+						allowCORSFromPort: c.Bool("allow-cors-from-port"),
+						autoTunnel:        c.Bool("auto-tunnel"),
+						authRedirectURL:   c.String("auth-redirect-url"),
+						verbose:           c.Bool("verbose"),
+						authTimeout:       c.Duration("auth-timeout"),
+						localAppTimeout:   c.Duration("timeout"),
+					})
+				},
+				Flags: []cli.Flag{
+					&cli.PathFlag{
+						Name:  "ssh_config",
+						Usage: "produce and update an OpenSSH compatible ssh_config file (defaults to $GITPOD_LCA_SSH_CONFIG)",
+						Value: sshConfig,
+					},
+				},
+			},
+		},
+	}
+	err := app.Run(os.Args)
+	if err != nil {
+		logrus.WithError(err).Fatal("Failed to start application.")
+	}
+}
+
+func DefaultCommand(name string) cli.ActionFunc {
+	return func(ctx *cli.Context) error {
+		return ctx.App.Command(name).Run(ctx)
+	}
 }
 
 type runOptions struct {
@@ -191,7 +259,7 @@ func connectToServer(loginOpts auth.LoginOpts, reconnectionHandler func(), close
 		logrus.WithError(err).WithField("origin", loginOpts.GitpodURL).Error()
 	}
 
-	tkn, err = Login(loginOpts)
+	tkn, err = login(loginOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -211,9 +279,8 @@ func tryConnectToServer(gitpodUrl string, tkn string, reconnectionHandler func()
 		ReconnectionHandler: reconnectionHandler,
 		CloseHandler:        closeHandler,
 		ExtraHeaders: map[string]string{
-			"User-Agent": "gitpod/local-companion",
-			//todo: import from main somehow
-			"X-Client-Version": "DEV",
+			"User-Agent":       "gitpod/local-companion",
+			"X-Client-Version": common.Version,
 		},
 	})
 	if err != nil {
@@ -236,6 +303,19 @@ func tryConnectToServer(gitpodUrl string, tkn string, reconnectionHandler func()
 	}
 
 	return nil, err
+}
+
+func login(loginOpts auth.LoginOpts) (string, error) {
+	tkn, err := auth.Login(context.Background(), loginOpts)
+	if tkn != "" {
+		err = auth.SetToken(loginOpts.GitpodURL, tkn)
+		if err != nil {
+			logrus.WithField("origin", loginOpts.GitpodURL).Warnf("could not write token to keyring: %s", err)
+			// Allow to continue
+			err = nil
+		}
+	}
+	return tkn, err
 }
 
 type logCallbacks struct{}
