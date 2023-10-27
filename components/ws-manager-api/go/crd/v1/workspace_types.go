@@ -188,8 +188,7 @@ type WorkspaceStatus struct {
 	// +kubebuilder:validation:Optional
 	Runtime *WorkspaceRuntimeStatus `json:"runtime,omitempty"`
 
-	Storage      StorageStatus `json:"storage,omitempty"`
-	VolumeDevice string        `json:"volumeDevice,omitempty"`
+	Storage StorageStatus `json:"storage,omitempty"`
 
 	LastActivity *metav1.Time `json:"lastActivity,omitempty"`
 }
@@ -253,6 +252,7 @@ const (
 	// NodeDisappeared is true if the workspace's node disappeared before the workspace was stopped
 	WorkspaceConditionNodeDisappeared WorkspaceCondition = "NodeDisappeared"
 
+	VolumeAttachRequest WorkspaceCondition = "VolumeAttachRequest"
 	// VolumeAttached is true if the workspace's volume has been attached to the node
 	VolumeAttached WorkspaceCondition = "VolumeAttached"
 	// VolumeMounted is true if the workspace's volume has been mounted on the node
