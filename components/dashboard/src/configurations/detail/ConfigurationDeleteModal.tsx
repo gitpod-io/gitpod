@@ -5,7 +5,7 @@
  */
 
 import type { Project } from "@gitpod/gitpod-protocol";
-import { FunctionComponent, useCallback, useState } from "react";
+import { FunctionComponent, useCallback } from "react";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import { useDeleteProject } from "../../data/projects/project-queries";
 
@@ -20,13 +20,10 @@ export const RemoveConfigurationModal: FunctionComponent<RemoveConfigurationModa
     onClose,
     onRemoved,
 }) => {
-    const [disabled, setDisabled] = useState(false);
     const useDeleteRepository = useDeleteProject();
 
     const removeConfiguration = useCallback(async () => {
-        setDisabled(true);
         await useDeleteRepository.mutateAsync(configuration.id);
-        setDisabled(false);
         onRemoved();
     }, [onRemoved, configuration.id, useDeleteRepository]);
 
@@ -39,7 +36,7 @@ export const RemoveConfigurationModal: FunctionComponent<RemoveConfigurationModa
                 description: configuration.cloneUrl ?? "",
             }}
             buttonText="Remove Configuration"
-            buttonDisabled={disabled}
+            buttonDisabled={useDeleteRepository.isLoading}
             onClose={onClose}
             onConfirm={removeConfiguration}
             visible
