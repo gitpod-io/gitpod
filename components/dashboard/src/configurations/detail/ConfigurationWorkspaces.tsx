@@ -39,11 +39,9 @@ export default function ConfigurationWorkspacesSettings({ repository }: Reposito
 
     const setWorkspaceClass = useCallback(
         async (value: string) => {
-            const before = repository.settings?.workspaceClasses?.regular;
             updateRepositorySettings({
                 workspaceClasses: { ...repository.settings?.workspaceClasses, regular: value },
             });
-            return before;
         },
         [repository, updateRepositorySettings],
     );
