@@ -71,7 +71,7 @@ export const LoadingButton = React.forwardRef<HTMLButtonElement, LoadingButtonPr
         return (
             <Button {...props} ref={ref} className="flex items-center gap-2">
                 {/* todo: make the layout consistent / animate thew width change */}
-                {loading && <Loader2 className="animate-spin" size={16} />}
+                {loading && <Loader2 strokeWidth={3} className="animate-spin" size={16} />}
                 <span>{children}</span>
             </Button>
         );
