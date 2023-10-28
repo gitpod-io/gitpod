@@ -120,9 +120,9 @@ export default function ConfigurationEnvironmentVariables({ configuration }: Con
                     })}
                 </ItemsList>
             )}
-            <button className="mt-2" onClick={() => showModal()}>
+            <Button className="mt-2" onClick={() => showModal()}>
                 New Variable
-            </button>
+            </Button>
         </section>
     );
 }

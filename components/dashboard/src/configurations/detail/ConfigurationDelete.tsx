@@ -5,6 +5,7 @@
  */
 
 import { Project } from "@gitpod/gitpod-protocol";
+import { Button } from "@podkit/button/Button";
 import { useCallback, useState } from "react";
 import { useHistory } from "react-router";
 import { Heading2, Subheading } from "../../components/typography/headings";
@@ -31,9 +32,9 @@ export default function DeleteConfiguration({ configuration }: RepositoryPrebuil
                     This will delete the configuration and all configuration-level environment variables you've set for
                     this configuration.
                 </Subheading>
-                <button className="danger secondary" onClick={() => setShowRemoveModal(true)}>
+                <Button variant="destructive" onClick={() => setShowRemoveModal(true)}>
                     Remove Configuration
-                </button>
+                </Button>
             </section>
             {showRemoveModal && (
                 <RemoveConfigurationModal
