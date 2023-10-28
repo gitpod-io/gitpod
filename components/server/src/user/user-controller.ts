@@ -643,6 +643,7 @@ export class UserController {
             throw err;
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         return new AdminCredentials(payload.tokenHash, payload.expiresAt, payload.algo);
     }
 }

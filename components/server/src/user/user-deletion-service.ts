@@ -14,6 +14,7 @@ import { AuthProviderService } from "../auth/auth-provider-service";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { Authorizer } from "../authorization/authorizer";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 @injectable()
 export class UserDeletionService {
@@ -39,7 +40,7 @@ export class UserDeletionService {
         await this.authorizer.checkPermissionOnUser(userId, "delete", targetUserId);
         const user = await this.db.findUserById(targetUserId);
         if (!user) {
-            throw new Error(`No user with id ${targetUserId} found!`);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `No user with id ${targetUserId} found!`);
         }
 
         if (user.markedDeleted === true) {

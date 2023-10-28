@@ -15,9 +15,12 @@ import { Config } from "./config";
 import { WsNextFunction, WsRequestHandler } from "./express/ws-handler";
 import { reportJWTCookieIssued } from "./prometheus-metrics";
 import { UserService } from "./user/user-service";
+import { JwtPayload } from "jsonwebtoken";
 
 @injectable()
 export class SessionHandler {
+    static JWT_REFRESH_THRESHOLD = 60 * 60 * 1000; // 1 hour
+
     @inject(Config) protected readonly config: Config;
     @inject(AuthJWT) protected readonly authJWT: AuthJWT;
     @inject(UserService) protected userService: UserService;
@@ -48,10 +51,9 @@ export class SessionHandler {
 
                     const issuedAtMs = (decoded.iat || 0) * 1000;
                     const now = new Date();
-                    const thresholdMs = 60 * 60 * 1000; // 1 hour
 
                     // Was the token issued more than threshold ago?
-                    if (issuedAtMs + thresholdMs < now.getTime()) {
+                    if (issuedAtMs + SessionHandler.JWT_REFRESH_THRESHOLD < now.getTime()) {
                         // issue a new one, to refresh it
                         const cookie = await this.createJWTSessionCookie(user.id);
                         res.cookie(cookie.name, cookie.value, cookie.opts);
@@ -103,15 +105,11 @@ export class SessionHandler {
     }
 
     async verify(cookie: string): Promise<User | undefined> {
-        const cookies = parseCookieHeader(cookie);
-        const jwtToken = cookies[this.getJWTCookieName(this.config)];
-        if (!jwtToken) {
-            log.debug("No JWT session present on request");
-            return undefined;
-        }
         try {
-            const claims = await this.authJWT.verify(jwtToken);
-            log.debug("JWT Session token verified", { claims });
+            const claims = await this.verifyJWTCookie(cookie);
+            if (!claims) {
+                return undefined;
+            }
 
             const subject = claims.sub;
             if (!subject) {
@@ -126,10 +124,31 @@ export class SessionHandler {
         }
     }
 
+    async verifyJWTCookie(cookie: string): Promise<JwtPayload | undefined> {
+        const cookies = parseCookieHeader(cookie);
+        const jwtToken = cookies[this.getJWTCookieName(this.config)];
+        if (!jwtToken) {
+            log.debug("No JWT session present on request");
+            return undefined;
+        }
+        const claims = await this.authJWT.verify(jwtToken);
+        log.debug("JWT Session token verified", { claims });
+        return claims;
+    }
+
     public async createJWTSessionCookie(
         userID: string,
+        // only for testing
+        options?: {
+            issuedAtMs?: number;
+            expirySeconds?: number;
+        },
     ): Promise<{ name: string; value: string; opts: express.CookieOptions }> {
-        const token = await this.authJWT.sign(userID, {});
+        const payload = {};
+        if (options?.issuedAtMs) {
+            Object.assign(payload, { iat: Math.floor(options.issuedAtMs / 1000) });
+        }
+        const token = await this.authJWT.sign(userID, payload, options?.expirySeconds);
 
         return {
             name: this.getJWTCookieName(this.config),

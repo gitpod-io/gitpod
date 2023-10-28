@@ -50,6 +50,7 @@ class TestBitbucketServerFileProvider {
                 bind(BitbucketServerContextParser).toSelf().inSingletonScope();
                 bind(AuthProviderParams).toConstantValue(TestBitbucketServerFileProvider.AUTH_HOST_CONFIG);
                 bind(BitbucketServerTokenHelper).toSelf().inSingletonScope();
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 bind(TokenService).toConstantValue({
                     createGitpodToken: async () => ({ token: { value: "foobar123-token" } }),
                 } as any);
@@ -90,6 +91,7 @@ class TestBitbucketServerFileProvider {
 
     @test async test_getGitpodFileContent_ok() {
         const result = await this.service.getGitpodFileContent(
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             {
                 revision: "master",
                 repository: <Repository>{

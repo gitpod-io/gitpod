@@ -234,6 +234,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                 if (repo.ref !== null) {
                     return {
                         ref: repo.ref.name,
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                         refType: this.toRefType({ userId: user.id }, { host, owner, repoName }, repo.ref.prefix),
                         isFile,
                         path,

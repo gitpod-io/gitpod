@@ -791,6 +791,7 @@ export class WorkspaceService {
                         chunk = chunk.replace("\n", WorkspaceImageBuild.LogLine.DELIMITER);
                         lineCount += chunk.split(WorkspaceImageBuild.LogLine.DELIMITER_REGEX).length;
 
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                         client.onWorkspaceImageBuildLogs(undefined as any, {
                             text: chunk,
                             isDiff: true,
@@ -911,7 +912,7 @@ export class WorkspaceService {
 }
 
 // TODO(gpl) Make private after FGA rollout
-export function mapGrpcError(err: Error): Error {
+export function mapGrpcError(err: any): Error {
     if (!isGrpcError(err)) {
         return err;
     }

@@ -386,6 +386,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
             },
             () => {
                 try {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                     return this.internalOnRequest(span, requestId, method, ...args);
                 } finally {
                     span.finish();
@@ -475,7 +476,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
                 TraceContext.setJsonRPCError(ctx, method, err, true);
 
                 log.error({ userId }, `Request ${method} failed with internal server error`, e, { method, args });
-                throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.message);
+                throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, String(e));
             }
         }
     }

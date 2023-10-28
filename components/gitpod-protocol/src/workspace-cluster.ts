@@ -13,6 +13,7 @@ const workspaceRegions = ["europe", "north-america", "south-america", "africa", 
 export type WorkspaceRegion = typeof workspaceRegions[number];
 
 export function isWorkspaceRegion(s: string): s is WorkspaceRegion {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return workspaceRegions.indexOf(s as any) !== -1;
 }
 

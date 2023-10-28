@@ -62,6 +62,7 @@ export class BitbucketServerApp {
                         return;
                     }
                     try {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                         await this.handlePushHook({ span }, user, payload, event);
                     } catch (err) {
                         TraceContext.setError({ span }, err);

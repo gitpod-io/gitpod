@@ -379,6 +379,7 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
         }
         const res = await userRepo.query(query);
         const count = res[0].cnt;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         return Number.parseInt(count);
     }
 
@@ -598,7 +599,7 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
     }
     async revoke(accessTokenToken: OAuthToken): Promise<void> {
         const tokenHash = crypto.createHash("sha256").update(accessTokenToken.accessToken, "utf8").digest("hex");
-        this.deleteGitpodToken(tokenHash);
+        await this.deleteGitpodToken(tokenHash);
     }
     async isRefreshTokenRevoked(refreshToken: OAuthToken): Promise<boolean> {
         return Date.now() > (refreshToken.refreshTokenExpiresAt?.getTime() ?? 0);

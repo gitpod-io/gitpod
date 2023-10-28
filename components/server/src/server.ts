@@ -112,7 +112,7 @@ export class Server {
             const startTime = Date.now();
             req.on("end", () => {
                 const method = req.method;
-                const route = req.route?.path || req.baseUrl || "unknown";
+                const route = String(req.route?.path || req.baseUrl || "unknown");
                 observeHttpRequestDuration(method, route, res.statusCode, (Date.now() - startTime) / 1000);
                 increaseHttpRequestCounter(method, route, res.statusCode);
             });
@@ -162,6 +162,7 @@ export class Server {
             // We rely on the origin header being set correctly (needed by regular clients to use Gitpod:
             // CORS allows subdomains to access gitpod.io)
             const verifyOrigin = (origin: string) => {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 let allowedRequest = isAllowedWebsocketDomain(origin, this.config.hostUrl.url.hostname);
                 if (!allowedRequest && this.config.insecureNoDomain) {
                     log.warn("Websocket connection CSRF guard disabled");
@@ -217,6 +218,7 @@ export class Server {
             );
 
             const wsPingPongHandler = new WsConnectionHandler();
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             const wsHandler = new WsExpressHandler(httpServer, verifyClient);
             this.disposables.push(wsHandler);
             wsHandler.ws(
@@ -229,6 +231,7 @@ export class Server {
                 ...initSessionHandlers,
                 wsPingPongHandler.handler(),
                 (ws: WebSocket, req: express.Request) => {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                     websocketConnectionHandler.onConnection((req as any).wsConnection, req);
                 },
             );
@@ -240,6 +243,7 @@ export class Server {
                 },
                 wsPingPongHandler.handler(),
                 (ws: WebSocket, req: express.Request) => {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                     websocketConnectionHandler.onConnection((req as any).wsConnection, req);
                 },
             );

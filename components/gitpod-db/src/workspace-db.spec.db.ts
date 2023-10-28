@@ -41,7 +41,13 @@ class WorkspaceDBSpec {
             tasks: [],
         },
         projectId: this.projectAID,
-        context: { title: "example" },
+        context: <CommitContext>{
+            title: "example",
+            repository: {
+                cloneUrl: "https://github.com/gitpod-io/gitpod",
+            },
+            revision: "abc",
+        },
         contextURL: "example.org",
         description: "blabla",
         ownerId: this.userId,
@@ -105,7 +111,13 @@ class WorkspaceDBSpec {
             tasks: [],
         },
         projectId: this.projectBID,
-        context: { title: "example" },
+        context: <CommitContext>{
+            title: "example",
+            repository: {
+                cloneUrl: "https://github.com/gitpod-io/gitpod",
+            },
+            revision: "abc",
+        },
         contextURL: "https://github.com/gitpod-io/gitpod",
         description: "Gitpod",
         ownerId: this.userId,
@@ -145,7 +157,13 @@ class WorkspaceDBSpec {
             image: "",
             tasks: [],
         },
-        context: { title: "example" },
+        context: <CommitContext>{
+            title: "example",
+            repository: {
+                cloneUrl: "https://github.com/gitpod-io/gitpod",
+            },
+            revision: "abc",
+        },
         contextURL: "example.org",
         description: "blabla",
         ownerId: this.userId,
@@ -204,6 +222,16 @@ class WorkspaceDBSpec {
             return;
         }
         fail("Rollback failed");
+    }
+
+    @test(timeout(10000))
+    public async testFindByInstanceId() {
+        await this.db.transaction(async (db) => {
+            await Promise.all([db.store(this.ws), db.storeInstance(this.wsi1)]);
+            const dbResult = await db.findByInstanceId(this.wsi1.id);
+            const expected = await db.findById(this.wsi1.workspaceId);
+            expect(dbResult).to.deep.eq(expected);
+        });
     }
 
     @test(timeout(10000))
@@ -583,6 +611,7 @@ class WorkspaceDBSpec {
                     repository: {
                         cloneUrl: inactiveRepo,
                     },
+                    revision: "abc",
                 },
                 config: {},
                 type: "regular",
@@ -599,6 +628,7 @@ class WorkspaceDBSpec {
                     repository: {
                         cloneUrl: activeRepo,
                     },
+                    revision: "abc",
                 },
                 config: {},
                 type: "regular",
