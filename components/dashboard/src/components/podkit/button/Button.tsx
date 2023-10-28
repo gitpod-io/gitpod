@@ -8,9 +8,11 @@ import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, VariantProps } from "class-variance-authority";
 import { cn } from "@podkit/lib/cn";
+import { Link } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 
-const buttonVariants = cva(
-    "inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-medium ring-offset-zinc-400 dark:ring-offset-neutral-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+export const buttonVariants = cva(
+    "inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
     {
         variants: {
             variant: {
@@ -42,17 +44,16 @@ export interface ButtonProps
     extends React.ButtonHTMLAttributes<HTMLButtonElement>,
         VariantProps<typeof buttonVariants> {
     asChild?: boolean;
-    loading?: boolean;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-    ({ className, variant, size, asChild = false, loading, ...props }, ref) => {
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+    ({ className, variant, size, asChild = false, ...props }, ref) => {
         const Comp = asChild ? Slot : "button";
         return (
             <Comp
                 className={cn(buttonVariants({ variant, size, className }))}
                 ref={ref}
-                disabled={props.disabled || loading}
+                disabled={props.disabled}
                 {...props}
             />
         );
@@ -60,4 +61,39 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 Button.displayName = "Button";
 
-export { Button, buttonVariants };
+export interface LoadingButtonProps extends ButtonProps {
+    loading: boolean;
+    asChild?: false;
+}
+
+export const LoadingButton = React.forwardRef<HTMLButtonElement, LoadingButtonProps>(
+    ({ className, variant, size, children, loading, ...props }, ref) => {
+        return (
+            <Button {...props} ref={ref} className="flex items-center gap-2">
+                {/* todo: make the layout consistent / animate thew width change */}
+                {loading && <Loader2 className="animate-spin" size={16} />}
+                <span>{children}</span>
+            </Button>
+        );
+    },
+);
+LoadingButton.displayName = "LoadingButton";
+
+export interface LinkButtonProps extends ButtonProps {
+    asChild?: false;
+    href: string;
+}
+
+/**
+ * A HTML anchor element styled as a button.
+ */
+export const LinkButton = React.forwardRef<HTMLButtonElement, LinkButtonProps>(
+    ({ className, variant, size, asChild, children, href, ...props }, ref) => {
+        return (
+            <Button className="transition-width" asChild {...props} ref={ref}>
+                <Link to={href}>{children}</Link>
+            </Button>
+        );
+    },
+);
+LinkButton.displayName = "LinkButton";

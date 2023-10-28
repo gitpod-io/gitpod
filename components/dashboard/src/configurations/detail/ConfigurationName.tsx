@@ -6,11 +6,11 @@
 
 // TODO: fix mismatched project types when we build repo configuration apis
 import { Project } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
-import { Button } from "../../components/Button";
-import { TextInputField } from "../../components/forms/TextInputField";
+import { LoadingButton } from "@podkit/button/Button";
 import { FC, useCallback, useState } from "react";
-import { useUpdateProject } from "../../data/projects/project-queries";
+import { TextInputField } from "../../components/forms/TextInputField";
 import { useToast } from "../../components/toasts/Toasts";
+import { useUpdateProject } from "../../data/projects/project-queries";
 import { useOnBlurError } from "../../hooks/use-onblur-error";
 
 const MAX_LENGTH = 100;
@@ -60,14 +60,14 @@ export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
                 onBlur={nameError.onBlur}
             />
 
-            <Button
+            <LoadingButton
                 className="mt-4"
-                htmlType="submit"
+                type="submit"
                 disabled={configuration.name === configurationName}
                 loading={updateConfiguration.isLoading}
             >
                 Update Name
-            </Button>
+            </LoadingButton>
         </form>
     );
 };
