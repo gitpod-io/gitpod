@@ -13,7 +13,7 @@ import { Heading1, Subheading } from "./typography/headings";
 export interface HeaderProps {
     title: string;
     complexTitle?: React.ReactElement;
-    subtitle: string | React.ReactElement;
+    subtitle?: string | React.ReactElement;
     tabs?: TabEntry[];
 }
 
@@ -31,7 +31,7 @@ export default function Header(p: HeaderProps) {
             <div className="flex pb-8 pt-6">
                 <div className="w-full">
                     {p.complexTitle ? p.complexTitle : <Heading1 tracking="tight">{p.title}</Heading1>}
-                    {typeof p.subtitle === "string" ? (
+                    {p.subtitle && typeof p.subtitle === "string" ? (
                         <Subheading tracking="wide">{p.subtitle}</Subheading>
                     ) : (
                         p.subtitle
