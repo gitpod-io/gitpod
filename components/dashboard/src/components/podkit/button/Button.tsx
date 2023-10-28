@@ -69,7 +69,12 @@ export interface LoadingButtonProps extends ButtonProps {
 export const LoadingButton = React.forwardRef<HTMLButtonElement, LoadingButtonProps>(
     ({ className, variant, size, children, loading, disabled, ...props }, ref) => {
         return (
-            <Button disabled={disabled || loading} ref={ref} className={cn("flex items-center gap-2")} {...props}>
+            <Button
+                disabled={disabled || loading}
+                ref={ref}
+                className={cn("flex items-center gap-2", className)}
+                {...props}
+            >
                 {/* todo: make the layout consistent / animate thew width change */}
                 {loading && <Loader2 strokeWidth={3} className="animate-spin" size={16} />}
                 <span>{children}</span>
