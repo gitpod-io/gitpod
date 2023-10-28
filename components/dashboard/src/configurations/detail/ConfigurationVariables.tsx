@@ -19,7 +19,7 @@ import InfoBox from "../../components/InfoBox";
 import { ItemsList, Item, ItemField } from "../../components/ItemsList";
 import { Text } from "@podkit/typography/Text";
 import { QuestionTooltip } from "@podkit/tooltip/QuestionTooltip";
-import { Button } from "@podkit/button/Button";
+import { Button, LoadingButton } from "@podkit/button/Button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@podkit/drop-down/DropDown";
 import { MoreVertical } from "lucide-react";
 import { cn } from "@podkit/lib/cn";
@@ -218,9 +218,9 @@ function VariableModal({ configuration, onClose, action = "add", presetName }: A
                 <Button variant="secondary" onClick={onClose}>
                     Cancel
                 </Button>
-                <Button type="submit" loading={setConfigurationEnvVar.isLoading}>
+                <LoadingButton type="submit" loading={setConfigurationEnvVar.isLoading}>
                     Save
-                </Button>
+                </LoadingButton>
             </ModalFooter>
         </Modal>
     );
