@@ -35,6 +35,7 @@ export default function Menu() {
 
     useEffect(() => {
         const { server } = getGitpodService();
+        // TODO: this is a hack to get the currency of the user's country
         server.getClientRegion().then((v) => {
             // @ts-ignore
             setCurrency(countries[v]?.currency === "EUR" ? "EUR" : "USD");

@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package gitpod.experimental.v2;
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v2";
+
+service ContextService {
+    rpc ResolveContext(ResolveContextRequest) returns (ResolveContextResponse);
+}
+
+message ResolveContextRequest {
+    string context_url = 1;
+}
+message ResolveContextResponse {
+    string clone_url = 1;
+    string ref = 2;
+
+    // DEPRECATED: delete after migrating to JB Toolbox
+    string referrer_ide = 3 [deprecated = true];
+}

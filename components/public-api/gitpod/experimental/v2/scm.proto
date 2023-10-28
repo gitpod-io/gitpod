@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package gitpod.experimental.v2;
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v2";
+
+service SCMService {
+    rpc GetSCMToken(GetSCMTokenRequest) returns (GetSCMTokenResponse) {}
+}
+
+message GetSCMTokenRequest {
+    string host = 1;
+}
+
+message GetSCMTokenResponse {
+    string token = 1;
+}
+
+message SCMToken {
+    // TODO add necessary fields for clients
+}

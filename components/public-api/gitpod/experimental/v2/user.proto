@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package gitpod.experimental.v2;
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v2";
+
+service UserService {
+    rpc GetAuthenticatedUser(GetAuthenticatedUserRequest) returns (GetAuthenticatedUserResponse) {};
+
+    rpc GetUser(GetUserRequest) returns (GetUserResponse) {};
+    rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {};
+    rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {};
+}
+
+message User {
+    string id = 1;
+
+    // TODO add necessary fields for dashboard
+    // don't add generic kitchen sinks like additionalData
+    // but rather speicific mutable properites like dotfilesRepo
+
+    // workspace_timeout is the timeout for workspaces
+    // if optional then the default timeout is used
+    // optional string workspace_timeout = ;
+}
+
+message GetAuthenticatedUserRequest {
+}
+message GetAuthenticatedUserResponse {
+    User user = 1;
+}
+
+/**
+ * UpdateUserRequest performs the partial update of a given user.
+ */
+message UpdateUserRequest {
+    string user_id = 1;
+
+    // TODO add necessary fields for dashboard
+    // don't add generic kitchen sinks like additionalData
+    // but rather speicific mutable properites like dotfilesRepo
+
+    // workspace_timeout is the timeout for workspaces
+    // if empty, the default timeout is used
+    // optional string workspace_timeout = ;
+}
+message UpdateUserResponse {
+    User user = 1;
+}
+
+message GetUserRequest {
+    string user_id = 1;
+}
+message GetUserResponse {
+    User user = 1;
+}
+
+message DeleteUserRequest {
+    string user_id = 1;
+}
+message DeleteUserResponse {
+}

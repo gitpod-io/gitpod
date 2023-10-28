@@ -3,15 +3,88 @@ syntax = "proto3";
 package gitpod.experimental.v2;
 
 import "google/protobuf/timestamp.proto";
+import "gitpod/experimental/v2/pagination.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v2";
 
 service WorkspaceService {
+  rpc CreateAndStartWorkspace(CreateAndStartWorkspaceRequest)
+      returns (CreateAndStartWorkspaceResponse) {}
+  rpc StartWorkspace(StartWorkspaceRequest) returns (StartWorkspaceResponse) {}
+  rpc StopWorkspace(StopWorkspaceRequest) returns (StopWorkspaceResponse) {}
+
   // GetWorkspace returns a single workspace.
   //
   // +return NOT_FOUND User does not have access to a workspace with the given
   // ID +return NOT_FOUND Workspace does not exist
   rpc GetWorkspace(GetWorkspaceRequest) returns (GetWorkspaceResponse) {}
+  rpc ListWorkspaces(ListWorkspacesRequest) returns (ListWorkspacesResponse) {}
+  rpc UpdateWorkspace(UpdateWorkspaceRequest)
+      returns (UpdateWorkspaceResponse) {}
+  rpc DeleteWorkspace(DeleteWorkspaceRequest)
+      returns (DeleteWorkspaceResponse) {}
+
+  rpc GetOwnerToken(GetOwnerTokenRequest) returns (GetOwnerTokenResponse) {}
+  rpc GetEditorCredentials(GetEditorCredentialsRequest)
+      returns (GetEditorCredentialsResponse) {}
+
+  rpc SendHeartbeat(SendHeartbeatRequest) returns (SendHeartbeatResponse) {}
+}
+
+message SendHeartbeatRequest {
+  string workspace_id = 1;
+  optional bool was_closed = 2;
+}
+message SendHeartbeatResponse {
+}
+
+message ListWorkspacesRequest { PaginationRequest pagination = 1; }
+message ListWorkspacesResponse {
+  repeated Workspace items = 1;
+  PaginationResponse pagination = 2;
+}
+
+message CreateAndStartWorkspaceRequest {
+  // TODO
+}
+message CreateAndStartWorkspaceResponse {
+  // TODO
+}
+
+message StartWorkspaceRequest {
+  // TODO
+}
+message StartWorkspaceResponse {
+  // TODO
+}
+
+message StopWorkspaceRequest { string workspace_id = 1; }
+message StopWorkspaceResponse {}
+
+message UpdateWorkspaceRequest {
+  string workspace_id = 2;
+  // TODO
+
+  // string name = ;
+  // bool pinned = ;
+}
+message UpdateWorkspaceResponse {}
+
+message DeleteWorkspaceRequest { string workspace_id = 1; }
+message DeleteWorkspaceResponse {}
+
+message GetOwnerTokenRequest {
+  // TODO
+}
+message GetOwnerTokenResponse {
+  // TODO
+}
+
+message GetEditorCredentialsRequest {
+  // TODO
+}
+message GetEditorCredentialsResponse {
+  // TODO
 }
 
 message GetWorkspaceRequest { string id = 1; }

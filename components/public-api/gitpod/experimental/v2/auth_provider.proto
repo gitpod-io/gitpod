@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package gitpod.experimental.v2;
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v2";
+
+service AuthProviderService {
+    rpc ListtAuthProviders(ListAuthProvidersRequest) returns (ListAuthProvidersResponse) {}
+}
+
+message ListAuthProvidersRequest {
+}
+message ListAuthProvidersResponse {
+    repeated AuthProvider items = 1;
+}
+
+message AuthProvider {
+    // TODO add necessary fields for the dashboard
+}

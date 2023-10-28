@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package gitpod.experimental.v2;
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v2";
+
+service VerificationService {
+    rpc SendPhoneNumberVerificationToken(SendPhoneNumberVerificationTokenRequest) returns (SendPhoneNumberVerificationTokenResponse) {}
+    rpc VerifyPhoneNumberVerificationToken(VerifyPhoneNumberVerificationTokenRequest) returns (VerifyPhoneNumberVerificationTokenResponse) {}
+}
+
+message SendPhoneNumberVerificationTokenRequest {
+    string phone_number = 1;
+}
+message SendPhoneNumberVerificationTokenResponse {
+    string verification_id = 1;
+}
+
+message VerifyPhoneNumberVerificationTokenRequest {
+    string phone_number = 1;
+    string verification_token = 2;
+    string verification_id = 3;
+}
+message VerifyPhoneNumberVerificationTokenResponse {
+    bool valid = 1;
+}
