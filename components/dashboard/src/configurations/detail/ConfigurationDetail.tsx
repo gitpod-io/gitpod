@@ -15,7 +15,7 @@ import Alert from "../../components/Alert";
 import ConfigurationPrebuildsSettings from "./ConfigurationPrebuilds";
 import ConfigurationWorkspacesSettings from "./ConfigurationWorkspaces";
 import DeleteConfiguration from "./ConfigurationDelete";
-import ConfigurationEnvironmentVariables from "./ConfigurationVariables";
+import ConfigurationEnvironmentVariables from "./variables/ConfigurationVariables";
 
 type PageRouteParams = {
     id: string;
