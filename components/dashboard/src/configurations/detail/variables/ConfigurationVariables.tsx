@@ -23,7 +23,7 @@ export default function ConfigurationEnvironmentVariables({ configuration }: Con
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { data: envVars, isLoading, isError } = useListProjectEnvironmentVariables(configuration.id);
 
-    if (isLoading || !isError || !envVars) {
+    if (isLoading || isError || !envVars) {
         return null;
     }
 
