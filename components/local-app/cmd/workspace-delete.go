@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/bufbuild/connect-go"
@@ -30,7 +31,7 @@ var deleteWorkspaceCommand = &cobra.Command{
 			return err
 		}
 
-		logger.Debug("Attempting to delete workspace...")
+		slog.Debug("Attempting to delete workspace...")
 		_, err = gitpod.Workspaces.DeleteWorkspace(ctx, connect.NewRequest(&v1.DeleteWorkspaceRequest{WorkspaceId: workspaceID}))
 
 		return err

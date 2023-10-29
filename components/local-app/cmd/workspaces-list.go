@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"time"
 
@@ -50,7 +51,10 @@ var listWorkspaceCommand = &cobra.Command{
 
 			timeAgo := humanize.Time(workspace.GetStatus().Instance.CreatedAt.AsTime())
 
-			table.Append([]string{workspace.WorkspaceId, TranslatePhase(workspace.GetStatus().Instance.Status.Phase.String()), timeAgo, workspace.Context.ContextUrl})
+			details := workspace.Context.GetDetails()
+			slog.Debug("details", details)
+
+			table.Append([]string{workspace.WorkspaceId, TranslatePhase(workspace.GetStatus().Instance.Status.Phase.String()), timeAgo, ""})
 		}
 
 		table.Render()

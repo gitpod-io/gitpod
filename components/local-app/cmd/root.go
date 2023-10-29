@@ -16,6 +16,21 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "gitpod",
 	Short: "A CLI for interacting with Gitpod",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		verbose, err := cmd.Flags().GetBool("verbose")
+		if err != nil {
+			slog.Error("Could not set up logging")
+			os.Exit(1)
+		}
+		if verbose {
+			var logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
+			slog.SetDefault(logger)
+		} else {
+			var logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelWarn}))
+			slog.SetDefault(logger)
+			return
+		}
+	},
 }
 
 func Execute() {
@@ -25,11 +40,9 @@ func Execute() {
 	}
 }
 
-var logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelWarn}))
-
 func init() {
 	config.Init()
-	logger.Debug("Configured configuration and environment variables")
+	slog.Debug("Configured configuration and environment variables")
 
-	rootCmd.Flags().BoolP("verbose", "v", false, "Display verbose output for more detailed logging")
+	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Display verbose output for more detailed logging")
 }
