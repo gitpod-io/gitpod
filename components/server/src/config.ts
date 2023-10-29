@@ -17,6 +17,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { filePathTelepresenceAware } from "@gitpod/gitpod-protocol/lib/env";
 import { WorkspaceClassesConfig } from "./workspace/workspace-classes";
 import { PrebuildRateLimiters } from "./workspace/prebuild-rate-limiter";
+import { IRateLimiterOptions } from "rate-limiter-flexible";
 
 export const Config = Symbol("Config");
 export type Config = Omit<
@@ -174,8 +175,19 @@ export interface ConfigSerialized {
 
     /**
      * The configuration for the rate limiter we (mainly) use for the websocket API
+     * @deprecated used for JSON-RPC API, for gRPC use rateLimits
      */
     rateLimiter: RateLimiterConfig;
+
+    /**
+     * The configuration for the rate limiter we use for the gRPC API.
+     * As a primary means use RateLimited decorator.
+     * Only use this if you need to adjst in production, make sure to apply changes to the decorator as well.
+     * Key is of the form `<grpc_service>/<grpc_method>`
+     */
+    rateLimits?: {
+        [key: string]: IRateLimiterOptions;
+    };
 
     /**
      * The address content service clients connect to

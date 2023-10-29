@@ -178,7 +178,7 @@ export const ModalBody: FC<ModalBodyProps> = ({ children, hideDivider = false, n
     return (
         // Allows the first tabbable element in the body to receive focus on mount
         <AutoFocusInside
-            className={cn("flex-grow relative border-gray-200 dark:border-gray-800 -mx-6 px-6 pb-6", {
+            className={cn("md:flex-grow relative border-gray-200 dark:border-gray-800 -mx-6 px-6 pb-6", {
                 "border-t border-b mt-2 py-4": !hideDivider,
                 "overflow-y-auto": !noScroll,
             })}

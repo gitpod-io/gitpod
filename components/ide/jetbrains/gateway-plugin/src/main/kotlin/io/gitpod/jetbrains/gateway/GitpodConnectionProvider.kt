@@ -375,7 +375,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
             }
 
             var userName = keyPair.userName
-            if (userName == null) {
+            if (userName.isNullOrBlank()) {
                 userName = "gitpod"
             }
 
