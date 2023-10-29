@@ -43,7 +43,6 @@ var listOrganizationCommand = &cobra.Command{
 		table.SetHeaderLine(false)
 
 		for _, org := range orgs.Msg.GetTeams() {
-
 			table.Append([]string{org.Name, org.Id})
 		}
 

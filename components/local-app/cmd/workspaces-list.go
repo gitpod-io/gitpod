@@ -24,6 +24,20 @@ func TranslatePhase(phase string) string {
 	return strings.ToLower(phase[6:])
 }
 
+func getWorkspaceRepo(ws *v1.Workspace) string {
+	repository := ""
+	wsDetails := ws.Context.GetDetails()
+	switch d := wsDetails.(type) {
+	case *v1.WorkspaceContext_Git_:
+		repository = fmt.Sprintf("%s/%s", d.Git.Repository.Owner, d.Git.Repository.Name)
+	case *v1.WorkspaceContext_Prebuild_:
+		repository = fmt.Sprintf("%s/%s", d.Prebuild.OriginalContext.Repository.Owner, d.Prebuild.OriginalContext.Repository.Name)
+	default:
+		slog.Warn("event", "could not determine repository for workspace", ws.WorkspaceId)
+	}
+	return repository
+}
+
 // listWorkspaceCommand lists all available workspaces
 var listWorkspaceCommand = &cobra.Command{
 	Use:   "list",
@@ -50,17 +64,7 @@ var listWorkspaceCommand = &cobra.Command{
 		table.SetHeaderLine(false)
 
 		for _, workspace := range workspaces.Msg.GetResult() {
-			repository := "n/a"
-			wsDetails := workspace.Context.GetDetails()
-			switch d := wsDetails.(type) {
-			case *v1.WorkspaceContext_Git_:
-				repository = fmt.Sprintf("%s/%s", d.Git.Repository.Owner, d.Git.Repository.Name)
-			case *v1.WorkspaceContext_Prebuild_:
-				repository = fmt.Sprintf("%s/%s", d.Prebuild.OriginalContext.Repository.Owner, d.Prebuild.OriginalContext.Repository.Name)
-			default:
-				slog.Warn("event", "could not determine repository for workspace", workspace.WorkspaceId)
-			}
-
+			repository := getWorkspaceRepo(workspace)
 			branch := workspace.GetStatus().Instance.Status.GitStatus.Branch
 
 			table.Append([]string{repository, branch, workspace.WorkspaceId, TranslatePhase(workspace.GetStatus().Instance.Status.Phase.String())})

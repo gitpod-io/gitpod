@@ -11,7 +11,7 @@ import (
 var wsCmd = &cobra.Command{
 	Use:     "workspace",
 	Short:   "Interact with workspaces",
-	Aliases: []string{"workspaces"},
+	Aliases: []string{"workspaces", "ws"},
 }
 
 func init() {

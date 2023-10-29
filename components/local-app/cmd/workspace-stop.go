@@ -22,6 +22,7 @@ var stopNonBlocking = false
 var stopWorkspaceCommand = &cobra.Command{
 	Use:   "stop <workspace-id>",
 	Short: "Stop a given workspace",
+	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		workspaceID := ""
 		if len(args) < 1 {
