@@ -34,7 +34,6 @@ func GetToken() (string, error) {
 
 	if err != nil {
 		configToken := config.GetString("token")
-		fmt.Println(configToken)
 		if configToken == "" {
 			return "", fmt.Errorf("no token found in keychain for %s, config file or the GITPOD_TOKEN environment variable. Please run `gitpod auth login` to login", host)
 		}
