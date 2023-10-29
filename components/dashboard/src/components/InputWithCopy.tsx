@@ -32,29 +32,28 @@ export const InputWithCopy: FC<Props> = ({ value, tip = "Click to copy", classNa
         // max-w-lg is to mirror width of TextInput so Tooltip is positioned correctly
         <div className={`w-full relative max-w-lg ${className ?? ""}`}>
             <TextInput value={value} disabled className="w-full pr-8 overscroll-none" />
-            <span className="absolute top-1.5 right-1">
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button
-                                type="transparent"
-                                spacing="compact"
-                                icon={
-                                    copied ? (
-                                        <CheckIcon className="text-green-500 w-5 h-5" />
-                                    ) : (
-                                        <CopyIcon className="w-3.5 h-3.5" />
-                                    )
-                                }
-                                onClick={handleCopyToClipboard}
-                            />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>{copied ? "Copied!" : tip}</p>
-                        </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-            </span>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                            className="absolute top-1.5 right-1"
+                            type="transparent"
+                            spacing="compact"
+                            icon={
+                                copied ? (
+                                    <CheckIcon className="text-green-500 w-5 h-5" />
+                                ) : (
+                                    <CopyIcon className="w-3.5 h-3.5" />
+                                )
+                            }
+                            onClick={handleCopyToClipboard}
+                        />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>{copied ? "Copied!" : tip}</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
         </div>
     );
 };
