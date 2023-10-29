@@ -45,12 +45,16 @@ var getWorkspaceCommand = &cobra.Command{
 		repository := getWorkspaceRepo(wsInfo)
 		phase := TranslatePhase(wsInfo.Status.Instance.Status.Phase.String())
 
+		createdAt := wsInfo.Status.Instance.CreatedAt
+		createdTime := time.Unix(createdAt.Seconds, 0)
+
 		data := &infoData{
 			WorkspaceId:    wsInfo.WorkspaceId,
 			WorkspaceUrl:   wsInfo.Status.Instance.Status.Url,
 			Repository:     repository,
 			Branch:         wsInfo.Status.Instance.Status.GitStatus.Branch,
 			WorkspacePhase: phase,
+			CreatedAt:      createdTime,
 			// todo: LastActive, Created, WorkspaceClass (API implementation pending), RepoUrl (API implementation also pending)
 		}
 
@@ -61,11 +65,12 @@ var getWorkspaceCommand = &cobra.Command{
 }
 
 type infoData struct {
-	WorkspaceId    string `json:"workspace_id"`
-	WorkspaceUrl   string `json:"workspace_url"`
-	Branch         string `json:"branch"`
-	Repository     string `json:"repository"`
-	WorkspacePhase string `json:"workspace_phase"`
+	WorkspaceId    string    `json:"workspace_id"`
+	WorkspaceUrl   string    `json:"workspace_url"`
+	Branch         string    `json:"branch"`
+	Repository     string    `json:"repository"`
+	WorkspacePhase string    `json:"workspace_phase"`
+	CreatedAt      time.Time `json:"created_at"`
 }
 
 func outputInfo(info *infoData) {
@@ -80,7 +85,7 @@ func outputInfo(info *infoData) {
 	// Repo URL
 	table.Append([]string{"Repo", info.Repository})
 	table.Append([]string{"Branch", info.Branch})
-	// Created (date)
+	table.Append([]string{"Created", info.CreatedAt.Format(time.RFC3339)})
 	// Last Active (duration)
 	table.Render()
 }
