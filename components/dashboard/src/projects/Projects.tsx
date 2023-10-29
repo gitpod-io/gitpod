@@ -23,6 +23,7 @@ import { ThemeContext } from "../theme-context";
 import { ProjectListItem } from "./ProjectListItem";
 import { CreateProjectModal } from "./create-project-modal/CreateProjectModal";
 import { projectsPathNew } from "./projects.routes";
+import { LinkButton } from "@podkit/buttons/LinkButton";
 
 export default function ProjectsPage() {
     const createProjectModal = useFeatureFlag("createProjectModal");
@@ -98,9 +99,7 @@ export default function ProjectsPage() {
                                 New Project
                             </Button>
                         ) : (
-                            <Link to={projectsPathNew}>
-                                <Button>New Project</Button>
-                            </Link>
+                            <LinkButton href={projectsPathNew}>New Project</LinkButton>
                         )}
                         {team && (
                             <Link to="./members">
@@ -131,7 +130,9 @@ export default function ProjectsPage() {
                         <div className="py-2 pl-3"></div>
                         {team && (
                             <Link to="./members" className="flex">
-                                <Button className="ml-2 secondary">Invite Members</Button>
+                                <Button variant="secondary" className="ml-2">
+                                    Invite Members
+                                </Button>
                             </Link>
                         )}
                         {createProjectModal ? (
