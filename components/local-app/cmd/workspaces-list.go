@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 	"time"
@@ -13,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/bufbuild/connect-go"
-	humanize "github.com/dustin/go-humanize"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/local-app/pkg/common"
 	"github.com/olekukonko/tablewriter"
@@ -43,18 +43,30 @@ var listWorkspaceCommand = &cobra.Command{
 		}
 
 		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"Workspace ID", "Phase", "Created", "Context URL"})
+		table.SetHeader([]string{"Repo", "Branch", "Workspace ID", "Status"})
 		table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-		table.SetCenterSeparator("|")
+		table.SetCenterSeparator("")
+		table.SetRowSeparator("")
+		table.SetColumnSeparator("")
+		table.SetAutoWrapText(true)
+		table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+		table.SetHeaderLine(false)
 
 		for _, workspace := range workspaces.Msg.GetResult() {
+			repository := "n/a"
+			wsDetails := workspace.Context.GetDetails()
+			switch d := wsDetails.(type) {
+			case *v1.WorkspaceContext_Git_:
+				repository = fmt.Sprintf("%s/%s", d.Git.Repository.Owner, d.Git.Repository.Name)
+			case *v1.WorkspaceContext_Prebuild_:
+				repository = fmt.Sprintf("%s/%s", d.Prebuild.OriginalContext.Repository.Owner, d.Prebuild.OriginalContext.Repository.Name)
+			default:
+				slog.Warn("event", "could not determine repository for workspace", workspace.WorkspaceId)
+			}
 
-			timeAgo := humanize.Time(workspace.GetStatus().Instance.CreatedAt.AsTime())
+			branch := workspace.GetStatus().Instance.Status.GitStatus.Branch
 
-			details := workspace.Context.GetDetails()
-			slog.Debug("details", details)
-
-			table.Append([]string{workspace.WorkspaceId, TranslatePhase(workspace.GetStatus().Instance.Status.Phase.String()), timeAgo, ""})
+			table.Append([]string{repository, branch, workspace.WorkspaceId, TranslatePhase(workspace.GetStatus().Instance.Status.Phase.String())})
 		}
 
 		table.Render()

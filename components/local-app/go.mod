@@ -28,7 +28,6 @@ require (
 
 require (
 	github.com/bufbuild/connect-go v1.10.0
-	github.com/dustin/go-humanize v1.0.1
 	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-20231023092031-ae38d864766a
 	github.com/go-git/go-git/v5 v5.10.0
 	github.com/manifoldco/promptui v0.9.0

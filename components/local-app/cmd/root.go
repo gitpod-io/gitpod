@@ -5,7 +5,6 @@
 package cmd
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 
@@ -17,6 +16,8 @@ var rootCmd = &cobra.Command{
 	Use:   "gitpod",
 	Short: "A CLI for interacting with Gitpod",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		config.Init()
+
 		verbose, err := cmd.Flags().GetBool("verbose")
 		if err != nil {
 			slog.Error("Could not set up logging")
@@ -35,13 +36,12 @@ var rootCmd = &cobra.Command{
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		slog.Error("An error occurred", err)
 		os.Exit(1)
 	}
 }
 
 func init() {
-	config.Init()
 	slog.Debug("Configured configuration and environment variables")
 
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Display verbose output for more detailed logging")
