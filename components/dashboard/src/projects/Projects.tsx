@@ -66,9 +66,7 @@ export default function ProjectsPage() {
                 <Alert type="error" className="mt-4 items-center">
                     <div className="flex justify-between items-center">
                         <span>There was a problem loading your projects.</span>
-                        <Button variant="primary" onClick={() => refetch()}>
-                            Retry
-                        </Button>
+                        <Button onClick={() => refetch()}>Retry</Button>
                     </div>
                 </Alert>
             )}
