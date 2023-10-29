@@ -19,7 +19,7 @@ export interface LinkButtonProps extends ButtonProps {
 export const LinkButton = React.forwardRef<HTMLButtonElement, LinkButtonProps>(
     ({ className, variant, size, asChild, children, href, ...props }, ref) => {
         return (
-            <Button className="transition-width" asChild {...props} ref={ref}>
+            <Button asChild {...props} ref={ref}>
                 <Link to={href}>{children}</Link>
             </Button>
         );
