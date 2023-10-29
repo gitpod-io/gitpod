@@ -37,10 +37,8 @@ var listOrganizationCommand = &cobra.Command{
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetHeader([]string{"Name", "Id"})
 		table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-		table.SetCenterSeparator("")
-		table.SetRowSeparator("")
+		table.SetBorder(false)
 		table.SetColumnSeparator("")
-		table.SetAutoWrapText(true)
 		table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 		table.SetHeaderLine(false)
 
