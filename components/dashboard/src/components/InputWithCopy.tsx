@@ -12,7 +12,6 @@ import { Button } from "./Button";
 import { TextInput } from "./forms/TextInputField";
 import { useTemporaryState } from "../hooks/use-temporary-value";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@podkit/tooltips/Tooltip";
-import { cn } from "@podkit/lib/cn";
 
 type Props = { value: string; tip?: string; className?: string };
 
@@ -32,30 +31,29 @@ export const InputWithCopy: FC<Props> = ({ value, tip = "Click to copy", classNa
     return (
         // max-w-lg is to mirror width of TextInput so Tooltip is positioned correctly
         <div className={`w-full relative max-w-lg ${className ?? ""}`}>
-            <TextInput value={value} disabled className="w-full pr-8 overscoll-none" />
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger
-                        className={cn("p-0 mx-1 bg-transparent text-black dark:text-white", className)}
-                        asChild
-                    >
-                        <Button
-                            type="transparent"
-                            htmlType="button"
-                            spacing="compact"
-                            icon={
-                                copied ? (
-                                    <CheckIcon className="text-green-500 w-5 h-5" />
-                                ) : (
-                                    <CopyIcon className="w-3.5 h-3.5" />
-                                )
-                            }
-                            onClick={handleCopyToClipboard}
-                        />
-                    </TooltipTrigger>
-                    <TooltipContent>{copied ? "Copied!" : tip}</TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
+            <TextInput value={value} disabled className="w-full pr-8 overscroll-none" />
+            <span className="absolute top-1.5 right-1">
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                type="transparent"
+                                htmlType="button"
+                                spacing="compact"
+                                icon={
+                                    copied ? (
+                                        <CheckIcon className="text-green-500 w-5 h-5" />
+                                    ) : (
+                                        <CopyIcon className="w-3.5 h-3.5" />
+                                    )
+                                }
+                                onClick={handleCopyToClipboard}
+                            />
+                        </TooltipTrigger>
+                        <TooltipContent>{copied ? "Copied!" : tip}</TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            </span>
         </div>
     );
 };
