@@ -129,11 +129,9 @@ export default function ProjectsPage() {
                         <div className="flex-1" />
                         <div className="py-2 pl-3"></div>
                         {team && (
-                            <Link to="./members" className="flex">
-                                <Button variant="secondary" className="ml-2">
-                                    Invite Members
-                                </Button>
-                            </Link>
+                            <LinkButton href="./members" variant="secondary" className="ml-2 flex">
+                                Invite Members
+                            </LinkButton>
                         )}
                         {createProjectModal ? (
                             <Button className="ml-2" onClick={() => setShowCreateProjectModal(true)}>
