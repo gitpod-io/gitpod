@@ -34,7 +34,7 @@ export const InputWithCopy: FC<Props> = ({ value, tip = "Click to copy", classNa
             <TextInput value={value} disabled className="w-full pr-8 overscroll-none" />
             <TooltipProvider>
                 <Tooltip>
-                    <TooltipTrigger asChild>
+                    <TooltipTrigger>
                         <Button
                             className="absolute top-1.5 right-1"
                             type="transparent"
