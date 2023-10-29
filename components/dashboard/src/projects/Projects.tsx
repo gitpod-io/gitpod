@@ -5,23 +5,24 @@
  */
 
 import { Project } from "@gitpod/gitpod-protocol";
+import { Button } from "@podkit/buttons/Button";
 import { useCallback, useContext, useMemo, useState } from "react";
 import { useHistory } from "react-router";
 import { Link } from "react-router-dom";
 import Alert from "../components/Alert";
 import Header from "../components/Header";
 import { SpinnerLoader } from "../components/Loader";
+import { Heading2 } from "../components/typography/headings";
+import { useFeatureFlag } from "../data/featureflag-query";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { useListAllProjectsQuery } from "../data/projects/list-all-projects-query";
 import search from "../icons/search.svg";
-import { Heading2 } from "../components/typography/headings";
 import projectsEmptyDark from "../images/projects-empty-dark.svg";
 import projectsEmpty from "../images/projects-empty.svg";
 import { ThemeContext } from "../theme-context";
 import { ProjectListItem } from "./ProjectListItem";
-import { projectsPathNew } from "./projects.routes";
-import { useFeatureFlag } from "../data/featureflag-query";
 import { CreateProjectModal } from "./create-project-modal/CreateProjectModal";
+import { projectsPathNew } from "./projects.routes";
 
 export default function ProjectsPage() {
     const createProjectModal = useFeatureFlag("createProjectModal");
@@ -65,9 +66,9 @@ export default function ProjectsPage() {
                 <Alert type="error" className="mt-4 items-center">
                     <div className="flex justify-between items-center">
                         <span>There was a problem loading your projects.</span>
-                        <button className="primary" onClick={() => refetch()}>
+                        <Button variant="primary" onClick={() => refetch()}>
                             Retry
-                        </button>
+                        </Button>
                     </div>
                 </Alert>
             )}
@@ -95,17 +96,17 @@ export default function ProjectsPage() {
                     </p>
                     <div className="flex space-x-2 justify-center mt-7">
                         {createProjectModal ? (
-                            <button className="ml-2" onClick={() => setShowCreateProjectModal(true)}>
+                            <Button className="ml-2" onClick={() => setShowCreateProjectModal(true)}>
                                 New Project
-                            </button>
+                            </Button>
                         ) : (
                             <Link to={projectsPathNew}>
-                                <button>New Project</button>
+                                <Button>New Project</Button>
                             </Link>
                         )}
                         {team && (
                             <Link to="./members">
-                                <button className="secondary">Invite Members</button>
+                                <Button variant="secondary">Invite Members</Button>
                             </Link>
                         )}
                     </div>
@@ -132,17 +133,17 @@ export default function ProjectsPage() {
                         <div className="py-2 pl-3"></div>
                         {team && (
                             <Link to="./members" className="flex">
-                                <button className="ml-2 secondary">Invite Members</button>
+                                <Button className="ml-2 secondary">Invite Members</Button>
                             </Link>
                         )}
                         {createProjectModal ? (
-                            <button className="ml-2" onClick={() => setShowCreateProjectModal(true)}>
+                            <Button className="ml-2" onClick={() => setShowCreateProjectModal(true)}>
                                 New Project
-                            </button>
+                            </Button>
                         ) : (
-                            <button className="ml-2" onClick={() => onNewProject()}>
+                            <Button className="ml-2" onClick={() => onNewProject()}>
                                 New Project
-                            </button>
+                            </Button>
                         )}
                     </div>
                     <div className="mt-4 grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-4 pb-40">
