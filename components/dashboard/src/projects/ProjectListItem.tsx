@@ -38,9 +38,9 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                         <div className="justify-end">
                             <DropdownActions>
                                 <DropdownMenuItem asChild>
-                                    <Link to={gitpodHostUrl.withContext(`${project.cloneUrl}`).toString()}>
+                                    <a href={gitpodHostUrl.withContext(`${project.cloneUrl}`).toString()}>
                                         New Workspace
-                                    </Link>
+                                    </a>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
                                     <Link to={`/projects/${project.id}/settings`}>Settings</Link>
