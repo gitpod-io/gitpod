@@ -102,9 +102,9 @@ export default function ProjectsPage() {
                             <LinkButton href={projectsPathNew}>New Project</LinkButton>
                         )}
                         {team && (
-                            <Link to="./members">
-                                <Button variant="secondary">Invite Members</Button>
-                            </Link>
+                            <LinkButton href="./members" variant="secondary">
+                                Invite Members
+                            </LinkButton>
                         )}
                     </div>
                 </div>
