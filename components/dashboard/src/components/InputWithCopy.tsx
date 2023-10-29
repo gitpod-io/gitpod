@@ -38,7 +38,6 @@ export const InputWithCopy: FC<Props> = ({ value, tip = "Click to copy", classNa
                         <TooltipTrigger asChild>
                             <Button
                                 type="transparent"
-                                htmlType="button"
                                 spacing="compact"
                                 icon={
                                     copied ? (
@@ -50,7 +49,9 @@ export const InputWithCopy: FC<Props> = ({ value, tip = "Click to copy", classNa
                                 onClick={handleCopyToClipboard}
                             />
                         </TooltipTrigger>
-                        <TooltipContent>{copied ? "Copied!" : tip}</TooltipContent>
+                        <TooltipContent>
+                            <p>{copied ? "Copied!" : tip}</p>
+                        </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
             </span>
