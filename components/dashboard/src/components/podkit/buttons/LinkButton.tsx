@@ -17,9 +17,9 @@ export interface LinkButtonProps extends ButtonProps {
  * A HTML anchor element styled as a button.
  */
 export const LinkButton = React.forwardRef<HTMLButtonElement, LinkButtonProps>(
-    ({ className, variant, size, asChild, children, href, ...props }, ref) => {
+    ({ asChild, children, href, ...props }, ref) => {
         return (
-            <Button asChild {...props} ref={ref}>
+            <Button ref={ref} {...props} asChild>
                 <Link to={href}>{children}</Link>
             </Button>
         );

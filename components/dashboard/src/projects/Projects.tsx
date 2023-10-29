@@ -111,7 +111,7 @@ export default function ProjectsPage() {
             )}
             {(data?.projects || []).length > 0 && (
                 <div className="app-container">
-                    <div className="mt-3 pb-3 flex border-b border-gray-200 dark:border-gray-800">
+                    <div className="mt-3 pb-3 flex border-b border-gray-200 dark:border-gray-800 items-center">
                         <div className="flex relative h-10 my-auto">
                             <img
                                 src={search}
@@ -129,7 +129,7 @@ export default function ProjectsPage() {
                         <div className="flex-1" />
                         <div className="py-2 pl-3"></div>
                         {team && (
-                            <LinkButton href="./members" variant="secondary" className="ml-2 flex">
+                            <LinkButton href="./members" variant="secondary" className="ml-2">
                                 Invite Members
                             </LinkButton>
                         )}
