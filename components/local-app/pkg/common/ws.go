@@ -53,7 +53,7 @@ func SshConnectToWs(ctx context.Context, workspaceID string, runDry bool) error 
 		return nil
 	}
 
-	slog.Debug("Connecting to", wsInfo.Description)
+	slog.Debug("Connecting to" + wsInfo.Description)
 
 	command := exec.Command("ssh", fmt.Sprintf("%s#%s@%s", wsInfo.WorkspaceId, ownerToken, host), "-o", "StrictHostKeyChecking=no")
 
