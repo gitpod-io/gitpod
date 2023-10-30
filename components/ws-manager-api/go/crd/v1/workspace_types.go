@@ -257,6 +257,8 @@ const (
 	VolumeAttached WorkspaceCondition = "VolumeAttached"
 	// VolumeMounted is true if the workspace's volume has been mounted on the node
 	VolumeMounted WorkspaceCondition = "VolumeMounted"
+	// ThroughputAdjusted is true if the throughput of the workspace volume has been adjusted
+	WorkspaceConditionThroughputAdjusted WorkspaceCondition = "ThroughputAdjusted"
 )
 
 func NewWorkspaceConditionDeployed() metav1.Condition {
