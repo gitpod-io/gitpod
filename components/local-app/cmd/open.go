@@ -22,8 +22,9 @@ import (
 
 // openWorkspaceFromLocalRepositoryCommand opens a local repository in Gitpod
 var openWorkspaceFromLocalRepositoryCommand = &cobra.Command{
-	Use:   "open",
-	Short: "Opens a local repository in Gitpod",
+	Use:    "open",
+	Short:  "Opens a local repository in Gitpod",
+	Hidden: true,
 	Long: `Opens a local repository in Gitpod, turning your local development environment into a cloud-based one.
 
 This command inspects the Git repository in the specified directory, or the current directory if none is specified. It retrieves the URL of all the remote repositories associated with the local repo.
