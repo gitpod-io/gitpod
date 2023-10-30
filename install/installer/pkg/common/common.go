@@ -505,6 +505,7 @@ func KubeRBACProxyContainerWithConfig(ctx *RenderContext) *corev1.Container {
 			"--logtostderr",
 			fmt.Sprintf("--insecure-listen-address=[$(IP)]:%d", baseserver.BuiltinMetricsPort),
 			fmt.Sprintf("--upstream=http://127.0.0.1:%d/", baseserver.BuiltinMetricsPort),
+			"--http2-disable",
 		},
 		Ports: []corev1.ContainerPort{
 			{Name: baseserver.BuiltinMetricsPortName, ContainerPort: baseserver.BuiltinMetricsPort},
