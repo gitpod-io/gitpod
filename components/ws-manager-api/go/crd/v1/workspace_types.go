@@ -195,7 +195,7 @@ func (s *WorkspaceStatus) SetCondition(cond metav1.Condition) {
 	s.Conditions = wsk8s.AddUniqueCondition(s.Conditions, cond)
 }
 
-// +kubebuilder:validation:Enum=Deployed;Failed;Timeout;FirstUserActivity;Closed;HeadlessTaskFailed;StoppedByRequest;Aborted;ContentReady;EverReady;BackupComplete;BackupFailure;Refresh;NodeDisappeared
+// +kubebuilder:validation:Enum=Deployed;Failed;Timeout;FirstUserActivity;Closed;HeadlessTaskFailed;StoppedByRequest;Aborted;ContentReady;EverReady;BackupComplete;BackupFailure;Refresh;NodeDisappeared;ThroughputAdjusted
 type WorkspaceCondition string
 
 const (
@@ -243,6 +243,9 @@ const (
 
 	// NodeDisappeared is true if the workspace's node disappeared before the workspace was stopped
 	WorkspaceConditionNodeDisappeared WorkspaceCondition = "NodeDisappeared"
+
+	// ThroughputAdjusted is true if the throughput of the workspace volume has been adjusted
+	WorkspaceConditionThroughputAdjusted WorkspaceCondition = "ThroughputAdjusted"
 )
 
 func NewWorkspaceConditionDeployed() metav1.Condition {
@@ -366,6 +369,14 @@ func NewWorkspaceConditionRefresh() metav1.Condition {
 func NewWorkspaceConditionNodeDisappeared() metav1.Condition {
 	return metav1.Condition{
 		Type:               string(WorkspaceConditionNodeDisappeared),
+		LastTransitionTime: metav1.Now(),
+		Status:             metav1.ConditionTrue,
+	}
+}
+
+func NewWorkspaceConditionThroughputAdjusted() metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionThroughputAdjusted),
 		LastTransitionTime: metav1.Now(),
 		Status:             metav1.ConditionTrue,
 	}
