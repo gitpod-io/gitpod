@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
@@ -147,6 +148,50 @@ func SelectWorkspace(ctx context.Context, filter WorkspaceFilter) string {
 
 	if err != nil {
 		fmt.Printf("Prompt failed %v\n", err)
+		return ""
+	}
+
+	return result
+}
+
+func SelectOrganization(ctx context.Context) string {
+	gitpod, err := GetGitpodClient(ctx)
+
+	if err != nil {
+		slog.ErrorContext(ctx, "Failed to setup Gitpod API client", err)
+	}
+
+	orgsList, err := gitpod.Teams.ListTeams(ctx, connect.NewRequest(&v1.ListTeamsRequest{}))
+
+	if err != nil {
+		slog.ErrorContext(ctx, "Failed to list organizations", err)
+	}
+
+	orgIds := []string{}
+
+	for _, org := range orgsList.Msg.GetTeams() {
+		orgIds = append(orgIds, org.Id)
+	}
+
+	if len(orgIds) == 0 {
+		slog.Error("No organization found")
+		return ""
+	}
+
+	if len(orgIds) == 1 {
+		slog.Debug("Only one organization found, automatically selecting it")
+		return orgIds[0]
+	}
+
+	prompt := promptui.Select{
+		Label: "Select a Workspace",
+		Items: orgIds,
+	}
+
+	_, result, err := prompt.Run()
+
+	if err != nil {
+		slog.ErrorContext(ctx, "Prompt failed", err)
 		return ""
 	}
 
