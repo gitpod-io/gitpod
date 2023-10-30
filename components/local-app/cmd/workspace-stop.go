@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var stopNonBlocking = false
+var stopDontWait = false
 
 // stopWorkspaceCommand stops to a given workspace
 var stopWorkspaceCommand = &cobra.Command{
@@ -60,7 +60,7 @@ var stopWorkspaceCommand = &cobra.Command{
 			return nil
 		}
 
-		if stopNonBlocking {
+		if stopDontWait {
 			fmt.Println("Workspace stopping")
 			return nil
 		}
@@ -108,5 +108,5 @@ var stopWorkspaceCommand = &cobra.Command{
 
 func init() {
 	wsCmd.AddCommand(stopWorkspaceCommand)
-	stopWorkspaceCommand.Flags().BoolVarP(&stopNonBlocking, "non-blocking", "n", false, "do not wait for workspace to fully stop, only initialize")
+	stopWorkspaceCommand.Flags().BoolVarP(&stopDontWait, "dont-wait", "d", false, "do not wait for workspace to fully stop, only initialize")
 }
