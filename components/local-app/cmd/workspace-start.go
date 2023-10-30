@@ -85,8 +85,10 @@ var startWorkspaceCommand = &cobra.Command{
 			if msg.GetResult().Instance.Status.Phase == v1.WorkspaceInstanceStatus_PHASE_RUNNING {
 				fmt.Println("Workspace started")
 				if startOpenSsh {
-					err = common.SshConnectToWs(ctx, workspaceID, false)
-					return err
+					return common.SshConnectToWs(ctx, workspaceID, false)
+				}
+				if startOpenEditor {
+					return common.OpenWsInPreferredEditor(ctx, workspaceID)
 				}
 				break
 			}
