@@ -15,10 +15,16 @@ export type Event =
     | "organisation_authorised"
     | "dotfile_repo_changed"
     | "feedback_submitted"
-    | "workspace_class_changed";
+    | "workspace_class_changed"
+    | "privacy_policy_update_accepted";
 type InternalEvent = Event | "path_changed" | "dashboard_clicked";
 
-export type EventProperties = TrackOrgAuthorised | TrackInviteUrlRequested | TrackDotfileRepo | TrackFeedback;
+export type EventProperties =
+    | TrackOrgAuthorised
+    | TrackInviteUrlRequested
+    | TrackDotfileRepo
+    | TrackFeedback
+    | TrackPolicyUpdateClick;
 type InternalEventProperties = EventProperties | TrackDashboardClick | TrackPathChanged;
 
 export interface TrackOrgAuthorised {
@@ -43,6 +49,12 @@ export interface TrackFeedback {
     error_object?: StartWorkspaceError;
     error_message?: string;
 }
+
+export interface TrackPolicyUpdateClick {
+    path: string;
+    success: boolean;
+}
+
 interface TrackDashboardClick {
     dnt?: boolean;
     path: string;

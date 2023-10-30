@@ -11,6 +11,7 @@ import Alert, { AlertType } from "./components/Alert";
 import { useUserLoader } from "./hooks/use-user-loader";
 import { getGitpodService } from "./service/service";
 import { isGitpodIo } from "./utils";
+import { trackEvent } from "./Analytics";
 
 const KEY_APP_DISMISSED_NOTIFICATIONS = "gitpod-app-notifications-dismissed";
 const PRIVACY_POLICY_LAST_UPDATED = "2023-10-17";
@@ -28,9 +29,23 @@ const UPDATED_PRIVACY_POLICY: Notification = {
     type: "info",
     preventDismiss: true,
     onClose: async () => {
-        const userUpdates = { additionalData: { profile: { acceptedPrivacyPolicyDate: dayjs().toISOString() } } };
-        const previousUser = await getGitpodService().server.getLoggedInUser();
-        await getGitpodService().server.updateLoggedInUser(deepMerge(previousUser, userUpdates));
+        let dismissSuccess = false;
+        try {
+            const userUpdates = { additionalData: { profile: { acceptedPrivacyPolicyDate: dayjs().toISOString() } } };
+            const previousUser = await getGitpodService().server.getLoggedInUser();
+            const updatedUser = await getGitpodService().server.updateLoggedInUser(
+                deepMerge(previousUser, userUpdates),
+            );
+            dismissSuccess = !!updatedUser;
+        } catch (err) {
+            console.error("Failed to update user's privacy policy acceptance date", err);
+            dismissSuccess = false;
+        } finally {
+            trackEvent("privacy_policy_update_accepted", {
+                path: window.location.pathname,
+                success: dismissSuccess,
+            });
+        }
     },
     message: (
         <span className="text-md">
