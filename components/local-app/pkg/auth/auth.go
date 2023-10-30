@@ -19,6 +19,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
+	"github.com/gitpod-io/local-app/pkg/common"
 	"github.com/sirupsen/logrus"
 	"github.com/skratchdot/open-golang/open"
 	keyring "github.com/zalando/go-keyring"
@@ -185,6 +186,17 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 			AuthURL:  authURL.String(),
 			TokenURL: tokenURL.String(),
 		},
+	}
+	if common.Flavor == "gitpod-cli" {
+		conf = &oauth2.Config{
+			ClientID:     "gitpod-cli",
+			ClientSecret: "gitpod-cli-secret",
+			Scopes:       authScopes,
+			Endpoint: oauth2.Endpoint{
+				AuthURL:  authURL.String(),
+				TokenURL: tokenURL.String(),
+			},
+		}
 	}
 	responseTypeParam := oauth2.SetAuthURLParam("response_type", "code")
 	redirectURIParam := oauth2.SetAuthURLParam("redirect_uri", fmt.Sprintf("http://127.0.0.1:%d", rl.Addr().(*net.TCPAddr).Port))

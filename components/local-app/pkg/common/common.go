@@ -6,6 +6,7 @@ package common
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"log/slog"
@@ -16,9 +17,9 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/components/public-api/go/client"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
-	"github.com/gitpod-io/local-app/pkg/auth"
 	"github.com/gitpod-io/local-app/pkg/config"
 	"github.com/manifoldco/promptui"
+	"github.com/zalando/go-keyring"
 )
 
 var (
@@ -27,16 +28,27 @@ var (
 
 	// Flavor - set during build
 	Flavor = "gitpod-cli"
+
+	keyringService = "gitpod-io"
 )
+
+// GetToken returns the persisted Gitpod token
+func GetTokenKeychain(host string) (token string, err error) {
+	tkn, err := keyring.Get(keyringService, host)
+	if errors.Is(err, keyring.ErrNotFound) {
+		return "", nil
+	}
+	return tkn, err
+}
 
 func GetToken() (string, error) {
 	host := config.GetString("host")
-	token, err := auth.GetToken(host)
+	token, err := GetTokenKeychain(host)
 
 	if err != nil {
 		configToken := config.GetString("token")
 		if configToken == "" {
-			return "", fmt.Errorf("no token found in keychain for %s, config file or the GITPOD_TOKEN environment variable. Please run `gitpod auth login` to login", host)
+			return "", fmt.Errorf("no token found in keychain for %s, config file or the GITPOD_TOKEN environment variable. Please run `gitpod login` to login", host)
 		}
 
 		return configToken, nil
