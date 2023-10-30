@@ -4,12 +4,13 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import dayjs from "dayjs";
+import deepMerge from "deepmerge";
 import { useCallback, useEffect, useState } from "react";
 import Alert, { AlertType } from "./components/Alert";
-import dayjs from "dayjs";
 import { useUserLoader } from "./hooks/use-user-loader";
 import { getGitpodService } from "./service/service";
-import deepMerge from "deepmerge";
+import { isGitpodIo } from "./utils";
 
 const KEY_APP_DISMISSED_NOTIFICATIONS = "gitpod-app-notifications-dismissed";
 const PRIVACY_POLICY_LAST_UPDATED = "2023-10-17";
@@ -48,10 +49,10 @@ export function AppNotifications() {
 
     useEffect(() => {
         const notifications = [];
-        if (!loading && user?.additionalData?.profile) {
+        if (!loading && isGitpodIo()) {
             if (
-                !user.additionalData.profile.acceptedPrivacyPolicyDate ||
-                new Date(PRIVACY_POLICY_LAST_UPDATED) > new Date(user.additionalData.profile?.acceptedPrivacyPolicyDate)
+                !user?.additionalData?.profile?.acceptedPrivacyPolicyDate ||
+                new Date(PRIVACY_POLICY_LAST_UPDATED) > new Date(user.additionalData.profile.acceptedPrivacyPolicyDate)
             ) {
                 notifications.push(UPDATED_PRIVACY_POLICY);
             }
