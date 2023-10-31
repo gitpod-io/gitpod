@@ -29,7 +29,7 @@ class TestBitbucketServerContextParser {
     static readonly AUTH_HOST_CONFIG: Partial<AuthProviderParams> = {
         id: "MyBitbucketServer",
         type: "BitbucketServer",
-        host: "bitbucket.gitpod-dev.com",
+        host: "bitbucket.gitpod-self-hosted.com",
     };
 
     public before() {
@@ -186,7 +186,7 @@ class TestBitbucketServerContextParser {
         });
     }
 
-    @test async test_commit_context_02() {
+    @test async test_branch_context_01() {
         const result = await this.parser.handle(
             {},
             this.user,
