@@ -29,7 +29,7 @@ class TestBitbucketServerContextParser {
     static readonly AUTH_HOST_CONFIG: Partial<AuthProviderParams> = {
         id: "MyBitbucketServer",
         type: "BitbucketServer",
-        host: "bitbucket.gitpod-self-hosted.com",
+        host: "bitbucket.gitpod-dev.com",
     };
 
     public before() {
@@ -194,6 +194,7 @@ class TestBitbucketServerContextParser {
         );
 
         expect(result).to.deep.include({
+            ref: "my-branch",
             refType: "branch",
             revision: "3ca42b45bc693973cb21a112a418c13f8b4d11a5",
             path: "",
