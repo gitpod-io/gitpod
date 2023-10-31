@@ -38,6 +38,18 @@ func getWorkspaceRepo(ws *v1.Workspace) string {
 	return repository
 }
 
+func getWorkspaceBranch(ws *v1.Workspace) string {
+	if ws == nil || ws.Status == nil ||
+		ws.Status.Instance == nil || ws.Status.Instance.Status == nil || ws.Status.Instance.Status.GitStatus == nil {
+		return ""
+	}
+	value := ws.Status.Instance.Status.GitStatus.Branch
+	if value == "" || value == "(detached)" {
+		return ""
+	}
+	return value
+}
+
 // listWorkspaceCommand lists all available workspaces
 var listWorkspaceCommand = &cobra.Command{
 	Use:   "list",
@@ -65,7 +77,7 @@ var listWorkspaceCommand = &cobra.Command{
 
 		for _, workspace := range workspaces.Msg.GetResult() {
 			repository := getWorkspaceRepo(workspace)
-			branch := workspace.GetStatus().Instance.Status.GitStatus.Branch
+			branch := getWorkspaceBranch(workspace)
 
 			table.Append([]string{repository, branch, workspace.WorkspaceId, TranslatePhase(workspace.GetStatus().Instance.Status.Phase.String())})
 		}

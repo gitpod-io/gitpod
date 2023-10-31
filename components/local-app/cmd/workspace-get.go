@@ -40,6 +40,9 @@ var getWorkspaceCommand = &cobra.Command{
 
 		slog.Debug("Attempting to retrieve workspace info...")
 		ws, err := gitpod.Workspaces.GetWorkspace(ctx, connect.NewRequest(&v1.GetWorkspaceRequest{WorkspaceId: workspaceID}))
+		if err != nil {
+			return err
+		}
 
 		wsInfo := ws.Msg.GetResult()
 		repository := getWorkspaceRepo(wsInfo)
@@ -52,7 +55,7 @@ var getWorkspaceCommand = &cobra.Command{
 			WorkspaceId:    wsInfo.WorkspaceId,
 			WorkspaceUrl:   wsInfo.Status.Instance.Status.Url,
 			Repository:     repository,
-			Branch:         wsInfo.Status.Instance.Status.GitStatus.Branch,
+			Branch:         getWorkspaceBranch(wsInfo),
 			WorkspacePhase: phase,
 			CreatedAt:      createdTime,
 			// todo: LastActive, Created, WorkspaceClass (API implementation pending), RepoUrl (API implementation also pending)
