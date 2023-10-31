@@ -111,7 +111,6 @@ import { NotFoundError, UnauthorizedError } from "../errors";
 import { RepoURL } from "../repohost/repo-url";
 import { AuthorizationService } from "../user/authorization-service";
 import { TokenProvider } from "../user/token-provider";
-import { UserDeletionService } from "../user/user-deletion-service";
 import { UserAuthentication } from "../user/user-authentication";
 import { ContextParser } from "./context-parser-service";
 import { GitTokenScopeGuesser } from "./git-token-scope-guesser";
@@ -214,7 +213,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(TokenProvider) private readonly tokenProvider: TokenProvider,
         @inject(UserAuthentication) private readonly userAuthentication: UserAuthentication,
         @inject(UserService) private readonly userService: UserService,
-        @inject(UserDeletionService) private readonly userDeletionService: UserDeletionService,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(AuthorizationService) private readonly authorizationService: AuthorizationService,
         @inject(SSHKeyService) private readonly sshKeyservice: SSHKeyService,
@@ -710,7 +708,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("deleteAccount");
         await this.guardAccess({ kind: "user", subject: user! }, "delete");
 
-        await this.userDeletionService.deleteUser(user.id, user.id);
+        await this.userService.deleteUser(user.id, user.id);
     }
 
     public async getWorkspace(ctx: TraceContext, workspaceId: string): Promise<WorkspaceInfo> {
@@ -2689,7 +2687,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const admin = await this.guardAdminAccess("adminDeleteUser", { id: userId }, Permission.ADMIN_PERMISSIONS);
 
-        await this.userDeletionService.deleteUser(admin.id, userId);
+        await this.userService.deleteUser(admin.id, userId);
     }
 
     async adminVerifyUser(ctx: TraceContext, userId: string): Promise<User> {
