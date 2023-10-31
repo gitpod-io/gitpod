@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"reflect"
 	"time"
 
 	"strings"
@@ -50,6 +51,15 @@ func getWorkspaceBranch(ws *v1.Workspace) string {
 	return value
 }
 
+type WorkspaceDisplayData struct {
+	Repository string
+	Branch     string
+	Id         string
+	Status     string
+}
+
+var wsListOutputField string
+
 // listWorkspaceCommand lists all available workspaces
 var listWorkspaceCommand = &cobra.Command{
 	Use:   "list",
@@ -79,10 +89,29 @@ var listWorkspaceCommand = &cobra.Command{
 			repository := getWorkspaceRepo(workspace)
 			branch := getWorkspaceBranch(workspace)
 
-			table.Append([]string{repository, branch, workspace.WorkspaceId, TranslatePhase(workspace.GetStatus().Instance.Status.Phase.String())})
+			wsData := WorkspaceDisplayData{
+				Repository: repository,
+				Branch:     branch,
+				Id:         workspace.WorkspaceId,
+				Status:     TranslatePhase(workspace.GetStatus().Instance.Status.Phase.String()),
+			}
+
+			if wsListOutputField != "" {
+				wsListOutputField = common.CapitalizeFirst(wsListOutputField)
+				val := reflect.ValueOf(wsData)
+				if fieldVal := val.FieldByName(wsListOutputField); fieldVal.IsValid() {
+					fmt.Printf("%v\n", fieldVal.Interface())
+				} else {
+					return fmt.Errorf("Field '%s' is an invalid field for workspaces", wsListOutputField)
+				}
+			} else {
+				table.Append([]string{wsData.Repository, wsData.Branch, wsData.Id, wsData.Status})
+			}
 		}
 
-		table.Render()
+		if wsListOutputField == "" {
+			table.Render()
+		}
 
 		return nil
 	},
@@ -90,4 +119,5 @@ var listWorkspaceCommand = &cobra.Command{
 
 func init() {
 	wsCmd.AddCommand(listWorkspaceCommand)
+	listWorkspaceCommand.Flags().StringVarP(&wsListOutputField, "field", "f", "", "output a specific field of the workspaces")
 }

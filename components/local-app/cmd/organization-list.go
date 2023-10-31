@@ -59,5 +59,5 @@ var listOrganizationCommand = &cobra.Command{
 
 func init() {
 	orgCmd.AddCommand(listOrganizationCommand)
-	listOrganizationCommand.Flags().StringVarP(&orgListOutputField, "field", "f", "", "output a specific field of the organization")
+	listOrganizationCommand.Flags().StringVarP(&orgListOutputField, "field", "f", "", "output a specific field of the organizations")
 }
