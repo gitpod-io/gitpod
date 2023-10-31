@@ -49,6 +49,15 @@ func GetWorkspaceRepo(ws *v1.Workspace) string {
 	return repository
 }
 
+// workspace.Msg.Result.Status.Instance.Status.Url
+func GetWorkspaceUrl(ws *v1.Workspace) string {
+	if ws == nil || ws.Status == nil ||
+		ws.Status.Instance == nil || ws.Status.Instance.Status == nil {
+		return ""
+	}
+	return ws.Status.Instance.Status.Url
+}
+
 func GetWorkspaceBranch(ws *v1.Workspace) string {
 	if ws == nil || ws.Status == nil ||
 		ws.Status.Instance == nil || ws.Status.Instance.Status == nil || ws.Status.Instance.Status.GitStatus == nil {
@@ -173,10 +182,10 @@ func OpenWsInPreferredEditor(ctx context.Context, workspaceID string) error {
 	fmt.Printf("%+v\n", response)
 
 	if response.OK {
-		if response.Desktop.Link == "" {
-			return fmt.Errorf("failed to open workspace in editor (no desktop editor)")
-		}
 		url := response.Desktop.Link
+		if url == "" {
+			url = GetWorkspaceUrl(workspace.Msg.Result)
+		}
 		var cmd *exec.Cmd
 		switch os := runtime.GOOS; os {
 		case "darwin":

@@ -53,7 +53,7 @@ var getWorkspaceCommand = &cobra.Command{
 
 		data := &common.WorkspaceDisplayData{
 			Id:         wsInfo.WorkspaceId,
-			Url:        wsInfo.Status.Instance.Status.Url,
+			Url:        common.GetWorkspaceUrl(wsInfo),
 			Repository: repository,
 			Branch:     common.GetWorkspaceBranch(wsInfo),
 			Status:     phase,
