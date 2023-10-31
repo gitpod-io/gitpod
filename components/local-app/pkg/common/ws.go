@@ -16,10 +16,20 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 )
+
+type WorkspaceDisplayData struct {
+	Repository string    `json:"repository"`
+	Branch     string    `json:"branch"`
+	Id         string    `json:"workspace_id"`
+	Status     string    `json:"status"`
+	Url        string    `json:"workspace_url"`
+	CreatedAt  time.Time `json:"created_at"`
+}
 
 func TranslateWsPhase(phase string) string {
 	return strings.ToLower(phase[6:])

@@ -51,13 +51,13 @@ var getWorkspaceCommand = &cobra.Command{
 		createdAt := wsInfo.Status.Instance.CreatedAt
 		createdTime := time.Unix(createdAt.Seconds, 0)
 
-		data := &infoData{
-			WorkspaceId:    wsInfo.WorkspaceId,
-			WorkspaceUrl:   wsInfo.Status.Instance.Status.Url,
-			Repository:     repository,
-			Branch:         common.GetWorkspaceBranch(wsInfo),
-			WorkspacePhase: phase,
-			CreatedAt:      createdTime,
+		data := &common.WorkspaceDisplayData{
+			Id:         wsInfo.WorkspaceId,
+			Url:        wsInfo.Status.Instance.Status.Url,
+			Repository: repository,
+			Branch:     common.GetWorkspaceBranch(wsInfo),
+			Status:     phase,
+			CreatedAt:  createdTime,
 			// todo: LastActive, Created, WorkspaceClass (API implementation pending), RepoUrl (API implementation also pending)
 		}
 
@@ -67,24 +67,15 @@ var getWorkspaceCommand = &cobra.Command{
 	},
 }
 
-type infoData struct {
-	WorkspaceId    string    `json:"workspace_id"`
-	WorkspaceUrl   string    `json:"workspace_url"`
-	Branch         string    `json:"branch"`
-	Repository     string    `json:"repository"`
-	WorkspacePhase string    `json:"workspace_phase"`
-	CreatedAt      time.Time `json:"created_at"`
-}
-
-func outputInfo(info *infoData) {
+func outputInfo(info *common.WorkspaceDisplayData) {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetColWidth(50)
 	table.SetBorder(false)
 	table.SetColumnSeparator(":")
-	table.Append([]string{"ID", info.WorkspaceId})
-	table.Append([]string{"URL", info.WorkspaceUrl})
+	table.Append([]string{"ID", info.Id})
+	table.Append([]string{"URL", info.Url})
 	// Class
-	table.Append([]string{"Status", info.WorkspacePhase})
+	table.Append([]string{"Status", info.Status})
 	// Repo URL
 	table.Append([]string{"Repo", info.Repository})
 	table.Append([]string{"Branch", info.Branch})

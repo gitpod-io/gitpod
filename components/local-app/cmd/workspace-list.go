@@ -18,13 +18,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type WorkspaceDisplayData struct {
-	Repository string
-	Branch     string
-	Id         string
-	Status     string
-}
-
 var wsListOutputField string
 
 // listWorkspaceCommand lists all available workspaces
@@ -56,7 +49,7 @@ var listWorkspaceCommand = &cobra.Command{
 			repository := common.GetWorkspaceRepo(workspace)
 			branch := common.GetWorkspaceBranch(workspace)
 
-			wsData := WorkspaceDisplayData{
+			wsData := common.WorkspaceDisplayData{
 				Repository: repository,
 				Branch:     branch,
 				Id:         workspace.WorkspaceId,
