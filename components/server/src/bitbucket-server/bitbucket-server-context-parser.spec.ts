@@ -186,6 +186,32 @@ class TestBitbucketServerContextParser {
         });
     }
 
+    @test async test_commit_context_02() {
+        const result = await this.parser.handle(
+            {},
+            this.user,
+            "https://bitbucket.gitpod-dev.com/users/svenefftinge/repos/browser-extension-test/commits?until=refs%2Fheads%2Fmy-branch&merges=include",
+        );
+
+        expect(result).to.deep.include({
+            refType: "branch",
+            revision: "3ca42b45bc693973cb21a112a418c13f8b4d11a5",
+            path: "",
+            isFile: false,
+            repository: {
+                cloneUrl: "https://bitbucket.gitpod-dev.com/scm/~svenefftinge/browser-extension-test.git",
+                defaultBranch: "main",
+                host: "bitbucket.gitpod-dev.com",
+                name: "browser-extension-test",
+                owner: "svenefftinge",
+                repoKind: "users",
+                private: false,
+                webUrl: "https://bitbucket.gitpod-dev.com/users/svenefftinge/repos/browser-extension-test",
+            },
+            title: "svenefftinge/browser-extension-test - my-branch",
+        });
+    }
+
     @test async test_PR_context_01() {
         const result = await this.parser.handle(
             {},
