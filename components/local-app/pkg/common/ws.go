@@ -21,6 +21,44 @@ import (
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 )
 
+func TranslateWsPhase(phase string) string {
+	return strings.ToLower(phase[6:])
+}
+
+func GetWorkspaceRepo(ws *v1.Workspace) string {
+	repository := ""
+	wsDetails := ws.Context.GetDetails()
+	switch d := wsDetails.(type) {
+	case *v1.WorkspaceContext_Git_:
+		repository = fmt.Sprintf("%s/%s", d.Git.Repository.Owner, d.Git.Repository.Name)
+	case *v1.WorkspaceContext_Prebuild_:
+		repository = fmt.Sprintf("%s/%s", d.Prebuild.OriginalContext.Repository.Owner, d.Prebuild.OriginalContext.Repository.Name)
+	default:
+		slog.Warn("event", "could not determine repository for workspace", ws.WorkspaceId)
+	}
+	return repository
+}
+
+func GetWorkspaceBranch(ws *v1.Workspace) string {
+	if ws == nil || ws.Status == nil ||
+		ws.Status.Instance == nil || ws.Status.Instance.Status == nil || ws.Status.Instance.Status.GitStatus == nil {
+		return ""
+	}
+	value := ws.Status.Instance.Status.GitStatus.Branch
+	if value == "" || value == "(detached)" {
+		return ""
+	}
+	return value
+}
+
+func HumanizeWorkspacePhase(ws *v1.Workspace) string {
+	if ws == nil || ws.Status == nil ||
+		ws.Status.Instance == nil || ws.Status.Instance.Status == nil {
+		return ""
+	}
+	return TranslateWsPhase(ws.Status.Instance.Status.Phase.String())
+}
+
 func SshConnectToWs(ctx context.Context, workspaceID string, runDry bool) error {
 	gitpod, err := GetGitpodClient(ctx)
 	if err != nil {

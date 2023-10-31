@@ -73,7 +73,7 @@ var stopWorkspaceCommand = &cobra.Command{
 
 		fmt.Println("Waiting for workspace to stop...")
 
-		fmt.Println("Workspace " + TranslatePhase(currentPhase.String()))
+		fmt.Println("Workspace " + common.TranslateWsPhase(currentPhase.String()))
 
 		previousStatus := ""
 
@@ -89,7 +89,7 @@ var stopWorkspaceCommand = &cobra.Command{
 				break
 			}
 
-			currentStatus := TranslatePhase(msg.GetResult().Instance.Status.Phase.String())
+			currentStatus := common.TranslateWsPhase(msg.GetResult().Instance.Status.Phase.String())
 
 			if currentStatus != previousStatus {
 				fmt.Println("Workspace " + currentStatus)

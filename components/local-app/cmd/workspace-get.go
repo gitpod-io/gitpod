@@ -45,8 +45,8 @@ var getWorkspaceCommand = &cobra.Command{
 		}
 
 		wsInfo := ws.Msg.GetResult()
-		repository := getWorkspaceRepo(wsInfo)
-		phase := TranslatePhase(wsInfo.Status.Instance.Status.Phase.String())
+		repository := common.GetWorkspaceRepo(wsInfo)
+		phase := common.HumanizeWorkspacePhase(wsInfo)
 
 		createdAt := wsInfo.Status.Instance.CreatedAt
 		createdTime := time.Unix(createdAt.Seconds, 0)
@@ -55,7 +55,7 @@ var getWorkspaceCommand = &cobra.Command{
 			WorkspaceId:    wsInfo.WorkspaceId,
 			WorkspaceUrl:   wsInfo.Status.Instance.Status.Url,
 			Repository:     repository,
-			Branch:         getWorkspaceBranch(wsInfo),
+			Branch:         common.GetWorkspaceBranch(wsInfo),
 			WorkspacePhase: phase,
 			CreatedAt:      createdTime,
 			// todo: LastActive, Created, WorkspaceClass (API implementation pending), RepoUrl (API implementation also pending)

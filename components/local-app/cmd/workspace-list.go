@@ -7,12 +7,9 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"os"
 	"reflect"
 	"time"
-
-	"strings"
 
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
@@ -20,36 +17,6 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
-
-func TranslatePhase(phase string) string {
-	return strings.ToLower(phase[6:])
-}
-
-func getWorkspaceRepo(ws *v1.Workspace) string {
-	repository := ""
-	wsDetails := ws.Context.GetDetails()
-	switch d := wsDetails.(type) {
-	case *v1.WorkspaceContext_Git_:
-		repository = fmt.Sprintf("%s/%s", d.Git.Repository.Owner, d.Git.Repository.Name)
-	case *v1.WorkspaceContext_Prebuild_:
-		repository = fmt.Sprintf("%s/%s", d.Prebuild.OriginalContext.Repository.Owner, d.Prebuild.OriginalContext.Repository.Name)
-	default:
-		slog.Warn("event", "could not determine repository for workspace", ws.WorkspaceId)
-	}
-	return repository
-}
-
-func getWorkspaceBranch(ws *v1.Workspace) string {
-	if ws == nil || ws.Status == nil ||
-		ws.Status.Instance == nil || ws.Status.Instance.Status == nil || ws.Status.Instance.Status.GitStatus == nil {
-		return ""
-	}
-	value := ws.Status.Instance.Status.GitStatus.Branch
-	if value == "" || value == "(detached)" {
-		return ""
-	}
-	return value
-}
 
 type WorkspaceDisplayData struct {
 	Repository string
@@ -86,14 +53,14 @@ var listWorkspaceCommand = &cobra.Command{
 		table.SetHeaderLine(false)
 
 		for _, workspace := range workspaces.Msg.GetResult() {
-			repository := getWorkspaceRepo(workspace)
-			branch := getWorkspaceBranch(workspace)
+			repository := common.GetWorkspaceRepo(workspace)
+			branch := common.GetWorkspaceBranch(workspace)
 
 			wsData := WorkspaceDisplayData{
 				Repository: repository,
 				Branch:     branch,
 				Id:         workspace.WorkspaceId,
-				Status:     TranslatePhase(workspace.GetStatus().Instance.Status.Phase.String()),
+				Status:     common.HumanizeWorkspacePhase(workspace),
 			}
 
 			if wsListOutputField != "" {

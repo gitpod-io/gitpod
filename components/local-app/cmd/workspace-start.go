@@ -71,7 +71,7 @@ var startWorkspaceCommand = &cobra.Command{
 
 		fmt.Println("Waiting for workspace to start...")
 
-		fmt.Println("Workspace " + TranslatePhase(wsInfo.Msg.GetResult().Status.Instance.Status.Phase.String()))
+		fmt.Println("Workspace " + common.HumanizeWorkspacePhase(wsInfo.Msg.GetResult()))
 
 		previousStatus := ""
 
@@ -93,7 +93,7 @@ var startWorkspaceCommand = &cobra.Command{
 				break
 			}
 
-			currentStatus := TranslatePhase(msg.GetResult().Instance.Status.Phase.String())
+			currentStatus := common.HumanizeWorkspacePhase(wsInfo.Msg.GetResult())
 
 			if currentStatus != previousStatus {
 				fmt.Println("Workspace " + currentStatus)
