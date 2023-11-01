@@ -16,18 +16,18 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 	return []runtime.Object{&rbacv1.RoleBinding{
 		TypeMeta: common.TypeMetaRoleBinding,
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      Component,
+			Name:      ComponentServiceAccount,
 			Namespace: ctx.Namespace,
 			Labels:    common.DefaultLabels(Component),
 		},
 		RoleRef: rbacv1.RoleRef{
 			Kind:     "Role",
-			Name:     Component,
+			Name:     ComponentServiceAccount,
 			APIGroup: "rbac.authorization.k8s.io",
 		},
 		Subjects: []rbacv1.Subject{{
 			Kind: "ServiceAccount",
-			Name: Component,
+			Name: ComponentServiceAccount,
 		}},
 	}}, nil
 }

@@ -16,7 +16,7 @@ func Role(ctx *common.RenderContext) ([]runtime.Object, error) {
 	return []runtime.Object{&rbacv1.Role{
 		TypeMeta: common.TypeMetaRole,
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      Component,
+			Name:      ComponentServiceAccount,
 			Namespace: ctx.Namespace,
 			Labels:    common.DefaultLabels(Component),
 		},

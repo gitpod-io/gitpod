@@ -43,7 +43,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Spec: corev1.PodSpec{
 						Affinity:                      cluster.WithNodeAffinityHostnameAntiAffinity(Component, cluster.AffinityLabelMeta),
 						TopologySpreadConstraints:     cluster.WithHostnameTopologySpread(Component),
-						ServiceAccountName:            Component,
+						ServiceAccountName:            ComponentServiceAccount,
 						EnableServiceLinks:            pointer.Bool(false),
 						DNSPolicy:                     corev1.DNSClusterFirst,
 						RestartPolicy:                 corev1.RestartPolicyAlways,
