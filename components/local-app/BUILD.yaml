@@ -36,7 +36,7 @@ packages:
       - GOARCH=amd64
     config:
       packaging: app
-      buildCommand: ["go", "build", "-o", "gitpod-cli", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=gitpod-cli'"]
+      buildCommand: ["go", "build", "-o", "gitpod-cli", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/constants.Flavor=gitpod-cli'"]
   - name: gitpod-cli-linux-arm64
     type: go
     srcs:
@@ -53,7 +53,7 @@ packages:
       - GOARCH=arm64
     config:
       packaging: app
-      buildCommand: ["go", "build", "-o", "gitpod-cli", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=gitpod-cli'"]
+      buildCommand: ["go", "build", "-o", "gitpod-cli", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/constants.Flavor=gitpod-cli'"]
   - name: gitpod-cli-darwin-amd64
     type: go
     srcs:
@@ -70,7 +70,7 @@ packages:
       - GOARCH=amd64
     config:
       packaging: app
-      buildCommand: ["go", "build", "-o", "gitpod-cli", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=gitpod-cli'"]
+      buildCommand: ["go", "build", "-o", "gitpod-cli", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/constants.Flavor=gitpod-cli'"]
   - name: gitpod-cli-darwin-arm64
     type: go
     srcs:
@@ -87,7 +87,7 @@ packages:
       - GOARCH=arm64
     config:
       packaging: app
-      buildCommand: ["go", "build", "-o", "gitpod-cli", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=gitpod-cli'"]
+      buildCommand: ["go", "build", "-o", "gitpod-cli", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/constants.Flavor=gitpod-cli'"]
   - name: gitpod-cli-windows-amd64
     type: go
     srcs:
@@ -104,7 +104,7 @@ packages:
       - GOARCH=amd64
     config:
       packaging: app
-      buildCommand: ["go", "build", "-o", "gitpod-cli", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=gitpod-cli'"]
+      buildCommand: ["go", "build", "-o", "gitpod-cli", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/constants.Flavor=gitpod-cli'"]
   - name: gitpod-cli-windows-386
     type: go
     srcs:
@@ -121,7 +121,7 @@ packages:
       - GOARCH=386
     config:
       packaging: app
-      buildCommand: ["go", "build", "-o", "gitpod-cli", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=gitpod-cli'"]
+      buildCommand: ["go", "build", "-o", "gitpod-cli", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/constants.Flavor=gitpod-cli'"]
   - name: gitpod-cli-windows-arm64
     type: go
     srcs:
@@ -138,7 +138,7 @@ packages:
       - GOARCH=arm64
     config:
       packaging: app
-      buildCommand: ["go", "build", "-o", "gitpod-cli", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=gitpod-cli'"]
+      buildCommand: ["go", "build", "-o", "gitpod-cli", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/constants.Flavor=gitpod-cli'"]
   - name: local-app-linux-amd64
     type: go
     srcs:
@@ -155,7 +155,7 @@ packages:
       - GOARCH=amd64
     config:
       packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=local-app'"]
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/constants.Flavor=local-app'"]
   - name: local-app-linux-arm64
     type: go
     srcs:
@@ -172,7 +172,7 @@ packages:
       - GOARCH=arm64
     config:
       packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=local-app'"]
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/constants.Flavor=local-app'"]
   - name: local-app-darwin-amd64
     type: go
     srcs:
@@ -189,7 +189,7 @@ packages:
       - GOARCH=amd64
     config:
       packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=local-app'"]
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/constants.Flavor=local-app'"]
   - name: local-app-darwin-arm64
     type: go
     srcs:
@@ -206,7 +206,7 @@ packages:
       - GOARCH=arm64
     config:
       packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=local-app'"]
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/constants.Flavor=local-app'"]
   - name: local-app-windows-amd64
     type: go
     srcs:
@@ -223,7 +223,7 @@ packages:
       - GOARCH=amd64
     config:
       packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=local-app'"]
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/constants.Flavor=local-app'"]
   - name: local-app-windows-386
     type: go
     srcs:
@@ -240,7 +240,7 @@ packages:
       - GOARCH=386
     config:
       packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=local-app'"]
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/constants.Flavor=local-app'"]
   - name: local-app-windows-arm64
     type: go
     srcs:
@@ -257,7 +257,7 @@ packages:
       - GOARCH=arm64
     config:
       packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/common.Flavor=local-app'"]
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}' -X 'github.com/gitpod-io/local-app/pkg/constants.Flavor=local-app'"]
   - name: docker
     type: docker
     deps:

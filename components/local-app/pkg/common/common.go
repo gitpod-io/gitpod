@@ -18,23 +18,14 @@ import (
 	"github.com/gitpod-io/gitpod/components/public-api/go/client"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/local-app/pkg/config"
+	"github.com/gitpod-io/local-app/pkg/constants"
 	"github.com/manifoldco/promptui"
 	"github.com/zalando/go-keyring"
 )
 
-var (
-	// Version - set during build
-	Version = "dev"
-
-	// Flavor - set during build
-	Flavor = "gitpod-cli"
-
-	keyringService = "gitpod-io"
-)
-
 // GetToken returns the persisted Gitpod token
 func GetTokenKeychain(host string) (token string, err error) {
-	tkn, err := keyring.Get(keyringService, host)
+	tkn, err := keyring.Get(constants.Flavor, host)
 	if errors.Is(err, keyring.ErrNotFound) {
 		return "", nil
 	}

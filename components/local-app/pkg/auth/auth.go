@@ -19,16 +19,12 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
-	"github.com/gitpod-io/local-app/pkg/common"
+	"github.com/gitpod-io/local-app/pkg/constants"
 	"github.com/sirupsen/logrus"
 	"github.com/skratchdot/open-golang/open"
 	keyring "github.com/zalando/go-keyring"
 	"golang.org/x/oauth2"
 	"golang.org/x/xerrors"
-)
-
-const (
-	keyringService = "gitpod-io"
 )
 
 var authScopes = []string{
@@ -76,12 +72,12 @@ func ValidateToken(client gitpod.APIInterface, tkn string) error {
 
 // SetToken returns the persisted Gitpod token
 func SetToken(host, token string) error {
-	return keyring.Set(keyringService, host, token)
+	return keyring.Set(constants.Flavor, host, token)
 }
 
 // GetToken returns the persisted Gitpod token
 func GetToken(host string) (token string, err error) {
-	tkn, err := keyring.Get(keyringService, host)
+	tkn, err := keyring.Get(constants.Flavor, host)
 	if errors.Is(err, keyring.ErrNotFound) {
 		return "", nil
 	}
@@ -90,7 +86,7 @@ func GetToken(host string) (token string, err error) {
 
 // DeleteToken deletes the persisted Gitpod token
 func DeleteToken(host string) error {
-	return keyring.Delete(keyringService, host)
+	return keyring.Delete(constants.Flavor, host)
 }
 
 // LoginOpts configure the login process
@@ -187,7 +183,7 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 			TokenURL: tokenURL.String(),
 		},
 	}
-	if common.Flavor == "gitpod-cli" {
+	if constants.Flavor == "gitpod-cli" {
 		conf = &oauth2.Config{
 			ClientID:     "gitpod-cli",
 			ClientSecret: "gitpod-cli-secret",

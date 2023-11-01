@@ -6,12 +6,12 @@ package main
 
 import (
 	"github.com/gitpod-io/local-app/cmd"
-	"github.com/gitpod-io/local-app/pkg/common"
+	"github.com/gitpod-io/local-app/pkg/constants"
 	"github.com/gitpod-io/local-app/pkg/localapp"
 )
 
 func main() {
-	if common.Flavor == "gitpod-cli" {
+	if constants.Flavor == "gitpod-cli" {
 		cmd.Execute()
 	} else {
 		localapp.RunCommand()

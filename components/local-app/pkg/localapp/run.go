@@ -20,7 +20,7 @@ import (
 	appapi "github.com/gitpod-io/gitpod/local-app/api"
 	"github.com/gitpod-io/local-app/pkg/auth"
 	"github.com/gitpod-io/local-app/pkg/bastion"
-	"github.com/gitpod-io/local-app/pkg/common"
+	"github.com/gitpod-io/local-app/pkg/constants"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -39,7 +39,7 @@ func RunCommand() {
 		Usage:                "connect your Gitpod workspaces",
 		Action:               DefaultCommand("run"),
 		EnableBashCompletion: true,
-		Version:              common.Version,
+		Version:              constants.Version,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "gitpod-host",
@@ -280,7 +280,7 @@ func tryConnectToServer(gitpodUrl string, tkn string, reconnectionHandler func()
 		CloseHandler:        closeHandler,
 		ExtraHeaders: map[string]string{
 			"User-Agent":       "gitpod/local-companion",
-			"X-Client-Version": common.Version,
+			"X-Client-Version": constants.Version,
 		},
 	})
 	if err != nil {
