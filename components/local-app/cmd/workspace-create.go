@@ -19,6 +19,9 @@ import (
 
 var workspaceClass string
 var editor string
+var createDontWait = false
+var createOpenSsh = false
+var createOpenEditor = false
 
 // createWorkspaceCommand creates a new workspace
 var createWorkspaceCommand = &cobra.Command{
@@ -41,8 +44,7 @@ var createWorkspaceCommand = &cobra.Command{
 			return err
 		}
 
-		slog.Debug("Attempting to create workspace...")
-		slog.Debug(orgId)
+		slog.Debug("Attempting to create workspace...", "org", orgId, "repo", passedArg)
 		newWorkspace, err := gitpod.Workspaces.CreateAndStartWorkspace(ctx, connect.NewRequest(
 			&v1.CreateAndStartWorkspaceRequest{
 				Source:         &v1.CreateAndStartWorkspaceRequest_ContextUrl{ContextUrl: passedArg},
@@ -59,17 +61,38 @@ var createWorkspaceCommand = &cobra.Command{
 			return err
 		}
 
-		if len(newWorkspace.Msg.WorkspaceId) == 0 {
+		workspaceID := newWorkspace.Msg.WorkspaceId
+
+		if len(workspaceID) == 0 {
 			return fmt.Errorf("Exception: API did not return a workspace ID back. Please try creating the workspace again")
 		}
 
-		fmt.Println(newWorkspace.Msg.WorkspaceId)
+		if createDontWait {
+			fmt.Println(workspaceID)
+			return nil
+		}
+
+		err = common.ObserveWsUntilStarted(ctx, workspaceID)
+		if err != nil {
+			return err
+		}
+
+		if createOpenSsh {
+			return common.SshConnectToWs(ctx, workspaceID, false)
+		}
+		if createOpenEditor {
+			return common.OpenWsInPreferredEditor(ctx, workspaceID)
+		}
+
 		return nil
 	},
 }
 
 func init() {
 	wsCmd.AddCommand(createWorkspaceCommand)
+	createWorkspaceCommand.Flags().BoolVarP(&createDontWait, "dont-wait", "d", false, "don't wait for the workspace to start and just print out the newly created workspace's ID")
 	createWorkspaceCommand.Flags().StringVarP(&workspaceClass, "class", "c", "", "the workspace class")
 	createWorkspaceCommand.Flags().StringVarP(&editor, "editor", "e", "", "the editor to use")
+	createWorkspaceCommand.Flags().BoolVarP(&createOpenSsh, "ssh", "s", false, "open an SSH connection to workspace after starting")
+	createWorkspaceCommand.Flags().BoolVarP(&createOpenEditor, "open", "o", false, "open the workspace in an editor after starting")
 }

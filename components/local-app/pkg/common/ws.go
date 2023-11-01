@@ -208,3 +208,57 @@ func OpenWsInPreferredEditor(ctx context.Context, workspaceID string) error {
 
 	return nil
 }
+
+func ObserveWsUntilStarted(ctx context.Context, workspaceId string) error {
+	gitpod, err := GetGitpodClient(ctx)
+	if err != nil {
+		return err
+	}
+
+	wsInfo, err := gitpod.Workspaces.GetWorkspace(ctx, connect.NewRequest(&v1.GetWorkspaceRequest{WorkspaceId: workspaceId}))
+	if err != nil {
+		return fmt.Errorf("Failed to get workspace info: %w", err)
+	}
+
+	if wsInfo.Msg.GetResult().Status.Instance.Status.Phase == v1.WorkspaceInstanceStatus_PHASE_RUNNING {
+		return fmt.Errorf("Workspace already running")
+	}
+
+	stream, err := gitpod.Workspaces.StreamWorkspaceStatus(ctx, connect.NewRequest(&v1.StreamWorkspaceStatusRequest{WorkspaceId: workspaceId}))
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Waiting for workspace to start...")
+
+	fmt.Println("Workspace " + HumanizeWorkspacePhase(wsInfo.Msg.GetResult()))
+
+	previousStatus := ""
+
+	for stream.Receive() {
+		msg := stream.Msg()
+		if msg == nil {
+			fmt.Println("No message received")
+			continue
+		}
+
+		if msg.GetResult().Instance.Status.Phase == v1.WorkspaceInstanceStatus_PHASE_RUNNING {
+			fmt.Println("Workspace running")
+			return nil
+		}
+
+		currentStatus := HumanizeWorkspacePhase(wsInfo.Msg.GetResult())
+
+		if currentStatus != previousStatus {
+			fmt.Println("Workspace " + currentStatus)
+			previousStatus = currentStatus
+		}
+	}
+
+	if err := stream.Err(); err != nil {
+		return err
+	}
+
+	return fmt.Errorf("Workspace stream ended unexpectedly")
+}

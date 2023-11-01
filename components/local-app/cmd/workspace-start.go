@@ -7,7 +7,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/bufbuild/connect-go"
@@ -63,47 +62,16 @@ var startWorkspaceCommand = &cobra.Command{
 			return nil
 		}
 
-		stream, err := gitpod.Workspaces.StreamWorkspaceStatus(ctx, connect.NewRequest(&v1.StreamWorkspaceStatusRequest{WorkspaceId: workspaceID}))
-
+		err = common.ObserveWsUntilStarted(ctx, workspaceID)
 		if err != nil {
 			return err
 		}
 
-		fmt.Println("Waiting for workspace to start...")
-
-		fmt.Println("Workspace " + common.HumanizeWorkspacePhase(wsInfo.Msg.GetResult()))
-
-		previousStatus := ""
-
-		for stream.Receive() {
-			msg := stream.Msg()
-			if msg == nil {
-				fmt.Println("No message received")
-				continue
-			}
-
-			if msg.GetResult().Instance.Status.Phase == v1.WorkspaceInstanceStatus_PHASE_RUNNING {
-				fmt.Println("Workspace started")
-				if startOpenSsh {
-					return common.SshConnectToWs(ctx, workspaceID, false)
-				}
-				if startOpenEditor {
-					return common.OpenWsInPreferredEditor(ctx, workspaceID)
-				}
-				break
-			}
-
-			currentStatus := common.HumanizeWorkspacePhase(wsInfo.Msg.GetResult())
-
-			if currentStatus != previousStatus {
-				fmt.Println("Workspace " + currentStatus)
-				previousStatus = currentStatus
-			}
+		if startOpenSsh {
+			return common.SshConnectToWs(ctx, workspaceID, false)
 		}
-
-		if err := stream.Err(); err != nil {
-			log.Fatalf("Failed to receive: %v", err)
-			return err
+		if startOpenEditor {
+			return common.OpenWsInPreferredEditor(ctx, workspaceID)
 		}
 
 		return nil
