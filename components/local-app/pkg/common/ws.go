@@ -161,8 +161,6 @@ func OpenWsInPreferredEditor(ctx context.Context, workspaceID string) error {
 		Path:   "_supervisor/v1/status/ide/wait/true",
 	}
 
-	fmt.Println((u.String()))
-
 	resp, err := http.Get(u.String())
 	if err != nil {
 		return err
@@ -178,8 +176,6 @@ func OpenWsInPreferredEditor(ctx context.Context, workspaceID string) error {
 	if err := json.Unmarshal(body, &response); err != nil {
 		return err
 	}
-
-	fmt.Printf("%+v\n", response)
 
 	if response.OK {
 		url := response.Desktop.Link
@@ -200,6 +196,10 @@ func OpenWsInPreferredEditor(ctx context.Context, workspaceID string) error {
 
 		err := cmd.Start()
 		if err != nil {
+			if execErr, ok := err.(*exec.Error); ok && execErr.Err == exec.ErrNotFound {
+				fmt.Println(url)
+				return fmt.Errorf("executable file not found in $PATH: %s. Please open the link manually instead", execErr.Name)
+			}
 			return fmt.Errorf("failed to open workspace in editor: %w", err)
 		}
 	} else {

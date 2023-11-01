@@ -133,12 +133,12 @@ func SelectWorkspace(ctx context.Context, filter WorkspaceFilter) string {
 	}
 
 	if len(wsIds) == 0 {
-		fmt.Println("No workspaces found")
+		slog.Error("No workspaces found to use")
 		return ""
 	}
 
 	if len(wsIds) == 1 {
-		fmt.Println("Only one workspace found, automatically selecting it")
+		slog.Info("Only one workspace found, automatically selecting it")
 		return wsIds[0]
 	}
 
