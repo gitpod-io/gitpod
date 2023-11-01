@@ -29,23 +29,16 @@ var serverCmd = &cobra.Command{
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		image := viper.GetString("image")
-		timeout := getTimeout()
-		logger := log.WithField("timeout", timeout.String()).WithField("image", image)
-		if image == "" {
-			logger.Fatal("Target image should be defined")
+		cfg, err := newDeploymentWaiterConfig()
+		if err != nil {
+			log.Fatal("Target image should be defined")
 		}
+		timeout := getTimeout()
+		logger := log.WithField("timeout", timeout.String()).WithField("image", cfg.targetImage).WithField("name", cfg.name).WithField("namespace", cfg.namespace)
 		ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
 		defer cancel()
 
-		err := waitK8SDeploymentImage(ctx, logger, &deploymentWaiterConfig{
-			// TODO: make sure there's only one source for those vars in installer and service-waiter
-			namespace:      "default",
-			name:           "server",
-			deploymentName: "server",
-			containerName:  "server",
-			targetImage:    image,
-		})
+		err = waitK8SDeploymentImage(ctx, logger, cfg)
 
 		if err != nil {
 			logger.WithError(err).Fatal("failed to wait service")
@@ -61,6 +54,24 @@ type deploymentWaiterConfig struct {
 	deploymentName string
 	containerName  string
 	targetImage    string
+}
+
+func newDeploymentWaiterConfig() (*deploymentWaiterConfig, error) {
+	image := viper.GetString("image")
+	if image == "" {
+		return nil, fmt.Errorf("Target image should be defined")
+	}
+	namespace := viper.GetString("namespace")
+	component := viper.GetString("component")
+	cfg := &deploymentWaiterConfig{
+		namespace: namespace,
+
+		name:           component,
+		deploymentName: component,
+		containerName:  component,
+		targetImage:    component,
+	}
+	return cfg, nil
 }
 
 func checkK8SDeploymentImage(ctx context.Context, k8sClient *kubernetes.Clientset, cfg *deploymentWaiterConfig) (bool, error) {
@@ -83,6 +94,7 @@ func checkK8SDeploymentImage(ctx context.Context, k8sClient *kubernetes.Clientse
 }
 
 func waitK8SDeploymentImage(ctx context.Context, logger *logrus.Entry, cfg *deploymentWaiterConfig) error {
+	logger.Infof("attempting to check if %s is using target image", cfg.name)
 	k8sCfg, err := rest.InClusterConfig()
 	if err != nil {
 		return fmt.Errorf("cannot get in cluster config: %w", err)
@@ -102,7 +114,7 @@ func waitK8SDeploymentImage(ctx context.Context, logger *logrus.Entry, cfg *depl
 		default:
 			ok, err := checkK8SDeploymentImage(ctx, k8sClient, cfg)
 			if err != nil {
-				logger.WithError(err).WithField("component", cfg.name).Error("image check failed")
+				logger.WithError(err).Error("image check failed")
 				continue
 			}
 			if ok {
@@ -116,4 +128,6 @@ func waitK8SDeploymentImage(ctx context.Context, logger *logrus.Entry, cfg *depl
 func init() {
 	rootCmd.AddCommand(serverCmd)
 	serverCmd.Flags().String("image", "", "The latest image of current installer build")
+	serverCmd.Flags().String("namespace", "", "The namespace of deployment")
+	serverCmd.Flags().String("component", "", "Component name of deployment")
 }

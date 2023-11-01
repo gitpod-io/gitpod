@@ -496,8 +496,7 @@ func RedisWaiterContainer(ctx *RenderContext) *corev1.Container {
 // ServerDeploymentWaiterContainer is the container used to wait for the deployment/server to be ready
 // it requires deployment get access to the cluster
 func ServerDeploymentWaiterContainer(ctx *RenderContext) *corev1.Container {
-	// TODO: use common-go
-	image := ctx.ImageName(ctx.Config.Repository, "server", ctx.VersionManifest.Components.Server.Version)
+	image := ctx.ImageName(ctx.Config.Repository, ServerComponent, ctx.VersionManifest.Components.Server.Version)
 	return &corev1.Container{
 		Name:  "server-waiter",
 		Image: ctx.ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
@@ -506,6 +505,10 @@ func ServerDeploymentWaiterContainer(ctx *RenderContext) *corev1.Container {
 			"server",
 			"--image",
 			image,
+			"--namespace",
+			ctx.Namespace,
+			"--component",
+			ServerComponent,
 		},
 		SecurityContext: &corev1.SecurityContext{
 			Privileged:               pointer.Bool(false),
@@ -515,11 +518,10 @@ func ServerDeploymentWaiterContainer(ctx *RenderContext) *corev1.Container {
 	}
 }
 
-// PublicAPIServerDeploymentWaiterContainer is the container used to wait for the deployment/public-api-server to be ready
+// PublicApiServerDeploymentWaiterContainer is the container used to wait for the deployment/public-api-server to be ready
 // it requires deployment get access to the cluster
-func PublicAPIServerDeploymentWaiterContainer(ctx *RenderContext) *corev1.Container {
-	// TODO: use common-go
-	image := ctx.ImageName(ctx.Config.Repository, "public-api-server", ctx.VersionManifest.Components.Server.Version)
+func PublicApiServerDeploymentWaiterContainer(ctx *RenderContext) *corev1.Container {
+	image := ctx.ImageName(ctx.Config.Repository, PublicApiComponent, ctx.VersionManifest.Components.Server.Version)
 	return &corev1.Container{
 		Name:  "papi-server-waiter",
 		Image: ctx.ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
@@ -528,6 +530,10 @@ func PublicAPIServerDeploymentWaiterContainer(ctx *RenderContext) *corev1.Contai
 			"public-api-server",
 			"--image",
 			image,
+			"--namespace",
+			ctx.Namespace,
+			"--component",
+			PublicApiComponent,
 		},
 		SecurityContext: &corev1.SecurityContext{
 			Privileged:               pointer.Bool(false),

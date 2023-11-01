@@ -49,7 +49,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						RestartPolicy:                 corev1.RestartPolicyAlways,
 						TerminationGracePeriodSeconds: pointer.Int64(30),
 						InitContainers: []corev1.Container{
-							*common.PublicAPIServerDeploymentWaiterContainer(ctx),
+							*common.PublicApiServerDeploymentWaiterContainer(ctx),
 							*common.ServerDeploymentWaiterContainer(ctx),
 						},
 						Containers: []corev1.Container{{

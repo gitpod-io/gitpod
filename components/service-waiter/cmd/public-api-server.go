@@ -23,23 +23,16 @@ var publicApiServerCmd = &cobra.Command{
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		image := viper.GetString("image")
-		timeout := getTimeout()
-		logger := log.WithField("timeout", timeout.String()).WithField("image", image)
-		if image == "" {
-			logger.Fatal("Target image should be defined")
+		cfg, err := newDeploymentWaiterConfig()
+		if err != nil {
+			log.Fatal("Target image should be defined")
 		}
+		timeout := getTimeout()
+		logger := log.WithField("timeout", timeout.String()).WithField("image", cfg.targetImage).WithField("name", cfg.name).WithField("namespace", cfg.namespace)
 		ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
 		defer cancel()
 
-		err := waitK8SDeploymentImage(ctx, logger, &deploymentWaiterConfig{
-			// TODO: make sure there's only one source for those vars in installer and service-waiter
-			namespace:      "default",
-			name:           "public-api-server",
-			deploymentName: "public-api-server",
-			containerName:  "public-api-server",
-			targetImage:    image,
-		})
+		err = waitK8SDeploymentImage(ctx, logger, cfg)
 
 		if err != nil {
 			logger.WithError(err).Fatal("failed to wait service")
@@ -52,4 +45,6 @@ var publicApiServerCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(publicApiServerCmd)
 	publicApiServerCmd.Flags().String("image", "", "The latest image of current installer build")
+	publicApiServerCmd.Flags().String("namespace", "", "The namespace of deployment")
+	publicApiServerCmd.Flags().String("component", "", "Component name of deployment")
 }

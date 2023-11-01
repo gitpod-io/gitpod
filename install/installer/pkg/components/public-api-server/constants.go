@@ -4,8 +4,12 @@
 
 package public_api_server
 
+import (
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
+)
+
 const (
-	Component = "public-api-server"
+	Component = common.PublicApiComponent
 
 	GRPCPortName      = "grpc"
 	GRPCContainerPort = 9001
