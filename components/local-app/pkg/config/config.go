@@ -6,25 +6,41 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 
 	"github.com/spf13/viper"
 )
 
-// Init initializes viper which reads in configuration files/environment variables
-func Init() {
+func getConfigFileDir() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
-	configPath := filepath.Join(homeDir)
-	configFile := filepath.Join(configPath, ".gp-cli.json")
+	configurationDir := filepath.Join(homeDir)
+
+	return configurationDir, nil
+}
+
+func getConfigFilePath(configurationDir string) string {
+	configFile := filepath.Join(configurationDir, ".gp-cli.json")
+	return configFile
+}
+
+// Init initializes viper which reads in configuration files/environment variables
+func Init() {
+	configDir, err := getConfigFileDir()
+	if err != nil {
+		slog.Debug("Could not retrieve config file path", "err", err)
+	}
+
+	configFile := getConfigFilePath(configDir)
 
 	viper.SetConfigName(".gp-cli")
 	viper.SetConfigType("json")
-	viper.AddConfigPath(configPath)
+	viper.AddConfigPath(configDir)
 
 	viper.SetEnvPrefix("gitpod")
 	viper.AutomaticEnv()
@@ -33,16 +49,44 @@ func Init() {
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			// Config file not found; create and write a new one
-			if err := os.MkdirAll(configPath, os.ModePerm); err != nil {
-				panic("Failed to create config directory: " + err.Error())
-			}
-			viper.SafeWriteConfigAs(configFile)
+			slog.Debug("Config file not found", "path", configFile)
 		} else {
-			// Config file was found but another error was produced
-			panic("Failed to read config file: " + err.Error())
+			slog.Warn("Failed to read config file", "err", err)
 		}
 	}
+}
+
+func CreateConfigFile() error {
+	configDir, err := getConfigFileDir()
+	if err != nil {
+		slog.Error("Could not retrieve config file path", "err", err)
+		return err
+	}
+
+	configFile := getConfigFilePath(configDir)
+
+	viper.SetConfigName(".gp-cli")
+	viper.SetConfigType("json")
+	viper.AddConfigPath(configDir)
+
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			// Config file not found; create and write a new one
+			if err := os.MkdirAll(configFile, os.ModePerm); err != nil {
+				return fmt.Errorf("Failed to create config directory: %w", err)
+			}
+			err = viper.SafeWriteConfigAs(configFile)
+			if err != nil {
+				return fmt.Errorf("Failed to write config file: %w", err)
+			}
+			slog.Info("Config file created", "path", configFile)
+		} else {
+			// Config file was found but another error was produced
+			return fmt.Errorf("Failed to read config file: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func GetGitpodUrl() string {

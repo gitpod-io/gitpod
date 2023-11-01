@@ -27,7 +27,7 @@ var rootCmd = &cobra.Command{
 			var logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
 			slog.SetDefault(logger)
 		} else {
-			var logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelWarn}))
+			var logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}))
 			slog.SetDefault(logger)
 			return
 		}
