@@ -101,8 +101,7 @@ message WorkspaceInfoResponse {
     // configcat_enabled controls whether configcat is enabled
     bool configcat_enabled = 18;
 
-    // default_workspace_image is the default image of the workspace
-    string default_workspace_image = 19;
+    reserved 19;
 }
 
 enum DebugWorkspaceType {

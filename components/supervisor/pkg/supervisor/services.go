@@ -647,20 +647,10 @@ type InfoService struct {
 	GitpodService serverapi.APIInterface
 
 	api.UnimplementedInfoServiceServer
-
-	cacheMu               sync.RWMutex
-	cacheTimestamp        time.Time
-	defaultWorkspaceImage string
 }
 
-var infoCacheDuration = 30 * time.Second
-
 func NewInfoService(cfg *Config, cstate ContentState, gitpodService serverapi.APIInterface) *InfoService {
-	svc := &InfoService{cfg: cfg, ContentState: cstate, GitpodService: gitpodService}
-	// it makes no sense to handle cancel here, just ignore the warning (find no way now to disable it)
-	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
-	go svc.getDefaultWorkspaceImage(ctx)
-	return svc
+	return &InfoService{cfg: cfg, ContentState: cstate, GitpodService: gitpodService}
 }
 
 // RegisterGRPC registers the gRPC info service.
@@ -673,55 +663,22 @@ func (is *InfoService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) 
 	return api.RegisterInfoServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 }
 
-func (is *InfoService) getDefaultWorkspaceImage(ctx context.Context) string {
-	is.cacheMu.RLock()
-
-	if time.Since(is.cacheTimestamp) < infoCacheDuration {
-		is.cacheMu.RUnlock()
-		return is.defaultWorkspaceImage
-	}
-	is.cacheMu.RUnlock()
-
-	is.cacheMu.Lock()
-	defer func() {
-		is.cacheTimestamp = time.Now()
-		is.cacheMu.Unlock()
-	}()
-	if time.Since(is.cacheTimestamp) < infoCacheDuration {
-		return is.defaultWorkspaceImage
-	}
-
-	is.defaultWorkspaceImage = is.cfg.DefaultWorkspaceImage
-	if is.GitpodService == nil {
-		return is.defaultWorkspaceImage
-	}
-	wsImage, err := is.GitpodService.GetDefaultWorkspaceImage(ctx)
-	if err == nil {
-		is.defaultWorkspaceImage = wsImage
-	} else {
-		log.WithError(err).Error("failed to get default workspace image")
-	}
-	return is.defaultWorkspaceImage
-}
-
 // WorkspaceInfo provides information about the workspace.
 func (is *InfoService) WorkspaceInfo(ctx context.Context, req *api.WorkspaceInfoRequest) (*api.WorkspaceInfoResponse, error) {
-	defaultWorkspaceImage := is.getDefaultWorkspaceImage(ctx)
 	resp := &api.WorkspaceInfoResponse{
-		CheckoutLocation:      is.cfg.RepoRoot,
-		InstanceId:            is.cfg.WorkspaceInstanceID,
-		WorkspaceId:           is.cfg.WorkspaceID,
-		DefaultWorkspaceImage: defaultWorkspaceImage,
-		GitpodHost:            is.cfg.GitpodHost,
-		WorkspaceContextUrl:   is.cfg.WorkspaceContextURL,
-		WorkspaceClusterHost:  is.cfg.WorkspaceClusterHost,
-		WorkspaceUrl:          is.cfg.WorkspaceUrl,
-		IdeAlias:              is.cfg.IDEAlias,
-		IdePort:               uint32(is.cfg.IDEPort),
-		WorkspaceClass:        &api.WorkspaceInfoResponse_WorkspaceClass{Id: is.cfg.WorkspaceClass},
-		OwnerId:               is.cfg.OwnerId,
-		DebugWorkspaceType:    is.cfg.DebugWorkspaceType,
-		ConfigcatEnabled:      is.cfg.ConfigcatEnabled,
+		CheckoutLocation:     is.cfg.RepoRoot,
+		InstanceId:           is.cfg.WorkspaceInstanceID,
+		WorkspaceId:          is.cfg.WorkspaceID,
+		GitpodHost:           is.cfg.GitpodHost,
+		WorkspaceContextUrl:  is.cfg.WorkspaceContextURL,
+		WorkspaceClusterHost: is.cfg.WorkspaceClusterHost,
+		WorkspaceUrl:         is.cfg.WorkspaceUrl,
+		IdeAlias:             is.cfg.IDEAlias,
+		IdePort:              uint32(is.cfg.IDEPort),
+		WorkspaceClass:       &api.WorkspaceInfoResponse_WorkspaceClass{Id: is.cfg.WorkspaceClass},
+		OwnerId:              is.cfg.OwnerId,
+		DebugWorkspaceType:   is.cfg.DebugWorkspaceType,
+		ConfigcatEnabled:     is.cfg.ConfigcatEnabled,
 	}
 	if is.cfg.WorkspaceClassInfo != nil {
 		resp.WorkspaceClass.DisplayName = is.cfg.WorkspaceClassInfo.DisplayName

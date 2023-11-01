@@ -19,6 +19,8 @@ import (
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpod"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpodlib"
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
+	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
+	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
 var (
@@ -125,12 +127,22 @@ USER gitpod
 	},
 }
 
-func getDefaultWorkspaceImage(ctx context.Context) (string, error) {
-	wsInfo, err := gitpod.GetWSInfo(ctx)
+func getDefaultWorkspaceImage(ctx context.Context, wsInfo *api.WorkspaceInfoResponse) (string, error) {
+	client, err := gitpod.ConnectToServer(ctx, wsInfo, []string{
+		"function:getDefaultWorkspaceImage",
+	})
 	if err != nil {
 		return "", err
 	}
-	return wsInfo.DefaultWorkspaceImage, nil
+	defer client.Close()
+
+	res, err := client.GetDefaultWorkspaceImage(ctx, &protocol.GetDefaultWorkspaceImageParams{
+		WorkspaceID: wsInfo.WorkspaceId,
+	})
+	if err != nil {
+		return "", err
+	}
+	return res.Image, nil
 }
 
 func isRequired(input string) error {
@@ -167,7 +179,11 @@ func askForDockerImage(ctx context.Context, cfg *gitpodlib.GitpodFile) error {
 	}
 
 	if chce == 0 {
-		defaultImage, err := getDefaultWorkspaceImage(ctx)
+		wsInfo, err := gitpod.GetWSInfo(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get workspace info: %w", err)
+		}
+		defaultImage, err := getDefaultWorkspaceImage(ctx, wsInfo)
 		if err != nil {
 			return fmt.Errorf("failed to get organization default workspace image: %w", err)
 		}
