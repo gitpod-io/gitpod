@@ -257,7 +257,6 @@
         "jetbrains": {
             "type": "object",
             "description": "Configure JetBrains integration",
-            "deprecationMessage": "The 'jetbrains' property is experimental.",
             "additionalProperties": false,
             "properties": {
                 "plugins": {
