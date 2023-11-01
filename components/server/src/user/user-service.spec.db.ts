@@ -23,6 +23,7 @@ const expect = chai.expect;
 describe("UserService", async () => {
     let container: Container;
     let userService: UserService;
+    let orgService: OrganizationService;
     let auth: Authorizer;
     let org: Organization;
     let user: User;
@@ -36,7 +37,7 @@ describe("UserService", async () => {
         });
         userService = container.get<UserService>(UserService);
         auth = container.get(Authorizer);
-        const orgService = container.get<OrganizationService>(OrganizationService);
+        orgService = container.get<OrganizationService>(OrganizationService);
         org = await orgService.createOrganization(BUILTIN_INSTLLATION_ADMIN_USER_ID, "myOrg");
         const invite = await orgService.getOrCreateInvite(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id);
         user = await userService.createUser({
@@ -202,5 +203,36 @@ describe("UserService", async () => {
         users = await userService.listUsers(nonOrgUser.id, {});
         expect(users.total).to.eq(1);
         expect(users.rows.some((u) => u.id === nonOrgUser.id)).to.be.true;
+    });
+
+    it("should delete user", async () => {
+        await expectError(ErrorCodes.NOT_FOUND, userService.deleteUser(nonOrgUser.id, user2.id));
+        await expectError(ErrorCodes.PERMISSION_DENIED, userService.deleteUser(user.id, user2.id));
+        // user can delete themselves
+        await userService.deleteUser(user.id, user.id);
+        user = await userService.findUserById(user.id, user.id);
+        expect(user.markedDeleted).to.be.true;
+
+        // org owners can delete users owned by org
+        const orgOwner = await userService.createUser({
+            organizationId: org.id,
+            identity: {
+                authId: "foo",
+                authName: "bar",
+                authProviderId: "github",
+                primaryEmail: "yolo@yolo.com",
+            },
+        });
+        await orgService.addOrUpdateMember(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id, orgOwner.id, "owner");
+
+        await expectError(ErrorCodes.NOT_FOUND, userService.deleteUser(orgOwner.id, nonOrgUser.id));
+        await userService.deleteUser(orgOwner.id, user2.id);
+        user2 = await userService.findUserById(orgOwner.id, user2.id);
+        expect(user2.markedDeleted).to.be.true;
+
+        // admins can delete any user
+        await userService.deleteUser(BUILTIN_INSTLLATION_ADMIN_USER_ID, nonOrgUser.id);
+        nonOrgUser = await userService.findUserById(BUILTIN_INSTLLATION_ADMIN_USER_ID, nonOrgUser.id);
+        expect(nonOrgUser.markedDeleted).to.be.true;
     });
 });

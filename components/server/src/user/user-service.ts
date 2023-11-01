@@ -10,6 +10,7 @@ import { UserDB } from "@gitpod/gitpod-db/lib";
 import { Authorizer } from "../authorization/authorizer";
 import {
     AdditionalUserData,
+    Disposable,
     Identity,
     RoleOrPermission,
     TokenEntry,
@@ -229,5 +230,76 @@ export class UserService {
         await this.authorizer.checkPermissionOnUser(subjectId, "write_info", userId);
 
         await this.userDb.updateUserPartial({ id: userId, fgaRelationshipsVersion: undefined });
+    }
+
+    private onDeleteListeners = new Set<
+        (subjectId: string, user: User, transactionCtx: TransactionalContext) => Promise<void>
+    >();
+    public onDeleteUser(
+        handler: (subjectId: string, user: User, transactionCtx: TransactionalContext) => Promise<void>,
+    ): Disposable {
+        this.onDeleteListeners.add(handler);
+        return {
+            dispose: () => {
+                this.onDeleteListeners.delete(handler);
+            },
+        };
+    }
+
+    /**
+     * This method deletes a User logically. The contract here is that after running this method without receiving an
+     * error, the system does not contain any data that is relatable to the actual person in the sense of the GDPR.
+     * To guarantee that, but also maintain traceability
+     * we anonymize data that might contain user related/relatable data and keep the entities itself (incl. ids).
+     */
+    async deleteUser(subjectId: string, targetUserId: string) {
+        await this.authorizer.checkPermissionOnUser(subjectId, "delete", targetUserId);
+
+        await this.userDb.transaction(async (db, ctx) => {
+            const user = await this.userDb.findUserById(targetUserId);
+            if (!user) {
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, `No user with id ${targetUserId} found!`);
+            }
+
+            if (user.markedDeleted === true) {
+                log.debug({ userId: targetUserId }, "Is deleted but markDeleted already set. Continuing.");
+            }
+            for (const listener of this.onDeleteListeners) {
+                await listener(subjectId, user, ctx);
+            }
+            user.avatarUrl = "deleted-avatarUrl";
+            user.fullName = "deleted-fullName";
+            user.name = "deleted-Name";
+            if (user.verificationPhoneNumber) {
+                user.verificationPhoneNumber = "deleted-phoneNumber";
+            }
+            for (const identity of user.identities) {
+                identity.deleted = true;
+                await db.deleteTokens(identity);
+            }
+            user.lastVerificationTime = undefined;
+            user.markedDeleted = true;
+            await db.storeUser(user);
+        });
+
+        // Track the deletion Event for Analytics Purposes
+        this.analytics.track({
+            userId: targetUserId,
+            event: "deletion",
+            properties: {
+                deleted_at: new Date().toISOString(),
+            },
+        });
+        this.analytics.identify({
+            userId: targetUserId,
+            traits: {
+                github_slug: "deleted-user",
+                gitlab_slug: "deleted-user",
+                bitbucket_slug: "deleted-user",
+                email: "deleted-user",
+                full_name: "deleted-user",
+                name: "deleted-user",
+            },
+        });
     }
 }
