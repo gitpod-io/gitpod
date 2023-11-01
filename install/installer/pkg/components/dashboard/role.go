@@ -22,8 +22,8 @@ func Role(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		Rules: []rbacv1.PolicyRule{
 			{
-				APIGroups: []string{""},
-				Resources: []string{"deployment"},
+				APIGroups: []string{"apps"},
+				Resources: []string{"deployments"},
 				Verbs: []string{
 					"get",
 				},
