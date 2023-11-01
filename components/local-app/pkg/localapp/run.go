@@ -161,6 +161,8 @@ func run(opts runOptions) error {
 	if opts.verbose {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
+
+	logrus.WithField("options", opts).Info("starting local companion")
 	logrus.WithField("ssh_config", opts.sshConfigPath).Info("writing workspace ssh_config file")
 
 	// Trailing slash(es) result in connection issues, so remove them preemptively
