@@ -57,7 +57,11 @@ Create a Gitpod configuration for this project.
 			return err
 		}
 		if !interactive {
-			defaultImage, err := getDefaultWorkspaceImage(ctx)
+			wsInfo, err := gitpod.GetWSInfo(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to get workspace info: %w", err)
+			}
+			defaultImage, err := getDefaultWorkspaceImage(ctx, wsInfo)
 			if err != nil {
 				fmt.Printf("failed to get organization default workspace image: %v\n", err)
 				fmt.Println("fallback to gitpod default")
