@@ -53,7 +53,7 @@ export const useUnifiedRepositorySearch = ({ searchString, excludeProjects = fal
 
 export const filterRepos = (searchString: string, suggestedRepos: SuggestedRepository[]) => {
     let results = suggestedRepos;
-    const normalizedSearchString = searchString.trim().toLowerCase();
+    const normalizedSearchString = searchString.trim();
 
     if (normalizedSearchString.length > 1) {
         results = suggestedRepos.filter((r) => {
