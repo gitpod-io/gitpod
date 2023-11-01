@@ -17,7 +17,7 @@ spec:
     - alert: GitpodWorkspaceStuckOnStoppedMk2
       labels:
         severity: warning
-        team: workspace
+        team: engine
       for: 20m
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceStuckOnStopped.md
@@ -98,7 +98,7 @@ spec:
     - alert: GitpodImagebuildDoneSuccess
       labels:
         severity: warning
-        team: workspace
+        team: engine
       for: 12h
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodImagebuildDoneSuccess.md
@@ -110,7 +110,7 @@ spec:
     - alert: GitpodImagebuildStartSuccess
       labels:
         severity: warning
-        team: workspace
+        team: engine
       for: 2h
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodImagebuildStartSuccess.md
