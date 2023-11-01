@@ -4,13 +4,19 @@
 
 package dashboard
 
-import "github.com/gitpod-io/gitpod/installer/pkg/common"
+import (
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"k8s.io/apimachinery/pkg/runtime"
+)
 
 var Objects = common.CompositeRenderFunc(
 	deployment,
 	networkpolicy,
 	rolebinding,
 	pdb,
+	func(ctx *common.RenderContext) ([]runtime.Object, error) {
+		return Role(ctx)
+	},
 	common.GenerateService(Component, []common.ServicePort{
 		{
 			Name:          PortName,

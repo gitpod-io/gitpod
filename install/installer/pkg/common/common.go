@@ -493,6 +493,50 @@ func RedisWaiterContainer(ctx *RenderContext) *corev1.Container {
 	}
 }
 
+// ServerDeploymentWaiterContainer is the container used to wait for the deployment/server to be ready
+// it requires deployment get access to the cluster
+func ServerDeploymentWaiterContainer(ctx *RenderContext) *corev1.Container {
+	// TODO: use common-go
+	image := ctx.ImageName(ctx.Config.Repository, "server", ctx.VersionManifest.Components.Server.Version)
+	return &corev1.Container{
+		Name:  "server-waiter",
+		Image: ctx.ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
+		Args: []string{
+			"-v",
+			"server",
+			"--image",
+			image,
+		},
+		SecurityContext: &corev1.SecurityContext{
+			Privileged:               pointer.Bool(false),
+			AllowPrivilegeEscalation: pointer.Bool(false),
+			RunAsUser:                pointer.Int64(31001),
+		},
+	}
+}
+
+// PublicAPIServerDeploymentWaiterContainer is the container used to wait for the deployment/public-api-server to be ready
+// it requires deployment get access to the cluster
+func PublicAPIServerDeploymentWaiterContainer(ctx *RenderContext) *corev1.Container {
+	// TODO: use common-go
+	image := ctx.ImageName(ctx.Config.Repository, "public-api-server", ctx.VersionManifest.Components.Server.Version)
+	return &corev1.Container{
+		Name:  "papi-server-waiter",
+		Image: ctx.ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
+		Args: []string{
+			"-v",
+			"public-api-server",
+			"--image",
+			image,
+		},
+		SecurityContext: &corev1.SecurityContext{
+			Privileged:               pointer.Bool(false),
+			AllowPrivilegeEscalation: pointer.Bool(false),
+			RunAsUser:                pointer.Int64(31001),
+		},
+	}
+}
+
 func KubeRBACProxyContainer(ctx *RenderContext) *corev1.Container {
 	return KubeRBACProxyContainerWithConfig(ctx)
 }
