@@ -106,12 +106,12 @@ func ValidateToken(client gitpod.APIInterface, tkn string) error {
 
 // SetToken returns the persisted Gitpod token
 func SetToken(host, token string) error {
-	return keyring.Set(constants.Flavor, host, token)
+	return keyring.Set(constants.KeychainServiceName, host, token)
 }
 
 // GetToken returns the persisted Gitpod token
 func GetToken(host string) (token string, err error) {
-	tkn, err := keyring.Get(constants.Flavor, host)
+	tkn, err := keyring.Get(constants.KeychainServiceName, host)
 	if errors.Is(err, keyring.ErrNotFound) {
 		return "", nil
 	}
@@ -120,7 +120,7 @@ func GetToken(host string) (token string, err error) {
 
 // DeleteToken deletes the persisted Gitpod token
 func DeleteToken(host string) error {
-	return keyring.Delete(constants.Flavor, host)
+	return keyring.Delete(constants.KeychainServiceName, host)
 }
 
 // LoginOpts configure the login process
