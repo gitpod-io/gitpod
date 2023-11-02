@@ -17,6 +17,7 @@ type Gitpod struct {
 	cfg *options
 
 	Workspaces           gitpod_experimental_v1connect.WorkspacesServiceClient
+	Editors              gitpod_experimental_v1connect.EditorServiceClient
 	Teams                gitpod_experimental_v1connect.TeamsServiceClient
 	Projects             gitpod_experimental_v1connect.ProjectsServiceClient
 	PersonalAccessTokens gitpod_experimental_v1connect.TokensServiceClient
@@ -46,6 +47,7 @@ func New(options ...Option) (*Gitpod, error) {
 	projects := gitpod_experimental_v1connect.NewProjectsServiceClient(client, url, serviceOpts...)
 	tokens := gitpod_experimental_v1connect.NewTokensServiceClient(client, url, serviceOpts...)
 	workspaces := gitpod_experimental_v1connect.NewWorkspacesServiceClient(client, url, serviceOpts...)
+	editors := gitpod_experimental_v1connect.NewEditorServiceClient(client, url, serviceOpts...)
 	idp := gitpod_experimental_v1connect.NewIdentityProviderServiceClient(client, url, serviceOpts...)
 
 	return &Gitpod{
@@ -54,6 +56,7 @@ func New(options ...Option) (*Gitpod, error) {
 		Projects:             projects,
 		PersonalAccessTokens: tokens,
 		Workspaces:           workspaces,
+		Editors:              editors,
 		IdentityProvider:     idp,
 	}, nil
 }
