@@ -22,10 +22,11 @@ func Role(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		Rules: []rbacv1.PolicyRule{
 			{
-				APIGroups: []string{"apps"},
-				Resources: []string{"deployments"},
+				APIGroups: []string{""},
+				Resources: []string{"pods"},
 				Verbs: []string{
 					"get",
+					"list",
 				},
 			},
 		},
