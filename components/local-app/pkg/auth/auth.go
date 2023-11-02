@@ -167,7 +167,7 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 
 	defer func() {
 		if closeErr := rl.Close(); closeErr != nil {
-			logrus.WithField("port", port).WithError(closeErr).Warn("Failed to to close listener")
+			logrus.WithField("port", port).WithError(closeErr).Debug("Failed to close listener")
 		}
 	}()
 
