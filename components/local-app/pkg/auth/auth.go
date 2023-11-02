@@ -30,7 +30,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
-var authScopes = []string{
+var authScopesLocalCompanion = []string{
 	"function:getGitpodTokenScopes",
 	"function:getWorkspace",
 	"function:getWorkspaces",
@@ -60,11 +60,11 @@ func fetchValidCliScopes(ctx context.Context) ([]string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusOK {
-		err = json.NewDecoder(resp.Body).Decode(&authScopes)
+		err = json.NewDecoder(resp.Body).Decode(&authScopesLocalCompanion)
 		if err != nil {
 			return nil, err
 		}
-		return authScopes, nil
+		return authScopesLocalCompanion, nil
 	}
 
 	return nil, errors.New(host + " did not provide valid scopes")
@@ -96,7 +96,7 @@ func ValidateToken(client gitpod.APIInterface, tkn string) error {
 	for _, scope := range tknScopes {
 		tknScopesMap[scope] = struct{}{}
 	}
-	for _, scope := range authScopes {
+	for _, scope := range authScopesLocalCompanion {
 		_, ok := tknScopesMap[scope]
 		if !ok {
 			return &ErrInvalidGitpodToken{fmt.Errorf("%v scope is missing in %v", scope, tknScopes)}
@@ -212,22 +212,22 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 	conf := &oauth2.Config{
 		ClientID:     "gplctl-1.0",
 		ClientSecret: "gplctl-1.0-secret", // Required (even though it is marked as optional?!)
-		Scopes:       authScopes,
+		Scopes:       authScopesLocalCompanion,
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  authURL.String(),
 			TokenURL: tokenURL.String(),
 		},
 	}
 	if constants.Flavor == "gitpod-cli" {
-		authScopes, err = fetchValidCliScopes(ctx)
+		authScopesLocalCompanion, err = fetchValidCliScopes(ctx)
 		if err != nil {
 			return "", err
 		}
-		slog.Debug("Using CLI scopes", "scopes", authScopes)
+		slog.Debug("Using CLI scopes", "scopes", authScopesLocalCompanion)
 		conf = &oauth2.Config{
 			ClientID:     "gitpod-cli",
 			ClientSecret: "gitpod-cli-secret",
-			Scopes:       authScopes,
+			Scopes:       authScopesLocalCompanion,
 			Endpoint: oauth2.Endpoint{
 				AuthURL:  authURL.String(),
 				TokenURL: tokenURL.String(),
