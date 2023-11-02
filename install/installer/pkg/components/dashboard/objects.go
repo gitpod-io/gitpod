@@ -24,5 +24,5 @@ var Objects = common.CompositeRenderFunc(
 			ServicePort:   ServicePort,
 		},
 	}),
-	common.DefaultServiceAccount(Component),
+	common.DefaultServiceAccount(ComponentServiceAccount),
 )
