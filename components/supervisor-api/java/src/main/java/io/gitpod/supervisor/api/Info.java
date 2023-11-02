@@ -937,26 +937,6 @@ public final class Info {
      */
     boolean getConfigcatEnabled();
 
-    /**
-     * <pre>
-     * default_workspace_image is the default image of the workspace
-     * </pre>
-     *
-     * <code>string default_workspace_image = 19;</code>
-     * @return The defaultWorkspaceImage.
-     */
-    java.lang.String getDefaultWorkspaceImage();
-    /**
-     * <pre>
-     * default_workspace_image is the default image of the workspace
-     * </pre>
-     *
-     * <code>string default_workspace_image = 19;</code>
-     * @return The bytes for defaultWorkspaceImage.
-     */
-    com.google.protobuf.ByteString
-        getDefaultWorkspaceImageBytes();
-
     public io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceLocationCase getWorkspaceLocationCase();
   }
   /**
@@ -983,7 +963,6 @@ public final class Info {
       ideAlias_ = "";
       ownerId_ = "";
       debugWorkspaceType_ = 0;
-      defaultWorkspaceImage_ = "";
     }
 
     @java.lang.Override
@@ -1141,12 +1120,6 @@ public final class Info {
             case 144: {
 
               configcatEnabled_ = input.readBool();
-              break;
-            }
-            case 154: {
-              java.lang.String s = input.readStringRequireUtf8();
-
-              defaultWorkspaceImage_ = s;
               break;
             }
             default: {
@@ -4545,52 +4518,6 @@ public final class Info {
       return configcatEnabled_;
     }
 
-    public static final int DEFAULT_WORKSPACE_IMAGE_FIELD_NUMBER = 19;
-    private volatile java.lang.Object defaultWorkspaceImage_;
-    /**
-     * <pre>
-     * default_workspace_image is the default image of the workspace
-     * </pre>
-     *
-     * <code>string default_workspace_image = 19;</code>
-     * @return The defaultWorkspaceImage.
-     */
-    @java.lang.Override
-    public java.lang.String getDefaultWorkspaceImage() {
-      java.lang.Object ref = defaultWorkspaceImage_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        defaultWorkspaceImage_ = s;
-        return s;
-      }
-    }
-    /**
-     * <pre>
-     * default_workspace_image is the default image of the workspace
-     * </pre>
-     *
-     * <code>string default_workspace_image = 19;</code>
-     * @return The bytes for defaultWorkspaceImage.
-     */
-    @java.lang.Override
-    public com.google.protobuf.ByteString
-        getDefaultWorkspaceImageBytes() {
-      java.lang.Object ref = defaultWorkspaceImage_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b =
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        defaultWorkspaceImage_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -4658,9 +4585,6 @@ public final class Info {
       }
       if (configcatEnabled_ != false) {
         output.writeBool(18, configcatEnabled_);
-      }
-      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(defaultWorkspaceImage_)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 19, defaultWorkspaceImage_);
       }
       unknownFields.writeTo(output);
     }
@@ -4731,9 +4655,6 @@ public final class Info {
         size += com.google.protobuf.CodedOutputStream
           .computeBoolSize(18, configcatEnabled_);
       }
-      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(defaultWorkspaceImage_)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(19, defaultWorkspaceImage_);
-      }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
@@ -4789,8 +4710,6 @@ public final class Info {
       if (debugWorkspaceType_ != other.debugWorkspaceType_) return false;
       if (getConfigcatEnabled()
           != other.getConfigcatEnabled()) return false;
-      if (!getDefaultWorkspaceImage()
-          .equals(other.getDefaultWorkspaceImage())) return false;
       if (!getWorkspaceLocationCase().equals(other.getWorkspaceLocationCase())) return false;
       switch (workspaceLocationCase_) {
         case 4:
@@ -4854,8 +4773,6 @@ public final class Info {
       hash = (37 * hash) + CONFIGCAT_ENABLED_FIELD_NUMBER;
       hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
           getConfigcatEnabled());
-      hash = (37 * hash) + DEFAULT_WORKSPACE_IMAGE_FIELD_NUMBER;
-      hash = (53 * hash) + getDefaultWorkspaceImage().hashCode();
       switch (workspaceLocationCase_) {
         case 4:
           hash = (37 * hash) + WORKSPACE_LOCATION_FILE_FIELD_NUMBER;
@@ -5045,8 +4962,6 @@ public final class Info {
 
         configcatEnabled_ = false;
 
-        defaultWorkspaceImage_ = "";
-
         workspaceLocationCase_ = 0;
         workspaceLocation_ = null;
         return this;
@@ -5109,7 +5024,6 @@ public final class Info {
         result.ownerId_ = ownerId_;
         result.debugWorkspaceType_ = debugWorkspaceType_;
         result.configcatEnabled_ = configcatEnabled_;
-        result.defaultWorkspaceImage_ = defaultWorkspaceImage_;
         result.workspaceLocationCase_ = workspaceLocationCase_;
         onBuilt();
         return result;
@@ -5216,10 +5130,6 @@ public final class Info {
         }
         if (other.getConfigcatEnabled() != false) {
           setConfigcatEnabled(other.getConfigcatEnabled());
-        }
-        if (!other.getDefaultWorkspaceImage().isEmpty()) {
-          defaultWorkspaceImage_ = other.defaultWorkspaceImage_;
-          onChanged();
         }
         switch (other.getWorkspaceLocationCase()) {
           case WORKSPACE_LOCATION_FILE: {
@@ -7108,102 +7018,6 @@ public final class Info {
         onChanged();
         return this;
       }
-
-      private java.lang.Object defaultWorkspaceImage_ = "";
-      /**
-       * <pre>
-       * default_workspace_image is the default image of the workspace
-       * </pre>
-       *
-       * <code>string default_workspace_image = 19;</code>
-       * @return The defaultWorkspaceImage.
-       */
-      public java.lang.String getDefaultWorkspaceImage() {
-        java.lang.Object ref = defaultWorkspaceImage_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          defaultWorkspaceImage_ = s;
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <pre>
-       * default_workspace_image is the default image of the workspace
-       * </pre>
-       *
-       * <code>string default_workspace_image = 19;</code>
-       * @return The bytes for defaultWorkspaceImage.
-       */
-      public com.google.protobuf.ByteString
-          getDefaultWorkspaceImageBytes() {
-        java.lang.Object ref = defaultWorkspaceImage_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b =
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          defaultWorkspaceImage_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <pre>
-       * default_workspace_image is the default image of the workspace
-       * </pre>
-       *
-       * <code>string default_workspace_image = 19;</code>
-       * @param value The defaultWorkspaceImage to set.
-       * @return This builder for chaining.
-       */
-      public Builder setDefaultWorkspaceImage(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-
-        defaultWorkspaceImage_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * default_workspace_image is the default image of the workspace
-       * </pre>
-       *
-       * <code>string default_workspace_image = 19;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearDefaultWorkspaceImage() {
-
-        defaultWorkspaceImage_ = getDefaultInstance().getDefaultWorkspaceImage();
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * default_workspace_image is the default image of the workspace
-       * </pre>
-       *
-       * <code>string default_workspace_image = 19;</code>
-       * @param value The bytes for defaultWorkspaceImage to set.
-       * @return This builder for chaining.
-       */
-      public Builder setDefaultWorkspaceImageBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-
-        defaultWorkspaceImage_ = value;
-        onChanged();
-        return this;
-      }
       @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
@@ -7292,7 +7106,7 @@ public final class Info {
   static {
     java.lang.String[] descriptorData = {
       "\n\ninfo.proto\022\nsupervisor\032\034google/api/ann" +
-      "otations.proto\"\026\n\024WorkspaceInfoRequest\"\331" +
+      "otations.proto\"\026\n\024WorkspaceInfoRequest\"\276" +
       "\006\n\025WorkspaceInfoResponse\022\024\n\014workspace_id" +
       "\030\001 \001(\t\022\023\n\013instance_id\030\002 \001(\t\022\031\n\021checkout_" +
       "location\030\003 \001(\t\022!\n\027workspace_location_fil" +
@@ -7309,19 +7123,18 @@ public final class Info {
       ".WorkspaceClass\022\020\n\010owner_id\030\020 \001(\t\022<\n\024deb" +
       "ug_workspace_type\030\021 \001(\0162\036.supervisor.Deb" +
       "ugWorkspaceType\022\031\n\021configcat_enabled\030\022 \001" +
-      "(\010\022\037\n\027default_workspace_image\030\023 \001(\t\032+\n\tG" +
-      "itpodAPI\022\020\n\010endpoint\030\001 \001(\t\022\014\n\004host\030\002 \001(\t" +
-      "\032)\n\nRepository\022\r\n\005owner\030\001 \001(\t\022\014\n\004name\030\002 " +
-      "\001(\t\032G\n\016WorkspaceClass\022\n\n\002id\030\001 \001(\t\022\024\n\014dis" +
-      "play_name\030\002 \001(\t\022\023\n\013description\030\003 \001(\tB\024\n\022" +
-      "workspace_location*<\n\022DebugWorkspaceType" +
-      "\022\013\n\007noDebug\020\000\022\013\n\007regular\020\001\022\014\n\010prebuild\020\002" +
-      "2\177\n\013InfoService\022p\n\rWorkspaceInfo\022 .super" +
-      "visor.WorkspaceInfoRequest\032!.supervisor." +
-      "WorkspaceInfoResponse\"\032\202\323\344\223\002\024\022\022/v1/info/" +
-      "workspaceBF\n\030io.gitpod.supervisor.apiZ*g" +
-      "ithub.com/gitpod-io/gitpod/supervisor/ap" +
-      "ib\006proto3"
+      "(\010\032+\n\tGitpodAPI\022\020\n\010endpoint\030\001 \001(\t\022\014\n\004hos" +
+      "t\030\002 \001(\t\032)\n\nRepository\022\r\n\005owner\030\001 \001(\t\022\014\n\004" +
+      "name\030\002 \001(\t\032G\n\016WorkspaceClass\022\n\n\002id\030\001 \001(\t" +
+      "\022\024\n\014display_name\030\002 \001(\t\022\023\n\013description\030\003 " +
+      "\001(\tB\024\n\022workspace_locationJ\004\010\023\020\024*<\n\022Debug" +
+      "WorkspaceType\022\013\n\007noDebug\020\000\022\013\n\007regular\020\001\022" +
+      "\014\n\010prebuild\020\0022\177\n\013InfoService\022p\n\rWorkspac" +
+      "eInfo\022 .supervisor.WorkspaceInfoRequest\032" +
+      "!.supervisor.WorkspaceInfoResponse\"\032\202\323\344\223" +
+      "\002\024\022\022/v1/info/workspaceBF\n\030io.gitpod.supe" +
+      "rvisor.apiZ*github.com/gitpod-io/gitpod/" +
+      "supervisor/apib\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -7339,7 +7152,7 @@ public final class Info {
     internal_static_supervisor_WorkspaceInfoResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_WorkspaceInfoResponse_descriptor,
-        new java.lang.String[] { "WorkspaceId", "InstanceId", "CheckoutLocation", "WorkspaceLocationFile", "WorkspaceLocationFolder", "UserHome", "GitpodApi", "GitpodHost", "WorkspaceContextUrl", "Repository", "WorkspaceClusterHost", "WorkspaceUrl", "IdeAlias", "IdePort", "WorkspaceClass", "OwnerId", "DebugWorkspaceType", "ConfigcatEnabled", "DefaultWorkspaceImage", "WorkspaceLocation", });
+        new java.lang.String[] { "WorkspaceId", "InstanceId", "CheckoutLocation", "WorkspaceLocationFile", "WorkspaceLocationFolder", "UserHome", "GitpodApi", "GitpodHost", "WorkspaceContextUrl", "Repository", "WorkspaceClusterHost", "WorkspaceUrl", "IdeAlias", "IdePort", "WorkspaceClass", "OwnerId", "DebugWorkspaceType", "ConfigcatEnabled", "WorkspaceLocation", });
     internal_static_supervisor_WorkspaceInfoResponse_GitpodAPI_descriptor =
       internal_static_supervisor_WorkspaceInfoResponse_descriptor.getNestedTypes().get(0);
     internal_static_supervisor_WorkspaceInfoResponse_GitpodAPI_fieldAccessorTable = new
