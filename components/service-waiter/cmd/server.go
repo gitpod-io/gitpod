@@ -115,12 +115,13 @@ func waitK8SDeploymentImage(ctx context.Context, logger *logrus.Entry, cfg *depl
 			ok, err := checkK8SDeploymentImage(ctx, k8sClient, cfg)
 			if err != nil {
 				logger.WithError(err).Error("image check failed")
+				time.Sleep(5 * time.Second)
 				continue
 			}
 			if ok {
 				return nil
 			}
-			time.Sleep(time.Second)
+			time.Sleep(5 * time.Second)
 		}
 	}
 }
