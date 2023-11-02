@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/gitpod-io/local-app/pkg/auth"
@@ -17,17 +18,18 @@ import (
 var (
 	authRedirectURL string
 	authTimeout     time.Duration
+	token           string
 )
 
 // loginCmd represents the login command
 var loginCmd = &cobra.Command{
-	Use:   "login <token>",
+	Use:   "login",
 	Short: "Logs the user in to the CLI",
 	Long:  `Logs the user in and stores the token in the system keychain.`,
-	Args:  cobra.MaximumNArgs(1),
+	Args:  cobra.ExactArgs(0),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) > 0 {
-			err := storeToken(args[0])
+		if len(token) > 0 {
+			err := storeToken(token)
 			return err
 		} else {
 			_, err := Login(auth.LoginOpts{GitpodURL: config.GetGitpodUrl(), RedirectURL: authRedirectURL, AuthTimeout: authTimeout})
@@ -40,7 +42,13 @@ func init() {
 	rootCmd.AddCommand(loginCmd)
 
 	loginCmd.Flags().StringVarP(&authRedirectURL, "auth-redirect-url", "r", "", "Auth redirect URL")
+	loginCmd.Flags().StringVarP(&token, "token", "t", "", "Manually provide a PAT")
 	loginCmd.Flags().DurationVarP(&authTimeout, "auth-timeout", "u", 30, "Auth timeout in seconds")
+
+	err := loginCmd.Flags().MarkHidden("auth-redirect-url")
+	if err != nil {
+		slog.Error("could not hide auth-redirect-url flag", "err", err)
+	}
 }
 
 func storeToken(token string) error {
