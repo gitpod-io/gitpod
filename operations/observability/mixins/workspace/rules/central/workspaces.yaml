@@ -94,15 +94,3 @@ spec:
         description: imagebuilds are not reaching done at too high of a rate in cluster {{ $labels.cluster }}.
       expr: |
         (1 - (sum(rate(gitpod_image_builder_builds_done_total{success="false", cluster!~"ephemeral.*"}[4h])) / sum(rate(gitpod_image_builder_builds_done_total{cluster!~"ephemeral.*"}[4h])))) < 0.60
-
-    - alert: GitpodImagebuildStartSuccess
-      labels:
-        severity: warning
-        team: engine
-      for: 2h
-      annotations:
-        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodImagebuildStartSuccess.md
-        summary: imagebuild start success rate is failing in cluster {{ $labels.cluster }}.
-        description: imagebuild starts are failing at too high of a rate in cluster {{ $labels.cluster }}.
-      expr: |
-        (1 - (sum(rate(gitpod_ws_manager_mk2_workspace_starts_failure_total{type="ImageBuild",cluster!~"ephemeral.*"}[8h])) / sum(rate(gitpod_ws_manager_mk2_workspace_starts_total{type="ImageBuild", cluster!~"ephemeral.*"}[4h])))) < 0.99
