@@ -8,7 +8,6 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/gitpod-io/local-app/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -16,8 +15,6 @@ var rootCmd = &cobra.Command{
 	Use:   "gitpod",
 	Short: "A CLI for interacting with Gitpod",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		config.Init()
-
 		verbose, err := cmd.Flags().GetBool("verbose")
 		if err != nil {
 			slog.Error("Could not set up logging")

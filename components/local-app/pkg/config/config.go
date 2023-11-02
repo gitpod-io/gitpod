@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func getConfigFileDir() (string, error) {
+func GetConfigFileDir() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
@@ -24,19 +24,19 @@ func getConfigFileDir() (string, error) {
 	return configurationDir, nil
 }
 
-func getConfigFilePath(configurationDir string) string {
+func GetConfigFilePath(configurationDir string) string {
 	configFile := filepath.Join(configurationDir, ".gp-cli.json")
 	return configFile
 }
 
-// Init initializes viper which reads in configuration files/environment variables
-func Init() {
-	configDir, err := getConfigFileDir()
+// init initializes viper which reads in configuration files/environment variables
+func init() {
+	configDir, err := GetConfigFileDir()
 	if err != nil {
 		slog.Debug("Could not retrieve config file path", "err", err)
 	}
 
-	configFile := getConfigFilePath(configDir)
+	configFile := GetConfigFilePath(configDir)
 
 	viper.SetConfigName(".gp-cli")
 	viper.SetConfigType("json")
@@ -57,13 +57,13 @@ func Init() {
 }
 
 func CreateConfigFile() error {
-	configDir, err := getConfigFileDir()
+	configDir, err := GetConfigFileDir()
 	if err != nil {
 		slog.Error("Could not retrieve config file path", "err", err)
 		return err
 	}
 
-	configFile := getConfigFilePath(configDir)
+	configFile := GetConfigFilePath(configDir)
 
 	viper.SetConfigName(".gp-cli")
 	viper.SetConfigType("json")
@@ -72,7 +72,7 @@ func CreateConfigFile() error {
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// Config file not found; create and write a new one
-			if err := os.MkdirAll(configFile, os.ModePerm); err != nil {
+			if err := os.MkdirAll(configDir, os.ModePerm); err != nil {
 				return fmt.Errorf("Failed to create config directory: %w", err)
 			}
 			err = viper.SafeWriteConfigAs(configFile)
