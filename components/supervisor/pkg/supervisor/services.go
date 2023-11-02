@@ -664,6 +664,7 @@ func (is *InfoService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) 
 }
 
 // WorkspaceInfo provides information about the workspace.
+// Note: we will use this performance critical function everywhere for initial opening please consider its performance when add new features
 func (is *InfoService) WorkspaceInfo(ctx context.Context, req *api.WorkspaceInfoRequest) (*api.WorkspaceInfoResponse, error) {
 	resp := &api.WorkspaceInfoResponse{
 		CheckoutLocation:     is.cfg.RepoRoot,

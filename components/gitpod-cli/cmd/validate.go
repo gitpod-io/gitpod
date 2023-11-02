@@ -88,7 +88,10 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 	var dockerContext string
 	switch img := gitpodConfig.Image.(type) {
 	case nil:
-		image, _ = getDefaultWorkspaceImage(ctx, wsInfo)
+		image, err = getDefaultWorkspaceImage(ctx, wsInfo)
+		if err != nil {
+			return err
+		}
 		fmt.Println("Using default workspace image:", image)
 	case string:
 		image = img
