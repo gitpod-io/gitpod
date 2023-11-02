@@ -21,7 +21,7 @@ defaultArgs:
   clionDownloadUrl: "https://download.jetbrains.com/cpp/CLion-2023.2.2.tar.gz"
   jbBackendVersion: "latest"
   dockerVersion: "20.10.24"
-  dockerComposeVersion: "2.21.0-gitpod.0"
+  dockerComposeVersion: "2.23.0-gitpod.0"
 provenance:
   enabled: true
   slsa: true
