@@ -170,6 +170,34 @@ var workspaceUpCmd = &cobra.Command{
 			return err
 		}
 
+		fmt.Printf("\nIf you want to track your workspace's changes, run \n\tgit branch --set-upstream-to=gitpod/%s %s\n", branch, branch)
+
+		wt, err := repo.Worktree()
+		if err != nil {
+			return err
+		}
+		pullRemote := func() {
+			err := wt.Pull(&git.PullOptions{
+				RemoteName:    "gitpod",
+				SingleBranch:  true,
+				Force:         true,
+				ReferenceName: head.Name(),
+			})
+			if err != nil && strings.Contains(err.Error(), "already up-to-date") {
+				err = nil
+			}
+			if err != nil {
+				slog.Warn("cannot pull remote changes", "err", err)
+			}
+		}
+		go func() {
+			for {
+				time.Sleep(5 * time.Second)
+				pullRemote()
+			}
+		}()
+		defer pullRemote()
+
 		if workspaceUpOpts.OpenSSH {
 			err = common.SSHConnectToWorkspace(ctx, workspaceID, false)
 			if err != nil && err.Error() == "exit status 255" {

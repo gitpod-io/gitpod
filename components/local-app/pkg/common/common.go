@@ -33,6 +33,10 @@ func GetTokenKeychain(host string) (token string, err error) {
 }
 
 func GetToken() (string, error) {
+	if tkn := os.Getenv("GITPOD_TOKEN"); tkn != "" {
+		return tkn, nil
+	}
+
 	host := config.GetString("host")
 	token, err := GetTokenKeychain(host)
 
