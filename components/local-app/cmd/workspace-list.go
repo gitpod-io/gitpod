@@ -34,7 +34,10 @@ var listWorkspaceCommand = &cobra.Command{
 			return err
 		}
 
-		workspaces, err := gitpod.Workspaces.ListWorkspaces(ctx, connect.NewRequest(&v1.ListWorkspacesRequest{}))
+		orgId := getOrganizationId()
+		workspaces, err := gitpod.Workspaces.ListWorkspaces(ctx, connect.NewRequest(&v1.ListWorkspacesRequest{
+			OrganizationId: orgId,
+		}))
 		if err != nil {
 			return err
 		}

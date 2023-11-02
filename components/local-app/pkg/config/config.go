@@ -94,10 +94,6 @@ func GetGitpodUrl() string {
 	return fmt.Sprintf("https://%s", host)
 }
 
-func GetOrganizationId() string {
-	return GetString("org_id")
-}
-
 func Set(key string, value interface{}) error {
 	viper.Set(key, value)
 	return viper.WriteConfig()

@@ -38,11 +38,14 @@ var getOrganizationCommand = &cobra.Command{
 	Use:   "get <organization-id>",
 	Short: "gets an organization's details",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		orgId := ""
 		if len(args) < 1 {
-			orgId = common.SelectOrganization(cmd.Context())
+			orgId = getOrganizationId()
 		} else {
 			orgId = args[0]
+		}
+
+		if len(orgId) == 0 {
+			return cmd.Help()
 		}
 
 		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
