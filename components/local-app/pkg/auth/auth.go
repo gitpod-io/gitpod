@@ -8,9 +8,11 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/url"
@@ -19,6 +21,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
+	"github.com/gitpod-io/local-app/pkg/config"
 	"github.com/gitpod-io/local-app/pkg/constants"
 	"github.com/sirupsen/logrus"
 	"github.com/skratchdot/open-golang/open"
@@ -33,6 +36,37 @@ var authScopes = []string{
 	"function:getWorkspaces",
 	"function:listenForWorkspaceInstanceUpdates",
 	"resource:default",
+}
+
+func fetchValidCliScopes(ctx context.Context) ([]string, error) {
+	var clientId = constants.Flavor
+	var serviceUrl = config.GetGitpodUrl()
+
+	endpoint := serviceUrl + "/api/oauth/inspect?client=" + clientId
+
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusOK {
+		err = json.NewDecoder(resp.Body).Decode(&authScopes)
+		if err != nil {
+			return nil, err
+		}
+		return authScopes, nil
+	}
+
+	return nil, errors.New("host did not provide valid scopes")
 }
 
 type ErrInvalidGitpodToken struct {
@@ -184,6 +218,11 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 		},
 	}
 	if constants.Flavor == "gitpod-cli" {
+		authScopes, err = fetchValidCliScopes(ctx)
+		if err != nil {
+			return "", err
+		}
+		slog.Debug("Using CLI scopes", "scopes", authScopes)
 		conf = &oauth2.Config{
 			ClientID:     "gitpod-cli",
 			ClientSecret: "gitpod-cli-secret",
