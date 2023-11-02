@@ -28,7 +28,7 @@ require (
 
 require (
 	github.com/bufbuild/connect-go v1.10.0
-	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-20231023092031-ae38d864766a
+	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-20231102144440-7121dcd64d1f
 	github.com/manifoldco/promptui v0.9.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/spf13/cobra v1.7.0
