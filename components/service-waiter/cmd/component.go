@@ -7,7 +7,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -18,7 +17,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/rest"
 )
 
 var componentCmdOpt struct {
@@ -90,8 +89,7 @@ func checkPodsImage(ctx context.Context, k8sClient *kubernetes.Clientset) (bool,
 }
 
 func waitPodsImage(ctx context.Context) error {
-	kubeConfigPath := filepath.Join("/home/gitpod", ".kube", "config")
-	k8sCfg, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
+	k8sCfg, err := rest.InClusterConfig()
 	if err != nil {
 		return fmt.Errorf("cannot get in cluster config: %w", err)
 	}
