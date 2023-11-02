@@ -12,9 +12,14 @@
     html,
     body {
         @apply h-full;
+        /* https://github.com/gitpod-io/gitpod/pull/18979#discussion_r1380773740 */
+        scrollbar-gutter: stable;
     }
     body {
         @apply bg-white dark:bg-gitpod-black text-black dark:text-white;
+    }
+    body[style] {
+        margin: 0 auto !important;
     }
     h1 {
         @apply text-gray-900 dark:text-gray-100 font-bold;
