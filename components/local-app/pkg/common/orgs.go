@@ -12,8 +12,8 @@ import (
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 )
 
-// InferOrgId returns the organization ID to use if there is only one org available.
-func InferOrgId() (string, error) {
+// InferOrgID returns the organization ID to use if there is only one org available.
+func InferOrgID() (string, error) {
 	ctx := context.Background()
 	gitpod, err := GetGitpodClient(ctx)
 	if err != nil {

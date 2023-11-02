@@ -38,5 +38,5 @@ var openWorkspaceCommand = &cobra.Command{
 }
 
 func init() {
-	wsCmd.AddCommand(openWorkspaceCommand)
+	workspaceCmd.AddCommand(openWorkspaceCommand)
 }

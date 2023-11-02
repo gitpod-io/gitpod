@@ -39,7 +39,7 @@ var getOrganizationCommand = &cobra.Command{
 	Short: "gets an organization's details",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
-			orgId = getOrganizationId()
+			orgId = getOrganizationID()
 		} else {
 			orgId = args[0]
 		}

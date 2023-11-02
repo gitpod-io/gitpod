@@ -16,14 +16,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var workspaceClass string
-var editor string
-var createDontWait = false
-var createOpenSsh = false
-var createOpenEditor = false
-
-// createWorkspaceCommand creates a new workspace
-var createWorkspaceCommand = &cobra.Command{
+// workspaceCreateCommand creates a new workspace
+var workspaceCreateCommand = &cobra.Command{
 	Use:   "create <repo-url>",
 	Short: "Creates a new workspace based on a given context",
 	Args:  cobra.ExactArgs(1),
@@ -33,9 +27,9 @@ var createWorkspaceCommand = &cobra.Command{
 		ctx, cancel := context.WithTimeout(cmd.Context(), 30*time.Second)
 		defer cancel()
 
-		orgId := getOrganizationId()
+		orgId := getOrganizationID()
 		if len(orgId) == 0 {
-			return fmt.Errorf("No org specified. Specify an organization ID using the GITPOD_ORG_ID environment variable")
+			return fmt.Errorf("no organisation specified. Specify an organization ID using the GITPOD_ORG_ID environment variable")
 		}
 
 		gitpod, err := common.GetGitpodClient(ctx)
@@ -50,10 +44,10 @@ var createWorkspaceCommand = &cobra.Command{
 				OrganizationId: orgId,
 				StartSpec: &v1.StartWorkspaceSpec{
 					IdeSettings: &v1.IDESettings{
-						DefaultIde:       editor,
+						DefaultIde:       workspaceCreateOpts.Editor,
 						UseLatestVersion: false,
 					},
-					WorkspaceClass: workspaceClass,
+					WorkspaceClass: workspaceCreateOpts.WorkspaceClass,
 				}}))
 
 		if err != nil {
@@ -63,23 +57,23 @@ var createWorkspaceCommand = &cobra.Command{
 		workspaceID := newWorkspace.Msg.WorkspaceId
 
 		if len(workspaceID) == 0 {
-			return fmt.Errorf("Exception: API did not return a workspace ID back. Please try creating the workspace again")
+			return fmt.Errorf("did not receive a workspace ID from the API; please try creating the workspace again")
 		}
 
-		if createDontWait {
+		if workspaceCreateOpts.DontWait {
 			fmt.Println(workspaceID)
 			return nil
 		}
 
-		err = common.ObserveWsUntilStarted(ctx, workspaceID)
+		_, err = common.ObserveWorkspaceUntilStarted(ctx, workspaceID)
 		if err != nil {
 			return err
 		}
 
-		if createOpenSsh {
-			return common.SshConnectToWs(ctx, workspaceID, false)
+		if workspaceCreateOpts.OpenSsh {
+			return common.SSHConnectToWorkspace(ctx, workspaceID, false)
 		}
-		if createOpenEditor {
+		if workspaceCreateOpts.OpenEditor {
 			return common.OpenWsInPreferredEditor(ctx, workspaceID)
 		}
 
@@ -87,11 +81,19 @@ var createWorkspaceCommand = &cobra.Command{
 	},
 }
 
+var workspaceCreateOpts struct {
+	WorkspaceClass string
+	Editor         string
+	DontWait       bool
+	OpenSsh        bool
+	OpenEditor     bool
+}
+
 func init() {
-	wsCmd.AddCommand(createWorkspaceCommand)
-	createWorkspaceCommand.Flags().BoolVarP(&createDontWait, "dont-wait", "d", false, "don't wait for the workspace to start and just print out the newly created workspace's ID")
-	createWorkspaceCommand.Flags().StringVarP(&workspaceClass, "class", "c", "", "the workspace class")
-	createWorkspaceCommand.Flags().StringVarP(&editor, "editor", "e", "", "the editor to use")
-	createWorkspaceCommand.Flags().BoolVarP(&createOpenSsh, "ssh", "s", false, "open an SSH connection to workspace after starting")
-	createWorkspaceCommand.Flags().BoolVarP(&createOpenEditor, "open", "o", false, "open the workspace in an editor after starting")
+	workspaceCmd.AddCommand(workspaceCreateCommand)
+	workspaceCreateCommand.Flags().BoolVarP(&workspaceCreateOpts.DontWait, "dont-wait", "d", false, "don't wait for the workspace to start and just print out the newly created workspace's ID")
+	workspaceCreateCommand.Flags().StringVarP(&workspaceCreateOpts.WorkspaceClass, "class", "c", "", "the workspace class")
+	workspaceCreateCommand.Flags().StringVarP(&workspaceCreateOpts.Editor, "editor", "e", "", "the editor to use")
+	workspaceCreateCommand.Flags().BoolVar(&workspaceCreateOpts.OpenSsh, "ssh", false, "open an SSH connection to workspace after starting")
+	workspaceCreateCommand.Flags().BoolVarP(&workspaceCreateOpts.OpenEditor, "open", "o", false, "open the workspace in an editor after starting")
 }

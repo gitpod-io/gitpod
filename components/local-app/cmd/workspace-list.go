@@ -34,7 +34,7 @@ var listWorkspaceCommand = &cobra.Command{
 			return err
 		}
 
-		orgId := getOrganizationId()
+		orgId := getOrganizationID()
 		workspaces, err := gitpod.Workspaces.ListWorkspaces(ctx, connect.NewRequest(&v1.ListWorkspacesRequest{
 			OrganizationId: orgId,
 		}))
@@ -82,6 +82,6 @@ var listWorkspaceCommand = &cobra.Command{
 }
 
 func init() {
-	wsCmd.AddCommand(listWorkspaceCommand)
+	workspaceCmd.AddCommand(listWorkspaceCommand)
 	listWorkspaceCommand.Flags().StringVarP(&wsListOutputField, "field", "f", "", "output a specific field of the workspaces")
 }

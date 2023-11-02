@@ -107,6 +107,6 @@ var stopWorkspaceCommand = &cobra.Command{
 }
 
 func init() {
-	wsCmd.AddCommand(stopWorkspaceCommand)
+	workspaceCmd.AddCommand(stopWorkspaceCommand)
 	stopWorkspaceCommand.Flags().BoolVarP(&stopDontWait, "dont-wait", "d", false, "do not wait for workspace to fully stop, only initialize")
 }

@@ -62,13 +62,13 @@ var startWorkspaceCommand = &cobra.Command{
 			return nil
 		}
 
-		err = common.ObserveWsUntilStarted(ctx, workspaceID)
+		_, err = common.ObserveWorkspaceUntilStarted(ctx, workspaceID)
 		if err != nil {
 			return err
 		}
 
 		if startOpenSsh {
-			return common.SshConnectToWs(ctx, workspaceID, false)
+			return common.SSHConnectToWorkspace(ctx, workspaceID, false)
 		}
 		if startOpenEditor {
 			return common.OpenWsInPreferredEditor(ctx, workspaceID)
@@ -79,7 +79,7 @@ var startWorkspaceCommand = &cobra.Command{
 }
 
 func init() {
-	wsCmd.AddCommand(startWorkspaceCommand)
+	workspaceCmd.AddCommand(startWorkspaceCommand)
 	startWorkspaceCommand.Flags().BoolVarP(&startDontWait, "dont-wait", "d", false, "do not wait for workspace to fully start, only initialize")
 	startWorkspaceCommand.Flags().BoolVarP(&startOpenSsh, "ssh", "s", false, "open an SSH connection to workspace after starting")
 	startWorkspaceCommand.Flags().BoolVarP(&startOpenEditor, "open", "e", false, "open the workspace in an editor after starting")

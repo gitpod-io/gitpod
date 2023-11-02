@@ -34,11 +34,11 @@ var connectWorkspaceCommand = &cobra.Command{
 		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
 		defer cancel()
 
-		return common.SshConnectToWs(ctx, workspaceID, dryRun)
+		return common.SSHConnectToWorkspace(ctx, workspaceID, dryRun)
 	},
 }
 
 func init() {
-	wsCmd.AddCommand(connectWorkspaceCommand)
+	workspaceCmd.AddCommand(connectWorkspaceCommand)
 	connectWorkspaceCommand.Flags().BoolVarP(&dryRun, "dry-run", "n", false, "Dry run the command")
 }

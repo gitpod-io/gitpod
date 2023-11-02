@@ -39,5 +39,5 @@ var deleteWorkspaceCommand = &cobra.Command{
 }
 
 func init() {
-	wsCmd.AddCommand(deleteWorkspaceCommand)
+	workspaceCmd.AddCommand(deleteWorkspaceCommand)
 }

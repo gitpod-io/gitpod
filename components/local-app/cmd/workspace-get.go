@@ -85,5 +85,5 @@ func outputInfo(info *common.WorkspaceDisplayData) {
 }
 
 func init() {
-	wsCmd.AddCommand(getWorkspaceCommand)
+	workspaceCmd.AddCommand(getWorkspaceCommand)
 }

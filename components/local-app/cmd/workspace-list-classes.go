@@ -77,6 +77,6 @@ var listWorkspaceClassesCommand = &cobra.Command{
 }
 
 func init() {
-	wsCmd.AddCommand(listWorkspaceClassesCommand)
+	workspaceCmd.AddCommand(listWorkspaceClassesCommand)
 	listWorkspaceClassesCommand.Flags().StringVarP(&classesListOutputField, "field", "f", "", "output a specific field of the classes")
 }

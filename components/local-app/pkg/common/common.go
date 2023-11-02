@@ -91,7 +91,8 @@ func GetGitpodClient(ctx context.Context) (*client.Gitpod, error) {
 }
 
 func constructAPIEndpoint() (string, error) {
-	host := config.GetString("host")
+	rl, _ := url.Parse(os.Getenv("GITPOD_HOST"))
+	host := rl.Host
 
 	u := &url.URL{
 		Scheme: "https",

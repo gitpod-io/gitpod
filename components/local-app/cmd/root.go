@@ -46,10 +46,10 @@ func init() {
 	slog.Debug("Configured configuration and environment variables")
 
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Display verbose output for more detailed logging")
-	rootCmd.PersistentFlags().StringVarP(&orgId, "org-id", "o", "", "The organization to use")
+	rootCmd.PersistentFlags().StringVar(&orgId, "organization", "", "The organization to use")
 }
 
-func getOrganizationId() string {
+func getOrganizationID() string {
 	if orgId != "" {
 		return orgId
 	}
@@ -59,7 +59,7 @@ func getOrganizationId() string {
 		return orgFromConfig
 	}
 
-	inferred, err := common.InferOrgId()
+	inferred, err := common.InferOrgID()
 	if err != nil {
 		slog.Warn("Could not get or infer an organization ID.", "error", err)
 	}
