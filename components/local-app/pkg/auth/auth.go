@@ -41,6 +41,7 @@ var authScopes = []string{
 func fetchValidCliScopes(ctx context.Context) ([]string, error) {
 	var clientId = constants.Flavor
 	var serviceUrl = config.GetGitpodUrl()
+	var host = config.GetString("host")
 
 	endpoint := serviceUrl + "/api/oauth/inspect?client=" + clientId
 
@@ -66,7 +67,7 @@ func fetchValidCliScopes(ctx context.Context) ([]string, error) {
 		return authScopes, nil
 	}
 
-	return nil, errors.New("host did not provide valid scopes")
+	return nil, errors.New(host + " did not provide valid scopes")
 }
 
 type ErrInvalidGitpodToken struct {
