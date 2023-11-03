@@ -64,7 +64,7 @@ var loginCmd = &cobra.Command{
 
 		cfg := config.FromContext(cmd.Context())
 		gpctx := &config.ConnectionContext{
-			Host:           *host,
+			Host:           &config.YamlURL{URL: host},
 			OrganizationID: loginOpts.OrganizationID,
 		}
 

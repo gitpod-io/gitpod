@@ -34,7 +34,6 @@ var rootCmd = &cobra.Command{
 
 		cfg, err := config.LoadConfig(rootOpts.ConfigLocation)
 		if errors.Is(err, os.ErrNotExist) {
-			cfg = config.DefaultConfig()
 			err = nil
 		}
 		if err != nil {
@@ -85,7 +84,7 @@ func getGitpodClient(ctx context.Context) (*client.Gitpod, error) {
 		return nil, fmt.Errorf("no token found for host %s: neither the active context, nor keychain, nor GITPOD_TOKEN environment variable provide one. Please run `gitpod login` to login", gpctx.Host.String())
 	}
 
-	var apiHost = gpctx.Host
+	var apiHost = *gpctx.Host.URL
 	apiHost.Host = "api." + apiHost.Host
 	slog.Debug("establishing connection to Gitpod", "host", apiHost.String())
 	res, err := client.New(client.WithCredentials(token), client.WithURL(apiHost.String()))

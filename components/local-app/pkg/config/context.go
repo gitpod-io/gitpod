@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -37,9 +38,35 @@ func (c *Config) GetActiveContext() (*ConnectionContext, error) {
 var ErrNoContext = fmt.Errorf("no active context - use \"gitpod login\" to create one")
 
 type ConnectionContext struct {
-	Host           url.URL `yaml:"host"`
-	OrganizationID string  `yaml:"organizationID,omitempty"`
-	Token          string  `yaml:"token,omitempty"`
+	Host           *YamlURL `yaml:"host"`
+	OrganizationID string   `yaml:"organizationID,omitempty"`
+	Token          string   `yaml:"token,omitempty"`
+}
+
+type YamlURL struct {
+	*url.URL
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler
+func (u *YamlURL) UnmarshalYAML(value *yaml.Node) error {
+	var s string
+	err := value.Decode(&s)
+	if err != nil {
+		return err
+	}
+
+	res, err := url.Parse(s)
+	if err != nil {
+		return err
+	}
+
+	*u = YamlURL{URL: res}
+	return nil
+}
+
+// MarshalYAML implements yaml.Marshaler
+func (u *YamlURL) MarshalYAML() (interface{}, error) {
+	return u.String(), nil
 }
 
 func SaveConfig(fn string, cfg *Config) error {
@@ -63,6 +90,8 @@ func DefaultConfig() *Config {
 	}
 }
 
+// LoadConfig loads the configuration from a file. If the file does not exist, it returns a default configuration.
+// This function never returns nil, even in case of an error. If an error is returned, this function also returns the default configuration.
 func LoadConfig(fn string) (res *Config, err error) {
 	defer func() {
 		if err != nil {
@@ -70,21 +99,28 @@ func LoadConfig(fn string) (res *Config, err error) {
 		}
 	}()
 
-	var cfg Config
-	cfg.Contexts = make(map[string]*ConnectionContext)
+	if strings.HasPrefix(fn, "~/") {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return nil, err
+		}
+		fn = filepath.Join(homeDir, fn[2:])
+	}
 
+	cfg := &Config{
+		Filename: fn,
+		Contexts: make(map[string]*ConnectionContext),
+	}
 	fc, err := os.ReadFile(fn)
 	if err != nil {
-		return nil, err
+		return cfg, err
 	}
 	err = yaml.Unmarshal(fc, &cfg)
 	if err != nil {
-		return nil, err
+		return cfg, err
 	}
 
-	cfg.Filename = fn
-
-	return &cfg, nil
+	return cfg, nil
 }
 
 type configContextKeyTpe struct{}
