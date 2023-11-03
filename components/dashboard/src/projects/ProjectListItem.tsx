@@ -8,13 +8,14 @@ import { FunctionComponent, useState } from "react";
 import dayjs from "dayjs";
 import { Project } from "@gitpod/gitpod-protocol";
 import { Link } from "react-router-dom";
-import ContextMenu from "../components/ContextMenu";
 import { RemoveProjectModal } from "./RemoveProjectModal";
 import { toRemoteURL } from "./render-utils";
 import { prebuildStatusIcon } from "./Prebuilds";
 import { gitpodHostUrl } from "../service/service";
 import { useLatestProjectPrebuildQuery } from "../data/prebuilds/latest-project-prebuild-query";
 import Tooltip from "../components/Tooltip";
+import { DropdownActions } from "@podkit/dropdown/DropDownActions";
+import { DropdownMenuItem } from "@podkit/dropdown/DropDown";
 
 type ProjectListItemProps = {
     project: Project;
@@ -35,26 +36,24 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                         <ProjectLink project={project} />
                         <span className="flex-grow" />
                         <div className="justify-end">
-                            <ContextMenu
-                                menuEntries={[
-                                    {
-                                        title: "New Workspace",
-                                        href: gitpodHostUrl.withContext(`${project.cloneUrl}`).toString(),
-                                        separator: true,
-                                    },
-                                    {
-                                        title: "Settings",
-                                        link: `/projects/${project.id}/settings`,
-                                        separator: true,
-                                    },
-                                    {
-                                        title: "Remove Project",
-                                        customFontStyle:
-                                            "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
-                                        onClick: () => setShowRemoveModal(true),
-                                    },
-                                ]}
-                            />
+                            <DropdownActions>
+                                <DropdownMenuItem asChild>
+                                    <a href={gitpodHostUrl.withContext(`${project.cloneUrl}`).toString()}>
+                                        New Workspace
+                                    </a>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link to={`/projects/${project.id}/settings`}>Settings</Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    className="text-red-600 dark:text-red-400 focus:text-red-800 dark:focus:text-red-300"
+                                    onSelect={() => {
+                                        setShowRemoveModal(true);
+                                    }}
+                                >
+                                    Delete
+                                </DropdownMenuItem>
+                            </DropdownActions>
                         </div>
                     </div>
                     <a target="_blank" rel="noreferrer noopener" href={project.cloneUrl.replace(/\.git$/, "")}>
