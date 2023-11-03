@@ -5,33 +5,43 @@
 package cmd
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"log/slog"
 	"os"
 
-	"github.com/gitpod-io/local-app/pkg/common"
+	"github.com/gitpod-io/gitpod/components/public-api/go/client"
+	"github.com/gitpod-io/local-app/pkg/auth"
 	"github.com/gitpod-io/local-app/pkg/config"
 	"github.com/spf13/cobra"
 )
 
-var orgId string
+var rootOpts struct {
+	ConfigLocation string
+	Verbose        bool
+}
 
 var rootCmd = &cobra.Command{
 	Use:   "gitpod",
 	Short: "A CLI for interacting with Gitpod",
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		verbose, err := cmd.Flags().GetBool("verbose")
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		var logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}))
+		if rootOpts.Verbose {
+			logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
+		}
+		slog.SetDefault(logger)
+
+		cfg, err := config.LoadConfig(rootOpts.ConfigLocation)
+		if errors.Is(err, os.ErrNotExist) {
+			cfg = config.DefaultConfig()
+			err = nil
+		}
 		if err != nil {
-			slog.Error("Could not set up logging")
-			os.Exit(1)
+			return err
 		}
-		if verbose {
-			var logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
-			slog.SetDefault(logger)
-		} else {
-			var logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}))
-			slog.SetDefault(logger)
-			return
-		}
+		cmd.SetContext(config.ToContext(context.Background(), cfg))
+		return nil
 	},
 }
 
@@ -44,28 +54,44 @@ func Execute() {
 func init() {
 	slog.Debug("Configured configuration and environment variables")
 
-	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Display verbose output for more detailed logging")
-	rootCmd.PersistentFlags().StringVarP(&orgId, "org-id", "o", "", "The organization to use")
+	rootCmd.PersistentFlags().BoolVarP(&rootOpts.Verbose, "verbose", "v", false, "Display verbose output for more detailed logging")
+
+	configLocation := config.DEFAULT_LOCATION
+	if fn := os.Getenv("GITPOD_CONFIG"); fn != "" {
+		configLocation = fn
+	}
+	rootCmd.PersistentFlags().StringVar(&rootOpts.ConfigLocation, "config", configLocation, "Location of the configuration file")
 }
 
-func getOrganizationId() string {
-	if orgId != "" {
-		return orgId
-	}
-
-	orgFromConfig := config.GetString("org_id")
-	if orgFromConfig != "" {
-		return orgFromConfig
-	}
-
-	inferred, err := common.InferOrgId()
+func getGitpodClient(ctx context.Context) (*client.Gitpod, error) {
+	cfg := config.FromContext(ctx)
+	gpctx, err := cfg.GetActiveContext()
 	if err != nil {
-		slog.Warn("Could not get or infer an organization ID.", "error", err)
+		return nil, err
 	}
 
-	if inferred != "" {
-		slog.Debug("Inferred organization ID", "orgId", inferred)
+	token := gpctx.Token
+	if token == "" {
+		token = os.Getenv("GITPOD_TOKEN")
+	}
+	if token == "" {
+		var err error
+		token, err = auth.GetToken(gpctx.Host.String())
+		if err != nil {
+			return nil, err
+		}
+	}
+	if token == "" {
+		return nil, fmt.Errorf("no token found for host %s: neither the active context, nor keychain, nor GITPOD_TOKEN environment variable provide one. Please run `gitpod login` to login", gpctx.Host.String())
 	}
 
-	return inferred
+	var apiHost = gpctx.Host
+	apiHost.Host = "api." + apiHost.Host
+	slog.Debug("establishing connection to Gitpod", "host", apiHost.String())
+	res, err := client.New(client.WithCredentials(token), client.WithURL(apiHost.String()))
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }

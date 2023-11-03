@@ -8,12 +8,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var wsCmd = &cobra.Command{
+var workspaceCmd = &cobra.Command{
 	Use:     "workspace",
 	Short:   "Interact with workspaces",
 	Aliases: []string{"workspaces", "ws"},
 }
 
 func init() {
-	rootCmd.AddCommand(wsCmd)
+	rootCmd.AddCommand(workspaceCmd)
 }

@@ -11,12 +11,11 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
-	"github.com/gitpod-io/local-app/pkg/common"
 	"github.com/spf13/cobra"
 )
 
 // stopWorkspaceCommand stops to a given workspace
-var deleteWorkspaceCommand = &cobra.Command{
+var workspaceDeleteCmd = &cobra.Command{
 	Use:   "delete <workspace-id>",
 	Short: "Deletes a given workspace",
 	Args:  cobra.ExactArgs(1),
@@ -26,7 +25,7 @@ var deleteWorkspaceCommand = &cobra.Command{
 		ctx, cancel := context.WithTimeout(cmd.Context(), 30*time.Second)
 		defer cancel()
 
-		gitpod, err := common.GetGitpodClient(ctx)
+		gitpod, err := getGitpodClient(ctx)
 		if err != nil {
 			return err
 		}
@@ -39,5 +38,5 @@ var deleteWorkspaceCommand = &cobra.Command{
 }
 
 func init() {
-	wsCmd.AddCommand(deleteWorkspaceCommand)
+	workspaceCmd.AddCommand(workspaceDeleteCmd)
 }

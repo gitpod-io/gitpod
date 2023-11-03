@@ -37,15 +37,15 @@ func outputClasses(classes []*v1.WorkspaceClass) {
 	table.Render()
 }
 
-// listWorkspaceClassesCommand lists all available organizations
-var listWorkspaceClassesCommand = &cobra.Command{
+// workspaceListClassesCmd lists all available organizations
+var workspaceListClassesCmd = &cobra.Command{
 	Use:   "list-classes",
 	Short: "Lists workspace classes",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
 		defer cancel()
 
-		gitpod, err := common.GetGitpodClient(ctx)
+		gitpod, err := getGitpodClient(ctx)
 		if err != nil {
 			return err
 		}
@@ -77,6 +77,6 @@ var listWorkspaceClassesCommand = &cobra.Command{
 }
 
 func init() {
-	wsCmd.AddCommand(listWorkspaceClassesCommand)
-	listWorkspaceClassesCommand.Flags().StringVarP(&classesListOutputField, "field", "f", "", "output a specific field of the classes")
+	workspaceCmd.AddCommand(workspaceListClassesCmd)
+	workspaceListClassesCmd.Flags().StringVarP(&classesListOutputField, "field", "f", "", "output a specific field of the classes")
 }

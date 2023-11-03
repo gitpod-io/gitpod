@@ -18,22 +18,17 @@ import (
 )
 
 // stopWorkspaceCommand stops to a given workspace
-var getWorkspaceCommand = &cobra.Command{
+var workspaceGetCmd = &cobra.Command{
 	Use:   "get <workspace-id>",
 	Short: "Retrieves metadata of a given workspace",
-	Args:  cobra.MaximumNArgs(1),
+	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		workspaceID := ""
-		if len(args) < 1 {
-			workspaceID = common.SelectWorkspace(cmd.Context(), nil)
-		} else {
-			workspaceID = args[0]
-		}
+		workspaceID := args[0]
 
 		ctx, cancel := context.WithTimeout(cmd.Context(), 30*time.Second)
 		defer cancel()
 
-		gitpod, err := common.GetGitpodClient(ctx)
+		gitpod, err := getGitpodClient(ctx)
 		if err != nil {
 			return err
 		}
@@ -85,5 +80,5 @@ func outputInfo(info *common.WorkspaceDisplayData) {
 }
 
 func init() {
-	wsCmd.AddCommand(getWorkspaceCommand)
+	workspaceCmd.AddCommand(workspaceGetCmd)
 }

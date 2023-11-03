@@ -11,7 +11,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
-	"github.com/gitpod-io/local-app/pkg/common"
+	"github.com/gitpod-io/local-app/pkg/config"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
@@ -35,11 +35,17 @@ func outputOrgs(orgs []*v1.Team) {
 
 // getOrganizationCommand gets all available organizations
 var getOrganizationCommand = &cobra.Command{
-	Use:   "get <organization-id>",
+	Use:   "get [organization-id]",
 	Short: "gets an organization's details",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		var orgId string
 		if len(args) < 1 {
-			orgId = getOrganizationId()
+			cfg := config.FromContext(cmd.Context())
+			gpctx, err := cfg.GetActiveContext()
+			if err != nil {
+				return err
+			}
+			orgId = gpctx.OrganizationID
 		} else {
 			orgId = args[0]
 		}
@@ -51,7 +57,7 @@ var getOrganizationCommand = &cobra.Command{
 		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
 		defer cancel()
 
-		gitpod, err := common.GetGitpodClient(ctx)
+		gitpod, err := getGitpodClient(ctx)
 		if err != nil {
 			return err
 		}

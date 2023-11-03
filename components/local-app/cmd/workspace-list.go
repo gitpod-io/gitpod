@@ -14,14 +14,15 @@ import (
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/local-app/pkg/common"
+	"github.com/gitpod-io/local-app/pkg/config"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
 
 var wsListOutputField string
 
-// listWorkspaceCommand lists all available workspaces
-var listWorkspaceCommand = &cobra.Command{
+// workspaceListCmd lists all available workspaces
+var workspaceListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Lists workspaces",
 	Args:  cobra.ExactArgs(0),
@@ -29,12 +30,18 @@ var listWorkspaceCommand = &cobra.Command{
 		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
 		defer cancel()
 
-		gitpod, err := common.GetGitpodClient(ctx)
+		gitpod, err := getGitpodClient(ctx)
 		if err != nil {
 			return err
 		}
 
-		orgId := getOrganizationId()
+		cfg := config.FromContext(ctx)
+		gpctx, err := cfg.GetActiveContext()
+		if err != nil {
+			return err
+		}
+		orgId := gpctx.OrganizationID
+
 		workspaces, err := gitpod.Workspaces.ListWorkspaces(ctx, connect.NewRequest(&v1.ListWorkspacesRequest{
 			OrganizationId: orgId,
 		}))
@@ -82,6 +89,6 @@ var listWorkspaceCommand = &cobra.Command{
 }
 
 func init() {
-	wsCmd.AddCommand(listWorkspaceCommand)
-	listWorkspaceCommand.Flags().StringVarP(&wsListOutputField, "field", "f", "", "output a specific field of the workspaces")
+	workspaceCmd.AddCommand(workspaceListCmd)
+	workspaceListCmd.Flags().StringVarP(&wsListOutputField, "field", "f", "", "output a specific field of the workspaces")
 }

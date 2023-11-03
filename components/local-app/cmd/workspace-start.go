@@ -15,33 +15,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var startDontWait = false
-var startOpenSsh = false
-var startOpenEditor = false
-
-// startWorkspaceCommand starts to a given workspace
-var startWorkspaceCommand = &cobra.Command{
+// workspaceStartCmd starts to a given workspace
+var workspaceStartCmd = &cobra.Command{
 	Use:   "start <workspace-id>",
 	Short: "Start a given workspace",
+	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		workspaceID := ""
-		if len(args) < 1 {
-			filter := func(ws *v1.Workspace) bool {
-				return ws.GetStatus().Instance.Status.Phase != v1.WorkspaceInstanceStatus_PHASE_RUNNING
-			}
-			workspaceID = common.SelectWorkspace(cmd.Context(), filter)
-		} else {
-			workspaceID = args[0]
-		}
+		workspaceID := args[0]
 
 		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Minute)
 		defer cancel()
 
-		if startOpenSsh && startOpenEditor {
-			return fmt.Errorf("Cannot open SSH and editor at the same time")
-		}
-
-		gitpod, err := common.GetGitpodClient(ctx)
+		gitpod, err := getGitpodClient(ctx)
 		if err != nil {
 			return err
 		}
@@ -57,30 +42,44 @@ var startWorkspaceCommand = &cobra.Command{
 			return nil
 		}
 
-		if startDontWait {
+		if workspaceStartOpts.DontWait {
 			fmt.Println("Workspace initialization started")
 			return nil
 		}
 
-		err = common.ObserveWsUntilStarted(ctx, workspaceID)
+		err = common.ObserveWorkspaceUntilStarted(ctx, gitpod, workspaceID)
 		if err != nil {
 			return err
 		}
 
-		if startOpenSsh {
-			return common.SshConnectToWs(ctx, workspaceID, false)
-		}
-		if startOpenEditor {
-			return common.OpenWsInPreferredEditor(ctx, workspaceID)
+		switch {
+		case workspaceStartOpts.OpenSSH:
+			return common.SshConnectToWs(ctx, gitpod, workspaceID, false)
+		case workspaceStartOpts.OpenEditor:
+			return common.OpenWorkspaceInPreferredEditor(ctx, gitpod, workspaceID)
 		}
 
 		return nil
 	},
 }
 
+type workspaceStartOptions struct {
+	DontWait   bool
+	OpenSSH    bool
+	OpenEditor bool
+}
+
+func addWorkspaceStartOptions(cmd *cobra.Command, opts *workspaceStartOptions) {
+	cmd.Flags().BoolVar(&opts.DontWait, "dont-wait", false, "do not wait for workspace to fully start, only initialize")
+	cmd.Flags().BoolVar(&opts.OpenSSH, "ssh", false, "open an SSH connection to workspace after starting")
+	cmd.Flags().BoolVar(&opts.OpenEditor, "open", false, "open the workspace in an editor after starting")
+
+	cmd.MarkFlagsMutuallyExclusive("ssh", "open")
+}
+
+var workspaceStartOpts workspaceStartOptions
+
 func init() {
-	wsCmd.AddCommand(startWorkspaceCommand)
-	startWorkspaceCommand.Flags().BoolVarP(&startDontWait, "dont-wait", "d", false, "do not wait for workspace to fully start, only initialize")
-	startWorkspaceCommand.Flags().BoolVarP(&startOpenSsh, "ssh", "s", false, "open an SSH connection to workspace after starting")
-	startWorkspaceCommand.Flags().BoolVarP(&startOpenEditor, "open", "e", false, "open the workspace in an editor after starting")
+	workspaceCmd.AddCommand(workspaceStartCmd)
+	addWorkspaceStartOptions(workspaceStartCmd, &workspaceStartOpts)
 }

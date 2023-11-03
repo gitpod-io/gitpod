@@ -304,3 +304,13 @@ func findOpenPortInRange(start, end int) (net.Listener, int, error) {
 	}
 	return nil, 0, xerrors.Errorf("could not open any valid port in range %d - %d", start, end)
 }
+
+type AuthenticatedTransport struct {
+	T     http.RoundTripper
+	Token string
+}
+
+func (t *AuthenticatedTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Header.Add("Authorization", "Bearer "+t.Token)
+	return t.T.RoundTrip(req)
+}

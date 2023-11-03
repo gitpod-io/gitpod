@@ -5,43 +5,45 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
-	"time"
 
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/local-app/pkg/common"
+	"github.com/gitpod-io/local-app/pkg/config"
 	"github.com/spf13/cobra"
 )
 
 var workspaceClass string
 var editor string
-var createDontWait = false
-var createOpenSsh = false
-var createOpenEditor = false
 
-// createWorkspaceCommand creates a new workspace
-var createWorkspaceCommand = &cobra.Command{
+// workspaceCreateCmd creates a new workspace
+var workspaceCreateCmd = &cobra.Command{
 	Use:   "create <repo-url>",
 	Short: "Creates a new workspace based on a given context",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SilenceErrors = true
+		cmd.SilenceUsage = true
+
 		passedArg := args[0]
 
-		ctx, cancel := context.WithTimeout(cmd.Context(), 30*time.Second)
-		defer cancel()
-
-		orgId := getOrganizationId()
-		if len(orgId) == 0 {
-			return fmt.Errorf("No org specified. Specify an organization ID using the GITPOD_ORG_ID environment variable")
-		}
-
-		gitpod, err := common.GetGitpodClient(ctx)
+		cfg := config.FromContext(cmd.Context())
+		gpctx, err := cfg.GetActiveContext()
 		if err != nil {
 			return err
 		}
+
+		gitpod, err := getGitpodClient(cmd.Context())
+		if err != nil {
+			return err
+		}
+
+		var (
+			orgId = gpctx.OrganizationID
+			ctx   = cmd.Context()
+		)
 
 		slog.Debug("Attempting to create workspace...", "org", orgId, "repo", passedArg)
 		newWorkspace, err := gitpod.Workspaces.CreateAndStartWorkspace(ctx, connect.NewRequest(
@@ -66,32 +68,37 @@ var createWorkspaceCommand = &cobra.Command{
 			return fmt.Errorf("Exception: API did not return a workspace ID back. Please try creating the workspace again")
 		}
 
-		if createDontWait {
+		if workspaceCreateOpts.StartOpts.DontWait {
 			fmt.Println(workspaceID)
 			return nil
 		}
 
-		err = common.ObserveWsUntilStarted(ctx, workspaceID)
+		err = common.ObserveWorkspaceUntilStarted(ctx, gitpod, workspaceID)
 		if err != nil {
 			return err
 		}
 
-		if createOpenSsh {
-			return common.SshConnectToWs(ctx, workspaceID, false)
+		if workspaceCreateOpts.StartOpts.OpenSSH {
+			return common.SshConnectToWs(ctx, gitpod, workspaceID, false)
 		}
-		if createOpenEditor {
-			return common.OpenWsInPreferredEditor(ctx, workspaceID)
+		if workspaceCreateOpts.StartOpts.OpenEditor {
+			return common.OpenWorkspaceInPreferredEditor(ctx, gitpod, workspaceID)
 		}
 
 		return nil
 	},
 }
 
+var workspaceCreateOpts struct {
+	StartOpts workspaceStartOptions
+
+	Editor string
+}
+
 func init() {
-	wsCmd.AddCommand(createWorkspaceCommand)
-	createWorkspaceCommand.Flags().BoolVarP(&createDontWait, "dont-wait", "d", false, "don't wait for the workspace to start and just print out the newly created workspace's ID")
-	createWorkspaceCommand.Flags().StringVarP(&workspaceClass, "class", "c", "", "the workspace class")
-	createWorkspaceCommand.Flags().StringVarP(&editor, "editor", "e", "", "the editor to use")
-	createWorkspaceCommand.Flags().BoolVarP(&createOpenSsh, "ssh", "s", false, "open an SSH connection to workspace after starting")
-	createWorkspaceCommand.Flags().BoolVarP(&createOpenEditor, "open", "o", false, "open the workspace in an editor after starting")
+	workspaceCmd.AddCommand(workspaceCreateCmd)
+	addWorkspaceStartOptions(workspaceCreateCmd, &workspaceCreateOpts.StartOpts)
+
+	workspaceCreateCmd.Flags().StringVar(&workspaceClass, "class", "", "the workspace class")
+	workspaceCreateCmd.Flags().StringVar(&editor, "editor", "", "the editor to use")
 }

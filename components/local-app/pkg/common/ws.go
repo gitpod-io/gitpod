@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/bufbuild/connect-go"
+	"github.com/gitpod-io/gitpod/components/public-api/go/client"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/sirupsen/logrus"
 )
@@ -78,13 +79,8 @@ func HumanizeWorkspacePhase(ws *v1.Workspace) string {
 	return TranslateWsPhase(ws.Status.Instance.Status.Phase.String())
 }
 
-func SshConnectToWs(ctx context.Context, workspaceID string, runDry bool) error {
-	gitpod, err := GetGitpodClient(ctx)
-	if err != nil {
-		return err
-	}
-
-	workspace, err := gitpod.Workspaces.GetWorkspace(ctx, connect.NewRequest(&v1.GetWorkspaceRequest{WorkspaceId: workspaceID}))
+func SshConnectToWs(ctx context.Context, clnt *client.Gitpod, workspaceID string, runDry bool) error {
+	workspace, err := clnt.Workspaces.GetWorkspace(ctx, connect.NewRequest(&v1.GetWorkspaceRequest{WorkspaceId: workspaceID}))
 	if err != nil {
 		return err
 	}
@@ -95,7 +91,7 @@ func SshConnectToWs(ctx context.Context, workspaceID string, runDry bool) error 
 		return fmt.Errorf("cannot connect, workspace is not running")
 	}
 
-	token, err := gitpod.Workspaces.GetOwnerToken(ctx, connect.NewRequest(&v1.GetOwnerTokenRequest{WorkspaceId: workspaceID}))
+	token, err := clnt.Workspaces.GetOwnerToken(ctx, connect.NewRequest(&v1.GetOwnerTokenRequest{WorkspaceId: workspaceID}))
 	if err != nil {
 		return err
 	}
@@ -137,13 +133,8 @@ type Desktop struct {
 	Kind     string `json:"kind"`
 }
 
-func OpenWsInPreferredEditor(ctx context.Context, workspaceID string) error {
-	gitpod, err := GetGitpodClient(ctx)
-	if err != nil {
-		return err
-	}
-
-	workspace, err := gitpod.Workspaces.GetWorkspace(ctx, connect.NewRequest(&v1.GetWorkspaceRequest{WorkspaceId: workspaceID}))
+func OpenWorkspaceInPreferredEditor(ctx context.Context, clnt *client.Gitpod, workspaceID string) error {
+	workspace, err := clnt.Workspaces.GetWorkspace(ctx, connect.NewRequest(&v1.GetWorkspaceRequest{WorkspaceId: workspaceID}))
 	if err != nil {
 		return err
 	}
@@ -209,13 +200,8 @@ func OpenWsInPreferredEditor(ctx context.Context, workspaceID string) error {
 	return nil
 }
 
-func ObserveWsUntilStarted(ctx context.Context, workspaceId string) error {
-	gitpod, err := GetGitpodClient(ctx)
-	if err != nil {
-		return err
-	}
-
-	wsInfo, err := gitpod.Workspaces.GetWorkspace(ctx, connect.NewRequest(&v1.GetWorkspaceRequest{WorkspaceId: workspaceId}))
+func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, workspaceId string) error {
+	wsInfo, err := clnt.Workspaces.GetWorkspace(ctx, connect.NewRequest(&v1.GetWorkspaceRequest{WorkspaceId: workspaceId}))
 	if err != nil {
 		return fmt.Errorf("Failed to get workspace info: %w", err)
 	}
@@ -230,7 +216,7 @@ func ObserveWsUntilStarted(ctx context.Context, workspaceId string) error {
 	maxRetries := 4
 	retries := 0
 	for {
-		stream, err := gitpod.Workspaces.StreamWorkspaceStatus(ctx, connect.NewRequest(&v1.StreamWorkspaceStatusRequest{WorkspaceId: workspaceId}))
+		stream, err := clnt.Workspaces.StreamWorkspaceStatus(ctx, connect.NewRequest(&v1.StreamWorkspaceStatusRequest{WorkspaceId: workspaceId}))
 		if err != nil {
 			if retries >= maxRetries {
 				return fmt.Errorf("Failed to stream workspace status after %d retries: %w", maxRetries, err)

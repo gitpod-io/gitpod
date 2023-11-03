@@ -18,26 +18,18 @@ import (
 
 var stopDontWait = false
 
-// stopWorkspaceCommand stops to a given workspace
-var stopWorkspaceCommand = &cobra.Command{
+// workspaceStopCommand stops to a given workspace
+var workspaceStopCommand = &cobra.Command{
 	Use:   "stop <workspace-id>",
 	Short: "Stop a given workspace",
-	Args:  cobra.MaximumNArgs(1),
+	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		workspaceID := ""
-		if len(args) < 1 {
-			filter := func(ws *v1.Workspace) bool {
-				return ws.GetStatus().Instance.Status.Phase != v1.WorkspaceInstanceStatus_PHASE_STOPPED
-			}
-			workspaceID = common.SelectWorkspace(cmd.Context(), filter)
-		} else {
-			workspaceID = args[0]
-		}
+		workspaceID := args[0]
 
 		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Minute)
 		defer cancel()
 
-		gitpod, err := common.GetGitpodClient(ctx)
+		gitpod, err := getGitpodClient(ctx)
 		if err != nil {
 			return err
 		}
@@ -107,6 +99,6 @@ var stopWorkspaceCommand = &cobra.Command{
 }
 
 func init() {
-	wsCmd.AddCommand(stopWorkspaceCommand)
-	stopWorkspaceCommand.Flags().BoolVarP(&stopDontWait, "dont-wait", "d", false, "do not wait for workspace to fully stop, only initialize")
+	workspaceCmd.AddCommand(workspaceStopCommand)
+	workspaceStopCommand.Flags().BoolVarP(&stopDontWait, "dont-wait", "d", false, "do not wait for workspace to fully stop, only initialize")
 }
