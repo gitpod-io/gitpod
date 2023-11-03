@@ -965,3 +965,4 @@ export class WorkspaceEnvironmentVariable extends Message<WorkspaceEnvironmentVa
     return proto3.util.equals(WorkspaceEnvironmentVariable, a, b);
   }
 }
+

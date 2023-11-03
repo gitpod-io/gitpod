@@ -228,3 +228,4 @@ export class EditorOption_Kind extends Message<EditorOption_Kind> {
     return proto3.util.equals(EditorOption_Kind, a, b);
   }
 }
+

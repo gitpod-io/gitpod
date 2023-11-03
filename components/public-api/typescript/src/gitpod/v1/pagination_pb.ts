@@ -100,3 +100,4 @@ export class PaginationResponse extends Message<PaginationResponse> {
     return proto3.util.equals(PaginationResponse, a, b);
   }
 }
+

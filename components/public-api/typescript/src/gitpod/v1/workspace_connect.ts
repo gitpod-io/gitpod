@@ -47,3 +47,4 @@ export const WorkspaceService = {
     },
   }
 } as const;
+

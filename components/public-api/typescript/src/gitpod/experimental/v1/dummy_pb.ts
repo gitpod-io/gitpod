@@ -159,3 +159,4 @@ export class LotsOfRepliesResponse extends Message<LotsOfRepliesResponse> {
     return proto3.util.equals(LotsOfRepliesResponse, a, b);
   }
 }
+

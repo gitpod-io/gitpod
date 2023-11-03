@@ -222,3 +222,4 @@ export class UpdateGitStatusResponse extends Message<UpdateGitStatusResponse> {
     return proto3.util.equals(UpdateGitStatusResponse, a, b);
   }
 }
+

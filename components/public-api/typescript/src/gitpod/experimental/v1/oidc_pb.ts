@@ -972,3 +972,4 @@ export class SetClientConfigActivationResponse extends Message<SetClientConfigAc
     return proto3.util.equals(SetClientConfigActivationResponse, a, b);
   }
 }
+

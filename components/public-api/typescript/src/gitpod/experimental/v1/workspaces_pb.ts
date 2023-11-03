@@ -2162,3 +2162,4 @@ proto3.util.setEnumType(GetDefaultWorkspaceImageResponse_ImageSource, "gitpod.ex
   { no: 1, name: "IMAGE_SOURCE_INSTALLATION" },
   { no: 2, name: "IMAGE_SOURCE_ORGANIZATION" },
 ]);
+
