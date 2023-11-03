@@ -89,7 +89,7 @@ var loginCmd = &cobra.Command{
 				orgID = orgsList.Msg.GetTeams()[0].Id
 			default:
 				orgID = orgsList.Msg.GetTeams()[0].Id
-				slog.Info("found more than one organisation and choose the first one", "org", orgID)
+				slog.Info("found more than one organization and choose the first one", "org", orgID)
 			}
 			cfg.Contexts[loginOpts.ContextName].OrganizationID = orgID
 		}
