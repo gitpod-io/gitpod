@@ -6,17 +6,13 @@ package cmd
 
 import (
 	"context"
-	"fmt"
-	"reflect"
 	"time"
 
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
-	"github.com/gitpod-io/local-app/pkg/common"
+	"github.com/gitpod-io/local-app/pkg/prettyprint"
 	"github.com/spf13/cobra"
 )
-
-var orgListOutputField string
 
 // listOrganizationCommand lists all available organizations
 var listOrganizationCommand = &cobra.Command{
@@ -36,28 +32,37 @@ var listOrganizationCommand = &cobra.Command{
 			return err
 		}
 
-		orgData := orgs.Msg.GetTeams()
-
-		if orgListOutputField != "" {
-			orgListOutputField = common.CapitalizeFirst(orgListOutputField)
-			for _, org := range orgData {
-				val := reflect.ValueOf(org).Elem()
-				if fieldVal := val.FieldByName(orgListOutputField); fieldVal.IsValid() {
-					fmt.Printf("%v\n", fieldVal.Interface())
-				} else {
-					return fmt.Errorf("Field '%s' is an invalid field for organizations", orgListOutputField)
-				}
-			}
-			return nil
-		}
-
-		outputOrgs(orgData)
-
-		return nil
+		w := prettyprint.Writer{Out: cmd.OutOrStdout(), Field: listOrganizationOpts.Format.Field}
+		return w.Write(tabularTeam(orgs.Msg.GetTeams()))
 	},
+}
+
+type tabularTeam []*v1.Team
+
+// Header implements prettyprint.Tabular.
+func (tabularTeam) Header() []string {
+	return []string{"id", "name"}
+}
+
+// Row implements prettyprint.Tabular.
+func (orgs tabularTeam) Row() []map[string]string {
+	res := make([]map[string]string, 0, len(orgs))
+	for _, org := range orgs {
+		res = append(res, map[string]string{
+			"id":   org.Id,
+			"name": org.Name,
+		})
+	}
+	return res
+}
+
+var _ prettyprint.Tabular = &tabularTeam{}
+
+var listOrganizationOpts struct {
+	Format formatOpts
 }
 
 func init() {
 	orgCmd.AddCommand(listOrganizationCommand)
-	listOrganizationCommand.Flags().StringVarP(&orgListOutputField, "field", "f", "", "output a specific field of the organizations")
+	addFormatFlags(listOrganizationCommand, &listOrganizationOpts.Format)
 }

@@ -6,20 +6,20 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"os"
-	"reflect"
 	"time"
 
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/local-app/pkg/common"
 	"github.com/gitpod-io/local-app/pkg/config"
-	"github.com/olekukonko/tablewriter"
+	"github.com/gitpod-io/local-app/pkg/prettyprint"
 	"github.com/spf13/cobra"
 )
 
-var wsListOutputField string
+var workspaceListOpts struct {
+	Format formatOpts
+}
 
 // workspaceListCmd lists all available workspaces
 var workspaceListCmd = &cobra.Command{
@@ -49,46 +49,33 @@ var workspaceListCmd = &cobra.Command{
 			return err
 		}
 
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"Repo", "Branch", "Workspace ID", "Status"})
-		table.SetBorder(false)
-		table.SetColumnSeparator("")
-		table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-		table.SetHeaderLine(false)
-
-		for _, workspace := range workspaces.Msg.GetResult() {
-			repository := common.GetWorkspaceRepo(workspace)
-			branch := common.GetWorkspaceBranch(workspace)
-
-			wsData := common.WorkspaceDisplayData{
-				Repository: repository,
-				Branch:     branch,
-				Id:         workspace.WorkspaceId,
-				Status:     common.HumanizeWorkspacePhase(workspace),
-			}
-
-			if wsListOutputField != "" {
-				wsListOutputField = common.CapitalizeFirst(wsListOutputField)
-				val := reflect.ValueOf(wsData)
-				if fieldVal := val.FieldByName(wsListOutputField); fieldVal.IsValid() {
-					fmt.Printf("%v\n", fieldVal.Interface())
-				} else {
-					return fmt.Errorf("Field '%s' is an invalid field for workspaces", wsListOutputField)
-				}
-			} else {
-				table.Append([]string{wsData.Repository, wsData.Branch, wsData.Id, wsData.Status})
-			}
-		}
-
-		if wsListOutputField == "" {
-			table.Render()
-		}
+		w := prettyprint.Writer{Out: os.Stdout, Field: workspaceListOpts.Format.Field}
+		_ = w.Write(tabularWorkspaces(workspaces.Msg.GetResult()))
 
 		return nil
 	},
 }
 
+type tabularWorkspaces []*v1.Workspace
+
+func (tabularWorkspaces) Header() []string {
+	return []string{"repository", "branch", "workspace", "status"}
+}
+
+func (wss tabularWorkspaces) Row() []map[string]string {
+	res := make([]map[string]string, 0, len(wss))
+	for _, ws := range wss {
+		res = append(res, map[string]string{
+			"repository": common.GetWorkspaceRepo(ws),
+			"branch":     common.GetWorkspaceBranch(ws),
+			"workspace":  ws.WorkspaceId,
+			"status":     common.HumanizeWorkspacePhase(ws),
+		})
+	}
+	return res
+}
+
 func init() {
 	workspaceCmd.AddCommand(workspaceListCmd)
-	workspaceListCmd.Flags().StringVarP(&wsListOutputField, "field", "f", "", "output a specific field of the workspaces")
+	addFormatFlags(workspaceListCmd, &workspaceListOpts.Format)
 }

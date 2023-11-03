@@ -12,73 +12,45 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
-	"github.com/gitpod-io/local-app/pkg/common"
-	"github.com/olekukonko/tablewriter"
+	"github.com/gitpod-io/local-app/pkg/prettyprint"
 	"github.com/spf13/cobra"
 )
 
-// stopWorkspaceCommand stops to a given workspace
+var workspaceGetOpts struct {
+	Format formatOpts
+}
+
 var workspaceGetCmd = &cobra.Command{
 	Use:   "get <workspace-id>",
 	Short: "Retrieves metadata of a given workspace",
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		workspaceID := args[0]
+		for _, workspaceID := range args {
+			ctx, cancel := context.WithTimeout(cmd.Context(), 30*time.Second)
+			defer cancel()
 
-		ctx, cancel := context.WithTimeout(cmd.Context(), 30*time.Second)
-		defer cancel()
+			gitpod, err := getGitpodClient(ctx)
+			if err != nil {
+				return err
+			}
 
-		gitpod, err := getGitpodClient(ctx)
-		if err != nil {
-			return err
+			slog.Debug("Attempting to retrieve workspace info...")
+			ws, err := gitpod.Workspaces.GetWorkspace(ctx, connect.NewRequest(&v1.GetWorkspaceRequest{WorkspaceId: workspaceID}))
+			if err != nil {
+				return err
+			}
+
+			w := prettyprint.Writer{Out: os.Stdout, LongFormat: true, Field: workspaceGetOpts.Format.Field}
+			err = w.Write(tabularWorkspaces([]*v1.Workspace{ws.Msg.GetResult()}))
+			if err != nil {
+				return err
+			}
 		}
-
-		slog.Debug("Attempting to retrieve workspace info...")
-		ws, err := gitpod.Workspaces.GetWorkspace(ctx, connect.NewRequest(&v1.GetWorkspaceRequest{WorkspaceId: workspaceID}))
-		if err != nil {
-			return err
-		}
-
-		wsInfo := ws.Msg.GetResult()
-		repository := common.GetWorkspaceRepo(wsInfo)
-		phase := common.HumanizeWorkspacePhase(wsInfo)
-
-		createdAt := wsInfo.Status.Instance.CreatedAt
-		createdTime := time.Unix(createdAt.Seconds, 0)
-
-		data := &common.WorkspaceDisplayData{
-			Id:         wsInfo.WorkspaceId,
-			Url:        common.GetWorkspaceUrl(wsInfo),
-			Repository: repository,
-			Branch:     common.GetWorkspaceBranch(wsInfo),
-			Status:     phase,
-			CreatedAt:  createdTime,
-			// todo: LastActive, Created, WorkspaceClass (API implementation pending), RepoUrl (API implementation also pending)
-		}
-
-		outputInfo(data)
-
-		return err
+		return nil
 	},
-}
-
-func outputInfo(info *common.WorkspaceDisplayData) {
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetColWidth(50)
-	table.SetBorder(false)
-	table.SetColumnSeparator(":")
-	table.Append([]string{"ID", info.Id})
-	table.Append([]string{"URL", info.Url})
-	// Class
-	table.Append([]string{"Status", info.Status})
-	// Repo URL
-	table.Append([]string{"Repo", info.Repository})
-	table.Append([]string{"Branch", info.Branch})
-	table.Append([]string{"Created", info.CreatedAt.Format(time.RFC3339)})
-	// Last Active (duration)
-	table.Render()
 }
 
 func init() {
 	workspaceCmd.AddCommand(workspaceGetCmd)
+	addFormatFlags(workspaceGetCmd, &workspaceGetOpts.Format)
 }

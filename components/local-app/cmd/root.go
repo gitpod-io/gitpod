@@ -14,6 +14,7 @@ import (
 	"github.com/gitpod-io/gitpod/components/public-api/go/client"
 	"github.com/gitpod-io/local-app/pkg/auth"
 	"github.com/gitpod-io/local-app/pkg/config"
+	"github.com/gitpod-io/local-app/pkg/prettyprint"
 	"github.com/spf13/cobra"
 )
 
@@ -26,9 +27,9 @@ var rootCmd = &cobra.Command{
 	Use:   "gitpod",
 	Short: "A CLI for interacting with Gitpod",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		var logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}))
+		var logger = slog.New(&prettyprint.Handler{LogLevel: slog.LevelInfo})
 		if rootOpts.Verbose {
-			logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
+			logger = slog.New(&prettyprint.Handler{LogLevel: slog.LevelDebug})
 		}
 		slog.SetDefault(logger)
 
@@ -93,4 +94,12 @@ func getGitpodClient(ctx context.Context) (*client.Gitpod, error) {
 	}
 
 	return res, nil
+}
+
+type formatOpts struct {
+	Field string
+}
+
+func addFormatFlags(cmd *cobra.Command, opts *formatOpts) {
+	cmd.Flags().StringVarP(&opts.Field, "field", "f", "", "Only print the specified field")
 }
