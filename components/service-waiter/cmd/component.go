@@ -128,7 +128,6 @@ func init() {
 	componentCmd.Flags().StringVar(&componentCmdOpt.component, "component", "", "Component name of deployment")
 	componentCmd.Flags().StringVar(&componentCmdOpt.labels, "labels", "", "Labels of deployment")
 
-	_ = componentCmd.MarkFlagRequired("image")
 	_ = componentCmd.MarkFlagRequired("namespace")
 	_ = componentCmd.MarkFlagRequired("component")
 	_ = componentCmd.MarkFlagRequired("labels")
