@@ -57,6 +57,7 @@ const localCli: OAuthClient = {
         { name: "function:startWorkspace" },
         { name: "function:stopWorkspace" },
         { name: "function:deleteWorkspace" },
+        { name: "function:getTeam" },
         { name: "function:getTeams" },
         { name: "function:getTeamMembers" },
         { name: "function:getTeamProjects" },
