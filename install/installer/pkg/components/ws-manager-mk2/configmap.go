@@ -70,6 +70,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Templates: templatesCfg,
 		},
 	}
+	var preferredWorkspaceClass string
 
 	installationShortNameSuffix := ""
 	if ctx.Config.Metadata.InstallationShortname != "" && ctx.Config.Metadata.InstallationShortname != configv1.InstallationShortNameOldDefault {
@@ -126,6 +127,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				tpls[tmpl_n] = tmpl_v
 			}
 		}
+		preferredWorkspaceClass = ucfg.Workspace.PreferredWorkspaceClass
+
 		schedulerName = ucfg.Workspace.SchedulerName
 		if ucfg.Workspace.HostURL != "" {
 			gitpodHostURL = ucfg.Workspace.HostURL
@@ -185,10 +188,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PrivateKey:  "/ws-daemon-tls-certs/tls.key",
 				},
 			},
-			WorkspaceClasses:     classes,
-			HeartbeatInterval:    util.Duration(30 * time.Second),
-			GitpodHostURL:        gitpodHostURL,
-			WorkspaceClusterHost: workspaceClusterHost,
+			WorkspaceClasses:        classes,
+			PreferredWorkspaceClass: preferredWorkspaceClass,
+			HeartbeatInterval:       util.Duration(30 * time.Second),
+			GitpodHostURL:           gitpodHostURL,
+			WorkspaceClusterHost:    workspaceClusterHost,
 			InitProbe: config.InitProbeConfiguration{
 				Timeout: (1 * time.Second).String(),
 			},
