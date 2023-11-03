@@ -429,6 +429,7 @@ export namespace GitpodServer {
     }
 
     export interface StartWorkspaceOptions {
+        //TODO(cw): none of these options can be changed for a workspace that's been created. Should be moved to CreateWorkspaceOptions.
         forceDefaultImage?: boolean;
         workspaceClass?: string;
         ideSettings?: IDESettings;
