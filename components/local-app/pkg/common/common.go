@@ -70,6 +70,10 @@ func ConstructGitpodClient(ctx context.Context, token string) (*client.Gitpod, e
 		Transport: at,
 	}
 
+	if len(token) == 0 {
+		return nil, fmt.Errorf("CLI not authenticated. Use `gitpod login` or the GITPOD_TOKEN environment variable.")
+	}
+
 	gp, err := client.New(client.WithHTTPClient(customClient), client.WithCredentials(token), client.WithURL(gitpodApiEndpoint))
 	client.AuthorizationInterceptor(token)
 	if err != nil {
