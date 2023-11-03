@@ -38,7 +38,8 @@ var componentCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		if componentCmdOpt.image == "" {
-			log.Fatal("Target image should be defined")
+			log.Errorf("target image is empty, skip service waiter %s", componentCmdOpt.component)
+			return
 		}
 		timeout := getTimeout()
 		log.WithField("timeout", timeout.String()).WithFields(logrus.Fields{"image": componentCmdOpt.image, "component": componentCmdOpt.component, "namespace": componentCmdOpt.namespace, "labels": componentCmdOpt.labels}).Info("start to wait component")
@@ -109,13 +110,13 @@ func waitPodsImage(ctx context.Context) error {
 			ok, err := checkPodsImage(ctx, k8sClient)
 			if err != nil {
 				log.WithError(err).Error("image check failed")
-				time.Sleep(5 * time.Second)
+				time.Sleep(1 * time.Second)
 				continue
 			}
 			if ok {
 				return nil
 			}
-			time.Sleep(5 * time.Second)
+			time.Sleep(1 * time.Second)
 		}
 	}
 }
