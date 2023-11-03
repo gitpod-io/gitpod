@@ -17,6 +17,7 @@ import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/g
 import { UserService as UserServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_connect";
 import { OrganizationService } from "@gitpod/public-api/lib/gitpod/v1/organization_connect";
 import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/v1/workspace_connect";
+import { AuthProviderService } from "@gitpod/public-api/lib/gitpod/experimental/v2/authprovider_connect";
 import express from "express";
 import * as http from "http";
 import { decorate, inject, injectable, interfaces } from "inversify";
@@ -39,6 +40,7 @@ import { APIStatsService as StatsServiceAPI } from "./stats";
 import { APITeamsService as TeamsServiceAPI } from "./teams";
 import { APIUserService as UserServiceAPI } from "./user";
 import { WorkspaceServiceAPI } from "./workspace-service-api";
+import { AuthProviderServiceAPI } from "./auth-provider-service-api";
 
 decorate(injectable(), PublicAPIConverter);
 
@@ -52,6 +54,7 @@ export class API {
     @inject(TeamsServiceAPI) private readonly teamServiceApi: TeamsServiceAPI;
     @inject(WorkspaceServiceAPI) private readonly workspaceServiceApi: WorkspaceServiceAPI;
     @inject(OrganizationServiceAPI) private readonly organizationServiceApi: OrganizationServiceAPI;
+    @inject(AuthProviderServiceAPI) private readonly authProviderServiceApi: AuthProviderServiceAPI;
     @inject(StatsServiceAPI) private readonly tatsServiceApi: StatsServiceAPI;
     @inject(HelloServiceAPI) private readonly helloServiceApi: HelloServiceAPI;
     @inject(SessionHandler) private readonly sessionHandler: SessionHandler;
@@ -89,6 +92,7 @@ export class API {
                     router.service(UserServiceDefinition, this.userServiceApi);
                     router.service(TeamsServiceDefinition, this.teamServiceApi);
                     router.service(StatsService, this.tatsServiceApi);
+                    router.service(AuthProviderService, this.authProviderServiceApi);
                 },
             }),
         );
