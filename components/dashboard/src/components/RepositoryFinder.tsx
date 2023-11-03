@@ -139,6 +139,7 @@ type SuggestedRepositoryOptionProps = {
 };
 const SuggestedRepositoryOption: FC<SuggestedRepositoryOptionProps> = ({ repo }) => {
     const name = repo.projectName || repo.repositoryName;
+    const repoPath = stripOffProtocol(repo.url);
 
     return (
         <div
@@ -156,8 +157,11 @@ const SuggestedRepositoryOption: FC<SuggestedRepositoryOptionProps> = ({ repo })
                 </>
             )}
 
-            <span className="text-sm whitespace-nowrap truncate overflow-ellipsis text-gray-500 dark:text-gray-400">
-                {stripOffProtocol(repo.url)}
+            <span
+                className="text-sm whitespace-nowrap truncate overflow-ellipsis text-gray-500 dark:text-gray-400"
+                title={repoPath}
+            >
+                {repoPath}
             </span>
         </div>
     );
