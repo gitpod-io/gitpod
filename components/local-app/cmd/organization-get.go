@@ -33,8 +33,8 @@ func outputOrgs(orgs []*v1.Team) {
 	table.Render()
 }
 
-// getOrganizationCommand gets all available organizations
-var getOrganizationCommand = &cobra.Command{
+// organizationGetCmd gets all available organizations
+var organizationGetCmd = &cobra.Command{
 	Use:   "get [organization-id]",
 	Short: "gets an organization's details",
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -74,5 +74,5 @@ var getOrganizationCommand = &cobra.Command{
 }
 
 func init() {
-	orgCmd.AddCommand(getOrganizationCommand)
+	organizationCmd.AddCommand(organizationGetCmd)
 }

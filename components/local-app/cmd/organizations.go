@@ -8,12 +8,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var orgCmd = &cobra.Command{
+var organizationCmd = &cobra.Command{
 	Use:     "organization",
 	Short:   "Interact with organizations",
 	Aliases: []string{"organizations", "org", "orgs"},
 }
 
 func init() {
-	rootCmd.AddCommand(orgCmd)
+	rootCmd.AddCommand(organizationCmd)
 }

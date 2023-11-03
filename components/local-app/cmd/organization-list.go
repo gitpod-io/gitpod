@@ -14,8 +14,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// listOrganizationCommand lists all available organizations
-var listOrganizationCommand = &cobra.Command{
+// organizationListCmd lists all available organizations
+var organizationListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Lists organizations",
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -63,6 +63,6 @@ var listOrganizationOpts struct {
 }
 
 func init() {
-	orgCmd.AddCommand(listOrganizationCommand)
-	addFormatFlags(listOrganizationCommand, &listOrganizationOpts.Format)
+	organizationCmd.AddCommand(organizationListCmd)
+	addFormatFlags(organizationListCmd, &listOrganizationOpts.Format)
 }
