@@ -20,12 +20,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	authRedirectURL string
-	authTimeout     time.Duration
-	token           string
-)
-
 var loginOpts struct {
 	Token          string
 	Host           string
