@@ -131,6 +131,7 @@ import { EnvVarService, ResolvedEnvVars } from "../user/env-var-service";
 import { RedlockAbortSignal } from "redlock";
 import { ConfigProvider } from "./config-provider";
 import { isGrpcError } from "@gitpod/gitpod-protocol/lib/util/grpc";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
@@ -684,8 +685,16 @@ export class WorkspaceStarter {
         abortSignal: RedlockAbortSignal,
         region?: WorkspaceRegion,
     ): Promise<StartWorkspaceResponse.AsObject | undefined> {
+        const constrainOnWorkspaceClassSupport = await isWorkspaceClassDiscoveryEnabled(user);
+
         let lastInstallation = "";
-        const clusters = await this.clientProvider.getStartClusterSets(user, workspace, instance, region);
+        const clusters = await this.clientProvider.getStartClusterSets(
+            user,
+            workspace,
+            instance,
+            region,
+            constrainOnWorkspaceClassSupport,
+        );
         for await (const cluster of clusters) {
             if (abortSignal.aborted) {
                 return;
@@ -1924,4 +1933,10 @@ function resolveGitpodTasks(ws: Workspace, instance: WorkspaceInstance): TaskCon
         tasks.push(...instance.configuration.ideSetup.tasks);
     }
     return tasks;
+}
+
+export async function isWorkspaceClassDiscoveryEnabled(user: User): Promise<boolean> {
+    return getExperimentsClientForBackend().getValueAsync("workspace_class_discovery_enabled", false, {
+        user: user,
+    });
 }
