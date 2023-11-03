@@ -24,6 +24,7 @@ func InferOrgId() (string, error) {
 
 	if err != nil {
 		slog.ErrorContext(ctx, "Failed to list organizations", err)
+		return "", err
 	}
 
 	orgIds := []string{}
