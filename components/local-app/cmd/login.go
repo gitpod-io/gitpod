@@ -49,7 +49,7 @@ var loginCmd = &cobra.Command{
 			var err error
 			token, err = auth.Login(context.Background(), auth.LoginOpts{
 				GitpodURL:   loginOpts.Host,
-				AuthTimeout: 30 * time.Second,
+				AuthTimeout: 5 * time.Minute,
 			})
 			if err != nil {
 				return err

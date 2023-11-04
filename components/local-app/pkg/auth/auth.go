@@ -21,7 +21,6 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
-	"github.com/gitpod-io/local-app/pkg/config"
 	"github.com/gitpod-io/local-app/pkg/constants"
 	"github.com/sirupsen/logrus"
 	"github.com/skratchdot/open-golang/open"
@@ -38,12 +37,10 @@ var authScopesLocalCompanion = []string{
 	"resource:default",
 }
 
-func fetchValidCliScopes(ctx context.Context) ([]string, error) {
+func fetchValidCliScopes(ctx context.Context, serviceURL string) ([]string, error) {
 	var clientId = constants.Flavor
-	var serviceUrl = config.GetGitpodUrl()
-	var host = config.GetString("host")
 
-	endpoint := serviceUrl + "/api/oauth/inspect?client=" + clientId
+	endpoint := serviceURL + "/api/oauth/inspect?client=" + clientId
 
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
@@ -67,7 +64,7 @@ func fetchValidCliScopes(ctx context.Context) ([]string, error) {
 		return authScopesLocalCompanion, nil
 	}
 
-	return nil, errors.New(host + " did not provide valid scopes")
+	return nil, errors.New(serviceURL + " did not provide valid scopes")
 }
 
 type ErrInvalidGitpodToken struct {
@@ -219,7 +216,7 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 		},
 	}
 	if constants.Flavor == "gitpod-cli" {
-		authScopesLocalCompanion, err = fetchValidCliScopes(ctx)
+		authScopesLocalCompanion, err = fetchValidCliScopes(ctx, opts.GitpodURL)
 		if err != nil {
 			return "", err
 		}
@@ -250,7 +247,6 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 		return "", xerrors.Errorf("cannot open browser to URL %s: %s\n", authorizationURL, err)
 	}
 
-	authTimeout := time.NewTimer(opts.AuthTimeout * time.Second)
 	var query url.Values
 	var code, approved string
 	select {
@@ -261,7 +257,7 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 	case query = <-queryChan:
 		code = query.Get("code")
 		approved = query.Get("approved")
-	case <-authTimeout.C:
+	case <-time.After(opts.AuthTimeout):
 		return "", xerrors.Errorf("auth timeout after %d seconds", uint32(opts.AuthTimeout))
 	}
 
