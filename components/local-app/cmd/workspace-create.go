@@ -7,6 +7,7 @@ package cmd
 import (
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
@@ -25,21 +26,38 @@ var workspaceCreateCmd = &cobra.Command{
 		cmd.SilenceUsage = true
 		repoURL := args[0]
 
-		if workspaceCreateOpts.WorkspaceClass == "" {
-			return prettyprint.AddResolution(fmt.Errorf("workspace class (--class) is required"),
-				"list the available workspace classes using `{gitpod} workspace list-classes` and specify by passing the ID using `--class`",
-			)
-		}
-
 		cfg := config.FromContext(cmd.Context())
 		gpctx, err := cfg.GetActiveContext()
 		if err != nil {
 			return err
 		}
-
 		gitpod, err := getGitpodClient(cmd.Context())
 		if err != nil {
 			return err
+		}
+
+		if workspaceCreateOpts.WorkspaceClass != "" {
+			resp, err := gitpod.Workspaces.ListWorkspaceClasses(cmd.Context(), connect.NewRequest(&v1.ListWorkspaceClassesRequest{}))
+			if err != nil {
+				return prettyprint.AddApology(prettyprint.AddResolution(fmt.Errorf("cannot list workspace classes: %w", err),
+					"don't pass an explicit workspace class, i.e. omit the --class flag",
+				))
+			}
+			var (
+				classes []string
+				found   bool
+			)
+			for _, cls := range resp.Msg.GetResult() {
+				classes = append(classes, cls.Id)
+				if cls.Id == workspaceCreateOpts.WorkspaceClass {
+					found = true
+				}
+			}
+			if !found {
+				return prettyprint.AddResolution(fmt.Errorf("workspace class %s not found", workspaceCreateOpts.WorkspaceClass),
+					fmt.Sprintf("use one of the available workspace classes: %s", strings.Join(classes, ", ")),
+				)
+			}
 		}
 
 		var (
