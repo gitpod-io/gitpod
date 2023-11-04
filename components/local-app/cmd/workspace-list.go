@@ -59,7 +59,7 @@ var workspaceListCmd = &cobra.Command{
 type tabularWorkspaces []*v1.Workspace
 
 func (tabularWorkspaces) Header() []string {
-	return []string{"repository", "branch", "workspace", "status"}
+	return []string{"id", "repository", "branch", "status"}
 }
 
 func (wss tabularWorkspaces) Row() []map[string]string {
@@ -87,9 +87,9 @@ func (wss tabularWorkspaces) Row() []map[string]string {
 		}
 
 		res = append(res, map[string]string{
+			"id":         ws.WorkspaceId,
 			"repository": repo,
 			"branch":     branch,
-			"workspace":  ws.WorkspaceId,
 			"status":     prettyprint.FormatWorkspacePhase(ws.Status.Instance.Status.Phase),
 		})
 	}
