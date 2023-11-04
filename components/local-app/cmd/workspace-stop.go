@@ -12,7 +12,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
-	"github.com/gitpod-io/local-app/pkg/common"
+	"github.com/gitpod-io/local-app/pkg/prettyprint"
 	"github.com/spf13/cobra"
 )
 
@@ -65,7 +65,7 @@ var workspaceStopCommand = &cobra.Command{
 
 		fmt.Println("Waiting for workspace to stop...")
 
-		fmt.Println("Workspace " + common.TranslateWsPhase(currentPhase.String()))
+		fmt.Println("Workspace " + prettyprint.FormatWorkspacePhase(currentPhase))
 
 		previousStatus := ""
 
@@ -81,8 +81,7 @@ var workspaceStopCommand = &cobra.Command{
 				break
 			}
 
-			currentStatus := common.TranslateWsPhase(msg.GetResult().Instance.Status.Phase.String())
-
+			currentStatus := prettyprint.FormatWorkspacePhase(msg.GetResult().Instance.Status.Phase)
 			if currentStatus != previousStatus {
 				fmt.Println("Workspace " + currentStatus)
 				previousStatus = currentStatus

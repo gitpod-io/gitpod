@@ -6,14 +6,16 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
-	"github.com/gitpod-io/local-app/pkg/common"
 	"github.com/gitpod-io/local-app/pkg/config"
+	"github.com/gitpod-io/local-app/pkg/helper"
 	"github.com/gitpod-io/local-app/pkg/prettyprint"
+	"github.com/sagikazarmark/slog-shim"
 	"github.com/spf13/cobra"
 )
 
@@ -65,11 +67,32 @@ func (tabularWorkspaces) Header() []string {
 func (wss tabularWorkspaces) Row() []map[string]string {
 	res := make([]map[string]string, 0, len(wss))
 	for _, ws := range wss {
+		if !helper.HasInstanceStatus(ws) {
+			slog.Debug("workspace has no instance status - removing from output", "workspace", ws.WorkspaceId)
+			continue
+		}
+
+		var repo string
+		wsDetails := ws.Context.GetDetails()
+		switch d := wsDetails.(type) {
+		case *v1.WorkspaceContext_Git_:
+			repo = fmt.Sprintf("%s/%s", d.Git.Repository.Owner, d.Git.Repository.Name)
+		case *v1.WorkspaceContext_Prebuild_:
+			repo = fmt.Sprintf("%s/%s", d.Prebuild.OriginalContext.Repository.Owner, d.Prebuild.OriginalContext.Repository.Name)
+		}
+		var branch string
+		if ws.Status.Instance.Status.GitStatus != nil {
+			branch = ws.Status.Instance.Status.GitStatus.Branch
+			if branch == "" || branch == "(detached)" {
+				branch = ""
+			}
+		}
+
 		res = append(res, map[string]string{
-			"repository": common.GetWorkspaceRepo(ws),
-			"branch":     common.GetWorkspaceBranch(ws),
+			"repository": repo,
+			"branch":     branch,
 			"workspace":  ws.WorkspaceId,
-			"status":     common.HumanizeWorkspacePhase(ws),
+			"status":     prettyprint.FormatWorkspacePhase(ws.Status.Instance.Status.Phase),
 		})
 	}
 	return res

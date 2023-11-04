@@ -5,7 +5,7 @@
 package cmd
 
 import (
-	"github.com/gitpod-io/local-app/pkg/common"
+	"github.com/gitpod-io/local-app/pkg/helper"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +24,7 @@ var workspaceSSHCmd = &cobra.Command{
 			return err
 		}
 
-		return common.SshConnectToWs(cmd.Context(), gitpod, workspaceID, dryRun)
+		return helper.SSHConnectToWorkspace(cmd.Context(), gitpod, workspaceID, dryRun)
 	},
 }
 

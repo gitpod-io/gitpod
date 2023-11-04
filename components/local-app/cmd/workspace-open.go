@@ -7,7 +7,7 @@ package cmd
 import (
 	"log/slog"
 
-	"github.com/gitpod-io/local-app/pkg/common"
+	"github.com/gitpod-io/local-app/pkg/helper"
 	"github.com/spf13/cobra"
 )
 
@@ -25,7 +25,7 @@ var workspaceOpenCmd = &cobra.Command{
 		}
 
 		slog.Debug("Attempting to open workspace...")
-		return common.OpenWorkspaceInPreferredEditor(cmd.Context(), gitpod, workspaceID)
+		return helper.OpenWorkspaceInPreferredEditor(cmd.Context(), gitpod, workspaceID)
 	},
 }
 

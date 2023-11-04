@@ -11,7 +11,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
-	"github.com/gitpod-io/local-app/pkg/common"
+	"github.com/gitpod-io/local-app/pkg/helper"
 	"github.com/spf13/cobra"
 )
 
@@ -47,16 +47,16 @@ var workspaceStartCmd = &cobra.Command{
 			return nil
 		}
 
-		err = common.ObserveWorkspaceUntilStarted(ctx, gitpod, workspaceID)
+		err = helper.ObserveWorkspaceUntilStarted(ctx, gitpod, workspaceID)
 		if err != nil {
 			return err
 		}
 
 		switch {
 		case workspaceStartOpts.OpenSSH:
-			return common.SshConnectToWs(ctx, gitpod, workspaceID, false)
+			return helper.SSHConnectToWorkspace(ctx, gitpod, workspaceID, false)
 		case workspaceStartOpts.OpenEditor:
-			return common.OpenWorkspaceInPreferredEditor(ctx, gitpod, workspaceID)
+			return helper.OpenWorkspaceInPreferredEditor(ctx, gitpod, workspaceID)
 		}
 
 		return nil

@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"text/tabwriter"
+
+	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 )
 
 type Writer struct {
@@ -80,4 +82,9 @@ type Tabular interface {
 // FormatBool returns "true" or "false" depending on the value of b.
 func FormatBool(b bool) string {
 	return strconv.FormatBool(b)
+}
+
+// FormatWorkspacePhase returns a user-facing representation of the given workspace phase
+func FormatWorkspacePhase(phase v1.WorkspaceInstanceStatus_Phase) string {
+	return strings.ToLower(strings.TrimPrefix(phase.String(), "PHASE_"))
 }
