@@ -97,7 +97,7 @@ export const TextInput: FunctionComponent<TextInputProps> = memo(
         return (
             <input
                 id={id}
-                className={classNames("w-full max-w-lg", className)}
+                className={classNames("w-full max-w-lg dark:text-[#A8A29E]", className)}
                 value={value}
                 type={type}
                 placeholder={placeholder}
