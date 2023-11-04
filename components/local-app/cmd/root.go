@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -95,6 +96,11 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&rootOpts.Verbose, "verbose", "v", false, "Display verbose output for more detailed logging")
 }
 
+var rootTestingOpts struct {
+	Client    *client.Gitpod
+	WriterOut io.Writer
+}
+
 func getGitpodClient(ctx context.Context) (*client.Gitpod, error) {
 	cfg := config.FromContext(ctx)
 	gpctx, err := cfg.GetActiveContext()
@@ -115,6 +121,10 @@ func getGitpodClient(ctx context.Context) (*client.Gitpod, error) {
 	}
 	if token == "" {
 		return nil, fmt.Errorf("no token found for host %s: neither the active context, nor keychain, nor GITPOD_TOKEN environment variable provide one. Please run `gitpod login` to login", gpctx.Host.String())
+	}
+
+	if gpctx.Host.String() == "https://testing" && rootTestingOpts.Client != nil {
+		return rootTestingOpts.Client, nil
 	}
 
 	var apiHost = *gpctx.Host.URL
@@ -140,10 +150,14 @@ type formatOpts struct {
 
 // Writer returns a prettyprint.Writer that can be used to print the output of a command
 func (opts *formatOpts) Writer(longFormat bool) *prettyprint.Writer {
+	var out io.Writer = os.Stdout
+	if rootTestingOpts.WriterOut != nil {
+		out = rootTestingOpts.WriterOut
+	}
 	return &prettyprint.Writer{
 		Field:      opts.Field,
 		LongFormat: longFormat,
-		Out:        os.Stdout,
+		Out:        out,
 	}
 }
 

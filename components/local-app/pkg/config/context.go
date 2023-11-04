@@ -33,6 +33,9 @@ func (c *Config) GetActiveContext() (*ConnectionContext, error) {
 		return nil, ErrNoContext
 	}
 	res := c.Contexts[c.ActiveContext]
+	if res == nil {
+		return nil, ErrNoContext
+	}
 	return res, nil
 }
 
