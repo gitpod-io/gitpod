@@ -62,7 +62,7 @@ func Execute() {
 	if err != nil {
 		nocolor := !isatty.IsTerminal(os.Stderr.Fd())
 		prettyprint.PrintError(os.Stderr, err, nocolor)
-		prettyprint.PrintResolutions(os.Stderr, err, nocolor)
+		prettyprint.PrintResolutions(os.Stderr, os.Args[0], err, nocolor)
 
 		os.Exit(1)
 	}

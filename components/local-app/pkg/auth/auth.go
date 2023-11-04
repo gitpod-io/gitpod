@@ -23,7 +23,6 @@ import (
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/local-app/pkg/constants"
 	"github.com/gitpod-io/local-app/pkg/prettyprint"
-	"github.com/sirupsen/logrus"
 	"github.com/skratchdot/open-golang/open"
 	keyring "github.com/zalando/go-keyring"
 	"golang.org/x/oauth2"
@@ -164,8 +163,9 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 	}
 
 	defer func() {
-		if closeErr := rl.Close(); closeErr != nil {
-			logrus.WithField("port", port).WithError(closeErr).Debug("Failed to close listener")
+		closeErr := rl.Close()
+		if closeErr != nil {
+			slog.Debug("Failed to close listener", "port", port, "err", closeErr)
 		}
 	}()
 
@@ -179,7 +179,7 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 		if opts.RedirectURL != "" {
 			http.Redirect(rw, req, opts.RedirectURL, http.StatusSeeOther)
 		} else {
-			io.WriteString(rw, html)
+			_, _ = io.WriteString(rw, html)
 		}
 	}
 
@@ -295,7 +295,7 @@ func findOpenPortInRange(start, end int) (net.Listener, int, error) {
 	for port := start; port < end; port++ {
 		rl, err := net.Listen("tcp4", fmt.Sprintf("127.0.0.1:%d", port))
 		if err != nil {
-			logrus.WithField("port", port).WithError(err).Info("Could not open port, trying next port")
+			slog.Debug("could not open port, trying next port", "port", port, "err", err)
 			continue
 		}
 

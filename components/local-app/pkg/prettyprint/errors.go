@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/fatih/color"
 )
@@ -24,7 +25,7 @@ func PrintError(out io.Writer, err error, nocolor bool) {
 }
 
 // PrintResolutions prints all resolutions of an error to the given writer.
-func PrintResolutions(out io.Writer, err error, nocolor bool) {
+func PrintResolutions(out io.Writer, command string, err error, nocolor bool) {
 	var resolutions []string
 	for err != nil {
 		if r, ok := err.(*ErrResolution); ok {
@@ -38,6 +39,7 @@ func PrintResolutions(out io.Writer, err error, nocolor bool) {
 	if len(resolutions) > 0 {
 		fmt.Fprint(out, stylePossibleResolutions.Sprint("\nPossible resolutions:\n"))
 		for _, r := range resolutions {
+			r = strings.ReplaceAll(r, "{gitpod}", command)
 			fmt.Fprintf(out, "  - %s\n", r)
 		}
 		fmt.Fprintln(out)
