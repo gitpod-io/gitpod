@@ -22,6 +22,7 @@ import { Timestamp } from "@bufbuild/protobuf";
 import arrowDown from "../images/sort-arrow.svg";
 import { Heading2, Subheading } from "../components/typography/headings";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { LinkButton } from "@podkit/buttons/LinkButton";
 
 interface EditPATData {
     name: string;
@@ -152,14 +153,12 @@ function PersonalAccessTokenCreateView() {
         <div>
             <PageWithSettingsSubMenu>
                 <div className="mb-4 flex gap-2">
-                    <Link to={settingsPathPersonalAccessTokens}>
-                        <button className="secondary">
-                            <div className="flex place-content-center">
-                                <img src={arrowDown} className="w-4 mr-2 transform rotate-90 mb-0" alt="Back arrow" />
-                                <span>Back to list</span>
-                            </div>
-                        </button>
-                    </Link>
+                    <LinkButton variant={"secondary"} href={settingsPathPersonalAccessTokens}>
+                        <div className="flex place-content-center">
+                            <img src={arrowDown} className="w-4 mr-2 transform rotate-90 mb-0" alt="Back arrow" />
+                            <span>Back to list</span>
+                        </div>
+                    </LinkButton>
                     {editToken && (
                         <button
                             className="danger bg-red-50 dark:bg-red-600 text-red-600 dark:text-red-50"
