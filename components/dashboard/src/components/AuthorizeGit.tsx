@@ -16,6 +16,7 @@ import { Button } from "./Button";
 import { Heading2, Heading3, Subheading } from "./typography/headings";
 import classNames from "classnames";
 import { iconForAuthProvider, simplifyProviderName } from "../provider-utils";
+import { LinkButton } from "@podkit/buttons/LinkButton";
 
 export function useNeedsGitAuthorization() {
     const authProviders = useAuthProviders();
@@ -60,9 +61,9 @@ export const AuthorizeGit: FC<{ className?: string }> = ({ className }) => {
                     {!!org.data?.isOwner ? (
                         <div className="px-6">
                             <Subheading>You need to configure at least one Git integration.</Subheading>
-                            <Link to="/settings/git">
-                                <Button className="mt-6 w-full">Add a Git integration</Button>
-                            </Link>
+                            <LinkButton className="mt-6 w-full" href="/settings/git">
+                                Add a Git integration
+                            </LinkButton>
                         </div>
                     ) : (
                         <>

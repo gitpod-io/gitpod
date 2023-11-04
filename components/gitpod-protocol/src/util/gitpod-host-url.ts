@@ -138,6 +138,10 @@ export class GitpodHostUrl {
         return this.url.toString();
     }
 
+    toRelative(): string {
+        return this.url.pathname + this.url.search + this.url.hash;
+    }
+
     toStringWoRootSlash() {
         let result = this.toString();
         if (result.endsWith("/")) {

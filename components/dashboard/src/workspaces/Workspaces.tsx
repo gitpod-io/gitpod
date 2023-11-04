@@ -179,7 +179,7 @@ const sortWorkspaces = (a: WorkspaceInfo, b: WorkspaceInfo) => {
 };
 
 /**
- * Given a WorkspaceInfo, return a timestamp of the last related activitiy
+ * Given a WorkspaceInfo, return a timestamp of the last related activity
  *
  * @param info WorkspaceInfo
  * @returns string timestamp

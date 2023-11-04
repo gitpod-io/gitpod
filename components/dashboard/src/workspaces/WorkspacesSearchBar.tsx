@@ -5,11 +5,10 @@
  */
 
 import { FunctionComponent } from "react";
-import { Link } from "react-router-dom";
 import { StartWorkspaceModalKeyBinding } from "../App";
 import DropDown from "../components/DropDown";
 import search from "../icons/search.svg";
-import { Button } from "../components/Button";
+import { LinkButton } from "@podkit/buttons/LinkButton";
 
 type WorkspacesSearchBarProps = {
     searchTerm: string;
@@ -67,11 +66,9 @@ export const WorkspacesSearchBar: FunctionComponent<WorkspacesSearchBarProps> = 
                     ]}
                 />
             </div>
-            <Link to={"/new"}>
-                <Button className="ml-2">
-                    New Workspace <span className="opacity-60 hidden md:inline">{StartWorkspaceModalKeyBinding}</span>
-                </Button>
-            </Link>
+            <LinkButton href={"/new"} className="ml-2">
+                New Workspace <span className="opacity-60 hidden md:inline">{StartWorkspaceModalKeyBinding}</span>
+            </LinkButton>
         </div>
     );
 };

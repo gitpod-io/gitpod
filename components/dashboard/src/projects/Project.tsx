@@ -23,6 +23,8 @@ import { getProjectTabs } from "./projects.routes";
 import { shortCommitMessage, toRemoteURL } from "./render-utils";
 import search from "../icons/search.svg";
 import Tooltip from "../components/Tooltip";
+import { Button } from "@podkit/buttons/Button";
+import { LinkButton } from "@podkit/buttons/LinkButton";
 
 export default function ProjectsPage() {
     const history = useHistory();
@@ -213,12 +215,9 @@ export default function ProjectsPage() {
                                 Authorize {showAuthBanner.host} <br />
                                 to access branch information.
                             </div>
-                            <button
-                                className={`primary mr-2 py-2`}
-                                onClick={() => onConfirmShowAuthModal(showAuthBanner.host)}
-                            >
+                            <Button className="mr-2 py-2" onClick={() => onConfirmShowAuthModal(showAuthBanner.host)}>
                                 Authorize Provider
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 ) : (
@@ -272,12 +271,12 @@ export default function ProjectsPage() {
                                         </span>
                                     )}
                                     {!isResuming && (
-                                        <button
+                                        <Button
                                             className="gp-link hover:text-gray-600"
                                             onClick={() => resumePrebuilds()}
                                         >
                                             Resume prebuilds
-                                        </button>
+                                        </Button>
                                     )}
                                 </Alert>
                             )}
@@ -368,13 +367,12 @@ export default function ProjectsPage() {
                                                         )}
                                                     </a>
                                                     <span className="flex-grow" />
-                                                    <a href={gitpodHostUrl.withContext(`${branch.url}`).toString()}>
-                                                        <button
-                                                            className={`primary mr-2 py-2 opacity-0 group-hover:opacity-100`}
-                                                        >
-                                                            New Workspace
-                                                        </button>
-                                                    </a>
+                                                    <LinkButton
+                                                        href={gitpodHostUrl.withContext(branch.url).toRelative()}
+                                                        className={`mr-2 py-2 opacity-0 group-hover:opacity-100`}
+                                                    >
+                                                        New Workspace
+                                                    </LinkButton>
                                                     <ItemFieldContextMenu
                                                         className="py-0.5"
                                                         menuEntries={[
