@@ -23,6 +23,7 @@ import arrowDown from "../images/sort-arrow.svg";
 import { Heading2, Subheading } from "../components/typography/headings";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { LinkButton } from "@podkit/buttons/LinkButton";
+import { Button } from "@podkit/buttons/Button";
 
 interface EditPATData {
     name: string;
@@ -160,12 +161,13 @@ function PersonalAccessTokenCreateView() {
                         </div>
                     </LinkButton>
                     {editToken && (
-                        <button
-                            className="danger bg-red-50 dark:bg-red-600 text-red-600 dark:text-red-50"
+                        <Button
+                            variant={"destructive"}
+                            className="bg-red-50 dark:bg-red-600 text-red-600 dark:text-red-50"
                             onClick={() => setModalData({ token: editToken })}
                         >
                             Regenerate
-                        </button>
+                        </Button>
                     )}
                 </div>
                 {errorMsg.length > 0 && (
@@ -256,14 +258,14 @@ function PersonalAccessTokenCreateView() {
                     <div className="flex gap-2">
                         {isEditing && (
                             <Link to={settingsPathPersonalAccessTokens}>
-                                <button className="secondary" onClick={handleConfirm}>
+                                <Button variant={"secondary"} onClick={handleConfirm}>
                                     Cancel
-                                </button>
+                                </Button>
                             </Link>
                         )}
-                        <button onClick={handleConfirm} disabled={isEditing && !editToken}>
+                        <Button onClick={handleConfirm} disabled={isEditing && !editToken}>
                             {isEditing ? "Update" : "Create"} Access Token
-                        </button>
+                        </Button>
                     </div>
                 </SpinnerOverlayLoader>
             </PageWithSettingsSubMenu>
