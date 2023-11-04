@@ -17,6 +17,7 @@ import (
 	"github.com/gitpod-io/local-app/pkg/auth"
 	"github.com/gitpod-io/local-app/pkg/config"
 	"github.com/gitpod-io/local-app/pkg/prettyprint"
+	"github.com/gookit/color"
 	"github.com/lmittmann/tint"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
@@ -28,8 +29,22 @@ var rootOpts struct {
 }
 
 var rootCmd = &cobra.Command{
-	Use:           "gitpod",
-	Short:         "A CLI for interacting with Gitpod",
+	Use:   "gitpod",
+	Short: "Gitpod: Always ready to code.",
+	Long: color.Sprint(`
+<fg=ff971d>      .-+*#+           </>      <b>Gitpod: Always ready to code.</>
+<fg=ff971d>   :=*#####*.          </>      Try the following commands to get started:
+<fg=ff971d>  .=*####*+-.    .--:  </>
+<fg=ff971d>  +****=:     :=*####+ </>      gitpod login              <lightgray>Login to Gitpod</>
+<fg=ff971d>  ****:   .-+*########.</>      gitpod whoami             <lightgray>Show information about the currently logged in user</>
+<fg=ff971d>  +***:   *****+--####.</>
+<fg=ff971d>  +***:   .-=:.  .#*##.</>      gitpod workspace list     <lightgray>List your workspaces</>
+<fg=ff971d>  +***+-.      .-+**** </>      gitpod workspace create   <lightgray>Create a new workspace</>
+<fg=ff971d>  .=*****+=::-+*****+: </>      gitpod workspace open     <lightgray>Open a running workspace</>
+<fg=ff971d>  .:=+*********=-.     </>      gitpod workspace stop     <lightgray>Stop a running workspace</>
+<fg=ff971d>      .-++++=:         </>
+
+	`),
 	SilenceErrors: true,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		level := slog.LevelInfo
@@ -61,23 +76,23 @@ var rootCmd = &cobra.Command{
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
-		nocolor := !isatty.IsTerminal(os.Stderr.Fd())
-		prettyprint.PrintError(os.Stderr, os.Args[0], err, nocolor)
+		prettyprint.PrintError(os.Stderr, os.Args[0], err)
 
 		os.Exit(1)
 	}
 }
 
 func init() {
-	slog.Debug("Configured configuration and environment variables")
-
-	rootCmd.PersistentFlags().BoolVarP(&rootOpts.Verbose, "verbose", "v", false, "Display verbose output for more detailed logging")
+	if !isatty.IsTerminal(os.Stdout.Fd()) || !isatty.IsTerminal(os.Stderr.Fd()) {
+		color.Disable()
+	}
 
 	configLocation := config.DEFAULT_LOCATION
 	if fn := os.Getenv("GITPOD_CONFIG"); fn != "" {
 		configLocation = fn
 	}
 	rootCmd.PersistentFlags().StringVar(&rootOpts.ConfigLocation, "config", configLocation, "Location of the configuration file")
+	rootCmd.PersistentFlags().BoolVarP(&rootOpts.Verbose, "verbose", "v", false, "Display verbose output for more detailed logging")
 }
 
 func getGitpodClient(ctx context.Context) (*client.Gitpod, error) {

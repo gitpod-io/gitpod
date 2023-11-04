@@ -132,3 +132,36 @@ func Capitalize(s string) string {
 
 	return strings.ToUpper(s[0:1]) + s[1:]
 }
+
+// // Format formats the given input string by interpreting HTML tags in the string. Specifically it supports
+// //
+// //	<b>bold</b>
+// //	<i>italic</i>
+// //	<u>underline</u>
+// //	<color=...></color>
+// func Format(input string) string {
+// 	input = regexpBold.ReplaceAllString(input, "\033[1m$1\033[0m")
+// 	input = regexpItalic.ReplaceAllString(input, "\033[3m$1\033[0m")
+// 	input = regexpUnderline.ReplaceAllString(input, "\033[4m$1\033[0m")
+
+// 	input = regexpColor.ReplaceAllStringFunc(input, func(s string) string {
+// 		parts := regexpColor.FindStringSubmatch(s)
+// 		if len(parts) != 3 {
+// 			return s
+// 		}
+
+// 		col := parts[1]
+// 		text := parts[2]
+
+// 		return fmt.Sprintf("\033[%sm%s\033[0m", color, text)
+// 	})
+
+// 	return input
+// }
+
+// var (
+// 	regexpColor     = regexp.MustCompile(`<color=(.*?)>(.*?)</color>`)
+// 	regexpBold      = regexp.MustCompile(`<b>(.*?)</b>`)
+// 	regexpItalic    = regexp.MustCompile(`<i>(.*?)</i>`)
+// 	regexpUnderline = regexp.MustCompile(`<u>(.*?)</u>`)
+// )

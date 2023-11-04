@@ -10,7 +10,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/fatih/color"
+	"github.com/gookit/color"
 )
 
 var (
@@ -20,8 +20,7 @@ var (
 )
 
 // PrintError prints an error to the given writer.
-func PrintError(out io.Writer, command string, err error, nocolor bool) {
-	color.NoColor = nocolor
+func PrintError(out io.Writer, command string, err error) {
 	fmt.Fprintf(out, "%s%s\n\n", styleError.Sprint("Error: "), err.Error())
 
 	var (

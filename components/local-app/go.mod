@@ -29,6 +29,7 @@ require (
 require (
 	github.com/bufbuild/connect-go v1.10.0
 	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-00010101000000-000000000000
+	github.com/gookit/color v1.5.4
 	github.com/lmittmann/tint v1.0.3
 	github.com/mattn/go-isatty v0.0.17
 	github.com/sagikazarmark/slog-shim v0.1.0
@@ -41,17 +42,16 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/stretchr/testify v1.8.4 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
+	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 )
 
 require (
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/danieljoos/wincred v1.1.0 // indirect
-	github.com/fatih/color v1.15.0
 	github.com/godbus/dbus/v5 v5.0.3 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
