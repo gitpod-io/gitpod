@@ -26,6 +26,18 @@ func (w Writer) Write(v Tabular) error {
 	defer tw.Flush()
 
 	if w.Field != "" {
+		var found bool
+		hdr := v.Header()
+		for _, h := range hdr {
+			if h == w.Field {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return AddResolution(fmt.Errorf("unknown field: %s", w.Field), "use one of the following fields: "+strings.Join(hdr, ", "))
+		}
+
 		for _, row := range v.Row() {
 			val := row[w.Field]
 			if val == "" {
