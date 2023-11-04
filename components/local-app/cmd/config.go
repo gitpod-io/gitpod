@@ -8,11 +8,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var cfgCmd = &cobra.Command{
+var configCmd = &cobra.Command{
 	Use:   "config",
-	Short: "Change the configuration of the CLI",
+	Short: "Interact with the CLI's configuration",
 }
 
 func init() {
-	rootCmd.AddCommand(cfgCmd)
+	rootCmd.AddCommand(configCmd)
 }
