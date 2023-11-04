@@ -14,41 +14,43 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// organizationGetCmd gets all available organizations
+// organizationGetCmd gets a single organization
 var organizationGetCmd = &cobra.Command{
 	Use:   "get [organization-id]",
-	Short: "gets an organization's details",
+	Short: "Retrieves metadata about a given organization",
+	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var orgId string
 		if len(args) < 1 {
 			cfg := config.FromContext(cmd.Context())
 			gpctx, err := cfg.GetActiveContext()
 			if err != nil {
 				return err
 			}
-			orgId = gpctx.OrganizationID
-		} else {
-			orgId = args[0]
+			args = append(args, gpctx.OrganizationID)
 		}
 
-		if len(orgId) == 0 {
-			return cmd.Help()
+		var organizations []*v1.Team
+		for _, orgId := range args {
+			if len(orgId) == 0 {
+				return cmd.Help()
+			}
+
+			ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
+			defer cancel()
+
+			gitpod, err := getGitpodClient(ctx)
+			if err != nil {
+				return err
+			}
+
+			orgs, err := gitpod.Teams.GetTeam(ctx, connect.NewRequest(&v1.GetTeamRequest{TeamId: orgId}))
+			if err != nil {
+				return err
+			}
+
+			organizations = append(organizations, orgs.Msg.GetTeam())
 		}
-
-		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
-		defer cancel()
-
-		gitpod, err := getGitpodClient(ctx)
-		if err != nil {
-			return err
-		}
-
-		orgs, err := gitpod.Teams.GetTeam(ctx, connect.NewRequest(&v1.GetTeamRequest{TeamId: orgId}))
-		if err != nil {
-			return err
-		}
-
-		return organizationGetOpts.Format.Writer(true).Write(tabularTeam([]*v1.Team{orgs.Msg.GetTeam()}))
+		return organizationGetOpts.Format.Writer(true).Write(tabularTeam(organizations))
 	},
 }
 

@@ -20,7 +20,7 @@ var workspaceGetOpts struct {
 
 var workspaceGetCmd = &cobra.Command{
 	Use:   "get <workspace-id>",
-	Short: "Retrieves metadata of a given workspace",
+	Short: "Retrieves metadata about a given workspace",
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var workspaces []*v1.Workspace
