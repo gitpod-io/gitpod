@@ -9,6 +9,7 @@ import (
 	"net/url"
 
 	"github.com/gitpod-io/local-app/pkg/config"
+	"github.com/gitpod-io/local-app/pkg/prettyprint"
 	"github.com/spf13/cobra"
 )
 
@@ -24,12 +25,18 @@ var configSetContext = &cobra.Command{
 		var targetContext string
 		if configSetContextOpts.Current {
 			if len(args) > 0 {
-				return fmt.Errorf("cannot use --current and specify a context name")
+				return prettyprint.AddResolution(fmt.Errorf("cannot use --current and specify a context name"),
+					"modify current context with `{gitpod} config set-context --current`",
+					"modify/create a different context with `{gitpod} config set-context <name>`",
+				)
 			}
 			targetContext = cfg.ActiveContext
 		} else {
 			if len(args) == 0 {
-				return fmt.Errorf("must specify a context name")
+				return prettyprint.AddResolution(fmt.Errorf("must specify a context name or use --current"),
+					"modify current context with `{gitpod} config set-context --current`",
+					"modify/create a different context with `{gitpod} config set-context <name>`",
+				)
 			}
 			targetContext = args[0]
 		}
