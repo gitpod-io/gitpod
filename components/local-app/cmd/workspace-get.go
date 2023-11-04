@@ -23,6 +23,7 @@ var workspaceGetCmd = &cobra.Command{
 	Short: "Retrieves metadata of a given workspace",
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		var workspaces []*v1.Workspace
 		for _, workspaceID := range args {
 			ctx, cancel := context.WithTimeout(cmd.Context(), 30*time.Second)
 			defer cancel()
@@ -32,15 +33,15 @@ var workspaceGetCmd = &cobra.Command{
 				return err
 			}
 
-			slog.Debug("Attempting to retrieve workspace info...")
+			slog.Debug("Attempting to retrieve workspace info...", "workspaceID", workspaceID)
 			ws, err := gitpod.Workspaces.GetWorkspace(ctx, connect.NewRequest(&v1.GetWorkspaceRequest{WorkspaceId: workspaceID}))
 			if err != nil {
 				return err
 			}
 
-			return workspaceGetOpts.Format.Writer(true).Write(tabularWorkspaces([]*v1.Workspace{ws.Msg.GetResult()}))
+			workspaces = append(workspaces, ws.Msg.GetResult())
 		}
-		return nil
+		return workspaceGetOpts.Format.Writer(true).Write(tabularWorkspaces(workspaces))
 	},
 }
 
