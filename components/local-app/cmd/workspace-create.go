@@ -60,6 +60,30 @@ var workspaceCreateCmd = &cobra.Command{
 			}
 		}
 
+		if workspaceCreateOpts.Editor != "" {
+			resp, err := gitpod.Editors.ListEditorOptions(cmd.Context(), connect.NewRequest(&v1.ListEditorOptionsRequest{}))
+			if err != nil {
+				return prettyprint.AddApology(prettyprint.AddResolution(fmt.Errorf("cannot list editor options: %w", err),
+					"don't pass an explicit editor, i.e. omit the --editor flag",
+				))
+			}
+			var (
+				editors []string
+				found   bool
+			)
+			for _, editor := range resp.Msg.GetResult() {
+				editors = append(editors, editor.Id)
+				if editor.Id == workspaceCreateOpts.Editor {
+					found = true
+				}
+			}
+			if !found {
+				return prettyprint.AddResolution(fmt.Errorf("editor %s not found", workspaceCreateOpts.Editor),
+					fmt.Sprintf("use one of the available editor options: %s", strings.Join(editors, ", ")),
+				)
+			}
+		}
+
 		var (
 			orgId = gpctx.OrganizationID
 			ctx   = cmd.Context()

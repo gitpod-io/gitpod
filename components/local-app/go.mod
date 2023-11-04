@@ -31,7 +31,6 @@ require (
 	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-00010101000000-000000000000
 	github.com/lmittmann/tint v1.0.3
 	github.com/mattn/go-isatty v0.0.17
-	github.com/olekukonko/tablewriter v0.0.5
 	github.com/sagikazarmark/slog-shim v0.1.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.17.0
@@ -55,7 +54,6 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/klauspost/compress v1.17.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
-	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
