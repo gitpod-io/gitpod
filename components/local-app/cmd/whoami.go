@@ -8,7 +8,6 @@ import (
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/local-app/pkg/config"
-	"github.com/gitpod-io/local-app/pkg/prettyprint"
 	"github.com/spf13/cobra"
 )
 
@@ -37,14 +36,11 @@ var whoamiCmd = &cobra.Command{
 			return err
 		}
 
-		w := prettyprint.Writer{Out: cmd.OutOrStdout(), Field: whoamiOpts.Format.Field, LongFormat: true}
-		_ = w.Write(tabularWhoami{
+		return whoamiOpts.Format.Writer(true).Write(tabularWhoami{
 			User: user.Msg.GetUser(),
 			Org:  org.Msg.GetTeam(),
 			Host: gpctx.Host.String(),
 		})
-
-		return nil
 	},
 }
 
