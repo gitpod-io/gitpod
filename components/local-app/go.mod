@@ -28,7 +28,7 @@ require (
 
 require (
 	github.com/bufbuild/connect-go v1.10.0
-	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-20231102144440-7121dcd64d1f
+	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-00010101000000-000000000000
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.17.0
@@ -82,3 +82,5 @@ replace github.com/gitpod-io/gitpod/gitpod-protocol => ../gitpod-protocol/go // 
 replace github.com/gitpod-io/gitpod/local-app/api => ../local-app-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/supervisor/api => ../supervisor-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/components/public-api/go => ../public-api/go // leeway

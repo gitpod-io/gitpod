@@ -22,6 +22,7 @@ type Gitpod struct {
 	Projects             gitpod_experimental_v1connect.ProjectsServiceClient
 	PersonalAccessTokens gitpod_experimental_v1connect.TokensServiceClient
 	IdentityProvider     gitpod_experimental_v1connect.IdentityProviderServiceClient
+	User                 gitpod_experimental_v1connect.UserServiceClient
 }
 
 func New(options ...Option) (*Gitpod, error) {
@@ -43,21 +44,15 @@ func New(options ...Option) (*Gitpod, error) {
 		),
 	}
 
-	teams := gitpod_experimental_v1connect.NewTeamsServiceClient(client, url, serviceOpts...)
-	projects := gitpod_experimental_v1connect.NewProjectsServiceClient(client, url, serviceOpts...)
-	tokens := gitpod_experimental_v1connect.NewTokensServiceClient(client, url, serviceOpts...)
-	workspaces := gitpod_experimental_v1connect.NewWorkspacesServiceClient(client, url, serviceOpts...)
-	editors := gitpod_experimental_v1connect.NewEditorServiceClient(client, url, serviceOpts...)
-	idp := gitpod_experimental_v1connect.NewIdentityProviderServiceClient(client, url, serviceOpts...)
-
 	return &Gitpod{
 		cfg:                  opts,
-		Teams:                teams,
-		Projects:             projects,
-		PersonalAccessTokens: tokens,
-		Workspaces:           workspaces,
-		Editors:              editors,
-		IdentityProvider:     idp,
+		Teams:                gitpod_experimental_v1connect.NewTeamsServiceClient(client, url, serviceOpts...),
+		Projects:             gitpod_experimental_v1connect.NewProjectsServiceClient(client, url, serviceOpts...),
+		PersonalAccessTokens: gitpod_experimental_v1connect.NewTokensServiceClient(client, url, serviceOpts...),
+		Workspaces:           gitpod_experimental_v1connect.NewWorkspacesServiceClient(client, url, serviceOpts...),
+		Editors:              gitpod_experimental_v1connect.NewEditorServiceClient(client, url, serviceOpts...),
+		IdentityProvider:     gitpod_experimental_v1connect.NewIdentityProviderServiceClient(client, url, serviceOpts...),
+		User:                 gitpod_experimental_v1connect.NewUserServiceClient(client, url, serviceOpts...),
 	}, nil
 }
 

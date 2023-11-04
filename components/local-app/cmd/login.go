@@ -16,7 +16,6 @@ import (
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/local-app/pkg/auth"
 	"github.com/gitpod-io/local-app/pkg/config"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -114,26 +113,4 @@ func init() {
 	loginCmd.Flags().StringVar(&loginOpts.Token, "token", "", "The token to use for authentication (defaults to $GITPOD_TOKEN)")
 	loginCmd.Flags().StringVarP(&loginOpts.ContextName, "context-name", "n", "default", "The name of the context to create")
 	loginCmd.Flags().StringVar(&loginOpts.OrganizationID, "org", "", "The organization ID to use for the context")
-}
-
-func storeToken(token string) error {
-	var err error
-
-	if token != "" {
-		err = auth.SetToken(config.GetString("host"), token)
-		if err != nil {
-			logrus.WithField("origin", config.GetString("host")).Warnf("could not write token to keyring: %s", err)
-			// Allow to continue
-			err = nil
-		}
-	}
-	return err
-}
-
-func Login(loginOpts auth.LoginOpts) (string, error) {
-	tkn, err := auth.Login(context.Background(), loginOpts)
-	if tkn != "" {
-		err = storeToken(tkn)
-	}
-	return tkn, err
 }
