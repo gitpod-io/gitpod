@@ -67,8 +67,12 @@ var loginCmd = &cobra.Command{
 			gpctx.Token = token
 		}
 
-		cfg.Contexts[loginOpts.ContextName] = gpctx
-		cfg.ActiveContext = loginOpts.ContextName
+		contextName := loginOpts.ContextName
+		if _, exists := cfg.Contexts[contextName]; exists && !cmd.Flags().Changed("context-name") {
+			contextName = host.Hostname()
+		}
+		cfg.Contexts[contextName] = gpctx
+		cfg.ActiveContext = contextName
 
 		if loginOpts.OrganizationID == "" {
 			clnt, err := getGitpodClient(config.ToContext(context.Background(), cfg))
