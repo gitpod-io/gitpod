@@ -41,7 +41,9 @@ var workspaceGetCmd = &cobra.Command{
 
 			workspaces = append(workspaces, ws.Msg.GetResult())
 		}
-		return workspaceGetOpts.Format.Writer(true).Write(tabularWorkspaces(workspaces))
+		return workspaceGetOpts.Format.Writer(true).Write(tabularWorkspaces{
+			Workspaces: workspaces,
+		})
 	},
 }
 

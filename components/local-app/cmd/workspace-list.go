@@ -18,15 +18,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var workspaceListOpts struct {
-	Format formatOpts
-}
-
 // workspaceListCmd lists all available workspaces
 var workspaceListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "Lists workspaces",
-	Args:  cobra.ExactArgs(0),
+	Use:     "list",
+	Short:   "Lists workspaces",
+	Aliases: []string{"ls"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 
@@ -52,21 +48,31 @@ var workspaceListCmd = &cobra.Command{
 			return err
 		}
 
-		return workspaceListOpts.Format.Writer(false).Write(tabularWorkspaces(workspaces.Msg.GetResult()))
+		return workspaceListOpts.Format.Writer(false).Write(tabularWorkspaces{
+			RunningOnly: workspaceListOpts.RunningOnly,
+			Workspaces:  workspaces.Msg.GetResult(),
+		})
 	},
 }
 
-type tabularWorkspaces []*v1.Workspace
+type tabularWorkspaces struct {
+	Workspaces  []*v1.Workspace
+	RunningOnly bool
+}
 
 func (tabularWorkspaces) Header() []string {
 	return []string{"id", "repository", "branch", "status"}
 }
 
 func (wss tabularWorkspaces) Row() []map[string]string {
-	res := make([]map[string]string, 0, len(wss))
-	for _, ws := range wss {
+	res := make([]map[string]string, 0, len(wss.Workspaces))
+	for _, ws := range wss.Workspaces {
 		if !helper.HasInstanceStatus(ws) {
 			slog.Debug("workspace has no instance status - removing from output", "workspace", ws.WorkspaceId)
+			continue
+		}
+		if wss.RunningOnly && ws.Status.Instance.Status.Phase != v1.WorkspaceInstanceStatus_PHASE_RUNNING {
+			slog.Debug("workspace is not running - removing from output", "workspace", ws.WorkspaceId)
 			continue
 		}
 
@@ -96,7 +102,13 @@ func (wss tabularWorkspaces) Row() []map[string]string {
 	return res
 }
 
+var workspaceListOpts struct {
+	Format      formatOpts
+	RunningOnly bool
+}
+
 func init() {
 	workspaceCmd.AddCommand(workspaceListCmd)
 	addFormatFlags(workspaceListCmd, &workspaceListOpts.Format)
+	workspaceListCmd.Flags().BoolVarP(&workspaceListOpts.RunningOnly, "running-only", "r", false, "Only list running workspaces")
 }
