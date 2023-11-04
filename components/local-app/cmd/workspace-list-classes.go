@@ -40,7 +40,7 @@ var workspaceListClassesCmd = &cobra.Command{
 type tabularWorkspaceClasses []*v1.WorkspaceClass
 
 func (t tabularWorkspaceClasses) Header() []string {
-	return []string{"name", "id", "description"}
+	return []string{"id", "name", "description"}
 }
 
 func (t tabularWorkspaceClasses) Row() []map[string]string {

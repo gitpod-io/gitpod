@@ -44,7 +44,7 @@ var workspaceListEditors = &cobra.Command{
 type tabularWorkspaceEditors []*v1.EditorOption
 
 func (t tabularWorkspaceEditors) Header() []string {
-	return []string{"name", "flavor", "id", "version"}
+	return []string{"id", "name", "flavor", "version"}
 }
 
 func (t tabularWorkspaceEditors) Row() []map[string]string {
