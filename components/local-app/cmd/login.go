@@ -77,7 +77,7 @@ var loginCmd = &cobra.Command{
 		if loginOpts.OrganizationID == "" {
 			clnt, err := getGitpodClient(config.ToContext(context.Background(), cfg))
 			if err != nil {
-				return fmt.Errorf("cannot conntect to Gitpod with this context: %w", err)
+				return fmt.Errorf("cannot connect to Gitpod with this context: %w", err)
 			}
 			orgsList, err := clnt.Teams.ListTeams(cmd.Context(), connect.NewRequest(&v1.ListTeamsRequest{}))
 			if err != nil {

@@ -6,33 +6,12 @@ package cmd
 
 import (
 	"context"
-	"os"
 	"time"
 
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
-
-var classesListOutputField string
-
-// Accepts an array of workspace classes and outputs them in a table
-func outputClasses(classes []*v1.WorkspaceClass) {
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Name", "Description", "Id"})
-	table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-	table.SetBorder(false)
-	table.SetColumnSeparator("")
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetHeaderLine(false)
-
-	for _, class := range classes {
-		table.Append([]string{class.DisplayName, class.Description, class.Id})
-	}
-
-	table.Render()
-}
 
 // workspaceListClassesCmd lists all available organizations
 var workspaceListClassesCmd = &cobra.Command{
