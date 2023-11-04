@@ -13,9 +13,10 @@ import (
 )
 
 var configSetContext = &cobra.Command{
-	Use:   "set-context <name | --current>",
-	Short: "Set a context entry in the gitpod CLI config",
-	Args:  cobra.MaximumNArgs(1),
+	Use:     "set-context <name | --current>",
+	Short:   "Set a context entry in the gitpod CLI config",
+	Aliases: []string{"add-context"},
+	Args:    cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 

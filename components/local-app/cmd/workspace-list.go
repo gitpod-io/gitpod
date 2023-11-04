@@ -28,6 +28,8 @@ var workspaceListCmd = &cobra.Command{
 	Short: "Lists workspaces",
 	Args:  cobra.ExactArgs(0),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SilenceUsage = true
+
 		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
 		defer cancel()
 

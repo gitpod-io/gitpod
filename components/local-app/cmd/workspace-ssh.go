@@ -17,6 +17,8 @@ var workspaceSSHCmd = &cobra.Command{
 	Short: "Connects to a workspace via SSH",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SilenceUsage = true
+
 		workspaceID := args[0]
 
 		gitpod, err := getGitpodClient(cmd.Context())

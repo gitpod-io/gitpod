@@ -39,10 +39,13 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
+require github.com/mattn/go-colorable v0.1.13 // indirect
+
 require (
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/danieljoos/wincred v1.1.0 // indirect
+	github.com/fatih/color v1.15.0
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/godbus/dbus/v5 v5.0.3 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect

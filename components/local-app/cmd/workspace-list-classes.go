@@ -39,6 +39,8 @@ var workspaceListClassesCmd = &cobra.Command{
 	Use:   "list-classes",
 	Short: "Lists workspace classes",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SilenceUsage = true
+
 		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
 		defer cancel()
 

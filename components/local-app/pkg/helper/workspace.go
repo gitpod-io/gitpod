@@ -30,6 +30,10 @@ func OpenWorkspaceInPreferredEditor(ctx context.Context, clnt *client.Gitpod, wo
 		return err
 	}
 
+	if workspace.Msg.Result.Status.Instance.Status.Phase != v1.WorkspaceInstanceStatus_PHASE_RUNNING {
+		return fmt.Errorf("cannot open workspace, workspace is not running")
+	}
+
 	wsUrl, err := url.Parse(workspace.Msg.Result.Status.Instance.Status.Url)
 	if err != nil {
 		return err

@@ -17,6 +17,8 @@ var workspaceOpenCmd = &cobra.Command{
 	Short: "Opens a given workspace in its pre-configured editor",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SilenceUsage = true
+
 		workspaceID := args[0]
 
 		gitpod, err := getGitpodClient(cmd.Context())

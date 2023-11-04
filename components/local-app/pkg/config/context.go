@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gitpod-io/local-app/pkg/prettyprint"
 	"gopkg.in/yaml.v3"
 )
 
@@ -35,7 +36,11 @@ func (c *Config) GetActiveContext() (*ConnectionContext, error) {
 	return res, nil
 }
 
-var ErrNoContext = fmt.Errorf("no active context - use \"gitpod login\" to create one")
+var ErrNoContext = prettyprint.AddResolution(fmt.Errorf("no active context"),
+	"sign in using `gitpod login`",
+	"select an existing context using `gitpod config use-context`",
+	"create a new context using `gitpod config add-context`",
+)
 
 type ConnectionContext struct {
 	Host           *YamlURL `yaml:"host"`

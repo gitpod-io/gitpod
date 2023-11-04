@@ -22,6 +22,7 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/local-app/pkg/constants"
+	"github.com/gitpod-io/local-app/pkg/prettyprint"
 	"github.com/sirupsen/logrus"
 	"github.com/skratchdot/open-golang/open"
 	keyring "github.com/zalando/go-keyring"
@@ -244,7 +245,9 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 	// open a browser window to the authorizationURL
 	err = open.Start(authorizationURL)
 	if err != nil {
-		return "", xerrors.Errorf("cannot open browser to URL %s: %s\n", authorizationURL, err)
+		return "", prettyprint.AddResolution(fmt.Errorf("cannot open browser to URL %s: %s\n", authorizationURL, err),
+			"provide a personal access token using --token or the GITPOD_TOKEN environment variable",
+		)
 	}
 
 	var query url.Values

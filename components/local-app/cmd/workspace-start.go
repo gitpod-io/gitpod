@@ -22,6 +22,7 @@ var workspaceStartCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
+
 		workspaceID := args[0]
 
 		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Minute)

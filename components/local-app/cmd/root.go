@@ -27,8 +27,9 @@ var rootOpts struct {
 }
 
 var rootCmd = &cobra.Command{
-	Use:   "gitpod",
-	Short: "A CLI for interacting with Gitpod",
+	Use:           "gitpod",
+	Short:         "A CLI for interacting with Gitpod",
+	SilenceErrors: true,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		level := slog.LevelInfo
 		if rootOpts.Verbose {
@@ -57,7 +58,12 @@ var rootCmd = &cobra.Command{
 }
 
 func Execute() {
-	if err := rootCmd.Execute(); err != nil {
+	err := rootCmd.Execute()
+	if err != nil {
+		nocolor := !isatty.IsTerminal(os.Stderr.Fd())
+		prettyprint.PrintError(os.Stderr, err, nocolor)
+		prettyprint.PrintResolutions(os.Stderr, err, nocolor)
+
 		os.Exit(1)
 	}
 }
