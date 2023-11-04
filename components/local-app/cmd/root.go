@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"time"
 
@@ -61,8 +62,7 @@ func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
 		nocolor := !isatty.IsTerminal(os.Stderr.Fd())
-		prettyprint.PrintError(os.Stderr, err, nocolor)
-		prettyprint.PrintResolutions(os.Stderr, os.Args[0], err, nocolor)
+		prettyprint.PrintError(os.Stderr, os.Args[0], err, nocolor)
 
 		os.Exit(1)
 	}
@@ -105,7 +105,13 @@ func getGitpodClient(ctx context.Context) (*client.Gitpod, error) {
 	var apiHost = *gpctx.Host.URL
 	apiHost.Host = "api." + apiHost.Host
 	slog.Debug("establishing connection to Gitpod", "host", apiHost.String())
-	res, err := client.New(client.WithCredentials(token), client.WithURL(apiHost.String()))
+	res, err := client.New(
+		client.WithCredentials(token),
+		client.WithURL(apiHost.String()),
+		client.WithHTTPClient(&http.Client{
+			Transport: &auth.AuthenticatedTransport{Token: token, T: http.DefaultTransport},
+		}),
+	)
 	if err != nil {
 		return nil, err
 	}

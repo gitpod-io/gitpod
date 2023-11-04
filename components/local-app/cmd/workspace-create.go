@@ -12,11 +12,9 @@ import (
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/local-app/pkg/config"
 	"github.com/gitpod-io/local-app/pkg/helper"
+	"github.com/gitpod-io/local-app/pkg/prettyprint"
 	"github.com/spf13/cobra"
 )
-
-var workspaceClass string
-var editor string
 
 // workspaceCreateCmd creates a new workspace
 var workspaceCreateCmd = &cobra.Command{
@@ -24,10 +22,14 @@ var workspaceCreateCmd = &cobra.Command{
 	Short: "Creates a new workspace based on a given context",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cmd.SilenceErrors = true
 		cmd.SilenceUsage = true
+		repoURL := args[0]
 
-		passedArg := args[0]
+		if workspaceCreateOpts.WorkspaceClass == "" {
+			return prettyprint.AddResolution(fmt.Errorf("workspace class (--class) is required"),
+				"list the available workspace classes using `{gitpod} workspace list-classes` and specify by passing the ID using `--class`",
+			)
+		}
 
 		cfg := config.FromContext(cmd.Context())
 		gpctx, err := cfg.GetActiveContext()
@@ -45,17 +47,17 @@ var workspaceCreateCmd = &cobra.Command{
 			ctx   = cmd.Context()
 		)
 
-		slog.Debug("Attempting to create workspace...", "org", orgId, "repo", passedArg)
+		slog.Debug("Attempting to create workspace...", "org", orgId, "repo", repoURL)
 		newWorkspace, err := gitpod.Workspaces.CreateAndStartWorkspace(ctx, connect.NewRequest(
 			&v1.CreateAndStartWorkspaceRequest{
-				Source:         &v1.CreateAndStartWorkspaceRequest_ContextUrl{ContextUrl: passedArg},
+				Source:         &v1.CreateAndStartWorkspaceRequest_ContextUrl{ContextUrl: repoURL},
 				OrganizationId: orgId,
 				StartSpec: &v1.StartWorkspaceSpec{
 					IdeSettings: &v1.IDESettings{
-						DefaultIde:       editor,
+						DefaultIde:       workspaceCreateOpts.Editor,
 						UseLatestVersion: false,
 					},
-					WorkspaceClass: workspaceClass,
+					WorkspaceClass: workspaceCreateOpts.WorkspaceClass,
 				},
 			},
 		))
@@ -65,7 +67,9 @@ var workspaceCreateCmd = &cobra.Command{
 
 		workspaceID := newWorkspace.Msg.WorkspaceId
 		if len(workspaceID) == 0 {
-			return fmt.Errorf("workspace was not created - please try creating the workspace again")
+			return prettyprint.AddApology(prettyprint.AddResolution(fmt.Errorf("workspace was not created"),
+				"try to create the workspace again",
+			))
 		}
 
 		if workspaceCreateOpts.StartOpts.DontWait {
@@ -93,13 +97,14 @@ var workspaceCreateCmd = &cobra.Command{
 var workspaceCreateOpts struct {
 	StartOpts workspaceStartOptions
 
-	Editor string
+	WorkspaceClass string
+	Editor         string
 }
 
 func init() {
 	workspaceCmd.AddCommand(workspaceCreateCmd)
 	addWorkspaceStartOptions(workspaceCreateCmd, &workspaceCreateOpts.StartOpts)
 
-	workspaceCreateCmd.Flags().StringVar(&workspaceClass, "class", "", "the workspace class")
-	workspaceCreateCmd.Flags().StringVar(&editor, "editor", "", "the editor to use")
+	workspaceCreateCmd.Flags().StringVar(&workspaceCreateOpts.WorkspaceClass, "class", "", "the workspace class")
+	workspaceCreateCmd.Flags().StringVar(&workspaceCreateOpts.Editor, "editor", "code", "the editor to use")
 }

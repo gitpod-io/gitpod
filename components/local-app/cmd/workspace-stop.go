@@ -62,7 +62,7 @@ var workspaceStopCommand = &cobra.Command{
 		}
 
 		slog.Info("waiting for workspace to stop...")
-		slog.Info("Workspace " + prettyprint.FormatWorkspacePhase(currentPhase))
+		slog.Info("workspace " + prettyprint.FormatWorkspacePhase(currentPhase))
 
 		previousStatus := ""
 
