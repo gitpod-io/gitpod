@@ -25,64 +25,84 @@ func (w Writer) Write(v Tabular) error {
 	tw := tabwriter.NewWriter(w.Out, 0, 4, 1, ' ', 0)
 	defer tw.Flush()
 
-	if w.Field != "" {
-		var found bool
-		hdr := v.Header()
-		for _, h := range hdr {
-			if h == w.Field {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return AddResolution(fmt.Errorf("unknown field: %s", w.Field), "use one of the following fields: "+strings.Join(hdr, ", "))
-		}
+	switch {
+	case w.Field != "":
+		return w.writeField(tw, v)
+	case w.LongFormat:
+		return w.writeLongFormat(tw, v)
+	default:
+		return w.writeShortFormat(tw, v)
+	}
+}
 
-		for _, row := range v.Row() {
-			val := row[w.Field]
-			if val == "" {
-				continue
-			}
-			_, err := tw.Write([]byte(fmt.Sprintf("%s\n", val)))
-			if err != nil {
-				return err
-			}
-		}
-	} else if w.LongFormat {
-		for _, row := range v.Row() {
-			for _, h := range v.Header() {
-				_, err := tw.Write([]byte(fmt.Sprintf("%s:\t%s\n", strings.ToUpper(h), row[h])))
-				if err != nil {
-					return err
-				}
-			}
-			_, err := tw.Write([]byte("\n"))
-			if err != nil {
-				return err
-			}
-		}
-	} else {
-		for _, h := range v.Header() {
-			_, err := tw.Write([]byte(fmt.Sprintf("%s\t", strings.ToUpper(h))))
-			if err != nil {
-				return err
-			}
-		}
-		_, _ = tw.Write([]byte("\n"))
-		for _, row := range v.Row() {
-			for _, h := range v.Header() {
-				_, err := tw.Write([]byte(fmt.Sprintf("%s\t", row[h])))
-				if err != nil {
-					return err
-				}
-			}
-			_, err := tw.Write([]byte("\n"))
-			if err != nil {
-				return err
-			}
+// writeField writes a single field of the given tabular data to the writer
+func (w Writer) writeField(tw *tabwriter.Writer, v Tabular) error {
+	var found bool
+	hdr := v.Header()
+	for _, h := range hdr {
+		if h == w.Field {
+			found = true
+			break
 		}
 	}
+	if !found {
+		return AddResolution(fmt.Errorf("unknown field: %s", w.Field), "use one of the following fields: "+strings.Join(hdr, ", "))
+	}
 
+	for _, row := range v.Row() {
+		val := row[w.Field]
+		if val == "" {
+			continue
+		}
+		_, err := tw.Write([]byte(fmt.Sprintf("%s\n", val)))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// writeLongFormat writes the given tabular data to the writer in a long format
+func (w Writer) writeLongFormat(tw *tabwriter.Writer, v Tabular) error {
+	for _, row := range v.Row() {
+		for _, h := range v.Header() {
+			fieldName := Capitalize(h)
+			fieldName = strings.ReplaceAll(fieldName, "id", "ID")
+
+			_, err := tw.Write([]byte(fmt.Sprintf("%s:\t%s\n", fieldName, row[h])))
+			if err != nil {
+				return err
+			}
+		}
+		_, err := tw.Write([]byte("\n"))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// writeShortFormat writes the given tabular data to the writer in a short format
+func (w Writer) writeShortFormat(tw *tabwriter.Writer, v Tabular) error {
+	for _, h := range v.Header() {
+		_, err := tw.Write([]byte(fmt.Sprintf("%s\t", strings.ToUpper(h))))
+		if err != nil {
+			return err
+		}
+	}
+	_, _ = tw.Write([]byte("\n"))
+	for _, row := range v.Row() {
+		for _, h := range v.Header() {
+			_, err := tw.Write([]byte(fmt.Sprintf("%s\t", row[h])))
+			if err != nil {
+				return err
+			}
+		}
+		_, err := tw.Write([]byte("\n"))
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -99,4 +119,16 @@ func FormatBool(b bool) string {
 // FormatWorkspacePhase returns a user-facing representation of the given workspace phase
 func FormatWorkspacePhase(phase v1.WorkspaceInstanceStatus_Phase) string {
 	return strings.ToLower(strings.TrimPrefix(phase.String(), "PHASE_"))
+}
+
+// Capitalize capitalizes the first letter of the given string
+func Capitalize(s string) string {
+	if s == "" {
+		return ""
+	}
+	if len(s) == 1 {
+		return strings.ToUpper(s)
+	}
+
+	return strings.ToUpper(s[0:1]) + s[1:]
 }

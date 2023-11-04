@@ -41,6 +41,7 @@ var whoamiCmd = &cobra.Command{
 		_ = w.Write(tabularWhoami{
 			User: user.Msg.GetUser(),
 			Org:  org.Msg.GetTeam(),
+			Host: gpctx.Host.String(),
 		})
 
 		return nil
@@ -50,10 +51,11 @@ var whoamiCmd = &cobra.Command{
 type tabularWhoami struct {
 	User *v1.User
 	Org  *v1.Team
+	Host string
 }
 
 func (tabularWhoami) Header() []string {
-	return []string{"user", "user id", "organization", "organization id"}
+	return []string{"user", "user id", "organization", "organization id", "host"}
 }
 
 func (who tabularWhoami) Row() []map[string]string {
@@ -63,6 +65,7 @@ func (who tabularWhoami) Row() []map[string]string {
 			"user id":         who.User.Id,
 			"organization":    who.Org.Name,
 			"organization id": who.Org.Id,
+			"host":            who.Host,
 		},
 	}
 }
