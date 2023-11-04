@@ -6,7 +6,7 @@ package cmd
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/bufbuild/connect-go"
@@ -21,6 +21,7 @@ var workspaceStartCmd = &cobra.Command{
 	Short: "Start a given workspace",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SilenceUsage = true
 		workspaceID := args[0]
 
 		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Minute)
@@ -31,19 +32,19 @@ var workspaceStartCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Println("Attempting to start workspace...")
+		slog.Info("starting workspace...")
 		wsInfo, err := gitpod.Workspaces.StartWorkspace(ctx, connect.NewRequest(&v1.StartWorkspaceRequest{WorkspaceId: workspaceID}))
 		if err != nil {
 			return err
 		}
 
 		if wsInfo.Msg.GetResult().Status.Instance.Status.Phase == v1.WorkspaceInstanceStatus_PHASE_RUNNING {
-			fmt.Println("Workspace already running")
+			slog.Info("workspace already running")
 			return nil
 		}
 
 		if workspaceStartOpts.DontWait {
-			fmt.Println("Workspace initialization started")
+			slog.Info("workspace initialization started")
 			return nil
 		}
 

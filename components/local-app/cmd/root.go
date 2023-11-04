@@ -10,11 +10,14 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/gitpod-io/gitpod/components/public-api/go/client"
 	"github.com/gitpod-io/local-app/pkg/auth"
 	"github.com/gitpod-io/local-app/pkg/config"
 	"github.com/gitpod-io/local-app/pkg/prettyprint"
+	"github.com/lmittmann/tint"
+	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 )
 
@@ -27,11 +30,19 @@ var rootCmd = &cobra.Command{
 	Use:   "gitpod",
 	Short: "A CLI for interacting with Gitpod",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		var logger = slog.New(&prettyprint.Handler{LogLevel: slog.LevelInfo})
+		level := slog.LevelInfo
 		if rootOpts.Verbose {
-			logger = slog.New(&prettyprint.Handler{LogLevel: slog.LevelDebug})
+			level = slog.LevelDebug
 		}
-		slog.SetDefault(logger)
+		var noColor bool
+		if !isatty.IsTerminal(os.Stdout.Fd()) {
+			noColor = true
+		}
+		slog.SetDefault(slog.New(tint.NewHandler(os.Stdout, &tint.Options{
+			Level:      level,
+			NoColor:    noColor,
+			TimeFormat: time.StampMilli,
+		})))
 
 		cfg, err := config.LoadConfig(rootOpts.ConfigLocation)
 		if errors.Is(err, os.ErrNotExist) {
@@ -98,6 +109,15 @@ func getGitpodClient(ctx context.Context) (*client.Gitpod, error) {
 
 type formatOpts struct {
 	Field string
+}
+
+// Writer returns a prettyprint.Writer that can be used to print the output of a command
+func (opts *formatOpts) Writer(longFormat bool) *prettyprint.Writer {
+	return &prettyprint.Writer{
+		Field:      opts.Field,
+		LongFormat: longFormat,
+		Out:        os.Stdout,
+	}
 }
 
 func addFormatFlags(cmd *cobra.Command, opts *formatOpts) {

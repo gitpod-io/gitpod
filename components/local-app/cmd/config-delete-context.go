@@ -5,9 +5,10 @@
 package cmd
 
 import (
+	"log/slog"
+
 	"github.com/gitpod-io/local-app/pkg/auth"
 	"github.com/gitpod-io/local-app/pkg/config"
-	"github.com/sagikazarmark/slog-shim"
 	"github.com/spf13/cobra"
 )
 

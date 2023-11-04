@@ -6,14 +6,11 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"os"
-	"reflect"
 	"time"
 
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
-	"github.com/gitpod-io/local-app/pkg/common"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
@@ -55,28 +52,33 @@ var workspaceListClassesCmd = &cobra.Command{
 			return err
 		}
 
-		classData := classes.Msg.GetResult()
-
-		if classesListOutputField != "" {
-			classesListOutputField = common.CapitalizeFirst(classesListOutputField)
-			for _, class := range classData {
-				val := reflect.ValueOf(class).Elem()
-				if fieldVal := val.FieldByName(classesListOutputField); fieldVal.IsValid() {
-					fmt.Printf("%v\n", fieldVal.Interface())
-				} else {
-					return fmt.Errorf("Field '%s' is an invalid field for workspace classes", classesListOutputField)
-				}
-			}
-			return nil
-		}
-
-		outputClasses(classData)
-
-		return nil
+		return workspaceListClassesOpts.Format.Writer(false).Write(tabularWorkspaceClasses(classes.Msg.GetResult()))
 	},
+}
+
+type tabularWorkspaceClasses []*v1.WorkspaceClass
+
+func (t tabularWorkspaceClasses) Header() []string {
+	return []string{"name", "id", "description"}
+}
+
+func (t tabularWorkspaceClasses) Row() []map[string]string {
+	res := make([]map[string]string, 0, len(t))
+	for _, class := range t {
+		res = append(res, map[string]string{
+			"name":        class.DisplayName,
+			"description": class.Description,
+			"id":          class.Id,
+		})
+	}
+	return res
+}
+
+var workspaceListClassesOpts struct {
+	Format formatOpts
 }
 
 func init() {
 	workspaceCmd.AddCommand(workspaceListClassesCmd)
-	workspaceListClassesCmd.Flags().StringVarP(&classesListOutputField, "field", "f", "", "output a specific field of the classes")
+	addFormatFlags(workspaceListClassesCmd, &workspaceListClassesOpts.Format)
 }

@@ -29,7 +29,10 @@ require (
 require (
 	github.com/bufbuild/connect-go v1.10.0
 	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-00010101000000-000000000000
+	github.com/lmittmann/tint v1.0.3
+	github.com/mattn/go-isatty v0.0.17
 	github.com/olekukonko/tablewriter v0.0.5
+	github.com/sagikazarmark/slog-shim v0.1.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.17.0
 	github.com/urfave/cli/v2 v2.19.3
@@ -55,7 +58,6 @@ require (
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sagikazarmark/locafero v0.3.0 // indirect
-	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37 // indirect
 	github.com/spf13/afero v1.10.0 // indirect

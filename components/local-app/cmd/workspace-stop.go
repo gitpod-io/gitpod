@@ -6,8 +6,7 @@ package cmd
 
 import (
 	"context"
-	"fmt"
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/bufbuild/connect-go"
@@ -34,7 +33,7 @@ var workspaceStopCommand = &cobra.Command{
 			return err
 		}
 
-		fmt.Println("Attempting to stop workspace...")
+		slog.Info("stopping workspace...")
 		wsInfo, err := gitpod.Workspaces.StopWorkspace(ctx, connect.NewRequest(&v1.StopWorkspaceRequest{WorkspaceId: workspaceID}))
 		if err != nil {
 			return err
@@ -43,17 +42,15 @@ var workspaceStopCommand = &cobra.Command{
 		currentPhase := wsInfo.Msg.GetResult().Status.Instance.Status.Phase
 
 		if currentPhase == v1.WorkspaceInstanceStatus_PHASE_STOPPED {
-			fmt.Println("Workspace is already stopped")
+			slog.Info("workspace is already stopped")
 			return nil
 		}
-
 		if currentPhase == v1.WorkspaceInstanceStatus_PHASE_STOPPING {
-			fmt.Println("Workspace is already stopping")
+			slog.Info("workspace is already stopping")
 			return nil
 		}
-
 		if stopDontWait {
-			fmt.Println("Workspace stopping")
+			slog.Info("workspace stopping")
 			return nil
 		}
 
@@ -63,33 +60,31 @@ var workspaceStopCommand = &cobra.Command{
 			return err
 		}
 
-		fmt.Println("Waiting for workspace to stop...")
-
-		fmt.Println("Workspace " + prettyprint.FormatWorkspacePhase(currentPhase))
+		slog.Info("waiting for workspace to stop...")
+		slog.Info("Workspace " + prettyprint.FormatWorkspacePhase(currentPhase))
 
 		previousStatus := ""
 
 		for stream.Receive() {
 			msg := stream.Msg()
 			if msg == nil {
-				fmt.Println("No message received")
+				slog.Debug("no message received")
 				continue
 			}
 
 			if msg.GetResult().Instance.Status.Phase == v1.WorkspaceInstanceStatus_PHASE_STOPPED {
-				fmt.Println("Workspace stopped")
+				slog.Info("workspace stopped")
 				break
 			}
 
 			currentStatus := prettyprint.FormatWorkspacePhase(msg.GetResult().Instance.Status.Phase)
 			if currentStatus != previousStatus {
-				fmt.Println("Workspace " + currentStatus)
+				slog.Info("workspace " + currentStatus)
 				previousStatus = currentStatus
 			}
 		}
 
 		if err := stream.Err(); err != nil {
-			log.Fatalf("Failed to receive: %v", err)
 			return err
 		}
 

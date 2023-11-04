@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
@@ -20,8 +21,6 @@ import (
 	"github.com/gitpod-io/gitpod/components/public-api/go/client"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/local-app/pkg/prettyprint"
-	"github.com/sagikazarmark/slog-shim"
-	"github.com/sirupsen/logrus"
 )
 
 // OpenWorkspaceInPreferredEditor opens the workspace in the user's preferred editor
@@ -128,7 +127,6 @@ func SSHConnectToWorkspace(ctx context.Context, clnt *client.Gitpod, workspaceID
 	}
 
 	slog.Debug("Connecting to" + wsInfo.Description)
-
 	command := exec.Command("ssh", fmt.Sprintf("%s#%s@%s", wsInfo.WorkspaceId, ownerToken, host), "-o", "StrictHostKeyChecking=no")
 
 	command.Stdin = os.Stdin
@@ -163,9 +161,9 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 		return nil
 	}
 
-	slog.Info("Waiting for workspace to start...", "workspaceID", workspaceID)
+	slog.Info("waiting for workspace to start...", "workspaceID", workspaceID)
 	if HasInstanceStatus(wsInfo.Msg.Result) {
-		slog.Info("Workspace " + prettyprint.FormatWorkspacePhase(wsInfo.Msg.Result.Status.Instance.Status.Phase))
+		slog.Info("workspace " + prettyprint.FormatWorkspacePhase(wsInfo.Msg.Result.Status.Instance.Status.Phase))
 	}
 
 	maxRetries := 4
@@ -174,13 +172,10 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 		stream, err := clnt.Workspaces.StreamWorkspaceStatus(ctx, connect.NewRequest(&v1.StreamWorkspaceStatusRequest{WorkspaceId: workspaceID}))
 		if err != nil {
 			if retries >= maxRetries {
-				return fmt.Errorf("Failed to stream workspace status after %d retries: %w", maxRetries, err)
+				return fmt.Errorf("failed to stream workspace status after %d retries: %w", maxRetries, err)
 			}
 			retries++
-			logrus.WithFields(logrus.Fields{
-				"retry":      retries,
-				"maxRetries": maxRetries,
-			}).Warn("Streaming failed, retrying")
+			slog.Warn("failed to stream workspace status, retrying", "err", err, "retry", retries, "maxRetries", maxRetries)
 			continue
 		}
 
@@ -193,7 +188,7 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 			}
 
 			if msg.GetResult().Instance.Status.Phase == v1.WorkspaceInstanceStatus_PHASE_RUNNING {
-				slog.Info("Workspace running")
+				slog.Info("workspace running")
 				return nil
 			}
 
@@ -202,7 +197,7 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 				currentStatus = prettyprint.FormatWorkspacePhase(wsInfo.Msg.Result.Status.Instance.Status.Phase)
 			}
 			if currentStatus != previousStatus {
-				slog.Info("Workspace " + currentStatus)
+				slog.Info("workspace " + currentStatus)
 				previousStatus = currentStatus
 			}
 		}
@@ -212,7 +207,7 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 				return fmt.Errorf("workspace stream ended unexpectedly after %d retries: %w", maxRetries, err)
 			}
 			retries++
-			fmt.Printf("stream ended unexpectedly, retrying %d/%d\n", retries, maxRetries)
+			slog.Warn("stream ended unexpectedly", "err", err, "retry", retries, "maxRetries", maxRetries)
 		} else {
 			return fmt.Errorf("workspace stream ended unexpectedly")
 		}

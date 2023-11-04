@@ -7,12 +7,10 @@ package cmd
 import (
 	"context"
 	"log/slog"
-	"os"
 	"time"
 
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
-	"github.com/gitpod-io/local-app/pkg/prettyprint"
 	"github.com/spf13/cobra"
 )
 
@@ -40,11 +38,7 @@ var workspaceGetCmd = &cobra.Command{
 				return err
 			}
 
-			w := prettyprint.Writer{Out: os.Stdout, LongFormat: true, Field: workspaceGetOpts.Format.Field}
-			err = w.Write(tabularWorkspaces([]*v1.Workspace{ws.Msg.GetResult()}))
-			if err != nil {
-				return err
-			}
+			return workspaceGetOpts.Format.Writer(true).Write(tabularWorkspaces([]*v1.Workspace{ws.Msg.GetResult()}))
 		}
 		return nil
 	},

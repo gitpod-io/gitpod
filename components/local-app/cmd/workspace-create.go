@@ -56,19 +56,20 @@ var workspaceCreateCmd = &cobra.Command{
 						UseLatestVersion: false,
 					},
 					WorkspaceClass: workspaceClass,
-				}}))
-
+				},
+			},
+		))
 		if err != nil {
 			return err
 		}
 
 		workspaceID := newWorkspace.Msg.WorkspaceId
-
 		if len(workspaceID) == 0 {
-			return fmt.Errorf("Exception: API did not return a workspace ID back. Please try creating the workspace again")
+			return fmt.Errorf("workspace was not created - please try creating the workspace again")
 		}
 
 		if workspaceCreateOpts.StartOpts.DontWait {
+			// There is no more information to print other than the workspace ID. No need to faff with tabular pretty printing.
 			fmt.Println(workspaceID)
 			return nil
 		}

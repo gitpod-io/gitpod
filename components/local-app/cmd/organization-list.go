@@ -32,8 +32,7 @@ var organizationListCmd = &cobra.Command{
 			return err
 		}
 
-		w := prettyprint.Writer{Out: cmd.OutOrStdout(), Field: listOrganizationOpts.Format.Field}
-		return w.Write(tabularTeam(orgs.Msg.GetTeams()))
+		return organizationListOpts.Format.Writer(false).Write(tabularTeam(orgs.Msg.GetTeams()))
 	},
 }
 
@@ -58,11 +57,11 @@ func (orgs tabularTeam) Row() []map[string]string {
 
 var _ prettyprint.Tabular = &tabularTeam{}
 
-var listOrganizationOpts struct {
+var organizationListOpts struct {
 	Format formatOpts
 }
 
 func init() {
 	organizationCmd.AddCommand(organizationListCmd)
-	addFormatFlags(organizationListCmd, &listOrganizationOpts.Format)
+	addFormatFlags(organizationListCmd, &organizationListOpts.Format)
 }

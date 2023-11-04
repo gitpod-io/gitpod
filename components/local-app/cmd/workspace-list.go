@@ -7,7 +7,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/bufbuild/connect-go"
@@ -51,10 +50,7 @@ var workspaceListCmd = &cobra.Command{
 			return err
 		}
 
-		w := prettyprint.Writer{Out: os.Stdout, Field: workspaceListOpts.Format.Field}
-		_ = w.Write(tabularWorkspaces(workspaces.Msg.GetResult()))
-
-		return nil
+		return workspaceListOpts.Format.Writer(false).Write(tabularWorkspaces(workspaces.Msg.GetResult()))
 	},
 }
 
