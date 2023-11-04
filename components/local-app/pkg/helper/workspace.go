@@ -14,7 +14,6 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"runtime"
 	"strings"
 	"time"
 
@@ -22,6 +21,7 @@ import (
 	"github.com/gitpod-io/gitpod/components/public-api/go/client"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/local-app/pkg/prettyprint"
+	"github.com/skratchdot/open-golang/open"
 )
 
 // OpenWorkspaceInPreferredEditor opens the workspace in the user's preferred editor
@@ -77,19 +77,8 @@ func OpenWorkspaceInPreferredEditor(ctx context.Context, clnt *client.Gitpod, wo
 		if url == "" && HasInstanceStatus(workspace.Msg.Result) {
 			url = workspace.Msg.Result.Status.Instance.Status.Url
 		}
-		var cmd *exec.Cmd
-		switch os := runtime.GOOS; os {
-		case "darwin":
-			cmd = exec.Command("open", url)
-		case "linux":
-			cmd = exec.Command("xdg-open", url)
-		case "windows":
-			cmd = exec.Command("cmd", "/c", "start", url)
-		default:
-			panic("unsupported platform")
-		}
 
-		err := cmd.Start()
+		err := open.Run(url)
 		if err != nil {
 			if execErr, ok := err.(*exec.Error); ok && execErr.Err == exec.ErrNotFound {
 				return fmt.Errorf("executable file not found in $PATH: %s. Please open %s manually instead", execErr.Name, url)
