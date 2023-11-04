@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// workspaceListClassesCmd lists all available organizations
+// workspaceListClassesCmd lists available workspace classes
 var workspaceListClassesCmd = &cobra.Command{
 	Use:   "list-classes",
 	Short: "Lists workspace classes",
