@@ -13,11 +13,14 @@ import { useLocation } from "react-router";
 import { User } from "@gitpod/gitpod-protocol";
 import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { useIsOwner, useListOrganizationMembers } from "../data/organizations/members-query";
 
 export default function OrganizationSelector() {
     const user = useCurrentUser();
     const orgs = useOrganizations();
     const currentOrg = useCurrentOrg();
+    const members = useListOrganizationMembers().data || [];
+    const owner = useIsOwner();
     const { data: billingMode } = useOrgBillingMode();
     const getOrgURL = useGetOrgURL();
     const repoConfigListAndDetail = useFeatureFlag("repoConfigListAndDetail");
@@ -40,13 +43,7 @@ export default function OrganizationSelector() {
               customContent: (
                   <CurrentOrgEntry
                       title={currentOrg.data.name}
-                      subtitle={
-                          !!currentOrg.data.members
-                              ? `${currentOrg.data.members.length} member${
-                                    currentOrg.data.members.length === 1 ? "" : "s"
-                                }`
-                              : "..."
-                      }
+                      subtitle={`${members.length} member${members.length === 1 ? "" : "s"}`}
                   />
               ),
               active: false,
@@ -82,7 +79,7 @@ export default function OrganizationSelector() {
             link: "/usage",
         });
         // Show billing if user is an owner of current org
-        if (currentOrg.data.isOwner) {
+        if (owner) {
             if (billingMode?.mode === "usage-based") {
                 linkEntries.push({
                     title: "Billing",
@@ -117,9 +114,7 @@ export default function OrganizationSelector() {
                 <OrgEntry
                     id={org.id}
                     title={org.name}
-                    subtitle={
-                        !!org.members ? `${org.members.length} member${org.members.length === 1 ? "" : "s"}` : "..."
-                    }
+                    subtitle={`${members.length} member${members.length === 1 ? "" : "s"}`}
                 />
             ),
             // marking as active for styles

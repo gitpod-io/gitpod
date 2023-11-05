@@ -21,6 +21,7 @@ import { Button } from "./Button";
 import { useCreateHoldPaymentIntentMutation } from "../data/billing/create-hold-payment-intent-mutation";
 import { useToast } from "./toasts/Toasts";
 import { ProgressBar } from "./ProgressBar";
+import { useListOrganizationMembers } from "../data/organizations/members-query";
 
 const BASE_USAGE_LIMIT_FOR_STRIPE_USERS = 1000;
 
@@ -33,8 +34,9 @@ let didAlreadyCallSubscribe = false;
 
 export default function UsageBasedBillingConfig({ hideSubheading = false }: Props) {
     const currentOrg = useCurrentOrg().data;
-    const attrId = currentOrg ? AttributionId.create(currentOrg) : undefined;
+    const attrId = currentOrg ? AttributionId.createFromOrganizationId(currentOrg.id) : undefined;
     const attributionId = attrId && AttributionId.render(attrId);
+    const members = useListOrganizationMembers().data;
     const [showUpdateLimitModal, setShowUpdateLimitModal] = useState<boolean>(false);
     const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | undefined>();
     const [isLoadingStripeSubscription, setIsLoadingStripeSubscription] = useState<boolean>(true);
@@ -155,7 +157,7 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
                 // FIXME: Should we ask the customer to confirm or edit this default limit?
                 let limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS;
                 if (attrId?.kind === "team" && currentOrg) {
-                    limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS * currentOrg.members.length;
+                    limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS * (members?.length || 0);
                 }
                 const newLimit = await getGitpodService().server.subscribeToStripe(
                     attributionId,
@@ -190,7 +192,7 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
                 );
             }
         },
-        [attrId?.kind, attributionId, currentOrg, location.pathname, refreshSubscriptionDetails],
+        [members, attrId?.kind, attributionId, currentOrg, location.pathname, refreshSubscriptionDetails],
     );
 
     const showSpinner = !attributionId || isLoadingStripeSubscription || isCreatingSubscription;

@@ -6,9 +6,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             (unknown)
-// source: gitpod/experimental/v2/workspace.proto
+// source: gitpod/v1/workspace.proto
 
-package v2
+package v1
 
 import (
 	context "context"
@@ -43,7 +43,7 @@ func NewWorkspaceServiceClient(cc grpc.ClientConnInterface) WorkspaceServiceClie
 
 func (c *workspaceServiceClient) GetWorkspace(ctx context.Context, in *GetWorkspaceRequest, opts ...grpc.CallOption) (*GetWorkspaceResponse, error) {
 	out := new(GetWorkspaceResponse)
-	err := c.cc.Invoke(ctx, "/gitpod.experimental.v2.WorkspaceService/GetWorkspace", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspaceService/GetWorkspace", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func _WorkspaceService_GetWorkspace_Handler(srv interface{}, ctx context.Context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gitpod.experimental.v2.WorkspaceService/GetWorkspace",
+		FullMethod: "/gitpod.v1.WorkspaceService/GetWorkspace",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkspaceServiceServer).GetWorkspace(ctx, req.(*GetWorkspaceRequest))
@@ -104,7 +104,7 @@ func _WorkspaceService_GetWorkspace_Handler(srv interface{}, ctx context.Context
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var WorkspaceService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "gitpod.experimental.v2.WorkspaceService",
+	ServiceName: "gitpod.v1.WorkspaceService",
 	HandlerType: (*WorkspaceServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -113,5 +113,5 @@ var WorkspaceService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "gitpod/experimental/v2/workspace.proto",
+	Metadata: "gitpod/v1/workspace.proto",
 }

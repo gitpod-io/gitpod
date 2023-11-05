@@ -1,17 +1,18 @@
 syntax = "proto3";
 
-package gitpod.experimental.v2;
+package gitpod.v1;
 
 import "google/protobuf/timestamp.proto";
-import "gitpod/experimental/v2/pagination.proto";
+import "gitpod/v1/pagination.proto";
 
-option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v2";
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
 
 
 message Organization {
     string id = 1;
     string name = 2;
     google.protobuf.Timestamp creation_time = 3;
+    string slug = 4;
 }
 
 message OrganizationMember {

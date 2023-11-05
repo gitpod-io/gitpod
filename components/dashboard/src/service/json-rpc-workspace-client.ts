@@ -6,8 +6,8 @@
 
 import { Code, ConnectError, PromiseClient } from "@connectrpc/connect";
 import { PartialMessage } from "@bufbuild/protobuf";
-import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/experimental/v2/workspace_connect";
-import { GetWorkspaceRequest, GetWorkspaceResponse } from "@gitpod/public-api/lib/gitpod/experimental/v2/workspace_pb";
+import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/v1/workspace_connect";
+import { GetWorkspaceRequest, GetWorkspaceResponse } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { converter } from "./public-api";
 import { getGitpodService } from "./service";
 

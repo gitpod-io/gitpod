@@ -5,9 +5,9 @@
  */
 
 import { OrganizationSettings } from "@gitpod/gitpod-protocol";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
-import { getOrgSettingsQueryKey, OrgSettingsResult } from "./org-settings-query";
+import { useOrgSettingsQueryInvalidator } from "./org-settings-query";
 import { useCurrentOrg } from "./orgs-query";
 
 type UpdateOrganizationSettingsArgs = Partial<
@@ -15,9 +15,9 @@ type UpdateOrganizationSettingsArgs = Partial<
 >;
 
 export const useUpdateOrgSettingsMutation = () => {
-    const queryClient = useQueryClient();
-    const team = useCurrentOrg().data;
-    const teamId = team?.id || "";
+    const org = useCurrentOrg().data;
+    const invalidator = useOrgSettingsQueryInvalidator();
+    const teamId = org?.id || "";
 
     return useMutation<OrganizationSettings, Error, UpdateOrganizationSettingsArgs>({
         mutationFn: async ({ workspaceSharingDisabled, defaultWorkspaceImage }) => {
@@ -26,10 +26,6 @@ export const useUpdateOrgSettingsMutation = () => {
                 defaultWorkspaceImage,
             });
         },
-        onSuccess: (newData, _) => {
-            const queryKey = getOrgSettingsQueryKey(teamId);
-            queryClient.setQueryData<OrgSettingsResult>(queryKey, newData);
-            queryClient.invalidateQueries({ queryKey });
-        },
+        onSuccess: invalidator,
     });
 };

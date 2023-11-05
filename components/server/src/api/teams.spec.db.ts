@@ -24,6 +24,7 @@ import { SessionHandler } from "../session-handler";
 import { Redis } from "ioredis";
 import { UserService } from "../user/user-service";
 import { Config } from "../config";
+import { OrganizationService } from "../orgs/organization-service";
 
 const expect = chai.expect;
 
@@ -40,6 +41,7 @@ export class APITeamsServiceSpec {
         API.bindAPI(this.container.bind.bind(this.container));
 
         this.container.bind(WorkspaceService).toConstantValue({} as WorkspaceService);
+        this.container.bind(OrganizationService).toConstantValue({} as OrganizationService);
         this.container.bind(UserAuthentication).toConstantValue({} as UserAuthentication);
         this.container.bind(SessionHandler).toConstantValue({} as SessionHandler);
         this.container.bind(Config).toConstantValue({} as Config);

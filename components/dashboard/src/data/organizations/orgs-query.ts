@@ -4,19 +4,14 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Organization, OrgMemberInfo, User } from "@gitpod/gitpod-protocol";
+import { User } from "@gitpod/gitpod-protocol";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useLocation } from "react-router";
-import { publicApiTeamMembersToProtocol, publicApiTeamToProtocol, teamsService } from "../../service/public-api";
+import { organizationClient } from "../../service/public-api";
 import { useCurrentUser } from "../../user-context";
 import { noPersistence } from "../setup";
-
-export interface OrganizationInfo extends Organization {
-    members: OrgMemberInfo[];
-    isOwner: boolean;
-    invitationId?: string;
-}
+import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 
 export function useOrganizationsInvalidator() {
     const user = useCurrentUser();
@@ -29,7 +24,7 @@ export function useOrganizationsInvalidator() {
 
 export function useOrganizations() {
     const user = useCurrentUser();
-    const query = useQuery<OrganizationInfo[], Error>(
+    const query = useQuery<Organization[], Error>(
         getQueryKey(user),
         async () => {
             console.log("Fetching orgs... " + JSON.stringify(getQueryKey(user)));
@@ -38,19 +33,8 @@ export function useOrganizations() {
                 return [];
             }
 
-            const response = await teamsService.listTeams({});
-            const result: OrganizationInfo[] = [];
-            for (const org of response.teams) {
-                const members = publicApiTeamMembersToProtocol(org.members || []);
-                const isOwner = members.some((m) => m.role === "owner" && m.userId === user?.id);
-                result.push({
-                    ...publicApiTeamToProtocol(org),
-                    members,
-                    isOwner,
-                    invitationId: org.teamInvitation?.id,
-                });
-            }
-            return result;
+            const response = await organizationClient.listOrganizations({});
+            return response.organizations;
         },
         {
             enabled: !!user,
@@ -68,7 +52,7 @@ function getQueryKey(user?: User) {
 }
 
 // Custom hook to return the current org if one is selected
-export function useCurrentOrg(): { data?: OrganizationInfo; isLoading: boolean } {
+export function useCurrentOrg(): { data?: Organization; isLoading: boolean } {
     const location = useLocation();
     const orgs = useOrganizations();
     const user = useCurrentUser();

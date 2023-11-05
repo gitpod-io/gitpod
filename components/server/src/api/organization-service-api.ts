@@ -6,7 +6,7 @@
 
 import { HandlerContext, ServiceImpl } from "@connectrpc/connect";
 import { inject, injectable } from "inversify";
-import { OrganizationService as OrganizationServiceInterface } from "@gitpod/public-api/lib/gitpod/experimental/v2/organization_connect";
+import { OrganizationService as OrganizationServiceInterface } from "@gitpod/public-api/lib/gitpod/v1/organization_connect";
 import {
     CreateOrganizationRequest,
     CreateOrganizationResponse,
@@ -34,10 +34,10 @@ import {
     GetOrganizationSettingsResponse,
     UpdateOrganizationSettingsRequest,
     UpdateOrganizationSettingsResponse,
-} from "@gitpod/public-api/lib/gitpod/experimental/v2/organization_pb";
+} from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
 import { OrganizationService } from "../orgs/organization-service";
-import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/experimental/v2/pagination_pb";
+import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 
 @injectable()
 export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationServiceInterface> {

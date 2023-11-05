@@ -4,32 +4,34 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { OrganizationSettings } from "@gitpod/gitpod-protocol";
+import { Organization, OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import React, { Children, ReactNode, useCallback, useMemo, useState } from "react";
 import Alert from "../components/Alert";
 import { Button } from "../components/Button";
-import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import ConfirmationModal from "../components/ConfirmationModal";
+import { InputWithCopy } from "../components/InputWithCopy";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
+import { CheckboxInputField } from "../components/forms/CheckboxInputField";
+import { InputField } from "../components/forms/InputField";
 import { TextInputField } from "../components/forms/TextInputField";
 import { Heading2, Subheading } from "../components/typography/headings";
-import { useUpdateOrgSettingsMutation } from "../data/organizations/update-org-settings-mutation";
+import { useIsOwner } from "../data/organizations/members-query";
 import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
-import { OrganizationInfo, useCurrentOrg, useOrganizationsInvalidator } from "../data/organizations/orgs-query";
+import { useCurrentOrg, useOrganizationsInvalidator } from "../data/organizations/orgs-query";
 import { useUpdateOrgMutation } from "../data/organizations/update-org-mutation";
+import { useUpdateOrgSettingsMutation } from "../data/organizations/update-org-settings-mutation";
+import { useDefaultWorkspaceImageQuery } from "../data/workspaces/default-workspace-image-query";
 import { useOnBlurError } from "../hooks/use-onblur-error";
-import { teamsService } from "../service/public-api";
+import { ReactComponent as Stack } from "../icons/Stack.svg";
+import { organizationClient } from "../service/public-api";
 import { gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
-import { useDefaultWorkspaceImageQuery } from "../data/workspaces/default-workspace-image-query";
-import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
-import { InputField } from "../components/forms/InputField";
-import { InputWithCopy } from "../components/InputWithCopy";
-import { ReactComponent as Stack } from "../icons/Stack.svg";
 
 export default function TeamSettingsPage() {
     const user = useCurrentUser();
     const org = useCurrentOrg().data;
+    const isOwner = useIsOwner();
     const invalidateOrgs = useOrganizationsInvalidator();
     const [modal, setModal] = useState(false);
     const [teamNameToDelete, setTeamNameToDelete] = useState("");
@@ -50,7 +52,7 @@ export default function TeamSettingsPage() {
 
     const updateTeamInformation = useCallback(
         async (e: React.FormEvent) => {
-            if (!org?.isOwner) {
+            if (!isOwner) {
                 return;
             }
             e.preventDefault();
@@ -67,7 +69,7 @@ export default function TeamSettingsPage() {
                 console.error(error);
             }
         },
-        [orgFormIsValid, updateOrg, teamName, org],
+        [isOwner, orgFormIsValid, updateOrg, teamName],
     );
 
     const deleteTeam = useCallback(async () => {
@@ -75,7 +77,7 @@ export default function TeamSettingsPage() {
             return;
         }
 
-        await teamsService.deleteTeam({ teamId: org.id });
+        await organizationClient.deleteOrganization({ organizationId: org.id });
         invalidateOrgs();
         document.location.href = gitpodHostUrl.asDashboard().toString();
     }, [invalidateOrgs, org, user]);
@@ -104,20 +106,20 @@ export default function TeamSettingsPage() {
                         value={teamName}
                         error={teamNameError.message}
                         onChange={setTeamName}
-                        disabled={!org?.isOwner}
+                        disabled={!isOwner}
                         onBlur={teamNameError.onBlur}
                     />
 
-                    {org?.isOwner && (
+                    {isOwner && (
                         <Button className="mt-4" htmlType="submit" disabled={org?.name === teamName || !orgFormIsValid}>
                             Update Organization
                         </Button>
                     )}
                 </form>
 
-                <OrgSettingsForm org={org} />
+                <OrgSettingsForm org={org} isOwner={isOwner} />
 
-                {user?.organizationId !== org?.id && org?.isOwner && (
+                {user?.organizationId !== org?.id && isOwner && (
                     <>
                         <Heading2 className="pt-12">Delete Organization</Heading2>
                         <Subheading className="pb-4 max-w-2xl">
@@ -170,8 +172,8 @@ export default function TeamSettingsPage() {
     );
 }
 
-function OrgSettingsForm(props: { org?: OrganizationInfo }) {
-    const { org } = props;
+function OrgSettingsForm(props: { org?: Organization; isOwner: boolean }) {
+    const { org, isOwner } = props;
     const { data: settings, isLoading } = useOrgSettingsQuery();
     const { data: imageInfo } = useDefaultWorkspaceImageQuery();
     const updateTeamSettings = useUpdateOrgSettingsMutation();
@@ -183,7 +185,7 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
             if (!org?.id) {
                 throw new Error("no organization selected");
             }
-            if (!org.isOwner) {
+            if (!isOwner) {
                 throw new Error("no organization settings change permission");
             }
             try {
@@ -195,7 +197,7 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
                 console.error(error);
             }
         },
-        [updateTeamSettings, org?.id, org?.isOwner, settings],
+        [updateTeamSettings, org?.id, isOwner, settings],
     );
 
     return (
@@ -225,7 +227,7 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
                 hint="Allow workspaces created within an Organization to share the workspace with any authenticated user."
                 checked={!settings?.workspaceSharingDisabled}
                 onChange={(checked) => handleUpdateTeamSettings({ workspaceSharingDisabled: !checked })}
-                disabled={isLoading || !org?.isOwner}
+                disabled={isLoading || !isOwner}
             />
 
             <Heading2 className="pt-12">Workspace Images</Heading2>
@@ -234,7 +236,7 @@ function OrgSettingsForm(props: { org?: OrganizationInfo }) {
             </Subheading>
 
             <WorkspaceImageButton
-                disabled={!org?.isOwner}
+                disabled={!isOwner}
                 settings={settings}
                 defaultWorkspaceImage={imageInfo?.image}
                 onClick={() => setShowImageEditModal(true)}
