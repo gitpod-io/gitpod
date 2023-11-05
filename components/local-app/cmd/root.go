@@ -137,7 +137,7 @@ func getGitpodClient(ctx context.Context) (*client.Gitpod, error) {
 			"provide a token by setting the GITPOD_TOKEN environment variable",
 			"login again using `gitpod login`",
 			"change to a different context using `gitpod config use-context <context>`",
-			"set a token explicitely using `gitpod config set-context --current --token <token>`",
+			"set a token explicitly using `gitpod config set-context --current --token <token>`",
 		)
 	}
 
