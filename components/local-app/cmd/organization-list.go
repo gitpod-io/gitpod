@@ -40,7 +40,7 @@ var organizationListCmd = &cobra.Command{
 				Name: org.Name,
 			})
 		}
-		return WriteTabular(res, organizationListOpts.Format, prettyprint.WriterFormatNarrow)
+		return WriteTabular(res, organizationListOpts.Format, prettyprint.WriterFormatWide)
 	},
 }
 
