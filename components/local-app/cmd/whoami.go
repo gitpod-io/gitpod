@@ -51,7 +51,7 @@ type tabularWhoami struct {
 }
 
 func (tabularWhoami) Header() []string {
-	return []string{"user", "user id", "organization", "organization id", "host"}
+	return []string{"user name", "user id", "organization", "organization id", "host"}
 }
 
 func (who tabularWhoami) Row() []map[string]string {
