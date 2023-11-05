@@ -16,6 +16,7 @@ import (
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/local-app/pkg/auth"
 	"github.com/gitpod-io/local-app/pkg/config"
+	"github.com/gitpod-io/local-app/pkg/prettyprint"
 	"github.com/spf13/cobra"
 )
 
@@ -83,7 +84,17 @@ var loginCmd = &cobra.Command{
 			}
 			orgsList, err := clnt.Teams.ListTeams(cmd.Context(), connect.NewRequest(&v1.ListTeamsRequest{}))
 			if err != nil {
-				return fmt.Errorf("cannot list organizations: %w. Please pass an organization ID using --organization-id", err)
+				resolutions := []string{
+					"pass an organization ID using --organization-id",
+				}
+				if loginOpts.Token != "" {
+					resolutions = append(resolutions,
+						"make sure the token has the right scopes",
+						"use a different token",
+						"login without passing a token but using the browser instead",
+					)
+				}
+				return prettyprint.AddResolution(fmt.Errorf("cannot list organizations: %w", err), resolutions...)
 			}
 
 			var orgID string
@@ -96,7 +107,7 @@ var loginCmd = &cobra.Command{
 				orgID = orgsList.Msg.GetTeams()[0].Id
 				slog.Info("found more than one organization and choose the first one", "org", orgID)
 			}
-			cfg.Contexts[loginOpts.ContextName].OrganizationID = orgID
+			cfg.Contexts[contextName].OrganizationID = orgID
 		}
 
 		err = config.SaveConfig(cfg.Filename, cfg)
