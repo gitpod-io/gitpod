@@ -21,13 +21,14 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
-	"github.com/gitpod-io/local-app/pkg/constants"
 	"github.com/gitpod-io/local-app/pkg/prettyprint"
 	"github.com/skratchdot/open-golang/open"
 	keyring "github.com/zalando/go-keyring"
 	"golang.org/x/oauth2"
 	"golang.org/x/xerrors"
 )
+
+const keychainServiceName = "gitpod-io"
 
 var authScopesLocalCompanion = []string{
 	"function:getGitpodTokenScopes",
@@ -37,8 +38,8 @@ var authScopesLocalCompanion = []string{
 	"resource:default",
 }
 
-func fetchValidCliScopes(ctx context.Context, serviceURL string) ([]string, error) {
-	var clientId = constants.Flavor
+func fetchValidCLIScopes(ctx context.Context, serviceURL string) ([]string, error) {
+	const clientId = "gitpod-cli"
 
 	endpoint := serviceURL + "/api/oauth/inspect?client=" + clientId
 
@@ -104,12 +105,12 @@ func ValidateToken(client gitpod.APIInterface, tkn string) error {
 
 // SetToken returns the persisted Gitpod token
 func SetToken(host, token string) error {
-	return keyring.Set(constants.KeychainServiceName, host, token)
+	return keyring.Set(keychainServiceName, host, token)
 }
 
 // GetToken returns the persisted Gitpod token
 func GetToken(host string) (token string, err error) {
-	tkn, err := keyring.Get(constants.KeychainServiceName, host)
+	tkn, err := keyring.Get(keychainServiceName, host)
 	if errors.Is(err, keyring.ErrNotFound) {
 		return "", nil
 	}
@@ -118,7 +119,7 @@ func GetToken(host string) (token string, err error) {
 
 // DeleteToken deletes the persisted Gitpod token
 func DeleteToken(host string) error {
-	return keyring.Delete(constants.KeychainServiceName, host)
+	return keyring.Delete(keychainServiceName, host)
 }
 
 // LoginOpts configure the login process
@@ -126,6 +127,8 @@ type LoginOpts struct {
 	GitpodURL   string
 	RedirectURL string
 	AuthTimeout time.Duration
+
+	ExtendScopes bool
 }
 
 const html = `
@@ -216,8 +219,8 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 			TokenURL: tokenURL.String(),
 		},
 	}
-	if constants.Flavor == "gitpod-cli" {
-		authScopesLocalCompanion, err = fetchValidCliScopes(ctx, opts.GitpodURL)
+	if opts.ExtendScopes {
+		authScopesLocalCompanion, err = fetchValidCLIScopes(ctx, opts.GitpodURL)
 		if err != nil {
 			return "", err
 		}

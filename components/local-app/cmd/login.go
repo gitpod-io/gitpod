@@ -49,6 +49,8 @@ var loginCmd = &cobra.Command{
 			token, err = auth.Login(context.Background(), auth.LoginOpts{
 				GitpodURL:   loginOpts.Host,
 				AuthTimeout: 5 * time.Minute,
+				// Request CLI scopes (extended compared to the local companion app)
+				ExtendScopes: true,
 			})
 			if err != nil {
 				return err

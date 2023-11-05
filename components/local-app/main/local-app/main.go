@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
-package localapp
+package main
 
 import (
 	"path/filepath"
@@ -28,7 +28,8 @@ import (
 	"google.golang.org/grpc"
 )
 
-func RunCommand() {
+func main() {
+	// maintain compatibility with old keyring
 	sshConfig := os.Getenv("GITPOD_LCA_SSH_CONFIG")
 	if sshConfig == "" {
 		sshConfig = filepath.Join(os.TempDir(), "gitpod_ssh_config")

@@ -7,18 +7,4 @@ package constants
 var (
 	// Version - set during build
 	Version = "dev"
-
-	// Flavor - set during build
-	Flavor = "gitpod-cli"
-
-	// KeychainServiceName - derived from Flavor
-	KeychainServiceName string
 )
-
-func init() {
-	if Flavor == "gitpod-cli" {
-		KeychainServiceName = "gitpod-cli"
-	} else {
-		KeychainServiceName = "gitpod-io"
-	}
-}
