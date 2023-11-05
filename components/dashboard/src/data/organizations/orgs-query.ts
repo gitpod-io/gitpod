@@ -4,6 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { toPlainMessage, PlainMessage } from "@bufbuild/protobuf";
 import { User } from "@gitpod/gitpod-protocol";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
@@ -24,7 +25,7 @@ export function useOrganizationsInvalidator() {
 
 export function useOrganizations() {
     const user = useCurrentUser();
-    const query = useQuery<Organization[], Error>(
+    const query = useQuery<PlainMessage<Organization>[], Error>(
         getQueryKey(user),
         async () => {
             console.log("Fetching orgs... " + JSON.stringify(getQueryKey(user)));
@@ -34,7 +35,7 @@ export function useOrganizations() {
             }
 
             const response = await organizationClient.listOrganizations({});
-            return response.organizations;
+            return response.organizations.map(toPlainMessage);
         },
         {
             enabled: !!user,
@@ -52,7 +53,7 @@ function getQueryKey(user?: User) {
 }
 
 // Custom hook to return the current org if one is selected
-export function useCurrentOrg(): { data?: Organization; isLoading: boolean } {
+export function useCurrentOrg(): { data?: PlainMessage<Organization>; isLoading: boolean } {
     const location = useLocation();
     const orgs = useOrganizations();
     const user = useCurrentUser();

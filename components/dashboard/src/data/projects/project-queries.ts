@@ -10,6 +10,7 @@ import { useCurrentOrg } from "../organizations/orgs-query";
 import { listAllProjects, projectsService } from "../../service/public-api";
 import { PartialProject } from "@gitpod/gitpod-protocol";
 import { getGitpodService } from "../../service/service";
+import { toPlainMessage } from "@bufbuild/protobuf";
 
 const BASE_KEY = "projects";
 
@@ -58,7 +59,8 @@ export const useListProjectsQuery = ({ page, pageSize }: ListProjectsQueryArgs) 
                 throw new Error("No org currently selected");
             }
 
-            return projectsService.listProjects({ teamId: org.id, pagination: { page, pageSize } });
+            const result = await projectsService.listProjects({ teamId: org.id, pagination: { page, pageSize } });
+            return toPlainMessage(result);
         },
         {
             enabled: !!org,

@@ -4,6 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { toPlainMessage, PlainMessage } from "@bufbuild/protobuf";
 import { OrganizationMember, OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
@@ -21,7 +22,7 @@ export function useOrganizationMembersInvalidator() {
 
 export function useListOrganizationMembers() {
     const organizationId = useCurrentOrg().data?.id;
-    const query = useQuery<OrganizationMember[], Error>(
+    const query = useQuery<PlainMessage<OrganizationMember>[], Error>(
         getQueryKey(organizationId),
         async () => {
             const response = await organizationClient.listOrganizationMembers({
@@ -30,7 +31,7 @@ export function useListOrganizationMembers() {
                     pageSize: 1000,
                 },
             });
-            return response.members;
+            return response.members.map(toPlainMessage);
         },
         {
             staleTime: 1000 * 60 * 5, // 5 minutes

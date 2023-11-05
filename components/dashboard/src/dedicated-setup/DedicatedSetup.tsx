@@ -4,6 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { PlainMessage } from "@bufbuild/protobuf";
 import { FC, useCallback, useContext, useMemo, useState } from "react";
 import { GettingStartedStep } from "./GettingStartedStep";
 import { OrgNamingStep } from "./OrgNamingStep";
@@ -68,7 +69,7 @@ const STEPS = {
 type StepsValue = typeof STEPS[keyof typeof STEPS];
 
 type DedicatedSetupStepsProps = {
-    org?: Organization;
+    org?: PlainMessage<Organization>;
     ssoConfig?: OIDCClientConfig;
     onComplete: () => void;
 };

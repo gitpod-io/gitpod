@@ -4,6 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { toPlainMessage, PlainMessage } from "@bufbuild/protobuf";
 import { useMutation } from "@tanstack/react-query";
 import { useOrganizationsInvalidator } from "./orgs-query";
 import { organizationClient } from "../../service/public-api";
@@ -14,14 +15,14 @@ type CreateOrgArgs = Pick<Organization, "name">;
 export const useCreateOrgMutation = () => {
     const invalidateOrgs = useOrganizationsInvalidator();
 
-    return useMutation<Organization, Error, CreateOrgArgs>({
+    return useMutation<PlainMessage<Organization>, Error, CreateOrgArgs>({
         mutationFn: async ({ name }) => {
             const { organization } = await organizationClient.createOrganization({ name });
             if (!organization) {
                 throw new Error("Error creating organization");
             }
 
-            return organization;
+            return toPlainMessage(organization);
         },
         onSuccess(newOrg) {
             invalidateOrgs();

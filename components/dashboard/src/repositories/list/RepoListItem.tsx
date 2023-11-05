@@ -11,9 +11,10 @@ import { Text } from "@podkit/typography/Text";
 import { Link } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { Project } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_pb";
+import { PlainMessage } from "@bufbuild/protobuf";
 
 type Props = {
-    project: Project;
+    project: PlainMessage<Project>;
 };
 export const RepositoryListItem: FC<Props> = ({ project }) => {
     const url = usePrettyRepoURL(project.cloneUrl);

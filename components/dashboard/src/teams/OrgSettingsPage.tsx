@@ -15,6 +15,7 @@ import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { useIsOwner } from "../data/organizations/members-query";
+import { PlainMessage } from "@bufbuild/protobuf";
 
 export interface OrgSettingsPageProps {
     children: React.ReactNode;
@@ -70,7 +71,7 @@ export function OrgSettingsPage({ children }: OrgSettingsPageProps) {
 }
 
 function getOrgSettingsMenu(params: {
-    org?: Organization;
+    org?: PlainMessage<Organization>;
     billingMode?: BillingMode;
     ssoEnabled?: boolean;
     orgGitAuthProviders: boolean;

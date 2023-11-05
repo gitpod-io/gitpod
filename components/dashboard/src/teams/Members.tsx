@@ -20,15 +20,16 @@ import { SpinnerLoader } from "../components/Loader";
 import { Delayed } from "../components/Delayed";
 import { InputField } from "../components/forms/InputField";
 import { InputWithCopy } from "../components/InputWithCopy";
-import { OrganizationMember, OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { useListOrganizationMembers, useOrganizationMembersInvalidator } from "../data/organizations/members-query";
 import { useInvitationId, useInviteInvalidator } from "../data/organizations/invite-query";
+import { PlainTimestamp } from "../data/plain-timestamp";
 
 export default function MembersPage() {
     const user = useCurrentUser();
     const org = useCurrentOrg();
     const membersQuery = useListOrganizationMembers();
-    const members: OrganizationMember[] = useMemo(() => membersQuery.data || [], [membersQuery.data]);
+    const members = useMemo(() => membersQuery.data || [], [membersQuery.data]);
     const invalidateInviteQuery = useInviteInvalidator();
     const invalidateMembers = useOrganizationMembersInvalidator();
 
@@ -185,91 +186,92 @@ export default function MembersPage() {
                     {filteredMembers.length === 0 ? (
                         <p className="pt-16 text-center">No members found</p>
                     ) : (
-                        filteredMembers.map((m) => (
-                            <Item className="grid grid-cols-3" key={m.userId}>
-                                <ItemField className="flex items-center my-auto">
-                                    <div className="flex-shrink-0">
-                                        {m.avatarUrl && (
-                                            <img
-                                                className="rounded-full w-8 h-8"
-                                                src={m.avatarUrl || ""}
-                                                alt={m.fullName}
-                                            />
-                                        )}
-                                    </div>
-                                    <div className="ml-5 truncate">
-                                        <div
-                                            className="text-base text-gray-900 dark:text-gray-50 font-medium"
-                                            title={m.fullName}
-                                        >
-                                            {m.fullName}
+                        filteredMembers.map((m) => {
+                            const memberSince = PlainTimestamp.toDate(m.memberSince);
+                            return (
+                                <Item className="grid grid-cols-3" key={m.userId}>
+                                    <ItemField className="flex items-center my-auto">
+                                        <div className="flex-shrink-0">
+                                            {m.avatarUrl && (
+                                                <img
+                                                    className="rounded-full w-8 h-8"
+                                                    src={m.avatarUrl || ""}
+                                                    alt={m.fullName}
+                                                />
+                                            )}
                                         </div>
-                                        <p title={m.email}>{m.email}</p>
-                                    </div>
-                                </ItemField>
-                                <ItemField className="my-auto">
-                                    <Tooltip content={dayjs(m.memberSince?.toDate()).format("MMM D, YYYY")}>
-                                        <span className="text-gray-400">
-                                            {dayjs(m.memberSince?.toDate()).fromNow()}
+                                        <div className="ml-5 truncate">
+                                            <div
+                                                className="text-base text-gray-900 dark:text-gray-50 font-medium"
+                                                title={m.fullName}
+                                            >
+                                                {m.fullName}
+                                            </div>
+                                            <p title={m.email}>{m.email}</p>
+                                        </div>
+                                    </ItemField>
+                                    <ItemField className="my-auto">
+                                        <Tooltip content={dayjs(memberSince).format("MMM D, YYYY")}>
+                                            <span className="text-gray-400">{dayjs(memberSince).fromNow()}</span>
+                                        </Tooltip>
+                                    </ItemField>
+                                    <ItemField className="flex items-center my-auto">
+                                        <span className="text-gray-400 capitalize">
+                                            {isOwner ? (
+                                                <DropDown
+                                                    customClasses="w-32"
+                                                    activeEntry={m.role === OrganizationRole.OWNER ? "owner" : "member"}
+                                                    entries={[
+                                                        {
+                                                            title: "owner",
+                                                            onClick: () =>
+                                                                setTeamMemberRole(m.userId, OrganizationRole.OWNER),
+                                                        },
+                                                        {
+                                                            title: "member",
+                                                            onClick: () =>
+                                                                setTeamMemberRole(m.userId, OrganizationRole.MEMBER),
+                                                        },
+                                                    ]}
+                                                />
+                                            ) : m.role === OrganizationRole.OWNER ? (
+                                                "owner"
+                                            ) : (
+                                                "member"
+                                            )}
                                         </span>
-                                    </Tooltip>
-                                </ItemField>
-                                <ItemField className="flex items-center my-auto">
-                                    <span className="text-gray-400 capitalize">
-                                        {isOwner ? (
-                                            <DropDown
-                                                customClasses="w-32"
-                                                activeEntry={m.role === OrganizationRole.OWNER ? "owner" : "member"}
-                                                entries={[
-                                                    {
-                                                        title: "owner",
-                                                        onClick: () =>
-                                                            setTeamMemberRole(m.userId, OrganizationRole.OWNER),
-                                                    },
-                                                    {
-                                                        title: "member",
-                                                        onClick: () =>
-                                                            setTeamMemberRole(m.userId, OrganizationRole.MEMBER),
-                                                    },
-                                                ]}
-                                            />
-                                        ) : m.role === OrganizationRole.OWNER ? (
-                                            "owner"
-                                        ) : (
-                                            "member"
-                                        )}
-                                    </span>
-                                    <span className="flex-grow" />
-                                    <ItemFieldContextMenu
-                                        menuEntries={
-                                            m.userId === user?.id
-                                                ? [
-                                                      {
-                                                          title: !isRemainingOwner
-                                                              ? "Leave Organization"
-                                                              : "Remaining owner",
-                                                          customFontStyle: !isRemainingOwner
-                                                              ? "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
-                                                              : "text-gray-400 dark:text-gray-200",
-                                                          onClick: () =>
-                                                              !isRemainingOwner && removeTeamMember(m.userId),
-                                                      },
-                                                  ]
-                                                : isOwner
-                                                ? [
-                                                      {
-                                                          title: "Remove",
-                                                          customFontStyle:
-                                                              "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
-                                                          onClick: () => removeTeamMember(m.userId),
-                                                      },
-                                                  ]
-                                                : []
-                                        }
-                                    />
-                                </ItemField>
-                            </Item>
-                        ))
+                                        <span className="flex-grow" />
+                                        <ItemFieldContextMenu
+                                            menuEntries={
+                                                m.userId === user?.id
+                                                    ? [
+                                                          {
+                                                              title: !isRemainingOwner
+                                                                  ? "Leave Organization"
+                                                                  : "Remaining owner",
+                                                              customFontStyle: !isRemainingOwner
+                                                                  ? "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                                                                  : "text-gray-400 dark:text-gray-200",
+                                                              onClick: () =>
+                                                                  !isRemainingOwner && removeTeamMember(m.userId),
+                                                          },
+                                                      ]
+                                                    : isOwner
+                                                    ? [
+                                                          {
+                                                              title: "Remove",
+                                                              customFontStyle:
+                                                                  "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
+                                                              onClick: () => removeTeamMember(m.userId),
+                                                          },
+                                                      ]
+                                                    : []
+                                            }
+                                        />
+                                    </ItemField>
+                                </Item>
+                            );
+                        })
                     )}
                 </ItemsList>
             </div>

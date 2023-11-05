@@ -27,6 +27,7 @@ import { organizationClient } from "../service/public-api";
 import { gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
+import { PlainMessage } from "@bufbuild/protobuf";
 
 export default function TeamSettingsPage() {
     const user = useCurrentUser();
@@ -172,7 +173,7 @@ export default function TeamSettingsPage() {
     );
 }
 
-function OrgSettingsForm(props: { org?: Organization; isOwner: boolean }) {
+function OrgSettingsForm(props: { org?: PlainMessage<Organization>; isOwner: boolean }) {
     const { org, isOwner } = props;
     const { data: settings, isLoading } = useOrgSettingsQuery();
     const { data: imageInfo } = useDefaultWorkspaceImageQuery();
@@ -254,7 +255,7 @@ function OrgSettingsForm(props: { org?: Organization; isOwner: boolean }) {
 }
 
 function WorkspaceImageButton(props: {
-    settings?: OrganizationSettings;
+    settings?: PlainMessage<OrganizationSettings>;
     defaultWorkspaceImage?: string;
     onClick: () => void;
     disabled?: boolean;
@@ -342,7 +343,7 @@ function WorkspaceImageButton(props: {
 
 interface OrgDefaultWorkspaceImageModalProps {
     globalDefaultImage: string | undefined;
-    settings: OrganizationSettings | undefined;
+    settings: PlainMessage<OrganizationSettings> | undefined;
     onClose: () => void;
 }
 

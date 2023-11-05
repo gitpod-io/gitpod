@@ -4,6 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { toPlainMessage, PlainMessage } from "@bufbuild/protobuf";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { organizationClient } from "../../service/public-api";
 import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
@@ -20,7 +21,7 @@ export function useOrgSettingsQueryInvalidator() {
 
 export function useOrgSettingsQuery() {
     const organizationId = useCurrentOrg().data?.id;
-    return useQuery<OrganizationSettings, Error>(
+    return useQuery<PlainMessage<OrganizationSettings>, Error>(
         getQueryKey(organizationId),
         async () => {
             if (!organizationId) {
@@ -28,7 +29,7 @@ export function useOrgSettingsQuery() {
             }
 
             const settings = await organizationClient.getOrganizationSettings({ organizationId });
-            return settings.settings || new OrganizationSettings();
+            return toPlainMessage(settings.settings || new OrganizationSettings());
         },
         {
             enabled: !!organizationId,

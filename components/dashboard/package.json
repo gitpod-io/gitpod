@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "private": true,
   "dependencies": {
+    "@bufbuild/protobuf": "^1.3.3",
     "@connectrpc/connect": "1.1.2",
     "@connectrpc/connect-web": "1.1.2",
     "@gitpod/gitpod-protocol": "0.1.5",
