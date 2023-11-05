@@ -110,7 +110,11 @@ func getGitpodClient(ctx context.Context) (*client.Gitpod, error) {
 
 	host := gpctx.Host
 	if host == nil {
-		return nil, fmt.Errorf("no host found for the active context. Please run `gitpod config set-context` or modify the configuration file to set one")
+		return nil, prettyprint.AddResolution(fmt.Errorf("active context has no host configured"),
+			"set a host using `gitpod config set-context --current --host <host>`",
+			"login again using `gitpod login`",
+			"change to a different context using `gitpod config use-context <context>`",
+		)
 	}
 
 	if host.String() == "https://testing" && rootTestingOpts.Client != nil {
@@ -129,7 +133,12 @@ func getGitpodClient(ctx context.Context) (*client.Gitpod, error) {
 		}
 	}
 	if token == "" {
-		return nil, fmt.Errorf("no token found for host %s: neither the active context, nor keychain, nor GITPOD_TOKEN environment variable provide one. Please run `gitpod login` to login", host.String())
+		return nil, prettyprint.AddResolution(fmt.Errorf("no token found for active context"),
+			"provide a token by setting the GITPOD_TOKEN environment variable",
+			"login again using `gitpod login`",
+			"change to a different context using `gitpod config use-context <context>`",
+			"set a token explicitely using `gitpod config set-context --current --token <token>`",
+		)
 	}
 
 	var apiHost = *gpctx.Host.URL
