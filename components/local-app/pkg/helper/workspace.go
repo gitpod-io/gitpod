@@ -112,9 +112,7 @@ func SSHConnectToWorkspace(ctx context.Context, clnt *client.Gitpod, workspaceID
 
 	ownerToken := token.Msg.Token
 
-	host := strings.Replace(wsInfo.Status.Instance.Status.Url, wsInfo.WorkspaceId, wsInfo.WorkspaceId+".ssh", -1)
-	host = strings.Replace(host, "https://", "", -1)
-
+	host := WorkspaceSSHHost(wsInfo)
 	if runDry {
 		fmt.Println("ssh", fmt.Sprintf("%s#%s@%s", wsInfo.WorkspaceId, ownerToken, host), "-o", "StrictHostKeyChecking=no")
 		return nil
@@ -122,16 +120,26 @@ func SSHConnectToWorkspace(ctx context.Context, clnt *client.Gitpod, workspaceID
 
 	slog.Debug("Connecting to" + wsInfo.Description)
 	command := exec.Command("ssh", fmt.Sprintf("%s#%s@%s", wsInfo.WorkspaceId, ownerToken, host), "-o", "StrictHostKeyChecking=no")
-
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
-
-	if err := command.Run(); err != nil {
+	err = command.Run()
+	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func WorkspaceSSHHost(ws *v1.Workspace) string {
+	if ws == nil || ws.Status == nil || ws.Status.Instance == nil || ws.Status.Instance.Status == nil {
+		return ""
+	}
+
+	host := strings.Replace(ws.Status.Instance.Status.Url, ws.WorkspaceId, ws.WorkspaceId+".ssh", -1)
+	host = strings.Replace(host, "https://", "", -1)
+
+	return host
 }
 
 // HasInstanceStatus returns true if the workspace has an instance status
@@ -144,15 +152,16 @@ func HasInstanceStatus(ws *v1.Workspace) bool {
 }
 
 // ObserveWorkspaceUntilStarted waits for the workspace to start and prints the status
-func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, workspaceID string) error {
+func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, workspaceID string) (*v1.WorkspaceStatus, error) {
 	wsInfo, err := clnt.Workspaces.GetWorkspace(ctx, connect.NewRequest(&v1.GetWorkspaceRequest{WorkspaceId: workspaceID}))
 	if err != nil {
-		return fmt.Errorf("cannot get workspace info: %w", err)
+		return nil, fmt.Errorf("cannot get workspace info: %w", err)
 	}
 
-	if wsInfo.Msg.GetResult().Status.Instance.Status.Phase == v1.WorkspaceInstanceStatus_PHASE_RUNNING {
+	ws := wsInfo.Msg.GetResult()
+	if ws.Status.Instance.Status.Phase == v1.WorkspaceInstanceStatus_PHASE_RUNNING {
 		// workspace is running - we're done
-		return nil
+		return ws.Status, nil
 	}
 
 	slog.Info("waiting for workspace to start...", "workspaceID", workspaceID)
@@ -169,7 +178,7 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 		stream, err := clnt.Workspaces.StreamWorkspaceStatus(ctx, connect.NewRequest(&v1.StreamWorkspaceStatusRequest{WorkspaceId: workspaceID}))
 		if err != nil {
 			if retries >= maxRetries {
-				return prettyprint.AddApology(fmt.Errorf("failed to stream workspace status after %d retries: %w", maxRetries, err))
+				return nil, prettyprint.AddApology(fmt.Errorf("failed to stream workspace status after %d retries: %w", maxRetries, err))
 			}
 			retries++
 			delay *= 2
@@ -185,9 +194,10 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 				continue
 			}
 
-			if msg.GetResult().Instance.Status.Phase == v1.WorkspaceInstanceStatus_PHASE_RUNNING {
+			ws := msg.GetResult()
+			if ws.Instance.Status.Phase == v1.WorkspaceInstanceStatus_PHASE_RUNNING {
 				slog.Info("workspace running")
-				return nil
+				return ws, nil
 			}
 
 			var currentStatus string
@@ -201,7 +211,7 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 		}
 		if err := stream.Err(); err != nil {
 			if retries >= maxRetries {
-				return prettyprint.AddApology(fmt.Errorf("failed to stream workspace status after %d retries: %w", maxRetries, err))
+				return nil, prettyprint.AddApology(fmt.Errorf("failed to stream workspace status after %d retries: %w", maxRetries, err))
 			}
 			retries++
 			delay *= 2
@@ -209,6 +219,6 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 			continue
 		}
 
-		return prettyprint.AddApology(fmt.Errorf("workspace stream ended unexpectedly"))
+		return nil, prettyprint.AddApology(fmt.Errorf("workspace stream ended unexpectedly"))
 	}
 }

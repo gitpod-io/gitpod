@@ -49,7 +49,7 @@ var workspaceStartCmd = &cobra.Command{
 			return nil
 		}
 
-		err = helper.ObserveWorkspaceUntilStarted(ctx, gitpod, workspaceID)
+		_, err = helper.ObserveWorkspaceUntilStarted(ctx, gitpod, workspaceID)
 		if err != nil {
 			return err
 		}
