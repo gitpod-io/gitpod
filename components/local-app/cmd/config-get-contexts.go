@@ -33,17 +33,22 @@ type tabularContexts struct {
 
 // Header implements prettyprint.Tabular.
 func (tabularContexts) Header() []string {
-	return []string{"active", "name", "url", "organization"}
+	return []string{"active", "name", "host", "organization"}
 }
 
 // Row implements prettyprint.Tabular.
 func (tc tabularContexts) Row() []map[string]string {
 	var res []map[string]string
 	for name, gpctx := range tc.Contexts {
+		host := ""
+		if gpctx.Host != nil {
+			host = gpctx.Host.String()
+		}
+
 		res = append(res, map[string]string{
 			"active":       prettyprint.FormatBool(tc.Active == name),
 			"name":         name,
-			"url":          gpctx.Host.String(),
+			"host":         host,
 			"organization": gpctx.OrganizationID,
 		})
 	}

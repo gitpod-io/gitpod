@@ -108,23 +108,28 @@ func getGitpodClient(ctx context.Context) (*client.Gitpod, error) {
 		return nil, err
 	}
 
+	host := gpctx.Host
+	if host == nil {
+		return nil, fmt.Errorf("no host found for the active context. Please run `gitpod config set-context` or modify the configuration file to set one")
+	}
+
+	if host.String() == "https://testing" && rootTestingOpts.Client != nil {
+		return rootTestingOpts.Client, nil
+	}
+
 	token := gpctx.Token
 	if token == "" {
 		token = os.Getenv("GITPOD_TOKEN")
 	}
 	if token == "" {
 		var err error
-		token, err = auth.GetToken(gpctx.Host.String())
+		token, err = auth.GetToken(host.String())
 		if err != nil {
 			return nil, err
 		}
 	}
 	if token == "" {
-		return nil, fmt.Errorf("no token found for host %s: neither the active context, nor keychain, nor GITPOD_TOKEN environment variable provide one. Please run `gitpod login` to login", gpctx.Host.String())
-	}
-
-	if gpctx.Host.String() == "https://testing" && rootTestingOpts.Client != nil {
-		return rootTestingOpts.Client, nil
+		return nil, fmt.Errorf("no token found for host %s: neither the active context, nor keychain, nor GITPOD_TOKEN environment variable provide one. Please run `gitpod login` to login", host.String())
 	}
 
 	var apiHost = *gpctx.Host.URL
