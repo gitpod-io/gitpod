@@ -48,58 +48,56 @@ var workspaceListCmd = &cobra.Command{
 			return err
 		}
 
-		return workspaceListOpts.Format.Writer(false).Write(tabularWorkspaces{
-			RunningOnly: workspaceListOpts.RunningOnly,
-			Workspaces:  workspaces.Msg.GetResult(),
-		})
+		result := make([]tabularWorkspace, 0, len(workspaces.Msg.GetResult()))
+		for _, ws := range workspaces.Msg.GetResult() {
+			r := newTabularWorkspace(ws)
+			if r == nil {
+				continue
+			}
+			if workspaceListOpts.RunningOnly && ws.Status.Instance.Status.Phase != v1.WorkspaceInstanceStatus_PHASE_RUNNING {
+				continue
+			}
+			result = append(result, *r)
+		}
+
+		return WriteTabular(result, workspaceListOpts.Format, prettyprint.WriterFormatWide)
 	},
 }
 
-type tabularWorkspaces struct {
-	Workspaces  []*v1.Workspace
-	RunningOnly bool
-}
-
-func (tabularWorkspaces) Header() []string {
-	return []string{"id", "repository", "branch", "status"}
-}
-
-func (wss tabularWorkspaces) Row() []map[string]string {
-	res := make([]map[string]string, 0, len(wss.Workspaces))
-	for _, ws := range wss.Workspaces {
-		if !helper.HasInstanceStatus(ws) {
-			slog.Debug("workspace has no instance status - removing from output", "workspace", ws.WorkspaceId)
-			continue
-		}
-		if wss.RunningOnly && ws.Status.Instance.Status.Phase != v1.WorkspaceInstanceStatus_PHASE_RUNNING {
-			slog.Debug("workspace is not running - removing from output", "workspace", ws.WorkspaceId)
-			continue
-		}
-
-		var repo string
-		wsDetails := ws.Context.GetDetails()
-		switch d := wsDetails.(type) {
-		case *v1.WorkspaceContext_Git_:
-			repo = fmt.Sprintf("%s/%s", d.Git.Repository.Owner, d.Git.Repository.Name)
-		case *v1.WorkspaceContext_Prebuild_:
-			repo = fmt.Sprintf("%s/%s", d.Prebuild.OriginalContext.Repository.Owner, d.Prebuild.OriginalContext.Repository.Name)
-		}
-		var branch string
-		if ws.Status.Instance.Status.GitStatus != nil {
-			branch = ws.Status.Instance.Status.GitStatus.Branch
-			if branch == "" || branch == "(detached)" {
-				branch = ""
-			}
-		}
-
-		res = append(res, map[string]string{
-			"id":         ws.WorkspaceId,
-			"repository": repo,
-			"branch":     branch,
-			"status":     prettyprint.FormatWorkspacePhase(ws.Status.Instance.Status.Phase),
-		})
+func newTabularWorkspace(ws *v1.Workspace) *tabularWorkspace {
+	if !helper.HasInstanceStatus(ws) {
+		slog.Debug("workspace has no instance status - removing from output", "workspace", ws.WorkspaceId)
+		return nil
 	}
-	return res
+
+	var repo string
+	wsDetails := ws.Context.GetDetails()
+	switch d := wsDetails.(type) {
+	case *v1.WorkspaceContext_Git_:
+		repo = fmt.Sprintf("%s/%s", d.Git.Repository.Owner, d.Git.Repository.Name)
+	case *v1.WorkspaceContext_Prebuild_:
+		repo = fmt.Sprintf("%s/%s", d.Prebuild.OriginalContext.Repository.Owner, d.Prebuild.OriginalContext.Repository.Name)
+	}
+	var branch string
+	if ws.Status.Instance.Status.GitStatus != nil {
+		branch = ws.Status.Instance.Status.GitStatus.Branch
+		if branch == "" || branch == "(detached)" {
+			branch = ""
+		}
+	}
+	return &tabularWorkspace{
+		ID:         ws.WorkspaceId,
+		Repository: repo,
+		Branch:     branch,
+		Status:     prettyprint.FormatWorkspacePhase(ws.Status.Instance.Status.Phase),
+	}
+}
+
+type tabularWorkspace struct {
+	ID         string `print:"id"`
+	Repository string `print:"repository"`
+	Branch     string `print:"branch"`
+	Status     string `print:"status"`
 }
 
 var workspaceListOpts struct {

@@ -11,6 +11,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/local-app/pkg/config"
+	"github.com/gitpod-io/local-app/pkg/prettyprint"
 	"github.com/spf13/cobra"
 )
 
@@ -29,7 +30,7 @@ var organizationGetCmd = &cobra.Command{
 			args = append(args, gpctx.OrganizationID)
 		}
 
-		var organizations []*v1.Team
+		var organizations []tabularTeam
 		for _, orgId := range args {
 			if len(orgId) == 0 {
 				return cmd.Help()
@@ -48,9 +49,12 @@ var organizationGetCmd = &cobra.Command{
 				return err
 			}
 
-			organizations = append(organizations, orgs.Msg.GetTeam())
+			organizations = append(organizations, tabularTeam{
+				ID:   orgs.Msg.GetTeam().Id,
+				Name: orgs.Msg.GetTeam().Name,
+			})
 		}
-		return organizationGetOpts.Format.Writer(true).Write(tabularTeam(organizations))
+		return WriteTabular(organizations, organizationGetOpts.Format, prettyprint.WriterFormatNarrow)
 	},
 }
 

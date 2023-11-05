@@ -10,6 +10,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
+	"github.com/gitpod-io/local-app/pkg/prettyprint"
 	"github.com/spf13/cobra"
 )
 
@@ -37,31 +38,25 @@ var workspaceListEditors = &cobra.Command{
 			return err
 		}
 
-		return workspaceListEditorsOpts.Format.Writer(false).Write(tabularWorkspaceEditors(editors.Msg.GetResult()))
+		res := make([]tabularWorkspaceEditor, 0, len(editors.Msg.GetResult()))
+		for _, editor := range editors.Msg.GetResult() {
+			res = append(res, tabularWorkspaceEditor{
+				ID:      editor.Id,
+				Name:    editor.Title,
+				Flavor:  editor.Label,
+				Version: editor.Stable.Version,
+			})
+		}
+
+		return WriteTabular(res, workspaceListEditorsOpts.Format, prettyprint.WriterFormatNarrow)
 	},
 }
 
-type tabularWorkspaceEditors []*v1.EditorOption
-
-func (t tabularWorkspaceEditors) Header() []string {
-	return []string{"id", "name", "flavor", "version"}
-}
-
-func (t tabularWorkspaceEditors) Row() []map[string]string {
-	res := make([]map[string]string, 0, len(t))
-	for _, editor := range t {
-		version := editor.Stable.Version
-		if workspaceListEditorOpts.Latest {
-			version = editor.Latest.Version
-		}
-		res = append(res, map[string]string{
-			"name":    editor.Title,
-			"flavor":  editor.Label,
-			"id":      editor.Id,
-			"version": version,
-		})
-	}
-	return res
+type tabularWorkspaceEditor struct {
+	ID      string `print:"id"`
+	Name    string `print:"name"`
+	Flavor  string `print:"flavor"`
+	Version string `print:"version"`
 }
 
 var workspaceListEditorsOpts struct {
@@ -73,7 +68,6 @@ var workspaceListEditorOpts workspaceListEditorsOptions
 func init() {
 	workspaceCmd.AddCommand(workspaceListEditors)
 
-	workspaceListEditors.Flags().BoolVar(&workspaceListEditorOpts.Latest, "latest", false, "try to show latest versions instead of stable")
-
+	workspaceListEditors.Flags().BoolVar(&workspaceListEditorOpts.Latest, "latest", false, "show latest versions instead of stable")
 	addFormatFlags(workspaceListEditors, &workspaceListEditorsOpts.Format)
 }

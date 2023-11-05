@@ -18,41 +18,25 @@ var configGetContextsCmd = &cobra.Command{
 
 		cfg := config.FromContext(cmd.Context())
 
-		w := prettyprint.Writer{Out: cmd.OutOrStdout(), Field: configGetContextsOpts.Format.Field}
-		return w.Write(tabularContexts{
-			Active:   cfg.ActiveContext,
-			Contexts: cfg.Contexts,
-		})
+		res := make([]tabularContext, 0, len(cfg.Contexts))
+		for name, ctx := range cfg.Contexts {
+			res = append(res, tabularContext{
+				Active:       name == cfg.ActiveContext,
+				Name:         name,
+				Host:         ctx.Host.String(),
+				Organization: ctx.OrganizationID,
+			})
+		}
+
+		return WriteTabular(res, configGetContextsOpts.Format, prettyprint.WriterFormatWide)
 	},
 }
 
-type tabularContexts struct {
-	Active   string
-	Contexts map[string]*config.ConnectionContext
-}
-
-// Header implements prettyprint.Tabular.
-func (tabularContexts) Header() []string {
-	return []string{"active", "name", "host", "organization"}
-}
-
-// Row implements prettyprint.Tabular.
-func (tc tabularContexts) Row() []map[string]string {
-	var res []map[string]string
-	for name, gpctx := range tc.Contexts {
-		host := ""
-		if gpctx.Host != nil {
-			host = gpctx.Host.String()
-		}
-
-		res = append(res, map[string]string{
-			"active":       prettyprint.FormatBool(tc.Active == name),
-			"name":         name,
-			"host":         host,
-			"organization": gpctx.OrganizationID,
-		})
-	}
-	return res
+type tabularContext struct {
+	Active       bool
+	Name         string
+	Host         string
+	Organization string
 }
 
 var configGetContextsOpts struct {

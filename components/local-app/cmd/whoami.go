@@ -8,6 +8,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/local-app/pkg/config"
+	"github.com/gitpod-io/local-app/pkg/prettyprint"
 	"github.com/spf13/cobra"
 )
 
@@ -36,34 +37,24 @@ var whoamiCmd = &cobra.Command{
 			return err
 		}
 
-		return whoamiOpts.Format.Writer(true).Write(tabularWhoami{
-			User: user.Msg.GetUser(),
-			Org:  org.Msg.GetTeam(),
-			Host: gpctx.Host.String(),
-		})
+		return WriteTabular([]whoamiResult{
+			{
+				Name:  user.Msg.GetUser().Name,
+				ID:    user.Msg.GetUser().Id,
+				Org:   org.Msg.GetTeam().Name,
+				OrgID: org.Msg.GetTeam().Id,
+				Host:  gpctx.Host.String(),
+			},
+		}, whoamiOpts.Format, prettyprint.WriterFormatNarrow)
 	},
 }
 
-type tabularWhoami struct {
-	User *v1.User
-	Org  *v1.Team
-	Host string
-}
-
-func (tabularWhoami) Header() []string {
-	return []string{"user name", "user id", "organization", "organization id", "host"}
-}
-
-func (who tabularWhoami) Row() []map[string]string {
-	return []map[string]string{
-		{
-			"user name":       who.User.Name,
-			"user id":         who.User.Id,
-			"organization":    who.Org.Name,
-			"organization id": who.Org.Id,
-			"host":            who.Host,
-		},
-	}
+type whoamiResult struct {
+	Name  string `print:"user name"`
+	ID    string `print:"user id"`
+	Org   string `print:"organization"`
+	OrgID string `print:"organization id"`
+	Host  string `print:"host"`
 }
 
 var whoamiOpts struct {

@@ -153,17 +153,18 @@ type formatOpts struct {
 	Field string
 }
 
-// Writer returns a prettyprint.Writer that can be used to print the output of a command
-func (opts *formatOpts) Writer(longFormat bool) *prettyprint.Writer {
+// WriteTabular writes the given tabular data to the writer
+func WriteTabular[T any](v []T, opts formatOpts, format prettyprint.WriterFormat) error {
 	var out io.Writer = os.Stdout
 	if rootTestingOpts.WriterOut != nil {
 		out = rootTestingOpts.WriterOut
 	}
-	return &prettyprint.Writer{
-		Field:      opts.Field,
-		LongFormat: longFormat,
-		Out:        out,
+	w := &prettyprint.Writer[T]{
+		Field:  opts.Field,
+		Format: format,
+		Out:    out,
 	}
+	return w.Write(v)
 }
 
 func addFormatFlags(cmd *cobra.Command, opts *formatOpts) {

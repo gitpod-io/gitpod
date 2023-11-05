@@ -7,6 +7,7 @@ package prettyprint
 import (
 	"fmt"
 	"io"
+	"reflect"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -14,42 +15,114 @@ import (
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 )
 
-type Writer struct {
-	Out        io.Writer
-	LongFormat bool
-	Field      string
+func reflectTabular[T any](data []T) (header []string, rows []map[string]string, err error) {
+	type field struct {
+		Name  string
+		Field *reflect.StructField
+	}
+	var fields []field
+
+	var dt T
+	t := reflect.TypeOf(dt)
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	if t.Kind() != reflect.Struct {
+		return nil, nil, AddApology(fmt.Errorf("can only reflect tabular data from structs"))
+	}
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		switch f.Type.Kind() {
+		case reflect.String, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		default:
+			continue
+		}
+		name := f.Tag.Get("print")
+		if name == "" {
+			name = f.Name
+		}
+		fields = append(fields, field{Name: name, Field: &f})
+		header = append(header, name)
+	}
+
+	rows = make([]map[string]string, 0, len(rows))
+	for _, row := range data {
+		r := make(map[string]string)
+		for _, f := range fields {
+			v := reflect.ValueOf(row)
+			if v.Kind() == reflect.Ptr {
+				v = v.Elem()
+			}
+			v = v.FieldByName(f.Field.Name)
+			switch v.Kind() {
+			case reflect.String:
+				r[f.Name] = v.String()
+			case reflect.Bool:
+				r[f.Name] = FormatBool(v.Bool())
+			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				r[f.Name] = strconv.FormatInt(v.Int(), 10)
+			}
+		}
+		rows = append(rows, r)
+	}
+
+	return header, rows, nil
+}
+
+type WriterFormat int
+
+const (
+	// WriterFormatWide makes the writer produce wide formatted output, e.g.
+	// FIELD ONE  FIELD TWO  FIELD THREE
+	// valueOne   valueTwo   valueThree
+	// valueOne   valueTwo   valueThree
+	WriterFormatWide WriterFormat = iota
+
+	// WriterFormatNarrow makes the writer produce narrow formatted output, e.g.
+	// Field: value
+	WriterFormatNarrow
+)
+
+type Writer[T any] struct {
+	Out    io.Writer
+	Format WriterFormat
+	Field  string
 }
 
 // Write writes the given tabular data to the writer
-func (w Writer) Write(v Tabular) error {
+func (w Writer[T]) Write(data []T) error {
+	header, rows, err := reflectTabular(data)
+	if err != nil {
+		return err
+	}
+
 	tw := tabwriter.NewWriter(w.Out, 0, 4, 1, ' ', 0)
 	defer tw.Flush()
 
 	switch {
 	case w.Field != "":
-		return w.writeField(tw, v)
-	case w.LongFormat:
-		return w.writeLongFormat(tw, v)
+		return w.writeField(tw, header, rows)
+	case w.Format == WriterFormatNarrow:
+		return w.writeNarrowFormat(tw, header, rows)
 	default:
-		return w.writeShortFormat(tw, v)
+		return w.writeWideFormat(tw, header, rows)
 	}
 }
 
 // writeField writes a single field of the given tabular data to the writer
-func (w Writer) writeField(tw *tabwriter.Writer, v Tabular) error {
+func (w Writer[T]) writeField(tw *tabwriter.Writer, header []string, rows []map[string]string) error {
 	var found bool
-	hdr := v.Header()
-	for _, h := range hdr {
+	for _, h := range header {
 		if h == w.Field {
 			found = true
 			break
 		}
 	}
 	if !found {
-		return AddResolution(fmt.Errorf("unknown field: %s", w.Field), "use one of the following fields: "+strings.Join(hdr, ", "))
+		return AddResolution(fmt.Errorf("unknown field: %s", w.Field), "use one of the following fields: "+strings.Join(header, ", "))
 	}
 
-	for _, row := range v.Row() {
+	for _, row := range rows {
 		val := row[w.Field]
 		if val == "" {
 			continue
@@ -62,10 +135,10 @@ func (w Writer) writeField(tw *tabwriter.Writer, v Tabular) error {
 	return nil
 }
 
-// writeLongFormat writes the given tabular data to the writer in a long format
-func (w Writer) writeLongFormat(tw *tabwriter.Writer, v Tabular) error {
-	for _, row := range v.Row() {
-		for _, h := range v.Header() {
+// writeNarrowFormat writes the given tabular data to the writer in a long format
+func (w Writer[T]) writeNarrowFormat(tw *tabwriter.Writer, header []string, rows []map[string]string) error {
+	for _, row := range rows {
+		for _, h := range header {
 			fieldName := Capitalize(h)
 			fieldName = strings.ReplaceAll(fieldName, "id", "ID")
 
@@ -74,25 +147,21 @@ func (w Writer) writeLongFormat(tw *tabwriter.Writer, v Tabular) error {
 				return err
 			}
 		}
-		_, err := tw.Write([]byte("\n"))
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }
 
-// writeShortFormat writes the given tabular data to the writer in a short format
-func (w Writer) writeShortFormat(tw *tabwriter.Writer, v Tabular) error {
-	for _, h := range v.Header() {
+// writeWideFormat writes the given tabular data to the writer in a short format
+func (w Writer[T]) writeWideFormat(tw *tabwriter.Writer, header []string, rows []map[string]string) error {
+	for _, h := range header {
 		_, err := tw.Write([]byte(fmt.Sprintf("%s\t", strings.ToUpper(h))))
 		if err != nil {
 			return err
 		}
 	}
 	_, _ = tw.Write([]byte("\n"))
-	for _, row := range v.Row() {
-		for _, h := range v.Header() {
+	for _, row := range rows {
+		for _, h := range header {
 			_, err := tw.Write([]byte(fmt.Sprintf("%s\t", row[h])))
 			if err != nil {
 				return err
@@ -104,11 +173,6 @@ func (w Writer) writeShortFormat(tw *tabwriter.Writer, v Tabular) error {
 		}
 	}
 	return nil
-}
-
-type Tabular interface {
-	Header() []string
-	Row() []map[string]string
 }
 
 // FormatBool returns "true" or "false" depending on the value of b.
@@ -132,36 +196,3 @@ func Capitalize(s string) string {
 
 	return strings.ToUpper(s[0:1]) + s[1:]
 }
-
-// // Format formats the given input string by interpreting HTML tags in the string. Specifically it supports
-// //
-// //	<b>bold</b>
-// //	<i>italic</i>
-// //	<u>underline</u>
-// //	<color=...></color>
-// func Format(input string) string {
-// 	input = regexpBold.ReplaceAllString(input, "\033[1m$1\033[0m")
-// 	input = regexpItalic.ReplaceAllString(input, "\033[3m$1\033[0m")
-// 	input = regexpUnderline.ReplaceAllString(input, "\033[4m$1\033[0m")
-
-// 	input = regexpColor.ReplaceAllStringFunc(input, func(s string) string {
-// 		parts := regexpColor.FindStringSubmatch(s)
-// 		if len(parts) != 3 {
-// 			return s
-// 		}
-
-// 		col := parts[1]
-// 		text := parts[2]
-
-// 		return fmt.Sprintf("\033[%sm%s\033[0m", color, text)
-// 	})
-
-// 	return input
-// }
-
-// var (
-// 	regexpColor     = regexp.MustCompile(`<color=(.*?)>(.*?)</color>`)
-// 	regexpBold      = regexp.MustCompile(`<b>(.*?)</b>`)
-// 	regexpItalic    = regexp.MustCompile(`<i>(.*?)</i>`)
-// 	regexpUnderline = regexp.MustCompile(`<u>(.*?)</u>`)
-// )

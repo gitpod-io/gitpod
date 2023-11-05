@@ -10,6 +10,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
+	"github.com/gitpod-io/local-app/pkg/prettyprint"
 	"github.com/spf13/cobra"
 )
 
@@ -33,26 +34,23 @@ var workspaceListClassesCmd = &cobra.Command{
 			return err
 		}
 
-		return workspaceListClassesOpts.Format.Writer(false).Write(tabularWorkspaceClasses(classes.Msg.GetResult()))
+		res := make([]tabularWorkspaceClass, 0, len(classes.Msg.GetResult()))
+		for _, class := range classes.Msg.GetResult() {
+			res = append(res, tabularWorkspaceClass{
+				ID:          class.Id,
+				Name:        class.DisplayName,
+				Description: class.Description,
+			})
+		}
+
+		return WriteTabular(res, workspaceListClassesOpts.Format, prettyprint.WriterFormatNarrow)
 	},
 }
 
-type tabularWorkspaceClasses []*v1.WorkspaceClass
-
-func (t tabularWorkspaceClasses) Header() []string {
-	return []string{"id", "name", "description"}
-}
-
-func (t tabularWorkspaceClasses) Row() []map[string]string {
-	res := make([]map[string]string, 0, len(t))
-	for _, class := range t {
-		res = append(res, map[string]string{
-			"name":        class.DisplayName,
-			"description": class.Description,
-			"id":          class.Id,
-		})
-	}
-	return res
+type tabularWorkspaceClass struct {
+	ID          string `print:"id"`
+	Name        string `print:"name"`
+	Description string `print:"description"`
 }
 
 var workspaceListClassesOpts struct {

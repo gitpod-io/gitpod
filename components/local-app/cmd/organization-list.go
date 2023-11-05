@@ -33,30 +33,21 @@ var organizationListCmd = &cobra.Command{
 			return err
 		}
 
-		return organizationListOpts.Format.Writer(false).Write(tabularTeam(orgs.Msg.GetTeams()))
+		res := make([]tabularTeam, 0, len(orgs.Msg.GetTeams()))
+		for _, org := range orgs.Msg.GetTeams() {
+			res = append(res, tabularTeam{
+				ID:   org.Id,
+				Name: org.Name,
+			})
+		}
+		return WriteTabular(res, organizationListOpts.Format, prettyprint.WriterFormatNarrow)
 	},
 }
 
-type tabularTeam []*v1.Team
-
-// Header implements prettyprint.Tabular.
-func (tabularTeam) Header() []string {
-	return []string{"id", "name"}
+type tabularTeam struct {
+	ID   string `print:"id"`
+	Name string `print:"name"`
 }
-
-// Row implements prettyprint.Tabular.
-func (orgs tabularTeam) Row() []map[string]string {
-	res := make([]map[string]string, 0, len(orgs))
-	for _, org := range orgs {
-		res = append(res, map[string]string{
-			"id":   org.Id,
-			"name": org.Name,
-		})
-	}
-	return res
-}
-
-var _ prettyprint.Tabular = &tabularTeam{}
 
 var organizationListOpts struct {
 	Format formatOpts
