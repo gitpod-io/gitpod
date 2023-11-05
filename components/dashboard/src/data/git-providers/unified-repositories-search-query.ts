@@ -20,26 +20,8 @@ export const useUnifiedRepositorySearch = ({ searchString, excludeProjects = fal
     const searchQuery = useSearchRepositories({ searchString });
 
     const filteredRepos = useMemo(() => {
-        const repoMap = new Map<string, SuggestedRepository>();
-        // combine & flatten suggestions and search results, then merge them into a map
         const flattenedRepos = [suggestedQuery.data || [], searchQuery.data || []].flat();
-
-        for (const repo of flattenedRepos) {
-            const key = excludeProjects ? repo.url : `${repo.url}:${repo.projectId || ""}`;
-
-            const newEntry = {
-                ...(repoMap.get(key) || {}),
-                ...repo,
-            };
-            if (excludeProjects) {
-                // TODO: would be great if we can always include repositoryName on SuggestedRepository entities, then we could remove this
-                newEntry.repositoryName = newEntry.repositoryName || newEntry.projectName;
-                newEntry.projectName = undefined;
-            }
-            repoMap.set(key, newEntry);
-        }
-
-        return filterRepos(searchString, Array.from(repoMap.values()));
+        return deduplicateAndFilterRepositories(searchString, excludeProjects, flattenedRepos);
     }, [excludeProjects, searchQuery.data, searchString, suggestedQuery.data]);
 
     return {
@@ -51,24 +33,52 @@ export const useUnifiedRepositorySearch = ({ searchString, excludeProjects = fal
     };
 };
 
-export const filterRepos = (searchString: string, suggestedRepos: SuggestedRepository[]) => {
-    let results = suggestedRepos;
-    const normalizedSearchString = searchString.trim();
-
-    if (normalizedSearchString.length > 1) {
-        results = suggestedRepos.filter((r) => {
-            return `${r.url}${r.projectName || ""}`.toLowerCase().includes(normalizedSearchString);
+export function deduplicateAndFilterRepositories(
+    searchString: string,
+    excludeProjects = false,
+    suggestedRepos: SuggestedRepository[],
+): SuggestedRepository[] {
+    const normalizedSearchString = searchString.trim().toLowerCase();
+    const collected = new Set<string>();
+    const results: SuggestedRepository[] = [];
+    const reposWithProject = new Set<string>();
+    if (!excludeProjects) {
+        suggestedRepos.forEach((r) => {
+            if (r.projectId) {
+                reposWithProject.add(r.url);
+            }
         });
-
-        if (results.length === 0) {
-            try {
-                // If the normalizedSearchString is a URL, and it's not present in the proposed results, "artificially" add it here.
-                new URL(normalizedSearchString);
-                results.push({ url: normalizedSearchString });
-            } catch {}
+    }
+    for (const repo of suggestedRepos) {
+        // filter out project entries if excludeProjects is true
+        if (repo.projectId && excludeProjects) {
+            continue;
         }
+        // filter out project-less entries if an entry with a project exists
+        if (!repo.projectId && reposWithProject.has(repo.url)) {
+            continue;
+        }
+        // filter out entries that don't match the search string
+        if (!`${repo.url}${repo.projectName || ""}`.toLowerCase().includes(normalizedSearchString)) {
+            continue;
+        }
+        // filter out duplicates
+        const key = `${repo.url}:${repo.projectId || "no-project"}`;
+        if (collected.has(key)) {
+            continue;
+        }
+        collected.add(key);
+        results.push(repo);
+    }
+
+    if (results.length === 0) {
+        try {
+            // If the normalizedSearchString is a URL, and it's not present in the proposed results, "artificially" add it here.
+            new URL(normalizedSearchString);
+            results.push({ url: normalizedSearchString });
+        } catch {}
     }
 
     // Limit what we show to 200 results
-    return results.length > 200 ? results.slice(0, 200) : results;
-};
+    return results.slice(0, 200);
+}
