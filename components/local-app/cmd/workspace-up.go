@@ -140,10 +140,10 @@ var workspaceUpCmd = &cobra.Command{
 			currentDir = parentDir
 		}
 
-		slog.Debug("found git working copy", "dir", currentDir)
+		slog.Debug("found Git working copy", "dir", currentDir)
 		repo, err := git.PlainOpen(currentDir)
 		if err != nil {
-			return prettyprint.AddApology(fmt.Errorf("cannot open git working copy at %s: %w", currentDir, err))
+			return prettyprint.AddApology(fmt.Errorf("cannot open Git working copy at %s: %w", currentDir, err))
 		}
 		_ = repo.DeleteRemote("gitpod")
 		head, err := repo.Head()
@@ -202,7 +202,7 @@ var workspaceUpCmd = &cobra.Command{
 		}
 		defer sess.Close()
 
-		slog.Debug("initializing remote workspace git repository")
+		slog.Debug("initializing remote workspace Git repository")
 		err = runSSHCommand(ctx, sess, "rm", "-r", "/workspace/empty/.git")
 		if err != nil {
 			return err
