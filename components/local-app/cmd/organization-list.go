@@ -16,8 +16,9 @@ import (
 
 // organizationListCmd lists all available organizations
 var organizationListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "Lists organizations",
+	Use:     "list",
+	Short:   "Lists organizations",
+	Aliases: []string{"ls"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
 		defer cancel()
