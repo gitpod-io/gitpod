@@ -28,12 +28,14 @@ export class JsonRpcAuthProviderClient implements PromiseClient<typeof AuthProvi
     async createAuthProvider(request: PartialMessage<CreateAuthProviderRequest>): Promise<CreateAuthProviderResponse> {
         throw new ConnectError("unimplemented", Code.Unimplemented);
     }
+
     async getAuthProvider(request: PartialMessage<GetAuthProviderRequest>): Promise<GetAuthProviderResponse> {
         if (!request.authProviderId) {
             throw new ConnectError("authProviderId is required", Code.InvalidArgument);
         }
         throw new ConnectError("unimplemented", Code.Unimplemented);
     }
+
     async listAuthProviders(request: PartialMessage<ListAuthProvidersRequest>): Promise<ListAuthProvidersResponse> {
         if (!request.id?.case) {
             throw new ConnectError("id is required", Code.InvalidArgument);
@@ -41,27 +43,27 @@ export class JsonRpcAuthProviderClient implements PromiseClient<typeof AuthProvi
         const organizationId = request.id.case === "organizationId" ? request.id.value : undefined;
         const userId = request.id.case === "userId" ? request.id.value : undefined;
 
-        if (organizationId) {
-            const result = await getGitpodService().server.getOrgAuthProviders({
-                organizationId,
-            });
-            const response = new ListAuthProvidersResponse();
-            response.list = result.map(converter.toAuthProvider);
-            return response;
+        if (!organizationId && !userId) {
+            throw new ConnectError("organizationId or userId is required", Code.InvalidArgument);
         }
-        if (userId) {
-            const result = await getGitpodService().server.getOwnAuthProviders();
-            const response = new ListAuthProvidersResponse();
-            response.list = result.map(converter.toAuthProvider);
-            return response;
-        }
-        throw new ConnectError("either organizationId or userId are required", Code.InvalidArgument);
+
+        const authProviders = !!organizationId
+            ? await getGitpodService().server.getOrgAuthProviders({
+                  organizationId,
+              })
+            : await getGitpodService().server.getOwnAuthProviders();
+        const response = new ListAuthProvidersResponse({
+            authProviders: authProviders.map(converter.toAuthProvider),
+        });
+        return response;
     }
+
     async listAuthProviderDescriptions(
         request: PartialMessage<ListAuthProviderDescriptionsRequest>,
     ): Promise<ListAuthProviderDescriptionsResponse> {
         throw new ConnectError("unimplemented", Code.Unimplemented);
     }
+
     async updateAuthProvider(request: PartialMessage<UpdateAuthProviderRequest>): Promise<UpdateAuthProviderResponse> {
         if (!request.authProviderId) {
             throw new ConnectError("authProviderId is required", Code.InvalidArgument);
@@ -78,6 +80,7 @@ export class JsonRpcAuthProviderClient implements PromiseClient<typeof AuthProvi
         });
         return new UpdateAuthProviderResponse();
     }
+
     async deleteAuthProvider(request: PartialMessage<DeleteAuthProviderRequest>): Promise<DeleteAuthProviderResponse> {
         if (!request.authProviderId) {
             throw new ConnectError("authProviderId is required", Code.InvalidArgument);
