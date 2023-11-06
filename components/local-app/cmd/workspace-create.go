@@ -143,10 +143,53 @@ var workspaceCreateOpts struct {
 	Editor         string
 }
 
+func classCompletionFunc(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	ctx := cmd.Context()
+	gitpod, err := getGitpodClient(ctx)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+	resp, err := gitpod.Workspaces.ListWorkspaceClasses(ctx, connect.NewRequest(&v1.ListWorkspaceClassesRequest{}))
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+	items := resp.Msg.GetResult()
+	completionStr := []string{}
+	for _, cls := range items {
+		defaultDesc := ""
+		if cls.IsDefault {
+			defaultDesc = "(default)"
+		}
+		completionStr = append(completionStr, fmt.Sprintf("%s\t%s%s - %s", cls.Id, defaultDesc, cls.DisplayName, cls.Description))
+	}
+	return completionStr, cobra.ShellCompDirectiveNoFileComp
+}
+
+func editorCompletionFunc(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	ctx := cmd.Context()
+	gitpod, err := getGitpodClient(ctx)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+	resp, err := gitpod.Editors.ListEditorOptions(ctx, connect.NewRequest(&v1.ListEditorOptionsRequest{}))
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+	items := resp.Msg.GetResult()
+	completionStr := []string{}
+	for _, editor := range items {
+		completionStr = append(completionStr, fmt.Sprintf("%s\t%s", editor.Id, editor.Title))
+	}
+	return completionStr, cobra.ShellCompDirectiveNoFileComp
+}
+
 func init() {
 	workspaceCmd.AddCommand(workspaceCreateCmd)
 	addWorkspaceStartOptions(workspaceCreateCmd, &workspaceCreateOpts.StartOpts)
 
-	workspaceCreateCmd.Flags().StringVar(&workspaceCreateOpts.WorkspaceClass, "class", "", "the workspace class")
-	workspaceCreateCmd.Flags().StringVar(&workspaceCreateOpts.Editor, "editor", "code", "the editor to use")
+	workspaceCreateCmd.Flags().StringVar(&workspaceCreateOpts.WorkspaceClass, "class", "", "the workspace class ([tab][tab] to list available options)")
+	workspaceCreateCmd.Flags().StringVar(&workspaceCreateOpts.Editor, "editor", "code", "the editor to use ([tab][tab] to list available options)")
+
+	_ = workspaceCreateCmd.RegisterFlagCompletionFunc("class", classCompletionFunc)
+	_ = workspaceCreateCmd.RegisterFlagCompletionFunc("editor", editorCompletionFunc)
 }
