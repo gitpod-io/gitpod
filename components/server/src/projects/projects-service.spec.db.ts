@@ -39,7 +39,7 @@ describe("ProjectsService", async () => {
 
         // create the org
         const orgService = container.get(OrganizationService);
-        org = await orgService.createOrganization(owner.id, "my-org");
+        org = await orgService.createOrganization(owner.id, owner.id, "my-org");
 
         // create and add a member
         member = await userDB.newUser();

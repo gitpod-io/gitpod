@@ -25,7 +25,7 @@ import {
 } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_pb";
 import { UserAuthentication } from "../user/user-authentication";
 import { WorkspaceService } from "../workspace/workspace-service";
-import { SYSTEM_USER } from "../authorization/authorizer";
+import { SYSTEM_USER_ID } from "../authorization/authorizer";
 import { validate } from "uuid";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
@@ -74,9 +74,9 @@ export class APIUserService implements ServiceImpl<typeof UserServiceInterface> 
 
         // TODO: Once connect-node supports middlewares, lift the tracing into the middleware.
         const trace = {};
-        // TODO for now we use SYSTEM_USER, since it is only called by internal componenets like usage
+        // TODO for now we use SYSTEM_USER_ID, since it is only called by internal componenets like usage
         // and not exposed publically, but there should be better way to get an authenticated user
-        await this.userService.blockUser(SYSTEM_USER, userId, true);
+        await this.userService.blockUser(SYSTEM_USER_ID, userId, true);
         log.info(`Blocked user ${userId}.`, {
             userId,
             reason,
@@ -84,7 +84,7 @@ export class APIUserService implements ServiceImpl<typeof UserServiceInterface> 
 
         const stoppedWorkspaces = await this.workspaceService.stopRunningWorkspacesForUser(
             trace,
-            SYSTEM_USER,
+            SYSTEM_USER_ID,
             userId,
             reason,
             StopWorkspacePolicy.IMMEDIATELY,

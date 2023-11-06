@@ -126,7 +126,7 @@ import { TokenProvider } from "../user/token-provider";
 import { UserAuthentication } from "../user/user-authentication";
 import { ImageSourceProvider } from "./image-source-provider";
 import { WorkspaceClassesConfig } from "./workspace-classes";
-import { SYSTEM_USER } from "../authorization/authorizer";
+import { SYSTEM_USER_ID } from "../authorization/authorizer";
 import { EnvVarService, ResolvedEnvVars } from "../user/env-var-service";
 import { RedlockAbortSignal } from "redlock";
 import { ConfigProvider } from "./config-provider";
@@ -487,7 +487,7 @@ export class WorkspaceStarter {
 
         if (blockedRepository.blockUser) {
             try {
-                await this.userService.blockUser(SYSTEM_USER, user.id, true);
+                await this.userService.blockUser(SYSTEM_USER_ID, user.id, true);
                 log.info({ userId: user.id }, "Blocked user.", { contextURL });
             } catch (error) {
                 log.error({ userId: user.id }, "Failed to block user.", error, { contextURL });

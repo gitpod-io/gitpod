@@ -97,7 +97,11 @@ describe("EnvVarService", async () => {
         owner = await userService.findUserById(BUILTIN_INSTLLATION_ADMIN_USER_ID, BUILTIN_INSTLLATION_ADMIN_USER_ID);
 
         const orgService = container.get<OrganizationService>(OrganizationService);
-        org = await orgService.createOrganization(BUILTIN_INSTLLATION_ADMIN_USER_ID, "myOrg");
+        org = await orgService.createOrganization(
+            BUILTIN_INSTLLATION_ADMIN_USER_ID,
+            BUILTIN_INSTLLATION_ADMIN_USER_ID,
+            "myOrg",
+        );
         const invite = await orgService.getOrCreateInvite(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id);
 
         member = await userService.createUser({

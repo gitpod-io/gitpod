@@ -46,7 +46,11 @@ describe("SSHKeyService", async () => {
         });
 
         const orgService = container.get<OrganizationService>(OrganizationService);
-        org = await orgService.createOrganization(BUILTIN_INSTLLATION_ADMIN_USER_ID, "myOrg");
+        org = await orgService.createOrganization(
+            BUILTIN_INSTLLATION_ADMIN_USER_ID,
+            BUILTIN_INSTLLATION_ADMIN_USER_ID,
+            "myOrg",
+        );
         const invite = await orgService.getOrCreateInvite(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id);
 
         const userService = container.get<UserService>(UserService);

@@ -25,6 +25,8 @@ import {
 import { SpiceDBAuthorizer } from "./spicedb-authorizer";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { MaybeSubject, Subject, SubjectId, toUserId } from "../auth/subject-id";
+import { tryGetSubjectId } from "../util/request-context";
 
 export function createInitializingAuthorizer(spiceDbAuthorizer: SpiceDBAuthorizer): Authorizer {
     const target = new Authorizer(spiceDbAuthorizer);
@@ -52,61 +54,69 @@ export function createInitializingAuthorizer(spiceDbAuthorizer: SpiceDBAuthorize
  * We need to call our internal API with system permissions in some cases.
  * As we don't have other ways to represent that (e.g. ServiceAccounts), we use this magic constant to designated it.
  */
-export const SYSTEM_USER = "SYSTEM_USER";
+export const SYSTEM_USER_ID = "SYSTEM_USER";
+export const SYSTEM_USER = SubjectId.fromUserId(SYSTEM_USER_ID);
+export function isSystemUser(subjectId: SubjectId): boolean {
+    return subjectId.equals(SYSTEM_USER);
+}
 
 export class Authorizer {
     constructor(private authorizer: SpiceDBAuthorizer) {}
 
-    async hasPermissionOnInstallation(userId: string, permission: InstallationPermission): Promise<boolean> {
-        if (userId === SYSTEM_USER) {
+    async hasPermissionOnInstallation(passed: MaybeSubject, permission: InstallationPermission): Promise<boolean> {
+        const subjectId = getSubjectFromCtx(passed);
+        if (isSystemUser(subjectId)) {
             return true;
         }
 
         const req = v1.CheckPermissionRequest.create({
-            subject: subject("user", userId),
+            subject: sub(subjectId),
             permission,
             resource: object("installation", InstallationID),
             consistency,
         });
 
-        return await this.authorizer.check(req, { userId });
+        return await this.authorizer.check(req, { subjectId });
     }
 
-    async checkPermissionOnInstallation(userId: string, permission: InstallationPermission): Promise<void> {
-        if (await this.hasPermissionOnInstallation(userId, permission)) {
+    async checkPermissionOnInstallation(passed: MaybeSubject, permission: InstallationPermission): Promise<void> {
+        const subjectId = getSubjectFromCtx(passed);
+        if (await this.hasPermissionOnInstallation(subjectId, permission)) {
             return;
         }
         throw new ApplicationError(
             ErrorCodes.PERMISSION_DENIED,
-            `User ${userId} does not have permission '${permission}' on the installation.`,
+            `Subject ${subjectId.toString()} does not have permission '${permission}' on the installation.`,
         );
     }
 
     async hasPermissionOnOrganization(
-        userId: string,
+        passed: MaybeSubject,
         permission: OrganizationPermission,
         orgId: string,
     ): Promise<boolean> {
-        if (userId === SYSTEM_USER) {
+        const subjectId = getSubjectFromCtx(passed);
+        if (isSystemUser(subjectId)) {
             return true;
         }
 
         const req = v1.CheckPermissionRequest.create({
-            subject: subject("user", userId),
+            subject: sub(subjectId),
             permission,
             resource: object("organization", orgId),
             consistency,
         });
 
-        return await this.authorizer.check(req, { userId });
+        return await this.authorizer.check(req, { subjectId });
     }
 
-    async checkPermissionOnOrganization(userId: string, permission: OrganizationPermission, orgId: string) {
-        if (await this.hasPermissionOnOrganization(userId, permission, orgId)) {
+    async checkPermissionOnOrganization(passed: MaybeSubject, permission: OrganizationPermission, orgId: string) {
+        const subjectId = getSubjectFromCtx(passed);
+        if (await this.hasPermissionOnOrganization(subjectId, permission, orgId)) {
             return;
         }
         // check if the user has read permission
-        if ("read_info" === permission || !(await this.hasPermissionOnOrganization(userId, "read_info", orgId))) {
+        if ("read_info" === permission || !(await this.hasPermissionOnOrganization(subjectId, "read_info", orgId))) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found.`);
         }
 
@@ -116,27 +126,33 @@ export class Authorizer {
         );
     }
 
-    async hasPermissionOnProject(userId: string, permission: ProjectPermission, projectId: string): Promise<boolean> {
-        if (userId === SYSTEM_USER) {
+    async hasPermissionOnProject(
+        passed: MaybeSubject,
+        permission: ProjectPermission,
+        projectId: string,
+    ): Promise<boolean> {
+        const subjectId = getSubjectFromCtx(passed);
+        if (isSystemUser(subjectId)) {
             return true;
         }
 
         const req = v1.CheckPermissionRequest.create({
-            subject: subject("user", userId),
+            subject: sub(subjectId),
             permission,
             resource: object("project", projectId),
             consistency,
         });
 
-        return await this.authorizer.check(req, { userId });
+        return await this.authorizer.check(req, { subjectId });
     }
 
-    async checkPermissionOnProject(userId: string, permission: ProjectPermission, projectId: string) {
-        if (await this.hasPermissionOnProject(userId, permission, projectId)) {
+    async checkPermissionOnProject(passed: MaybeSubject, permission: ProjectPermission, projectId: string) {
+        const subjectId = getSubjectFromCtx(passed);
+        if (await this.hasPermissionOnProject(subjectId, permission, projectId)) {
             return;
         }
         // check if the user has read permission
-        if ("read_info" === permission || !(await this.hasPermissionOnProject(userId, "read_info", projectId))) {
+        if ("read_info" === permission || !(await this.hasPermissionOnProject(subjectId, "read_info", projectId))) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
         }
 
@@ -146,26 +162,32 @@ export class Authorizer {
         );
     }
 
-    async hasPermissionOnUser(userId: string, permission: UserPermission, resourceUserId: string): Promise<boolean> {
-        if (userId === SYSTEM_USER) {
+    async hasPermissionOnUser(
+        passed: MaybeSubject,
+        permission: UserPermission,
+        resourceUserId: string,
+    ): Promise<boolean> {
+        const subjectId = getSubjectFromCtx(passed);
+        if (isSystemUser(subjectId)) {
             return true;
         }
 
         const req = v1.CheckPermissionRequest.create({
-            subject: subject("user", userId),
+            subject: sub(subjectId),
             permission,
             resource: object("user", resourceUserId),
             consistency,
         });
 
-        return await this.authorizer.check(req, { userId });
+        return await this.authorizer.check(req, { subjectId });
     }
 
-    async checkPermissionOnUser(userId: string, permission: UserPermission, resourceUserId: string) {
-        if (await this.hasPermissionOnUser(userId, permission, resourceUserId)) {
+    async checkPermissionOnUser(passed: MaybeSubject, permission: UserPermission, resourceUserId: string) {
+        const subjectId = getSubjectFromCtx(passed);
+        if (await this.hasPermissionOnUser(subjectId, permission, resourceUserId)) {
             return;
         }
-        if ("read_info" === permission || !(await this.hasPermissionOnUser(userId, "read_info", resourceUserId))) {
+        if ("read_info" === permission || !(await this.hasPermissionOnUser(subjectId, "read_info", resourceUserId))) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `User ${resourceUserId} not found.`);
         }
 
@@ -176,30 +198,32 @@ export class Authorizer {
     }
 
     async hasPermissionOnWorkspace(
-        userId: string,
+        passed: MaybeSubject,
         permission: WorkspacePermission,
         workspaceId: string,
         forceEnablement?: boolean, // temporary to find an issue with workspace sharing
     ): Promise<boolean> {
-        if (userId === SYSTEM_USER) {
+        const subjectId = getSubjectFromCtx(passed);
+        if (isSystemUser(subjectId)) {
             return true;
         }
 
         const req = v1.CheckPermissionRequest.create({
-            subject: subject("user", userId),
+            subject: sub(subjectId),
             permission,
             resource: object("workspace", workspaceId),
             consistency,
         });
 
-        return await this.authorizer.check(req, { userId }, forceEnablement);
+        return await this.authorizer.check(req, { subjectId }, forceEnablement);
     }
 
-    async checkPermissionOnWorkspace(userId: string, permission: WorkspacePermission, workspaceId: string) {
-        if (await this.hasPermissionOnWorkspace(userId, permission, workspaceId)) {
+    async checkPermissionOnWorkspace(passed: MaybeSubject, permission: WorkspacePermission, workspaceId: string) {
+        const subjectId = getSubjectFromCtx(passed);
+        if (await this.hasPermissionOnWorkspace(subjectId, permission, workspaceId)) {
             return;
         }
-        if ("read_info" === permission || !(await this.hasPermissionOnWorkspace(userId, "read_info", workspaceId))) {
+        if ("read_info" === permission || !(await this.hasPermissionOnWorkspace(subjectId, "read_info", workspaceId))) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} not found.`);
         }
 
@@ -210,8 +234,9 @@ export class Authorizer {
     }
 
     // write operations below
-    public async removeAllRelationships(userId: string, type: ResourceType, id: string) {
-        if (!(await isFgaWritesEnabled(userId))) {
+    public async removeAllRelationships(passed: MaybeSubject, type: ResourceType, id: string) {
+        const subjectId = getSubjectFromCtx(passed);
+        if (!(await isFgaWritesEnabled(subjectId))) {
             return;
         }
         await this.authorizer.deleteRelationships(
@@ -302,20 +327,22 @@ export class Authorizer {
         await this.authorizer.writeRelationships(...updates);
     }
 
-    async addProjectToOrg(userId: string, orgID: string, projectID: string): Promise<void> {
-        if (!(await isFgaWritesEnabled(userId))) {
+    async addProjectToOrg(passed: MaybeSubject, orgID: string, projectID: string): Promise<void> {
+        const subjectId = getSubjectFromCtx(passed);
+        if (!(await isFgaWritesEnabled(subjectId))) {
             return;
         }
         await this.authorizer.writeRelationships(set(rel.project(projectID).org.organization(orgID)));
     }
 
     async setProjectVisibility(
-        userId: string,
+        passed: MaybeSubject,
         projectID: string,
         organizationId: string,
         visibility: Project.Visibility,
     ) {
-        if (!(await isFgaWritesEnabled(userId))) {
+        const subjectId = getSubjectFromCtx(passed);
+        if (!(await isFgaWritesEnabled(subjectId))) {
             return;
         }
         const updates = [];
@@ -336,8 +363,9 @@ export class Authorizer {
         await this.authorizer.writeRelationships(...updates);
     }
 
-    async removeProjectFromOrg(userId: string, orgID: string, projectID: string): Promise<void> {
-        if (!(await isFgaWritesEnabled(userId))) {
+    async removeProjectFromOrg(passed: MaybeSubject, orgID: string, projectID: string): Promise<void> {
+        const subjectId = getSubjectFromCtx(passed);
+        if (!(await isFgaWritesEnabled(subjectId))) {
             return;
         }
         await this.authorizer.writeRelationships(
@@ -348,17 +376,18 @@ export class Authorizer {
     }
 
     async addOrganization(
-        userId: string,
+        passed: MaybeSubject,
         orgId: string,
         members: { userId: string; role: TeamMemberRole }[],
         projectIds: string[],
     ): Promise<void> {
-        if (!(await isFgaWritesEnabled(userId))) {
+        const subjectId = getSubjectFromCtx(passed);
+        if (!(await isFgaWritesEnabled(subjectId))) {
             return;
         }
         await this.addOrganizationMembers(orgId, members);
 
-        await this.addOrganizationProjects(userId, orgId, projectIds);
+        await this.addOrganizationProjects(subjectId, orgId, projectIds);
 
         await this.authorizer.writeRelationships(
             set(rel.organization(orgId).installation.installation), //
@@ -366,16 +395,16 @@ export class Authorizer {
         );
     }
 
-    private async addOrganizationProjects(userId: string, orgID: string, projectIds: string[]): Promise<void> {
+    private async addOrganizationProjects(subject: MaybeSubject, orgID: string, projectIds: string[]): Promise<void> {
         const existing = await this.findAll(rel.project("").org.organization(orgID));
         const toBeRemoved = asSet(existing.map((r) => r.resource?.objectId));
         for (const projectId of projectIds) {
-            await this.addProjectToOrg(userId, orgID, projectId);
-            await this.setProjectVisibility(userId, projectId, orgID, "org-public");
+            await this.addProjectToOrg(subject, orgID, projectId);
+            await this.setProjectVisibility(subject, projectId, orgID, "org-public");
             toBeRemoved.delete(projectId);
         }
         for (const projectId of toBeRemoved) {
-            await this.removeProjectFromOrg(userId, orgID, projectId);
+            await this.removeProjectFromOrg(subject, orgID, projectId);
         }
     }
 
@@ -503,21 +532,44 @@ export class Authorizer {
     }
 }
 
-export async function isFgaChecksEnabled(userId: string): Promise<boolean> {
+function getSubjectFromCtx(passed?: Subject): SubjectId {
+    const ctxSubjectId = tryGetSubjectId();
+    if (passed) {
+        const passedId = Subject.toId(passed);
+        if (ctxSubjectId && !ctxSubjectId.equals(passedId)) {
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `SubjectId mismatch`);
+        }
+        return passedId;
+    }
+    if (!ctxSubjectId) {
+        throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `No SubjectId available`);
+    }
+    return ctxSubjectId;
+}
+
+export async function isFgaChecksEnabled(subject: Subject): Promise<boolean> {
+    const subjectId = Subject.toId(subject);
+    const userId = toUserId(subjectId);
     return getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
-        user: {
-            id: userId,
-        },
+        user: userId
+            ? {
+                  id: userId,
+              }
+            : undefined,
     });
 }
 
-export async function isFgaWritesEnabled(userId: string): Promise<boolean> {
+export async function isFgaWritesEnabled(subject: Subject): Promise<boolean> {
+    const subjectId = Subject.toId(subject);
+    const userId = toUserId(subjectId);
     const result = await getExperimentsClientForBackend().getValueAsync("spicedb_relationship_updates", false, {
-        user: {
-            id: userId,
-        },
+        user: userId
+            ? {
+                  id: userId,
+              }
+            : undefined,
     });
-    return result || (await isFgaChecksEnabled(userId));
+    return result || (await isFgaChecksEnabled(subjectId));
 }
 
 function set(rs: v1.Relationship): v1.RelationshipUpdate {
@@ -541,9 +593,10 @@ function object(type: ResourceType, id?: string): v1.ObjectReference {
     });
 }
 
-function subject(type: ResourceType, id?: string, relation?: Relation | Permission): v1.SubjectReference {
+function sub(subject: Subject, relation?: Relation | Permission): v1.SubjectReference {
+    const subjectId = Subject.toId(subject);
     return v1.SubjectReference.create({
-        object: object(type, id),
+        object: object(subjectId.kind, subjectId.value),
         optionalRelation: relation,
     });
 }

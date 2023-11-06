@@ -20,7 +20,7 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
     private readonly apiConverter: PublicAPIConverter;
 
     async getWorkspace(req: GetWorkspaceRequest, context: HandlerContext): Promise<GetWorkspaceResponse> {
-        const info = await this.workspaceService.getWorkspace(context.user.id, req.id);
+        const info = await this.workspaceService.getWorkspace(undefined, req.id);
         const response = new GetWorkspaceResponse();
         response.item = this.apiConverter.toWorkspace(info);
         return response;

@@ -55,7 +55,7 @@ describe("UsageService", async () => {
                 authId: "1234",
             },
         });
-        org = await os.createOrganization(owner.id, "myorg");
+        org = await os.createOrganization(owner.id, owner.id, "myorg");
         const invite = await os.getOrCreateInvite(owner.id, org.id);
 
         member = await userService.createUser({

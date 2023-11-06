@@ -19,6 +19,7 @@ import { inject, injectable } from "inversify";
 import { Authorizer } from "../authorization/authorizer";
 import { ProjectsService } from "../projects/projects-service";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
+import { MaybeSubject, Subject } from "../auth/subject-id";
 
 @injectable()
 export class OrganizationService {
@@ -31,7 +32,7 @@ export class OrganizationService {
     ) {}
 
     async listOrganizations(
-        userId: string,
+        subject: MaybeSubject,
         req: {
             offset?: number;
             limit?: number;
@@ -51,7 +52,7 @@ export class OrganizationService {
         await Promise.all(
             result.rows.map(async (org) => {
                 // if the user doesn't see the org, filter it out
-                if (!(await this.auth.hasPermissionOnOrganization(userId, "read_info", org.id))) {
+                if (!(await this.auth.hasPermissionOnOrganization(subject, "read_info", org.id))) {
                     result.total--;
                     result.rows = result.rows.filter((o) => o.id !== org.id);
                 }
@@ -73,8 +74,8 @@ export class OrganizationService {
         return result;
     }
 
-    async getOrganization(userId: string, orgId: string): Promise<Organization> {
-        await this.auth.checkPermissionOnOrganization(userId, "read_info", orgId);
+    async getOrganization(subject: MaybeSubject, orgId: string): Promise<Organization> {
+        await this.auth.checkPermissionOnOrganization(subject, "read_info", orgId);
         const result = await this.teamDB.findTeamById(orgId);
         if (!result) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found`);
@@ -83,26 +84,30 @@ export class OrganizationService {
     }
 
     async updateOrganization(
-        userId: string,
+        subject: MaybeSubject,
         orgId: string,
         changes: Pick<Organization, "name">,
     ): Promise<Organization> {
-        await this.auth.checkPermissionOnOrganization(userId, "write_info", orgId);
+        await this.auth.checkPermissionOnOrganization(subject, "write_info", orgId);
         return this.teamDB.updateTeam(orgId, changes);
     }
 
-    async createOrganization(userId: string, name: string): Promise<Organization> {
+    async createOrganization(subject: MaybeSubject, ownerId: string | undefined, name: string): Promise<Organization> {
+        if (!ownerId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "No owner id provided.");
+        }
+
         let result: Organization;
         try {
             result = await this.teamDB.transaction(async (db) => {
-                result = await db.createTeam(userId, name);
+                result = await db.createTeam(ownerId, name);
                 const members = await db.findMembersByTeam(result.id);
-                await this.auth.addOrganization(userId, result.id, members, []);
+                await this.auth.addOrganization(subject, result.id, members, []);
                 return result;
             });
         } catch (err) {
             if (result! && result.id) {
-                await this.auth.removeOrganizationRole(result.id, userId, "member");
+                await this.auth.removeOrganizationRole(result.id, ownerId, "member");
             }
 
             throw err;
@@ -110,7 +115,6 @@ export class OrganizationService {
         try {
             const invite = await this.teamDB.resetGenericInvite(result.id);
             this.analytics.track({
-                userId,
                 event: "team_created",
                 properties: {
                     id: result.id,
@@ -125,15 +129,15 @@ export class OrganizationService {
         return result;
     }
 
-    public async deleteOrganization(userId: string, orgId: string): Promise<void> {
-        await this.auth.checkPermissionOnOrganization(userId, "delete", orgId);
-        const projects = await this.projectsService.getProjects(userId, orgId);
+    public async deleteOrganization(subject: MaybeSubject, orgId: string): Promise<void> {
+        await this.auth.checkPermissionOnOrganization(subject, "delete", orgId);
+        const projects = await this.projectsService.getProjects(subject, orgId);
 
         const members = await this.teamDB.findMembersByTeam(orgId);
         try {
             await this.teamDB.transaction(async (db, ctx) => {
                 for (const project of projects) {
-                    await this.projectsService.deleteProject(userId, project.id, ctx);
+                    await this.projectsService.deleteProject(subject, project.id, ctx);
                 }
                 for (const member of members) {
                     await db.removeMemberFromTeam(member.userId, orgId);
@@ -141,10 +145,9 @@ export class OrganizationService {
 
                 await db.deleteTeam(orgId);
 
-                await this.auth.removeAllRelationships(userId, "organization", orgId);
+                await this.auth.removeAllRelationships(subject, "organization", orgId);
             });
             return this.analytics.track({
-                userId: userId,
                 event: "team_deleted",
                 properties: {
                     team_id: orgId,
@@ -152,7 +155,7 @@ export class OrganizationService {
             });
         } catch (err) {
             await this.auth.addOrganization(
-                userId,
+                subject,
                 orgId,
                 members,
                 projects.map((p) => p.id),
@@ -160,13 +163,13 @@ export class OrganizationService {
         }
     }
 
-    public async listMembers(userId: string, orgId: string): Promise<OrgMemberInfo[]> {
-        await this.auth.checkPermissionOnOrganization(userId, "read_members", orgId);
+    public async listMembers(subject: MaybeSubject, orgId: string): Promise<OrgMemberInfo[]> {
+        await this.auth.checkPermissionOnOrganization(subject, "read_members", orgId);
         return this.teamDB.findMembersByTeam(orgId);
     }
 
-    public async getOrCreateInvite(userId: string, orgId: string): Promise<TeamMembershipInvite> {
-        await this.auth.checkPermissionOnOrganization(userId, "invite_members", orgId);
+    public async getOrCreateInvite(subject: MaybeSubject, orgId: string): Promise<TeamMembershipInvite> {
+        await this.auth.checkPermissionOnOrganization(subject, "invite_members", orgId);
         const invite = await this.teamDB.findGenericInviteByTeamId(orgId);
         if (invite) {
             if (await this.teamDB.hasActiveSSO(orgId)) {
@@ -174,11 +177,11 @@ export class OrganizationService {
             }
             return invite;
         }
-        return this.resetInvite(userId, orgId);
+        return this.resetInvite(subject, orgId);
     }
 
-    public async resetInvite(userId: string, orgId: string): Promise<TeamMembershipInvite> {
-        await this.auth.checkPermissionOnOrganization(userId, "invite_members", orgId);
+    public async resetInvite(subject: MaybeSubject, orgId: string): Promise<TeamMembershipInvite> {
+        await this.auth.checkPermissionOnOrganization(subject, "invite_members", orgId);
         if (await this.teamDB.hasActiveSSO(orgId)) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
         }
@@ -215,13 +218,13 @@ export class OrganizationService {
     }
 
     public async addOrUpdateMember(
-        userId: string,
+        subject: MaybeSubject,
         orgId: string,
         memberId: string,
         role: OrgMemberRole,
         txCtx?: TransactionalContext,
     ): Promise<void> {
-        await this.auth.checkPermissionOnOrganization(userId, "write_members", orgId);
+        await this.auth.checkPermissionOnOrganization(subject, "write_members", orgId);
         let members: OrgMemberInfo[] = [];
         try {
             await this.teamDB.transaction(txCtx, async (teamDB, txCtx) => {
@@ -262,16 +265,16 @@ export class OrganizationService {
     }
 
     public async removeOrganizationMember(
-        userId: string,
+        subject: MaybeSubject,
         orgId: string,
         memberId: string,
         txCtx?: TransactionalContext,
     ): Promise<void> {
         // The user is leaving a team, if they are removing themselves from the team.
-        if (userId === memberId) {
-            await this.auth.checkPermissionOnOrganization(userId, "read_info", orgId);
+        if (subject && Subject.toId(subject).userId() === memberId) {
+            await this.auth.checkPermissionOnOrganization(subject, "read_info", orgId);
         } else {
-            await this.auth.checkPermissionOnOrganization(userId, "write_members", orgId);
+            await this.auth.checkPermissionOnOrganization(subject, "write_members", orgId);
         }
         let membership: OrgMemberInfo | undefined;
         try {
@@ -317,23 +320,26 @@ export class OrganizationService {
             throw new ApplicationError(code, message);
         }
         this.analytics.track({
-            userId,
             event: "team_user_removed",
             properties: {
                 team_id: orgId,
-                removed_user_id: userId,
+                removed_user_id: memberId,
             },
         });
     }
 
-    async getSettings(userId: string, orgId: string): Promise<OrganizationSettings> {
-        await this.auth.checkPermissionOnOrganization(userId, "read_settings", orgId);
+    async getSettings(subject: MaybeSubject, orgId: string): Promise<OrganizationSettings> {
+        await this.auth.checkPermissionOnOrganization(subject, "read_settings", orgId);
         const settings = (await this.teamDB.findOrgSettings(orgId)) || {};
         return settings;
     }
 
-    async updateSettings(userId: string, orgId: string, settings: OrganizationSettings): Promise<OrganizationSettings> {
-        await this.auth.checkPermissionOnOrganization(userId, "write_settings", orgId);
+    async updateSettings(
+        subject: MaybeSubject,
+        orgId: string,
+        settings: OrganizationSettings,
+    ): Promise<OrganizationSettings> {
+        await this.auth.checkPermissionOnOrganization(subject, "write_settings", orgId);
         await this.teamDB.setOrgSettings(orgId, settings);
         return settings;
     }

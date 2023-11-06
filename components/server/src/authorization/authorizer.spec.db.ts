@@ -11,7 +11,7 @@ import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
 import { createTestContainer } from "../test/service-testing-container-module";
-import { Authorizer } from "./authorizer";
+import { Authorizer, SYSTEM_USER } from "./authorizer";
 import { rel } from "./definitions";
 import { v4 } from "uuid";
 
@@ -99,7 +99,7 @@ describe("Authorizer", async () => {
         const p1 = v4();
         const p2 = v4();
         await authorizer.addOrganization(
-            "",
+            SYSTEM_USER,
             orgId,
             [
                 { userId: u1, role: "member" },
@@ -116,7 +116,7 @@ describe("Authorizer", async () => {
         await expected(rel.project(p2).org.organization(orgId));
 
         // add org again with different members and projects
-        await authorizer.addOrganization("", orgId, [{ userId: u2, role: "member" }], [p2]);
+        await authorizer.addOrganization(SYSTEM_USER, orgId, [{ userId: u2, role: "member" }], [p2]);
         await expected(rel.organization(orgId).installation.installation);
         await notExpected(rel.organization(orgId).member.user(u1));
         await expected(rel.organization(orgId).member.user(u2));

@@ -37,8 +37,12 @@ describe("UserService", async () => {
         });
         userService = container.get<UserService>(UserService);
         auth = container.get(Authorizer);
-        orgService = container.get<OrganizationService>(OrganizationService);
-        org = await orgService.createOrganization(BUILTIN_INSTLLATION_ADMIN_USER_ID, "myOrg");
+        const orgService = container.get<OrganizationService>(OrganizationService);
+        org = await orgService.createOrganization(
+            BUILTIN_INSTLLATION_ADMIN_USER_ID,
+            BUILTIN_INSTLLATION_ADMIN_USER_ID,
+            "myOrg",
+        );
         const invite = await orgService.getOrCreateInvite(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id);
         user = await userService.createUser({
             organizationId: org.id,
