@@ -11,9 +11,9 @@ import { ContextMenuEntry } from "../../components/ContextMenu";
 import { Item, ItemField, ItemFieldContextMenu, ItemFieldIcon } from "../../components/ItemsList";
 import { useDeleteOrgAuthProviderMutation } from "../../data/auth-providers/delete-org-auth-provider-mutation";
 import { GitIntegrationModal } from "./GitIntegrationModal";
-import { useCurrentOrg } from "../../data/organizations/orgs-query";
 import { ModalFooterAlert } from "../../components/Modal";
 import { useToast } from "../../components/toasts/Toasts";
+import { useListOrganizationMembers } from "../../data/organizations/members-query";
 
 type Props = {
     provider: AuthProviderEntry;
@@ -22,10 +22,10 @@ export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) =
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
     const deleteAuthProvider = useDeleteOrgAuthProviderMutation();
-    const { data: org } = useCurrentOrg();
+    const members = useListOrganizationMembers().data || [];
     const { toast } = useToast();
 
-    const memberCount = org?.members.length ?? 1;
+    const memberCount = members.length ?? 1;
 
     const menuEntries = useMemo(() => {
         const result: ContextMenuEntry[] = [];

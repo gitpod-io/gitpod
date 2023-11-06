@@ -6,7 +6,7 @@
 
 import ContextMenu, { ContextMenuEntry } from "./ContextMenu";
 import CaretDown from "../icons/CaretDown.svg";
-import { WorkspaceGitStatus } from "@gitpod/public-api/lib/gitpod/experimental/v2/workspace_pb";
+import { WorkspaceGitStatus } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 export default function PendingChangesDropdown({ gitStatus }: { gitStatus?: WorkspaceGitStatus }) {
     const headingStyle = "text-gray-500 dark:text-gray-400 text-left";

@@ -27,11 +27,7 @@ import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
 import Alert from "../components/Alert";
 import { converter, workspaceClient, workspacesService } from "../service/public-api";
-import {
-    GetWorkspaceRequest,
-    Workspace,
-    WorkspacePhase_Phase,
-} from "@gitpod/public-api/lib/gitpod/experimental/v2/workspace_pb";
+import { GetWorkspaceRequest, Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 const sessionId = v4();
 

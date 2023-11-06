@@ -1,0 +1,246 @@
+syntax = "proto3";
+
+package gitpod.v1;
+
+import "google/protobuf/timestamp.proto";
+import "gitpod/v1/pagination.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+
+message Organization {
+  string id = 1;
+  string name = 2;
+  google.protobuf.Timestamp creation_time = 3;
+  string slug = 4;
+}
+
+message OrganizationMember {
+  string user_id = 1;
+  OrganizationRole role = 2;
+  google.protobuf.Timestamp member_since = 3;
+  optional string avatar_url = 4;
+  optional string full_name = 5;
+  optional string email = 6;
+  bool owned_by_organization = 7;
+}
+
+enum OrganizationRole {
+  ORGANIZATION_ROLE_UNSPECIFIED = 0;
+  ORGANIZATION_ROLE_OWNER = 1;
+  ORGANIZATION_ROLE_MEMBER = 2;
+}
+
+message OrganizationSettings {
+  bool workspace_sharing_disabled = 1;
+  optional string default_workspace_image = 2;
+}
+
+service OrganizationService {
+  // CreateOrganization creates a new Organization.
+  rpc CreateOrganization(CreateOrganizationRequest)
+      returns (CreateOrganizationResponse) {};
+
+  // GetOrganization retrieves a single Organization.
+  rpc GetOrganization(GetOrganizationRequest)
+      returns (GetOrganizationResponse) {}
+
+  // UpdateOrganization updates the properties of an Organization.
+  rpc UpdateOrganization(UpdateOrganizationRequest)
+      returns (UpdateOrganizationResponse) {};
+
+  // ListOrganizations lists all organization the caller has access to.
+  rpc ListOrganizations(ListOrganizationsRequest)
+      returns (ListOrganizationsResponse) {};
+
+  // DeleteOrganization deletes the specified organization.
+  rpc DeleteOrganization(DeleteOrganizationRequest)
+      returns (DeleteOrganizationResponse) {};
+
+  // GetOrganizationInvitation retrieves the invitation for a Organization.
+  rpc GetOrganizationInvitation(GetOrganizationInvitationRequest)
+      returns (GetOrganizationInvitationResponse) {};
+
+  // JoinOrganization makes the caller a OrganizationMember of the Organization.
+  rpc JoinOrganization(JoinOrganizationRequest)
+      returns (JoinOrganizationResponse) {};
+
+  // ResetOrganizationInvitation resets the invitation_id for a Organization.
+  rpc ResetOrganizationInvitation(ResetOrganizationInvitationRequest)
+      returns (ResetOrganizationInvitationResponse) {};
+
+  // ListOrganizationMembers lists the members of a Organization.
+  rpc ListOrganizationMembers(ListOrganizationMembersRequest)
+      returns (ListOrganizationMembersResponse) {};
+
+  // UpdateOrganizationMember updates organization membership properties.
+  rpc UpdateOrganizationMember(UpdateOrganizationMemberRequest)
+      returns (UpdateOrganizationMemberResponse) {};
+
+  // DeleteOrganizationMember removes a OrganizationMember from the
+  // Organization.
+  rpc DeleteOrganizationMember(DeleteOrganizationMemberRequest)
+      returns (DeleteOrganizationMemberResponse) {};
+
+  // GetOrganizationSettings retrieves the settings of a Organization.
+  rpc GetOrganizationSettings(GetOrganizationSettingsRequest)
+      returns (GetOrganizationSettingsResponse) {};
+
+  // UpdateOrganizationSettings updates the settings of a Organization.
+  rpc UpdateOrganizationSettings(UpdateOrganizationSettingsRequest)
+      returns (UpdateOrganizationSettingsResponse) {};
+}
+
+message UpdateOrganizationRequest {
+  // organization_id is the ID of the organization to update the settings for.
+  string organization_id = 1;
+
+  // name is the new name of the organization
+  string name = 2;
+}
+
+message UpdateOrganizationResponse {
+  // organization is the updated organization
+  Organization organization = 1;
+}
+
+message UpdateOrganizationSettingsRequest {
+  // organization_id is the ID of the organization to update the settings for.
+  string organization_id = 1;
+
+  // settings are the settings to update
+  OrganizationSettings settings = 2;
+}
+
+message UpdateOrganizationSettingsResponse {
+  // settings are the updated settings
+  OrganizationSettings settings = 1;
+}
+
+message GetOrganizationSettingsRequest {
+  // organization_id is the ID of the organization to retrieve the settings for.
+  string organization_id = 1;
+}
+
+message GetOrganizationSettingsResponse {
+  // settings are the settings of the organization
+  OrganizationSettings settings = 1;
+}
+
+message CreateOrganizationRequest {
+  // name is the organization name
+  string name = 1;
+}
+
+message CreateOrganizationResponse {
+  // organization is the created organization
+  Organization organization = 1;
+}
+
+message GetOrganizationRequest {
+  // organization_id is the unique identifier of the Organization to retreive.
+  string organization_id = 1;
+}
+
+message GetOrganizationResponse {
+  // organization is the requested organization
+  Organization organization = 1;
+}
+
+message ListOrganizationsRequest {
+  // pagination contains the pagination options for listing organizations
+  PaginationRequest pagination = 1;
+
+  // scope is the scope of the organizations to list
+  Scope scope = 2;
+
+  enum Scope {
+    SCOPE_UNSPECIFIED = 0;
+    SCOPE_MEMBER = 1;
+    SCOPE_ALL = 2;
+  }
+}
+
+message ListOrganizationsResponse {
+  // organizations are the organizations that matched the query
+  repeated Organization organizations = 1;
+  // pagination contains the pagination options for listing organizations
+  PaginationResponse pagination = 2;
+}
+
+message DeleteOrganizationRequest {
+  // organization_id is the ID of the organization to delete
+  string organization_id = 1;
+}
+
+message DeleteOrganizationResponse {}
+
+message GetOrganizationInvitationRequest {
+  // organization_id is the ID of the organization to retrieve the invitation
+  string organization_id = 1;
+}
+
+message GetOrganizationInvitationResponse {
+  // invitation_id is the invitation ID for an Organization
+  string invitation_id = 1;
+}
+
+message JoinOrganizationRequest {
+  // invitation_id is the invitation ID for an Organization
+  string invitation_id = 1;
+}
+
+message JoinOrganizationResponse {
+  // organization_id is the id of the organization the user has just joined
+  string organization_id = 1;
+}
+
+message ResetOrganizationInvitationRequest {
+  // organization_id is the ID of the organization to reset the invitation for.
+  string organization_id = 1;
+}
+
+message ResetOrganizationInvitationResponse {
+  // invitation_id is the new invitation id for the organization.
+  string invitation_id = 1;
+}
+
+message ListOrganizationMembersRequest {
+  // organization_id is the ID of the organization that contains the members to
+  // list
+  string organization_id = 1;
+  PaginationRequest pagination = 2;
+}
+
+message ListOrganizationMembersResponse {
+  // members are the organization members of this Organization
+  repeated OrganizationMember members = 1;
+  PaginationResponse pagination = 2;
+}
+
+message UpdateOrganizationMemberRequest {
+  // organization_id is the ID of the organization in which the role is to be
+  // updated
+  string organization_id = 1;
+
+  // user_id is the user for which the membership shall be updated.
+  string user_id = 2;
+
+  // role is the new role for the user in the organization
+  OrganizationRole role = 3;
+}
+
+message UpdateOrganizationMemberResponse {
+  // member is the updated organization member
+  OrganizationMember member = 1;
+}
+
+message DeleteOrganizationMemberRequest {
+  // organization_id is the ID of the organization in which a member should be
+  // deleted.
+  string organization_id = 1;
+
+  // user_id is the ID of the user that should be deleted from the organization.
+  string user_id = 2;
+}
+
+message DeleteOrganizationMemberResponse {}

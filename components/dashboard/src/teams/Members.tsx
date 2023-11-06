@@ -4,8 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { TeamMemberRole } from "@gitpod/gitpod-protocol";
-import { TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import dayjs from "dayjs";
 import { useMemo, useState } from "react";
 import { trackEvent } from "../Analytics";
@@ -14,23 +12,30 @@ import Header from "../components/Header";
 import { Item, ItemField, ItemFieldContextMenu, ItemsList } from "../components/ItemsList";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import Tooltip from "../components/Tooltip";
-import { useCurrentOrg, useOrganizationsInvalidator } from "../data/organizations/orgs-query";
+import { useCurrentOrg } from "../data/organizations/orgs-query";
 import searchIcon from "../icons/search.svg";
-import { teamsService } from "../service/public-api";
+import { organizationClient } from "../service/public-api";
 import { useCurrentUser } from "../user-context";
 import { SpinnerLoader } from "../components/Loader";
 import { Delayed } from "../components/Delayed";
 import { InputField } from "../components/forms/InputField";
 import { InputWithCopy } from "../components/InputWithCopy";
+import { OrganizationMember, OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import { useListOrganizationMembers, useOrganizationMembersInvalidator } from "../data/organizations/members-query";
+import { useInvitationId, useInviteInvalidator } from "../data/organizations/invite-query";
 
 export default function MembersPage() {
     const user = useCurrentUser();
     const org = useCurrentOrg();
-    const invalidateOrgs = useOrganizationsInvalidator();
+    const membersQuery = useListOrganizationMembers();
+    const members: OrganizationMember[] = useMemo(() => membersQuery.data || [], [membersQuery.data]);
+    const invalidateInviteQuery = useInviteInvalidator();
+    const invalidateMembers = useOrganizationMembersInvalidator();
 
     const [showInviteModal, setShowInviteModal] = useState<boolean>(false);
     const [searchText, setSearchText] = useState<string>("");
-    const [roleFilter, setRoleFilter] = useState<TeamMemberRole | undefined>();
+    const [roleFilter, setRoleFilter] = useState<OrganizationRole | undefined>();
+    const inviteId = useInvitationId().data;
 
     const inviteUrl = useMemo(() => {
         if (!org.data) {
@@ -38,42 +43,43 @@ export default function MembersPage() {
         }
         // orgs without an invitation id invite members through their own login page
         const link = new URL(window.location.href);
-        if (!org.data.invitationId) {
+        if (!inviteId) {
             link.pathname = "/login/" + org.data.slug;
         } else {
             link.pathname = "/orgs/join";
-            link.search = "?inviteId=" + org.data.invitationId;
+            link.search = "?inviteId=" + inviteId;
         }
         return link.href;
-    }, [org.data]);
+    }, [org.data, inviteId]);
 
     const resetInviteLink = async () => {
-        await teamsService.resetTeamInvitation({ teamId: org.data?.id });
-        invalidateOrgs();
+        await organizationClient.resetOrganizationInvitation({ organizationId: org.data?.id });
+        invalidateInviteQuery();
     };
 
-    const setTeamMemberRole = async (userId: string, role: TeamMemberRole) => {
-        await teamsService.updateTeamMember({
-            teamId: org.data?.id,
-            teamMember: { userId, role: role === "owner" ? TeamRole.OWNER : TeamRole.MEMBER },
+    const setTeamMemberRole = async (userId: string, role: OrganizationRole) => {
+        await organizationClient.updateOrganizationMember({
+            organizationId: org.data?.id,
+            userId,
+            role,
         });
-        invalidateOrgs();
+        invalidateMembers();
     };
 
     const removeTeamMember = async (userId: string) => {
-        await teamsService.deleteTeamMember({ teamId: org.data?.id, teamMemberId: userId });
-        invalidateOrgs();
+        await organizationClient.deleteOrganizationMember({ organizationId: org.data?.id, userId });
+        invalidateMembers();
     };
 
     const isRemainingOwner = useMemo(() => {
-        const owners = org.data?.members.filter((m) => m.role === "owner");
+        const owners = members.filter((m) => m.role === OrganizationRole.OWNER);
         return owners?.length === 1 && owners[0].userId === user?.id;
-    }, [org.data?.members, user?.id]);
+    }, [members, user?.id]);
 
     const isOwner = useMemo(() => {
-        const owners = org.data?.members.filter((m) => m.role === "owner");
+        const owners = members.filter((m) => m.role === OrganizationRole.OWNER);
         return !!owners?.some((o) => o.userId === user?.id);
-    }, [org.data?.members, user?.id]);
+    }, [members, user?.id]);
 
     // Note: We would hardly get here, but just in case. We should show a loader instead of blank section.
     if (org.isLoading) {
@@ -85,11 +91,11 @@ export default function MembersPage() {
     }
 
     const filteredMembers =
-        org.data?.members.filter((m) => {
+        members.filter((m) => {
             if (!!roleFilter && m.role !== roleFilter) {
                 return false;
             }
-            const memberSearchText = `${m.fullName || ""}${m.primaryEmail || ""}`.toLocaleLowerCase();
+            const memberSearchText = `${m.fullName || ""}${m.email || ""}`.toLocaleLowerCase();
             if (!memberSearchText.includes(searchText.toLocaleLowerCase())) {
                 return false;
             }
@@ -119,7 +125,11 @@ export default function MembersPage() {
                         <DropDown
                             customClasses="w-32"
                             activeEntry={
-                                roleFilter === "owner" ? "Owners" : roleFilter === "member" ? "Members" : "All"
+                                roleFilter === OrganizationRole.OWNER
+                                    ? "Owners"
+                                    : roleFilter === OrganizationRole.MEMBER
+                                    ? "Members"
+                                    : "All"
                             }
                             entries={[
                                 {
@@ -128,11 +138,11 @@ export default function MembersPage() {
                                 },
                                 {
                                     title: "Owners",
-                                    onClick: () => setRoleFilter("owner"),
+                                    onClick: () => setRoleFilter(OrganizationRole.OWNER),
                                 },
                                 {
                                     title: "Members",
-                                    onClick: () => setRoleFilter("member"),
+                                    onClick: () => setRoleFilter(OrganizationRole.OWNER),
                                 },
                             ]}
                         />
@@ -194,33 +204,39 @@ export default function MembersPage() {
                                         >
                                             {m.fullName}
                                         </div>
-                                        <p title={m.primaryEmail}>{m.primaryEmail}</p>
+                                        <p title={m.email}>{m.email}</p>
                                     </div>
                                 </ItemField>
                                 <ItemField className="my-auto">
-                                    <Tooltip content={dayjs(m.memberSince).format("MMM D, YYYY")}>
-                                        <span className="text-gray-400">{dayjs(m.memberSince).fromNow()}</span>
+                                    <Tooltip content={dayjs(m.memberSince?.toDate()).format("MMM D, YYYY")}>
+                                        <span className="text-gray-400">
+                                            {dayjs(m.memberSince?.toDate()).fromNow()}
+                                        </span>
                                     </Tooltip>
                                 </ItemField>
                                 <ItemField className="flex items-center my-auto">
                                     <span className="text-gray-400 capitalize">
-                                        {org.data?.isOwner ? (
+                                        {isOwner ? (
                                             <DropDown
                                                 customClasses="w-32"
-                                                activeEntry={m.role}
+                                                activeEntry={m.role === OrganizationRole.OWNER ? "owner" : "member"}
                                                 entries={[
                                                     {
                                                         title: "owner",
-                                                        onClick: () => setTeamMemberRole(m.userId, "owner"),
+                                                        onClick: () =>
+                                                            setTeamMemberRole(m.userId, OrganizationRole.OWNER),
                                                     },
                                                     {
                                                         title: "member",
-                                                        onClick: () => setTeamMemberRole(m.userId, "member"),
+                                                        onClick: () =>
+                                                            setTeamMemberRole(m.userId, OrganizationRole.MEMBER),
                                                     },
                                                 ]}
                                             />
+                                        ) : m.role === OrganizationRole.OWNER ? (
+                                            "owner"
                                         ) : (
-                                            m.role
+                                            "member"
                                         )}
                                     </span>
                                     <span className="flex-grow" />
@@ -239,7 +255,7 @@ export default function MembersPage() {
                                                               !isRemainingOwner && removeTeamMember(m.userId),
                                                       },
                                                   ]
-                                                : org.data?.isOwner
+                                                : isOwner
                                                 ? [
                                                       {
                                                           title: "Remove",
@@ -267,7 +283,7 @@ export default function MembersPage() {
                         </InputField>
                     </ModalBody>
                     <ModalFooter>
-                        {!!org?.data?.invitationId && (
+                        {!!inviteId && (
                             <button className="secondary" onClick={() => resetInviteLink()}>
                                 Reset Invite Link
                             </button>

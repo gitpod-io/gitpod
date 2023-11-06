@@ -4,10 +4,10 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Organization } from "@gitpod/gitpod-protocol";
 import { useMutation } from "@tanstack/react-query";
 import { useOrganizationsInvalidator } from "./orgs-query";
-import { publicApiTeamToProtocol, teamsService } from "../../service/public-api";
+import { organizationClient } from "../../service/public-api";
+import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 
 type CreateOrgArgs = Pick<Organization, "name">;
 
@@ -16,13 +16,12 @@ export const useCreateOrgMutation = () => {
 
     return useMutation<Organization, Error, CreateOrgArgs>({
         mutationFn: async ({ name }) => {
-            const { team } = await teamsService.createTeam({ name });
-            if (!team) {
-                throw new Error("Error creating team");
+            const { organization } = await organizationClient.createOrganization({ name });
+            if (!organization) {
+                throw new Error("Error creating organization");
             }
 
-            const org = publicApiTeamToProtocol(team);
-            return org;
+            return organization;
         },
         onSuccess(newOrg) {
             invalidateOrgs();

@@ -4,39 +4,41 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { MethodKind, ServiceType } from "@bufbuild/protobuf";
 import { Code, ConnectError, ConnectRouter, HandlerContext, ServiceImpl } from "@connectrpc/connect";
 import { expressConnectMiddleware } from "@connectrpc/connect-express";
-import { MethodKind, ServiceType } from "@bufbuild/protobuf";
+import { User } from "@gitpod/gitpod-protocol";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connect";
 import { StatsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/stats_connect";
 import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connect";
 import { UserService as UserServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_connect";
-import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/experimental/v2/workspace_connect";
+import { OrganizationService } from "@gitpod/public-api/lib/gitpod/v1/organization_connect";
+import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/v1/workspace_connect";
 import express from "express";
 import * as http from "http";
 import { decorate, inject, injectable, interfaces } from "inversify";
+import { Redis } from "ioredis";
 import { AddressInfo } from "net";
 import { performance } from "perf_hooks";
+import { IRateLimiterOptions, RateLimiterMemory, RateLimiterRedis, RateLimiterRes } from "rate-limiter-flexible";
 import { v4 } from "uuid";
 import { isFgaChecksEnabled } from "../authorization/authorizer";
+import { Config } from "../config";
 import { grpcServerHandled, grpcServerHandling, grpcServerStarted } from "../prometheus-metrics";
 import { SessionHandler } from "../session-handler";
+import { UserService } from "../user/user-service";
 import { LogContextOptions, runWithLogContext } from "../util/log-context";
 import { wrapAsyncGenerator } from "../util/request-context";
-import { HelloServiceAPI as HelloServiceAPI } from "./hello-service-api";
+import { HelloServiceAPI } from "./hello-service-api";
+import { OrganizationServiceAPI } from "./organization-service-api";
+import { RateLimited } from "./rate-limited";
 import { APIStatsService as StatsServiceAPI } from "./stats";
 import { APITeamsService as TeamsServiceAPI } from "./teams";
 import { APIUserService as UserServiceAPI } from "./user";
 import { WorkspaceServiceAPI } from "./workspace-service-api";
-import { IRateLimiterOptions, RateLimiterMemory, RateLimiterRedis, RateLimiterRes } from "rate-limiter-flexible";
-import { Redis } from "ioredis";
-import { RateLimited } from "./rate-limited";
-import { Config } from "../config";
-import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { UserService } from "../user/user-service";
-import { User } from "@gitpod/gitpod-protocol";
 
 decorate(injectable(), PublicAPIConverter);
 
@@ -48,7 +50,8 @@ function service<T extends ServiceType>(type: T, impl: ServiceImpl<T>): [T, Serv
 export class API {
     @inject(UserServiceAPI) private readonly userServiceApi: UserServiceAPI;
     @inject(TeamsServiceAPI) private readonly teamServiceApi: TeamsServiceAPI;
-    @inject(WorkspaceServiceAPI) private readonly workspacesServiceApi: WorkspaceServiceAPI;
+    @inject(WorkspaceServiceAPI) private readonly workspaceServiceApi: WorkspaceServiceAPI;
+    @inject(OrganizationServiceAPI) private readonly organizationServiceApi: OrganizationServiceAPI;
     @inject(StatsServiceAPI) private readonly tatsServiceApi: StatsServiceAPI;
     @inject(HelloServiceAPI) private readonly helloServiceApi: HelloServiceAPI;
     @inject(SessionHandler) private readonly sessionHandler: SessionHandler;
@@ -97,7 +100,8 @@ export class API {
                 routes: (router: ConnectRouter) => {
                     for (const [type, impl] of [
                         service(HelloService, this.helloServiceApi),
-                        service(WorkspaceService, this.workspacesServiceApi),
+                        service(WorkspaceService, this.workspaceServiceApi),
+                        service(OrganizationService, this.organizationServiceApi),
                     ]) {
                         router.service(type, new Proxy(impl, this.interceptService(type)));
                     }
@@ -294,6 +298,7 @@ export class API {
         bind(UserServiceAPI).toSelf().inSingletonScope();
         bind(TeamsServiceAPI).toSelf().inSingletonScope();
         bind(WorkspaceServiceAPI).toSelf().inSingletonScope();
+        bind(OrganizationServiceAPI).toSelf().inSingletonScope();
         bind(StatsServiceAPI).toSelf().inSingletonScope();
         bind(API).toSelf().inSingletonScope();
     }

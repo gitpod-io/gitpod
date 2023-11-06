@@ -16,7 +16,7 @@ import {
 import { getGitpodService } from "../service/service";
 import { PrebuildStatus } from "../projects/Prebuilds";
 import { converter, workspaceClient } from "../service/public-api";
-import { GetWorkspaceRequest, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/experimental/v2/workspace_pb";
+import { GetWorkspaceRequest, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 const WorkspaceLogs = React.lazy(() => import("./WorkspaceLogs"));
 

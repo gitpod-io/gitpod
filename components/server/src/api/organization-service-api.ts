@@ -6,7 +6,7 @@
 
 import { HandlerContext, ServiceImpl } from "@connectrpc/connect";
 import { inject, injectable } from "inversify";
-import { OrganizationService as OrganizationServiceInterface } from "@gitpod/public-api/lib/gitpod/experimental/v2/organization_connect";
+import { OrganizationService as OrganizationServiceInterface } from "@gitpod/public-api/lib/gitpod/v1/organization_connect";
 import {
     CreateOrganizationRequest,
     CreateOrganizationResponse,
@@ -34,10 +34,11 @@ import {
     GetOrganizationSettingsResponse,
     UpdateOrganizationSettingsRequest,
     UpdateOrganizationSettingsResponse,
-} from "@gitpod/public-api/lib/gitpod/experimental/v2/organization_pb";
+    ListOrganizationsRequest_Scope,
+} from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
 import { OrganizationService } from "../orgs/organization-service";
-import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/experimental/v2/pagination_pb";
+import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 
 @injectable()
 export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationServiceInterface> {
@@ -69,20 +70,26 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         req: UpdateOrganizationRequest,
         context: HandlerContext,
     ): Promise<UpdateOrganizationResponse> {
-        await this.orgService.updateOrganization(context.user.id, req.organizationId, {
+        const org = await this.orgService.updateOrganization(context.user.id, req.organizationId, {
             name: req.name,
         });
-        return new UpdateOrganizationResponse();
+        return new UpdateOrganizationResponse({
+            organization: this.apiConverter.toOrganization(org),
+        });
     }
 
     async listOrganizations(
         req: ListOrganizationsRequest,
         context: HandlerContext,
     ): Promise<ListOrganizationsResponse> {
-        const orgs = await this.orgService.listOrganizations(context.user.id, {
-            limit: req.pagination?.pageSize || 100,
-            offset: (req.pagination?.page || 0) * (req.pagination?.pageSize || 0),
-        });
+        const orgs = await this.orgService.listOrganizations(
+            context.user.id,
+            {
+                limit: req.pagination?.pageSize || 100,
+                offset: (req.pagination?.page || 0) * (req.pagination?.pageSize || 0),
+            },
+            req.scope === ListOrganizationsRequest_Scope.ALL ? "installation" : "member",
+        );
         const response = new ListOrganizationsResponse();
         response.organizations = orgs.rows.map((org) => this.apiConverter.toOrganization(org));
         response.pagination = new PaginationResponse();
@@ -148,7 +155,12 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
             req.userId,
             this.apiConverter.fromOrgMemberRole(req.role),
         );
-        return new UpdateOrganizationMemberResponse();
+        const member = await this.orgService
+            .listMembers(context.user.id, req.organizationId)
+            .then((members) => members.find((member) => member.userId === req.userId));
+        return new UpdateOrganizationMemberResponse({
+            member: member && this.apiConverter.toOrganizationMember(member),
+        });
     }
 
     async deleteOrganizationMember(
@@ -173,10 +185,12 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         req: UpdateOrganizationSettingsRequest,
         context: HandlerContext,
     ): Promise<UpdateOrganizationSettingsResponse> {
-        await this.orgService.updateSettings(context.user.id, req.organizationId, {
+        const settings = await this.orgService.updateSettings(context.user.id, req.organizationId, {
             workspaceSharingDisabled: req.settings?.workspaceSharingDisabled,
             defaultWorkspaceImage: req.settings?.defaultWorkspaceImage,
         });
-        return new UpdateOrganizationSettingsResponse();
+        return new UpdateOrganizationSettingsResponse({
+            settings: this.apiConverter.toOrganizationSettings(settings),
+        });
     }
 }
