@@ -129,6 +129,7 @@ import { WorkspaceFactory } from "./workspace/workspace-factory";
 import { WorkspaceService } from "./workspace/workspace-service";
 import { WorkspaceStartController } from "./workspace/workspace-start-controller";
 import { WorkspaceStarter } from "./workspace/workspace-starter";
+import { ContextAwareAnalyticsWriter } from "./util/request-context";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -248,7 +249,12 @@ export const productionContainerModule = new ContainerModule(
 
         bind(CodeSyncService).toSelf().inSingletonScope();
 
-        bind(IAnalyticsWriter).toDynamicValue(newAnalyticsWriterFromEnv).inSingletonScope();
+        bind(IAnalyticsWriter)
+            .toDynamicValue((ctx) => {
+                const writer = newAnalyticsWriterFromEnv();
+                return new ContextAwareAnalyticsWriter(writer);
+            })
+            .inSingletonScope();
 
         bind(OAuthController).toSelf().inSingletonScope();
 

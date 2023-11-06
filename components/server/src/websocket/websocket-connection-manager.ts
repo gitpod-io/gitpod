@@ -49,7 +49,8 @@ import * as opentracing from "opentracing";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { maskIp } from "../analytics";
-import { runWithLogContext } from "../util/log-context";
+import { runWithRequestContext } from "../util/request-context";
+import { SubjectId } from "../auth/subject-id";
 
 export type GitpodServiceFactory = () => GitpodServerImpl;
 
@@ -377,12 +378,15 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
         const span = TraceContext.startSpan(method, undefined);
         const userId = this.clientMetadata.userId;
         const requestId = span.context().toTraceId();
-        return runWithLogContext(
-            "request",
+        const rpcSignal = args[args.length - 1];
+        const signal = rpcSignal ? (rpcSignal as AbortSignal) : new AbortController().signal;
+        return runWithRequestContext(
             {
-                userId,
-                contextId: requestId,
-                method,
+                requestKind: "jsonrpc",
+                requestMethod: method,
+                requestId,
+                signal,
+                subjectId: userId ? SubjectId.fromUserId(userId) : undefined,
             },
             () => {
                 try {

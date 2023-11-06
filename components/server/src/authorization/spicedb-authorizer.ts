@@ -14,8 +14,7 @@ import * as grpc from "@grpc/grpc-js";
 import { isFgaChecksEnabled, isFgaWritesEnabled } from "./authorizer";
 import { base64decode } from "@jmondi/oauth2-server";
 import { DecodedZedToken } from "@gitpod/spicedb-impl/lib/impl/v1/impl.pb";
-import { RequestContext } from "node-fetch";
-import { getRequestContext } from "../util/request-context";
+import { RequestContext, tryCtx } from "../util/request-context";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 async function tryThree<T>(errMessage: string, code: (attempt: number) => Promise<T>): Promise<T> {
@@ -242,7 +241,7 @@ interface ZedTokenCache {
 
 type ContextWithZedToken = RequestContext & { zedToken?: StoredZedToken };
 function getContext(): ContextWithZedToken {
-    return getRequestContext() as ContextWithZedToken;
+    return (tryCtx() || {}) as ContextWithZedToken;
 }
 
 /**

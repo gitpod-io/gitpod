@@ -10,6 +10,7 @@ import { GetWorkspaceRequest, GetWorkspaceResponse } from "@gitpod/public-api/li
 import { inject, injectable } from "inversify";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
+import { userId } from "../util/request-context";
 
 @injectable()
 export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceInterface> {
@@ -19,8 +20,8 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
     @inject(PublicAPIConverter)
     private readonly apiConverter: PublicAPIConverter;
 
-    async getWorkspace(req: GetWorkspaceRequest, context: HandlerContext): Promise<GetWorkspaceResponse> {
-        const info = await this.workspaceService.getWorkspace(context.user.id, req.id);
+    async getWorkspace(req: GetWorkspaceRequest, _: HandlerContext): Promise<GetWorkspaceResponse> {
+        const info = await this.workspaceService.getWorkspace(userId(), req.id);
         const response = new GetWorkspaceResponse();
         response.item = this.apiConverter.toWorkspace(info);
         return response;

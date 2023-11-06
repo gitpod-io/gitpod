@@ -111,6 +111,9 @@ message GetOrganizationSettingsResponse {
 message CreateOrganizationRequest {
     // name is the organization name
     string name = 1;
+
+    // the id of the owning user
+    optional string owner_id = 2;
 }
 
 message CreateOrganizationResponse {

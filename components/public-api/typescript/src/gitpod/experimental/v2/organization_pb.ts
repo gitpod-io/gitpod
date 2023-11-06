@@ -449,6 +449,13 @@ export class CreateOrganizationRequest extends Message<CreateOrganizationRequest
    */
   name = "";
 
+  /**
+   * the id of the owning user
+   *
+   * @generated from field: optional string owner_id = 2;
+   */
+  ownerId?: string;
+
   constructor(data?: PartialMessage<CreateOrganizationRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -458,6 +465,7 @@ export class CreateOrganizationRequest extends Message<CreateOrganizationRequest
   static readonly typeName = "gitpod.experimental.v2.CreateOrganizationRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "owner_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateOrganizationRequest {
