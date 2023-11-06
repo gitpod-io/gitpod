@@ -19,13 +19,13 @@ import {
     WorkspacePort_Policy,
     WorkspacePort_Protocol,
     WorkspaceStatus,
-} from "@gitpod/public-api/lib/gitpod/experimental/v2/workspace_pb";
+} from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import {
     Organization,
     OrganizationMember,
     OrganizationRole,
     OrganizationSettings,
-} from "@gitpod/public-api/lib/gitpod/experimental/v2/organization_pb";
+} from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { ApplicationError, ErrorCode, ErrorCodes } from "./messaging/error";
 import {
     CommitContext,
@@ -331,6 +331,7 @@ export class PublicAPIConverter {
         const result = new Organization();
         result.id = org.id;
         result.name = org.name;
+        result.slug = org.slug || "";
         result.creationTime = Timestamp.fromDate(new Date(org.creationTime));
         return result;
     }

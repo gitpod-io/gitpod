@@ -215,7 +215,7 @@ https://{$GITPOD_DOMAIN} {
 		import server_public_api
 	}
 
-	@proxy_server_public_api_2 path /public-api/gitpod.experimental.v2.*
+	@proxy_server_public_api_2 path /public-api/gitpod.v1.*
 	handle @proxy_server_public_api_2 {
 		import server_public_api
 	}

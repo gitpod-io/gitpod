@@ -5,8 +5,8 @@
  */
 
 import { HandlerContext, ServiceImpl } from "@connectrpc/connect";
-import { WorkspaceService as WorkspaceServiceInterface } from "@gitpod/public-api/lib/gitpod/experimental/v2/workspace_connect";
-import { GetWorkspaceRequest, GetWorkspaceResponse } from "@gitpod/public-api/lib/gitpod/experimental/v2/workspace_pb";
+import { WorkspaceService as WorkspaceServiceInterface } from "@gitpod/public-api/lib/gitpod/v1/workspace_connect";
+import { GetWorkspaceRequest, GetWorkspaceResponse } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { inject, injectable } from "inversify";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";

@@ -6,7 +6,7 @@
 
 import { PartialMessage } from "@bufbuild/protobuf";
 import { CallOptions, Code, ConnectError, PromiseClient } from "@connectrpc/connect";
-import { OrganizationService } from "@gitpod/public-api/lib/gitpod/experimental/v2/organization_connect";
+import { OrganizationService } from "@gitpod/public-api/lib/gitpod/v1/organization_connect";
 import {
     CreateOrganizationRequest,
     CreateOrganizationResponse,
@@ -34,7 +34,7 @@ import {
     UpdateOrganizationResponse,
     UpdateOrganizationSettingsRequest,
     UpdateOrganizationSettingsResponse,
-} from "@gitpod/public-api/lib/gitpod/experimental/v2/organization_pb";
+} from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { getGitpodService } from "./service";
 import { converter } from "./public-api";
 

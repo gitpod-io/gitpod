@@ -14,13 +14,13 @@ import { useOIDCClientsQuery } from "../data/oidc-clients/oidc-clients-query";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { Delayed } from "../components/Delayed";
 import { SpinnerLoader } from "../components/Loader";
-import { OrganizationInfo } from "../data/organizations/orgs-query";
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
 import { useQueryParams } from "../hooks/use-query-params";
 import { useDocumentTitle } from "../hooks/use-document-title";
 import { forceDedicatedSetupParam } from "./use-show-dedicated-setup";
+import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 
 type Props = {
     onComplete: () => void;
@@ -68,7 +68,7 @@ const STEPS = {
 type StepsValue = typeof STEPS[keyof typeof STEPS];
 
 type DedicatedSetupStepsProps = {
-    org?: OrganizationInfo;
+    org?: Organization;
     ssoConfig?: OIDCClientConfig;
     onComplete: () => void;
 };

@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package gitpod.experimental.v2;
+package gitpod.v1;
 
-option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v2";
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
 
 message PaginationRequest {
     // Page size is the maximum number of results to retrieve per page.

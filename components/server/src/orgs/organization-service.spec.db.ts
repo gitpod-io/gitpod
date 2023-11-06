@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
+import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TypeORM } from "@gitpod/gitpod-db/lib";
 import { Organization, User } from "@gitpod/gitpod-protocol";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -15,6 +15,7 @@ import { createTestContainer } from "../test/service-testing-container-module";
 import { OrganizationService } from "./organization-service";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import { expectError } from "../test/expect-utils";
+import { UserService } from "../user/user-service";
 
 const expect = chai.expect;
 
@@ -25,7 +26,7 @@ describe("OrganizationService", async () => {
     let owner: User;
     let member: User;
     let stranger: User;
-    let admin: User;
+    const adminId = BUILTIN_INSTLLATION_ADMIN_USER_ID;
     let org: Organization;
 
     beforeEach(async () => {
@@ -34,21 +35,33 @@ describe("OrganizationService", async () => {
             centralizedPermissions: true,
         });
         os = container.get(OrganizationService);
-        const userDB = container.get<UserDB>(UserDB);
-        owner = await userDB.newUser();
+        const userService = container.get<UserService>(UserService);
+        owner = await userService.createUser({
+            identity: {
+                authId: "github|1234",
+                authName: "github",
+                authProviderId: "github",
+            },
+        });
         org = await os.createOrganization(owner.id, "myorg");
         const invite = await os.getOrCreateInvite(owner.id, org.id);
 
-        member = await userDB.newUser();
+        member = await userService.createUser({
+            identity: {
+                authId: "github|1234",
+                authName: "github",
+                authProviderId: "github",
+            },
+        });
         await os.joinOrganization(member.id, invite.id);
 
-        stranger = await userDB.newUser();
-
-        const adminUser = await userDB.findUserById(BUILTIN_INSTLLATION_ADMIN_USER_ID)!;
-        if (!adminUser) {
-            throw new Error("admin user not found");
-        }
-        admin = adminUser;
+        stranger = await userService.createUser({
+            identity: {
+                authId: "github|1234",
+                authName: "github",
+                authProviderId: "github",
+            },
+        });
     });
 
     afterEach(async () => {
@@ -140,10 +153,11 @@ describe("OrganizationService", async () => {
         await os.createOrganization(owner.id, "org2");
         let orgs = await os.listOrganizationsByMember(owner.id, owner.id);
         expect(orgs.length).to.eq(3);
-        orgs = await os.listOrganizationsByMember(member.id, owner.id);
+        orgs = await os.listOrganizationsByMember(member.id, member.id);
         expect(orgs.length).to.eq(1);
-        orgs = await os.listOrganizationsByMember(stranger.id, owner.id);
+        orgs = await os.listOrganizationsByMember(stranger.id, stranger.id);
         expect(orgs.length).to.eq(0);
+        await expectError(ErrorCodes.NOT_FOUND, os.listOrganizationsByMember(stranger.id, owner.id));
     });
 
     it("should getOrganization", async () => {
@@ -182,21 +196,21 @@ describe("OrganizationService", async () => {
     });
 
     it("should allow admins to do its thing", async () => {
-        await os.updateOrganization(admin.id, org.id, { name: "Name Changed" });
-        const updated = await os.getOrganization(admin.id, org.id);
+        await os.updateOrganization(adminId, org.id, { name: "Name Changed" });
+        const updated = await os.getOrganization(adminId, org.id);
         expect(updated.name).to.equal("Name Changed");
 
-        await os.updateSettings(admin.id, org.id, { workspaceSharingDisabled: true });
-        const settings = await os.getSettings(admin.id, org.id);
+        await os.updateSettings(adminId, org.id, { workspaceSharingDisabled: true });
+        const settings = await os.getSettings(adminId, org.id);
         expect(settings.workspaceSharingDisabled).to.be.true;
     });
 
     it("should remove the admin on first join", async () => {
-        const myOrg = await os.createOrganization(BUILTIN_INSTLLATION_ADMIN_USER_ID, "My Org");
-        expect((await os.listMembers(BUILTIN_INSTLLATION_ADMIN_USER_ID, myOrg.id)).length).to.eq(1);
+        const myOrg = await os.createOrganization(adminId, "My Org");
+        expect((await os.listMembers(adminId, myOrg.id)).length).to.eq(1);
 
         // add a another member which should become owner
-        await os.addOrUpdateMember(BUILTIN_INSTLLATION_ADMIN_USER_ID, myOrg.id, owner.id, "member");
+        await os.addOrUpdateMember(adminId, myOrg.id, owner.id, "member");
         // admin should have been removed
         const members = await os.listMembers(owner.id, myOrg.id);
         expect(members.length).to.eq(1);
@@ -205,15 +219,15 @@ describe("OrganizationService", async () => {
 
     it("should listOrganizations", async () => {
         const strangerOrg = await os.createOrganization(stranger.id, "stranger-org");
-        let orgs = await os.listOrganizations(owner.id, {});
+        let orgs = await os.listOrganizations(owner.id, {}, "installation");
         expect(orgs.rows[0].id).to.eq(org.id);
         expect(orgs.total).to.eq(1);
 
-        orgs = await os.listOrganizations(stranger.id, {});
+        orgs = await os.listOrganizations(stranger.id, {}, "installation");
         expect(orgs.rows[0].id).to.eq(strangerOrg.id);
         expect(orgs.total).to.eq(1);
 
-        orgs = await os.listOrganizations(admin.id, {});
+        orgs = await os.listOrganizations(adminId, {}, "installation");
         expect(orgs.rows.some((org) => org.id === org.id)).to.be.true;
         expect(orgs.rows.some((org) => org.id === strangerOrg.id)).to.be.true;
         expect(orgs.total).to.eq(2);

@@ -39,7 +39,39 @@ export class OrganizationService {
             orderDir?: "asc" | "desc";
             searchTerm?: string;
         },
+        scope?: "member" | "installation",
     ): Promise<{ total: number; rows: Organization[] }> {
+        if (scope !== "installation") {
+            let result = await this.listOrganizationsByMember(userId, userId);
+            result = result.filter((o) => o.name.toLowerCase().includes((req.searchTerm || "").toLowerCase()));
+            // apply ordering
+            if (req.orderBy) {
+                result.sort((a, b) => {
+                    const aVal = a[req.orderBy!];
+                    const bVal = b[req.orderBy!];
+                    if (!aVal && !bVal) {
+                        return 0;
+                    }
+                    if (!aVal) {
+                        return req.orderDir === "asc" ? -1 : 1;
+                    }
+                    if (!bVal) {
+                        return req.orderDir === "asc" ? 1 : -1;
+                    }
+                    if (aVal < bVal) {
+                        return req.orderDir === "asc" ? -1 : 1;
+                    }
+                    if (aVal > bVal) {
+                        return req.orderDir === "asc" ? 1 : -1;
+                    }
+                    return 0;
+                });
+            }
+            return {
+                total: result.length,
+                rows: result.slice(req.offset || 0, (req.offset || 0) + (req.limit || 50)),
+            };
+        }
         const result = await this.teamDB.findTeams(
             req.offset || 0,
             req.limit || 50,
@@ -62,7 +94,7 @@ export class OrganizationService {
     }
 
     async listOrganizationsByMember(userId: string, memberId: string): Promise<Organization[]> {
-        //TODO check if user has access to member
+        await this.auth.checkPermissionOnUser(userId, "read_info", memberId);
         const orgs = await this.teamDB.findTeamsByUser(memberId);
         const result: Organization[] = [];
         for (const org of orgs) {

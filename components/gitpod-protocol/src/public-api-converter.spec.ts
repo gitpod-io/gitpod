@@ -11,11 +11,11 @@ import {
     WorkspacePhase_Phase,
     WorkspacePort_Policy,
     WorkspacePort_Protocol,
-} from "@gitpod/public-api/lib/gitpod/experimental/v2/workspace_pb";
+} from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { expect } from "chai";
 import { PublicAPIConverter } from "./public-api-converter";
 import { OrgMemberInfo } from "./teams-projects-protocol";
-import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/experimental/v2/organization_pb";
+import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 
 describe("PublicAPIConverter", () => {
     const converter = new PublicAPIConverter();
@@ -25,11 +25,13 @@ describe("PublicAPIConverter", () => {
             const org = {
                 id: "123",
                 name: "My Org",
+                slug: "my-org",
                 creationTime: "2022-01-01T00:00:00.000Z",
             };
             const result = converter.toOrganization(org);
             expect(result.id).to.equal(org.id);
             expect(result.name).to.equal(org.name);
+            expect(result.slug).to.equal(org.slug);
             expect(result.creationTime).to.deep.equal(Timestamp.fromDate(new Date(org.creationTime)));
         });
     });

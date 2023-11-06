@@ -4,26 +4,24 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { MethodKind, ServiceType } from "@bufbuild/protobuf";
 import { Code, ConnectError, PromiseClient, createPromiseClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
-import { MethodKind, ServiceType } from "@bufbuild/protobuf";
-import { TeamMemberInfo, TeamMemberRole, User } from "@gitpod/gitpod-protocol";
+import { User } from "@gitpod/gitpod-protocol";
 import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
-import { Project as ProtocolProject, Team as ProtocolTeam } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
+import { Project as ProtocolProject } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connect";
 import { OIDCService } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_connect";
 import { ProjectsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_connect";
 import { Project } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_pb";
-import { TeamsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connect";
-import { Team, TeamMember, TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { TokensService } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_connect";
 import { WorkspacesService as WorkspaceV1Service } from "@gitpod/public-api/lib/gitpod/experimental/v1/workspaces_connect";
-import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/experimental/v2/workspace_connect";
+import { OrganizationService } from "@gitpod/public-api/lib/gitpod/v1/organization_connect";
+import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/v1/workspace_connect";
 import { getMetricsInterceptor } from "@gitpod/public-api/lib/metrics";
 import { getExperimentsClient } from "../experiments/client";
-import { JsonRpcWorkspaceClient } from "./json-rpc-workspace-client";
 import { JsonRpcOrganizationClient } from "./json-rpc-organization-client";
-import { OrganizationService } from "@gitpod/public-api/lib/gitpod/experimental/v2/organization_connect";
+import { JsonRpcWorkspaceClient } from "./json-rpc-workspace-client";
 
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
@@ -33,7 +31,6 @@ const transport = createConnectTransport({
 export const converter = new PublicAPIConverter();
 
 export const helloService = createPromiseClient(HelloService, transport);
-export const teamsService = createPromiseClient(TeamsService, transport);
 export const personalAccessTokensService = createPromiseClient(TokensService, transport);
 export const projectsService = createPromiseClient(ProjectsService, transport);
 /**
@@ -43,47 +40,11 @@ export const workspacesService = createPromiseClient(WorkspaceV1Service, transpo
 export const oidcService = createPromiseClient(OIDCService, transport);
 
 export const workspaceClient = createServiceClient(WorkspaceService, new JsonRpcWorkspaceClient());
-export const organizationClient = createServiceClient(OrganizationService, new JsonRpcOrganizationClient());
-
-export function publicApiTeamToProtocol(team: Team): ProtocolTeam {
-    return {
-        id: team.id,
-        name: team.name,
-        slug: team.slug,
-        // We do not use the creationTime in the dashboard anywhere, se we keep it empty.
-        creationTime: "",
-    };
-}
-
-export function publicApiTeamsToProtocol(teams: Team[]): ProtocolTeam[] {
-    return teams.map(publicApiTeamToProtocol);
-}
-
-export function publicApiTeamMembersToProtocol(members: TeamMember[]): TeamMemberInfo[] {
-    return members.map(publicApiTeamMemberToProtocol);
-}
-
-export function publicApiTeamMemberToProtocol(member: TeamMember): TeamMemberInfo {
-    return {
-        userId: member.userId,
-        fullName: member.fullName,
-        avatarUrl: member.avatarUrl,
-        memberSince: member.memberSince?.toDate().toISOString() || "",
-        role: publicApiTeamRoleToProtocol(member.role),
-        primaryEmail: member.primaryEmail,
-        ownedByOrganization: member.ownedByOrganization,
-    };
-}
-
-export function publicApiTeamRoleToProtocol(role: TeamRole): TeamMemberRole {
-    switch (role) {
-        case TeamRole.OWNER:
-            return "owner";
-        case TeamRole.MEMBER:
-        case TeamRole.UNSPECIFIED:
-            return "member";
-    }
-}
+export const organizationClient = createServiceClient(
+    OrganizationService,
+    new JsonRpcOrganizationClient(),
+    "organization",
+);
 
 export async function listAllProjects(opts: { orgId: string }): Promise<ProtocolProject[]> {
     let pagination = {
@@ -140,7 +101,11 @@ export function updateUser(newUser: User | undefined) {
     user = newUser;
 }
 
-function createServiceClient<T extends ServiceType>(type: T, jsonRpcClient?: PromiseClient<T>): PromiseClient<T> {
+function createServiceClient<T extends ServiceType>(
+    type: T,
+    jsonRpcClient?: PromiseClient<T>,
+    featureFlagSuffix?: string,
+): PromiseClient<T> {
     return new Proxy(createPromiseClient(type, transport), {
         get(grpcClient, prop) {
             const experimentsClient = getExperimentsClient();
@@ -149,18 +114,20 @@ function createServiceClient<T extends ServiceType>(type: T, jsonRpcClient?: Pro
                 if (!jsonRpcClient) {
                     return grpcClient;
                 }
+                const featureFlags = ["dashboard_public_api_enabled", "centralizedPermissions"];
+                if (featureFlagSuffix) {
+                    featureFlags.push(`dashboard_public_api_${featureFlagSuffix}_enabled`);
+                }
                 // TODO(ak): is not going to work for getLoggedInUser itself
-                const [isPublicAPIEnabled, isFgaChecksEnabled] = await Promise.all([
-                    experimentsClient.getValueAsync("dashboard_public_api_enabled", false, {
-                        user,
-                        gitpodHost: window.location.host,
-                    }),
-                    experimentsClient.getValueAsync("centralizedPermissions", false, {
-                        user,
-                        gitpodHost: window.location.host,
-                    }),
-                ]);
-                if (isPublicAPIEnabled && isFgaChecksEnabled) {
+                const resolvedFlags = await Promise.all(
+                    featureFlags.map((ff) =>
+                        experimentsClient.getValueAsync(ff, false, {
+                            user,
+                            gitpodHost: window.location.host,
+                        }),
+                    ),
+                );
+                if (resolvedFlags.every((f) => f === true)) {
                     return grpcClient;
                 }
                 return jsonRpcClient;

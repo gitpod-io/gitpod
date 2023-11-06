@@ -10,7 +10,7 @@ import { useHistory } from "react-router-dom";
 import { Heading1, Heading3, Subheading } from "../components/typography/headings";
 import { useOrganizationsInvalidator } from "../data/organizations/orgs-query";
 import { useDocumentTitle } from "../hooks/use-document-title";
-import { publicApiTeamToProtocol, teamsService } from "../service/public-api";
+import { organizationClient } from "../service/public-api";
 import { Button } from "../components/Button";
 
 export default function NewTeamPage() {
@@ -24,11 +24,10 @@ export default function NewTeamPage() {
         event.preventDefault();
 
         try {
-            const team = publicApiTeamToProtocol((await teamsService.createTeam({ name })).team!);
-
+            const team = await organizationClient.createOrganization({ name });
             invalidateOrgs();
             // Redirects to the new Org's dashboard
-            history.push(`/workspaces/?org=${team.id}`);
+            history.push(`/workspaces/?org=${team.organization?.id}`);
         } catch (error) {
             console.error(error);
             if (error instanceof ConnectError) {
