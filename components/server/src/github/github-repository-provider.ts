@@ -230,7 +230,7 @@ export class GithubRepositoryProvider implements RepositoryProvider {
         return repos;
     }
 
-    public async searchRepos(user: User, searchString: string): Promise<RepositoryInfo[]> {
+    public async searchRepos(user: User, searchString: string, limit: number): Promise<RepositoryInfo[]> {
         // graphql api only returns public orgs, so we need to use the rest api to get both public & private orgs
         const orgs = await this.github.run(user, async (api) => {
             return api.orgs.listMembershipsForAuthenticatedUser({
@@ -245,7 +245,7 @@ export class GithubRepositoryProvider implements RepositoryProvider {
         const query = JSON.stringify(`${searchString} in:name user:@me ${orgFilters}`);
         const repoSearchQuery = `
             query SearchRepos {
-                search (type: REPOSITORY, first: 10, query: ${query}){
+                search (type: REPOSITORY, first: ${limit}, query: ${query}){
                     edges {
                         node {
                             ... on Repository {

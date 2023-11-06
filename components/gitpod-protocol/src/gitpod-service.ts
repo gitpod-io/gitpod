@@ -318,6 +318,7 @@ export interface GetProviderRepositoriesParams {
 export interface SearchRepositoriesParams {
     organizationId: string;
     searchString: string;
+    limit?: number; // defaults to 30
 }
 export interface ProviderRepository {
     name: string;

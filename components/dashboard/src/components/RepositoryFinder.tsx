@@ -11,6 +11,8 @@ import { ReactComponent as RepositoryIcon } from "../icons/RepositoryWithColor.s
 import { SuggestedRepository } from "@gitpod/gitpod-protocol";
 import { MiddleDot } from "./typography/MiddleDot";
 import { useUnifiedRepositorySearch } from "../data/git-providers/unified-repositories-search-query";
+import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
+import { ReactComponent as Exclamation2 } from "../images/exclamation2.svg";
 
 interface RepositoryFinderProps {
     selectedContextURL?: string;
@@ -30,7 +32,14 @@ export default function RepositoryFinder({
     onChange,
 }: RepositoryFinderProps) {
     const [searchString, setSearchString] = useState("");
-    const { data: repos, isLoading, isSearching } = useUnifiedRepositorySearch({ searchString, excludeProjects });
+    const {
+        data: repos,
+        isLoading,
+        isSearching,
+        hasMore,
+    } = useUnifiedRepositorySearch({ searchString, excludeProjects });
+
+    const authProviders = useAuthProviders();
 
     const handleSelectionChange = useCallback(
         (selectedID: string) => {
@@ -87,15 +96,55 @@ export default function RepositoryFinder({
         // searchString ignore here as list is already pre-filtered against it
         // w/ mirrored state via useUnifiedRepositorySearch
         (searchString: string) => {
-            return repos.map((repo) => {
+            const result = repos.map((repo) => {
                 return {
                     id: repo.projectId || repo.url,
                     element: <SuggestedRepositoryOption repo={repo} />,
                     isSelectable: true,
                 } as ComboboxElement;
             });
+            if (hasMore) {
+                // add an element that tells the user to refince the search
+                result.push({
+                    id: "more",
+                    element: (
+                        <div className="text-sm text-gray-400 dark:text-gray-500">
+                            Repo missing? Try refining your search.
+                        </div>
+                    ),
+                    isSelectable: false,
+                } as ComboboxElement);
+            }
+            if (searchString.length >= 3 && authProviders.data?.some((p) => p.authProviderType === "BitbucketServer")) {
+                // add an element that tells the user that the Bitbucket Server does only support prefix search
+                result.push({
+                    id: "bitbucket-server",
+                    element: (
+                        <div className="text-sm text-gray-400 dark:text-gray-500">
+                            <div className="flex items-center">
+                                <Exclamation2 className="w-4 h-4"></Exclamation2>
+                                <span className="ml-2">Bitbucket Server only supports searching by prefix.</span>
+                            </div>
+                        </div>
+                    ),
+                    isSelectable: false,
+                } as ComboboxElement);
+            }
+            if (searchString.length < 3) {
+                // add an element that tells the user to type more
+                result.push({
+                    id: "not-searched",
+                    element: (
+                        <div className="text-sm text-gray-400 dark:text-gray-500">
+                            Please type at least 3 characters to search.
+                        </div>
+                    ),
+                    isSelectable: false,
+                } as ComboboxElement);
+            }
+            return result;
         },
-        [repos],
+        [repos, hasMore, authProviders.data],
     );
 
     return (
