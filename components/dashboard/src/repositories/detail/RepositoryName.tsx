@@ -4,25 +4,24 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-// TODO: fix mismatched project types when we build repo configuration apis
-import { Project } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { Button } from "../../components/Button";
 import { TextInputField } from "../../components/forms/TextInputField";
 import { FC, useCallback, useState } from "react";
 import { useUpdateProject } from "../../data/projects/project-queries";
 import { useToast } from "../../components/toasts/Toasts";
 import { useOnBlurError } from "../../hooks/use-onblur-error";
+import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 
 const MAX_LENGTH = 100;
 
 type Props = {
-    project: Project;
+    configuration: Configuration;
 };
 
-export const RepositoryNameForm: FC<Props> = ({ project }) => {
+export const RepositoryNameForm: FC<Props> = ({ configuration }) => {
     const { toast } = useToast();
     const updateProject = useUpdateProject();
-    const [projectName, setProjectName] = useState(project.name);
+    const [projectName, setProjectName] = useState(configuration.name);
 
     const nameError = useOnBlurError("Sorry, this name is too long.", projectName.length <= MAX_LENGTH);
 
@@ -37,7 +36,7 @@ export const RepositoryNameForm: FC<Props> = ({ project }) => {
 
             updateProject.mutate(
                 {
-                    id: project.id,
+                    id: configuration.id,
                     name: projectName,
                 },
                 {
@@ -47,7 +46,7 @@ export const RepositoryNameForm: FC<Props> = ({ project }) => {
                 },
             );
         },
-        [nameError.isValid, updateProject, project.id, projectName, toast],
+        [nameError.isValid, updateProject, configuration.id, projectName, toast],
     );
 
     return (
@@ -63,7 +62,7 @@ export const RepositoryNameForm: FC<Props> = ({ project }) => {
             <Button
                 className="mt-4"
                 htmlType="submit"
-                disabled={project.name === projectName}
+                disabled={configuration.name === projectName}
                 loading={updateProject.isLoading}
             >
                 Update Name

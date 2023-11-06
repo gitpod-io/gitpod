@@ -7,16 +7,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { configurationClient } from "../../service/public-api";
+import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 
 const BASE_KEY = "configurations";
 
-type ListConfigurationsQueryArgs = {
+type ListConfigurationsArgs = {
     searchTerm?: string;
     page: number;
     pageSize: number;
 };
 
-export const useListConfigurationsQuery = ({ searchTerm = "", page, pageSize }: ListConfigurationsQueryArgs) => {
+export const useListConfigurations = ({ searchTerm = "", page, pageSize }: ListConfigurationsArgs) => {
     const { data: org } = useCurrentOrg();
 
     return useQuery(
@@ -26,13 +27,13 @@ export const useListConfigurationsQuery = ({ searchTerm = "", page, pageSize }: 
                 throw new Error("No org currently selected");
             }
 
-            const response = await configurationClient.listConfigurations({
+            const { configurations, pagination } = await configurationClient.listConfigurations({
                 organizationId: org.id,
                 searchTerm,
                 pagination: { page, pageSize },
             });
 
-            return response;
+            return { configurations, pagination };
         },
         {
             enabled: !!org,
@@ -40,11 +41,27 @@ export const useListConfigurationsQuery = ({ searchTerm = "", page, pageSize }: 
     );
 };
 
-export const getListConfigurationsQueryKey = (orgId: string, args?: ListConfigurationsQueryArgs) => {
+export const getListConfigurationsQueryKey = (orgId: string, args?: ListConfigurationsArgs) => {
     const key: any[] = [BASE_KEY, "list", { orgId }];
     if (args) {
         key.push(args);
     }
+
+    return key;
+};
+
+export const useConfiguration = (configurationId: string) => {
+    return useQuery<Configuration | undefined, Error>(getConfigurationQueryKey(configurationId), async () => {
+        const { configuration } = await configurationClient.getConfiguration({
+            configurationId,
+        });
+
+        return configuration;
+    });
+};
+
+export const getConfigurationQueryKey = (configurationId: string) => {
+    const key: any[] = [BASE_KEY, { configurationId }];
 
     return key;
 };

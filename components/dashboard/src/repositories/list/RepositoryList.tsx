@@ -12,14 +12,14 @@ import { Project } from "@gitpod/gitpod-protocol";
 import { CreateProjectModal } from "../../projects/create-project-modal/CreateProjectModal";
 import { Button } from "../../components/Button";
 import { RepositoryListItem } from "./RepoListItem";
-import { useListConfigurationsQuery } from "../../data/configurations/configuration-queries";
+import { useListConfigurations } from "../../data/configurations/configuration-queries";
 import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
 import { TextInput } from "../../components/forms/TextInputField";
 
 const RepositoryListPage: FC = () => {
     const history = useHistory();
     const [searchTerm, setSearchTerm, debouncedSearchTerm] = useStateWithDebounce("");
-    const { data, isLoading } = useListConfigurationsQuery({ searchTerm: debouncedSearchTerm, page: 1, pageSize: 10 });
+    const { data, isLoading } = useListConfigurations({ searchTerm: debouncedSearchTerm, page: 1, pageSize: 10 });
     const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
 
     const handleProjectCreated = useCallback(
