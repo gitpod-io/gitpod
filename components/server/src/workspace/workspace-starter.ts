@@ -594,7 +594,7 @@ export class WorkspaceStarter {
                 if (isClusterMaintenanceError(err)) {
                     reason = "workspaceClusterMaintenance";
                     err = new Error(
-                        "Cannot start a workspace because the workspace cluster is temporarily unavailable due to maintenance. Please try again in a few minutes",
+                        "We're in the middle of an update. We'll be back to normal soon. Please try again in a few minutes.",
                     );
                 }
                 await this.failInstanceStart({ span }, err, workspace, instance, abortSignal);
