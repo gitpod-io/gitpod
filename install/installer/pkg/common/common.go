@@ -493,6 +493,49 @@ func RedisWaiterContainer(ctx *RenderContext) *corev1.Container {
 	}
 }
 
+// ServerComponentWaiterContainer is the container used to wait for the deployment/server to be ready
+// it requires pods list access to the cluster
+func ServerComponentWaiterContainer(ctx *RenderContext) *corev1.Container {
+	image := ctx.ImageName(ctx.Config.Repository, ServerComponent, ctx.VersionManifest.Components.Server.Version)
+	return componentWaiterContainer(ctx, ServerComponent, DefaultLabels(ServerComponent), image)
+}
+
+// PublicApiServerComponentWaiterContainer is the container used to wait for the deployment/public-api-server to be ready
+// it requires pods list access to the cluster
+func PublicApiServerComponentWaiterContainer(ctx *RenderContext) *corev1.Container {
+	image := ctx.ImageName(ctx.Config.Repository, PublicApiComponent, ctx.VersionManifest.Components.Server.Version)
+	return componentWaiterContainer(ctx, PublicApiComponent, DefaultLabels(PublicApiComponent), image)
+}
+
+func componentWaiterContainer(ctx *RenderContext, component string, labels map[string]string, image string) *corev1.Container {
+	labelsStr := []string{}
+	for k, v := range labels {
+		labelsStr = append(labelsStr, fmt.Sprintf("%s=%s", k, v))
+	}
+
+	return &corev1.Container{
+		Name:  component + "-waiter",
+		Image: ctx.ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
+		Args: []string{
+			"-v",
+			"component",
+			"--namespace",
+			ctx.Namespace,
+			"--component",
+			component,
+			"--labels",
+			strings.Join(labelsStr, ","),
+			"--image",
+			image,
+		},
+		SecurityContext: &corev1.SecurityContext{
+			Privileged:               pointer.Bool(false),
+			AllowPrivilegeEscalation: pointer.Bool(false),
+			RunAsUser:                pointer.Int64(31001),
+		},
+	}
+}
+
 func KubeRBACProxyContainer(ctx *RenderContext) *corev1.Container {
 	return KubeRBACProxyContainerWithConfig(ctx)
 }

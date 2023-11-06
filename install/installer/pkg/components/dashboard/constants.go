@@ -10,4 +10,10 @@ const (
 	PortName      = "http"
 	ServicePort   = 3001
 	ReadinessPort = 8080
+
+	// We need a new service account because
+	// - Update old one will make preview env / dedicated deploy failed with err
+	//   The RoleBinding "dashboard" is invalid: roleRef: Invalid value: rbac.RoleRef{APIGroup:"rbac.authorization.k8s.io", Kind:"Role", Name:"dashboard"}: cannot change roleRef
+	// - Add new one will not work for dedicated since it will not clean old resources
+	ComponentServiceAccount = "dashboard-service-account"
 )
