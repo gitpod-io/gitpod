@@ -208,9 +208,9 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
         return commits.map((c) => c.id);
     }
 
-    public async searchRepos(user: User, searchString: string): Promise<RepositoryInfo[]> {
-        // Only load 1 page of 10 results for our searchString
-        const results = await this.api.getRepos(user, { maxPages: 1, limit: 30, searchString });
+    public async searchRepos(user: User, searchString: string, limit: number): Promise<RepositoryInfo[]> {
+        // Only load 1 page of limit results for our searchString
+        const results = await this.api.getRepos(user, { maxPages: 1, limit, searchString });
 
         const repos: RepositoryInfo[] = [];
         results.forEach((r) => {

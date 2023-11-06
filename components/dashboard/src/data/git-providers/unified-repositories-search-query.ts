@@ -17,15 +17,18 @@ type UnifiedRepositorySearchArgs = {
 // Combines the suggested repositories and the search repositories query into one hook
 export const useUnifiedRepositorySearch = ({ searchString, excludeProjects = false }: UnifiedRepositorySearchArgs) => {
     const suggestedQuery = useSuggestedRepositories();
-    const searchQuery = useSearchRepositories({ searchString });
+    const searchLimit = 30;
+    const searchQuery = useSearchRepositories({ searchString, limit: searchLimit });
 
     const filteredRepos = useMemo(() => {
         const flattenedRepos = [suggestedQuery.data || [], searchQuery.data || []].flat();
+
         return deduplicateAndFilterRepositories(searchString, excludeProjects, flattenedRepos);
     }, [excludeProjects, searchQuery.data, searchString, suggestedQuery.data]);
 
     return {
         data: filteredRepos,
+        hasMore: searchQuery.data?.length === searchLimit,
         isLoading: suggestedQuery.isLoading,
         isSearching: searchQuery.isFetching,
         isError: suggestedQuery.isError || searchQuery.isError,

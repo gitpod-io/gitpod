@@ -354,7 +354,7 @@ export function CreateWorkspacePage() {
     if (needsGitAuthorization) {
         return (
             <div className="flex flex-col mt-32 mx-auto ">
-                <div className="flex flex-col max-h-screen max-w-lg mx-auto items-center w-full">
+                <div className="flex flex-col max-h-screen max-w-xl mx-auto items-center w-full">
                     <Heading1>New Workspace</Heading1>
                     <div className="text-gray-500 text-center text-base">
                         Start a new workspace with the following options.
@@ -367,7 +367,7 @@ export function CreateWorkspacePage() {
 
     return (
         <div className="flex flex-col mt-32 mx-auto ">
-            <div className="flex flex-col max-h-screen max-w-lg mx-auto items-center w-full">
+            <div className="flex flex-col max-h-screen max-w-xl mx-auto items-center w-full">
                 <Heading1>New Workspace</Heading1>
                 <div className="text-gray-500 text-center text-base">
                     Create a new workspace in the{" "}
