@@ -21,14 +21,14 @@ const RepositoryListPage: FC = () => {
 
     const handleProjectCreated = useCallback(
         (project: Project) => {
-            history.push(`/repositories/${project.id}`);
+            history.push(`/configurations/${project.id}`);
         },
         [history],
     );
 
     return (
         <>
-            <Header title="Repositories" subtitle="" />
+            <Header title="Configurations" subtitle="" />
 
             <div className="app-container">
                 <div className="py-4 text-right">
@@ -39,7 +39,8 @@ const RepositoryListPage: FC = () => {
 
                 <ul className="space-y-2 mt-8">
                     {!isLoading &&
-                        data?.projects.map((project) => <RepositoryListItem key={project.id} project={project} />)}
+                        data &&
+                        data.projects.map((project) => <RepositoryListItem key={project.id} project={project} />)}
                 </ul>
             </div>
 

@@ -19,7 +19,7 @@ type Props = {
     project: Project;
 };
 
-export const RepositoryNameForm: FC<Props> = ({ project }) => {
+export const ConfigurationNameForm: FC<Props> = ({ project }) => {
     const { toast } = useToast();
     const updateProject = useUpdateProject();
     const [projectName, setProjectName] = useState(project.name);
