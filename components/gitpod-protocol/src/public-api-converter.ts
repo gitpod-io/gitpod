@@ -26,7 +26,7 @@ import {
     OrganizationRole,
     OrganizationSettings,
 } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
-import { ApplicationError, ErrorCode, ErrorCodes } from "./messaging/error";
+import { ApplicationError, ConnectAwareApplicationError, ErrorCode, ErrorCodes } from "./messaging/error";
 import {
     CommitContext,
     EnvVarWithValue,
@@ -154,7 +154,11 @@ export class PublicAPIConverter {
         if (reason instanceof ConnectError) {
             return reason;
         }
+        if (reason instanceof ConnectAwareApplicationError) {
+            return reason.toConnectError();
+        }
         if (reason instanceof ApplicationError) {
+            // TODO(ak) remove metadata once we have a better way to pass application errors
             const metadata: HeadersInit = {};
             metadata[applicationErrorCode] = String(reason.code);
             if (reason.data) {

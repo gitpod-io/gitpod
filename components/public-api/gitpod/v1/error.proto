@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package gitpod.v1;
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+
+// Describes the cause of the error with structured details to further classify the error.
+//
+// Example of a PERMISSION_DENIED status when a user is blocked
+//      { "reason": "REASON_USER_BLOCKED" }
+//
+// Example of a PERMISSION_DENIED status when a user is not verified
+//      { "reason": "REASON_NEEDS_VERIFICATION" }
+//
+// Example of FAILED_PRECONDITION status when an org payment limit is reached
+//      { "reason": "REASON_PAYMENT_SPENDING_LIMIT_REACHEAD" }
+//
+message ErrorInfo {
+  enum Reason {
+    REASON_UNSPECIFIED = 0;
+    REASON_USER_BLOCKED = 1;
+    REASON_NEEDS_VERIFICATION = 2;
+    REASON_PAYMENT_SPENDING_LIMIT_REACHEAD = 3;
+    REASON_INVITES_DISABLED_SSO_ORGANIZATION = 4;
+    REASON_LAST_ORGANIZATION_OWNER_CANNOT_BE_REMOVED = 5;
+    REASON_MEMBER_BELONGS_TO_ORGANIZATION = 6;
+    // define other reasons
+  }
+  // The reason of the error.
+  Reason reason = 1;
+
+  map<string, string> metadata = 2;
+}
+
+// Describes the resource that is being accessed.
+//
+// It should be used as a payload for NOT_FOUND and ALREDY_EXIST status codes.
+message ResourceInfo {
+  enum Type {
+    TYPE_UNSPECIFIED = 0;
+    TYPE_USER = 1;
+    TYPE_ORGANIZATION = 2;
+    TYPE_CONFIGURATION = 3;
+    TYPE_WORKSPACE = 4;
+    TYPE_ORGANIZATION_INVITE = 5;
+    TYPE_ORGANIZATION_MEMBER = 6;
+    // define other resources
+  }
+  // The id of the resource being accessed
+  string id = 1;
+  // the type of resource being accessed
+  Type type = 2;
+  // The id of the parent resource of the resource being accessed
+  // For example, the parent of a member is the organization.
+  optional string parent_id = 3;
+}
+
+// Describes violations in a client request. This error type focuses on the
+// syntactic aspects of the request.
+//
+// It should be used as a payload for INVALID_ARGUMENT and OUT_OF_RANGE status codes.
+message BadRequest {
+  enum Reason {
+    REASON_UNSPECIFIED = 0;
+    REASON_TOO_LONG = 1;
+    // define other reasons
+  }
+
+  // A message type used to describe a single bad request field.
+  message FieldViolation {
+    // A path that leads to a field in the request body.
+    string field_path = 1;
+
+    // message is a human readable description why the request element is bad.
+    string message = 2;
+
+		Reason reason = 3;
+  }
+
+  repeated FieldViolation fields = 1;
+}
+
+// Contains metadata about the request that clients can attach when filing a bug
+// or providing other forms of feedback.
+message RequestInfo {
+  // An opaque string that should only be interpreted by the service generating
+  // it. For example, it can be used to identify requests in the service's logs.
+  string request_id = 1;
+}

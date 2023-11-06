@@ -13,12 +13,19 @@ import {
     TeamMembershipInvite,
 } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
-import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import {
+    ApplicationError,
+    ErrorCodes,
+    FailedPreconditionError,
+    InternalError,
+    NotFoundError,
+} from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
 import { Authorizer } from "../authorization/authorizer";
 import { ProjectsService } from "../projects/projects-service";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
+import { ErrorInfo_Reason, ResourceInfo_Type } from "@gitpod/public-api/lib/gitpod/v1/error_pb";
 
 @injectable()
 export class OrganizationService {
@@ -109,7 +116,7 @@ export class OrganizationService {
         await this.auth.checkPermissionOnOrganization(userId, "read_info", orgId);
         const result = await this.teamDB.findTeamById(orgId);
         if (!result) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found`);
+            throw new NotFoundError({ type: ResourceInfo_Type.ORGANIZATION, id: orgId });
         }
         return result;
     }
@@ -202,7 +209,7 @@ export class OrganizationService {
         const invite = await this.teamDB.findGenericInviteByTeamId(orgId);
         if (invite) {
             if (await this.teamDB.hasActiveSSO(orgId)) {
-                throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
+                throw new FailedPreconditionError({ reason: ErrorInfo_Reason.INVITES_DISABLED_SSO_ORGANIZATION });
             }
             return invite;
         }
@@ -212,7 +219,7 @@ export class OrganizationService {
     public async resetInvite(userId: string, orgId: string): Promise<TeamMembershipInvite> {
         await this.auth.checkPermissionOnOrganization(userId, "invite_members", orgId);
         if (await this.teamDB.hasActiveSSO(orgId)) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
+            throw new FailedPreconditionError({ reason: ErrorInfo_Reason.INVITES_DISABLED_SSO_ORGANIZATION });
         }
         return this.teamDB.resetGenericInvite(orgId);
     }
@@ -221,10 +228,10 @@ export class OrganizationService {
         // Invites can be used by anyone, as long as they know the invite ID, hence needs no resource guard
         const invite = await this.teamDB.findTeamMembershipInviteById(inviteId);
         if (!invite || invite.invalidationTime !== "") {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "The invite link is no longer valid.");
+            throw new NotFoundError({ type: ResourceInfo_Type.ORGANIZATION_INVITE, id: inviteId });
         }
         if (await this.teamDB.hasActiveSSO(invite.teamId)) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
+            throw new FailedPreconditionError({ reason: ErrorInfo_Reason.INVITES_DISABLED_SSO_ORGANIZATION });
         }
         try {
             return await this.teamDB.transaction(async (db) => {
@@ -312,28 +319,34 @@ export class OrganizationService {
                 const members = await db.findMembersByTeam(orgId);
                 // cannot remove last owner
                 if (!members.some((m) => m.userId !== memberId && m.role === "owner")) {
-                    throw new ApplicationError(ErrorCodes.CONFLICT, "Cannot remove the last owner of an organization.");
+                    throw new FailedPreconditionError({
+                        reason: ErrorInfo_Reason.LAST_ORGANIZATION_OWNER_CANNOT_BE_REMOVED,
+                    });
                 }
 
                 membership = members.find((m) => m.userId === memberId);
                 if (!membership) {
-                    throw new ApplicationError(
-                        ErrorCodes.NOT_FOUND,
-                        `Could not find membership for user '${memberId}' in organization '${orgId}'`,
-                    );
+                    throw new NotFoundError({
+                        type: ResourceInfo_Type.ORGANIZATION_MEMBER,
+                        id: memberId,
+                        parentId: orgId,
+                    });
                 }
 
                 // Check if user's account belongs to the Org.
                 const userToBeRemoved = await this.userDB.findUserById(memberId);
                 if (!userToBeRemoved) {
-                    throw new ApplicationError(ErrorCodes.NOT_FOUND, `Could not find user '${memberId}'`);
+                    throw new NotFoundError({ type: ResourceInfo_Type.USER, id: memberId });
                 }
                 // Only invited members can be removed from the Org, but organizational accounts cannot.
                 if (userToBeRemoved.organizationId && orgId === userToBeRemoved.organizationId) {
-                    throw new ApplicationError(
-                        ErrorCodes.PERMISSION_DENIED,
-                        `User's account '${memberId}' belongs to the organization '${orgId}'`,
-                    );
+                    throw new FailedPreconditionError({
+                        reason: ErrorInfo_Reason.MEMBER_BELONGS_TO_ORGANIZATION,
+                        metadata: {
+                            memberId,
+                            organizationId: orgId,
+                        },
+                    });
                 }
 
                 await db.removeMemberFromTeam(userToBeRemoved.id, orgId);
@@ -344,9 +357,11 @@ export class OrganizationService {
                 // Rollback to the original role the user had
                 await this.auth.addOrganizationRole(orgId, memberId, membership.role);
             }
-            const code = ApplicationError.hasErrorCode(err) ? err.code : ErrorCodes.INTERNAL_SERVER_ERROR;
-            const message = ApplicationError.hasErrorCode(err) ? err.message : "" + err;
-            throw new ApplicationError(code, message);
+            if (err instanceof ApplicationError) {
+                throw err;
+            }
+            log.error({ organizationId: orgId }, "Failed to remove member from team:", err);
+            throw new InternalError("Failed to remove member from team.", err);
         }
         this.analytics.track({
             userId,
