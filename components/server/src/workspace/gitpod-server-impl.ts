@@ -1694,6 +1694,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("searchRepositories");
 
         const logCtx: LogContext = { userId: user.id };
+        const limit: number = params.limit || 30;
 
         // Search repos across scm providers for this user
         // Will search personal, and org repos
@@ -1708,7 +1709,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                         log.error(logCtx, "Unsupported repository host: " + p.host);
                         return [];
                     }
-                    const repos = await services.repositoryProvider.searchRepos(user, params.searchString);
+                    const repos = await services.repositoryProvider.searchRepos(user, params.searchString, limit);
 
                     return repos.map((r) =>
                         suggestionFromUserRepo({
@@ -1726,7 +1727,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const sortedRepos = sortSuggestedRepositories(providerRepos.flat());
 
-        return sortedRepos.map(
+        //return only the first 'limit' results
+        return sortedRepos.slice(0, limit).map(
             (repo): SuggestedRepository => ({
                 url: repo.url,
                 repositoryName: repo.repositoryName,
