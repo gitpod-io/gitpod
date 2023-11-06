@@ -27,7 +27,7 @@ spec:
               - alert: GitpodWorkspaceNodeHighNormalizedLoadAverage
                 labels:
                     severity: warning
-                    team: workspace
+                    team: engine
                 for: 60m
                 annotations:
                     runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceNodeHighNormalizedLoadAverage.md
@@ -47,7 +47,7 @@ spec:
               - alert: AutoscaleFailure
                 labels:
                     severity: warning
-                    team: workspace
+                    team: engine
                 annotations:
                     runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/AutoscaleFailure.md
                     summary: Automatic scale-up failed for some reason.
@@ -58,7 +58,7 @@ spec:
               - alert: NodePoolLoad
                 labels:
                     severity: critical
-                    team: workspace
+                    team: engine
                 for: 60m
                 annotations:
                     runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/NodePoolLoad.md

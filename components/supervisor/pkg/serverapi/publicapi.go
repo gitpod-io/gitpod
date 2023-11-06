@@ -34,7 +34,6 @@ type APIInterface interface {
 	OpenPort(ctx context.Context, port *gitpod.WorkspaceInstancePort) (res *gitpod.WorkspaceInstancePort, err error)
 	UpdateGitStatus(ctx context.Context, status *gitpod.WorkspaceInstanceRepoStatus) (err error)
 	WorkspaceUpdates(ctx context.Context) (<-chan *gitpod.WorkspaceInstance, error)
-	GetDefaultWorkspaceImage(ctx context.Context) (string, error)
 
 	// Metrics
 	RegisterMetrics(registry *prometheus.Registry) error
@@ -301,36 +300,6 @@ func (s *Service) OpenPort(ctx context.Context, port *gitpod.WorkspaceInstancePo
 	// server don't respond anything
 	// see https://github.com/gitpod-io/gitpod/blob/2967579c330de67090d975661a6e3e1cd970ab68/components/server/src/workspace/gitpod-server-impl.ts#L1521
 	return port, nil
-}
-
-func (s *Service) GetDefaultWorkspaceImage(ctx context.Context) (image string, err error) {
-	if s == nil {
-		return "", errNotConnected
-	}
-	startTime := time.Now()
-	usePublicApi := s.usePublicAPI(ctx)
-	defer func() {
-		s.apiMetrics.ProcessMetrics(usePublicApi, "GetDefaultWorkspaceImage", nil, startTime)
-	}()
-	workspaceID := s.cfg.WorkspaceID
-	if !usePublicApi {
-		resp, err := s.gitpodService.GetDefaultWorkspaceImage(ctx, &gitpod.GetDefaultWorkspaceImageParams{
-			WorkspaceID: workspaceID,
-		})
-		if err != nil {
-			return "", err
-		}
-		return resp.Image, nil
-	}
-	service := v1.NewWorkspacesServiceClient(s.publicAPIConn)
-	resp, err := service.GetDefaultWorkspaceImage(ctx, &v1.GetDefaultWorkspaceImageRequest{
-		WorkspaceId: &workspaceID,
-	})
-	if err != nil {
-		log.WithField("method", "GetDefaultWorkspaceImage").WithError(err).Error("failed to call PublicAPI")
-		return "", err
-	}
-	return resp.Image, nil
 }
 
 // onWorkspaceUpdates listen to server and public API workspaceUpdates and publish to subscribers once Service created.

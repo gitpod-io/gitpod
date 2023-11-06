@@ -14,18 +14,6 @@ spec:
 
   - name: workspace-alerts
     rules:
-    - alert: GitpodWorkspaceStuckOnStoppedMk2
-      labels:
-        severity: warning
-        team: workspace
-      for: 20m
-      annotations:
-        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceStuckOnStopped.md
-        summary: Workspaces are stuck in STOPPED phase on cluster {{ $labels.cluster }}.
-        description: '{{ printf "%.2f" $value }} regular workspaces are stuck on stopped for more than 20 minutes. Current status: {{ $labels.reason }}'
-      expr: |
-        sum(gitpod_ws_manager_mk2_workspace_phase_total{phase="Stopped", cluster!~"ephemeral.*"}) > 5
-
     - alert: GitpodWorkspaceStuckOnStoppingMk2
       labels:
         severity: critical
@@ -98,7 +86,7 @@ spec:
     - alert: GitpodImagebuildDoneSuccess
       labels:
         severity: warning
-        team: workspace
+        team: engine
       for: 12h
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodImagebuildDoneSuccess.md
@@ -106,15 +94,3 @@ spec:
         description: imagebuilds are not reaching done at too high of a rate in cluster {{ $labels.cluster }}.
       expr: |
         (1 - (sum(rate(gitpod_image_builder_builds_done_total{success="false", cluster!~"ephemeral.*"}[4h])) / sum(rate(gitpod_image_builder_builds_done_total{cluster!~"ephemeral.*"}[4h])))) < 0.60
-
-    - alert: GitpodImagebuildStartSuccess
-      labels:
-        severity: warning
-        team: workspace
-      for: 2h
-      annotations:
-        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodImagebuildStartSuccess.md
-        summary: imagebuild start success rate is failing in cluster {{ $labels.cluster }}.
-        description: imagebuild starts are failing at too high of a rate in cluster {{ $labels.cluster }}.
-      expr: |
-        (1 - (sum(rate(gitpod_ws_manager_mk2_workspace_starts_failure_total{type="ImageBuild",cluster!~"ephemeral.*"}[8h])) / sum(rate(gitpod_ws_manager_mk2_workspace_starts_total{type="ImageBuild", cluster!~"ephemeral.*"}[4h])))) < 0.99

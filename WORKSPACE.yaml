@@ -7,8 +7,8 @@ defaultArgs:
   publishToNPM: true
   publishToJBMarketplace: true
   localAppVersion: unknown
-  codeCommit: 9ab5dfec5c88efc77a902df0a0c26733ab0c4a51
-  codeVersion: 1.83.1
+  codeCommit: 50b5698060d06fa4650f10651a8714fe1d3cffe2
+  codeVersion: 1.84.0
   codeQuality: stable
   noVerifyJBPlugin: false
   intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2023.2.3.tar.gz"
@@ -21,7 +21,7 @@ defaultArgs:
   clionDownloadUrl: "https://download.jetbrains.com/cpp/CLion-2023.2.2.tar.gz"
   jbBackendVersion: "latest"
   dockerVersion: "20.10.24"
-  dockerComposeVersion: "2.21.0-gitpod.0"
+  dockerComposeVersion: "2.23.0-gitpod.0"
 provenance:
   enabled: true
   slsa: true

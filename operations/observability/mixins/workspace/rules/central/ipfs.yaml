@@ -16,7 +16,7 @@ spec:
         - alert: IPFSStorageLow
           labels:
             severity: warning
-            team: workspace
+            team: engine
           for: 10m
           annotations:
             runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/IPFSAlmostOutOfStorage.md
@@ -26,7 +26,7 @@ spec:
         - alert: IPFSStorageCritical
           labels:
             severity: critical
-            team: workspace
+            team: engine
           for: 10m
           annotations:
             runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/IPFSAlmostOutOfStorage.md
