@@ -54,6 +54,15 @@ class ProjectDBSpec {
         const foundProject = await this.projectDb.findProjectsBySearchTerm(0, 10, "creationTime", "DESC", searchTerm);
 
         expect(foundProject.rows[0].id).to.eq(storedProject.id);
+
+        const foundProjectByName = await this.projectDb.findProjectsBySearchTerm(
+            0,
+            10,
+            "creationTime",
+            "DESC",
+            "some-proj",
+        );
+        expect(foundProjectByName.rows[0].id).to.eq(storedProject.id);
     }
 }
 
