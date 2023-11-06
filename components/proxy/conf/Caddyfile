@@ -335,10 +335,10 @@ https://{$GITPOD_DOMAIN} {
 		}
 	}
 
-	@local_app {
-		path /static/bin/gitpod-local-companion-*
+	@ide_bin {
+		path /static/bin/gitpod-*
 	}
-	handle @local_app {
+	handle @ide_bin {
 		import compression
 
 		reverse_proxy ide-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:80 {

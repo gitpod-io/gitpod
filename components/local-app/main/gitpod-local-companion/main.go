@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -20,6 +20,7 @@ import (
 	appapi "github.com/gitpod-io/gitpod/local-app/api"
 	"github.com/gitpod-io/local-app/pkg/auth"
 	"github.com/gitpod-io/local-app/pkg/bastion"
+	"github.com/gitpod-io/local-app/pkg/constants"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -27,12 +28,8 @@ import (
 	"google.golang.org/grpc"
 )
 
-var (
-	// Version - set during build
-	Version = "dev"
-)
-
 func main() {
+	// maintain compatibility with old keyring
 	sshConfig := os.Getenv("GITPOD_LCA_SSH_CONFIG")
 	if sshConfig == "" {
 		sshConfig = filepath.Join(os.TempDir(), "gitpod_ssh_config")
@@ -43,7 +40,7 @@ func main() {
 		Usage:                "connect your Gitpod workspaces",
 		Action:               DefaultCommand("run"),
 		EnableBashCompletion: true,
-		Version:              Version,
+		Version:              constants.Version,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "gitpod-host",
@@ -165,6 +162,8 @@ func run(opts runOptions) error {
 	if opts.verbose {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
+
+	logrus.WithField("options", opts).Info("starting local companion")
 	logrus.WithField("ssh_config", opts.sshConfigPath).Info("writing workspace ssh_config file")
 
 	// Trailing slash(es) result in connection issues, so remove them preemptively
@@ -284,7 +283,7 @@ func tryConnectToServer(gitpodUrl string, tkn string, reconnectionHandler func()
 		CloseHandler:        closeHandler,
 		ExtraHeaders: map[string]string{
 			"User-Agent":       "gitpod/local-companion",
-			"X-Client-Version": Version,
+			"X-Client-Version": constants.Version,
 		},
 	})
 	if err != nil {

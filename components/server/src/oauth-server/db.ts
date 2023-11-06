@@ -17,6 +17,7 @@ export interface InMemory {
 }
 
 // Clients
+
 const localAppClientID = "gplctl-1.0";
 const localClient: OAuthClient = {
     id: localAppClientID,
@@ -31,6 +32,40 @@ const localClient: OAuthClient = {
         { name: "function:getWorkspace" },
         { name: "function:getWorkspaces" },
         { name: "function:listenForWorkspaceInstanceUpdates" },
+        { name: "resource:default" },
+    ],
+};
+
+const localCliClientID = "gitpod-cli";
+const localCli: OAuthClient = {
+    id: localCliClientID,
+    secret: `${localCliClientID}-secret`,
+    name: "Gitpod CLI",
+    // Set of valid redirect URIs
+    // NOTE: these need to be kept in sync with the port range in the local app
+    redirectUris: Array.from({ length: 10 }, (_, i) => "http://127.0.0.1:" + (63110 + i)),
+    allowedGrants: ["authorization_code"],
+    scopes: [
+        { name: "function:listenForWorkspaceInstanceUpdates" },
+        { name: "function:getGitpodTokenScopes" },
+        { name: "function:getLoggedInUser" },
+        { name: "function:accessCodeSyncStorage" },
+        { name: "function:getOwnerToken" },
+        { name: "function:getWorkspace" },
+        { name: "function:getWorkspaces" },
+        { name: "function:getSSHPublicKeys" },
+        { name: "function:startWorkspace" },
+        { name: "function:stopWorkspace" },
+        { name: "function:deleteWorkspace" },
+        { name: "function:getTeam" },
+        { name: "function:getTeams" },
+        { name: "function:getTeamMembers" },
+        { name: "function:getTeamProjects" },
+        { name: "function:createWorkspace" },
+        { name: "function:getToken" },
+        { name: "function:getSupportedWorkspaceClasses" },
+        { name: "function:getSuggestedContextURLs" },
+        { name: "function:getIDEOptions" },
         { name: "resource:default" },
     ],
 };
@@ -117,6 +152,7 @@ const cursor = createVSCodeClient("cursor", "Cursor");
 export const inMemoryDatabase: InMemory = {
     clients: {
         [localClient.id]: localClient,
+        [localCli.id]: localCli,
         [jetBrainsGateway.id]: jetBrainsGateway,
         [vscode.id]: vscode,
         [vscodeInsiders.id]: vscodeInsiders,

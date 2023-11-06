@@ -8,9 +8,11 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/url"
@@ -19,23 +21,51 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
-	"github.com/sirupsen/logrus"
+	"github.com/gitpod-io/local-app/pkg/prettyprint"
 	"github.com/skratchdot/open-golang/open"
 	keyring "github.com/zalando/go-keyring"
 	"golang.org/x/oauth2"
 	"golang.org/x/xerrors"
 )
 
-const (
-	keyringService = "gitpod-io"
-)
+const keychainServiceName = "gitpod-io"
 
-var authScopes = []string{
+var authScopesLocalCompanion = []string{
 	"function:getGitpodTokenScopes",
 	"function:getWorkspace",
 	"function:getWorkspaces",
 	"function:listenForWorkspaceInstanceUpdates",
 	"resource:default",
+}
+
+func fetchValidCLIScopes(ctx context.Context, serviceURL string) ([]string, error) {
+	const clientId = "gitpod-cli"
+
+	endpoint := serviceURL + "/api/oauth/inspect?client=" + clientId
+
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusOK {
+		err = json.NewDecoder(resp.Body).Decode(&authScopesLocalCompanion)
+		if err != nil {
+			return nil, err
+		}
+		return authScopesLocalCompanion, nil
+	}
+
+	return nil, prettyprint.AddApology(errors.New(serviceURL + " did not provide valid scopes"))
 }
 
 type ErrInvalidGitpodToken struct {
@@ -64,7 +94,7 @@ func ValidateToken(client gitpod.APIInterface, tkn string) error {
 	for _, scope := range tknScopes {
 		tknScopesMap[scope] = struct{}{}
 	}
-	for _, scope := range authScopes {
+	for _, scope := range authScopesLocalCompanion {
 		_, ok := tknScopesMap[scope]
 		if !ok {
 			return &ErrInvalidGitpodToken{fmt.Errorf("%v scope is missing in %v", scope, tknScopes)}
@@ -75,12 +105,12 @@ func ValidateToken(client gitpod.APIInterface, tkn string) error {
 
 // SetToken returns the persisted Gitpod token
 func SetToken(host, token string) error {
-	return keyring.Set(keyringService, host, token)
+	return keyring.Set(keychainServiceName, host, token)
 }
 
 // GetToken returns the persisted Gitpod token
 func GetToken(host string) (token string, err error) {
-	tkn, err := keyring.Get(keyringService, host)
+	tkn, err := keyring.Get(keychainServiceName, host)
 	if errors.Is(err, keyring.ErrNotFound) {
 		return "", nil
 	}
@@ -89,7 +119,7 @@ func GetToken(host string) (token string, err error) {
 
 // DeleteToken deletes the persisted Gitpod token
 func DeleteToken(host string) error {
-	return keyring.Delete(keyringService, host)
+	return keyring.Delete(keychainServiceName, host)
 }
 
 // LoginOpts configure the login process
@@ -97,6 +127,8 @@ type LoginOpts struct {
 	GitpodURL   string
 	RedirectURL string
 	AuthTimeout time.Duration
+
+	ExtendScopes bool
 }
 
 const html = `
@@ -134,8 +166,9 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 	}
 
 	defer func() {
-		if closeErr := rl.Close(); closeErr != nil {
-			logrus.WithField("port", port).WithError(closeErr).Warn("Failed to to close listener")
+		closeErr := rl.Close()
+		if closeErr != nil {
+			slog.Debug("Failed to close listener", "port", port, "err", closeErr)
 		}
 	}()
 
@@ -149,7 +182,7 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 		if opts.RedirectURL != "" {
 			http.Redirect(rw, req, opts.RedirectURL, http.StatusSeeOther)
 		} else {
-			io.WriteString(rw, html)
+			_, _ = io.WriteString(rw, html)
 		}
 	}
 
@@ -180,11 +213,27 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 	conf := &oauth2.Config{
 		ClientID:     "gplctl-1.0",
 		ClientSecret: "gplctl-1.0-secret", // Required (even though it is marked as optional?!)
-		Scopes:       authScopes,
+		Scopes:       authScopesLocalCompanion,
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  authURL.String(),
 			TokenURL: tokenURL.String(),
 		},
+	}
+	if opts.ExtendScopes {
+		authScopesLocalCompanion, err = fetchValidCLIScopes(ctx, opts.GitpodURL)
+		if err != nil {
+			return "", err
+		}
+		slog.Debug("Using CLI scopes", "scopes", authScopesLocalCompanion)
+		conf = &oauth2.Config{
+			ClientID:     "gitpod-cli",
+			ClientSecret: "gitpod-cli-secret",
+			Scopes:       authScopesLocalCompanion,
+			Endpoint: oauth2.Endpoint{
+				AuthURL:  authURL.String(),
+				TokenURL: tokenURL.String(),
+			},
+		}
 	}
 	responseTypeParam := oauth2.SetAuthURLParam("response_type", "code")
 	redirectURIParam := oauth2.SetAuthURLParam("redirect_uri", fmt.Sprintf("http://127.0.0.1:%d", rl.Addr().(*net.TCPAddr).Port))
@@ -199,10 +248,11 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 	// open a browser window to the authorizationURL
 	err = open.Start(authorizationURL)
 	if err != nil {
-		return "", xerrors.Errorf("cannot open browser to URL %s: %s\n", authorizationURL, err)
+		return "", prettyprint.AddResolution(fmt.Errorf("cannot open browser to URL %s: %s\n", authorizationURL, err),
+			"provide a personal access token using --token or the GITPOD_TOKEN environment variable",
+		)
 	}
 
-	authTimeout := time.NewTimer(opts.AuthTimeout * time.Second)
 	var query url.Values
 	var code, approved string
 	select {
@@ -213,7 +263,7 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 	case query = <-queryChan:
 		code = query.Get("code")
 		approved = query.Get("approved")
-	case <-authTimeout.C:
+	case <-time.After(opts.AuthTimeout):
 		return "", xerrors.Errorf("auth timeout after %d seconds", uint32(opts.AuthTimeout))
 	}
 
@@ -248,11 +298,21 @@ func findOpenPortInRange(start, end int) (net.Listener, int, error) {
 	for port := start; port < end; port++ {
 		rl, err := net.Listen("tcp4", fmt.Sprintf("127.0.0.1:%d", port))
 		if err != nil {
-			logrus.WithField("port", port).WithError(err).Info("Could not open port, trying next port")
+			slog.Debug("could not open port, trying next port", "port", port, "err", err)
 			continue
 		}
 
 		return rl, port, nil
 	}
 	return nil, 0, xerrors.Errorf("could not open any valid port in range %d - %d", start, end)
+}
+
+type AuthenticatedTransport struct {
+	T     http.RoundTripper
+	Token string
+}
+
+func (t *AuthenticatedTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Header.Add("Authorization", "Bearer "+t.Token)
+	return t.T.RoundTrip(req)
 }

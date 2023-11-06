@@ -5,9 +5,10 @@
 package client
 
 import (
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestNew(t *testing.T) {
@@ -30,6 +31,7 @@ func TestNew(t *testing.T) {
 		require.NotNil(t, gitpod.Workspaces)
 		require.NotNil(t, gitpod.Projects)
 		require.NotNil(t, gitpod.PersonalAccessTokens)
+		require.NotNil(t, gitpod.User)
 	})
 
 	t.Run("fails when no credentials specified", func(t *testing.T) {
