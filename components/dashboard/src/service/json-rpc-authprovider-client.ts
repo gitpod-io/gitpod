@@ -4,27 +4,24 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Code, ConnectError, PromiseClient } from "@connectrpc/connect";
 import { PartialMessage } from "@bufbuild/protobuf";
+import { Code, ConnectError, PromiseClient } from "@connectrpc/connect";
 import { AuthProviderService } from "@gitpod/public-api/lib/gitpod/v1/authprovider_connect";
 import {
     CreateAuthProviderRequest,
-    GetAuthProviderRequest,
-    ListAuthProvidersRequest,
-    ListAuthProviderDescriptionsRequest,
-    UpdateAuthProviderRequest,
-    DeleteAuthProviderRequest,
     CreateAuthProviderResponse,
-    ListAuthProvidersResponse,
-    GetAuthProviderResponse,
-    ListAuthProviderDescriptionsResponse,
-    UpdateAuthProviderResponse,
+    DeleteAuthProviderRequest,
     DeleteAuthProviderResponse,
-    AuthProvider,
-    AuthProviderType,
-    OAuth2Config,
+    GetAuthProviderRequest,
+    GetAuthProviderResponse,
+    ListAuthProviderDescriptionsRequest,
+    ListAuthProviderDescriptionsResponse,
+    ListAuthProvidersRequest,
+    ListAuthProvidersResponse,
+    UpdateAuthProviderRequest,
+    UpdateAuthProviderResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
-import { AuthProviderEntry } from "@gitpod/gitpod-protocol";
+import { converter } from "./public-api";
 import { getGitpodService } from "./service";
 
 export class JsonRpcAuthProviderClient implements PromiseClient<typeof AuthProviderService> {
@@ -49,13 +46,13 @@ export class JsonRpcAuthProviderClient implements PromiseClient<typeof AuthProvi
                 organizationId,
             });
             const response = new ListAuthProvidersResponse();
-            response.list = result.map(toAuthProvider);
+            response.list = result.map(converter.toAuthProvider);
             return response;
         }
         if (userId) {
             const result = await getGitpodService().server.getOwnAuthProviders();
             const response = new ListAuthProvidersResponse();
-            response.list = result.map(toAuthProvider);
+            response.list = result.map(converter.toAuthProvider);
             return response;
         }
         throw new ConnectError("either organizationId or userId are required", Code.InvalidArgument);
@@ -87,39 +84,5 @@ export class JsonRpcAuthProviderClient implements PromiseClient<typeof AuthProvi
         }
         await getGitpodService().server.deleteAuthProvider(request.authProviderId);
         return new DeleteAuthProviderResponse();
-    }
-}
-
-function toAuthProvider(entry: AuthProviderEntry): AuthProvider {
-    const ap = new AuthProvider();
-    ap.verified = entry.status === "verified";
-    ap.host = entry.host;
-    ap.id = entry.id;
-    ap.type = toAuthProviderType(entry.type);
-    ap.oauth2Config = toOAuth2Config(entry);
-    ap.scopes = entry.oauth?.scope?.split(entry.oauth?.scopeSeparator || " ") || [];
-    ap.settingsUrl = entry.oauth.settingsUrl;
-    return ap;
-}
-
-function toOAuth2Config(entry: AuthProviderEntry): OAuth2Config {
-    const config = new OAuth2Config();
-    config.clientId = entry.oauth.clientId;
-    config.clientSecret = entry.oauth.clientSecret;
-    return config;
-}
-
-function toAuthProviderType(type: string): AuthProviderType {
-    switch (type) {
-        case "GitHub":
-            return AuthProviderType.GITHUB;
-        case "GitLab":
-            return AuthProviderType.GITLAB;
-        case "Bitbucket":
-            return AuthProviderType.BITBUCKET;
-        case "BitbucketServer":
-            return AuthProviderType.BITBUCKET_SERVER;
-        default:
-            return AuthProviderType.UNSPECIFIED; // not allowed
     }
 }
