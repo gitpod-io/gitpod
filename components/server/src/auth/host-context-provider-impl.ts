@@ -75,7 +75,7 @@ export class HostContextProviderImpl implements HostContextProvider {
         const knownOAuthRevisions = Array.from(this.dynamicHosts.entries())
             .map(([_, hostContext]) => hostContext.authProvider.params.oauthRevision)
             .filter((rev) => !!rev) as string[];
-        const newAndUpdatedAuthProviders = await this.authProviderService.getAllAuthProviders(knownOAuthRevisions);
+        const newAndUpdatedAuthProviders = await this.authProviderService.getAllAuthProviderParams(knownOAuthRevisions);
         ctx.span?.setTag("updateDynamicHosts.newAndUpdatedAuthProviders", newAndUpdatedAuthProviders.length);
 
         for (const config of newAndUpdatedAuthProviders) {

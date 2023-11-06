@@ -195,6 +195,9 @@ const defaultFunctions: FunctionsConfig = {
     getIDToken: { group: "default", points: 1 },
     reportErrorBoundary: { group: "default", points: 1 },
     getOnboardingState: { group: "default", points: 1 },
+    getAuthProvider: { group: "default", points: 1 },
+    deleteAuthProvider: { group: "default", points: 1 },
+    updateAuthProvider: { group: "default", points: 1 },
 };
 
 function getConfig(config: RateLimiterConfig): RateLimiterConfig {
