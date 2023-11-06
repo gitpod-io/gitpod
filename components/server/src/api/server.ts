@@ -17,7 +17,7 @@ import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/g
 import { UserService as UserServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_connect";
 import { OrganizationService } from "@gitpod/public-api/lib/gitpod/v1/organization_connect";
 import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/v1/workspace_connect";
-import { AuthProviderService } from "@gitpod/public-api/lib/gitpod/experimental/v2/authprovider_connect";
+import { AuthProviderService } from "@gitpod/public-api/lib/gitpod/v1/authprovider_connect";
 import express from "express";
 import * as http from "http";
 import { decorate, inject, injectable, interfaces } from "inversify";
