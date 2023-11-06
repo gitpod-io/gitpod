@@ -19,7 +19,6 @@ import {
     WorkspaceConditionBool,
     PortVisibility as WsManPortVisibility,
     PortProtocol as WsManPortProtocol,
-    DescribeWorkspaceRequest,
     DescribeClusterRequest,
 } from "@gitpod/ws-manager/lib";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";

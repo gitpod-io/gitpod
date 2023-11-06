@@ -3265,7 +3265,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     async getSupportedWorkspaceClasses(ctx: TraceContext): Promise<SupportedWorkspaceClass[]> {
         const user = await this.checkAndBlockUser("getSupportedWorkspaceClasses");
-        return this.workspaceService.getSupportedWorkspaceClasses(user.id);
+        return this.workspaceService.getSupportedWorkspaceClasses(user);
     }
 
     //#region gitpod.io concerns
