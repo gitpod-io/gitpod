@@ -35,7 +35,7 @@ const generatePackage = function (goos, goarch, binaryName, mainFile) {
 };
 
 const packages = [];
-for (binaryName of ["local-app", "gitpod-cli"]) {
+for (binaryName of ["gitpod-local-companion", "gitpod-cli"]) {
     for (goos of ["linux", "darwin", "windows"]) {
         for (goarch of ["amd64", "arm64"]) {
             packages.push(generatePackage(goos, goarch, binaryName, "main/" + binaryName + "/main.go"));
