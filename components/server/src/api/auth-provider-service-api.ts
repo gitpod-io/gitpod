@@ -36,7 +36,35 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
         request: CreateAuthProviderRequest,
         context: HandlerContext,
     ): Promise<CreateAuthProviderResponse> {
-        throw new ConnectError("unimplemented", Code.Unimplemented);
+        const ownerId = request.owner.case === "ownerId" ? request.owner.value : undefined;
+        const organizationId = request.owner.case === "organizationId" ? request.owner.value : undefined;
+
+        if (!organizationId && !ownerId) {
+            throw new ConnectError("organizationId or ownerId is required", Code.InvalidArgument);
+        }
+
+        if (organizationId) {
+            const result = await this.authProviderService.createOrgAuthProvider(context.user.id, {
+                organizationId,
+                host: request.host,
+                ownerId: context.user.id,
+                type: this.apiConverter.fromAuthProviderType(request.type),
+                clientId: request.oauth2Config?.clientId,
+                clientSecret: request.oauth2Config?.clientSecret,
+            });
+
+            return new CreateAuthProviderResponse({ authProvider: this.apiConverter.toAuthProvider(result) });
+        } else {
+            const result = await this.authProviderService.createAuthProviderOfUser(context.user.id, {
+                host: request.host,
+                ownerId: context.user.id,
+                type: this.apiConverter.fromAuthProviderType(request.type),
+                clientId: request.oauth2Config?.clientId,
+                clientSecret: request.oauth2Config?.clientSecret,
+            });
+
+            return new CreateAuthProviderResponse({ authProvider: this.apiConverter.toAuthProvider(result) });
+        }
     }
     async getAuthProvider(request: GetAuthProviderRequest, context: HandlerContext): Promise<GetAuthProviderResponse> {
         if (!request.authProviderId) {
@@ -88,13 +116,62 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
         request: UpdateAuthProviderRequest,
         context: HandlerContext,
     ): Promise<UpdateAuthProviderResponse> {
-        throw new ConnectError("unimplemented", Code.Unimplemented);
+        if (!request.authProviderId) {
+            throw new ConnectError("authProviderId is required", Code.InvalidArgument);
+        }
+        const clientId = request?.oauth2Config?.clientId;
+        const clientSecret = request?.oauth2Config?.clientSecret;
+        if (!clientId || typeof clientSecret === "undefined") {
+            throw new ConnectError("clientId or clientSecret are required", Code.InvalidArgument);
+        }
+
+        const authProvider = await this.authProviderService.getAuthProvider(context.user.id, request.authProviderId);
+        if (!authProvider) {
+            throw new ConnectError("Provider not found.", Code.NotFound);
+        }
+
+        if (authProvider.organizationId) {
+            await this.authProviderService.updateOrgAuthProvider(context.user.id, {
+                id: request.authProviderId,
+                organizationId: authProvider.organizationId,
+                clientId: clientId,
+                clientSecret: clientSecret,
+            });
+        } else {
+            await this.authProviderService.updateAuthProviderOfUser(context.user.id, {
+                id: request.authProviderId,
+                ownerId: context.user.id,
+                clientId: clientId,
+                clientSecret: clientSecret,
+            });
+        }
+
+        return new UpdateAuthProviderResponse();
     }
 
     async deleteAuthProvider(
         request: DeleteAuthProviderRequest,
         context: HandlerContext,
     ): Promise<DeleteAuthProviderResponse> {
-        throw new ConnectError("unimplemented", Code.Unimplemented);
+        if (!request.authProviderId) {
+            throw new ConnectError("authProviderId is required", Code.InvalidArgument);
+        }
+
+        const authProvider = await this.authProviderService.getAuthProvider(context.user.id, request.authProviderId);
+        if (!authProvider) {
+            throw new ConnectError("Provider not found.", Code.NotFound);
+        }
+
+        if (authProvider.organizationId) {
+            await this.authProviderService.deleteAuthProviderOfOrg(
+                context.user.id,
+                authProvider.organizationId,
+                request.authProviderId,
+            );
+        } else {
+            await this.authProviderService.deleteAuthProviderOfUser(context.user.id, request.authProviderId);
+        }
+
+        return new DeleteAuthProviderResponse();
     }
 }

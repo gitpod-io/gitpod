@@ -424,4 +424,19 @@ export class PublicAPIConverter {
                 return AuthProviderType.UNSPECIFIED; // not allowed
         }
     }
+
+    fromAuthProviderType(type: AuthProviderType): string {
+        switch (type) {
+            case AuthProviderType.GITHUB:
+                return "GitHub";
+            case AuthProviderType.GITLAB:
+                return "GitLab";
+            case AuthProviderType.BITBUCKET:
+                return "Bitbucket";
+            case AuthProviderType.BITBUCKET_SERVER:
+                return "BitbucketServer";
+            default:
+                return ""; // not allowed
+        }
+    }
 }
