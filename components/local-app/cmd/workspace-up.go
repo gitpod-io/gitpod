@@ -207,13 +207,13 @@ var workspaceUpCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		err = runSSHCommand(ctx, sess, "git", "init", "/workspace/empty")
+		err = runSSHCommand(ctx, sess, "git", "init", "/workspace/remote")
 		if err != nil {
 			return err
 		}
 
 		slog.Debug("pushing to workspace")
-		sshRemote := fmt.Sprintf("%s#%s@%s:/workspace/empty", workspaceID, ownerToken, helper.WorkspaceSSHHost(&v1.Workspace{WorkspaceId: workspaceID, Status: ws}))
+		sshRemote := fmt.Sprintf("%s#%s@%s:/workspace/remote", workspaceID, ownerToken, helper.WorkspaceSSHHost(&v1.Workspace{WorkspaceId: workspaceID, Status: ws}))
 		_, err = repo.CreateRemote(&gitcfg.RemoteConfig{
 			Name: "gitpod",
 			URLs: []string{sshRemote},
@@ -235,6 +235,10 @@ var workspaceUpCmd = &cobra.Command{
 		}
 
 		slog.Debug("checking out branch in workspace")
+		err = runSSHCommand(ctx, sess, "sh -c 'cd /workspace/empty && git clone /workspace/remote .'")
+		if err != nil {
+			return err
+		}
 		err = runSSHCommand(ctx, sess, "sh -c 'cd /workspace/empty && git checkout "+branch+"'")
 		if err != nil {
 			return err
