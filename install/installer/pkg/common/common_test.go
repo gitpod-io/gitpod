@@ -26,6 +26,7 @@ func TestKubeRBACProxyContainer_DefaultPorts(t *testing.T) {
 		"--logtostderr",
 		fmt.Sprintf("--insecure-listen-address=[$(IP)]:%v", baseserver.BuiltinMetricsPort),
 		fmt.Sprintf("--upstream=http://%v/", common.LocalhostPrometheusAddr()),
+		"--http2-disable",
 	}, container.Args)
 	require.Equal(t, []corev1.ContainerPort{
 		{Name: baseserver.BuiltinMetricsPortName, ContainerPort: baseserver.BuiltinMetricsPort},
@@ -41,6 +42,7 @@ func TestKubeRBACProxyContainerWithConfig(t *testing.T) {
 		"--logtostderr",
 		fmt.Sprintf("--insecure-listen-address=[$(IP)]:%d", baseserver.BuiltinMetricsPort),
 		fmt.Sprintf("--upstream=http://%v/", common.LocalhostPrometheusAddr()),
+		"--http2-disable",
 	}, container.Args)
 	require.Equal(t, []corev1.ContainerPort{
 		{Name: baseserver.BuiltinMetricsPortName, ContainerPort: baseserver.BuiltinMetricsPort},
