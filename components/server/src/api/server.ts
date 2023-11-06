@@ -303,6 +303,7 @@ export class API {
         bind(TeamsServiceAPI).toSelf().inSingletonScope();
         bind(WorkspaceServiceAPI).toSelf().inSingletonScope();
         bind(OrganizationServiceAPI).toSelf().inSingletonScope();
+        bind(ConfigurationServiceAPI).toSelf().inSingletonScope();
         bind(StatsServiceAPI).toSelf().inSingletonScope();
         bind(API).toSelf().inSingletonScope();
     }
