@@ -31,6 +31,7 @@ export default function Preferences() {
     const [dotfileRepo, setDotfileRepo] = useState<string>(user?.additionalData?.dotfileRepo || "");
     const [workspaceTimeout, setWorkspaceTimeout] = useState<string>(user?.additionalData?.workspaceTimeout ?? "");
     const [timeoutUpdating, setTimeoutUpdating] = useState(false);
+    const [creationError, setCreationError] = useState<Error>();
 
     const saveDotfileRepo = useCallback(
         async (e) => {
@@ -70,10 +71,11 @@ export default function Preferences() {
                         );
                     }
                 }
+                // Reset creationError to avoid displaying the error message and toast the success message
+                setCreationError(undefined);
                 toast(toastMessage);
             } catch (e) {
-                // TODO: Convert this to an error style toast
-                alert("Cannot set custom workspace timeout: " + e.message);
+                setCreationError(new Error(e.message));
             } finally {
                 setTimeoutUpdating(false);
             }
@@ -159,21 +161,28 @@ export default function Preferences() {
                                 </span>
                             }
                         >
-                            <div className="flex space-x-2">
-                                <div className="flex-grow">
-                                    <TextInput
-                                        value={workspaceTimeout}
-                                        placeholder="e.g. 30m"
-                                        onChange={setWorkspaceTimeout}
-                                    />
+                            <div className="flex flex-col">
+                                <div className="flex items-center space-x-2 mb-2">
+                                    <div className="flex-grow">
+                                        <TextInput
+                                            value={workspaceTimeout}
+                                            placeholder="e.g. 30m"
+                                            onChange={setWorkspaceTimeout}
+                                        />
+                                    </div>
+                                    <Button
+                                        htmlType="submit"
+                                        loading={timeoutUpdating}
+                                        disabled={workspaceTimeout === user?.additionalData?.workspaceTimeout ?? ""}
+                                    >
+                                        Save
+                                    </Button>
                                 </div>
-                                <Button
-                                    htmlType="submit"
-                                    loading={timeoutUpdating}
-                                    disabled={workspaceTimeout === user?.additionalData?.workspaceTimeout ?? ""}
-                                >
-                                    Save
-                                </Button>
+                                {!!creationError && (
+                                    <p className="text-gitpod-red w-full max-w-lg">
+                                        Cannot set custom workspace timeout: {creationError.message}
+                                    </p>
+                                )}
                             </div>
                         </InputField>
                     </form>
