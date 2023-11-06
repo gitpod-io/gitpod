@@ -26,14 +26,56 @@ import { getGitpodService } from "./service";
 
 export class JsonRpcAuthProviderClient implements PromiseClient<typeof AuthProviderService> {
     async createAuthProvider(request: PartialMessage<CreateAuthProviderRequest>): Promise<CreateAuthProviderResponse> {
-        throw new ConnectError("unimplemented", Code.Unimplemented);
+        const ownerId = request.owner?.case === "ownerId" ? request.owner.value : undefined;
+        const organizationId = request.owner?.case === "organizationId" ? request.owner.value : undefined;
+
+        if (!organizationId && !ownerId) {
+            throw new ConnectError("organizationId or ownerId is required", Code.InvalidArgument);
+        }
+        if (!request.type) {
+            throw new ConnectError("type is required", Code.InvalidArgument);
+        }
+        if (!request.host) {
+            throw new ConnectError("host is required", Code.InvalidArgument);
+        }
+
+        if (organizationId) {
+            const result = await getGitpodService().server.createOrgAuthProvider({
+                entry: {
+                    organizationId,
+                    host: request.host,
+                    type: converter.fromAuthProviderType(request.type),
+                    clientId: request.oauth2Config?.clientId,
+                    clientSecret: request.oauth2Config?.clientSecret,
+                },
+            });
+            return new CreateAuthProviderResponse({ authProvider: converter.toAuthProvider(result) });
+        }
+        if (ownerId) {
+            const result = await getGitpodService().server.updateOwnAuthProvider({
+                entry: {
+                    host: request.host,
+                    ownerId,
+                    type: converter.fromAuthProviderType(request.type),
+                    clientId: request.oauth2Config?.clientId,
+                    clientSecret: request.oauth2Config?.clientSecret,
+                },
+            });
+            return new CreateAuthProviderResponse({ authProvider: converter.toAuthProvider(result) });
+        }
+
+        throw new ConnectError("organizationId or ownerId is required", Code.InvalidArgument);
     }
 
     async getAuthProvider(request: PartialMessage<GetAuthProviderRequest>): Promise<GetAuthProviderResponse> {
         if (!request.authProviderId) {
             throw new ConnectError("authProviderId is required", Code.InvalidArgument);
         }
-        throw new ConnectError("unimplemented", Code.Unimplemented);
+
+        const provider = await getGitpodService().server.getAuthProvider(request.authProviderId);
+        return new GetAuthProviderResponse({
+            authProvider: converter.toAuthProvider(provider),
+        });
     }
 
     async listAuthProviders(request: PartialMessage<ListAuthProvidersRequest>): Promise<ListAuthProvidersResponse> {
