@@ -100,7 +100,7 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
         const redacted = authProviders.map(AuthProviderEntry.redact.bind(AuthProviderEntry));
 
         const result = new ListAuthProvidersResponse({
-            list: redacted.map((ap) => this.apiConverter.toAuthProvider(ap)),
+            authProviders: redacted.map((ap) => this.apiConverter.toAuthProvider(ap)),
         });
         return result;
     }
