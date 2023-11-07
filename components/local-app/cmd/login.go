@@ -66,7 +66,8 @@ var loginCmd = &cobra.Command{
 
 		err = auth.SetToken(loginOpts.Host, token)
 		if err != nil {
-			slog.Warn("could not write token to keyring, storing in config file instead", "err", err)
+			slog.Debug("could not write token to keyring, storing in config file instead")
+			slog.Warn("could not write token to keyring, storing in config file instead. Use -v to see the error.")
 			gpctx.Token = token
 		}
 
@@ -115,7 +116,18 @@ var loginCmd = &cobra.Command{
 			return err
 		}
 
-		return nil
+		client, err := getGitpodClient(config.ToContext(cmd.Context(), cfg))
+		if err != nil {
+			return err
+		}
+		who, err := whoami(cmd.Context(), client, gpctx)
+		if err != nil {
+			return err
+		}
+
+		slog.Info("Login succesfull")
+		fmt.Println()
+		return WriteTabular(who, formatOpts{}, prettyprint.WriterFormatNarrow)
 	},
 }
 
