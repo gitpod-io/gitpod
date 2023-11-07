@@ -44,8 +44,10 @@ var workspaceStopCommand = &cobra.Command{
 		switch wsPhase {
 		case v1.WorkspaceInstanceStatus_PHASE_STOPPED:
 			slog.Info("workspace is already stopped")
+			return nil
 		case v1.WorkspaceInstanceStatus_PHASE_STOPPING:
 			slog.Info("workspace is already stopping")
+			return nil
 		}
 
 		if stopDontWait {
