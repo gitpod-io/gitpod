@@ -35,6 +35,7 @@ import { GitpodServerImpl } from "../workspace/gitpod-server-impl";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
 import { UserService } from "./user-service";
 import { WorkspaceService } from "../workspace/workspace-service";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 export const ServerFactory = Symbol("ServerFactory");
 export type ServerFactory = () => GitpodServerImpl;
@@ -358,12 +359,16 @@ export class UserController {
                     return;
                 }
 
+                const useSameSiteNone = await getExperimentsClientForBackend().getValueAsync("sameSiteNone", false, {
+                    user,
+                });
+
                 res.cookie(name, token, {
                     path: "/",
                     httpOnly: true,
                     secure: true,
                     maxAge: 1000 * 60 * 60 * 24 * 1, // 1 day
-                    sameSite: "lax", // default: true. "Lax" needed for cookie to work in the workspace domain.
+                    sameSite: useSameSiteNone ? "none" : "lax", // default: true. "Lax" needed for cookie to work in the workspace domain.
                     domain: `.${this.config.hostUrl.url.host}`,
                 });
                 res.sendStatus(200);
