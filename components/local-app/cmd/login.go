@@ -18,6 +18,8 @@ import (
 	"github.com/gitpod-io/local-app/pkg/config"
 	"github.com/gitpod-io/local-app/pkg/prettyprint"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var loginOpts struct {
@@ -88,17 +90,27 @@ var loginCmd = &cobra.Command{
 			}
 			orgsList, err := clnt.Teams.ListTeams(cmd.Context(), connect.NewRequest(&v1.ListTeamsRequest{}))
 			if err != nil {
-				resolutions := []string{
-					"pass an organization ID using --organization-id",
+				var (
+					resolutions     []string
+					unauthenticated bool
+				)
+				if status.Code(err) == codes.Unauthenticated {
+					resolutions = []string{
+						"pass an organization ID using --organization-id",
+					}
+					if loginOpts.Token != "" {
+						resolutions = append(resolutions,
+							"make sure the token has the right scopes",
+							"use a different token",
+							"login without passing a token but using the browser instead",
+						)
+					}
 				}
-				if loginOpts.Token != "" {
-					resolutions = append(resolutions,
-						"make sure the token has the right scopes",
-						"use a different token",
-						"login without passing a token but using the browser instead",
-					)
+				if unauthenticated {
+					return prettyprint.AddResolution(fmt.Errorf("cannot list organizations: %w", err), resolutions...)
+				} else {
+					return prettyprint.MarkExceptional(err)
 				}
-				return prettyprint.AddResolution(fmt.Errorf("cannot list organizations: %w", err), resolutions...)
 			}
 
 			var orgID string
