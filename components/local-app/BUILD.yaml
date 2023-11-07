@@ -20,8 +20,6 @@ scripts:
     script: |
       go build -o gitpod ./main/gitpod-cli
       sudo mv gitpod /usr/bin/gitpod
-      # add exec permission
       sudo chmod +x /usr/bin/gitpod
-
-      # pipe completion to bash-completion with sudo
+      # pipe completion
       sudo /usr/bin/gitpod completion bash | sudo tee /usr/share/bash-completion/completions/gitpod
