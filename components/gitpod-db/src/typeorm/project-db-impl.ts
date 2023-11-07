@@ -80,7 +80,8 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
 
         const queryBuilder = projectRepo
             .createQueryBuilder("project")
-            .andWhere(
+            // TODO: should we make this conditional if searchTerm has a value to avoid the scan?
+            .where(
                 new Brackets((qb) => {
                     qb.where("project.cloneUrl LIKE :searchTerm", { searchTerm: `%${searchTerm}%` }).orWhere(
                         "project.name LIKE :searchTerm",

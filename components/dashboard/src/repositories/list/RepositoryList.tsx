@@ -19,7 +19,7 @@ import { TextInput } from "../../components/forms/TextInputField";
 const RepositoryListPage: FC = () => {
     const history = useHistory();
     const [searchTerm, setSearchTerm, debouncedSearchTerm] = useStateWithDebounce("");
-    const { data, isLoading } = useListConfigurations({ searchTerm: debouncedSearchTerm, page: 1, pageSize: 10 });
+    const { data, isLoading } = useListConfigurations({ searchTerm: debouncedSearchTerm, page: 0, pageSize: 10 });
     const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
 
     const handleProjectCreated = useCallback(
