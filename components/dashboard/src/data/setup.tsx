@@ -17,6 +17,9 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { FunctionComponent } from "react";
 import debounce from "lodash.debounce";
 // Need to import all the protobuf classes we want to support for hydration
+import * as OrganizationClasses from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import * as WorkspaceClasses from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import * as PaginationClasses from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import * as ConfigurationClasses from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 
 // This is used to version the cache
@@ -136,10 +139,9 @@ const supportedMessages = new Map<string, typeof Message>();
 
 function initializeMessages() {
     const constr = [
-        ...Object.values(require("@gitpod/public-api/lib/gitpod/v1/organization_pb")),
-        ...Object.values(require("@gitpod/public-api/lib/gitpod/v1/workspace_pb")),
-        ...Object.values(require("@gitpod/public-api/lib/gitpod/v1/pagination_pb")),
-        ...Object.values(require("@gitpod/public-api/lib/gitpod/v1/pagination_pb")),
+        ...Object.values(OrganizationClasses),
+        ...Object.values(WorkspaceClasses),
+        ...Object.values(PaginationClasses),
         ...Object.values(ConfigurationClasses),
     ];
     for (const c of constr) {
