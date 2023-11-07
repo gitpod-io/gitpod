@@ -15,7 +15,7 @@ service WorkspaceService {
 
   // WatchWorkspaceStatus watchs the workspaces status changes
   //
-  // ID +return NOT_FOUND Workspace does not exist
+  // workspace_id +return NOT_FOUND Workspace does not exist
   rpc WatchWorkspaceStatus(WatchWorkspaceStatusRequest) returns (stream WatchWorkspaceStatusResponse) {}
 }
 

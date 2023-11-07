@@ -35,7 +35,7 @@ export const WorkspaceService = {
     /**
      * WatchWorkspaceStatus watchs the workspaces status changes
      *
-     * ID +return NOT_FOUND Workspace does not exist
+     * workspace_id +return NOT_FOUND Workspace does not exist
      *
      * @generated from rpc gitpod.v1.WorkspaceService.WatchWorkspaceStatus
      */

@@ -33,7 +33,7 @@ type WorkspaceServiceClient interface {
 	GetWorkspace(ctx context.Context, in *GetWorkspaceRequest, opts ...grpc.CallOption) (*GetWorkspaceResponse, error)
 	// WatchWorkspaceStatus watchs the workspaces status changes
 	//
-	// ID +return NOT_FOUND Workspace does not exist
+	// workspace_id +return NOT_FOUND Workspace does not exist
 	WatchWorkspaceStatus(ctx context.Context, in *WatchWorkspaceStatusRequest, opts ...grpc.CallOption) (WorkspaceService_WatchWorkspaceStatusClient, error)
 }
 
@@ -97,7 +97,7 @@ type WorkspaceServiceServer interface {
 	GetWorkspace(context.Context, *GetWorkspaceRequest) (*GetWorkspaceResponse, error)
 	// WatchWorkspaceStatus watchs the workspaces status changes
 	//
-	// ID +return NOT_FOUND Workspace does not exist
+	// workspace_id +return NOT_FOUND Workspace does not exist
 	WatchWorkspaceStatus(*WatchWorkspaceStatusRequest, WorkspaceService_WatchWorkspaceStatusServer) error
 	mustEmbedUnimplementedWorkspaceServiceServer()
 }

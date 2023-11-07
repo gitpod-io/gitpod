@@ -38,7 +38,7 @@ type WorkspaceServiceClient interface {
 	GetWorkspace(context.Context, *connect_go.Request[v1.GetWorkspaceRequest]) (*connect_go.Response[v1.GetWorkspaceResponse], error)
 	// WatchWorkspaceStatus watchs the workspaces status changes
 	//
-	// ID +return NOT_FOUND Workspace does not exist
+	// workspace_id +return NOT_FOUND Workspace does not exist
 	WatchWorkspaceStatus(context.Context, *connect_go.Request[v1.WatchWorkspaceStatusRequest]) (*connect_go.ServerStreamForClient[v1.WatchWorkspaceStatusResponse], error)
 }
 
@@ -90,7 +90,7 @@ type WorkspaceServiceHandler interface {
 	GetWorkspace(context.Context, *connect_go.Request[v1.GetWorkspaceRequest]) (*connect_go.Response[v1.GetWorkspaceResponse], error)
 	// WatchWorkspaceStatus watchs the workspaces status changes
 	//
-	// ID +return NOT_FOUND Workspace does not exist
+	// workspace_id +return NOT_FOUND Workspace does not exist
 	WatchWorkspaceStatus(context.Context, *connect_go.Request[v1.WatchWorkspaceStatusRequest], *connect_go.ServerStream[v1.WatchWorkspaceStatusResponse]) error
 }
 
