@@ -291,4 +291,7 @@ func init() {
 
 	workspaceUpCmd.Flags().StringVar(&workspaceCreateOpts.WorkspaceClass, "class", "", "the workspace class")
 	workspaceUpCmd.Flags().StringVar(&workspaceCreateOpts.Editor, "editor", "code", "the editor to use")
+
+	_ = workspaceUpCmd.RegisterFlagCompletionFunc("class", classCompletionFunc)
+	_ = workspaceUpCmd.RegisterFlagCompletionFunc("editor", editorCompletionFunc)
 }
