@@ -503,7 +503,7 @@ func ServerComponentWaiterContainer(ctx *RenderContext) *corev1.Container {
 // PublicApiServerComponentWaiterContainer is the container used to wait for the deployment/public-api-server to be ready
 // it requires pods list access to the cluster
 func PublicApiServerComponentWaiterContainer(ctx *RenderContext) *corev1.Container {
-	image := ctx.ImageName(ctx.Config.Repository, PublicApiComponent, ctx.VersionManifest.Components.Server.Version)
+	image := ctx.ImageName(ctx.Config.Repository, PublicApiComponent, ctx.VersionManifest.Components.PublicAPIServer.Version)
 	return componentWaiterContainer(ctx, PublicApiComponent, DefaultLabels(PublicApiComponent), image)
 }
 
