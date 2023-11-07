@@ -19,6 +19,7 @@ import {
     ListConfigurationsResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 @injectable()
 export class ConfigurationServiceAPI implements ServiceImpl<typeof ConfigurationServiceInterface> {
@@ -34,13 +35,13 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         context: HandlerContext,
     ): Promise<CreateConfigurationResponse> {
         if (!req.organizationId) {
-            throw new Error("organizationId is required");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
         if (!req.cloneUrl) {
-            throw new Error("cloneUrl is required");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "cloneUrl is required");
         }
         if (!req.name) {
-            throw new Error("name is required");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "name is required");
         }
 
         const project = await this.projectService.createProject(
@@ -61,7 +62,7 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
 
     async getConfiguration(req: GetConfigurationRequest, context: HandlerContext) {
         if (!req.configurationId) {
-            throw new Error("configurationId is required");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configurationId is required");
         }
 
         const project = await this.projectService.getProject(context.user.id, req.configurationId);
@@ -73,7 +74,7 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
 
     async listConfigurations(req: ListConfigurationsRequest, context: HandlerContext) {
         if (!req.organizationId) {
-            throw new Error("organizationId is required");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
 
         const { rows, total } = await this.projectService.findProjects(context.user.id, {
@@ -94,7 +95,7 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
 
     async deleteConfiguration(req: DeleteConfigurationRequest, handler: HandlerContext) {
         if (!req.configurationId) {
-            throw new Error("configurationId is required");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configurationId is required");
         }
 
         await this.projectService.deleteProject(handler.user.id, req.configurationId);
