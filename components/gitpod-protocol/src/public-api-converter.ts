@@ -396,7 +396,7 @@ export class PublicAPIConverter {
         return result;
     }
 
-    toPrebuildSettings(prebuilds: PrebuildSettingsProtocol | undefined): PrebuildSettings {
+    toPrebuildSettings(prebuilds?: PrebuildSettingsProtocol): PrebuildSettings {
         const result = new PrebuildSettings();
         if (prebuilds) {
             result.enabled = prebuilds.enable;
@@ -422,7 +422,7 @@ export class PublicAPIConverter {
         return undefined;
     }
 
-    toWorkspaceSettings(workspaceClass: string | undefined): WorkspaceSettings {
+    toWorkspaceSettings(workspaceClass?: string): WorkspaceSettings {
         const result = new WorkspaceSettings();
         if (workspaceClass) {
             result.workspaceClass = workspaceClass;
