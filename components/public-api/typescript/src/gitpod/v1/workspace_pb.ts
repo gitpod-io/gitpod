@@ -166,9 +166,16 @@ export class WatchWorkspaceStatusRequest extends Message<WatchWorkspaceStatusReq
  */
 export class WatchWorkspaceStatusResponse extends Message<WatchWorkspaceStatusResponse> {
   /**
-   * item is the workspace that was changed
+   * workspace_id is the ID of the workspace that has status updated
    *
-   * @generated from field: gitpod.v1.WorkspaceStatus status = 1;
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * status is the updated status of workspace
+   *
+   * @generated from field: gitpod.v1.WorkspaceStatus status = 2;
    */
   status?: WorkspaceStatus;
 
@@ -180,7 +187,8 @@ export class WatchWorkspaceStatusResponse extends Message<WatchWorkspaceStatusRe
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.WatchWorkspaceStatusResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "status", kind: "message", T: WorkspaceStatus },
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "status", kind: "message", T: WorkspaceStatus },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WatchWorkspaceStatusResponse {

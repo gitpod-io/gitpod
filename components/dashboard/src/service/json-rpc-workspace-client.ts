@@ -68,6 +68,7 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
                 continue;
             }
             const response = new WatchWorkspaceStatusResponse();
+            response.workspaceId = item.workspaceId;
             response.status = status;
             yield response;
         }

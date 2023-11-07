@@ -31,8 +31,11 @@ message WatchWorkspaceStatusRequest {
 }
 
 message WatchWorkspaceStatusResponse {
-  // item is the workspace that was changed
-  WorkspaceStatus status = 1;
+  // workspace_id is the ID of the workspace that has status updated
+  string workspace_id = 1;
+
+  // status is the updated status of workspace
+  WorkspaceStatus status = 2;
 }
 
 // +resource get workspace
