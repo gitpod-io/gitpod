@@ -17,7 +17,9 @@ import (
 	"github.com/gitpod-io/gitpod/components/public-api/go/client"
 	"github.com/gitpod-io/local-app/pkg/auth"
 	"github.com/gitpod-io/local-app/pkg/config"
+	"github.com/gitpod-io/local-app/pkg/constants"
 	"github.com/gitpod-io/local-app/pkg/prettyprint"
+	"github.com/gitpod-io/local-app/pkg/telemetry"
 	"github.com/gookit/color"
 	"github.com/lmittmann/tint"
 	"github.com/mattn/go-isatty"
@@ -88,17 +90,27 @@ var rootCmd = &cobra.Command{
 			return err
 		}
 		cmd.SetContext(config.ToContext(context.Background(), cfg))
+
+		telemetry.Init(!telemetry.DoNotTrack() && cfg.Telemetry.Enabled, cfg.Telemetry.Identity, constants.Version)
+		telemetry.RecordCommand(cmd)
+
 		return nil
 	},
 }
 
 func Execute() {
 	err := rootCmd.Execute()
+
+	var exitCode int
 	if err != nil {
+		exitCode = 1
 		prettyprint.PrintError(os.Stderr, os.Args[0], err)
 
-		os.Exit(1)
+		telemetry.RecordError(err)
 	}
+
+	telemetry.Close()
+	os.Exit(exitCode)
 }
 
 func init() {
@@ -141,7 +153,7 @@ func getGitpodClient(ctx context.Context) (*client.Gitpod, error) {
 		)
 	}
 
-	if host.String() == "https://testing" && rootTestingOpts.Client != nil {
+	if rootTestingOpts.Client != nil {
 		return rootTestingOpts.Client, nil
 	}
 
