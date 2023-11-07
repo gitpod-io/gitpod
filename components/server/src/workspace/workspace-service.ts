@@ -630,7 +630,7 @@ export class WorkspaceService {
                 });
             });
             allClasses.sort((a, b) => a.displayName.localeCompare(b.displayName));
-            const uniqueClasses = allClasses.filter((v, i, a) => a.indexOf(v) == i);
+            const uniqueClasses = allClasses.filter((v, i, a) => a.map((c) => c.id).indexOf(v.id) == i);
 
             return uniqueClasses;
         }
