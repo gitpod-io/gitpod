@@ -66,8 +66,11 @@ var loginCmd = &cobra.Command{
 
 		err = auth.SetToken(loginOpts.Host, token)
 		if err != nil {
-			slog.Debug("could not write token to keyring, storing in config file instead")
-			slog.Warn("could not write token to keyring, storing in config file instead. Use -v to see the error.")
+			if slog.Default().Enabled(cmd.Context(), slog.LevelDebug) {
+				slog.Debug("could not write token to keyring, storing in config file instead", "err", err)
+			} else {
+				slog.Warn("could not write token to keyring, storing in config file instead. Use -v to see the error.")
+			}
 			gpctx.Token = token
 		}
 

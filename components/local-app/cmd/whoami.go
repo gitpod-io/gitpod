@@ -40,7 +40,7 @@ var whoamiCmd = &cobra.Command{
 	},
 }
 
-// printWhoami prints information about the currently logged in user
+// whoami returns information about the currently logged in user
 func whoami(ctx context.Context, client *client.Gitpod, gpctx *config.ConnectionContext) ([]whoamiResult, error) {
 	user, err := client.User.GetAuthenticatedUser(ctx, &connect.Request[v1.GetAuthenticatedUserRequest]{})
 	if err != nil {
