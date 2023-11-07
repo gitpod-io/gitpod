@@ -5,7 +5,10 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/bufbuild/connect-go"
+	"github.com/gitpod-io/gitpod/components/public-api/go/client"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/local-app/pkg/config"
 	"github.com/gitpod-io/local-app/pkg/prettyprint"
@@ -28,25 +31,35 @@ var whoamiCmd = &cobra.Command{
 			return err
 		}
 
-		user, err := client.User.GetAuthenticatedUser(cmd.Context(), &connect.Request[v1.GetAuthenticatedUserRequest]{})
-		if err != nil {
-			return err
-		}
-		org, err := client.Teams.GetTeam(cmd.Context(), &connect.Request[v1.GetTeamRequest]{Msg: &v1.GetTeamRequest{TeamId: gpctx.OrganizationID}})
+		who, err := whoami(cmd.Context(), client, gpctx)
 		if err != nil {
 			return err
 		}
 
-		return WriteTabular([]whoamiResult{
-			{
-				Name:  user.Msg.GetUser().Name,
-				ID:    user.Msg.GetUser().Id,
-				Org:   org.Msg.GetTeam().Name,
-				OrgID: org.Msg.GetTeam().Id,
-				Host:  gpctx.Host.String(),
-			},
-		}, whoamiOpts.Format, prettyprint.WriterFormatNarrow)
+		return WriteTabular(who, whoamiOpts.Format, prettyprint.WriterFormatNarrow)
 	},
+}
+
+// whoami returns information about the currently logged in user
+func whoami(ctx context.Context, client *client.Gitpod, gpctx *config.ConnectionContext) ([]whoamiResult, error) {
+	user, err := client.User.GetAuthenticatedUser(ctx, &connect.Request[v1.GetAuthenticatedUserRequest]{})
+	if err != nil {
+		return nil, err
+	}
+	org, err := client.Teams.GetTeam(ctx, &connect.Request[v1.GetTeamRequest]{Msg: &v1.GetTeamRequest{TeamId: gpctx.OrganizationID}})
+	if err != nil {
+		return nil, err
+	}
+
+	return []whoamiResult{
+		{
+			Name:  user.Msg.GetUser().Name,
+			ID:    user.Msg.GetUser().Id,
+			Org:   org.Msg.GetTeam().Name,
+			OrgID: org.Msg.GetTeam().Id,
+			Host:  gpctx.Host.String(),
+		},
+	}, nil
 }
 
 type whoamiResult struct {
