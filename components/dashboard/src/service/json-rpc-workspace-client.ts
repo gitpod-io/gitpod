@@ -7,7 +7,12 @@
 import { CallOptions, Code, ConnectError, PromiseClient } from "@connectrpc/connect";
 import { PartialMessage } from "@bufbuild/protobuf";
 import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/v1/workspace_connect";
-import { GetWorkspaceRequest, GetWorkspaceResponse } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import {
+    GetWorkspaceRequest,
+    GetWorkspaceResponse,
+    WatchWorkspaceStatusRequest,
+    WatchWorkspaceStatusResponse,
+} from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { converter } from "./public-api";
 import { getGitpodService } from "./service";
 import { generateAsyncGenerator } from "@gitpod/gitpod-protocol/lib/generate-async-generator";
