@@ -187,8 +187,8 @@ func init() {
 	workspaceCmd.AddCommand(workspaceCreateCmd)
 	addWorkspaceStartOptions(workspaceCreateCmd, &workspaceCreateOpts.StartOpts)
 
-	workspaceCreateCmd.Flags().StringVar(&workspaceCreateOpts.WorkspaceClass, "class", "", "the workspace class ([tab][tab] to list available options)")
-	workspaceCreateCmd.Flags().StringVar(&workspaceCreateOpts.Editor, "editor", "code", "the editor to use ([tab][tab] to list available options)")
+	workspaceCreateCmd.Flags().StringVar(&workspaceCreateOpts.WorkspaceClass, "class", "", "the workspace class")
+	workspaceCreateCmd.Flags().StringVar(&workspaceCreateOpts.Editor, "editor", "code", "the editor to use")
 
 	_ = workspaceCreateCmd.RegisterFlagCompletionFunc("class", classCompletionFunc)
 	_ = workspaceCreateCmd.RegisterFlagCompletionFunc("editor", editorCompletionFunc)
