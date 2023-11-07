@@ -235,16 +235,6 @@ export class CreateConfigurationRequest extends Message<CreateConfigurationReque
    */
   cloneUrl = "";
 
-  /**
-   * @generated from field: optional gitpod.v1.PrebuildSettings prebuild_settings = 4;
-   */
-  prebuildSettings?: PrebuildSettings;
-
-  /**
-   * @generated from field: optional gitpod.v1.WorkspaceSettings workspace_settings = 5;
-   */
-  workspaceSettings?: WorkspaceSettings;
-
   constructor(data?: PartialMessage<CreateConfigurationRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -256,8 +246,6 @@ export class CreateConfigurationRequest extends Message<CreateConfigurationReque
     { no: 1, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "clone_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 4, name: "prebuild_settings", kind: "message", T: PrebuildSettings, opt: true },
-    { no: 5, name: "workspace_settings", kind: "message", T: WorkspaceSettings, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateConfigurationRequest {

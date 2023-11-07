@@ -56,8 +56,6 @@ message CreateConfigurationRequest {
   string organization_id = 1;
   string name = 2;
   string clone_url = 3;
-  optional PrebuildSettings prebuild_settings = 4;
-  optional WorkspaceSettings workspace_settings = 5;
 }
 
 message CreateConfigurationResponse { Configuration configuration = 1; }
