@@ -42,6 +42,11 @@ tasks:
             gp env -u GCP_ADC_FILE
           fi
           exit 0
+    - name: Install `gitpod` CLI
+      command: |
+        leeway run components/local-app:install-cli
+        leeway run components/local-app:cli-completion
+        exit 0
     # This task takes care of configuring your workspace so it can manage and interact
     # with preview environments.
     - name: Preview environment configuration

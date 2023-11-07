@@ -101,7 +101,13 @@ var rootTestingOpts struct {
 	WriterOut io.Writer
 }
 
+var clientCache *client.Gitpod
+
 func getGitpodClient(ctx context.Context) (*client.Gitpod, error) {
+	// There will be only one client in a command context right now
+	if clientCache != nil {
+		return clientCache, nil
+	}
 	cfg := config.FromContext(ctx)
 	gpctx, err := cfg.GetActiveContext()
 	if err != nil {
@@ -154,6 +160,7 @@ func getGitpodClient(ctx context.Context) (*client.Gitpod, error) {
 	if err != nil {
 		return nil, err
 	}
+	clientCache = res
 
 	return res, nil
 }
