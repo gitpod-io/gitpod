@@ -11,6 +11,7 @@ import Alert from "../../components/Alert";
 import { Loader2 } from "lucide-react";
 import type { UseQueryResult } from "@tanstack/react-query";
 import type { Project } from "@gitpod/gitpod-protocol";
+import { BreadcrumbNav } from "@podkit/breadcrumbs/BreadcrumbNav";
 
 export interface PageWithAdminSubMenuProps {
     children: React.ReactNode;
@@ -22,7 +23,7 @@ export function ConfigurationDetailPage({ children, projectQuery, id }: PageWith
     const { data, error, isLoading, refetch } = projectQuery;
 
     const settingsMenu = useMemo(() => {
-        return getSettingsMenu(id);
+        return getConfigurationsMenu(id);
     }, [id]);
 
     return (
@@ -54,13 +55,20 @@ export function ConfigurationDetailPage({ children, projectQuery, id }: PageWith
                     // TODO: add a better not-found UI w/ link back to repositories
                     <div>Sorry, we couldn't find that repository configuration.</div>
                 ) : (
-                    children
+                    <>
+                        <BreadcrumbNav
+                            pageTitle="Repository Configuration"
+                            pageDescription={data.name}
+                            backLink="/configurations"
+                        />
+                        {children}
+                    </>
                 ))}
         </PageWithSubMenu>
     );
 }
 
-function getSettingsMenu(id: string) {
+function getConfigurationsMenu(id: string) {
     const base = `/configurations/${id}`;
     return [
         {
