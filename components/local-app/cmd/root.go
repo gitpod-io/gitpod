@@ -55,11 +55,29 @@ var rootCmd = &cobra.Command{
 		var noColor bool
 		if !isatty.IsTerminal(os.Stdout.Fd()) {
 			noColor = true
+			color.Disable()
 		}
 		slog.SetDefault(slog.New(tint.NewHandler(os.Stdout, &tint.Options{
 			Level:      level,
 			NoColor:    noColor,
 			TimeFormat: time.StampMilli,
+			ReplaceAttr: func(groups []string, attr slog.Attr) slog.Attr {
+				if attr.Key != "level" {
+					return attr
+				}
+
+				switch attr.Value.String() {
+				case slog.LevelDebug.String():
+					attr.Value = slog.StringValue(color.Gray.Render("[DEBUG]"))
+				case slog.LevelInfo.String():
+					attr.Value = slog.StringValue(color.Green.Render("[INFO ]"))
+				case slog.LevelWarn.String():
+					attr.Value = slog.StringValue(color.Yellow.Render("[WARN ]"))
+				case slog.LevelError.String():
+					attr.Value = slog.StringValue(color.Red.Render("[ERROR]"))
+				}
+				return attr
+			},
 		})))
 
 		cfg, err := config.LoadConfig(rootOpts.ConfigLocation)
