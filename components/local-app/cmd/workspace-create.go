@@ -160,7 +160,7 @@ func classCompletionFunc(cmd *cobra.Command, args []string, toComplete string) (
 		if cls.IsDefault {
 			defaultDesc = "(default)"
 		}
-		completionStr = append(completionStr, fmt.Sprintf("%s\t%s%s - %s", cls.Id, defaultDesc, cls.DisplayName, cls.Description))
+		completionStr = append(completionStr, fmt.Sprintf("%s\t%s%s - %s", cls.Id, cls.DisplayName, defaultDesc, cls.Description))
 	}
 	return completionStr, cobra.ShellCompDirectiveNoFileComp
 }
