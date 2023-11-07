@@ -188,6 +188,8 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 			continue
 		}
 
+		defer stream.Close()
+
 		for stream.Receive() {
 			msg := stream.Msg()
 			if msg == nil {
