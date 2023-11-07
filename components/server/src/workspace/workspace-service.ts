@@ -739,7 +739,10 @@ export class WorkspaceService {
             const dispose = this.subscriber.listenForWorkspaceInstanceUpdates(userId, (_ctx, instance) => {
                 sink.next(instance);
             });
-            return dispose.dispose;
+            return () => {
+                console.log("=============dispose");
+                dispose.dispose();
+            };
         }, opts);
     }
 

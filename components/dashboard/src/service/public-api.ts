@@ -46,6 +46,27 @@ export const organizationClient = createServiceClient(
     "organization",
 );
 
+// @ts-ignore
+window.$testWorkspaceClient = workspaceClient;
+
+// @ts-ignore
+window.$testWatch = (workspaceId: string) => {
+    const abortController = new AbortController();
+    const it = workspaceClient.watchWorkspaceStatus(
+        { workspaceId },
+        {
+            signal: abortController.signal,
+        },
+    );
+    const startWatchWorkspace = async () => {
+        for await (const workspace of it) {
+            console.log("rcv", workspaceId, JSON.stringify(workspace));
+        }
+    };
+    startWatchWorkspace().then().catch(console.error);
+    return abortController.abort.bind(abortController);
+};
+
 export async function listAllProjects(opts: { orgId: string }): Promise<ProtocolProject[]> {
     let pagination = {
         page: 1,
