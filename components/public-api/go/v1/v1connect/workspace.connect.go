@@ -36,6 +36,10 @@ type WorkspaceServiceClient interface {
 	// +return NOT_FOUND User does not have access to a workspace with the given
 	// ID +return NOT_FOUND Workspace does not exist
 	GetWorkspace(context.Context, *connect_go.Request[v1.GetWorkspaceRequest]) (*connect_go.Response[v1.GetWorkspaceResponse], error)
+	// WatchWorkspaceStatus watchs the workspaces status changes
+	//
+	// ID +return NOT_FOUND Workspace does not exist
+	WatchWorkspaceStatus(context.Context, *connect_go.Request[v1.WatchWorkspaceStatusRequest]) (*connect_go.ServerStreamForClient[v1.WatchWorkspaceStatusResponse], error)
 }
 
 // NewWorkspaceServiceClient constructs a client for the gitpod.v1.WorkspaceService service. By
@@ -53,17 +57,28 @@ func NewWorkspaceServiceClient(httpClient connect_go.HTTPClient, baseURL string,
 			baseURL+"/gitpod.v1.WorkspaceService/GetWorkspace",
 			opts...,
 		),
+		watchWorkspaceStatus: connect_go.NewClient[v1.WatchWorkspaceStatusRequest, v1.WatchWorkspaceStatusResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.WorkspaceService/WatchWorkspaceStatus",
+			opts...,
+		),
 	}
 }
 
 // workspaceServiceClient implements WorkspaceServiceClient.
 type workspaceServiceClient struct {
-	getWorkspace *connect_go.Client[v1.GetWorkspaceRequest, v1.GetWorkspaceResponse]
+	getWorkspace         *connect_go.Client[v1.GetWorkspaceRequest, v1.GetWorkspaceResponse]
+	watchWorkspaceStatus *connect_go.Client[v1.WatchWorkspaceStatusRequest, v1.WatchWorkspaceStatusResponse]
 }
 
 // GetWorkspace calls gitpod.v1.WorkspaceService.GetWorkspace.
 func (c *workspaceServiceClient) GetWorkspace(ctx context.Context, req *connect_go.Request[v1.GetWorkspaceRequest]) (*connect_go.Response[v1.GetWorkspaceResponse], error) {
 	return c.getWorkspace.CallUnary(ctx, req)
+}
+
+// WatchWorkspaceStatus calls gitpod.v1.WorkspaceService.WatchWorkspaceStatus.
+func (c *workspaceServiceClient) WatchWorkspaceStatus(ctx context.Context, req *connect_go.Request[v1.WatchWorkspaceStatusRequest]) (*connect_go.ServerStreamForClient[v1.WatchWorkspaceStatusResponse], error) {
+	return c.watchWorkspaceStatus.CallServerStream(ctx, req)
 }
 
 // WorkspaceServiceHandler is an implementation of the gitpod.v1.WorkspaceService service.
@@ -73,6 +88,10 @@ type WorkspaceServiceHandler interface {
 	// +return NOT_FOUND User does not have access to a workspace with the given
 	// ID +return NOT_FOUND Workspace does not exist
 	GetWorkspace(context.Context, *connect_go.Request[v1.GetWorkspaceRequest]) (*connect_go.Response[v1.GetWorkspaceResponse], error)
+	// WatchWorkspaceStatus watchs the workspaces status changes
+	//
+	// ID +return NOT_FOUND Workspace does not exist
+	WatchWorkspaceStatus(context.Context, *connect_go.Request[v1.WatchWorkspaceStatusRequest], *connect_go.ServerStream[v1.WatchWorkspaceStatusResponse]) error
 }
 
 // NewWorkspaceServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -87,6 +106,11 @@ func NewWorkspaceServiceHandler(svc WorkspaceServiceHandler, opts ...connect_go.
 		svc.GetWorkspace,
 		opts...,
 	))
+	mux.Handle("/gitpod.v1.WorkspaceService/WatchWorkspaceStatus", connect_go.NewServerStreamHandler(
+		"/gitpod.v1.WorkspaceService/WatchWorkspaceStatus",
+		svc.WatchWorkspaceStatus,
+		opts...,
+	))
 	return "/gitpod.v1.WorkspaceService/", mux
 }
 
@@ -95,4 +119,8 @@ type UnimplementedWorkspaceServiceHandler struct{}
 
 func (UnimplementedWorkspaceServiceHandler) GetWorkspace(context.Context, *connect_go.Request[v1.GetWorkspaceRequest]) (*connect_go.Response[v1.GetWorkspaceResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.GetWorkspace is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) WatchWorkspaceStatus(context.Context, *connect_go.Request[v1.WatchWorkspaceStatusRequest], *connect_go.ServerStream[v1.WatchWorkspaceStatusResponse]) error {
+	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.WatchWorkspaceStatus is not implemented"))
 }

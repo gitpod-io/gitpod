@@ -12,11 +12,28 @@ service WorkspaceService {
   // +return NOT_FOUND User does not have access to a workspace with the given
   // ID +return NOT_FOUND Workspace does not exist
   rpc GetWorkspace(GetWorkspaceRequest) returns (GetWorkspaceResponse) {}
+
+  // WatchWorkspaceStatus watchs the workspaces status changes
+  //
+  // ID +return NOT_FOUND Workspace does not exist
+  rpc WatchWorkspaceStatus(WatchWorkspaceStatusRequest) returns (stream WatchWorkspaceStatusResponse) {}
 }
 
 message GetWorkspaceRequest { string id = 1; }
 
 message GetWorkspaceResponse { Workspace item = 1; }
+
+message WatchWorkspaceStatusRequest {
+  // workspace_id specifies the workspace to watch
+  //
+  // +optional if empty then watch all workspaces
+  optional string workspace_id = 1;
+}
+
+message WatchWorkspaceStatusResponse {
+  // item is the workspace that was changed
+  WorkspaceStatus status = 1;
+}
 
 // +resource get workspace
 message Workspace {

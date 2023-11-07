@@ -25,4 +25,35 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         response.item = this.apiConverter.toWorkspace(info);
         return response;
     }
+
+    async *watchWorkspaceStatus(
+        req: WatchWorkspaceStatusRequest,
+        context: HandlerContext,
+    ): AsyncIterable<WatchWorkspaceStatusResponse> {
+        if (req.workspaceId) {
+            const instance = await this.workspaceService.getCurrentInstance(context.user.id, req.workspaceId);
+            const status = this.apiConverter.toWorkspace(instance).status;
+            if (status) {
+                const response = new WatchWorkspaceStatusResponse();
+                response.status = status;
+                yield response;
+            }
+        }
+        const it = this.workspaceService.watchWorkspaceStatus(context.user.id, { signal: context.signal });
+        for await (const instance of it) {
+            if (!instance) {
+                continue;
+            }
+            if (req.workspaceId && instance.workspaceId !== req.workspaceId) {
+                continue;
+            }
+            const status = this.apiConverter.toWorkspace(instance).status;
+            if (!status) {
+                continue;
+            }
+            const response = new WatchWorkspaceStatusResponse();
+            response.status = status;
+            yield response;
+        }
+    }
 }
