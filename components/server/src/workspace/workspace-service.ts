@@ -736,13 +736,17 @@ export class WorkspaceService {
 
     public watchWorkspaceStatus(userId: string, opts: { signal: AbortSignal }) {
         return generateAsyncGenerator<WorkspaceInstance>((sink) => {
-            const dispose = this.subscriber.listenForWorkspaceInstanceUpdates(userId, (_ctx, instance) => {
-                sink.next(instance);
-            });
-            return () => {
-                console.log("=============dispose");
-                dispose.dispose();
-            };
+            try {
+                const dispose = this.subscriber.listenForWorkspaceInstanceUpdates(userId, (_ctx, instance) => {
+                    sink.push(instance);
+                });
+                return () => {
+                    console.log("=============dispose");
+                    dispose.dispose();
+                };
+            } catch (e) {
+                sink.fail(e);
+            }
         }, opts);
     }
 

@@ -38,13 +38,19 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
             throw new ConnectError("signal is required", Code.InvalidArgument);
         }
         const it = generateAsyncGenerator<WorkspaceInstance>(
-            (sink) => {
-                const dispose = getGitpodService().registerClient({
-                    onInstanceUpdate: (instance) => {
-                        sink.next(instance);
-                    },
-                });
-                return dispose.dispose;
+            (queue) => {
+                try {
+                    const dispose = getGitpodService().registerClient({
+                        onInstanceUpdate: (instance) => {
+                            queue.push(instance);
+                        },
+                    });
+                    return () => {
+                        dispose.dispose();
+                    };
+                } catch (e) {
+                    queue.fail(e);
+                }
             },
             { signal: options.signal },
         );
