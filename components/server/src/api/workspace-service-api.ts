@@ -40,6 +40,7 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
             const status = this.apiConverter.toWorkspace(instance).status;
             if (status) {
                 const response = new WatchWorkspaceStatusResponse();
+                response.workspaceId = instance.workspaceId;
                 response.status = status;
                 yield response;
             }

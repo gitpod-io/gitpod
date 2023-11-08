@@ -741,7 +741,6 @@ export class WorkspaceService {
                     sink.push(instance);
                 });
                 return () => {
-                    console.log("=============dispose");
                     dispose.dispose();
                 };
             } catch (e) {

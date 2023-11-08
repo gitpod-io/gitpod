@@ -41,6 +41,7 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
             const resp = await this.getWorkspace({ id: request.workspaceId });
             if (resp.item?.status) {
                 const response = new WatchWorkspaceStatusResponse();
+                response.workspaceId = resp.item.id;
                 response.status = resp.item.status;
                 yield response;
             }
