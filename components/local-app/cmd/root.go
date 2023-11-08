@@ -91,7 +91,13 @@ var rootCmd = &cobra.Command{
 		}
 		cmd.SetContext(config.ToContext(context.Background(), cfg))
 
-		telemetry.Init(!telemetry.DoNotTrack() && cfg.Telemetry.Enabled, cfg.Telemetry.Identity, constants.Version)
+		telemetryEnabled := !telemetry.DoNotTrack()
+		telemetryEnabled = telemetryEnabled && cfg.Telemetry.Enabled
+		// For now we only enable telemetry on gitpod.io
+		if gpctx, err := cfg.GetActiveContext(); err == nil && gpctx != nil {
+			telemetryEnabled = telemetryEnabled && gpctx.Host.String() == "https://gitpod.io"
+		}
+		telemetry.Init(telemetryEnabled, cfg.Telemetry.Identity, constants.Version)
 		telemetry.RecordCommand(cmd)
 
 		return nil

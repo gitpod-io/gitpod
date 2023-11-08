@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"bytes"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -16,6 +17,7 @@ import (
 	"github.com/gitpod-io/gitpod/components/public-api/go/client"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/local-app/pkg/config"
+	"github.com/gitpod-io/local-app/pkg/prettyprint"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -28,7 +30,10 @@ type CommandTest struct {
 }
 
 type CommandTestExpectation struct {
-	Error  string
+	Error           string
+	SystemException bool
+	HasResolutions  bool
+
 	Output string
 }
 
@@ -88,6 +93,12 @@ func RunCommandTests(t *testing.T, tests []CommandTest) {
 			var act CommandTestExpectation
 			if err != nil {
 				act.Error = err.Error()
+				if se := new(prettyprint.ErrSystemException); errors.As(err, &se) {
+					act.SystemException = true
+				}
+				if re := new(prettyprint.ErrResolution); errors.As(err, &re) {
+					act.HasResolutions = true
+				}
 			}
 			act.Output = actual.String()
 

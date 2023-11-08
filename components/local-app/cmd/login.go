@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/url"
@@ -18,8 +19,6 @@ import (
 	"github.com/gitpod-io/local-app/pkg/config"
 	"github.com/gitpod-io/local-app/pkg/prettyprint"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 var loginOpts struct {
@@ -94,7 +93,8 @@ var loginCmd = &cobra.Command{
 					resolutions     []string
 					unauthenticated bool
 				)
-				if status.Code(err) == codes.Unauthenticated {
+				if ce := new(connect.Error); errors.As(err, &ce) && ce.Code() == connect.CodeUnauthenticated {
+					unauthenticated = true
 					resolutions = []string{
 						"pass an organization ID using --organization-id",
 					}
@@ -107,7 +107,7 @@ var loginCmd = &cobra.Command{
 					}
 				}
 				if unauthenticated {
-					return prettyprint.AddResolution(fmt.Errorf("cannot list organizations: %w", err), resolutions...)
+					return prettyprint.AddResolution(fmt.Errorf("unauthenticated"), resolutions...)
 				} else {
 					return prettyprint.MarkExceptional(err)
 				}

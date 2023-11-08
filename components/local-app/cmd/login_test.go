@@ -26,8 +26,12 @@ func TestLoginCmd(t *testing.T) {
 			},
 			PrepServer: func(mux *http.ServeMux) {
 				mux.Handle(gitpod_experimental_v1connect.NewTeamsServiceHandler(&testLoginCmdSrv{
-					Err: connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("unauthenticated")),
+					Err: connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("cannot establish caller identity")),
 				}))
+			},
+			Expectation: CommandTestExpectation{
+				Error:          "unauthenticated",
+				HasResolutions: true,
 			},
 		},
 	})
