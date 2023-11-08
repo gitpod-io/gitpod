@@ -14,8 +14,13 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { expect } from "chai";
 import { PublicAPIConverter } from "./public-api-converter";
-import { OrgMemberInfo } from "./teams-projects-protocol";
+import { OrgMemberInfo, Project, PrebuildSettings as PrebuildSettingsProtocol } from "./teams-projects-protocol";
 import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import {
+    BranchMatchingStrategy,
+    PrebuildSettings,
+    WorkspaceSettings,
+} from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 
 describe("PublicAPIConverter", () => {
     const converter = new PublicAPIConverter();
@@ -621,6 +626,99 @@ describe("PublicAPIConverter", () => {
                 },
                 "restarted",
             );
+        });
+    });
+
+    describe("toConfiguration", () => {
+        it("should convert a Project to a Configuration", () => {
+            const project: Project = {
+                id: "123",
+                teamId: "456",
+                name: "My Project",
+                cloneUrl: "https://github.com/myorg/myproject.git",
+                appInstallationId: "",
+                creationTime: new Date().toISOString(),
+                settings: {
+                    workspaceClasses: {
+                        regular: "dev",
+                    },
+                    prebuilds: {
+                        enable: true,
+                        branchMatchingPattern: "main",
+                        branchStrategy: "default-branch",
+                        prebuildInterval: 20,
+                        workspaceClass: "dev",
+                    },
+                },
+            };
+            const result = converter.toConfiguration(project);
+            expect(result.id).to.equal(project.id);
+            expect(result.organizationId).to.equal(project.teamId);
+            expect(result.name).to.equal(project.name);
+            expect(result.cloneUrl).to.equal(project.cloneUrl);
+            expect(result.workspaceSettings).to.deep.equal(
+                new WorkspaceSettings({
+                    workspaceClass: project.settings?.workspaceClasses?.regular,
+                }),
+            );
+            expect(result.prebuildSettings).to.deep.equal(
+                new PrebuildSettings({
+                    enabled: project.settings?.prebuilds?.enable,
+                    branchMatchingPattern: project.settings?.prebuilds?.branchMatchingPattern,
+                    branchStrategy: BranchMatchingStrategy.DEFAULT_BRANCH,
+                    prebuildInterval: project.settings?.prebuilds?.prebuildInterval,
+                    workspaceClass: project.settings?.prebuilds?.workspaceClass,
+                }),
+            );
+        });
+    });
+
+    describe("toPrebuildSettings", () => {
+        it("should convert a PrebuildSettingsProtocol to a PrebuildSettings", () => {
+            const prebuilds: PrebuildSettingsProtocol = {
+                enable: true,
+                branchMatchingPattern: "main",
+                branchStrategy: "default-branch",
+                prebuildInterval: 42,
+                workspaceClass: "dev",
+            };
+            const result = converter.toPrebuildSettings(prebuilds);
+            expect(result.enabled).to.equal(prebuilds.enable);
+            expect(result.branchMatchingPattern).to.equal(prebuilds.branchMatchingPattern);
+            expect(result.branchStrategy).to.equal(BranchMatchingStrategy.DEFAULT_BRANCH);
+            expect(result.prebuildInterval).to.equal(prebuilds.prebuildInterval);
+            expect(result.workspaceClass).to.equal(prebuilds.workspaceClass);
+        });
+
+        it("should return an empty PrebuildSettings if no PrebuildSettingsProtocol is provided", () => {
+            const result = converter.toPrebuildSettings(undefined);
+            expect(result).to.deep.equal(new PrebuildSettings());
+        });
+    });
+
+    describe("toBranchMatchingStrategy", () => {
+        it("should convert a BranchStrategy to a BranchMatchingStrategy", () => {
+            expect(converter.toBranchMatchingStrategy("default-branch")).to.equal(
+                BranchMatchingStrategy.DEFAULT_BRANCH,
+            );
+            expect(converter.toBranchMatchingStrategy("all-branches")).to.equal(BranchMatchingStrategy.ALL_BRANCHES);
+            expect(converter.toBranchMatchingStrategy("matched-branches")).to.equal(
+                BranchMatchingStrategy.MATCHED_BRANCHES,
+            );
+            expect(converter.toBranchMatchingStrategy(undefined)).to.equal(BranchMatchingStrategy.DEFAULT_BRANCH);
+        });
+    });
+
+    describe("toWorkspaceSettings", () => {
+        it("should convert a workspace class string to a WorkspaceSettings", () => {
+            const workspaceClass = "dev";
+            const result = converter.toWorkspaceSettings(workspaceClass);
+            expect(result).to.deep.equal(new WorkspaceSettings({ workspaceClass }));
+        });
+
+        it("should return an empty WorkspaceSettings if no workspace class string is provided", () => {
+            const result = converter.toWorkspaceSettings(undefined);
+            expect(result).to.deep.equal(new WorkspaceSettings());
         });
     });
 });

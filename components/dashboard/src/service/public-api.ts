@@ -18,6 +18,7 @@ import { TokensService } from "@gitpod/public-api/lib/gitpod/experimental/v1/tok
 import { WorkspacesService as WorkspaceV1Service } from "@gitpod/public-api/lib/gitpod/experimental/v1/workspaces_connect";
 import { OrganizationService } from "@gitpod/public-api/lib/gitpod/v1/organization_connect";
 import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/v1/workspace_connect";
+import { ConfigurationService } from "@gitpod/public-api/lib/gitpod/v1/configuration_connect";
 import { getMetricsInterceptor } from "@gitpod/public-api/lib/metrics";
 import { getExperimentsClient } from "../experiments/client";
 import { JsonRpcOrganizationClient } from "./json-rpc-organization-client";
@@ -45,6 +46,8 @@ export const organizationClient = createServiceClient(
     new JsonRpcOrganizationClient(),
     "organization",
 );
+// No jsonrcp client for the configuration service as it's only used in new UI of the dashboard
+export const configurationClient = createServiceClient(ConfigurationService);
 
 export async function listAllProjects(opts: { orgId: string }): Promise<ProtocolProject[]> {
     let pagination = {

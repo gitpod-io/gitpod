@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { GetWorkspaceRequest, GetWorkspaceResponse } from "./workspace_pb.js";
+import { GetWorkspaceRequest, GetWorkspaceResponse, WatchWorkspaceStatusRequest, WatchWorkspaceStatusResponse } from "./workspace_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -31,6 +31,19 @@ export const WorkspaceService = {
       I: GetWorkspaceRequest,
       O: GetWorkspaceResponse,
       kind: MethodKind.Unary,
+    },
+    /**
+     * WatchWorkspaceStatus watchs the workspaces status changes
+     *
+     * workspace_id +return NOT_FOUND Workspace does not exist
+     *
+     * @generated from rpc gitpod.v1.WorkspaceService.WatchWorkspaceStatus
+     */
+    watchWorkspaceStatus: {
+      name: "WatchWorkspaceStatus",
+      I: WatchWorkspaceStatusRequest,
+      O: WatchWorkspaceStatusResponse,
+      kind: MethodKind.ServerStreaming,
     },
   }
 } as const;

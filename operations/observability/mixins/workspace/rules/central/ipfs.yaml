@@ -21,8 +21,8 @@ spec:
           annotations:
             runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/IPFSAlmostOutOfStorage.md
             summary: IPFS is running out of storage within a few days in a workspace cluster. Create and shift to a new workspace cluster with a fresh IPFS.
-            description: IPFS in cluster {{ $labels.cluster }} is running out of storage. This happens naturally for workspace clusters over time, and is prevented by recreating the clusters regularly. Once out of storage, IPFS will stop working, and we fall back to the GCP registry for workspace image pulls, resulting in slower workspace startup times.
-          expr: min(node_filesystem_avail_bytes{device="/dev/mapper/lvm--disk-ipfs", node=~"services-.*", cluster!~"ephemeral.*"}) by (cluster) < 600*1024*1024*1024
+            description: IPFS in cluster {{ $labels.cluster }} is running out of storage ({{ $value | humanize1024 }}B left). This happens naturally for workspace clusters over time, and is prevented by recreating the clusters regularly. Once out of storage, IPFS will stop working, and we fall back to the GCP registry for workspace image pulls, resulting in slower workspace startup times.
+          expr: min(node_filesystem_avail_bytes{device="/dev/mapper/lvm--disk-ipfs", node=~"services-.*", cluster!~"ephemeral.*"}) by (cluster) < 600 * 1024*1024*1024
         - alert: IPFSStorageCritical
           labels:
             severity: critical
@@ -31,5 +31,5 @@ spec:
           annotations:
             runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/IPFSAlmostOutOfStorage.md
             summary: IPFS is now very close to running out of storage in a workspace cluster. Create and shift to a new workspace cluster with a fresh IPFS.
-            description: IPFS in cluster {{ $labels.cluster }} has almost ran out of storage. This happens naturally for workspace clusters over time, and is prevented by recreating the clusters regularly. Once out of storage, IPFS will stop working, and we fall back to the GCP registry for workspace image pulls, resulting in slower workspace startup times.
-          expr: min(node_filesystem_avail_bytes{device="/dev/mapper/lvm--disk-ipfs", node=~"services-.*", cluster!~"ephemeral.*"}) by (cluster) < 200*1024*1024*1024
+            description: IPFS in cluster {{ $labels.cluster }} has almost ran out of storage ({{ $value | humanize1024 }}B left). This happens naturally for workspace clusters over time, and is prevented by recreating the clusters regularly. Once out of storage, IPFS will stop working, and we fall back to the GCP registry for workspace image pulls, resulting in slower workspace startup times.
+          expr: min(node_filesystem_avail_bytes{device="/dev/mapper/lvm--disk-ipfs", node=~"services-.*", cluster!~"ephemeral.*"}) by (cluster) < 200 * 1024*1024*1024

@@ -65,7 +65,7 @@ func fetchValidCLIScopes(ctx context.Context, serviceURL string) ([]string, erro
 		return authScopesLocalCompanion, nil
 	}
 
-	return nil, prettyprint.AddApology(errors.New(serviceURL + " did not provide valid scopes"))
+	return nil, prettyprint.MarkExceptional(errors.New(serviceURL + " did not provide valid scopes"))
 }
 
 type ErrInvalidGitpodToken struct {

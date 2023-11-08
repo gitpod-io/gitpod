@@ -17,6 +17,7 @@ import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/g
 import { UserService as UserServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_connect";
 import { OrganizationService } from "@gitpod/public-api/lib/gitpod/v1/organization_connect";
 import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/v1/workspace_connect";
+import { ConfigurationService } from "@gitpod/public-api/lib/gitpod/v1/configuration_connect";
 import express from "express";
 import * as http from "http";
 import { decorate, inject, injectable, interfaces } from "inversify";
@@ -39,6 +40,7 @@ import { APIStatsService as StatsServiceAPI } from "./stats";
 import { APITeamsService as TeamsServiceAPI } from "./teams";
 import { APIUserService as UserServiceAPI } from "./user";
 import { WorkspaceServiceAPI } from "./workspace-service-api";
+import { ConfigurationServiceAPI } from "./configuration-service-api";
 
 decorate(injectable(), PublicAPIConverter);
 
@@ -52,6 +54,7 @@ export class API {
     @inject(TeamsServiceAPI) private readonly teamServiceApi: TeamsServiceAPI;
     @inject(WorkspaceServiceAPI) private readonly workspaceServiceApi: WorkspaceServiceAPI;
     @inject(OrganizationServiceAPI) private readonly organizationServiceApi: OrganizationServiceAPI;
+    @inject(ConfigurationServiceAPI) private readonly configurationServiceApi: ConfigurationServiceAPI;
     @inject(StatsServiceAPI) private readonly tatsServiceApi: StatsServiceAPI;
     @inject(HelloServiceAPI) private readonly helloServiceApi: HelloServiceAPI;
     @inject(SessionHandler) private readonly sessionHandler: SessionHandler;
@@ -102,6 +105,7 @@ export class API {
                         service(HelloService, this.helloServiceApi),
                         service(WorkspaceService, this.workspaceServiceApi),
                         service(OrganizationService, this.organizationServiceApi),
+                        service(ConfigurationService, this.configurationServiceApi),
                     ]) {
                         router.service(type, new Proxy(impl, this.interceptService(type)));
                     }
@@ -299,6 +303,7 @@ export class API {
         bind(TeamsServiceAPI).toSelf().inSingletonScope();
         bind(WorkspaceServiceAPI).toSelf().inSingletonScope();
         bind(OrganizationServiceAPI).toSelf().inSingletonScope();
+        bind(ConfigurationServiceAPI).toSelf().inSingletonScope();
         bind(StatsServiceAPI).toSelf().inSingletonScope();
         bind(API).toSelf().inSingletonScope();
     }

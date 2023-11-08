@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/gitpod-io/local-app/pkg/prettyprint"
+	"github.com/gitpod-io/local-app/pkg/telemetry"
 	"gopkg.in/yaml.v3"
 )
 
@@ -23,6 +24,12 @@ type Config struct {
 
 	ActiveContext string `yaml:"activeContext,omitempty"`
 	Contexts      map[string]*ConnectionContext
+	Telemetry     *Telemetry `yaml:"telemetry,omitempty"`
+}
+
+type Telemetry struct {
+	Enabled  bool   `yaml:"enabled,omitempty"`
+	Identity string `yaml:"identity,omitempty"`
 }
 
 func (c *Config) GetActiveContext() (*ConnectionContext, error) {
@@ -118,6 +125,10 @@ func LoadConfig(fn string) (res *Config, err error) {
 	cfg := &Config{
 		Filename: fn,
 		Contexts: make(map[string]*ConnectionContext),
+		Telemetry: &Telemetry{
+			Enabled:  !telemetry.DoNotTrack(),
+			Identity: telemetry.GenerateIdentity(),
+		},
 	}
 	fc, err := os.ReadFile(fn)
 	if err != nil {

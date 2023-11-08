@@ -26,6 +26,12 @@ import {
     OrganizationRole,
     OrganizationSettings,
 } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import {
+    BranchMatchingStrategy,
+    Configuration,
+    PrebuildSettings,
+    WorkspaceSettings,
+} from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { ApplicationError, ErrorCode, ErrorCodes } from "./messaging/error";
 import {
     CommitContext,
@@ -50,6 +56,8 @@ import {
     OrgMemberInfo,
     OrgMemberRole,
     OrganizationSettings as OrganizationSettingsProtocol,
+    Project,
+    PrebuildSettings as PrebuildSettingsProtocol,
 } from "./teams-projects-protocol";
 
 const applicationErrorCode = "application-error-code";
@@ -374,6 +382,49 @@ export class PublicAPIConverter {
         const result = new OrganizationSettings();
         result.workspaceSharingDisabled = !!settings.workspaceSharingDisabled;
         result.defaultWorkspaceImage = settings.defaultWorkspaceImage || undefined;
+        return result;
+    }
+
+    toConfiguration(project: Project): Configuration {
+        const result = new Configuration();
+        result.id = project.id;
+        result.organizationId = project.teamId;
+        result.name = project.name;
+        result.cloneUrl = project.cloneUrl;
+        result.workspaceSettings = this.toWorkspaceSettings(project.settings?.workspaceClasses?.regular);
+        result.prebuildSettings = this.toPrebuildSettings(project.settings?.prebuilds);
+        return result;
+    }
+
+    toPrebuildSettings(prebuilds?: PrebuildSettingsProtocol): PrebuildSettings {
+        const result = new PrebuildSettings();
+        if (prebuilds) {
+            result.enabled = !!prebuilds.enable;
+            result.branchMatchingPattern = prebuilds.branchMatchingPattern ?? "";
+            result.branchStrategy = this.toBranchMatchingStrategy(prebuilds.branchStrategy);
+            result.prebuildInterval = prebuilds.prebuildInterval ?? 20;
+            result.workspaceClass = prebuilds.workspaceClass ?? "";
+        }
+        return result;
+    }
+
+    toBranchMatchingStrategy(branchStrategy?: PrebuildSettingsProtocol.BranchStrategy): BranchMatchingStrategy {
+        switch (branchStrategy) {
+            case "default-branch":
+                return BranchMatchingStrategy.DEFAULT_BRANCH;
+            case "all-branches":
+                return BranchMatchingStrategy.ALL_BRANCHES;
+            case "matched-branches":
+                return BranchMatchingStrategy.MATCHED_BRANCHES;
+        }
+        return BranchMatchingStrategy.DEFAULT_BRANCH;
+    }
+
+    toWorkspaceSettings(workspaceClass?: string): WorkspaceSettings {
+        const result = new WorkspaceSettings();
+        if (workspaceClass) {
+            result.workspaceClass = workspaceClass;
+        }
         return result;
     }
 }

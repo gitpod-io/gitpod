@@ -164,9 +164,11 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 		return ws.Status, nil
 	}
 
+	var wsStatus string
 	slog.Info("waiting for workspace to start...", "workspaceID", workspaceID)
 	if HasInstanceStatus(wsInfo.Msg.Result) {
-		slog.Info("workspace " + prettyprint.FormatWorkspacePhase(wsInfo.Msg.Result.Status.Instance.Status.Phase))
+		slog.Info("workspace status: " + prettyprint.FormatWorkspacePhase(wsInfo.Msg.Result.Status.Instance.Status.Phase))
+		wsStatus = prettyprint.FormatWorkspacePhase(wsInfo.Msg.Result.Status.Instance.Status.Phase)
 	}
 
 	var (
@@ -178,7 +180,7 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 		stream, err := clnt.Workspaces.StreamWorkspaceStatus(ctx, connect.NewRequest(&v1.StreamWorkspaceStatusRequest{WorkspaceId: workspaceID}))
 		if err != nil {
 			if retries >= maxRetries {
-				return nil, prettyprint.AddApology(fmt.Errorf("failed to stream workspace status after %d retries: %w", maxRetries, err))
+				return nil, prettyprint.MarkExceptional(fmt.Errorf("failed to stream workspace status after %d retries: %w", maxRetries, err))
 			}
 			retries++
 			delay *= 2
@@ -186,7 +188,8 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 			continue
 		}
 
-		previousStatus := ""
+		defer stream.Close()
+
 		for stream.Receive() {
 			msg := stream.Msg()
 			if msg == nil {
@@ -200,18 +203,18 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 				return ws, nil
 			}
 
-			var currentStatus string
 			if HasInstanceStatus(wsInfo.Msg.Result) {
-				currentStatus = prettyprint.FormatWorkspacePhase(wsInfo.Msg.Result.Status.Instance.Status.Phase)
-			}
-			if currentStatus != previousStatus {
-				slog.Info("workspace " + currentStatus)
-				previousStatus = currentStatus
+				newWsStatus := prettyprint.FormatWorkspacePhase(ws.Instance.Status.Phase)
+				// De-duplicate status messages
+				if wsStatus != newWsStatus {
+					slog.Info("workspace status: " + newWsStatus)
+					wsStatus = newWsStatus
+				}
 			}
 		}
 		if err := stream.Err(); err != nil {
 			if retries >= maxRetries {
-				return nil, prettyprint.AddApology(fmt.Errorf("failed to stream workspace status after %d retries: %w", maxRetries, err))
+				return nil, prettyprint.MarkExceptional(fmt.Errorf("failed to stream workspace status after %d retries: %w", maxRetries, err))
 			}
 			retries++
 			delay *= 2
@@ -219,6 +222,6 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 			continue
 		}
 
-		return nil, prettyprint.AddApology(fmt.Errorf("workspace stream ended unexpectedly"))
+		return nil, prettyprint.MarkExceptional(fmt.Errorf("workspace stream ended unexpectedly"))
 	}
 }
