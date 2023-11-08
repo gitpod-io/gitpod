@@ -4,14 +4,14 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useMemo } from "react";
-import { PageWithSubMenu } from "../../components/PageWithSubMenu";
-import { Button } from "@podkit/buttons/Button";
-import Alert from "../../components/Alert";
-import { Loader2 } from "lucide-react";
-import type { UseQueryResult } from "@tanstack/react-query";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { BreadcrumbNav } from "@podkit/breadcrumbs/BreadcrumbNav";
+import { Button } from "@podkit/buttons/Button";
+import type { UseQueryResult } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+import { useMemo } from "react";
+import Alert from "../../components/Alert";
+import { PageWithSubMenu } from "../../components/PageWithSubMenu";
 
 export interface PageWithAdminSubMenuProps {
     children: React.ReactNode;
@@ -60,7 +60,7 @@ export function ConfigurationDetailPage({ children, configurationQuery, id }: Pa
                         // TODO: add a better not-found UI w/ link back to repositories
                         <div>Sorry, we couldn't find that repository configuration.</div>
                     ) : (
-                        { children }
+                        children
                     ))}
             </PageWithSubMenu>
         </div>
