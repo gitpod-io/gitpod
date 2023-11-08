@@ -403,6 +403,7 @@ export class PublicAPIConverter {
         result.organizationId = project.teamId;
         result.name = project.name;
         result.cloneUrl = project.cloneUrl;
+        result.creationTime = Timestamp.fromDate(new Date(project.creationTime));
         result.workspaceSettings = this.toWorkspaceSettings(project.settings?.workspaceClasses?.regular);
         result.prebuildSettings = this.toPrebuildSettings(project.settings?.prebuilds);
         return result;

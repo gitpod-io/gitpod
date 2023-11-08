@@ -66,7 +66,7 @@ const RepositoryListPage: FC = () => {
 
                 {isLoading && <Loader2 className="animate-spin" />}
 
-                <table>
+                <table className="w-full text-left">
                     <thead>
                         <tr>
                             <th>Name</th>

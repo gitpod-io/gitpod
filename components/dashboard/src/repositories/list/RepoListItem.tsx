@@ -18,7 +18,7 @@ export const RepositoryListItem: FC<Props> = ({ configuration }) => {
     const url = usePrettyRepoURL(configuration.cloneUrl);
 
     return (
-        <tr key={configuration.id} className="flex flex-row w-full space-between items-center">
+        <tr>
             <td className="">
                 <Text className="font-semibold">{configuration.name}</Text>
             </td>
