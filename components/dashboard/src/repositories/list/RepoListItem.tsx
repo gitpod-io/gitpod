@@ -19,17 +19,24 @@ export const RepositoryListItem: FC<Props> = ({ configuration }) => {
     const url = usePrettyRepoURL(configuration.cloneUrl);
 
     return (
-        <li key={configuration.id} className="flex flex-row w-full space-between items-center">
-            <div className="flex flex-col flex-grow gap-1">
+        <tr key={configuration.id} className="flex flex-row w-full space-between items-center">
+            <td className="">
                 <Text className="font-semibold">{configuration.name}</Text>
+            </td>
+            <td>
                 <TextMuted className="text-sm">{url}</TextMuted>
-            </div>
+            </td>
+            <td>
+                {configuration.creationTime
+                    ?.toDate()
+                    .toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+            </td>
 
             <div>
                 <Link to={`/repositories/${configuration.id}`}>
                     <Button type="secondary">View</Button>
                 </Link>
             </div>
-        </li>
+        </tr>
     );
 };

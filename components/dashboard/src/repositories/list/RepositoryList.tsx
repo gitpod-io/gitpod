@@ -15,12 +15,22 @@ import { RepositoryListItem } from "./RepoListItem";
 import { useListConfigurations } from "../../data/configurations/configuration-queries";
 import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
 import { TextInput } from "../../components/forms/TextInputField";
+import Pagination from "../../Pagination/Pagination";
 
 const RepositoryListPage: FC = () => {
     const history = useHistory();
+
+    // TODO: Consider pushing this state into query params
+    const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm, debouncedSearchTerm] = useStateWithDebounce("");
-    const { data, isLoading } = useListConfigurations({ searchTerm: debouncedSearchTerm, page: 0, pageSize: 10 });
+
+    const pageSize = 10;
+
+    const { data, isLoading } = useListConfigurations({ searchTerm: debouncedSearchTerm, page: currentPage, pageSize });
     const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
+
+    // TODO: add this to response payload for pagination
+    const totalPages = data?.pagination?.total ?? 0 / pageSize;
 
     const handleProjectCreated = useCallback(
         (project: Project) => {
@@ -31,25 +41,49 @@ const RepositoryListPage: FC = () => {
 
     return (
         <>
-            <Header title="Configurations" subtitle="" />
-
             <div className="app-container">
-                <div className="py-4 text-right">
-                    <Button onClick={() => setShowCreateProjectModal(true)}>Configure Repository</Button>
+                {/* TODO: Consider updating Header to have an action button prop */}
+                <div className="flex flex-row justify-between">
+                    <Header
+                        title="Repository Configuration"
+                        subtitle="Configure and refine the experience of working with a repository in Gitpod"
+                    />
+                    <Button onClick={() => setShowCreateProjectModal(true)}>Import Repository</Button>
                 </div>
 
-                <div>
-                    <TextInput value={searchTerm} onChange={setSearchTerm} placeholder="Search repositories" />
+                {/* Search/Filter bar */}
+                <div className="flex flex-row justify-between">
+                    <div>
+                        <TextInput
+                            value={searchTerm}
+                            onChange={setSearchTerm}
+                            placeholder="Search imported repositories"
+                        />
+                        {/* TODO: Add prebuild status filter dropdown */}
+                    </div>
+                    <div>{/* TODO: Add copy explaining what records we're showing & total records count */}</div>
                 </div>
 
                 {isLoading && <Loader2 className="animate-spin" />}
 
-                <ul className="space-y-2 mt-8">
-                    {!isLoading &&
-                        data?.configurations.map((configuration) => (
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Repository URL</th>
+                            <th>Created</th>
+                            <th>Prebuilds</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data?.configurations.map((configuration) => (
                             <RepositoryListItem key={configuration.id} configuration={configuration} />
                         ))}
-                </ul>
+                    </tbody>
+                </table>
+
+                {/* TODO: Refactor Pagination into podkit or to use podkit components internally */}
+                <Pagination currentPage={currentPage} setPage={setCurrentPage} totalNumberOfPages={totalPages} />
             </div>
 
             {showCreateProjectModal && (
