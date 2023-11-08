@@ -138,7 +138,7 @@ class ProjectDBSpec {
         expect(page1.rows[1].id).to.eq(storedProject2.id);
         expect(page1.rows[2].id).to.eq(storedProject3.id);
 
-        const page2 = await this.projectDb.findProjectsBySearchTerm(1, pageSize, "name", "ASC", "");
+        const page2 = await this.projectDb.findProjectsBySearchTerm(pageSize * 1, pageSize, "name", "ASC", "");
         expect(page2.total).equals(5);
         expect(page2.rows.length).equal(2);
         expect(page2.rows[0].id).to.eq(storedProject4.id);
