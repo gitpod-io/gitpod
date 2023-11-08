@@ -6,7 +6,12 @@
 
 import { Timestamp } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@connectrpc/connect";
-import { AuthProvider, AuthProviderType, OAuth2Config } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import {
+    AuthProvider,
+    AuthProviderDescription,
+    AuthProviderType,
+    OAuth2Config,
+} from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import {
     Organization,
     OrganizationMember,
@@ -31,6 +36,7 @@ import { ContextURL } from "./context-url";
 import { ApplicationError, ErrorCode, ErrorCodes } from "./messaging/error";
 import {
     AuthProviderEntry as AuthProviderProtocol,
+    AuthProviderInfo,
     CommitContext,
     EnvVarWithValue,
     Workspace as ProtocolWorkspace,
@@ -379,11 +385,20 @@ export class PublicAPIConverter {
         return result;
     }
 
+    toAuthProviderDescription(ap: AuthProviderInfo): AuthProviderDescription {
+        const result = new AuthProviderDescription({
+            id: ap.authProviderId,
+            host: ap.host,
+            type: this.toAuthProviderType(ap.authProviderType),
+        });
+        return result;
+    }
+
     toAuthProvider(ap: AuthProviderProtocol): AuthProvider {
         const result = new AuthProvider({
             id: ap.id,
             host: ap.host,
-            type: this.toAuthProviderType(ap),
+            type: this.toAuthProviderType(ap.type),
             verified: ap.status === "verified",
             settingsUrl: ap.oauth?.settingsUrl,
             scopes: ap.oauth?.scope?.split(ap.oauth?.scopeSeparator || " ") || [],
@@ -410,8 +425,8 @@ export class PublicAPIConverter {
         });
     }
 
-    toAuthProviderType(ap: AuthProviderProtocol): AuthProviderType {
-        switch (ap.type) {
+    toAuthProviderType(type: string): AuthProviderType {
+        switch (type) {
             case "GitHub":
                 return AuthProviderType.GITHUB;
             case "GitLab":

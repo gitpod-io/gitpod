@@ -103,7 +103,10 @@ export class JsonRpcAuthProviderClient implements PromiseClient<typeof AuthProvi
     async listAuthProviderDescriptions(
         request: PartialMessage<ListAuthProviderDescriptionsRequest>,
     ): Promise<ListAuthProviderDescriptionsResponse> {
-        throw new ConnectError("unimplemented", Code.Unimplemented);
+        const aps = await getGitpodService().server.getAuthProviders();
+        return new ListAuthProviderDescriptionsResponse({
+            descriptions: aps.map((ap) => converter.toAuthProviderDescription(ap)),
+        });
     }
 
     async updateAuthProvider(request: PartialMessage<UpdateAuthProviderRequest>): Promise<UpdateAuthProviderResponse> {

@@ -23,7 +23,8 @@ import {
     DeleteAuthProviderResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { AuthProviderService } from "../auth/auth-provider-service";
-import { AuthProviderEntry } from "@gitpod/gitpod-protocol";
+import { AuthProviderEntry, AuthProviderInfo } from "@gitpod/gitpod-protocol";
+import { Unauthenticated } from "./unauthenticated";
 
 @injectable()
 export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderServiceInterface> {
@@ -105,11 +106,22 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
         return result;
     }
 
+    /**
+     * Listing descriptions of auth providers doesn't require authentication.
+     */
+    @Unauthenticated()
     async listAuthProviderDescriptions(
-        request: ListAuthProviderDescriptionsRequest,
+        _request: ListAuthProviderDescriptionsRequest,
         context: HandlerContext,
     ): Promise<ListAuthProviderDescriptionsResponse> {
-        throw new ConnectError("unimplemented", Code.Unimplemented);
+        const user = context.user;
+        const aps = user
+            ? await this.authProviderService.getAuthProviderDescriptions(user)
+            : await this.authProviderService.getAuthProviderDescriptionsUnauthenticated();
+
+        return new ListAuthProviderDescriptionsResponse({
+            descriptions: aps.map((ap: AuthProviderInfo) => this.apiConverter.toAuthProviderDescription(ap)),
+        });
     }
 
     async updateAuthProvider(
