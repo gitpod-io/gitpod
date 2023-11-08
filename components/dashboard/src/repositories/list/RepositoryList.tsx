@@ -73,6 +73,8 @@ const RepositoryListPage: FC = () => {
                             <th>Repository URL</th>
                             <th>Created</th>
                             <th>Prebuilds</th>
+                            {/* Action column */}
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>

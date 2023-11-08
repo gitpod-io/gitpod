@@ -8,8 +8,7 @@ import { FC } from "react";
 import { usePrettyRepoURL } from "../../hooks/use-pretty-repo-url";
 import { TextMuted } from "@podkit/typography/TextMuted";
 import { Text } from "@podkit/typography/Text";
-import { Link } from "react-router-dom";
-import { Button } from "../../components/Button";
+import { LinkButton } from "@podkit/buttons/LinkButton";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 
 type Props = {
@@ -23,20 +22,25 @@ export const RepositoryListItem: FC<Props> = ({ configuration }) => {
             <td className="">
                 <Text className="font-semibold">{configuration.name}</Text>
             </td>
+
             <td>
                 <TextMuted className="text-sm">{url}</TextMuted>
             </td>
+
             <td>
                 {configuration.creationTime
                     ?.toDate()
                     .toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
             </td>
 
-            <div>
-                <Link to={`/repositories/${configuration.id}`}>
-                    <Button type="secondary">View</Button>
-                </Link>
-            </div>
+            <td>
+                {/* TODO: add icon */}
+                {configuration.prebuildSettings?.enabled ? "Enabled" : "Disabled"}
+            </td>
+
+            <td>
+                <LinkButton href={`/repositories/${configuration.id}`}>View</LinkButton>
+            </td>
         </tr>
     );
 };
