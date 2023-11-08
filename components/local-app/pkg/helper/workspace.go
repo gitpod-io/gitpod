@@ -180,7 +180,7 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 		stream, err := clnt.Workspaces.StreamWorkspaceStatus(ctx, connect.NewRequest(&v1.StreamWorkspaceStatusRequest{WorkspaceId: workspaceID}))
 		if err != nil {
 			if retries >= maxRetries {
-				return nil, prettyprint.AddApology(fmt.Errorf("failed to stream workspace status after %d retries: %w", maxRetries, err))
+				return nil, prettyprint.MarkExceptional(fmt.Errorf("failed to stream workspace status after %d retries: %w", maxRetries, err))
 			}
 			retries++
 			delay *= 2
@@ -214,7 +214,7 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 		}
 		if err := stream.Err(); err != nil {
 			if retries >= maxRetries {
-				return nil, prettyprint.AddApology(fmt.Errorf("failed to stream workspace status after %d retries: %w", maxRetries, err))
+				return nil, prettyprint.MarkExceptional(fmt.Errorf("failed to stream workspace status after %d retries: %w", maxRetries, err))
 			}
 			retries++
 			delay *= 2
@@ -222,6 +222,6 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 			continue
 		}
 
-		return nil, prettyprint.AddApology(fmt.Errorf("workspace stream ended unexpectedly"))
+		return nil, prettyprint.MarkExceptional(fmt.Errorf("workspace stream ended unexpectedly"))
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"runtime"
 	"strings"
 
 	"github.com/gookit/color"
@@ -31,7 +32,7 @@ func PrintError(out io.Writer, command string, err error) {
 		if r, ok := err.(*ErrResolution); ok {
 			resolutions = append(resolutions, r.Resolutions...)
 		}
-		if _, ok := err.(*ErrApology); ok {
+		if _, ok := err.(*ErrSystemException); ok {
 			apology = true
 		}
 
@@ -71,18 +72,26 @@ func (e *ErrResolution) Unwrap() error {
 	return e.Err
 }
 
-func AddApology(err error) *ErrApology {
-	return &ErrApology{err}
+func MarkExceptional(err error) *ErrSystemException {
+	context := "unknown"
+	if _, file, no, ok := runtime.Caller(1); ok {
+		context = fmt.Sprintf("%s:%d", file, no)
+	}
+	return &ErrSystemException{
+		Context: context,
+		Err:     err,
+	}
 }
 
-type ErrApology struct {
-	Err error
+type ErrSystemException struct {
+	Context string
+	Err     error
 }
 
-func (e ErrApology) Error() string {
+func (e ErrSystemException) Error() string {
 	return e.Err.Error()
 }
 
-func (e ErrApology) Unwrap() error {
+func (e ErrSystemException) Unwrap() error {
 	return e.Err
 }

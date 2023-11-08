@@ -56,7 +56,7 @@ var workspaceUpCmd = &cobra.Command{
 		if workspaceCreateOpts.WorkspaceClass != "" {
 			resp, err := gitpod.Workspaces.ListWorkspaceClasses(cmd.Context(), connect.NewRequest(&v1.ListWorkspaceClassesRequest{}))
 			if err != nil {
-				return prettyprint.AddApology(prettyprint.AddResolution(fmt.Errorf("cannot list workspace classes: %w", err),
+				return prettyprint.MarkExceptional(prettyprint.AddResolution(fmt.Errorf("cannot list workspace classes: %w", err),
 					"don't pass an explicit workspace class, i.e. omit the --class flag",
 				))
 			}
@@ -80,7 +80,7 @@ var workspaceUpCmd = &cobra.Command{
 		if workspaceCreateOpts.Editor != "" {
 			resp, err := gitpod.Editors.ListEditorOptions(cmd.Context(), connect.NewRequest(&v1.ListEditorOptionsRequest{}))
 			if err != nil {
-				return prettyprint.AddApology(prettyprint.AddResolution(fmt.Errorf("cannot list editor options: %w", err),
+				return prettyprint.MarkExceptional(prettyprint.AddResolution(fmt.Errorf("cannot list editor options: %w", err),
 					"don't pass an explicit editor, i.e. omit the --editor flag",
 				))
 			}
@@ -109,7 +109,7 @@ var workspaceUpCmd = &cobra.Command{
 		defer func() {
 			// If the error doesn't have a resolution, assume it's a system error and add an apology
 			if err != nil && !errors.Is(err, &prettyprint.ErrResolution{}) {
-				err = prettyprint.AddApology(err)
+				err = prettyprint.MarkExceptional(err)
 			}
 		}()
 
@@ -143,12 +143,12 @@ var workspaceUpCmd = &cobra.Command{
 		slog.Debug("found Git working copy", "dir", currentDir)
 		repo, err := git.PlainOpen(currentDir)
 		if err != nil {
-			return prettyprint.AddApology(fmt.Errorf("cannot open Git working copy at %s: %w", currentDir, err))
+			return prettyprint.MarkExceptional(fmt.Errorf("cannot open Git working copy at %s: %w", currentDir, err))
 		}
 		_ = repo.DeleteRemote("gitpod")
 		head, err := repo.Head()
 		if err != nil {
-			return prettyprint.AddApology(fmt.Errorf("cannot get HEAD: %w", err))
+			return prettyprint.MarkExceptional(fmt.Errorf("cannot get HEAD: %w", err))
 		}
 		branch := head.Name().Short()
 
@@ -170,7 +170,7 @@ var workspaceUpCmd = &cobra.Command{
 		}
 		workspaceID := newWorkspace.Msg.WorkspaceId
 		if len(workspaceID) == 0 {
-			return prettyprint.AddApology(prettyprint.AddResolution(fmt.Errorf("workspace was not created"),
+			return prettyprint.MarkExceptional(prettyprint.AddResolution(fmt.Errorf("workspace was not created"),
 				"try to create the workspace again",
 			))
 		}
