@@ -7,16 +7,16 @@
 import { FC } from "react";
 import Header from "../../components/Header";
 import { useParams } from "react-router";
-import { useProject } from "../../data/projects/project-queries";
 import { ConfigurationNameForm } from "./ConfigurationName";
 import { ConfigurationDetailPage } from "./ConfigurationDetailPage";
+import { useConfiguration } from "../../data/configurations/configuration-queries";
 
 type PageRouteParams = {
     id: string;
 };
 const ConfigurationDetailGeneral: FC = () => {
     const { id } = useParams<PageRouteParams>();
-    const configurationQuery = useProject({ id });
+    const configurationQuery = useConfiguration(id);
 
     return (
         <ConfigurationDetailPage configurationQuery={configurationQuery} id={id}>
