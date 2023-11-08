@@ -19,10 +19,10 @@ const ConfigurationDetailGeneral: FC = () => {
     const configurationQuery = useProject({ id });
 
     return (
-        <ConfigurationDetailPage projectQuery={configurationQuery} id={id}>
+        <ConfigurationDetailPage configurationQuery={configurationQuery} id={id}>
             <Header title="Repository Detail" subtitle="" />
             <div className="app-container">
-                <ConfigurationNameForm project={configurationQuery.data!} />
+                <ConfigurationNameForm configuration={configurationQuery.data!} />
             </div>
         </ConfigurationDetailPage>
     );

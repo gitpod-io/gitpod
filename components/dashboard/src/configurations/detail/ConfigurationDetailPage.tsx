@@ -10,17 +10,17 @@ import { Button } from "@podkit/buttons/Button";
 import Alert from "../../components/Alert";
 import { Loader2 } from "lucide-react";
 import type { UseQueryResult } from "@tanstack/react-query";
-import type { Project } from "@gitpod/gitpod-protocol";
+import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { BreadcrumbNav } from "@podkit/breadcrumbs/BreadcrumbNav";
 
 export interface PageWithAdminSubMenuProps {
     children: React.ReactNode;
-    projectQuery: UseQueryResult<Project | null, Error>;
+    configurationQuery: UseQueryResult<Configuration | null, Error>;
     id: string;
 }
 
-export function ConfigurationDetailPage({ children, projectQuery, id }: PageWithAdminSubMenuProps) {
-    const { data, error, isLoading, refetch } = projectQuery;
+export function ConfigurationDetailPage({ children, configurationQuery, id }: PageWithAdminSubMenuProps) {
+    const { data, error, isLoading, refetch } = configurationQuery;
 
     const settingsMenu = useMemo(() => {
         return getConfigurationsMenu(id);

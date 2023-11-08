@@ -7,7 +7,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { configurationClient } from "../../service/public-api";
-import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 
 const BASE_KEY = "configurations";
 
