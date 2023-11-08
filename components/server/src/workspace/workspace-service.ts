@@ -745,7 +745,12 @@ export class WorkspaceService {
                     dispose.dispose();
                 };
             } catch (e) {
-                sink.fail(e);
+                if (e instanceof Error) {
+                    sink.fail(e);
+                    return;
+                } else {
+                    sink.fail(new Error(String(e) || "unknown"));
+                }
             }
         }, opts);
     }

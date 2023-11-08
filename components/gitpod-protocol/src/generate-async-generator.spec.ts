@@ -87,6 +87,7 @@ class TestGenerateAsyncGenerator {
             }
             expect(e.message).to.be.equal("Abort error");
             expect(ref.result.length).to.be.equal(5);
+            ref.result.forEach((v, i) => expect(v).to.be.equal(i));
             expect(ref.isDisposed).to.be.equal(true);
         }
     }
@@ -106,6 +107,7 @@ class TestGenerateAsyncGenerator {
             expect(e.message).to.be.equal("Abort error");
             expect(ref.result[0]).to.be.equal(0);
             expect(ref.result.length).to.be.equal(1);
+            ref.result.forEach((v, i) => expect(v).to.be.equal(i));
             expect(ref.isDisposed).to.be.equal(true);
         }
     }
@@ -124,6 +126,7 @@ class TestGenerateAsyncGenerator {
             }
             expect(e).to.be.equal(error);
             expect(ref.result.length).to.be.equal(0);
+            ref.result.forEach((v, i) => expect(v).to.be.equal(i));
             expect(ref.isDisposed).to.be.equal(false);
         }
     }
@@ -142,6 +145,7 @@ class TestGenerateAsyncGenerator {
             }
             expect(e).to.be.equal(error);
             expect(ref.result.length).to.be.equal(2);
+            ref.result.forEach((v, i) => expect(v).to.be.equal(i));
             expect(ref.isDisposed).to.be.equal(true);
         }
     }
@@ -161,6 +165,7 @@ class TestGenerateAsyncGenerator {
             }
             expect(e.message).to.be.equal("Should throw error");
             expect(ref.result.length).to.be.equal(0);
+            ref.result.forEach((v, i) => expect(v).to.be.equal(i));
             expect(ref.isDisposed).to.be.equal(false);
         }
     }
