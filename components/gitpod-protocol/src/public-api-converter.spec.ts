@@ -705,7 +705,7 @@ describe("PublicAPIConverter", () => {
             expect(converter.toBranchMatchingStrategy("matched-branches")).to.equal(
                 BranchMatchingStrategy.MATCHED_BRANCHES,
             );
-            expect(converter.toBranchMatchingStrategy(undefined)).to.be.undefined;
+            expect(converter.toBranchMatchingStrategy(undefined)).to.equal(BranchMatchingStrategy.DEFAULT_BRANCH);
         });
     });
 
