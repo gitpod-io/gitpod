@@ -18,11 +18,11 @@ message Configuration {
 }
 
 message PrebuildSettings {
-  optional bool enabled = 1;
-  optional string branch_matching_pattern = 2;
-  optional BranchMatchingStrategy branch_strategy = 3;
-  optional int32 prebuild_interval = 4;
-  optional string workspace_class = 5;
+  bool enabled = 1;
+  string branch_matching_pattern = 2;
+  BranchMatchingStrategy branch_strategy = 3;
+  int32 prebuild_interval = 4;
+  string workspace_class = 5;
 }
 
 enum BranchMatchingStrategy {
@@ -32,7 +32,7 @@ enum BranchMatchingStrategy {
   BRANCH_MATCHING_STRATEGY_MATCHED_BRANCHES = 3;
 }
 
-message WorkspaceSettings { optional string workspace_class = 1; }
+message WorkspaceSettings { string workspace_class = 1; }
 
 service ConfigurationService {
   // Creates a new configuration.

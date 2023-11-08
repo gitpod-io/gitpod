@@ -123,29 +123,29 @@ export class Configuration extends Message<Configuration> {
  */
 export class PrebuildSettings extends Message<PrebuildSettings> {
   /**
-   * @generated from field: optional bool enabled = 1;
+   * @generated from field: bool enabled = 1;
    */
-  enabled?: boolean;
+  enabled = false;
 
   /**
-   * @generated from field: optional string branch_matching_pattern = 2;
+   * @generated from field: string branch_matching_pattern = 2;
    */
-  branchMatchingPattern?: string;
+  branchMatchingPattern = "";
 
   /**
-   * @generated from field: optional gitpod.v1.BranchMatchingStrategy branch_strategy = 3;
+   * @generated from field: gitpod.v1.BranchMatchingStrategy branch_strategy = 3;
    */
-  branchStrategy?: BranchMatchingStrategy;
+  branchStrategy = BranchMatchingStrategy.UNSPECIFIED;
 
   /**
-   * @generated from field: optional int32 prebuild_interval = 4;
+   * @generated from field: int32 prebuild_interval = 4;
    */
-  prebuildInterval?: number;
+  prebuildInterval = 0;
 
   /**
-   * @generated from field: optional string workspace_class = 5;
+   * @generated from field: string workspace_class = 5;
    */
-  workspaceClass?: string;
+  workspaceClass = "";
 
   constructor(data?: PartialMessage<PrebuildSettings>) {
     super();
@@ -155,11 +155,11 @@ export class PrebuildSettings extends Message<PrebuildSettings> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.PrebuildSettings";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "enabled", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
-    { no: 2, name: "branch_matching_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 3, name: "branch_strategy", kind: "enum", T: proto3.getEnumType(BranchMatchingStrategy), opt: true },
-    { no: 4, name: "prebuild_interval", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
-    { no: 5, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 1, name: "enabled", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "branch_matching_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "branch_strategy", kind: "enum", T: proto3.getEnumType(BranchMatchingStrategy) },
+    { no: 4, name: "prebuild_interval", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 5, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PrebuildSettings {
@@ -184,9 +184,9 @@ export class PrebuildSettings extends Message<PrebuildSettings> {
  */
 export class WorkspaceSettings extends Message<WorkspaceSettings> {
   /**
-   * @generated from field: optional string workspace_class = 1;
+   * @generated from field: string workspace_class = 1;
    */
-  workspaceClass?: string;
+  workspaceClass = "";
 
   constructor(data?: PartialMessage<WorkspaceSettings>) {
     super();
@@ -196,7 +196,7 @@ export class WorkspaceSettings extends Message<WorkspaceSettings> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.WorkspaceSettings";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 1, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceSettings {
