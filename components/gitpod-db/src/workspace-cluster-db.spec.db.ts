@@ -101,6 +101,15 @@ export class WorkspaceClusterDBSpec {
             score: 0,
             maxScore: 0,
             govern: false,
+            availableWorkspaceClasses: [
+                {
+                    id: "some-class",
+                    displayName: "Some Class",
+                    description: "Some class description",
+                    creditsPerMinute: 0.5,
+                },
+            ],
+            preferredWorkspaceClass: "some-class",
         });
         const wsc2: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "us71",
@@ -118,6 +127,14 @@ export class WorkspaceClusterDBSpec {
         const wscs = await this.db.findFiltered({ name: "eu71" });
         expect(wscs.length).to.equal(1);
         expect(wscs[0].name).to.equal("eu71");
+        expect(wscs[0].availableWorkspaceClasses).to.deep.equal([
+            {
+                id: "some-class",
+                displayName: "Some Class",
+                description: "Some class description",
+                creditsPerMinute: 0.5,
+            },
+        ]);
     }
 
     @test public async testFindFilteredByApplicationCluster() {
