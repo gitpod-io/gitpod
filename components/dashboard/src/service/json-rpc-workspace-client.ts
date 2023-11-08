@@ -37,6 +37,14 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
         if (!options?.signal) {
             throw new ConnectError("signal is required", Code.InvalidArgument);
         }
+        if (request.workspaceId) {
+            const resp = await this.getWorkspace({ id: request.workspaceId });
+            if (resp.item?.status) {
+                const response = new WatchWorkspaceStatusResponse();
+                response.status = resp.item.status;
+                yield response;
+            }
+        }
         const it = generateAsyncGenerator<WorkspaceInstance>(
             (queue) => {
                 try {
@@ -54,14 +62,6 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
             },
             { signal: options.signal },
         );
-        if (request.workspaceId) {
-            const resp = await this.getWorkspace({ id: request.workspaceId });
-            if (resp.item?.status) {
-                const response = new WatchWorkspaceStatusResponse();
-                response.status = resp.item.status;
-                yield response;
-            }
-        }
         for await (const item of it) {
             if (!item) {
                 continue;
