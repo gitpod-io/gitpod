@@ -126,7 +126,7 @@
     "@types/js-yaml": "^4.0.3",
     "@types/lodash.debounce": "^4.0.6",
     "@types/mocha": "^10.0.1",
-    "@types/node": "^16.11.0",
+    "@types/node": "^18.18.8",
     "@types/node-fetch": "^2.6.1",
     "@types/passport": "^1.0.7",
     "@types/passport-oauth2": "^1.4.11",

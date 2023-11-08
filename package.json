@@ -4,7 +4,7 @@
     "version": "0.0.0",
     "license": "UNLICENSED",
     "devDependencies": {
-        "@types/node": "^16.11.0",
+        "@types/node": "^18.18.8",
         "@types/shelljs": "^0.8.9",
         "json": "^11.0.0",
         "rimraf": "^3.0.2",

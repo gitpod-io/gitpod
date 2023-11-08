@@ -30,6 +30,7 @@ import {
     WorkspaceTimeoutDuration,
 } from "@gitpod/gitpod-protocol";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { generateAsyncGenerator } from "@gitpod/gitpod-protocol/lib/generate-async-generator";
 import { Authorizer } from "../authorization/authorizer";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { WorkspaceFactory } from "./workspace-factory";
@@ -61,6 +62,7 @@ import { HeadlessLogEndpoint, HeadlessLogService } from "./headless-log-service"
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { OrganizationService } from "../orgs/organization-service";
 import { isGrpcError } from "@gitpod/gitpod-protocol/lib/util/grpc";
+import { RedisSubscriber } from "../messaging/redis-subscriber";
 
 export interface StartWorkspaceOptions extends StarterStartWorkspaceOptions {
     /**
@@ -85,6 +87,8 @@ export class WorkspaceService {
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
         @inject(HeadlessLogService) private readonly headlessLogService: HeadlessLogService,
         @inject(Authorizer) private readonly auth: Authorizer,
+
+        @inject(RedisSubscriber) private readonly subscriber: RedisSubscriber,
     ) {}
 
     async createWorkspace(
@@ -728,6 +732,26 @@ export class WorkspaceService {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Headless logs for ${instanceId} not found`);
         }
         return urls;
+    }
+
+    public watchWorkspaceStatus(userId: string, opts: { signal: AbortSignal }) {
+        return generateAsyncGenerator<WorkspaceInstance>((sink) => {
+            try {
+                const dispose = this.subscriber.listenForWorkspaceInstanceUpdates(userId, (_ctx, instance) => {
+                    sink.push(instance);
+                });
+                return () => {
+                    dispose.dispose();
+                };
+            } catch (e) {
+                if (e instanceof Error) {
+                    sink.fail(e);
+                    return;
+                } else {
+                    sink.fail(new Error(String(e) || "unknown"));
+                }
+            }
+        }, opts);
     }
 
     public async watchWorkspaceImageBuildLogs(

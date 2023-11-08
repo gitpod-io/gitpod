@@ -31,6 +31,10 @@ type WorkspaceServiceClient interface {
 	// +return NOT_FOUND User does not have access to a workspace with the given
 	// ID +return NOT_FOUND Workspace does not exist
 	GetWorkspace(ctx context.Context, in *GetWorkspaceRequest, opts ...grpc.CallOption) (*GetWorkspaceResponse, error)
+	// WatchWorkspaceStatus watchs the workspaces status changes
+	//
+	// workspace_id +return NOT_FOUND Workspace does not exist
+	WatchWorkspaceStatus(ctx context.Context, in *WatchWorkspaceStatusRequest, opts ...grpc.CallOption) (WorkspaceService_WatchWorkspaceStatusClient, error)
 }
 
 type workspaceServiceClient struct {
@@ -50,6 +54,38 @@ func (c *workspaceServiceClient) GetWorkspace(ctx context.Context, in *GetWorksp
 	return out, nil
 }
 
+func (c *workspaceServiceClient) WatchWorkspaceStatus(ctx context.Context, in *WatchWorkspaceStatusRequest, opts ...grpc.CallOption) (WorkspaceService_WatchWorkspaceStatusClient, error) {
+	stream, err := c.cc.NewStream(ctx, &WorkspaceService_ServiceDesc.Streams[0], "/gitpod.v1.WorkspaceService/WatchWorkspaceStatus", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &workspaceServiceWatchWorkspaceStatusClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type WorkspaceService_WatchWorkspaceStatusClient interface {
+	Recv() (*WatchWorkspaceStatusResponse, error)
+	grpc.ClientStream
+}
+
+type workspaceServiceWatchWorkspaceStatusClient struct {
+	grpc.ClientStream
+}
+
+func (x *workspaceServiceWatchWorkspaceStatusClient) Recv() (*WatchWorkspaceStatusResponse, error) {
+	m := new(WatchWorkspaceStatusResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // WorkspaceServiceServer is the server API for WorkspaceService service.
 // All implementations must embed UnimplementedWorkspaceServiceServer
 // for forward compatibility
@@ -59,6 +95,10 @@ type WorkspaceServiceServer interface {
 	// +return NOT_FOUND User does not have access to a workspace with the given
 	// ID +return NOT_FOUND Workspace does not exist
 	GetWorkspace(context.Context, *GetWorkspaceRequest) (*GetWorkspaceResponse, error)
+	// WatchWorkspaceStatus watchs the workspaces status changes
+	//
+	// workspace_id +return NOT_FOUND Workspace does not exist
+	WatchWorkspaceStatus(*WatchWorkspaceStatusRequest, WorkspaceService_WatchWorkspaceStatusServer) error
 	mustEmbedUnimplementedWorkspaceServiceServer()
 }
 
@@ -68,6 +108,9 @@ type UnimplementedWorkspaceServiceServer struct {
 
 func (UnimplementedWorkspaceServiceServer) GetWorkspace(context.Context, *GetWorkspaceRequest) (*GetWorkspaceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetWorkspace not implemented")
+}
+func (UnimplementedWorkspaceServiceServer) WatchWorkspaceStatus(*WatchWorkspaceStatusRequest, WorkspaceService_WatchWorkspaceStatusServer) error {
+	return status.Errorf(codes.Unimplemented, "method WatchWorkspaceStatus not implemented")
 }
 func (UnimplementedWorkspaceServiceServer) mustEmbedUnimplementedWorkspaceServiceServer() {}
 
@@ -100,6 +143,27 @@ func _WorkspaceService_GetWorkspace_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkspaceService_WatchWorkspaceStatus_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(WatchWorkspaceStatusRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(WorkspaceServiceServer).WatchWorkspaceStatus(m, &workspaceServiceWatchWorkspaceStatusServer{stream})
+}
+
+type WorkspaceService_WatchWorkspaceStatusServer interface {
+	Send(*WatchWorkspaceStatusResponse) error
+	grpc.ServerStream
+}
+
+type workspaceServiceWatchWorkspaceStatusServer struct {
+	grpc.ServerStream
+}
+
+func (x *workspaceServiceWatchWorkspaceStatusServer) Send(m *WatchWorkspaceStatusResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // WorkspaceService_ServiceDesc is the grpc.ServiceDesc for WorkspaceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -112,6 +176,12 @@ var WorkspaceService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _WorkspaceService_GetWorkspace_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "WatchWorkspaceStatus",
+			Handler:       _WorkspaceService_WatchWorkspaceStatus_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "gitpod/v1/workspace.proto",
 }
