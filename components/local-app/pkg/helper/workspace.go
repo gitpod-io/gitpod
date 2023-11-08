@@ -164,9 +164,11 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 		return ws.Status, nil
 	}
 
+	var wsStatus string
 	slog.Info("waiting for workspace to start...", "workspaceID", workspaceID)
 	if HasInstanceStatus(wsInfo.Msg.Result) {
-		slog.Info("workspace " + prettyprint.FormatWorkspacePhase(wsInfo.Msg.Result.Status.Instance.Status.Phase))
+		slog.Info("workspace status: " + prettyprint.FormatWorkspacePhase(wsInfo.Msg.Result.Status.Instance.Status.Phase))
+		wsStatus = prettyprint.FormatWorkspacePhase(wsInfo.Msg.Result.Status.Instance.Status.Phase)
 	}
 
 	var (
@@ -186,7 +188,8 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 			continue
 		}
 
-		previousStatus := ""
+		defer stream.Close()
+
 		for stream.Receive() {
 			msg := stream.Msg()
 			if msg == nil {
@@ -200,13 +203,13 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 				return ws, nil
 			}
 
-			var currentStatus string
 			if HasInstanceStatus(wsInfo.Msg.Result) {
-				currentStatus = prettyprint.FormatWorkspacePhase(wsInfo.Msg.Result.Status.Instance.Status.Phase)
-			}
-			if currentStatus != previousStatus {
-				slog.Info("workspace " + currentStatus)
-				previousStatus = currentStatus
+				newWsStatus := prettyprint.FormatWorkspacePhase(ws.Instance.Status.Phase)
+				// De-duplicate status messages
+				if wsStatus != newWsStatus {
+					slog.Info("workspace status: " + newWsStatus)
+					wsStatus = newWsStatus
+				}
 			}
 		}
 		if err := stream.Err(); err != nil {

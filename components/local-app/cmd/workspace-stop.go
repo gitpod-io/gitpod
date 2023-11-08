@@ -34,38 +34,37 @@ var workspaceStopCommand = &cobra.Command{
 			return err
 		}
 
-		slog.Info("stopping workspace...")
+		slog.Debug("stopping workspace...")
 		wsInfo, err := gitpod.Workspaces.StopWorkspace(ctx, connect.NewRequest(&v1.StopWorkspaceRequest{WorkspaceId: workspaceID}))
 		if err != nil {
 			return err
 		}
 
-		currentPhase := wsInfo.Msg.GetResult().Status.Instance.Status.Phase
-
-		if currentPhase == v1.WorkspaceInstanceStatus_PHASE_STOPPED {
+		wsPhase := wsInfo.Msg.GetResult().Status.Instance.Status.Phase
+		switch wsPhase {
+		case v1.WorkspaceInstanceStatus_PHASE_STOPPED:
 			slog.Info("workspace is already stopped")
 			return nil
-		}
-		if currentPhase == v1.WorkspaceInstanceStatus_PHASE_STOPPING {
+		case v1.WorkspaceInstanceStatus_PHASE_STOPPING:
 			slog.Info("workspace is already stopping")
 			return nil
 		}
+
 		if stopDontWait {
 			slog.Info("workspace stopping")
 			return nil
 		}
 
 		stream, err := gitpod.Workspaces.StreamWorkspaceStatus(ctx, connect.NewRequest(&v1.StreamWorkspaceStatusRequest{WorkspaceId: workspaceID}))
-
 		if err != nil {
 			return err
 		}
 
+		defer stream.Close()
+
 		slog.Info("waiting for workspace to stop...")
-		slog.Info("workspace " + prettyprint.FormatWorkspacePhase(currentPhase))
 
 		previousStatus := ""
-
 		for stream.Receive() {
 			msg := stream.Msg()
 			if msg == nil {
@@ -73,15 +72,26 @@ var workspaceStopCommand = &cobra.Command{
 				continue
 			}
 
-			if msg.GetResult().Instance.Status.Phase == v1.WorkspaceInstanceStatus_PHASE_STOPPED {
-				slog.Info("workspace stopped")
+			wsPhase = msg.GetResult().Instance.Status.Phase
+			switch wsPhase {
+			case v1.WorkspaceInstanceStatus_PHASE_STOPPED:
+				{
+					slog.Info("workspace stopped")
+					return nil
+				}
+			case v1.WorkspaceInstanceStatus_PHASE_RUNNING:
+				// Skip reporting the "running" status as it is often the initial state and seems confusing to the user.
+				// There is some delay between requesting a workspace to stop and it actually stopping, so we don't want
+				// to report "running" in the meantime.
 				break
-			}
-
-			currentStatus := prettyprint.FormatWorkspacePhase(msg.GetResult().Instance.Status.Phase)
-			if currentStatus != previousStatus {
-				slog.Info("workspace " + currentStatus)
-				previousStatus = currentStatus
+			default:
+				{
+					currentStatus := prettyprint.FormatWorkspacePhase(wsPhase)
+					if currentStatus != previousStatus {
+						slog.Info("workspace status: " + currentStatus)
+						previousStatus = currentStatus
+					}
+				}
 			}
 		}
 
