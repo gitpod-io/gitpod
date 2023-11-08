@@ -35,10 +35,10 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         context: HandlerContext,
     ): Promise<CreateConfigurationResponse> {
         if (!req.organizationId) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organization_id is required");
         }
         if (!req.cloneUrl) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "cloneUrl is required");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "clone_url is required");
         }
         if (!req.name) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "name is required");
@@ -62,7 +62,7 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
 
     async getConfiguration(req: GetConfigurationRequest, context: HandlerContext) {
         if (!req.configurationId) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configurationId is required");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configuration_id is required");
         }
 
         const project = await this.projectService.getProject(context.user.id, req.configurationId);
@@ -74,7 +74,7 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
 
     async listConfigurations(req: ListConfigurationsRequest, context: HandlerContext) {
         if (!req.organizationId) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organization_id is required");
         }
 
         const { rows, total } = await this.projectService.findProjects(context.user.id, {
@@ -95,7 +95,7 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
 
     async deleteConfiguration(req: DeleteConfigurationRequest, handler: HandlerContext) {
         if (!req.configurationId) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configurationId is required");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configuration_id is required");
         }
 
         await this.projectService.deleteProject(handler.user.id, req.configurationId);
