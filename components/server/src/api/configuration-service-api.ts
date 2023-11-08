@@ -77,12 +77,15 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organization_id is required");
         }
 
+        const limit = req.pagination?.pageSize || 25;
+        const offset = (req.pagination?.page ?? 0) * limit;
+
         const { rows, total } = await this.projectService.findProjects(context.user.id, {
             searchTerm: req.searchTerm,
             orderBy: "name",
             orderDir: "ASC",
-            limit: req.pagination?.pageSize || 25,
-            offset: req.pagination?.page || 0,
+            limit,
+            offset,
         });
 
         return new ListConfigurationsResponse({
