@@ -7,18 +7,18 @@
 import { FC } from "react";
 import Header from "../../components/Header";
 import { useParams } from "react-router";
-import { useProject } from "../../data/projects/project-queries";
 import { Button } from "../../components/Button";
 import { RepositoryNameForm } from "./RepositoryName";
 import { Loader2 } from "lucide-react";
 import Alert from "../../components/Alert";
+import { useConfiguration } from "../../data/configurations/configuration-queries";
 
 type PageRouteParams = {
     id: string;
 };
 const RepositoryDetailPage: FC = () => {
     const { id } = useParams<PageRouteParams>();
-    const { data, error, isLoading, refetch } = useProject({ id });
+    const { data, error, isLoading, refetch } = useConfiguration(id);
 
     return (
         <>
@@ -42,7 +42,7 @@ const RepositoryDetailPage: FC = () => {
                         // TODO: add a better not-found UI w/ link back to repositories
                         <div>Sorry, we couldn't find that repository configuration.</div>
                     ) : (
-                        <RepositoryNameForm project={data} />
+                        <RepositoryNameForm configuration={data} />
                     ))}
             </div>
         </>
