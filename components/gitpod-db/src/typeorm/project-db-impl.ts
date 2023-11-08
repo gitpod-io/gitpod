@@ -77,22 +77,25 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
         searchTerm?: string,
     ): Promise<{ total: number; rows: Project[] }> {
         const projectRepo = await this.getRepo();
+        const normalizedSearchTerm = searchTerm?.trim();
 
         const queryBuilder = projectRepo
             .createQueryBuilder("project")
-            // TODO: should we make this conditional if searchTerm has a value to avoid the scan?
-            .where(
-                new Brackets((qb) => {
-                    qb.where("project.cloneUrl LIKE :searchTerm", { searchTerm: `%${searchTerm}%` }).orWhere(
-                        "project.name LIKE :searchTerm",
-                        { searchTerm: `%${searchTerm}%` },
-                    );
-                }),
-            )
-            .andWhere("project.markedDeleted = false")
+            .where("project.markedDeleted = false")
             .skip(offset)
             .take(limit)
             .orderBy(orderBy, orderDir);
+
+        if (normalizedSearchTerm) {
+            queryBuilder.andWhere(
+                new Brackets((qb) => {
+                    qb.where("project.cloneUrl LIKE :searchTerm", { searchTerm: `%${normalizedSearchTerm}%` }).orWhere(
+                        "project.name LIKE :searchTerm",
+                        { searchTerm: `%${normalizedSearchTerm}%` },
+                    );
+                }),
+            );
+        }
 
         const [rows, total] = await queryBuilder.getManyAndCount();
         return { total, rows };
