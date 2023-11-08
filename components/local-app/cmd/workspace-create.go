@@ -101,6 +101,11 @@ var workspaceCreateCmd = &cobra.Command{
 					},
 					WorkspaceClass: workspaceCreateOpts.WorkspaceClass,
 				},
+				// Without this flag we might not create a new workspce because there's already one running on the same commit.
+				IgnoreRunningWorkspaceOnSameCommit: true,
+				// Note(cw): the CLI cannot handle running prebuilds yet, so we ignore them for now.
+				IgnoreRunningPrebuild:       true,
+				AllowUsingPreviousPrebuilds: true,
 			},
 		))
 		if err != nil {
