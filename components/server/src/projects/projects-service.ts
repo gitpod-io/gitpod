@@ -26,10 +26,11 @@ import {
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { URL } from "url";
-import { Authorizer, SYSTEM_USER } from "../authorization/authorizer";
+import { Authorizer, SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
 import { ScmService } from "./scm-service";
 import { daysBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { runWithSubjectId } from "../util/request-context";
 
 const MAX_PROJECT_NAME_LENGTH = 100;
 
@@ -443,7 +444,9 @@ export class ProjectsService {
             const newPrebuildSettings: PrebuildSettings = { enable: false, ...Project.PREBUILD_SETTINGS_DEFAULTS };
 
             // if workspaces were running in the past week
-            const isInactive = await this.isProjectConsideredInactive(SYSTEM_USER, project.id);
+            const isInactive = await runWithSubjectId(SYSTEM_USER, async () =>
+                this.isProjectConsideredInactive(SYSTEM_USER_ID, project.id),
+            );
             logCtx.isInactive = isInactive;
             if (!isInactive) {
                 const sevenDaysAgo = new Date(daysBefore(new Date().toISOString(), 7));

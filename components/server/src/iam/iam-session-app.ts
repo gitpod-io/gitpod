@@ -17,7 +17,8 @@ import { ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { OrganizationService } from "../orgs/organization-service";
 import { UserService } from "../user/user-service";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
-import { SYSTEM_USER } from "../authorization/authorizer";
+import { SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
+import { runWithSubjectId, runWithRequestContext } from "../util/request-context";
 
 @injectable()
 export class IamSessionApp {
@@ -42,9 +43,23 @@ export class IamSessionApp {
             app.use(middleware);
         });
 
+        // Use RequestContext
+        app.use((req, res, next) => {
+            runWithRequestContext(
+                {
+                    requestKind: "iam-session-app",
+                    requestMethod: req.path,
+                    signal: new AbortController().signal,
+                },
+                () => next(),
+            );
+        });
+
         app.post("/session", async (req: express.Request, res: express.Response) => {
             try {
-                const result = await this.doCreateSession(req, res);
+                const result = await runWithSubjectId(SYSTEM_USER, async () =>
+                    this.doCreateSession(req, res),
+                );
                 res.status(200).json(result);
             } catch (error) {
                 log.error("Error creating session on behalf of IAM", error);
@@ -174,7 +189,7 @@ export class IamSessionApp {
                 ctx,
             );
 
-            await this.orgService.addOrUpdateMember(SYSTEM_USER, organizationId, user.id, "member", ctx);
+            await this.orgService.addOrUpdateMember(SYSTEM_USER_ID, organizationId, user.id, "member", ctx);
             return user;
         });
     }

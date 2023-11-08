@@ -157,7 +157,7 @@ import {
 } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 import { ClientError } from "nice-grpc-common";
 import { BillingModes } from "../billing/billing-mode";
-import { Authorizer, SYSTEM_USER, isFgaChecksEnabled } from "../authorization/authorizer";
+import { Authorizer, SYSTEM_USER, SYSTEM_USER_ID, isFgaChecksEnabled } from "../authorization/authorizer";
 import { OrganizationService } from "../orgs/organization-service";
 import { RedisSubscriber } from "../messaging/redis-subscriber";
 import { UsageService } from "../orgs/usage-service";
@@ -173,7 +173,6 @@ import {
     suggestionFromRecentWorkspace,
     suggestionFromUserRepo,
 } from "./suggested-repos-sorter";
-import { SubjectId } from "../auth/subject-id";
 import { runWithSubjectId } from "../util/request-context";
 
 // shortcut
@@ -470,8 +469,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, "User is not authenticated. Please login.");
         }
 
-        const user = await runWithSubjectId(SubjectId.fromUserId(SYSTEM_USER), async () =>
-            this.userService.findUserById(SYSTEM_USER, userId),
+        const user = await runWithSubjectId(SYSTEM_USER, async () =>
+            this.userService.findUserById(SYSTEM_USER_ID, userId),
         );
         if (user.markedDeleted === true) {
             throw new ApplicationError(ErrorCodes.USER_DELETED, "User has been deleted.");

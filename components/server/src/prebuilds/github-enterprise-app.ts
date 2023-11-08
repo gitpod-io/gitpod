@@ -22,9 +22,8 @@ import { RepoURL } from "../repohost";
 import { UserService } from "../user/user-service";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ProjectsService } from "../projects/projects-service";
-import { SYSTEM_USER } from "../authorization/authorizer";
+import { SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
 import { runWithSubjectId } from "../util/request-context";
-import { SubjectId } from "../auth/subject-id";
 
 @injectable()
 export class GitHubEnterpriseApp {
@@ -260,8 +259,8 @@ export class GitHubEnterpriseApp {
 
     private async findProjectOwners(cloneURL: string): Promise<{ users: User[]; project: Project } | undefined> {
         try {
-            const projects = await runWithSubjectId(SubjectId.fromUserId(SYSTEM_USER), async () =>
-                this.projectService.findProjectsByCloneUrl(SYSTEM_USER, cloneURL),
+            const projects = await runWithSubjectId(SYSTEM_USER, async () =>
+                this.projectService.findProjectsByCloneUrl(SYSTEM_USER_ID, cloneURL),
             );
             const project = projects[0];
             if (project) {

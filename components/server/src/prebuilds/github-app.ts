@@ -41,9 +41,8 @@ import { RepoURL } from "../repohost";
 import { ApplicationError, ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UserService } from "../user/user-service";
 import { ProjectsService } from "../projects/projects-service";
+import { SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
 import { runWithSubjectId, runWithRequestContext } from "../util/request-context";
-import { SYSTEM_USER } from "../authorization/authorizer";
-import { SubjectId } from "../auth/subject-id";
 
 /**
  * GitHub app urls:
@@ -174,9 +173,9 @@ export class GithubApp {
                         // To implement this in a more robust way, we'd need to store `repository.id` with the project, next to the cloneUrl.
                         const oldName = (ctx.payload as any)?.changes?.repository?.name?.from;
                         if (oldName) {
-                            const projects = await runWithSubjectId(SubjectId.fromUserId(SYSTEM_USER), async () =>
+                            const projects = await runWithSubjectId(SYSTEM_USER, async () =>
                                 this.projectService.findProjectsByCloneUrl(
-                                    SYSTEM_USER,
+                                    SYSTEM_USER_ID,
                                     `https://github.com/${repository.owner.login}/${oldName}.git`,
                                 ),
                             );
@@ -300,8 +299,8 @@ export class GithubApp {
             const contextURL = `${repo.html_url}/tree/${branch}`;
             span.setTag("contextURL", contextURL);
             const context = (await this.contextParser.handle({ span }, installationOwner, contextURL)) as CommitContext;
-            const projects = await runWithSubjectId(SubjectId.fromUserId(SYSTEM_USER), async () =>
-                this.projectService.findProjectsByCloneUrl(SYSTEM_USER, context.repository.cloneUrl),
+            const projects = await runWithSubjectId(SYSTEM_USER, async () =>
+                this.projectService.findProjectsByCloneUrl(SYSTEM_USER_ID, context.repository.cloneUrl),
             );
             for (const project of projects) {
                 try {

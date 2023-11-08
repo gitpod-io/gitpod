@@ -11,7 +11,7 @@ import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
 import { createTestContainer } from "../test/service-testing-container-module";
-import { Authorizer, SYSTEM_USER } from "./authorizer";
+import { Authorizer, SYSTEM_USER, SYSTEM_USER_ID } from "./authorizer";
 import { OrganizationService } from "../orgs/organization-service";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { UserService } from "../user/user-service";
@@ -87,7 +87,7 @@ describe("CachingSpiceDBAuthorizer", async () => {
             }),
         );
         const org1 = await withCtx(userA, orgSvc.createOrganization(userA.id, "org1"));
-        await withCtx(SYSTEM_USER, orgSvc.addOrUpdateMember(SYSTEM_USER, org1.id, userA.id, "owner"));
+        await withCtx(SYSTEM_USER, orgSvc.addOrUpdateMember(SYSTEM_USER_ID, org1.id, userA.id, "owner"));
         const userB = await withCtx(
             SYSTEM_USER,
             userSvc.createUser({
@@ -99,7 +99,7 @@ describe("CachingSpiceDBAuthorizer", async () => {
                 },
             }),
         );
-        await withCtx(SYSTEM_USER, orgSvc.addOrUpdateMember(SYSTEM_USER, org1.id, userB.id, "member"));
+        await withCtx(SYSTEM_USER, orgSvc.addOrUpdateMember(SYSTEM_USER_ID, org1.id, userB.id, "member"));
         const userC = await withCtx(
             SYSTEM_USER,
             userSvc.createUser({
@@ -111,7 +111,7 @@ describe("CachingSpiceDBAuthorizer", async () => {
                 },
             }),
         );
-        await withCtx(SYSTEM_USER, orgSvc.addOrUpdateMember(SYSTEM_USER, org1.id, userC.id, "member"));
+        await withCtx(SYSTEM_USER, orgSvc.addOrUpdateMember(SYSTEM_USER_ID, org1.id, userC.id, "member"));
 
         // userA creates a workspace when userB is still member of the org
         // All members have "read_info" (derived from membership)
@@ -131,7 +131,7 @@ describe("CachingSpiceDBAuthorizer", async () => {
         ).to.be.true;
 
         // userB is removed from the org
-        await withCtx(SYSTEM_USER, orgSvc.removeOrganizationMember(SYSTEM_USER, org1.id, userB.id));
+        await withCtx(SYSTEM_USER, orgSvc.removeOrganizationMember(SYSTEM_USER_ID, org1.id, userB.id));
 
         expect(
             await withCtx(userB, authorizer.hasPermissionOnWorkspace(userB.id, "read_info", ws1.id)),
@@ -183,7 +183,7 @@ describe("CachingSpiceDBAuthorizer", async () => {
             }),
         );
         const org1 = await withCtx(userA, orgSvc.createOrganization(userA.id, "org1"));
-        await withCtx(SYSTEM_USER, orgSvc.addOrUpdateMember(SYSTEM_USER, org1.id, userA.id, "owner"));
+        await withCtx(SYSTEM_USER, orgSvc.addOrUpdateMember(SYSTEM_USER_ID, org1.id, userA.id, "owner"));
         const userC = await withCtx(
             SYSTEM_USER,
             userSvc.createUser({
@@ -195,7 +195,7 @@ describe("CachingSpiceDBAuthorizer", async () => {
                 },
             }),
         );
-        await withCtx(SYSTEM_USER, orgSvc.addOrUpdateMember(SYSTEM_USER, org1.id, userC.id, "member"));
+        await withCtx(SYSTEM_USER, orgSvc.addOrUpdateMember(SYSTEM_USER_ID, org1.id, userC.id, "member"));
 
         // userA creates a workspace before userB is member of the org
         const ws1 = await withCtx(userA, createTestWorkspace(org1, userA));
@@ -221,7 +221,7 @@ describe("CachingSpiceDBAuthorizer", async () => {
                 },
             }),
         );
-        await withCtx(SYSTEM_USER, orgSvc.addOrUpdateMember(SYSTEM_USER, org1.id, userB.id, "member"));
+        await withCtx(SYSTEM_USER, orgSvc.addOrUpdateMember(SYSTEM_USER_ID, org1.id, userB.id, "member"));
 
         expect(
             await withCtx(userB, authorizer.hasPermissionOnWorkspace(userB.id, "read_info", ws1.id)),
