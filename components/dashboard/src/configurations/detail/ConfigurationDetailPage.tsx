@@ -15,7 +15,7 @@ import { BreadcrumbNav } from "@podkit/breadcrumbs/BreadcrumbNav";
 
 export interface PageWithAdminSubMenuProps {
     children: React.ReactNode;
-    configurationQuery: UseQueryResult<Configuration | null, Error>;
+    configurationQuery: UseQueryResult<Configuration | undefined, Error>;
     id: string;
 }
 
