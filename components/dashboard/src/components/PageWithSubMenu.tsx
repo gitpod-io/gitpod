@@ -12,20 +12,20 @@ import Header, { TabEntry } from "../components/Header";
 import { Separator } from "./Separator";
 
 export interface PageWithSubMenuProps {
-    title: string;
-    subtitle: string;
+    title?: string;
+    subtitle?: string;
+    tabs?: TabEntry[];
     subMenu: {
         title: string;
         link: string[];
     }[];
-    tabs?: TabEntry[];
     children: React.ReactNode;
 }
 
 export function PageWithSubMenu(p: PageWithSubMenuProps) {
     return (
         <div className="w-full">
-            <Header title={p.title} subtitle={p.subtitle} tabs={p.tabs} />
+            {p.title && p.subtitle && <Header title={p.title} subtitle={p.subtitle} tabs={p.tabs} />}
             <div className="app-container flex md:pt-9 flex-col md:flex-row">
                 {/* TODO: extract into SubMenu component and show scrolling indicators */}
                 <div>

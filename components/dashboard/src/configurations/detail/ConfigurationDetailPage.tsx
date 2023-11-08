@@ -27,44 +27,43 @@ export function ConfigurationDetailPage({ children, projectQuery, id }: PageWith
     }, [id]);
 
     return (
-        <PageWithSubMenu
-            subMenu={settingsMenu}
-            title={data?.name ?? id}
-            subtitle="Change settings of this configuration"
-        >
-            {isLoading && <Loader2 className="animate-spin" />}
-            {error && (
-                <div className="gap-4">
-                    <Alert type="error">
-                        <span>Failed to load repository configuration</span>
-                        <pre>{error.message}</pre>
-                    </Alert>
-
-                    <Button
-                        variant={"destructive"}
-                        onClick={() => {
-                            refetch();
-                        }}
-                    >
-                        Retry
-                    </Button>
-                </div>
-            )}
-            {!isLoading &&
-                (!data ? (
-                    // TODO: add a better not-found UI w/ link back to repositories
-                    <div>Sorry, we couldn't find that repository configuration.</div>
-                ) : (
-                    <>
-                        <BreadcrumbNav
-                            pageTitle="Repository Configuration"
-                            pageDescription={data.name}
-                            backLink="/configurations"
-                        />
-                        {children}
-                    </>
-                ))}
-        </PageWithSubMenu>
+        <div className="w-full">
+            <BreadcrumbNav
+                pageTitle="Repository Configuration"
+                pageDescription={data?.name ?? ""}
+                backLink="/configurations"
+            />
+            <PageWithSubMenu
+                subMenu={settingsMenu}
+                title={data?.name ?? id}
+                subtitle="Change settings of this configuration"
+            >
+                {isLoading && <Loader2 className="animate-spin" />}
+                {error && (
+                    <div className="gap-4">
+                        <Alert type="error">
+                            <span>Failed to load repository configuration</span>
+                            <pre>{error.message}</pre>
+                        </Alert>
+                        <Button
+                            variant={"destructive"}
+                            onClick={() => {
+                                refetch();
+                            }}
+                        >
+                            Retry
+                        </Button>
+                    </div>
+                )}
+                {!isLoading &&
+                    (!data ? (
+                        // TODO: add a better not-found UI w/ link back to repositories
+                        <div>Sorry, we couldn't find that repository configuration.</div>
+                    ) : (
+                        { children }
+                    ))}
+            </PageWithSubMenu>
+        </div>
     );
 }
 
