@@ -78,7 +78,8 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         }
 
         const limit = req.pagination?.pageSize || 25;
-        const offset = (req.pagination?.page ?? 0) * limit;
+        const currentPage = req.pagination?.page ?? 1;
+        const offset = currentPage > 1 ? currentPage * limit : 0;
 
         const { rows, total } = await this.projectService.findProjects(context.user.id, {
             searchTerm: req.searchTerm,
