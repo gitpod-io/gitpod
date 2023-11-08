@@ -5,9 +5,12 @@
 package telemetry
 
 import (
+	"crypto/sha256"
 	"errors"
+	"fmt"
 	"log/slog"
 	"math/rand"
+	"net"
 	"os"
 	"runtime"
 	"strings"
@@ -51,14 +54,27 @@ func DoNotTrack() bool {
 	return os.Getenv("DO_NOT_TRACK") == "1"
 }
 
-// RandomIdentity generates a random identity
-func RandomIdentity() string {
-	letters := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
-	b := make([]rune, 32)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
+// GenerateIdentity generates an identity using the machine's MAC address or a random value
+func GenerateIdentity() string {
+	var addr string
+	interfaces, err := net.Interfaces()
+	if err == nil {
+		for _, i := range interfaces {
+			addr = i.HardwareAddr.String()
+			if i.Flags&net.FlagUp != 0 && addr != "" {
+				break
+			}
+		}
 	}
-	return string(b)
+	if addr == "" {
+		letters := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
+		b := make([]rune, 32)
+		for i := range b {
+			b[i] = letters[rand.Intn(len(letters))]
+		}
+		addr = string(b)
+	}
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(addr)))
 }
 
 func Close() {
@@ -81,7 +97,7 @@ func track(event string, props segment.Properties) {
 	if !Enabled() {
 		return
 	}
-	slog.Debug("tracking telemetry", "props", props, "event", event)
+	slog.Debug("tracking telemetry", "props", props, "event", event, "identity", opts.Identity)
 
 	err := opts.client.Enqueue(segment.Track{
 		AnonymousId: opts.Identity,

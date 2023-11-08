@@ -127,7 +127,7 @@ func LoadConfig(fn string) (res *Config, err error) {
 		Contexts: make(map[string]*ConnectionContext),
 		Telemetry: &Telemetry{
 			Enabled:  !telemetry.DoNotTrack(),
-			Identity: telemetry.RandomIdentity(),
+			Identity: telemetry.GenerateIdentity(),
 		},
 	}
 	fc, err := os.ReadFile(fn)
