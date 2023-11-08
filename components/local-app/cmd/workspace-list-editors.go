@@ -48,7 +48,7 @@ var workspaceListEditors = &cobra.Command{
 			})
 		}
 
-		return WriteTabular(res, workspaceListEditorsOpts.Format, prettyprint.WriterFormatNarrow)
+		return WriteTabular(res, workspaceListEditorsOpts.Format, prettyprint.WriterFormatWide)
 	},
 }
 
