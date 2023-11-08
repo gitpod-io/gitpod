@@ -399,18 +399,16 @@ export class PublicAPIConverter {
     toPrebuildSettings(prebuilds?: PrebuildSettingsProtocol): PrebuildSettings {
         const result = new PrebuildSettings();
         if (prebuilds) {
-            result.enabled = prebuilds.enable;
-            result.branchMatchingPattern = prebuilds.branchMatchingPattern;
+            result.enabled = !!prebuilds.enable;
+            result.branchMatchingPattern = prebuilds.branchMatchingPattern ?? "";
             result.branchStrategy = this.toBranchMatchingStrategy(prebuilds.branchStrategy);
-            result.prebuildInterval = prebuilds.prebuildInterval;
-            result.workspaceClass = prebuilds.workspaceClass;
+            result.prebuildInterval = prebuilds.prebuildInterval ?? 20;
+            result.workspaceClass = prebuilds.workspaceClass ?? "";
         }
         return result;
     }
 
-    toBranchMatchingStrategy(
-        branchStrategy?: PrebuildSettingsProtocol.BranchStrategy,
-    ): BranchMatchingStrategy | undefined {
+    toBranchMatchingStrategy(branchStrategy?: PrebuildSettingsProtocol.BranchStrategy): BranchMatchingStrategy {
         switch (branchStrategy) {
             case "default-branch":
                 return BranchMatchingStrategy.DEFAULT_BRANCH;
@@ -419,7 +417,7 @@ export class PublicAPIConverter {
             case "matched-branches":
                 return BranchMatchingStrategy.MATCHED_BRANCHES;
         }
-        return undefined;
+        return BranchMatchingStrategy.DEFAULT_BRANCH;
     }
 
     toWorkspaceSettings(workspaceClass?: string): WorkspaceSettings {
