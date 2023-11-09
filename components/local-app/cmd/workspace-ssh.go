@@ -15,7 +15,16 @@ var dryRun bool
 var workspaceSSHCmd = &cobra.Command{
 	Use:   "ssh <workspace-id>",
 	Short: "Connects to a workspace via SSH",
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.MinimumNArgs(1),
+	Example: `  # connect to workspace with current terminal session
+  $ gitpod workspace ssh <workspace-id>
+
+  # Execute simple command in the workspace
+  $ gitpod workspace ssh <workspace-id> -- ls -la
+
+  # Get all SSH features with --dry-run
+  $ $(gitpod workspace ssh <workspace-id> --dry-run) -- ls -la
+  $ $(gitpod workspace ssh <workspace-id> --dry-run) -t watch date`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 
@@ -26,7 +35,14 @@ var workspaceSSHCmd = &cobra.Command{
 			return err
 		}
 
-		return helper.SSHConnectToWorkspace(cmd.Context(), gitpod, workspaceID, dryRun)
+		dashDashIndex := cmd.ArgsLenAtDash()
+
+		sshArgs := []string{}
+		if dashDashIndex != -1 {
+			sshArgs = args[dashDashIndex:]
+		}
+
+		return helper.SSHConnectToWorkspace(cmd.Context(), gitpod, workspaceID, dryRun, sshArgs...)
 	},
 }
 

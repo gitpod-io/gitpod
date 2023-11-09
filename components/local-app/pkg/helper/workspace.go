@@ -93,7 +93,7 @@ func OpenWorkspaceInPreferredEditor(ctx context.Context, clnt *client.Gitpod, wo
 }
 
 // SSHConnectToWorkspace connects to the workspace via SSH
-func SSHConnectToWorkspace(ctx context.Context, clnt *client.Gitpod, workspaceID string, runDry bool) error {
+func SSHConnectToWorkspace(ctx context.Context, clnt *client.Gitpod, workspaceID string, runDry bool, sshArgs ...string) error {
 	workspace, err := clnt.Workspaces.GetWorkspace(ctx, connect.NewRequest(&v1.GetWorkspaceRequest{WorkspaceId: workspaceID}))
 	if err != nil {
 		return err
@@ -113,16 +113,20 @@ func SSHConnectToWorkspace(ctx context.Context, clnt *client.Gitpod, workspaceID
 	ownerToken := token.Msg.Token
 
 	host := WorkspaceSSHHost(wsInfo)
+
+	command := exec.Command("ssh", fmt.Sprintf("%s#%s@%s", wsInfo.WorkspaceId, ownerToken, host), "-o", "StrictHostKeyChecking=no")
+	if len(sshArgs) > 0 {
+		slog.Debug("With additional SSH args and command", "with", sshArgs)
+		command.Args = append(command.Args, "--", strings.Join(sshArgs, " "))
+	}
 	if runDry {
-		fmt.Println("ssh", fmt.Sprintf("%s#%s@%s", wsInfo.WorkspaceId, ownerToken, host), "-o", "StrictHostKeyChecking=no")
+		fmt.Println(strings.Join(command.Args, " "))
 		return nil
 	}
-
-	slog.Debug("Connecting to" + wsInfo.Description)
-	command := exec.Command("ssh", fmt.Sprintf("%s#%s@%s", wsInfo.WorkspaceId, ownerToken, host), "-o", "StrictHostKeyChecking=no")
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
+	slog.Debug("Connecting to", "context", wsInfo.Description)
 	err = command.Run()
 	if err != nil {
 		return err
