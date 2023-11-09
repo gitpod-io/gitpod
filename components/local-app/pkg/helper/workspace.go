@@ -123,10 +123,10 @@ func SSHConnectToWorkspace(ctx context.Context, clnt *client.Gitpod, workspaceID
 		fmt.Println(strings.Join(command.Args, " "))
 		return nil
 	}
+	slog.Debug("Connecting to", "context", wsInfo.Description)
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
-	slog.Debug("Connecting to", "context", wsInfo.Description)
 	err = command.Run()
 	if err != nil {
 		return err
