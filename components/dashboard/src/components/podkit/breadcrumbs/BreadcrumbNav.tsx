@@ -5,6 +5,7 @@
  */
 
 import { LinkButton } from "@podkit/buttons/LinkButton";
+import { cn } from "@podkit/lib/cn";
 import { ChevronLeft } from "lucide-react";
 import type { FC } from "react";
 
@@ -21,17 +22,12 @@ interface BreadcrumbPageNavProps {
      * The link to the previous page.
      */
     backLink?: string;
+    className?: string;
 }
 
-export const BreadcrumbNav: FC<BreadcrumbPageNavProps> = ({
-    children,
-    pageTitle,
-    pageDescription,
-    backLink,
-    ...props
-}) => {
+export const BreadcrumbNav: FC<BreadcrumbPageNavProps> = ({ pageTitle, pageDescription, backLink, className }) => {
     return (
-        <section className="flex flex-row items-center justify-start gap-2 w-full">
+        <section className={cn("flex flex-row items-center justify-start gap-2 w-full py-4", className)}>
             {backLink && (
                 <LinkButton variant={"ghost"} className="py-1 px-0" href={backLink}>
                     <ChevronLeft size={24} />

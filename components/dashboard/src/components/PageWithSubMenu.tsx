@@ -10,6 +10,7 @@ import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
 import Header, { TabEntry } from "../components/Header";
 import { Separator } from "./Separator";
+import { cn } from "@podkit/lib/cn";
 
 export interface PageWithSubMenuProps {
     title?: string;
@@ -26,7 +27,7 @@ export function PageWithSubMenu(p: PageWithSubMenuProps) {
     return (
         <div className="w-full">
             {p.title && p.subtitle && <Header title={p.title} subtitle={p.subtitle} tabs={p.tabs} />}
-            <div className="app-container flex md:pt-9 flex-col md:flex-row">
+            <div className={cn("app-container flex flex-col md:flex-row", p.title && p.subtitle && "md:pt-9")}>
                 {/* TODO: extract into SubMenu component and show scrolling indicators */}
                 <div>
                     <ul
