@@ -33,7 +33,7 @@ export const BreadcrumbNav: FC<BreadcrumbPageNavProps> = ({
     return (
         <section className="flex flex-row items-center justify-start gap-2 w-full">
             {backLink && (
-                <LinkButton variant={"ghost"} className="py-2 px-2" href={backLink}>
+                <LinkButton variant={"ghost"} className="py-1 px-0" href={backLink}>
                     <ChevronLeft size={24} />
                 </LinkButton>
             )}
