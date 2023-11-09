@@ -26,6 +26,7 @@ const expect = chai.expect;
 describe("AuthProviderService", async () => {
     let service: AuthProviderService;
     let userService: UserService;
+    let orgService: OrganizationService;
     let container: Container;
     let currentUser: User;
     let org: Organization;
@@ -120,8 +121,8 @@ describe("AuthProviderService", async () => {
                 authProviderId: "public-github",
             },
         });
-        const os = container.get<OrganizationService>(OrganizationService);
-        org = await os.createOrganization(currentUser.id, "myorg");
+        orgService = container.get<OrganizationService>(OrganizationService);
+        org = await orgService.createOrganization(currentUser.id, "myorg");
     });
 
     afterEach(async () => {
@@ -307,6 +308,55 @@ describe("AuthProviderService", async () => {
 
             const oauthProperty: keyof AuthProviderEntry = "oauth";
             expect(providers[0]).to.not.haveOwnProperty(oauthProperty);
+        });
+        it.only("as regular member, should find org-level providers if no built-in providers present", async () => {
+            const member = await userService.createUser({
+                identity: {
+                    authId: "gh-user-2",
+                    authName: "user2",
+                    authProviderId: "public-github",
+                },
+            });
+            const invite = await orgService.getOrCreateInvite(currentUser.id, org.id);
+            await orgService.joinOrganization(member.id, invite.id);
+
+            const created = await service.createOrgAuthProvider(currentUser.id, newOrgEntry());
+            await service.markAsVerified({ userId: currentUser.id, id: created.id });
+
+            const providers = await service.getAuthProviderDescriptions(member);
+
+            expect(providers).to.has.lengthOf(1);
+            expect(providers[0]).to.deep.include(<Partial<AuthProviderInfo>>{
+                authProviderId: created.id,
+                authProviderType: created.type,
+                host: created.host,
+                organizationId: created.organizationId,
+                ownerId: created.ownerId,
+            });
+
+            const oauthProperty: keyof AuthProviderEntry = "oauth";
+            expect(providers[0]).to.not.haveOwnProperty(oauthProperty);
+        });
+        it.only("as regular member, should find only built-in providers if present", async () => {
+            addBuiltInProvider("localhost");
+
+            const member = await userService.createUser({
+                identity: {
+                    authId: "gh-user-2",
+                    authName: "user2",
+                    authProviderId: "public-github",
+                },
+            });
+            const invite = await orgService.getOrCreateInvite(currentUser.id, org.id);
+            await orgService.joinOrganization(member.id, invite.id);
+
+            const created = await service.createOrgAuthProvider(currentUser.id, newOrgEntry());
+            await service.markAsVerified({ userId: currentUser.id, id: created.id });
+
+            const providers = await service.getAuthProviderDescriptions(member);
+
+            expect(providers).to.has.lengthOf(1);
+            expect(providers[0].host).to.be.equal("localhost");
         });
     });
 });
