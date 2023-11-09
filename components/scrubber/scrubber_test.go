@@ -472,11 +472,11 @@ func BenchmarkKeyValue(b *testing.B) {
 }
 
 // go test -bench=BenchmarkMetrics -benchmem -benchtime=5s
-// strings
-// BenchmarkMetrics-32          190          30726112 ns/op         3098513 B/op      61369 allocs/op
-// regex
+// regex:
 // BenchmarkMetrics-32            5        1106232258 ns/op            8228 B/op          1 allocs/op
-// strings + lru
+// strings.Contains:
+// BenchmarkMetrics-32          190          30726112 ns/op         3098513 B/op      61369 allocs/op
+// strings.Contains + lru cache on key:
 // BenchmarkMetrics-32          303          19896634 ns/op         3098512 B/op      61369 allocs/op
 //
 // Commented out to exclude the prometheus dependency.
