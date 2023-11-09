@@ -39,7 +39,7 @@ export const BreadcrumbNav: FC<BreadcrumbPageNavProps> = ({ pageTitle, pageDescr
             )}
             <h1 className="text-lg font-bold">{pageTitle}</h1>
             <span>·</span>
-            <p className="gray-900 dark:gray-300 text-md">{pageDescription}</p>
+            <p className="text-gray-900 dark:text-gray-300 text-md">{pageDescription}</p>
         </section>
     );
 };
