@@ -29,8 +29,9 @@ const RepositoryListPage: FC = () => {
     const { data, isLoading } = useListConfigurations({ searchTerm: debouncedSearchTerm, page: currentPage, pageSize });
     const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
 
+    const totalRows = data?.pagination?.total ?? 0;
     // TODO: add this to response payload for pagination
-    const totalPages = data?.pagination?.total ?? 0 / pageSize;
+    const totalPages = totalRows / pageSize;
 
     const handleProjectCreated = useCallback(
         (project: Project) => {
@@ -52,7 +53,7 @@ const RepositoryListPage: FC = () => {
                 </div>
 
                 {/* Search/Filter bar */}
-                <div className="flex flex-row justify-between">
+                <div className="flex flex-row justify-between items-center">
                     <div>
                         <TextInput
                             value={searchTerm}
@@ -61,7 +62,8 @@ const RepositoryListPage: FC = () => {
                         />
                         {/* TODO: Add prebuild status filter dropdown */}
                     </div>
-                    <div>{/* TODO: Add copy explaining what records we're showing & total records count */}</div>
+                    {/* Account for variation of message when totalRows is greater than smallest page size option (20?) */}
+                    <div>{totalRows === 1 ? "Showing 1 repo" : `Showing ${totalRows} repos`}</div>
                 </div>
 
                 {isLoading && <Loader2 className="animate-spin" />}
