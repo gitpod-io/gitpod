@@ -51,7 +51,7 @@ export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
     );
 
     return (
-        <form onSubmit={updateName}>
+        <form onSubmit={updateName} className="border border-gray-300 rounded-xl p-4">
             <TextInputField
                 label="Configuration name"
                 hint={`The name can be up to ${MAX_LENGTH} characters long.`}
