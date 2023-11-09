@@ -33,6 +33,10 @@ type Attributes struct {
 	VSCodeClientID string
 
 	GitpodHost string
+
+	// Component is using in components/service-waiter
+	// Feature Flag key is `service_waiter_skip_component`
+	Component string
 }
 
 type ClientOpt func(o *options)

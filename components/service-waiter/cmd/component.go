@@ -7,12 +7,14 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -46,6 +48,11 @@ var componentCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
 		defer cancel()
 
+		if shouldSkipComponentWaiter(ctx) {
+			log.Infof("skip component waiter %s", componentCmdOpt.component)
+			return
+		}
+
 		err := waitPodsImage(ctx)
 
 		if err != nil {
@@ -54,6 +61,26 @@ var componentCmd = &cobra.Command{
 			log.Info("service is ready")
 		}
 	},
+}
+
+var experimentsClient experiments.Client
+var once sync.Once
+
+func shouldSkipComponentWaiter(ctx context.Context) bool {
+	once.Do(func() {
+		experimentsClient = experiments.NewClient()
+		if experimentsClient == nil {
+			log.Error("failed to create experiments client")
+		}
+	})
+	if experimentsClient == nil {
+		// skip if failed to craete client refer
+		// it should never reach here, in case it happens, always skip
+		return true
+	}
+	return experimentsClient.GetBoolValue(ctx, experiments.ServiceWaiterSkipComponentsFlag, true, experiments.Attributes{
+		Component: componentCmdOpt.component,
+	})
 }
 
 func checkPodsImage(ctx context.Context, k8sClient *kubernetes.Clientset) (bool, error) {
@@ -107,6 +134,9 @@ func waitPodsImage(ctx context.Context) error {
 			}
 			return ctx.Err()
 		default:
+			if shouldSkipComponentWaiter(ctx) {
+				return nil
+			}
 			ok, err := checkPodsImage(ctx, k8sClient)
 			if err != nil {
 				log.WithError(err).Error("image check failed")
