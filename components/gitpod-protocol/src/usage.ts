@@ -58,8 +58,10 @@ export interface WorkspaceInstanceUsageData {
     workspaceType: WorkspaceType;
     workspaceClass: string;
     contextURL: string;
+    creationTime?: string;
     startTime: string;
     endTime?: string;
+    stoppedTime?: string;
     userId: string;
     userName: string;
     userAvatarURL: string;

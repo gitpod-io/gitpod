@@ -27,6 +27,8 @@ export const transformUsageRecord = (usage: Usage): UsageCSVRow | undefined => {
         endTime: metadata.endTime ?? "",
         userName: metadata.userName,
         startTime: metadata.startTime,
+        creationTime: metadata.creationTime ?? "",
+        stoppedTime: metadata.stoppedTime ?? "",
         contextURL: metadata.contextURL,
         workspaceId: metadata.workspaceId,
         userAvatarURL: metadata.userAvatarURL,
@@ -47,9 +49,11 @@ export type UsageCSVRow = {
     workspaceInstanceId: string;
     kind: string;
     userId: string;
-    endTime: string;
-    userName: string;
+    creationTime: string;
     startTime: string;
+    endTime: string;
+    stoppedTime: string;
+    userName: string;
     contextURL: string;
     workspaceId: string;
     userAvatarURL: string;

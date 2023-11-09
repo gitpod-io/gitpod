@@ -409,6 +409,10 @@ func newUsageFromInstance(instance db.WorkspaceInstanceForUsage, pricer *Workspa
 		Draft:               draft,
 	}
 
+	creationTime := ""
+	if instance.CreationTime.IsSet() {
+		creationTime = db.TimeToISO8601(instance.CreationTime.Time())
+	}
 	startedTime := ""
 	if instance.StartedTime.IsSet() {
 		startedTime = db.TimeToISO8601(instance.StartedTime.Time())
@@ -417,13 +421,19 @@ func newUsageFromInstance(instance db.WorkspaceInstanceForUsage, pricer *Workspa
 	if stopTime.IsSet() {
 		endTime = db.TimeToISO8601(stopTime.Time())
 	}
+	stoppedTime := ""
+	if instance.StoppedTime.IsSet() {
+		stoppedTime = db.TimeToISO8601(instance.StoppedTime.Time())
+	}
 	err := usage.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
 		WorkspaceId:    instance.WorkspaceID,
 		WorkspaceType:  instance.Type,
 		WorkspaceClass: instance.WorkspaceClass,
 		ContextURL:     instance.ContextURL,
+		CreationTime:   creationTime,
 		StartTime:      startedTime,
 		EndTime:        endTime,
+		StoppedTime:    stoppedTime,
 		UserID:         instance.UserID,
 		UserName:       instance.UserName,
 		UserAvatarURL:  instance.UserAvatarURL,
