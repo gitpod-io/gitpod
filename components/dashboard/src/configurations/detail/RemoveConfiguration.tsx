@@ -25,7 +25,7 @@ export const RemoveConfiguration = ({ configuration }: Props) => {
 
     return (
         <>
-            <div className="mt-12 border border-gray-300 rounded-xl p-4">
+            <div className="mt-12 border border-gray-300 dark:border-gray-700 rounded-xl p-4">
                 <Heading2>Remove this Configuration</Heading2>
                 <Subheading className="pb-4 max-w-md dark:text-gray-400">
                     This will delete the project and all project-level environment variables you've set for this
