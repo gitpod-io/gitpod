@@ -117,7 +117,7 @@ func SSHConnectToWorkspace(ctx context.Context, clnt *client.Gitpod, workspaceID
 	command := exec.Command("ssh", fmt.Sprintf("%s#%s@%s", wsInfo.WorkspaceId, ownerToken, host), "-o", "StrictHostKeyChecking=no")
 	if len(sshArgs) > 0 {
 		slog.Debug("With additional SSH args and command", "with", sshArgs)
-		command.Args = append(command.Args, "--", strings.Join(sshArgs, " "))
+		command.Args = append(command.Args, sshArgs...)
 	}
 	if runDry {
 		fmt.Println(strings.Join(command.Args, " "))

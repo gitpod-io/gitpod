@@ -19,7 +19,7 @@ var workspaceSSHCmd = &cobra.Command{
 	Example: `  # connect to workspace with current terminal session
   $ gitpod workspace ssh <workspace-id>
 
-  # Execute simple command in the workspace
+  # Execute with ssh command
   $ gitpod workspace ssh <workspace-id> -- ls -la
 
   # Get all SSH features with --dry-run
