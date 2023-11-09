@@ -33,6 +33,7 @@ const RepositoryListPage: FC = () => {
         setCurrentPage(1);
     }, [debouncedSearchTerm]);
 
+    // Have this set to a low value for now to test pagination while we develop this
     // TODO: move this into state and add control for changing it
     const pageSize = 5;
 
