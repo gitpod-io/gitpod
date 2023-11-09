@@ -10,17 +10,11 @@ import { getGitpodService } from "../../service/service";
 import { StartWorkspaceError } from "../../start/StartPage";
 
 export function useWorkspaceContext(contextUrl?: string) {
-    const query = useQuery<WorkspaceContext | null, StartWorkspaceError>(
-        ["workspace-context", contextUrl],
-        () => {
-            if (!contextUrl) {
-                return null;
-            }
-            return getGitpodService().server.resolveContext(contextUrl);
-        },
-        {
-            retry: false,
-        },
-    );
+    const query = useQuery<WorkspaceContext | null, StartWorkspaceError>(["workspace-context", contextUrl], () => {
+        if (!contextUrl) {
+            return null;
+        }
+        return getGitpodService().server.resolveContext(contextUrl);
+    });
     return query;
 }
