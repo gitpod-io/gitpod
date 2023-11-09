@@ -53,10 +53,6 @@ export function deduplicateAndFilterRepositories(
         });
     }
     for (const repo of suggestedRepos) {
-        // filter out project entries if excludeProjects is true
-        if (repo.projectId && excludeProjects) {
-            continue;
-        }
         // filter out project-less entries if an entry with a project exists
         if (!repo.projectId && reposWithProject.has(repo.url)) {
             continue;
@@ -66,7 +62,7 @@ export function deduplicateAndFilterRepositories(
             continue;
         }
         // filter out duplicates
-        const key = `${repo.url}:${repo.projectId || "no-project"}`;
+        const key = `${repo.url}:${excludeProjects ? "" : repo.projectId || "no-project"}`;
         if (collected.has(key)) {
             continue;
         }
