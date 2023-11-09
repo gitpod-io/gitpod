@@ -188,11 +188,19 @@ type WorkspaceStatus struct {
 	// +kubebuilder:validation:Optional
 	Runtime *WorkspaceRuntimeStatus `json:"runtime,omitempty"`
 
+	Storage StorageStatus `json:"storage,omitempty"`
+
 	LastActivity *metav1.Time `json:"lastActivity,omitempty"`
 }
 
 func (s *WorkspaceStatus) SetCondition(cond metav1.Condition) {
 	s.Conditions = wsk8s.AddUniqueCondition(s.Conditions, cond)
+}
+
+type StorageStatus struct {
+	VolumeName     string `json:"volumeName"`
+	AttachedDevice string `json:"attachedDevice"`
+	MountPath      string `json:"mountPath"`
 }
 
 // +kubebuilder:validation:Enum=Deployed;Failed;Timeout;FirstUserActivity;Closed;HeadlessTaskFailed;StoppedByRequest;Aborted;ContentReady;EverReady;BackupComplete;BackupFailure;Refresh;NodeDisappeared;ThroughputAdjusted
@@ -244,6 +252,11 @@ const (
 	// NodeDisappeared is true if the workspace's node disappeared before the workspace was stopped
 	WorkspaceConditionNodeDisappeared WorkspaceCondition = "NodeDisappeared"
 
+	VolumeAttachRequest WorkspaceCondition = "VolumeAttachRequest"
+	// VolumeAttached is true if the workspace's volume has been attached to the node
+	VolumeAttached WorkspaceCondition = "VolumeAttached"
+	// VolumeMounted is true if the workspace's volume has been mounted on the node
+	VolumeMounted WorkspaceCondition = "VolumeMounted"
 	// ThroughputAdjusted is true if the throughput of the workspace volume has been adjusted
 	WorkspaceConditionThroughputAdjusted WorkspaceCondition = "ThroughputAdjusted"
 )
