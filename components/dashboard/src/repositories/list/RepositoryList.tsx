@@ -24,7 +24,7 @@ const RepositoryListPage: FC = () => {
 
     const history = useHistory();
 
-    // TODO: Consider pushing this state into query params
+    // TODO: Move this state into url search params
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm, debouncedSearchTerm] = useStateWithDebounce("");
 
