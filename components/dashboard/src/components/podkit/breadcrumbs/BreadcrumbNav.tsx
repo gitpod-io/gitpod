@@ -27,7 +27,7 @@ interface BreadcrumbPageNavProps {
 
 export const BreadcrumbNav: FC<BreadcrumbPageNavProps> = ({ pageTitle, pageDescription, backLink, className }) => {
     return (
-        <section className={cn("flex flex-row items-center justify-start gap-2 w-full py-4 px-4", className)}>
+        <section className={cn("flex flex-row items-center justify-start gap-2 w-full py-4 app-container", className)}>
             {backLink && (
                 <LinkButton
                     variant={"ghost"}
