@@ -188,7 +188,8 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 			continue
 		}
 
-		defer stream.Close()
+		// Attempt to close the stream hangs the connection instead. We should investigate what's up (EXP-909)
+		// defer stream.Close()
 
 		for stream.Receive() {
 			msg := stream.Msg()
