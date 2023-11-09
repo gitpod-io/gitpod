@@ -9,6 +9,7 @@ import * as chai from "chai";
 
 import { generateAsyncGenerator } from "./generate-async-generator";
 import { Disposable } from "./util/disposable";
+import EventIterator from "event-iterator";
 
 const expect = chai.expect;
 
@@ -75,7 +76,7 @@ function watchIterator(ref: Ref, opts: Option) {
 class TestGenerateAsyncGenerator {
     @test public async "happy path"() {
         const ref: Ref = { isDisposed: false, result: [], watchStarted: false };
-        const it = watchIterator(ref, { times: 5 });
+        const it: EventIterator<number> = watchIterator(ref, { times: 5 });
         try {
             for await (const v of it) {
                 ref.result.push(v);
