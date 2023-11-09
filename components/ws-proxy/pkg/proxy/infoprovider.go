@@ -63,6 +63,8 @@ type WorkspaceInfo struct {
 	OwnerUserId   string
 	SSHPublicKeys []string
 	IsRunning     bool
+
+	SSHKey *workspacev1.SSHKey
 }
 
 const (
@@ -191,6 +193,7 @@ func (r *CRDWorkspaceInfoProvider) Reconcile(ctx context.Context, req ctrl.Reque
 		StartedAt:       ws.CreationTimestamp.Time,
 		OwnerUserId:     ws.Spec.Ownership.Owner,
 		SSHPublicKeys:   ws.Spec.SshPublicKeys,
+		SSHKey:          ws.Spec.SSHKey,
 		IsRunning:       ws.Status.Phase == workspacev1.WorkspacePhaseRunning,
 	}
 
