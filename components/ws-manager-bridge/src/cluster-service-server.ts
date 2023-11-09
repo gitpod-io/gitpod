@@ -160,6 +160,9 @@ export class ClusterService implements IClusterServiceServer {
                         }
                     });
                 });
+
+                // Make a test call to the cluster to validate the TLS config.
+                // We use this test call to gather the available workspace classes.
                 newCluster.preferredWorkspaceClass = clusterDesc.getPreferredWorkspaceClass();
                 newCluster.availableWorkspaceClasses = clusterDesc.getWorkspaceClassesList().map((c) => {
                     return <WorkspaceClass>{

@@ -14,7 +14,7 @@ const columnPrefClass = "preferredWorkspaceClass";
 export class WorkspaceClusterAvailableClasses1699012261520 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         if (!(await columnExists(queryRunner, table, columnAWC))) {
-            await queryRunner.query(`ALTER TABLE ${table} ADD COLUMN ${columnAWC} TEXT, ALGORITHM=INPLACE, LOCK=NONE`);
+            await queryRunner.query(`ALTER TABLE ${table} ADD COLUMN ${columnAWC} JSON, ALGORITHM=INPLACE, LOCK=NONE`);
         }
         if (!(await columnExists(queryRunner, table, columnPrefClass))) {
             await queryRunner.query(

@@ -128,6 +128,13 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			}
 		}
 		preferredWorkspaceClass = ucfg.Workspace.PreferredWorkspaceClass
+		if preferredWorkspaceClass == "" {
+			// if no preferred workspace class is set, use a random one (maps have no order, there is no "first")
+			for _, k := range ucfg.Workspace.WorkspaceClasses {
+				preferredWorkspaceClass = k.Name
+				break
+			}
+		}
 
 		schedulerName = ucfg.Workspace.SchedulerName
 		if ucfg.Workspace.HostURL != "" {

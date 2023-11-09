@@ -617,7 +617,7 @@ export class WorkspaceService {
         });
     }
 
-    public async getSupportedWorkspaceClasses(user: User): Promise<SupportedWorkspaceClass[]> {
+    public async getSupportedWorkspaceClasses(user: { id: string }): Promise<SupportedWorkspaceClass[]> {
         if (await isWorkspaceClassDiscoveryEnabled(user)) {
             const allClasses = (await this.clientProvider.getAllWorkspaceClusters()).flatMap((cluster) => {
                 return (cluster.availableWorkspaceClasses || [])?.map((cls) => {

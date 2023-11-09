@@ -1935,7 +1935,7 @@ function resolveGitpodTasks(ws: Workspace, instance: WorkspaceInstance): TaskCon
     return tasks;
 }
 
-export async function isWorkspaceClassDiscoveryEnabled(user: User): Promise<boolean> {
+export async function isWorkspaceClassDiscoveryEnabled(user: { id: string }): Promise<boolean> {
     return getExperimentsClientForBackend().getValueAsync("workspace_class_discovery_enabled", false, {
         user: user,
     });

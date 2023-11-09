@@ -100,20 +100,7 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
     deleted: boolean;
 
     @Column({
-        type: "simple-json",
-        transformer: (() => {
-            return <ValueTransformer>{
-                to(value: any): any {
-                    if (!value) {
-                        return undefined;
-                    }
-                    return JSON.stringify(value);
-                },
-                from(value: any): any {
-                    return JSON.parse(value);
-                },
-            };
-        })(),
+        type: "json",
     })
     availableWorkspaceClasses?: WorkspaceClass[];
 
