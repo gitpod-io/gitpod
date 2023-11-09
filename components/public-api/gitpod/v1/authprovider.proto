@@ -79,8 +79,8 @@ message ListAuthProviderDescriptionsResponse {
 
 message UpdateAuthProviderRequest {
   string auth_provider_id = 1;
-
-  OAuth2Config oauth2_config = 2;
+  optional string client_id = 2;
+  optional string client_secret = 3;
 }
 
 message UpdateAuthProviderResponse {}
@@ -95,8 +95,8 @@ message AuthProviderDescription {
   AuthProviderType type = 4;
   string host = 5;
 
-  optional string icon = 6;
-  optional string description = 7;
+  string icon = 6;
+  string description = 7;
 }
 
 message AuthProvider {
@@ -110,9 +110,9 @@ message AuthProvider {
   AuthProviderType type = 4;
   string host = 5;
 
-  optional string icon = 6;
-  optional string description = 7;
-  optional string settings_url = 8;
+  string icon = 6;
+  string description = 7;
+  string settings_url = 8;
 
   bool verified = 9;
   bool enable_login = 10;

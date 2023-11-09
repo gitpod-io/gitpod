@@ -440,9 +440,14 @@ export class UpdateAuthProviderRequest extends Message<UpdateAuthProviderRequest
   authProviderId = "";
 
   /**
-   * @generated from field: gitpod.v1.OAuth2Config oauth2_config = 2;
+   * @generated from field: optional string client_id = 2;
    */
-  oauth2Config?: OAuth2Config;
+  clientId?: string;
+
+  /**
+   * @generated from field: optional string client_secret = 3;
+   */
+  clientSecret?: string;
 
   constructor(data?: PartialMessage<UpdateAuthProviderRequest>) {
     super();
@@ -453,7 +458,8 @@ export class UpdateAuthProviderRequest extends Message<UpdateAuthProviderRequest
   static readonly typeName = "gitpod.v1.UpdateAuthProviderRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "auth_provider_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "oauth2_config", kind: "message", T: OAuth2Config },
+    { no: 2, name: "client_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 3, name: "client_secret", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateAuthProviderRequest {
@@ -592,14 +598,14 @@ export class AuthProviderDescription extends Message<AuthProviderDescription> {
   host = "";
 
   /**
-   * @generated from field: optional string icon = 6;
+   * @generated from field: string icon = 6;
    */
-  icon?: string;
+  icon = "";
 
   /**
-   * @generated from field: optional string description = 7;
+   * @generated from field: string description = 7;
    */
-  description?: string;
+  description = "";
 
   constructor(data?: PartialMessage<AuthProviderDescription>) {
     super();
@@ -612,8 +618,8 @@ export class AuthProviderDescription extends Message<AuthProviderDescription> {
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "type", kind: "enum", T: proto3.getEnumType(AuthProviderType) },
     { no: 5, name: "host", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 6, name: "icon", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 7, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 6, name: "icon", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AuthProviderDescription {
@@ -670,19 +676,19 @@ export class AuthProvider extends Message<AuthProvider> {
   host = "";
 
   /**
-   * @generated from field: optional string icon = 6;
+   * @generated from field: string icon = 6;
    */
-  icon?: string;
+  icon = "";
 
   /**
-   * @generated from field: optional string description = 7;
+   * @generated from field: string description = 7;
    */
-  description?: string;
+  description = "";
 
   /**
-   * @generated from field: optional string settings_url = 8;
+   * @generated from field: string settings_url = 8;
    */
-  settingsUrl?: string;
+  settingsUrl = "";
 
   /**
    * @generated from field: bool verified = 9;
@@ -717,9 +723,9 @@ export class AuthProvider extends Message<AuthProvider> {
     { no: 3, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */, oneof: "owner" },
     { no: 4, name: "type", kind: "enum", T: proto3.getEnumType(AuthProviderType) },
     { no: 5, name: "host", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 6, name: "icon", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 7, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 8, name: "settings_url", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 6, name: "icon", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 8, name: "settings_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 9, name: "verified", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 10, name: "enable_login", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 11, name: "scopes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
