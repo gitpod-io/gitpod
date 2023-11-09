@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -58,6 +59,21 @@ func DefaultLabels(component string) map[string]string {
 		"app":       "gitpod",
 		"component": component,
 	}
+}
+
+func DefaultLabelSelector(component string) string {
+	labels := DefaultLabels(component)
+	labelKeys := []string{}
+	// get keys of label and sort them
+	for k := range labels {
+		labelKeys = append(labelKeys, k)
+	}
+	results := []string{}
+	sort.Strings(labelKeys)
+	for _, key := range labelKeys {
+		results = append(results, fmt.Sprintf("%s=%s", key, labels[key]))
+	}
+	return strings.Join(results, ",")
 }
 
 func MergeEnv(envs ...[]corev1.EnvVar) (res []corev1.EnvVar) {
@@ -497,22 +513,17 @@ func RedisWaiterContainer(ctx *RenderContext) *corev1.Container {
 // it requires pods list access to the cluster
 func ServerComponentWaiterContainer(ctx *RenderContext) *corev1.Container {
 	image := ctx.ImageName(ctx.Config.Repository, ServerComponent, ctx.VersionManifest.Components.Server.Version)
-	return componentWaiterContainer(ctx, ServerComponent, DefaultLabels(ServerComponent), image)
+	return componentWaiterContainer(ctx, ServerComponent, DefaultLabelSelector(ServerComponent), image)
 }
 
 // PublicApiServerComponentWaiterContainer is the container used to wait for the deployment/public-api-server to be ready
 // it requires pods list access to the cluster
 func PublicApiServerComponentWaiterContainer(ctx *RenderContext) *corev1.Container {
 	image := ctx.ImageName(ctx.Config.Repository, PublicApiComponent, ctx.VersionManifest.Components.PublicAPIServer.Version)
-	return componentWaiterContainer(ctx, PublicApiComponent, DefaultLabels(PublicApiComponent), image)
+	return componentWaiterContainer(ctx, PublicApiComponent, DefaultLabelSelector(PublicApiComponent), image)
 }
 
-func componentWaiterContainer(ctx *RenderContext, component string, labels map[string]string, image string) *corev1.Container {
-	labelsStr := []string{}
-	for k, v := range labels {
-		labelsStr = append(labelsStr, fmt.Sprintf("%s=%s", k, v))
-	}
-
+func componentWaiterContainer(ctx *RenderContext, component, labels, image string) *corev1.Container {
 	return &corev1.Container{
 		Name:  component + "-waiter",
 		Image: ctx.ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
@@ -524,7 +535,7 @@ func componentWaiterContainer(ctx *RenderContext, component string, labels map[s
 			"--component",
 			component,
 			"--labels",
-			strings.Join(labelsStr, ","),
+			labels,
 			"--image",
 			image,
 		},
