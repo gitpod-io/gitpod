@@ -157,7 +157,7 @@ export class AuthProviderService {
                     publicRepo: BitbucketOAuthScopes.Requirements.DEFAULT,
                     privateRepo: BitbucketOAuthScopes.Requirements.DEFAULT,
                 };
-            case "Bitbucket":
+            case "BitbucketServer":
                 return {
                     default: BitbucketServerOAuthScopes.Requirements.DEFAULT,
                     publicRepo: BitbucketServerOAuthScopes.Requirements.DEFAULT,
@@ -173,7 +173,7 @@ export class AuthProviderService {
                 return GitLabScope.All;
             case "Bitbucket":
                 return BitbucketOAuthScopes.ALL;
-            case "Bitbucket":
+            case "BitbucketServer":
                 return BitbucketServerOAuthScopes.ALL;
         }
     }
