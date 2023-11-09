@@ -21,6 +21,7 @@ var workspaceSSHCmd = &cobra.Command{
 
   # Execute with ssh command
   $ gitpod workspace ssh <workspace-id> -- ls -la
+  $ gitpod ws ssh <workspace-id> -- -t watch date
 
   # Get all SSH features with --dry-run
   $ $(gitpod workspace ssh <workspace-id> --dry-run) -- ls -la
