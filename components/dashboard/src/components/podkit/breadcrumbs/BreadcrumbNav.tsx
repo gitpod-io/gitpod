@@ -31,7 +31,7 @@ export const BreadcrumbNav: FC<BreadcrumbPageNavProps> = ({ pageTitle, pageDescr
             {backLink && (
                 <LinkButton
                     variant={"ghost"}
-                    className="py-1 px-0 hover:bg-gray-200 dark:hover:bg-gray-800"
+                    className="py-1 px-0 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:text-gray-200"
                     href={backLink}
                 >
                     <ChevronLeft size={24} />
