@@ -49,7 +49,7 @@ var componentCmd = &cobra.Command{
 		defer cancel()
 
 		if shouldSkipComponentWaiter(ctx) {
-			log.Infof("skip component waiter %s", componentCmdOpt.component)
+			log.Infof("skip component waiter %s with Feature Flag", componentCmdOpt.component)
 			return
 		}
 
@@ -74,11 +74,12 @@ func shouldSkipComponentWaiter(ctx context.Context) bool {
 		}
 	})
 	if experimentsClient == nil {
-		// skip if failed to craete client refer
+		// not skip if failed to create client refer
 		// it should never reach here, in case it happens, always skip
-		return true
+		log.Debug("failed to create experiments client, default not skip")
+		return false
 	}
-	return experimentsClient.GetBoolValue(ctx, experiments.ServiceWaiterSkipComponentsFlag, true, experiments.Attributes{
+	return experimentsClient.GetBoolValue(ctx, experiments.ServiceWaiterSkipComponentsFlag, false, experiments.Attributes{
 		Component: componentCmdOpt.component,
 	})
 }
@@ -135,6 +136,7 @@ func waitPodsImage(ctx context.Context) error {
 			return ctx.Err()
 		default:
 			if shouldSkipComponentWaiter(ctx) {
+				log.Infof("skip component waiter %s with Feature Flag", componentCmdOpt.component)
 				return nil
 			}
 			ok, err := checkPodsImage(ctx, k8sClient)

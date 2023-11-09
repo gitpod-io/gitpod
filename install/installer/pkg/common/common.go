@@ -510,14 +510,18 @@ func RedisWaiterContainer(ctx *RenderContext) *corev1.Container {
 }
 
 // ServerComponentWaiterContainer is the container used to wait for the deployment/server to be ready
-// it requires pods list access to the cluster
+// it requires
+//   - pods list access to the cluster
+//   - configcat env
 func ServerComponentWaiterContainer(ctx *RenderContext) *corev1.Container {
 	image := ctx.ImageName(ctx.Config.Repository, ServerComponent, ctx.VersionManifest.Components.Server.Version)
 	return componentWaiterContainer(ctx, ServerComponent, DefaultLabelSelector(ServerComponent), image)
 }
 
 // PublicApiServerComponentWaiterContainer is the container used to wait for the deployment/public-api-server to be ready
-// it requires pods list access to the cluster
+// it requires
+//   - pods list access to the cluster
+//   - configcat env
 func PublicApiServerComponentWaiterContainer(ctx *RenderContext) *corev1.Container {
 	image := ctx.ImageName(ctx.Config.Repository, PublicApiComponent, ctx.VersionManifest.Components.PublicAPIServer.Version)
 	return componentWaiterContainer(ctx, PublicApiComponent, DefaultLabelSelector(PublicApiComponent), image)
