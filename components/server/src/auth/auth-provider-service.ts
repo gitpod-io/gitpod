@@ -18,10 +18,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import fetch from "node-fetch";
 import { Authorizer } from "../authorization/authorizer";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { GitHubScope } from "../github/scopes";
-import { GitLabScope } from "../gitlab/scopes";
-import { BitbucketOAuthScopes } from "../bitbucket/bitbucket-oauth-scopes";
-import { BitbucketServerOAuthScopes } from "../bitbucket-server/bitbucket-server-oauth-scopes";
+import { getRequiredScopes, getScopesOfProvider } from "./auth-provider-scopes";
 
 @injectable()
 export class AuthProviderService {
@@ -107,8 +104,8 @@ export class AuthProviderService {
                 hiddenOnDashboard: ap.hiddenOnDashboard,
                 disallowLogin: ap.disallowLogin,
                 description: ap.description,
-                scopes: this.toScopes(ap),
-                requirements: this.toScopeRequirements(ap),
+                scopes: getScopesOfProvider(ap),
+                requirements: getRequiredScopes(ap),
             };
 
         const result: AuthProviderInfo[] = [];
@@ -130,52 +127,6 @@ export class AuthProviderService {
             }
         }
         return result;
-    }
-    /**
-     * This is extracted from auth provider handlers in order to avoid a
-     * dependency to host contexts.
-     *
-     * TODO(at) these defaults of provider types needs to be centralized.
-     */
-    private toScopeRequirements(entry: AuthProviderEntry) {
-        switch (entry.type) {
-            case "GitHub":
-                return {
-                    default: GitHubScope.Requirements.DEFAULT,
-                    publicRepo: GitHubScope.Requirements.PUBLIC_REPO,
-                    privateRepo: GitHubScope.Requirements.PRIVATE_REPO,
-                };
-            case "GitLab":
-                return {
-                    default: GitLabScope.Requirements.DEFAULT,
-                    publicRepo: GitLabScope.Requirements.DEFAULT,
-                    privateRepo: GitLabScope.Requirements.REPO,
-                };
-            case "Bitbucket":
-                return {
-                    default: BitbucketOAuthScopes.Requirements.DEFAULT,
-                    publicRepo: BitbucketOAuthScopes.Requirements.DEFAULT,
-                    privateRepo: BitbucketOAuthScopes.Requirements.DEFAULT,
-                };
-            case "BitbucketServer":
-                return {
-                    default: BitbucketServerOAuthScopes.Requirements.DEFAULT,
-                    publicRepo: BitbucketServerOAuthScopes.Requirements.DEFAULT,
-                    privateRepo: BitbucketServerOAuthScopes.Requirements.DEFAULT,
-                };
-        }
-    }
-    private toScopes(entry: AuthProviderEntry) {
-        switch (entry.type) {
-            case "GitHub":
-                return GitHubScope.All;
-            case "GitLab":
-                return GitLabScope.All;
-            case "Bitbucket":
-                return BitbucketOAuthScopes.ALL;
-            case "BitbucketServer":
-                return BitbucketServerOAuthScopes.ALL;
-        }
     }
 
     async getAuthProvidersOfUser(user: User | string): Promise<AuthProviderEntry[]> {
