@@ -20,14 +20,14 @@ export const buttonVariants = cva(
                 outline: "border border-input bg-transparent hover:bg-kumquat-ripe hover:text-gray-600",
                 secondary:
                     "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-100 hover:text-gray-600",
-                ghost: "hover:bg-kumquat-ripe hover:text-gray-600",
+                ghost: "bg-transparent hover:bg-gray-100 hover:text-gray-600 text-gray-500",
                 link: "text-gray-500 dark:text-gray-100 underline-offset-4 hover:underline",
             },
             size: {
                 default: "h-9 px-4 py-2",
                 sm: "h-8 rounded-md px-3 text-xs",
                 lg: "h-10 rounded-md px-8",
-                icon: "h-9 w-9",
+                icon: "h-9 w-9 p-0 rounded-sm",
             },
         },
         defaultVariants: {
