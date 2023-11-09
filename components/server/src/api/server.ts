@@ -180,7 +180,7 @@ export class API {
                         if (reason != err && err.code === Code.Internal) {
                             log.error("public api: unexpected internal error", reason);
                             err = new ConnectError(
-                                `Oops! Something went wrong. Please quote the request ID ${logContext.requestId} when reaching out to Gitpod Support.`,
+                                `Oops! Something went wrong.`,
                                 Code.Internal,
                                 // pass metadata to preserve the application error
                                 err.metadata,
