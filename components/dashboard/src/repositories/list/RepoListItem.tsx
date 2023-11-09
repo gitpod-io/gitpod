@@ -42,9 +42,9 @@ export const RepositoryListItem: FC<Props> = ({ configuration }) => {
             <td className="hidden md:table-cell">
                 <div className="flex flex-row gap-1 items-center">
                     {prebuildsEnabled ? (
-                        <CheckCircle2Icon size={16} className="text-green-500" />
+                        <CheckCircle2Icon size={20} className="text-green-500" />
                     ) : (
-                        <AlertTriangleIcon size={16} className="text-red-500" />
+                        <AlertTriangleIcon size={20} className="text-red-500" />
                     )}
 
                     <TextMuted className={cn(!prebuildsEnabled && "text-red-500")}>

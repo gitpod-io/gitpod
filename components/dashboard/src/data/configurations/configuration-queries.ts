@@ -33,10 +33,14 @@ export const useListConfigurations = ({ searchTerm = "", page, pageSize }: ListC
                 pagination: { page, pageSize },
             });
 
-            return { configurations, pagination };
+            return {
+                configurations,
+                pagination,
+            };
         },
         {
             enabled: !!org,
+            keepPreviousData: true,
         },
     );
 };
