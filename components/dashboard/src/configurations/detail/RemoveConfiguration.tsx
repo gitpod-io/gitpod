@@ -25,8 +25,8 @@ export const RemoveConfiguration = ({ configuration }: Props) => {
 
     return (
         <>
-            <div className="border border-gray-300 rounded-xl p-4">
-                <Heading2 className="mt-12">Remove this Configuration</Heading2>
+            <div className="mt-12 border border-gray-300 rounded-xl p-4">
+                <Heading2>Remove this Configuration</Heading2>
                 <Subheading className="pb-4 max-w-md">
                     This will delete the project and all project-level environment variables you've set for this
                     project. It will not delete the repository.
@@ -42,7 +42,6 @@ export const RemoveConfiguration = ({ configuration }: Props) => {
                     onClose={() => setShowRemoveModal(false)}
                 />
             )}
-            )
         </>
     );
 };
