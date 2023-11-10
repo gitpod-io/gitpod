@@ -483,6 +483,11 @@ export class UpdateAuthProviderRequest extends Message<UpdateAuthProviderRequest
  * @generated from message gitpod.v1.UpdateAuthProviderResponse
  */
 export class UpdateAuthProviderResponse extends Message<UpdateAuthProviderResponse> {
+  /**
+   * @generated from field: gitpod.v1.AuthProvider auth_provider = 1;
+   */
+  authProvider?: AuthProvider;
+
   constructor(data?: PartialMessage<UpdateAuthProviderResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -491,6 +496,7 @@ export class UpdateAuthProviderResponse extends Message<UpdateAuthProviderRespon
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.UpdateAuthProviderResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "auth_provider", kind: "message", T: AuthProvider },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateAuthProviderResponse {
