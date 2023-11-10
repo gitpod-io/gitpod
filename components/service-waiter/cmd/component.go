@@ -148,8 +148,7 @@ func init() {
 func startWaitFeatureFlag(ctx context.Context, timeout time.Duration) {
 	featureFlagCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
-	client := experiments.NewClient()
-
+	client := experiments.NewClient(experiments.WithDefaultClient(nil))
 	defaultSkip := true
 	if client == nil {
 		log.Error("failed to create experiments client, skip immediately")

@@ -49,10 +49,19 @@ func WithGitpodProxy(gitpodHost string) ClientOpt {
 	}
 }
 
+func WithDefaultClient(defaultClient Client) ClientOpt {
+	return func(o *options) {
+		o.defaultClient = defaultClient
+		o.hasDefaultClient = true
+	}
+}
+
 type options struct {
-	pollInterval time.Duration
-	baseURL      string
-	sdkKey       string
+	pollInterval     time.Duration
+	baseURL          string
+	sdkKey           string
+	defaultClient    Client
+	hasDefaultClient bool
 }
 
 // NewClient constructs a new experiments.Client. This is NOT A SINGLETON.
@@ -70,6 +79,9 @@ func NewClient(opts ...ClientOpt) Client {
 	}
 
 	if opt.sdkKey == "" {
+		if opt.hasDefaultClient {
+			return opt.defaultClient
+		}
 		return NewAlwaysReturningDefaultValueClient()
 	}
 	logger := log.Log.Dup()
