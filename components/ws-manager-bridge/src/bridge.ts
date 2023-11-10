@@ -19,6 +19,7 @@ import {
     WorkspaceConditionBool,
     PortVisibility as WsManPortVisibility,
     PortProtocol as WsManPortProtocol,
+    DescribeClusterRequest,
 } from "@gitpod/ws-manager/lib";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -29,7 +30,7 @@ import { Metrics } from "./metrics";
 import { ClientProvider, WsmanSubscriber } from "./wsman-subscriber";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { Configuration } from "./config";
-import { WorkspaceCluster } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import { WorkspaceClass, WorkspaceCluster, WorkspaceClusterDB } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { performance } from "perf_hooks";
 import { WorkspaceInstanceController } from "./workspace-instance-controller";
 import { PrebuildUpdater } from "./prebuild-updater";
@@ -50,6 +51,7 @@ export type WorkspaceClusterInfo = Pick<WorkspaceCluster, "name" | "url">;
 @injectable()
 export class WorkspaceManagerBridge implements Disposable {
     constructor(
+        @inject(WorkspaceClusterDB) private readonly clusterDB: WorkspaceClusterDB,
         @inject(TracedWorkspaceDB) private readonly workspaceDB: DBWithTracing<WorkspaceDB>,
         @inject(Metrics) private readonly metrics: Metrics,
         @inject(Configuration) private readonly config: Configuration,
@@ -94,11 +96,41 @@ export class WorkspaceManagerBridge implements Disposable {
             this.config.controllerMaxDisconnectSeconds,
         );
 
+        const tim = setInterval(() => {
+            this.updateWorkspaceClasses(cluster, clientProvider);
+        }, controllerIntervalSeconds * 1000);
+        this.disposables.push({ dispose: () => clearInterval(tim) });
+
         log.info(`Started bridge to cluster.`, logPayload);
     }
 
     public stop() {
         this.dispose();
+    }
+
+    protected async updateWorkspaceClasses(clusterInfo: WorkspaceClusterInfo, clientProvider: ClientProvider) {
+        try {
+            const client = await clientProvider();
+            const resp = await client.describeCluster({}, new DescribeClusterRequest());
+
+            const cluster = await this.clusterDB.findByName(clusterInfo.name);
+            if (!cluster) {
+                return;
+            }
+            cluster.availableWorkspaceClasses = resp.getWorkspaceClassesList().map((c) => {
+                return <WorkspaceClass>{
+                    creditsPerMinute: c.getCreditsPerMinute(),
+                    description: c.getDescription(),
+                    displayName: c.getDisplayName(),
+                    id: c.getId(),
+                };
+            });
+            cluster.preferredWorkspaceClass = resp.getPreferredWorkspaceClass();
+
+            await this.clusterDB.save(cluster);
+        } catch (e) {
+            log.error({}, "Failed to update workspace classes", e, { clusterInfo });
+        }
     }
 
     protected async startStatusUpdateHandler(clientProvider: ClientProvider, logPayload: {}): Promise<void> {

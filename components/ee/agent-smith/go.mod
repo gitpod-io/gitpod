@@ -10,7 +10,7 @@ require (
 	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
 	github.com/google/go-cmp v0.5.9
 	github.com/h2non/filetype v1.0.8
-	github.com/hashicorp/golang-lru v0.5.4
+	github.com/hashicorp/golang-lru v1.0.2
 	github.com/prometheus/client_golang v1.16.0
 	github.com/prometheus/procfs v0.10.1
 	github.com/sirupsen/logrus v1.9.3

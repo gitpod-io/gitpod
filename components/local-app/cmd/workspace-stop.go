@@ -60,7 +60,8 @@ var workspaceStopCommand = &cobra.Command{
 			return err
 		}
 
-		defer stream.Close()
+		// See EXP-909
+		// defer stream.Close()
 
 		slog.Info("waiting for workspace to stop...")
 

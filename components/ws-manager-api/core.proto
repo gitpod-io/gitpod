@@ -720,11 +720,23 @@ message DescribeClusterRequest {}
 // DescribeClusterResponse is the answer to a DescribeClusterRequest
 message DescribeClusterResponse {
     // workspace classes that are supported by the cluster
-    repeated WorkspaceClass WorkspaceClasses = 1;
+    repeated WorkspaceClass workspace_classes = 1;
+
+    // preferred_workspace_class is the workspace class that is preferred by the cluster (consider this the "default" workspace class)
+    string preferred_workspace_class = 2;
 }
 
 // WorkspaceClass describes a workspace class that is supported by the cluster
 message WorkspaceClass {
-    string Id = 1;
-    string DisplayName = 2;
+    // ID is a unique identifier (within the cluster) of this workspace class
+    string id = 1;
+
+    // The string we display to users in the UI
+    string display_name = 2;
+
+    // The description of this workspace class
+    string description = 3;
+
+    // The cost of running a workspace of this class per minute expressed in credits
+    float credits_per_minute = 4;
 }
