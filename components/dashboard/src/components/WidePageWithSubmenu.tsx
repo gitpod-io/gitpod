@@ -31,7 +31,7 @@ export function WidePageWithSubMenu(p: PageWithSubMenuProps) {
                         )}
                     >
                         {p.subMenu.map((e) => {
-                            return <SubmenuItem title={e.title} link={e.link} key={e.title} />;
+                            return <SubmenuItem title={e.title} link={e.link} key={e.title} icon={e.icon} />;
                         })}
                     </ul>
                 </div>
