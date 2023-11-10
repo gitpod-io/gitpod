@@ -7,7 +7,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -27,6 +26,8 @@ var componentCmdOpt struct {
 	namespace string
 	component string
 	labels    string
+
+	featureFlagTimeout time.Duration
 }
 
 var componentCmd = &cobra.Command{
@@ -48,10 +49,7 @@ var componentCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
 		defer cancel()
 
-		if shouldSkipComponentWaiter(ctx) {
-			log.Infof("skip component waiter %s with Feature Flag", componentCmdOpt.component)
-			return
-		}
+		go startWaitFeatureFlag(ctx, componentCmdOpt.featureFlagTimeout)
 
 		err := waitPodsImage(ctx)
 
@@ -63,26 +61,7 @@ var componentCmd = &cobra.Command{
 	},
 }
 
-var experimentsClient experiments.Client
-var once sync.Once
-
-func shouldSkipComponentWaiter(ctx context.Context) bool {
-	once.Do(func() {
-		experimentsClient = experiments.NewClient()
-		if experimentsClient == nil {
-			log.Error("failed to create experiments client")
-		}
-	})
-	if experimentsClient == nil {
-		// not skip if failed to create client refer
-		// it should never reach here, in case it happens, always skip
-		log.Debug("failed to create experiments client, default not skip")
-		return false
-	}
-	return experimentsClient.GetBoolValue(ctx, experiments.ServiceWaiterSkipComponentsFlag, false, experiments.Attributes{
-		Component: componentCmdOpt.component,
-	})
-}
+var shouldSkipComponentWaiter bool = false
 
 func checkPodsImage(ctx context.Context, k8sClient *kubernetes.Clientset) (bool, error) {
 	pods, err := k8sClient.CoreV1().Pods(componentCmdOpt.namespace).List(ctx, metav1.ListOptions{
@@ -135,7 +114,7 @@ func waitPodsImage(ctx context.Context) error {
 			}
 			return ctx.Err()
 		default:
-			if shouldSkipComponentWaiter(ctx) {
+			if shouldSkipComponentWaiter {
 				log.Infof("skip component waiter %s with Feature Flag", componentCmdOpt.component)
 				return nil
 			}
@@ -159,8 +138,57 @@ func init() {
 	componentCmd.Flags().StringVar(&componentCmdOpt.namespace, "namespace", "", "The namespace of deployment")
 	componentCmd.Flags().StringVar(&componentCmdOpt.component, "component", "", "Component name of deployment")
 	componentCmd.Flags().StringVar(&componentCmdOpt.labels, "labels", "", "Labels of deployment")
+	componentCmd.Flags().DurationVar(&componentCmdOpt.featureFlagTimeout, "feature-flag-timeout", 3*time.Minute, "The maximum time to wait for feature flag")
 
 	_ = componentCmd.MarkFlagRequired("namespace")
 	_ = componentCmd.MarkFlagRequired("component")
 	_ = componentCmd.MarkFlagRequired("labels")
+}
+
+func startWaitFeatureFlag(ctx context.Context, timeout time.Duration) {
+	featureFlagCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	client := experiments.NewClient()
+
+	defaultSkip := true
+	if client == nil {
+		log.Error("failed to create experiments client, skip immediately")
+		shouldSkipComponentWaiter = defaultSkip
+		return
+	}
+	value, _, fetchTimes := ActualWaitFeatureFlag(featureFlagCtx, client, defaultSkip)
+	log.WithField("fetchTimes", fetchTimes).WithField("value", value).Info("get final value of feature flag")
+	shouldSkipComponentWaiter = value
+}
+
+var FeatureSleepDuration = 1 * time.Second
+
+func ActualWaitFeatureFlag(ctx context.Context, client experiments.Client, defaultValue bool) (flagValue bool, ok bool, fetchTimes int) {
+	if client == nil {
+		return defaultValue, false, fetchTimes
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			log.WithField("defaultValue", defaultValue).Info("feature flag timeout with no expected value, fallback")
+			return defaultValue, false, fetchTimes
+		default:
+			stringValue := client.GetStringValue(ctx, experiments.ServiceWaiterSkipComponentsFlag, "NONE", experiments.Attributes{
+				Component: componentCmdOpt.component,
+			})
+			fetchTimes++
+			if stringValue == "true" {
+				return true, true, fetchTimes
+			}
+			if stringValue == "false" {
+				return false, true, fetchTimes
+			}
+			if stringValue == "NONE" {
+				time.Sleep(FeatureSleepDuration)
+				continue
+			}
+			log.WithField("value", stringValue).Warn("unexpected value from feature flag")
+			time.Sleep(FeatureSleepDuration)
+		}
+	}
 }
