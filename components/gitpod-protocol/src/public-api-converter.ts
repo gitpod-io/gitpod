@@ -440,6 +440,8 @@ export class PublicAPIConverter {
         const result = new AuthProviderDescription({
             id: ap.authProviderId,
             host: ap.host,
+            description: ap.description,
+            icon: ap.icon,
             type: this.toAuthProviderType(ap.authProviderType),
         });
         return result;
