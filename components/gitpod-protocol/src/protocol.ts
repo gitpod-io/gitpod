@@ -1529,7 +1529,6 @@ export interface AuthProviderInfo {
     readonly ownerId?: string;
     readonly organizationId?: string;
     readonly verified: boolean;
-    readonly isReadonly?: boolean;
     readonly hiddenOnDashboard?: boolean;
     readonly disallowLogin?: boolean;
     readonly icon?: string;
@@ -1588,6 +1587,7 @@ export namespace AuthProviderEntry {
         clientSecret: string;
         organizationId: string;
     };
+    export type UpdateOAuth2Config = Pick<OAuth2Config, "clientId" | "clientSecret">;
     export function redact(entry: AuthProviderEntry): AuthProviderEntry {
         return {
             ...entry,

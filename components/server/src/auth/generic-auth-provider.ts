@@ -113,7 +113,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
             disallowLogin,
             description,
             scopes,
-            settingsUrl: this.oauthConfig.settingsUrl,
+            settingsUrl: this.oauthConfig.settingsUrl, // unused
             requirements: {
                 default: scopes,
                 publicRepo: scopes,
