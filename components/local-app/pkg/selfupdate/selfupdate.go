@@ -46,7 +46,7 @@ type Binary struct {
 
 type FilenameParserFunc func(filename string) (os, arch string, ok bool)
 
-var regexDefaultFilenamePattern = regexp.MustCompile(`^.*-(linux|darwin|windows)-(amd64|arm64)(\.exe)?$`)
+var regexDefaultFilenamePattern = regexp.MustCompile(`.*-(linux|darwin|windows)-(amd64|arm64)(\.exe)?`)
 
 func DefaultFilenameParser(filename string) (os, arch string, ok bool) {
 	matches := regexDefaultFilenamePattern.FindStringSubmatch(filename)

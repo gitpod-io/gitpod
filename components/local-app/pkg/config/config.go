@@ -22,8 +22,8 @@ type Config struct {
 
 	ActiveContext string `yaml:"activeContext,omitempty"`
 	Contexts      map[string]*ConnectionContext
-	Telemetry     *Telemetry `yaml:"telemetry"`
-	Autoupdate    bool       `yaml:"autoupdate"`
+	Telemetry     Telemetry `yaml:"telemetry"`
+	Autoupdate    bool      `yaml:"autoupdate"`
 }
 
 type Telemetry struct {
@@ -83,7 +83,7 @@ func LoadConfig(fn string) (res *Config, err error) {
 	cfg := &Config{
 		Filename: fn,
 		Contexts: make(map[string]*ConnectionContext),
-		Telemetry: &Telemetry{
+		Telemetry: Telemetry{
 			Enabled:  !telemetry.DoNotTrack(),
 			Identity: telemetry.GenerateIdentity(),
 		},
