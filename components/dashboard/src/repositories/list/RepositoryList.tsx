@@ -48,7 +48,7 @@ const RepositoryListPage: FC = () => {
     // This will fix issues w/ relying on some server provided state and some client state (like current page)
     const rowCount = data?.configurations.length ?? 0;
     const totalRows = data?.pagination?.total ?? 0;
-    const totalPages = totalRows / pageSize;
+    const totalPages = Math.ceil(totalRows / pageSize);
 
     const handleProjectCreated = useCallback(
         (project: Project) => {
