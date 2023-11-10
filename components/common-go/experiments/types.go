@@ -69,7 +69,7 @@ func NewClient(opts ...ClientOpt) Client {
 		return NewAlwaysReturningDefaultValueClient()
 	}
 	logger := log.Log.Dup()
-	logger.Level = logrus.ErrorLevel
+	logger.Logger.SetLevel(logrus.ErrorLevel)
 	return newConfigCatClient(configcat.Config{
 		SDKKey:       opt.sdkKey,
 		BaseURL:      opt.baseURL,
