@@ -7,13 +7,10 @@
 import classNames from "classnames";
 import { Separator } from "./Separator";
 import { cn } from "@podkit/lib/cn";
-import { SubmenuItem } from "./PageWithSubMenu";
+import { SubmenuItem, SubmenuItemProps } from "./PageWithSubMenu";
 
 export interface PageWithSubMenuProps {
-    subMenu: {
-        title: string;
-        link: string[];
-    }[];
+    subMenu: SubmenuItemProps[];
     children: React.ReactNode;
 }
 
