@@ -122,7 +122,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		PrometheusAddr:     common.LocalhostPrometheusAddr(),
 		ReadinessProbeAddr: fmt.Sprintf(":%v", ReadinessPort),
 		WorkspaceManager:   wsManagerConfig,
-		EnableWorkspaceCRD: true,
 	}
 
 	fc, err := common.ToJSONString(wspcfg)

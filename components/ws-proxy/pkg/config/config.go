@@ -22,7 +22,6 @@ type Config struct {
 	ReadinessProbeAddr string                       `json:"readinessProbeAddr"`
 	Namespace          string                       `json:"namespace"`
 	WorkspaceManager   *WorkspaceManagerConn        `json:"wsManager"`
-	EnableWorkspaceCRD bool                         `json:"enableWorkspaceCRD"`
 }
 
 type WorkspaceManagerConn struct {
