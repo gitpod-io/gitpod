@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { configurationClient } from "../../service/public-api";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
@@ -57,6 +57,23 @@ export const useConfiguration = (configurationId: string) => {
         });
 
         return configuration;
+    });
+};
+
+export const useDeleteConfiguration = (configurationId: string) => {
+    const queryClient = useQueryClient();
+
+    return useMutation<void, Error>({
+        mutationKey: getConfigurationQueryKey(configurationId),
+        mutationFn: async () => {
+            await configurationClient.deleteConfiguration({
+                configurationId,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["configurations", "list"] });
+            queryClient.invalidateQueries({ queryKey: getConfigurationQueryKey(configurationId) });
+        },
     });
 };
 

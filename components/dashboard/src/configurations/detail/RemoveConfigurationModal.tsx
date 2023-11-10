@@ -6,8 +6,8 @@
 
 import { FunctionComponent, useCallback, useState } from "react";
 import ConfirmationModal from "../../components/ConfirmationModal";
-import { useDeleteConfiguration } from "../../data/configurations/delete-configuration-mutation";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { useDeleteConfiguration } from "../../data/configurations/configuration-queries";
 
 type RemoveProjectModalProps = {
     configuration: Configuration;
