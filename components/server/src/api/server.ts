@@ -41,6 +41,7 @@ import { APITeamsService as TeamsServiceAPI } from "./teams";
 import { APIUserService as UserServiceAPI } from "./user";
 import { WorkspaceServiceAPI } from "./workspace-service-api";
 import { ConfigurationServiceAPI } from "./configuration-service-api";
+import { Unauthenticated } from "./unauthenticated";
 
 decorate(injectable(), PublicAPIConverter);
 
@@ -214,9 +215,21 @@ export class API {
 
                     const apply = async <T>(): Promise<T> => {
                         const subjectId = await self.verify(context);
+                        const isAuthenticated = !!subjectId;
+                        const requiresAuthentication = !Unauthenticated.get(target, prop);
+
+                        if (!isAuthenticated && requiresAuthentication) {
+                            throw new ConnectError("unauthenticated", Code.Unauthenticated);
+                        }
+
+                        if (isAuthenticated) {
                         await rateLimit(subjectId);
                         context.user = await self.ensureFgaMigration(subjectId);
+                        }
 
+                        // TODO(at) if unauthenticated, we still need to apply enforece a rate limit
+
+                        // actually call the RPC handler
                         return Reflect.apply(target[prop as any], target, args);
                     };
                     if (grpc_type === "unary" || grpc_type === "client_stream") {
@@ -250,14 +263,16 @@ export class API {
         };
     }
 
-    private async verify(context: HandlerContext): Promise<string> {
+    private async verify(context: HandlerContext): Promise<string | undefined> {
         const cookieHeader = (context.requestHeader.get("cookie") || "") as string;
+        try {
         const claims = await this.sessionHandler.verifyJWTCookie(cookieHeader);
         const subjectId = claims?.sub;
-        if (!subjectId) {
-            throw new ConnectError("unauthenticated", Code.Unauthenticated);
+            return subjectId;
+        } catch (error) {
+            log.warn("Failed to authenticate user with JWT Session", error);
+            return undefined;
         }
-        return subjectId;
     }
 
     private async ensureFgaMigration(userId: string): Promise<User> {
