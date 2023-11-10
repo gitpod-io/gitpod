@@ -924,13 +924,28 @@ export class WorkspaceService {
         });
     }
 
-    public async resolveBaseImage(ctx: TraceContext, user: User, imageRef: string) {
+    public async validateImageRef(ctx: TraceContext, user: User, imageRef: string) {
         try {
             return await this.workspaceStarter.resolveBaseImage(ctx, user, imageRef);
         } catch (e) {
-            // we could map proper response message according to e.code
-            // see https://github.com/gitpod-io/gitpod/blob/ef95e6f3ca0bf314c40da1b83251423c2208d175/components/image-builder-mk3/pkg/orchestrator/orchestrator_test.go#L178
-            throw ApplicationError.fromGRPCError(e);
+            // see https://github.com/gitpod-io/gitpod/blob/f3e41f8d86234e4101edff2199c54f50f8cbb656/components/image-builder-mk3/pkg/orchestrator/orchestrator.go#L561
+            // TODO(ak) ideally we won't check a message (subject to change)
+            // but ws-manager does not return INTERNAL for invalid image refs provided by a user
+            // otherwise we report it as internal error in observability
+            const code = e["code"];
+            const details = e["details"];
+            if (
+                typeof details === "string" &&
+                (code === grpc.status.INVALID_ARGUMENT || details.includes("cannot resolve image"))
+            ) {
+                let message = details;
+                // strip confusing prefix
+                if (details.startsWith("cannt resolve base image ref: ")) {
+                    message = details.substring("cannt resolve base image ref: ".length);
+                }
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, message);
+            }
+            throw e;
         }
     }
 }

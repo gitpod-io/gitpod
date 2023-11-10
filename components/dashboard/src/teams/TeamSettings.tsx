@@ -27,6 +27,7 @@ import { organizationClient } from "../service/public-api";
 import { gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
+import { ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 export default function TeamSettingsPage() {
     const user = useCurrentUser();
@@ -204,7 +205,6 @@ function OrgSettingsForm(props: { org?: Organization; isOwner: boolean }) {
         <form
             onSubmit={(e) => {
                 e.preventDefault();
-                // handleUpdateTeamSettings({ defaultWorkspaceImage });
             }}
         >
             {props.org && (
@@ -282,7 +282,7 @@ function WorkspaceImageButton(props: {
         };
     }
 
-    const image = props.settings?.defaultWorkspaceImage ?? props.defaultWorkspaceImage ?? "";
+    const image = props.settings?.defaultWorkspaceImage || props.defaultWorkspaceImage || "";
 
     const descList = useMemo(() => {
         const arr: ReactNode[] = [<span>Default image</span>];
@@ -348,7 +348,7 @@ interface OrgDefaultWorkspaceImageModalProps {
 
 function OrgDefaultWorkspaceImageModal(props: OrgDefaultWorkspaceImageModalProps) {
     const [errorMsg, setErrorMsg] = useState("");
-    const [defaultWorkspaceImage, setDefaultWorkspaceImage] = useState(props.settings?.defaultWorkspaceImage ?? "");
+    const [defaultWorkspaceImage, setDefaultWorkspaceImage] = useState(props.settings?.defaultWorkspaceImage || "");
     const updateTeamSettings = useUpdateOrgSettingsMutation();
 
     const handleUpdateTeamSettings = useCallback(
@@ -360,7 +360,9 @@ function OrgDefaultWorkspaceImageModal(props: OrgDefaultWorkspaceImageModalProps
                 });
                 props.onClose();
             } catch (error) {
-                console.error(error);
+                if (!ErrorCode.isUserError(error["code"])) {
+                    console.error(error);
+                }
                 setErrorMsg(error.message);
             }
         },

@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { HandlerContext, ServiceImpl } from "@connectrpc/connect";
+import { Code, ConnectError, HandlerContext, ServiceImpl } from "@connectrpc/connect";
 import { WorkspaceService as WorkspaceServiceInterface } from "@gitpod/public-api/lib/gitpod/v1/workspace_connect";
 import {
     GetWorkspaceRequest,
@@ -25,9 +25,12 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
     private readonly apiConverter: PublicAPIConverter;
 
     async getWorkspace(req: GetWorkspaceRequest, context: HandlerContext): Promise<GetWorkspaceResponse> {
-        const info = await this.workspaceService.getWorkspace(context.user.id, req.id);
+        if (!req.workspaceId) {
+            throw new ConnectError("workspaceId is required", Code.InvalidArgument);
+        }
+        const info = await this.workspaceService.getWorkspace(context.user.id, req.workspaceId);
         const response = new GetWorkspaceResponse();
-        response.item = this.apiConverter.toWorkspace(info);
+        response.workspace = this.apiConverter.toWorkspace(info);
         return response;
     }
 
