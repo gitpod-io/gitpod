@@ -156,9 +156,9 @@ func startWaitFeatureFlag(ctx context.Context, timeout time.Duration) {
 		return
 	}
 	startTime := time.Now()
-	value, _, fetchTimes := ActualWaitFeatureFlag(featureFlagCtx, client, defaultSkip)
+	value, isActualValue, fetchTimes := ActualWaitFeatureFlag(featureFlagCtx, client, defaultSkip)
 	avgTime := time.Since(startTime) / time.Duration(fetchTimes)
-	log.WithField("fetchTimes", fetchTimes).WithField("avgTime", avgTime).WithField("value", value).Info("get final value of feature flag")
+	log.WithField("fetchTimes", fetchTimes).WithField("avgTime", avgTime).WithField("isActualValue", isActualValue).WithField("value", value).Info("get final value of feature flag")
 	shouldSkipComponentWaiter = value
 }
 
