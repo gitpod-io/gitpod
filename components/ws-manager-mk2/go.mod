@@ -16,7 +16,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/hashicorp/golang-lru v0.5.1
+	github.com/hashicorp/golang-lru v1.0.2
 	github.com/imdario/mergo v0.3.13
 	github.com/onsi/ginkgo/v2 v2.11.0
 	github.com/onsi/gomega v1.27.10
