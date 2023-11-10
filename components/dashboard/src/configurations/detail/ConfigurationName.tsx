@@ -60,9 +60,9 @@ export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
                 onChange={setProjectName}
                 onBlur={nameError.onBlur}
             />
-            <div className="flex flex-row items-center justify-start gap-2 w-full">
+            <div className="flex flex-row items-center justify-start gap-2 mt-4 w-full">
                 <LoadingButton
-                    className="mt-4"
+                    className=""
                     type="submit"
                     disabled={configuration.name === projectName}
                     loading={updateProject.isLoading}
@@ -70,7 +70,6 @@ export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
                     Save
                 </LoadingButton>
                 <Button
-                    className="mt-4 ml-2"
                     variant="secondary"
                     disabled={configuration.name === projectName}
                     onClick={() => {
