@@ -26,6 +26,7 @@ import { AuthProviderService } from "../auth/auth-provider-service";
 import { AuthProviderEntry, AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { Unauthenticated } from "./unauthenticated";
 import { validate as uuidValidate } from "uuid";
+import { selectPage } from "./pagination";
 
 @injectable()
 export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderServiceInterface> {
@@ -99,10 +100,14 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
             ? await this.authProviderService.getAuthProvidersOfOrg(context.user.id, organizationId)
             : await this.authProviderService.getAuthProvidersOfUser(context.user.id);
 
-        const redacted = authProviders.map(AuthProviderEntry.redact.bind(AuthProviderEntry));
+        const selectedProviders = selectPage(authProviders, request.pagination);
+        const redacted = selectedProviders.map(AuthProviderEntry.redact.bind(AuthProviderEntry));
 
         const result = new ListAuthProvidersResponse({
             authProviders: redacted.map((ap) => this.apiConverter.toAuthProvider(ap)),
+            pagination: {
+                total: redacted.length,
+            },
         });
         return result;
     }
@@ -112,7 +117,7 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
      */
     @Unauthenticated()
     async listAuthProviderDescriptions(
-        _request: ListAuthProviderDescriptionsRequest,
+        request: ListAuthProviderDescriptionsRequest,
         context: HandlerContext,
     ): Promise<ListAuthProviderDescriptionsResponse> {
         const user = context.user;
@@ -120,8 +125,11 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
             ? await this.authProviderService.getAuthProviderDescriptions(user)
             : await this.authProviderService.getAuthProviderDescriptionsUnauthenticated();
 
+        const selectedProviders = selectPage(aps, request.pagination);
         return new ListAuthProviderDescriptionsResponse({
-            descriptions: aps.map((ap: AuthProviderInfo) => this.apiConverter.toAuthProviderDescription(ap)),
+            descriptions: selectedProviders.map((ap: AuthProviderInfo) =>
+                this.apiConverter.toAuthProviderDescription(ap),
+            ),
         });
     }
 
