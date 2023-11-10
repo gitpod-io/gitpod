@@ -25,6 +25,7 @@ import {
 import { AuthProviderService } from "../auth/auth-provider-service";
 import { AuthProviderEntry, AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { Unauthenticated } from "./unauthenticated";
+import { validate as uuidValidate } from "uuid";
 
 @injectable()
 export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderServiceInterface> {
@@ -37,10 +38,10 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
         request: CreateAuthProviderRequest,
         context: HandlerContext,
     ): Promise<CreateAuthProviderResponse> {
-        const ownerId = request.owner.case === "ownerId" ? request.owner.value : undefined;
-        const organizationId = request.owner.case === "organizationId" ? request.owner.value : undefined;
+        const ownerId = request.owner.case === "ownerId" ? request.owner.value : "";
+        const organizationId = request.owner.case === "organizationId" ? request.owner.value : "";
 
-        if (!organizationId && !ownerId) {
+        if (!uuidValidate(organizationId) && !uuidValidate(ownerId)) {
             throw new ConnectError("organizationId or ownerId is required", Code.InvalidArgument);
         }
 
@@ -87,10 +88,10 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
         context: HandlerContext,
     ): Promise<ListAuthProvidersResponse> {
         const target = request.id;
-        const ownerId = target.case === "userId" ? target.value : undefined;
-        const organizationId = target.case === "organizationId" ? target.value : undefined;
+        const ownerId = target.case === "userId" ? target.value : "";
+        const organizationId = target.case === "organizationId" ? target.value : "";
 
-        if (!organizationId && !ownerId) {
+        if (!uuidValidate(organizationId) && !uuidValidate(ownerId)) {
             throw new ConnectError("organizationId or ownerId is required", Code.InvalidArgument);
         }
 
