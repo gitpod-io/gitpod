@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FunctionComponent, useCallback, useState } from "react";
+import { FunctionComponent, useCallback } from "react";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { useDeleteConfiguration } from "../../data/configurations/configuration-queries";
@@ -20,13 +20,10 @@ export const RemoveConfigurationModal: FunctionComponent<RemoveProjectModalProps
     onClose,
     onRemoved,
 }) => {
-    const [disabled, setDisabled] = useState(false);
     const removeConfigMutation = useDeleteConfiguration(configuration.id);
 
     const removeProject = useCallback(async () => {
-        setDisabled(true);
         removeConfigMutation.mutateAsync();
-        setDisabled(false);
         onRemoved();
     }, [removeConfigMutation, onRemoved]);
 
@@ -35,11 +32,11 @@ export const RemoveConfigurationModal: FunctionComponent<RemoveProjectModalProps
             title="Remove Repository"
             areYouSureText="Are you sure you want to remove this repository from this organization? Organization members will also lose access to it.."
             children={{
-                name: configuration?.name ?? "",
-                description: configuration?.cloneUrl ?? "",
+                name: configuration.name ?? "",
+                description: configuration.cloneUrl ?? "",
             }}
-            buttonText="Remove Repository"
-            buttonDisabled={disabled}
+            buttonText="Remove Configuration"
+            buttonDisabled={removeConfigMutation.isLoading}
             onClose={onClose}
             onConfirm={removeProject}
             visible
