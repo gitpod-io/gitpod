@@ -11,7 +11,7 @@ import type { UseQueryResult } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useMemo } from "react";
 import Alert from "../../components/Alert";
-import { PageWithSubMenu } from "../../components/PageWithSubMenu";
+import { WidePageWithSubMenu } from "../../components/WidePageWithSubmenu";
 
 export interface PageWithAdminSubMenuProps {
     children: React.ReactNode;
@@ -33,7 +33,7 @@ export function ConfigurationDetailPage({ children, configurationQuery, id }: Pa
                 pageDescription={data?.name ?? ""}
                 backLink="/configurations"
             />
-            <PageWithSubMenu subMenu={settingsMenu}>
+            <WidePageWithSubMenu subMenu={settingsMenu}>
                 {isLoading && <Loader2 className="animate-spin" />}
                 {error && (
                     <div className="gap-4">
@@ -58,7 +58,7 @@ export function ConfigurationDetailPage({ children, configurationQuery, id }: Pa
                     ) : (
                         children
                     ))}
-            </PageWithSubMenu>
+            </WidePageWithSubMenu>
         </div>
     );
 }

@@ -59,7 +59,7 @@ type SubmenuItemProps = {
     link: string[];
 };
 
-const SubmenuItem: FC<SubmenuItemProps> = ({ title, link }) => {
+export const SubmenuItem: FC<SubmenuItemProps> = ({ title, link }) => {
     const location = useLocation();
     const itemRef = useRef<HTMLLIElement>(null);
 
