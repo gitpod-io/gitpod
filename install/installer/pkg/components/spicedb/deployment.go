@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 )
 
@@ -148,10 +149,17 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									RunAsNonRoot: pointer.Bool(true),
 									RunAsUser:    pointer.Int64(65532),
 								},
+								// Compare issue https://linear.app/gitpod/issue/EXP-906/spicedb-deployment-fails-in-gitpod-dedicated:
+								//  - this should be a single grpc_health_probe-based readiness probe
+								//  - but it started failing (with k8s 1.27.7 ?)
+								//  - to unblock container startup, we split into readiness and liveness probes
 								ReadinessProbe: &corev1.Probe{
 									ProbeHandler: corev1.ProbeHandler{
-										Exec: &v1.ExecAction{
-											Command: []string{"grpc_health_probe", "-v", fmt.Sprintf("-addr=localhost:%d", ContainerGRPCPort)},
+										// Exec: &v1.ExecAction{
+										// 	Command: []string{"grpc_health_probe", "-v", fmt.Sprintf("-addr=localhost:%d", ContainerGRPCPort)},
+										// },
+										TCPSocket: &v1.TCPSocketAction{
+											Port: intstr.FromInt(ContainerGRPCPort),
 										},
 									},
 									InitialDelaySeconds: 1,
@@ -161,6 +169,19 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									FailureThreshold: 30,
 									SuccessThreshold: 1,
 									TimeoutSeconds:   1,
+								},
+								// Because we can't test readiness properly to not block startup, we use a liveness probe to test whether the cluster has come up
+								LivenessProbe: &corev1.Probe{
+									ProbeHandler: corev1.ProbeHandler{
+										Exec: &v1.ExecAction{
+											Command: []string{"grpc_health_probe", "-v", fmt.Sprintf("-addr=localhost:%d", ContainerGRPCPort)},
+										},
+									},
+									InitialDelaySeconds: 10,
+									PeriodSeconds:       10,
+									FailureThreshold:    3,
+									SuccessThreshold:    1,
+									TimeoutSeconds:      1,
 								},
 								VolumeMounts: []v1.VolumeMount{
 									bootstrapVolumeMount,
