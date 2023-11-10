@@ -14,10 +14,7 @@ import { Separator } from "./Separator";
 export interface PageWithSubMenuProps {
     title: string;
     subtitle: string;
-    subMenu: {
-        title: string;
-        link: string[];
-    }[];
+    subMenu: SubmenuItemProps[];
     tabs?: TabEntry[];
     children: React.ReactNode;
 }
@@ -56,9 +53,10 @@ export function PageWithSubMenu(p: PageWithSubMenuProps) {
 export type SubmenuItemProps = {
     title: string;
     link: string[];
+    icon?: React.ReactNode;
 };
 
-export const SubmenuItem: FC<SubmenuItemProps> = ({ title, link }) => {
+export const SubmenuItem: FC<SubmenuItemProps> = ({ title, link, icon }) => {
     const location = useLocation();
     const itemRef = useRef<HTMLLIElement>(null);
 
@@ -69,7 +67,7 @@ export const SubmenuItem: FC<SubmenuItemProps> = ({ title, link }) => {
         }
     }, [link, location.pathname]);
 
-    let classes = "flex block py-2 px-4 rounded-md whitespace-nowrap max-w-52";
+    let classes = "flex justify-between block py-2 px-4 rounded-md whitespace-nowrap max-w-52";
 
     if (link.some((l) => l === location.pathname)) {
         classes += " bg-gray-300 text-gray-800 dark:bg-gray-800 dark:text-gray-50";
@@ -79,7 +77,7 @@ export const SubmenuItem: FC<SubmenuItemProps> = ({ title, link }) => {
     return (
         <Link to={link[0]} key={title} className="md:w-full">
             <li ref={itemRef} className={classes}>
-                {title}
+                {title} {icon}
             </li>
         </Link>
     );

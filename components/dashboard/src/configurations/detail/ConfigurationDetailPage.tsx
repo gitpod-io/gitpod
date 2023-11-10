@@ -8,10 +8,11 @@ import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configurati
 import { BreadcrumbNav } from "@podkit/breadcrumbs/BreadcrumbNav";
 import { Button } from "@podkit/buttons/Button";
 import type { UseQueryResult } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { HelpCircle, Loader2 } from "lucide-react";
 import { useMemo } from "react";
 import Alert from "../../components/Alert";
 import { WidePageWithSubMenu } from "../../components/WidePageWithSubmenu";
+import type { SubmenuItemProps } from "../../components/PageWithSubMenu";
 
 export interface PageWithAdminSubMenuProps {
     children: React.ReactNode;
@@ -63,12 +64,13 @@ export function ConfigurationDetailPage({ children, configurationQuery, id }: Pa
     );
 }
 
-function getConfigurationsMenu(id: string) {
+function getConfigurationsMenu(id: string): SubmenuItemProps[] {
     const base = `/configurations/${id}`;
     return [
         {
             title: "General",
             link: [base],
+            icon: <HelpCircle />,
         },
         {
             title: "Gitpod YAML",
