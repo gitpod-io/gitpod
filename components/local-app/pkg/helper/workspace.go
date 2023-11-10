@@ -192,7 +192,8 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 			slog.Warn("failed to stream workspace status, retrying", "err", err, "retry", retries, "maxRetries", maxRetries)
 			continue
 		}
-		defer stream.Close()
+		// Attempt to close the stream hangs the connection instead. We should investigate what's up (EXP-909)
+		// defer stream.Close()
 
 		for stream.Receive() {
 			msg := stream.Msg()
