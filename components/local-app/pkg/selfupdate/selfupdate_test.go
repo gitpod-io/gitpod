@@ -84,6 +84,89 @@ func TestGenerateManifest(t *testing.T) {
 	}
 }
 
+func TestDownloadManifest(t *testing.T) {
+	marshal := func(mf *Manifest) []byte {
+		fc, err := json.Marshal(mf)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return fc
+	}
+
+	type Expectation struct {
+		Error    string
+		Manifest *Manifest
+	}
+	tests := []struct {
+		Name        string
+		Expectation func(url string) Expectation
+		Manifest    []byte
+	}{
+		{
+			Name: "happy path",
+			Manifest: marshal(&Manifest{
+				Version: semver.MustParse("0.2.0"),
+				Binaries: []Binary{
+					{
+						Filename: "gitpod-linux-amd64",
+						OS:       "linux",
+						Arch:     "amd64",
+						Digest:   "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+					},
+				},
+			}),
+			Expectation: func(url string) Expectation {
+				return Expectation{
+					Manifest: &Manifest{
+						Version: semver.MustParse("0.2.0"),
+						Binaries: []Binary{
+							{
+								URL:      url + "/gitpod-linux-amd64",
+								Filename: "gitpod-linux-amd64",
+								OS:       "linux",
+								Arch:     "amd64",
+								Digest:   "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+							},
+						},
+					},
+				}
+			},
+		},
+		{
+			Name: "not found",
+			Expectation: func(url string) Expectation {
+				return Expectation{
+					Error: "download manifest from " + url + "/manifest.json: 404 Not Found",
+				}
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			mux := http.NewServeMux()
+			if test.Manifest != nil {
+				mux.Handle("/manifest.json", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					_, _ = w.Write(test.Manifest)
+				}))
+			}
+			srv := httptest.NewServer(mux)
+			t.Cleanup(func() { srv.Close() })
+
+			var act Expectation
+			res, err := DownloadManifest(context.Background(), srv.URL)
+			if err != nil {
+				act.Error = err.Error()
+			}
+			act.Manifest = res
+
+			if diff := cmp.Diff(test.Expectation(srv.URL), act); diff != "" {
+				t.Errorf("DownloadManifest() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
 func TestReplaceSelf(t *testing.T) {
 	type File struct {
 		OS       string

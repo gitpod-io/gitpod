@@ -101,7 +101,7 @@ func GenerateManifest(version *semver.Version, loc string, filenameParser Filena
 func DownloadManifest(ctx context.Context, baseURL string) (res *Manifest, err error) {
 	defer func() {
 		if err != nil {
-			err = fmt.Errorf("download manifest from %s: %w", baseURL, err)
+			err = fmt.Errorf("download manifest from %s/manifest.json: %w", baseURL, err)
 		}
 	}()
 
@@ -120,6 +120,10 @@ func DownloadManifest(ctx context.Context, baseURL string) (res *Manifest, err e
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf(resp.Status)
+	}
 
 	var mf Manifest
 	err = json.NewDecoder(resp.Body).Decode(&mf)
