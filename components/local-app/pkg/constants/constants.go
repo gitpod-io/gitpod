@@ -11,12 +11,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver/v3"
 	version "github.com/gitpod-io/local-app"
 )
 
 var (
 	// Version is fed from the main CLI version
-	Version = strings.TrimSpace(version.Version)
+	Version = semver.MustParse(strings.TrimSpace(version.Version))
 
 	// GitCommit - set during build
 	GitCommit = "unknown"

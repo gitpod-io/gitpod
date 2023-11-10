@@ -19,6 +19,7 @@ import (
 	"github.com/gitpod-io/local-app/pkg/config"
 	"github.com/gitpod-io/local-app/pkg/constants"
 	"github.com/gitpod-io/local-app/pkg/prettyprint"
+	"github.com/gitpod-io/local-app/pkg/selfupdate"
 	"github.com/gitpod-io/local-app/pkg/telemetry"
 	"github.com/gookit/color"
 	"github.com/lmittmann/tint"
@@ -97,8 +98,14 @@ var rootCmd = &cobra.Command{
 		if gpctx, err := cfg.GetActiveContext(); err == nil && gpctx != nil {
 			telemetryEnabled = telemetryEnabled && gpctx.Host.String() == "https://gitpod.io"
 		}
-		telemetry.Init(telemetryEnabled, cfg.Telemetry.Identity, constants.Version)
+		telemetry.Init(telemetryEnabled, cfg.Telemetry.Identity, constants.Version.String())
 		telemetry.RecordCommand(cmd)
+
+		waitForUpdate := selfupdate.Autoupdate(cmd.Context(), cfg)
+		cmd.PostRunE = func(cmd *cobra.Command, args []string) error {
+			waitForUpdate()
+			return nil
+		}
 
 		return nil
 	},

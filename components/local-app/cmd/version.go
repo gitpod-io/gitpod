@@ -22,7 +22,7 @@ var versionCmd = &cobra.Command{
 			BuildTime string `print:"built at"`
 		}
 		v := Version{
-			Version:   constants.Version,
+			Version:   constants.Version.String(),
 			GitCommit: constants.GitCommit,
 			BuildTime: constants.MustParseBuildTime().Format(time.RFC3339),
 		}
