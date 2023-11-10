@@ -8,7 +8,11 @@ import { useMutation } from "@tanstack/react-query";
 import { useOrgSettingsQueryInvalidator } from "./org-settings-query";
 import { useCurrentOrg } from "./orgs-query";
 import { organizationClient } from "../../service/public-api";
-import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import {
+    OrganizationSettings,
+    UpdateOrganizationSettingsRequest,
+} from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import { FieldMask } from "@bufbuild/protobuf";
 
 type UpdateOrganizationSettingsArgs = Partial<
     Pick<OrganizationSettings, "workspaceSharingDisabled" | "defaultWorkspaceImage">
@@ -17,18 +21,24 @@ type UpdateOrganizationSettingsArgs = Partial<
 export const useUpdateOrgSettingsMutation = () => {
     const org = useCurrentOrg().data;
     const invalidator = useOrgSettingsQueryInvalidator();
-    const teamId = org?.id || "";
+    const organizationId = org?.id || "";
 
     return useMutation<OrganizationSettings, Error, UpdateOrganizationSettingsArgs>({
         mutationFn: async ({ workspaceSharingDisabled, defaultWorkspaceImage }) => {
-            const settings = await organizationClient.updateOrganizationSettings({
-                organizationId: teamId,
-                settings: {
-                    workspaceSharingDisabled: workspaceSharingDisabled || false,
-                    defaultWorkspaceImage,
-                },
+            const request = new UpdateOrganizationSettingsRequest({
+                organizationId,
+                workspaceSharingDisabled,
             });
-            return settings.settings || new OrganizationSettings();
+            defaultWorkspaceImage = defaultWorkspaceImage?.trim();
+            if (defaultWorkspaceImage) {
+                request.defaultWorkspaceImage = defaultWorkspaceImage;
+            } else if (defaultWorkspaceImage === "") {
+                request.resetMask = new FieldMask({
+                    paths: ["default_workspace_image"],
+                });
+            }
+            const settings = await organizationClient.updateOrganizationSettings(request);
+            return settings.settings!;
         },
         onSuccess: invalidator,
     });

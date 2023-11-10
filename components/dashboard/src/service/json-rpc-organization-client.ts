@@ -37,6 +37,7 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { getGitpodService } from "./service";
 import { converter } from "./public-api";
+import { OrganizationSettings } from "@gitpod/gitpod-protocol";
 
 export class JsonRpcOrganizationClient implements PromiseClient<typeof OrganizationService> {
     async createOrganization(
@@ -71,7 +72,7 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         options?: CallOptions | undefined,
     ): Promise<UpdateOrganizationResponse> {
         if (!request.organizationId) {
-            throw new ConnectError("id is required", Code.InvalidArgument);
+            throw new ConnectError("organizationId is required", Code.InvalidArgument);
         }
         if (!request.name) {
             throw new ConnectError("name is required", Code.InvalidArgument);
@@ -97,7 +98,7 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         options?: CallOptions | undefined,
     ): Promise<DeleteOrganizationResponse> {
         if (!request.organizationId) {
-            throw new ConnectError("id is required", Code.InvalidArgument);
+            throw new ConnectError("organizationId is required", Code.InvalidArgument);
         }
         await getGitpodService().server.deleteTeam(request.organizationId);
         return new DeleteOrganizationResponse();
@@ -108,7 +109,7 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         options?: CallOptions | undefined,
     ): Promise<GetOrganizationInvitationResponse> {
         if (!request.organizationId) {
-            throw new ConnectError("id is required", Code.InvalidArgument);
+            throw new ConnectError("organizationId is required", Code.InvalidArgument);
         }
         const result = await getGitpodService().server.getGenericInvite(request.organizationId);
         return new GetOrganizationInvitationResponse({
@@ -134,7 +135,7 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         options?: CallOptions | undefined,
     ): Promise<ResetOrganizationInvitationResponse> {
         if (!request.organizationId) {
-            throw new ConnectError("id is required", Code.InvalidArgument);
+            throw new ConnectError("organizationId is required", Code.InvalidArgument);
         }
         const newInvite = await getGitpodService().server.resetGenericInvite(request.organizationId);
         return new ResetOrganizationInvitationResponse({
@@ -147,7 +148,7 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         options?: CallOptions | undefined,
     ): Promise<ListOrganizationMembersResponse> {
         if (!request.organizationId) {
-            throw new ConnectError("id is required", Code.InvalidArgument);
+            throw new ConnectError("organizationId is required", Code.InvalidArgument);
         }
         const result = await getGitpodService().server.getTeamMembers(request.organizationId);
         return new ListOrganizationMembersResponse({
@@ -160,7 +161,7 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         options?: CallOptions | undefined,
     ): Promise<UpdateOrganizationMemberResponse> {
         if (!request.organizationId) {
-            throw new ConnectError("id is required", Code.InvalidArgument);
+            throw new ConnectError("organizationId is required", Code.InvalidArgument);
         }
         if (!request.userId) {
             throw new ConnectError("userId is required", Code.InvalidArgument);
@@ -181,7 +182,7 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         options?: CallOptions | undefined,
     ): Promise<DeleteOrganizationMemberResponse> {
         if (!request.organizationId) {
-            throw new ConnectError("id is required", Code.InvalidArgument);
+            throw new ConnectError("organizationId is required", Code.InvalidArgument);
         }
         if (!request.userId) {
             throw new ConnectError("userId is required", Code.InvalidArgument);
@@ -195,7 +196,7 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         options?: CallOptions | undefined,
     ): Promise<GetOrganizationSettingsResponse> {
         if (!request.organizationId) {
-            throw new ConnectError("id is required", Code.InvalidArgument);
+            throw new ConnectError("organizationId is required", Code.InvalidArgument);
         }
         const result = await getGitpodService().server.getOrgSettings(request.organizationId);
         return new GetOrganizationSettingsResponse({
@@ -208,12 +209,18 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         options?: CallOptions | undefined,
     ): Promise<UpdateOrganizationSettingsResponse> {
         if (!request.organizationId) {
-            throw new ConnectError("id is required", Code.InvalidArgument);
+            throw new ConnectError("organizationId is required", Code.InvalidArgument);
         }
-        await getGitpodService().server.updateOrgSettings(request.organizationId, {
-            workspaceSharingDisabled: request.settings?.workspaceSharingDisabled,
-            defaultWorkspaceImage: request.settings?.defaultWorkspaceImage,
-        });
+        const update: Partial<OrganizationSettings> = {
+            workspaceSharingDisabled: request?.workspaceSharingDisabled,
+        };
+        const resetDefaultWorkspaceImage = request.resetMask?.paths?.includes("default_workspace_image");
+        if (resetDefaultWorkspaceImage) {
+            update.defaultWorkspaceImage = null;
+        } else if (typeof request?.defaultWorkspaceImage === "string") {
+            update.defaultWorkspaceImage = request.defaultWorkspaceImage;
+        }
+        await getGitpodService().server.updateOrgSettings(request.organizationId, update);
         return new UpdateOrganizationSettingsResponse();
     }
 }

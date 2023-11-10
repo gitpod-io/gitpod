@@ -67,11 +67,11 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
             // Try get hold of a recent WorkspaceInfo
             try {
                 const request = new GetWorkspaceRequest();
-                request.id = props.workspaceId;
+                request.workspaceId = props.workspaceId;
                 const response = await workspaceClient.getWorkspace(request);
                 setWorkspace({
-                    instanceId: response.item?.status?.instanceId,
-                    phase: response.item?.status?.phase?.name,
+                    instanceId: response.workspace?.status?.instanceId,
+                    phase: response.workspace?.status?.phase?.name,
                 });
             } catch (err) {
                 console.error(err);

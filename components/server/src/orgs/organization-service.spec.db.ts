@@ -5,7 +5,7 @@
  */
 
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TypeORM } from "@gitpod/gitpod-db/lib";
-import { Organization, User } from "@gitpod/gitpod-protocol";
+import { Organization, OrganizationSettings, User } from "@gitpod/gitpod-protocol";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import * as chai from "chai";
@@ -16,6 +16,7 @@ import { OrganizationService } from "./organization-service";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import { expectError } from "../test/expect-utils";
 import { UserService } from "../user/user-service";
+import { DefaultWorkspaceImageValidator } from "./default-workspace-image-validator";
 
 const expect = chai.expect;
 
@@ -28,12 +29,21 @@ describe("OrganizationService", async () => {
     let stranger: User;
     const adminId = BUILTIN_INSTLLATION_ADMIN_USER_ID;
     let org: Organization;
+    let validateDefaultWorkspaceImage: DefaultWorkspaceImageValidator | undefined;
 
     beforeEach(async () => {
         container = createTestContainer();
         Experiments.configureTestingClient({
             centralizedPermissions: true,
         });
+        validateDefaultWorkspaceImage = undefined;
+        container
+            .rebind<DefaultWorkspaceImageValidator>(DefaultWorkspaceImageValidator)
+            .toDynamicValue(() => async (userId, imageRef) => {
+                if (validateDefaultWorkspaceImage) {
+                    await validateDefaultWorkspaceImage(userId, imageRef);
+                }
+            });
         os = container.get(OrganizationService);
         const userService = container.get<UserService>(UserService);
         owner = await userService.createUser({
@@ -231,5 +241,68 @@ describe("OrganizationService", async () => {
         expect(orgs.rows.some((org) => org.id === org.id)).to.be.true;
         expect(orgs.rows.some((org) => org.id === strangerOrg.id)).to.be.true;
         expect(orgs.total).to.eq(2);
+    });
+
+    it("should manage settings", async () => {
+        const myOrg = await os.createOrganization(adminId, "My Org");
+        const settings = await os.getSettings(adminId, myOrg.id);
+        expect(settings).to.deep.eq(<OrganizationSettings>{}, "initial setttings");
+
+        const assertUpdateSettings = async (
+            message: string,
+            update: Partial<OrganizationSettings>,
+            expected: OrganizationSettings,
+        ) => {
+            const updated = await os.updateSettings(adminId, myOrg.id, update);
+            expect(updated).to.deep.eq(expected, message + " (update)");
+            const verified = await os.getSettings(adminId, myOrg.id);
+            expect(verified).to.deep.eq(expected, message + " (get)");
+        };
+
+        await assertUpdateSettings(
+            "should disable workspace sharing",
+            { workspaceSharingDisabled: true },
+            {
+                workspaceSharingDisabled: true,
+            },
+        );
+        await assertUpdateSettings(
+            "should update default workspace image",
+            { defaultWorkspaceImage: "ubuntu" },
+            {
+                workspaceSharingDisabled: true,
+                defaultWorkspaceImage: "ubuntu",
+            },
+        );
+
+        try {
+            await os.updateSettings(adminId, myOrg.id, { defaultWorkspaceImage: "    " });
+            expect.fail("should have failed");
+        } catch (err) {
+            expect(err.message).to.equal(
+                "defaultWorkspaceImage cannot be blank",
+                "should validate blank default workspace image",
+            );
+        }
+
+        validateDefaultWorkspaceImage = () => {
+            throw new Error("invalid image");
+        };
+        try {
+            await os.updateSettings(adminId, myOrg.id, { defaultWorkspaceImage: "lalala" });
+            expect.fail("should have failed");
+        } catch (err) {
+            expect(err.message).to.equal("invalid image", "should validate default workspace image");
+        }
+
+        validateDefaultWorkspaceImage = undefined;
+        await assertUpdateSettings(
+            "should reset default workspace image",
+            { defaultWorkspaceImage: null },
+            {
+                workspaceSharingDisabled: true,
+            },
+        );
+        await assertUpdateSettings("should enable workspace sharing", { workspaceSharingDisabled: false }, {});
     });
 });

@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { HandlerContext, ServiceImpl } from "@connectrpc/connect";
+import { Code, ConnectError, HandlerContext, ServiceImpl } from "@connectrpc/connect";
 import { inject, injectable } from "inversify";
 import { OrganizationService as OrganizationServiceInterface } from "@gitpod/public-api/lib/gitpod/v1/organization_connect";
 import {
@@ -38,7 +38,9 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
 import { OrganizationService } from "../orgs/organization-service";
+import { OrganizationSettings as ProtocolOrganizationSettings } from "@gitpod/gitpod-protocol";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
+import { validate as uuidValidate } from "uuid";
 
 @injectable()
 export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationServiceInterface> {
@@ -60,6 +62,10 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
     }
 
     async getOrganization(req: GetOrganizationRequest, context: HandlerContext): Promise<GetOrganizationResponse> {
+        if (!uuidValidate(req.organizationId)) {
+            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+        }
+
         const org = await this.orgService.getOrganization(context.user.id, req.organizationId);
         const response = new GetOrganizationResponse();
         response.organization = this.apiConverter.toOrganization(org);
@@ -70,9 +76,14 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         req: UpdateOrganizationRequest,
         context: HandlerContext,
     ): Promise<UpdateOrganizationResponse> {
-        const org = await this.orgService.updateOrganization(context.user.id, req.organizationId, {
-            name: req.name,
-        });
+        if (!uuidValidate(req.organizationId)) {
+            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+        }
+        if (typeof req.name !== "string") {
+            throw new ConnectError("nothing to update", Code.InvalidArgument);
+        }
+
+        const org = await this.orgService.updateOrganization(context.user.id, req.organizationId, { name: req.name });
         return new UpdateOrganizationResponse({
             organization: this.apiConverter.toOrganization(org),
         });
@@ -101,6 +112,10 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         req: DeleteOrganizationRequest,
         context: HandlerContext,
     ): Promise<DeleteOrganizationResponse> {
+        if (!uuidValidate(req.organizationId)) {
+            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+        }
+
         await this.orgService.deleteOrganization(context.user.id, req.organizationId);
         return new DeleteOrganizationResponse();
     }
@@ -109,6 +124,10 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         req: GetOrganizationInvitationRequest,
         context: HandlerContext,
     ): Promise<GetOrganizationInvitationResponse> {
+        if (!uuidValidate(req.organizationId)) {
+            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+        }
+
         const invitation = await this.orgService.getOrCreateInvite(context.user.id, req.organizationId);
         const response = new GetOrganizationInvitationResponse();
         response.invitationId = invitation.id;
@@ -116,6 +135,10 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
     }
 
     async joinOrganization(req: JoinOrganizationRequest, context: HandlerContext): Promise<JoinOrganizationResponse> {
+        if (!uuidValidate(req.invitationId)) {
+            throw new ConnectError("invitationId is required", Code.InvalidArgument);
+        }
+
         const orgId = await this.orgService.joinOrganization(context.user.id, req.invitationId);
         const result = new JoinOrganizationResponse();
         result.organizationId = orgId;
@@ -126,6 +149,10 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         req: ResetOrganizationInvitationRequest,
         context: HandlerContext,
     ): Promise<ResetOrganizationInvitationResponse> {
+        if (!uuidValidate(req.organizationId)) {
+            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+        }
+
         const inviteId = await this.orgService.resetInvite(context.user.id, req.organizationId);
         const result = new ResetOrganizationInvitationResponse();
         result.invitationId = inviteId.id;
@@ -136,6 +163,10 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         req: ListOrganizationMembersRequest,
         context: HandlerContext,
     ): Promise<ListOrganizationMembersResponse> {
+        if (!uuidValidate(req.organizationId)) {
+            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+        }
+
         const members = await this.orgService.listMembers(context.user.id, req.organizationId);
         //TODO pagination
         const response = new ListOrganizationMembersResponse();
@@ -149,6 +180,16 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         req: UpdateOrganizationMemberRequest,
         context: HandlerContext,
     ): Promise<UpdateOrganizationMemberResponse> {
+        if (!uuidValidate(req.organizationId)) {
+            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+        }
+        if (!uuidValidate(req.userId)) {
+            throw new ConnectError("userId is required", Code.InvalidArgument);
+        }
+        if (req.role === undefined) {
+            throw new ConnectError("nothing to update", Code.InvalidArgument);
+        }
+
         await this.orgService.addOrUpdateMember(
             context.user.id,
             req.organizationId,
@@ -167,6 +208,13 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         req: DeleteOrganizationMemberRequest,
         context: HandlerContext,
     ): Promise<DeleteOrganizationMemberResponse> {
+        if (!uuidValidate(req.organizationId)) {
+            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+        }
+        if (!uuidValidate(req.userId)) {
+            throw new ConnectError("userId is required", Code.InvalidArgument);
+        }
+
         await this.orgService.removeOrganizationMember(context.user.id, req.organizationId, req.userId);
         return new DeleteOrganizationMemberResponse();
     }
@@ -175,6 +223,10 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         req: GetOrganizationSettingsRequest,
         context: HandlerContext,
     ): Promise<GetOrganizationSettingsResponse> {
+        if (!uuidValidate(req.organizationId)) {
+            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+        }
+
         const settings = await this.orgService.getSettings(context.user.id, req.organizationId);
         const response = new GetOrganizationSettingsResponse();
         response.settings = this.apiConverter.toOrganizationSettings(settings);
@@ -185,10 +237,34 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         req: UpdateOrganizationSettingsRequest,
         context: HandlerContext,
     ): Promise<UpdateOrganizationSettingsResponse> {
-        const settings = await this.orgService.updateSettings(context.user.id, req.organizationId, {
-            workspaceSharingDisabled: req.settings?.workspaceSharingDisabled,
-            defaultWorkspaceImage: req.settings?.defaultWorkspaceImage,
-        });
+        if (!uuidValidate(req.organizationId)) {
+            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+        }
+
+        const update: Partial<ProtocolOrganizationSettings> = {};
+        if (typeof req.workspaceSharingDisabled === "boolean") {
+            update.workspaceSharingDisabled = req.workspaceSharingDisabled;
+        }
+
+        const hasDefaultWorkspaceImage = typeof req.defaultWorkspaceImage === "string";
+        const resetDefaultWorkspaceImage = req.resetMask?.paths.includes("default_workspace_image");
+        if (hasDefaultWorkspaceImage && resetDefaultWorkspaceImage) {
+            throw new ConnectError(
+                "defaultWorkspaceImage cannot be set and reset at the same time",
+                Code.InvalidArgument,
+            );
+        }
+        if (resetDefaultWorkspaceImage) {
+            update.defaultWorkspaceImage = null;
+        } else if (hasDefaultWorkspaceImage) {
+            update.defaultWorkspaceImage = req.defaultWorkspaceImage;
+        }
+
+        if (Object.keys(update).length === 0) {
+            throw new ConnectError("nothing to update", Code.InvalidArgument);
+        }
+
+        const settings = await this.orgService.updateSettings(context.user.id, req.organizationId, update);
         return new UpdateOrganizationSettingsResponse({
             settings: this.apiConverter.toOrganizationSettings(settings),
         });

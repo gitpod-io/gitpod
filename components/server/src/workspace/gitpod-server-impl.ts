@@ -2358,10 +2358,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("updateOrgSettings");
         traceAPIParams(ctx, { orgId, userId: user.id });
         await this.guardTeamOperation(orgId, "update");
-        if (settings.defaultWorkspaceImage?.trim()) {
-            await this.workspaceService.resolveBaseImage(ctx, user, settings.defaultWorkspaceImage);
+        // backward compatiblity to old dashboard
+        const update = { ...settings };
+        const defaultWorkspaceImage = settings.defaultWorkspaceImage?.trim();
+        if (defaultWorkspaceImage) {
+            update.defaultWorkspaceImage = defaultWorkspaceImage;
+        } else if (defaultWorkspaceImage === "") {
+            update.defaultWorkspaceImage = null;
         }
-        return this.organizationService.updateSettings(user.id, orgId, settings);
+        return this.organizationService.updateSettings(user.id, orgId, update);
     }
 
     async getDefaultWorkspaceImage(

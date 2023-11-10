@@ -10,7 +10,7 @@
 // @ts-nocheck
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { Message, proto3, Timestamp } from "@bufbuild/protobuf";
+import { FieldMask, Message, proto3, Timestamp } from "@bufbuild/protobuf";
 import { PaginationRequest, PaginationResponse } from "./pagination_pb.js";
 
 /**
@@ -114,19 +114,19 @@ export class OrganizationMember extends Message<OrganizationMember> {
   memberSince?: Timestamp;
 
   /**
-   * @generated from field: optional string avatar_url = 4;
+   * @generated from field: string avatar_url = 4;
    */
-  avatarUrl?: string;
+  avatarUrl = "";
 
   /**
-   * @generated from field: optional string full_name = 5;
+   * @generated from field: string full_name = 5;
    */
-  fullName?: string;
+  fullName = "";
 
   /**
-   * @generated from field: optional string email = 6;
+   * @generated from field: string email = 6;
    */
-  email?: string;
+  email = "";
 
   /**
    * @generated from field: bool owned_by_organization = 7;
@@ -144,9 +144,9 @@ export class OrganizationMember extends Message<OrganizationMember> {
     { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "role", kind: "enum", T: proto3.getEnumType(OrganizationRole) },
     { no: 3, name: "member_since", kind: "message", T: Timestamp },
-    { no: 4, name: "avatar_url", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 5, name: "full_name", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 6, name: "email", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 4, name: "avatar_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "full_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "email", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 7, name: "owned_by_organization", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
@@ -177,9 +177,9 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
   workspaceSharingDisabled = false;
 
   /**
-   * @generated from field: optional string default_workspace_image = 2;
+   * @generated from field: string default_workspace_image = 2;
    */
-  defaultWorkspaceImage?: string;
+  defaultWorkspaceImage = "";
 
   constructor(data?: PartialMessage<OrganizationSettings>) {
     super();
@@ -190,7 +190,7 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
   static readonly typeName = "gitpod.v1.OrganizationSettings";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "workspace_sharing_disabled", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 2, name: "default_workspace_image", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 2, name: "default_workspace_image", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OrganizationSettings {
@@ -224,9 +224,9 @@ export class UpdateOrganizationRequest extends Message<UpdateOrganizationRequest
   /**
    * name is the new name of the organization
    *
-   * @generated from field: string name = 2;
+   * @generated from field: optional string name = 2;
    */
-  name = "";
+  name?: string;
 
   constructor(data?: PartialMessage<UpdateOrganizationRequest>) {
     super();
@@ -237,7 +237,7 @@ export class UpdateOrganizationRequest extends Message<UpdateOrganizationRequest
   static readonly typeName = "gitpod.v1.UpdateOrganizationRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateOrganizationRequest {
@@ -308,11 +308,19 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
   organizationId = "";
 
   /**
-   * settings are the settings to update
-   *
-   * @generated from field: gitpod.v1.OrganizationSettings settings = 2;
+   * @generated from field: google.protobuf.FieldMask reset_mask = 2;
    */
-  settings?: OrganizationSettings;
+  resetMask?: FieldMask;
+
+  /**
+   * @generated from field: optional bool workspace_sharing_disabled = 3;
+   */
+  workspaceSharingDisabled?: boolean;
+
+  /**
+   * @generated from field: optional string default_workspace_image = 4;
+   */
+  defaultWorkspaceImage?: string;
 
   constructor(data?: PartialMessage<UpdateOrganizationSettingsRequest>) {
     super();
@@ -323,7 +331,9 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
   static readonly typeName = "gitpod.v1.UpdateOrganizationSettingsRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "settings", kind: "message", T: OrganizationSettings },
+    { no: 2, name: "reset_mask", kind: "message", T: FieldMask },
+    { no: 3, name: "workspace_sharing_disabled", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 4, name: "default_workspace_image", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateOrganizationSettingsRequest {
@@ -1153,9 +1163,9 @@ export class UpdateOrganizationMemberRequest extends Message<UpdateOrganizationM
   /**
    * role is the new role for the user in the organization
    *
-   * @generated from field: gitpod.v1.OrganizationRole role = 3;
+   * @generated from field: optional gitpod.v1.OrganizationRole role = 3;
    */
-  role = OrganizationRole.UNSPECIFIED;
+  role?: OrganizationRole;
 
   constructor(data?: PartialMessage<UpdateOrganizationMemberRequest>) {
     super();
@@ -1167,7 +1177,7 @@ export class UpdateOrganizationMemberRequest extends Message<UpdateOrganizationM
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "role", kind: "enum", T: proto3.getEnumType(OrganizationRole) },
+    { no: 3, name: "role", kind: "enum", T: proto3.getEnumType(OrganizationRole), opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateOrganizationMemberRequest {

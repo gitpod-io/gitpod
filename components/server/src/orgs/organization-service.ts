@@ -19,6 +19,7 @@ import { inject, injectable } from "inversify";
 import { Authorizer } from "../authorization/authorizer";
 import { ProjectsService } from "../projects/projects-service";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
+import { DefaultWorkspaceImageValidator } from "./default-workspace-image-validator";
 
 @injectable()
 export class OrganizationService {
@@ -28,6 +29,8 @@ export class OrganizationService {
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
         @inject(Authorizer) private readonly auth: Authorizer,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
+        @inject(DefaultWorkspaceImageValidator)
+        private readonly validateDefaultWorkspaceImage: DefaultWorkspaceImageValidator,
     ) {}
 
     async listOrganizations(
@@ -360,13 +363,35 @@ export class OrganizationService {
 
     async getSettings(userId: string, orgId: string): Promise<OrganizationSettings> {
         await this.auth.checkPermissionOnOrganization(userId, "read_settings", orgId);
-        const settings = (await this.teamDB.findOrgSettings(orgId)) || {};
-        return settings;
+        const settings = await this.teamDB.findOrgSettings(orgId);
+        return this.toSettings(settings);
     }
 
-    async updateSettings(userId: string, orgId: string, settings: OrganizationSettings): Promise<OrganizationSettings> {
+    async updateSettings(
+        userId: string,
+        orgId: string,
+        settings: Partial<OrganizationSettings>,
+    ): Promise<OrganizationSettings> {
         await this.auth.checkPermissionOnOrganization(userId, "write_settings", orgId);
-        await this.teamDB.setOrgSettings(orgId, settings);
-        return settings;
+        if (typeof settings.defaultWorkspaceImage === "string") {
+            const defaultWorkspaceImage = settings.defaultWorkspaceImage.trim();
+            if (!defaultWorkspaceImage.length) {
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "defaultWorkspaceImage cannot be blank");
+            }
+            await this.validateDefaultWorkspaceImage(userId, defaultWorkspaceImage);
+            settings = { ...settings, defaultWorkspaceImage };
+        }
+        return this.toSettings(await this.teamDB.setOrgSettings(orgId, settings));
+    }
+
+    private toSettings(settings: OrganizationSettings = {}): OrganizationSettings {
+        const result: OrganizationSettings = {};
+        if (settings.workspaceSharingDisabled) {
+            result.workspaceSharingDisabled = settings.workspaceSharingDisabled;
+        }
+        if (typeof settings.defaultWorkspaceImage === "string") {
+            result.defaultWorkspaceImage = settings.defaultWorkspaceImage;
+        }
+        return result;
     }
 }

@@ -446,9 +446,6 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
             observeAPICallsDuration(method, 200, timer());
             return result;
         } catch (e) {
-            // TODO(ak) this guard does not look correct
-            // it checks for a presence of `code`, but other errors also may have code, like all Node.js errors: https://nodejs.org/api/errors.html#errorcode
-            // instanceof ApplicationError should be more appropriate here
             if (ApplicationError.hasErrorCode(e)) {
                 increaseApiCallCounter(method, e.code);
                 observeAPICallsDuration(method, e.code, timer());
