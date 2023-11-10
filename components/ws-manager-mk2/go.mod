@@ -24,6 +24,7 @@ require (
 	github.com/prometheus/client_golang v1.16.0
 	github.com/prometheus/client_model v0.4.0
 	github.com/sirupsen/logrus v1.9.3
+	golang.org/x/crypto v0.11.0
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
 	google.golang.org/grpc v1.55.0
 	google.golang.org/protobuf v1.30.0
