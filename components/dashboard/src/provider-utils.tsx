@@ -4,20 +4,25 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import bitbucket from "./images/bitbucket.svg";
 import github from "./images/github.svg";
 import gitlab from "./images/gitlab.svg";
 import { gitpodHostUrl } from "./service/service";
 
-function iconForAuthProvider(type: string) {
+function iconForAuthProvider(type: string | AuthProviderType) {
     switch (type) {
         case "GitHub":
+        case AuthProviderType.GITHUB:
             return <img className="fill-current dark:filter-invert w-5 h-5 ml-3 mr-3 my-auto" src={github} alt="" />;
         case "GitLab":
+        case AuthProviderType.GITLAB:
             return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={gitlab} alt="" />;
         case "Bitbucket":
+        case AuthProviderType.BITBUCKET:
             return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={bitbucket} alt="" />;
         case "BitbucketServer":
+        case AuthProviderType.BITBUCKET_SERVER:
             return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={bitbucket} alt="" />;
         default:
             return <></>;
