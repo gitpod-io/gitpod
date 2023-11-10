@@ -18,6 +18,7 @@ import { UserService as UserServiceDefinition } from "@gitpod/public-api/lib/git
 import { OrganizationService } from "@gitpod/public-api/lib/gitpod/v1/organization_connect";
 import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/v1/workspace_connect";
 import { ConfigurationService } from "@gitpod/public-api/lib/gitpod/v1/configuration_connect";
+import { AuthProviderService } from "@gitpod/public-api/lib/gitpod/v1/authprovider_connect";
 import express from "express";
 import * as http from "http";
 import { decorate, inject, injectable, interfaces } from "inversify";
@@ -41,6 +42,7 @@ import { APITeamsService as TeamsServiceAPI } from "./teams";
 import { APIUserService as UserServiceAPI } from "./user";
 import { WorkspaceServiceAPI } from "./workspace-service-api";
 import { ConfigurationServiceAPI } from "./configuration-service-api";
+import { AuthProviderServiceAPI } from "./auth-provider-service-api";
 import { Unauthenticated } from "./unauthenticated";
 
 decorate(injectable(), PublicAPIConverter);
@@ -56,6 +58,7 @@ export class API {
     @inject(WorkspaceServiceAPI) private readonly workspaceServiceApi: WorkspaceServiceAPI;
     @inject(OrganizationServiceAPI) private readonly organizationServiceApi: OrganizationServiceAPI;
     @inject(ConfigurationServiceAPI) private readonly configurationServiceApi: ConfigurationServiceAPI;
+    @inject(AuthProviderServiceAPI) private readonly authProviderServiceApi: AuthProviderServiceAPI;
     @inject(StatsServiceAPI) private readonly tatsServiceApi: StatsServiceAPI;
     @inject(HelloServiceAPI) private readonly helloServiceApi: HelloServiceAPI;
     @inject(SessionHandler) private readonly sessionHandler: SessionHandler;
@@ -107,6 +110,7 @@ export class API {
                         service(WorkspaceService, this.workspaceServiceApi),
                         service(OrganizationService, this.organizationServiceApi),
                         service(ConfigurationService, this.configurationServiceApi),
+                        service(AuthProviderService, this.authProviderServiceApi),
                     ]) {
                         router.service(type, new Proxy(impl, this.interceptService(type)));
                     }
@@ -223,8 +227,8 @@ export class API {
                         }
 
                         if (isAuthenticated) {
-                        await rateLimit(subjectId);
-                        context.user = await self.ensureFgaMigration(subjectId);
+                            await rateLimit(subjectId);
+                            context.user = await self.ensureFgaMigration(subjectId);
                         }
 
                         // TODO(at) if unauthenticated, we still need to apply enforece a rate limit
@@ -266,8 +270,8 @@ export class API {
     private async verify(context: HandlerContext): Promise<string | undefined> {
         const cookieHeader = (context.requestHeader.get("cookie") || "") as string;
         try {
-        const claims = await this.sessionHandler.verifyJWTCookie(cookieHeader);
-        const subjectId = claims?.sub;
+            const claims = await this.sessionHandler.verifyJWTCookie(cookieHeader);
+            const subjectId = claims?.sub;
             return subjectId;
         } catch (error) {
             log.warn("Failed to authenticate user with JWT Session", error);
@@ -319,6 +323,7 @@ export class API {
         bind(WorkspaceServiceAPI).toSelf().inSingletonScope();
         bind(OrganizationServiceAPI).toSelf().inSingletonScope();
         bind(ConfigurationServiceAPI).toSelf().inSingletonScope();
+        bind(AuthProviderServiceAPI).toSelf().inSingletonScope();
         bind(StatsServiceAPI).toSelf().inSingletonScope();
         bind(API).toSelf().inSingletonScope();
     }
