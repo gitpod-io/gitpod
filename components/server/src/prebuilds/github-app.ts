@@ -82,6 +82,7 @@ export class GithubApp {
                     logLevel: GithubApp.mapToGitHubLogLevel(logLevel),
                     baseUrl: config.githubApp.baseUrl,
                 }),
+                webhookPath: "/",
             });
             log.debug("Starting GitHub app integration", {
                 appId: config.githubApp.appId,
@@ -154,10 +155,7 @@ export class GithubApp {
                         return;
                     }
                     if (action === "renamed") {
-                        // HINT(AT): This is undocumented, but the event payload contains something like
-                        // "changes": { "repository": { "name": { "from": "test-repo-123" } } }
-                        // To implement this in a more robust way, we'd need to store `repository.id` with the project, next to the cloneUrl.
-                        const oldName = (ctx.payload as any)?.changes?.repository?.name?.from;
+                        const oldName = ctx.payload?.changes?.repository?.name?.from;
                         if (oldName) {
                             const projects = await this.projectService.findProjectsByCloneUrl(
                                 SYSTEM_USER,
@@ -511,7 +509,7 @@ export class GithubApp {
         const pr = ctx.payload.pull_request;
         const contextURL = pr.html_url;
 
-        const isFork = pr.head.repo.id !== pr.base.repo.id;
+        const isFork = pr.head.repo?.id !== pr.base.repo.id;
         if (isFork) {
             log.debug({ userId: user.id }, `GitHub PR event from fork.`, {
                 contextURL,
