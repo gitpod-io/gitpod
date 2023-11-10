@@ -54,6 +54,8 @@ export class WorkspaceClusterDBImpl implements WorkspaceClusterDB {
             state: "available",
             govern: false,
             admissionConstraints: [],
+            availableWorkspaceClasses: [],
+            preferredWorkspaceClass: "",
         };
 
         const repo = await this.getRepo();

@@ -47,6 +47,18 @@ export interface WorkspaceCluster {
 
     // An optional set of constraints that limit who can start workspaces on the cluster
     admissionConstraints?: AdmissionConstraint[];
+
+    // The classes of workspaces that can be started on this cluster
+    availableWorkspaceClasses?: WorkspaceClass[];
+
+    // The class of workspaces that should be started on this cluster by default
+    preferredWorkspaceClass?: string;
+}
+
+export namespace WorkspaceCluster {
+    export function preferredWorkspaceClass(cluster: WorkspaceCluster): WorkspaceClass | undefined {
+        return (cluster.availableWorkspaceClasses || []).find((c) => c.id === cluster.preferredWorkspaceClass);
+    }
 }
 
 export type WorkspaceClusterState = "available" | "cordoned" | "draining";
@@ -83,6 +95,20 @@ export namespace AdmissionConstraint {
     export function hasPermission(ac: AdmissionConstraint, permission: PermissionName): boolean {
         return isHasPermissionConstraint(ac) && ac.permission === permission;
     }
+}
+
+export interface WorkspaceClass {
+    // id is a unique identifier (within the cluster) of this workspace class
+    id: string;
+
+    // The string we display to users in the UI
+    displayName: string;
+
+    // The description of this workspace class
+    description: string;
+
+    // The cost of running a workspace of this class per minute expressed in credits
+    creditsPerMinute: number;
 }
 
 export const WorkspaceClusterDB = Symbol("WorkspaceClusterDB");

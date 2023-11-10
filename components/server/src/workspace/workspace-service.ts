@@ -46,7 +46,11 @@ import {
     AdmissionLevel,
     ControlAdmissionRequest,
 } from "@gitpod/ws-manager/lib";
-import { WorkspaceStarter, StartWorkspaceOptions as StarterStartWorkspaceOptions } from "./workspace-starter";
+import {
+    WorkspaceStarter,
+    StartWorkspaceOptions as StarterStartWorkspaceOptions,
+    isWorkspaceClassDiscoveryEnabled,
+} from "./workspace-starter";
 import { LogContext, log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
 import * as crypto from "crypto";
@@ -617,7 +621,24 @@ export class WorkspaceService {
         });
     }
 
-    public async getSupportedWorkspaceClasses(userId: string): Promise<SupportedWorkspaceClass[]> {
+    public async getSupportedWorkspaceClasses(user: { id: string }): Promise<SupportedWorkspaceClass[]> {
+        if (await isWorkspaceClassDiscoveryEnabled(user)) {
+            const allClasses = (await this.clientProvider.getAllWorkspaceClusters()).flatMap((cluster) => {
+                return (cluster.availableWorkspaceClasses || [])?.map((cls) => {
+                    return <SupportedWorkspaceClass>{
+                        description: cls.description,
+                        displayName: cls.displayName,
+                        id: cls.id,
+                        isDefault: cls.id === cluster.preferredWorkspaceClass,
+                    };
+                });
+            });
+            allClasses.sort((a, b) => a.displayName.localeCompare(b.displayName));
+            const uniqueClasses = allClasses.filter((v, i, a) => a.map((c) => c.id).indexOf(v.id) == i);
+
+            return uniqueClasses;
+        }
+
         // No access check required, valid session/user is enough
         const classes = this.config.workspaceClasses.map((c) => ({
             id: c.id,

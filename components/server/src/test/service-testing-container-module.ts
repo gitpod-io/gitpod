@@ -143,6 +143,49 @@ const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound,
                 maxScore: 100,
                 score: 100,
                 govern: true,
+                availableWorkspaceClasses: [
+                    {
+                        creditsPerMinute: 1,
+                        description: "2vCPU / 4GB RAM",
+                        id: "basic",
+                        displayName: "Basic",
+                    },
+                    {
+                        creditsPerMinute: 2,
+                        description: "4vCPU / 8GB RAM",
+                        id: "pro",
+                        displayName: "Pro",
+                    },
+                ],
+            },
+            {
+                name: "eu-central-1-nextgen",
+                region: "europe",
+                url: "https://ws.gitpod.io",
+                state: "available",
+                maxScore: 100,
+                score: 100,
+                govern: true,
+                availableWorkspaceClasses: [
+                    {
+                        creditsPerMinute: 1,
+                        description: "2vCPU / 4GB RAM",
+                        id: "basic",
+                        displayName: "Basic",
+                    },
+                    {
+                        creditsPerMinute: 1,
+                        description: "2vCPU / 4GB RAM",
+                        id: "nextgen-basic",
+                        displayName: "NextGen Basic",
+                    },
+                    {
+                        creditsPerMinute: 2,
+                        description: "4vCPU / 8GB RAM",
+                        id: "nextgen-pro",
+                        displayName: "NextGen Pro",
+                    },
+                ],
             },
         ];
         return <WorkspaceManagerClientProviderSource>{
