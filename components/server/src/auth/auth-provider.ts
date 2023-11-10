@@ -5,31 +5,35 @@
  */
 
 import express from "express";
-import { AuthProviderInfo, User, OAuth2Config, AuthProviderEntry } from "@gitpod/gitpod-protocol";
+import { AuthProviderInfo, User, AuthProviderEntry } from "@gitpod/gitpod-protocol";
 
 import { UserEnvVarValue } from "@gitpod/gitpod-protocol";
 
 export const AuthProviderParams = Symbol("AuthProviderParams");
 export interface AuthProviderParams extends AuthProviderEntry {
-    readonly builtin: boolean; // true, if `ownerId` == ""
-    readonly verified: boolean; // true, if `status` == "verified"
+    /**
+     * computed value: `true`, if `ownerId` == ""
+     */
+    readonly builtin: boolean;
+    /**
+     * computed value: `true`, if `status` == "verified"
+     */
+    readonly verified: boolean;
 
-    readonly oauth: OAuth2Config;
-
-    // for special auth providers only
-    readonly params?: {
-        [key: string]: string;
-        readonly authUrl: string;
-        readonly callBackUrl: string;
-        readonly githubToken: string;
-    };
-
-    // properties to control behavior
     readonly hiddenOnDashboard?: boolean;
-    readonly disallowLogin?: boolean;
-    readonly requireTOS?: boolean;
 
+    /**
+     * @deprecated unused
+     */
+    readonly disallowLogin?: boolean;
+
+    /**
+     * @deprecated unused
+     */
     readonly description: string;
+    /**
+     * @deprecated unused
+     */
     readonly icon: string;
 }
 export function parseAuthProviderParamsFromEnv(json: object): AuthProviderParams[] {

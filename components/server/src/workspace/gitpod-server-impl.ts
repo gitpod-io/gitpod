@@ -626,56 +626,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
      * If there are built-in auth providers configured, only these are returned.
      */
     public async getAuthProviders(ctx: TraceContext): Promise<AuthProviderInfo[]> {
-        const { builtinAuthProvidersConfigured } = this.config;
-
-        const hostContexts = this.hostContextProvider.getAll();
-        const authProviders = hostContexts.map((hc) => hc.authProvider.info);
-
-        const isBuiltIn = (info: AuthProviderInfo) => !info.ownerId;
-        const isNotHidden = (info: AuthProviderInfo) => !info.hiddenOnDashboard;
-        const isVerified = (info: AuthProviderInfo) => info.verified;
-        const isNotOrgProvider = (info: AuthProviderInfo) => !info.organizationId;
-
-        // if no user session is available, compute public information only
+        // if no user session is available, return public information only
         if (!this.userID) {
-            const toPublic = (info: AuthProviderInfo) =>
-                <AuthProviderInfo>{
-                    authProviderId: info.authProviderId,
-                    authProviderType: info.authProviderType,
-                    disallowLogin: info.disallowLogin,
-                    host: info.host,
-                    icon: info.icon,
-                    description: info.description,
-                };
-            let result = authProviders.filter(isNotHidden).filter(isVerified).filter(isNotOrgProvider);
-            if (builtinAuthProvidersConfigured) {
-                result = result.filter(isBuiltIn);
-            }
-            return result.map(toPublic);
+            return await this.authProviderService.getAuthProviderDescriptionsUnauthenticated();
         }
-
-        const user = await this.checkUser("getAuthProviders");
 
         // otherwise show all the details
-        const result: AuthProviderInfo[] = [];
-        for (const info of authProviders) {
-            const identity = user.identities.find((i) => i.authProviderId === info.authProviderId);
-            if (identity) {
-                result.push({ ...info, isReadonly: identity.readonly });
-                continue;
-            }
-            if (info.ownerId === user.id) {
-                result.push(info);
-                continue;
-            }
-            if (builtinAuthProvidersConfigured && !isBuiltIn(info)) {
-                continue;
-            }
-            if (isNotHidden(info) && isVerified(info)) {
-                result.push(info);
-            }
-        }
-        return result;
+        const user = await this.checkUser("getAuthProviders");
+        return await this.authProviderService.getAuthProviderDescriptions(user);
     }
 
     public async getConfiguration(ctx: TraceContext): Promise<Configuration> {
@@ -2941,25 +2899,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const safeProvider = this.redactUpdateOwnAuthProviderParams({ entry });
         try {
-            if ("host" in safeProvider) {
-                // on creating we're are checking for already existing runtime providers
-
-                const host = safeProvider.host && safeProvider.host.toLowerCase();
-
-                if (!(await this.authProviderService.isHostReachable(host))) {
-                    log.debug(`Host could not be reached.`, { entry, safeProvider });
-                    throw new Error("Host could not be reached.");
-                }
-
-                const hostContext = this.hostContextProvider.get(host);
-                if (hostContext) {
-                    const builtInExists = hostContext.authProvider.params.ownerId === undefined;
-                    log.debug(`Attempt to override existing auth provider.`, { entry, safeProvider, builtInExists });
-                    throw new Error("Provider for this host already exists.");
-                }
+            if ("id" in safeProvider) {
+                const result = await this.authProviderService.updateAuthProviderOfUser(user.id, safeProvider);
+                return AuthProviderEntry.redact(result);
             }
-            const result = await this.authProviderService.updateAuthProvider(safeProvider);
-            return AuthProviderEntry.redact(result);
+            if ("host" in safeProvider) {
+                const result = await this.authProviderService.createAuthProviderOfUser(user.id, safeProvider);
+                return AuthProviderEntry.redact(result);
+            }
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Unexpected parameters.");
         } catch (error) {
             if (ApplicationError.hasErrorCode(error)) {
                 throw error;
@@ -2991,12 +2939,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { params });
 
         const user = await this.checkAndBlockUser("deleteOwnAuthProvider");
-        const ownProviders = await this.authProviderService.getAuthProvidersOfUser(user.id);
-        const authProvider = ownProviders.find((p) => p.id === params.id);
-        if (!authProvider) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "User resource not found.");
-        }
-        await this.authProviderService.deleteAuthProvider(authProvider);
+
+        await this.authProviderService.deleteAuthProviderOfUser(user.id, params.id);
     }
 
     async createOrgAuthProvider(
@@ -3020,12 +2964,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (!newProvider.organizationId || !uuidValidate(newProvider.organizationId)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid organizationId");
         }
-
-        await this.guardWithFeatureFlag("orgGitAuthProviders", user, newProvider.organizationId);
-
-        await this.guardTeamOperation(newProvider.organizationId, "update");
-        await this.auth.checkPermissionOnOrganization(user.id, "write_git_provider", newProvider.organizationId);
-
         if (!newProvider.host) {
             throw new ApplicationError(
                 ErrorCodes.BAD_REQUEST,
@@ -3033,23 +2971,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             );
         }
 
+        await this.guardWithFeatureFlag("orgGitAuthProviders", user, newProvider.organizationId);
+
+        await this.guardTeamOperation(newProvider.organizationId, "update");
+
         try {
-            // on creating we're are checking for already existing runtime providers
-            const host = newProvider.host && newProvider.host.toLowerCase();
-
-            if (!(await this.authProviderService.isHostReachable(host))) {
-                log.debug(`Host could not be reached.`, { entry, newProvider });
-                throw new Error("Host could not be reached.");
-            }
-
-            const hostContext = this.hostContextProvider.get(host);
-            if (hostContext) {
-                const builtInExists = hostContext.authProvider.params.ownerId === undefined;
-                log.debug(`Attempt to override existing auth provider.`, { entry, newProvider, builtInExists });
-                throw new Error("Provider for this host already exists.");
-            }
-
-            const result = await this.authProviderService.createOrgAuthProvider(newProvider);
+            const result = await this.authProviderService.createOrgAuthProvider(user.id, newProvider);
             return AuthProviderEntry.redact(result);
         } catch (error) {
             if (ApplicationError.hasErrorCode(error)) {
@@ -3083,10 +3010,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardWithFeatureFlag("orgGitAuthProviders", user, providerUpdate.organizationId);
 
         await this.guardTeamOperation(providerUpdate.organizationId, "update");
-        await this.auth.checkPermissionOnOrganization(user.id, "write_git_provider", providerUpdate.organizationId);
 
         try {
-            const result = await this.authProviderService.updateOrgAuthProvider(providerUpdate);
+            const result = await this.authProviderService.updateOrgAuthProvider(user.id, providerUpdate);
             return AuthProviderEntry.redact(result);
         } catch (error) {
             if (ApplicationError.hasErrorCode(error)) {
@@ -3108,10 +3034,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardWithFeatureFlag("orgGitAuthProviders", user, params.organizationId);
 
         await this.guardTeamOperation(params.organizationId, "get");
-        await this.auth.checkPermissionOnOrganization(user.id, "read_git_provider", params.organizationId);
 
         try {
-            const result = await this.authProviderService.getAuthProvidersOfOrg(params.organizationId);
+            const result = await this.authProviderService.getAuthProvidersOfOrg(user.id, params.organizationId);
             return result.map(AuthProviderEntry.redact.bind(AuthProviderEntry));
         } catch (error) {
             if (ApplicationError.hasErrorCode(error)) {
@@ -3127,24 +3052,79 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("deleteOrgAuthProvider");
 
+        // check for "orgGitAuthProviders" feature flag
         const team = await this.getTeam(ctx, params.organizationId);
         if (!team) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid organizationId");
         }
-
         await this.guardWithFeatureFlag("orgGitAuthProviders", user, team.id);
 
         await this.guardTeamOperation(params.organizationId || "", "update");
-        await this.auth.checkPermissionOnOrganization(user.id, "write_git_provider", params.organizationId);
 
-        // Find the matching auth provider we're attempting to delete
-        const orgProviders = await this.authProviderService.getAuthProvidersOfOrg(team.id);
-        const authProvider = orgProviders.find((p) => p.id === params.id && p.organizationId === params.organizationId);
-        if (!authProvider) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Provider resource not found.");
+        await this.authProviderService.deleteAuthProviderOfOrg(user.id, params.organizationId, params.id);
+    }
+
+    async getAuthProvider(ctx: TraceContextWithSpan, id: string): Promise<AuthProviderEntry> {
+        traceAPIParams(ctx, { id });
+
+        const user = await this.checkAndBlockUser("getAuthProvider");
+
+        const result = await this.authProviderService.getAuthProvider(user.id, id);
+        return AuthProviderEntry.redact(result);
+    }
+
+    /**
+     * Delegates to `deleteOrgAuthProvider` or `deleteOwnAuthProvider` depending on the ownership
+     * of the specified auth provider.
+     */
+    async deleteAuthProvider(ctx: TraceContextWithSpan, id: string): Promise<void> {
+        traceAPIParams(ctx, { id });
+
+        const user = await this.checkAndBlockUser("deleteAuthProvider");
+
+        // TODO(at) get rid of the additional read here when user-level providers are migrated to org-level.
+        const authProvider = await this.authProviderService.getAuthProvider(user.id, id);
+        if (authProvider.organizationId) {
+            return this.deleteOrgAuthProvider(ctx, { id, organizationId: authProvider.organizationId });
+        } else {
+            return this.deleteOwnAuthProvider(ctx, { id });
         }
+    }
 
-        await this.authProviderService.deleteAuthProvider(authProvider);
+    /**
+     * Delegates to `updateOrgAuthProvider` or `updateOwnAuthProvider` depending on the ownership
+     * of the specified auth provider.
+     */
+    async updateAuthProvider(
+        ctx: TraceContextWithSpan,
+        id: string,
+        update: AuthProviderEntry.UpdateOAuth2Config,
+    ): Promise<AuthProviderEntry> {
+        traceAPIParams(ctx, { id });
+
+        const user = await this.checkAndBlockUser("updateAuthProvider");
+
+        const authProvider = await this.authProviderService.getAuthProvider(user.id, id);
+
+        if (authProvider.organizationId) {
+            return this.updateOrgAuthProvider(ctx, {
+                entry: {
+                    organizationId: authProvider.organizationId,
+                    id: authProvider.id,
+                    clientId: update.clientId,
+                    clientSecret: update.clientSecret,
+                },
+            });
+        } else {
+            return this.updateOwnAuthProvider(ctx, {
+                entry: {
+                    id: authProvider.id,
+                    clientId: update.clientId,
+                    clientSecret: update.clientSecret,
+                    ownerId: user.id,
+                },
+            });
+        }
     }
 
     async getOnboardingState(ctx: TraceContext): Promise<GitpodServer.OnboardingState> {

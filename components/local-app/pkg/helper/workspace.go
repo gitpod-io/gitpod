@@ -93,7 +93,7 @@ func OpenWorkspaceInPreferredEditor(ctx context.Context, clnt *client.Gitpod, wo
 }
 
 // SSHConnectToWorkspace connects to the workspace via SSH
-func SSHConnectToWorkspace(ctx context.Context, clnt *client.Gitpod, workspaceID string, runDry bool) error {
+func SSHConnectToWorkspace(ctx context.Context, clnt *client.Gitpod, workspaceID string, runDry bool, sshArgs ...string) error {
 	workspace, err := clnt.Workspaces.GetWorkspace(ctx, connect.NewRequest(&v1.GetWorkspaceRequest{WorkspaceId: workspaceID}))
 	if err != nil {
 		return err
@@ -113,13 +113,17 @@ func SSHConnectToWorkspace(ctx context.Context, clnt *client.Gitpod, workspaceID
 	ownerToken := token.Msg.Token
 
 	host := WorkspaceSSHHost(wsInfo)
+
+	command := exec.Command("ssh", fmt.Sprintf("%s#%s@%s", wsInfo.WorkspaceId, ownerToken, host), "-o", "StrictHostKeyChecking=no")
+	if len(sshArgs) > 0 {
+		slog.Debug("With additional SSH args and command", "with", sshArgs)
+		command.Args = append(command.Args, sshArgs...)
+	}
 	if runDry {
-		fmt.Println("ssh", fmt.Sprintf("%s#%s@%s", wsInfo.WorkspaceId, ownerToken, host), "-o", "StrictHostKeyChecking=no")
+		fmt.Println(strings.Join(command.Args, " "))
 		return nil
 	}
-
-	slog.Debug("Connecting to" + wsInfo.Description)
-	command := exec.Command("ssh", fmt.Sprintf("%s#%s@%s", wsInfo.WorkspaceId, ownerToken, host), "-o", "StrictHostKeyChecking=no")
+	slog.Debug("Connecting to", "context", wsInfo.Description)
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
@@ -159,6 +163,9 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 	}
 
 	ws := wsInfo.Msg.GetResult()
+	if ws.Status == nil || ws.Status.Instance == nil || ws.Status.Instance.Status == nil {
+		return nil, fmt.Errorf("cannot get workspace status")
+	}
 	if ws.Status.Instance.Status.Phase == v1.WorkspaceInstanceStatus_PHASE_RUNNING {
 		// workspace is running - we're done
 		return ws.Status, nil
@@ -173,21 +180,18 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 
 	var (
 		maxRetries = 5
-		retries    = 0
 		delay      = 100 * time.Millisecond
 	)
-	for {
+	for retries := 0; retries < maxRetries; retries++ {
 		stream, err := clnt.Workspaces.StreamWorkspaceStatus(ctx, connect.NewRequest(&v1.StreamWorkspaceStatusRequest{WorkspaceId: workspaceID}))
 		if err != nil {
 			if retries >= maxRetries {
 				return nil, prettyprint.MarkExceptional(fmt.Errorf("failed to stream workspace status after %d retries: %w", maxRetries, err))
 			}
-			retries++
 			delay *= 2
 			slog.Warn("failed to stream workspace status, retrying", "err", err, "retry", retries, "maxRetries", maxRetries)
 			continue
 		}
-
 		// Attempt to close the stream hangs the connection instead. We should investigate what's up (EXP-909)
 		// defer stream.Close()
 
@@ -222,7 +226,6 @@ func ObserveWorkspaceUntilStarted(ctx context.Context, clnt *client.Gitpod, work
 			slog.Warn("failed to stream workspace status, retrying", "err", err, "retry", retries, "maxRetries", maxRetries)
 			continue
 		}
-
-		return nil, prettyprint.MarkExceptional(fmt.Errorf("workspace stream ended unexpectedly"))
 	}
+	return nil, prettyprint.MarkExceptional(fmt.Errorf("workspace stream ended unexpectedly"))
 }

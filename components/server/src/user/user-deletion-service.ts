@@ -45,7 +45,7 @@ export class UserDeletionService {
         const authProviders = await this.authProviderService.getAuthProvidersOfUser(user);
         for (const provider of authProviders) {
             try {
-                await this.authProviderService.deleteAuthProvider(provider);
+                await this.authProviderService.deleteAuthProviderOfUser(user.id, provider.id);
             } catch (error) {
                 log.error({ userId: user.id }, "Failed to delete user's auth provider.", error);
             }
