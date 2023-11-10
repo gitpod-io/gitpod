@@ -41,6 +41,11 @@ leeway run components/local-app:install-cli
 leeway run components/local-app:cli-completion
 ```
 
+### Versioning and Release Management
+
+The CLI is versioned independently of other Gitpod artifacts due to its auto-updating behaviour.
+To create a new version that existing clients will consume increment the number in `version.txt`. Make sure to use semantic versioning. The minor version can be greater than 10, e.g. `0.342` is a valid version.
+
 ## local-app
 
 **Beware**: this is very much work in progress and will likely break things.
