@@ -143,15 +143,16 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
             throw new ConnectError("Provider not found.", Code.NotFound);
         }
 
+        let entry: AuthProviderEntry;
         if (authProvider.organizationId) {
-            await this.authProviderService.updateOrgAuthProvider(context.user.id, {
+            entry = await this.authProviderService.updateOrgAuthProvider(context.user.id, {
                 id: request.authProviderId,
                 organizationId: authProvider.organizationId,
                 clientId: clientId,
                 clientSecret: clientSecret,
             });
         } else {
-            await this.authProviderService.updateAuthProviderOfUser(context.user.id, {
+            entry = await this.authProviderService.updateAuthProviderOfUser(context.user.id, {
                 id: request.authProviderId,
                 ownerId: context.user.id,
                 clientId: clientId,
@@ -159,7 +160,9 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
             });
         }
 
-        return new UpdateAuthProviderResponse();
+        return new UpdateAuthProviderResponse({
+            authProvider: this.apiConverter.toAuthProvider(AuthProviderEntry.redact(entry)),
+        });
     }
 
     async deleteAuthProvider(

@@ -119,11 +119,13 @@ export class JsonRpcAuthProviderClient implements PromiseClient<typeof AuthProvi
             throw new ConnectError("clientId or clientSecret are required", Code.InvalidArgument);
         }
 
-        await getGitpodService().server.updateAuthProvider(request.authProviderId, {
+        const entry = await getGitpodService().server.updateAuthProvider(request.authProviderId, {
             clientId,
             clientSecret,
         });
-        return new UpdateAuthProviderResponse();
+        return new UpdateAuthProviderResponse({
+            authProvider: converter.toAuthProvider(entry),
+        });
     }
 
     async deleteAuthProvider(request: PartialMessage<DeleteAuthProviderRequest>): Promise<DeleteAuthProviderResponse> {
