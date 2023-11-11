@@ -34,7 +34,7 @@ export function ConfigurationDetailPage({ children, configurationQuery, id }: Pa
                 pageDescription={data?.name ?? ""}
                 backLink="/configurations"
             />
-            <WidePageWithSubMenu subMenu={settingsMenu}>
+            <WidePageWithSubMenu subMenu={settingsMenu} navTitle="Configuration Settings">
                 {isLoading && <Loader2 className="animate-spin" />}
                 {error && (
                     <div className="gap-4">

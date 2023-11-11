@@ -10,6 +10,10 @@ import { cn } from "@podkit/lib/cn";
 import { SubmenuItem, SubmenuItemProps } from "./PageWithSubMenu";
 
 export interface PageWithSubMenuProps {
+    /**
+     * The name of the navigation menu, as read by screen readers.
+     */
+    navTitle?: string;
     subMenu: SubmenuItemProps[];
     children: React.ReactNode;
 }
@@ -19,7 +23,7 @@ export function WidePageWithSubMenu(p: PageWithSubMenuProps) {
         <div className="w-full">
             <div className={cn("app-container flex flex-col md:flex-row")}>
                 {/* TODO: extract into SubMenu component and show scrolling indicators */}
-                <div>
+                <nav aria-label={p.navTitle}>
                     <ul
                         className={classNames(
                             // Handle flipping between row and column layout
@@ -34,7 +38,7 @@ export function WidePageWithSubMenu(p: PageWithSubMenuProps) {
                             return <SubmenuItem title={e.title} link={e.link} key={e.title} icon={e.icon} />;
                         })}
                     </ul>
-                </div>
+                </nav>
                 <div className="md:ml-4 w-full pt-1 mb-40">
                     <Separator className="md:hidden" />
                     <div className="pt-4 md:pt-0">{p.children}</div>
