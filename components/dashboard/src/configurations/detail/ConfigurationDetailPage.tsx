@@ -70,7 +70,7 @@ function getConfigurationsMenu(id: string): SubmenuItemProps[] {
         {
             title: "General",
             link: [base],
-            icon: <HelpCircle />,
+            icon: <HelpCircle size={20} />,
         },
         {
             title: "Gitpod YAML",
