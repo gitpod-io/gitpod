@@ -17,11 +17,16 @@ type PageRouteParams = {
 const ConfigurationDetailGeneral: FC = () => {
     const { id } = useParams<PageRouteParams>();
     const configurationQuery = useConfiguration(id);
+    const { data } = configurationQuery;
 
     return (
         <ConfigurationDetailPage configurationQuery={configurationQuery} id={id}>
-            <ConfigurationNameForm configuration={configurationQuery.data!} />
-            <RemoveConfiguration configuration={configurationQuery.data!} />
+            {data && (
+                <>
+                    <ConfigurationNameForm configuration={data} />
+                    <RemoveConfiguration configuration={data} />
+                </>
+            )}
         </ConfigurationDetailPage>
     );
 };
