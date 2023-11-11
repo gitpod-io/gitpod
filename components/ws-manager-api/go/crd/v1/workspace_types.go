@@ -121,9 +121,9 @@ type TimeoutSpec struct {
 // SSHKey temporal generated SSH key required to access the workspace
 type SSHKey struct {
 	// +kubebuilder:validation:Required
-	Public string `json:"public"`
+	Public string `json:"publicKey"`
 	// +kubebuilder:validation:Required
-	Private string `json:"private"`
+	Private string `json:"privateKey"`
 }
 
 type AdmissionSpec struct {
