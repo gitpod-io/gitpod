@@ -67,7 +67,7 @@ export const SubmenuItem: FC<SubmenuItemProps> = ({ title, link, icon }) => {
         }
     }, [link, location.pathname]);
 
-    let classes = "flex justify-between block py-2 px-4 whitespace-nowrap max-w-52";
+    let classes = "flex justify-between block rounded-md py-2 px-4 whitespace-nowrap max-w-52";
 
     if (link.some((l) => l === location.pathname)) {
         classes += " bg-gray-300 text-gray-800 dark:bg-gray-800 dark:text-gray-50";
