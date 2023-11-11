@@ -8,7 +8,7 @@ import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configurati
 import { BreadcrumbNav } from "@podkit/breadcrumbs/BreadcrumbNav";
 import { Button } from "@podkit/buttons/Button";
 import type { UseQueryResult } from "@tanstack/react-query";
-import { HelpCircle, Loader2 } from "lucide-react";
+import { AlertTriangle, HelpCircle, Loader2 } from "lucide-react";
 import { useMemo } from "react";
 import Alert from "../../components/Alert";
 import { WidePageWithSubMenu } from "../../components/WidePageWithSubmenu";
@@ -70,15 +70,16 @@ function getConfigurationsMenu(id: string): SubmenuItemProps[] {
         {
             title: "General",
             link: [base],
-            icon: <HelpCircle size={20} />,
         },
         {
             title: "Gitpod YAML",
             link: [`${base}/configuration`],
+            icon: <HelpCircle size={20} />,
         },
         {
             title: "Prebuilds",
             link: [`${base}/prebuilds`],
+            icon: <AlertTriangle size={20} />,
         },
         {
             title: "Environment variables",

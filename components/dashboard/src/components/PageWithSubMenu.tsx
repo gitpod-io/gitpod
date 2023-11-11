@@ -74,6 +74,7 @@ export const SubmenuItem: FC<SubmenuItemProps> = ({ title, link, icon }) => {
     } else {
         classes += " hover:bg-gray-100 dark:hover:bg-gray-800";
     }
+
     return (
         <Link to={link[0]} key={title} className="md:w-full rounded-md">
             <li ref={itemRef} className={classes}>
