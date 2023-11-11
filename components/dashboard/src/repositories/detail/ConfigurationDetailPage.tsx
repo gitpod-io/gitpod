@@ -32,7 +32,7 @@ export function ConfigurationDetailPage({ children, configurationQuery, id }: Pa
             <BreadcrumbNav
                 pageTitle="Repository Configuration"
                 pageDescription={data?.name ?? ""}
-                backLink="/configurations"
+                backLink="/repositories"
             />
             <WidePageWithSubMenu subMenu={settingsMenu} navTitle="Configuration Settings">
                 {isLoading && <Loader2 className="animate-spin" />}

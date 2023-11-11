@@ -61,7 +61,7 @@ export default function OrganizationSelector() {
                 customContent: <LinkEntry>Configurations</LinkEntry>,
                 active: false,
                 separator: false,
-                link: "/configurations",
+                link: "/repositories",
             });
         }
         linkEntries.push({
