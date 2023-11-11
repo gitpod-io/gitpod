@@ -4,14 +4,15 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { TextInputField } from "../../components/forms/TextInputField";
-import { FC, useCallback, useState } from "react";
-import { useUpdateProject } from "../../data/projects/project-queries";
-import { useToast } from "../../components/toasts/Toasts";
-import { useOnBlurError } from "../../hooks/use-onblur-error";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { Button } from "@podkit/buttons/Button";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
+import { FC, useCallback, useState } from "react";
+import { TextInputField } from "../../components/forms/TextInputField";
+import { useToast } from "../../components/toasts/Toasts";
+import { useUpdateProject } from "../../data/projects/project-queries";
+import { useOnBlurError } from "../../hooks/use-onblur-error";
+import { ConfigurationSettingsField } from "./ConfigurationSettingsField";
 
 const MAX_LENGTH = 100;
 
@@ -51,34 +52,36 @@ export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
     );
 
     return (
-        <form onSubmit={updateName} className="border border-gray-300 dark:border-gray-700 rounded-xl p-4">
-            <TextInputField
-                label="Configuration name"
-                hint={`The name can be up to ${MAX_LENGTH} characters long.`}
-                value={projectName}
-                error={nameError.message}
-                onChange={setProjectName}
-                onBlur={nameError.onBlur}
-            />
-            <div className="flex flex-row items-center justify-start gap-2 mt-4 w-full">
-                <LoadingButton
-                    className=""
-                    type="submit"
-                    disabled={configuration.name === projectName}
-                    loading={updateProject.isLoading}
-                >
-                    Save
-                </LoadingButton>
-                <Button
-                    variant="secondary"
-                    disabled={configuration.name === projectName}
-                    onClick={() => {
-                        setProjectName(configuration.name);
-                    }}
-                >
-                    Cancel
-                </Button>
-            </div>
-        </form>
+        <ConfigurationSettingsField>
+            <form onSubmit={updateName}>
+                <TextInputField
+                    label="Configuration name"
+                    hint={`The name can be up to ${MAX_LENGTH} characters long.`}
+                    value={projectName}
+                    error={nameError.message}
+                    onChange={setProjectName}
+                    onBlur={nameError.onBlur}
+                />
+                <div className="flex flex-row items-center justify-start gap-2 mt-4 w-full">
+                    <LoadingButton
+                        className=""
+                        type="submit"
+                        disabled={configuration.name === projectName}
+                        loading={updateProject.isLoading}
+                    >
+                        Save
+                    </LoadingButton>
+                    <Button
+                        variant="secondary"
+                        disabled={configuration.name === projectName}
+                        onClick={() => {
+                            setProjectName(configuration.name);
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                </div>
+            </form>
+        </ConfigurationSettingsField>
     );
 };

@@ -10,6 +10,7 @@ import { RemoveConfigurationModal } from "./RemoveConfigurationModal";
 import { useHistory } from "react-router";
 import { useCallback, useState } from "react";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { ConfigurationSettingsField } from "./ConfigurationSettingsField";
 
 interface Props {
     configuration: Configuration;
@@ -25,7 +26,7 @@ export const RemoveConfiguration = ({ configuration }: Props) => {
 
     return (
         <>
-            <div className="mt-12 border border-gray-300 dark:border-gray-700 rounded-xl p-4">
+            <ConfigurationSettingsField>
                 <Heading2>Remove this Configuration</Heading2>
                 <Subheading className="pb-4 max-w-md dark:text-gray-400">
                     This will delete the project and all project-level environment variables you've set for this
@@ -34,7 +35,7 @@ export const RemoveConfiguration = ({ configuration }: Props) => {
                 <Button type={"danger.secondary"} onClick={() => setShowRemoveModal(true)}>
                     Remove Configuration
                 </Button>
-            </div>
+            </ConfigurationSettingsField>
             {configuration && showRemoveModal && (
                 <RemoveConfigurationModal
                     configuration={configuration}
