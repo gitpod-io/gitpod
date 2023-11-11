@@ -65,7 +65,7 @@ export function ConfigurationDetailPage({ children, configurationQuery, id }: Pa
 }
 
 function getConfigurationsMenu(id: string): SubmenuItemProps[] {
-    const base = `/configurations/${id}`;
+    const base = `/repositories/${id}`;
     return [
         {
             title: "General",

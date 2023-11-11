@@ -24,7 +24,7 @@ const RepositoryListPage: FC = () => {
 
     const handleProjectCreated = useCallback(
         (project: Project) => {
-            history.push(`/configurations/${project.id}`);
+            history.push(`/repositories/${project.id}`);
         },
         [history],
     );
