@@ -23,8 +23,9 @@ export const RemoveConfigurationModal: FunctionComponent<RemoveProjectModalProps
     const removeConfigMutation = useDeleteConfiguration(configuration.id);
 
     const removeProject = useCallback(async () => {
-        removeConfigMutation.mutateAsync();
-        onRemoved();
+        removeConfigMutation.mutate(undefined, {
+            onSuccess: () => onRemoved(),
+        });
     }, [removeConfigMutation, onRemoved]);
 
     return (
