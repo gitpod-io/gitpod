@@ -43,7 +43,7 @@ var workspaceListClassesCmd = &cobra.Command{
 			})
 		}
 
-		return WriteTabular(res, workspaceListClassesOpts.Format, prettyprint.WriterFormatNarrow)
+		return WriteTabular(res, workspaceListClassesOpts.Format, prettyprint.WriterFormatWide)
 	},
 }
 

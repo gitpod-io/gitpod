@@ -39,7 +39,7 @@ var workspaceCreateCmd = &cobra.Command{
 		if workspaceCreateOpts.WorkspaceClass != "" {
 			resp, err := gitpod.Workspaces.ListWorkspaceClasses(cmd.Context(), connect.NewRequest(&v1.ListWorkspaceClassesRequest{}))
 			if err != nil {
-				return prettyprint.AddApology(prettyprint.AddResolution(fmt.Errorf("cannot list workspace classes: %w", err),
+				return prettyprint.MarkExceptional(prettyprint.AddResolution(fmt.Errorf("cannot list workspace classes: %w", err),
 					"don't pass an explicit workspace class, i.e. omit the --class flag",
 				))
 			}
@@ -63,7 +63,7 @@ var workspaceCreateCmd = &cobra.Command{
 		if workspaceCreateOpts.Editor != "" {
 			resp, err := gitpod.Editors.ListEditorOptions(cmd.Context(), connect.NewRequest(&v1.ListEditorOptionsRequest{}))
 			if err != nil {
-				return prettyprint.AddApology(prettyprint.AddResolution(fmt.Errorf("cannot list editor options: %w", err),
+				return prettyprint.MarkExceptional(prettyprint.AddResolution(fmt.Errorf("cannot list editor options: %w", err),
 					"don't pass an explicit editor, i.e. omit the --editor flag",
 				))
 			}
@@ -101,6 +101,11 @@ var workspaceCreateCmd = &cobra.Command{
 					},
 					WorkspaceClass: workspaceCreateOpts.WorkspaceClass,
 				},
+				// Without this flag we might not create a new workspace because there's already one running on the same commit.
+				IgnoreRunningWorkspaceOnSameCommit: true,
+				// Note(cw): the CLI cannot handle running prebuilds yet, so we ignore them for now.
+				IgnoreRunningPrebuild:       true,
+				AllowUsingPreviousPrebuilds: true,
 			},
 		))
 		if err != nil {
@@ -109,7 +114,7 @@ var workspaceCreateCmd = &cobra.Command{
 
 		workspaceID := newWorkspace.Msg.WorkspaceId
 		if len(workspaceID) == 0 {
-			return prettyprint.AddApology(prettyprint.AddResolution(fmt.Errorf("workspace was not created"),
+			return prettyprint.MarkExceptional(prettyprint.AddResolution(fmt.Errorf("workspace was not created"),
 				"try to create the workspace again",
 			))
 		}

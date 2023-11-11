@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package gitpod.v1;
+
+import "google/protobuf/timestamp.proto";
+import "gitpod/v1/pagination.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+
+message Configuration {
+  string id = 1;
+  string organization_id = 2;
+  string name = 3;
+  string clone_url = 4;
+  google.protobuf.Timestamp creation_time = 5;
+  PrebuildSettings prebuild_settings = 6;
+  WorkspaceSettings workspace_settings = 7;
+}
+
+message PrebuildSettings {
+  bool enabled = 1;
+  string branch_matching_pattern = 2;
+  BranchMatchingStrategy branch_strategy = 3;
+  int32 prebuild_interval = 4;
+  string workspace_class = 5;
+}
+
+enum BranchMatchingStrategy {
+  BRANCH_MATCHING_STRATEGY_UNSPECIFIED = 0;
+  BRANCH_MATCHING_STRATEGY_DEFAULT_BRANCH = 1;
+  BRANCH_MATCHING_STRATEGY_ALL_BRANCHES = 2;
+  BRANCH_MATCHING_STRATEGY_MATCHED_BRANCHES = 3;
+}
+
+message WorkspaceSettings { string workspace_class = 1; }
+
+service ConfigurationService {
+  // Creates a new configuration.
+  rpc CreateConfiguration(CreateConfigurationRequest)
+      returns (CreateConfigurationResponse) {};
+
+  // Retrieves a configuration.
+  rpc GetConfiguration(GetConfigurationRequest)
+      returns (GetConfigurationResponse) {};
+
+  // Lists configurations.
+  rpc ListConfigurations(ListConfigurationsRequest)
+      returns (ListConfigurationsResponse) {};
+
+  // Deletes a configuration.
+  rpc DeleteConfiguration(DeleteConfigurationRequest)
+      returns (DeleteConfigurationResponse) {};
+}
+
+message CreateConfigurationRequest {
+  string organization_id = 1;
+  string name = 2;
+  string clone_url = 3;
+}
+
+message CreateConfigurationResponse { Configuration configuration = 1; }
+
+message GetConfigurationRequest { string configuration_id = 1; }
+
+message GetConfigurationResponse { Configuration configuration = 1; }
+
+message ListConfigurationsRequest {
+  string organization_id = 1;
+  string search_term = 2;
+  PaginationRequest pagination = 3;
+}
+
+message ListConfigurationsResponse {
+  repeated Configuration configurations = 1;
+  PaginationResponse pagination = 2;
+}
+
+message DeleteConfigurationRequest { string configuration_id = 1; }
+
+message DeleteConfigurationResponse {}

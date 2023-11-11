@@ -446,7 +446,9 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
             observeAPICallsDuration(method, 200, timer());
             return result;
         } catch (e) {
-            const requestIdMessage = ` If this error is unexpected, please quote the request ID '${requestId}' when reaching out to Gitpod Support.`;
+            // TODO(ak) this guard does not look correct
+            // it checks for a presence of `code`, but other errors also may have code, like all Node.js errors: https://nodejs.org/api/errors.html#errorcode
+            // instanceof ApplicationError should be more appropriate here
             if (ApplicationError.hasErrorCode(e)) {
                 increaseApiCallCounter(method, e.code);
                 observeAPICallsDuration(method, e.code, timer());
@@ -463,13 +465,13 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
                         message: e.message,
                     },
                 );
-                throw new ResponseError(e.code, e.message + requestIdMessage, e.data);
+                throw new ResponseError(e.code, e.message, e.data);
             } else {
                 TraceContext.setError(ctx, e); // this is a "real" error
 
                 const err = new ApplicationError(
                     ErrorCodes.INTERNAL_SERVER_ERROR,
-                    `Internal server error: '${e.message}'` + requestIdMessage,
+                    `Internal server error: '${e.message}'`,
                 );
                 increaseApiCallCounter(method, err.code);
                 observeAPICallsDuration(method, err.code, timer());

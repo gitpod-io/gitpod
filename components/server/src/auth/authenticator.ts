@@ -16,7 +16,6 @@ import { TokenProvider } from "../user/token-provider";
 import { UserAuthentication } from "../user/user-authentication";
 import { UserService } from "../user/user-service";
 import { AuthFlow, AuthProvider } from "./auth-provider";
-import { AuthProviderService } from "./auth-provider-service";
 import { HostContextProvider } from "./host-context-provider";
 import { SignInJWT } from "./jwt";
 
@@ -29,7 +28,6 @@ export class Authenticator {
     @inject(TeamDB) protected teamDb: TeamDB;
     @inject(HostContextProvider) protected hostContextProvider: HostContextProvider;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
-    @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
     @inject(UserAuthentication) protected readonly userAuthentication: UserAuthentication;
     @inject(SignInJWT) protected readonly signInJWT: SignInJWT;
 

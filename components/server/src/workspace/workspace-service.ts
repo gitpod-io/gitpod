@@ -30,6 +30,7 @@ import {
     WorkspaceTimeoutDuration,
 } from "@gitpod/gitpod-protocol";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { generateAsyncGenerator } from "@gitpod/gitpod-protocol/lib/generate-async-generator";
 import { Authorizer } from "../authorization/authorizer";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { WorkspaceFactory } from "./workspace-factory";
@@ -45,7 +46,11 @@ import {
     AdmissionLevel,
     ControlAdmissionRequest,
 } from "@gitpod/ws-manager/lib";
-import { WorkspaceStarter, StartWorkspaceOptions as StarterStartWorkspaceOptions } from "./workspace-starter";
+import {
+    WorkspaceStarter,
+    StartWorkspaceOptions as StarterStartWorkspaceOptions,
+    isWorkspaceClassDiscoveryEnabled,
+} from "./workspace-starter";
 import { LogContext, log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
 import * as crypto from "crypto";
@@ -61,6 +66,7 @@ import { HeadlessLogEndpoint, HeadlessLogService } from "./headless-log-service"
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { OrganizationService } from "../orgs/organization-service";
 import { isGrpcError } from "@gitpod/gitpod-protocol/lib/util/grpc";
+import { RedisSubscriber } from "../messaging/redis-subscriber";
 
 export interface StartWorkspaceOptions extends StarterStartWorkspaceOptions {
     /**
@@ -85,6 +91,8 @@ export class WorkspaceService {
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
         @inject(HeadlessLogService) private readonly headlessLogService: HeadlessLogService,
         @inject(Authorizer) private readonly auth: Authorizer,
+
+        @inject(RedisSubscriber) private readonly subscriber: RedisSubscriber,
     ) {}
 
     async createWorkspace(
@@ -613,7 +621,24 @@ export class WorkspaceService {
         });
     }
 
-    public async getSupportedWorkspaceClasses(userId: string): Promise<SupportedWorkspaceClass[]> {
+    public async getSupportedWorkspaceClasses(user: { id: string }): Promise<SupportedWorkspaceClass[]> {
+        if (await isWorkspaceClassDiscoveryEnabled(user)) {
+            const allClasses = (await this.clientProvider.getAllWorkspaceClusters()).flatMap((cluster) => {
+                return (cluster.availableWorkspaceClasses || [])?.map((cls) => {
+                    return <SupportedWorkspaceClass>{
+                        description: cls.description,
+                        displayName: cls.displayName,
+                        id: cls.id,
+                        isDefault: cls.id === cluster.preferredWorkspaceClass,
+                    };
+                });
+            });
+            allClasses.sort((a, b) => a.displayName.localeCompare(b.displayName));
+            const uniqueClasses = allClasses.filter((v, i, a) => a.map((c) => c.id).indexOf(v.id) == i);
+
+            return uniqueClasses;
+        }
+
         // No access check required, valid session/user is enough
         const classes = this.config.workspaceClasses.map((c) => ({
             id: c.id,
@@ -728,6 +753,26 @@ export class WorkspaceService {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Headless logs for ${instanceId} not found`);
         }
         return urls;
+    }
+
+    public watchWorkspaceStatus(userId: string, opts: { signal: AbortSignal }) {
+        return generateAsyncGenerator<WorkspaceInstance>((sink) => {
+            try {
+                const dispose = this.subscriber.listenForWorkspaceInstanceUpdates(userId, (_ctx, instance) => {
+                    sink.push(instance);
+                });
+                return () => {
+                    dispose.dispose();
+                };
+            } catch (e) {
+                if (e instanceof Error) {
+                    sink.fail(e);
+                    return;
+                } else {
+                    sink.fail(new Error(String(e) || "unknown"));
+                }
+            }
+        }, opts);
     }
 
     public async watchWorkspaceImageBuildLogs(

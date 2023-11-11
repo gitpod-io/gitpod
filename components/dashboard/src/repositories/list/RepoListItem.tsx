@@ -10,23 +10,23 @@ import { TextMuted } from "@podkit/typography/TextMuted";
 import { Text } from "@podkit/typography/Text";
 import { Link } from "react-router-dom";
 import { Button } from "../../components/Button";
-import { Project } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_pb";
+import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 
 type Props = {
-    project: Project;
+    configuration: Configuration;
 };
-export const RepositoryListItem: FC<Props> = ({ project }) => {
-    const url = usePrettyRepoURL(project.cloneUrl);
+export const RepositoryListItem: FC<Props> = ({ configuration }) => {
+    const url = usePrettyRepoURL(configuration.cloneUrl);
 
     return (
-        <li key={project.id} className="flex flex-row w-full space-between items-center">
+        <li key={configuration.id} className="flex flex-row w-full space-between items-center">
             <div className="flex flex-col flex-grow gap-1">
-                <Text className="font-semibold">{project.name}</Text>
+                <Text className="font-semibold">{configuration.name}</Text>
                 <TextMuted className="text-sm">{url}</TextMuted>
             </div>
 
             <div>
-                <Link to={`/repositories/${project.id}`}>
+                <Link to={`/repositories/${configuration.id}`}>
                     <Button type="secondary">View</Button>
                 </Link>
             </div>

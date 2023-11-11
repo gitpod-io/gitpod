@@ -7,7 +7,7 @@
 import { PartialProject, Project, ProjectEnvVar, ProjectEnvVarWithValue, ProjectUsage } from "@gitpod/gitpod-protocol";
 import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
 import { inject, injectable, optional } from "inversify";
-import { EntityManager, FindConditions, Repository } from "typeorm";
+import { Brackets, EntityManager, FindConditions, Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
 import { ProjectDB } from "../project-db";
 import { DBProject } from "./entity/db-project";
@@ -77,14 +77,25 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
         searchTerm?: string,
     ): Promise<{ total: number; rows: Project[] }> {
         const projectRepo = await this.getRepo();
+        const normalizedSearchTerm = searchTerm?.trim();
 
         const queryBuilder = projectRepo
             .createQueryBuilder("project")
-            .where("project.cloneUrl LIKE :searchTerm", { searchTerm: `%${searchTerm}%` })
-            .andWhere("project.markedDeleted = false")
+            .where("project.markedDeleted = false")
             .skip(offset)
             .take(limit)
             .orderBy(orderBy, orderDir);
+
+        if (normalizedSearchTerm) {
+            queryBuilder.andWhere(
+                new Brackets((qb) => {
+                    qb.where("project.cloneUrl LIKE :searchTerm", { searchTerm: `%${normalizedSearchTerm}%` }).orWhere(
+                        "project.name LIKE :searchTerm",
+                        { searchTerm: `%${normalizedSearchTerm}%` },
+                    );
+                }),
+            );
+        }
 
         const [rows, total] = await queryBuilder.getManyAndCount();
         return { total, rows };

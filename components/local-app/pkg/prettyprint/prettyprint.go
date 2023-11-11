@@ -28,7 +28,7 @@ func reflectTabular[T any](data []T) (header []string, rows []map[string]string,
 		t = t.Elem()
 	}
 	if t.Kind() != reflect.Struct {
-		return nil, nil, AddApology(fmt.Errorf("can only reflect tabular data from structs"))
+		return nil, nil, MarkExceptional(fmt.Errorf("can only reflect tabular data from structs"))
 	}
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)

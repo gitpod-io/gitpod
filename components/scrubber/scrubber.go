@@ -8,10 +8,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"regexp"
 	"strings"
 	"unsafe"
 
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/mitchellh/reflectwalk"
 )
 
@@ -99,21 +99,26 @@ type Scrubber interface {
 var Default Scrubber = newScrubberImpl()
 
 func newScrubberImpl() *scrubberImpl {
-	hashedRegex, err := regexp.Compile("(?i)(" + strings.Join(HashedFieldNames, "|") + ")")
-	if err != nil {
-		panic(fmt.Errorf("cannot compile hashed regex: %w", err))
+	var (
+		lowerSanitiseHash   []string
+		lowerSanitiseRedact []string
+	)
+	for _, v := range HashedFieldNames {
+		lowerSanitiseHash = append(lowerSanitiseHash, strings.ToLower(v))
+	}
+	for _, v := range RedactedFieldNames {
+		lowerSanitiseRedact = append(lowerSanitiseRedact, strings.ToLower(v))
 	}
 
-	redactedRegex, err := regexp.Compile("(?i)(" + strings.Join(RedactedFieldNames, "|") + ")")
+	cache, err := lru.New(1000)
 	if err != nil {
-		panic(fmt.Errorf("cannot compile redacted regex: %w", err))
+		panic(fmt.Errorf("cannot create cache: %w", err))
 	}
 
 	res := &scrubberImpl{
-		RegexpIndex: map[*regexp.Regexp]Sanitisatiser{
-			hashedRegex:   SanitiseHash,
-			redactedRegex: SanitiseRedact,
-		},
+		LowerSanitiseHash:   lowerSanitiseHash,
+		LowerSanitiseRedact: lowerSanitiseRedact,
+		KeySanitiserCache:   cache,
 	}
 	res.Walker = &structScrubber{Parent: res}
 
@@ -121,8 +126,10 @@ func newScrubberImpl() *scrubberImpl {
 }
 
 type scrubberImpl struct {
-	Walker      *structScrubber
-	RegexpIndex map[*regexp.Regexp]Sanitisatiser
+	Walker              *structScrubber
+	LowerSanitiseHash   []string
+	LowerSanitiseRedact []string
+	KeySanitiserCache   *lru.Cache
 }
 
 // JSON implements Scrubber
@@ -152,14 +159,39 @@ func (s *scrubberImpl) KeyValue(key string, value string) (sanitisedValue string
 	return sanitisatiser(value)
 }
 
+type keySanitiser struct {
+	s Sanitisatiser
+}
+
+var (
+	sanitiseIgnore keySanitiser = keySanitiser{s: nil}
+	sanitiseHash   keySanitiser = keySanitiser{s: SanitiseHash}
+	sanitiseRedact keySanitiser = keySanitiser{s: SanitiseRedact}
+)
+
 // getSanitisatiser implements
 func (s *scrubberImpl) getSanitisatiser(key string) Sanitisatiser {
-	for re, sanitisatiser := range s.RegexpIndex {
-		if re.MatchString(key) {
-			return sanitisatiser
+	lower := strings.ToLower(key)
+	san, ok := s.KeySanitiserCache.Get(lower)
+	if ok {
+		w := san.(keySanitiser)
+		return w.s
+	}
+
+	for _, f := range s.LowerSanitiseRedact {
+		if strings.Contains(lower, f) {
+			s.KeySanitiserCache.Add(lower, sanitiseRedact)
+			return SanitiseRedact
+		}
+	}
+	for _, f := range s.LowerSanitiseHash {
+		if strings.Contains(lower, f) {
+			s.KeySanitiserCache.Add(lower, sanitiseHash)
+			return SanitiseHash
 		}
 	}
 
+	s.KeySanitiserCache.Add(lower, sanitiseIgnore)
 	return nil
 }
 

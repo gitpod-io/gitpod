@@ -20,7 +20,10 @@ func TestWorkspaceListCmd(t *testing.T) {
 		{
 			Name:        "no config",
 			Commandline: []string{"workspace", "list"},
-			Expectation: CommandTestExpectation{Error: config.ErrNoContext.Error()},
+			Expectation: CommandTestExpectation{
+				Error:          config.ErrNoContext.Error(),
+				HasResolutions: true,
+			},
 		},
 		{
 			Name:        "test one workspace",

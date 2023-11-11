@@ -85,8 +85,10 @@ type WorkspaceInstanceUsageData struct {
 	WorkspaceType  WorkspaceType `json:"workspaceType"`
 	WorkspaceClass string        `json:"workspaceClass"`
 	ContextURL     string        `json:"contextURL"`
+	CreationTime   string        `json:"creationTime"`
 	StartTime      string        `json:"startTime"`
 	EndTime        string        `json:"endTime"`
+	StoppedTime    string        `json:"stoppedTime"`
 	UserID         uuid.UUID     `json:"userId"`
 	UserName       string        `json:"userName"`
 	UserAvatarURL  string        `json:"userAvatarURL"`

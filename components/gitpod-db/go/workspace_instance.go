@@ -135,6 +135,7 @@ func queryWorkspaceInstanceForUsage(ctx context.Context, conn *gorm.DB) *gorm.DB
 			"ws.type as workspaceType, "+
 			"wsi.workspaceClass as workspaceClass, "+
 			"wsi.usageAttributionId as usageAttributionId, "+
+			"wsi.creationTime as creationTime, "+
 			"wsi.startedTime as startedTime, "+
 			"wsi.stoppingTime as stoppingTime, "+
 			"wsi.stoppedTime as stoppedTime, "+
@@ -206,6 +207,7 @@ type WorkspaceInstanceForUsage struct {
 	UserName           string         `gorm:"column:userName;type:varchar;size:255;" json:"userName"`
 	UserAvatarURL      string         `gorm:"column:userAvatarURL;type:varchar;size:255;" json:"userAvatarURL"`
 
+	CreationTime VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
 	StartedTime  VarcharTime `gorm:"column:startedTime;type:varchar;size:255;" json:"startedTime"`
 	StoppingTime VarcharTime `gorm:"column:stoppingTime;type:varchar;size:255;" json:"stoppingTime"`
 	StoppedTime  VarcharTime `gorm:"column:stoppedTime;type:varchar;size:255;" json:"stoppedTime"`

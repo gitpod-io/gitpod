@@ -575,6 +575,21 @@ describe("WorkspaceService", async () => {
         expect(!!wsActual.shareable, "shareable should still be false").to.equal(false);
     });
 
+    it("should return supported workspace classes", async () => {
+        const svc = container.get(WorkspaceService);
+
+        Experiments.configureTestingClient({
+            workspace_class_discovery_enabled: true,
+        });
+
+        const workspaceClasses = await svc.getSupportedWorkspaceClasses(owner);
+        expect(workspaceClasses).to.not.be.undefined;
+        expect(workspaceClasses.length).to.be.greaterThan(0);
+
+        expect(workspaceClasses.filter((c) => c.id === "basic").length).to.equal(1);
+        expect(workspaceClasses.filter((c) => c.id === "nextgen-basic").length).to.equal(1);
+    });
+
     it("should controlAdmission - sharing disabled on org", async () => {
         const svc = container.get(WorkspaceService);
         const ws = await createTestWorkspace(svc, org, owner, project);

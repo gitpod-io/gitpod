@@ -81,15 +81,30 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     updateLoggedInUser(user: Partial<User>): Promise<User>;
     sendPhoneNumberVerificationToken(phoneNumber: string): Promise<{ verificationId: string }>;
     verifyPhoneNumberVerificationToken(phoneNumber: string, token: string, verificationId: string): Promise<boolean>;
-    getAuthProviders(): Promise<AuthProviderInfo[]>;
-    getOwnAuthProviders(): Promise<AuthProviderEntry[]>;
-    updateOwnAuthProvider(params: GitpodServer.UpdateOwnAuthProviderParams): Promise<AuthProviderEntry>;
-    deleteOwnAuthProvider(params: GitpodServer.DeleteOwnAuthProviderParams): Promise<void>;
     getConfiguration(): Promise<Configuration>;
     getToken(query: GitpodServer.GetTokenSearchOptions): Promise<Token | undefined>;
     getGitpodTokenScopes(tokenHash: string): Promise<string[]>;
     deleteAccount(): Promise<void>;
     getClientRegion(): Promise<string | undefined>;
+
+    // Auth Provider API
+    getAuthProviders(): Promise<AuthProviderInfo[]>;
+    // user-level
+    getOwnAuthProviders(): Promise<AuthProviderEntry[]>;
+    updateOwnAuthProvider(params: GitpodServer.UpdateOwnAuthProviderParams): Promise<AuthProviderEntry>;
+    deleteOwnAuthProvider(params: GitpodServer.DeleteOwnAuthProviderParams): Promise<void>;
+    // org-level
+    createOrgAuthProvider(params: GitpodServer.CreateOrgAuthProviderParams): Promise<AuthProviderEntry>;
+    updateOrgAuthProvider(params: GitpodServer.UpdateOrgAuthProviderParams): Promise<AuthProviderEntry>;
+    getOrgAuthProviders(params: GitpodServer.GetOrgAuthProviderParams): Promise<AuthProviderEntry[]>;
+    deleteOrgAuthProvider(params: GitpodServer.DeleteOrgAuthProviderParams): Promise<void>;
+    // public-api compatibility
+    /** @deprecated used for public-api compatibility only */
+    getAuthProvider(id: string): Promise<AuthProviderEntry>;
+    /** @deprecated used for public-api compatibility only */
+    deleteAuthProvider(id: string): Promise<void>;
+    /** @deprecated used for public-api compatibility only */
+    updateAuthProvider(id: string, update: AuthProviderEntry.UpdateOAuth2Config): Promise<AuthProviderEntry>;
 
     // Query/retrieve workspaces
     getWorkspaces(options: GitpodServer.GetWorkspacesOptions): Promise<WorkspaceInfo[]>;
@@ -167,10 +182,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     deleteTeam(teamId: string): Promise<void>;
     getOrgSettings(orgId: string): Promise<OrganizationSettings>;
     updateOrgSettings(teamId: string, settings: Partial<OrganizationSettings>): Promise<OrganizationSettings>;
-    createOrgAuthProvider(params: GitpodServer.CreateOrgAuthProviderParams): Promise<AuthProviderEntry>;
-    updateOrgAuthProvider(params: GitpodServer.UpdateOrgAuthProviderParams): Promise<AuthProviderEntry>;
-    getOrgAuthProviders(params: GitpodServer.GetOrgAuthProviderParams): Promise<AuthProviderEntry[]>;
-    deleteOrgAuthProvider(params: GitpodServer.DeleteOrgAuthProviderParams): Promise<void>;
 
     getDefaultWorkspaceImage(params: GetDefaultWorkspaceImageParams): Promise<GetDefaultWorkspaceImageResult>;
 
@@ -429,6 +440,7 @@ export namespace GitpodServer {
     }
 
     export interface StartWorkspaceOptions {
+        //TODO(cw): none of these options can be changed for a workspace that's been created. Should be moved to CreateWorkspaceOptions.
         forceDefaultImage?: boolean;
         workspaceClass?: string;
         ideSettings?: IDESettings;

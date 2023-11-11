@@ -23,7 +23,7 @@ const generatePackage = function (goos, goarch, binaryName, mainFile) {
                 "build",
                 "-trimpath",
                 "-ldflags",
-                "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/common.Version=commit-${__git_commit}'",
+                "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/constants.Version=commit-${__git_commit}'",
                 "-o",
                 binaryName,
                 mainFile,

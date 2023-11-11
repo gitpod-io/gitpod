@@ -1,0 +1,137 @@
+syntax = "proto3";
+
+package gitpod.v1;
+
+import "gitpod/v1/pagination.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+
+service AuthProviderService {
+  // CreateAuthProvider creates a new auth provider.
+  rpc CreateAuthProvider(CreateAuthProviderRequest)
+      returns (CreateAuthProviderResponse) {}
+
+  // GetAuthProvider returns a single auth provider.
+  rpc GetAuthProvider(GetAuthProviderRequest)
+      returns (GetAuthProviderResponse) {}
+
+  // ListAuthProviders lists auth providers.
+  rpc ListAuthProviders(ListAuthProvidersRequest)
+      returns (ListAuthProvidersResponse) {}
+
+  // ListAuthProviderDescriptions lists publicly available descriptions of
+  // authproviders.
+  rpc ListAuthProviderDescriptions(ListAuthProviderDescriptionsRequest)
+      returns (ListAuthProviderDescriptionsResponse) {}
+
+  // UpdateAuthProvider updates an auth provider.
+  rpc UpdateAuthProvider(UpdateAuthProviderRequest)
+      returns (UpdateAuthProviderResponse) {}
+
+  // DeleteAuthProvider deletes the specified auth provider.
+  rpc DeleteAuthProvider(DeleteAuthProviderRequest)
+      returns (DeleteAuthProviderResponse) {}
+}
+
+message CreateAuthProviderRequest {
+  oneof owner {
+    string owner_id = 1;
+    string organization_id = 2;
+  }
+
+  AuthProviderType type = 3;
+  string host = 4;
+
+  OAuth2Config oauth2_config = 5;
+}
+
+message CreateAuthProviderResponse { AuthProvider auth_provider = 1; }
+
+message GetAuthProviderRequest { string auth_provider_id = 1; }
+
+message GetAuthProviderResponse { AuthProvider auth_provider = 1; }
+
+message ListAuthProvidersRequest {
+  PaginationRequest pagination = 1;
+  oneof id {
+    string user_id = 2;
+    string organization_id = 3;
+  }
+}
+
+message ListAuthProvidersResponse {
+  repeated AuthProvider auth_providers = 1;
+  PaginationResponse pagination = 2;
+}
+
+message ListAuthProviderDescriptionsRequest {
+  PaginationRequest pagination = 1;
+  oneof id {
+    string user_id = 2;
+    string organization_id = 3;
+  }
+}
+
+message ListAuthProviderDescriptionsResponse {
+  repeated AuthProviderDescription descriptions = 1;
+  PaginationResponse pagination = 2;
+}
+
+message UpdateAuthProviderRequest {
+  string auth_provider_id = 1;
+  optional string client_id = 2;
+  optional string client_secret = 3;
+}
+
+message UpdateAuthProviderResponse {}
+
+message DeleteAuthProviderRequest { string auth_provider_id = 1; }
+
+message DeleteAuthProviderResponse {}
+
+message AuthProviderDescription {
+  string id = 1;
+
+  AuthProviderType type = 4;
+  string host = 5;
+
+  string icon = 6;
+  string description = 7;
+}
+
+message AuthProvider {
+  string id = 1;
+
+  oneof owner {
+    string owner_id = 2;
+    string organization_id = 3;
+  }
+
+  AuthProviderType type = 4;
+  string host = 5;
+
+  string icon = 6;
+  string description = 7;
+  string settings_url = 8;
+
+  bool verified = 9;
+  bool enable_login = 10;
+
+  repeated string scopes = 11;
+
+  OAuth2Config oauth2_config = 12;
+}
+
+message OAuth2Config {
+  string client_id = 1;
+  string client_secret = 2;
+}
+
+enum AuthProviderType {
+  // This value is not allowed.
+  AUTH_PROVIDER_TYPE_UNSPECIFIED = 0;
+  AUTH_PROVIDER_TYPE_GITHUB = 1;
+  AUTH_PROVIDER_TYPE_GITLAB = 2;
+  AUTH_PROVIDER_TYPE_BITBUCKET = 3;
+  AUTH_PROVIDER_TYPE_BITBUCKET_SERVER = 4;
+}

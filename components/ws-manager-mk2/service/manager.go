@@ -8,6 +8,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -25,6 +26,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
@@ -760,19 +762,29 @@ func (wsm *WorkspaceManagerServer) DescribeCluster(ctx context.Context, req *wsm
 	span, _ := tracing.FromContext(ctx, "DescribeCluster")
 	defer tracing.FinishSpan(span, nil)
 
-	classes := make([]*wsmanapi.WorkspaceClass, len(wsm.Config.WorkspaceClasses))
-
-	i := 0
+	classes := make([]*wsmanapi.WorkspaceClass, 0, len(wsm.Config.WorkspaceClasses))
 	for id, class := range wsm.Config.WorkspaceClasses {
-		classes[i] = &wsmanapi.WorkspaceClass{
-			Id:          id,
-			DisplayName: class.Name,
+		var cpu, ram, disk resource.Quantity
+		if class.Container.Limits != nil {
+			cpu, _ = resource.ParseQuantity(class.Container.Limits.CPU.BurstLimit)
+			ram, _ = resource.ParseQuantity(class.Container.Limits.Memory)
+			disk, _ = resource.ParseQuantity(class.Container.Limits.Storage)
 		}
-		i += 1
+		desc := fmt.Sprintf("%d vCPU, %dGB memory, %dGB disk", cpu.Value(), ram.ScaledValue(resource.Giga), disk.ScaledValue(resource.Giga))
+		classes = append(classes, &wsmanapi.WorkspaceClass{
+			Id:               id,
+			DisplayName:      class.Name,
+			Description:      desc,
+			CreditsPerMinute: class.CreditsPerMinute,
+		})
 	}
+	sort.Slice(classes, func(i, j int) bool {
+		return classes[i].Id < classes[j].Id
+	})
 
 	return &wsmanapi.DescribeClusterResponse{
-		WorkspaceClasses: classes,
+		WorkspaceClasses:        classes,
+		PreferredWorkspaceClass: wsm.Config.PreferredWorkspaceClass,
 	}, nil
 }
 

@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/url"
@@ -88,17 +89,28 @@ var loginCmd = &cobra.Command{
 			}
 			orgsList, err := clnt.Teams.ListTeams(cmd.Context(), connect.NewRequest(&v1.ListTeamsRequest{}))
 			if err != nil {
-				resolutions := []string{
-					"pass an organization ID using --organization-id",
+				var (
+					resolutions     []string
+					unauthenticated bool
+				)
+				if ce := new(connect.Error); errors.As(err, &ce) && ce.Code() == connect.CodeUnauthenticated {
+					unauthenticated = true
+					resolutions = []string{
+						"pass an organization ID using --organization-id",
+					}
+					if loginOpts.Token != "" {
+						resolutions = append(resolutions,
+							"make sure the token has the right scopes",
+							"use a different token",
+							"login without passing a token but using the browser instead",
+						)
+					}
 				}
-				if loginOpts.Token != "" {
-					resolutions = append(resolutions,
-						"make sure the token has the right scopes",
-						"use a different token",
-						"login without passing a token but using the browser instead",
-					)
+				if unauthenticated {
+					return prettyprint.AddResolution(fmt.Errorf("unauthenticated"), resolutions...)
+				} else {
+					return prettyprint.MarkExceptional(err)
 				}
-				return prettyprint.AddResolution(fmt.Errorf("cannot list organizations: %w", err), resolutions...)
 			}
 
 			var orgID string
