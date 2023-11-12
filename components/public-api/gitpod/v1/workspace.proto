@@ -3,6 +3,7 @@ syntax = "proto3";
 package gitpod.v1;
 
 import "google/protobuf/timestamp.proto";
+import "gitpod/v1/pagination.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
 
@@ -16,10 +17,19 @@ service WorkspaceService {
   // WatchWorkspaceStatus watchs the workspaces status changes
   //
   // workspace_id +return NOT_FOUND Workspace does not exist
-  rpc WatchWorkspaceStatus(WatchWorkspaceStatusRequest) returns (stream WatchWorkspaceStatusResponse) {}
+  rpc WatchWorkspaceStatus(WatchWorkspaceStatusRequest)
+      returns (stream WatchWorkspaceStatusResponse) {}
+
+  // ListWorkspaces returns a list of workspaces that match the query.
+  rpc ListWorkspaces(ListWorkspacesRequest) returns (ListWorkspacesResponse) {}
 }
 
-message GetWorkspaceRequest { string workspace_id = 1; }
+message GetWorkspaceRequest {
+  // workspace_id specifies the workspace to get
+  //
+  // +required
+  string workspace_id = 1;
+}
 
 message GetWorkspaceResponse { Workspace workspace = 1; }
 
@@ -36,6 +46,30 @@ message WatchWorkspaceStatusResponse {
 
   // status is the updated status of workspace
   WorkspaceStatus status = 2;
+}
+
+message ListWorkspacesRequest {
+  // pagination contains the pagination options for listing workspaces
+  PaginationRequest pagination = 1;
+
+  // organization_id is the ID of the organization that contains the workspaces
+  //
+  // +required
+  string organization_id = 2;
+
+  // pinned indicates whether to list only pinned workspaces
+  bool pinned = 3;
+
+  // search_term is a search term to filter workspaces by name
+  string search_term = 4;
+}
+
+message ListWorkspacesResponse {
+  // workspaces are the workspaces that matched the query
+  repeated Workspace workspaces = 1;
+
+  // pagination contains the pagination options for listing workspaces
+  PaginationResponse pagination = 2;
 }
 
 // +resource get workspace
