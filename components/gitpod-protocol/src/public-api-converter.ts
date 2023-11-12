@@ -44,6 +44,12 @@ import {
     UserEnvironmentVariable,
 } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
 import { ContextURL } from "./context-url";
+import {
+    Prebuild,
+    PrebuildStatus,
+    PrebuildPhase,
+    PrebuildPhase_Phase,
+} from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { ApplicationError, ErrorCode, ErrorCodes } from "./messaging/error";
 import {
     AuthProviderEntry as AuthProviderProtocol,
@@ -57,12 +63,14 @@ import {
     WorkspaceInfo,
     UserEnvVarValue,
     ProjectEnvVar,
+    PrebuiltWorkspaceState,
 } from "./protocol";
 import {
     OrgMemberInfo,
     OrgMemberRole,
     OrganizationSettings as OrganizationSettingsProtocol,
     PrebuildSettings as PrebuildSettingsProtocol,
+    PrebuildWithStatus,
     Project,
     Organization as ProtocolOrganization,
 } from "./teams-projects-protocol";
@@ -74,6 +82,7 @@ import {
     WorkspaceInstanceConditions,
     WorkspaceInstancePort,
 } from "./workspace-instance";
+import { Author, Commit } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 
 const applicationErrorCode = "application-error-code";
 const applicationErrorData = "application-error-data";
@@ -208,8 +217,8 @@ export class PublicAPIConverter {
             if (reason.code === ErrorCodes.INTERNAL_SERVER_ERROR) {
                 return new ConnectError(reason.message, Code.Internal, metadata, undefined, reason);
             }
-            if (reason.code === ErrorCodes.REQUEST_TIMEOUT) {
-                return new ConnectError(reason.message, Code.Canceled, metadata, undefined, reason);
+            if (reason.code === ErrorCodes.CANCELLED) {
+                return new ConnectError(reason.message, Code.DeadlineExceeded, metadata, undefined, reason);
             }
             return new ConnectError(reason.message, Code.InvalidArgument, metadata, undefined, reason);
         }
@@ -541,5 +550,61 @@ export class PublicAPIConverter {
             default:
                 return ""; // not allowed
         }
+    }
+
+    toPrebuilds(prebuilds: PrebuildWithStatus[]): Prebuild[] {
+        return prebuilds.map((prebuild) => this.toPrebuild(prebuild));
+    }
+
+    toPrebuild(prebuild: PrebuildWithStatus): Prebuild {
+        return new Prebuild({
+            id: prebuild.info.id,
+            workspaceId: prebuild.info.buildWorkspaceId,
+
+            basedOnPrebuildId: prebuild.info.basedOnPrebuildId,
+
+            configurationId: prebuild.info.projectId,
+            ref: prebuild.info.branch,
+            commit: new Commit({
+                message: prebuild.info.changeTitle,
+                author: new Author({
+                    name: prebuild.info.changeAuthor,
+                    avatarUrl: prebuild.info.changeAuthorAvatar,
+                }),
+                authorDate: Timestamp.fromDate(new Date(prebuild.info.changeDate)),
+                sha: prebuild.info.changeHash,
+            }),
+            contextUrl: prebuild.info.changeUrl,
+
+            status: this.toPrebuildStatus(prebuild),
+        });
+    }
+
+    toPrebuildStatus(prebuild: PrebuildWithStatus): PrebuildStatus {
+        return new PrebuildStatus({
+            phase: new PrebuildPhase({
+                name: this.toPrebuildPhase(prebuild.status),
+            }),
+            startTime: Timestamp.fromDate(new Date(prebuild.info.startedAt)),
+            message: prebuild.error,
+        });
+    }
+
+    toPrebuildPhase(status: PrebuiltWorkspaceState): PrebuildPhase_Phase {
+        switch (status) {
+            case "queued":
+                return PrebuildPhase_Phase.QUEUED;
+            case "building":
+                return PrebuildPhase_Phase.BUILDING;
+            case "aborted":
+                return PrebuildPhase_Phase.ABORTED;
+            case "timeout":
+                return PrebuildPhase_Phase.TIMEOUT;
+            case "available":
+                return PrebuildPhase_Phase.AVAILABLE;
+            case "failed":
+                return PrebuildPhase_Phase.FAILED;
+        }
+        return PrebuildPhase_Phase.UNSPECIFIED;
     }
 }

@@ -18,6 +18,10 @@ import { ProjectsService } from "../projects/projects-service";
 import { IncrementalWorkspaceService } from "./incremental-workspace-service";
 import { EntitlementService } from "../billing/entitlement-service";
 import { CommitContext, Project, ProjectSettings, Repository, WorkspaceConfig } from "@gitpod/gitpod-protocol";
+import { Authorizer } from "../authorization/authorizer";
+import { ContextParser } from "../workspace/context-parser-service";
+import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
+import { RedisSubscriber } from "../messaging/redis-subscriber";
 
 const expect = chai.expect;
 
@@ -33,6 +37,10 @@ const containerModule = new ContainerModule((bind) => {
     bind(ProjectsService).toConstantValue({} as any);
     bind(IncrementalWorkspaceService).toConstantValue({} as any);
     bind(EntitlementService).toConstantValue({} as any);
+    bind(Authorizer).toConstantValue({} as any);
+    bind(ContextParser).toConstantValue({} as any);
+    bind(IAnalyticsWriter).toConstantValue({} as any);
+    bind(RedisSubscriber).toConstantValue({} as any);
     // #endregion
 });
 

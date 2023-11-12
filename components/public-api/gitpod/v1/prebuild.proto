@@ -27,7 +27,7 @@ message GetPrebuildResponse {
 message ListPrebuildsRequest {
   PaginationRequest pagination = 1;
   // it is for backward compatiblity with the current dashboard, use prebuild_id instead
-  string build_workspace_id = 2 [deprecated = true];
+  string workspace_id = 2 [deprecated = true];
   string configuration_id = 3;
   string git_ref = 4;
 }
@@ -51,7 +51,10 @@ message CancelPrebuildRequest {
 message CancelPrebuildResponse {}
 
 message WatchPrebuildRequest {
-  repeated string prebuild_ids = 1;
+  oneof scope {
+    string prebuild_id = 1;
+    string configuration_id = 2;
+  }
 }
 message WatchPrebuildResponse {
   Prebuild prebuild = 1;
@@ -59,8 +62,8 @@ message WatchPrebuildResponse {
 
 message Prebuild {
   string id = 1;
-  // it is for backward compatiblity with the current dashboard, use prebuild_id instead
-  string build_workspace_id = 2 [deprecated = true];
+  // it is for backward compatiblity with the current dashboard, use id instead
+  string workspace_id = 2 [deprecated = true];
 
   string based_on_prebuild_id = 3;
 

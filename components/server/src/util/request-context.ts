@@ -99,11 +99,11 @@ export function ctxUserId(): string {
 }
 
 /**
- * @throws 408/REQUEST_TIMEOUT if the request has been aborted
+ * @throws 408/CANCELLED if the request has been aborted
  */
 export function ctxCheckAborted() {
     if (ctxGet().signal.aborted) {
-        throw new ApplicationError(ErrorCodes.REQUEST_TIMEOUT, "Request aborted");
+        throw new ApplicationError(ErrorCodes.CANCELLED, "Request aborted");
     }
 }
 

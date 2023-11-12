@@ -9,15 +9,19 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { getListWorkspacesQueryKey, ListWorkspacesQueryResult } from "./list-workspaces-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
-import { workspaceClient } from "../../service/public-api";
-import { WatchWorkspaceStatusResponse, Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { stream, workspaceClient } from "../../service/public-api";
+import {
+    WatchWorkspaceStatusRequest,
+    WatchWorkspaceStatusResponse,
+    Workspace,
+} from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 export const useListenToWorkspacesWSMessages = () => {
     const queryClient = useQueryClient();
     const organizationId = useCurrentOrg().data?.id;
 
     useEffect(() => {
-        const disposable = disposableWatchWorkspaceStatus(undefined, (status) => {
+        const disposable = watchWorkspaceStatus(undefined, (status) => {
             const queryKey = getListWorkspacesQueryKey(organizationId);
             let foundWorkspaces = false;
 
@@ -47,38 +51,12 @@ export const useListenToWorkspacesWSMessages = () => {
     }, [organizationId, queryClient]);
 };
 
-export const disposableWatchWorkspaceStatus = (
+export function watchWorkspaceStatus(
     workspaceId: string | undefined,
     cb: (response: WatchWorkspaceStatusResponse) => void,
-): Disposable => {
-    const MAX_BACKOFF = 60000;
-    const BASE_BACKOFF = 3000;
-    let backoff = BASE_BACKOFF;
-    const abortController = new AbortController();
-
-    (async () => {
-        while (!abortController.signal.aborted) {
-            try {
-                const it = workspaceClient.watchWorkspaceStatus(
-                    { workspaceId },
-                    {
-                        signal: abortController.signal,
-                    },
-                );
-                for await (const response of it) {
-                    cb(response);
-                    backoff = BASE_BACKOFF;
-                }
-            } catch (e) {
-                backoff = Math.min(2 * backoff, MAX_BACKOFF);
-                console.error("failed to watch workspace status, retrying", e);
-            }
-            const jitter = Math.random() * 0.3 * backoff;
-            const delay = backoff + jitter;
-            await new Promise((resolve) => setTimeout(resolve, delay));
-        }
-    })();
-    return {
-        dispose: () => abortController.abort(),
-    };
-};
+): Disposable {
+    return stream<WatchWorkspaceStatusRequest>(
+        (options) => workspaceClient.watchWorkspaceStatus({ workspaceId }, options),
+        cb,
+    );
+}
