@@ -7,7 +7,7 @@ const generatePackage = function (goos, goarch, binaryName, mainFile) {
     let pkg = {
         name,
         type: "go",
-        srcs: ["go.mod", "go.sum", "**/*.go"],
+        srcs: ["go.mod", "go.sum", "**/*.go", "version.txt"],
         deps: [
             "components/supervisor-api/go:lib",
             "components/gitpod-protocol/go:lib",
@@ -19,14 +19,12 @@ const generatePackage = function (goos, goarch, binaryName, mainFile) {
             packaging: "app",
             dontTest: dontTest,
             buildCommand: [
-                "go",
-                "build",
-                "-trimpath",
-                "-ldflags",
-                "-buildid= -w -s -X 'github.com/gitpod-io/local-app/pkg/constants.Version=commit-${__git_commit}'",
-                "-o",
-                binaryName,
-                mainFile,
+                "sh",
+                "-c",
+                'go build -trimpath -ldflags "-X github.com/gitpod-io/local-app/pkg/constants.GitCommit=${__git_commit} -X github.com/gitpod-io/local-app/pkg/constants.BuildTime=$(date +%s)" -o ' +
+                    binaryName +
+                    " " +
+                    mainFile,
             ],
         },
         binaryName,

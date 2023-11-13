@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/bufbuild/connect-go"
@@ -37,6 +38,9 @@ var loginCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 
+		if !strings.HasPrefix(loginOpts.Host, "http") {
+			loginOpts.Host = "https://" + loginOpts.Host
+		}
 		host, err := url.Parse(loginOpts.Host)
 		if err != nil {
 			return fmt.Errorf("cannot parse host %s: %w", loginOpts.Host, err)
