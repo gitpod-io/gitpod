@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"log/slog"
 	"math/rand"
@@ -45,17 +46,18 @@ func Init(enabled bool, identity, version string, logLevel slog.Level) {
 	opts.Identity = identity
 
 	if segmentKey != "" {
+		var logger segment.Logger
 		if logLevel == slog.LevelDebug {
-			opts.client, _ = segment.NewWithConfig(segmentKey, segment.Config{
-				Verbose: true,
-				Logger:  segment.StdLogger(log.New(os.Stderr, "telemetry ", log.LstdFlags)),
-			})
+			logger = segment.StdLogger(log.New(os.Stderr, "telemetry ", log.LstdFlags))
 		} else {
-			opts.client, _ = segment.NewWithConfig(segmentKey, segment.Config{
-				Verbose: false,
-				Logger:  nil,
-			})
+			// we don't want to log anything
+			log := log.New(os.Stderr, "telemetry ", log.LstdFlags)
+			log.SetOutput(io.Discard)
+			logger = segment.StdLogger(log)
 		}
+		opts.client, _ = segment.NewWithConfig(segmentKey, segment.Config{
+			Logger: logger,
+		})
 	}
 }
 
