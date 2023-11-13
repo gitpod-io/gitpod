@@ -92,6 +92,7 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
 
         return new ListConfigurationsResponse({
             configurations: rows.map((project) => this.apiConverter.toConfiguration(project)),
+            // TODO: add additional pagination metadata to response
             pagination: new PaginationResponse({
                 total,
             }),

@@ -127,13 +127,11 @@ class ProjectDBSpec {
         const storedProject4 = await this.projectDb.storeProject(project4);
         const storedProject5 = await this.projectDb.storeProject(project5);
 
-        // TODO: omit searchTerm
         const allResults = await this.projectDb.findProjectsBySearchTerm({
             offset: 0,
             limit: 10,
             orderBy: "name",
             orderDir: "ASC",
-            searchTerm: "",
         });
         expect(allResults.total).equals(5);
         expect(allResults.rows.length).equal(5);
@@ -144,13 +142,11 @@ class ProjectDBSpec {
         expect(allResults.rows[4].id).to.eq(storedProject5.id);
 
         const pageSize = 3;
-        // TODO: omit searchTerm
         const page1 = await this.projectDb.findProjectsBySearchTerm({
             offset: 0,
             limit: pageSize,
             orderBy: "name",
             orderDir: "ASC",
-            searchTerm: "",
         });
         expect(page1.total).equals(5);
         expect(page1.rows.length).equal(3);
@@ -158,13 +154,11 @@ class ProjectDBSpec {
         expect(page1.rows[1].id).to.eq(storedProject2.id);
         expect(page1.rows[2].id).to.eq(storedProject3.id);
 
-        // TODO: omit searchTerm
         const page2 = await this.projectDb.findProjectsBySearchTerm({
             offset: pageSize * 1,
             limit: pageSize,
             orderBy: "name",
             orderDir: "ASC",
-            searchTerm: "",
         });
         expect(page2.total).equals(5);
         expect(page2.rows.length).equal(2);
