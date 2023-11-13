@@ -7,12 +7,13 @@
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { Button } from "@podkit/buttons/Button";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
-import { FC, useCallback, useState } from "react";
+import { FC, useCallback } from "react";
 import { TextInputField } from "../../components/forms/TextInputField";
 import { useToast } from "../../components/toasts/Toasts";
 import { useUpdateProject } from "../../data/projects/project-queries";
 import { useOnBlurError } from "../../hooks/use-onblur-error";
 import { ConfigurationSettingsField } from "./ConfigurationSettingsField";
+import { useDirtyState } from "../../hooks/use-dirty-state";
 
 const MAX_LENGTH = 100;
 
@@ -23,7 +24,7 @@ type Props = {
 export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
     const { toast } = useToast();
     const updateProject = useUpdateProject();
-    const [projectName, setProjectName] = useState(configuration.name);
+    const [projectName, setProjectName, isNameDirty] = useDirtyState(configuration.name);
 
     const nameError = useOnBlurError("Sorry, this name is too long.", projectName.length <= MAX_LENGTH);
 
@@ -44,11 +45,12 @@ export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
                 {
                     onSuccess: () => {
                         toast(`Configuration name set to "${projectName}".`);
+                        setProjectName(projectName);
                     },
                 },
             );
         },
-        [nameError.isValid, updateProject, configuration.id, projectName, toast],
+        [nameError.isValid, updateProject, configuration.id, projectName, toast, setProjectName],
     );
 
     return (
@@ -63,17 +65,12 @@ export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
                     onBlur={nameError.onBlur}
                 />
                 <div className="flex flex-row items-center justify-start gap-2 mt-4 w-full">
-                    <LoadingButton
-                        className=""
-                        type="submit"
-                        disabled={configuration.name === projectName}
-                        loading={updateProject.isLoading}
-                    >
+                    <LoadingButton type="submit" disabled={isNameDirty} loading={updateProject.isLoading}>
                         Save
                     </LoadingButton>
                     <Button
                         variant="secondary"
-                        disabled={configuration.name === projectName}
+                        disabled={isNameDirty}
                         onClick={() => {
                             setProjectName(configuration.name);
                         }}
