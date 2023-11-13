@@ -20,7 +20,7 @@ import { useDocumentTitle } from "../../hooks/use-document-title";
 import { PaginationControls, PaginationCountText } from "./PaginationControls";
 
 const RepositoryListPage: FC = () => {
-    useDocumentTitle("Repository configuration");
+    useDocumentTitle("Imported repositories");
 
     const history = useHistory();
 
@@ -61,14 +61,14 @@ const RepositoryListPage: FC = () => {
         <>
             <div className="app-container">
                 <PageHeading
-                    title="Repository configuration"
+                    title="Imported repositories"
                     subtitle="Configure and refine the experience of working with a repository in Gitpod"
                     action={<Button onClick={() => setShowCreateProjectModal(true)}>Import Repository</Button>}
                 />
 
                 {/* Search/Filter bar */}
-                <div className="flex flex-row justify-between items-center">
-                    <div className="flex flex-row gap-2 items-center">
+                <div className="flex flex-row flex-wrap justify-between items-center">
+                    <div className="flex flex-row flex-wrap gap-2 items-center">
                         {/* TODO: Add search icon on left and decide on pulling Inputs into podkit */}
                         <TextInput
                             className="w-80"
@@ -102,7 +102,7 @@ const RepositoryListPage: FC = () => {
                         <thead className="[&_th]:p-3 [&_th]:bg-gray-100 [&_th:first-child]:rounded-tl-md [&_th:last-child]:rounded-tr-md text-semibold">
                             <tr className="border-b">
                                 <th className="w-48">Name</th>
-                                <th className="hidden md:table-cell">Repository URL</th>
+                                <th className="hidden md:table-cell">Repository</th>
                                 <th className="hidden md:table-cell w-32">Created</th>
                                 <th className="hidden md:table-cell w-24">Prebuilds</th>
                                 {/* Action column, loading status in header */}
