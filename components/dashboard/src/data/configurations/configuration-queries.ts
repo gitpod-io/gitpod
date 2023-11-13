@@ -60,17 +60,19 @@ export const useConfiguration = (configurationId: string) => {
     });
 };
 
-export const useDeleteConfiguration = (configurationId: string) => {
+type DeleteConfigurationArgs = {
+    configurationId: string;
+};
+export const useDeleteConfiguration = () => {
     const queryClient = useQueryClient();
 
-    return useMutation<void, Error>({
-        mutationKey: getConfigurationQueryKey(configurationId),
-        mutationFn: async () => {
-            await configurationClient.deleteConfiguration({
+    return useMutation({
+        mutationFn: async ({ configurationId }: DeleteConfigurationArgs) => {
+            return await configurationClient.deleteConfiguration({
                 configurationId,
             });
         },
-        onSuccess: () => {
+        onSuccess: (_, { configurationId }) => {
             queryClient.invalidateQueries({ queryKey: ["configurations", "list"] });
             queryClient.invalidateQueries({ queryKey: getConfigurationQueryKey(configurationId) });
         },

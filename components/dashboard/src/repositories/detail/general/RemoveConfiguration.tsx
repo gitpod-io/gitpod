@@ -5,12 +5,12 @@
  */
 
 import { Heading2, Subheading } from "@podkit/typography/Headings";
-import { Button } from "../../components/Button";
+import { Button } from "../../../components/Button";
 import { RemoveConfigurationModal } from "./RemoveConfigurationModal";
 import { useHistory } from "react-router";
 import { useCallback, useState } from "react";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
-import { ConfigurationSettingsField } from "./ConfigurationSettingsField";
+import { ConfigurationSettingsField } from "../ConfigurationSettingsField";
 
 interface Props {
     configuration: Configuration;
@@ -21,7 +21,7 @@ export const RemoveConfiguration = ({ configuration }: Props) => {
 
     const history = useHistory();
     const onProjectRemoved = useCallback(() => {
-        history.push("/projects");
+        history.push("/repositories");
     }, [history]);
 
     return (

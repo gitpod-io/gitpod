@@ -5,9 +5,9 @@
  */
 
 import { FunctionComponent, useCallback } from "react";
-import ConfirmationModal from "../../components/ConfirmationModal";
+import ConfirmationModal from "../../../components/ConfirmationModal";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
-import { useDeleteConfiguration } from "../../data/configurations/configuration-queries";
+import { useDeleteConfiguration } from "../../../data/configurations/configuration-queries";
 
 type RemoveProjectModalProps = {
     configuration: Configuration;
@@ -20,13 +20,16 @@ export const RemoveConfigurationModal: FunctionComponent<RemoveProjectModalProps
     onClose,
     onRemoved,
 }) => {
-    const removeConfigMutation = useDeleteConfiguration(configuration.id);
+    const removeConfigMutation = useDeleteConfiguration();
 
     const removeProject = useCallback(async () => {
-        removeConfigMutation.mutate(undefined, {
-            onSuccess: () => onRemoved(),
-        });
-    }, [removeConfigMutation, onRemoved]);
+        removeConfigMutation.mutate(
+            { configurationId: configuration.id },
+            {
+                onSuccess: () => onRemoved(),
+            },
+        );
+    }, [removeConfigMutation, configuration.id, onRemoved]);
 
     return (
         <ConfirmationModal

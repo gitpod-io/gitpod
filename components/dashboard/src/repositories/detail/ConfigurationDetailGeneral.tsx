@@ -6,10 +6,10 @@
 
 import { FC } from "react";
 import { useParams } from "react-router";
-import { ConfigurationNameForm } from "./ConfigurationName";
+import { ConfigurationNameForm } from "./general/ConfigurationName";
 import { ConfigurationDetailPage } from "./ConfigurationDetailPage";
 import { useConfiguration } from "../../data/configurations/configuration-queries";
-import { RemoveConfiguration } from "./RemoveConfiguration";
+import { RemoveConfiguration } from "./general/RemoveConfiguration";
 
 type PageRouteParams = {
     id: string;

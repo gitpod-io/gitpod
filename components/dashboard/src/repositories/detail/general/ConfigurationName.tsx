@@ -8,12 +8,12 @@ import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configurati
 import { Button } from "@podkit/buttons/Button";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { FC, useCallback } from "react";
-import { TextInputField } from "../../components/forms/TextInputField";
-import { useToast } from "../../components/toasts/Toasts";
-import { useUpdateProject } from "../../data/projects/project-queries";
-import { useOnBlurError } from "../../hooks/use-onblur-error";
-import { ConfigurationSettingsField } from "./ConfigurationSettingsField";
-import { useDirtyState } from "../../hooks/use-dirty-state";
+import { TextInputField } from "../../../components/forms/TextInputField";
+import { useToast } from "../../../components/toasts/Toasts";
+import { useUpdateProject } from "../../../data/projects/project-queries";
+import { useOnBlurError } from "../../../hooks/use-onblur-error";
+import { ConfigurationSettingsField } from "../ConfigurationSettingsField";
+import { useDirtyState } from "../../../hooks/use-dirty-state";
 
 const MAX_LENGTH = 100;
 
