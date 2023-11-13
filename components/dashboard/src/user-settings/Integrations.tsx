@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AuthProviderEntry, User } from "@gitpod/gitpod-protocol";
+import { AuthProviderEntry, User, getScopesForAuthProviderType } from "@gitpod/gitpod-protocol";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import React, { useCallback, useContext, useEffect, useState } from "react";
@@ -31,7 +31,6 @@ import { useFeatureFlag } from "../data/featureflag-query";
 import { EmptyMessage } from "../components/EmptyMessage";
 import { Delayed } from "@podkit/loading/Delayed";
 import { AuthProviderDescription } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
-import { getScopesForAuthProviderType } from "@gitpod/gitpod-protocol/src/auth-providers";
 
 export default function Integrations() {
     return (
