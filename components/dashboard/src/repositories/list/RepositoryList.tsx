@@ -18,6 +18,7 @@ import { PageHeading } from "@podkit/layout/PageHeading";
 import { Button } from "@podkit/buttons/Button";
 import { useDocumentTitle } from "../../hooks/use-document-title";
 import { PaginationControls, PaginationCountText } from "./PaginationControls";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@podkit/tables/Table";
 
 const RepositoryListPage: FC = () => {
     useDocumentTitle("Imported repositories");
@@ -97,30 +98,38 @@ const RepositoryListPage: FC = () => {
                 </div>
 
                 <div className="relative w-full overflow-auto mt-2">
-                    <table className="w-full text-left text-sm">
+                    <Table>
                         {/* TODO: Add sorting controls */}
-                        <thead className="[&_th]:p-3 [&_th]:bg-gray-100 [&_th:first-child]:rounded-tl-md [&_th:last-child]:rounded-tr-md text-semibold">
-                            <tr className="border-b">
-                                <th className="w-48">Name</th>
-                                <th className="hidden md:table-cell">Repository</th>
-                                <th className="hidden md:table-cell w-32">Created</th>
-                                <th className="hidden md:table-cell w-24">Prebuilds</th>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-52">Name</TableHead>
+                                <TableHead hideOnSmallScreen>Repository</TableHead>
+                                <TableHead className="w-32" hideOnSmallScreen>
+                                    Created
+                                </TableHead>
+                                <TableHead className="w-24" hideOnSmallScreen>
+                                    Prebuilds
+                                </TableHead>
                                 {/* Action column, loading status in header */}
-                                <th className="w-24 text-right">
+                                <TableHead className="w-24 text-right">
                                     {isFetching && isPreviousData && (
                                         <div className="flex flex-right justify-end items-center">
-                                            <LoaderIcon className="animate-spin text-gray-500" size={20} />
+                                            {/* TODO: Make a LoadingIcon component */}
+                                            <LoaderIcon
+                                                className="animate-spin text-gray-500 dark:text-gray-300"
+                                                size={20}
+                                            />
                                         </div>
                                     )}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="[&_td]:p-3 [&_td:last-child]:text-right">
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {data?.configurations.map((configuration) => (
                                 <RepositoryListItem key={configuration.id} configuration={configuration} />
                             ))}
-                        </tbody>
-                    </table>
+                        </TableBody>
+                    </Table>
 
                     {totalPages > 1 && (
                         <PaginationControls

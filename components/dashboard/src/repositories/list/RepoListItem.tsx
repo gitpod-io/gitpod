@@ -12,6 +12,7 @@ import { LinkButton } from "@podkit/buttons/LinkButton";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { cn } from "@podkit/lib/cn";
 import { AlertTriangleIcon, CheckCircle2Icon } from "lucide-react";
+import { TableCell, TableRow } from "@podkit/tables/Table";
 
 type Props = {
     configuration: Configuration;
@@ -25,21 +26,22 @@ export const RepositoryListItem: FC<Props> = ({ configuration }) => {
             .toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) ?? "";
 
     return (
-        <tr className="border-b transition-colors hover:bg-muted/50">
-            <td>
+        <TableRow>
+            <TableCell>
                 <div className="flex flex-col gap-1">
                     <Text className="font-semibold">{configuration.name}</Text>
+                    {/* We show the url on a 2nd line for smaller screens since we hide the column */}
                     <TextMuted className="inline md:hidden text-sm">{url}</TextMuted>
                 </div>
-            </td>
+            </TableCell>
 
-            <td className="hidden md:table-cell">
+            <TableCell hideOnSmallScreen>
                 <TextMuted className="text-sm">{url}</TextMuted>
-            </td>
+            </TableCell>
 
-            <td className="hidden md:table-cell">{created}</td>
+            <TableCell hideOnSmallScreen>{created}</TableCell>
 
-            <td className="hidden md:table-cell">
+            <TableCell hideOnSmallScreen>
                 <div className="flex flex-row gap-1 items-center">
                     {prebuildsEnabled ? (
                         <CheckCircle2Icon size={20} className="text-green-500" />
@@ -47,17 +49,17 @@ export const RepositoryListItem: FC<Props> = ({ configuration }) => {
                         <AlertTriangleIcon size={20} className="text-red-500" />
                     )}
 
-                    <TextMuted className={cn(!prebuildsEnabled && "text-red-500")}>
+                    <TextMuted className={cn(!prebuildsEnabled && "text-red-500 dark:text-red-500")}>
                         {prebuildsEnabled ? "Enabled" : "Disabled"}
                     </TextMuted>
                 </div>
-            </td>
+            </TableCell>
 
-            <td>
+            <TableCell>
                 <LinkButton href={`/repositories/${configuration.id}`} variant="secondary">
                     View
                 </LinkButton>
-            </td>
-        </tr>
+            </TableCell>
+        </TableRow>
     );
 };
