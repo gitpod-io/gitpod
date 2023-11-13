@@ -49,6 +49,12 @@ func WithGitpodProxy(gitpodHost string) ClientOpt {
 	}
 }
 
+func WithPollInterval(interval time.Duration) ClientOpt {
+	return func(o *options) {
+		o.pollInterval = interval
+	}
+}
+
 func WithDefaultClient(defaultClient Client) ClientOpt {
 	return func(o *options) {
 		o.defaultClient = defaultClient
