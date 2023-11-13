@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AuthProviderEntry } from "@gitpod/gitpod-protocol";
 import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import { ContextMenuEntry } from "../../components/ContextMenu";
@@ -14,9 +13,10 @@ import { GitIntegrationModal } from "./GitIntegrationModal";
 import { ModalFooterAlert } from "../../components/Modal";
 import { useToast } from "../../components/toasts/Toasts";
 import { useListOrganizationMembers } from "../../data/organizations/members-query";
+import { AuthProvider } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 
 type Props = {
-    provider: AuthProviderEntry;
+    provider: AuthProvider;
 };
 export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) => {
     const [showEditModal, setShowEditModal] = useState(false);
@@ -30,7 +30,7 @@ export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) =
     const menuEntries = useMemo(() => {
         const result: ContextMenuEntry[] = [];
         result.push({
-            title: provider.status === "verified" ? "Edit" : "Activate",
+            title: provider.verified ? "Edit" : "Activate",
             onClick: () => setShowEditModal(true),
             separator: true,
         });
@@ -40,7 +40,7 @@ export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) =
             onClick: () => setShowDeleteConfirmation(true),
         });
         return result;
-    }, [provider.status]);
+    }, [provider.verified]);
 
     const deleteProvider = useCallback(async () => {
         try {
@@ -58,7 +58,7 @@ export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) =
                     <div
                         className={
                             "rounded-full w-3 h-3 text-sm align-middle m-auto " +
-                            (provider.status === "verified" ? "bg-green-500" : "bg-gray-400")
+                            (provider.verified ? "bg-green-500" : "bg-gray-400")
                         }
                     >
                         &nbsp;

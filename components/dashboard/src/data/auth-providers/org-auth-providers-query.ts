@@ -4,13 +4,13 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AuthProviderEntry } from "@gitpod/gitpod-protocol";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { getGitpodService } from "../../service/service";
 import { useCurrentOrg } from "../organizations/orgs-query";
+import { authProviderClient } from "../../service/public-api";
+import { AuthProvider, ListAuthProvidersRequest } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 
-export type OrgAuthProvidersQueryResult = AuthProviderEntry[];
+export type OrgAuthProvidersQueryResult = AuthProvider[];
 export const useOrgAuthProvidersQuery = () => {
     const organization = useCurrentOrg().data;
 
@@ -21,7 +21,16 @@ export const useOrgAuthProvidersQuery = () => {
                 throw new Error("No current organization selected");
             }
 
-            return await getGitpodService().server.getOrgAuthProviders({ organizationId: organization.id });
+            const response = await authProviderClient.listAuthProviders(
+                new ListAuthProvidersRequest({
+                    id: {
+                        case: "organizationId",
+                        value: organization.id,
+                    },
+                }),
+            );
+
+            return response.authProviders;
         },
     });
 };
