@@ -30,6 +30,8 @@ import {
     TakeSnapshotResponse,
     UpdateSSHKeyRequest,
     UpdateSSHKeyResponse,
+    DescribeClusterRequest,
+    DescribeClusterResponse,
 } from "./core_pb";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
@@ -240,6 +242,30 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
                     const span = TraceContext.startSpan(`/ws-manager/describeWorkspace`, ctx);
                     span.log({ attempt });
                     this.client.describeWorkspace(
+                        request,
+                        withTracing({ span }),
+                        this.getDefaultUnaryOptions(),
+                        (err, resp) => {
+                            span.finish();
+                            if (err) {
+                                TraceContext.setError(ctx, err);
+                                reject(err);
+                            } else {
+                                resolve(resp);
+                            }
+                        },
+                    );
+                }),
+        );
+    }
+
+    public describeCluster(ctx: TraceContext, request: DescribeClusterRequest): Promise<DescribeClusterResponse> {
+        return this.retryIfUnavailable(
+            (attempt: number) =>
+                new Promise<DescribeClusterResponse>((resolve, reject) => {
+                    const span = TraceContext.startSpan(`/ws-manager/describeCluster`, ctx);
+                    span.log({ attempt });
+                    this.client.describeCluster(
                         request,
                         withTracing({ span }),
                         this.getDefaultUnaryOptions(),

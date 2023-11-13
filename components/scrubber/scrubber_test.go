@@ -471,6 +471,58 @@ func BenchmarkKeyValue(b *testing.B) {
 	}
 }
 
+// go test -bench=BenchmarkMetrics -benchmem -benchtime=5s
+// regex:
+// BenchmarkMetrics-32            5        1106232258 ns/op            8228 B/op          1 allocs/op
+// strings.Contains:
+// BenchmarkMetrics-32          190          30726112 ns/op         3098513 B/op      61369 allocs/op
+// strings.Contains + lru cache on key:
+// BenchmarkMetrics-32          303          19896634 ns/op         3098512 B/op      61369 allocs/op
+//
+// Commented out to exclude the prometheus dependency.
+// func BenchmarkMetrics(b *testing.B) {
+// 	// 1 MB firehose metrics file.
+// 	// file contains newline-separated json objects in the format {"b": "<data>"}
+// 	// where <data> is a base64-encoded string
+// 	file := "/workspace/gitpod/components/scrubber/metrics-file"
+// 	var data []string
+// 	osFile, err := os.Open(file)
+// 	if err != nil {
+// 		b.Fatal(err)
+// 	}
+// 	defer osFile.Close()
+// 	dec := json.NewDecoder(osFile)
+// 	for dec.More() {
+// 		var obj map[string]string
+// 		err := dec.Decode(&obj)
+// 		if err != nil {
+// 			b.Fatal(err)
+// 		}
+// 		data = append(data, obj["b"])
+// 	}
+
+// 	var reqs []*prompb.WriteRequest
+// 	for _, d := range data {
+// 		reader := base64.NewDecoder(base64.StdEncoding, strings.NewReader(d))
+// 		req, err := remote.DecodeWriteRequest(reader)
+// 		if err != nil {
+// 			b.Fatal(err)
+// 		}
+// 		reqs = append(reqs, req)
+// 	}
+
+// 	b.ResetTimer()
+// 	for i := 0; i < b.N; i++ {
+// 		for _, req := range reqs {
+// 			for _, ts := range req.Timeseries {
+// 				for _, l := range ts.Labels {
+// 					_ = Default.KeyValue(l.Name, l.Value)
+// 				}
+// 			}
+// 		}
+// 	}
+// }
+
 func BenchmarkValue(b *testing.B) {
 	const input = "This text contains {\"json\":\"data\"}, a workspace ID gitpodio-gitpod-uesaddev73c and an email foo@bar.com"
 

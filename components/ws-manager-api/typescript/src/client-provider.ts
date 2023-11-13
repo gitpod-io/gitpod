@@ -19,7 +19,7 @@ import {
     WorkspaceManagerClientProviderCompositeSource,
     WorkspaceManagerClientProviderSource,
 } from "./client-provider-source";
-import { workspaceClusterSetsAuthorized } from "./constraints";
+import { workspaceClusterSetsAuthorized, workspaceClusterSetsAuthorizedAndSupportsWorkspaceClass } from "./constraints";
 import { WorkspaceManagerClient } from "./core_grpc_pb";
 import { linearBackoffStrategy, PromisifiedWorkspaceManagerClient } from "./promisified-client";
 
@@ -47,6 +47,8 @@ export class WorkspaceManagerClientProvider implements Disposable {
      * @param user user who wants to starts a workspace manager
      * @param workspace the workspace we want to start
      * @param instance the instance we want to start
+     * @param region the region we want to start the workspace in
+     * @param constrainWorkspaceClassSupport if true, only clusters that support the workspace class of the workspace are returned
      * @returns a set of workspace clusters we can start the workspace in
      */
     public async getStartClusterSets(
@@ -54,11 +56,16 @@ export class WorkspaceManagerClientProvider implements Disposable {
         workspace?: Workspace,
         instance?: WorkspaceInstance,
         region?: WorkspaceRegion,
+        constrainWorkspaceClassSupport?: boolean,
     ): Promise<IWorkspaceClusterStartSet> {
         const allClusters = await this.source.getAllWorkspaceClusters();
         const availableClusters = allClusters.filter((c) => c.score > 0 && c.state === "available");
 
-        const sets = workspaceClusterSetsAuthorized
+        let baseSets = workspaceClusterSetsAuthorized;
+        if (constrainWorkspaceClassSupport) {
+            baseSets = workspaceClusterSetsAuthorizedAndSupportsWorkspaceClass;
+        }
+        const sets = baseSets
             .map((constraints) => {
                 const r = constraints.constraint(availableClusters, { user, workspace, instance, region });
                 if (!r) {

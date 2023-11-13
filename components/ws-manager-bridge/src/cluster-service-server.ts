@@ -15,6 +15,7 @@ import {
     AdmissionConstraint,
     AdmissionConstraintHasPermission,
     WorkspaceClusterWoTLS,
+    WorkspaceClass,
 } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import {
     ClusterServiceService,
@@ -43,7 +44,7 @@ import { BridgeController } from "./bridge-controller";
 import { Configuration } from "./config";
 import { GRPCError } from "./rpc";
 import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
-import { GetWorkspacesRequest, WorkspaceManagerClient } from "@gitpod/ws-manager/lib";
+import { DescribeClusterRequest, DescribeClusterResponse, WorkspaceManagerClient } from "@gitpod/ws-manager/lib";
 
 export interface ClusterServiceServerOptions {
     port: number;
@@ -144,9 +145,9 @@ export class ClusterService implements IClusterServiceServer {
                 };
 
                 // try to connect to validate the config. Throws an exception if it fails.
-                await new Promise<void>((resolve, reject) => {
+                const clusterDesc = await new Promise<DescribeClusterResponse>((resolve, reject) => {
                     const c = this.clientProvider.createConnection(WorkspaceManagerClient, newCluster);
-                    c.getWorkspaces(new GetWorkspacesRequest(), (err: any) => {
+                    c.describeCluster(new DescribeClusterRequest(), (err: any, resp: DescribeClusterResponse) => {
                         if (err) {
                             reject(
                                 new GRPCError(
@@ -155,9 +156,21 @@ export class ClusterService implements IClusterServiceServer {
                                 ),
                             );
                         } else {
-                            resolve();
+                            resolve(resp);
                         }
                     });
+                });
+
+                // Make a test call to the cluster to validate the TLS config.
+                // We use this test call to gather the available workspace classes.
+                newCluster.preferredWorkspaceClass = clusterDesc.getPreferredWorkspaceClass();
+                newCluster.availableWorkspaceClasses = clusterDesc.getWorkspaceClassesList().map((c) => {
+                    return <WorkspaceClass>{
+                        creditsPerMinute: c.getCreditsPerMinute(),
+                        description: c.getDescription(),
+                        displayName: c.getDisplayName(),
+                        id: c.getId(),
+                    };
                 });
 
                 await this.clusterDB.save(newCluster);
