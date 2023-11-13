@@ -83,7 +83,7 @@ message UpdateAuthProviderRequest {
   optional string client_secret = 3;
 }
 
-message UpdateAuthProviderResponse {}
+message UpdateAuthProviderResponse { AuthProvider auth_provider = 1; }
 
 message DeleteAuthProviderRequest { string auth_provider_id = 1; }
 

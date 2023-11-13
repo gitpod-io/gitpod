@@ -1577,14 +1577,16 @@ export namespace AuthProviderEntry {
         clientId?: string;
         clientSecret?: string;
     };
-    export type UpdateEntry = Pick<AuthProviderEntry, "id" | "ownerId"> &
-        Pick<OAuth2Config, "clientId" | "clientSecret">;
+    export type UpdateEntry = Pick<AuthProviderEntry, "id" | "ownerId"> & {
+        clientId?: string;
+        clientSecret?: string;
+    };
     export type NewOrgEntry = NewEntry & {
         organizationId: string;
     };
     export type UpdateOrgEntry = Pick<AuthProviderEntry, "id"> & {
-        clientId: string;
-        clientSecret: string;
+        clientId?: string;
+        clientSecret?: string;
         organizationId: string;
     };
     export type UpdateOAuth2Config = Pick<OAuth2Config, "clientId" | "clientSecret">;
