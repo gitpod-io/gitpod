@@ -174,6 +174,8 @@ import {
     suggestionFromRecentWorkspace,
     suggestionFromUserRepo,
 } from "./suggested-repos-sorter";
+import { SubjectId } from "../auth/subject-id";
+import { runWithSubjectId } from "../util/request-context";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -466,11 +468,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     private async checkUser(methodName?: string, logPayload?: {}, ctx?: LogContext): Promise<User> {
         // Generally, a user session is required.
-        if (!this.userID) {
+        const userId = this.userID;
+        if (!userId) {
             throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, "User is not authenticated. Please login.");
         }
 
-        const user = await this.userService.findUserById(SYSTEM_USER, this.userID);
+        const user = await runWithSubjectId(SubjectId.fromUserId(SYSTEM_USER), async () =>
+            this.userService.findUserById(SYSTEM_USER, userId),
+        );
         if (user.markedDeleted === true) {
             throw new ApplicationError(ErrorCodes.USER_DELETED, "User has been deleted.");
         }

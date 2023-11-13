@@ -6,6 +6,7 @@
 
 import { inject, injectable } from "inversify";
 import * as grpc from "@grpc/grpc-js";
+import { EventIterator } from "event-iterator";
 import { RedisPublisher, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
     GetWorkspaceTimeoutResult,
@@ -755,7 +756,7 @@ export class WorkspaceService {
         return urls;
     }
 
-    public watchWorkspaceStatus(userId: string, opts: { signal: AbortSignal }) {
+    public watchWorkspaceStatus(userId: string, opts: { signal: AbortSignal }): EventIterator<WorkspaceInstance> {
         return generateAsyncGenerator<WorkspaceInstance>((sink) => {
             try {
                 const dispose = this.subscriber.listenForWorkspaceInstanceUpdates(userId, (_ctx, instance) => {

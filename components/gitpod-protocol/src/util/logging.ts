@@ -17,6 +17,7 @@ export interface LogContext {
     organizationId?: string;
     sessionId?: string;
     userId?: string;
+    subjectId?: string;
     workspaceId?: string;
     instanceId?: string;
 }
