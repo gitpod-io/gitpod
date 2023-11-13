@@ -27,6 +27,12 @@ import (
 	"github.com/opencontainers/go-digest"
 )
 
+const (
+	// GitpodCLIBasePath is the path relative to a Gitpod installation where the latest
+	// binary and manifest can be found.
+	GitpodCLIBasePath = "/static/bin"
+)
+
 // Manifest is the manifest of a selfupdate
 type Manifest struct {
 	Version  *semver.Version `json:"version"`
@@ -138,6 +144,31 @@ func DownloadManifest(ctx context.Context, baseURL string) (res *Manifest, err e
 	return &mf, nil
 }
 
+// DownloadManifestFromActiveContext downloads the manifest from the active configuration context
+func DownloadManifestFromActiveContext(ctx context.Context) (res *Manifest, err error) {
+	cfg := config.FromContext(ctx)
+	if cfg == nil {
+		return nil, nil
+	}
+
+	gpctx, _ := cfg.GetActiveContext()
+	if gpctx == nil {
+		slog.Debug("no active context - autoupdate disabled")
+		return
+	}
+
+	mfctx, cancel := context.WithTimeout(ctx, 1*time.Second)
+	defer cancel()
+	baseURL := *gpctx.Host.URL
+	baseURL.Path = GitpodCLIBasePath
+	mf, err := DownloadManifest(mfctx, baseURL.String())
+	if err != nil {
+		return
+	}
+
+	return mf, nil
+}
+
 // NeedsUpdate checks if the current version is outdated
 func NeedsUpdate(current *semver.Version, manifest *Manifest) bool {
 	return manifest.Version.GreaterThan(current)
@@ -191,25 +222,18 @@ func Autoupdate(ctx context.Context, cfg *config.Config) func() {
 	go func() {
 		defer close(done)
 
-		gpctx, _ := cfg.GetActiveContext()
-		if gpctx == nil {
-			slog.Debug("no active context - autoupdate disabled")
-			return
-		}
-
 		var err error
 		defer func() {
 			if err != nil {
 				slog.Debug("autoupdate failed", "err", err)
 			}
 		}()
-
-		mfctx, cancel := context.WithTimeout(ctx, 1*time.Second)
-		defer cancel()
-		baseURL := *gpctx.Host.URL
-		baseURL.Path = "/static/bin"
-		mf, err := DownloadManifest(mfctx, baseURL.String())
+		mf, err := DownloadManifestFromActiveContext(ctx)
 		if err != nil {
+			return
+		}
+		if mf == nil {
+			slog.Debug("no selfupdate version manifest available")
 			return
 		}
 
