@@ -29,6 +29,21 @@ function iconForAuthProvider(type: string | AuthProviderType) {
     }
 }
 
+export function toAuthProviderLabel(type: AuthProviderType) {
+    switch (type) {
+        case AuthProviderType.GITHUB:
+            return "GitHub";
+        case AuthProviderType.GITLAB:
+            return "GitLab";
+        case AuthProviderType.BITBUCKET:
+            return "Bitbucket Cloud";
+        case AuthProviderType.BITBUCKET_SERVER:
+            return "Bitbucket Server";
+        default:
+            return "Unknown type";
+    }
+}
+
 function simplifyProviderName(host: string) {
     switch (host) {
         case "github.com":

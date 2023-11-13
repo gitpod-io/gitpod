@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AuthProviderEntry, AuthProviderInfo, User } from "@gitpod/gitpod-protocol";
+import { AuthProviderEntry, User } from "@gitpod/gitpod-protocol";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import React, { useCallback, useContext, useEffect, useState } from "react";
@@ -19,17 +19,19 @@ import Modal, { ModalBody, ModalHeader, ModalFooter } from "../components/Modal"
 import { Heading2, Subheading } from "../components/typography/headings";
 import copy from "../images/copy.svg";
 import exclamation from "../images/exclamation.svg";
-import { openAuthorizeWindow } from "../provider-utils";
+import { openAuthorizeWindow, toAuthProviderLabel } from "../provider-utils";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import { AuthEntryItem } from "./AuthEntryItem";
 import { IntegrationEntryItem } from "./IntegrationItemEntry";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { SelectAccountModal } from "./SelectAccountModal";
-import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
+import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-query";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { EmptyMessage } from "../components/EmptyMessage";
 import { Delayed } from "@podkit/loading/Delayed";
+import { AuthProviderDescription } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import { getScopesForAuthProviderType } from "@gitpod/gitpod-protocol/src/auth-providers";
 
 export default function Integrations() {
     return (
@@ -46,11 +48,13 @@ export default function Integrations() {
 function GitProviders() {
     const { user, setUser } = useContext(UserContext);
 
-    const authProviders = useAuthProviders();
+    const authProviders = useAuthProviderDescriptions();
     const [allScopes, setAllScopes] = useState<Map<string, string[]>>(new Map());
-    const [disconnectModal, setDisconnectModal] = useState<{ provider: AuthProviderInfo } | undefined>(undefined);
+    const [disconnectModal, setDisconnectModal] = useState<{ provider: AuthProviderDescription } | undefined>(
+        undefined,
+    );
     const [editModal, setEditModal] = useState<
-        { provider: AuthProviderInfo; prevScopes: Set<string>; nextScopes: Set<string> } | undefined
+        { provider: AuthProviderDescription; prevScopes: Set<string>; nextScopes: Set<string> } | undefined
     >(undefined);
     const [selectAccountModal, setSelectAccountModal] = useState<SelectAccountPayload | undefined>(undefined);
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
@@ -59,14 +63,14 @@ function GitProviders() {
         if (user) {
             const scopesByProvider = new Map<string, string[]>();
             const connectedProviders = user.identities.map((i) =>
-                authProviders.data?.find((ap) => ap.authProviderId === i.authProviderId),
+                authProviders.data?.find((ap) => ap.id === i.authProviderId),
             );
             for (let provider of connectedProviders) {
                 if (!provider) {
                     continue;
                 }
                 const token = await getGitpodService().server.getToken({ host: provider.host });
-                scopesByProvider.set(provider.authProviderId, token?.scopes?.slice() || []);
+                scopesByProvider.set(provider.id, token?.scopes?.slice() || []);
             }
             setAllScopes(scopesByProvider);
         }
@@ -80,29 +84,27 @@ function GitProviders() {
         return !!user?.identities?.find((i) => i.authProviderId === authProviderId);
     };
 
-    const gitProviderMenu = (provider: AuthProviderInfo) => {
+    const gitProviderMenu = (provider: AuthProviderDescription) => {
         const result: ContextMenuEntry[] = [];
-        const connected = isConnected(provider.authProviderId);
+        const connected = isConnected(provider.id);
         if (connected) {
             result.push({
                 title: "Edit Permissions",
                 onClick: () => startEditPermissions(provider),
-                separator: !provider.settingsUrl,
+                // separator: !provider.settingsUrl,
             });
-            if (provider.settingsUrl) {
-                result.push({
-                    title: `Manage on ${provider.host}`,
-                    onClick: () => {
-                        window.open(provider.settingsUrl, "_blank", "noopener,noreferrer");
-                    },
-                    separator: true,
-                });
-            }
+            // if (provider.settingsUrl) {
+            //     result.push({
+            //         title: `Manage on ${provider.host}`,
+            //         onClick: () => {
+            //             window.open(provider.settingsUrl, "_blank", "noopener,noreferrer");
+            //         },
+            //         separator: true,
+            //     });
+            // }
             const canDisconnect =
                 (user && User.isOrganizationOwned(user)) ||
-                authProviders.data?.some(
-                    (p) => p.authProviderId !== provider.authProviderId && isConnected(p.authProviderId),
-                );
+                authProviders.data?.some((p) => p.id !== provider.id && isConnected(p.id));
             if (canDisconnect) {
                 result.push({
                     title: "Disconnect",
@@ -128,11 +130,11 @@ function GitProviders() {
         return allScopes.get(authProviderId);
     };
 
-    const connect = async (ap: AuthProviderInfo) => {
-        await doAuthorize(ap.host, ap.requirements?.default);
+    const connect = async (ap: AuthProviderDescription) => {
+        await doAuthorize(ap.host);
     };
 
-    const disconnect = async (ap: AuthProviderInfo) => {
+    const disconnect = async (ap: AuthProviderDescription) => {
         setDisconnectModal(undefined);
         const returnTo = gitpodHostUrl.with({ pathname: "complete-auth", search: "message=success" }).toString();
         const deauthorizeUrl = gitpodHostUrl
@@ -157,7 +159,7 @@ function GitProviders() {
             );
     };
 
-    const startEditPermissions = async (provider: AuthProviderInfo) => {
+    const startEditPermissions = async (provider: AuthProviderDescription) => {
         // todo: add spinner
 
         const token = await getGitpodService().server.getToken({ host: provider.host });
@@ -271,7 +273,7 @@ function GitProviders() {
                     title="Disconnect Provider"
                     areYouSureText="Are you sure you want to disconnect the following provider?"
                     children={{
-                        name: disconnectModal.provider.authProviderType,
+                        name: toAuthProviderLabel(disconnectModal.provider.type),
                         description: disconnectModal.provider.host,
                     }}
                     buttonText="Disconnect Provider"
@@ -296,14 +298,14 @@ function GitProviders() {
                     <ModalHeader>Edit Permissions</ModalHeader>
                     <ModalBody>
                         <CheckboxListField label="Configure provider permissions.">
-                            {(editModal.provider.scopes || []).map((scope) => (
+                            {(getScopesForAuthProviderType(editModal.provider.type) || []).map((scope) => (
                                 <CheckboxInputField
                                     key={scope}
                                     value={scope}
                                     label={scope}
                                     hint={getDescriptionForScope(scope)}
                                     checked={editModal.nextScopes.has(scope)}
-                                    disabled={editModal.provider.requirements?.default.includes(scope)}
+                                    // disabled={editModal.provider.requirements?.default.includes(scope)} // what?!
                                     topMargin={false}
                                     onChange={(checked) => onChangeScopeHandler(checked, scope)}
                                 />
@@ -340,7 +342,7 @@ function GitProviders() {
                     ) : (
                         authProviders.data.map((ap) => (
                             <AuthEntryItem
-                                key={ap.authProviderId}
+                                key={ap.id}
                                 isConnected={isConnected}
                                 gitProviderMenu={gitProviderMenu}
                                 getUsername={getUsername}
