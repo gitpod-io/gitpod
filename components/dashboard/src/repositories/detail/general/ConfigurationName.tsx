@@ -69,6 +69,7 @@ export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
                         Save
                     </LoadingButton>
                     <Button
+                        type="button"
                         variant="secondary"
                         disabled={!isNameDirty}
                         onClick={() => {
