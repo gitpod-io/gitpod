@@ -65,12 +65,12 @@ export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
                     onBlur={nameError.onBlur}
                 />
                 <div className="flex flex-row items-center justify-start gap-2 mt-4 w-full">
-                    <LoadingButton type="submit" disabled={isNameDirty} loading={updateProject.isLoading}>
+                    <LoadingButton type="submit" disabled={!isNameDirty} loading={updateProject.isLoading}>
                         Save
                     </LoadingButton>
                     <Button
                         variant="secondary"
-                        disabled={isNameDirty}
+                        disabled={!isNameDirty}
                         onClick={() => {
                             setProjectName(configuration.name);
                         }}
