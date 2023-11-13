@@ -6,38 +6,49 @@
 
 import { cn } from "@podkit/lib/cn";
 import { FC } from "react";
+import { Slot } from "@radix-ui/react-slot";
 
 type HeadingProps = {
     id?: string;
     tracking?: "tight" | "wide";
     color?: "light" | "dark";
     className?: string;
+    asChild?: boolean;
 };
 
-export const Heading1: FC<HeadingProps> = ({ id, color, tracking, className, children }) => {
+export const Heading1: FC<HeadingProps> = ({ id, color, tracking, className, children, asChild }) => {
+    const Comp = asChild ? Slot : "h1";
+
     return (
-        <h1
+        <Comp
             id={id}
             className={cn(getHeadingColor(color), getTracking(tracking), "font-bold text-4xl truncate", className)}
         >
             {children}
-        </h1>
+        </Comp>
     );
 };
 
-export const Heading2: FC<HeadingProps> = ({ id, color, tracking, className, children }) => {
+export const Heading2: FC<HeadingProps> = ({ id, color, tracking, className, children, asChild }) => {
+    const Comp = asChild ? Slot : "h2";
+
     return (
-        <h2 id={id} className={cn(getHeadingColor(color), getTracking(tracking), "font-semibold text-2xl", className)}>
+        <Comp
+            id={id}
+            className={cn(getHeadingColor(color), getTracking(tracking), "font-semibold text-2xl", className)}
+        >
             {children}
-        </h2>
+        </Comp>
     );
 };
 
-export const Heading3: FC<HeadingProps> = ({ id, color, tracking, className, children }) => {
+export const Heading3: FC<HeadingProps> = ({ id, color, tracking, className, children, asChild }) => {
+    const Comp = asChild ? Slot : "h3";
+
     return (
-        <h3 id={id} className={cn(getHeadingColor(color), getTracking(tracking), "font-semibold text-lg", className)}>
+        <Comp id={id} className={cn(getHeadingColor(color), getTracking(tracking), "font-semibold text-lg", className)}>
             {children}
-        </h3>
+        </Comp>
     );
 };
 

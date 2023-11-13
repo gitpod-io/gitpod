@@ -9,6 +9,7 @@ import { cn } from "@podkit/lib/cn";
 import { ChevronLeft } from "lucide-react";
 import type { FC } from "react";
 import { MiddleDot } from "../../typography/MiddleDot";
+import { Heading3 } from "@podkit/typography/Headings";
 
 interface BreadcrumbPageNavProps {
     /**
@@ -38,7 +39,9 @@ export const BreadcrumbNav: FC<BreadcrumbPageNavProps> = ({ pageTitle, pageDescr
                     <ChevronLeft size={24} />
                 </LinkButton>
             )}
-            <h1 className="text-lg font-bold">{pageTitle}</h1>
+            <Heading3 asChild>
+                <h1>{pageTitle}</h1>
+            </Heading3>
             <MiddleDot />
             <p className="text-gray-900 dark:text-gray-300 text-lg">{pageDescription}</p>
         </section>
