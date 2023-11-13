@@ -121,7 +121,7 @@ func TestDownloadManifest(t *testing.T) {
 						Version: semver.MustParse("0.2.0"),
 						Binaries: []Binary{
 							{
-								URL:      url + "/gitpod-linux-amd64",
+								URL:      url + GitpodCLIBasePath + "/gitpod-linux-amd64",
 								Filename: "gitpod-linux-amd64",
 								OS:       "linux",
 								Arch:     "amd64",
@@ -136,7 +136,7 @@ func TestDownloadManifest(t *testing.T) {
 			Name: "not found",
 			Expectation: func(url string) Expectation {
 				return Expectation{
-					Error: "download manifest from " + url + "/manifest.json: 404 Not Found",
+					Error: "cannot download manifest from " + url + GitpodCLIBasePath + "/manifest.json: 404 Not Found",
 				}
 			},
 		},
@@ -146,7 +146,7 @@ func TestDownloadManifest(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			mux := http.NewServeMux()
 			if test.Manifest != nil {
-				mux.Handle("/manifest.json", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				mux.Handle(filepath.Join(GitpodCLIBasePath, "/manifest.json"), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					_, _ = w.Write(test.Manifest)
 				}))
 			}
@@ -209,11 +209,11 @@ func TestReplaceSelf(t *testing.T) {
 			}
 
 			mux := http.NewServeMux()
-			mux.Handle("/manifest.json", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			mux.Handle(GitpodCLIBasePath+"/manifest.json", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				_ = json.NewEncoder(w).Encode(mf)
 			}))
 			for _, f := range test.Files {
-				mux.Handle("/"+f.Filename, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				mux.Handle(GitpodCLIBasePath+"/"+f.Filename, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					_, _ = w.Write(f.Content)
 				}))
 			}

@@ -101,10 +101,12 @@ var rootCmd = &cobra.Command{
 		telemetry.Init(telemetryEnabled, cfg.Telemetry.Identity, constants.Version.String())
 		telemetry.RecordCommand(cmd)
 
-		waitForUpdate := selfupdate.Autoupdate(cmd.Context(), cfg)
-		cmd.PostRunE = func(cmd *cobra.Command, args []string) error {
-			waitForUpdate()
-			return nil
+		if !isVersionCommand(cmd) {
+			waitForUpdate := selfupdate.Autoupdate(cmd.Context(), cfg)
+			cmd.PostRunE = func(cmd *cobra.Command, args []string) error {
+				waitForUpdate()
+				return nil
+			}
 		}
 
 		return nil

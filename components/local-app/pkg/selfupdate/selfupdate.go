@@ -18,11 +18,13 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/gitpod-io/local-app/pkg/config"
 	"github.com/gitpod-io/local-app/pkg/constants"
+	"github.com/gitpod-io/local-app/pkg/prettyprint"
 	"github.com/inconshreveable/go-update"
 	"github.com/opencontainers/go-digest"
 )
@@ -107,7 +109,11 @@ func GenerateManifest(version *semver.Version, loc string, filenameParser Filena
 func DownloadManifest(ctx context.Context, baseURL string) (res *Manifest, err error) {
 	defer func() {
 		if err != nil {
-			err = fmt.Errorf("download manifest from %s/manifest.json: %w", baseURL, err)
+			pth := strings.TrimSuffix(baseURL, "/") + GitpodCLIBasePath
+			err = prettyprint.AddResolution(fmt.Errorf("cannot download manifest from %s/manifest.json: %w", pth, err),
+				"make sure you are connected to the internet",
+				"make sure you can reach "+baseURL,
+			)
 		}
 	}()
 
@@ -115,6 +121,8 @@ func DownloadManifest(ctx context.Context, baseURL string) (res *Manifest, err e
 	if err != nil {
 		return nil, err
 	}
+	murl.Path = filepath.Join(murl.Path, GitpodCLIBasePath)
+
 	originalPath := murl.Path
 	murl.Path = filepath.Join(murl.Path, "manifest.json")
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, murl.String(), nil)
@@ -159,9 +167,7 @@ func DownloadManifestFromActiveContext(ctx context.Context) (res *Manifest, err 
 
 	mfctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
-	baseURL := *gpctx.Host.URL
-	baseURL.Path = GitpodCLIBasePath
-	mf, err := DownloadManifest(mfctx, baseURL.String())
+	mf, err := DownloadManifest(mfctx, gpctx.Host.URL.String())
 	if err != nil {
 		return
 	}
@@ -225,7 +231,7 @@ func Autoupdate(ctx context.Context, cfg *config.Config) func() {
 		var err error
 		defer func() {
 			if err != nil {
-				slog.Debug("autoupdate failed", "err", err)
+				slog.Debug("version check failed", "err", err)
 			}
 		}()
 		mf, err := DownloadManifestFromActiveContext(ctx)
@@ -242,10 +248,7 @@ func Autoupdate(ctx context.Context, cfg *config.Config) func() {
 			return
 		}
 
-		dlctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
-		defer cancel()
-		slog.Debug("attempting to autoupdate", "current", constants.Version, "latest", mf.Version)
-		err = ReplaceSelf(dlctx, mf)
+		slog.Warn("new version available - run `"+os.Args[0]+" version update` to update", "current", constants.Version, "latest", mf.Version)
 	}()
 
 	return func() {
@@ -253,7 +256,7 @@ func Autoupdate(ctx context.Context, cfg *config.Config) func() {
 		case <-done:
 			return
 		case <-time.After(5 * time.Second):
-			slog.Warn("autoupdate is still running - press Ctrl+C to abort")
+			slog.Warn("version check is still running - press Ctrl+C to abort")
 		}
 	}
 }

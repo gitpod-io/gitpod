@@ -45,15 +45,23 @@ var versionCmd = &cobra.Command{
 			}
 		}
 
-		return WriteTabular([]Version{v}, formatOpts{}, prettyprint.WriterFormatNarrow)
+		return WriteTabular([]Version{v}, versionOpts.Format, prettyprint.WriterFormatNarrow)
 	},
 }
 
 var versionOpts struct {
+	Format          formatOpts
 	DontCheckLatest bool
 }
 
 func init() {
 	rootCmd.AddCommand(versionCmd)
+	addFormatFlags(versionCmd, &versionOpts.Format)
+
 	versionCmd.Flags().BoolVar(&versionOpts.DontCheckLatest, "dont-check-latest", false, "Don't check for the latest available version")
+}
+
+// isVersionCommand returns true if the given command is a version command
+func isVersionCommand(cmd *cobra.Command) bool {
+	return cmd == versionCmd || cmd.Parent() == versionCmd
 }
