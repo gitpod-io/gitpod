@@ -7,13 +7,12 @@
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { Button } from "@podkit/buttons/Button";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
-import { FC, useCallback } from "react";
+import { FC, useCallback, useMemo, useState } from "react";
 import { TextInputField } from "../../../components/forms/TextInputField";
 import { useToast } from "../../../components/toasts/Toasts";
 import { useUpdateProject } from "../../../data/projects/project-queries";
 import { useOnBlurError } from "../../../hooks/use-onblur-error";
 import { ConfigurationSettingsField } from "../ConfigurationSettingsField";
-import { useDirtyState } from "../../../hooks/use-dirty-state";
 
 const MAX_LENGTH = 100;
 
@@ -24,8 +23,9 @@ type Props = {
 export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
     const { toast } = useToast();
     const updateProject = useUpdateProject();
-    const [projectName, setProjectName, isNameDirty] = useDirtyState(configuration.name);
+    const [projectName, setProjectName] = useState(configuration.name);
 
+    const nameChanged = useMemo(() => projectName !== configuration.name, [projectName, configuration.name]);
     const nameError = useOnBlurError("Sorry, this name is too long.", projectName.length <= MAX_LENGTH);
 
     const updateName = useCallback(
@@ -64,13 +64,13 @@ export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
                     onBlur={nameError.onBlur}
                 />
                 <div className="flex flex-row items-center justify-start gap-2 mt-4 w-full">
-                    <LoadingButton type="submit" disabled={!isNameDirty} loading={updateProject.isLoading}>
+                    <LoadingButton type="submit" disabled={!nameChanged} loading={updateProject.isLoading}>
                         Save
                     </LoadingButton>
                     <Button
                         type="button"
                         variant="secondary"
-                        disabled={!isNameDirty}
+                        disabled={!nameChanged}
                         onClick={() => {
                             setProjectName(configuration.name);
                         }}
