@@ -82,6 +82,7 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         const offset = currentPage > 1 ? (currentPage - 1) * limit : 0;
 
         const { rows, total } = await this.projectService.findProjects(context.user.id, {
+            organizationId: req.organizationId,
             searchTerm: req.searchTerm,
             orderBy: "name",
             orderDir: "ASC",

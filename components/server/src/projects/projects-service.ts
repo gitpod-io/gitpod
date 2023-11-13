@@ -71,6 +71,12 @@ export class ProjectsService {
             organizationId?: string;
         },
     ): Promise<{ total: number; rows: Project[] }> {
+        if (searchOptions.organizationId) {
+            await this.auth.checkPermissionOnOrganization(userId, "read_info", searchOptions.organizationId);
+        } else {
+            // If no org is provided need to check that user has installation admin scope
+        }
+
         const projects = await this.projectDB.findProjectsBySearchTerm({
             offset: searchOptions.offset || 0,
             limit: searchOptions.limit || 1000,
