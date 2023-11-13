@@ -36,7 +36,7 @@ export function ConfigurationDetailPage({ children, configurationQuery, id }: Pa
             />
             <WidePageWithSubMenu subMenu={settingsMenu} navTitle="Configuration Settings">
                 {isLoading && <Loader2 className="animate-spin" />}
-                {error && (
+                {error ? (
                     <div className="gap-4">
                         <Alert type="error">
                             <span>Failed to load repository configuration</span>
@@ -51,14 +51,15 @@ export function ConfigurationDetailPage({ children, configurationQuery, id }: Pa
                             Retry
                         </Button>
                     </div>
-                )}
-                {!isLoading &&
+                ) : (
+                    !isLoading &&
                     (!data ? (
                         // TODO: add a better not-found UI w/ link back to repositories
                         <div>Sorry, we couldn't find that repository configuration.</div>
                     ) : (
                         children
-                    ))}
+                    ))
+                )}
             </WidePageWithSubMenu>
         </div>
     );
