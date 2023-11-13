@@ -12,13 +12,7 @@ export interface ProjectDB extends TransactionalDB<ProjectDB> {
     findProjectById(projectId: string): Promise<Project | undefined>;
     findProjectsByCloneUrl(cloneUrl: string): Promise<Project[]>;
     findProjects(orgID: string): Promise<Project[]>;
-    findProjectsBySearchTerm(
-        offset: number,
-        limit: number,
-        orderBy: keyof Project,
-        orderDir: "ASC" | "DESC",
-        searchTerm: string,
-    ): Promise<{ total: number; rows: Project[] }>;
+    findProjectsBySearchTerm(args: FindProjectsBySearchTermArgs): Promise<{ total: number; rows: Project[] }>;
     storeProject(project: Project): Promise<Project>;
     updateProject(partialProject: PartialProject): Promise<void>;
     markDeleted(projectId: string): Promise<void>;
@@ -37,3 +31,12 @@ export interface ProjectDB extends TransactionalDB<ProjectDB> {
     getProjectUsage(projectId: string): Promise<ProjectUsage | undefined>;
     updateProjectUsage(projectId: string, usage: Partial<ProjectUsage>): Promise<void>;
 }
+
+export type FindProjectsBySearchTermArgs = {
+    offset: number;
+    limit: number;
+    orderBy: keyof Project;
+    orderDir: "ASC" | "DESC";
+    searchTerm?: string;
+    organizationId?: string;
+};
