@@ -45,12 +45,11 @@ export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
                 {
                     onSuccess: () => {
                         toast(`Configuration name set to "${projectName}".`);
-                        setProjectName(projectName);
                     },
                 },
             );
         },
-        [nameError.isValid, updateProject, configuration.id, projectName, toast, setProjectName],
+        [nameError.isValid, updateProject, configuration.id, projectName, toast],
     );
 
     return (
