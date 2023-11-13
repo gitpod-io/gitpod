@@ -38,7 +38,7 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
 
     const urlHash = useMemo(() => getURLHash(), []);
 
-    const authProviderDescriptions = useAuthProviderDescriptions();
+    const authProviders = useAuthProviderDescriptions();
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
     const [hostFromContext, setHostFromContext] = useState<string | undefined>();
     const [repoPathname, setRepoPathname] = useState<string | undefined>();
@@ -59,8 +59,8 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
     }, [urlHash]);
 
     let providerFromContext: AuthProviderDescription | undefined;
-    if (hostFromContext && authProviderDescriptions.data) {
-        providerFromContext = authProviderDescriptions.data.find((provider) => provider.host === hostFromContext);
+    if (hostFromContext && authProviders.data) {
+        providerFromContext = authProviders.data.find((provider) => provider.host === hostFromContext);
     }
 
     const updateUser = useCallback(async () => {
@@ -164,7 +164,7 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                                             </span>
                                         </button>
                                     ) : (
-                                        authProviderDescriptions.data?.map((ap) => (
+                                        authProviders.data?.map((ap) => (
                                             <button
                                                 key={"button" + ap.host}
                                                 className="btn-login flex-none w-56 h-10 p-0 inline-flex rounded-xl"
@@ -179,10 +179,7 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                                     )}
                                     <SSOLoginForm
                                         onSuccess={authorizeSuccessful}
-                                        singleOrgMode={
-                                            !!authProviderDescriptions.data &&
-                                            authProviderDescriptions.data.length === 0
-                                        }
+                                        singleOrgMode={!!authProviders.data && authProviders.data.length === 0}
                                     />
                                 </div>
                                 {errorMessage && <ErrorMessage imgSrc={exclamation} message={errorMessage} />}
