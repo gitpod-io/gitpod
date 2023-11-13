@@ -5,7 +5,7 @@
  */
 
 import { injectable, inject } from "inversify";
-import { AuthProviderEntry as AuthProviderEntry, AuthProviderInfo, User } from "@gitpod/gitpod-protocol";
+import { AuthProviderEntry as AuthProviderEntry, AuthProviderInfo, OAuth2Config, User } from "@gitpod/gitpod-protocol";
 import { AuthProviderParams } from "./auth-provider";
 import { AuthProviderEntryDB, TeamDB } from "@gitpod/gitpod-db/lib";
 import { Config } from "../config";
@@ -236,10 +236,10 @@ export class AuthProviderService {
         }
 
         // update config on demand
-        const oauth = {
+        const oauth: OAuth2Config = {
             ...existing.oauth,
-            clientId: entry.clientId,
-            clientSecret: entry.clientSecret || existing.oauth.clientSecret, // FE may send empty ("") if not changed
+            clientId: entry.clientId || existing.oauth?.clientId,
+            clientSecret: entry.clientSecret || existing.oauth?.clientSecret, // FE may send empty ("") if not changed
         };
         const authProvider: AuthProviderEntry = {
             ...existing,
@@ -297,10 +297,10 @@ export class AuthProviderService {
         }
 
         // update config on demand
-        const oauth = {
+        const oauth: OAuth2Config = {
             ...existing.oauth,
-            clientId: entry.clientId,
-            clientSecret: entry.clientSecret || existing.oauth.clientSecret, // FE may send empty ("") if not changed
+            clientId: entry.clientId || existing.oauth?.clientId,
+            clientSecret: entry.clientSecret || existing.oauth?.clientSecret, // FE may send empty ("") if not changed
         };
         const authProvider: AuthProviderEntry = {
             ...existing,
@@ -308,7 +308,7 @@ export class AuthProviderService {
             status: "pending",
         };
 
-        const result = await this.authProviderDB.storeAuthProvider(authProvider as AuthProviderEntry, true);
+        const result = await this.authProviderDB.storeAuthProvider(authProvider, true);
         return AuthProviderEntry.redact(result);
     }
 

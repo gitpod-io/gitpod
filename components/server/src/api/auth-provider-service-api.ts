@@ -142,7 +142,7 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
         }
         const clientId = request.clientId;
         const clientSecret = request.clientSecret;
-        if (!clientId || typeof clientSecret === "undefined") {
+        if (!clientId && !clientSecret) {
             throw new ConnectError("clientId or clientSecret are required", Code.InvalidArgument);
         }
 
