@@ -11,6 +11,7 @@ import { Label } from "@podkit/forms/Label";
 import { RadioGroup, RadioGroupItem } from "@podkit/forms/RadioListField";
 import { TextMuted } from "@podkit/typography/TextMuted";
 import { Heading2 } from "@podkit/typography/Headings";
+import { ConfigurationSettingsField } from "../ConfigurationSettingsField";
 
 interface Props {
     configuration: Configuration;
@@ -31,7 +32,7 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
     }
 
     return (
-        <section>
+        <ConfigurationSettingsField>
             <div className="mb-4">
                 <Heading2 asChild>
                     <h2 className="text-base">Workspace Size Options</h2>
@@ -40,7 +41,7 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
             </div>
             <RadioGroup value={selectedValue} onValueChange={setSelectedValue}>
                 {classes.map((wsClass) => (
-                    <div className="flex items-start space-x-2 my-4">
+                    <div className="flex items-start space-x-2 my-2">
                         <RadioGroupItem value={wsClass.id} id={wsClass.id} />
                         <div className="flex flex-col">
                             <Label htmlFor={wsClass.id} className="font-bold">
@@ -51,6 +52,6 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
                     </div>
                 ))}
             </RadioGroup>
-        </section>
+        </ConfigurationSettingsField>
     );
 };
