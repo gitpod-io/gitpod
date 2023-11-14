@@ -5,13 +5,15 @@
  */
 
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useWorkspaceClasses } from "../../../data/workspaces/workspace-classes-query";
 import { Label } from "@podkit/forms/Label";
 import { RadioGroup, RadioGroupItem } from "@podkit/forms/RadioListField";
 import { TextMuted } from "@podkit/typography/TextMuted";
 import { Heading2 } from "@podkit/typography/Headings";
 import { ConfigurationSettingsField } from "../ConfigurationSettingsField";
+import { useUpdateProject } from "../../../data/projects/project-queries";
+import { useToast } from "../../../components/toasts/Toasts";
 
 interface Props {
     configuration: Configuration;
@@ -21,7 +23,35 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
     const [selectedValue, setSelectedValue] = useState(
         configuration.workspaceSettings?.workspaceClass || "g1-standard",
     );
+
+    const updateProject = useUpdateProject();
     const { data: classes, isError, isLoading } = useWorkspaceClasses();
+
+    const { toast } = useToast();
+
+    const setWorkspaceClass = useCallback(
+        async (value: string) => {
+            const before = configuration.workspaceSettings?.workspaceClass;
+            updateProject.mutate(
+                {
+                    id: configuration.id,
+                    settings: {
+                        workspaceClasses: {
+                            regular: value,
+                        },
+                    },
+                },
+                {
+                    onSuccess: () => {
+                        setSelectedValue(value);
+                        toast({ message: "Workspace size updated" });
+                    },
+                },
+            );
+            return before;
+        },
+        [configuration.id, configuration.workspaceSettings?.workspaceClass, toast, updateProject],
+    );
 
     if (isError) {
         return <div>Something went wrong</div>;
@@ -39,7 +69,7 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
                 </Heading2>
                 <TextMuted>Choose the size of your workspace based on the resources you need.</TextMuted>
             </div>
-            <RadioGroup value={selectedValue} onValueChange={setSelectedValue}>
+            <RadioGroup value={selectedValue} onValueChange={setWorkspaceClass}>
                 {classes.map((wsClass) => (
                     <div className="flex items-start space-x-2 my-2">
                         <RadioGroupItem value={wsClass.id} id={wsClass.id} />
