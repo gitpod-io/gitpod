@@ -8,6 +8,7 @@ import { useState } from "react";
 import { ContextMenuEntry } from "../components/ContextMenu";
 import { Item, ItemFieldIcon, ItemField, ItemFieldContextMenu } from "../components/ItemsList";
 import { AuthProviderDescription } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import { toAuthProviderLabel } from "../provider-utils";
 
 interface AuthEntryItemParams {
     ap: AuthProviderDescription;
@@ -37,7 +38,9 @@ export const AuthEntryItem = (props: AuthEntryItemParams) => {
                 </div>
             </ItemFieldIcon>
             <ItemField className="w-4/12 xl:w-3/12 flex flex-col my-auto">
-                <span className="my-auto font-medium truncate overflow-ellipsis">{props.ap.type}</span>
+                <span className="my-auto font-medium truncate overflow-ellipsis">
+                    {toAuthProviderLabel(props.ap.type)}
+                </span>
                 <span className="text-sm my-auto text-gray-400 truncate overflow-ellipsis dark:text-gray-500">
                     {props.ap.host}
                 </span>
