@@ -601,12 +601,12 @@ export function GitIntegrationModal(
             onUpdate();
 
             const updateProviderEntry = async () => {
-                const provider = (await getGitpodService().server.getOwnAuthProviders()).find(
-                    (ap) => ap.id === newProvider.id,
-                );
-                if (provider) {
-                    setProviderEntry(provider);
-                }
+                // const provider = (await getGitpodService().server.getOwnAuthProviders()).find(
+                //     (ap) => ap.id === newProvider.id,
+                // );
+                // if (provider) {
+                //     setProviderEntry(provider);
+                // }
             };
 
             // just open the authorization window and do *not* await
