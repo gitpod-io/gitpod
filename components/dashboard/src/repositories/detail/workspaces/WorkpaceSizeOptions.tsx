@@ -9,6 +9,8 @@ import { useState } from "react";
 import { useWorkspaceClasses } from "../../../data/workspaces/workspace-classes-query";
 import { Label } from "@podkit/forms/Label";
 import { RadioGroup, RadioGroupItem } from "@podkit/forms/RadioListField";
+import { Heading2 } from "@podkit/typography/Headings";
+import { TextMuted } from "@podkit/typography/TextMuted";
 
 interface Props {
     configuration: Configuration;
@@ -29,18 +31,26 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
     }
 
     return (
-        <RadioGroup value={selectedValue} onValueChange={setSelectedValue}>
-            {classes.map((wsClass) => (
-                <div className="flex items-center space-x-2 my-4">
-                    <RadioGroupItem value={wsClass.id} id={wsClass.id} />
-                    <div className="flex flex-col">
-                        <Label htmlFor={wsClass.id} className="font-bold">
-                            {wsClass.displayName}
-                        </Label>
-                        <span>{wsClass.description}</span>
+        <section>
+            <div className="mb-4">
+                <Heading2 className="text-base font-bold mb-2" asChild>
+                    Workspace Size Options
+                </Heading2>
+                <TextMuted>Choose the size of your workspace based on the resources you need.</TextMuted>
+            </div>
+            <RadioGroup value={selectedValue} onValueChange={setSelectedValue}>
+                {classes.map((wsClass) => (
+                    <div className="flex items-start space-x-2 my-4">
+                        <RadioGroupItem value={wsClass.id} id={wsClass.id} />
+                        <div className="flex flex-col">
+                            <Label htmlFor={wsClass.id} className="font-bold">
+                                {wsClass.displayName}
+                            </Label>
+                            <span>{wsClass.description}</span>
+                        </div>
                     </div>
-                </div>
-            ))}
-        </RadioGroup>
+                ))}
+            </RadioGroup>
+        </section>
     );
 };
