@@ -195,6 +195,7 @@ export interface Organization {
 
 export interface OrganizationSettings {
     workspaceSharingDisabled?: boolean;
+    // null or empty string to reset to default
     defaultWorkspaceImage?: string | null;
 }
 

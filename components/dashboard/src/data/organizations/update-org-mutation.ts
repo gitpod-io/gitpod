@@ -4,10 +4,10 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Organization } from "@gitpod/gitpod-protocol";
 import { useMutation } from "@tanstack/react-query";
-import { getGitpodService } from "../../service/service";
 import { useCurrentOrg, useOrganizationsInvalidator } from "./orgs-query";
+import { organizationClient } from "../../service/public-api";
+import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 
 type UpdateOrgArgs = Pick<Organization, "name">;
 
@@ -21,7 +21,11 @@ export const useUpdateOrgMutation = () => {
                 throw new Error("No current organization selected");
             }
 
-            return await getGitpodService().server.updateTeam(org.id, { name });
+            const response = await organizationClient.updateOrganization({
+                organizationId: org.id,
+                name,
+            });
+            return response.organization!;
         },
         onSuccess(updatedOrg) {
             // TODO: Update query cache with new org prior to invalidation so it's reflected immediately

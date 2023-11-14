@@ -239,6 +239,7 @@ describe("PublicAPIConverter", () => {
                     },
                     additionalEnvironmentVariables: [],
                     region: "dev",
+                    prebuildId: "",
                     workspaceClass: "g1-standard",
                     editor: {
                         name: "code",
@@ -368,6 +369,7 @@ describe("PublicAPIConverter", () => {
                     },
                     additionalEnvironmentVariables: [],
                     region: "dev",
+                    prebuildId: "",
                     workspaceClass: "g1-standard",
                     editor: {
                         name: "code",
@@ -508,6 +510,7 @@ describe("PublicAPIConverter", () => {
                     },
                     additionalEnvironmentVariables: [],
                     region: "dev",
+                    prebuildId: "",
                     workspaceClass: "g1-standard",
                     editor: {
                         name: "code",
@@ -623,6 +626,7 @@ describe("PublicAPIConverter", () => {
                     },
                     additionalEnvironmentVariables: [],
                     region: "dev",
+                    prebuildId: "",
                     workspaceClass: "g1-standard",
                     editor: {
                         name: "code",

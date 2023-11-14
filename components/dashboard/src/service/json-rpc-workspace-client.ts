@@ -20,13 +20,13 @@ import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 
 export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceService> {
     async getWorkspace(request: PartialMessage<GetWorkspaceRequest>): Promise<GetWorkspaceResponse> {
-        if (!request.id) {
-            throw new ConnectError("id is required", Code.InvalidArgument);
+        if (!request.workspaceId) {
+            throw new ConnectError("workspaceId is required", Code.InvalidArgument);
         }
-        const info = await getGitpodService().server.getWorkspace(request.id);
+        const info = await getGitpodService().server.getWorkspace(request.workspaceId);
         const workspace = converter.toWorkspace(info);
         const result = new GetWorkspaceResponse();
-        result.item = workspace;
+        result.workspace = workspace;
         return result;
     }
 
@@ -38,11 +38,11 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
             throw new ConnectError("signal is required", Code.InvalidArgument);
         }
         if (request.workspaceId) {
-            const resp = await this.getWorkspace({ id: request.workspaceId });
-            if (resp.item?.status) {
+            const resp = await this.getWorkspace({ workspaceId: request.workspaceId });
+            if (resp.workspace?.status) {
                 const response = new WatchWorkspaceStatusResponse();
-                response.workspaceId = resp.item.id;
-                response.status = resp.item.status;
+                response.workspaceId = resp.workspace.id;
+                response.status = resp.workspace.status;
                 yield response;
             }
         }
