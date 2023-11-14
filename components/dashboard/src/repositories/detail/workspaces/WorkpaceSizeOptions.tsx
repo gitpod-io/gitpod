@@ -33,7 +33,12 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
             {classes.map((wsClass) => (
                 <div className="flex items-center space-x-2 my-4">
                     <RadioGroupItem value={wsClass.id} id={wsClass.id} />
-                    <Label htmlFor={wsClass.id}>{wsClass.displayName}</Label>
+                    <div className="flex flex-col">
+                        <Label htmlFor={wsClass.id} className="font-bold">
+                            {wsClass.displayName}
+                        </Label>
+                        <span>{wsClass.description}</span>
+                    </div>
                 </div>
             ))}
         </RadioGroup>
