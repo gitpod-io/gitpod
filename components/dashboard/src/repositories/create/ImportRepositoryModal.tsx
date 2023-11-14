@@ -50,14 +50,14 @@ export const ImportRepositoryModal: FC<Props> = ({ onClose, onCreated }) => {
 
     return (
         <Modal visible onClose={onClose} onSubmit={handleSubmit}>
-            <ModalHeader>New Project</ModalHeader>
+            <ModalHeader>Import repository</ModalHeader>
             <ModalBody>
                 <div className="w-112 max-w-full">
                     {needsGitAuth ? (
                         <AuthorizeGit />
                     ) : (
                         <>
-                            <InputField label="Repository" className="mb-8 w-full">
+                            <InputField label="Select a repository" className="mb-8 w-full">
                                 <RepositoryFinder
                                     selectedContextURL={selectedRepo?.url}
                                     selectedProjectID={selectedRepo?.projectId}
@@ -82,7 +82,7 @@ export const ImportRepositoryModal: FC<Props> = ({ onClose, onCreated }) => {
                     Cancel
                 </Button>
                 <Button htmlType="submit" loading={createConfiguration.isLoading}>
-                    Create
+                    Import
                 </Button>
             </ModalFooter>
         </Modal>
