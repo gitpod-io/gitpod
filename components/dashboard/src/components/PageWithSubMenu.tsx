@@ -14,10 +14,7 @@ import { Separator } from "./Separator";
 export interface PageWithSubMenuProps {
     title: string;
     subtitle: string;
-    subMenu: {
-        title: string;
-        link: string[];
-    }[];
+    subMenu: SubmenuItemProps[];
     tabs?: TabEntry[];
     children: React.ReactNode;
 }
@@ -53,12 +50,13 @@ export function PageWithSubMenu(p: PageWithSubMenuProps) {
     );
 }
 
-type SubmenuItemProps = {
+export type SubmenuItemProps = {
     title: string;
     link: string[];
+    icon?: React.ReactNode;
 };
 
-const SubmenuItem: FC<SubmenuItemProps> = ({ title, link }) => {
+export const SubmenuItem: FC<SubmenuItemProps> = ({ title, link, icon }) => {
     const location = useLocation();
     const itemRef = useRef<HTMLLIElement>(null);
 
@@ -69,17 +67,19 @@ const SubmenuItem: FC<SubmenuItemProps> = ({ title, link }) => {
         }
     }, [link, location.pathname]);
 
-    let classes = "flex block py-2 px-4 rounded-md whitespace-nowrap max-w-52";
+    let classes = "flex justify-between block rounded-md py-2 px-4 whitespace-nowrap max-w-52";
 
-    if (link.some((l) => l === location.pathname)) {
+    const isCurrent = link.some((l) => l === location.pathname);
+    if (isCurrent) {
         classes += " bg-gray-300 text-gray-800 dark:bg-gray-800 dark:text-gray-50";
     } else {
-        classes += " hover:bg-gray-100 dark:hover:bg-gray-800";
+        classes += " hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-400";
     }
+
     return (
-        <Link to={link[0]} key={title} className="md:w-full">
+        <Link to={link[0]} key={title} className="md:w-full rounded-md">
             <li ref={itemRef} className={classes}>
-                {title}
+                {title} {icon}
             </li>
         </Link>
     );

@@ -31,7 +31,7 @@ const RepositoryListPage: FC = () => {
 
     return (
         <>
-            <Header title="Repositories" subtitle="" />
+            <Header title="Configurations" subtitle="" />
 
             <div className="app-container">
                 <div className="py-4 text-right">

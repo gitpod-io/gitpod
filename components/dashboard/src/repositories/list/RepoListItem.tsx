@@ -10,7 +10,7 @@ import { TextMuted } from "@podkit/typography/TextMuted";
 import { Text } from "@podkit/typography/Text";
 import { Link } from "react-router-dom";
 import { Button } from "../../components/Button";
-import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 
 type Props = {
     configuration: Configuration;
