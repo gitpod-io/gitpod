@@ -7,8 +7,6 @@
 import { FC, useCallback, useEffect, useState } from "react";
 import { LoaderIcon } from "lucide-react";
 import { useHistory } from "react-router-dom";
-import { Project } from "@gitpod/gitpod-protocol";
-import { CreateProjectModal } from "../../projects/create-project-modal/CreateProjectModal";
 import { RepositoryListItem } from "./RepoListItem";
 import { useListConfigurations } from "../../data/configurations/configuration-queries";
 import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
@@ -19,6 +17,8 @@ import { Button } from "@podkit/buttons/Button";
 import { useDocumentTitle } from "../../hooks/use-document-title";
 import { PaginationControls, PaginationCountText } from "./PaginationControls";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@podkit/tables/Table";
+import { ImportRepositoryModal } from "../create/ImportRepositoryModal";
+import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 
 const RepositoryListPage: FC = () => {
     useDocumentTitle("Imported repositories");
@@ -51,9 +51,9 @@ const RepositoryListPage: FC = () => {
     const totalRows = data?.pagination?.total ?? 0;
     const totalPages = Math.ceil(totalRows / pageSize);
 
-    const handleProjectCreated = useCallback(
-        (project: Project) => {
-            history.push(`/repositories/${project.id}`);
+    const handleRepoImported = useCallback(
+        (configuration: Configuration) => {
+            history.push(`/repositories/${configuration.id}`);
         },
         [history],
     );
@@ -145,7 +145,10 @@ const RepositoryListPage: FC = () => {
             </div>
 
             {showCreateProjectModal && (
-                <CreateProjectModal onClose={() => setShowCreateProjectModal(false)} onCreated={handleProjectCreated} />
+                <ImportRepositoryModal
+                    onClose={() => setShowCreateProjectModal(false)}
+                    onCreated={handleRepoImported}
+                />
             )}
         </>
     );

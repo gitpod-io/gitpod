@@ -88,3 +88,35 @@ export const getConfigurationQueryKey = (configurationId: string) => {
 
     return key;
 };
+
+export type CreateConfigurationArgs = {
+    name: string;
+    cloneUrl: string;
+};
+
+export const useCreateConfiguration = () => {
+    const { data: org } = useCurrentOrg();
+
+    return useMutation<Configuration, Error, CreateConfigurationArgs>({
+        mutationFn: async ({ name, cloneUrl }) => {
+            if (!org) {
+                throw new Error("No org currently selected");
+            }
+
+            // TODO: Should we push this into the api?
+            // ensure a .git suffix
+            const normalizedCloneURL = cloneUrl.endsWith(".git") ? cloneUrl : `${cloneUrl}.git`;
+
+            const response = await configurationClient.createConfiguration({
+                name,
+                cloneUrl: normalizedCloneURL,
+                organizationId: org.id,
+            });
+            if (!response.configuration) {
+                throw new Error("Failed to create configuration");
+            }
+
+            return response.configuration;
+        },
+    });
+};
