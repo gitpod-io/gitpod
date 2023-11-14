@@ -40,7 +40,7 @@ export function toAuthProviderLabel(type: AuthProviderType) {
         case AuthProviderType.BITBUCKET_SERVER:
             return "Bitbucket Server";
         default:
-            return "Unknown type";
+            return "-";
     }
 }
 
