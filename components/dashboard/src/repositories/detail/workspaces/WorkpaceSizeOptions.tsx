@@ -10,6 +10,7 @@ import { useWorkspaceClasses } from "../../../data/workspaces/workspace-classes-
 import { Label } from "@podkit/forms/Label";
 import { RadioGroup, RadioGroupItem } from "@podkit/forms/RadioListField";
 import { TextMuted } from "@podkit/typography/TextMuted";
+import { Heading2 } from "@podkit/typography/Headings";
 
 interface Props {
     configuration: Configuration;
@@ -32,7 +33,9 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
     return (
         <section>
             <div className="mb-4">
-                <h2 className="text-base font-bold">Workspace Size Options</h2>
+                <Heading2 asChild>
+                    <h2 className="text-base">Workspace Size Options</h2>
+                </Heading2>
                 <TextMuted>Choose the size of your workspace based on the resources you need.</TextMuted>
             </div>
             <RadioGroup value={selectedValue} onValueChange={setSelectedValue}>
