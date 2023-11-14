@@ -38,6 +38,7 @@ import {
 import { authProviderClient } from "../service/public-api";
 import { useCreateUserAuthProviderMutation } from "../data/auth-providers/create-user-auth-provider-mutation";
 import { useUpdateUserAuthProviderMutation } from "../data/auth-providers/update-user-auth-provider-mutation";
+import { useDeleteUserAuthProviderMutation } from "../data/auth-providers/delete-user-auth-provider-mutation";
 
 export default function Integrations() {
     return (
@@ -378,6 +379,8 @@ function GitIntegrations() {
     const { user } = useContext(UserContext);
     const userGitAuthProviders = useFeatureFlag("userGitAuthProviders");
 
+    const deleteUserAuthProvider = useDeleteUserAuthProviderMutation();
+
     const [modal, setModal] = useState<
         | { mode: "new" }
         | { mode: "edit"; provider: AuthProvider }
@@ -402,7 +405,9 @@ function GitIntegrations() {
 
     const deleteProvider = async (provider: AuthProvider) => {
         try {
-            await getGitpodService().server.deleteOwnAuthProvider(provider);
+            await deleteUserAuthProvider.mutateAsync({
+                providerId: provider.id,
+            });
         } catch (error) {
             console.log(error);
         }
@@ -601,12 +606,12 @@ export function GitIntegrationModal(
             onUpdate();
 
             const updateProviderEntry = async () => {
-                // const provider = (await getGitpodService().server.getOwnAuthProviders()).find(
-                //     (ap) => ap.id === newProvider.id,
-                // );
-                // if (provider) {
-                //     setProviderEntry(provider);
-                // }
+                const { authProvider } = await authProviderClient.getAuthProvider({
+                    authProviderId: newProvider.id,
+                });
+                if (authProvider) {
+                    setProviderEntry(authProvider);
+                }
             };
 
             // just open the authorization window and do *not* await

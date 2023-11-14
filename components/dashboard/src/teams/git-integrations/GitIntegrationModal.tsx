@@ -22,6 +22,7 @@ import { useToast } from "../../components/toasts/Toasts";
 import { AuthProvider, AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { useCreateOrgAuthProviderMutation } from "../../data/auth-providers/create-org-auth-provider-mutation";
 import { useUpdateOrgAuthProviderMutation } from "../../data/auth-providers/update-org-auth-provider-mutation";
+import { authProviderClient } from "../../service/public-api";
 
 type Props = {
     provider?: AuthProvider;
@@ -53,7 +54,6 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
     const [savingProvider, setSavingProvider] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
-    // const getProvider = useGetAuthProviderQuery(savedProvider?.id);
     const createProvider = useCreateOrgAuthProviderMutation();
     const updateProvider = useUpdateOrgAuthProviderMutation();
     const invalidateOrgAuthProviders = useInvalidateOrgAuthProvidersQuery(team?.id ?? "");
@@ -88,6 +88,17 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
 
         setHost(cleanHost(host));
     }, [host, hostOnBlurErrorTracking]);
+
+    const reloadSavedProvider = useCallback(async () => {
+        if (!savedProvider || !team) {
+            return;
+        }
+
+        const { authProvider } = await authProviderClient.getAuthProvider({ authProviderId: savedProvider.id });
+        if (authProvider) {
+            setSavedProvider(authProvider);
+        }
+    }, [savedProvider, team]);
 
     const activate = useCallback(async () => {
         if (!team) {
@@ -146,8 +157,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                     props.onClose();
                 },
                 onError: (payload) => {
-                    // FIXME
-                    // reloadSavedProvider();
+                    reloadSavedProvider();
 
                     let errorMessage: string;
                     if (typeof payload === "string") {
@@ -178,6 +188,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
         type,
         createProvider,
         updateProvider,
+        reloadSavedProvider,
     ]);
 
     const isValid = useMemo(

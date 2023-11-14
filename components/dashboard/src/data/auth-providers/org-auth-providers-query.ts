@@ -10,11 +10,10 @@ import { useCurrentOrg } from "../organizations/orgs-query";
 import { authProviderClient } from "../../service/public-api";
 import { AuthProvider, ListAuthProvidersRequest } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 
-export type OrgAuthProvidersQueryResult = AuthProvider[];
 export const useOrgAuthProvidersQuery = () => {
     const organization = useCurrentOrg().data;
 
-    return useQuery<OrgAuthProvidersQueryResult>({
+    return useQuery<AuthProvider[]>({
         queryKey: getOrgAuthProvidersQueryKey(organization?.id ?? ""),
         queryFn: async () => {
             if (!organization) {

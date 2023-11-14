@@ -5,22 +5,22 @@
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useCurrentOrg } from "../organizations/orgs-query";
-import { getOrgAuthProvidersQueryKey } from "./org-auth-providers-query";
 import { authProviderClient } from "../../service/public-api";
 import { AuthProvider, DeleteAuthProviderRequest } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import { getUserAuthProvidersQueryKey } from "./user-auth-providers-query";
+import { useCurrentUser } from "../../user-context";
 
 type DeleteAuthProviderArgs = {
     providerId: string;
 };
-export const useDeleteOrgAuthProviderMutation = () => {
+export const useDeleteUserAuthProviderMutation = () => {
     const queryClient = useQueryClient();
-    const organization = useCurrentOrg().data;
+    const user = useCurrentUser();
 
     return useMutation({
         mutationFn: async ({ providerId }: DeleteAuthProviderArgs) => {
-            if (!organization) {
-                throw new Error("No current organization selected");
+            if (!user) {
+                throw new Error("No current user");
             }
 
             const response = await authProviderClient.deleteAuthProvider(
@@ -32,11 +32,11 @@ export const useDeleteOrgAuthProviderMutation = () => {
             return response;
         },
         onSuccess: (_, { providerId }) => {
-            if (!organization) {
-                throw new Error("No current organization selected");
+            if (!user) {
+                throw new Error("No current user");
             }
 
-            const queryKey = getOrgAuthProvidersQueryKey(organization.id);
+            const queryKey = getUserAuthProvidersQueryKey(user.id);
             queryClient.setQueryData<AuthProvider[]>(queryKey, (providers) => {
                 return providers?.filter((p) => p.id !== providerId);
             });
