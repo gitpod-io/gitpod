@@ -7,6 +7,7 @@
 import { ContextMenuEntry } from "../components/ContextMenu";
 import { Item, ItemFieldIcon, ItemField, ItemFieldContextMenu } from "../components/ItemsList";
 import { AuthProvider } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import { toAuthProviderLabel } from "../provider-utils";
 
 export const IntegrationEntryItem = (props: {
     ap: AuthProvider;
@@ -25,7 +26,7 @@ export const IntegrationEntryItem = (props: {
                 </div>
             </ItemFieldIcon>
             <ItemField className="w-3/12 flex flex-col my-auto">
-                <span className="font-medium truncate overflow-ellipsis">{props.ap.type}</span>
+                <span className="font-medium truncate overflow-ellipsis">{toAuthProviderLabel(props.ap.type)}</span>
             </ItemField>
             <ItemField className="w-7/12 flex flex-col my-auto">
                 <span className="my-auto truncate text-gray-500 overflow-ellipsis">{props.ap.host}</span>

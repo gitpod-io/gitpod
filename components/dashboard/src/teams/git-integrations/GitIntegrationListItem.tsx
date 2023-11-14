@@ -14,6 +14,7 @@ import { ModalFooterAlert } from "../../components/Modal";
 import { useToast } from "../../components/toasts/Toasts";
 import { useListOrganizationMembers } from "../../data/organizations/members-query";
 import { AuthProvider } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import { toAuthProviderLabel } from "../../provider-utils";
 
 type Props = {
     provider: AuthProvider;
@@ -65,7 +66,7 @@ export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) =
                     </div>
                 </ItemFieldIcon>
                 <ItemField className="w-5/12 flex items-center">
-                    <span className="font-medium truncate overflow-ellipsis">{provider.type}</span>
+                    <span className="font-medium truncate overflow-ellipsis">{toAuthProviderLabel(provider.type)}</span>
                 </ItemField>
                 <ItemField className="w-5/12 flex items-center">
                     <span className="my-auto truncate text-gray-500 overflow-ellipsis">{provider.host}</span>
@@ -81,7 +82,7 @@ export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) =
                             : "You are about to delete an organization-wide Git providers integration. Are you sure?"
                     }
                     children={{
-                        name: provider.type,
+                        name: toAuthProviderLabel(provider.type),
                         description: provider.host,
                     }}
                     buttonText="Remove Provider"

@@ -15,7 +15,7 @@ import { Subheading } from "../../components/typography/headings";
 import { useInvalidateOrgAuthProvidersQuery } from "../../data/auth-providers/org-auth-providers-query";
 import { useCurrentOrg } from "../../data/organizations/orgs-query";
 import { useOnBlurError } from "../../hooks/use-onblur-error";
-import { openAuthorizeWindow } from "../../provider-utils";
+import { openAuthorizeWindow, toAuthProviderLabel } from "../../provider-utils";
 import { getGitpodService, gitpodHostUrl } from "../../service/service";
 import { UserContext } from "../../user-context";
 import { useToast } from "../../components/toasts/Toasts";
@@ -152,7 +152,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                     // Refresh the current user - they may have a new identity record now
                     // setup a promise and don't wait so we can close the modal right away
                     getGitpodService().server.getLoggedInUser().then(setUser);
-                    toast(`${newProvider.type} integration has been activated.`);
+                    toast(`${toAuthProviderLabel(newProvider.type)} integration has been activated.`);
 
                     props.onClose();
                 },

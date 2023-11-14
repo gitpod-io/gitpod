@@ -468,7 +468,7 @@ function GitIntegrations() {
                     title="Remove Integration"
                     areYouSureText="Are you sure you want to remove the following Git integration?"
                     children={{
-                        name: modal.provider.type,
+                        name: toAuthProviderLabel(modal.provider.type),
                         description: modal.provider.host,
                     }}
                     buttonText="Remove Integration"
