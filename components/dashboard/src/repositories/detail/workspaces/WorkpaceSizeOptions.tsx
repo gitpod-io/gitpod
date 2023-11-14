@@ -33,8 +33,8 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
     return (
         <section>
             <div className="mb-4">
-                <Heading2 className="text-base font-bold mb-2" asChild>
-                    Workspace Size Options
+                <Heading2 className="mb-2" asChild>
+                    <span className="text-base font-bold">Workspace Size Options</span>
                 </Heading2>
                 <TextMuted>Choose the size of your workspace based on the resources you need.</TextMuted>
             </div>
