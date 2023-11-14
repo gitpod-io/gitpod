@@ -57,8 +57,8 @@ export default function OrganizationSelector() {
     if (currentOrg.data) {
         if (repoConfigListAndDetail) {
             linkEntries.push({
-                title: "Configurations",
-                customContent: <LinkEntry>Configurations</LinkEntry>,
+                title: "Repositories",
+                customContent: <LinkEntry>Repositories</LinkEntry>,
                 active: false,
                 separator: false,
                 link: "/repositories",
