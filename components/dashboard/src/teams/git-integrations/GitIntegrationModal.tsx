@@ -339,7 +339,8 @@ const RedirectUrlDescription: FunctionComponent<RedirectUrlDescriptionProps> = (
 
     return (
         <span>
-            Use this redirect URI to register a {type} instance as an authorized Git provider in Gitpod.{" "}
+            Use this redirect URI to register a {toAuthProviderLabel(type)} instance as an authorized Git provider in
+            Gitpod.{" "}
             <a href={docsUrl} target="_blank" rel="noreferrer noopener" className="gp-link">
                 Learn more
             </a>
