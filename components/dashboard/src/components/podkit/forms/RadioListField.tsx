@@ -5,45 +5,31 @@
  */
 
 import { cn } from "@podkit/lib/cn";
-import * as RadioGroup from "@radix-ui/react-radio-group";
+import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
 import { Circle } from "lucide-react";
-import React, { useCallback } from "react";
-import { useId } from "../../../hooks/useId";
-import { InputField } from "../../forms/InputField";
-import { InputFieldHint } from "../../forms/InputFieldHint";
-
-type RadioListFieldProps = {
-    id?: string;
-    selectedValue: string;
-    hint?: React.ReactNode;
-    error?: React.ReactNode;
-    topMargin?: boolean;
-    onChange: (value: string) => void;
-    children: RadioListItem[];
-    className?: string;
-};
+import React from "react";
 
 export const RadioGroupItem = React.forwardRef<
-    React.ElementRef<typeof RadioGroup.Item>,
-    React.ComponentPropsWithoutRef<typeof RadioGroup.Item>
+    React.ElementRef<typeof RadioGroupPrimitive.Item>,
+    React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item>
 >(({ className, ...props }, ref) => {
     return (
-        <RadioGroup.Item
+        <RadioGroupPrimitive.Item
             ref={ref}
             className={cn(
-                "aspect-square h-4 w-4 rounded-full border ring-offset-white dark:ring-offset-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-                "dark:accent-kumquat-ripe accent-gitpod-black",
+                "aspect-square h-4 w-4 rounded-full border-2 ring-offset-white dark:ring-offset-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 p-0 text-black dark:text-gray-200 border-black dark:border-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500 bg-inherit",
+                // "dark:accent-kumquat-ripe accent-gitpod-black",
                 className,
             )}
             {...props}
         >
-            <RadioGroup.Indicator className="flex items-center justify-center">
-                <Circle className="h-2.5 w-2.5 fill-current text-current" />
-            </RadioGroup.Indicator>
-        </RadioGroup.Item>
+            <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
+                <Circle className="h-1.5 w-1.5 fill-current text-current" />
+            </RadioGroupPrimitive.Indicator>
+        </RadioGroupPrimitive.Item>
     );
 });
-RadioGroupItem.displayName = RadioGroup.Item.displayName;
+RadioGroupItem.displayName = RadioGroupPrimitive.Item.displayName;
 
 export type RadioListItem = {
     radio: React.ReactElement;
@@ -51,45 +37,10 @@ export type RadioListItem = {
     hint?: React.ReactNode;
 };
 
-export const RadioListField: React.FC<RadioListFieldProps> = ({
-    id,
-    selectedValue,
-    error,
-    topMargin = true,
-    onChange,
-    children,
-    className,
-}) => {
-    const maybeId = useId();
-    const elementId = id || maybeId;
-
-    const handleChange = useCallback(
-        (value) => {
-            onChange(value);
-        },
-        [onChange],
-    );
-
-    return (
-        <InputField error={error} topMargin={topMargin}>
-            <RadioGroup.Root
-                className={cn("grid gap-2", className)}
-                value={selectedValue}
-                onValueChange={handleChange}
-                aria-labelledby={elementId}
-            >
-                {children.map((child, index) => (
-                    <div key={index} className="flex flex-col">
-                        {React.cloneElement(child.radio, {
-                            id: `${elementId}-${index}`,
-                        })}
-                        <label className="text-sm font-semibold pl-2 cursor-pointer" htmlFor={`${elementId}-${index}`}>
-                            {child.label}
-                        </label>
-                        {child.hint && <InputFieldHint>{child.hint}</InputFieldHint>}
-                    </div>
-                ))}
-            </RadioGroup.Root>
-        </InputField>
-    );
-};
+export const RadioGroup = React.forwardRef<
+    React.ElementRef<typeof RadioGroupPrimitive.Root>,
+    React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Root>
+>(({ className, ...props }, ref) => {
+    return <RadioGroupPrimitive.Root className={cn("grid gap-2", className)} {...props} ref={ref} />;
+});
+RadioGroup.displayName = RadioGroupPrimitive.Root.displayName;

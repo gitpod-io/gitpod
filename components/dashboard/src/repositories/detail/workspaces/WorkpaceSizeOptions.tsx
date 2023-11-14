@@ -5,9 +5,10 @@
  */
 
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
-import { RadioGroupItem, RadioListField } from "../../../components/podkit/forms/RadioListField";
 import { useState } from "react";
 import { useWorkspaceClasses } from "../../../data/workspaces/workspace-classes-query";
+import { Label } from "@podkit/forms/Label";
+import { RadioGroup, RadioGroupItem } from "@podkit/forms/RadioListField";
 
 interface Props {
     configuration: Configuration;
@@ -28,14 +29,13 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
     }
 
     return (
-        <RadioListField
-            selectedValue={selectedValue}
-            onChange={setSelectedValue}
-            children={classes.map((c) => ({
-                radio: <RadioGroupItem value={c.id} />,
-                label: c.displayName,
-                hint: c.description,
-            }))}
-        />
+        <RadioGroup value={selectedValue} onValueChange={setSelectedValue}>
+            {classes.map((wsClass) => (
+                <div className="flex items-center space-x-2 my-4">
+                    <RadioGroupItem value={wsClass.id} id={wsClass.id} />
+                    <Label htmlFor={wsClass.id}>{wsClass.displayName}</Label>
+                </div>
+            ))}
+        </RadioGroup>
     );
 };
