@@ -63,7 +63,6 @@ import {
     SnapshotContext,
     SSHPublicKeyValue,
     UserSSHPublicKeyValue,
-    PrebuildEvent,
     RoleOrPermission,
     WorkspaceInstanceRepoStatus,
     GetProviderRepositoriesParams,
@@ -1308,18 +1307,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         return repositories;
-    }
-
-    public async getPrebuildEvents(ctx: TraceContext, projectId: string): Promise<PrebuildEvent[]> {
-        traceAPIParams(ctx, { projectId });
-        const user = await this.checkAndBlockUser("getPrebuildEvents");
-
-        const project = await this.projectsService.getProject(user.id, projectId);
-        await this.guardProjectOperation(user, projectId, "get");
-        await this.auth.checkPermissionOnProject(user.id, "read_prebuild", projectId);
-
-        const events = await this.projectsService.getPrebuildEvents(user.id, project.id);
-        return events;
     }
 
     async triggerPrebuild(
