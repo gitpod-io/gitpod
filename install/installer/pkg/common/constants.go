@@ -62,6 +62,9 @@ const (
 	AuthPKISecretName           = "auth-pki"
 	IDEServiceComponent         = "ide-service"
 	OpenVSXProxyComponent       = "openvsx-proxy"
+	DashboardComponent          = "dashboard"
+	IDEMetricsComponent         = "ide-metrics"
+	IDEMetricsPort              = 3000
 )
 
 var (

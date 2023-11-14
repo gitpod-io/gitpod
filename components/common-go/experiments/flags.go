@@ -11,6 +11,7 @@ const (
 	OIDCServiceEnabledFlag                         = "oidcServiceEnabled"
 	SupervisorPersistServerAPIChannelWhenStartFlag = "supervisor_persist_serverapi_channel_when_start"
 	SupervisorUsePublicAPIFlag                     = "supervisor_experimental_publicapi"
+	ServiceWaiterSkipComponentsFlag                = "service_waiter_skip_components"
 )
 
 func IsPersonalAccessTokensEnabled(ctx context.Context, client Client, attributes Attributes) bool {

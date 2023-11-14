@@ -4,8 +4,10 @@
 
 package dashboard
 
+import "github.com/gitpod-io/gitpod/installer/pkg/common"
+
 const (
-	Component     = "dashboard"
+	Component     = common.DashboardComponent
 	ContainerPort = 80
 	PortName      = "http"
 	ServicePort   = 3001
