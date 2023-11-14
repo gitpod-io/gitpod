@@ -83,6 +83,10 @@ const ConfigurationGeneral = React.lazy(
     () => import(/* webpackPrefetch: true */ "../repositories/detail/ConfigurationDetailGeneral"),
 );
 
+const ConfigurationWorkspaces = React.lazy(
+    () => import(/* webpackPrefetch: true */ "../repositories/detail/ConfigurationDetailWorkspaces"),
+);
+
 export const AppRoutes = () => {
     const hash = getURLHash();
     const user = useCurrentUser();
@@ -220,6 +224,7 @@ export const AppRoutes = () => {
                         <>
                             <Route exact path="/repositories" component={ConfigurationListPage} />
                             <Route exact path="/repositories/:id" component={ConfigurationGeneral} />
+                            <Route exact path="/repositories/:id/workspaces" component={ConfigurationWorkspaces} />
                         </>
                     )}
                     {/* basic redirect for old team slugs */}
