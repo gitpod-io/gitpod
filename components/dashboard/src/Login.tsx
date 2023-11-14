@@ -17,7 +17,7 @@ import { getURLHash } from "./utils";
 import ErrorMessage from "./components/ErrorMessage";
 import { Heading1, Heading2, Subheading } from "./components/typography/headings";
 import { SSOLoginForm } from "./login/SSOLoginForm";
-import { useAuthProviderDescriptions } from "./data/auth-providers/auth-provider-query";
+import { useAuthProviderDescriptions } from "./data/auth-providers/auth-provider-descriptions-query";
 import { SetupPending } from "./login/SetupPending";
 import { useNeedsSetup } from "./dedicated-setup/use-needs-setup";
 import { AuthProviderDescription } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";

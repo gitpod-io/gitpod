@@ -6,7 +6,7 @@
 
 import { FC, useCallback, useContext } from "react";
 import { Link } from "react-router-dom";
-import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-query";
+import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
 import { openAuthorizeWindow } from "../provider-utils";
 import { getGitpodService } from "../service/service";
 import { UserContext, useCurrentUser } from "../user-context";

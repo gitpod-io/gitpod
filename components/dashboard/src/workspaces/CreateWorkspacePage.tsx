@@ -27,7 +27,7 @@ import SelectWorkspaceClassComponent from "../components/SelectWorkspaceClassCom
 import { UsageLimitReachedModal } from "../components/UsageLimitReachedModal";
 import { InputField } from "../components/forms/InputField";
 import { Heading1 } from "../components/typography/headings";
-import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-query";
+import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { useListAllProjectsQuery } from "../data/projects/list-all-projects-query";
 import { useCreateWorkspaceMutation } from "../data/workspaces/create-workspace-mutation";

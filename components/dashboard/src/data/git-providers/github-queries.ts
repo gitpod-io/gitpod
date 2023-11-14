@@ -6,7 +6,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
-import { useAuthProviderDescriptions } from "../auth-providers/auth-provider-query";
+import { useAuthProviderDescriptions } from "../auth-providers/auth-provider-descriptions-query";
 import { useCurrentUser } from "../../user-context";
 import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 

@@ -5,7 +5,7 @@
  */
 
 import { FC, useCallback } from "react";
-import { useAuthProviderDescriptions } from "../../data/auth-providers/auth-provider-query";
+import { useAuthProviderDescriptions } from "../../data/auth-providers/auth-provider-descriptions-query";
 import { openAuthorizeWindow } from "../../provider-utils";
 
 type Props = {

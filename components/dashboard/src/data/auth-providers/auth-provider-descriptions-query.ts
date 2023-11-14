@@ -15,7 +15,7 @@ import {
 export const useAuthProviderDescriptions = () => {
     const user = useCurrentUser();
     const query = useQuery<AuthProviderDescription[]>({
-        queryKey: ["auth-provider-descriptions"],
+        queryKey: getAuthProviderDescriptionsQueryKey(),
         queryFn: async () => {
             const params = new ListAuthProviderDescriptionsRequest();
             if (user) {
@@ -30,3 +30,5 @@ export const useAuthProviderDescriptions = () => {
     });
     return query;
 };
+
+export const getAuthProviderDescriptionsQueryKey = () => ["auth-provider-descriptions", {}];

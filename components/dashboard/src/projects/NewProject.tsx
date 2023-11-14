@@ -13,7 +13,7 @@ import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName } from "
 import { getGitpodService } from "../service/service";
 import { UserContext, useCurrentUser } from "../user-context";
 import { Heading1, Subheading } from "../components/typography/headings";
-import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-query";
+import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
 import { AuthorizeGit, useNeedsGitAuthorization } from "../components/AuthorizeGit";
 import { NewProjectRepoSelection } from "./new-project/NewProjectRepoSelection";
 import { NewProjectSubheading } from "./new-project/NewProjectSubheading";

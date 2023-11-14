@@ -4,13 +4,13 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AuthProviderEntry } from "@gitpod/gitpod-protocol";
 import { ContextMenuEntry } from "../components/ContextMenu";
 import { Item, ItemFieldIcon, ItemField, ItemFieldContextMenu } from "../components/ItemsList";
+import { AuthProvider } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 
 export const IntegrationEntryItem = (props: {
-    ap: AuthProviderEntry;
-    gitProviderMenu: (provider: AuthProviderEntry) => ContextMenuEntry[];
+    ap: AuthProvider;
+    gitProviderMenu: (provider: AuthProvider) => ContextMenuEntry[];
 }) => {
     return (
         <Item key={"ap-" + props.ap.id} className="h-16">
@@ -18,7 +18,7 @@ export const IntegrationEntryItem = (props: {
                 <div
                     className={
                         "rounded-full w-3 h-3 text-sm align-middle m-auto " +
-                        (props.ap.status === "verified" ? "bg-green-500" : "bg-gray-400")
+                        (props.ap.verified ? "bg-green-500" : "bg-gray-400")
                     }
                 >
                     &nbsp;

@@ -11,7 +11,7 @@ import { ReactComponent as RepositoryIcon } from "../icons/RepositoryWithColor.s
 import { SuggestedRepository } from "@gitpod/gitpod-protocol";
 import { MiddleDot } from "./typography/MiddleDot";
 import { useUnifiedRepositorySearch } from "../data/git-providers/unified-repositories-search-query";
-import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-query";
+import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
 import { ReactComponent as Exclamation2 } from "../images/exclamation2.svg";
 import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 

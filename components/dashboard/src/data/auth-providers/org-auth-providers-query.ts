@@ -43,4 +43,4 @@ export const useInvalidateOrgAuthProvidersQuery = (organizationId: string) => {
     }, [organizationId, queryClient]);
 };
 
-export const getOrgAuthProvidersQueryKey = (organizationId: string) => ["auth-providers", { organizationId }];
+export const getOrgAuthProvidersQueryKey = (organizationId: string) => ["org-auth-providers", { organizationId }];

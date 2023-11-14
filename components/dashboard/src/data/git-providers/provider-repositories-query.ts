@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
 import { useCurrentUser } from "../../user-context";
 import { CancellationTokenSource } from "vscode-jsonrpc";
-import { useAuthProviderDescriptions } from "../auth-providers/auth-provider-query";
+import { useAuthProviderDescriptions } from "../auth-providers/auth-provider-descriptions-query";
 import { GetProviderRepositoriesParams } from "@gitpod/gitpod-protocol";
 import { useFeatureFlag } from "../featureflag-query";
 import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";

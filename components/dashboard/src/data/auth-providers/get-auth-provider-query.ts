@@ -9,7 +9,7 @@ import { authProviderClient } from "../../service/public-api";
 import { AuthProvider, GetAuthProviderRequest } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 
 export const useGetAuthProviderQuery = (authProviderId: string | undefined) => {
-    return useQuery<AuthProvider | undefined, Error>(getAuthProvidersQueryKey(authProviderId || ""), async () => {
+    return useQuery<AuthProvider | undefined, Error>(getAuthProviderQueryKey(authProviderId || ""), async () => {
         if (!authProviderId) {
             return;
         }
@@ -23,4 +23,4 @@ export const useGetAuthProviderQuery = (authProviderId: string | undefined) => {
     });
 };
 
-export const getAuthProvidersQueryKey = (authProviderId: string) => ["auth-provider", { authProviderId }];
+export const getAuthProviderQueryKey = (authProviderId: string) => ["auth-provider", { authProviderId }];
