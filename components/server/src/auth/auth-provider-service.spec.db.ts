@@ -309,7 +309,7 @@ describe("AuthProviderService", async () => {
             const oauthProperty: keyof AuthProviderEntry = "oauth";
             expect(providers[0]).to.not.haveOwnProperty(oauthProperty);
         });
-        it.only("as regular member, should find org-level providers if no built-in providers present", async () => {
+        it("as regular member, should find org-level providers if no built-in providers present", async () => {
             const member = await userService.createUser({
                 identity: {
                     authId: "gh-user-2",
@@ -337,7 +337,7 @@ describe("AuthProviderService", async () => {
             const oauthProperty: keyof AuthProviderEntry = "oauth";
             expect(providers[0]).to.not.haveOwnProperty(oauthProperty);
         });
-        it.only("as regular member, should find only built-in providers if present", async () => {
+        it("as regular member, should find only built-in providers if present", async () => {
             addBuiltInProvider("localhost");
 
             const member = await userService.createUser({
@@ -357,6 +357,67 @@ describe("AuthProviderService", async () => {
 
             expect(providers).to.has.lengthOf(1);
             expect(providers[0].host).to.be.equal("localhost");
+        });
+    });
+
+    describe("updateAuthProvider", async () => {
+        it("should update user-level provider", async () => {
+            const created = await service.createAuthProviderOfUser(currentUser.id, newEntry());
+            const someRandomString = String(Date.now());
+            const updatedClientId = await service.updateAuthProviderOfUser(currentUser.id, {
+                id: created.id,
+                ownerId: currentUser.id,
+                clientId: someRandomString,
+            });
+            expect(updatedClientId.oauth?.clientId).to.be.equal(someRandomString);
+            expect(updatedClientId.oauthRevision).to.be.not.equal(created.oauthRevision);
+
+            const updatedClientSecret = await service.updateAuthProviderOfUser(currentUser.id, {
+                id: created.id,
+                ownerId: currentUser.id,
+                clientSecret: String(Date.now()),
+            });
+            expect(updatedClientSecret.oauthRevision).to.be.not.equal(updatedClientId.oauthRevision);
+        });
+        it("should fail if permissions do not permit", async () => {
+            const created = await service.createAuthProviderOfUser(currentUser.id, newEntry());
+            await expectError(
+                ErrorCodes.NOT_FOUND,
+                service.updateAuthProviderOfUser("some-stranger", {
+                    id: created.id,
+                    ownerId: currentUser.id,
+                    clientId: "any",
+                }),
+            );
+        });
+        it("should update org-level provider", async () => {
+            const created = await service.createOrgAuthProvider(currentUser.id, newOrgEntry());
+            const someRandomString = String(Date.now());
+            const updatedClientId = await service.updateOrgAuthProvider(currentUser.id, {
+                id: created.id,
+                organizationId: org.id,
+                clientId: someRandomString,
+            });
+            expect(updatedClientId.oauth?.clientId).to.be.equal(someRandomString);
+            expect(updatedClientId.oauthRevision).to.be.not.equal(created.oauthRevision);
+
+            const updatedClientSecret = await service.updateOrgAuthProvider(currentUser.id, {
+                id: created.id,
+                organizationId: org.id,
+                clientSecret: String(Date.now()),
+            });
+            expect(updatedClientSecret.oauthRevision).to.be.not.equal(updatedClientId.oauthRevision);
+        });
+        it("should fail if org-permissions do not permit", async () => {
+            const created = await service.createOrgAuthProvider(currentUser.id, newOrgEntry());
+            await expectError(
+                ErrorCodes.NOT_FOUND,
+                service.updateOrgAuthProvider("some-stranger", {
+                    id: created.id,
+                    organizationId: org.id,
+                    clientId: "any",
+                }),
+            );
         });
     });
 });

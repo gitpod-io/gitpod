@@ -40,7 +40,7 @@ func main() {
 		Usage:                "connect your Gitpod workspaces",
 		Action:               DefaultCommand("run"),
 		EnableBashCompletion: true,
-		Version:              constants.Version,
+		Version:              constants.Version.String(),
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "gitpod-host",
@@ -283,7 +283,7 @@ func tryConnectToServer(gitpodUrl string, tkn string, reconnectionHandler func()
 		CloseHandler:        closeHandler,
 		ExtraHeaders: map[string]string{
 			"User-Agent":       "gitpod/local-companion",
-			"X-Client-Version": constants.Version,
+			"X-Client-Version": constants.Version.String(),
 		},
 	})
 	if err != nil {

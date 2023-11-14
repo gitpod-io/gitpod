@@ -37,6 +37,12 @@ type CommandTestExpectation struct {
 	Output string
 }
 
+// AddActiveTestContext sets the active context to "test" which makes sure we run against the test HTTP server
+func AddActiveTestContext(cfg *config.Config) *config.Config {
+	cfg.ActiveContext = "test"
+	return cfg
+}
+
 func RunCommandTests(t *testing.T, tests []CommandTest) {
 	for _, test := range tests {
 		name := test.Name
@@ -69,9 +75,13 @@ func RunCommandTests(t *testing.T, tests []CommandTest) {
 					}
 					rootTestingOpts.Client = clnt
 
+					testurl, err := url.Parse(apisrv.URL)
+					if err != nil {
+						t.Fatal(err)
+					}
 					test.Config.Contexts = map[string]*config.ConnectionContext{
 						"test": {
-							Host:  &config.YamlURL{URL: &url.URL{Scheme: "https", Host: "testing"}},
+							Host:  &config.YamlURL{URL: testurl},
 							Token: "hello world",
 						},
 					}

@@ -26,6 +26,7 @@ import { UserService } from "../user/user-service";
 import { Config } from "../config";
 import { OrganizationService } from "../orgs/organization-service";
 import { ProjectsService } from "../projects/projects-service";
+import { AuthProviderService } from "../auth/auth-provider-service";
 
 const expect = chai.expect;
 
@@ -49,6 +50,7 @@ export class APITeamsServiceSpec {
         this.container.bind(Redis).toConstantValue({} as Redis);
         this.container.bind(UserService).toConstantValue({} as UserService);
         this.container.bind(ProjectsService).toConstantValue({} as ProjectsService);
+        this.container.bind(AuthProviderService).toConstantValue({} as AuthProviderService);
 
         // Clean-up database
         const typeorm = testContainer.get<TypeORM>(TypeORM);
