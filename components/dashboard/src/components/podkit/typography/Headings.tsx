@@ -22,7 +22,7 @@ export const Heading1: FC<HeadingProps> = ({ id, color, tracking, className, chi
     return (
         <Comp
             id={id}
-            className={cn(getHeadingColor(color), getTracking(tracking), "font-bold text-4xl truncate", className)}
+            className={cn(getHeadingColor(color), getTracking(tracking), "font-bold text-3xl truncate", className)}
         >
             {children}
         </Comp>

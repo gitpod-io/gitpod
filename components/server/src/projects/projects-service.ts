@@ -68,15 +68,24 @@ export class ProjectsService {
             orderBy?: keyof Project;
             orderDir?: "ASC" | "DESC";
             searchTerm?: string;
+            organizationId?: string;
         },
     ): Promise<{ total: number; rows: Project[] }> {
-        const projects = await this.projectDB.findProjectsBySearchTerm(
-            searchOptions.offset || 0,
-            searchOptions.limit || 1000,
-            searchOptions.orderBy || "creationTime",
-            searchOptions.orderDir || "ASC",
-            searchOptions.searchTerm || "",
-        );
+        if (searchOptions.organizationId) {
+            await this.auth.checkPermissionOnOrganization(userId, "read_info", searchOptions.organizationId);
+        } else {
+            // If no org is provided need to check that user has installation admin scope
+        }
+
+        const projects = await this.projectDB.findProjectsBySearchTerm({
+            offset: searchOptions.offset || 0,
+            limit: searchOptions.limit || 1000,
+            orderBy: searchOptions.orderBy || "creationTime",
+            orderDir: searchOptions.orderDir || "ASC",
+            searchTerm: searchOptions.searchTerm || "",
+            organizationId: searchOptions.organizationId,
+        });
+        // TODO: adjust this to not filter entities, but log errors if any are not accessible for current user
         const rows = await this.filterByReadAccess(userId, projects.rows);
         const total = projects.total;
         return {

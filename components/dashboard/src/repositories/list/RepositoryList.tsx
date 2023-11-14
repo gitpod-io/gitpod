@@ -4,23 +4,52 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, useCallback, useState } from "react";
-import Header from "../../components/Header";
-import { Loader2 } from "lucide-react";
+import { FC, useCallback, useEffect, useState } from "react";
+import { LoaderIcon } from "lucide-react";
 import { useHistory } from "react-router-dom";
 import { Project } from "@gitpod/gitpod-protocol";
 import { CreateProjectModal } from "../../projects/create-project-modal/CreateProjectModal";
-import { Button } from "../../components/Button";
 import { RepositoryListItem } from "./RepoListItem";
 import { useListConfigurations } from "../../data/configurations/configuration-queries";
 import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
 import { TextInput } from "../../components/forms/TextInputField";
+import { TextMuted } from "@podkit/typography/TextMuted";
+import { PageHeading } from "@podkit/layout/PageHeading";
+import { Button } from "@podkit/buttons/Button";
+import { useDocumentTitle } from "../../hooks/use-document-title";
+import { PaginationControls, PaginationCountText } from "./PaginationControls";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@podkit/tables/Table";
 
 const RepositoryListPage: FC = () => {
+    useDocumentTitle("Imported repositories");
+
     const history = useHistory();
+
+    // TODO: Move this state into url search params
+    const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm, debouncedSearchTerm] = useStateWithDebounce("");
-    const { data, isLoading } = useListConfigurations({ searchTerm: debouncedSearchTerm, page: 0, pageSize: 10 });
+
+    // Reset to page 1 when debounced search term changes (when we perform a new search)
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [debouncedSearchTerm]);
+
+    // Have this set to a low value for now to test pagination while we develop this
+    // TODO: move this into state and add control for changing it
+    const pageSize = 5;
+
+    const { data, isFetching, isPreviousData } = useListConfigurations({
+        searchTerm: debouncedSearchTerm,
+        page: currentPage,
+        pageSize,
+    });
     const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
+
+    // TODO: Adding these to response payload to avoid having to calculate them here
+    // This will fix issues w/ relying on some server provided state and some client state (like current page)
+    const rowCount = data?.configurations.length ?? 0;
+    const totalRows = data?.pagination?.total ?? 0;
+    const totalPages = Math.ceil(totalRows / pageSize);
 
     const handleProjectCreated = useCallback(
         (project: Project) => {
@@ -31,25 +60,88 @@ const RepositoryListPage: FC = () => {
 
     return (
         <>
-            <Header title="Configurations" subtitle="" />
-
             <div className="app-container">
-                <div className="py-4 text-right">
-                    <Button onClick={() => setShowCreateProjectModal(true)}>Configure Repository</Button>
+                <PageHeading
+                    title="Imported repositories"
+                    subtitle="Configure and refine the experience of working with a repository in Gitpod"
+                    action={<Button onClick={() => setShowCreateProjectModal(true)}>Import Repository</Button>}
+                />
+
+                {/* Search/Filter bar */}
+                <div className="flex flex-row flex-wrap justify-between items-center">
+                    <div className="flex flex-row flex-wrap gap-2 items-center">
+                        {/* TODO: Add search icon on left and decide on pulling Inputs into podkit */}
+                        <TextInput
+                            className="w-80"
+                            value={searchTerm}
+                            onChange={setSearchTerm}
+                            placeholder="Search imported repositories"
+                        />
+                        {/* TODO: Add prebuild status filter dropdown */}
+                    </div>
+                    {/* Account for variation of message when totalRows is greater than smallest page size option (20?) */}
+                    <div>
+                        <TextMuted className="text-sm">
+                            {rowCount < totalRows ? (
+                                <PaginationCountText
+                                    currentPage={currentPage}
+                                    pageSize={pageSize}
+                                    currentRows={rowCount}
+                                    totalRows={totalRows}
+                                    includePrefix
+                                />
+                            ) : (
+                                <>{totalRows === 1 ? "Showing 1 repo" : `Showing ${totalRows} repos`}</>
+                            )}
+                        </TextMuted>
+                    </div>
                 </div>
 
-                <div>
-                    <TextInput value={searchTerm} onChange={setSearchTerm} placeholder="Search repositories" />
+                <div className="relative w-full overflow-auto mt-2">
+                    <Table>
+                        {/* TODO: Add sorting controls */}
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-52">Name</TableHead>
+                                <TableHead hideOnSmallScreen>Repository</TableHead>
+                                <TableHead className="w-32" hideOnSmallScreen>
+                                    Created
+                                </TableHead>
+                                <TableHead className="w-24" hideOnSmallScreen>
+                                    Prebuilds
+                                </TableHead>
+                                {/* Action column, loading status in header */}
+                                <TableHead className="w-24 text-right">
+                                    {isFetching && isPreviousData && (
+                                        <div className="flex flex-right justify-end items-center">
+                                            {/* TODO: Make a LoadingIcon component */}
+                                            <LoaderIcon
+                                                className="animate-spin text-gray-500 dark:text-gray-300"
+                                                size={20}
+                                            />
+                                        </div>
+                                    )}
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {data?.configurations.map((configuration) => (
+                                <RepositoryListItem key={configuration.id} configuration={configuration} />
+                            ))}
+                        </TableBody>
+                    </Table>
+
+                    {totalPages > 1 && (
+                        <PaginationControls
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            totalRows={totalRows}
+                            pageSize={pageSize}
+                            currentRows={rowCount}
+                            onPageChanged={setCurrentPage}
+                        />
+                    )}
                 </div>
-
-                {isLoading && <Loader2 className="animate-spin" />}
-
-                <ul className="space-y-2 mt-8">
-                    {!isLoading &&
-                        data?.configurations.map((configuration) => (
-                            <RepositoryListItem key={configuration.id} configuration={configuration} />
-                        ))}
-                </ul>
             </div>
 
             {showCreateProjectModal && (
