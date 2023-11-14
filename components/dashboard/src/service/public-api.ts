@@ -25,6 +25,8 @@ import { JsonRpcOrganizationClient } from "./json-rpc-organization-client";
 import { JsonRpcWorkspaceClient } from "./json-rpc-workspace-client";
 import { JsonRpcAuthProviderClient } from "./json-rpc-authprovider-client";
 import { AuthProviderService } from "@gitpod/public-api/lib/gitpod/v1/authprovider_connect";
+import { EnvironmentVariableService } from "@gitpod/public-api/lib/gitpod/v1/envvar_connect";
+import { JsonRpcEnvvarClient } from "./json-rpc-envvar-client";
 
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
@@ -52,6 +54,8 @@ export const organizationClient = createServiceClient(
 export const configurationClient = createServiceClient(ConfigurationService);
 
 export const authProviderClient = createServiceClient(AuthProviderService, new JsonRpcAuthProviderClient());
+
+export const envVarClient = createServiceClient(EnvironmentVariableService, new JsonRpcEnvvarClient());
 
 export async function listAllProjects(opts: { orgId: string }): Promise<ProtocolProject[]> {
     let pagination = {

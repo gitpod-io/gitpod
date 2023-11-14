@@ -9,11 +9,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { Item, ItemField, ItemsList } from "../components/ItemsList";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
-import { getGitpodService } from "../service/service";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { EnvironmentVariableEntry } from "./EnvironmentVariableEntry";
 import { Button } from "../components/Button";
 import { Heading2, Subheading } from "../components/typography/headings";
+import { envVarClient } from "../service/public-api";
+import { UserEnvironmentVariable } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
 
 interface EnvVarModalProps {
     envVar: UserEnvVarValue;
@@ -133,7 +134,7 @@ function DeleteEnvVarModal(p: { variable: UserEnvVarValue; deleteVariable: () =>
     );
 }
 
-function sortEnvVars(a: UserEnvVarValue, b: UserEnvVarValue) {
+function sortEnvVars(a: UserEnvironmentVariable, b: UserEnvironmentVariable) {
     if (a.name === b.name) {
         return a.repositoryPattern > b.repositoryPattern ? 1 : -1;
     }
@@ -143,6 +144,7 @@ function sortEnvVars(a: UserEnvVarValue, b: UserEnvVarValue) {
 export default function EnvVars() {
     const [envVars, setEnvVars] = useState([] as UserEnvVarValue[]);
     const [currentEnvVar, setCurrentEnvVar] = useState({
+        id: undefined,
         name: "",
         value: "",
         repositoryPattern: "",
@@ -150,9 +152,16 @@ export default function EnvVars() {
     const [isAddEnvVarModalVisible, setAddEnvVarModalVisible] = useState(false);
     const [isDeleteEnvVarModalVisible, setDeleteEnvVarModalVisible] = useState(false);
     const update = async () => {
-        await getGitpodService()
-            .server.getAllEnvVars()
-            .then((r) => setEnvVars(r.sort(sortEnvVars)));
+        await envVarClient.listUserEnvironmentVariables({}).then((r) =>
+            setEnvVars(
+                r.environmentVariables.sort(sortEnvVars).map((e) => ({
+                    id: e.id,
+                    name: e.name,
+                    value: e.value,
+                    repositoryPattern: e.repositoryPattern,
+                })),
+            ),
+        );
     };
 
     useEffect(() => {
@@ -160,7 +169,7 @@ export default function EnvVars() {
     }, []);
 
     const add = () => {
-        setCurrentEnvVar({ name: "", value: "", repositoryPattern: "" });
+        setCurrentEnvVar({ id: undefined, name: "", value: "", repositoryPattern: "" });
         setAddEnvVarModalVisible(true);
         setDeleteEnvVarModalVisible(false);
     };
@@ -178,12 +187,28 @@ export default function EnvVars() {
     };
 
     const save = async (variable: UserEnvVarValue) => {
-        await getGitpodService().server.setEnvVar(variable);
+        if (variable.id) {
+            await envVarClient.updateUserEnvironmentVariable({
+                envVarId: variable.id,
+                name: variable.name,
+                value: variable.value,
+                repositoryPattern: variable.repositoryPattern,
+            });
+        } else {
+            await envVarClient.createUserEnvironmentVariable({
+                name: variable.name,
+                value: variable.value,
+                repositoryPattern: variable.repositoryPattern,
+            });
+        }
+
         await update();
     };
 
     const deleteVariable = async (variable: UserEnvVarValue) => {
-        await getGitpodService().server.deleteEnvVar(variable);
+        await envVarClient.deleteUserEnvironmentVariable({
+            envVarId: variable.id,
+        });
         await update();
     };
 
