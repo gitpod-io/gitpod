@@ -41,7 +41,6 @@ import {
     PrebuildWithStatus,
     StartPrebuildResult,
     PartialProject,
-    PrebuildEvent,
     OrganizationSettings,
 } from "./teams-projects-protocol";
 import { JsonRpcProxy, JsonRpcServer } from "./messaging/proxy-factory";
@@ -197,7 +196,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     deleteProject(projectId: string): Promise<void>;
     getTeamProjects(teamId: string): Promise<Project[]>;
     getProjectOverview(projectId: string): Promise<Project.Overview | undefined>;
-    getPrebuildEvents(projectId: string): Promise<PrebuildEvent[]>;
     findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]>;
     findPrebuildByWorkspaceID(workspaceId: string): Promise<PrebuiltWorkspace | undefined>;
     getPrebuild(prebuildId: string): Promise<PrebuildWithStatus | undefined>;

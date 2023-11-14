@@ -65,7 +65,6 @@ const TeamGitIntegrations = React.lazy(() => import(/* webpackPrefetch: true */ 
 const NewProject = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/NewProject"));
 const Projects = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/Projects"));
 const Project = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/Project"));
-const Events = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/Events"));
 const ProjectSettings = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/ProjectSettings"));
 const ProjectVariables = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/ProjectVariables"));
 const Prebuilds = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/Prebuilds"));
@@ -210,7 +209,6 @@ export const AppRoutes = () => {
                     <Route exact path="/sso" component={SSO} />
 
                     <Route exact path={`/projects/:projectSlug`} component={Project} />
-                    <Route exact path={`/projects/:projectSlug/events`} component={Events} />
                     <Route exact path={`/projects/:projectSlug/prebuilds`} component={Prebuilds} />
                     <Route exact path={`/projects/:projectSlug/settings`} component={ProjectSettings} />
                     <Route exact path={`/projects/:projectSlug/variables`} component={ProjectVariables} />

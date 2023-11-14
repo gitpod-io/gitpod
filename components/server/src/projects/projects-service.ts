@@ -5,7 +5,7 @@
  */
 
 import { inject, injectable } from "inversify";
-import { DBWithTracing, ProjectDB, TracedWorkspaceDB, WebhookEventDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { DBWithTracing, ProjectDB, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
     Branch,
     PrebuildWithStatus,
@@ -13,7 +13,6 @@ import {
     FindPrebuildsParams,
     Project,
     User,
-    PrebuildEvent,
 } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
@@ -41,7 +40,6 @@ export class ProjectsService {
         @inject(TracedWorkspaceDB) private readonly workspaceDb: DBWithTracing<WorkspaceDB>,
         @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
-        @inject(WebhookEventDB) private readonly webhookEventDB: WebhookEventDB,
         @inject(Authorizer) private readonly auth: Authorizer,
         @inject(ScmService) private readonly scmService: ScmService,
     ) {}
@@ -424,22 +422,6 @@ export class ProjectsService {
             return !project || isOlderThan7Days(project.creationTime);
         }
         return isOlderThan7Days(usage.lastWorkspaceStart);
-    }
-
-    async getPrebuildEvents(userId: string, projectId: string): Promise<PrebuildEvent[]> {
-        const project = await this.getProject(userId, projectId);
-        const events = await this.webhookEventDB.findByCloneUrl(project.cloneUrl, 100);
-        return events.map((we) => ({
-            id: we.id,
-            creationTime: we.creationTime,
-            cloneUrl: we.cloneUrl,
-            branch: we.branch,
-            commit: we.commit,
-            prebuildId: we.prebuildId,
-            projectId: we.projectId,
-            status: we.prebuildStatus || we.status,
-            message: we.message,
-        }));
     }
 
     private async migratePrebuildSettingsOnDemand(project: Project): Promise<Project> {
