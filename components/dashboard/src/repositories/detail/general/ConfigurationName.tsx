@@ -7,7 +7,7 @@
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { Button } from "@podkit/buttons/Button";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
-import { FC, useCallback, useMemo, useState } from "react";
+import { FC, useCallback, useState } from "react";
 import { TextInputField } from "../../../components/forms/TextInputField";
 import { useToast } from "../../../components/toasts/Toasts";
 import { useUpdateProject } from "../../../data/projects/project-queries";
@@ -25,7 +25,7 @@ export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
     const updateProject = useUpdateProject();
     const [projectName, setProjectName] = useState(configuration.name);
 
-    const nameChanged = useMemo(() => projectName !== configuration.name, [projectName, configuration.name]);
+    const nameChanged = projectName !== configuration.name;
     const nameError = useOnBlurError("Sorry, this name is too long.", projectName.length <= MAX_LENGTH);
 
     const updateName = useCallback(
