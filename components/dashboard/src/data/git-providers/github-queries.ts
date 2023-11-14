@@ -11,7 +11,8 @@ import { useCurrentUser } from "../../user-context";
 
 export const useIsGithubAppEnabled = () => {
     return useQuery(["github-app-enabled"], async () => {
-        return await getGitpodService().server.isGitHubAppEnabled();
+        // similar to `isGitpodio`, but the GH App is only configured on Cloud.
+        return window.location.hostname === "gitpod.io" || window.location.hostname === "gitpod-staging.com";
     });
 };
 
