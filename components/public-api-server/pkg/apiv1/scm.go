@@ -5,10 +5,6 @@
 package apiv1
 
 import (
-	"context"
-
-	connect "github.com/bufbuild/connect-go"
-	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 )
