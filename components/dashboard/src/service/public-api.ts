@@ -23,6 +23,8 @@ import { getMetricsInterceptor } from "@gitpod/public-api/lib/metrics";
 import { getExperimentsClient } from "../experiments/client";
 import { JsonRpcOrganizationClient } from "./json-rpc-organization-client";
 import { JsonRpcWorkspaceClient } from "./json-rpc-workspace-client";
+import { JsonRpcAuthProviderClient } from "./json-rpc-authprovider-client";
+import { AuthProviderService } from "@gitpod/public-api/lib/gitpod/v1/authprovider_connect";
 
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
@@ -48,6 +50,8 @@ export const organizationClient = createServiceClient(
 );
 // No jsonrcp client for the configuration service as it's only used in new UI of the dashboard
 export const configurationClient = createServiceClient(ConfigurationService);
+
+export const authProviderClient = createServiceClient(AuthProviderService, new JsonRpcAuthProviderClient());
 
 export async function listAllProjects(opts: { orgId: string }): Promise<ProtocolProject[]> {
     let pagination = {

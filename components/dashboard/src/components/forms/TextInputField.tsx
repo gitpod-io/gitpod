@@ -4,10 +4,10 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import classNames from "classnames";
 import { FunctionComponent, memo, ReactNode, useCallback } from "react";
 import { useId } from "../../hooks/useId";
 import { InputField } from "./InputField";
+import { cn } from "@podkit/lib/cn";
 
 type TextInputFieldTypes = "text" | "password" | "email" | "url";
 
@@ -97,7 +97,7 @@ export const TextInput: FunctionComponent<TextInputProps> = memo(
         return (
             <input
                 id={id}
-                className={classNames("w-full max-w-lg dark:text-[#A8A29E]", className)}
+                className={cn("w-full max-w-lg dark:text-[#A8A29E]", className)}
                 value={value}
                 type={type}
                 placeholder={placeholder}

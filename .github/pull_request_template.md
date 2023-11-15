@@ -66,6 +66,8 @@ gitpod:summary
 - [ ] /werft with-large-vm
 - [x] /werft with-gce-vm
       If enabled this will create the environment on GCE infra
+- [x] /werft preemptible
+      Saves cost. Untick this only if you're really sure you need a non-preemtible machine.
 - [ ] with-integration-tests=all
       Valid options are `all`, `workspace`, `webapp`, `ide`, `jetbrains`, `vscode`, `ssh`. If enabled, `with-preview` and `with-large-vm` will be enabled.
 - [ ] with-monitoring

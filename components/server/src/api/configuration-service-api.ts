@@ -78,9 +78,11 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         }
 
         const limit = req.pagination?.pageSize || 25;
-        const offset = (req.pagination?.page ?? 0) * limit;
+        const currentPage = req.pagination?.page ?? 1;
+        const offset = currentPage > 1 ? (currentPage - 1) * limit : 0;
 
         const { rows, total } = await this.projectService.findProjects(context.user.id, {
+            organizationId: req.organizationId,
             searchTerm: req.searchTerm,
             orderBy: "name",
             orderDir: "ASC",
@@ -90,6 +92,7 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
 
         return new ListConfigurationsResponse({
             configurations: rows.map((project) => this.apiConverter.toConfiguration(project)),
+            // TODO: add additional pagination metadata to response
             pagination: new PaginationResponse({
                 total,
             }),

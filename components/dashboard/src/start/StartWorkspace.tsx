@@ -272,14 +272,14 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         const { workspaceId } = this.props;
         try {
             const request = new GetWorkspaceRequest();
-            request.id = workspaceId;
+            request.workspaceId = workspaceId;
             const response = await workspaceClient.getWorkspace(request);
-            if (response.item?.status?.instanceId) {
+            if (response.workspace?.status?.instanceId) {
                 this.setState((s) => ({
-                    workspace: response.item,
-                    startedInstanceId: s.startedInstanceId || response.item?.status?.instanceId, // note: here's a potential mismatch between startedInstanceId and instance.id. TODO(gpl) How to handle this?
+                    workspace: response.workspace,
+                    startedInstanceId: s.startedInstanceId || response.workspace?.status?.instanceId, // note: here's a potential mismatch between startedInstanceId and instance.id. TODO(gpl) How to handle this?
                 }));
-                this.onWorkspaceUpdate(response.item);
+                this.onWorkspaceUpdate(response.workspace);
             }
         } catch (error) {
             console.error(error);

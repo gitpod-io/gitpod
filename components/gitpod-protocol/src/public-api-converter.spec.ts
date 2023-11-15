@@ -21,6 +21,12 @@ import {
     PrebuildSettings,
     WorkspaceSettings,
 } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { AuthProviderEntry, AuthProviderInfo } from "./protocol";
+import {
+    AuthProvider,
+    AuthProviderDescription,
+    AuthProviderType,
+} from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 
 describe("PublicAPIConverter", () => {
     const converter = new PublicAPIConverter();
@@ -233,6 +239,7 @@ describe("PublicAPIConverter", () => {
                     },
                     additionalEnvironmentVariables: [],
                     region: "dev",
+                    prebuildId: "",
                     workspaceClass: "g1-standard",
                     editor: {
                         name: "code",
@@ -362,6 +369,7 @@ describe("PublicAPIConverter", () => {
                     },
                     additionalEnvironmentVariables: [],
                     region: "dev",
+                    prebuildId: "",
                     workspaceClass: "g1-standard",
                     editor: {
                         name: "code",
@@ -502,6 +510,7 @@ describe("PublicAPIConverter", () => {
                     },
                     additionalEnvironmentVariables: [],
                     region: "dev",
+                    prebuildId: "",
                     workspaceClass: "g1-standard",
                     editor: {
                         name: "code",
@@ -617,6 +626,7 @@ describe("PublicAPIConverter", () => {
                     },
                     additionalEnvironmentVariables: [],
                     region: "dev",
+                    prebuildId: "",
                     workspaceClass: "g1-standard",
                     editor: {
                         name: "code",
@@ -656,6 +666,7 @@ describe("PublicAPIConverter", () => {
             expect(result.organizationId).to.equal(project.teamId);
             expect(result.name).to.equal(project.name);
             expect(result.cloneUrl).to.equal(project.cloneUrl);
+            expect(result.creationTime).to.deep.equal(Timestamp.fromDate(new Date(project.creationTime)));
             expect(result.workspaceSettings).to.deep.equal(
                 new WorkspaceSettings({
                     workspaceClass: project.settings?.workspaceClasses?.regular,
@@ -719,6 +730,82 @@ describe("PublicAPIConverter", () => {
         it("should return an empty WorkspaceSettings if no workspace class string is provided", () => {
             const result = converter.toWorkspaceSettings(undefined);
             expect(result).to.deep.equal(new WorkspaceSettings());
+        });
+    });
+
+    describe("toAuthProviderDescription", () => {
+        const info: AuthProviderInfo = {
+            authProviderId: "ap123",
+            authProviderType: "GitHub",
+            host: "localhost",
+            verified: true,
+            icon: "unused icon",
+            description: "unused description",
+            settingsUrl: "unused",
+            ownerId: "unused",
+            organizationId: "unused",
+        };
+        const description = new AuthProviderDescription({
+            id: info.authProviderId,
+            type: AuthProviderType.GITHUB,
+            host: info.host,
+            icon: info.icon,
+            description: info.description,
+        });
+        it("should convert an auth provider info to a description", () => {
+            const result = converter.toAuthProviderDescription(info);
+            expect(result).to.deep.equal(description);
+        });
+    });
+
+    describe("toAuthProvider", () => {
+        const entry: AuthProviderEntry = {
+            id: "ap123",
+            type: "GitHub",
+            host: "localhost",
+            status: "pending",
+            ownerId: "userId",
+            organizationId: "orgId123",
+            oauth: {
+                clientId: "clientId123",
+                clientSecret: "should not appear in result",
+                callBackUrl: "localhost/callback",
+                authorizationUrl: "auth.service/authorize",
+                tokenUrl: "auth.service/token",
+            },
+        };
+        const provider = new AuthProvider({
+            id: entry.id,
+            type: AuthProviderType.GITHUB,
+            host: entry.host,
+            oauth2Config: {
+                clientId: entry.oauth?.clientId,
+                clientSecret: entry.oauth?.clientSecret,
+            },
+            owner: {
+                case: "organizationId",
+                value: entry.organizationId!,
+            },
+        });
+        it("should convert an auth provider", () => {
+            const result = converter.toAuthProvider(entry);
+            expect(result).to.deep.equal(provider);
+        });
+    });
+
+    describe("toAuthProviderType", () => {
+        const mapping: { [key: string]: number } = {
+            GitHub: AuthProviderType.GITHUB,
+            GitLab: AuthProviderType.GITLAB,
+            Bitbucket: AuthProviderType.BITBUCKET,
+            BitbucketServer: AuthProviderType.BITBUCKET_SERVER,
+            Other: AuthProviderType.UNSPECIFIED,
+        };
+        it("should convert auth provider types", () => {
+            for (const k of Object.getOwnPropertyNames(mapping)) {
+                const result = converter.toAuthProviderType(k);
+                expect(result).to.deep.equal(mapping[k]);
+            }
         });
     });
 });

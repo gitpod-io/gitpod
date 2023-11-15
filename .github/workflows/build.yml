@@ -39,6 +39,7 @@ jobs:
       with_large_vm: ${{ contains( steps.pr-details.outputs.pr_body, '[X] /werft with-large-vm') || (steps.output.outputs.with_integration_tests != '') }}
       publish_to_npm: ${{ contains( steps.pr-details.outputs.pr_body, '[X] /werft publish-to-npm') }}
       publish_to_jbmp: ${{ contains( steps.pr-details.outputs.pr_body, '[X] /werft publish-to-jb-marketplace') }}
+      with_preemptible: ${{ contains( steps.pr-details.outputs.pr_body, '[X] /werft preemptible') }}
       with_dedicated_emulation: ${{ contains( steps.pr-details.outputs.pr_body, '[X] with-dedicated-emulation') }}
       analytics: ${{ steps.output.outputs.analytics }}
       workspace_feature_flags: ${{ steps.output.outputs.workspace_feature_flags }}
@@ -135,6 +136,7 @@ jobs:
           infrastructure_provider: ${{ needs.configuration.outputs.preview_infra_provider }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
           large_vm: ${{ needs.configuration.outputs.with_large_vm }}
+          preemptible: ${{ needs.configuration.outputs.with_preemptible }}
           recreate_vm: ${{ inputs.recreate_vm }}
 
   build-gitpod:

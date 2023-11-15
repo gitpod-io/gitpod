@@ -3,7 +3,7 @@ packages:
   - name: docker
     type: docker
     deps:
-      - :app
+      - :app-with-manifest
     argdeps:
       - imageRepoBase
     config:
@@ -13,7 +13,32 @@ packages:
       image:
         - ${imageRepoBase}/local-app:${version}
         - ${imageRepoBase}/local-app:commit-${__git_commit}
-
+  - name: update-manifest
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+      - version.txt
+    deps:
+      - components/supervisor-api/go:lib
+      - components/gitpod-protocol/go:lib
+      - components/local-app-api/go:lib
+      - components/public-api/go:lib
+    config:
+      packaging: app
+      dontTest: true
+      buildCommand: ["go", "build", "-o", "update-manifest", "./main/update-manifest/main.go"]
+  - name: app-with-manifest
+    type: generic
+    deps:
+      - :app
+      - :update-manifest
+    config:
+      commands:
+        - ["sh", "-c", "mkdir -p bin && mv components-local-app--app/bin/* bin/"]
+        - ["sh", "-c", "components-local-app--update-manifest/update-manifest --cwd bin | tee bin/manifest.json"]
+        - ["rm", "-rf", "components-local-app--update-manifest", "components-local-app--app"]
 scripts:
   - name: install-cli
     description: "Install gitpod-cli as `gitpod` command and add auto-completion. Usage: '. $(leeway run components/local-app:install-cli)'"

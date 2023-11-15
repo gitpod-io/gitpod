@@ -4,8 +4,26 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Code, ConnectError } from "@connectrpc/connect";
 import { Timestamp } from "@bufbuild/protobuf";
+import { Code, ConnectError } from "@connectrpc/connect";
+import {
+    AuthProvider,
+    AuthProviderDescription,
+    AuthProviderType,
+    OAuth2Config,
+} from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import {
+    BranchMatchingStrategy,
+    Configuration,
+    PrebuildSettings,
+    WorkspaceSettings,
+} from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import {
+    Organization,
+    OrganizationMember,
+    OrganizationRole,
+    OrganizationSettings,
+} from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import {
     AdmissionLevel,
     EditorReference,
@@ -20,28 +38,28 @@ import {
     WorkspacePort_Protocol,
     WorkspaceStatus,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
-import {
-    Organization,
-    OrganizationMember,
-    OrganizationRole,
-    OrganizationSettings,
-} from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
-import {
-    BranchMatchingStrategy,
-    Configuration,
-    PrebuildSettings,
-    WorkspaceSettings,
-} from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { ContextURL } from "./context-url";
 import { ApplicationError, ErrorCode, ErrorCodes } from "./messaging/error";
 import {
+    AuthProviderEntry as AuthProviderProtocol,
+    AuthProviderInfo,
     CommitContext,
     EnvVarWithValue,
+    Workspace as ProtocolWorkspace,
     WithEnvvarsContext,
     WithPrebuild,
     WorkspaceContext,
     WorkspaceInfo,
-    Workspace as ProtocolWorkspace,
 } from "./protocol";
+import {
+    OrgMemberInfo,
+    OrgMemberRole,
+    OrganizationSettings as OrganizationSettingsProtocol,
+    PrebuildSettings as PrebuildSettingsProtocol,
+    Project,
+    Organization as ProtocolOrganization,
+} from "./teams-projects-protocol";
+import { TrustedValue } from "./util/scrubbing";
 import {
     ConfigurationIdeConfig,
     PortProtocol,
@@ -49,16 +67,6 @@ import {
     WorkspaceInstanceConditions,
     WorkspaceInstancePort,
 } from "./workspace-instance";
-import { ContextURL } from "./context-url";
-import { TrustedValue } from "./util/scrubbing";
-import {
-    Organization as ProtocolOrganization,
-    OrgMemberInfo,
-    OrgMemberRole,
-    OrganizationSettings as OrganizationSettingsProtocol,
-    Project,
-    PrebuildSettings as PrebuildSettingsProtocol,
-} from "./teams-projects-protocol";
 
 const applicationErrorCode = "application-error-code";
 const applicationErrorData = "application-error-data";
@@ -129,23 +137,27 @@ export class PublicAPIConverter {
         phase.lastTransitionTime = Timestamp.fromDate(new Date(lastTransitionTime));
 
         status.instanceId = arg.id;
-        status.message = arg.status.message;
+        if (arg.status.message) {
+            status.message = arg.status.message;
+        }
         status.workspaceUrl = arg.ideUrl;
         status.ports = this.toPorts(arg.status.exposedPorts);
         status.conditions = this.toWorkspaceConditions(arg.status.conditions);
         status.gitStatus = this.toGitStatus(arg, status.gitStatus);
         workspace.region = arg.region;
-        workspace.workspaceClass = arg.workspaceClass;
+        if (arg.workspaceClass) {
+            workspace.workspaceClass = arg.workspaceClass;
+        }
         workspace.editor = this.toEditor(arg.configuration.ideConfig);
 
         return workspace;
     }
 
     toWorkspaceConditions(conditions: WorkspaceInstanceConditions): WorkspaceConditions {
-        const result = new WorkspaceConditions();
-        result.failed = conditions.failed;
-        result.timeout = conditions.timeout;
-        return result;
+        return new WorkspaceConditions({
+            failed: conditions.failed,
+            timeout: conditions.timeout,
+        });
     }
 
     toEditor(ideConfig: ConfigurationIdeConfig | undefined): EditorReference | undefined {
@@ -345,15 +357,15 @@ export class PublicAPIConverter {
     }
 
     toOrganizationMember(member: OrgMemberInfo): OrganizationMember {
-        const result = new OrganizationMember();
-        result.userId = member.userId;
-        result.fullName = member.fullName;
-        result.email = member.primaryEmail;
-        result.avatarUrl = member.avatarUrl;
-        result.role = this.toOrgMemberRole(member.role);
-        result.memberSince = Timestamp.fromDate(new Date(member.memberSince));
-        result.ownedByOrganization = member.ownedByOrganization;
-        return result;
+        return new OrganizationMember({
+            userId: member.userId,
+            fullName: member.fullName,
+            email: member.primaryEmail,
+            avatarUrl: member.avatarUrl,
+            role: this.toOrgMemberRole(member.role),
+            memberSince: Timestamp.fromDate(new Date(member.memberSince)),
+            ownedByOrganization: member.ownedByOrganization,
+        });
     }
 
     toOrgMemberRole(role: OrgMemberRole): OrganizationRole {
@@ -379,10 +391,10 @@ export class PublicAPIConverter {
     }
 
     toOrganizationSettings(settings: OrganizationSettingsProtocol): OrganizationSettings {
-        const result = new OrganizationSettings();
-        result.workspaceSharingDisabled = !!settings.workspaceSharingDisabled;
-        result.defaultWorkspaceImage = settings.defaultWorkspaceImage || undefined;
-        return result;
+        return new OrganizationSettings({
+            workspaceSharingDisabled: !!settings.workspaceSharingDisabled,
+            defaultWorkspaceImage: settings.defaultWorkspaceImage || undefined,
+        });
     }
 
     toConfiguration(project: Project): Configuration {
@@ -391,6 +403,7 @@ export class PublicAPIConverter {
         result.organizationId = project.teamId;
         result.name = project.name;
         result.cloneUrl = project.cloneUrl;
+        result.creationTime = Timestamp.fromDate(new Date(project.creationTime));
         result.workspaceSettings = this.toWorkspaceSettings(project.settings?.workspaceClasses?.regular);
         result.prebuildSettings = this.toPrebuildSettings(project.settings?.prebuilds);
         return result;
@@ -426,5 +439,77 @@ export class PublicAPIConverter {
             result.workspaceClass = workspaceClass;
         }
         return result;
+    }
+
+    toAuthProviderDescription(ap: AuthProviderInfo): AuthProviderDescription {
+        const result = new AuthProviderDescription({
+            id: ap.authProviderId,
+            host: ap.host,
+            description: ap.description,
+            icon: ap.icon,
+            type: this.toAuthProviderType(ap.authProviderType),
+        });
+        return result;
+    }
+
+    toAuthProvider(ap: AuthProviderProtocol): AuthProvider {
+        const result = new AuthProvider({
+            id: ap.id,
+            host: ap.host,
+            type: this.toAuthProviderType(ap.type),
+            verified: ap.status === "verified",
+            settingsUrl: ap.oauth?.settingsUrl,
+            scopes: ap.oauth?.scope?.split(ap.oauth?.scopeSeparator || " ") || [],
+        });
+        if (ap.organizationId) {
+            result.owner = {
+                case: "organizationId",
+                value: ap.organizationId,
+            };
+        } else {
+            result.owner = {
+                case: "ownerId",
+                value: ap.ownerId,
+            };
+        }
+        result.oauth2Config = this.toOAuth2Config(ap);
+        return result;
+    }
+
+    toOAuth2Config(ap: AuthProviderProtocol): OAuth2Config {
+        return new OAuth2Config({
+            clientId: ap.oauth?.clientId,
+            clientSecret: ap.oauth?.clientSecret,
+        });
+    }
+
+    toAuthProviderType(type: string): AuthProviderType {
+        switch (type) {
+            case "GitHub":
+                return AuthProviderType.GITHUB;
+            case "GitLab":
+                return AuthProviderType.GITLAB;
+            case "Bitbucket":
+                return AuthProviderType.BITBUCKET;
+            case "BitbucketServer":
+                return AuthProviderType.BITBUCKET_SERVER;
+            default:
+                return AuthProviderType.UNSPECIFIED; // not allowed
+        }
+    }
+
+    fromAuthProviderType(type: AuthProviderType): string {
+        switch (type) {
+            case AuthProviderType.GITHUB:
+                return "GitHub";
+            case AuthProviderType.GITLAB:
+                return "GitLab";
+            case AuthProviderType.BITBUCKET:
+                return "Bitbucket";
+            case AuthProviderType.BITBUCKET_SERVER:
+                return "BitbucketServer";
+            default:
+                return ""; // not allowed
+        }
     }
 }

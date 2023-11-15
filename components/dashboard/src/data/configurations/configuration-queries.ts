@@ -4,10 +4,10 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { configurationClient } from "../../service/public-api";
-import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 
 const BASE_KEY = "configurations";
 
@@ -33,10 +33,14 @@ export const useListConfigurations = ({ searchTerm = "", page, pageSize }: ListC
                 pagination: { page, pageSize },
             });
 
-            return { configurations, pagination };
+            return {
+                configurations,
+                pagination,
+            };
         },
         {
             enabled: !!org,
+            keepPreviousData: true,
         },
     );
 };
@@ -57,6 +61,25 @@ export const useConfiguration = (configurationId: string) => {
         });
 
         return configuration;
+    });
+};
+
+type DeleteConfigurationArgs = {
+    configurationId: string;
+};
+export const useDeleteConfiguration = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ configurationId }: DeleteConfigurationArgs) => {
+            return await configurationClient.deleteConfiguration({
+                configurationId,
+            });
+        },
+        onSuccess: (_, { configurationId }) => {
+            queryClient.invalidateQueries({ queryKey: ["configurations", "list"] });
+            queryClient.invalidateQueries({ queryKey: getConfigurationQueryKey(configurationId) });
+        },
     });
 };
 
