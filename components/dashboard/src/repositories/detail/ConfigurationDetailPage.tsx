@@ -30,7 +30,7 @@ export function ConfigurationDetailPage({ children, configurationQuery, id }: Pa
     return (
         <div className="w-full">
             <BreadcrumbNav
-                pageTitle="Repository Configuration"
+                pageTitle="Imported repositories"
                 pageDescription={data?.name ?? ""}
                 backLink="/repositories"
             />
