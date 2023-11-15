@@ -19,6 +19,7 @@ import { useDocumentTitle } from "../../hooks/use-document-title";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@podkit/tables/Table";
 import { ImportRepositoryModal } from "../create/ImportRepositoryModal";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
 
 const RepositoryListPage: FC = () => {
     useDocumentTitle("Imported repositories");
@@ -26,21 +27,22 @@ const RepositoryListPage: FC = () => {
     const history = useHistory();
 
     // TODO: Move this state into url search params
-    const [nextToken, setNextToken] = useState<string>();
+    // const [nextToken, setNextToken] = useState<string>();
     const [searchTerm, setSearchTerm, debouncedSearchTerm] = useStateWithDebounce("");
 
     // Reset to page 1 when debounced search term changes (when we perform a new search)
     useEffect(() => {
-        setNextToken(undefined);
+        // setNextToken(undefined);
+        // TODO: reset query to page 1 somehow?
     }, [debouncedSearchTerm]);
 
     // Have this set to a low value for now to test pagination while we develop this
     // TODO: move this into state and add control for changing it
-    const pageSize = 5;
+    const pageSize = 2;
 
-    const { data, isFetching, isPreviousData } = useListConfigurations({
+    const { data, isFetching, isFetchingNextPage, isPreviousData, hasNextPage, fetchNextPage } = useListConfigurations({
         searchTerm: debouncedSearchTerm,
-        token: nextToken,
+        // token: nextToken,
         pageSize,
     });
     const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
@@ -58,6 +60,7 @@ const RepositoryListPage: FC = () => {
         [history],
     );
 
+    console.log("hasNextPage", hasNextPage, data?.pageParams);
     return (
         <>
             <div className="app-container">
@@ -125,15 +128,19 @@ const RepositoryListPage: FC = () => {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {data?.configurations.map((configuration) => (
-                                <RepositoryListItem key={configuration.id} configuration={configuration} />
-                            ))}
+                            {data?.pages.map((page) => {
+                                return page.configurations.map((configuration) => {
+                                    return <RepositoryListItem key={configuration.id} configuration={configuration} />;
+                                });
+                            })}
                         </TableBody>
                     </Table>
 
-                    {data?.pagination?.nextToken && (
-                        <div className="flex flex-row justify-center">
-                            <Button onClick={() => setNextToken(data.pagination?.nextToken)}>Load more</Button>
+                    {hasNextPage && (
+                        <div className="mt-4 flex flex-row justify-center">
+                            <LoadingButton onClick={() => fetchNextPage()} loading={isFetchingNextPage}>
+                                Load more
+                            </LoadingButton>
                         </div>
                     )}
 

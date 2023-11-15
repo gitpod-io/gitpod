@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { configurationClient } from "../../service/public-api";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
@@ -13,16 +13,16 @@ const BASE_KEY = "configurations";
 
 type ListConfigurationsArgs = {
     pageSize: number;
-    token?: string;
     searchTerm?: string;
 };
 
-export const useListConfigurations = ({ searchTerm = "", token, pageSize }: ListConfigurationsArgs) => {
+export const useListConfigurations = ({ searchTerm = "", pageSize }: ListConfigurationsArgs) => {
     const { data: org } = useCurrentOrg();
 
-    return useQuery(
-        getListConfigurationsQueryKey(org?.id || "", { searchTerm, token, pageSize }),
-        async () => {
+    return useInfiniteQuery(
+        getListConfigurationsQueryKey(org?.id || "", { searchTerm, pageSize }),
+        // QueryFn receives the past page's pageParam as it's argument
+        async ({ pageParam: nextToken }) => {
             if (!org) {
                 throw new Error("No org currently selected");
             }
@@ -30,8 +30,7 @@ export const useListConfigurations = ({ searchTerm = "", token, pageSize }: List
             const { configurations, pagination } = await configurationClient.listConfigurations({
                 organizationId: org.id,
                 searchTerm,
-                // TODO: add support for nextToken
-                pagination: { pageSize },
+                pagination: { pageSize, token: nextToken },
             });
 
             return {
@@ -42,6 +41,11 @@ export const useListConfigurations = ({ searchTerm = "", token, pageSize }: List
         {
             enabled: !!org,
             keepPreviousData: true,
+            // This enables the query to know if there are nore pages, and passes the last page's nextToken to the queryFn
+            getNextPageParam: (lastPage) => {
+                // Must ensure we return undefined if there are no more pages
+                return lastPage.pagination?.nextToken || undefined;
+            },
         },
     );
 };
