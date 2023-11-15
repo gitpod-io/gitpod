@@ -214,7 +214,9 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     deleteGitpodToken(tokenHash: string): Promise<void>;
 
     // misc
+    /** @deprecated always returns false */
     isGitHubAppEnabled(): Promise<boolean>;
+    /** @deprecated this is a no-op */
     registerGithubApp(installationId: string): Promise<void>;
 
     /**
