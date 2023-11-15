@@ -20,11 +20,7 @@ const ConfigurationDetailWorkspaces: FC = () => {
 
     return (
         <ConfigurationDetailPage configurationQuery={configurationQuery} id={id}>
-            {data && (
-                <>
-                    <ConfigurationWorkspaceSizeOptions configuration={data} />
-                </>
-            )}
+            {data && <ConfigurationWorkspaceSizeOptions configuration={data} />}
         </ConfigurationDetailPage>
     );
 };
