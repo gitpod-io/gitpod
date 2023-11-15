@@ -41,6 +41,7 @@ import { OrganizationService } from "../orgs/organization-service";
 import { OrganizationSettings as ProtocolOrganizationSettings } from "@gitpod/gitpod-protocol";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import { validate as uuidValidate } from "uuid";
+import { parsePaginationToken } from "./pagination";
 
 @injectable()
 export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationServiceInterface> {
@@ -93,18 +94,21 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         req: ListOrganizationsRequest,
         context: HandlerContext,
     ): Promise<ListOrganizationsResponse> {
+        const paginationToken = parsePaginationToken(req.pagination?.token);
+
         const orgs = await this.orgService.listOrganizations(
             context.user.id,
             {
                 limit: req.pagination?.pageSize || 100,
-                offset: (req.pagination?.page || 0) * (req.pagination?.pageSize || 0),
+                offset: paginationToken.offset,
             },
             req.scope === ListOrganizationsRequest_Scope.ALL ? "installation" : "member",
         );
         const response = new ListOrganizationsResponse();
         response.organizations = orgs.rows.map((org) => this.apiConverter.toOrganization(org));
         response.pagination = new PaginationResponse();
-        response.pagination.total = orgs.total;
+        // drop total, provide nextToken
+        // response.pagination.total = orgs.total;
         return response;
     }
 
@@ -172,7 +176,6 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         const response = new ListOrganizationMembersResponse();
         response.members = members.map((member) => this.apiConverter.toOrganizationMember(member));
         response.pagination = new PaginationResponse();
-        response.pagination.total = members.length;
         return response;
     }
 

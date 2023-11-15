@@ -5,7 +5,7 @@
  */
 
 import * as chai from "chai";
-import { selectPage, PAGE_DEFAULT, PAGE_SIZE_DEFAULT, PAGE_SIZE_MAX } from "./pagination";
+import { selectPage, PAGE_DEFAULT, PAGE_SIZE_DEFAULT, PAGE_SIZE_MAX, generatePaginationToken } from "./pagination";
 import { PaginationRequest } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 
 const expect = chai.expect;
@@ -25,7 +25,8 @@ describe("selectPage", function () {
         expect(selection[0]).to.equal(`item${PAGE_DEFAULT}`);
     });
     it(`should return second page`, function () {
-        const selection = selectPage(a1000, new PaginationRequest({ page: 2, pageSize: 50 }));
+        const paginationToken = generatePaginationToken({ offset: 50 });
+        const selection = selectPage(a1000, new PaginationRequest({ token: paginationToken, pageSize: 50 }));
         expect(selection).to.have.lengthOf(50);
         expect(selection[0]).to.equal(`item${1 * 50 + 1}`);
         expect(selection[selection.length - 1]).to.equal(`item${2 * 50}`);
