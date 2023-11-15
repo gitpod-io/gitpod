@@ -67,7 +67,7 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
     }
 
     return (
-        <ConfigurationSettingsField>
+        <ConfigurationSettingsField className="px-8 py-6">
             <form onSubmit={setWorkspaceClass}>
                 <div className="mb-4">
                     <Heading2 asChild>
