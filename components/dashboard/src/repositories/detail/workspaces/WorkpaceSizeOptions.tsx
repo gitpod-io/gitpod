@@ -80,7 +80,7 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
                     {classes.map((wsClass) => (
                         <Label className="flex items-start space-x-2 my-2">
                             <RadioGroupItem value={wsClass.id} />
-                            <div className="flex flex-col">
+                            <div className="flex flex-col space-y-2">
                                 <span className="font-bold">{wsClass.displayName}</span>
                                 <span>{wsClass.description}</span>
                             </div>
