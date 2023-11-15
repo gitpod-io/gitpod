@@ -95,7 +95,7 @@ export class JsonRpcAuthProviderClient implements PromiseClient<typeof AuthProvi
               })
             : await getGitpodService().server.getOwnAuthProviders();
         const response = new ListAuthProvidersResponse({
-            authProviders: authProviders.map(converter.toAuthProvider),
+            authProviders: authProviders.map(converter.toAuthProvider.bind(converter)),
         });
         return response;
     }
