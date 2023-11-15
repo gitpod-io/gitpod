@@ -15,6 +15,7 @@ import { ConfigurationSettingsField } from "../ConfigurationSettingsField";
 import { useUpdateProject } from "../../../data/projects/project-queries";
 import { useToast } from "../../../components/toasts/Toasts";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
+import { LoadingState } from "@podkit/loading/LoadingState";
 
 interface Props {
     configuration: Configuration;
@@ -58,12 +59,12 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
         [configuration.id, selectedValue, toast, updateProject],
     );
 
-    if (isError) {
+    if (isError || !classes) {
         return <div>Something went wrong</div>;
     }
 
-    if (isLoading || !classes) {
-        return <div>Loading...</div>;
+    if (isLoading) {
+        return <LoadingState />;
     }
 
     return (
