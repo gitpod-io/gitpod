@@ -71,9 +71,7 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
         <ConfigurationSettingsField className="px-8 py-6">
             <form onSubmit={setWorkspaceClass}>
                 <div className="mb-4">
-                    <Heading2 className="text-base" asChild>
-                        Workspace Size Options
-                    </Heading2>
+                    <Heading2 className="text-base">Workspace Size Options</Heading2>
                     <TextMuted>Choose the size of your workspace based on the resources you need.</TextMuted>
                 </div>
                 <RadioGroup value={selectedValue} onValueChange={setSelectedValue}>
