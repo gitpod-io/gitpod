@@ -22,21 +22,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSCMService_GetSuggestedRepoURLs(t *testing.T) {
-	t.Run("proxies request to server", func(t *testing.T) {
-		serverMock, client := setupSCMService(t)
-
-		str := ""
-		serverMock.EXPECT().GetSuggestedContextURLs(gomock.Any()).Return([]*string{&str}, nil)
-
-		retrieved, err := client.GetSuggestedRepoURLs(context.Background(), connect.NewRequest(&v1.GetSuggestedRepoURLsRequest{}))
-		require.NoError(t, err)
-		requireEqualProto(t, &v1.GetSuggestedRepoURLsResponse{
-			Repos: []string{""},
-		}, retrieved.Msg)
-	})
-}
-
 func setupSCMService(t *testing.T) (*protocol.MockAPIInterface, v1connect.SCMServiceClient) {
 	t.Helper()
 

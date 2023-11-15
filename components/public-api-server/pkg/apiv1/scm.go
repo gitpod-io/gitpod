@@ -26,26 +26,3 @@ type SCMService struct {
 
 	v1connect.UnimplementedSCMServiceHandler
 }
-
-func (s *SCMService) GetSuggestedRepoURLs(ctx context.Context, req *connect.Request[v1.GetSuggestedRepoURLsRequest]) (*connect.Response[v1.GetSuggestedRepoURLsResponse], error) {
-	conn, err := getConnection(ctx, s.connectionPool)
-	if err != nil {
-		return nil, err
-	}
-
-	reposPtrs, err := conn.GetSuggestedContextURLs(ctx)
-	if err != nil {
-		return nil, proxy.ConvertError(err)
-	}
-
-	repos := make([]string, len(reposPtrs))
-	for i, repoPtr := range reposPtrs {
-		if repoPtr != nil {
-			repos[i] = *repoPtr
-		}
-	}
-
-	return connect.NewResponse(&v1.GetSuggestedRepoURLsResponse{
-		Repos: repos,
-	}), nil
-}
