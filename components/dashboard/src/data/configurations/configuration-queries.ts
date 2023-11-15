@@ -12,16 +12,16 @@ import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configurati
 const BASE_KEY = "configurations";
 
 type ListConfigurationsArgs = {
-    searchTerm?: string;
-    page: number;
     pageSize: number;
+    token?: string;
+    searchTerm?: string;
 };
 
-export const useListConfigurations = ({ searchTerm = "", page, pageSize }: ListConfigurationsArgs) => {
+export const useListConfigurations = ({ searchTerm = "", token, pageSize }: ListConfigurationsArgs) => {
     const { data: org } = useCurrentOrg();
 
     return useQuery(
-        getListConfigurationsQueryKey(org?.id || "", { searchTerm, page, pageSize }),
+        getListConfigurationsQueryKey(org?.id || "", { searchTerm, token, pageSize }),
         async () => {
             if (!org) {
                 throw new Error("No org currently selected");
@@ -30,7 +30,8 @@ export const useListConfigurations = ({ searchTerm = "", page, pageSize }: ListC
             const { configurations, pagination } = await configurationClient.listConfigurations({
                 organizationId: org.id,
                 searchTerm,
-                pagination: { page, pageSize },
+                // TODO: add support for nextToken
+                pagination: { pageSize },
             });
 
             return {

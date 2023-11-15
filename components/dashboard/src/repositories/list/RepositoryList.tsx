@@ -11,11 +11,11 @@ import { RepositoryListItem } from "./RepoListItem";
 import { useListConfigurations } from "../../data/configurations/configuration-queries";
 import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
 import { TextInput } from "../../components/forms/TextInputField";
-import { TextMuted } from "@podkit/typography/TextMuted";
+// import { TextMuted } from "@podkit/typography/TextMuted";
 import { PageHeading } from "@podkit/layout/PageHeading";
 import { Button } from "@podkit/buttons/Button";
 import { useDocumentTitle } from "../../hooks/use-document-title";
-import { PaginationControls, PaginationCountText } from "./PaginationControls";
+// import { PaginationControls, PaginationCountText } from "./PaginationControls";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@podkit/tables/Table";
 import { ImportRepositoryModal } from "../create/ImportRepositoryModal";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
@@ -26,12 +26,12 @@ const RepositoryListPage: FC = () => {
     const history = useHistory();
 
     // TODO: Move this state into url search params
-    const [currentPage, setCurrentPage] = useState(1);
+    const [nextToken, setNextToken] = useState<string>();
     const [searchTerm, setSearchTerm, debouncedSearchTerm] = useStateWithDebounce("");
 
     // Reset to page 1 when debounced search term changes (when we perform a new search)
     useEffect(() => {
-        setCurrentPage(1);
+        setNextToken(undefined);
     }, [debouncedSearchTerm]);
 
     // Have this set to a low value for now to test pagination while we develop this
@@ -40,16 +40,16 @@ const RepositoryListPage: FC = () => {
 
     const { data, isFetching, isPreviousData } = useListConfigurations({
         searchTerm: debouncedSearchTerm,
-        page: currentPage,
+        token: nextToken,
         pageSize,
     });
     const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
 
     // TODO: Adding these to response payload to avoid having to calculate them here
     // This will fix issues w/ relying on some server provided state and some client state (like current page)
-    const rowCount = data?.configurations.length ?? 0;
-    const totalRows = data?.pagination?.total ?? 0;
-    const totalPages = Math.ceil(totalRows / pageSize);
+    // const rowCount = data?.configurations.length ?? 0;
+    // const totalRows = data?.pagination?.total ?? 0;
+    // const totalPages = Math.ceil(totalRows / pageSize);
 
     const handleRepoImported = useCallback(
         (configuration: Configuration) => {
@@ -81,10 +81,10 @@ const RepositoryListPage: FC = () => {
                     </div>
                     {/* Account for variation of message when totalRows is greater than smallest page size option (20?) */}
                     <div>
-                        <TextMuted className="text-sm">
+                        {/* <TextMuted className="text-sm">
                             {rowCount < totalRows ? (
                                 <PaginationCountText
-                                    currentPage={currentPage}
+                                    currentPage={nextToken}
                                     pageSize={pageSize}
                                     currentRows={rowCount}
                                     totalRows={totalRows}
@@ -93,7 +93,7 @@ const RepositoryListPage: FC = () => {
                             ) : (
                                 <>{totalRows === 1 ? "Showing 1 repo" : `Showing ${totalRows} repos`}</>
                             )}
-                        </TextMuted>
+                        </TextMuted> */}
                     </div>
                 </div>
 
@@ -131,16 +131,22 @@ const RepositoryListPage: FC = () => {
                         </TableBody>
                     </Table>
 
-                    {totalPages > 1 && (
+                    {data?.pagination?.nextToken && (
+                        <div className="flex flex-row justify-center">
+                            <Button onClick={() => setNextToken(data.pagination?.nextToken)}>Load more</Button>
+                        </div>
+                    )}
+
+                    {/* {totalPages > 1 && (
                         <PaginationControls
-                            currentPage={currentPage}
+                            currentPage={nextToken}
                             totalPages={totalPages}
                             totalRows={totalRows}
                             pageSize={pageSize}
                             currentRows={rowCount}
-                            onPageChanged={setCurrentPage}
+                            onPageChanged={setNextToken}
                         />
-                    )}
+                    )} */}
                 </div>
             </div>
 
