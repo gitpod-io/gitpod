@@ -96,6 +96,7 @@ export type CreateConfigurationArgs = {
 
 export const useCreateConfiguration = () => {
     const { data: org } = useCurrentOrg();
+    const queryClient = useQueryClient();
 
     return useMutation<Configuration, Error, CreateConfigurationArgs>({
         mutationFn: async ({ name, cloneUrl }) => {
@@ -117,6 +118,10 @@ export const useCreateConfiguration = () => {
             }
 
             return response.configuration;
+        },
+        onSuccess: (configuration) => {
+            queryClient.setQueryData(getConfigurationQueryKey(configuration.id), configuration);
+            queryClient.invalidateQueries({ queryKey: ["configurations", "list"] });
         },
     });
 };

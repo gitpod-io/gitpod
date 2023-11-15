@@ -6,7 +6,6 @@
 
 import { FC, useCallback, useState } from "react";
 import Modal, { ModalBody, ModalFooter, ModalFooterAlert, ModalHeader } from "../../components/Modal";
-import { Button } from "../../components/Button";
 import { SuggestedRepository } from "@gitpod/gitpod-protocol";
 import RepositoryFinder from "../../components/RepositoryFinder";
 import { InputField } from "../../components/forms/InputField";
@@ -14,6 +13,8 @@ import { AuthorizeGit, useNeedsGitAuthorization } from "../../components/Authori
 import { useTemporaryState } from "../../hooks/use-temporary-value";
 import { CreateConfigurationArgs, useCreateConfiguration } from "../../data/configurations/configuration-queries";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
+import { Button } from "@podkit/buttons/Button";
 
 type Props = {
     onCreated: (configuration: Configuration) => void;
@@ -57,7 +58,7 @@ export const ImportRepositoryModal: FC<Props> = ({ onClose, onCreated }) => {
                         <AuthorizeGit />
                     ) : (
                         <>
-                            <InputField label="Select a repository" className="mb-8 w-full">
+                            <InputField className="mb-8 w-full">
                                 <RepositoryFinder
                                     selectedContextURL={selectedRepo?.url}
                                     selectedProjectID={selectedRepo?.projectId}
@@ -78,12 +79,12 @@ export const ImportRepositoryModal: FC<Props> = ({ onClose, onCreated }) => {
                     )
                 }
             >
-                <Button type="secondary" onClick={onClose}>
+                <Button variant="secondary" onClick={onClose}>
                     Cancel
                 </Button>
-                <Button htmlType="submit" loading={createConfiguration.isLoading}>
+                <LoadingButton type="submit" loading={createConfiguration.isLoading}>
                     Import
-                </Button>
+                </LoadingButton>
             </ModalFooter>
         </Modal>
     );
