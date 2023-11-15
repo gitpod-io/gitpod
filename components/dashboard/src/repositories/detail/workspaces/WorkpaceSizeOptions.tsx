@@ -31,7 +31,6 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
 
     const setWorkspaceClass = useCallback(
         async (value: string) => {
-            const before = configuration.workspaceSettings?.workspaceClass;
             updateProject.mutate(
                 {
                     id: configuration.id,
@@ -43,14 +42,17 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
                 },
                 {
                     onSuccess: () => {
+                        // todo: use optimistic updates when we introduce configuration update hooks
                         setSelectedValue(value);
                         toast({ message: "Workspace size updated" });
                     },
+                    onError: (e) => {
+                        toast({ message: `Failed updating workspace size: ${e.message}` });
+                    },
                 },
             );
-            return before;
         },
-        [configuration.id, configuration.workspaceSettings?.workspaceClass, toast, updateProject],
+        [configuration.id, toast, updateProject],
     );
 
     if (isError) {
