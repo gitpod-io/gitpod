@@ -8,12 +8,10 @@ import { Project } from "@gitpod/gitpod-protocol";
 import { Button } from "@podkit/buttons/Button";
 import { useCallback, useContext, useMemo, useState } from "react";
 import { useHistory } from "react-router";
-import { Link } from "react-router-dom";
 import Alert from "../components/Alert";
 import Header from "../components/Header";
 import { SpinnerLoader } from "../components/Loader";
 import { Heading2 } from "../components/typography/headings";
-import { useFeatureFlag } from "../data/featureflag-query";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { useListAllProjectsQuery } from "../data/projects/list-all-projects-query";
 import search from "../icons/search.svg";
@@ -22,22 +20,15 @@ import projectsEmpty from "../images/projects-empty.svg";
 import { ThemeContext } from "../theme-context";
 import { ProjectListItem } from "./ProjectListItem";
 import { CreateProjectModal } from "./create-project-modal/CreateProjectModal";
-import { projectsPathNew } from "./projects.routes";
 import { LinkButton } from "@podkit/buttons/LinkButton";
 
 export default function ProjectsPage() {
-    const createProjectModal = useFeatureFlag("createProjectModal");
     const history = useHistory();
     const team = useCurrentOrg().data;
     const { data, isLoading, isError, refetch } = useListAllProjectsQuery();
     const { isDark } = useContext(ThemeContext);
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
     const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
-
-    // TODO: remove this once we enable createProjectModal
-    const onNewProject = useCallback(() => {
-        history.push(projectsPathNew);
-    }, [history]);
 
     const handleProjectCreated = useCallback(
         (project: Project) => {
@@ -94,13 +85,9 @@ export default function ProjectsPage() {
                         </a>
                     </p>
                     <div className="flex space-x-2 justify-center mt-7">
-                        {createProjectModal ? (
-                            <Button className="ml-2" onClick={() => setShowCreateProjectModal(true)}>
-                                New Project
-                            </Button>
-                        ) : (
-                            <LinkButton href={projectsPathNew}>New Project</LinkButton>
-                        )}
+                        <Button className="ml-2" onClick={() => setShowCreateProjectModal(true)}>
+                            New Project
+                        </Button>
                         {team && (
                             <LinkButton href="./members" variant="secondary">
                                 Invite Members
@@ -133,15 +120,9 @@ export default function ProjectsPage() {
                                 Invite Members
                             </LinkButton>
                         )}
-                        {createProjectModal ? (
-                            <Button className="ml-2" onClick={() => setShowCreateProjectModal(true)}>
-                                New Project
-                            </Button>
-                        ) : (
-                            <Button className="ml-2" onClick={() => onNewProject()}>
-                                New Project
-                            </Button>
-                        )}
+                        <Button className="ml-2" onClick={() => setShowCreateProjectModal(true)}>
+                            New Project
+                        </Button>
                     </div>
                     <div className="mt-4 grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-4 pb-40">
                         {filteredProjects.map((p) => (
@@ -153,27 +134,19 @@ export default function ProjectsPage() {
                                 key="new-project"
                                 className="h-52 border-dashed border-2 border-gray-100 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl focus:bg-kumquat-light transition ease-in-out group"
                             >
-                                {createProjectModal ? (
-                                    // We should be using a button here, but will handle it with the new projects list work
-                                    <div
-                                        className="cursor-pointer flex h-full"
-                                        onClick={() => setShowCreateProjectModal(true)}
-                                    >
-                                        <div className="m-auto text-gray-400 dark:text-gray-600">New Project</div>
-                                    </div>
-                                ) : (
-                                    <Link to={projectsPathNew} data-analytics='{"button_type":"card"}'>
-                                        <div className="flex h-full">
-                                            <div className="m-auto text-gray-400 dark:text-gray-600">New Project</div>
-                                        </div>
-                                    </Link>
-                                )}
+                                {/* We should be using a button here, but will handle it with the new projects list work */}
+                                <div
+                                    className="cursor-pointer flex h-full"
+                                    onClick={() => setShowCreateProjectModal(true)}
+                                >
+                                    <div className="m-auto text-gray-400 dark:text-gray-600">New Project</div>
+                                </div>
                             </div>
                         )}
                     </div>
                 </div>
             )}
-            {createProjectModal && showCreateProjectModal && (
+            {showCreateProjectModal && (
                 <CreateProjectModal onClose={() => setShowCreateProjectModal(false)} onCreated={handleProjectCreated} />
             )}
         </>
