@@ -88,7 +88,12 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
                         </div>
                     ))}
                 </RadioGroup>
-                <LoadingButton type="submit" disabled={!classChanged} loading={updateProject.isLoading}>
+                <LoadingButton
+                    className="mt-8"
+                    type="submit"
+                    disabled={!classChanged}
+                    loading={updateProject.isLoading}
+                >
                     Save
                 </LoadingButton>
             </form>
