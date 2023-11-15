@@ -40,9 +40,6 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         if (!req.cloneUrl) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "clone_url is required");
         }
-        if (!req.name) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "name is required");
-        }
 
         const project = await this.projectService.createProject(
             {
