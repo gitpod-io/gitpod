@@ -17,12 +17,12 @@ import searchIcon from "../icons/search.svg";
 import { organizationClient } from "../service/public-api";
 import { useCurrentUser } from "../user-context";
 import { SpinnerLoader } from "../components/Loader";
-import { Delayed } from "../components/Delayed";
 import { InputField } from "../components/forms/InputField";
 import { InputWithCopy } from "../components/InputWithCopy";
 import { OrganizationMember, OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { useListOrganizationMembers, useOrganizationMembersInvalidator } from "../data/organizations/members-query";
 import { useInvitationId, useInviteInvalidator } from "../data/organizations/invite-query";
+import { Delayed } from "@podkit/loading/Delayed";
 
 export default function MembersPage() {
     const user = useCurrentUser();

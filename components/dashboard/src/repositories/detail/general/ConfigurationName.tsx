@@ -5,7 +5,6 @@
  */
 
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
-import { Button } from "@podkit/buttons/Button";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { FC, useCallback, useState } from "react";
 import { TextInputField } from "../../../components/forms/TextInputField";
@@ -67,16 +66,6 @@ export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
                     <LoadingButton type="submit" disabled={!nameChanged} loading={updateProject.isLoading}>
                         Save
                     </LoadingButton>
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        disabled={!nameChanged}
-                        onClick={() => {
-                            setProjectName(configuration.name);
-                        }}
-                    >
-                        Cancel
-                    </Button>
                 </div>
             </form>
         </ConfigurationSettingsField>

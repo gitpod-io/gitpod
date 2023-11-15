@@ -12,7 +12,6 @@ import Alert from "../components/Alert";
 import { CheckboxInputField, CheckboxListField } from "../components/forms/CheckboxInputField";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { ContextMenuEntry } from "../components/ContextMenu";
-import { Delayed } from "../components/Delayed";
 import InfoBox from "../components/InfoBox";
 import { ItemsList } from "../components/ItemsList";
 import { SpinnerLoader } from "../components/Loader";
@@ -30,6 +29,7 @@ import { SelectAccountModal } from "./SelectAccountModal";
 import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { EmptyMessage } from "../components/EmptyMessage";
+import { Delayed } from "@podkit/loading/Delayed";
 
 export default function Integrations() {
     return (
