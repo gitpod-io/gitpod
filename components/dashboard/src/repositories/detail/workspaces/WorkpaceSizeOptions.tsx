@@ -5,7 +5,7 @@
  */
 
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
-import { useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useWorkspaceClasses } from "../../../data/workspaces/workspace-classes-query";
 import { Label } from "@podkit/forms/Label";
 import { RadioGroup, RadioGroupItem } from "@podkit/forms/RadioListField";
@@ -14,6 +14,7 @@ import { Heading2 } from "@podkit/typography/Headings";
 import { ConfigurationSettingsField } from "../ConfigurationSettingsField";
 import { useUpdateProject } from "../../../data/projects/project-queries";
 import { useToast } from "../../../components/toasts/Toasts";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
 
 interface Props {
     configuration: Configuration;
@@ -23,6 +24,7 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
     const [selectedValue, setSelectedValue] = useState(
         configuration.workspaceSettings?.workspaceClass || "g1-standard",
     );
+    const classChanged = selectedValue !== configuration.workspaceSettings?.workspaceClass;
 
     const updateProject = useUpdateProject();
     const { data: classes, isError, isLoading } = useWorkspaceClasses();
@@ -30,20 +32,21 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
     const { toast } = useToast();
 
     const setWorkspaceClass = useCallback(
-        async (value: string) => {
+        async (e: React.FormEvent) => {
+            e.preventDefault();
+
             updateProject.mutate(
                 {
                     id: configuration.id,
                     settings: {
                         workspaceClasses: {
-                            regular: value,
+                            regular: selectedValue,
                         },
                     },
                 },
                 {
                     onSuccess: () => {
                         // todo: use optimistic updates when we introduce configuration update hooks
-                        setSelectedValue(value);
                         toast({ message: "Workspace size updated" });
                     },
                     onError: (e) => {
@@ -52,7 +55,7 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
                 },
             );
         },
-        [configuration.id, toast, updateProject],
+        [configuration.id, selectedValue, toast, updateProject],
     );
 
     if (isError) {
@@ -65,25 +68,30 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
 
     return (
         <ConfigurationSettingsField>
-            <div className="mb-4">
-                <Heading2 asChild>
-                    <h2 className="text-base">Workspace Size Options</h2>
-                </Heading2>
-                <TextMuted>Choose the size of your workspace based on the resources you need.</TextMuted>
-            </div>
-            <RadioGroup value={selectedValue} onValueChange={setWorkspaceClass}>
-                {classes.map((wsClass) => (
-                    <div className="flex items-start space-x-2 my-2">
-                        <RadioGroupItem value={wsClass.id} id={wsClass.id} />
-                        <div className="flex flex-col">
-                            <Label htmlFor={wsClass.id} className="font-bold">
-                                {wsClass.displayName}
-                            </Label>
-                            <span>{wsClass.description}</span>
+            <form onSubmit={setWorkspaceClass}>
+                <div className="mb-4">
+                    <Heading2 asChild>
+                        <h2 className="text-base">Workspace Size Options</h2>
+                    </Heading2>
+                    <TextMuted>Choose the size of your workspace based on the resources you need.</TextMuted>
+                </div>
+                <RadioGroup value={selectedValue} onValueChange={setSelectedValue}>
+                    {classes.map((wsClass) => (
+                        <div className="flex items-start space-x-2 my-2">
+                            <RadioGroupItem value={wsClass.id} id={wsClass.id} />
+                            <div className="flex flex-col">
+                                <Label htmlFor={wsClass.id} className="font-bold">
+                                    {wsClass.displayName}
+                                </Label>
+                                <span>{wsClass.description}</span>
+                            </div>
                         </div>
-                    </div>
-                ))}
-            </RadioGroup>
+                    ))}
+                </RadioGroup>
+                <LoadingButton type="submit" disabled={!classChanged} loading={updateProject.isLoading}>
+                    Save
+                </LoadingButton>
+            </form>
         </ConfigurationSettingsField>
     );
 };
