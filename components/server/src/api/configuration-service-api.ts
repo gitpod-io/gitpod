@@ -10,7 +10,6 @@ import { ConfigurationService as ConfigurationServiceInterface } from "@gitpod/p
 import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
 import { ProjectsService } from "../projects/projects-service";
 import {
-    BranchMatchingStrategy,
     CreateConfigurationRequest,
     CreateConfigurationResponse,
     DeleteConfigurationRequest,
@@ -105,21 +104,21 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configuration_id is required");
         }
 
-        let branchStrategy: PrebuildSettings["branchStrategy"];
-        switch (req.configuration?.prebuildSettings?.branchStrategy) {
-            case BranchMatchingStrategy.DEFAULT_BRANCH: {
-                branchStrategy = "default-branch";
-                break;
-            }
-            case BranchMatchingStrategy.ALL_BRANCHES: {
-                branchStrategy = "all-branches";
-                break;
-            }
-            case BranchMatchingStrategy.MATCHED_BRANCHES: {
-                branchStrategy = "matched-branches";
-                break;
-            }
-        }
+        // let branchStrategy: PrebuildSettings["branchStrategy"];
+        // switch (req.configuration?.prebuildSettings?.branchStrategy) {
+        //     case BranchMatchingStrategy.DEFAULT_BRANCH: {
+        //         branchStrategy = "default-branch";
+        //         break;
+        //     }
+        //     case BranchMatchingStrategy.ALL_BRANCHES: {
+        //         branchStrategy = "all-branches";
+        //         break;
+        //     }
+        //     case BranchMatchingStrategy.MATCHED_BRANCHES: {
+        //         branchStrategy = "matched-branches";
+        //         break;
+        //     }
+        // }
 
         await this.projectService.updateProject(handler.user, {
             id: req.configuration.id,
@@ -127,18 +126,18 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
             cloneUrl: req.configuration.cloneUrl,
             teamId: req.configuration.organizationId,
             creationTime: req.configuration.creationTime?.toDate().toString(),
-            settings: {
-                prebuilds: {
-                    enable: req.configuration.prebuildSettings?.enabled,
-                    prebuildInterval: req.configuration.prebuildSettings?.prebuildInterval,
-                    branchStrategy,
-                    branchMatchingPattern: req.configuration.prebuildSettings?.branchMatchingPattern,
-                    workspaceClass: req.configuration.prebuildSettings?.workspaceClass,
-                },
-                workspaceClasses: {
-                    regular: req.configuration.workspaceSettings?.workspaceClass,
-                },
-            },
+            // settings: {
+            //     prebuilds: {
+            //         enable: req.configuration.prebuildSettings?.enabled,
+            //         prebuildInterval: req.configuration.prebuildSettings?.prebuildInterval,
+            //         branchStrategy,
+            //         branchMatchingPattern: req.configuration.prebuildSettings?.branchMatchingPattern,
+            //         workspaceClass: req.configuration.prebuildSettings?.workspaceClass,
+            //     },
+            //     workspaceClasses: {
+            //         regular: req.configuration.workspaceSettings?.workspaceClass,
+            //     },
+            // },
         });
 
         return new UpdateConfigurationResponse();
