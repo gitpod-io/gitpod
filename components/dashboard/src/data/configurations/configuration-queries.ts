@@ -97,6 +97,11 @@ export const useUpdateConfiguration = () => {
                 workspaceSettings: configuration.workspaceSettings,
                 prebuildSettings: configuration.prebuildSettings,
             });
+
+            if (!updated.configuration) {
+                throw new Error("Failed to update configuration");
+            }
+
             queryClient.invalidateQueries({ queryKey: ["configurations", "list"] });
             queryClient.invalidateQueries({ queryKey: getConfigurationQueryKey(configuration.id) });
 
