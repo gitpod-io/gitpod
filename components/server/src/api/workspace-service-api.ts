@@ -15,6 +15,7 @@ import {
 import { inject, injectable } from "inversify";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
+import { ctxSignal, ctxUserId } from "../util/request-context";
 
 @injectable()
 export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceInterface> {
@@ -24,11 +25,11 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
     @inject(PublicAPIConverter)
     private readonly apiConverter: PublicAPIConverter;
 
-    async getWorkspace(req: GetWorkspaceRequest, context: HandlerContext): Promise<GetWorkspaceResponse> {
+    async getWorkspace(req: GetWorkspaceRequest, _: HandlerContext): Promise<GetWorkspaceResponse> {
         if (!req.workspaceId) {
             throw new ConnectError("workspaceId is required", Code.InvalidArgument);
         }
-        const info = await this.workspaceService.getWorkspace(context.user.id, req.workspaceId);
+        const info = await this.workspaceService.getWorkspace(ctxUserId(), req.workspaceId);
         const response = new GetWorkspaceResponse();
         response.workspace = this.apiConverter.toWorkspace(info);
         return response;
@@ -36,10 +37,10 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
 
     async *watchWorkspaceStatus(
         req: WatchWorkspaceStatusRequest,
-        context: HandlerContext,
+        _: HandlerContext,
     ): AsyncIterable<WatchWorkspaceStatusResponse> {
         if (req.workspaceId) {
-            const instance = await this.workspaceService.getCurrentInstance(context.user.id, req.workspaceId);
+            const instance = await this.workspaceService.getCurrentInstance(ctxUserId(), req.workspaceId);
             const status = this.apiConverter.toWorkspace(instance).status;
             if (status) {
                 const response = new WatchWorkspaceStatusResponse();
@@ -48,7 +49,7 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
                 yield response;
             }
         }
-        const it = this.workspaceService.watchWorkspaceStatus(context.user.id, { signal: context.signal });
+        const it = this.workspaceService.watchWorkspaceStatus(ctxUserId(), { signal: ctxSignal() });
         for await (const instance of it) {
             if (!instance) {
                 continue;

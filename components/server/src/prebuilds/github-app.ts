@@ -41,7 +41,9 @@ import { RepoURL } from "../repohost";
 import { ApplicationError, ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UserService } from "../user/user-service";
 import { ProjectsService } from "../projects/projects-service";
+import { runWithSubjectId, runWithRequestContext } from "../util/request-context";
 import { SYSTEM_USER } from "../authorization/authorizer";
+import { SubjectId } from "../auth/subject-id";
 
 /**
  * GitHub app urls:
@@ -112,6 +114,19 @@ export class GithubApp {
                     res.redirect(301, this.getBadgeImageURL());
                 });
 
+        // Use RequestContext
+        options.getRouter &&
+            options.getRouter().use((req, res, next) => {
+                runWithRequestContext(
+                    {
+                        requestKind: "probot",
+                        requestMethod: req.path,
+                        signal: new AbortController().signal,
+                    },
+                    () => next(),
+                );
+            });
+
         app.on("installation.created", (ctx: Context<"installation.created">) => {
             catchError(
                 (async () => {
@@ -159,9 +174,11 @@ export class GithubApp {
                         // To implement this in a more robust way, we'd need to store `repository.id` with the project, next to the cloneUrl.
                         const oldName = (ctx.payload as any)?.changes?.repository?.name?.from;
                         if (oldName) {
-                            const projects = await this.projectService.findProjectsByCloneUrl(
-                                SYSTEM_USER,
-                                `https://github.com/${repository.owner.login}/${oldName}.git`,
+                            const projects = await runWithSubjectId(SubjectId.fromUserId(SYSTEM_USER), async () =>
+                                this.projectService.findProjectsByCloneUrl(
+                                    SYSTEM_USER,
+                                    `https://github.com/${repository.owner.login}/${oldName}.git`,
+                                ),
                             );
                             for (const project of projects) {
                                 project.cloneUrl = repository.clone_url;
@@ -283,7 +300,9 @@ export class GithubApp {
             const contextURL = `${repo.html_url}/tree/${branch}`;
             span.setTag("contextURL", contextURL);
             const context = (await this.contextParser.handle({ span }, installationOwner, contextURL)) as CommitContext;
-            const projects = await this.projectService.findProjectsByCloneUrl(SYSTEM_USER, context.repository.cloneUrl);
+            const projects = await runWithSubjectId(SubjectId.fromUserId(SYSTEM_USER), async () =>
+                this.projectService.findProjectsByCloneUrl(SYSTEM_USER, context.repository.cloneUrl),
+            );
             for (const project of projects) {
                 try {
                     const user = await this.findProjectOwner(project, installationOwner);

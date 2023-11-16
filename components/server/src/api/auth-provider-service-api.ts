@@ -23,34 +23,36 @@ import {
     DeleteAuthProviderResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { AuthProviderService } from "../auth/auth-provider-service";
-import { AuthProviderEntry, AuthProviderInfo } from "@gitpod/gitpod-protocol";
+import { AuthProviderEntry, AuthProviderInfo, User } from "@gitpod/gitpod-protocol";
 import { Unauthenticated } from "./unauthenticated";
 import { validate as uuidValidate } from "uuid";
 import { selectPage } from "./pagination";
+import { ctxUserId } from "../util/request-context";
+import { UserService } from "../user/user-service";
 
 @injectable()
 export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderServiceInterface> {
     constructor(
         @inject(PublicAPIConverter) private readonly apiConverter: PublicAPIConverter,
         @inject(AuthProviderService) private readonly authProviderService: AuthProviderService,
+        @inject(UserService) private readonly userService: UserService,
     ) {}
 
     async createAuthProvider(
         request: CreateAuthProviderRequest,
-        context: HandlerContext,
+        _: HandlerContext,
     ): Promise<CreateAuthProviderResponse> {
-        const ownerId = request.owner.case === "ownerId" ? request.owner.value : "";
         const organizationId = request.owner.case === "organizationId" ? request.owner.value : "";
 
-        if (!uuidValidate(organizationId) && !uuidValidate(ownerId)) {
-            throw new ConnectError("organizationId or ownerId is required", Code.InvalidArgument);
-        }
-
         if (organizationId) {
-            const result = await this.authProviderService.createOrgAuthProvider(context.user.id, {
+            if (!uuidValidate(organizationId)) {
+                throw new ConnectError("organizationId is required", Code.InvalidArgument);
+            }
+
+            const result = await this.authProviderService.createOrgAuthProvider(ctxUserId(), {
                 organizationId,
                 host: request.host,
-                ownerId: context.user.id,
+                ownerId: ctxUserId(),
                 type: this.apiConverter.fromAuthProviderType(request.type),
                 clientId: request.oauth2Config?.clientId,
                 clientSecret: request.oauth2Config?.clientSecret,
@@ -58,9 +60,9 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
 
             return new CreateAuthProviderResponse({ authProvider: this.apiConverter.toAuthProvider(result) });
         } else {
-            const result = await this.authProviderService.createAuthProviderOfUser(context.user.id, {
+            const result = await this.authProviderService.createAuthProviderOfUser(ctxUserId(), {
                 host: request.host,
-                ownerId: context.user.id,
+                ownerId: ctxUserId(),
                 type: this.apiConverter.fromAuthProviderType(request.type),
                 clientId: request.oauth2Config?.clientId,
                 clientSecret: request.oauth2Config?.clientSecret,
@@ -69,12 +71,12 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
             return new CreateAuthProviderResponse({ authProvider: this.apiConverter.toAuthProvider(result) });
         }
     }
-    async getAuthProvider(request: GetAuthProviderRequest, context: HandlerContext): Promise<GetAuthProviderResponse> {
+    async getAuthProvider(request: GetAuthProviderRequest, _: HandlerContext): Promise<GetAuthProviderResponse> {
         if (!request.authProviderId) {
             throw new ConnectError("authProviderId is required", Code.InvalidArgument);
         }
 
-        const authProvider = await this.authProviderService.getAuthProvider(context.user.id, request.authProviderId);
+        const authProvider = await this.authProviderService.getAuthProvider(ctxUserId(), request.authProviderId);
         if (!authProvider) {
             throw new ConnectError("Provider not found.", Code.NotFound);
         }
@@ -84,10 +86,7 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
         });
     }
 
-    async listAuthProviders(
-        request: ListAuthProvidersRequest,
-        context: HandlerContext,
-    ): Promise<ListAuthProvidersResponse> {
+    async listAuthProviders(request: ListAuthProvidersRequest, _: HandlerContext): Promise<ListAuthProvidersResponse> {
         const target = request.id;
         const ownerId = target.case === "userId" ? target.value : "";
         const organizationId = target.case === "organizationId" ? target.value : "";
@@ -97,8 +96,8 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
         }
 
         const authProviders = organizationId
-            ? await this.authProviderService.getAuthProvidersOfOrg(context.user.id, organizationId)
-            : await this.authProviderService.getAuthProvidersOfUser(context.user.id);
+            ? await this.authProviderService.getAuthProvidersOfOrg(ctxUserId(), organizationId)
+            : await this.authProviderService.getAuthProvidersOfUser(ctxUserId());
 
         const selectedProviders = selectPage(authProviders, request.pagination);
         const redacted = selectedProviders.map(AuthProviderEntry.redact.bind(AuthProviderEntry));
@@ -118,9 +117,13 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
     @Unauthenticated()
     async listAuthProviderDescriptions(
         request: ListAuthProviderDescriptionsRequest,
-        context: HandlerContext,
+        _: HandlerContext,
     ): Promise<ListAuthProviderDescriptionsResponse> {
-        const user = context.user;
+        const userId = ctxUserId();
+        let user: User | undefined = undefined;
+        if (userId) {
+            user = await this.userService.findUserById(userId, userId);
+        }
         const aps = user
             ? await this.authProviderService.getAuthProviderDescriptions(user)
             : await this.authProviderService.getAuthProviderDescriptionsUnauthenticated();
@@ -135,7 +138,7 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
 
     async updateAuthProvider(
         request: UpdateAuthProviderRequest,
-        context: HandlerContext,
+        _: HandlerContext,
     ): Promise<UpdateAuthProviderResponse> {
         if (!request.authProviderId) {
             throw new ConnectError("authProviderId is required", Code.InvalidArgument);
@@ -146,23 +149,23 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
             throw new ConnectError("clientId or clientSecret are required", Code.InvalidArgument);
         }
 
-        const authProvider = await this.authProviderService.getAuthProvider(context.user.id, request.authProviderId);
+        const authProvider = await this.authProviderService.getAuthProvider(ctxUserId(), request.authProviderId);
         if (!authProvider) {
             throw new ConnectError("Provider not found.", Code.NotFound);
         }
 
         let entry: AuthProviderEntry;
         if (authProvider.organizationId) {
-            entry = await this.authProviderService.updateOrgAuthProvider(context.user.id, {
+            entry = await this.authProviderService.updateOrgAuthProvider(ctxUserId(), {
                 id: request.authProviderId,
                 organizationId: authProvider.organizationId,
                 clientId: clientId,
                 clientSecret: clientSecret,
             });
         } else {
-            entry = await this.authProviderService.updateAuthProviderOfUser(context.user.id, {
+            entry = await this.authProviderService.updateAuthProviderOfUser(ctxUserId(), {
                 id: request.authProviderId,
-                ownerId: context.user.id,
+                ownerId: ctxUserId(),
                 clientId: clientId,
                 clientSecret: clientSecret,
             });
@@ -175,25 +178,25 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
 
     async deleteAuthProvider(
         request: DeleteAuthProviderRequest,
-        context: HandlerContext,
+        _: HandlerContext,
     ): Promise<DeleteAuthProviderResponse> {
         if (!request.authProviderId) {
             throw new ConnectError("authProviderId is required", Code.InvalidArgument);
         }
 
-        const authProvider = await this.authProviderService.getAuthProvider(context.user.id, request.authProviderId);
+        const authProvider = await this.authProviderService.getAuthProvider(ctxUserId(), request.authProviderId);
         if (!authProvider) {
             throw new ConnectError("Provider not found.", Code.NotFound);
         }
 
         if (authProvider.organizationId) {
             await this.authProviderService.deleteAuthProviderOfOrg(
-                context.user.id,
+                ctxUserId(),
                 authProvider.organizationId,
                 request.authProviderId,
             );
         } else {
-            await this.authProviderService.deleteAuthProviderOfUser(context.user.id, request.authProviderId);
+            await this.authProviderService.deleteAuthProviderOfUser(ctxUserId(), request.authProviderId);
         }
 
         return new DeleteAuthProviderResponse();

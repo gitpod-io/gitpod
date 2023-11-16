@@ -201,6 +201,9 @@ export class PublicAPIConverter {
             if (reason.code === ErrorCodes.INTERNAL_SERVER_ERROR) {
                 return new ConnectError(reason.message, Code.Internal, metadata, undefined, reason);
             }
+            if (reason.code === ErrorCodes.REQUEST_TIMEOUT) {
+                return new ConnectError(reason.message, Code.Canceled, metadata, undefined, reason);
+            }
             return new ConnectError(reason.message, Code.InvalidArgument, metadata, undefined, reason);
         }
         return ConnectError.from(reason, Code.Internal);

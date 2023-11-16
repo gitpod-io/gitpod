@@ -47,7 +47,8 @@ import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
 import { JobRunner } from "./jobs/runner";
 import { RedisSubscriber } from "./messaging/redis-subscriber";
 import { HEADLESS_LOGS_PATH_PREFIX, HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from "./workspace/headless-log-service";
-import { runWithLogContext } from "./util/log-context";
+import { runWithRequestContext } from "./util/request-context";
+import { SubjectId } from "./auth/subject-id";
 
 @injectable()
 export class Server {
@@ -140,14 +141,18 @@ export class Server {
         // Install passport
         await this.authenticator.init(app);
 
-        // log context
-        app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-            try {
-                const userId = req.user ? req.user.id : undefined;
-                runWithLogContext("http", { userId, requestPath: req.path }, () => next());
-            } catch (err) {
-                next(err);
-            }
+        // Use RequestContext for authorization
+        app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+            const userId = req.user ? req.user.id : undefined;
+            runWithRequestContext(
+                {
+                    requestKind: "http",
+                    requestMethod: req.path,
+                    signal: new AbortController().signal,
+                    subjectId: userId ? SubjectId.fromUserId(userId) : undefined, // TODO(gpl) Can we assume this? E.g., has this been verified? It should: It means we could decode the cookie, right?
+                },
+                () => next(),
+            );
         });
 
         // Ensure that host contexts of dynamic auth providers are initialized.

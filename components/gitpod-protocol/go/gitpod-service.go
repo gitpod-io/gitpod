@@ -42,7 +42,6 @@ type APIInterface interface {
 	GetWorkspaceOwner(ctx context.Context, workspaceID string) (res *UserInfo, err error)
 	GetWorkspaceUsers(ctx context.Context, workspaceID string) (res []*WorkspaceInstanceUser, err error)
 	GetFeaturedRepositories(ctx context.Context) (res []*WhitelistedRepository, err error)
-	GetSuggestedContextURLs(ctx context.Context) (res []*string, err error)
 	GetWorkspace(ctx context.Context, id string) (res *WorkspaceInfo, err error)
 	GetIDEOptions(ctx context.Context) (res *IDEOptions, err error)
 	IsWorkspaceOwner(ctx context.Context, workspaceID string) (res bool, err error)
@@ -147,8 +146,6 @@ const (
 	FunctionGetWorkspaceUsers FunctionName = "getWorkspaceUsers"
 	// FunctionGetFeaturedRepositories is the name of the getFeaturedRepositories function
 	FunctionGetFeaturedRepositories FunctionName = "getFeaturedRepositories"
-	// FunctionGetSuggestedContextURLs is the name of the getSuggestedContextURLs function
-	FunctionGetSuggestedContextURLs FunctionName = "getSuggestedContextURLs"
 	// FunctionGetWorkspace is the name of the getWorkspace function
 	FunctionGetWorkspace FunctionName = "getWorkspace"
 	// FunctionGetIDEOptions is the name of the getIDEOptions function
@@ -1053,24 +1050,6 @@ func (gp *APIoverJSONRPC) ClosePort(ctx context.Context, workspaceID string, por
 	if err != nil {
 		return
 	}
-
-	return
-}
-
-// GetSuggestedContextURLs calls getSuggestedContextURLs on the server
-func (gp *APIoverJSONRPC) GetSuggestedContextURLs(ctx context.Context) (res []*string, err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	var result []*string
-	err = gp.C.Call(ctx, "getSuggestedContextURLs", _params, &result)
-	if err != nil {
-		return
-	}
-	res = result
 
 	return
 }

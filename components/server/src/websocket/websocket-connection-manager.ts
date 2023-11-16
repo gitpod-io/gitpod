@@ -22,7 +22,7 @@ import {
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { EventEmitter } from "events";
 import express from "express";
-import { ErrorCodes as RPCErrorCodes, MessageConnection, ResponseError } from "vscode-jsonrpc";
+import { ErrorCodes as RPCErrorCodes, MessageConnection, ResponseError, CancellationToken } from "vscode-jsonrpc";
 import { AllAccessFunctionGuard, FunctionAccessGuard, WithFunctionAccessGuard } from "../auth/function-access";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { isValidFunctionName, RateLimiter, RateLimiterConfig, UserRateLimiter } from "../auth/rate-limiter";
@@ -49,7 +49,8 @@ import * as opentracing from "opentracing";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { maskIp } from "../analytics";
-import { runWithLogContext } from "../util/log-context";
+import { runWithRequestContext } from "../util/request-context";
+import { SubjectId } from "../auth/subject-id";
 
 export type GitpodServiceFactory = () => GitpodServerImpl;
 
@@ -376,18 +377,23 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
     protected async onRequest(method: string, ...args: any[]): Promise<any> {
         const span = TraceContext.startSpan(method, undefined);
         const userId = this.clientMetadata.userId;
-        const requestId = span.context().toTraceId();
-        return runWithLogContext(
-            "request",
+        const abortController = new AbortController();
+        const cancellationToken = args[args.length - 1];
+        if (CancellationToken.is(cancellationToken)) {
+            cancellationToken.onCancellationRequested(() => abortController.abort());
+        }
+        return runWithRequestContext(
             {
-                userId,
-                contextId: requestId,
-                method,
+                requestKind: "jsonrpc",
+                requestMethod: method,
+                signal: abortController.signal,
+                subjectId: userId ? SubjectId.fromUserId(userId) : undefined,
+                traceId: span.context().toTraceId(),
             },
-            () => {
+            async () => {
                 try {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                    return this.internalOnRequest(span, requestId, method, ...args);
+                    return await this.internalOnRequest(span, method, ...args);
                 } finally {
                     span.finish();
                 }
@@ -395,12 +401,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
         );
     }
 
-    private async internalOnRequest(
-        span: opentracing.Span,
-        requestId: string,
-        method: string,
-        ...args: any[]
-    ): Promise<any> {
+    private async internalOnRequest(span: opentracing.Span, method: string, ...args: any[]): Promise<any> {
         const userId = this.clientMetadata.userId;
         const ctx = { span };
         const timer = apiCallDurationHistogram.startTimer();
