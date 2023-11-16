@@ -113,9 +113,9 @@ export class JsonRpcAuthProviderClient implements PromiseClient<typeof AuthProvi
         if (!request.authProviderId) {
             throw new ConnectError("authProviderId is required", Code.InvalidArgument);
         }
-        const clientId = request?.clientId;
-        const clientSecret = request?.clientSecret;
-        if (!clientId || !clientSecret) {
+        const clientId = request?.clientId || "";
+        const clientSecret = request?.clientSecret || "";
+        if (!clientId && !clientSecret) {
             throw new ConnectError("clientId or clientSecret are required", Code.InvalidArgument);
         }
 
