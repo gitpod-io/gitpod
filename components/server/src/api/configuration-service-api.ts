@@ -22,7 +22,6 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { PrebuildSettings } from "@gitpod/gitpod-protocol";
 
 @injectable()
 export class ConfigurationServiceAPI implements ServiceImpl<typeof ConfigurationServiceInterface> {
