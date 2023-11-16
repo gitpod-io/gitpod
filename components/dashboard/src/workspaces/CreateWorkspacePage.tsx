@@ -44,6 +44,7 @@ import { SelectAccountModal } from "../user-settings/SelectAccountModal";
 import { settingsPathIntegrations } from "../user-settings/settings.routes";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import { WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
@@ -160,16 +161,15 @@ export function CreateWorkspacePage() {
     const [errorIde, setErrorIde] = useState<string | undefined>(undefined);
 
     const existingWorkspaces = useMemo(() => {
-        if (!workspaces.data || !CommitContext.is(workspaceContext.data)) {
+        if (!workspaces.data) {
             return [];
         }
         return workspaces.data.filter(
             (ws) =>
-                ws.latestInstance?.status?.phase === "running" &&
-                CommitContext.is(ws.workspace.context) &&
+                ws.status?.phase?.name === WorkspacePhase_Phase.RUNNING &&
                 CommitContext.is(workspaceContext.data) &&
-                ws.workspace.context.repository.cloneUrl === workspaceContext.data.repository.cloneUrl &&
-                ws.workspace.context.revision === workspaceContext.data.revision,
+                ws.status.gitStatus?.cloneUrl === workspaceContext.data?.repository.cloneUrl &&
+                ws.status?.gitStatus?.latestCommit === workspaceContext.data.revision,
         );
     }, [workspaces.data, workspaceContext.data]);
     const [selectAccountError, setSelectAccountError] = useState<SelectAccountPayload | undefined>(undefined);
@@ -432,15 +432,14 @@ export function CreateWorkspacePage() {
                         {createWorkspaceMutation.isStarting ? "Opening Workspace ..." : "Continue"}
                     </Button>
                 </div>
-
                 {existingWorkspaces.length > 0 && !createWorkspaceMutation.isStarting && (
                     <div className="w-full flex flex-col justify-end px-6">
                         <p className="mt-6 text-center text-base">Running workspaces on this revision</p>
                         {existingWorkspaces.map((w) => {
                             return (
                                 <a
-                                    key={w.workspace.id}
-                                    href={w.latestInstance?.ideUrl || `/start/${w.workspace.id}}`}
+                                    key={w.id}
+                                    href={w.status?.workspaceUrl || `/start/${w.id}}`}
                                     className="rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-800 flex"
                                 >
                                     <WorkspaceEntry info={w} shortVersion={true} />

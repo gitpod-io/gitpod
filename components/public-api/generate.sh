@@ -31,3 +31,5 @@ rm -rf go/experimental
 protoc_buf_generate
 
 update_license
+
+yarn --cwd typescript build

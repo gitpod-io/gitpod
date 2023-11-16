@@ -26,7 +26,7 @@ import * as AuthProviderClasses from "@gitpod/public-api/lib/gitpod/v1/authprovi
 // This is used to version the cache
 // If data we cache changes in a non-backwards compatible way, increment this version
 // That will bust any previous cache versions a client may have stored
-const CACHE_VERSION = "4";
+const CACHE_VERSION = "5";
 
 export function noPersistence(queryKey: QueryKey): QueryKey {
     return [...queryKey, "no-persistence"];

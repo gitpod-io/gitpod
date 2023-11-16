@@ -4,11 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Workspace } from "@gitpod/gitpod-protocol";
 import { FunctionComponent, useCallback } from "react";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { useDeleteWorkspaceMutation } from "../data/workspaces/delete-workspace-mutation";
 import { useToast } from "../components/toasts/Toasts";
+import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 type Props = {
     workspace: Workspace;
@@ -33,7 +33,7 @@ export const DeleteWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
             areYouSureText="Are you sure you want to delete this workspace?"
             children={{
                 name: workspace.id,
-                description: workspace.description,
+                description: workspace.name,
             }}
             buttonText="Delete Workspace"
             warningText={deleteWorkspace.isError ? "There was a problem deleting your workspace." : undefined}
