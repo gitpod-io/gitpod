@@ -56,6 +56,7 @@ import {
     OrgMemberInfo,
     OrgMemberRole,
     OrganizationSettings as OrganizationSettingsProtocol,
+    PartialProject,
     PrebuildSettings as PrebuildSettingsProtocol,
     Project,
     Organization as ProtocolOrganization,
@@ -436,16 +437,12 @@ export class PublicAPIConverter {
         return creationTime.toDate().toISOString();
     }
 
-    fromConfiguration(configuration: Configuration): Project {
+    fromConfiguration(configuration: Configuration): PartialProject {
         const prebuildSettings = this.fromPrebuildSettings(configuration.prebuildSettings);
         const workspaceSettings = this.fromWorkspaceSettings(configuration.workspaceSettings?.workspaceClass);
-        const result: Project = {
+        const result: PartialProject = {
             id: configuration.id,
             name: configuration.name,
-            cloneUrl: configuration.cloneUrl,
-            teamId: configuration.organizationId,
-            appInstallationId: "",
-            creationTime: this.fromCreationTime(configuration.creationTime),
             settings: {
                 prebuilds: prebuildSettings,
                 workspaceClasses: workspaceSettings,
