@@ -100,14 +100,13 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
             ? await this.authProviderService.getAuthProvidersOfOrg(context.user.id, organizationId)
             : await this.authProviderService.getAuthProvidersOfUser(context.user.id);
 
-        // TODO: Should convert this to paginate in the service layer
         const selectedProviders = selectPage(authProviders, request.pagination);
         const redacted = selectedProviders.map(AuthProviderEntry.redact.bind(AuthProviderEntry));
 
         const result = new ListAuthProvidersResponse({
             authProviders: redacted.map((ap) => this.apiConverter.toAuthProvider(ap)),
             pagination: {
-                // TODO: do we need the nextToken here?
+                total: redacted.length,
             },
         });
         return result;

@@ -13,35 +13,6 @@ import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialM
 import { Message, proto3 } from "@bufbuild/protobuf";
 
 /**
- * TODO: Do we want this embedded in the PaginationRequest or standalone for
- * messages to include separately?
- *
- * @generated from enum gitpod.v1.SortOrder
- */
-export enum SortOrder {
-  /**
-   * @generated from enum value: SORT_ORDER_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: SORT_ORDER_ASC = 1;
-   */
-  ASC = 1,
-
-  /**
-   * @generated from enum value: SORT_ORDER_DESC = 2;
-   */
-  DESC = 2,
-}
-// Retrieve enum metadata with: proto3.getEnumType(SortOrder)
-proto3.util.setEnumType(SortOrder, "gitpod.v1.SortOrder", [
-  { no: 0, name: "SORT_ORDER_UNSPECIFIED" },
-  { no: 1, name: "SORT_ORDER_ASC" },
-  { no: 2, name: "SORT_ORDER_DESC" },
-]);
-
-/**
  * @generated from message gitpod.v1.PaginationRequest
  */
 export class PaginationRequest extends Message<PaginationRequest> {
@@ -54,7 +25,20 @@ export class PaginationRequest extends Message<PaginationRequest> {
   pageSize = 0;
 
   /**
-   * @generated from field: string token = 2;
+   * Page is the page number of results to retrieve.
+   * The first page starts at 1.
+   * Defaults to 1.
+   *
+   * @generated from field: int32 page = 2 [deprecated = true];
+   * @deprecated
+   */
+  page = 0;
+
+  /**
+   * Token for the next set of results that was returned as next_token of a
+   * PaginationResponse
+   *
+   * @generated from field: string token = 3;
    */
   token = "";
 
@@ -67,7 +51,8 @@ export class PaginationRequest extends Message<PaginationRequest> {
   static readonly typeName = "gitpod.v1.PaginationRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "page_size", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 2, name: "token", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "page", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 3, name: "token", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PaginationRequest {
@@ -92,10 +77,18 @@ export class PaginationRequest extends Message<PaginationRequest> {
  */
 export class PaginationResponse extends Message<PaginationResponse> {
   /**
+   * Total is the total number of results available.
+   *
+   * @generated from field: int32 total = 1 [deprecated = true];
+   * @deprecated
+   */
+  total = 0;
+
+  /**
    * Token passed for retreiving the next set of results. Empty if there are no
    * more results
    *
-   * @generated from field: string next_token = 1;
+   * @generated from field: string next_token = 2;
    */
   nextToken = "";
 
@@ -107,7 +100,8 @@ export class PaginationResponse extends Message<PaginationResponse> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.PaginationResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "next_token", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 1, name: "total", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 2, name: "next_token", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PaginationResponse {
@@ -124,48 +118,5 @@ export class PaginationResponse extends Message<PaginationResponse> {
 
   static equals(a: PaginationResponse | PlainMessage<PaginationResponse> | undefined, b: PaginationResponse | PlainMessage<PaginationResponse> | undefined): boolean {
     return proto3.util.equals(PaginationResponse, a, b);
-  }
-}
-
-/**
- * @generated from message gitpod.v1.Sort
- */
-export class Sort extends Message<Sort> {
-  /**
-   * @generated from field: string field = 1;
-   */
-  field = "";
-
-  /**
-   * @generated from field: gitpod.v1.SortOrder order = 2;
-   */
-  order = SortOrder.UNSPECIFIED;
-
-  constructor(data?: PartialMessage<Sort>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.Sort";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "order", kind: "enum", T: proto3.getEnumType(SortOrder) },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Sort {
-    return new Sort().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Sort {
-    return new Sort().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Sort {
-    return new Sort().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: Sort | PlainMessage<Sort> | undefined, b: Sort | PlainMessage<Sort> | undefined): boolean {
-    return proto3.util.equals(Sort, a, b);
   }
 }

@@ -68,9 +68,6 @@ message ListConfigurationsRequest {
   string organization_id = 1;
   string search_term = 2;
   PaginationRequest pagination = 3;
-
-  // Configurations can be sorted by "name" OR "creation_time"
-  repeated Sort sort = 4;
 }
 
 message ListConfigurationsResponse {

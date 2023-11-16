@@ -9,24 +9,21 @@ message PaginationRequest {
   // Defaults to 25. Maximum 100.
   int32 page_size = 1;
 
-  string token = 2;
+  // Page is the page number of results to retrieve.
+  // The first page starts at 1.
+  // Defaults to 1.
+  int32 page = 2 [ deprecated = true ];
+
+  // Token for the next set of results that was returned as next_token of a
+  // PaginationResponse
+  string token = 3;
 }
 
 message PaginationResponse {
+  // Total is the total number of results available.
+  int32 total = 1 [ deprecated = true ];
+
   // Token passed for retreiving the next set of results. Empty if there are no
   // more results
-  string next_token = 1;
-}
-
-// TODO: Do we want this embedded in the PaginationRequest or standalone for
-// messages to include separately?
-enum SortOrder {
-  SORT_ORDER_UNSPECIFIED = 0;
-  SORT_ORDER_ASC = 1;
-  SORT_ORDER_DESC = 2;
-}
-
-message Sort {
-  string field = 1;
-  SortOrder order = 2;
+  string next_token = 2;
 }
