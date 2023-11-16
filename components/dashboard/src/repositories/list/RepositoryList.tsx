@@ -48,7 +48,7 @@ const RepositoryListPage: FC = () => {
 
     return (
         <>
-            <div className="app-container">
+            <div className="app-container mb-8">
                 <PageHeading
                     title="Imported repositories"
                     subtitle="Configure and refine the experience of working with a repository in Gitpod"
@@ -107,7 +107,7 @@ const RepositoryListPage: FC = () => {
                     </Table>
 
                     {hasNextPage && (
-                        <div className="mt-4 flex flex-row justify-center">
+                        <div className="my-4 flex flex-row justify-center">
                             <LoadingButton onClick={() => fetchNextPage()} loading={isFetchingNextPage}>
                                 Load more
                             </LoadingButton>
