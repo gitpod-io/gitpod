@@ -8,19 +8,28 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { configurationClient } from "../../service/public-api";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
+import { useEffect } from "react";
 
 const BASE_KEY = "configurations";
 
 type ListConfigurationsArgs = {
-    pageSize: number;
+    pageSize?: number;
     searchTerm?: string;
 };
 
 export const useListConfigurations = ({ searchTerm = "", pageSize }: ListConfigurationsArgs) => {
     const { data: org } = useCurrentOrg();
 
+    // Debounce searchTerm for query
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [_, setSearchTerm, debouncedSearchTerm] = useStateWithDebounce(searchTerm);
+    useEffect(() => {
+        setSearchTerm(searchTerm);
+    }, [searchTerm, setSearchTerm]);
+
     return useInfiniteQuery(
-        getListConfigurationsQueryKey(org?.id || "", { searchTerm, pageSize }),
+        getListConfigurationsQueryKey(org?.id || "", { searchTerm: debouncedSearchTerm, pageSize }),
         // QueryFn receives the past page's pageParam as it's argument
         async ({ pageParam: nextToken }) => {
             if (!org) {
@@ -29,7 +38,7 @@ export const useListConfigurations = ({ searchTerm = "", pageSize }: ListConfigu
 
             const { configurations, pagination } = await configurationClient.listConfigurations({
                 organizationId: org.id,
-                searchTerm,
+                searchTerm: debouncedSearchTerm,
                 pagination: { pageSize, token: nextToken },
             });
 

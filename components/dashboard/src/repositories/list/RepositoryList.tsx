@@ -4,54 +4,40 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, useCallback, useEffect, useState } from "react";
+import { FC, useCallback, useState } from "react";
 import { LoaderIcon } from "lucide-react";
 import { useHistory } from "react-router-dom";
 import { RepositoryListItem } from "./RepoListItem";
 import { useListConfigurations } from "../../data/configurations/configuration-queries";
-import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
 import { TextInput } from "../../components/forms/TextInputField";
-// import { TextMuted } from "@podkit/typography/TextMuted";
 import { PageHeading } from "@podkit/layout/PageHeading";
 import { Button } from "@podkit/buttons/Button";
 import { useDocumentTitle } from "../../hooks/use-document-title";
-// import { PaginationControls, PaginationCountText } from "./PaginationControls";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@podkit/tables/Table";
 import { ImportRepositoryModal } from "../create/ImportRepositoryModal";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
+import { useQueryParams } from "../../hooks/use-query-params";
 
 const RepositoryListPage: FC = () => {
     useDocumentTitle("Imported repositories");
 
     const history = useHistory();
 
-    // TODO: Move this state into url search params
-    // const [nextToken, setNextToken] = useState<string>();
-    const [searchTerm, setSearchTerm, debouncedSearchTerm] = useStateWithDebounce("");
-
-    // Reset to page 1 when debounced search term changes (when we perform a new search)
-    useEffect(() => {
-        // setNextToken(undefined);
-        // TODO: reset query to page 1 somehow?
-    }, [debouncedSearchTerm]);
-
-    // Have this set to a low value for now to test pagination while we develop this
-    // TODO: move this into state and add control for changing it
-    const pageSize = 2;
+    // Search/Filter params tracked in url query params
+    const params = useQueryParams();
+    const searchTerm = params.get("search") || "";
+    const updateSearchTerm = useCallback(
+        (val: string) => {
+            history.replace({ search: `?search=${val}` });
+        },
+        [history],
+    );
 
     const { data, isFetching, isFetchingNextPage, isPreviousData, hasNextPage, fetchNextPage } = useListConfigurations({
-        searchTerm: debouncedSearchTerm,
-        // token: nextToken,
-        pageSize,
+        searchTerm,
     });
     const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
-
-    // TODO: Adding these to response payload to avoid having to calculate them here
-    // This will fix issues w/ relying on some server provided state and some client state (like current page)
-    // const rowCount = data?.configurations.length ?? 0;
-    // const totalRows = data?.pagination?.total ?? 0;
-    // const totalPages = Math.ceil(totalRows / pageSize);
 
     const handleRepoImported = useCallback(
         (configuration: Configuration) => {
@@ -60,7 +46,6 @@ const RepositoryListPage: FC = () => {
         [history],
     );
 
-    console.log("hasNextPage", hasNextPage, data?.pageParams);
     return (
         <>
             <div className="app-container">
@@ -77,27 +62,12 @@ const RepositoryListPage: FC = () => {
                         <TextInput
                             className="w-80"
                             value={searchTerm}
-                            onChange={setSearchTerm}
+                            onChange={updateSearchTerm}
                             placeholder="Search imported repositories"
                         />
                         {/* TODO: Add prebuild status filter dropdown */}
                     </div>
                     {/* Account for variation of message when totalRows is greater than smallest page size option (20?) */}
-                    <div>
-                        {/* <TextMuted className="text-sm">
-                            {rowCount < totalRows ? (
-                                <PaginationCountText
-                                    currentPage={nextToken}
-                                    pageSize={pageSize}
-                                    currentRows={rowCount}
-                                    totalRows={totalRows}
-                                    includePrefix
-                                />
-                            ) : (
-                                <>{totalRows === 1 ? "Showing 1 repo" : `Showing ${totalRows} repos`}</>
-                            )}
-                        </TextMuted> */}
-                    </div>
                 </div>
 
                 <div className="relative w-full overflow-auto mt-2">
@@ -143,17 +113,6 @@ const RepositoryListPage: FC = () => {
                             </LoadingButton>
                         </div>
                     )}
-
-                    {/* {totalPages > 1 && (
-                        <PaginationControls
-                            currentPage={nextToken}
-                            totalPages={totalPages}
-                            totalRows={totalRows}
-                            pageSize={pageSize}
-                            currentRows={rowCount}
-                            onPageChanged={setNextToken}
-                        />
-                    )} */}
                 </div>
             </div>
 
