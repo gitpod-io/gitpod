@@ -4,6 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { PaginationRequest } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 
 export const PAGE_SIZE_DEFAULT = 25;
@@ -40,7 +41,7 @@ export function parsePaginationToken(token?: string): PaginationToken {
 
             return paginationToken;
         } catch (e) {
-            // TODO: Do we want to log anything here?
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid pagination token");
         }
     }
 

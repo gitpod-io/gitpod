@@ -5,8 +5,16 @@
  */
 
 import * as chai from "chai";
-import { selectPage, PAGE_DEFAULT, PAGE_SIZE_DEFAULT, PAGE_SIZE_MAX, generatePaginationToken } from "./pagination";
+import {
+    selectPage,
+    PAGE_DEFAULT,
+    PAGE_SIZE_DEFAULT,
+    PAGE_SIZE_MAX,
+    generatePaginationToken,
+    parsePaginationToken,
+} from "./pagination";
 import { PaginationRequest } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
+import { ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 const expect = chai.expect;
 
@@ -36,5 +44,36 @@ describe("selectPage", function () {
         expect(selection).to.have.lengthOf(10);
         expect(selection[0]).to.equal(`item${1}`);
         expect(selection[selection.length - 1]).to.equal(`item${10}`);
+    });
+});
+
+describe("generatePaginationToken", () => {
+    it(`should generate a token`, () => {
+        const token = generatePaginationToken({ offset: 50 });
+        expect(token).to.equal("eyJvZmZzZXQiOjUwfQ==");
+    });
+});
+
+describe("parsePaginationToken", () => {
+    it("should parse a valid token", () => {
+        const token = generatePaginationToken({ offset: 10 });
+        const result = parsePaginationToken(token);
+        expect(result.offset).equals(10);
+    });
+
+    it("should return an offset of 0 if no token is provided", () => {
+        const result = parsePaginationToken();
+        expect(result.offset).equals(0);
+    });
+
+    it("should throw if the token is invalid", () => {
+        const token = "invalidToken";
+        expect(() => parsePaginationToken(token)).throws(ApplicationError);
+    });
+
+    it("should return an offset of 0 if token is valid but does not contain an offset", () => {
+        const token = Buffer.from(JSON.stringify({ git: "pod" })).toString("base64");
+        const result = parsePaginationToken(token);
+        expect(result.offset).equals(0);
     });
 });
