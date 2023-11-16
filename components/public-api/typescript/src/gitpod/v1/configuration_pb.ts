@@ -469,6 +469,74 @@ export class ListConfigurationsResponse extends Message<ListConfigurationsRespon
 }
 
 /**
+ * @generated from message gitpod.v1.UpdateConfigurationRequest
+ */
+export class UpdateConfigurationRequest extends Message<UpdateConfigurationRequest> {
+  /**
+   * @generated from field: gitpod.v1.Configuration configuration = 1;
+   */
+  configuration?: Configuration;
+
+  constructor(data?: PartialMessage<UpdateConfigurationRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.UpdateConfigurationRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "configuration", kind: "message", T: Configuration },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateConfigurationRequest {
+    return new UpdateConfigurationRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateConfigurationRequest {
+    return new UpdateConfigurationRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateConfigurationRequest {
+    return new UpdateConfigurationRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateConfigurationRequest | PlainMessage<UpdateConfigurationRequest> | undefined, b: UpdateConfigurationRequest | PlainMessage<UpdateConfigurationRequest> | undefined): boolean {
+    return proto3.util.equals(UpdateConfigurationRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.UpdateConfigurationResponse
+ */
+export class UpdateConfigurationResponse extends Message<UpdateConfigurationResponse> {
+  constructor(data?: PartialMessage<UpdateConfigurationResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.UpdateConfigurationResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateConfigurationResponse {
+    return new UpdateConfigurationResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateConfigurationResponse {
+    return new UpdateConfigurationResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateConfigurationResponse {
+    return new UpdateConfigurationResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateConfigurationResponse | PlainMessage<UpdateConfigurationResponse> | undefined, b: UpdateConfigurationResponse | PlainMessage<UpdateConfigurationResponse> | undefined): boolean {
+    return proto3.util.equals(UpdateConfigurationResponse, a, b);
+  }
+}
+
+/**
  * @generated from message gitpod.v1.DeleteConfigurationRequest
  */
 export class DeleteConfigurationRequest extends Message<DeleteConfigurationRequest> {

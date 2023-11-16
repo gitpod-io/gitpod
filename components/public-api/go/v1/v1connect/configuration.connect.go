@@ -37,6 +37,8 @@ type ConfigurationServiceClient interface {
 	GetConfiguration(context.Context, *connect_go.Request[v1.GetConfigurationRequest]) (*connect_go.Response[v1.GetConfigurationResponse], error)
 	// Lists configurations.
 	ListConfigurations(context.Context, *connect_go.Request[v1.ListConfigurationsRequest]) (*connect_go.Response[v1.ListConfigurationsResponse], error)
+	// Updates a configuration.
+	UpdateConfiguration(context.Context, *connect_go.Request[v1.UpdateConfigurationRequest]) (*connect_go.Response[v1.UpdateConfigurationResponse], error)
 	// Deletes a configuration.
 	DeleteConfiguration(context.Context, *connect_go.Request[v1.DeleteConfigurationRequest]) (*connect_go.Response[v1.DeleteConfigurationResponse], error)
 }
@@ -66,6 +68,11 @@ func NewConfigurationServiceClient(httpClient connect_go.HTTPClient, baseURL str
 			baseURL+"/gitpod.v1.ConfigurationService/ListConfigurations",
 			opts...,
 		),
+		updateConfiguration: connect_go.NewClient[v1.UpdateConfigurationRequest, v1.UpdateConfigurationResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.ConfigurationService/UpdateConfiguration",
+			opts...,
+		),
 		deleteConfiguration: connect_go.NewClient[v1.DeleteConfigurationRequest, v1.DeleteConfigurationResponse](
 			httpClient,
 			baseURL+"/gitpod.v1.ConfigurationService/DeleteConfiguration",
@@ -79,6 +86,7 @@ type configurationServiceClient struct {
 	createConfiguration *connect_go.Client[v1.CreateConfigurationRequest, v1.CreateConfigurationResponse]
 	getConfiguration    *connect_go.Client[v1.GetConfigurationRequest, v1.GetConfigurationResponse]
 	listConfigurations  *connect_go.Client[v1.ListConfigurationsRequest, v1.ListConfigurationsResponse]
+	updateConfiguration *connect_go.Client[v1.UpdateConfigurationRequest, v1.UpdateConfigurationResponse]
 	deleteConfiguration *connect_go.Client[v1.DeleteConfigurationRequest, v1.DeleteConfigurationResponse]
 }
 
@@ -97,6 +105,11 @@ func (c *configurationServiceClient) ListConfigurations(ctx context.Context, req
 	return c.listConfigurations.CallUnary(ctx, req)
 }
 
+// UpdateConfiguration calls gitpod.v1.ConfigurationService.UpdateConfiguration.
+func (c *configurationServiceClient) UpdateConfiguration(ctx context.Context, req *connect_go.Request[v1.UpdateConfigurationRequest]) (*connect_go.Response[v1.UpdateConfigurationResponse], error) {
+	return c.updateConfiguration.CallUnary(ctx, req)
+}
+
 // DeleteConfiguration calls gitpod.v1.ConfigurationService.DeleteConfiguration.
 func (c *configurationServiceClient) DeleteConfiguration(ctx context.Context, req *connect_go.Request[v1.DeleteConfigurationRequest]) (*connect_go.Response[v1.DeleteConfigurationResponse], error) {
 	return c.deleteConfiguration.CallUnary(ctx, req)
@@ -110,6 +123,8 @@ type ConfigurationServiceHandler interface {
 	GetConfiguration(context.Context, *connect_go.Request[v1.GetConfigurationRequest]) (*connect_go.Response[v1.GetConfigurationResponse], error)
 	// Lists configurations.
 	ListConfigurations(context.Context, *connect_go.Request[v1.ListConfigurationsRequest]) (*connect_go.Response[v1.ListConfigurationsResponse], error)
+	// Updates a configuration.
+	UpdateConfiguration(context.Context, *connect_go.Request[v1.UpdateConfigurationRequest]) (*connect_go.Response[v1.UpdateConfigurationResponse], error)
 	// Deletes a configuration.
 	DeleteConfiguration(context.Context, *connect_go.Request[v1.DeleteConfigurationRequest]) (*connect_go.Response[v1.DeleteConfigurationResponse], error)
 }
@@ -136,6 +151,11 @@ func NewConfigurationServiceHandler(svc ConfigurationServiceHandler, opts ...con
 		svc.ListConfigurations,
 		opts...,
 	))
+	mux.Handle("/gitpod.v1.ConfigurationService/UpdateConfiguration", connect_go.NewUnaryHandler(
+		"/gitpod.v1.ConfigurationService/UpdateConfiguration",
+		svc.UpdateConfiguration,
+		opts...,
+	))
 	mux.Handle("/gitpod.v1.ConfigurationService/DeleteConfiguration", connect_go.NewUnaryHandler(
 		"/gitpod.v1.ConfigurationService/DeleteConfiguration",
 		svc.DeleteConfiguration,
@@ -157,6 +177,10 @@ func (UnimplementedConfigurationServiceHandler) GetConfiguration(context.Context
 
 func (UnimplementedConfigurationServiceHandler) ListConfigurations(context.Context, *connect_go.Request[v1.ListConfigurationsRequest]) (*connect_go.Response[v1.ListConfigurationsResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.ConfigurationService.ListConfigurations is not implemented"))
+}
+
+func (UnimplementedConfigurationServiceHandler) UpdateConfiguration(context.Context, *connect_go.Request[v1.UpdateConfigurationRequest]) (*connect_go.Response[v1.UpdateConfigurationResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.ConfigurationService.UpdateConfiguration is not implemented"))
 }
 
 func (UnimplementedConfigurationServiceHandler) DeleteConfiguration(context.Context, *connect_go.Request[v1.DeleteConfigurationRequest]) (*connect_go.Response[v1.DeleteConfigurationResponse], error) {

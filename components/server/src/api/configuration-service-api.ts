@@ -10,6 +10,7 @@ import { ConfigurationService as ConfigurationServiceInterface } from "@gitpod/p
 import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
 import { ProjectsService } from "../projects/projects-service";
 import {
+    BranchMatchingStrategy,
     CreateConfigurationRequest,
     CreateConfigurationResponse,
     DeleteConfigurationRequest,
@@ -17,9 +18,12 @@ import {
     GetConfigurationRequest,
     ListConfigurationsRequest,
     ListConfigurationsResponse,
+    UpdateConfigurationRequest,
+    UpdateConfigurationResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { PrebuildSettings } from "@gitpod/gitpod-protocol";
 
 @injectable()
 export class ConfigurationServiceAPI implements ServiceImpl<typeof ConfigurationServiceInterface> {
@@ -94,6 +98,50 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
                 total,
             }),
         });
+    }
+
+    async updateConfiguration(req: UpdateConfigurationRequest, handler: HandlerContext) {
+        if (!req.configuration?.id) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configuration_id is required");
+        }
+
+        let branchStrategy: PrebuildSettings["branchStrategy"];
+        switch (req.configuration?.prebuildSettings?.branchStrategy) {
+            case BranchMatchingStrategy.DEFAULT_BRANCH: {
+                branchStrategy = "default-branch";
+                break;
+            }
+            case BranchMatchingStrategy.ALL_BRANCHES: {
+                branchStrategy = "all-branches";
+                break;
+            }
+            case BranchMatchingStrategy.MATCHED_BRANCHES: {
+                branchStrategy = "matched-branches";
+                break;
+            }
+        }
+
+        await this.projectService.updateProject(handler.user, {
+            id: req.configuration.id,
+            name: req.configuration.name,
+            cloneUrl: req.configuration.cloneUrl,
+            teamId: req.configuration.organizationId,
+            creationTime: req.configuration.creationTime?.toDate().toString(),
+            settings: {
+                prebuilds: {
+                    enable: req.configuration.prebuildSettings?.enabled,
+                    prebuildInterval: req.configuration.prebuildSettings?.prebuildInterval,
+                    branchStrategy,
+                    branchMatchingPattern: req.configuration.prebuildSettings?.branchMatchingPattern,
+                    workspaceClass: req.configuration.prebuildSettings?.workspaceClass,
+                },
+                workspaceClasses: {
+                    regular: req.configuration.workspaceSettings?.workspaceClass,
+                },
+            },
+        });
+
+        return new UpdateConfigurationResponse();
     }
 
     async deleteConfiguration(req: DeleteConfigurationRequest, handler: HandlerContext) {

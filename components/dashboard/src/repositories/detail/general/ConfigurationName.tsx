@@ -9,9 +9,9 @@ import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { FC, useCallback, useState } from "react";
 import { TextInputField } from "../../../components/forms/TextInputField";
 import { useToast } from "../../../components/toasts/Toasts";
-import { useUpdateProject } from "../../../data/projects/project-queries";
 import { useOnBlurError } from "../../../hooks/use-onblur-error";
 import { ConfigurationSettingsField } from "../ConfigurationSettingsField";
+import { useUpdateConfiguration } from "../../../data/configurations/configuration-queries";
 
 const MAX_LENGTH = 100;
 
@@ -21,11 +21,11 @@ type Props = {
 
 export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
     const { toast } = useToast();
-    const updateProject = useUpdateProject();
-    const [projectName, setProjectName] = useState(configuration.name);
+    const updateConfiguration = useUpdateConfiguration();
+    const [configurationName, setConfigurationName] = useState(configuration.name);
 
-    const nameChanged = projectName !== configuration.name;
-    const nameError = useOnBlurError("Sorry, this name is too long.", projectName.length <= MAX_LENGTH);
+    const nameChanged = configurationName !== configuration.name;
+    const nameError = useOnBlurError("Sorry, this name is too long.", configurationName.length <= MAX_LENGTH);
 
     const updateName = useCallback(
         async (e: React.FormEvent) => {
@@ -36,19 +36,19 @@ export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
                 return;
             }
 
-            updateProject.mutate(
+            updateConfiguration.mutate(
                 {
                     id: configuration.id,
-                    name: projectName,
+                    name: configurationName,
                 },
                 {
                     onSuccess: () => {
-                        toast(`Configuration name set to "${projectName}".`);
+                        toast(`Configuration name set to "${configurationName}".`);
                     },
                 },
             );
         },
-        [nameError.isValid, updateProject, configuration.id, projectName, toast],
+        [nameError.isValid, updateConfiguration, configuration.id, configurationName, toast],
     );
 
     return (
@@ -57,13 +57,13 @@ export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
                 <TextInputField
                     label="Configuration name"
                     hint={`The name can be up to ${MAX_LENGTH} characters long.`}
-                    value={projectName}
+                    value={configurationName}
                     error={nameError.message}
-                    onChange={setProjectName}
+                    onChange={setConfigurationName}
                     onBlur={nameError.onBlur}
                 />
                 <div className="flex flex-row items-center justify-start gap-2 mt-4 w-full">
-                    <LoadingButton type="submit" disabled={!nameChanged} loading={updateProject.isLoading}>
+                    <LoadingButton type="submit" disabled={!nameChanged} loading={updateConfiguration.isLoading}>
                         Save
                     </LoadingButton>
                 </div>

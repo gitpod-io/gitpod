@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { configurationClient } from "../../service/public-api";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 
 const BASE_KEY = "configurations";
 
@@ -79,6 +80,26 @@ export const useDeleteConfiguration = () => {
         onSuccess: (_, { configurationId }) => {
             queryClient.invalidateQueries({ queryKey: ["configurations", "list"] });
             queryClient.invalidateQueries({ queryKey: getConfigurationQueryKey(configurationId) });
+        },
+    });
+};
+
+type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
+
+export const useUpdateConfiguration = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (configuration: PartialConfiguration) => {
+            await configurationClient.updateConfiguration({
+                configuration,
+            });
+
+            return configuration;
+        },
+        onSuccess: (_, { id }) => {
+            queryClient.invalidateQueries({ queryKey: ["configurations", "list"] });
+            queryClient.invalidateQueries({ queryKey: getConfigurationQueryKey(id) });
         },
     });
 };

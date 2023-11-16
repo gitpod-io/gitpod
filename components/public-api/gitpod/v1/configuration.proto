@@ -47,6 +47,10 @@ service ConfigurationService {
   rpc ListConfigurations(ListConfigurationsRequest)
       returns (ListConfigurationsResponse) {};
 
+  // Updates a configuration.
+  rpc UpdateConfiguration(UpdateConfigurationRequest)
+      returns (UpdateConfigurationResponse) {};
+
   // Deletes a configuration.
   rpc DeleteConfiguration(DeleteConfigurationRequest)
       returns (DeleteConfigurationResponse) {};
@@ -74,6 +78,10 @@ message ListConfigurationsResponse {
   repeated Configuration configurations = 1;
   PaginationResponse pagination = 2;
 }
+
+message UpdateConfigurationRequest { Configuration configuration = 1; }
+
+message UpdateConfigurationResponse {}
 
 message DeleteConfigurationRequest { string configuration_id = 1; }
 
