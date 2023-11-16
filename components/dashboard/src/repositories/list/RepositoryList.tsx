@@ -108,7 +108,11 @@ const RepositoryListPage: FC = () => {
 
                     {hasNextPage && (
                         <div className="my-4 flex flex-row justify-center">
-                            <LoadingButton onClick={() => fetchNextPage()} loading={isFetchingNextPage}>
+                            <LoadingButton
+                                variant="secondary"
+                                onClick={() => fetchNextPage()}
+                                loading={isFetchingNextPage}
+                            >
                                 Load more
                             </LoadingButton>
                         </div>
