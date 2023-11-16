@@ -20,6 +20,7 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { validate as uuidValidate } from "uuid";
 import { PaginationToken, generatePaginationToken, parsePaginationToken } from "./pagination";
 
 @injectable()
@@ -71,12 +72,21 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
     }
 
     async listConfigurations(req: ListConfigurationsRequest, context: HandlerContext) {
-        if (!req.organizationId) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organization_id is required");
+        // TODO: encapsulate this validation into some more generic schema validation
+        const limit = req.pagination?.pageSize || 25;
+        if (limit > 100) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "pageSize must be less than 100");
+        }
+        if (limit < 25) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "pageSize must be greater than 25");
+        }
+        if ((req.searchTerm || "").length > 100) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "searchTerm must be less than 100 characters");
+        }
+        if (!uuidValidate(req.organizationId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
 
-        // TODO: validate w/in range 25-100
-        const limit = req.pagination?.pageSize || 25;
         const paginationToken = parsePaginationToken(req.pagination?.token);
 
         const { rows } = await this.projectService.findProjects(context.user.id, {
