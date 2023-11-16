@@ -230,9 +230,6 @@ const gitpodServiceMock = createServiceMock({
     getClientRegion: async () => {
         return "europe-west-1";
     },
-    getSuggestedContextURLs: async () => {
-        return [];
-    },
     getIDEOptions: async () => {
         return {
             defaultDesktopIde: "code-desktop",
