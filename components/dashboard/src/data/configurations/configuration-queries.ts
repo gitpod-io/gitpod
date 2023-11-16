@@ -93,6 +93,7 @@ export const useUpdateConfiguration = () => {
         mutationFn: async (configuration: PartialConfiguration) => {
             await configurationClient.updateConfiguration({
                 configurationId: configuration.id,
+                name: configuration.name,
                 workspaceSettings: configuration.workspaceSettings,
                 prebuildSettings: configuration.prebuildSettings,
             });
