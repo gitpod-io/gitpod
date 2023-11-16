@@ -121,6 +121,7 @@ jobs:
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
           infrastructure_provider: gce
           large_vm: true
+          preemptible: true
       - name: Deploy Gitpod to the preview environment
         if: inputs.skip_deploy != 'true'
         id: deploy-gitpod

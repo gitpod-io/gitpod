@@ -8,7 +8,6 @@ import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import Header from "../components/Header";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { ItemsList } from "../components/ItemsList";
-import { WorkspaceInfo } from "@gitpod/gitpod-protocol";
 import Arrow from "../components/Arrow";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { useListWorkspacesQuery } from "../data/workspaces/list-workspaces-query";
@@ -17,6 +16,7 @@ import { WorkspacesSearchBar } from "./WorkspacesSearchBar";
 import { hoursBefore, isDateSmallerOrEqual } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { useDeleteInactiveWorkspacesMutation } from "../data/workspaces/delete-inactive-workspaces-mutation";
 import { useToast } from "../components/toasts/Toasts";
+import { Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 const WorkspacesPage: FunctionComponent = () => {
     const [limit, setLimit] = useState(50);
@@ -46,14 +46,14 @@ const WorkspacesPage: FunctionComponent = () => {
     const { filteredActiveWorkspaces, filteredInactiveWorkspaces } = useMemo(() => {
         const filteredActiveWorkspaces = activeWorkspaces.filter(
             (info) =>
-                `${info.workspace.description}${info.workspace.id}${info.workspace.contextURL}${info.workspace.context}`
+                `${info.name}${info.id}${info.contextUrl}${info.status?.gitStatus?.cloneUrl}${info.status?.gitStatus?.branch}`
                     .toLowerCase()
                     .indexOf(searchTerm.toLowerCase()) !== -1,
         );
 
         const filteredInactiveWorkspaces = inactiveWorkspaces.filter(
             (info) =>
-                `${info.workspace.description}${info.workspace.id}${info.workspace.contextURL}${info.workspace.context}`
+                `${info.name}${info.id}${info.contextUrl}${info.status?.gitStatus?.cloneUrl}${info.status?.gitStatus?.branch}`
                     .toLowerCase()
                     .indexOf(searchTerm.toLowerCase()) !== -1,
         );
@@ -67,7 +67,7 @@ const WorkspacesPage: FunctionComponent = () => {
     const handleDeleteInactiveWorkspacesConfirmation = useCallback(async () => {
         try {
             await deleteInactiveWorkspaces.mutateAsync({
-                workspaceIds: inactiveWorkspaces.map((info) => info.workspace.id),
+                workspaceIds: inactiveWorkspaces.map((info) => info.id),
             });
 
             setDeleteModalVisible(false);
@@ -102,7 +102,7 @@ const WorkspacesPage: FunctionComponent = () => {
                         <ItemsList className="app-container pb-40">
                             <div className="border-t border-gray-200 dark:border-gray-800"></div>
                             {filteredActiveWorkspaces.map((info) => {
-                                return <WorkspaceEntry key={info.workspace.id} info={info} />;
+                                return <WorkspaceEntry key={info.id} info={info} />;
                             })}
                             {filteredActiveWorkspaces.length > 0 && <div className="py-6"></div>}
                             {filteredInactiveWorkspaces.length > 0 && (
@@ -152,7 +152,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                     {showInactive ? (
                                         <>
                                             {filteredInactiveWorkspaces.map((info) => {
-                                                return <WorkspaceEntry key={info.workspace.id} info={info} />;
+                                                return <WorkspaceEntry key={info.id} info={info} />;
                                             })}
                                         </>
                                     ) : null}
@@ -169,31 +169,20 @@ const WorkspacesPage: FunctionComponent = () => {
 
 export default WorkspacesPage;
 
-const sortWorkspaces = (a: WorkspaceInfo, b: WorkspaceInfo) => {
+const sortWorkspaces = (a: Workspace, b: Workspace) => {
     const result = workspaceActiveDate(b).localeCompare(workspaceActiveDate(a));
     if (result === 0) {
-        // both active now? order by creationtime
-        return WorkspaceInfo.lastActiveISODate(b).localeCompare(WorkspaceInfo.lastActiveISODate(a));
+        // both active now? order by workspace id
+        return b.id.localeCompare(a.id);
     }
     return result;
 };
 
 /**
- * Given a WorkspaceInfo, return a timestamp of the last related activitiy
- *
- * @param info WorkspaceInfo
- * @returns string timestamp
+ * Given a WorkspaceInfo, return a ISO string of the last related activitiy
  */
-function workspaceActiveDate(info: WorkspaceInfo): string {
-    if (!info.latestInstance) {
-        return info.workspace.creationTime;
-    }
-    if (info.latestInstance.status.phase === "stopped" || info.latestInstance.status.phase === "unknown") {
-        return WorkspaceInfo.lastActiveISODate(info);
-    }
-
-    const now = new Date().toISOString();
-    return info.latestInstance.stoppedTime || info.latestInstance.stoppingTime || now;
+function workspaceActiveDate(info: Workspace): string {
+    return info.status!.phase!.lastTransitionTime!.toDate().toISOString();
 }
 
 /**
@@ -203,14 +192,10 @@ function workspaceActiveDate(info: WorkspaceInfo): string {
  * @param info WorkspaceInfo
  * @returns boolean If workspace is considered active
  */
-function isWorkspaceActive(info: WorkspaceInfo): boolean {
-    const lastSessionStart = WorkspaceInfo.lastActiveISODate(info);
+function isWorkspaceActive(info: Workspace): boolean {
+    const lastSessionStart = info.status!.phase!.lastTransitionTime!.toDate().toISOString();
     const twentyfourHoursAgo = hoursBefore(new Date().toISOString(), 24);
 
-    return (
-        (info.workspace.pinned ||
-            (!!info.latestInstance && info.latestInstance.status?.phase !== "stopped") ||
-            isDateSmallerOrEqual(twentyfourHoursAgo, lastSessionStart)) &&
-        !info.workspace.softDeleted
-    );
+    const isStopped = info.status?.phase?.name === WorkspacePhase_Phase.STOPPED;
+    return info.pinned || !isStopped || isDateSmallerOrEqual(twentyfourHoursAgo, lastSessionStart);
 }

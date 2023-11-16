@@ -132,6 +132,8 @@ import { RedlockAbortSignal } from "redlock";
 import { ConfigProvider } from "./config-provider";
 import { isGrpcError } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { SubjectId } from "../auth/subject-id";
+import { runWithSubjectId } from "../util/request-context";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
@@ -488,7 +490,9 @@ export class WorkspaceStarter {
 
         if (blockedRepository.blockUser) {
             try {
-                await this.userService.blockUser(SYSTEM_USER, user.id, true);
+                await runWithSubjectId(SubjectId.fromUserId(SYSTEM_USER), async () =>
+                    this.userService.blockUser(SYSTEM_USER, user.id, true),
+                );
                 log.info({ userId: user.id }, "Blocked user.", { contextURL });
             } catch (error) {
                 log.error({ userId: user.id }, "Failed to block user.", error, { contextURL });

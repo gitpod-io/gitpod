@@ -10,7 +10,6 @@ import {
     RateLimiterError,
     StartWorkspaceResult,
     WorkspaceImageBuild,
-    WorkspaceInstance,
 } from "@gitpod/gitpod-protocol";
 import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -26,8 +25,9 @@ import { getGitpodService, gitpodHostUrl, getIDEFrontendService, IDEFrontendServ
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
 import Alert from "../components/Alert";
-import { converter, workspaceClient, workspacesService } from "../service/public-api";
+import { workspaceClient, workspacesService } from "../service/public-api";
 import { GetWorkspaceRequest, Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { disposableWatchWorkspaceStatus } from "../data/workspaces/listen-to-workspace-ws-messages";
 
 const sessionId = v4();
 
@@ -125,11 +125,21 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         }
 
         try {
+            const watchDispose = disposableWatchWorkspaceStatus(this.state.workspace?.id, (resp) => {
+                if (resp.workspaceId !== this.state.workspace?.id || !resp.status) {
+                    return;
+                }
+                this.onWorkspaceUpdate(
+                    new Workspace({
+                        ...this.state.workspace,
+                        status: resp.status,
+                    }),
+                );
+            });
+            this.toDispose.push(watchDispose);
             this.toDispose.push(
                 getGitpodService().registerClient({
                     notifyDidOpenConnection: () => this.fetchWorkspaceInfo(undefined),
-                    onInstanceUpdate: (workspaceInstance: WorkspaceInstance) =>
-                        this.onInstanceUpdate(workspaceInstance),
                 }),
             );
         } catch (error) {
@@ -296,15 +306,6 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     protected async fetchIDEOptions() {
         const ideOptions = await getGitpodService().server.getIDEOptions();
         this.setState({ ideOptions });
-    }
-
-    private async onInstanceUpdate(instance: WorkspaceInstance) {
-        const workspace = this.state.workspace;
-        if (!workspace || instance.workspaceId !== workspace?.id) {
-            return;
-        }
-        const newWorkspace = converter.toWorkspace(instance, workspace.clone());
-        this.onWorkspaceUpdate(newWorkspace);
     }
 
     private async onWorkspaceUpdate(workspace: Workspace) {

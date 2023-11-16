@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
 import { useContext, useEffect, useState, useMemo, useCallback, FC } from "react";
 import { UserContext } from "./user-context";
@@ -18,9 +17,10 @@ import { getURLHash } from "./utils";
 import ErrorMessage from "./components/ErrorMessage";
 import { Heading1, Heading2, Subheading } from "./components/typography/headings";
 import { SSOLoginForm } from "./login/SSOLoginForm";
-import { useAuthProviders } from "./data/auth-providers/auth-provider-query";
+import { useAuthProviderDescriptions } from "./data/auth-providers/auth-provider-descriptions-query";
 import { SetupPending } from "./login/SetupPending";
 import { useNeedsSetup } from "./dedicated-setup/use-needs-setup";
+import { AuthProviderDescription } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 
 export function markLoggedIn() {
     document.cookie = GitpodCookie.generateCookie(window.location.hostname);
@@ -38,7 +38,7 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
 
     const urlHash = useMemo(() => getURLHash(), []);
 
-    const authProviders = useAuthProviders();
+    const authProviders = useAuthProviderDescriptions();
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
     const [hostFromContext, setHostFromContext] = useState<string | undefined>();
     const [repoPathname, setRepoPathname] = useState<string | undefined>();
@@ -58,7 +58,7 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
         }
     }, [urlHash]);
 
-    let providerFromContext: AuthProviderInfo | undefined;
+    let providerFromContext: AuthProviderDescription | undefined;
     if (hostFromContext && authProviders.data) {
         providerFromContext = authProviders.data.find((provider) => provider.host === hostFromContext);
     }
@@ -158,7 +158,7 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                                             className="btn-login flex-none w-56 h-10 p-0 inline-flex rounded-xl"
                                             onClick={() => openLogin(providerFromContext!.host)}
                                         >
-                                            {iconForAuthProvider(providerFromContext.authProviderType)}
+                                            {iconForAuthProvider(providerFromContext.type)}
                                             <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
                                                 Continue with {simplifyProviderName(providerFromContext.host)}
                                             </span>
@@ -170,7 +170,7 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                                                 className="btn-login flex-none w-56 h-10 p-0 inline-flex rounded-xl"
                                                 onClick={() => openLogin(ap.host)}
                                             >
-                                                {iconForAuthProvider(ap.authProviderType)}
+                                                {iconForAuthProvider(ap.type)}
                                                 <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
                                                     Continue with {simplifyProviderName(ap.host)}
                                                 </span>

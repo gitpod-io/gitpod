@@ -5,7 +5,6 @@
  */
 
 import {
-    AppInstallationDB,
     UserDB,
     WorkspaceDB,
     DBWithTracing,
@@ -174,6 +173,8 @@ import {
     suggestionFromRecentWorkspace,
     suggestionFromUserRepo,
 } from "./suggested-repos-sorter";
+import { SubjectId } from "../auth/subject-id";
+import { runWithSubjectId } from "../util/request-context";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -222,8 +223,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(OrganizationService) private readonly organizationService: OrganizationService,
 
         @inject(LinkedInService) private readonly linkedInService: LinkedInService,
-
-        @inject(AppInstallationDB) private readonly appInstallationDB: AppInstallationDB,
 
         @inject(AuthProviderService) private readonly authProviderService: AuthProviderService,
 
@@ -466,11 +465,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     private async checkUser(methodName?: string, logPayload?: {}, ctx?: LogContext): Promise<User> {
         // Generally, a user session is required.
-        if (!this.userID) {
+        const userId = this.userID;
+        if (!userId) {
             throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, "User is not authenticated. Please login.");
         }
 
-        const user = await this.userService.findUserById(SYSTEM_USER, this.userID);
+        const user = await runWithSubjectId(SubjectId.fromUserId(SYSTEM_USER), async () =>
+            this.userService.findUserById(SYSTEM_USER, userId),
+        );
         if (user.markedDeleted === true) {
             throw new ApplicationError(ErrorCodes.USER_DELETED, "User has been deleted.");
         }
@@ -1398,117 +1400,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         ).filter((e) => e !== undefined) as WhitelistedRepository[];
     }
 
-    public async getSuggestedContextURLs(ctx: TraceContext): Promise<string[]> {
-        const user = await this.checkAndBlockUser("getSuggestedContextURLs");
-        const suggestions: Array<{ url: string; lastUse?: string; priority: number }> = [];
-        const logCtx: LogContext = { userId: user.id };
-
-        // Fetch all data sources in parallel for maximum speed (don't await in this scope before `Promise.allSettled(promises)` below!)
-        const promises = [];
-
-        // Example repositories
-        promises.push(
-            this.getFeaturedRepositories(ctx)
-                .then((exampleRepos) => {
-                    exampleRepos.forEach((r) => suggestions.push({ url: r.url, priority: 0 }));
-                })
-                .catch((error) => {
-                    log.error(logCtx, "Could not get example repositories", error);
-                }),
-        );
-
-        // Repositories of all accessible projects
-        promises.push(
-            this.getAccessibleProjects().then((projects) => {
-                projects.forEach((project) =>
-                    suggestions.push({ url: project.cloneUrl.replace(/\.git$/, ""), priority: 1 }),
-                );
-            }),
-        );
-
-        // User repositories (from Git hosts directly)
-        promises.push(
-            this.getAuthProviders(ctx)
-                .then((authProviders) =>
-                    Promise.all(
-                        authProviders.map(async (p) => {
-                            try {
-                                const hostContext = this.hostContextProvider.get(p.host);
-                                const services = hostContext?.services;
-                                if (!services) {
-                                    log.error(logCtx, "Unsupported repository host: " + p.host);
-                                    return;
-                                }
-                                const userRepos = await services.repositoryProvider.getUserRepos(user);
-                                userRepos.forEach((r) =>
-                                    suggestions.push({ url: r.url.replace(/\.git$/, ""), priority: 5 }),
-                                );
-                            } catch (error) {
-                                log.debug(logCtx, "Could not get user repositories from host " + p.host, error);
-                            }
-                        }),
-                    ),
-                )
-                .catch((error) => {
-                    log.error(logCtx, "Could not get auth providers", error);
-                }),
-        );
-
-        // Recent repositories
-        promises.push(
-            this.getWorkspaces(ctx, {
-                /* limit: 20 */
-            })
-                .then((workspaces) => {
-                    workspaces.forEach((ws) => {
-                        let repoUrl;
-                        if (CommitContext.is(ws.workspace.context)) {
-                            repoUrl = ws.workspace.context?.repository?.cloneUrl?.replace(/\.git$/, "");
-                        }
-                        if (!repoUrl) {
-                            repoUrl = ws.workspace.contextURL;
-                        }
-                        if (repoUrl) {
-                            const lastUse = WorkspaceInfo.lastActiveISODate(ws);
-                            suggestions.push({ url: repoUrl, lastUse, priority: 10 });
-                        }
-                    });
-                })
-                .catch((error) => {
-                    log.error(logCtx, "Could not fetch recent workspace repositories", error);
-                }),
-        );
-
-        await Promise.allSettled(promises);
-
-        const uniqueURLs = new Set();
-        return suggestions
-            .sort((a, b) => {
-                // priority first
-                if (a.priority !== b.priority) {
-                    return a.priority < b.priority ? 1 : -1;
-                }
-                // Most recently used second
-                if (b.lastUse || a.lastUse) {
-                    const la = a.lastUse || "";
-                    const lb = b.lastUse || "";
-                    return la < lb ? 1 : la === lb ? 0 : -1;
-                }
-                // Otherwise, alphasort
-                const ua = a.url.toLowerCase();
-                const ub = b.url.toLowerCase();
-                return ua > ub ? 1 : ua === ub ? 0 : -1;
-            })
-            .filter((s) => {
-                if (uniqueURLs.has(s.url)) {
-                    return false;
-                }
-                uniqueURLs.add(s.url);
-                return true;
-            })
-            .map((s) => s.url);
-    }
-
     public async getSuggestedRepositories(ctx: TraceContext, organizationId: string): Promise<SuggestedRepository[]> {
         traceAPIParams(ctx, { organizationId });
 
@@ -1836,24 +1727,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async isGitHubAppEnabled(ctx: TraceContext): Promise<boolean> {
-        await this.checkAndBlockUser();
-        return !!this.config.githubApp?.enabled;
+        return false;
     }
 
-    async registerGithubApp(ctx: TraceContext, installationId: string): Promise<void> {
-        traceAPIParams(ctx, { installationId });
-
-        const user = await this.checkAndBlockUser();
-
-        if (!this.config.githubApp?.enabled) {
-            throw new ApplicationError(
-                ErrorCodes.NOT_FOUND,
-                "No GitHub app enabled for this installation. Please talk to your administrator.",
-            );
-        }
-
-        await this.appInstallationDB.recordNewInstallation("github", "user", installationId, user.id);
-    }
+    async registerGithubApp(ctx: TraceContext, installationId: string): Promise<void> {}
 
     async takeSnapshot(ctx: TraceContext, options: GitpodServer.TakeSnapshotOptions): Promise<string> {
         traceAPIParams(ctx, { options });

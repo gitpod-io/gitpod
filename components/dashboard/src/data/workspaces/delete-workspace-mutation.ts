@@ -27,7 +27,7 @@ export const useDeleteWorkspaceMutation = () => {
             // Remove workspace from cache so it's reflected right away
             queryClient.setQueryData<ListWorkspacesQueryResult>(queryKey, (oldWorkspacesData) => {
                 return oldWorkspacesData?.filter((info) => {
-                    return info.workspace.id !== workspaceId;
+                    return info.id !== workspaceId;
                 });
             });
 

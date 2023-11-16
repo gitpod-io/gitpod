@@ -6,17 +6,19 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
-import { useAuthProviders } from "../auth-providers/auth-provider-query";
+import { useAuthProviderDescriptions } from "../auth-providers/auth-provider-descriptions-query";
 import { useCurrentUser } from "../../user-context";
+import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 
 export const useIsGithubAppEnabled = () => {
     return useQuery(["github-app-enabled"], async () => {
-        return await getGitpodService().server.isGitHubAppEnabled();
+        // similar to `isGitpodio`, but the GH App is only configured on Cloud.
+        return window.location.hostname === "gitpod.io" || window.location.hostname === "gitpod-staging.com";
     });
 };
 
 export const useAreGithubWebhooksUnauthorized = (providerHost: string) => {
-    const { data: authProviders } = useAuthProviders();
+    const { data: authProviders } = useAuthProviderDescriptions();
     const { data: isGitHubAppEnabled } = useIsGithubAppEnabled();
     const { data: token } = useGetGitToken(providerHost);
 
@@ -32,7 +34,7 @@ export const useAreGithubWebhooksUnauthorized = (providerHost: string) => {
 
     // Find matching auth provider - if none, treat as authorized
     const ap = authProviders?.find((ap) => ap.host === providerHost);
-    if (!ap || ap.authProviderType !== "GitHub") {
+    if (!ap || ap.type !== AuthProviderType.GITHUB) {
         return false;
     }
 

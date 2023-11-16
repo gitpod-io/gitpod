@@ -5,7 +5,6 @@
  */
 
 import { HandlerContext, ServiceImpl } from "@connectrpc/connect";
-import { User } from "@gitpod/gitpod-protocol";
 import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connect";
 import {
     LotsOfRepliesRequest,
@@ -14,27 +13,30 @@ import {
     SayHelloResponse,
 } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_pb";
 import { injectable } from "inversify";
+import { ctxCheckAborted, ctxTrySubjectId } from "../util/request-context";
 
 @injectable()
 export class HelloServiceAPI implements ServiceImpl<typeof HelloService> {
-    async sayHello(req: SayHelloRequest, context: HandlerContext): Promise<SayHelloResponse> {
+    async sayHello(req: SayHelloRequest, _: HandlerContext): Promise<SayHelloResponse> {
         const response = new SayHelloResponse();
-        response.reply = "Hello " + this.getSubject(context);
+        response.reply = "Hello " + getSubject();
         return response;
     }
-    async *lotsOfReplies(req: LotsOfRepliesRequest, context: HandlerContext): AsyncGenerator<LotsOfRepliesResponse> {
+    async *lotsOfReplies(req: LotsOfRepliesRequest, _: HandlerContext): AsyncGenerator<LotsOfRepliesResponse> {
         let count = req.previousCount || 0;
-        while (!context.signal.aborted) {
+        while (true) {
+            ctxCheckAborted();
+
             const response = new LotsOfRepliesResponse();
-            response.reply = `Hello ${this.getSubject(context)} ${count}`;
+            response.reply = `Hello ${getSubject()} ${count}`;
             response.count = count;
             yield response;
             count++;
             await new Promise((resolve) => setTimeout(resolve, 30000));
         }
     }
+}
 
-    private getSubject(context: HandlerContext): string {
-        return User.getName(context.user) || "World";
-    }
+function getSubject(): string {
+    return ctxTrySubjectId()?.toString() || "World";
 }

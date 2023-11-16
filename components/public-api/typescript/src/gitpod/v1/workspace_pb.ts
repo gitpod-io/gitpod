@@ -11,6 +11,7 @@
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message, proto3, protoInt64, Timestamp } from "@bufbuild/protobuf";
+import { PaginationRequest, PaginationResponse } from "./pagination_pb.js";
 
 /**
  * Admission level describes who can access a workspace instance and its ports.
@@ -51,6 +52,10 @@ proto3.util.setEnumType(AdmissionLevel, "gitpod.v1.AdmissionLevel", [
  */
 export class GetWorkspaceRequest extends Message<GetWorkspaceRequest> {
   /**
+   * workspace_id specifies the workspace to get
+   *
+   * +required
+   *
    * @generated from field: string workspace_id = 1;
    */
   workspaceId = "";
@@ -205,6 +210,118 @@ export class WatchWorkspaceStatusResponse extends Message<WatchWorkspaceStatusRe
 
   static equals(a: WatchWorkspaceStatusResponse | PlainMessage<WatchWorkspaceStatusResponse> | undefined, b: WatchWorkspaceStatusResponse | PlainMessage<WatchWorkspaceStatusResponse> | undefined): boolean {
     return proto3.util.equals(WatchWorkspaceStatusResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.ListWorkspacesRequest
+ */
+export class ListWorkspacesRequest extends Message<ListWorkspacesRequest> {
+  /**
+   * pagination contains the pagination options for listing workspaces
+   *
+   * @generated from field: gitpod.v1.PaginationRequest pagination = 1;
+   */
+  pagination?: PaginationRequest;
+
+  /**
+   * organization_id is the ID of the organization that contains the workspaces
+   *
+   * +required
+   *
+   * @generated from field: string organization_id = 2;
+   */
+  organizationId = "";
+
+  /**
+   * pinned indicates whether to list only pinned workspaces
+   *
+   * @generated from field: bool pinned = 3;
+   */
+  pinned = false;
+
+  /**
+   * search_term is a search term to filter workspaces by name
+   *
+   * @generated from field: string search_term = 4;
+   */
+  searchTerm = "";
+
+  constructor(data?: PartialMessage<ListWorkspacesRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListWorkspacesRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "pagination", kind: "message", T: PaginationRequest },
+    { no: 2, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "pinned", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 4, name: "search_term", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListWorkspacesRequest {
+    return new ListWorkspacesRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListWorkspacesRequest {
+    return new ListWorkspacesRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListWorkspacesRequest {
+    return new ListWorkspacesRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListWorkspacesRequest | PlainMessage<ListWorkspacesRequest> | undefined, b: ListWorkspacesRequest | PlainMessage<ListWorkspacesRequest> | undefined): boolean {
+    return proto3.util.equals(ListWorkspacesRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.ListWorkspacesResponse
+ */
+export class ListWorkspacesResponse extends Message<ListWorkspacesResponse> {
+  /**
+   * workspaces are the workspaces that matched the query
+   *
+   * @generated from field: repeated gitpod.v1.Workspace workspaces = 1;
+   */
+  workspaces: Workspace[] = [];
+
+  /**
+   * pagination contains the pagination options for listing workspaces
+   *
+   * @generated from field: gitpod.v1.PaginationResponse pagination = 2;
+   */
+  pagination?: PaginationResponse;
+
+  constructor(data?: PartialMessage<ListWorkspacesResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListWorkspacesResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspaces", kind: "message", T: Workspace, repeated: true },
+    { no: 2, name: "pagination", kind: "message", T: PaginationResponse },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListWorkspacesResponse {
+    return new ListWorkspacesResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListWorkspacesResponse {
+    return new ListWorkspacesResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListWorkspacesResponse {
+    return new ListWorkspacesResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListWorkspacesResponse | PlainMessage<ListWorkspacesResponse> | undefined, b: ListWorkspacesResponse | PlainMessage<ListWorkspacesResponse> | undefined): boolean {
+    return proto3.util.equals(ListWorkspacesResponse, a, b);
   }
 }
 
