@@ -9,7 +9,7 @@ RUN apk add brotli gzip
 # Gitpod CLI and Local App
 COPY components-local-app--app/bin/* /bin/
 
-RUN for FILE in `ls /bin/gitpod-local-companion*`;do \
+RUN for FILE in `ls /bin/*`;do \
   gzip -v -f -9 -k "$FILE"; \
 done
 
