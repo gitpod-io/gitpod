@@ -106,6 +106,10 @@ func (l *configCatLogger) GetLevel() configcat.LogLevel {
 	return configcat.LogLevelError
 }
 
+func (l *configCatLogger) Debugf(format string, args ...interface{}) {}
+func (l *configCatLogger) Infof(format string, args ...interface{})  {}
+func (l *configCatLogger) Warnf(format string, args ...interface{})  {}
+
 func logField(experimentName, value interface{}) logrus.Fields {
 	return logrus.Fields{
 		fmt.Sprintf("experiments.%s", experimentName): value,
