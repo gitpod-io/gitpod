@@ -21,6 +21,7 @@ import * as OrganizationClasses from "@gitpod/public-api/lib/gitpod/v1/organizat
 import * as WorkspaceClasses from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import * as PaginationClasses from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import * as ConfigurationClasses from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import * as AuthProviderClasses from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 
 // This is used to version the cache
 // If data we cache changes in a non-backwards compatible way, increment this version
@@ -143,6 +144,7 @@ function initializeMessages() {
         ...Object.values(WorkspaceClasses),
         ...Object.values(PaginationClasses),
         ...Object.values(ConfigurationClasses),
+        ...Object.values(AuthProviderClasses),
     ];
     for (const c of constr) {
         if ((c as any).prototype instanceof Message) {
