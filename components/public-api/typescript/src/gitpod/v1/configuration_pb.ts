@@ -473,9 +473,19 @@ export class ListConfigurationsResponse extends Message<ListConfigurationsRespon
  */
 export class UpdateConfigurationRequest extends Message<UpdateConfigurationRequest> {
   /**
-   * @generated from field: gitpod.v1.Configuration configuration = 1;
+   * @generated from field: string configuration_id = 1;
    */
-  configuration?: Configuration;
+  configurationId = "";
+
+  /**
+   * @generated from field: optional gitpod.v1.UpdateConfigurationRequest.PrebuildSettings prebuild_settings = 2;
+   */
+  prebuildSettings?: UpdateConfigurationRequest_PrebuildSettings;
+
+  /**
+   * @generated from field: optional gitpod.v1.UpdateConfigurationRequest.WorkspaceSettings workspace_settings = 3;
+   */
+  workspaceSettings?: UpdateConfigurationRequest_WorkspaceSettings;
 
   constructor(data?: PartialMessage<UpdateConfigurationRequest>) {
     super();
@@ -485,7 +495,9 @@ export class UpdateConfigurationRequest extends Message<UpdateConfigurationReque
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.UpdateConfigurationRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "configuration", kind: "message", T: Configuration },
+    { no: 1, name: "configuration_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "prebuild_settings", kind: "message", T: UpdateConfigurationRequest_PrebuildSettings, opt: true },
+    { no: 3, name: "workspace_settings", kind: "message", T: UpdateConfigurationRequest_WorkspaceSettings, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateConfigurationRequest {
@@ -506,9 +518,112 @@ export class UpdateConfigurationRequest extends Message<UpdateConfigurationReque
 }
 
 /**
+ * @generated from message gitpod.v1.UpdateConfigurationRequest.PrebuildSettings
+ */
+export class UpdateConfigurationRequest_PrebuildSettings extends Message<UpdateConfigurationRequest_PrebuildSettings> {
+  /**
+   * @generated from field: optional bool enabled = 1;
+   */
+  enabled?: boolean;
+
+  /**
+   * @generated from field: optional string branch_matching_pattern = 2;
+   */
+  branchMatchingPattern?: string;
+
+  /**
+   * @generated from field: optional gitpod.v1.BranchMatchingStrategy branch_strategy = 3;
+   */
+  branchStrategy?: BranchMatchingStrategy;
+
+  /**
+   * @generated from field: optional int32 prebuild_interval = 4;
+   */
+  prebuildInterval?: number;
+
+  /**
+   * @generated from field: optional string workspace_class = 5;
+   */
+  workspaceClass?: string;
+
+  constructor(data?: PartialMessage<UpdateConfigurationRequest_PrebuildSettings>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.UpdateConfigurationRequest.PrebuildSettings";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "enabled", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 2, name: "branch_matching_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 3, name: "branch_strategy", kind: "enum", T: proto3.getEnumType(BranchMatchingStrategy), opt: true },
+    { no: 4, name: "prebuild_interval", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
+    { no: 5, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateConfigurationRequest_PrebuildSettings {
+    return new UpdateConfigurationRequest_PrebuildSettings().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateConfigurationRequest_PrebuildSettings {
+    return new UpdateConfigurationRequest_PrebuildSettings().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateConfigurationRequest_PrebuildSettings {
+    return new UpdateConfigurationRequest_PrebuildSettings().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateConfigurationRequest_PrebuildSettings | PlainMessage<UpdateConfigurationRequest_PrebuildSettings> | undefined, b: UpdateConfigurationRequest_PrebuildSettings | PlainMessage<UpdateConfigurationRequest_PrebuildSettings> | undefined): boolean {
+    return proto3.util.equals(UpdateConfigurationRequest_PrebuildSettings, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.UpdateConfigurationRequest.WorkspaceSettings
+ */
+export class UpdateConfigurationRequest_WorkspaceSettings extends Message<UpdateConfigurationRequest_WorkspaceSettings> {
+  /**
+   * @generated from field: optional string workspace_class = 1;
+   */
+  workspaceClass?: string;
+
+  constructor(data?: PartialMessage<UpdateConfigurationRequest_WorkspaceSettings>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.UpdateConfigurationRequest.WorkspaceSettings";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateConfigurationRequest_WorkspaceSettings {
+    return new UpdateConfigurationRequest_WorkspaceSettings().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateConfigurationRequest_WorkspaceSettings {
+    return new UpdateConfigurationRequest_WorkspaceSettings().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateConfigurationRequest_WorkspaceSettings {
+    return new UpdateConfigurationRequest_WorkspaceSettings().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateConfigurationRequest_WorkspaceSettings | PlainMessage<UpdateConfigurationRequest_WorkspaceSettings> | undefined, b: UpdateConfigurationRequest_WorkspaceSettings | PlainMessage<UpdateConfigurationRequest_WorkspaceSettings> | undefined): boolean {
+    return proto3.util.equals(UpdateConfigurationRequest_WorkspaceSettings, a, b);
+  }
+}
+
+/**
  * @generated from message gitpod.v1.UpdateConfigurationResponse
  */
 export class UpdateConfigurationResponse extends Message<UpdateConfigurationResponse> {
+  /**
+   * @generated from field: gitpod.v1.Configuration configuration = 1;
+   */
+  configuration?: Configuration;
+
   constructor(data?: PartialMessage<UpdateConfigurationResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -517,6 +632,7 @@ export class UpdateConfigurationResponse extends Message<UpdateConfigurationResp
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.UpdateConfigurationResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "configuration", kind: "message", T: Configuration },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateConfigurationResponse {

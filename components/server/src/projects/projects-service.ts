@@ -375,7 +375,7 @@ export class ProjectsService {
         return result;
     }
 
-    async updateProject(user: User, partialProject: PartialProject): Promise<void> {
+    async updateProject(user: User, partialProject: PartialProject): Promise<Project> {
         await this.auth.checkPermissionOnProject(user.id, "write_info", partialProject.id);
 
         const partial: PartialProject = { id: partialProject.id };

@@ -455,10 +455,10 @@ type UpdateOrganizationSettingsRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	// organization_id is the ID of the organization to update the settings for.
-	OrganizationId string `protobuf:"bytes,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	OrganizationId           string `protobuf:"bytes,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	WorkspaceSharingDisabled *bool  `protobuf:"varint,3,opt,name=workspace_sharing_disabled,json=workspaceSharingDisabled,proto3,oneof" json:"workspace_sharing_disabled,omitempty"`
 	// pass empty string to reset to the installation default workspace image
-	WorkspaceSharingDisabled *bool   `protobuf:"varint,3,opt,name=workspace_sharing_disabled,json=workspaceSharingDisabled,proto3,oneof" json:"workspace_sharing_disabled,omitempty"`
-	DefaultWorkspaceImage    *string `protobuf:"bytes,4,opt,name=default_workspace_image,json=defaultWorkspaceImage,proto3,oneof" json:"default_workspace_image,omitempty"`
+	DefaultWorkspaceImage *string `protobuf:"bytes,4,opt,name=default_workspace_image,json=defaultWorkspaceImage,proto3,oneof" json:"default_workspace_image,omitempty"`
 }
 
 func (x *UpdateOrganizationSettingsRequest) Reset() {

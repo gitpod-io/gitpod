@@ -79,9 +79,21 @@ message ListConfigurationsResponse {
   PaginationResponse pagination = 2;
 }
 
-message UpdateConfigurationRequest { Configuration configuration = 1; }
+message UpdateConfigurationRequest {
+  message PrebuildSettings {
+    optional bool enabled = 1;
+    optional string branch_matching_pattern = 2;
+    optional BranchMatchingStrategy branch_strategy = 3;
+    optional int32 prebuild_interval = 4;
+    optional string workspace_class = 5;
+  }
+  message WorkspaceSettings { optional string workspace_class = 1; }
+  string configuration_id = 1;
+  optional PrebuildSettings prebuild_settings = 2;
+  optional WorkspaceSettings workspace_settings = 3;
+}
 
-message UpdateConfigurationResponse {}
+message UpdateConfigurationResponse { Configuration configuration = 1; }
 
 message DeleteConfigurationRequest { string configuration_id = 1; }
 

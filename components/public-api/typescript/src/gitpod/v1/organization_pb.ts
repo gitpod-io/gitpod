@@ -308,13 +308,13 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
   organizationId = "";
 
   /**
-   * pass empty string to reset to the installation default workspace image
-   *
    * @generated from field: optional bool workspace_sharing_disabled = 3;
    */
   workspaceSharingDisabled?: boolean;
 
   /**
+   * pass empty string to reset to the installation default workspace image
+   *
    * @generated from field: optional string default_workspace_image = 4;
    */
   defaultWorkspaceImage?: string;

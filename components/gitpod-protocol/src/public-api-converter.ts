@@ -50,6 +50,7 @@ import {
     WithPrebuild,
     WorkspaceContext,
     WorkspaceInfo,
+    WorkspaceClasses,
 } from "./protocol";
 import {
     OrgMemberInfo,
@@ -391,6 +392,66 @@ export class PublicAPIConverter {
             default:
                 throw new Error(`unknown org member role ${role}`);
         }
+    }
+
+    fromWorkspaceSettings(workspaceClass?: string): WorkspaceClasses {
+        const result: WorkspaceClasses = {};
+        if (workspaceClass) {
+            result.regular = workspaceClass;
+        }
+        return result;
+    }
+
+    fromBranchMatchingStrategy(
+        branchStrategy?: BranchMatchingStrategy,
+    ): PrebuildSettingsProtocol.BranchStrategy | undefined {
+        switch (branchStrategy) {
+            case BranchMatchingStrategy.DEFAULT_BRANCH:
+                return "default-branch";
+            case BranchMatchingStrategy.ALL_BRANCHES:
+                return "all-branches";
+            case BranchMatchingStrategy.MATCHED_BRANCHES:
+                return "matched-branches";
+            default:
+                return undefined;
+        }
+    }
+
+    fromPrebuildSettings(prebuilds?: PrebuildSettings): PrebuildSettingsProtocol {
+        const result: PrebuildSettingsProtocol = {};
+        if (prebuilds) {
+            result.enable = !!prebuilds.enabled;
+            result.branchMatchingPattern = prebuilds.branchMatchingPattern ?? "";
+            result.branchStrategy = this.fromBranchMatchingStrategy(prebuilds.branchStrategy);
+            result.prebuildInterval = prebuilds.prebuildInterval ?? 20;
+            result.workspaceClass = prebuilds.workspaceClass ?? "";
+        }
+        return result;
+    }
+
+    fromCreationTime(creationTime?: Timestamp): string {
+        if (!creationTime) {
+            return "";
+        }
+        return creationTime.toDate().toISOString();
+    }
+
+    fromConfiguration(configuration: Configuration): Project {
+        const prebuildSettings = this.fromPrebuildSettings(configuration.prebuildSettings);
+        const workspaceSettings = this.fromWorkspaceSettings(configuration.workspaceSettings?.workspaceClass);
+        const result: Project = {
+            id: configuration.id,
+            name: configuration.name,
+            cloneUrl: configuration.cloneUrl,
+            teamId: configuration.organizationId,
+            appInstallationId: "",
+            creationTime: this.fromCreationTime(configuration.creationTime),
+            settings: {
+                prebuilds: prebuildSettings,
+                workspaceClasses: workspaceSettings,
+            },
+        };
+        return result;
     }
 
     toOrganizationSettings(settings: OrganizationSettingsProtocol): OrganizationSettings {
