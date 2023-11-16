@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package gitpod.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+
+message Author {
+    string name = 1;
+    string avatar_url = 2;
+}
+
+message Commit {
+    string message = 1;
+    Author author = 2;
+    google.protobuf.Timestamp author_date = 3;
+    string sha = 4;
+}
