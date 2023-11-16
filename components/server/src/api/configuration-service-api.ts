@@ -20,6 +20,8 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ctxUserId } from "../util/request-context";
+import { UserService } from "../user/user-service";
 
 @injectable()
 export class ConfigurationServiceAPI implements ServiceImpl<typeof ConfigurationServiceInterface> {
@@ -28,17 +30,24 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         private readonly projectService: ProjectsService,
         @inject(PublicAPIConverter)
         private readonly apiConverter: PublicAPIConverter,
+        @inject(UserService)
+        private readonly userService: UserService,
     ) {}
 
     async createConfiguration(
         req: CreateConfigurationRequest,
-        context: HandlerContext,
+        _: HandlerContext,
     ): Promise<CreateConfigurationResponse> {
         if (!req.organizationId) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organization_id is required");
         }
         if (!req.cloneUrl) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "clone_url is required");
+        }
+
+        const installer = await this.userService.findUserById(ctxUserId(), ctxUserId());
+        if (!installer) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "user not found");
         }
 
         const project = await this.projectService.createProject(
@@ -49,7 +58,7 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
                 appInstallationId: "",
                 slug: "",
             },
-            context.user,
+            installer,
         );
 
         return new CreateConfigurationResponse({
@@ -57,19 +66,19 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         });
     }
 
-    async getConfiguration(req: GetConfigurationRequest, context: HandlerContext) {
+    async getConfiguration(req: GetConfigurationRequest, _: HandlerContext) {
         if (!req.configurationId) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configuration_id is required");
         }
 
-        const project = await this.projectService.getProject(context.user.id, req.configurationId);
+        const project = await this.projectService.getProject(ctxUserId(), req.configurationId);
 
         return {
             configuration: this.apiConverter.toConfiguration(project),
         };
     }
 
-    async listConfigurations(req: ListConfigurationsRequest, context: HandlerContext) {
+    async listConfigurations(req: ListConfigurationsRequest, _: HandlerContext) {
         if (!req.organizationId) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organization_id is required");
         }
@@ -78,7 +87,7 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         const currentPage = req.pagination?.page ?? 1;
         const offset = currentPage > 1 ? (currentPage - 1) * limit : 0;
 
-        const { rows, total } = await this.projectService.findProjects(context.user.id, {
+        const { rows, total } = await this.projectService.findProjects(ctxUserId(), {
             organizationId: req.organizationId,
             searchTerm: req.searchTerm,
             orderBy: "name",
@@ -96,12 +105,12 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         });
     }
 
-    async deleteConfiguration(req: DeleteConfigurationRequest, handler: HandlerContext) {
+    async deleteConfiguration(req: DeleteConfigurationRequest, _: HandlerContext) {
         if (!req.configurationId) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configuration_id is required");
         }
 
-        await this.projectService.deleteProject(handler.user.id, req.configurationId);
+        await this.projectService.deleteProject(ctxUserId(), req.configurationId);
 
         return new DeleteConfigurationResponse();
     }

@@ -65,6 +65,9 @@ export const ErrorCodes = {
     // 404 Not Found
     NOT_FOUND: 404 as const,
 
+    // 408 Request Timeout
+    REQUEST_TIMEOUT: 408 as const,
+
     // 409 Conflict (e.g. already existing)
     CONFLICT: 409 as const,
 

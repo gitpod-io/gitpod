@@ -29,7 +29,9 @@ import {
 } from "../prometheus-metrics";
 import { Redis } from "ioredis";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { runWithContext } from "../util/request-context";
+import { runWithRequestContext } from "../util/request-context";
+import { SYSTEM_USER } from "../authorization/authorizer";
+import { SubjectId } from "../auth/subject-id";
 
 const UNDEFINED_KEY = "undefined";
 
@@ -55,7 +57,13 @@ export class RedisSubscriber {
         }
 
         this.redis.on("message", async (channel: string, message: string) => {
-            await runWithContext("redis-subscriber", {}, async () => {
+            const ctx = {
+                signal: new AbortController().signal,
+                requestKind: "redis-subscriber",
+                requestMethod: channel,
+                subjectId: SubjectId.fromUserId(SYSTEM_USER),
+            };
+            await runWithRequestContext(ctx, async () => {
                 reportRedisUpdateReceived(channel);
 
                 let err: Error | undefined;

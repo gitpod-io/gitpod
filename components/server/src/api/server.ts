@@ -32,8 +32,12 @@ import { Config } from "../config";
 import { grpcServerHandled, grpcServerHandling, grpcServerStarted } from "../prometheus-metrics";
 import { SessionHandler } from "../session-handler";
 import { UserService } from "../user/user-service";
-import { LogContextOptions, runWithLogContext } from "../util/log-context";
-import { wrapAsyncGenerator } from "../util/request-context";
+import {
+    runWithSubjectId,
+    runWithRequestContext,
+    wrapAsyncGenerator,
+    RequestContextSeed,
+} from "../util/request-context";
 import { HelloServiceAPI } from "./hello-service-api";
 import { OrganizationServiceAPI } from "./organization-service-api";
 import { RateLimited } from "./rate-limited";
@@ -44,6 +48,7 @@ import { WorkspaceServiceAPI } from "./workspace-service-api";
 import { ConfigurationServiceAPI } from "./configuration-service-api";
 import { AuthProviderServiceAPI } from "./auth-provider-service-api";
 import { Unauthenticated } from "./unauthenticated";
+import { SubjectId } from "../auth/subject-id";
 
 decorate(injectable(), PublicAPIConverter);
 
@@ -136,17 +141,16 @@ export class API {
         return {
             get(target, prop) {
                 return (...args: any[]) => {
-                    const logContext: LogContextOptions & {
-                        requestId?: string;
-                        contextTimeMs: number;
-                        grpc_service: string;
-                        grpc_method: string;
-                    } = {
-                        contextTimeMs: performance.now(),
-                        grpc_service,
-                        grpc_method: prop as string,
+                    const connectContext = args[1] as HandlerContext;
+                    const requestContext: RequestContextSeed = {
+                        requestId: v4(),
+                        requestKind: "public-api",
+                        requestMethod: `${grpc_service}/${prop as string}`,
+                        startTime: performance.now(),
+                        signal: connectContext.signal,
                     };
-                    const withRequestContext = <T>(fn: () => T): T => runWithLogContext("public-api", logContext, fn);
+
+                    const withRequestContext = <T>(fn: () => T): T => runWithRequestContext(requestContext, fn);
 
                     const method = type.methods[prop as string];
                     if (!method) {
@@ -169,8 +173,6 @@ export class API {
                     } else if (method.kind === MethodKind.BiDiStreaming) {
                         grpc_type = "bidi_stream";
                     }
-
-                    logContext.requestId = v4();
 
                     grpcServerStarted.labels(grpc_service, grpc_method, grpc_type).inc();
                     const stopTimer = grpcServerHandling.startTimer({ grpc_service, grpc_method, grpc_type });
@@ -195,8 +197,6 @@ export class API {
                         throw err;
                     };
 
-                    const context = args[1] as HandlerContext;
-
                     const rateLimit = async (subjectId: string) => {
                         const key = `${grpc_service}/${grpc_method}`;
                         const options = self.config.rateLimits?.[key] || RateLimited.getOptions(target, prop);
@@ -217,47 +217,73 @@ export class API {
                         }
                     };
 
-                    const apply = async <T>(): Promise<T> => {
-                        const subjectId = await self.verify(context);
-                        const isAuthenticated = !!subjectId;
+                    // actually call the RPC handler
+                    const auth = async () => {
+                        // Authenticate
+                        const userId = await self.verify(connectContext);
+                        const isAuthenticated = !!userId;
                         const requiresAuthentication = !Unauthenticated.get(target, prop);
-
                         if (!isAuthenticated && requiresAuthentication) {
                             throw new ConnectError("unauthenticated", Code.Unauthenticated);
                         }
 
                         if (isAuthenticated) {
-                            await rateLimit(subjectId);
-                            context.user = await self.ensureFgaMigration(subjectId);
+                            await rateLimit(userId);
+                            await self.ensureFgaMigration(userId);
                         }
-
                         // TODO(at) if unauthenticated, we still need to apply enforece a rate limit
 
-                        // actually call the RPC handler
+                        return userId ? SubjectId.fromUserId(userId) : undefined;
+                    };
+
+                    const apply = async <T>(): Promise<T> => {
                         return Reflect.apply(target[prop as any], target, args);
                     };
                     if (grpc_type === "unary" || grpc_type === "client_stream") {
                         return withRequestContext(async () => {
+                            let subjectId: SubjectId | undefined = undefined;
                             try {
-                                const promise = await apply<Promise<any>>();
-                                const result = await promise;
-                                done();
-                                return result;
+                                subjectId = await auth();
                             } catch (e) {
                                 handleError(e);
                             }
+
+                            return runWithSubjectId(subjectId, async () => {
+                                try {
+                                    const promise = await apply<Promise<any>>();
+                                    const result = await promise;
+                                    done();
+                                    return result;
+                                } catch (e) {
+                                    handleError(e);
+                                }
+                            });
                         });
                     }
+
+                    // Because we can't await before returning that generator, we await inside the generator, and create child contexts with that SubjectId
                     return wrapAsyncGenerator(
                         (async function* () {
+                            let subjectId: SubjectId | undefined = undefined;
                             try {
-                                const generator = await apply<AsyncGenerator<any>>();
-                                for await (const item of generator) {
-                                    yield item;
+                                subjectId = await auth();
+                            } catch (e) {
+                                handleError(e);
+                            }
+
+                            // We can't wrap the generator in runWithSubjectId, so we have to "unroll" it here.
+                            try {
+                                const generator = await runWithSubjectId(subjectId, () => apply<AsyncGenerator<any>>());
+                                while (true) {
+                                    const { value, done } = await runWithSubjectId(subjectId, () => generator.next());
+                                    if (done) {
+                                        break;
+                                    }
+                                    yield value;
                                 }
                                 done();
                             } catch (e) {
-                                handleError(e);
+                                runWithSubjectId(subjectId, () => handleError(e));
                             }
                         })(),
                         withRequestContext,
@@ -271,8 +297,8 @@ export class API {
         const cookieHeader = (context.requestHeader.get("cookie") || "") as string;
         try {
             const claims = await this.sessionHandler.verifyJWTCookie(cookieHeader);
-            const subjectId = claims?.sub;
-            return subjectId;
+            const userId = claims?.sub;
+            return userId;
         } catch (error) {
             log.warn("Failed to authenticate user with JWT Session", error);
             return undefined;
