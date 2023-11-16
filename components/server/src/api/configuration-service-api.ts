@@ -107,7 +107,7 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         });
     }
 
-    async updateConfiguration(req: UpdateConfigurationRequest, handler: HandlerContext) {
+    async updateConfiguration(req: UpdateConfigurationRequest, _: HandlerContext) {
         if (!req.configuration?.id) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configuration_id is required");
         }
@@ -137,9 +137,9 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         await this.projectService.updateProject(installer, {
             id: req.configuration.id,
             name: req.configuration.name,
-            cloneUrl: req.configuration.cloneUrl,
-            teamId: req.configuration.organizationId,
-            creationTime: req.configuration.creationTime?.toDate().toString(),
+            // cloneUrl: req.configuration.cloneUrl,
+            // teamId: req.configuration.organizationId,
+            // creationTime: req.configuration.creationTime?.toDate().toString(),
             // settings: {
             //     prebuilds: {
             //         enable: req.configuration.prebuildSettings?.enabled,
