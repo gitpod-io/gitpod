@@ -12,10 +12,10 @@ import { RadioGroup, RadioGroupItem } from "@podkit/forms/RadioListField";
 import { TextMuted } from "@podkit/typography/TextMuted";
 import { Heading2 } from "@podkit/typography/Headings";
 import { ConfigurationSettingsField } from "../ConfigurationSettingsField";
-import { useUpdateProject } from "../../../data/projects/project-queries";
 import { useToast } from "../../../components/toasts/Toasts";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { LoadingState } from "@podkit/loading/LoadingState";
+import { useUpdateConfiguration } from "../../../data/configurations/configuration-queries";
 
 interface Props {
     configuration: Configuration;
@@ -27,7 +27,7 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
     );
     const classChanged = selectedValue !== configuration.workspaceSettings?.workspaceClass;
 
-    const updateProject = useUpdateProject();
+    const updateConfiguration = useUpdateConfiguration();
     const { data: classes, isError, isLoading } = useWorkspaceClasses();
 
     const { toast } = useToast();
@@ -36,13 +36,11 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
         async (e: React.FormEvent) => {
             e.preventDefault();
 
-            updateProject.mutate(
+            updateConfiguration.mutate(
                 {
                     id: configuration.id,
-                    settings: {
-                        workspaceClasses: {
-                            regular: selectedValue,
-                        },
+                    workspaceSettings: {
+                        workspaceClass: selectedValue,
                     },
                 },
                 {
@@ -56,7 +54,7 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
                 },
             );
         },
-        [configuration.id, selectedValue, toast, updateProject],
+        [configuration.id, selectedValue, toast, updateConfiguration],
     );
 
     if (isError || !classes) {
@@ -89,7 +87,7 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
                     className="mt-8"
                     type="submit"
                     disabled={!classChanged}
-                    loading={updateProject.isLoading}
+                    loading={updateConfiguration.isLoading}
                 >
                     Save
                 </LoadingButton>

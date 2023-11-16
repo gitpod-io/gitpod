@@ -89,21 +89,17 @@ type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id
 export const useUpdateConfiguration = () => {
     const queryClient = useQueryClient();
 
-    return useMutation({
-        mutationFn: async (configuration: PartialConfiguration) => {
-            await configurationClient.updateConfiguration({
-                configurationId: configuration.id,
-                name: configuration.name,
-                workspaceSettings: configuration.workspaceSettings,
-                prebuildSettings: configuration.prebuildSettings,
-            });
+    return useMutation<Configuration, Error, PartialConfiguration>(async (configuration) => {
+        const updated = await configurationClient.updateConfiguration({
+            configurationId: configuration.id,
+            name: configuration.name,
+            workspaceSettings: configuration.workspaceSettings,
+            prebuildSettings: configuration.prebuildSettings,
+        });
+        queryClient.invalidateQueries({ queryKey: ["configurations", "list"] });
+        queryClient.invalidateQueries({ queryKey: getConfigurationQueryKey(configuration.id) });
 
-            return configuration;
-        },
-        onSuccess: (_, { id }) => {
-            queryClient.invalidateQueries({ queryKey: ["configurations", "list"] });
-            queryClient.invalidateQueries({ queryKey: getConfigurationQueryKey(id) });
-        },
+        return updated.configuration;
     });
 };
 
