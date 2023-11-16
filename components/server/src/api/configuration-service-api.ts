@@ -122,6 +122,7 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
 
         const configuration = new Configuration();
         configuration.id = req.configurationId;
+        configuration.name = req.name || undefined;
         configuration.prebuildSettings = new PrebuildSettings(req.prebuildSettings);
         configuration.workspaceSettings = new Workspace(req.workspaceSettings);
 

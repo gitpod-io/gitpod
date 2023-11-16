@@ -89,8 +89,9 @@ message UpdateConfigurationRequest {
   }
   message WorkspaceSettings { optional string workspace_class = 1; }
   string configuration_id = 1;
-  optional PrebuildSettings prebuild_settings = 2;
-  optional WorkspaceSettings workspace_settings = 3;
+  string name = 2;
+  optional PrebuildSettings prebuild_settings = 3;
+  optional WorkspaceSettings workspace_settings = 4;
 }
 
 message UpdateConfigurationResponse { Configuration configuration = 1; }
