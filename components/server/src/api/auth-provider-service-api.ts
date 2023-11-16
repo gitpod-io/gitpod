@@ -42,14 +42,13 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
         request: CreateAuthProviderRequest,
         _: HandlerContext,
     ): Promise<CreateAuthProviderResponse> {
-        const ownerId = request.owner.case === "ownerId" ? request.owner.value : "";
         const organizationId = request.owner.case === "organizationId" ? request.owner.value : "";
 
-        if (!uuidValidate(organizationId) && !uuidValidate(ownerId)) {
-            throw new ConnectError("organizationId or ownerId is required", Code.InvalidArgument);
-        }
-
         if (organizationId) {
+            if (!uuidValidate(organizationId)) {
+                throw new ConnectError("organizationId is required", Code.InvalidArgument);
+            }
+
             const result = await this.authProviderService.createOrgAuthProvider(ctxUserId(), {
                 organizationId,
                 host: request.host,
@@ -87,10 +86,7 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
         });
     }
 
-    async listAuthProviders(
-        request: ListAuthProvidersRequest,
-        _: HandlerContext,
-    ): Promise<ListAuthProvidersResponse> {
+    async listAuthProviders(request: ListAuthProvidersRequest, _: HandlerContext): Promise<ListAuthProvidersResponse> {
         const target = request.id;
         const ownerId = target.case === "userId" ? target.value : "";
         const organizationId = target.case === "organizationId" ? target.value : "";
