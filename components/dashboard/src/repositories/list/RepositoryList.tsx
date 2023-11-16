@@ -29,7 +29,7 @@ const RepositoryListPage: FC = () => {
     const searchTerm = params.get("search") || "";
     const updateSearchTerm = useCallback(
         (val: string) => {
-            history.replace({ search: `?search=${val}` });
+            history.replace({ search: `?search=${encodeURIComponent(val)}` });
         },
         [history],
     );
