@@ -5,7 +5,6 @@
  */
 
 import {
-    AppInstallationDB,
     UserDB,
     WorkspaceDB,
     DBWithTracing,
@@ -222,8 +221,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(OrganizationService) private readonly organizationService: OrganizationService,
 
         @inject(LinkedInService) private readonly linkedInService: LinkedInService,
-
-        @inject(AppInstallationDB) private readonly appInstallationDB: AppInstallationDB,
 
         @inject(AuthProviderService) private readonly authProviderService: AuthProviderService,
 
@@ -1725,24 +1722,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async isGitHubAppEnabled(ctx: TraceContext): Promise<boolean> {
-        await this.checkAndBlockUser();
-        return !!this.config.githubApp?.enabled;
+        return false;
     }
 
-    async registerGithubApp(ctx: TraceContext, installationId: string): Promise<void> {
-        traceAPIParams(ctx, { installationId });
-
-        const user = await this.checkAndBlockUser();
-
-        if (!this.config.githubApp?.enabled) {
-            throw new ApplicationError(
-                ErrorCodes.NOT_FOUND,
-                "No GitHub app enabled for this installation. Please talk to your administrator.",
-            );
-        }
-
-        await this.appInstallationDB.recordNewInstallation("github", "user", installationId, user.id);
-    }
+    async registerGithubApp(ctx: TraceContext, installationId: string): Promise<void> {}
 
     async takeSnapshot(ctx: TraceContext, options: GitpodServer.TakeSnapshotOptions): Promise<string> {
         traceAPIParams(ctx, { options });
