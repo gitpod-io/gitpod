@@ -8,7 +8,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { configurationClient } from "../../service/public-api";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
-import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
+import type { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 
 const BASE_KEY = "configurations";
 
