@@ -8,9 +8,10 @@ import { useQuery } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
 import { useCurrentUser } from "../../user-context";
 import { CancellationTokenSource } from "vscode-jsonrpc";
-import { useAuthProviders } from "../auth-providers/auth-provider-query";
+import { useAuthProviderDescriptions } from "../auth-providers/auth-provider-descriptions-query";
 import { GetProviderRepositoriesParams } from "@gitpod/gitpod-protocol";
 import { useFeatureFlag } from "../featureflag-query";
+import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 
 type UseProviderRepositoriesQueryArgs = {
     providerHost: string;
@@ -24,12 +25,12 @@ export const useProviderRepositoriesForUser = ({
 }: UseProviderRepositoriesQueryArgs) => {
     const user = useCurrentUser();
     const newProjectIncrementalRepoSearchBBS = useFeatureFlag("newProjectIncrementalRepoSearchBBS");
-    const { data: authProviders } = useAuthProviders();
+    const { data: authProviders } = useAuthProviderDescriptions();
     const selectedProvider = authProviders?.find((p) => p.host === providerHost);
 
     const queryKey: any[] = ["provider-repositories", { userId: user?.id }, { providerHost, installationId }];
 
-    const isBitbucketServer = selectedProvider?.authProviderType === "BitbucketServer";
+    const isBitbucketServer = selectedProvider?.type === AuthProviderType.BITBUCKET_SERVER;
     const enableIncrementalSearch = isBitbucketServer && newProjectIncrementalRepoSearchBBS;
     if (enableIncrementalSearch) {
         queryKey.push({ search });

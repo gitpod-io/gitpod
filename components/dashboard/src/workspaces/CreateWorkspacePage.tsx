@@ -27,7 +27,7 @@ import SelectWorkspaceClassComponent from "../components/SelectWorkspaceClassCom
 import { UsageLimitReachedModal } from "../components/UsageLimitReachedModal";
 import { InputField } from "../components/forms/InputField";
 import { Heading1 } from "../components/typography/headings";
-import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
+import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { useListAllProjectsQuery } from "../data/projects/list-all-projects-query";
 import { useCreateWorkspaceMutation } from "../data/workspaces/create-workspace-mutation";
@@ -43,6 +43,7 @@ import { UserContext, useCurrentUser } from "../user-context";
 import { SelectAccountModal } from "../user-settings/SelectAccountModal";
 import { settingsPathIntegrations } from "../user-settings/settings.routes";
 import { WorkspaceEntry } from "./WorkspaceEntry";
+import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
@@ -574,14 +575,19 @@ const RepositoryInputError: FC<RepositoryInputErrorProps> = ({ title, message, l
 export const RepositoryNotFound: FC<{ error: StartWorkspaceError }> = ({ error }) => {
     const { host, owner, userIsOwner, userScopes = [], lastUpdate } = error.data || {};
 
-    const authProviders = useAuthProviders();
+    const authProviders = useAuthProviderDescriptions();
     const authProvider = authProviders.data?.find((a) => a.host === host);
     if (!authProvider) {
         return <RepositoryInputError title="The repository was not found in your account." />;
     }
 
     // TODO: this should be aware of already granted permissions
-    const missingScope = authProvider.authProviderType === "GitHub" ? "repo" : "read_repository";
+    const missingScope =
+        authProvider.type === AuthProviderType.GITHUB
+            ? "repo"
+            : authProvider.type === AuthProviderType.GITLAB
+            ? "api"
+            : "";
     const authorizeURL = gitpodHostUrl
         .withApi({
             pathname: "/authorize",

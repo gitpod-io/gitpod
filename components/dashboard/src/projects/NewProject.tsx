@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AuthProviderInfo, Project } from "@gitpod/gitpod-protocol";
+import { Project } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import ErrorMessage from "../components/ErrorMessage";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
@@ -13,19 +13,20 @@ import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName } from "
 import { getGitpodService } from "../service/service";
 import { UserContext, useCurrentUser } from "../user-context";
 import { Heading1, Subheading } from "../components/typography/headings";
-import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
+import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
 import { AuthorizeGit, useNeedsGitAuthorization } from "../components/AuthorizeGit";
 import { NewProjectRepoSelection } from "./new-project/NewProjectRepoSelection";
 import { NewProjectSubheading } from "./new-project/NewProjectSubheading";
 import { Button } from "../components/Button";
+import { AuthProviderDescription, AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 
 export default function NewProject() {
     const currentTeam = useCurrentOrg()?.data;
     const user = useCurrentUser();
-    const authProviders = useAuthProviders();
+    const authProviders = useAuthProviderDescriptions();
 
     // State this component manages
-    const [selectedProvider, setSelectedProvider] = useState<AuthProviderInfo>();
+    const [selectedProvider, setSelectedProvider] = useState<AuthProviderDescription>();
     const [project, setProject] = useState<Project>();
 
     // Defaults selectedProviderHost if not set yet
@@ -34,9 +35,7 @@ export default function NewProject() {
             for (let i = user.identities.length - 1; i >= 0; i--) {
                 const candidate = user.identities[i];
                 if (candidate) {
-                    const authProvider = authProviders.data.find(
-                        (ap) => ap.authProviderId === candidate.authProviderId,
-                    );
+                    const authProvider = authProviders.data.find((ap) => ap.id === candidate.authProviderId);
                     if (authProvider) {
                         setSelectedProvider(authProvider);
                         break;
@@ -107,8 +106,8 @@ export default function NewProject() {
 }
 
 type NewProjectMainContentProps = {
-    selectedProvider?: AuthProviderInfo;
-    onProviderSelected: (ap: AuthProviderInfo, updateUser?: boolean) => void;
+    selectedProvider?: AuthProviderDescription;
+    onProviderSelected: (ap: AuthProviderDescription, updateUser?: boolean) => void;
     onProjectCreated: (project: Project) => void;
 };
 const NewProjectMainContent: FC<NewProjectMainContentProps> = ({
@@ -117,12 +116,12 @@ const NewProjectMainContent: FC<NewProjectMainContentProps> = ({
     onProjectCreated,
 }) => {
     const { setUser } = useContext(UserContext);
-    const authProviders = useAuthProviders();
+    const authProviders = useAuthProviderDescriptions();
     const needsGitAuth = useNeedsGitAuthorization();
     const [showGitProviders, setShowGitProviders] = useState(false);
 
     const onGitProviderSeleted = useCallback(
-        async (ap: AuthProviderInfo, updateUser?: boolean) => {
+        async (ap: AuthProviderDescription, updateUser?: boolean) => {
             // TODO: Can we push this down into where sends updateUser=true?
             if (updateUser) {
                 setUser(await getGitpodService().server.getLoggedInUser());
@@ -151,23 +150,22 @@ const NewProjectMainContent: FC<NewProjectMainContentProps> = ({
 };
 
 const GitProviders: FC<{
-    authProviders: AuthProviderInfo[];
-    onProviderSelected: (ap: AuthProviderInfo, updateUser?: boolean) => void;
+    authProviders: AuthProviderDescription[];
+    onProviderSelected: (ap: AuthProviderDescription, updateUser?: boolean) => void;
 }> = ({ authProviders, onProviderSelected }) => {
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
     const selectProvider = useCallback(
-        async (ap: AuthProviderInfo) => {
+        async (ap: AuthProviderDescription) => {
             setErrorMessage(undefined);
 
             const token = await getGitpodService().server.getToken({ host: ap.host });
-            if (token && !(ap.authProviderType === "GitHub" && !token.scopes.includes("repo"))) {
+            if (token && !(ap.type === AuthProviderType.GITHUB && !token.scopes.includes("repo"))) {
                 onProviderSelected(ap);
                 return;
             }
             await openAuthorizeWindow({
                 host: ap.host,
-                scopes: ap.authProviderType === "GitHub" ? ["repo"] : ap.requirements?.default,
                 onSuccess: async () => {
                     onProviderSelected(ap, true);
                 },
@@ -194,10 +192,10 @@ const GitProviders: FC<{
         () =>
             authProviders.filter(
                 (p) =>
-                    p.authProviderType === "GitHub" ||
+                    p.type === AuthProviderType.GITHUB ||
                     p.host === "bitbucket.org" ||
-                    p.authProviderType === "GitLab" ||
-                    p.authProviderType === "BitbucketServer",
+                    p.type === AuthProviderType.GITLAB ||
+                    p.type === AuthProviderType.BITBUCKET_SERVER,
             ),
         [authProviders],
     );
@@ -216,7 +214,7 @@ const GitProviders: FC<{
                                 className="btn-login flex-none w-56 h-10 p-0 inline-flex"
                                 onClick={() => selectProvider(ap)}
                             >
-                                {iconForAuthProvider(ap.authProviderType)}
+                                {iconForAuthProvider(ap.type)}
                                 <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
                                     Continue with {simplifyProviderName(ap.host)}
                                 </span>

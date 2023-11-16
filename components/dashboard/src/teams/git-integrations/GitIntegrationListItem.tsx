@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AuthProviderEntry } from "@gitpod/gitpod-protocol";
 import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import { ContextMenuEntry } from "../../components/ContextMenu";
@@ -14,9 +13,11 @@ import { GitIntegrationModal } from "./GitIntegrationModal";
 import { ModalFooterAlert } from "../../components/Modal";
 import { useToast } from "../../components/toasts/Toasts";
 import { useListOrganizationMembers } from "../../data/organizations/members-query";
+import { AuthProvider } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import { toAuthProviderLabel } from "../../provider-utils";
 
 type Props = {
-    provider: AuthProviderEntry;
+    provider: AuthProvider;
 };
 export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) => {
     const [showEditModal, setShowEditModal] = useState(false);
@@ -30,7 +31,7 @@ export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) =
     const menuEntries = useMemo(() => {
         const result: ContextMenuEntry[] = [];
         result.push({
-            title: provider.status === "verified" ? "Edit" : "Activate",
+            title: provider.verified ? "Edit" : "Activate",
             onClick: () => setShowEditModal(true),
             separator: true,
         });
@@ -40,7 +41,7 @@ export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) =
             onClick: () => setShowDeleteConfirmation(true),
         });
         return result;
-    }, [provider.status]);
+    }, [provider.verified]);
 
     const deleteProvider = useCallback(async () => {
         try {
@@ -58,14 +59,14 @@ export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) =
                     <div
                         className={
                             "rounded-full w-3 h-3 text-sm align-middle m-auto " +
-                            (provider.status === "verified" ? "bg-green-500" : "bg-gray-400")
+                            (provider.verified ? "bg-green-500" : "bg-gray-400")
                         }
                     >
                         &nbsp;
                     </div>
                 </ItemFieldIcon>
                 <ItemField className="w-5/12 flex items-center">
-                    <span className="font-medium truncate overflow-ellipsis">{provider.type}</span>
+                    <span className="font-medium truncate overflow-ellipsis">{toAuthProviderLabel(provider.type)}</span>
                 </ItemField>
                 <ItemField className="w-5/12 flex items-center">
                     <span className="my-auto truncate text-gray-500 overflow-ellipsis">{provider.host}</span>
@@ -81,7 +82,7 @@ export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) =
                             : "You are about to delete an organization-wide Git providers integration. Are you sure?"
                     }
                     children={{
-                        name: provider.type,
+                        name: toAuthProviderLabel(provider.type),
                         description: provider.host,
                     }}
                     buttonText="Remove Provider"
