@@ -8,7 +8,7 @@ export function filter(
     obj: { [key: string]: any },
     predicate: (key: string, value: any) => boolean,
 ): { [key: string]: any } {
-    const result = Object.create(null);
+    const result = Object.create({}); // typeorm doesn't like Object.create(null)
     for (const [key, value] of Object.entries(obj)) {
         if (predicate(key, value)) {
             result[key] = value;
