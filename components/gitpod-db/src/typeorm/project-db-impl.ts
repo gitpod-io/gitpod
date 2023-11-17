@@ -9,7 +9,7 @@ import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryp
 import { inject, injectable, optional } from "inversify";
 import { Brackets, EntityManager, FindConditions, Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
-import { ProjectDB } from "../project-db";
+import { ProjectDB, FindProjectsBySearchTermArgs } from "../project-db";
 import { DBProject } from "./entity/db-project";
 import { DBProjectEnvVar } from "./entity/db-project-env-vars";
 import { DBProjectInfo } from "./entity/db-project-info";
@@ -69,13 +69,14 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
         return repo.find({ where: { teamId: orgId, markedDeleted: false }, order: { name: "ASC" } });
     }
 
-    public async findProjectsBySearchTerm(
-        offset: number,
-        limit: number,
-        orderBy: keyof Project,
-        orderDir: "DESC" | "ASC",
-        searchTerm?: string,
-    ): Promise<{ total: number; rows: Project[] }> {
+    public async findProjectsBySearchTerm({
+        offset,
+        limit,
+        orderBy,
+        orderDir,
+        searchTerm,
+        organizationId,
+    }: FindProjectsBySearchTermArgs): Promise<{ total: number; rows: Project[] }> {
         const projectRepo = await this.getRepo();
         const normalizedSearchTerm = searchTerm?.trim();
 
@@ -85,6 +86,10 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
             .skip(offset)
             .take(limit)
             .orderBy(orderBy, orderDir);
+
+        if (organizationId) {
+            queryBuilder.andWhere("project.teamId = :organizationId", { organizationId });
+        }
 
         if (normalizedSearchTerm) {
             queryBuilder.andWhere(

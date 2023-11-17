@@ -5,9 +5,10 @@
  */
 import { User } from "@gitpod/gitpod-protocol";
 import { Request } from "express";
-import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
+import { IAnalyticsWriter, IdentifyMessage, PageMessage, TrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
 import * as crypto from "crypto";
 import { clientIp } from "./express-util";
+import { ctxTrySubjectId } from "./util/request-context";
 
 export async function trackLogin(user: User, request: Request, authHost: string, analytics: IAnalyticsWriter) {
     // make new complete identify call for each login
@@ -127,5 +128,37 @@ function stripCookie(cookie: string) {
         return cookie.substring(1, cookie.length - 1);
     } else {
         return cookie;
+    }
+}
+
+export class ContextAwareAnalyticsWriter implements IAnalyticsWriter {
+    constructor(readonly writer: IAnalyticsWriter) {}
+
+    identify(msg: IdentifyMessage): void {
+        this.writer.identify(msg);
+    }
+
+    track(msg: TrackMessage): void {
+        this.writer.track(msg);
+    }
+
+    page(msg: PageMessage): void {
+        const traceIds = this.getAnalyticsIds();
+        this.writer.page({
+            ...msg,
+            userId: msg.userId || traceIds.userId,
+            subjectId: msg.subjectId || traceIds.subjectId,
+        });
+    }
+
+    private getAnalyticsIds(): { userId?: string; subjectId?: string } {
+        const subjectId = ctxTrySubjectId();
+        if (!subjectId) {
+            return {};
+        }
+        return {
+            userId: subjectId.userId(),
+            subjectId: subjectId.toString(),
+        };
     }
 }

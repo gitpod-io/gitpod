@@ -18,9 +18,9 @@ message OrganizationMember {
   string user_id = 1;
   OrganizationRole role = 2;
   google.protobuf.Timestamp member_since = 3;
-  optional string avatar_url = 4;
-  optional string full_name = 5;
-  optional string email = 6;
+  string avatar_url = 4;
+  string full_name = 5;
+  string email = 6;
   bool owned_by_organization = 7;
 }
 
@@ -32,7 +32,7 @@ enum OrganizationRole {
 
 message OrganizationSettings {
   bool workspace_sharing_disabled = 1;
-  optional string default_workspace_image = 2;
+  string default_workspace_image = 2;
 }
 
 service OrganizationService {
@@ -95,7 +95,7 @@ message UpdateOrganizationRequest {
   string organization_id = 1;
 
   // name is the new name of the organization
-  string name = 2;
+  optional string name = 2;
 }
 
 message UpdateOrganizationResponse {
@@ -107,8 +107,10 @@ message UpdateOrganizationSettingsRequest {
   // organization_id is the ID of the organization to update the settings for.
   string organization_id = 1;
 
-  // settings are the settings to update
-  OrganizationSettings settings = 2;
+  // pass empty string to reset to the installation default workspace image
+  optional bool workspace_sharing_disabled = 3;
+
+  optional string default_workspace_image = 4;
 }
 
 message UpdateOrganizationSettingsResponse {
@@ -226,7 +228,7 @@ message UpdateOrganizationMemberRequest {
   string user_id = 2;
 
   // role is the new role for the user in the organization
-  OrganizationRole role = 3;
+  optional OrganizationRole role = 3;
 }
 
 message UpdateOrganizationMemberResponse {

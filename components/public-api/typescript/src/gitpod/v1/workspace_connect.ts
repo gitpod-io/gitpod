@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { GetWorkspaceRequest, GetWorkspaceResponse, WatchWorkspaceStatusRequest, WatchWorkspaceStatusResponse } from "./workspace_pb.js";
+import { GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspacesRequest, ListWorkspacesResponse, WatchWorkspaceStatusRequest, WatchWorkspaceStatusResponse } from "./workspace_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -45,5 +45,17 @@ export const WorkspaceService = {
       O: WatchWorkspaceStatusResponse,
       kind: MethodKind.ServerStreaming,
     },
+    /**
+     * ListWorkspaces returns a list of workspaces that match the query.
+     *
+     * @generated from rpc gitpod.v1.WorkspaceService.ListWorkspaces
+     */
+    listWorkspaces: {
+      name: "ListWorkspaces",
+      I: ListWorkspacesRequest,
+      O: ListWorkspacesResponse,
+      kind: MethodKind.Unary,
+    },
   }
 } as const;
+

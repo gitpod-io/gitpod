@@ -40,7 +40,7 @@ export const useDeleteInactiveWorkspacesMutation = () => {
             // Using the result of the mutationFn so we only remove workspaces that were delete
             queryClient.setQueryData<ListWorkspacesQueryResult>(queryKey, (oldWorkspacesData) => {
                 return oldWorkspacesData?.filter((info) => {
-                    return !deletedWorkspaceIds.includes(info.workspace.id);
+                    return !deletedWorkspaceIds.includes(info.id);
                 });
             });
 

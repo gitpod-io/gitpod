@@ -8,28 +8,58 @@ import { FC } from "react";
 import { usePrettyRepoURL } from "../../hooks/use-pretty-repo-url";
 import { TextMuted } from "@podkit/typography/TextMuted";
 import { Text } from "@podkit/typography/Text";
-import { Link } from "react-router-dom";
-import { Button } from "../../components/Button";
-import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { LinkButton } from "@podkit/buttons/LinkButton";
+import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { cn } from "@podkit/lib/cn";
+import { AlertTriangleIcon, CheckCircle2Icon } from "lucide-react";
+import { TableCell, TableRow } from "@podkit/tables/Table";
 
 type Props = {
     configuration: Configuration;
 };
 export const RepositoryListItem: FC<Props> = ({ configuration }) => {
     const url = usePrettyRepoURL(configuration.cloneUrl);
+    const prebuildsEnabled = !!configuration.prebuildSettings?.enabled;
+    const created =
+        configuration.creationTime
+            ?.toDate()
+            .toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) ?? "";
 
     return (
-        <li key={configuration.id} className="flex flex-row w-full space-between items-center">
-            <div className="flex flex-col flex-grow gap-1">
-                <Text className="font-semibold">{configuration.name}</Text>
-                <TextMuted className="text-sm">{url}</TextMuted>
-            </div>
+        <TableRow>
+            <TableCell>
+                <div className="flex flex-col gap-1">
+                    <Text className="font-semibold">{configuration.name}</Text>
+                    {/* We show the url on a 2nd line for smaller screens since we hide the column */}
+                    <TextMuted className="inline md:hidden text-sm">{url}</TextMuted>
+                </div>
+            </TableCell>
 
-            <div>
-                <Link to={`/repositories/${configuration.id}`}>
-                    <Button type="secondary">View</Button>
-                </Link>
-            </div>
-        </li>
+            <TableCell hideOnSmallScreen>
+                <TextMuted className="text-sm">{url}</TextMuted>
+            </TableCell>
+
+            <TableCell hideOnSmallScreen>{created}</TableCell>
+
+            <TableCell hideOnSmallScreen>
+                <div className="flex flex-row gap-1 items-center">
+                    {prebuildsEnabled ? (
+                        <CheckCircle2Icon size={20} className="text-green-500" />
+                    ) : (
+                        <AlertTriangleIcon size={20} className="text-red-500" />
+                    )}
+
+                    <TextMuted className={cn(!prebuildsEnabled && "text-red-500 dark:text-red-500")}>
+                        {prebuildsEnabled ? "Enabled" : "Disabled"}
+                    </TextMuted>
+                </div>
+            </TableCell>
+
+            <TableCell>
+                <LinkButton href={`/repositories/${configuration.id}`} variant="secondary">
+                    View
+                </LinkButton>
+            </TableCell>
+        </TableRow>
     );
 };

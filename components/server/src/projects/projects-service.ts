@@ -5,7 +5,7 @@
  */
 
 import { inject, injectable } from "inversify";
-import { DBWithTracing, ProjectDB, TracedWorkspaceDB, WebhookEventDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { DBWithTracing, ProjectDB, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
     Branch,
     PrebuildWithStatus,
@@ -13,7 +13,6 @@ import {
     FindPrebuildsParams,
     Project,
     User,
-    PrebuildEvent,
 } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
@@ -41,7 +40,6 @@ export class ProjectsService {
         @inject(TracedWorkspaceDB) private readonly workspaceDb: DBWithTracing<WorkspaceDB>,
         @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
-        @inject(WebhookEventDB) private readonly webhookEventDB: WebhookEventDB,
         @inject(Authorizer) private readonly auth: Authorizer,
         @inject(ScmService) private readonly scmService: ScmService,
     ) {}
@@ -70,15 +68,24 @@ export class ProjectsService {
             orderBy?: keyof Project;
             orderDir?: "ASC" | "DESC";
             searchTerm?: string;
+            organizationId?: string;
         },
     ): Promise<{ total: number; rows: Project[] }> {
-        const projects = await this.projectDB.findProjectsBySearchTerm(
-            searchOptions.offset || 0,
-            searchOptions.limit || 1000,
-            searchOptions.orderBy || "creationTime",
-            searchOptions.orderDir || "ASC",
-            searchOptions.searchTerm || "",
-        );
+        if (searchOptions.organizationId) {
+            await this.auth.checkPermissionOnOrganization(userId, "read_info", searchOptions.organizationId);
+        } else {
+            // If no org is provided need to check that user has installation admin scope
+        }
+
+        const projects = await this.projectDB.findProjectsBySearchTerm({
+            offset: searchOptions.offset || 0,
+            limit: searchOptions.limit || 1000,
+            orderBy: searchOptions.orderBy || "creationTime",
+            orderDir: searchOptions.orderDir || "ASC",
+            searchTerm: searchOptions.searchTerm || "",
+            organizationId: searchOptions.organizationId,
+        });
+        // TODO: adjust this to not filter entities, but log errors if any are not accessible for current user
         const rows = await this.filterByReadAccess(userId, projects.rows);
         const total = projects.total;
         return {
@@ -424,22 +431,6 @@ export class ProjectsService {
             return !project || isOlderThan7Days(project.creationTime);
         }
         return isOlderThan7Days(usage.lastWorkspaceStart);
-    }
-
-    async getPrebuildEvents(userId: string, projectId: string): Promise<PrebuildEvent[]> {
-        const project = await this.getProject(userId, projectId);
-        const events = await this.webhookEventDB.findByCloneUrl(project.cloneUrl, 100);
-        return events.map((we) => ({
-            id: we.id,
-            creationTime: we.creationTime,
-            cloneUrl: we.cloneUrl,
-            branch: we.branch,
-            commit: we.commit,
-            prebuildId: we.prebuildId,
-            projectId: we.projectId,
-            status: we.prebuildStatus || we.status,
-            message: we.message,
-        }));
     }
 
     private async migratePrebuildSettingsOnDemand(project: Project): Promise<Project> {

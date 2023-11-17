@@ -41,7 +41,6 @@ import {
     PrebuildWithStatus,
     StartPrebuildResult,
     PartialProject,
-    PrebuildEvent,
     OrganizationSettings,
 } from "./teams-projects-protocol";
 import { JsonRpcProxy, JsonRpcServer } from "./messaging/proxy-factory";
@@ -111,7 +110,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getWorkspaceOwner(workspaceId: string): Promise<UserInfo | undefined>;
     getWorkspaceUsers(workspaceId: string): Promise<WorkspaceInstanceUser[]>;
     getFeaturedRepositories(): Promise<WhitelistedRepository[]>;
-    getSuggestedContextURLs(): Promise<string[]>;
     getSuggestedRepositories(organizationId: string): Promise<SuggestedRepository[]>;
     searchRepositories(params: SearchRepositoriesParams): Promise<SuggestedRepository[]>;
     /**
@@ -197,7 +195,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     deleteProject(projectId: string): Promise<void>;
     getTeamProjects(teamId: string): Promise<Project[]>;
     getProjectOverview(projectId: string): Promise<Project.Overview | undefined>;
-    getPrebuildEvents(projectId: string): Promise<PrebuildEvent[]>;
     findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]>;
     findPrebuildByWorkspaceID(workspaceId: string): Promise<PrebuiltWorkspace | undefined>;
     getPrebuild(prebuildId: string): Promise<PrebuildWithStatus | undefined>;
@@ -214,7 +211,9 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     deleteGitpodToken(tokenHash: string): Promise<void>;
 
     // misc
+    /** @deprecated always returns false */
     isGitHubAppEnabled(): Promise<boolean>;
+    /** @deprecated this is a no-op */
     registerGithubApp(installationId: string): Promise<void>;
 
     /**

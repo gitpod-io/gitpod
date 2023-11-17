@@ -11,6 +11,7 @@
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message, proto3, protoInt64, Timestamp } from "@bufbuild/protobuf";
+import { PaginationRequest, PaginationResponse } from "./pagination_pb.js";
 
 /**
  * Admission level describes who can access a workspace instance and its ports.
@@ -51,9 +52,13 @@ proto3.util.setEnumType(AdmissionLevel, "gitpod.v1.AdmissionLevel", [
  */
 export class GetWorkspaceRequest extends Message<GetWorkspaceRequest> {
   /**
-   * @generated from field: string id = 1;
+   * workspace_id specifies the workspace to get
+   *
+   * +required
+   *
+   * @generated from field: string workspace_id = 1;
    */
-  id = "";
+  workspaceId = "";
 
   constructor(data?: PartialMessage<GetWorkspaceRequest>) {
     super();
@@ -63,7 +68,7 @@ export class GetWorkspaceRequest extends Message<GetWorkspaceRequest> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.GetWorkspaceRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetWorkspaceRequest {
@@ -88,9 +93,9 @@ export class GetWorkspaceRequest extends Message<GetWorkspaceRequest> {
  */
 export class GetWorkspaceResponse extends Message<GetWorkspaceResponse> {
   /**
-   * @generated from field: gitpod.v1.Workspace item = 1;
+   * @generated from field: gitpod.v1.Workspace workspace = 1;
    */
-  item?: Workspace;
+  workspace?: Workspace;
 
   constructor(data?: PartialMessage<GetWorkspaceResponse>) {
     super();
@@ -100,7 +105,7 @@ export class GetWorkspaceResponse extends Message<GetWorkspaceResponse> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.GetWorkspaceResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "item", kind: "message", T: Workspace },
+    { no: 1, name: "workspace", kind: "message", T: Workspace },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetWorkspaceResponse {
@@ -129,9 +134,9 @@ export class WatchWorkspaceStatusRequest extends Message<WatchWorkspaceStatusReq
    *
    * +optional if empty then watch all workspaces
    *
-   * @generated from field: optional string workspace_id = 1;
+   * @generated from field: string workspace_id = 1;
    */
-  workspaceId?: string;
+  workspaceId = "";
 
   constructor(data?: PartialMessage<WatchWorkspaceStatusRequest>) {
     super();
@@ -141,7 +146,7 @@ export class WatchWorkspaceStatusRequest extends Message<WatchWorkspaceStatusReq
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.WatchWorkspaceStatusRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WatchWorkspaceStatusRequest {
@@ -209,6 +214,118 @@ export class WatchWorkspaceStatusResponse extends Message<WatchWorkspaceStatusRe
 }
 
 /**
+ * @generated from message gitpod.v1.ListWorkspacesRequest
+ */
+export class ListWorkspacesRequest extends Message<ListWorkspacesRequest> {
+  /**
+   * pagination contains the pagination options for listing workspaces
+   *
+   * @generated from field: gitpod.v1.PaginationRequest pagination = 1;
+   */
+  pagination?: PaginationRequest;
+
+  /**
+   * organization_id is the ID of the organization that contains the workspaces
+   *
+   * +required
+   *
+   * @generated from field: string organization_id = 2;
+   */
+  organizationId = "";
+
+  /**
+   * pinned indicates whether to list only pinned workspaces
+   *
+   * @generated from field: bool pinned = 3;
+   */
+  pinned = false;
+
+  /**
+   * search_term is a search term to filter workspaces by name
+   *
+   * @generated from field: string search_term = 4;
+   */
+  searchTerm = "";
+
+  constructor(data?: PartialMessage<ListWorkspacesRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListWorkspacesRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "pagination", kind: "message", T: PaginationRequest },
+    { no: 2, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "pinned", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 4, name: "search_term", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListWorkspacesRequest {
+    return new ListWorkspacesRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListWorkspacesRequest {
+    return new ListWorkspacesRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListWorkspacesRequest {
+    return new ListWorkspacesRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListWorkspacesRequest | PlainMessage<ListWorkspacesRequest> | undefined, b: ListWorkspacesRequest | PlainMessage<ListWorkspacesRequest> | undefined): boolean {
+    return proto3.util.equals(ListWorkspacesRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.ListWorkspacesResponse
+ */
+export class ListWorkspacesResponse extends Message<ListWorkspacesResponse> {
+  /**
+   * workspaces are the workspaces that matched the query
+   *
+   * @generated from field: repeated gitpod.v1.Workspace workspaces = 1;
+   */
+  workspaces: Workspace[] = [];
+
+  /**
+   * pagination contains the pagination options for listing workspaces
+   *
+   * @generated from field: gitpod.v1.PaginationResponse pagination = 2;
+   */
+  pagination?: PaginationResponse;
+
+  constructor(data?: PartialMessage<ListWorkspacesResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListWorkspacesResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspaces", kind: "message", T: Workspace, repeated: true },
+    { no: 2, name: "pagination", kind: "message", T: PaginationResponse },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListWorkspacesResponse {
+    return new ListWorkspacesResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListWorkspacesResponse {
+    return new ListWorkspacesResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListWorkspacesResponse {
+    return new ListWorkspacesResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListWorkspacesResponse | PlainMessage<ListWorkspacesResponse> | undefined, b: ListWorkspacesResponse | PlainMessage<ListWorkspacesResponse> | undefined): boolean {
+    return proto3.util.equals(ListWorkspacesResponse, a, b);
+  }
+}
+
+/**
  * +resource get workspace
  *
  * @generated from message gitpod.v1.Workspace
@@ -264,9 +381,9 @@ export class Workspace extends Message<Workspace> {
    *
    * +optional defaults to the user's default region
    *
-   * @generated from field: optional string region = 8;
+   * @generated from field: string region = 8;
    */
-  region?: string;
+  region = "";
 
   /**
    * workspace_class specifies the workspace class with which to create the
@@ -276,9 +393,9 @@ export class Workspace extends Message<Workspace> {
    * +optional defaults to the class configured on the project or the cluster's
    * default class.
    *
-   * @generated from field: optional string workspace_class = 9;
+   * @generated from field: string workspace_class = 9;
    */
-  workspaceClass?: string;
+  workspaceClass = "";
 
   /**
    * editor specifies the editor that will be used with this workspace.
@@ -286,7 +403,7 @@ export class Workspace extends Message<Workspace> {
    *
    * +optional defaults to the default editor of the user
    *
-   * @generated from field: optional gitpod.v1.EditorReference editor = 10;
+   * @generated from field: gitpod.v1.EditorReference editor = 10;
    */
   editor?: EditorReference;
 
@@ -303,9 +420,9 @@ export class Workspace extends Message<Workspace> {
    * from which this workspace was created
    * +optional if empty then this workspace was not created from a prebuild
    *
-   * @generated from field: optional string prebuild_id = 12;
+   * @generated from field: string prebuild_id = 12;
    */
-  prebuildId?: string;
+  prebuildId = "";
 
   constructor(data?: PartialMessage<Workspace>) {
     super();
@@ -322,11 +439,11 @@ export class Workspace extends Message<Workspace> {
     { no: 5, name: "pinned", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 6, name: "status", kind: "message", T: WorkspaceStatus },
     { no: 7, name: "additional_environment_variables", kind: "message", T: WorkspaceEnvironmentVariable, repeated: true },
-    { no: 8, name: "region", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 9, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 10, name: "editor", kind: "message", T: EditorReference, opt: true },
+    { no: 8, name: "region", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 9, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 10, name: "editor", kind: "message", T: EditorReference },
     { no: 11, name: "context_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 12, name: "prebuild_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 12, name: "prebuild_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Workspace {
@@ -363,9 +480,9 @@ export class WorkspaceStatus extends Message<WorkspaceStatus> {
   /**
    * message is an optional human-readable message detailing the current phase
    *
-   * @generated from field: optional string message = 2;
+   * @generated from field: string message = 2;
    */
-  message?: string;
+  message = "";
 
   /**
    * workspace_url is the URL of the workspace. Only present when the phase is
@@ -421,7 +538,7 @@ export class WorkspaceStatus extends Message<WorkspaceStatus> {
   static readonly typeName = "gitpod.v1.WorkspaceStatus";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "phase", kind: "message", T: WorkspacePhase },
-    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "workspace_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "git_status", kind: "message", T: WorkspaceGitStatus },
     { no: 5, name: "ports", kind: "message", T: WorkspacePort, repeated: true },
@@ -455,17 +572,17 @@ export class WorkspaceConditions extends Message<WorkspaceConditions> {
    * failed contains technical details for the failure of the workspace.
    * +optional If this field is empty, the workspace has not failed.
    *
-   * @generated from field: optional string failed = 1;
+   * @generated from field: string failed = 1;
    */
-  failed?: string;
+  failed = "";
 
   /**
    * timeout contains the reason the workspace has timed out.
    * +optional If this field is empty, the workspace has not timed out.
    *
-   * @generated from field: optional string timeout = 2;
+   * @generated from field: string timeout = 2;
    */
-  timeout?: string;
+  timeout = "";
 
   constructor(data?: PartialMessage<WorkspaceConditions>) {
     super();
@@ -475,8 +592,8 @@ export class WorkspaceConditions extends Message<WorkspaceConditions> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.WorkspaceConditions";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "failed", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 2, name: "timeout", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 1, name: "failed", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "timeout", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceConditions {
@@ -933,9 +1050,9 @@ export class WorkspaceEnvironmentVariable extends Message<WorkspaceEnvironmentVa
   name = "";
 
   /**
-   * @generated from field: optional string value = 2;
+   * @generated from field: string value = 2;
    */
-  value?: string;
+  value = "";
 
   constructor(data?: PartialMessage<WorkspaceEnvironmentVariable>) {
     super();
@@ -946,7 +1063,7 @@ export class WorkspaceEnvironmentVariable extends Message<WorkspaceEnvironmentVa
   static readonly typeName = "gitpod.v1.WorkspaceEnvironmentVariable";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "value", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 2, name: "value", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceEnvironmentVariable {

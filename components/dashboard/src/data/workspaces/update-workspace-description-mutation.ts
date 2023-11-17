@@ -8,6 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
 import { getListWorkspacesQueryKey, ListWorkspacesQueryResult } from "./list-workspaces-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
+import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 type UpdateWorkspaceDescriptionArgs = {
     workspaceId: string;
@@ -27,19 +28,15 @@ export const useUpdateWorkspaceDescriptionMutation = () => {
             // pro-actively update workspace description rather than reload all workspaces
             queryClient.setQueryData<ListWorkspacesQueryResult>(queryKey, (oldWorkspacesData) => {
                 return oldWorkspacesData?.map((info) => {
-                    if (info.workspace.id !== workspaceId) {
+                    if (info.id !== workspaceId) {
                         return info;
                     }
 
                     // TODO: Once the update description response includes an updated record,
                     // we can return that instead of having to know what to merge manually (same for other mutations)
-                    return {
-                        ...info,
-                        workspace: {
-                            ...info.workspace,
-                            description: newDescription,
-                        },
-                    };
+                    const workspace = new Workspace(info);
+                    workspace.name = newDescription;
+                    return workspace;
                 });
             });
 

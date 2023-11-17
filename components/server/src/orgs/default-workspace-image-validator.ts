@@ -4,10 +4,5 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/gitpod-protocol";
-
-declare module "@connectrpc/connect" {
-    interface HandlerContext {
-        user: User;
-    }
-}
+export type DefaultWorkspaceImageValidator = (userId: string, imageRef: string) => Promise<void>;
+export const DefaultWorkspaceImageValidator = Symbol("DefaultWorkspaceImageValidator");

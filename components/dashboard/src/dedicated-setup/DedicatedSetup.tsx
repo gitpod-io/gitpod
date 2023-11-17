@@ -12,7 +12,6 @@ import { useConfetti } from "../contexts/ConfettiContext";
 import { SetupCompleteStep } from "./SetupCompleteStep";
 import { useOIDCClientsQuery } from "../data/oidc-clients/oidc-clients-query";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
-import { Delayed } from "../components/Delayed";
 import { SpinnerLoader } from "../components/Loader";
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
@@ -21,6 +20,7 @@ import { useQueryParams } from "../hooks/use-query-params";
 import { useDocumentTitle } from "../hooks/use-document-title";
 import { forceDedicatedSetupParam } from "./use-show-dedicated-setup";
 import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import { Delayed } from "@podkit/loading/Delayed";
 
 type Props = {
     onComplete: () => void;

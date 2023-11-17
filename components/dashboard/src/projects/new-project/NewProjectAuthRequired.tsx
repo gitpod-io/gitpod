@@ -5,7 +5,7 @@
  */
 
 import { FC, useCallback } from "react";
-import { useAuthProviders } from "../../data/auth-providers/auth-provider-query";
+import { useAuthProviderDescriptions } from "../../data/auth-providers/auth-provider-descriptions-query";
 import { openAuthorizeWindow } from "../../provider-utils";
 
 type Props = {
@@ -18,7 +18,7 @@ export const NewProjectAuthRequired: FC<Props> = ({
     areGitHubWebhooksUnauthorized = false,
     onReconfigure,
 }) => {
-    const authProviders = useAuthProviders();
+    const authProviders = useAuthProviderDescriptions();
 
     const handleAuthorize = useCallback(() => {
         const ap = authProviders.data?.find((ap) => ap.host === selectedProviderHost);
@@ -27,12 +27,8 @@ export const NewProjectAuthRequired: FC<Props> = ({
         }
         openAuthorizeWindow({
             host: ap.host,
-            scopes: ap.authProviderType === "GitHub" ? ["repo"] : ap.requirements?.default,
             onSuccess: async () => {
-                // TODO: Verify this works correctly
-                if (ap.authProviderType === "GitHub") {
-                    authProviders.refetch();
-                }
+                authProviders.refetch();
             },
             onError: (payload) => {
                 console.error("Authorization failed", selectedProviderHost, payload);

@@ -239,6 +239,7 @@ describe("PublicAPIConverter", () => {
                     },
                     additionalEnvironmentVariables: [],
                     region: "dev",
+                    prebuildId: "",
                     workspaceClass: "g1-standard",
                     editor: {
                         name: "code",
@@ -368,6 +369,7 @@ describe("PublicAPIConverter", () => {
                     },
                     additionalEnvironmentVariables: [],
                     region: "dev",
+                    prebuildId: "",
                     workspaceClass: "g1-standard",
                     editor: {
                         name: "code",
@@ -508,6 +510,7 @@ describe("PublicAPIConverter", () => {
                     },
                     additionalEnvironmentVariables: [],
                     region: "dev",
+                    prebuildId: "",
                     workspaceClass: "g1-standard",
                     editor: {
                         name: "code",
@@ -623,6 +626,7 @@ describe("PublicAPIConverter", () => {
                     },
                     additionalEnvironmentVariables: [],
                     region: "dev",
+                    prebuildId: "",
                     workspaceClass: "g1-standard",
                     editor: {
                         name: "code",
@@ -662,6 +666,7 @@ describe("PublicAPIConverter", () => {
             expect(result.organizationId).to.equal(project.teamId);
             expect(result.name).to.equal(project.name);
             expect(result.cloneUrl).to.equal(project.cloneUrl);
+            expect(result.creationTime).to.deep.equal(Timestamp.fromDate(new Date(project.creationTime)));
             expect(result.workspaceSettings).to.deep.equal(
                 new WorkspaceSettings({
                     workspaceClass: project.settings?.workspaceClasses?.regular,

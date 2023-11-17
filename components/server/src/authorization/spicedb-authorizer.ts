@@ -14,8 +14,7 @@ import * as grpc from "@grpc/grpc-js";
 import { isFgaChecksEnabled, isFgaWritesEnabled } from "./authorizer";
 import { base64decode } from "@jmondi/oauth2-server";
 import { DecodedZedToken } from "@gitpod/spicedb-impl/lib/impl/v1/impl.pb";
-import { RequestContext } from "node-fetch";
-import { getRequestContext } from "../util/request-context";
+import { ctxTryGetCache, ctxTrySetCache } from "../util/request-context";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 async function tryThree<T>(errMessage: string, code: (attempt: number) => Promise<T>): Promise<T> {
@@ -240,10 +239,14 @@ interface ZedTokenCache {
     consistency(resourceRef: v1.ObjectReference | undefined): Promise<v1.Consistency>;
 }
 
-type ContextWithZedToken = RequestContext & { zedToken?: StoredZedToken };
-function getContext(): ContextWithZedToken {
-    return getRequestContext() as ContextWithZedToken;
-}
+// "contribute" a cache shape to the request context
+type ZedTokenCacheType = StoredZedToken;
+const ctxCacheSetZedToken = (zedToken: StoredZedToken | undefined): void => {
+    ctxTrySetCache<ZedTokenCacheType>("zedToken", zedToken);
+};
+const ctxCacheGetZedToken = (): StoredZedToken | undefined => {
+    return ctxTryGetCache<ZedTokenCacheType>("zedToken");
+};
 
 /**
  * This is a simple implementation of the ZedTokenCache that uses the local context to store single ZedToken per API request, which is stored in AsyncLocalStorage.
@@ -253,12 +256,12 @@ export class RequestLocalZedTokenCache implements ZedTokenCache {
     constructor() {}
 
     async get(objectRef: v1.ObjectReference | undefined): Promise<string | undefined> {
-        return getContext().zedToken?.token;
+        return ctxCacheGetZedToken()?.token;
     }
 
     async set(...kvs: ZedTokenCacheKV[]) {
         function clearZedTokenOnContext() {
-            getContext().zedToken = undefined;
+            ctxCacheSetZedToken(undefined);
         }
 
         const mustClearCache = kvs.some(([k, v]) => !!k && !v); // did we write a relationship without getting a writtenAt token?
@@ -270,11 +273,11 @@ export class RequestLocalZedTokenCache implements ZedTokenCache {
         try {
             const allTokens = [
                 ...kvs.map(([_, v]) => (!!v ? StoredZedToken.fromToken(v) : undefined)),
-                getContext().zedToken,
+                ctxCacheGetZedToken(),
             ].filter((v) => !!v) as StoredZedToken[];
             const freshest = this.freshest(...allTokens);
             if (freshest) {
-                getContext().zedToken = freshest;
+                ctxCacheSetZedToken(freshest);
             }
         } catch (err) {
             log.warn("[spicedb] Failed to set ZedToken on context", err);

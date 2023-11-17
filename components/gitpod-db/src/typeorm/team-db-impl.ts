@@ -366,28 +366,19 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
         });
     }
 
-    public async setOrgSettings(orgId: string, settings: Partial<OrganizationSettings>): Promise<void> {
+    public async setOrgSettings(orgId: string, settings: Partial<OrganizationSettings>): Promise<OrganizationSettings> {
         const repo = await this.getOrgSettingsRepo();
         const team = await repo.findOne({ where: { orgId, deleted: false } });
-        const update: Partial<OrganizationSettings> = {
-            defaultWorkspaceImage: settings.defaultWorkspaceImage,
-            workspaceSharingDisabled: settings.workspaceSharingDisabled,
-        };
-        // Set to null if defaultWorkspaceImage is empty string, so that it can fallback to default image
-        if (update.defaultWorkspaceImage?.trim() === "") {
-            update.defaultWorkspaceImage = null;
-        }
         if (!team) {
-            await repo.insert({
-                ...update,
+            return await repo.save({
+                ...settings,
                 orgId,
             });
-        } else {
-            await repo.save({
-                ...team,
-                ...update,
-            });
         }
+        return await repo.save({
+            ...team,
+            ...settings,
+        });
     }
 
     public async hasActiveSSO(organizationId: string): Promise<boolean> {

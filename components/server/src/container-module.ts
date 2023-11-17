@@ -129,6 +129,8 @@ import { WorkspaceFactory } from "./workspace/workspace-factory";
 import { WorkspaceService } from "./workspace/workspace-service";
 import { WorkspaceStartController } from "./workspace/workspace-start-controller";
 import { WorkspaceStarter } from "./workspace/workspace-starter";
+import { DefaultWorkspaceImageValidator } from "./orgs/default-workspace-image-validator";
+import { ContextAwareAnalyticsWriter } from "./analytics";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -248,7 +250,12 @@ export const productionContainerModule = new ContainerModule(
 
         bind(CodeSyncService).toSelf().inSingletonScope();
 
-        bind(IAnalyticsWriter).toDynamicValue(newAnalyticsWriterFromEnv).inSingletonScope();
+        bind(IAnalyticsWriter)
+            .toDynamicValue((ctx) => {
+                const writer = newAnalyticsWriterFromEnv();
+                return new ContextAwareAnalyticsWriter(writer);
+            })
+            .inSingletonScope();
 
         bind(OAuthController).toSelf().inSingletonScope();
 
@@ -375,5 +382,15 @@ export const productionContainerModule = new ContainerModule(
         bind(RedisMutex).toSelf().inSingletonScope();
         bind(RedisSubscriber).toSelf().inSingletonScope();
         bind(RedisPublisher).toSelf().inSingletonScope();
+
+        bind<DefaultWorkspaceImageValidator>(DefaultWorkspaceImageValidator)
+            .toDynamicValue((ctx) =>
+                // lazy load to avoid circular dependency
+                async (userId: string, imageRef: string) => {
+                    const user = await ctx.container.get(UserService).findUserById(userId, userId);
+                    await ctx.container.get(WorkspaceService).validateImageRef({}, user, imageRef);
+                },
+            )
+            .inSingletonScope();
     },
 );

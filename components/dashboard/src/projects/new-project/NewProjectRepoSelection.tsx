@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AuthProviderInfo, Project } from "@gitpod/gitpod-protocol";
+import { Project } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { useAreGithubWebhooksUnauthorized, useIsGithubAppEnabled } from "../../data/git-providers/github-queries";
 import { LinkButton } from "../../components/LinkButton";
@@ -22,9 +22,10 @@ import { NewProjectCreateFromURL } from "./NewProjectCreateFromURL";
 import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
 import { useFeatureFlag } from "../../data/featureflag-query";
 import Alert from "../../components/Alert";
+import { AuthProviderDescription, AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 
 type Props = {
-    selectedProvider?: AuthProviderInfo;
+    selectedProvider?: AuthProviderDescription;
     onProjectCreated: (project: Project) => void;
     onChangeGitProvider: () => void;
 };
@@ -59,7 +60,7 @@ export const NewProjectRepoSelection: FC<Props> = ({ selectedProvider, onProject
     // Memoized & derived values
     const noReposAvailable = !!(reposInAccounts?.length === 0 || areGitHubWebhooksUnauthorized);
     const isGitHub = selectedProvider?.host === "github.com";
-    const isBitbucketServer = selectedProvider?.authProviderType === "BitbucketServer";
+    const isBitbucketServer = selectedProvider?.type === AuthProviderType.BITBUCKET_SERVER;
     const enableBBSIncrementalSearch = isBitbucketServer && newProjectIncrementalRepoSearchBBS;
 
     const accounts = useMemo(() => {

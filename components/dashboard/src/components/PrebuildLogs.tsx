@@ -15,8 +15,9 @@ import {
 } from "@gitpod/gitpod-protocol";
 import { getGitpodService } from "../service/service";
 import { PrebuildStatus } from "../projects/Prebuilds";
-import { converter, workspaceClient } from "../service/public-api";
+import { workspaceClient } from "../service/public-api";
 import { GetWorkspaceRequest, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { disposableWatchWorkspaceStatus } from "../data/workspaces/listen-to-workspace-ws-messages";
 
 const WorkspaceLogs = React.lazy(() => import("./WorkspaceLogs"));
 
@@ -67,11 +68,11 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
             // Try get hold of a recent WorkspaceInfo
             try {
                 const request = new GetWorkspaceRequest();
-                request.id = props.workspaceId;
+                request.workspaceId = props.workspaceId;
                 const response = await workspaceClient.getWorkspace(request);
                 setWorkspace({
-                    instanceId: response.item?.status?.instanceId,
-                    phase: response.item?.status?.phase?.name,
+                    instanceId: response.workspace?.status?.instanceId,
+                    phase: response.workspace?.status?.phase?.name,
                 });
             } catch (err) {
                 console.error(err);
@@ -92,17 +93,18 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
                 setError(err);
             }
 
+            const watchDispose = disposableWatchWorkspaceStatus(props.workspaceId, (resp) => {
+                if (resp.status?.instanceId && resp.status?.phase?.name) {
+                    setWorkspace({
+                        instanceId: resp.status.instanceId,
+                        phase: resp.status.phase.name,
+                    });
+                }
+            });
             // Register for future updates
+            disposables.push(watchDispose);
             disposables.push(
                 getGitpodService().registerClient({
-                    onInstanceUpdate: (instance) => {
-                        if (props.workspaceId === instance.workspaceId) {
-                            setWorkspace({
-                                instanceId: instance.id,
-                                phase: converter.toPhase(instance),
-                            });
-                        }
-                    },
                     onWorkspaceImageBuildLogs: (
                         info: WorkspaceImageBuild.StateInfo,
                         content?: WorkspaceImageBuild.LogContent,

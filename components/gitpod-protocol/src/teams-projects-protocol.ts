@@ -7,7 +7,6 @@
 import { PrebuiltWorkspaceState, WorkspaceClasses } from "./protocol";
 import { v4 as uuidv4 } from "uuid";
 import { DeepPartial } from "./util/deep-partial";
-import { WebhookEvent } from "./webhook-event";
 
 export interface ProjectConfig {
     ".gitpod.yml": string;
@@ -195,6 +194,7 @@ export interface Organization {
 
 export interface OrganizationSettings {
     workspaceSharingDisabled?: boolean;
+    // null or empty string to reset to default
     defaultWorkspaceImage?: string | null;
 }
 
@@ -228,16 +228,4 @@ export interface TeamMembershipInvite {
 
     /** This is a flag that triggers the HARD DELETION of this entity */
     deleted?: boolean;
-}
-
-export interface PrebuildEvent {
-    id: string;
-    creationTime: string;
-    status: WebhookEvent.Status | WebhookEvent.PrebuildStatus;
-    message?: string;
-    prebuildId?: string;
-    projectId?: string;
-    cloneUrl?: string;
-    branch?: string;
-    commit?: string;
 }

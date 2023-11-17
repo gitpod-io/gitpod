@@ -7,7 +7,7 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import { Heading3, Subheading } from "../components/typography/headings";
 import gitpodIcon from "../icons/gitpod.svg";
-import { Delayed } from "../components/Delayed";
+import { Delayed } from "@podkit/loading/Delayed";
 
 function useDelay(wait: number) {
     const [done, setDone] = useState(false);

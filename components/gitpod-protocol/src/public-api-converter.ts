@@ -137,23 +137,27 @@ export class PublicAPIConverter {
         phase.lastTransitionTime = Timestamp.fromDate(new Date(lastTransitionTime));
 
         status.instanceId = arg.id;
-        status.message = arg.status.message;
+        if (arg.status.message) {
+            status.message = arg.status.message;
+        }
         status.workspaceUrl = arg.ideUrl;
         status.ports = this.toPorts(arg.status.exposedPorts);
         status.conditions = this.toWorkspaceConditions(arg.status.conditions);
         status.gitStatus = this.toGitStatus(arg, status.gitStatus);
         workspace.region = arg.region;
-        workspace.workspaceClass = arg.workspaceClass;
+        if (arg.workspaceClass) {
+            workspace.workspaceClass = arg.workspaceClass;
+        }
         workspace.editor = this.toEditor(arg.configuration.ideConfig);
 
         return workspace;
     }
 
     toWorkspaceConditions(conditions: WorkspaceInstanceConditions): WorkspaceConditions {
-        const result = new WorkspaceConditions();
-        result.failed = conditions.failed;
-        result.timeout = conditions.timeout;
-        return result;
+        return new WorkspaceConditions({
+            failed: conditions.failed,
+            timeout: conditions.timeout,
+        });
     }
 
     toEditor(ideConfig: ConfigurationIdeConfig | undefined): EditorReference | undefined {
@@ -196,6 +200,9 @@ export class PublicAPIConverter {
             }
             if (reason.code === ErrorCodes.INTERNAL_SERVER_ERROR) {
                 return new ConnectError(reason.message, Code.Internal, metadata, undefined, reason);
+            }
+            if (reason.code === ErrorCodes.REQUEST_TIMEOUT) {
+                return new ConnectError(reason.message, Code.Canceled, metadata, undefined, reason);
             }
             return new ConnectError(reason.message, Code.InvalidArgument, metadata, undefined, reason);
         }
@@ -353,15 +360,15 @@ export class PublicAPIConverter {
     }
 
     toOrganizationMember(member: OrgMemberInfo): OrganizationMember {
-        const result = new OrganizationMember();
-        result.userId = member.userId;
-        result.fullName = member.fullName;
-        result.email = member.primaryEmail;
-        result.avatarUrl = member.avatarUrl;
-        result.role = this.toOrgMemberRole(member.role);
-        result.memberSince = Timestamp.fromDate(new Date(member.memberSince));
-        result.ownedByOrganization = member.ownedByOrganization;
-        return result;
+        return new OrganizationMember({
+            userId: member.userId,
+            fullName: member.fullName,
+            email: member.primaryEmail,
+            avatarUrl: member.avatarUrl,
+            role: this.toOrgMemberRole(member.role),
+            memberSince: Timestamp.fromDate(new Date(member.memberSince)),
+            ownedByOrganization: member.ownedByOrganization,
+        });
     }
 
     toOrgMemberRole(role: OrgMemberRole): OrganizationRole {
@@ -387,10 +394,10 @@ export class PublicAPIConverter {
     }
 
     toOrganizationSettings(settings: OrganizationSettingsProtocol): OrganizationSettings {
-        const result = new OrganizationSettings();
-        result.workspaceSharingDisabled = !!settings.workspaceSharingDisabled;
-        result.defaultWorkspaceImage = settings.defaultWorkspaceImage || undefined;
-        return result;
+        return new OrganizationSettings({
+            workspaceSharingDisabled: !!settings.workspaceSharingDisabled,
+            defaultWorkspaceImage: settings.defaultWorkspaceImage || undefined,
+        });
     }
 
     toConfiguration(project: Project): Configuration {
@@ -399,6 +406,7 @@ export class PublicAPIConverter {
         result.organizationId = project.teamId;
         result.name = project.name;
         result.cloneUrl = project.cloneUrl;
+        result.creationTime = Timestamp.fromDate(new Date(project.creationTime));
         result.workspaceSettings = this.toWorkspaceSettings(project.settings?.workspaceClasses?.regular);
         result.prebuildSettings = this.toPrebuildSettings(project.settings?.prebuilds);
         return result;

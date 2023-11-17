@@ -8,6 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
 import { getListWorkspacesQueryKey, ListWorkspacesQueryResult } from "./list-workspaces-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
+import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 type ToggleWorkspacePinnedArgs = {
     workspaceId: string;
@@ -27,17 +28,12 @@ export const useToggleWorkspacedPinnedMutation = () => {
             // Update workspace.pinned to account for the toggle so it's reflected immediately
             queryClient.setQueryData<ListWorkspacesQueryResult>(queryKey, (oldWorkspaceData) => {
                 return oldWorkspaceData?.map((info) => {
-                    if (info.workspace.id !== workspaceId) {
+                    if (info.id !== workspaceId) {
                         return info;
                     }
-
-                    return {
-                        ...info,
-                        workspace: {
-                            ...info.workspace,
-                            pinned: !info.workspace.pinned,
-                        },
-                    };
+                    const workspace = new Workspace(info);
+                    workspace.pinned = !workspace.pinned;
+                    return workspace;
                 });
             });
 

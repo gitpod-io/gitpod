@@ -15,6 +15,7 @@ import { getProjectPath } from "../workspaces/WorkspaceEntry";
 import { WorkspaceStatusIndicator } from "../workspaces/WorkspaceStatusIndicator";
 import Property from "./Property";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { converter } from "../service/public-api";
 
 export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance }) {
     const [workspace, setWorkspace] = useState(props.workspace);
@@ -58,10 +59,24 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                     <div className="flex">
                         <Heading2>{workspace.workspaceId}</Heading2>
                         <span className="my-auto ml-3">
-                            <WorkspaceStatusIndicator instance={WorkspaceAndInstance.toInstance(workspace)} />
+                            <WorkspaceStatusIndicator
+                                status={
+                                    converter.toWorkspace({
+                                        workspace: WorkspaceAndInstance.toWorkspace(workspace),
+                                        latestInstance: WorkspaceAndInstance.toInstance(workspace),
+                                    }).status
+                                }
+                            />
                         </span>
                     </div>
-                    <Subheading>{getProjectPath(WorkspaceAndInstance.toWorkspace(workspace))}</Subheading>
+                    <Subheading>
+                        {getProjectPath(
+                            converter.toWorkspace({
+                                workspace: WorkspaceAndInstance.toWorkspace(workspace),
+                                latestInstance: WorkspaceAndInstance.toInstance(workspace),
+                            }),
+                        )}
+                    </Subheading>
                 </div>
                 <button
                     className="secondary ml-3"
@@ -172,7 +187,7 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                         return (
                             <div className="px-6 py-3 flex justify-between text-sm text-gray-400 mb-2">
                                 <span className="my-1 ml-3">
-                                    <WorkspaceStatusIndicator instance={wsi} />
+                                    <WorkspaceStatusIndicator status={converter.toWorkspace(wsi).status} />
                                 </span>
                                 <div className="w-4/12">{wsi.id}</div>
                                 <div className="w-2/12">{dayjs(wsi.startedTime).fromNow()}</div>

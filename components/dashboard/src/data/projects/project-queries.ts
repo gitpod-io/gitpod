@@ -8,7 +8,7 @@ import { Project } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { listAllProjects, projectsService } from "../../service/public-api";
-import { PartialProject } from "@gitpod/gitpod-protocol";
+import type { PartialProject } from "@gitpod/gitpod-protocol";
 import { getGitpodService } from "../../service/service";
 
 const BASE_KEY = "projects";
@@ -79,15 +79,15 @@ export const useUpdateProject = () => {
     const { data: org } = useCurrentOrg();
     const client = useQueryClient();
 
-    return useMutation<void, Error, PartialProject>(async ({ id, name }) => {
+    return useMutation<void, Error, PartialProject>(async (settings) => {
         if (!org) {
             throw new Error("No org currently selected");
         }
 
-        await getGitpodService().server.updateProjectPartial({ id, name });
+        await getGitpodService().server.updateProjectPartial(settings);
 
         // Invalidate project
-        client.invalidateQueries(getProjectQueryKey(org.id, id));
+        client.invalidateQueries(getProjectQueryKey(org.id, settings.id));
         // Invalidate project list queries
         client.invalidateQueries(getListProjectsQueryKey(org.id));
     });

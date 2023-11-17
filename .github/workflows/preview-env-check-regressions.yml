@@ -71,6 +71,7 @@ jobs:
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
           infrastructure_provider: ${{ needs.configuration.outputs.infrastructure_provider }}
           large_vm: false
+          preemptible: true
       - name: Deploy Gitpod to the preview environment
         id: deploy-gitpod
         uses: ./.github/actions/deploy-gitpod

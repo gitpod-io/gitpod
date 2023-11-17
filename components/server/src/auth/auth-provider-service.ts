@@ -227,9 +227,11 @@ export class AuthProviderService {
         if (!existing) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Provider resource not found.");
         }
-        const changed =
-            entry.clientId !== existing.oauth.clientId ||
-            (entry.clientSecret && entry.clientSecret !== existing.oauth.clientSecret);
+
+        // Explicitly check if any update needs to be performed
+        const changedId = entry.clientId && entry.clientId !== existing.oauth.clientId;
+        const changedSecret = entry.clientSecret && entry.clientSecret !== existing.oauth.clientSecret;
+        const changed = changedId || changedSecret;
 
         if (!changed) {
             return existing;

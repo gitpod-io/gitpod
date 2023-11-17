@@ -11,8 +11,9 @@ import { ReactComponent as RepositoryIcon } from "../icons/RepositoryWithColor.s
 import { SuggestedRepository } from "@gitpod/gitpod-protocol";
 import { MiddleDot } from "./typography/MiddleDot";
 import { useUnifiedRepositorySearch } from "../data/git-providers/unified-repositories-search-query";
-import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
+import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
 import { ReactComponent as Exclamation2 } from "../images/exclamation2.svg";
+import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 
 interface RepositoryFinderProps {
     selectedContextURL?: string;
@@ -39,7 +40,7 @@ export default function RepositoryFinder({
         hasMore,
     } = useUnifiedRepositorySearch({ searchString, excludeProjects });
 
-    const authProviders = useAuthProviders();
+    const authProviders = useAuthProviderDescriptions();
 
     const handleSelectionChange = useCallback(
         (selectedID: string) => {
@@ -115,7 +116,10 @@ export default function RepositoryFinder({
                     isSelectable: false,
                 } as ComboboxElement);
             }
-            if (searchString.length >= 3 && authProviders.data?.some((p) => p.authProviderType === "BitbucketServer")) {
+            if (
+                searchString.length >= 3 &&
+                authProviders.data?.some((p) => p.type === AuthProviderType.BITBUCKET_SERVER)
+            ) {
                 // add an element that tells the user that the Bitbucket Server does only support prefix search
                 result.push({
                     id: "bitbucket-server",

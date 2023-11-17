@@ -66,7 +66,9 @@ export const ConfirmationModal: FC<Props> = ({
                 {isEntity(children) ? (
                     <div className="w-full p-4 mb-2 bg-gray-100 dark:bg-gray-700 rounded-xl group">
                         <p className="text-base text-gray-800 dark:text-gray-100 font-semibold">{children.name}</p>
-                        {children.description && <p className="text-gray-500 truncate">{children.description}</p>}
+                        {children.description && (
+                            <p className="text-gray-500 dark:text-gray-300 truncate">{children.description}</p>
+                        )}
                     </div>
                 ) : (
                     children

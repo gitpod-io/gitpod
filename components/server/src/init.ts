@@ -59,11 +59,13 @@ import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { TypeORM } from "@gitpod/gitpod-db/lib";
 import { dbConnectionsEnqueued, dbConnectionsFree, dbConnectionsTotal } from "./prometheus-metrics";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { installCtxLogAugmenter } from "./util/log-context";
 if (process.env.NODE_ENV === "development") {
     require("longjohn");
 }
 
 log.enableJSONLogging("server", process.env.VERSION, LogrusLogLevel.getFromEnv());
+installCtxLogAugmenter();
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {

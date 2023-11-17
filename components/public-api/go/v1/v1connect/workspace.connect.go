@@ -40,6 +40,8 @@ type WorkspaceServiceClient interface {
 	//
 	// workspace_id +return NOT_FOUND Workspace does not exist
 	WatchWorkspaceStatus(context.Context, *connect_go.Request[v1.WatchWorkspaceStatusRequest]) (*connect_go.ServerStreamForClient[v1.WatchWorkspaceStatusResponse], error)
+	// ListWorkspaces returns a list of workspaces that match the query.
+	ListWorkspaces(context.Context, *connect_go.Request[v1.ListWorkspacesRequest]) (*connect_go.Response[v1.ListWorkspacesResponse], error)
 }
 
 // NewWorkspaceServiceClient constructs a client for the gitpod.v1.WorkspaceService service. By
@@ -62,6 +64,11 @@ func NewWorkspaceServiceClient(httpClient connect_go.HTTPClient, baseURL string,
 			baseURL+"/gitpod.v1.WorkspaceService/WatchWorkspaceStatus",
 			opts...,
 		),
+		listWorkspaces: connect_go.NewClient[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.WorkspaceService/ListWorkspaces",
+			opts...,
+		),
 	}
 }
 
@@ -69,6 +76,7 @@ func NewWorkspaceServiceClient(httpClient connect_go.HTTPClient, baseURL string,
 type workspaceServiceClient struct {
 	getWorkspace         *connect_go.Client[v1.GetWorkspaceRequest, v1.GetWorkspaceResponse]
 	watchWorkspaceStatus *connect_go.Client[v1.WatchWorkspaceStatusRequest, v1.WatchWorkspaceStatusResponse]
+	listWorkspaces       *connect_go.Client[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse]
 }
 
 // GetWorkspace calls gitpod.v1.WorkspaceService.GetWorkspace.
@@ -79,6 +87,11 @@ func (c *workspaceServiceClient) GetWorkspace(ctx context.Context, req *connect_
 // WatchWorkspaceStatus calls gitpod.v1.WorkspaceService.WatchWorkspaceStatus.
 func (c *workspaceServiceClient) WatchWorkspaceStatus(ctx context.Context, req *connect_go.Request[v1.WatchWorkspaceStatusRequest]) (*connect_go.ServerStreamForClient[v1.WatchWorkspaceStatusResponse], error) {
 	return c.watchWorkspaceStatus.CallServerStream(ctx, req)
+}
+
+// ListWorkspaces calls gitpod.v1.WorkspaceService.ListWorkspaces.
+func (c *workspaceServiceClient) ListWorkspaces(ctx context.Context, req *connect_go.Request[v1.ListWorkspacesRequest]) (*connect_go.Response[v1.ListWorkspacesResponse], error) {
+	return c.listWorkspaces.CallUnary(ctx, req)
 }
 
 // WorkspaceServiceHandler is an implementation of the gitpod.v1.WorkspaceService service.
@@ -92,6 +105,8 @@ type WorkspaceServiceHandler interface {
 	//
 	// workspace_id +return NOT_FOUND Workspace does not exist
 	WatchWorkspaceStatus(context.Context, *connect_go.Request[v1.WatchWorkspaceStatusRequest], *connect_go.ServerStream[v1.WatchWorkspaceStatusResponse]) error
+	// ListWorkspaces returns a list of workspaces that match the query.
+	ListWorkspaces(context.Context, *connect_go.Request[v1.ListWorkspacesRequest]) (*connect_go.Response[v1.ListWorkspacesResponse], error)
 }
 
 // NewWorkspaceServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -111,6 +126,11 @@ func NewWorkspaceServiceHandler(svc WorkspaceServiceHandler, opts ...connect_go.
 		svc.WatchWorkspaceStatus,
 		opts...,
 	))
+	mux.Handle("/gitpod.v1.WorkspaceService/ListWorkspaces", connect_go.NewUnaryHandler(
+		"/gitpod.v1.WorkspaceService/ListWorkspaces",
+		svc.ListWorkspaces,
+		opts...,
+	))
 	return "/gitpod.v1.WorkspaceService/", mux
 }
 
@@ -123,4 +143,8 @@ func (UnimplementedWorkspaceServiceHandler) GetWorkspace(context.Context, *conne
 
 func (UnimplementedWorkspaceServiceHandler) WatchWorkspaceStatus(context.Context, *connect_go.Request[v1.WatchWorkspaceStatusRequest], *connect_go.ServerStream[v1.WatchWorkspaceStatusResponse]) error {
 	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.WatchWorkspaceStatus is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) ListWorkspaces(context.Context, *connect_go.Request[v1.ListWorkspacesRequest]) (*connect_go.Response[v1.ListWorkspacesResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.ListWorkspaces is not implemented"))
 }

@@ -4,10 +4,10 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { configurationClient } from "../../service/public-api";
-import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 
 const BASE_KEY = "configurations";
 
@@ -33,10 +33,14 @@ export const useListConfigurations = ({ searchTerm = "", page, pageSize }: ListC
                 pagination: { page, pageSize },
             });
 
-            return { configurations, pagination };
+            return {
+                configurations,
+                pagination,
+            };
         },
         {
             enabled: !!org,
+            keepPreviousData: true,
         },
     );
 };
@@ -60,8 +64,64 @@ export const useConfiguration = (configurationId: string) => {
     });
 };
 
+type DeleteConfigurationArgs = {
+    configurationId: string;
+};
+export const useDeleteConfiguration = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ configurationId }: DeleteConfigurationArgs) => {
+            return await configurationClient.deleteConfiguration({
+                configurationId,
+            });
+        },
+        onSuccess: (_, { configurationId }) => {
+            queryClient.invalidateQueries({ queryKey: ["configurations", "list"] });
+            queryClient.invalidateQueries({ queryKey: getConfigurationQueryKey(configurationId) });
+        },
+    });
+};
+
 export const getConfigurationQueryKey = (configurationId: string) => {
     const key: any[] = [BASE_KEY, { configurationId }];
 
     return key;
+};
+
+export type CreateConfigurationArgs = {
+    name: string;
+    cloneUrl: string;
+};
+
+export const useCreateConfiguration = () => {
+    const { data: org } = useCurrentOrg();
+    const queryClient = useQueryClient();
+
+    return useMutation<Configuration, Error, CreateConfigurationArgs>({
+        mutationFn: async ({ name, cloneUrl }) => {
+            if (!org) {
+                throw new Error("No org currently selected");
+            }
+
+            // TODO: Should we push this into the api?
+            // ensure a .git suffix
+            const normalizedCloneURL = cloneUrl.endsWith(".git") ? cloneUrl : `${cloneUrl}.git`;
+
+            const response = await configurationClient.createConfiguration({
+                name,
+                cloneUrl: normalizedCloneURL,
+                organizationId: org.id,
+            });
+            if (!response.configuration) {
+                throw new Error("Failed to create configuration");
+            }
+
+            return response.configuration;
+        },
+        onSuccess: (configuration) => {
+            queryClient.setQueryData(getConfigurationQueryKey(configuration.id), configuration);
+            queryClient.invalidateQueries({ queryKey: ["configurations", "list"] });
+        },
+    });
 };
