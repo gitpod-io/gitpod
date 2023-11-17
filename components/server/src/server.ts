@@ -191,7 +191,7 @@ export class Server {
                     }
 
                     try {
-                        await this.bearerAuth.auth(info.req as express.Request);
+                        await this.bearerAuth.authExpressRequest(info.req as express.Request);
                         authenticatedUsingBearerToken = true;
                     } catch (e) {
                         if (isBearerAuthError(e)) {
