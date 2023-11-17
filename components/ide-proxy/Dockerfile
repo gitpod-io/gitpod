@@ -7,7 +7,7 @@ FROM cgr.dev/chainguard/wolfi-base:latest@sha256:5fd82be4dfccc650c1985d57847f1af
 RUN apk add brotli gzip
 
 # Gitpod CLI and Local App
-COPY components-local-app--app/bin/* /bin/
+COPY components-local-app--app-with-manifest/bin/* /bin/
 
 RUN for FILE in `ls /bin/gitpod-local-companion*`;do \
   gzip -v -f -9 -k "$FILE"; \

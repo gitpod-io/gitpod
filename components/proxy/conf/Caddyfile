@@ -336,7 +336,7 @@ https://{$GITPOD_DOMAIN} {
 	}
 
 	@ide_bin {
-		path /static/bin/gitpod-*
+		path /static/bin/*
 	}
 	handle @ide_bin {
 		import compression
