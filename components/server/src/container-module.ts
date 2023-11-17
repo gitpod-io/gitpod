@@ -56,12 +56,9 @@ import { BillingModes } from "./billing/billing-mode";
 import { EntitlementService, EntitlementServiceImpl } from "./billing/entitlement-service";
 import { EntitlementServiceUBP } from "./billing/entitlement-service-ubp";
 import { StripeService } from "./billing/stripe-service";
-import { BitbucketAppSupport } from "./bitbucket/bitbucket-app-support";
 import { CodeSyncService } from "./code-sync/code-sync-service";
 import { Config, ConfigFile } from "./config";
 import { ConfigurationService } from "./config/configuration-service";
-import { GitHubAppSupport } from "./github/github-app-support";
-import { GitLabAppSupport } from "./gitlab/gitlab-app-support";
 import { IamSessionApp } from "./iam/iam-session-app";
 import { IDEService } from "./ide-service";
 import { DatabaseGarbageCollector } from "./jobs/database-gc";
@@ -341,13 +338,10 @@ export const productionContainerModule = new ContainerModule(
 
         bind(PrebuildManager).toSelf().inSingletonScope();
         bind(GithubApp).toSelf().inSingletonScope();
-        bind(GitHubAppSupport).toSelf().inSingletonScope();
         bind(GithubAppRules).toSelf().inSingletonScope();
         bind(PrebuildStatusMaintainer).toSelf().inSingletonScope();
         bind(GitLabApp).toSelf().inSingletonScope();
-        bind(GitLabAppSupport).toSelf().inSingletonScope();
         bind(BitbucketApp).toSelf().inSingletonScope();
-        bind(BitbucketAppSupport).toSelf().inSingletonScope();
         bind(GitHubEnterpriseApp).toSelf().inSingletonScope();
         bind(BitbucketServerApp).toSelf().inSingletonScope();
         bind(IncrementalWorkspaceService).toSelf().inSingletonScope();

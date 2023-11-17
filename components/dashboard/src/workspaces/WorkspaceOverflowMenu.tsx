@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceInfo, WorkspaceInstancePhase } from "@gitpod/gitpod-protocol";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import { ContextMenuEntry } from "../components/ContextMenu";
@@ -17,9 +16,10 @@ import ConnectToSSHModal from "./ConnectToSSHModal";
 import { DeleteWorkspaceModal } from "./DeleteWorkspaceModal";
 import { useToast } from "../components/toasts/Toasts";
 import { RenameWorkspaceModal } from "./RenameWorkspaceModal";
+import { AdmissionLevel, Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 type WorkspaceEntryOverflowMenuProps = {
-    info: WorkspaceInfo;
+    info: Workspace;
     changeMenuState: (state: boolean) => void;
 };
 
@@ -37,8 +37,8 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
     const toggleWorkspaceShared = useToggleWorkspaceSharedMutation();
     const toggleWorkspacePinned = useToggleWorkspacedPinnedMutation();
 
-    const workspace = info.workspace;
-    const state: WorkspaceInstancePhase = info.latestInstance?.status?.phase || "stopped";
+    const workspace = info;
+    const state: WorkspacePhase_Phase = info?.status?.phase?.name || WorkspacePhase_Phase.STOPPED;
 
     //TODO: shift this into ConnectToSSHModal
     const handleConnectViaSSHClick = useCallback(async () => {
@@ -59,13 +59,16 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
     }, [toast, stopWorkspace, workspace.id]);
 
     const toggleShared = useCallback(() => {
-        const newLevel = workspace.shareable ? "owner" : "everyone";
+        const newLevel =
+            workspace.status?.admission === AdmissionLevel.EVERYONE
+                ? AdmissionLevel.OWNER_ONLY
+                : AdmissionLevel.EVERYONE;
 
         toggleWorkspaceShared.mutate({
             workspaceId: workspace.id,
             level: newLevel,
         });
-    }, [toggleWorkspaceShared, workspace.id, workspace.shareable]);
+    }, [toggleWorkspaceShared, workspace.id, workspace.status?.admission]);
 
     const togglePinned = useCallback(() => {
         toggleWorkspacePinned.mutate({
@@ -106,7 +109,7 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
         },
     ];
 
-    if (state === "running") {
+    if (state === WorkspacePhase_Phase.RUNNING) {
         menuEntries.push({
             title: "Stop",
             onClick: handleStopWorkspace,
@@ -126,7 +129,7 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
     menuEntries.push(
         {
             title: "Share",
-            active: !!workspace.shareable,
+            active: workspace.status?.admission === AdmissionLevel.EVERYONE,
             onClick: toggleShared,
         },
         {
@@ -151,11 +154,11 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
             {isRenameModalVisible && (
                 <RenameWorkspaceModal workspace={workspace} onClose={() => setRenameModalVisible(false)} />
             )}
-            {isSSHModalVisible && info.latestInstance && ownerToken !== "" && (
+            {isSSHModalVisible && info.status && ownerToken !== "" && (
                 <ConnectToSSHModal
                     workspaceId={workspace.id}
                     ownerToken={ownerToken}
-                    ideUrl={info.latestInstance.ideUrl.replaceAll("https://", "")}
+                    ideUrl={info.status.workspaceUrl.replaceAll("https://", "")}
                     onClose={() => {
                         setSSHModalVisible(false);
                         setOwnerToken("");

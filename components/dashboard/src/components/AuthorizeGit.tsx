@@ -4,10 +4,9 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useContext } from "react";
 import { Link } from "react-router-dom";
-import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
+import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
 import { openAuthorizeWindow } from "../provider-utils";
 import { getGitpodService } from "../service/service";
 import { UserContext, useCurrentUser } from "../user-context";
@@ -16,29 +15,29 @@ import { Heading2, Heading3, Subheading } from "./typography/headings";
 import classNames from "classnames";
 import { iconForAuthProvider, simplifyProviderName } from "../provider-utils";
 import { useIsOwner } from "../data/organizations/members-query";
+import { AuthProviderDescription } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 
 export function useNeedsGitAuthorization() {
-    const authProviders = useAuthProviders();
+    const authProviders = useAuthProviderDescriptions();
     const user = useCurrentUser();
     if (!user || !authProviders.data) {
         return false;
     }
-    return !authProviders.data.some((ap) => user.identities.some((i) => ap.authProviderId === i.authProviderId));
+    return !authProviders.data.some((ap) => user.identities.some((i) => ap.id === i.authProviderId));
 }
 
 export const AuthorizeGit: FC<{ className?: string }> = ({ className }) => {
     const { setUser } = useContext(UserContext);
     const owner = useIsOwner();
-    const authProviders = useAuthProviders();
+    const { data: authProviders } = useAuthProviderDescriptions();
     const updateUser = useCallback(() => {
         getGitpodService().server.getLoggedInUser().then(setUser);
     }, [setUser]);
 
     const connect = useCallback(
-        (ap: AuthProviderInfo) => {
+        (ap: AuthProviderDescription) => {
             openAuthorizeWindow({
                 host: ap.host,
-                scopes: ap.requirements?.default,
                 overrideScopes: true,
                 onSuccess: updateUser,
             });
@@ -46,15 +45,13 @@ export const AuthorizeGit: FC<{ className?: string }> = ({ className }) => {
         [updateUser],
     );
 
-    if (authProviders.data === undefined) {
+    if (authProviders === undefined) {
         return <></>;
     }
 
-    const verifiedProviders = authProviders.data.filter((ap) => ap.verified);
-
     return (
         <div className={classNames("text-center p-4 m-4 py-10", className)}>
-            {verifiedProviders.length === 0 ? (
+            {authProviders.length === 0 ? (
                 <>
                     <Heading3 className="pb-2">No Git integrations</Heading3>
                     {!!owner ? (
@@ -82,7 +79,7 @@ export const AuthorizeGit: FC<{ className?: string }> = ({ className }) => {
                         Select one of the following available providers to access repositories for your account.
                     </Subheading>
                     <div className="flex flex-col items-center">
-                        {verifiedProviders.map((ap) => {
+                        {authProviders.map((ap) => {
                             return (
                                 <Button
                                     onClick={() => connect(ap)}
@@ -91,7 +88,7 @@ export const AuthorizeGit: FC<{ className?: string }> = ({ className }) => {
                                     className="mt-3 btn-login flex-none w-56 px-0 py-0.5 inline-flex"
                                 >
                                     <div className="flex relative -left-4 w-56">
-                                        {iconForAuthProvider(ap.authProviderType)}
+                                        {iconForAuthProvider(ap.type)}
                                         <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
                                             Continue with {simplifyProviderName(ap.host)}
                                         </span>

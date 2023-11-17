@@ -5,9 +5,10 @@
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { getGitpodService } from "../../service/service";
 import { useCurrentOrg } from "../organizations/orgs-query";
-import { getOrgAuthProvidersQueryKey, OrgAuthProvidersQueryResult } from "./org-auth-providers-query";
+import { getOrgAuthProvidersQueryKey } from "./org-auth-providers-query";
+import { authProviderClient } from "../../service/public-api";
+import { AuthProvider, DeleteAuthProviderRequest } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 
 type DeleteAuthProviderArgs = {
     providerId: string;
@@ -22,10 +23,13 @@ export const useDeleteOrgAuthProviderMutation = () => {
                 throw new Error("No current organization selected");
             }
 
-            return await getGitpodService().server.deleteOrgAuthProvider({
-                id: providerId,
-                organizationId: organization.id,
-            });
+            const response = await authProviderClient.deleteAuthProvider(
+                new DeleteAuthProviderRequest({
+                    authProviderId: providerId,
+                }),
+            );
+
+            return response;
         },
         onSuccess: (_, { providerId }) => {
             if (!organization) {
@@ -33,7 +37,7 @@ export const useDeleteOrgAuthProviderMutation = () => {
             }
 
             const queryKey = getOrgAuthProvidersQueryKey(organization.id);
-            queryClient.setQueryData<OrgAuthProvidersQueryResult>(queryKey, (providers) => {
+            queryClient.setQueryData<AuthProvider[]>(queryKey, (providers) => {
                 return providers?.filter((p) => p.id !== providerId);
             });
 
