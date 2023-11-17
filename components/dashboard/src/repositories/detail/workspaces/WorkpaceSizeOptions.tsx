@@ -38,7 +38,7 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
 
             updateConfiguration.mutate(
                 {
-                    id: configuration.id,
+                    configurationId: configuration.id,
                     workspaceSettings: {
                         workspaceClass: selectedValue,
                     },

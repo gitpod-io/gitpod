@@ -38,7 +38,7 @@ export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
 
             updateConfiguration.mutate(
                 {
-                    id: configuration.id,
+                    configurationId: configuration.id,
                     name: configurationName,
                 },
                 {
