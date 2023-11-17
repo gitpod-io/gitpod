@@ -69,6 +69,9 @@ import {
     WorkspaceInstanceConditions,
     WorkspaceInstancePort,
 } from "./workspace-instance";
+import { DeepPartial } from "./util/deep-partial";
+
+type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
 
 const applicationErrorCode = "application-error-code";
 const applicationErrorData = "application-error-data";
@@ -418,14 +421,14 @@ export class PublicAPIConverter {
         }
     }
 
-    fromPrebuildSettings(prebuilds?: PrebuildSettings): PrebuildSettingsProtocol {
+    fromPartialPrebuildSettings(prebuilds?: DeepPartial<PrebuildSettings>): DeepPartial<PrebuildSettingsProtocol> {
         const result: PrebuildSettingsProtocol = {};
         if (prebuilds) {
             result.enable = !!prebuilds.enabled;
-            result.branchMatchingPattern = prebuilds.branchMatchingPattern ?? "";
+            result.branchMatchingPattern = prebuilds.branchMatchingPattern;
             result.branchStrategy = this.fromBranchMatchingStrategy(prebuilds.branchStrategy);
-            result.prebuildInterval = prebuilds.prebuildInterval ?? 20;
-            result.workspaceClass = prebuilds.workspaceClass ?? "";
+            result.prebuildInterval = prebuilds.prebuildInterval;
+            result.workspaceClass = prebuilds.workspaceClass;
         }
         return result;
     }
@@ -437,15 +440,15 @@ export class PublicAPIConverter {
         return creationTime.toDate().toISOString();
     }
 
-    fromConfiguration(configuration: Configuration): PartialProject {
-        const prebuildSettings = this.fromPrebuildSettings(configuration.prebuildSettings);
-        const workspaceSettings = this.fromWorkspaceSettings(configuration.workspaceSettings?.workspaceClass);
+    fromPartialConfiguration(configuration: PartialConfiguration): PartialProject {
+        const prebuilds = this.fromPartialPrebuildSettings(configuration.prebuildSettings);
+        const workspaceClasses = this.fromWorkspaceSettings(configuration.workspaceSettings?.workspaceClass);
         const result: PartialProject = {
             id: configuration.id,
             name: configuration.name,
             settings: {
-                prebuilds: prebuildSettings,
-                workspaceClasses: workspaceSettings,
+                prebuilds,
+                workspaceClasses,
             },
         };
         return result;

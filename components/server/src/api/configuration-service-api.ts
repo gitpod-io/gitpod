@@ -26,6 +26,7 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 import { ctxUserId } from "../util/request-context";
 import { UserService } from "../user/user-service";
 import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 
 @injectable()
 export class ConfigurationServiceAPI implements ServiceImpl<typeof ConfigurationServiceInterface> {
@@ -120,13 +121,14 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "user not found");
         }
 
-        const configuration = new Configuration();
-        configuration.id = req.configurationId;
-        if (req.name) configuration.name = req.name;
+        const configuration: DeepPartial<Configuration> = {
+            id: req.configurationId,
+            name: req.name,
+        };
         configuration.prebuildSettings = new PrebuildSettings(req.prebuildSettings);
         configuration.workspaceSettings = new Workspace(req.workspaceSettings);
 
-        const project = this.apiConverter.fromConfiguration(configuration);
+        const project = this.apiConverter.fromPartialConfiguration(configuration);
 
         const updatedProject = await this.projectService.updateProject(installer, project);
 

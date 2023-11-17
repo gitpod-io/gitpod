@@ -478,9 +478,9 @@ export class UpdateConfigurationRequest extends Message<UpdateConfigurationReque
   configurationId = "";
 
   /**
-   * @generated from field: string name = 2;
+   * @generated from field: optional string name = 2;
    */
-  name = "";
+  name?: string;
 
   /**
    * @generated from field: optional gitpod.v1.UpdateConfigurationRequest.PrebuildSettings prebuild_settings = 3;
@@ -501,7 +501,7 @@ export class UpdateConfigurationRequest extends Message<UpdateConfigurationReque
   static readonly typeName = "gitpod.v1.UpdateConfigurationRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "configuration_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 3, name: "prebuild_settings", kind: "message", T: UpdateConfigurationRequest_PrebuildSettings, opt: true },
     { no: 4, name: "workspace_settings", kind: "message", T: UpdateConfigurationRequest_WorkspaceSettings, opt: true },
   ]);
