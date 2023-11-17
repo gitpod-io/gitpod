@@ -12,8 +12,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var configDeleteCmd = &cobra.Command{
-	Use:   "delete-context <name>",
+var configContextDeleteCmd = &cobra.Command{
+	Use:   "delete <name>",
 	Short: "Deletes a context",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
@@ -54,5 +54,5 @@ var configDeleteCmd = &cobra.Command{
 }
 
 func init() {
-	configCmd.AddCommand(configDeleteCmd)
+	configContextCmd.AddCommand(configContextDeleteCmd)
 }

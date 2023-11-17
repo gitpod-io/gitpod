@@ -10,8 +10,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var configGetContextsCmd = &cobra.Command{
-	Use:   "get-contexts",
+var configContextsListCmd = &cobra.Command{
+	Use:   "list",
 	Short: "Lists the available contexts",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
@@ -28,7 +28,7 @@ var configGetContextsCmd = &cobra.Command{
 			})
 		}
 
-		return WriteTabular(res, configGetContextsOpts.Format, prettyprint.WriterFormatWide)
+		return WriteTabular(res, configContextsListpts.Format, prettyprint.WriterFormatWide)
 	},
 }
 
@@ -39,11 +39,11 @@ type tabularContext struct {
 	Organization string
 }
 
-var configGetContextsOpts struct {
+var configContextsListpts struct {
 	Format formatOpts
 }
 
 func init() {
-	configCmd.AddCommand(configGetContextsCmd)
-	addFormatFlags(configGetContextsCmd, &configGetContextsOpts.Format)
+	configContextCmd.AddCommand(configContextsListCmd)
+	addFormatFlags(configContextsListCmd, &configContextsListpts.Format)
 }
