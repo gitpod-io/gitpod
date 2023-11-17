@@ -224,6 +224,6 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
     async resolveWorkspaceEnvironmentVariables(
         req: PartialMessage<ResolveWorkspaceEnvironmentVariablesRequest>,
     ): Promise<ResolveWorkspaceEnvironmentVariablesResponse> {
-        throw new Error("Not implemented");
+        throw new ConnectError("Unimplemented", Code.Unimplemented);
     }
 }

@@ -1830,11 +1830,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("setEnvVar");
         const userEnvVars = await this.envVarService.listUserEnvVars(user.id, user.id);
         if (userEnvVars.find((v) => v.name == variable.name && v.repositoryPattern == variable.repositoryPattern)) {
-            return this.envVarService.updateUserEnvVar(user.id, user.id, variable, (envvar: UserEnvVar) => {
+            await this.envVarService.updateUserEnvVar(user.id, user.id, variable, (envvar: UserEnvVar) => {
                 return this.guardAccess({ kind: "envVar", subject: envvar }, "update");
             });
         } else {
-            return this.envVarService.addUserEnvVar(user.id, user.id, variable, (envvar: UserEnvVar) => {
+            await this.envVarService.addUserEnvVar(user.id, user.id, variable, (envvar: UserEnvVar) => {
                 return this.guardAccess({ kind: "envVar", subject: envvar }, "create");
             });
         }
@@ -1882,9 +1882,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardProjectOperation(user, projectId, "update");
         const envVars = await this.envVarService.listProjectEnvVars(user.id, projectId);
         if (envVars.find((v) => v.name === name)) {
-            return this.envVarService.updateProjectEnvVar(user.id, projectId, { name, value, censored });
+            await this.envVarService.updateProjectEnvVar(user.id, projectId, { name, value, censored });
         } else {
-            return this.envVarService.addProjectEnvVar(user.id, projectId, { name, value, censored });
+            await this.envVarService.addProjectEnvVar(user.id, projectId, { name, value, censored });
         }
     }
 

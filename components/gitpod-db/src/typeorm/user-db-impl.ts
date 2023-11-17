@@ -50,6 +50,7 @@ import { DataCache } from "../data-cache";
 import { TransactionalDBImpl } from "./transactional-db-impl";
 import { TypeORM } from "./typeorm";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { filter } from "../utils";
 
 // OAuth token expiry
 const tokenExpiryInFuture = new DateInterval("7d");
@@ -395,9 +396,9 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
         });
     }
 
-    public async addEnvVar(userId: string, envVar: UserEnvVarValue): Promise<void> {
+    public async addEnvVar(userId: string, envVar: UserEnvVarValue): Promise<UserEnvVar> {
         const repo = await this.getUserEnvVarRepo();
-        await repo.save({
+        return await repo.save({
             id: uuidv4(),
             userId,
             name: envVar.name,
@@ -406,15 +407,22 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
         });
     }
 
-    public async updateEnvVar(userId: string, envVar: Required<UserEnvVarValue>): Promise<void> {
-        const repo = await this.getUserEnvVarRepo();
-        await repo.update(
-            {
-                id: envVar.id,
-                userId: userId,
-            },
-            { name: envVar.name, repositoryPattern: envVar.repositoryPattern, value: envVar.value },
-        );
+    public async updateEnvVar(userId: string, envVar: Partial<UserEnvVarValue>): Promise<UserEnvVar | undefined> {
+        if (!envVar.id) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "An environment variable with this ID could not be found");
+        }
+
+        return await this.transaction(async (_, ctx) => {
+            const envVarRepo = ctx.entityManager.getRepository<DBUserEnvVar>(DBUserEnvVar);
+
+            await envVarRepo.update(
+                { id: envVar.id, userId },
+                filter(envVar, (_, v) => v !== null && v !== undefined),
+            );
+
+            const found = await envVarRepo.findOne({ id: envVar.id, userId, deleted: false });
+            return found;
+        });
     }
 
     public async getEnvVars(userId: string): Promise<UserEnvVar[]> {

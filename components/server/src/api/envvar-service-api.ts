@@ -33,6 +33,8 @@ import { EnvVarService } from "../user/env-var-service";
 import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
 import { ProjectEnvVarWithValue, UserEnvVar, UserEnvVarValue } from "@gitpod/gitpod-protocol";
 import { WorkspaceService } from "../workspace/workspace-service";
+import { ctxUserId } from "../util/request-context";
+import { validate as uuidValidate } from "uuid";
 
 @injectable()
 export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof EnvironmentVariableServiceInterface> {
@@ -47,10 +49,10 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
 
     async listUserEnvironmentVariables(
         req: ListUserEnvironmentVariablesRequest,
-        context: HandlerContext,
+        _: HandlerContext,
     ): Promise<ListUserEnvironmentVariablesResponse> {
         const response = new ListUserEnvironmentVariablesResponse();
-        const userEnvVars = await this.envVarService.listUserEnvVars(context.user.id, context.user.id);
+        const userEnvVars = await this.envVarService.listUserEnvVars(ctxUserId(), ctxUserId());
         response.environmentVariables = userEnvVars.map((i) => this.apiConverter.toUserEnvironmentVariable(i));
 
         return response;
@@ -58,15 +60,15 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
 
     async updateUserEnvironmentVariable(
         req: UpdateUserEnvironmentVariableRequest,
-        context: HandlerContext,
+        _: HandlerContext,
     ): Promise<UpdateUserEnvironmentVariableResponse> {
-        if (!req.envVarId) {
-            throw new ConnectError("envVarId is not set", Code.InvalidArgument);
+        if (!uuidValidate(req.envVarId)) {
+            throw new ConnectError("envVarId is required", Code.InvalidArgument);
         }
 
         const response = new UpdateUserEnvironmentVariableResponse();
 
-        const userEnvVars = await this.envVarService.listUserEnvVars(context.user.id, context.user.id);
+        const userEnvVars = await this.envVarService.listUserEnvVars(ctxUserId(), ctxUserId());
         const userEnvVarfound = userEnvVars.find((i) => i.id === req.envVarId);
         if (userEnvVarfound) {
             const variable: UserEnvVarValue = {
@@ -74,17 +76,10 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
                 value: req.value ?? userEnvVarfound.value,
                 repositoryPattern: req.repositoryPattern ?? userEnvVarfound.repositoryPattern,
             };
-            variable.repositoryPattern = UserEnvVar.normalizeRepoPattern(variable.repositoryPattern);
 
-            await this.envVarService.updateUserEnvVar(context.user.id, context.user.id, variable);
+            const updatedUsertEnvVar = await this.envVarService.updateUserEnvVar(ctxUserId(), ctxUserId(), variable);
 
-            const updatedUserEnvVars = await this.envVarService.listUserEnvVars(context.user.id, context.user.id);
-            const updatedUserEnvVar = updatedUserEnvVars.find((i) => i.id === req.envVarId);
-            if (!updatedUserEnvVar) {
-                throw new ConnectError("could not update env variable", Code.Internal);
-            }
-
-            response.environmentVariable = this.apiConverter.toUserEnvironmentVariable(updatedUserEnvVar);
+            response.environmentVariable = this.apiConverter.toUserEnvironmentVariable(updatedUsertEnvVar);
             return response;
         }
 
@@ -93,7 +88,7 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
 
     async createUserEnvironmentVariable(
         req: CreateUserEnvironmentVariableRequest,
-        context: HandlerContext,
+        _: HandlerContext,
     ): Promise<CreateUserEnvironmentVariableResponse> {
         const response = new CreateUserEnvironmentVariableResponse();
 
@@ -104,25 +99,20 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
         };
         variable.repositoryPattern = UserEnvVar.normalizeRepoPattern(variable.repositoryPattern);
 
-        await this.envVarService.addUserEnvVar(context.user.id, context.user.id, variable);
-
-        const updatedUserEnvVars = await this.envVarService.listUserEnvVars(context.user.id, context.user.id);
-        const updatedUserEnvVar = updatedUserEnvVars.find(
-            (v) => v.name === variable.name && v.repositoryPattern === variable.repositoryPattern,
-        );
-        if (!updatedUserEnvVar) {
-            throw new ConnectError("could not create env variable", Code.Internal);
-        }
-
-        response.environmentVariable = this.apiConverter.toUserEnvironmentVariable(updatedUserEnvVar);
+        const result = await this.envVarService.addUserEnvVar(ctxUserId(), ctxUserId(), variable);
+        response.environmentVariable = this.apiConverter.toUserEnvironmentVariable(result);
 
         return response;
     }
 
     async deleteUserEnvironmentVariable(
         req: DeleteUserEnvironmentVariableRequest,
-        context: HandlerContext,
+        _: HandlerContext,
     ): Promise<DeleteUserEnvironmentVariableResponse> {
+        if (!uuidValidate(req.envVarId)) {
+            throw new ConnectError("envVarId is required", Code.InvalidArgument);
+        }
+
         const variable: UserEnvVarValue = {
             id: req.envVarId,
             name: "",
@@ -130,7 +120,7 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
             repositoryPattern: "",
         };
 
-        await this.envVarService.deleteUserEnvVar(context.user.id, context.user.id, variable);
+        await this.envVarService.deleteUserEnvVar(ctxUserId(), ctxUserId(), variable);
 
         const response = new DeleteUserEnvironmentVariableResponse();
         return response;
@@ -138,10 +128,14 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
 
     async listConfigurationEnvironmentVariables(
         req: ListConfigurationEnvironmentVariablesRequest,
-        context: HandlerContext,
+        _: HandlerContext,
     ): Promise<ListConfigurationEnvironmentVariablesResponse> {
+        if (!uuidValidate(req.configurationId)) {
+            throw new ConnectError("configurationId is required", Code.InvalidArgument);
+        }
+
         const response = new ListConfigurationEnvironmentVariablesResponse();
-        const projectEnvVars = await this.envVarService.listProjectEnvVars(context.user.id, req.configurationId);
+        const projectEnvVars = await this.envVarService.listProjectEnvVars(ctxUserId(), req.configurationId);
         response.environmentVariables = projectEnvVars.map((i) =>
             this.apiConverter.toConfigurationEnvironmentVariable(i),
         );
@@ -151,42 +145,33 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
 
     async updateConfigurationEnvironmentVariable(
         req: UpdateConfigurationEnvironmentVariableRequest,
-        context: HandlerContext,
+        _: HandlerContext,
     ): Promise<UpdateConfigurationEnvironmentVariableResponse> {
-        const response = new UpdateConfigurationEnvironmentVariableResponse();
-
-        const projectEnvVars = await this.envVarService.listProjectEnvVars(context.user.id, req.configurationId);
-        const projectEnvVarfound = projectEnvVars.find((i) => i.id === req.envVarId);
-        if (projectEnvVarfound) {
-            const variable: ProjectEnvVarWithValue = {
-                name: req.name ?? projectEnvVarfound.name,
-                value: "",
-                censored:
-                    (req.admission === EnvironmentVariableAdmission.PREBUILD ? true : false) ??
-                    projectEnvVarfound.censored,
-            };
-
-            await this.envVarService.updateProjectEnvVar(context.user.id, req.configurationId, variable);
-
-            const updatedProjectEnvVars = await this.envVarService.listProjectEnvVars(
-                context.user.id,
-                req.configurationId,
-            );
-            const updatedProjectEnvVar = updatedProjectEnvVars.find((i) => i.id === req.envVarId);
-            if (!updatedProjectEnvVar) {
-                throw new ConnectError("could not update env variable", Code.Internal);
-            }
-
-            response.environmentVariable = this.apiConverter.toConfigurationEnvironmentVariable(updatedProjectEnvVar);
-            return response;
+        if (!uuidValidate(req.configurationId)) {
+            throw new ConnectError("configurationId is required", Code.InvalidArgument);
+        }
+        if (!uuidValidate(req.envVarId)) {
+            throw new ConnectError("envVarId is required", Code.InvalidArgument);
         }
 
-        throw new ConnectError("env variable not found", Code.InvalidArgument);
+        const response = new UpdateConfigurationEnvironmentVariableResponse();
+
+        const updatedProjectEnvVar = await this.envVarService.updateProjectEnvVar(ctxUserId(), req.configurationId, {
+            id: req.envVarId,
+            censored: req.admission
+                ? req.admission === EnvironmentVariableAdmission.PREBUILD
+                    ? true
+                    : false
+                : undefined,
+        });
+
+        response.environmentVariable = this.apiConverter.toConfigurationEnvironmentVariable(updatedProjectEnvVar);
+        return response;
     }
 
     async createConfigurationEnvironmentVariable(
         req: CreateConfigurationEnvironmentVariableRequest,
-        context: HandlerContext,
+        _: HandlerContext,
     ): Promise<CreateConfigurationEnvironmentVariableResponse> {
         const response = new CreateConfigurationEnvironmentVariableResponse();
 
@@ -196,24 +181,21 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
             censored: req.admission === EnvironmentVariableAdmission.PREBUILD ? true : false,
         };
 
-        await this.envVarService.addProjectEnvVar(context.user.id, req.configurationId, variable);
-
-        const updatedProjectEnvVars = await this.envVarService.listProjectEnvVars(context.user.id, req.configurationId);
-        const updatedProjectEnvVar = updatedProjectEnvVars.find((v) => v.name === variable.name);
-        if (!updatedProjectEnvVar) {
-            throw new ConnectError("could not create env variable", Code.Internal);
-        }
-
-        response.environmentVariable = this.apiConverter.toConfigurationEnvironmentVariable(updatedProjectEnvVar);
+        const result = await this.envVarService.addProjectEnvVar(ctxUserId(), req.configurationId, variable);
+        response.environmentVariable = this.apiConverter.toConfigurationEnvironmentVariable(result);
 
         return response;
     }
 
     async deleteConfigurationEnvironmentVariable(
         req: DeleteConfigurationEnvironmentVariableRequest,
-        context: HandlerContext,
+        _: HandlerContext,
     ): Promise<DeleteConfigurationEnvironmentVariableResponse> {
-        await this.envVarService.deleteProjectEnvVar(context.user.id, req.envVarId);
+        if (!uuidValidate(req.envVarId)) {
+            throw new ConnectError("envVarId is required", Code.InvalidArgument);
+        }
+
+        await this.envVarService.deleteProjectEnvVar(ctxUserId(), req.envVarId);
 
         const response = new DeleteConfigurationEnvironmentVariableResponse();
         return response;
@@ -221,11 +203,11 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
 
     async resolveWorkspaceEnvironmentVariables(
         req: ResolveWorkspaceEnvironmentVariablesRequest,
-        context: HandlerContext,
+        _: HandlerContext,
     ): Promise<ResolveWorkspaceEnvironmentVariablesResponse> {
         const response = new ResolveWorkspaceEnvironmentVariablesResponse();
 
-        const { workspace } = await this.workspaceService.getWorkspace(context.user.id, req.workspaceId);
+        const { workspace } = await this.workspaceService.getWorkspace(ctxUserId(), req.workspaceId);
         const envVars = await this.envVarService.resolveEnvVariables(
             workspace.ownerId,
             workspace.projectId,
