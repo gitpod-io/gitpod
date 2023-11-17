@@ -146,9 +146,6 @@ import { LinkedInService } from "../linkedin-service";
 import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
 import { IncrementalWorkspaceService } from "../prebuilds/incremental-workspace-service";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
-import { GitHubAppSupport } from "../github/github-app-support";
-import { GitLabAppSupport } from "../gitlab/gitlab-app-support";
-import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
 import { StripeService } from "../billing/stripe-service";
 import {
     BillingServiceClient,
@@ -195,10 +192,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(TracedWorkspaceDB) private readonly workspaceDb: DBWithTracing<WorkspaceDB>,
         @inject(ContextParser) private contextParser: ContextParser,
         @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
-
-        @inject(GitHubAppSupport) private readonly githubAppSupport: GitHubAppSupport,
-        @inject(GitLabAppSupport) private readonly gitLabAppSupport: GitLabAppSupport,
-        @inject(BitbucketAppSupport) private readonly bitbucketAppSupport: BitbucketAppSupport,
 
         @inject(PrebuildManager) private readonly prebuildManager: PrebuildManager,
         @inject(IncrementalWorkspaceService) private readonly incrementalPrebuildsService: IncrementalWorkspaceService,
@@ -1265,7 +1258,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         );
     }
 
-    // Projects
+    /**
+     *
+     * @deprecated
+     */
     async getProviderRepositoriesForUser(
         ctx: TraceContext,
         params: GetProviderRepositoriesParams,
@@ -1273,42 +1269,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<ProviderRepository[]> {
         traceAPIParams(ctx, { params });
 
-        const user = await this.checkAndBlockUser("getProviderRepositoriesForUser");
-
-        const repositories: ProviderRepository[] = [];
-        const providerHost = params.provider;
-        const provider = (await this.getAuthProviders(ctx)).find((ap) => ap.host === providerHost);
-
-        if (providerHost === "github.com" && this.config.githubApp?.enabled) {
-            repositories.push(...(await this.githubAppSupport.getProviderRepositoriesForUser({ user, ...params })));
-        } else if (provider?.authProviderType === "GitHub") {
-            const hostContext = this.hostContextProvider.get(providerHost);
-            if (hostContext?.services) {
-                repositories.push(
-                    ...(await hostContext.services.repositoryService.getRepositoriesForAutomatedPrebuilds(user, {})),
-                );
-            }
-        } else if (providerHost === "bitbucket.org" && provider) {
-            repositories.push(...(await this.bitbucketAppSupport.getProviderRepositoriesForUser({ user, provider })));
-        } else if (provider?.authProviderType === "BitbucketServer") {
-            const hostContext = this.hostContextProvider.get(providerHost);
-            if (hostContext?.services) {
-                repositories.push(
-                    ...(await hostContext.services.repositoryService.getRepositoriesForAutomatedPrebuilds(user, {
-                        searchString: params.searchString,
-                        cancellationToken,
-                        limit: params.limit,
-                        maxPages: params.maxPages,
-                    })),
-                );
-            }
-        } else if (provider?.authProviderType === "GitLab") {
-            repositories.push(...(await this.gitLabAppSupport.getProviderRepositoriesForUser({ user, provider })));
-        } else {
-            log.info({ userId: user.id }, `Unsupported provider: "${params.provider}"`, { params });
-        }
-
-        return repositories;
+        await this.checkAndBlockUser("getProviderRepositoriesForUser");
+        return [];
     }
 
     async triggerPrebuild(

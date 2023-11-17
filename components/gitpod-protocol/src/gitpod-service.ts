@@ -187,6 +187,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getOnboardingState(): Promise<GitpodServer.OnboardingState>;
 
     // Projects
+    /** @deprecated no-op */
     getProviderRepositoriesForUser(
         params: GetProviderRepositoriesParams,
         cancellationToken?: CancellationToken,

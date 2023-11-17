@@ -8,7 +8,6 @@ import React, { useState } from "react";
 import { Redirect, Route, Switch, useLocation } from "react-router";
 import OAuthClientApproval from "../OauthClientApproval";
 import Menu from "../menu/Menu";
-import { projectsPathInstallGitHubApp, projectsPathNew } from "../projects/projects.routes";
 import { parseProps } from "../start/StartWorkspace";
 import {
     settingsPathAccount,
@@ -41,6 +40,7 @@ import { WebsocketClients } from "./WebsocketClients";
 import { BlockedEmailDomains } from "../admin/BlockedEmailDomains";
 import { AppNotifications } from "../AppNotifications";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { projectsPathInstallGitHubApp } from "../projects/projects.routes";
 
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Account"));
@@ -62,7 +62,6 @@ const TeamSettings = React.lazy(() => import(/* webpackPrefetch: true */ "../tea
 const TeamUsageBasedBilling = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/TeamUsageBasedBilling"));
 const SSO = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/SSO"));
 const TeamGitIntegrations = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/GitIntegrationsPage"));
-const NewProject = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/NewProject"));
 const Projects = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/Projects"));
 const Project = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/Project"));
 const ProjectSettings = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/ProjectSettings"));
@@ -136,7 +135,6 @@ export const AppRoutes = () => {
                 <AppNotifications />
                 <Switch>
                     <Route path="/new" exact component={CreateWorkspacePage} />
-                    <Route path={projectsPathNew} exact component={NewProject} />
                     <Route path="/open">
                         <Redirect to="/new" />
                     </Route>
