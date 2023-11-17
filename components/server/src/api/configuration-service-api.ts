@@ -117,14 +117,25 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "user not found");
         }
 
-        const configuration: PartialConfiguration = {
+        const update: PartialConfiguration = {
             id: req.configurationId,
-            name: req.name,
-            prebuildSettings: req.prebuildSettings,
-            workspaceSettings: req.workspaceSettings,
         };
 
-        const project = this.apiConverter.fromPartialConfiguration(configuration);
+        if (typeof req.name === "string") {
+            update.name = req.name;
+        }
+        if (req.prebuildSettings) {
+            update.prebuildSettings = req.prebuildSettings;
+        }
+        if (req.workspaceSettings) {
+            update.workspaceSettings = req.workspaceSettings;
+        }
+
+        if (Object.keys(update).length <= 1) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "nothing to update");
+        }
+
+        const project = this.apiConverter.fromPartialConfiguration(update);
 
         const updatedProject = await this.projectService.updateProject(installer, project);
 
