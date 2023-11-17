@@ -69,9 +69,9 @@ import {
     WorkspaceInstanceConditions,
     WorkspaceInstancePort,
 } from "./workspace-instance";
-import { DeepPartial } from "./util/deep-partial";
+import type { DeepPartial } from "./util/deep-partial";
 
-type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
+export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
 
 const applicationErrorCode = "application-error-code";
 const applicationErrorData = "application-error-data";

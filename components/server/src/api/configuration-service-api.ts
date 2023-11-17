@@ -7,10 +7,9 @@
 import { HandlerContext, ServiceImpl } from "@connectrpc/connect";
 import { inject, injectable } from "inversify";
 import { ConfigurationService as ConfigurationServiceInterface } from "@gitpod/public-api/lib/gitpod/v1/configuration_connect";
-import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
+import { PublicAPIConverter, PartialConfiguration } from "@gitpod/gitpod-protocol/lib/public-api-converter";
 import { ProjectsService } from "../projects/projects-service";
 import {
-    Configuration,
     CreateConfigurationRequest,
     CreateConfigurationResponse,
     DeleteConfigurationRequest,
@@ -26,7 +25,6 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 import { ctxUserId } from "../util/request-context";
 import { UserService } from "../user/user-service";
 import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
-import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 
 @injectable()
 export class ConfigurationServiceAPI implements ServiceImpl<typeof ConfigurationServiceInterface> {
@@ -121,7 +119,7 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "user not found");
         }
 
-        const configuration: DeepPartial<Configuration> = {
+        const configuration: PartialConfiguration = {
             id: req.configurationId,
             name: req.name,
         };
