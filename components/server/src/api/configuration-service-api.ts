@@ -22,6 +22,8 @@ import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ctxUserId } from "../util/request-context";
 import { UserService } from "../user/user-service";
+import { SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
+import { Project } from "@gitpod/gitpod-protocol";
 
 @injectable()
 export class ConfigurationServiceAPI implements ServiceImpl<typeof ConfigurationServiceInterface> {
@@ -87,11 +89,18 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         const currentPage = req.pagination?.page ?? 1;
         const offset = currentPage > 1 ? (currentPage - 1) * limit : 0;
 
+        const sort = req.sort?.[0];
+
+        // validate orderBy and orderDir
+        const orderBy = sort?.field || "name";
+        const sortOrder = sort?.order || SortOrder.ASC;
+        const orderDir: "ASC" | "DESC" = sortOrder === SortOrder.DESC ? "DESC" : "ASC";
+
         const { rows, total } = await this.projectService.findProjects(ctxUserId(), {
             organizationId: req.organizationId,
             searchTerm: req.searchTerm,
-            orderBy: "name",
-            orderDir: "ASC",
+            orderBy: orderBy as keyof Project,
+            orderDir,
             limit,
             offset,
         });
