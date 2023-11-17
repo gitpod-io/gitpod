@@ -6,30 +6,36 @@ package cmd
 
 import (
 	"github.com/gitpod-io/gitpod/common-go/log"
-	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
+	v1 "github.com/gitpod-io/gitpod/components/public-api/go/v1"
+	v1connect "github.com/gitpod-io/gitpod/components/public-api/go/v1/v1connect"
 	"github.com/spf13/cobra"
 )
 
 var publicApiWorkspacesListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List your workspaces",
+	Use:     "list",
+	Aliases: []string{"ls"},
+	Short:   "List your workspaces",
+	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		conn, err := newPublicAPIConn()
+		organizationID := args[0]
+
+		httpClient, address, opts, err := newConnectHttpClient()
 		if err != nil {
 			log.Log.WithError(err).Fatal()
 		}
 
-		service := v1.NewWorkspacesServiceClient(conn)
+		service := v1connect.NewWorkspaceServiceClient(httpClient, address, opts...)
 
-		resp, err := service.ListWorkspaces(cmd.Context(), &v1.ListWorkspacesRequest{})
+		cResp, err := service.ListWorkspaces(cmd.Context(), wrapReq(&v1.ListWorkspacesRequest{OrganizationId: organizationID}))
 		if err != nil {
 			log.WithError(err).Fatal("failed to retrieve workspace list")
 			return
 		}
+		resp := cResp.Msg
 
-		tpl := `ID	Owner	ContextURL	InstanceID	InstanceStatus
-{{- range .Result }}
-{{ .WorkspaceId }}	{{ .OwnerId }}	{{ .Context.ContextUrl }}	{{ .Status.Instance.InstanceId}}	{{ .Status.Instance.Status.Phase}}
+		tpl := `ID	OrganizationID	ContextURL	InstanceID	InstanceStatus
+{{- range .Workspaces }}
+{{ .Id }}	{{ .OrganizationId }}	{{ .ContextUrl }}	{{ .Status.InstanceId }}	{{ .Status.Phase.Name }}
 {{ end }}
 `
 		err = getOutputFormat(tpl, "{..id}").Print(resp)

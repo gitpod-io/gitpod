@@ -8,8 +8,11 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"net/http"
 	"os"
+	"strings"
 
+	connect "github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -68,4 +71,37 @@ func newPublicAPIConn() (*grpc.ClientConn, error) {
 	}
 
 	return conn, nil
+}
+
+type connectHttpTransport struct {
+	token string
+}
+
+func (t *connectHttpTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.URL.Path = "/public-api" + req.URL.Path
+	req.Header.Add("authorization", fmt.Sprintf("Bearer %s", t.token))
+	return http.DefaultTransport.RoundTrip(req)
+}
+
+func newConnectHttpClient() (client connect.HTTPClient, address string, opts []connect.ClientOption, err error) {
+	if publicApiCmdOpts.address == "" {
+		return nil, "", nil, fmt.Errorf("empty connection address")
+	}
+	address = publicApiCmdOpts.address
+	if !strings.Contains(publicApiCmdOpts.address, "://") {
+		address = "https://" + address
+	}
+
+	if publicApiCmdOpts.token == "" {
+		return nil, "", nil, fmt.Errorf("empty connection token. Use --token or GPCTL_PUBLICAPI_TOKEN to provide one.")
+	}
+	opts = []connect.ClientOption{
+		connect.WithProtoJSON(),
+	}
+	client = &http.Client{Transport: &connectHttpTransport{token: publicApiCmdOpts.token}}
+	return client, address, opts, nil
+}
+
+func wrapReq[T any](req *T) *connect.Request[T] {
+	return &connect.Request[T]{Msg: req}
 }
