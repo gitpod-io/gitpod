@@ -17,14 +17,12 @@ import {
     GetConfigurationRequest,
     ListConfigurationsRequest,
     ListConfigurationsResponse,
-    PrebuildSettings,
     UpdateConfigurationRequest,
 } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ctxUserId } from "../util/request-context";
 import { UserService } from "../user/user-service";
-import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 @injectable()
 export class ConfigurationServiceAPI implements ServiceImpl<typeof ConfigurationServiceInterface> {
@@ -122,9 +120,9 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         const configuration: PartialConfiguration = {
             id: req.configurationId,
             name: req.name,
+            prebuildSettings: req.prebuildSettings,
+            workspaceSettings: req.workspaceSettings,
         };
-        configuration.prebuildSettings = new PrebuildSettings(req.prebuildSettings);
-        configuration.workspaceSettings = new Workspace(req.workspaceSettings);
 
         const project = this.apiConverter.fromPartialConfiguration(configuration);
 
