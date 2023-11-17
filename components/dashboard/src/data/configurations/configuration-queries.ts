@@ -86,7 +86,7 @@ export const useDeleteConfiguration = () => {
 
 type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
 
-export const useUpdateConfiguration = () => {
+export const useConfigurationMutation = () => {
     const queryClient = useQueryClient();
 
     return useMutation<Configuration, Error, PartialConfiguration>({
