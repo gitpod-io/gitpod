@@ -89,12 +89,17 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         const currentPage = req.pagination?.page ?? 1;
         const offset = currentPage > 1 ? (currentPage - 1) * limit : 0;
 
+        // Sort code start
         const sort = req.sort?.[0];
-
-        // validate orderBy and orderDir
         const orderBy = sort?.field || "name";
         const sortOrder = sort?.order || SortOrder.ASC;
         const orderDir: "ASC" | "DESC" = sortOrder === SortOrder.DESC ? "DESC" : "ASC";
+
+        // validate orderBy and orderDir
+        if (!["name", "creationTime"].includes(orderBy as string)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "orderBy must be one of 'name' or 'creationTime'");
+        }
+        // Sort code end
 
         const { rows, total } = await this.projectService.findProjects(ctxUserId(), {
             organizationId: req.organizationId,
