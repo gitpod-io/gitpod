@@ -22,15 +22,8 @@ type ListConfigurationsArgs = {
 export const useListConfigurations = ({ searchTerm = "", pageSize }: ListConfigurationsArgs) => {
     const { data: org } = useCurrentOrg();
 
-    // Debounce searchTerm for query
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [_, setSearchTerm, debouncedSearchTerm] = useStateWithDebounce(searchTerm);
-    useEffect(() => {
-        setSearchTerm(searchTerm);
-    }, [searchTerm, setSearchTerm]);
-
     return useInfiniteQuery(
-        getListConfigurationsQueryKey(org?.id || "", { searchTerm: debouncedSearchTerm, pageSize }),
+        getListConfigurationsQueryKey(org?.id || "", { searchTerm, pageSize }),
         // QueryFn receives the past page's pageParam as it's argument
         async ({ pageParam: nextToken }) => {
             if (!org) {
@@ -39,7 +32,7 @@ export const useListConfigurations = ({ searchTerm = "", pageSize }: ListConfigu
 
             const { configurations, pagination } = await configurationClient.listConfigurations({
                 organizationId: org.id,
-                searchTerm: debouncedSearchTerm,
+                searchTerm,
                 pagination: { pageSize, token: nextToken },
             });
 
