@@ -50,7 +50,7 @@ export const useListConfigurations = ({ searchTerm = "", pageSize }: ListConfigu
         {
             enabled: !!org,
             keepPreviousData: true,
-            // This enables the query to know if there are nore pages, and passes the last page's nextToken to the queryFn
+            // This enables the query to know if there are more pages, and passes the last page's nextToken to the queryFn
             getNextPageParam: (lastPage) => {
                 // Must ensure we return undefined if there are no more pages
                 return lastPage.pagination?.nextToken || undefined;
