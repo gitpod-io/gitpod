@@ -27,6 +27,9 @@ const RepositoryListPage: FC = () => {
     const [searchTerm, setSearchTerm, searchTermDebounced] = useStateWithDebounce(params.get("search") || "");
     const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
 
+    // const [sortBy, setSortBy] = useState<"name" | "creationTime">("name");
+    // const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
     // Search/Filter params tracked in url query params
     useEffect(() => {
         const params = searchTermDebounced ? `?search=${encodeURIComponent(searchTermDebounced)}` : "";
@@ -36,6 +39,8 @@ const RepositoryListPage: FC = () => {
     const { data, isLoading, isFetching, isFetchingNextPage, isPreviousData, hasNextPage, fetchNextPage } =
         useListConfigurations({
             searchTerm: searchTermDebounced,
+            sortBy: "name",
+            sortOrder: "asc",
         });
 
     const handleRepoImported = useCallback(
