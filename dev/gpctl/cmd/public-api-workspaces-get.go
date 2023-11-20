@@ -6,7 +6,8 @@ package cmd
 
 import (
 	"github.com/gitpod-io/gitpod/common-go/log"
-	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
+	v1 "github.com/gitpod-io/gitpod/components/public-api/go/v1"
+	v1connect "github.com/gitpod-io/gitpod/components/public-api/go/v1/v1connect"
 	"github.com/spf13/cobra"
 )
 
@@ -17,25 +18,26 @@ var publicApiWorkspacesGetCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		workspaceID := args[0]
 
-		conn, err := newPublicAPIConn()
+		httpClient, address, opts, err := newConnectHttpClient()
 		if err != nil {
 			log.Log.WithError(err).Fatal()
 		}
 
-		service := v1.NewWorkspacesServiceClient(conn)
+		service := v1connect.NewWorkspaceServiceClient(httpClient, address, opts...)
 
 		log.Log.Debugf("Retrieving workspace ID: %s", workspaceID)
-		resp, err := service.GetWorkspace(cmd.Context(), &v1.GetWorkspaceRequest{WorkspaceId: workspaceID})
+		cResp, err := service.GetWorkspace(cmd.Context(), wrapReq(&v1.GetWorkspaceRequest{WorkspaceId: workspaceID}))
 		if err != nil {
 			log.WithError(err).Fatalf("failed to retrieve workspace (ID: %s)", workspaceID)
 			return
 		}
+		resp := cResp.Msg
 
-		tpl := `ID:	{{ .Result.WorkspaceId }}
-Owner:	{{ .Result.OwnerId }}
-ContextURL:	{{ .Result.Context.ContextUrl }}
-InstanceID:	{{ .Result.Status.Instance.InstanceId }}
-InstanceStatus:	{{ .Result.Status.Instance.Status.Phase }}
+		tpl := `ID:	{{ .Workspace.Id }}
+OrganizationID:	{{ .Workspace.OrganizationId }}
+ContextURL:	{{ .Workspace.ContextUrl }}
+InstanceID:	{{ .Workspace.Status.InstanceId }}
+InstanceStatus:	{{ .Workspace.Status.Phase.Name }}
 `
 		err = getOutputFormat(tpl, "{..result.workspace_id}").Print(resp)
 		if err != nil {

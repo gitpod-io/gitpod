@@ -503,11 +503,13 @@ export class Authorizer {
     }
 }
 
-export async function isFgaChecksEnabled(userId: string): Promise<boolean> {
+export async function isFgaChecksEnabled(userId: string | undefined): Promise<boolean> {
     return getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
-        user: {
-            id: userId,
-        },
+        user: userId
+            ? {
+                  id: userId,
+              }
+            : undefined,
     });
 }
 

@@ -27,6 +27,7 @@ import { Config } from "../config";
 import { OrganizationService } from "../orgs/organization-service";
 import { ProjectsService } from "../projects/projects-service";
 import { AuthProviderService } from "../auth/auth-provider-service";
+import { BearerAuth } from "../auth/bearer-authenticator";
 
 const expect = chai.expect;
 
@@ -45,6 +46,7 @@ export class APITeamsServiceSpec {
         this.container.bind(WorkspaceService).toConstantValue({} as WorkspaceService);
         this.container.bind(OrganizationService).toConstantValue({} as OrganizationService);
         this.container.bind(UserAuthentication).toConstantValue({} as UserAuthentication);
+        this.container.bind(BearerAuth).toConstantValue({} as BearerAuth);
         this.container.bind(SessionHandler).toConstantValue({} as SessionHandler);
         this.container.bind(Config).toConstantValue({} as Config);
         this.container.bind(Redis).toConstantValue({} as Redis);
