@@ -472,12 +472,19 @@ export class PublicAPIConverter {
         const workspaceClasses = this.fromWorkspaceSettings(configuration.workspaceSettings?.workspaceClass);
         const result: PartialProject = {
             id: configuration.id,
-            name: configuration.name,
-            settings: {
+        };
+
+        if (configuration.name) {
+            result.name = configuration.name;
+        }
+
+        if (Object.keys(prebuilds).length > 0 || Object.keys(workspaceClasses).length > 0) {
+            result.settings = {
                 prebuilds,
                 workspaceClasses,
-            },
-        };
+            };
+        }
+
         return result;
     }
 
