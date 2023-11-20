@@ -7,7 +7,6 @@ package cmd
 import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/v1"
-	v1connect "github.com/gitpod-io/gitpod/components/public-api/go/v1/v1connect"
 	"github.com/spf13/cobra"
 )
 
@@ -18,20 +17,19 @@ var publicApiWorkspacesGetCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		workspaceID := args[0]
 
-		httpClient, address, opts, err := newConnectHttpClient()
+		conn, err := newPublicAPIConn()
 		if err != nil {
 			log.Log.WithError(err).Fatal()
 		}
 
-		service := v1connect.NewWorkspaceServiceClient(httpClient, address, opts...)
+		service := v1.NewWorkspaceServiceClient(conn)
 
 		log.Log.Debugf("Retrieving workspace ID: %s", workspaceID)
-		cResp, err := service.GetWorkspace(cmd.Context(), wrapReq(&v1.GetWorkspaceRequest{WorkspaceId: workspaceID}))
+		resp, err := service.GetWorkspace(cmd.Context(), &v1.GetWorkspaceRequest{WorkspaceId: workspaceID})
 		if err != nil {
 			log.WithError(err).Fatalf("failed to retrieve workspace (ID: %s)", workspaceID)
 			return
 		}
-		resp := cResp.Msg
 
 		tpl := `ID:	{{ .Workspace.Id }}
 OrganizationID:	{{ .Workspace.OrganizationId }}
