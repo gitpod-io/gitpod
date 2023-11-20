@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package gitpod.v1;
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+
+enum SortOrder {
+  SORT_ORDER_UNSPECIFIED = 0;
+  SORT_ORDER_ASC = 1;
+  SORT_ORDER_DESC = 2;
+}
+
+message Sort {
+  string field = 1;
+  SortOrder order = 2;
+}
