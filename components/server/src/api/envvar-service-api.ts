@@ -31,7 +31,7 @@ import {
 import { inject, injectable } from "inversify";
 import { EnvVarService } from "../user/env-var-service";
 import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
-import { ProjectEnvVarWithValue, UserEnvVar, UserEnvVarValue } from "@gitpod/gitpod-protocol";
+import { ProjectEnvVarWithValue, UserEnvVarValue } from "@gitpod/gitpod-protocol";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { ctxUserId } from "../util/request-context";
 import { validate as uuidValidate } from "uuid";
@@ -97,7 +97,6 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
             value: req.value,
             repositoryPattern: req.repositoryPattern,
         };
-        variable.repositoryPattern = UserEnvVar.normalizeRepoPattern(variable.repositoryPattern);
 
         const result = await this.envVarService.addUserEnvVar(ctxUserId(), ctxUserId(), variable);
         response.environmentVariable = this.apiConverter.toUserEnvironmentVariable(result);
@@ -154,8 +153,6 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
             throw new ConnectError("envVarId is required", Code.InvalidArgument);
         }
 
-        const response = new UpdateConfigurationEnvironmentVariableResponse();
-
         const updatedProjectEnvVar = await this.envVarService.updateProjectEnvVar(ctxUserId(), req.configurationId, {
             id: req.envVarId,
             censored: req.admission
@@ -165,6 +162,7 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
                 : undefined,
         });
 
+        const response = new UpdateConfigurationEnvironmentVariableResponse();
         response.environmentVariable = this.apiConverter.toConfigurationEnvironmentVariable(updatedProjectEnvVar);
         return response;
     }
@@ -173,8 +171,6 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
         req: CreateConfigurationEnvironmentVariableRequest,
         _: HandlerContext,
     ): Promise<CreateConfigurationEnvironmentVariableResponse> {
-        const response = new CreateConfigurationEnvironmentVariableResponse();
-
         const variable: ProjectEnvVarWithValue = {
             name: req.name,
             value: req.value,
@@ -182,8 +178,9 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
         };
 
         const result = await this.envVarService.addProjectEnvVar(ctxUserId(), req.configurationId, variable);
-        response.environmentVariable = this.apiConverter.toConfigurationEnvironmentVariable(result);
 
+        const response = new CreateConfigurationEnvironmentVariableResponse();
+        response.environmentVariable = this.apiConverter.toConfigurationEnvironmentVariable(result);
         return response;
     }
 

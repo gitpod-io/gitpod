@@ -416,7 +416,7 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
             const envVarRepo = ctx.entityManager.getRepository<DBUserEnvVar>(DBUserEnvVar);
 
             await envVarRepo.update(
-                { id: envVar.id, userId },
+                { id: envVar.id, userId, deleted: false },
                 filter(envVar, (_, v) => v !== null && v !== undefined),
             );
 

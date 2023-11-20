@@ -47,7 +47,7 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
         req: PartialMessage<UpdateUserEnvironmentVariableRequest>,
     ): Promise<UpdateUserEnvironmentVariableResponse> {
         if (!req.envVarId) {
-            throw new ConnectError("id is not set", Code.InvalidArgument);
+            throw new ConnectError("envVarId is required", Code.InvalidArgument);
         }
 
         const response = new UpdateUserEnvironmentVariableResponse();
@@ -81,7 +81,7 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
         req: PartialMessage<CreateUserEnvironmentVariableRequest>,
     ): Promise<CreateUserEnvironmentVariableResponse> {
         if (!req.name || !req.value || !req.repositoryPattern) {
-            throw new ConnectError("invalid argument", Code.InvalidArgument);
+            throw new ConnectError("name, value and repositoryPattern are required", Code.InvalidArgument);
         }
 
         const response = new CreateUserEnvironmentVariableResponse();
@@ -112,7 +112,7 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
         req: PartialMessage<DeleteUserEnvironmentVariableRequest>,
     ): Promise<DeleteUserEnvironmentVariableResponse> {
         if (!req.envVarId) {
-            throw new ConnectError("invalid argument", Code.InvalidArgument);
+            throw new ConnectError("envVarId is required", Code.InvalidArgument);
         }
 
         const variable: UserEnvVarValue = {
@@ -132,7 +132,7 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
         req: PartialMessage<ListConfigurationEnvironmentVariablesRequest>,
     ): Promise<ListConfigurationEnvironmentVariablesResponse> {
         if (!req.configurationId) {
-            throw new ConnectError("configurationId is not set", Code.InvalidArgument);
+            throw new ConnectError("configurationId is required", Code.InvalidArgument);
         }
 
         const result = new ListConfigurationEnvironmentVariablesResponse();
@@ -146,10 +146,10 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
         req: PartialMessage<UpdateConfigurationEnvironmentVariableRequest>,
     ): Promise<UpdateConfigurationEnvironmentVariableResponse> {
         if (!req.envVarId) {
-            throw new ConnectError("envVarId is not set", Code.InvalidArgument);
+            throw new ConnectError("envVarId is required", Code.InvalidArgument);
         }
         if (!req.configurationId) {
-            throw new ConnectError("configurationId is not set", Code.InvalidArgument);
+            throw new ConnectError("configurationId is required", Code.InvalidArgument);
         }
 
         const response = new UpdateConfigurationEnvironmentVariableResponse();
@@ -183,7 +183,7 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
         req: PartialMessage<CreateConfigurationEnvironmentVariableRequest>,
     ): Promise<CreateConfigurationEnvironmentVariableResponse> {
         if (!req.configurationId || !req.name || !req.value) {
-            throw new ConnectError("invalid argument", Code.InvalidArgument);
+            throw new ConnectError("configurationId, name and value are required", Code.InvalidArgument);
         }
 
         const response = new CreateConfigurationEnvironmentVariableResponse();
@@ -212,7 +212,7 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
         req: PartialMessage<DeleteConfigurationEnvironmentVariableRequest>,
     ): Promise<DeleteConfigurationEnvironmentVariableResponse> {
         if (!req.envVarId) {
-            throw new ConnectError("invalid argument", Code.InvalidArgument);
+            throw new ConnectError("envVarId is required", Code.InvalidArgument);
         }
 
         await getGitpodService().server.deleteProjectEnvironmentVariable(req.envVarId);
