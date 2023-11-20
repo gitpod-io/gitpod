@@ -84,7 +84,7 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
             return response;
         }
 
-        throw new ConnectError("env variable not found", Code.InvalidArgument);
+        throw new ConnectError("env variable not found", Code.NotFound);
     }
 
     async createUserEnvironmentVariable(

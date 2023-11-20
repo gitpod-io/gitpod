@@ -75,7 +75,7 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
             return response;
         }
 
-        throw new ConnectError("env variable not found", Code.InvalidArgument);
+        throw new ConnectError("env variable not found", Code.NotFound);
     }
 
     async createUserEnvironmentVariable(
@@ -177,7 +177,7 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
             return response;
         }
 
-        throw new ConnectError("env variable not found", Code.InvalidArgument);
+        throw new ConnectError("env variable not found", Code.NotFound);
     }
 
     async createConfigurationEnvironmentVariable(
