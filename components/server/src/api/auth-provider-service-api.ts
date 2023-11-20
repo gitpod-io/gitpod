@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Code, ConnectError, HandlerContext, ServiceImpl } from "@connectrpc/connect";
+import { HandlerContext, ServiceImpl } from "@connectrpc/connect";
 import { AuthProviderService as AuthProviderServiceInterface } from "@gitpod/public-api/lib/gitpod/v1/authprovider_connect";
 import { inject, injectable } from "inversify";
 import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
@@ -29,6 +29,7 @@ import { validate as uuidValidate } from "uuid";
 import { selectPage } from "./pagination";
 import { ctxUserId } from "../util/request-context";
 import { UserService } from "../user/user-service";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 @injectable()
 export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderServiceInterface> {
@@ -46,7 +47,7 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
 
         if (organizationId) {
             if (!uuidValidate(organizationId)) {
-                throw new ConnectError("organizationId is required", Code.InvalidArgument);
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
             }
 
             const result = await this.authProviderService.createOrgAuthProvider(ctxUserId(), {
@@ -73,12 +74,12 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
     }
     async getAuthProvider(request: GetAuthProviderRequest, _: HandlerContext): Promise<GetAuthProviderResponse> {
         if (!request.authProviderId) {
-            throw new ConnectError("authProviderId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "authProviderId is required");
         }
 
         const authProvider = await this.authProviderService.getAuthProvider(ctxUserId(), request.authProviderId);
         if (!authProvider) {
-            throw new ConnectError("Provider not found.", Code.NotFound);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Provider not found.");
         }
 
         return new GetAuthProviderResponse({
@@ -92,7 +93,7 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
         const organizationId = target.case === "organizationId" ? target.value : "";
 
         if (!uuidValidate(organizationId) && !uuidValidate(ownerId)) {
-            throw new ConnectError("organizationId or ownerId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId or ownerId is required");
         }
 
         const authProviders = organizationId
@@ -141,17 +142,17 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
         _: HandlerContext,
     ): Promise<UpdateAuthProviderResponse> {
         if (!request.authProviderId) {
-            throw new ConnectError("authProviderId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "authProviderId is required");
         }
         const clientId = request.clientId;
         const clientSecret = request.clientSecret;
         if (!clientId && !clientSecret) {
-            throw new ConnectError("clientId or clientSecret are required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "clientId or clientSecret are required");
         }
 
         const authProvider = await this.authProviderService.getAuthProvider(ctxUserId(), request.authProviderId);
         if (!authProvider) {
-            throw new ConnectError("Provider not found.", Code.NotFound);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Provider not found.");
         }
 
         let entry: AuthProviderEntry;
@@ -181,12 +182,12 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
         _: HandlerContext,
     ): Promise<DeleteAuthProviderResponse> {
         if (!request.authProviderId) {
-            throw new ConnectError("authProviderId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "authProviderId is required");
         }
 
         const authProvider = await this.authProviderService.getAuthProvider(ctxUserId(), request.authProviderId);
         if (!authProvider) {
-            throw new ConnectError("Provider not found.", Code.NotFound);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Provider not found.");
         }
 
         if (authProvider.organizationId) {

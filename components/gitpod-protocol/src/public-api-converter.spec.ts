@@ -8,6 +8,7 @@
 import { Timestamp } from "@bufbuild/protobuf";
 import {
     AdmissionLevel,
+    WorkspaceEnvironmentVariable,
     WorkspacePhase_Phase,
     WorkspacePort_Policy,
     WorkspacePort_Protocol,
@@ -21,12 +22,17 @@ import {
     PrebuildSettings,
     WorkspaceSettings,
 } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
-import { AuthProviderEntry, AuthProviderInfo } from "./protocol";
+import { AuthProviderEntry, AuthProviderInfo, ProjectEnvVar, UserEnvVarValue, WithEnvvarsContext } from "./protocol";
 import {
     AuthProvider,
     AuthProviderDescription,
     AuthProviderType,
 } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import {
+    ConfigurationEnvironmentVariable,
+    EnvironmentVariableAdmission,
+    UserEnvironmentVariable,
+} from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
 
 describe("PublicAPIConverter", () => {
     const converter = new PublicAPIConverter();
@@ -806,6 +812,61 @@ describe("PublicAPIConverter", () => {
                 const result = converter.toAuthProviderType(k);
                 expect(result).to.deep.equal(mapping[k]);
             }
+        });
+    });
+
+    describe("toWorkspaceEnvironmentVariables", () => {
+        const wsCtx: WithEnvvarsContext = {
+            title: "title",
+            envvars: [
+                {
+                    name: "FOO",
+                    value: "bar",
+                },
+            ],
+        };
+        const envVars = [new WorkspaceEnvironmentVariable({ name: "FOO", value: "bar" })];
+        it("should convert workspace environment variable types", () => {
+            const result = converter.toWorkspaceEnvironmentVariables(wsCtx);
+            expect(result).to.deep.equal(envVars);
+        });
+    });
+
+    describe("toUserEnvironmentVariable", () => {
+        const envVar: UserEnvVarValue = {
+            id: "1",
+            name: "FOO",
+            value: "bar",
+            repositoryPattern: "*/*",
+        };
+        const userEnvVar = new UserEnvironmentVariable({
+            id: "1",
+            name: "FOO",
+            value: "bar",
+            repositoryPattern: "*/*",
+        });
+        it("should convert user environment variable types", () => {
+            const result = converter.toUserEnvironmentVariable(envVar);
+            expect(result).to.deep.equal(userEnvVar);
+        });
+    });
+
+    describe("toConfigurationEnvironmentVariable", () => {
+        const envVar: ProjectEnvVar = {
+            id: "1",
+            name: "FOO",
+            censored: true,
+            projectId: "1",
+        };
+        const userEnvVar = new ConfigurationEnvironmentVariable({
+            id: "1",
+            name: "FOO",
+            admission: EnvironmentVariableAdmission.PREBUILD,
+            configurationId: "1",
+        });
+        it("should convert configuration environment variable types", () => {
+            const result = converter.toConfigurationEnvironmentVariable(envVar);
+            expect(result).to.deep.equal(userEnvVar);
         });
     });
 });

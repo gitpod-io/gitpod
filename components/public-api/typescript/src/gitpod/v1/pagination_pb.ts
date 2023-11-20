@@ -29,9 +29,18 @@ export class PaginationRequest extends Message<PaginationRequest> {
    * The first page starts at 1.
    * Defaults to 1.
    *
-   * @generated from field: int32 page = 2;
+   * @generated from field: int32 page = 2 [deprecated = true];
+   * @deprecated
    */
   page = 0;
+
+  /**
+   * Token for the next set of results that was returned as next_token of a
+   * PaginationResponse
+   *
+   * @generated from field: string token = 3;
+   */
+  token = "";
 
   constructor(data?: PartialMessage<PaginationRequest>) {
     super();
@@ -43,6 +52,7 @@ export class PaginationRequest extends Message<PaginationRequest> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "page_size", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 2, name: "page", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 3, name: "token", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PaginationRequest {
@@ -69,9 +79,18 @@ export class PaginationResponse extends Message<PaginationResponse> {
   /**
    * Total is the total number of results available.
    *
-   * @generated from field: int32 total = 1;
+   * @generated from field: int32 total = 1 [deprecated = true];
+   * @deprecated
    */
   total = 0;
+
+  /**
+   * Token passed for retreiving the next set of results. Empty if there are no
+   * more results
+   *
+   * @generated from field: string next_token = 2;
+   */
+  nextToken = "";
 
   constructor(data?: PartialMessage<PaginationResponse>) {
     super();
@@ -82,6 +101,7 @@ export class PaginationResponse extends Message<PaginationResponse> {
   static readonly typeName = "gitpod.v1.PaginationResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "total", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 2, name: "next_token", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PaginationResponse {

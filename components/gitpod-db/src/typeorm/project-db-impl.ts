@@ -17,6 +17,7 @@ import { DBProjectUsage } from "./entity/db-project-usage";
 import { TransactionalDBImpl } from "./transactional-db-impl";
 import { TypeORM } from "./typeorm";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { filter } from "../utils";
 
 function toProjectEnvVar(envVarWithValue: DBProjectEnvVar): ProjectEnvVar {
     const envVar = { ...envVarWithValue };
@@ -152,9 +153,12 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
         return envVarRepo.findOne({ projectId, name: envVar.name, deleted: false });
     }
 
-    public async addProjectEnvironmentVariable(projectId: string, envVar: ProjectEnvVarWithValue): Promise<void> {
+    public async addProjectEnvironmentVariable(
+        projectId: string,
+        envVar: ProjectEnvVarWithValue,
+    ): Promise<ProjectEnvVar> {
         const envVarRepo = await this.getProjectEnvVarRepo();
-        await envVarRepo.save({
+        const insertedEnvVar = await envVarRepo.save({
             id: uuidv4(),
             projectId,
             name: envVar.name,
@@ -163,14 +167,31 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
             creationTime: new Date().toISOString(),
             deleted: false,
         });
+        return toProjectEnvVar(insertedEnvVar);
     }
 
     public async updateProjectEnvironmentVariable(
         projectId: string,
-        envVar: Required<ProjectEnvVarWithValue>,
-    ): Promise<void> {
-        const envVarRepo = await this.getProjectEnvVarRepo();
-        await envVarRepo.update({ id: envVar.id, projectId }, { value: envVar.value, censored: envVar.censored });
+        envVar: Partial<ProjectEnvVarWithValue>,
+    ): Promise<ProjectEnvVar | undefined> {
+        if (!envVar.id) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "An environment variable with this ID could not be found");
+        }
+
+        return await this.transaction(async (_, ctx) => {
+            const envVarRepo = ctx.entityManager.getRepository<DBProjectEnvVar>(DBProjectEnvVar);
+
+            await envVarRepo.update(
+                { id: envVar.id, projectId },
+                filter(envVar, (_, v) => v !== null && v !== undefined),
+            );
+
+            const found = await envVarRepo.findOne({ id: envVar.id, projectId, deleted: false });
+            if (!found) {
+                return;
+            }
+            return toProjectEnvVar(found);
+        });
     }
 
     public async getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]> {

@@ -142,7 +142,11 @@ describe("EnvVarService", async () => {
         const resp1 = await es.listUserEnvVars(member.id, member.id);
         expect(resp1.length).to.equal(0);
 
-        await es.addUserEnvVar(member.id, member.id, { name: "var1", value: "foo", repositoryPattern: "*/*" });
+        const added1 = await es.addUserEnvVar(member.id, member.id, {
+            name: "var1",
+            value: "foo",
+            repositoryPattern: "*/*",
+        });
 
         const resp2 = await es.listUserEnvVars(member.id, member.id);
         expect(resp2.length).to.equal(1);
@@ -152,14 +156,23 @@ describe("EnvVarService", async () => {
             es.addUserEnvVar(member.id, member.id, { name: "var1", value: "foo2", repositoryPattern: "*/*" }),
         );
 
-        await es.updateUserEnvVar(member.id, member.id, { name: "var1", value: "foo2", repositoryPattern: "*/*" });
+        await es.updateUserEnvVar(member.id, member.id, {
+            ...added1,
+            name: "var1",
+            value: "foo2",
+            repositoryPattern: "*/*",
+        });
 
         const resp3 = await es.listUserEnvVars(member.id, member.id);
         expect(resp3.length).to.equal(1);
 
         await expectError(
-            ErrorCodes.BAD_REQUEST,
-            es.updateUserEnvVar(member.id, member.id, { name: "var2", value: "foo2", repositoryPattern: "*/*" }),
+            ErrorCodes.NOT_FOUND,
+            es.updateUserEnvVar(member.id, member.id, {
+                name: "var2",
+                value: "foo2",
+                repositoryPattern: "*/*",
+            }),
         );
 
         await expectError(ErrorCodes.NOT_FOUND, es.listUserEnvVars(stranger.id, member.id));
@@ -197,15 +210,15 @@ describe("EnvVarService", async () => {
     });
 
     it("should let owners create, update, delete and get project env vars", async () => {
-        await es.addProjectEnvVar(owner.id, project.id, { name: "FOO", value: "BAR", censored: false });
+        const added1 = await es.addProjectEnvVar(owner.id, project.id, { name: "FOO", value: "BAR", censored: false });
         await expectError(
             ErrorCodes.BAD_REQUEST,
             es.addProjectEnvVar(owner.id, project.id, { name: "FOO", value: "BAR2", censored: false }),
         );
 
-        await es.updateProjectEnvVar(owner.id, project.id, { name: "FOO", value: "BAR2", censored: false });
+        await es.updateProjectEnvVar(owner.id, project.id, { ...added1, name: "FOO", value: "BAR2", censored: false });
         await expectError(
-            ErrorCodes.BAD_REQUEST,
+            ErrorCodes.NOT_FOUND,
             es.updateProjectEnvVar(owner.id, project.id, { name: "FOO2", value: "BAR", censored: false }),
         );
 

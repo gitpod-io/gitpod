@@ -38,6 +38,11 @@ import {
     WorkspacePort_Protocol,
     WorkspaceStatus,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import {
+    ConfigurationEnvironmentVariable,
+    EnvironmentVariableAdmission,
+    UserEnvironmentVariable,
+} from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
 import { ContextURL } from "./context-url";
 import { ApplicationError, ErrorCode, ErrorCodes } from "./messaging/error";
 import {
@@ -51,6 +56,8 @@ import {
     WorkspaceContext,
     WorkspaceInfo,
     WorkspaceClasses,
+    UserEnvVarValue,
+    ProjectEnvVar,
 } from "./protocol";
 import {
     OrgMemberInfo,
@@ -109,7 +116,7 @@ export class PublicAPIConverter {
             status.admission = this.toAdmission(arg.workspace.shareable);
             status.gitStatus = this.toGitStatus(arg.workspace);
             workspace.status = status;
-            workspace.additionalEnvironmentVariables = this.toEnvironmentVariables(arg.workspace.context);
+            workspace.additionalEnvironmentVariables = this.toWorkspaceEnvironmentVariables(arg.workspace.context);
 
             if (arg.latestInstance) {
                 return this.toWorkspace(arg.latestInstance, workspace);
@@ -233,17 +240,37 @@ export class PublicAPIConverter {
         return new ApplicationError(code, reason.message, new TrustedValue(data));
     }
 
-    toEnvironmentVariables(context: WorkspaceContext): WorkspaceEnvironmentVariable[] {
+    toWorkspaceEnvironmentVariables(context: WorkspaceContext): WorkspaceEnvironmentVariable[] {
         if (WithEnvvarsContext.is(context)) {
-            return context.envvars.map((envvar) => this.toEnvironmentVariable(envvar));
+            return context.envvars.map((envvar) => this.toWorkspaceEnvironmentVariable(envvar));
         }
         return [];
     }
 
-    toEnvironmentVariable(envVar: EnvVarWithValue): WorkspaceEnvironmentVariable {
+    toWorkspaceEnvironmentVariable(envVar: EnvVarWithValue): WorkspaceEnvironmentVariable {
         const result = new WorkspaceEnvironmentVariable();
         result.name = envVar.name;
-        envVar.value = envVar.value;
+        result.value = envVar.value;
+        return result;
+    }
+
+    toUserEnvironmentVariable(envVar: UserEnvVarValue): UserEnvironmentVariable {
+        const result = new UserEnvironmentVariable();
+        result.id = envVar.id || "";
+        result.name = envVar.name;
+        result.value = envVar.value;
+        result.repositoryPattern = envVar.repositoryPattern;
+        return result;
+    }
+
+    toConfigurationEnvironmentVariable(envVar: ProjectEnvVar): ConfigurationEnvironmentVariable {
+        const result = new ConfigurationEnvironmentVariable();
+        result.id = envVar.id || "";
+        result.name = envVar.name;
+        result.configurationId = envVar.projectId;
+        result.admission = envVar.censored
+            ? EnvironmentVariableAdmission.PREBUILD
+            : EnvironmentVariableAdmission.EVERYWHERE;
         return result;
     }
 

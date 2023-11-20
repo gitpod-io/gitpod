@@ -22,11 +22,12 @@ import * as WorkspaceClasses from "@gitpod/public-api/lib/gitpod/v1/workspace_pb
 import * as PaginationClasses from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import * as ConfigurationClasses from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import * as AuthProviderClasses from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import * as EnvVarClasses from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
 
 // This is used to version the cache
 // If data we cache changes in a non-backwards compatible way, increment this version
 // That will bust any previous cache versions a client may have stored
-const CACHE_VERSION = "5";
+const CACHE_VERSION = "6";
 
 export function noPersistence(queryKey: QueryKey): QueryKey {
     return [...queryKey, "no-persistence"];
@@ -41,6 +42,7 @@ export const setupQueryClientProvider = () => {
             queries: {
                 // Default stale time to help avoid re-fetching data too frequently
                 staleTime: 1000 * 5, // 5 seconds
+                refetchOnWindowFocus: false,
             },
         },
         queryCache: new QueryCache({
@@ -145,6 +147,7 @@ function initializeMessages() {
         ...Object.values(PaginationClasses),
         ...Object.values(ConfigurationClasses),
         ...Object.values(AuthProviderClasses),
+        ...Object.values(EnvVarClasses),
     ];
     for (const c of constr) {
         if ((c as any).prototype instanceof Message) {

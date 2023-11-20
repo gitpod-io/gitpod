@@ -4,34 +4,43 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { configurationClient } from "../../service/public-api";
 import type { Configuration, UpdateConfigurationRequest } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import type { PartialMessage } from "@bufbuild/protobuf";
+import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
+import { useEffect } from "react";
 
 const BASE_KEY = "configurations";
 
 type ListConfigurationsArgs = {
+    pageSize?: number;
     searchTerm?: string;
-    page: number;
-    pageSize: number;
 };
 
-export const useListConfigurations = ({ searchTerm = "", page, pageSize }: ListConfigurationsArgs) => {
+export const useListConfigurations = ({ searchTerm = "", pageSize }: ListConfigurationsArgs) => {
     const { data: org } = useCurrentOrg();
 
-    return useQuery(
-        getListConfigurationsQueryKey(org?.id || "", { searchTerm, page, pageSize }),
-        async () => {
+    // Debounce searchTerm for query
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [_, setSearchTerm, debouncedSearchTerm] = useStateWithDebounce(searchTerm);
+    useEffect(() => {
+        setSearchTerm(searchTerm);
+    }, [searchTerm, setSearchTerm]);
+
+    return useInfiniteQuery(
+        getListConfigurationsQueryKey(org?.id || "", { searchTerm: debouncedSearchTerm, pageSize }),
+        // QueryFn receives the past page's pageParam as it's argument
+        async ({ pageParam: nextToken }) => {
             if (!org) {
                 throw new Error("No org currently selected");
             }
 
             const { configurations, pagination } = await configurationClient.listConfigurations({
                 organizationId: org.id,
-                searchTerm,
-                pagination: { page, pageSize },
+                searchTerm: debouncedSearchTerm,
+                pagination: { pageSize, token: nextToken },
             });
 
             return {
@@ -42,6 +51,11 @@ export const useListConfigurations = ({ searchTerm = "", page, pageSize }: ListC
         {
             enabled: !!org,
             keepPreviousData: true,
+            // This enables the query to know if there are more pages, and passes the last page's nextToken to the queryFn
+            getNextPageParam: (lastPage) => {
+                // Must ensure we return undefined if there are no more pages
+                return lastPage.pagination?.nextToken || undefined;
+            },
         },
     );
 };
