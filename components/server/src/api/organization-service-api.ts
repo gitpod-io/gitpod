@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Code, ConnectError, HandlerContext, ServiceImpl } from "@connectrpc/connect";
+import { HandlerContext, ServiceImpl } from "@connectrpc/connect";
 import { inject, injectable } from "inversify";
 import { OrganizationService as OrganizationServiceInterface } from "@gitpod/public-api/lib/gitpod/v1/organization_connect";
 import {
@@ -67,7 +67,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
 
     async getOrganization(req: GetOrganizationRequest, _: HandlerContext): Promise<GetOrganizationResponse> {
         if (!uuidValidate(req.organizationId)) {
-            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
 
         const org = await this.orgService.getOrganization(ctxUserId(), req.organizationId);
@@ -78,10 +78,10 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
 
     async updateOrganization(req: UpdateOrganizationRequest, _: HandlerContext): Promise<UpdateOrganizationResponse> {
         if (!uuidValidate(req.organizationId)) {
-            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
         if (typeof req.name !== "string") {
-            throw new ConnectError("nothing to update", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "nothing to update");
         }
 
         const org = await this.orgService.updateOrganization(ctxUserId(), req.organizationId, {
@@ -110,7 +110,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
 
     async deleteOrganization(req: DeleteOrganizationRequest, _: HandlerContext): Promise<DeleteOrganizationResponse> {
         if (!uuidValidate(req.organizationId)) {
-            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
 
         await this.orgService.deleteOrganization(ctxUserId(), req.organizationId);
@@ -122,7 +122,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         _: HandlerContext,
     ): Promise<GetOrganizationInvitationResponse> {
         if (!uuidValidate(req.organizationId)) {
-            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
 
         const invitation = await this.orgService.getOrCreateInvite(ctxUserId(), req.organizationId);
@@ -133,7 +133,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
 
     async joinOrganization(req: JoinOrganizationRequest, _: HandlerContext): Promise<JoinOrganizationResponse> {
         if (!uuidValidate(req.invitationId)) {
-            throw new ConnectError("invitationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "invitationId is required");
         }
 
         const orgId = await this.orgService.joinOrganization(ctxUserId(), req.invitationId);
@@ -147,7 +147,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         _: HandlerContext,
     ): Promise<ResetOrganizationInvitationResponse> {
         if (!uuidValidate(req.organizationId)) {
-            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
 
         const inviteId = await this.orgService.resetInvite(ctxUserId(), req.organizationId);
@@ -161,7 +161,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         _: HandlerContext,
     ): Promise<ListOrganizationMembersResponse> {
         if (!uuidValidate(req.organizationId)) {
-            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
 
         const members = await this.orgService.listMembers(ctxUserId(), req.organizationId);
@@ -178,13 +178,13 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         _: HandlerContext,
     ): Promise<UpdateOrganizationMemberResponse> {
         if (!uuidValidate(req.organizationId)) {
-            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
         if (!uuidValidate(req.userId)) {
-            throw new ConnectError("userId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "userId is required");
         }
         if (req.role === undefined) {
-            throw new ConnectError("nothing to update", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "nothing to update");
         }
 
         await this.orgService.addOrUpdateMember(
@@ -206,10 +206,10 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         _: HandlerContext,
     ): Promise<DeleteOrganizationMemberResponse> {
         if (!uuidValidate(req.organizationId)) {
-            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
         if (!uuidValidate(req.userId)) {
-            throw new ConnectError("userId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "userId is required");
         }
 
         await this.orgService.removeOrganizationMember(ctxUserId(), req.organizationId, req.userId);
@@ -221,7 +221,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         _: HandlerContext,
     ): Promise<GetOrganizationSettingsResponse> {
         if (!uuidValidate(req.organizationId)) {
-            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
 
         const settings = await this.orgService.getSettings(ctxUserId(), req.organizationId);
@@ -235,7 +235,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         _: HandlerContext,
     ): Promise<UpdateOrganizationSettingsResponse> {
         if (!uuidValidate(req.organizationId)) {
-            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
 
         const update: Partial<ProtocolOrganizationSettings> = {};
@@ -247,7 +247,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         }
 
         if (Object.keys(update).length === 0) {
-            throw new ConnectError("nothing to update", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "nothing to update");
         }
 
         const settings = await this.orgService.updateSettings(ctxUserId(), req.organizationId, update);
