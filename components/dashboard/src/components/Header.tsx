@@ -8,7 +8,7 @@ import { useLocation } from "react-router";
 import { useDocumentTitle } from "../hooks/use-document-title";
 import { Separator } from "./Separator";
 import TabMenuItem from "./TabMenuItem";
-import { Heading1, Subheading } from "./typography/headings";
+import { Heading1, Subheading } from "@podkit/typography/Headings";
 
 export interface HeaderProps {
     title: string;
