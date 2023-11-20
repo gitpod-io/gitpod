@@ -5,7 +5,7 @@
  */
 
 import { PartialMessage } from "@bufbuild/protobuf";
-import { CallOptions, Code, ConnectError, PromiseClient } from "@connectrpc/connect";
+import { CallOptions, PromiseClient } from "@connectrpc/connect";
 import { OrganizationService } from "@gitpod/public-api/lib/gitpod/v1/organization_connect";
 import {
     CreateOrganizationRequest,
@@ -37,6 +37,7 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { getGitpodService } from "./service";
 import { converter } from "./public-api";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 export class JsonRpcOrganizationClient implements PromiseClient<typeof OrganizationService> {
     async createOrganization(
@@ -44,7 +45,7 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         options?: CallOptions | undefined,
     ): Promise<CreateOrganizationResponse> {
         if (!request.name) {
-            throw new ConnectError("name is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "name is required");
         }
         const result = await getGitpodService().server.createTeam(request.name);
         return new CreateOrganizationResponse({
@@ -57,7 +58,7 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         options?: CallOptions | undefined,
     ): Promise<GetOrganizationResponse> {
         if (!request.organizationId) {
-            throw new ConnectError("id is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "id is required");
         }
         const result = await getGitpodService().server.getTeam(request.organizationId);
 
@@ -71,10 +72,10 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         options?: CallOptions | undefined,
     ): Promise<UpdateOrganizationResponse> {
         if (!request.organizationId) {
-            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
         if (!request.name) {
-            throw new ConnectError("name is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "name is required");
         }
         await getGitpodService().server.updateTeam(request.organizationId, {
             name: request.name,
@@ -97,7 +98,7 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         options?: CallOptions | undefined,
     ): Promise<DeleteOrganizationResponse> {
         if (!request.organizationId) {
-            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
         await getGitpodService().server.deleteTeam(request.organizationId);
         return new DeleteOrganizationResponse();
@@ -108,7 +109,7 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         options?: CallOptions | undefined,
     ): Promise<GetOrganizationInvitationResponse> {
         if (!request.organizationId) {
-            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
         const result = await getGitpodService().server.getGenericInvite(request.organizationId);
         return new GetOrganizationInvitationResponse({
@@ -121,7 +122,7 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         options?: CallOptions | undefined,
     ): Promise<JoinOrganizationResponse> {
         if (!request.invitationId) {
-            throw new ConnectError("invitationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "invitationId is required");
         }
         const result = await getGitpodService().server.joinTeam(request.invitationId);
         return new JoinOrganizationResponse({
@@ -134,7 +135,7 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         options?: CallOptions | undefined,
     ): Promise<ResetOrganizationInvitationResponse> {
         if (!request.organizationId) {
-            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
         const newInvite = await getGitpodService().server.resetGenericInvite(request.organizationId);
         return new ResetOrganizationInvitationResponse({
@@ -147,7 +148,7 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         options?: CallOptions | undefined,
     ): Promise<ListOrganizationMembersResponse> {
         if (!request.organizationId) {
-            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
         const result = await getGitpodService().server.getTeamMembers(request.organizationId);
         return new ListOrganizationMembersResponse({
@@ -160,13 +161,13 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         options?: CallOptions | undefined,
     ): Promise<UpdateOrganizationMemberResponse> {
         if (!request.organizationId) {
-            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
         if (!request.userId) {
-            throw new ConnectError("userId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "userId is required");
         }
         if (!request.role) {
-            throw new ConnectError("role is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "role is required");
         }
         await getGitpodService().server.setTeamMemberRole(
             request.organizationId,
@@ -181,10 +182,10 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         options?: CallOptions | undefined,
     ): Promise<DeleteOrganizationMemberResponse> {
         if (!request.organizationId) {
-            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
         if (!request.userId) {
-            throw new ConnectError("userId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "userId is required");
         }
         await getGitpodService().server.removeTeamMember(request.organizationId, request.userId);
         return new DeleteOrganizationMemberResponse();
@@ -195,7 +196,7 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         options?: CallOptions | undefined,
     ): Promise<GetOrganizationSettingsResponse> {
         if (!request.organizationId) {
-            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
         const result = await getGitpodService().server.getOrgSettings(request.organizationId);
         return new GetOrganizationSettingsResponse({
@@ -208,7 +209,7 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         options?: CallOptions | undefined,
     ): Promise<UpdateOrganizationSettingsResponse> {
         if (!request.organizationId) {
-            throw new ConnectError("organizationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
         await getGitpodService().server.updateOrgSettings(request.organizationId, {
             workspaceSharingDisabled: request?.workspaceSharingDisabled,
