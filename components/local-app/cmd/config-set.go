@@ -31,7 +31,7 @@ Example:
   # Set your current context's organization
   gitpod config set --organization-id=your-org-id
 `,
-	Args: cobra.MaximumNArgs(1),
+	Args: cobra.ExactArgs(0),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 
