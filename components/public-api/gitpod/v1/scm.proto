@@ -6,6 +6,62 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
 
+service SCMService {
+    rpc GetSCMToken(GetSCMTokenRequest) returns (GetSCMTokenResponse) {}
+    rpc GuessTokenScopes(GuessTokenScopesRequest) returns (GuessTokenScopesResponse) {}
+    rpc SearchRepositories(SearchRepositoriesRequest) returns (SearchRepositoriesResponse) {}
+    rpc ListSuggestedRepositories(ListSuggestedRepositoriesRequest) returns (ListSuggestedRepositoriesResponse) {}
+}
+
+message GetSCMTokenRequest {
+    string host = 1;
+}
+message GetSCMTokenResponse {
+    SCMToken token = 1;
+}
+
+message GuessTokenScopesRequest {
+    string host = 1;
+    string repo_url = 2;
+    string git_command = 3;
+}
+message GuessTokenScopesResponse {
+    repeated string scopes = 1;
+    string message = 2;
+}
+
+message SearchRepositoriesRequest {
+    string search_string = 1;
+    int32 limit = 2;
+}
+message SearchRepositoriesResponse {
+    repeated SuggestedRepository repositories = 1;
+}
+
+message ListSuggestedRepositoriesRequest {
+    string organization_id = 1;
+}
+message ListSuggestedRepositoriesResponse {
+    repeated SuggestedRepository repositories = 1;
+}
+
+message SCMToken {
+    string username = 1;
+    string value = 2;
+    string id_token = 3;
+    string refresh_token = 4;
+    repeated string scopes = 5;
+    google.protobuf.Timestamp update_date = 6;
+    google.protobuf.Timestamp expiry_date = 7;
+}
+
+message SuggestedRepository {
+    string url = 1;
+    string repo_name = 2;
+    string configuration_id = 3;
+    string configuration_name = 4;
+}
+
 message Author {
     string name = 1;
     string avatar_url = 2;
