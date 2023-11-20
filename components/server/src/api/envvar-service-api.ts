@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Code, ConnectError, HandlerContext, ServiceImpl } from "@connectrpc/connect";
+import { HandlerContext, ServiceImpl } from "@connectrpc/connect";
 import { EnvironmentVariableService as EnvironmentVariableServiceInterface } from "@gitpod/public-api/lib/gitpod/v1/envvar_connect";
 import {
     ListUserEnvironmentVariablesRequest,
@@ -35,6 +35,7 @@ import { ProjectEnvVarWithValue, UserEnvVarValue } from "@gitpod/gitpod-protocol
 import { WorkspaceService } from "../workspace/workspace-service";
 import { ctxUserId } from "../util/request-context";
 import { validate as uuidValidate } from "uuid";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 @injectable()
 export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof EnvironmentVariableServiceInterface> {
@@ -63,7 +64,7 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
         _: HandlerContext,
     ): Promise<UpdateUserEnvironmentVariableResponse> {
         if (!uuidValidate(req.envVarId)) {
-            throw new ConnectError("envVarId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "envVarId is required");
         }
 
         const response = new UpdateUserEnvironmentVariableResponse();
@@ -84,7 +85,7 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
             return response;
         }
 
-        throw new ConnectError("env variable not found", Code.NotFound);
+        throw new ApplicationError(ErrorCodes.NOT_FOUND, "env variable not found");
     }
 
     async createUserEnvironmentVariable(
@@ -110,7 +111,7 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
         _: HandlerContext,
     ): Promise<DeleteUserEnvironmentVariableResponse> {
         if (!uuidValidate(req.envVarId)) {
-            throw new ConnectError("envVarId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "envVarId is required");
         }
 
         const variable: UserEnvVarValue = {
@@ -131,7 +132,7 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
         _: HandlerContext,
     ): Promise<ListConfigurationEnvironmentVariablesResponse> {
         if (!uuidValidate(req.configurationId)) {
-            throw new ConnectError("configurationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configurationId is required");
         }
 
         const response = new ListConfigurationEnvironmentVariablesResponse();
@@ -148,10 +149,10 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
         _: HandlerContext,
     ): Promise<UpdateConfigurationEnvironmentVariableResponse> {
         if (!uuidValidate(req.configurationId)) {
-            throw new ConnectError("configurationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configurationId is required");
         }
         if (!uuidValidate(req.envVarId)) {
-            throw new ConnectError("envVarId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "envVarId is required");
         }
 
         const updatedProjectEnvVar = await this.envVarService.updateProjectEnvVar(ctxUserId(), req.configurationId, {
@@ -190,7 +191,7 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
         _: HandlerContext,
     ): Promise<DeleteConfigurationEnvironmentVariableResponse> {
         if (!uuidValidate(req.envVarId)) {
-            throw new ConnectError("envVarId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "envVarId is required");
         }
 
         await this.envVarService.deleteProjectEnvVar(ctxUserId(), req.envVarId);

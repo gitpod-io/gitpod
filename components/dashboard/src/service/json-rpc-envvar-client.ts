@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Code, ConnectError, PromiseClient } from "@connectrpc/connect";
+import { PromiseClient } from "@connectrpc/connect";
 import { PartialMessage } from "@bufbuild/protobuf";
 import { EnvironmentVariableService } from "@gitpod/public-api/lib/gitpod/v1/envvar_connect";
 import {
@@ -31,6 +31,7 @@ import {
 import { converter } from "./public-api";
 import { getGitpodService } from "./service";
 import { UserEnvVar, UserEnvVarValue } from "@gitpod/gitpod-protocol";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVariableService> {
     async listUserEnvironmentVariables(
@@ -47,7 +48,7 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
         req: PartialMessage<UpdateUserEnvironmentVariableRequest>,
     ): Promise<UpdateUserEnvironmentVariableResponse> {
         if (!req.envVarId) {
-            throw new ConnectError("envVarId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "envVarId is required");
         }
 
         const response = new UpdateUserEnvironmentVariableResponse();
@@ -68,21 +69,21 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
             const updatedUserEnvVars = await getGitpodService().server.getAllEnvVars();
             const updatedUserEnvVar = updatedUserEnvVars.find((i) => i.id === req.envVarId);
             if (!updatedUserEnvVar) {
-                throw new ConnectError("could not update env variable", Code.Internal);
+                throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "could not update env variable");
             }
 
             response.environmentVariable = converter.toUserEnvironmentVariable(updatedUserEnvVar);
             return response;
         }
 
-        throw new ConnectError("env variable not found", Code.NotFound);
+        throw new ApplicationError(ErrorCodes.NOT_FOUND, "env variable not found");
     }
 
     async createUserEnvironmentVariable(
         req: PartialMessage<CreateUserEnvironmentVariableRequest>,
     ): Promise<CreateUserEnvironmentVariableResponse> {
         if (!req.name || !req.value || !req.repositoryPattern) {
-            throw new ConnectError("name, value and repositoryPattern are required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "name, value and repositoryPattern are required");
         }
 
         const response = new CreateUserEnvironmentVariableResponse();
@@ -101,7 +102,7 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
             (v) => v.name === variable.name && v.repositoryPattern === variable.repositoryPattern,
         );
         if (!updatedUserEnvVar) {
-            throw new ConnectError("could not update env variable", Code.Internal);
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "could not update env variable");
         }
 
         response.environmentVariable = converter.toUserEnvironmentVariable(updatedUserEnvVar);
@@ -113,7 +114,7 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
         req: PartialMessage<DeleteUserEnvironmentVariableRequest>,
     ): Promise<DeleteUserEnvironmentVariableResponse> {
         if (!req.envVarId) {
-            throw new ConnectError("envVarId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "envVarId is required");
         }
 
         const variable: UserEnvVarValue = {
@@ -133,7 +134,7 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
         req: PartialMessage<ListConfigurationEnvironmentVariablesRequest>,
     ): Promise<ListConfigurationEnvironmentVariablesResponse> {
         if (!req.configurationId) {
-            throw new ConnectError("configurationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configurationId is required");
         }
 
         const result = new ListConfigurationEnvironmentVariablesResponse();
@@ -147,10 +148,10 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
         req: PartialMessage<UpdateConfigurationEnvironmentVariableRequest>,
     ): Promise<UpdateConfigurationEnvironmentVariableResponse> {
         if (!req.envVarId) {
-            throw new ConnectError("envVarId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "envVarId is required");
         }
         if (!req.configurationId) {
-            throw new ConnectError("configurationId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configurationId is required");
         }
 
         const response = new UpdateConfigurationEnvironmentVariableResponse();
@@ -170,21 +171,21 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
             );
             const updatedProjectEnvVar = updatedProjectEnvVars.find((i) => i.id === req.envVarId);
             if (!updatedProjectEnvVar) {
-                throw new ConnectError("could not update env variable", Code.Internal);
+                throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "could not update env variable");
             }
 
             response.environmentVariable = converter.toConfigurationEnvironmentVariable(updatedProjectEnvVar);
             return response;
         }
 
-        throw new ConnectError("env variable not found", Code.NotFound);
+        throw new ApplicationError(ErrorCodes.NOT_FOUND, "env variable not found");
     }
 
     async createConfigurationEnvironmentVariable(
         req: PartialMessage<CreateConfigurationEnvironmentVariableRequest>,
     ): Promise<CreateConfigurationEnvironmentVariableResponse> {
         if (!req.configurationId || !req.name || !req.value) {
-            throw new ConnectError("configurationId, name and value are required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configurationId, name and value are required");
         }
 
         const response = new CreateConfigurationEnvironmentVariableResponse();
@@ -201,7 +202,7 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
         );
         const updatedProjectEnvVar = updatedProjectEnvVars.find((v) => v.name === req.name);
         if (!updatedProjectEnvVar) {
-            throw new ConnectError("could not create env variable", Code.Internal);
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "could not create env variable");
         }
 
         response.environmentVariable = converter.toConfigurationEnvironmentVariable(updatedProjectEnvVar);
@@ -213,7 +214,7 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
         req: PartialMessage<DeleteConfigurationEnvironmentVariableRequest>,
     ): Promise<DeleteConfigurationEnvironmentVariableResponse> {
         if (!req.envVarId) {
-            throw new ConnectError("envVarId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "envVarId is required");
         }
 
         await getGitpodService().server.deleteProjectEnvironmentVariable(req.envVarId);
@@ -225,6 +226,6 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
     async resolveWorkspaceEnvironmentVariables(
         req: PartialMessage<ResolveWorkspaceEnvironmentVariablesRequest>,
     ): Promise<ResolveWorkspaceEnvironmentVariablesResponse> {
-        throw new ConnectError("Unimplemented", Code.Unimplemented);
+        throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Unimplemented");
     }
 }
