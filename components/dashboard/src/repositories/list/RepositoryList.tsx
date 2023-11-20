@@ -5,7 +5,7 @@
  */
 
 import { FC, useCallback, useEffect, useState } from "react";
-import { LoaderIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronUpIcon, LoaderIcon } from "lucide-react";
 import { useHistory } from "react-router-dom";
 import { RepositoryListItem } from "./RepoListItem";
 import { useListConfigurations } from "../../data/configurations/configuration-queries";
@@ -29,6 +29,9 @@ const RepositoryListPage: FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm, debouncedSearchTerm] = useStateWithDebounce("");
 
+    const [sortBy, setSortBy] = useState<"name" | "creationTime">("name");
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
     // Reset to page 1 when debounced search term changes (when we perform a new search)
     useEffect(() => {
         setCurrentPage(1);
@@ -36,12 +39,14 @@ const RepositoryListPage: FC = () => {
 
     // Have this set to a low value for now to test pagination while we develop this
     // TODO: move this into state and add control for changing it
-    const pageSize = 5;
+    const pageSize = 2;
 
     const { data, isFetching, isPreviousData } = useListConfigurations({
         searchTerm: debouncedSearchTerm,
         page: currentPage,
         pageSize,
+        sortBy,
+        sortOrder,
     });
     const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
 
@@ -57,6 +62,16 @@ const RepositoryListPage: FC = () => {
         },
         [history],
     );
+
+    const setSortCreationTime = useCallback(() => {
+        setSortBy("creationTime");
+        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    }, [sortOrder]);
+
+    const setSortName = useCallback(() => {
+        setSortBy("name");
+        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    }, [sortOrder]);
 
     return (
         <>
@@ -99,13 +114,54 @@ const RepositoryListPage: FC = () => {
 
                 <div className="relative w-full overflow-auto mt-2">
                     <Table>
-                        {/* TODO: Add sorting controls */}
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-52">Name</TableHead>
+                                <TableHead className="w-52">
+                                    <div className="flex flex-row items-center gap-1">
+                                        <Button
+                                            variant="ghost"
+                                            onClick={() => {
+                                                setSortBy("name");
+                                                setSortOrder("asc");
+                                            }}
+                                        >
+                                            Name
+                                        </Button>
+                                        {sortBy === "name" && sortOrder === "asc" && (
+                                            <Button variant="ghost" onClick={setSortName}>
+                                                <ChevronUpIcon />
+                                            </Button>
+                                        )}
+                                        {sortBy === "name" && sortOrder === "desc" && (
+                                            <Button variant="ghost" onClick={setSortName}>
+                                                <ChevronDownIcon />
+                                            </Button>
+                                        )}
+                                    </div>
+                                </TableHead>
                                 <TableHead hideOnSmallScreen>Repository</TableHead>
                                 <TableHead className="w-32" hideOnSmallScreen>
-                                    Created
+                                    <div className="flex flex-row items-center gap-1">
+                                        <Button
+                                            variant="ghost"
+                                            onClick={() => {
+                                                setSortBy("creationTime");
+                                                setSortOrder("asc");
+                                            }}
+                                        >
+                                            Create
+                                        </Button>
+                                        {sortBy === "creationTime" && sortOrder === "asc" && (
+                                            <Button variant="ghost" onClick={setSortCreationTime}>
+                                                <ChevronUpIcon />
+                                            </Button>
+                                        )}
+                                        {sortBy === "creationTime" && sortOrder === "desc" && (
+                                            <Button variant="ghost" onClick={setSortCreationTime}>
+                                                <ChevronDownIcon />
+                                            </Button>
+                                        )}
+                                    </div>
                                 </TableHead>
                                 <TableHead className="w-24" hideOnSmallScreen>
                                     Prebuilds

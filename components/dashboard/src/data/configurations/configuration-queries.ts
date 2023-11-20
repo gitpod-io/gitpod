@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { configurationClient } from "../../service/public-api";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
 
 const BASE_KEY = "configurations";
 
@@ -15,13 +16,21 @@ type ListConfigurationsArgs = {
     searchTerm?: string;
     page: number;
     pageSize: number;
+    sortBy: string;
+    sortOrder: "asc" | "desc";
 };
 
-export const useListConfigurations = ({ searchTerm = "", page, pageSize }: ListConfigurationsArgs) => {
+export const useListConfigurations = ({
+    searchTerm = "",
+    page,
+    pageSize,
+    sortBy,
+    sortOrder,
+}: ListConfigurationsArgs) => {
     const { data: org } = useCurrentOrg();
 
     return useQuery(
-        getListConfigurationsQueryKey(org?.id || "", { searchTerm, page, pageSize }),
+        getListConfigurationsQueryKey(org?.id || "", { searchTerm, page, pageSize, sortBy, sortOrder }),
         async () => {
             if (!org) {
                 throw new Error("No org currently selected");
@@ -31,6 +40,12 @@ export const useListConfigurations = ({ searchTerm = "", page, pageSize }: ListC
                 organizationId: org.id,
                 searchTerm,
                 pagination: { page, pageSize },
+                sort: [
+                    {
+                        field: sortBy,
+                        order: sortOrder === "asc" ? SortOrder.ASC : SortOrder.DESC,
+                    },
+                ],
             });
 
             return {
