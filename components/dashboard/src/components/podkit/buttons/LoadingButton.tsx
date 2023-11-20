@@ -15,12 +15,13 @@ export interface LoadingButtonProps extends ButtonProps {
 }
 
 export const LoadingButton = React.forwardRef<HTMLButtonElement, LoadingButtonProps>(
-    ({ className, variant, size, children, loading, disabled, ...props }, ref) => {
+    ({ className, size, children, loading, disabled, ...props }, ref) => {
         return (
             <Button
                 disabled={disabled || loading}
                 ref={ref}
                 className={cn("flex items-center gap-2", className)}
+                size={size}
                 {...props}
             >
                 {/* todo: make the layout consistent / animate thew width change */}

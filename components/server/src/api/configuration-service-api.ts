@@ -20,6 +20,8 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { validate as uuidValidate } from "uuid";
+import { PaginationToken, generatePaginationToken, parsePaginationToken } from "./pagination";
 import { ctxUserId } from "../util/request-context";
 import { UserService } from "../user/user-service";
 
@@ -79,30 +81,52 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
     }
 
     async listConfigurations(req: ListConfigurationsRequest, _: HandlerContext) {
-        if (!req.organizationId) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organization_id is required");
+        // TODO: encapsulate this validation into some more generic schema validation
+        const limit = req.pagination?.pageSize || 25;
+        if (limit > 100) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "pageSize must be less than 100");
+        }
+        if (limit < 25) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "pageSize must be greater than 25");
+        }
+        if ((req.searchTerm || "").length > 100) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "searchTerm must be less than 100 characters");
+        }
+        if (!uuidValidate(req.organizationId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
 
-        const limit = req.pagination?.pageSize || 25;
-        const currentPage = req.pagination?.page ?? 1;
-        const offset = currentPage > 1 ? (currentPage - 1) * limit : 0;
+        const paginationToken = parsePaginationToken(req.pagination?.token);
 
-        const { rows, total } = await this.projectService.findProjects(ctxUserId(), {
+        const { rows } = await this.projectService.findProjects(ctxUserId(), {
             organizationId: req.organizationId,
             searchTerm: req.searchTerm,
+            // TODO: support sorting params from req.pagination
             orderBy: "name",
             orderDir: "ASC",
-            limit,
-            offset,
+            // We request 1 additional record to help determine if there are more results
+            limit: limit + 1,
+            offset: paginationToken.offset,
         });
 
-        return new ListConfigurationsResponse({
-            configurations: rows.map((project) => this.apiConverter.toConfiguration(project)),
-            // TODO: add additional pagination metadata to response
-            pagination: new PaginationResponse({
-                total,
-            }),
+        // Drop the extra record we requested to determine if there are more results
+        const pagedRows = rows.slice(0, limit);
+
+        const response = new ListConfigurationsResponse({
+            configurations: pagedRows.map((project) => this.apiConverter.toConfiguration(project)),
         });
+        response.pagination = new PaginationResponse();
+
+        // If we got back an extra row, it means there are more results
+        if (rows.length > limit) {
+            const nextToken: PaginationToken = {
+                offset: paginationToken.offset + limit,
+            };
+
+            response.pagination.nextToken = generatePaginationToken(nextToken);
+        }
+
+        return response;
     }
 
     async deleteConfiguration(req: DeleteConfigurationRequest, _: HandlerContext) {

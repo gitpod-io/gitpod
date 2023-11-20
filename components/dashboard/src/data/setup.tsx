@@ -41,6 +41,7 @@ export const setupQueryClientProvider = () => {
             queries: {
                 // Default stale time to help avoid re-fetching data too frequently
                 staleTime: 1000 * 5, // 5 seconds
+                refetchOnWindowFocus: false,
             },
         },
         queryCache: new QueryCache({
