@@ -112,7 +112,7 @@ describe("ProjectsService", async () => {
         await ps.updateProject(owner, {
             id: project.id,
             settings: {
-                prebuilds: { prebuildInterval: 1 },
+                prebuilds: { prebuildInterval: 1, enable: true, branchMatchingPattern: "feature-*" },
             },
         });
         const updatedProject1 = await ps.getProject(owner.id, project.id);
@@ -126,6 +126,8 @@ describe("ProjectsService", async () => {
         });
         const updatedProject2 = await ps.getProject(member.id, project.id);
         expect(updatedProject2?.settings?.prebuilds?.prebuildInterval).to.equal(2);
+        expect(updatedProject2?.settings?.prebuilds?.enable).to.equal(true);
+        expect(updatedProject2?.settings?.prebuilds?.branchMatchingPattern).to.equal("feature-*");
 
         await expectError(ErrorCodes.NOT_FOUND, () =>
             ps.updateProject(stranger, {
