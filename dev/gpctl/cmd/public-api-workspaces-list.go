@@ -7,7 +7,6 @@ package cmd
 import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/v1"
-	v1connect "github.com/gitpod-io/gitpod/components/public-api/go/v1/v1connect"
 	"github.com/spf13/cobra"
 )
 
@@ -19,19 +18,18 @@ var publicApiWorkspacesListCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		organizationID := args[0]
 
-		httpClient, address, opts, err := newConnectHttpClient()
+		conn, err := newPublicAPIConn()
 		if err != nil {
 			log.Log.WithError(err).Fatal()
 		}
 
-		service := v1connect.NewWorkspaceServiceClient(httpClient, address, opts...)
+		service := v1.NewWorkspaceServiceClient(conn)
 
-		cResp, err := service.ListWorkspaces(cmd.Context(), wrapReq(&v1.ListWorkspacesRequest{OrganizationId: organizationID}))
+		resp, err := service.ListWorkspaces(cmd.Context(), &v1.ListWorkspacesRequest{OrganizationId: organizationID})
 		if err != nil {
 			log.WithError(err).Fatal("failed to retrieve workspace list")
 			return
 		}
-		resp := cResp.Msg
 
 		tpl := `ID	OrganizationID	ContextURL	InstanceID	InstanceStatus
 {{- range .Workspaces }}
