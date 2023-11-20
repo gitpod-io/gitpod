@@ -5,7 +5,6 @@
  */
 
 import { scrubber } from "./scrubbing";
-import * as prometheusClient from "prom-client";
 
 const inspect: (object: unknown) => string = require("util").inspect; // undefined in frontend
 
@@ -248,16 +247,7 @@ namespace GoogleLogSeverity {
     };
 }
 
-const logsCounter = new prometheusClient.Counter({
-    name: "gitpod_logs_total",
-    help: "Total number of logs by level",
-    labelNames: ["level"],
-    registers: [prometheusClient.register],
-});
-
 function doLog(calledViaConsole: boolean, consoleLog: ConsoleLog, severity: GoogleLogSeverity, args: unknown[]): void {
-    logsCounter.labels(severity).inc();
-
     if (!jsonLogging) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         consoleLog(...args);
