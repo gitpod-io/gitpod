@@ -56,6 +56,7 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
         const userEnvVarfound = userEnvVars.find((i) => i.id === req.envVarId);
         if (userEnvVarfound) {
             const variable: UserEnvVarValue = {
+                id: req.envVarId,
                 name: req.name ?? userEnvVarfound.name,
                 value: req.value ?? userEnvVarfound.value,
                 repositoryPattern: req.repositoryPattern ?? userEnvVarfound.repositoryPattern,
