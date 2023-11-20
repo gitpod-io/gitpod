@@ -20,8 +20,11 @@ export interface ProjectDB extends TransactionalDB<ProjectDB> {
         projectId: string,
         envVar: ProjectEnvVarWithValue,
     ): Promise<ProjectEnvVar | undefined>;
-    addProjectEnvironmentVariable(projectId: string, envVar: ProjectEnvVarWithValue): Promise<void>;
-    updateProjectEnvironmentVariable(projectId: string, envVar: Required<ProjectEnvVarWithValue>): Promise<void>;
+    addProjectEnvironmentVariable(projectId: string, envVar: ProjectEnvVarWithValue): Promise<ProjectEnvVar>;
+    updateProjectEnvironmentVariable(
+        projectId: string,
+        envVar: Partial<ProjectEnvVarWithValue>,
+    ): Promise<ProjectEnvVar | undefined>;
     getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]>;
     getProjectEnvironmentVariableById(variableId: string): Promise<ProjectEnvVar | undefined>;
     deleteProjectEnvironmentVariable(variableId: string): Promise<void>;

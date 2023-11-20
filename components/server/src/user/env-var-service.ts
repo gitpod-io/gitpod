@@ -65,7 +65,7 @@ export class EnvVarService {
         userId: string,
         variable: UserEnvVarValue,
         oldPermissionCheck?: (envvar: UserEnvVar) => Promise<void>, // @deprecated
-    ): Promise<void> {
+    ): Promise<UserEnvVarValue> {
         await this.auth.checkPermissionOnUser(requestorId, "write_env_var", userId);
         const validationError = UserEnvVar.validate(variable);
         if (validationError) {
@@ -93,8 +93,7 @@ export class EnvVarService {
         }
         this.analytics.track({ event: "envvar-set", userId });
 
-        // Ensure id is not set so a new variable is created
-        await this.userDB.addEnvVar(userId, variable);
+        return await this.userDB.addEnvVar(userId, variable);
     }
 
     async updateUserEnvVar(
@@ -102,7 +101,7 @@ export class EnvVarService {
         userId: string,
         variable: UserEnvVarValue,
         oldPermissionCheck?: (envvar: UserEnvVar) => Promise<void>, // @deprecated
-    ): Promise<void> {
+    ): Promise<UserEnvVarValue> {
         await this.auth.checkPermissionOnUser(requestorId, "write_env_var", userId);
         const validationError = UserEnvVar.validate(variable);
         if (validationError) {
@@ -111,18 +110,17 @@ export class EnvVarService {
 
         variable.repositoryPattern = UserEnvVar.normalizeRepoPattern(variable.repositoryPattern);
 
-        const existingVar = await this.userDB.findEnvVar(userId, variable);
-        if (!existingVar) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Env var ${variable.name} does not exists`);
-        }
-
         if (oldPermissionCheck) {
-            await oldPermissionCheck({ ...variable, userId, id: existingVar.id });
+            await oldPermissionCheck({ ...variable, userId, id: variable.id! });
         }
         this.analytics.track({ event: "envvar-set", userId });
 
-        // overwrite existing variable id rather than introduce a duplicate
-        await this.userDB.updateEnvVar(userId, { ...variable, id: existingVar.id });
+        const result = await this.userDB.updateEnvVar(userId, variable);
+        if (!result) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Env var ${variable.name} does not exists`);
+        }
+
+        return result;
     }
 
     async deleteUserEnvVar(
@@ -177,7 +175,11 @@ export class EnvVarService {
         return result;
     }
 
-    async addProjectEnvVar(requestorId: string, projectId: string, envVar: ProjectEnvVarWithValue): Promise<void> {
+    async addProjectEnvVar(
+        requestorId: string,
+        projectId: string,
+        envVar: ProjectEnvVarWithValue,
+    ): Promise<ProjectEnvVar> {
         await this.auth.checkPermissionOnProject(requestorId, "write_env_var", projectId);
 
         if (!envVar.name) {
@@ -195,10 +197,14 @@ export class EnvVarService {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Project env var ${envVar.name} already exists`);
         }
 
-        return this.projectDB.addProjectEnvironmentVariable(projectId, envVar);
+        return await this.projectDB.addProjectEnvironmentVariable(projectId, envVar);
     }
 
-    async updateProjectEnvVar(requestorId: string, projectId: string, envVar: ProjectEnvVarWithValue): Promise<void> {
+    async updateProjectEnvVar(
+        requestorId: string,
+        projectId: string,
+        envVar: Partial<ProjectEnvVarWithValue>,
+    ): Promise<ProjectEnvVar> {
         await this.auth.checkPermissionOnProject(requestorId, "write_env_var", projectId);
 
         if (!envVar.name) {
@@ -211,12 +217,12 @@ export class EnvVarService {
             );
         }
 
-        const existingVar = await this.projectDB.findProjectEnvironmentVariable(projectId, envVar);
-        if (!existingVar) {
+        const result = await this.projectDB.updateProjectEnvironmentVariable(projectId, envVar);
+        if (!result) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Project env var ${envVar.name} does not exists`);
         }
 
-        return this.projectDB.updateProjectEnvironmentVariable(projectId, { ...envVar, id: existingVar.id! });
+        return result;
     }
 
     async deleteProjectEnvVar(requestorId: string, variableId: string): Promise<void> {

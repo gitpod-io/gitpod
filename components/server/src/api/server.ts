@@ -18,6 +18,7 @@ import { OrganizationService } from "@gitpod/public-api/lib/gitpod/v1/organizati
 import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/v1/workspace_connect";
 import { ConfigurationService } from "@gitpod/public-api/lib/gitpod/v1/configuration_connect";
 import { AuthProviderService } from "@gitpod/public-api/lib/gitpod/v1/authprovider_connect";
+import { EnvironmentVariableService } from "@gitpod/public-api/lib/gitpod/v1/envvar_connect";
 import express from "express";
 import * as http from "http";
 import { decorate, inject, injectable, interfaces } from "inversify";
@@ -46,6 +47,7 @@ import { APIUserService as UserServiceAPI } from "./user";
 import { WorkspaceServiceAPI } from "./workspace-service-api";
 import { ConfigurationServiceAPI } from "./configuration-service-api";
 import { AuthProviderServiceAPI } from "./auth-provider-service-api";
+import { EnvironmentVariableServiceAPI } from "./envvar-service-api";
 import { Unauthenticated } from "./unauthenticated";
 import { SubjectId } from "../auth/subject-id";
 import { BearerAuth } from "../auth/bearer-authenticator";
@@ -64,6 +66,7 @@ export class API {
     @inject(OrganizationServiceAPI) private readonly organizationServiceApi: OrganizationServiceAPI;
     @inject(ConfigurationServiceAPI) private readonly configurationServiceApi: ConfigurationServiceAPI;
     @inject(AuthProviderServiceAPI) private readonly authProviderServiceApi: AuthProviderServiceAPI;
+    @inject(EnvironmentVariableServiceAPI) private readonly envvarServiceApi: EnvironmentVariableServiceAPI;
     @inject(StatsServiceAPI) private readonly tatsServiceApi: StatsServiceAPI;
     @inject(HelloServiceAPI) private readonly helloServiceApi: HelloServiceAPI;
     @inject(SessionHandler) private readonly sessionHandler: SessionHandler;
@@ -117,6 +120,7 @@ export class API {
                         service(OrganizationService, this.organizationServiceApi),
                         service(ConfigurationService, this.configurationServiceApi),
                         service(AuthProviderService, this.authProviderServiceApi),
+                        service(EnvironmentVariableService, this.envvarServiceApi),
                     ]) {
                         router.service(type, new Proxy(impl, this.interceptService(type)));
                     }
@@ -367,6 +371,7 @@ export class API {
         bind(OrganizationServiceAPI).toSelf().inSingletonScope();
         bind(ConfigurationServiceAPI).toSelf().inSingletonScope();
         bind(AuthProviderServiceAPI).toSelf().inSingletonScope();
+        bind(EnvironmentVariableServiceAPI).toSelf().inSingletonScope();
         bind(StatsServiceAPI).toSelf().inSingletonScope();
         bind(API).toSelf().inSingletonScope();
     }

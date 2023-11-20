@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Project, ProjectEnvVar } from "@gitpod/gitpod-protocol";
+import { Project } from "@gitpod/gitpod-protocol";
 import { useCallback, useEffect, useState } from "react";
 import { Redirect } from "react-router";
 import Alert from "../components/Alert";
@@ -13,23 +13,29 @@ import InfoBox from "../components/InfoBox";
 import { Item, ItemField, ItemFieldContextMenu, ItemsList } from "../components/ItemsList";
 import Modal, { ModalBody, ModalFooter, ModalFooterAlert, ModalHeader } from "../components/Modal";
 import { Heading2, Subheading } from "../components/typography/headings";
-import { getGitpodService } from "../service/service";
 import { useCurrentProject } from "./project-context";
 import { ProjectSettingsPage } from "./ProjectSettings";
 import { Button } from "../components/Button";
 import { useSetProjectEnvVar } from "../data/projects/set-project-env-var-mutation";
+import { envVarClient } from "../service/public-api";
+import {
+    ConfigurationEnvironmentVariable,
+    EnvironmentVariableAdmission,
+} from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
 
 export default function ProjectVariablesPage() {
     const { project, loading } = useCurrentProject();
-    const [envVars, setEnvVars] = useState<ProjectEnvVar[]>([]);
+    const [envVars, setEnvVars] = useState<ConfigurationEnvironmentVariable[]>([]);
     const [showAddVariableModal, setShowAddVariableModal] = useState<boolean>(false);
 
     const updateEnvVars = async () => {
         if (!project) {
             return;
         }
-        const vars = await getGitpodService().server.getProjectEnvironmentVariables(project.id);
-        const sortedVars = vars.sort((a, b) => (a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1));
+        const resp = await envVarClient.listConfigurationEnvironmentVariables({ configurationId: project.id });
+        const sortedVars = resp.environmentVariables.sort((a, b) =>
+            a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1,
+        );
         setEnvVars(sortedVars);
     };
 
@@ -39,7 +45,7 @@ export default function ProjectVariablesPage() {
     }, [project]);
 
     const deleteEnvVar = async (variableId: string) => {
-        await getGitpodService().server.deleteProjectEnvironmentVariable(variableId);
+        await envVarClient.deleteConfigurationEnvironmentVariable({ envVarId: variableId });
         updateEnvVars();
     };
 
@@ -85,7 +91,11 @@ export default function ProjectVariablesPage() {
                         return (
                             <Item key={variable.id} className="grid grid-cols-3 items-center">
                                 <ItemField className="truncate">{variable.name}</ItemField>
-                                <ItemField>{variable.censored ? "Hidden" : "Visible"}</ItemField>
+                                <ItemField>
+                                    {variable.admission === EnvironmentVariableAdmission.PREBUILD
+                                        ? "Hidden"
+                                        : "Visible"}
+                                </ItemField>
                                 <ItemField className="flex justify-end">
                                     <ItemFieldContextMenu
                                         menuEntries={[
@@ -110,7 +120,7 @@ export default function ProjectVariablesPage() {
 function AddVariableModal(props: { project?: Project; onClose: () => void }) {
     const [name, setName] = useState<string>("");
     const [value, setValue] = useState<string>("");
-    const [censored, setCensored] = useState<boolean>(true);
+    const [admission, setAdmission] = useState<EnvironmentVariableAdmission>(EnvironmentVariableAdmission.PREBUILD);
     const setProjectEnvVar = useSetProjectEnvVar();
 
     const addVariable = useCallback(async () => {
@@ -123,11 +133,11 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
                 projectId: props.project.id,
                 name,
                 value,
-                censored,
+                admission,
             },
             { onSuccess: props.onClose },
         );
-    }, [censored, name, props.onClose, props.project, setProjectEnvVar, value]);
+    }, [admission, name, props.onClose, props.project, setProjectEnvVar, value]);
 
     return (
         <Modal visible onClose={props.onClose} onSubmit={addVariable}>
@@ -164,10 +174,16 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
                 <CheckboxInputField
                     label="Hide Variable in Workspaces"
                     hint="Unset this environment variable so that it's not accessible from the terminal in workspaces."
-                    checked={censored}
-                    onChange={() => setCensored(!censored)}
+                    checked={admission === EnvironmentVariableAdmission.PREBUILD}
+                    onChange={() =>
+                        setAdmission(
+                            admission === EnvironmentVariableAdmission.PREBUILD
+                                ? EnvironmentVariableAdmission.EVERYWHERE
+                                : EnvironmentVariableAdmission.PREBUILD,
+                        )
+                    }
                 />
-                {!censored && (
+                {admission === EnvironmentVariableAdmission.EVERYWHERE && (
                     <div className="mt-4">
                         <InfoBox>
                             This variable will be visible to anyone who starts a Gitpod workspace for your repository.
