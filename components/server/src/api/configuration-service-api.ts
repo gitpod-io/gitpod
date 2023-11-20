@@ -17,12 +17,31 @@ import {
     GetConfigurationRequest,
     ListConfigurationsRequest,
     ListConfigurationsResponse,
+    PrebuildSettings,
     UpdateConfigurationRequest,
+    WorkspaceSettings,
 } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ctxUserId } from "../util/request-context";
 import { UserService } from "../user/user-service";
+import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
+
+function buildUpdateObject<T extends Record<string, any>>(obj: T): Partial<T> {
+    const update: Partial<T> = {};
+    Object.keys(obj).forEach((key) => {
+        const property = obj[key];
+        if (property !== undefined) {
+            if (property !== null && typeof property === "object" && !Array.isArray(property)) {
+                // Recursively build update object for nested properties
+                update[key as keyof T] = buildUpdateObject(property) as any;
+            } else {
+                update[key as keyof T] = property;
+            }
+        }
+    });
+    return update;
+}
 
 @injectable()
 export class ConfigurationServiceAPI implements ServiceImpl<typeof ConfigurationServiceInterface> {
@@ -124,11 +143,13 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         if (typeof req.name === "string") {
             update.name = req.name;
         }
-        if (req.prebuildSettings) {
-            update.prebuildSettings = req.prebuildSettings;
+
+        if (req.prebuildSettings !== undefined) {
+            update.prebuildSettings = buildUpdateObject<DeepPartial<PrebuildSettings>>(req.prebuildSettings);
         }
-        if (req.workspaceSettings) {
-            update.workspaceSettings = req.workspaceSettings;
+
+        if (req.workspaceSettings !== undefined) {
+            update.workspaceSettings = buildUpdateObject<DeepPartial<WorkspaceSettings>>(req.workspaceSettings);
         }
 
         if (Object.keys(update).length <= 1) {
