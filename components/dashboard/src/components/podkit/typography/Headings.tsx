@@ -57,7 +57,7 @@ export const Heading3: FC<HeadingProps> = ({ id, color, tracking, className, chi
  */
 export const Subheading: FC<HeadingProps> = ({ id, tracking, className, children }) => {
     return (
-        <p id={id} className={cn("text-base text-gray-500 dark:text-gray-500", getTracking(tracking), className)}>
+        <p id={id} className={cn("text-base text-gray-500 dark:text-gray-400", getTracking(tracking), className)}>
             {children}
         </p>
     );

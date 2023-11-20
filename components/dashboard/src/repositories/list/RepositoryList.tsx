@@ -4,40 +4,39 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, useCallback, useState } from "react";
-import { LoaderIcon } from "lucide-react";
+import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom";
-import { RepositoryListItem } from "./RepoListItem";
 import { useListConfigurations } from "../../data/configurations/configuration-queries";
-import { TextInput } from "../../components/forms/TextInputField";
 import { PageHeading } from "@podkit/layout/PageHeading";
 import { Button } from "@podkit/buttons/Button";
 import { useDocumentTitle } from "../../hooks/use-document-title";
-import { Table, TableBody, TableHead, TableHeader, TableRow } from "@podkit/tables/Table";
 import { ImportRepositoryModal } from "../create/ImportRepositoryModal";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
-import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { useQueryParams } from "../../hooks/use-query-params";
+import { RepoListEmptyState } from "./RepoListEmptyState";
+import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
+import { RepositoryTable } from "./RepositoryTable";
+import { LoadingState } from "@podkit/loading/LoadingState";
 
 const RepositoryListPage: FC = () => {
     useDocumentTitle("Imported repositories");
 
     const history = useHistory();
 
-    // Search/Filter params tracked in url query params
     const params = useQueryParams();
-    const searchTerm = params.get("search") || "";
-    const updateSearchTerm = useCallback(
-        (val: string) => {
-            history.replace({ search: `?search=${encodeURIComponent(val)}` });
-        },
-        [history],
-    );
-
-    const { data, isFetching, isFetchingNextPage, isPreviousData, hasNextPage, fetchNextPage } = useListConfigurations({
-        searchTerm,
-    });
+    const [searchTerm, setSearchTerm, searchTermDebounced] = useStateWithDebounce(params.get("search") || "");
     const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
+
+    // Search/Filter params tracked in url query params
+    useEffect(() => {
+        const params = searchTermDebounced ? `?search=${encodeURIComponent(searchTermDebounced)}` : "";
+        history.replace({ search: params });
+    }, [history, searchTermDebounced]);
+
+    const { data, isLoading, isFetching, isFetchingNextPage, isPreviousData, hasNextPage, fetchNextPage } =
+        useListConfigurations({
+            searchTerm: searchTermDebounced,
+        });
 
     const handleRepoImported = useCallback(
         (configuration: Configuration) => {
@@ -46,78 +45,46 @@ const RepositoryListPage: FC = () => {
         [history],
     );
 
+    const configurations = useMemo(() => {
+        return data?.pages.map((page) => page.configurations).flat() ?? [];
+    }, [data?.pages]);
+
+    const hasMoreThanOnePage = (data?.pages.length ?? 0) > 1;
+
+    // This tracks any filters/search params applied
+    const hasFilters = !!searchTermDebounced;
+
+    // Show the table once we're done loading and either have results, or have filters applied
+    const showTable = !isLoading && (configurations.length > 0 || hasFilters);
+
     return (
         <>
             <div className="app-container mb-8">
                 <PageHeading
                     title="Imported repositories"
                     subtitle="Configure and refine the experience of working with a repository in Gitpod"
-                    action={<Button onClick={() => setShowCreateProjectModal(true)}>Import Repository</Button>}
+                    action={
+                        showTable && <Button onClick={() => setShowCreateProjectModal(true)}>Import Repository</Button>
+                    }
                 />
 
-                {/* Search/Filter bar */}
-                <div className="flex flex-row flex-wrap justify-between items-center">
-                    <div className="flex flex-row flex-wrap gap-2 items-center">
-                        {/* TODO: Add search icon on left and decide on pulling Inputs into podkit */}
-                        <TextInput
-                            className="w-80"
-                            value={searchTerm}
-                            onChange={updateSearchTerm}
-                            placeholder="Search imported repositories"
-                        />
-                        {/* TODO: Add prebuild status filter dropdown */}
-                    </div>
-                    {/* Account for variation of message when totalRows is greater than smallest page size option (20?) */}
-                </div>
+                {isLoading && <LoadingState />}
 
-                <div className="relative w-full overflow-auto mt-2">
-                    <Table>
-                        {/* TODO: Add sorting controls */}
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-52">Name</TableHead>
-                                <TableHead hideOnSmallScreen>Repository</TableHead>
-                                <TableHead className="w-32" hideOnSmallScreen>
-                                    Created
-                                </TableHead>
-                                <TableHead className="w-24" hideOnSmallScreen>
-                                    Prebuilds
-                                </TableHead>
-                                {/* Action column, loading status in header */}
-                                <TableHead className="w-24 text-right">
-                                    {isFetching && isPreviousData && (
-                                        <div className="flex flex-right justify-end items-center">
-                                            {/* TODO: Make a LoadingIcon component */}
-                                            <LoaderIcon
-                                                className="animate-spin text-gray-500 dark:text-gray-300"
-                                                size={20}
-                                            />
-                                        </div>
-                                    )}
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {data?.pages.map((page) => {
-                                return page.configurations.map((configuration) => {
-                                    return <RepositoryListItem key={configuration.id} configuration={configuration} />;
-                                });
-                            })}
-                        </TableBody>
-                    </Table>
+                {showTable && (
+                    <RepositoryTable
+                        searchTerm={searchTerm}
+                        configurations={configurations}
+                        // we check isPreviousData too so we don't show spinner if it's a background refresh
+                        isSearching={isFetching && isPreviousData}
+                        isFetchingNextPage={isFetchingNextPage}
+                        hasNextPage={!!hasNextPage}
+                        hasMoreThanOnePage={hasMoreThanOnePage}
+                        onLoadNextPage={() => fetchNextPage()}
+                        onSearchTermChange={setSearchTerm}
+                    />
+                )}
 
-                    {hasNextPage && (
-                        <div className="my-4 flex flex-row justify-center">
-                            <LoadingButton
-                                variant="secondary"
-                                onClick={() => fetchNextPage()}
-                                loading={isFetchingNextPage}
-                            >
-                                Load more
-                            </LoadingButton>
-                        </div>
-                    )}
-                </div>
+                {!showTable && !isLoading && <RepoListEmptyState onImport={() => setShowCreateProjectModal(true)} />}
             </div>
 
             {showCreateProjectModal && (
