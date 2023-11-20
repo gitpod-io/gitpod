@@ -29,7 +29,8 @@ const RepositoryListPage: FC = () => {
 
     // Search/Filter params tracked in url query params
     useEffect(() => {
-        history.replace({ search: `?search=${encodeURIComponent(searchTermDebounced)}` });
+        const params = searchTermDebounced ? `?search=${encodeURIComponent(searchTermDebounced)}` : "";
+        history.replace({ search: params });
     }, [history, searchTermDebounced]);
 
     const { data, isLoading, isFetching, isFetchingNextPage, isPreviousData, hasNextPage, fetchNextPage } =
@@ -47,6 +48,8 @@ const RepositoryListPage: FC = () => {
     const configurations = useMemo(() => {
         return data?.pages.map((page) => page.configurations).flat() ?? [];
     }, [data?.pages]);
+
+    const hasMoreThanOnePage = (data?.pages.length ?? 0) > 1;
 
     // This tracks any filters/search params applied
     const hasFilters = !!searchTermDebounced;
@@ -75,6 +78,7 @@ const RepositoryListPage: FC = () => {
                         isSearching={isFetching && isPreviousData}
                         isFetchingNextPage={isFetchingNextPage}
                         hasNextPage={!!hasNextPage}
+                        hasMoreThanOnePage={hasMoreThanOnePage}
                         onLoadNextPage={() => fetchNextPage()}
                         onSearchTermChange={setSearchTerm}
                     />
