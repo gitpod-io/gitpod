@@ -397,9 +397,14 @@ export class ProjectsService {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${partialProject.id} not found.`);
         }
 
+        if (!partialProject.settings?.prebuilds && !partialProject.settings?.workspaceClasses) {
+            // No nested settings update, just update the project partially
+            return this.projectDB.updateProject(partialProject);
+        }
+
         const update = deepmerge(existingProject, partialProject);
 
-        await this.handleEnablePrebuild(user, partialProject);
+        await this.handleEnablePrebuild(user, update);
         return this.projectDB.updateProject(update);
     }
 

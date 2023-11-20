@@ -111,6 +111,7 @@ describe("ProjectsService", async () => {
 
         await ps.updateProject(owner, {
             id: project.id,
+            name: "Project Robot",
             settings: {
                 prebuilds: { prebuildInterval: 1, enable: true, branchMatchingPattern: "feature-*" },
             },
@@ -125,6 +126,7 @@ describe("ProjectsService", async () => {
             },
         });
         const updatedProject2 = await ps.getProject(member.id, project.id);
+        expect(updatedProject2.name).to.equal("Project Robot");
         expect(updatedProject2?.settings?.prebuilds?.prebuildInterval).to.equal(2);
         expect(updatedProject2?.settings?.prebuilds?.enable).to.equal(true);
         expect(updatedProject2?.settings?.prebuilds?.branchMatchingPattern).to.equal("feature-*");
