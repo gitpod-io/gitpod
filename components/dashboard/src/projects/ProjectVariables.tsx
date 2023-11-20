@@ -45,7 +45,7 @@ export default function ProjectVariablesPage() {
     }, [project]);
 
     const deleteEnvVar = async (variableId: string) => {
-        await envVarClient.deleteConfigurationEnvironmentVariable({ envVarId: variableId });
+        await envVarClient.deleteConfigurationEnvironmentVariable({ environmentVariableId: variableId });
         updateEnvVars();
     };
 

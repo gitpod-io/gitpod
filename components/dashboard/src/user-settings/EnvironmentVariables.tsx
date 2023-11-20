@@ -189,7 +189,7 @@ export default function EnvVars() {
     const save = async (variable: UserEnvVarValue) => {
         if (variable.id) {
             await envVarClient.updateUserEnvironmentVariable({
-                envVarId: variable.id,
+                environmentVariableId: variable.id,
                 name: variable.name,
                 value: variable.value,
                 repositoryPattern: variable.repositoryPattern,
@@ -207,7 +207,7 @@ export default function EnvVars() {
 
     const deleteVariable = async (variable: UserEnvVarValue) => {
         await envVarClient.deleteUserEnvironmentVariable({
-            envVarId: variable.id,
+            environmentVariableId: variable.id,
         });
         await update();
     };
