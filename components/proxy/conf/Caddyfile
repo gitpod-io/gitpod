@@ -127,7 +127,6 @@
 }
 
 (server_public_api) {
-	# TODO(ak) verify that it only enabled for json content-type, not grpc
 	import compression
 
 	reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3001 {
