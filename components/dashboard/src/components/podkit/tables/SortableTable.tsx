@@ -35,7 +35,7 @@ export const SortableTableHead = React.forwardRef<
                 {children}
                 {/* keep element in dom to preserve space */}
                 <span className={cn(!sortOrder && "invisible")}>
-                    {sortOrder === "asc" ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                    {sortOrder === "asc" ? <ChevronUpIcon size={20} /> : <ChevronDownIcon size={20} />}
                 </span>
             </Button>
         </TableHead>
