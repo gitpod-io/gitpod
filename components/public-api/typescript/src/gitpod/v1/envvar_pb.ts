@@ -179,9 +179,9 @@ export class ListUserEnvironmentVariablesResponse extends Message<ListUserEnviro
  */
 export class UpdateUserEnvironmentVariableRequest extends Message<UpdateUserEnvironmentVariableRequest> {
   /**
-   * @generated from field: string env_var_id = 1;
+   * @generated from field: string environment_variable_id = 1;
    */
-  envVarId = "";
+  environmentVariableId = "";
 
   /**
    * @generated from field: optional string name = 2;
@@ -206,7 +206,7 @@ export class UpdateUserEnvironmentVariableRequest extends Message<UpdateUserEnvi
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.UpdateUserEnvironmentVariableRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "env_var_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 1, name: "environment_variable_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 3, name: "value", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 4, name: "repository_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
@@ -357,9 +357,9 @@ export class CreateUserEnvironmentVariableResponse extends Message<CreateUserEnv
  */
 export class DeleteUserEnvironmentVariableRequest extends Message<DeleteUserEnvironmentVariableRequest> {
   /**
-   * @generated from field: string env_var_id = 1;
+   * @generated from field: string environment_variable_id = 1;
    */
-  envVarId = "";
+  environmentVariableId = "";
 
   constructor(data?: PartialMessage<DeleteUserEnvironmentVariableRequest>) {
     super();
@@ -369,7 +369,7 @@ export class DeleteUserEnvironmentVariableRequest extends Message<DeleteUserEnvi
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.DeleteUserEnvironmentVariableRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "env_var_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 1, name: "environment_variable_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteUserEnvironmentVariableRequest {
@@ -571,9 +571,9 @@ export class UpdateConfigurationEnvironmentVariableRequest extends Message<Updat
   configurationId = "";
 
   /**
-   * @generated from field: string env_var_id = 2;
+   * @generated from field: string environment_variable_id = 2;
    */
-  envVarId = "";
+  environmentVariableId = "";
 
   /**
    * @generated from field: optional string name = 3;
@@ -599,7 +599,7 @@ export class UpdateConfigurationEnvironmentVariableRequest extends Message<Updat
   static readonly typeName = "gitpod.v1.UpdateConfigurationEnvironmentVariableRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "configuration_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "env_var_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "environment_variable_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 4, name: "value", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 5, name: "admission", kind: "enum", T: proto3.getEnumType(EnvironmentVariableAdmission), opt: true },
@@ -756,9 +756,9 @@ export class CreateConfigurationEnvironmentVariableResponse extends Message<Crea
  */
 export class DeleteConfigurationEnvironmentVariableRequest extends Message<DeleteConfigurationEnvironmentVariableRequest> {
   /**
-   * @generated from field: string env_var_id = 1;
+   * @generated from field: string environment_variable_id = 1;
    */
-  envVarId = "";
+  environmentVariableId = "";
 
   constructor(data?: PartialMessage<DeleteConfigurationEnvironmentVariableRequest>) {
     super();
@@ -768,7 +768,7 @@ export class DeleteConfigurationEnvironmentVariableRequest extends Message<Delet
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.DeleteConfigurationEnvironmentVariableRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "env_var_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 1, name: "environment_variable_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteConfigurationEnvironmentVariableRequest {

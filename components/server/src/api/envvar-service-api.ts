@@ -63,17 +63,17 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
         req: UpdateUserEnvironmentVariableRequest,
         _: HandlerContext,
     ): Promise<UpdateUserEnvironmentVariableResponse> {
-        if (!uuidValidate(req.envVarId)) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "envVarId is required");
+        if (!uuidValidate(req.environmentVariableId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "environmentVariableId is required");
         }
 
         const response = new UpdateUserEnvironmentVariableResponse();
 
         const userEnvVars = await this.envVarService.listUserEnvVars(ctxUserId(), ctxUserId());
-        const userEnvVarfound = userEnvVars.find((i) => i.id === req.envVarId);
+        const userEnvVarfound = userEnvVars.find((i) => i.id === req.environmentVariableId);
         if (userEnvVarfound) {
             const variable: UserEnvVarValue = {
-                id: req.envVarId,
+                id: req.environmentVariableId,
                 name: req.name ?? userEnvVarfound.name,
                 value: req.value ?? userEnvVarfound.value,
                 repositoryPattern: req.repositoryPattern ?? userEnvVarfound.repositoryPattern,
@@ -110,12 +110,12 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
         req: DeleteUserEnvironmentVariableRequest,
         _: HandlerContext,
     ): Promise<DeleteUserEnvironmentVariableResponse> {
-        if (!uuidValidate(req.envVarId)) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "envVarId is required");
+        if (!uuidValidate(req.environmentVariableId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "environmentVariableId is required");
         }
 
         const variable: UserEnvVarValue = {
-            id: req.envVarId,
+            id: req.environmentVariableId,
             name: "",
             value: "",
             repositoryPattern: "",
@@ -151,12 +151,12 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
         if (!uuidValidate(req.configurationId)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configurationId is required");
         }
-        if (!uuidValidate(req.envVarId)) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "envVarId is required");
+        if (!uuidValidate(req.environmentVariableId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "environmentVariableId is required");
         }
 
         const updatedProjectEnvVar = await this.envVarService.updateProjectEnvVar(ctxUserId(), req.configurationId, {
-            id: req.envVarId,
+            id: req.environmentVariableId,
             censored: req.admission
                 ? req.admission === EnvironmentVariableAdmission.PREBUILD
                     ? true
@@ -190,11 +190,11 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
         req: DeleteConfigurationEnvironmentVariableRequest,
         _: HandlerContext,
     ): Promise<DeleteConfigurationEnvironmentVariableResponse> {
-        if (!uuidValidate(req.envVarId)) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "envVarId is required");
+        if (!uuidValidate(req.environmentVariableId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "environmentVariableId is required");
         }
 
-        await this.envVarService.deleteProjectEnvVar(ctxUserId(), req.envVarId);
+        await this.envVarService.deleteProjectEnvVar(ctxUserId(), req.environmentVariableId);
 
         const response = new DeleteConfigurationEnvironmentVariableResponse();
         return response;

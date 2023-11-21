@@ -59,7 +59,7 @@ message ListUserEnvironmentVariablesResponse {
 }
 
 message UpdateUserEnvironmentVariableRequest {
-  string env_var_id = 1;
+  string environment_variable_id = 1;
   optional string name = 2;
   optional string value = 3;
   optional string repository_pattern = 4;
@@ -80,7 +80,7 @@ message CreateUserEnvironmentVariableResponse {
 }
 
 message DeleteUserEnvironmentVariableRequest {
-  string env_var_id = 1;
+  string environment_variable_id = 1;
 }
 
 message DeleteUserEnvironmentVariableResponse {}
@@ -110,7 +110,7 @@ message ListConfigurationEnvironmentVariablesResponse {
 
 message UpdateConfigurationEnvironmentVariableRequest {
   string configuration_id = 1;
-  string env_var_id = 2;
+  string environment_variable_id = 2;
   optional string name = 3;
   optional string value = 4;
   optional EnvironmentVariableAdmission admission = 5;
@@ -132,7 +132,7 @@ message CreateConfigurationEnvironmentVariableResponse {
 }
 
 message DeleteConfigurationEnvironmentVariableRequest {
-  string env_var_id = 1;
+  string environment_variable_id = 1;
 }
 
 message DeleteConfigurationEnvironmentVariableResponse {}
