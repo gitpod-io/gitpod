@@ -8,17 +8,17 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
 
 service SCMService {
-  rpc GetSCMToken(GetSCMTokenRequest) returns (GetSCMTokenResponse) {}
+  rpc SearchSCMTokens(SearchSCMTokensRequest) returns (SearchSCMTokensResponse) {}
   rpc GuessTokenScopes(GuessTokenScopesRequest) returns (GuessTokenScopesResponse) {}
   rpc SearchRepositories(SearchRepositoriesRequest) returns (SearchRepositoriesResponse) {}
   rpc ListSuggestedRepositories(ListSuggestedRepositoriesRequest) returns (ListSuggestedRepositoriesResponse) {}
 }
 
-message GetSCMTokenRequest {
+message SearchSCMTokensRequest {
   string host = 1;
 }
-message GetSCMTokenResponse {
-  SCMToken token = 1;
+message SearchSCMTokensResponse {
+  repeated SCMToken tokens = 1;
 }
 
 message GuessTokenScopesRequest {

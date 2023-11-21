@@ -31,7 +31,7 @@ const (
 
 // SCMServiceClient is a client for the gitpod.v1.SCMService service.
 type SCMServiceClient interface {
-	GetSCMToken(context.Context, *connect_go.Request[v1.GetSCMTokenRequest]) (*connect_go.Response[v1.GetSCMTokenResponse], error)
+	SearchSCMTokens(context.Context, *connect_go.Request[v1.SearchSCMTokensRequest]) (*connect_go.Response[v1.SearchSCMTokensResponse], error)
 	GuessTokenScopes(context.Context, *connect_go.Request[v1.GuessTokenScopesRequest]) (*connect_go.Response[v1.GuessTokenScopesResponse], error)
 	SearchRepositories(context.Context, *connect_go.Request[v1.SearchRepositoriesRequest]) (*connect_go.Response[v1.SearchRepositoriesResponse], error)
 	ListSuggestedRepositories(context.Context, *connect_go.Request[v1.ListSuggestedRepositoriesRequest]) (*connect_go.Response[v1.ListSuggestedRepositoriesResponse], error)
@@ -47,9 +47,9 @@ type SCMServiceClient interface {
 func NewSCMServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) SCMServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &sCMServiceClient{
-		getSCMToken: connect_go.NewClient[v1.GetSCMTokenRequest, v1.GetSCMTokenResponse](
+		searchSCMTokens: connect_go.NewClient[v1.SearchSCMTokensRequest, v1.SearchSCMTokensResponse](
 			httpClient,
-			baseURL+"/gitpod.v1.SCMService/GetSCMToken",
+			baseURL+"/gitpod.v1.SCMService/SearchSCMTokens",
 			opts...,
 		),
 		guessTokenScopes: connect_go.NewClient[v1.GuessTokenScopesRequest, v1.GuessTokenScopesResponse](
@@ -72,15 +72,15 @@ func NewSCMServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts 
 
 // sCMServiceClient implements SCMServiceClient.
 type sCMServiceClient struct {
-	getSCMToken               *connect_go.Client[v1.GetSCMTokenRequest, v1.GetSCMTokenResponse]
+	searchSCMTokens           *connect_go.Client[v1.SearchSCMTokensRequest, v1.SearchSCMTokensResponse]
 	guessTokenScopes          *connect_go.Client[v1.GuessTokenScopesRequest, v1.GuessTokenScopesResponse]
 	searchRepositories        *connect_go.Client[v1.SearchRepositoriesRequest, v1.SearchRepositoriesResponse]
 	listSuggestedRepositories *connect_go.Client[v1.ListSuggestedRepositoriesRequest, v1.ListSuggestedRepositoriesResponse]
 }
 
-// GetSCMToken calls gitpod.v1.SCMService.GetSCMToken.
-func (c *sCMServiceClient) GetSCMToken(ctx context.Context, req *connect_go.Request[v1.GetSCMTokenRequest]) (*connect_go.Response[v1.GetSCMTokenResponse], error) {
-	return c.getSCMToken.CallUnary(ctx, req)
+// SearchSCMTokens calls gitpod.v1.SCMService.SearchSCMTokens.
+func (c *sCMServiceClient) SearchSCMTokens(ctx context.Context, req *connect_go.Request[v1.SearchSCMTokensRequest]) (*connect_go.Response[v1.SearchSCMTokensResponse], error) {
+	return c.searchSCMTokens.CallUnary(ctx, req)
 }
 
 // GuessTokenScopes calls gitpod.v1.SCMService.GuessTokenScopes.
@@ -100,7 +100,7 @@ func (c *sCMServiceClient) ListSuggestedRepositories(ctx context.Context, req *c
 
 // SCMServiceHandler is an implementation of the gitpod.v1.SCMService service.
 type SCMServiceHandler interface {
-	GetSCMToken(context.Context, *connect_go.Request[v1.GetSCMTokenRequest]) (*connect_go.Response[v1.GetSCMTokenResponse], error)
+	SearchSCMTokens(context.Context, *connect_go.Request[v1.SearchSCMTokensRequest]) (*connect_go.Response[v1.SearchSCMTokensResponse], error)
 	GuessTokenScopes(context.Context, *connect_go.Request[v1.GuessTokenScopesRequest]) (*connect_go.Response[v1.GuessTokenScopesResponse], error)
 	SearchRepositories(context.Context, *connect_go.Request[v1.SearchRepositoriesRequest]) (*connect_go.Response[v1.SearchRepositoriesResponse], error)
 	ListSuggestedRepositories(context.Context, *connect_go.Request[v1.ListSuggestedRepositoriesRequest]) (*connect_go.Response[v1.ListSuggestedRepositoriesResponse], error)
@@ -113,9 +113,9 @@ type SCMServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewSCMServiceHandler(svc SCMServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
 	mux := http.NewServeMux()
-	mux.Handle("/gitpod.v1.SCMService/GetSCMToken", connect_go.NewUnaryHandler(
-		"/gitpod.v1.SCMService/GetSCMToken",
-		svc.GetSCMToken,
+	mux.Handle("/gitpod.v1.SCMService/SearchSCMTokens", connect_go.NewUnaryHandler(
+		"/gitpod.v1.SCMService/SearchSCMTokens",
+		svc.SearchSCMTokens,
 		opts...,
 	))
 	mux.Handle("/gitpod.v1.SCMService/GuessTokenScopes", connect_go.NewUnaryHandler(
@@ -139,8 +139,8 @@ func NewSCMServiceHandler(svc SCMServiceHandler, opts ...connect_go.HandlerOptio
 // UnimplementedSCMServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedSCMServiceHandler struct{}
 
-func (UnimplementedSCMServiceHandler) GetSCMToken(context.Context, *connect_go.Request[v1.GetSCMTokenRequest]) (*connect_go.Response[v1.GetSCMTokenResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.SCMService.GetSCMToken is not implemented"))
+func (UnimplementedSCMServiceHandler) SearchSCMTokens(context.Context, *connect_go.Request[v1.SearchSCMTokensRequest]) (*connect_go.Response[v1.SearchSCMTokensResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.SCMService.SearchSCMTokens is not implemented"))
 }
 
 func (UnimplementedSCMServiceHandler) GuessTokenScopes(context.Context, *connect_go.Request[v1.GuessTokenScopesRequest]) (*connect_go.Response[v1.GuessTokenScopesResponse], error) {

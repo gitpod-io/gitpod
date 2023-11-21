@@ -14,76 +14,76 @@ import { Message, proto3, Timestamp } from "@bufbuild/protobuf";
 import { PaginationRequest, PaginationResponse } from "./pagination_pb.js";
 
 /**
- * @generated from message gitpod.v1.GetSCMTokenRequest
+ * @generated from message gitpod.v1.SearchSCMTokensRequest
  */
-export class GetSCMTokenRequest extends Message<GetSCMTokenRequest> {
+export class SearchSCMTokensRequest extends Message<SearchSCMTokensRequest> {
   /**
    * @generated from field: string host = 1;
    */
   host = "";
 
-  constructor(data?: PartialMessage<GetSCMTokenRequest>) {
+  constructor(data?: PartialMessage<SearchSCMTokensRequest>) {
     super();
     proto3.util.initPartial(data, this);
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.GetSCMTokenRequest";
+  static readonly typeName = "gitpod.v1.SearchSCMTokensRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "host", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetSCMTokenRequest {
-    return new GetSCMTokenRequest().fromBinary(bytes, options);
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SearchSCMTokensRequest {
+    return new SearchSCMTokensRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetSCMTokenRequest {
-    return new GetSCMTokenRequest().fromJson(jsonValue, options);
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SearchSCMTokensRequest {
+    return new SearchSCMTokensRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetSCMTokenRequest {
-    return new GetSCMTokenRequest().fromJsonString(jsonString, options);
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SearchSCMTokensRequest {
+    return new SearchSCMTokensRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(a: GetSCMTokenRequest | PlainMessage<GetSCMTokenRequest> | undefined, b: GetSCMTokenRequest | PlainMessage<GetSCMTokenRequest> | undefined): boolean {
-    return proto3.util.equals(GetSCMTokenRequest, a, b);
+  static equals(a: SearchSCMTokensRequest | PlainMessage<SearchSCMTokensRequest> | undefined, b: SearchSCMTokensRequest | PlainMessage<SearchSCMTokensRequest> | undefined): boolean {
+    return proto3.util.equals(SearchSCMTokensRequest, a, b);
   }
 }
 
 /**
- * @generated from message gitpod.v1.GetSCMTokenResponse
+ * @generated from message gitpod.v1.SearchSCMTokensResponse
  */
-export class GetSCMTokenResponse extends Message<GetSCMTokenResponse> {
+export class SearchSCMTokensResponse extends Message<SearchSCMTokensResponse> {
   /**
-   * @generated from field: gitpod.v1.SCMToken token = 1;
+   * @generated from field: repeated gitpod.v1.SCMToken tokens = 1;
    */
-  token?: SCMToken;
+  tokens: SCMToken[] = [];
 
-  constructor(data?: PartialMessage<GetSCMTokenResponse>) {
+  constructor(data?: PartialMessage<SearchSCMTokensResponse>) {
     super();
     proto3.util.initPartial(data, this);
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.GetSCMTokenResponse";
+  static readonly typeName = "gitpod.v1.SearchSCMTokensResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "token", kind: "message", T: SCMToken },
+    { no: 1, name: "tokens", kind: "message", T: SCMToken, repeated: true },
   ]);
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetSCMTokenResponse {
-    return new GetSCMTokenResponse().fromBinary(bytes, options);
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SearchSCMTokensResponse {
+    return new SearchSCMTokensResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetSCMTokenResponse {
-    return new GetSCMTokenResponse().fromJson(jsonValue, options);
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SearchSCMTokensResponse {
+    return new SearchSCMTokensResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetSCMTokenResponse {
-    return new GetSCMTokenResponse().fromJsonString(jsonString, options);
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SearchSCMTokensResponse {
+    return new SearchSCMTokensResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(a: GetSCMTokenResponse | PlainMessage<GetSCMTokenResponse> | undefined, b: GetSCMTokenResponse | PlainMessage<GetSCMTokenResponse> | undefined): boolean {
-    return proto3.util.equals(GetSCMTokenResponse, a, b);
+  static equals(a: SearchSCMTokensResponse | PlainMessage<SearchSCMTokensResponse> | undefined, b: SearchSCMTokensResponse | PlainMessage<SearchSCMTokensResponse> | undefined): boolean {
+    return proto3.util.equals(SearchSCMTokensResponse, a, b);
   }
 }
 
