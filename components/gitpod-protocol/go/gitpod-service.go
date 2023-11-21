@@ -41,7 +41,6 @@ type APIInterface interface {
 	GetWorkspaces(ctx context.Context, options *GetWorkspacesOptions) (res []*WorkspaceInfo, err error)
 	GetWorkspaceOwner(ctx context.Context, workspaceID string) (res *UserInfo, err error)
 	GetWorkspaceUsers(ctx context.Context, workspaceID string) (res []*WorkspaceInstanceUser, err error)
-	GetFeaturedRepositories(ctx context.Context) (res []*WhitelistedRepository, err error)
 	GetWorkspace(ctx context.Context, id string) (res *WorkspaceInfo, err error)
 	GetIDEOptions(ctx context.Context) (res *IDEOptions, err error)
 	IsWorkspaceOwner(ctx context.Context, workspaceID string) (res bool, err error)
@@ -144,8 +143,6 @@ const (
 	FunctionGetWorkspaceOwner FunctionName = "getWorkspaceOwner"
 	// FunctionGetWorkspaceUsers is the name of the getWorkspaceUsers function
 	FunctionGetWorkspaceUsers FunctionName = "getWorkspaceUsers"
-	// FunctionGetFeaturedRepositories is the name of the getFeaturedRepositories function
-	FunctionGetFeaturedRepositories FunctionName = "getFeaturedRepositories"
 	// FunctionGetWorkspace is the name of the getWorkspace function
 	FunctionGetWorkspace FunctionName = "getWorkspace"
 	// FunctionGetIDEOptions is the name of the getIDEOptions function
@@ -678,24 +675,6 @@ func (gp *APIoverJSONRPC) GetWorkspaceUsers(ctx context.Context, workspaceID str
 
 	var result []*WorkspaceInstanceUser
 	err = gp.C.Call(ctx, "getWorkspaceUsers", _params, &result)
-	if err != nil {
-		return
-	}
-	res = result
-
-	return
-}
-
-// GetFeaturedRepositories calls getFeaturedRepositories on the server
-func (gp *APIoverJSONRPC) GetFeaturedRepositories(ctx context.Context) (res []*WhitelistedRepository, err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	var result []*WhitelistedRepository
-	err = gp.C.Call(ctx, "getFeaturedRepositories", _params, &result)
 	if err != nil {
 		return
 	}
@@ -1905,14 +1884,6 @@ type VSCodeConfig struct {
 type Configuration struct {
 	DaysBeforeGarbageCollection float64 `json:"daysBeforeGarbageCollection,omitempty"`
 	GarbageCollectionStartDate  float64 `json:"garbageCollectionStartDate,omitempty"`
-}
-
-// WhitelistedRepository is the WhitelistedRepository message type
-type WhitelistedRepository struct {
-	Avatar      string `json:"avatar,omitempty"`
-	Description string `json:"description,omitempty"`
-	Name        string `json:"name,omitempty"`
-	URL         string `json:"url,omitempty"`
 }
 
 // EnvVar is the EnvVar message type

@@ -157,9 +157,6 @@ const gitpodServiceMock = createServiceMock({
     getWorkspaces: async () => {
         return [];
     },
-    getFeaturedRepositories: async () => {
-        return [];
-    },
     getAuthProviders: async () => {
         return [
             {

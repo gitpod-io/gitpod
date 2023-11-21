@@ -6,6 +6,7 @@
 
 import { EventIterator } from "event-iterator";
 import { Queue } from "event-iterator/lib/event-iterator";
+import { ApplicationError, ErrorCodes } from "./messaging/error";
 
 /**
  * Generates an asynchronous generator that yields values based on the provided setup function.
@@ -23,7 +24,7 @@ export function generateAsyncGenerator<T>(
 ) {
     return new EventIterator<T>((queue) => {
         opts.signal.addEventListener("abort", () => {
-            queue.fail(new Error("Abort error"));
+            queue.fail(new ApplicationError(ErrorCodes.CANCELLED, "cancelled"));
         });
         const dispose = setup(queue);
         return () => {

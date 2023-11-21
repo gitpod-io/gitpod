@@ -902,4 +902,53 @@ describe("PublicAPIConverter", () => {
             expect(result).to.deep.equal(userEnvVar);
         });
     });
+
+    describe("toPrebuild", () => {
+        it("should convert a prebuild", () => {
+            const result = converter.toPrebuild({
+                info: {
+                    id: "5fba7d7c-e740-4339-b928-0e3c5975eb37",
+                    buildWorkspaceId: "akosyakov-parceldemo-pzlbt0c1t2w",
+                    teamId: "e13b09f1-19b9-413f-be18-181fe9316816",
+                    userId: "8cccf1d0-2ed8-4d54-b141-f633f6008cd3",
+                    projectName: "parcel-demo",
+                    projectId: "8400828f-99bb-4758-a7d2-f25e88013823",
+                    startedAt: "2023-11-17T10:42:00.000Z",
+                    startedBy: "",
+                    startedByAvatar: "",
+                    cloneUrl: "https://github.com/akosyakov/parcel-demo.git",
+                    branch: "master",
+                    changeAuthor: "Anton Kosyakov",
+                    changeAuthorAvatar: "https://avatars.githubusercontent.com/u/3082655?v=4",
+                    changeDate: "2021-06-28T10:48:28Z",
+                    changeHash: "60dbf818194082ef1a368bacd49cfd25a34c9256",
+                    changeTitle: "add open/preview",
+                    changeUrl: "https://github.com/akosyakov/parcel-demo/tree/master",
+                },
+                status: "building",
+            });
+            expect(result.toJson()).to.deep.equal({
+                id: "5fba7d7c-e740-4339-b928-0e3c5975eb37",
+                workspaceId: "akosyakov-parceldemo-pzlbt0c1t2w",
+                configurationId: "8400828f-99bb-4758-a7d2-f25e88013823",
+                ref: "master",
+                commit: {
+                    author: {
+                        avatarUrl: "https://avatars.githubusercontent.com/u/3082655?v=4",
+                        name: "Anton Kosyakov",
+                    },
+                    authorDate: "2021-06-28T10:48:28Z",
+                    message: "add open/preview",
+                    sha: "60dbf818194082ef1a368bacd49cfd25a34c9256",
+                },
+                contextUrl: "https://github.com/akosyakov/parcel-demo/tree/master",
+                status: {
+                    phase: {
+                        name: "PHASE_BUILDING",
+                    },
+                    startTime: "2023-11-17T10:42:00Z",
+                },
+            });
+        });
+    });
 });

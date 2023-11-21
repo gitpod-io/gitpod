@@ -55,6 +55,7 @@ import express from "express";
 import { Container } from "inversify";
 import { Server } from "./server";
 import { log, LogrusLogLevel } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { installLogCountMetric } from "@gitpod/gitpod-protocol/lib/util/logging-node";
 import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { TypeORM } from "@gitpod/gitpod-db/lib";
 import { dbConnectionsEnqueued, dbConnectionsFree, dbConnectionsTotal } from "./prometheus-metrics";
@@ -66,6 +67,7 @@ if (process.env.NODE_ENV === "development") {
 
 log.enableJSONLogging("server", process.env.VERSION, LogrusLogLevel.getFromEnv());
 installCtxLogAugmenter();
+installLogCountMetric();
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {

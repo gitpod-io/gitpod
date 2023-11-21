@@ -27,7 +27,7 @@ import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
 import Alert from "../components/Alert";
 import { workspaceClient, workspacesService } from "../service/public-api";
 import { GetWorkspaceRequest, Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
-import { disposableWatchWorkspaceStatus } from "../data/workspaces/listen-to-workspace-ws-messages";
+import { watchWorkspaceStatus } from "../data/workspaces/listen-to-workspace-ws-messages";
 
 const sessionId = v4();
 
@@ -125,7 +125,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         }
 
         try {
-            const watchDispose = disposableWatchWorkspaceStatus(this.state.workspace?.id, (resp) => {
+            const watchDispose = watchWorkspaceStatus(this.state.workspace?.id, (resp) => {
                 if (resp.workspaceId !== this.state.workspace?.id || !resp.status) {
                     return;
                 }

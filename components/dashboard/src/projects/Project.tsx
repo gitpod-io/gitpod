@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
+import { Project } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import dayjs from "dayjs";
 import { useCallback, useEffect, useState } from "react";
@@ -23,6 +23,8 @@ import { getProjectTabs } from "./projects.routes";
 import { shortCommitMessage, toRemoteURL } from "./render-utils";
 import search from "../icons/search.svg";
 import Tooltip from "../components/Tooltip";
+import { prebuildClient } from "../service/public-api";
+import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 
 export default function ProjectsPage() {
     const history = useHistory();
@@ -33,7 +35,7 @@ export default function ProjectsPage() {
     const [branches, setBranches] = useState<Project.BranchDetails[]>([]);
     const [isConsideredInactive, setIsConsideredInactive] = useState<boolean>(false);
     const [isResuming, setIsResuming] = useState<boolean>(false);
-    const [prebuilds, setPrebuilds] = useState<Map<string, PrebuildWithStatus | undefined>>(new Map());
+    const [prebuilds, setPrebuilds] = useState<Map<string, Prebuild | undefined>>(new Map());
     const [prebuildLoaders, setPrebuildLoaders] = useState<Set<string>>(new Set());
 
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
@@ -125,12 +127,14 @@ export default function ProjectsPage() {
             return;
         }
         prebuildLoaders.add(branch.name);
-        const branchPrebuilds = await getGitpodService().server.findPrebuilds({
-            projectId: project.id,
-            branch: branch.name,
-            latest: true,
+        const response = await prebuildClient.listPrebuilds({
+            configurationId: project.id,
+            gitRef: branch.name,
+            pagination: {
+                pageSize: 1,
+            },
         });
-        setPrebuilds((prev) => new Map(prev).set(branch.name, branchPrebuilds[0]));
+        setPrebuilds((prev) => new Map(prev).set(branch.name, response.prebuilds[0]));
         prebuildLoaders.delete(branch.name);
     };
 
@@ -150,18 +154,25 @@ export default function ProjectsPage() {
         }
         try {
             setIsLoading(true);
-            const prebuildResult = await getGitpodService().server.triggerPrebuild(project.id, branch.name);
+            const prebuildResult = await prebuildClient.startPrebuild({
+                configurationId: project.id,
+                gitRef: branch.name || undefined,
+            });
             history.push(`/projects/${project.id}/${prebuildResult.prebuildId}`);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const cancelPrebuild = (prebuildId: string) => {
+    const cancelPrebuild = async (prebuildId: string) => {
         if (!project) {
             return;
         }
-        getGitpodService().server.cancelPrebuild(project.id, prebuildId);
+        try {
+            await prebuildClient.cancelPrebuild({ prebuildId });
+        } catch (e) {
+            console.error("Could not cancel prebuild", e);
+        }
     };
 
     const formatDate = (date: string | undefined) => {
@@ -174,7 +185,7 @@ export default function ProjectsPage() {
         }
         try {
             setIsResuming(true);
-            const response = await getGitpodService().server.triggerPrebuild(project.id, null);
+            const response = await prebuildClient.startPrebuild({ configurationId: project.id });
             setIsConsideredInactive(false);
             history.push(`/projects/${project.id}/${response.prebuildId}`);
         } catch (error) {
@@ -293,7 +304,7 @@ export default function ProjectsPage() {
                                     .slice(0, 10)
                                     .map((branch, index) => {
                                         let prebuild = matchingPrebuild(branch); // this might lazily trigger fetching of prebuild details
-                                        if (prebuild && prebuild.info.changeHash !== branch.changeHash) {
+                                        if (prebuild && prebuild.commit?.sha !== branch.changeHash) {
                                             prebuild = undefined;
                                         }
                                         const avatar = branch.changeAuthorAvatar && (
@@ -350,11 +361,7 @@ export default function ProjectsPage() {
                                                 <ItemField className="flex items-center my-auto">
                                                     <a
                                                         className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1 cursor-pointer"
-                                                        href={
-                                                            prebuild
-                                                                ? `/projects/${project.id}/${prebuild.info.id}`
-                                                                : ""
-                                                        }
+                                                        href={prebuild ? `/projects/${project.id}/${prebuild.id}` : ""}
                                                     >
                                                         {prebuild ? (
                                                             <>
@@ -378,14 +385,16 @@ export default function ProjectsPage() {
                                                     <ItemFieldContextMenu
                                                         className="py-0.5"
                                                         menuEntries={[
-                                                            prebuild?.status === "queued" ||
-                                                            prebuild?.status === "building"
+                                                            prebuild?.status?.phase?.name ===
+                                                                PrebuildPhase_Phase.QUEUED ||
+                                                            prebuild?.status?.phase?.name ===
+                                                                PrebuildPhase_Phase.BUILDING
                                                                 ? {
                                                                       title: "Cancel Prebuild",
                                                                       customFontStyle:
                                                                           "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
                                                                       onClick: () =>
-                                                                          prebuild && cancelPrebuild(prebuild.info.id),
+                                                                          prebuild && cancelPrebuild(prebuild.id),
                                                                   }
                                                                 : {
                                                                       title: `${prebuild ? "Rerun" : "Run"} Prebuild (${

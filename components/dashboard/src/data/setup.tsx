@@ -23,11 +23,13 @@ import * as PaginationClasses from "@gitpod/public-api/lib/gitpod/v1/pagination_
 import * as ConfigurationClasses from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import * as AuthProviderClasses from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import * as EnvVarClasses from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
+import * as PrebuildClasses from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import * as SCMClasses from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 
 // This is used to version the cache
 // If data we cache changes in a non-backwards compatible way, increment this version
 // That will bust any previous cache versions a client may have stored
-const CACHE_VERSION = "6";
+const CACHE_VERSION = "7";
 
 export function noPersistence(queryKey: QueryKey): QueryKey {
     return [...queryKey, "no-persistence"];
@@ -148,6 +150,8 @@ function initializeMessages() {
         ...Object.values(ConfigurationClasses),
         ...Object.values(AuthProviderClasses),
         ...Object.values(EnvVarClasses),
+        ...Object.values(PrebuildClasses),
+        ...Object.values(SCMClasses),
     ];
     for (const c of constr) {
         if ((c as any).prototype instanceof Message) {

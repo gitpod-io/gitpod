@@ -1072,13 +1072,6 @@ export interface PrebuiltWorkspaceUpdatable {
     contextUrl?: string;
 }
 
-export interface WhitelistedRepository {
-    url: string;
-    name: string;
-    description?: string;
-    avatar?: string;
-}
-
 export type PortOnOpen = "open-browser" | "open-preview" | "notify" | "ignore";
 
 export interface PortConfig {
