@@ -9,7 +9,6 @@ import {
     WorkspaceInfo,
     WorkspaceCreationResult,
     WorkspaceInstanceUser,
-    WhitelistedRepository,
     WorkspaceImageBuild,
     AuthProviderInfo,
     Token,
@@ -109,7 +108,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getWorkspaces(options: GitpodServer.GetWorkspacesOptions): Promise<WorkspaceInfo[]>;
     getWorkspaceOwner(workspaceId: string): Promise<UserInfo | undefined>;
     getWorkspaceUsers(workspaceId: string): Promise<WorkspaceInstanceUser[]>;
-    getFeaturedRepositories(): Promise<WhitelistedRepository[]>;
     getSuggestedRepositories(organizationId: string): Promise<SuggestedRepository[]>;
     searchRepositories(params: SearchRepositoriesParams): Promise<SuggestedRepository[]>;
     /**

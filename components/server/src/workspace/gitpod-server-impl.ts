@@ -35,7 +35,6 @@ import {
     User,
     UserEnvVarValue,
     UserInfo,
-    WhitelistedRepository,
     Workspace,
     WorkspaceContext,
     WorkspaceCreationResult,
@@ -106,7 +105,6 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { GuardedResource, ResourceAccessGuard, ResourceAccessOp } from "../auth/resource-access";
 import { Config } from "../config";
 import { NotFoundError, UnauthorizedError } from "../errors";
-import { RepoURL } from "../repohost/repo-url";
 import { AuthorizationService } from "../user/authorization-service";
 import { TokenProvider } from "../user/token-provider";
 import { UserAuthentication } from "../user/user-authentication";
@@ -1325,41 +1323,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         });
 
         return prebuild;
-    }
-
-    public async getFeaturedRepositories(ctx: TraceContext): Promise<WhitelistedRepository[]> {
-        const user = await this.checkAndBlockUser("getFeaturedRepositories");
-        const repositories = await this.workspaceDb.trace(ctx).getFeaturedRepositories();
-        if (repositories.length === 0) return [];
-
-        return (
-            await Promise.all(
-                repositories
-                    .filter((repo) => repo.url != undefined)
-                    .map(async (whitelistedRepo) => {
-                        const repoUrl = RepoURL.parseRepoUrl(whitelistedRepo.url!);
-                        if (!repoUrl) return undefined;
-
-                        const { host, owner, repo } = repoUrl;
-                        const hostContext = this.hostContextProvider.get(host);
-                        if (!hostContext || !hostContext.services) {
-                            return undefined;
-                        }
-                        const repoProvider = hostContext.services.repositoryProvider;
-                        try {
-                            const repository = await repoProvider.getRepo(user, owner, repo);
-                            return {
-                                url: repository.webUrl,
-                                name: repository.name,
-                                description: whitelistedRepo.description || repository.description,
-                                avatar: repository.avatarUrl,
-                            };
-                        } catch {
-                            // this happens quite often if only GitLab is enabled
-                        }
-                    }),
-            )
-        ).filter((e) => e !== undefined) as WhitelistedRepository[];
     }
 
     public async getSuggestedRepositories(ctx: TraceContext, organizationId: string): Promise<SuggestedRepository[]> {
