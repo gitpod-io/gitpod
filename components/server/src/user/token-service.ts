@@ -10,37 +10,43 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { UserDB } from "@gitpod/gitpod-db/lib";
 import { v4 as uuidv4 } from "uuid";
 import { TokenProvider } from "./token-provider";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 @injectable()
 export class TokenService implements TokenProvider {
     static readonly GITPOD_AUTH_PROVIDER_ID = "Gitpod";
-    static readonly GITPOD_PORT_AUTH_TOKEN_EXPIRY_MILLIS = 30 * 60 * 1000;
 
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(UserDB) protected readonly userDB: UserDB;
 
     protected getTokenForHostCache = new Map<string, Promise<Token>>();
 
-    async getTokenForHost(user: User, host: string): Promise<Token> {
+    async getTokenForHost(user: User | string, host: string): Promise<Token> {
+        const userId = User.is(user) ? user.id : user;
         // (AT) when it comes to token renewal, the awaited http requests may
         // cause "parallel" calls to repeat the renewal, which will fail.
         // Caching for pending operations should solve this issue.
-        const key = `${host}-${user.id}`;
+        const key = `${host}-${userId}`;
         let promise = this.getTokenForHostCache.get(key);
         if (!promise) {
-            promise = this.doGetTokenForHost(user, host);
+            promise = this.doGetTokenForHost(userId, host);
             this.getTokenForHostCache.set(key, promise);
             promise = promise.finally(() => this.getTokenForHostCache.delete(key));
         }
         return promise;
     }
 
-    async doGetTokenForHost(user: User, host: string): Promise<Token> {
+    private async doGetTokenForHost(userId: string, host: string): Promise<Token> {
+        const user = await this.userDB.findUserById(userId);
+        if (!user) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `User (${userId}) not found.`);
+        }
         const identity = this.getIdentityForHost(user, host);
         let token = await this.userDB.findTokenForIdentity(identity);
         if (!token) {
-            throw new Error(
-                `No token found for user ${identity.authProviderId}/${identity.authId}/${identity.authName}!`,
+            throw new ApplicationError(
+                ErrorCodes.NOT_FOUND,
+                `SCM Token not found: (${userId}/${identity?.authId}/${identity?.authName}).`,
             );
         }
         const aboutToExpireTime = new Date();
@@ -84,16 +90,16 @@ export class TokenService implements TokenProvider {
         return await this.userDB.addToken(identity, token);
     }
 
-    protected getIdentityForHost(user: User, host: string): Identity {
+    private getIdentityForHost(user: User, host: string): Identity {
         const authProviderId = this.getAuthProviderId(host);
         const hostIdentity = authProviderId && User.getIdentity(user, authProviderId);
         if (!hostIdentity) {
-            throw new Error(`User ${user.name} has no identity for host: ${host}!`);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `User (${user.id}) has no identity for host: ${host}.`);
         }
         return hostIdentity;
     }
 
-    protected getAuthProviderId(host: string): string | undefined {
+    private getAuthProviderId(host: string): string | undefined {
         const hostContext = this.hostContextProvider.get(host);
         if (!hostContext) {
             return undefined;

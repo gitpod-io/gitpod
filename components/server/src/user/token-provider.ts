@@ -13,5 +13,5 @@ export interface TokenProvider {
      * @param user
      * @param host
      */
-    getTokenForHost(user: User, host: string): Promise<Token>;
+    getTokenForHost(user: User | string, host: string): Promise<Token>;
 }

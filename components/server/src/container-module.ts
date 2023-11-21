@@ -86,7 +86,6 @@ import { IncrementalWorkspaceService } from "./prebuilds/incremental-workspace-s
 import { PrebuildManager } from "./prebuilds/prebuild-manager";
 import { PrebuildStatusMaintainer } from "./prebuilds/prebuilt-status-maintainer";
 import { ProjectsService } from "./projects/projects-service";
-import { ScmService } from "./projects/scm-service";
 import { RedisMutex } from "./redis/mutex";
 import { Server } from "./server";
 import { SessionHandler } from "./session-handler";
@@ -128,6 +127,7 @@ import { WorkspaceStartController } from "./workspace/workspace-start-controller
 import { WorkspaceStarter } from "./workspace/workspace-starter";
 import { DefaultWorkspaceImageValidator } from "./orgs/default-workspace-image-validator";
 import { ContextAwareAnalyticsWriter } from "./analytics";
+import { ScmService } from "./scm/scm-service";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {

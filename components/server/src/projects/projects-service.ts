@@ -28,9 +28,9 @@ import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messag
 import { URL } from "url";
 import { Authorizer, SYSTEM_USER } from "../authorization/authorizer";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
-import { ScmService } from "./scm-service";
 import { daysBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import deepmerge from "deepmerge";
+import { ScmService } from "../scm/scm-service";
 
 const MAX_PROJECT_NAME_LENGTH = 100;
 
