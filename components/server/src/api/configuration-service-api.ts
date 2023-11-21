@@ -100,22 +100,21 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
 
         const paginationToken = parsePaginationToken(req.pagination?.token);
 
-        // Sort code start
+        // grab the first sort entry - only 1 supported here
         const sort = req.sort?.[0];
+        // defaults to name
         const orderBy = sort?.field || "name";
         const sortOrder = sort?.order || SortOrder.ASC;
+        // defaults to ascending
         const orderDir: "ASC" | "DESC" = sortOrder === SortOrder.DESC ? "DESC" : "ASC";
 
-        // validate orderBy and orderDir
         if (!["name", "creationTime"].includes(orderBy as string)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "orderBy must be one of 'name' or 'creationTime'");
         }
-        // Sort code end
 
         const { rows } = await this.projectService.findProjects(ctxUserId(), {
             organizationId: req.organizationId,
             searchTerm: req.searchTerm,
-            // TODO: support sorting params from req.pagination
             orderBy: orderBy as keyof Project,
             orderDir,
             // We request 1 additional record to help determine if there are more results
