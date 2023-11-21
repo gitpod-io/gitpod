@@ -78,7 +78,11 @@ import {
     AdminModifyRoleOrPermissionRequest,
     WorkspaceAndInstance,
 } from "@gitpod/gitpod-protocol/lib/admin-protocol";
-import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import {
+    ApplicationError,
+    ErrorCodes,
+    UnauthorizedRepositoryAccessError,
+} from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import {
     InterfaceWithTraceContext,
@@ -101,13 +105,12 @@ import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { AuthProviderService } from "../auth/auth-provider-service";
 import { GuardedResource, ResourceAccessGuard, ResourceAccessOp } from "../auth/resource-access";
 import { Config } from "../config";
-import { NotFoundError, UnauthorizedError } from "../errors";
 import { AuthorizationService } from "../user/authorization-service";
 import { UserAuthentication } from "../user/user-authentication";
 import { ContextParser } from "./context-parser-service";
 import { isClusterMaintenanceError } from "./workspace-starter";
 import { HeadlessLogUrls } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
-import { ConfigProvider, InvalidGitpodYMLError } from "./config-provider";
+import { ConfigProvider } from "./config-provider";
 import { ProjectsService } from "../projects/projects-service";
 import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import {
@@ -1089,7 +1092,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                         event: "snapshot_access_denied",
                         properties: { snapshot_id: context.snapshotId, error: String(error) },
                     }).catch((err) => log.error("cannot track event", err));
-                    if (UnauthorizedError.is(error)) {
+                    if (error instanceof UnauthorizedRepositoryAccessError) {
                         throw error;
                     }
                     throw new ApplicationError(
@@ -1197,20 +1200,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     private handleError(error: any, logContext: LogContext, normalizedContextUrl: string) {
-        if (NotFoundError.is(error)) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Repository not found.", error.data);
-        }
-        if (UnauthorizedError.is(error)) {
-            throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
-        }
-        if (InvalidGitpodYMLError.is(error)) {
-            throw new ApplicationError(ErrorCodes.INVALID_GITPOD_YML, error.message);
-        }
-
         if (ApplicationError.hasErrorCode(error)) {
             // specific errors will be handled in create-workspace.tsx
             throw error;
         }
+        // TODO(ak) not sure about it we shovel all errors in context parsing error
+        // we should rather do internal errors, and categorize at sources
         log.debug(logContext, error);
         throw new ApplicationError(
             ErrorCodes.CONTEXT_PARSE_ERROR,
@@ -1955,21 +1950,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("getProjectOverview");
         await this.guardProjectOperation(user, projectId, "get");
-        try {
-            const result = await this.projectsService.getProjectOverview(user, projectId);
-            if (result) {
-                result.isConsideredInactive = await this.projectsService.isProjectConsideredInactive(
-                    user.id,
-                    projectId,
-                );
-            }
-            return result;
-        } catch (error) {
-            if (UnauthorizedError.is(error)) {
-                throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
-            }
-            throw error;
+        const result = await this.projectsService.getProjectOverview(user, projectId);
+        if (result) {
+            result.isConsideredInactive = await this.projectsService.isProjectConsideredInactive(user.id, projectId);
         }
+        return result;
     }
 
     async adminFindPrebuilds(ctx: TraceContext, params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {

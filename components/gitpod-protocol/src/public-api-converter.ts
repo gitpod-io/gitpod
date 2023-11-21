@@ -4,8 +4,21 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Timestamp } from "@bufbuild/protobuf";
+import { Timestamp, toPlainMessage } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@connectrpc/connect";
+import {
+    FailedPreconditionDetails,
+    ImageBuildLogsNotYetAvailableError,
+    InvalidCostCenterError as InvalidCostCenterErrorData,
+    InvalidGitpodYMLError as InvalidGitpodYMLErrorData,
+    NeedsVerificationError,
+    PaymentSpendingLimitReachedError,
+    PermissionDeniedDetails,
+    RepositoryNotFoundError as RepositoryNotFoundErrorData,
+    RepositoryUnauthorizedError as RepositoryUnauthorizedErrorData,
+    TooManyRunningWorkspacesError,
+    UserBlockedError,
+} from "@gitpod/public-api/lib/gitpod/v1/error_pb";
 import {
     AuthProvider,
     AuthProviderDescription,
@@ -51,7 +64,13 @@ import {
     PrebuildPhase,
     PrebuildPhase_Phase,
 } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
-import { ApplicationError, ErrorCode, ErrorCodes } from "./messaging/error";
+import {
+    ApplicationError,
+    ErrorCodes,
+    InvalidGitpodYMLError,
+    RepositoryNotFoundError,
+    UnauthorizedRepositoryAccessError,
+} from "./messaging/error";
 import {
     AuthProviderEntry as AuthProviderProtocol,
     AuthProviderInfo,
@@ -79,7 +98,6 @@ import {
     Project,
     Organization as ProtocolOrganization,
 } from "./teams-projects-protocol";
-import { TrustedValue } from "./util/scrubbing";
 import {
     ConfigurationIdeConfig,
     PortProtocol,
@@ -91,9 +109,6 @@ import { Author, Commit } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import type { DeepPartial } from "./util/deep-partial";
 
 export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
-
-const applicationErrorCode = "application-error-code";
-const applicationErrorData = "application-error-data";
 
 /**
  * Converter between gRPC and JSON-RPC types.
@@ -199,57 +214,240 @@ export class PublicAPIConverter {
             return reason;
         }
         if (reason instanceof ApplicationError) {
-            const metadata: HeadersInit = {};
-            metadata[applicationErrorCode] = String(reason.code);
-            if (reason.data) {
-                metadata[applicationErrorData] = JSON.stringify(reason.data);
+            if (reason.code === ErrorCodes.USER_BLOCKED) {
+                return new ConnectError(
+                    reason.message,
+                    Code.PermissionDenied,
+                    undefined,
+                    [
+                        new PermissionDeniedDetails({
+                            reason: {
+                                case: "userBlocked",
+                                value: new UserBlockedError(),
+                            },
+                        }),
+                    ],
+                    reason,
+                );
+            }
+            if (reason.code === ErrorCodes.NEEDS_VERIFICATION) {
+                return new ConnectError(
+                    reason.message,
+                    Code.PermissionDenied,
+                    undefined,
+                    [
+                        new PermissionDeniedDetails({
+                            reason: {
+                                case: "needsVerification",
+                                value: new NeedsVerificationError(),
+                            },
+                        }),
+                    ],
+                    reason,
+                );
+            }
+            if (reason instanceof InvalidGitpodYMLError) {
+                return new ConnectError(
+                    reason.message,
+                    Code.FailedPrecondition,
+                    undefined,
+                    [
+                        new FailedPreconditionDetails({
+                            reason: {
+                                case: "invalidGitpodYml",
+                                value: new InvalidGitpodYMLErrorData(reason.info),
+                            },
+                        }),
+                    ],
+                    reason,
+                );
+            }
+            if (reason instanceof RepositoryNotFoundError) {
+                return new ConnectError(
+                    reason.message,
+                    Code.FailedPrecondition,
+                    undefined,
+                    [
+                        new FailedPreconditionDetails({
+                            reason: {
+                                case: "repositoryNotFound",
+                                value: new RepositoryNotFoundErrorData(reason.info),
+                            },
+                        }),
+                    ],
+                    reason,
+                );
+            }
+            if (reason instanceof UnauthorizedRepositoryAccessError) {
+                return new ConnectError(
+                    reason.message,
+                    Code.FailedPrecondition,
+                    undefined,
+                    [
+                        new FailedPreconditionDetails({
+                            reason: {
+                                case: "repositoryUnauthorized",
+                                value: new RepositoryUnauthorizedErrorData(reason.info),
+                            },
+                        }),
+                    ],
+                    reason,
+                );
+            }
+            if (reason.code === ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED) {
+                return new ConnectError(
+                    reason.message,
+                    Code.FailedPrecondition,
+                    undefined,
+                    [
+                        new FailedPreconditionDetails({
+                            reason: {
+                                case: "paymentSpendingLimitReached",
+                                value: new PaymentSpendingLimitReachedError(),
+                            },
+                        }),
+                    ],
+                    reason,
+                );
+            }
+            if (reason.code === ErrorCodes.INVALID_COST_CENTER) {
+                return new ConnectError(
+                    reason.message,
+                    Code.FailedPrecondition,
+                    undefined,
+                    [
+                        new FailedPreconditionDetails({
+                            reason: {
+                                case: "invalidCostCenter",
+                                value: new InvalidCostCenterErrorData({
+                                    attributionId: reason.data.attributionId,
+                                }),
+                            },
+                        }),
+                    ],
+                    reason,
+                );
+            }
+            if (reason.code === ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE) {
+                return new ConnectError(
+                    reason.message,
+                    Code.FailedPrecondition,
+                    undefined,
+                    [
+                        new FailedPreconditionDetails({
+                            reason: {
+                                case: "imageBuildLogsNotYetAvailable",
+                                value: new ImageBuildLogsNotYetAvailableError(),
+                            },
+                        }),
+                    ],
+                    reason,
+                );
+            }
+            if (reason.code === ErrorCodes.TOO_MANY_RUNNING_WORKSPACES) {
+                return new ConnectError(
+                    reason.message,
+                    Code.FailedPrecondition,
+                    undefined,
+                    [
+                        new FailedPreconditionDetails({
+                            reason: {
+                                case: "tooManyRunningWorkspaces",
+                                value: new TooManyRunningWorkspacesError(),
+                            },
+                        }),
+                    ],
+                    reason,
+                );
             }
             if (reason.code === ErrorCodes.NOT_FOUND) {
-                return new ConnectError(reason.message, Code.NotFound, metadata, undefined, reason);
+                return new ConnectError(reason.message, Code.NotFound, undefined, undefined, reason);
             }
             if (reason.code === ErrorCodes.NOT_AUTHENTICATED) {
-                return new ConnectError(reason.message, Code.Unauthenticated, metadata, undefined, reason);
+                return new ConnectError(reason.message, Code.Unauthenticated, undefined, undefined, reason);
             }
-            if (reason.code === ErrorCodes.PERMISSION_DENIED || reason.code === ErrorCodes.USER_BLOCKED) {
-                return new ConnectError(reason.message, Code.PermissionDenied, metadata, undefined, reason);
+            if (reason.code === ErrorCodes.PERMISSION_DENIED) {
+                return new ConnectError(reason.message, Code.PermissionDenied, undefined, undefined, reason);
             }
             if (reason.code === ErrorCodes.CONFLICT) {
-                return new ConnectError(reason.message, Code.AlreadyExists, metadata, undefined, reason);
+                return new ConnectError(reason.message, Code.AlreadyExists, undefined, undefined, reason);
             }
             if (reason.code === ErrorCodes.PRECONDITION_FAILED) {
-                return new ConnectError(reason.message, Code.FailedPrecondition, metadata, undefined, reason);
+                return new ConnectError(reason.message, Code.FailedPrecondition, undefined, undefined, reason);
             }
             if (reason.code === ErrorCodes.TOO_MANY_REQUESTS) {
-                return new ConnectError(reason.message, Code.ResourceExhausted, metadata, undefined, reason);
-            }
-            if (reason.code === ErrorCodes.INTERNAL_SERVER_ERROR) {
-                return new ConnectError(reason.message, Code.Internal, metadata, undefined, reason);
+                return new ConnectError(reason.message, Code.ResourceExhausted, undefined, undefined, reason);
             }
             if (reason.code === ErrorCodes.CANCELLED) {
-                return new ConnectError(reason.message, Code.DeadlineExceeded, metadata, undefined, reason);
+                return new ConnectError(reason.message, Code.Canceled, undefined, undefined, reason);
             }
-            return new ConnectError(reason.message, Code.InvalidArgument, metadata, undefined, reason);
+            if (reason.code === ErrorCodes.INTERNAL_SERVER_ERROR) {
+                return new ConnectError(reason.message, Code.Internal, undefined, undefined, reason);
+            }
+            return new ConnectError(reason.message, Code.Unknown, undefined, undefined, reason);
         }
         return ConnectError.from(reason, Code.Internal);
     }
 
-    fromError(reason: ConnectError): Error {
-        const codeMetadata = reason.metadata?.get(applicationErrorCode);
-        if (!codeMetadata) {
-            return reason;
+    fromError(reason: ConnectError): ApplicationError {
+        if (reason.code === Code.NotFound) {
+            return new ApplicationError(ErrorCodes.NOT_FOUND, reason.rawMessage);
         }
-        const code = Number(codeMetadata) as ErrorCode;
-        const dataMetadata = reason.metadata?.get(applicationErrorData);
-        let data = undefined;
-        if (dataMetadata) {
-            try {
-                data = JSON.parse(dataMetadata);
-            } catch (e) {
-                console.error("failed to parse application error data", e);
+        if (reason.code === Code.Unauthenticated) {
+            return new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, reason.rawMessage);
+        }
+        if (reason.code === Code.PermissionDenied) {
+            const details = reason.findDetails(PermissionDeniedDetails)[0];
+            switch (details?.reason?.case) {
+                case "userBlocked":
+                    return new ApplicationError(ErrorCodes.USER_BLOCKED, reason.rawMessage);
+                case "needsVerification":
+                    return new ApplicationError(ErrorCodes.NEEDS_VERIFICATION, reason.rawMessage);
             }
+            return new ApplicationError(ErrorCodes.PERMISSION_DENIED, reason.rawMessage);
         }
-        // data is trusted here, since it was scrubbed before on the server
-        return new ApplicationError(code, reason.message, new TrustedValue(data));
+        if (reason.code === Code.AlreadyExists) {
+            return new ApplicationError(ErrorCodes.CONFLICT, reason.rawMessage);
+        }
+        if (reason.code === Code.FailedPrecondition) {
+            const details = reason.findDetails(FailedPreconditionDetails)[0];
+            switch (details?.reason?.case) {
+                case "invalidGitpodYml":
+                    const invalidGitpodYmlInfo = toPlainMessage(details.reason.value);
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+                    return new InvalidGitpodYMLError(invalidGitpodYmlInfo);
+                case "repositoryNotFound":
+                    const repositoryNotFoundInfo = toPlainMessage(details.reason.value);
+                    return new RepositoryNotFoundError(repositoryNotFoundInfo);
+                case "repositoryUnauthorized":
+                    const repositoryUnauthorizedInfo = toPlainMessage(details.reason.value);
+                    return new UnauthorizedRepositoryAccessError(repositoryUnauthorizedInfo);
+                case "paymentSpendingLimitReached":
+                    return new ApplicationError(ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED, reason.rawMessage);
+                case "invalidCostCenter":
+                    const invalidCostCenterInfo = toPlainMessage(details.reason.value);
+                    return new ApplicationError(
+                        ErrorCodes.INVALID_COST_CENTER,
+                        reason.rawMessage,
+                        invalidCostCenterInfo,
+                    );
+                case "imageBuildLogsNotYetAvailable":
+                    return new ApplicationError(ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE, reason.rawMessage);
+                case "tooManyRunningWorkspaces":
+                    return new ApplicationError(ErrorCodes.TOO_MANY_RUNNING_WORKSPACES, reason.rawMessage);
+            }
+            return new ApplicationError(ErrorCodes.PRECONDITION_FAILED, reason.rawMessage);
+        }
+        if (reason.code === Code.ResourceExhausted) {
+            return new ApplicationError(ErrorCodes.TOO_MANY_REQUESTS, reason.rawMessage);
+        }
+        if (reason.code === Code.Canceled) {
+            return new ApplicationError(ErrorCodes.CANCELLED, reason.rawMessage);
+        }
+        if (reason.code === Code.Internal) {
+            return new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, reason.rawMessage);
+        }
+        return new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, reason.rawMessage);
     }
 
     toWorkspaceEnvironmentVariables(context: WorkspaceContext): WorkspaceEnvironmentVariable[] {

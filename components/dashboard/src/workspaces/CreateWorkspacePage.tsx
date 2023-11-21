@@ -522,7 +522,7 @@ const ErrorMessage: FunctionComponent<ErrorMessageProps> = ({ error, reset, setS
         case ErrorCodes.INVALID_COST_CENTER:
             return <RepositoryInputError title={`The organization '${error.data}' is not valid.`} />;
         case ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED:
-            return <UsageLimitReachedModal onClose={reset} hints={error?.data} />;
+            return <UsageLimitReachedModal onClose={reset} />;
         case ErrorCodes.NEEDS_VERIFICATION:
             return <VerifyModal />;
         default:
