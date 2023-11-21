@@ -3,6 +3,7 @@ syntax = "proto3";
 package gitpod.v1;
 
 import "google/protobuf/timestamp.proto";
+import "gitpod/v1/pagination.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
 
@@ -39,10 +40,14 @@ message SearchRepositoriesResponse {
 }
 
 message ListSuggestedRepositoriesRequest {
-    string organization_id = 1;
+    PaginationRequest pagination = 1;
+
+    string organization_id = 2;
 }
 message ListSuggestedRepositoriesResponse {
-    repeated SuggestedRepository repositories = 1;
+    PaginationResponse pagination = 1;
+
+    repeated SuggestedRepository repositories = 2;
 }
 
 message SCMToken {

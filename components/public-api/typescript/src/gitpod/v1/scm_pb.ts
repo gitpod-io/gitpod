@@ -11,6 +11,7 @@
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message, proto3, Timestamp } from "@bufbuild/protobuf";
+import { PaginationRequest, PaginationResponse } from "./pagination_pb.js";
 
 /**
  * @generated from message gitpod.v1.GetSCMTokenRequest
@@ -263,7 +264,12 @@ export class SearchRepositoriesResponse extends Message<SearchRepositoriesRespon
  */
 export class ListSuggestedRepositoriesRequest extends Message<ListSuggestedRepositoriesRequest> {
   /**
-   * @generated from field: string organization_id = 1;
+   * @generated from field: gitpod.v1.PaginationRequest pagination = 1;
+   */
+  pagination?: PaginationRequest;
+
+  /**
+   * @generated from field: string organization_id = 2;
    */
   organizationId = "";
 
@@ -275,7 +281,8 @@ export class ListSuggestedRepositoriesRequest extends Message<ListSuggestedRepos
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.ListSuggestedRepositoriesRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 1, name: "pagination", kind: "message", T: PaginationRequest },
+    { no: 2, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListSuggestedRepositoriesRequest {
@@ -300,7 +307,12 @@ export class ListSuggestedRepositoriesRequest extends Message<ListSuggestedRepos
  */
 export class ListSuggestedRepositoriesResponse extends Message<ListSuggestedRepositoriesResponse> {
   /**
-   * @generated from field: repeated gitpod.v1.SuggestedRepository repositories = 1;
+   * @generated from field: gitpod.v1.PaginationResponse pagination = 1;
+   */
+  pagination?: PaginationResponse;
+
+  /**
+   * @generated from field: repeated gitpod.v1.SuggestedRepository repositories = 2;
    */
   repositories: SuggestedRepository[] = [];
 
@@ -312,7 +324,8 @@ export class ListSuggestedRepositoriesResponse extends Message<ListSuggestedRepo
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.ListSuggestedRepositoriesResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "repositories", kind: "message", T: SuggestedRepository, repeated: true },
+    { no: 1, name: "pagination", kind: "message", T: PaginationResponse },
+    { no: 2, name: "repositories", kind: "message", T: SuggestedRepository, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListSuggestedRepositoriesResponse {
