@@ -100,7 +100,7 @@ export default function RepositoryFinder({
             const result = repos.map((repo) => {
                 return {
                     id: repo.projectId || repo.url,
-                    element: <SuggestedRepositoryOption repo={repo} />,
+                    element: <SuggestedRepositoryOption repo={repo} useProjectNameIfAvailable={!excludeProjects} />,
                     isSelectable: true,
                 } as ComboboxElement;
             });
@@ -148,7 +148,7 @@ export default function RepositoryFinder({
             }
             return result;
         },
-        [repos, hasMore, authProviders.data],
+        [repos, hasMore, authProviders.data, excludeProjects],
     );
 
     return (
@@ -189,9 +189,11 @@ export default function RepositoryFinder({
 
 type SuggestedRepositoryOptionProps = {
     repo: SuggestedRepository;
+    useProjectNameIfAvailable?: boolean;
 };
-const SuggestedRepositoryOption: FC<SuggestedRepositoryOptionProps> = ({ repo }) => {
-    const name = repo.projectName || repo.repositoryName;
+const SuggestedRepositoryOption: FC<SuggestedRepositoryOptionProps> = ({ repo, useProjectNameIfAvailable = true }) => {
+    // use the project name if it's available and not explicitly disabed via prop, otherwise use the repo name
+    const name = useProjectNameIfAvailable && repo.projectName ? repo.projectName : repo.repositoryName;
     const repoPath = stripOffProtocol(repo.url);
 
     return (
