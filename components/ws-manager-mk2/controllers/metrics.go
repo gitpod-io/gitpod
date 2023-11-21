@@ -15,7 +15,9 @@ import (
 	"github.com/go-logr/logr"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/prometheus/client_golang/prometheus"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
@@ -29,6 +31,7 @@ const (
 	workspaceBackupFailuresTotal  string = "workspace_backups_failure_total"
 	workspaceRestoresTotal        string = "workspace_restores_total"
 	workspaceRestoresFailureTotal string = "workspace_restores_failure_total"
+	workspaceNodeCapacity         string = "workspace_node_capacity"
 )
 
 type StopReason string
@@ -57,6 +60,8 @@ type controllerMetrics struct {
 
 	workspacePhases *phaseTotalVec
 	timeoutSettings *timeoutSettingsVec
+
+	workspaceNodeCapacity *nodeCapacityVec
 
 	// used to prevent recording metrics multiple times
 	cache *lru.Cache
@@ -127,9 +132,10 @@ func newControllerMetrics(r *WorkspaceReconciler) (*controllerMetrics, error) {
 			Help:      "total number of workspace restore failures",
 		}, []string{"type", "class"}),
 
-		workspacePhases: newPhaseTotalVec(r),
-		timeoutSettings: newTimeoutSettingsVec(r),
-		cache:           cache,
+		workspacePhases:       newPhaseTotalVec(r),
+		timeoutSettings:       newTimeoutSettingsVec(r),
+		workspaceNodeCapacity: newNodeCapacityVec(r),
+		cache:                 cache,
 	}, nil
 }
 
@@ -457,4 +463,123 @@ func (m *maintenanceEnabledGauge) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	ch <- metric
+}
+
+type nodeCapacityVec struct {
+	name       string
+	desc       *prometheus.Desc
+	reconciler *WorkspaceReconciler
+}
+
+func newNodeCapacityVec(r *WorkspaceReconciler) *nodeCapacityVec {
+	name := prometheus.BuildFQName(metricsNamespace, metricsWorkspaceSubsystem, workspaceNodeCapacity)
+	desc := prometheus.NewDesc(
+		name,
+		"Amount of resource capacity on the node (cpu/memory, metric for `total` on the node vs `requested` by workspaces)",
+		[]string{"node", "resource", "metric"},
+		prometheus.Labels(map[string]string{}),
+	)
+	return &nodeCapacityVec{
+		name:       name,
+		reconciler: r,
+		desc:       desc,
+	}
+}
+
+// Describe implements Collector. It will send exactly one Desc to the provided channel.
+func (n *nodeCapacityVec) Describe(ch chan<- *prometheus.Desc) {
+	ch <- n.desc
+}
+
+// Collect implements Collector.
+func (n *nodeCapacityVec) Collect(ch chan<- prometheus.Metric) {
+	ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
+	defer cancel()
+
+	var nodes corev1.NodeList
+	err := n.reconciler.List(ctx, &nodes)
+	if err != nil {
+		log.FromContext(ctx).Error(err, "cannot list nodes for node capacity metric")
+		return
+	}
+
+	nodeMap := make(map[string]corev1.Node)
+	for _, node := range nodes.Items {
+		// Only collect metrics for workspace nodes.
+		if node.Labels["gitpod.io/workload_workspace_regular"] != "true" && node.Labels["gitpod.io/workload_workspace_headless"] != "true" {
+			continue
+		}
+
+		nodeMap[node.Name] = node
+
+		// Record node total capacity.
+		for _, resource := range []corev1.ResourceName{corev1.ResourceCPU, corev1.ResourceMemory} {
+			capacity := node.Status.Capacity[resource]
+			metric, err := prometheus.NewConstMetric(n.desc, prometheus.GaugeValue, float64(capacity.Value()), node.Name, resource.String(), "total")
+			if err != nil {
+				log.FromContext(ctx).Error(err, "cannot create node capacity metric", "node", node.Name, "resource", resource.String(), "metric", "total")
+				continue
+			}
+
+			ch <- metric
+		}
+	}
+
+	var workspaces workspacev1.WorkspaceList
+	if err = n.reconciler.List(ctx, &workspaces, client.InNamespace(n.reconciler.Config.Namespace)); err != nil {
+		log.FromContext(ctx).Error(err, "cannot list workspaces for node capacity metric")
+		return
+	}
+
+	// we're only interested in the total capacity of the node
+	nodeCapacity := make(map[string]map[corev1.ResourceName]int64)
+	for _, ws := range workspaces.Items {
+		if ws.Status.Runtime == nil {
+			continue
+		}
+		nodeName := ws.Status.Runtime.NodeName
+		if nodeName == "" {
+			// Not yet scheduled.
+			continue
+		}
+
+		if ws.Status.Phase != workspacev1.WorkspacePhaseStopped {
+			// Stopped, no longer consuming resources on the node.
+			continue
+		}
+
+		if _, ok := nodeCapacity[nodeName]; !ok {
+			nodeCapacity[nodeName] = map[corev1.ResourceName]int64{
+				corev1.ResourceCPU:    0,
+				corev1.ResourceMemory: 0,
+			}
+		}
+
+		class, ok := n.reconciler.Config.WorkspaceClasses[ws.Spec.Class]
+		if !ok {
+			log.FromContext(ctx).Error(err, "cannot find workspace class for node capacity metric", "class", ws.Spec.Class)
+			continue
+		}
+
+		requests, err := class.Container.Requests.ResourceList()
+		if err != nil {
+			log.FromContext(ctx).Error(err, "cannot get resource requests for node capacity metric", "class", ws.Spec.Class)
+			continue
+		}
+
+		nodeCapacity[nodeName][corev1.ResourceCPU] += requests.Cpu().Value()
+		nodeCapacity[nodeName][corev1.ResourceMemory] += requests.Memory().Value()
+	}
+
+	for nodeName, metrics := range nodeCapacity {
+		for resource, value := range metrics {
+			metric, err := prometheus.NewConstMetric(n.desc, prometheus.GaugeValue, float64(value), nodeName, resource.String(), "requested")
+			if err != nil {
+				log.FromContext(ctx).Error(err, "cannot create node capacity metric", "node", nodeName, "resource", resource.String(), "metric", "requested")
+				continue
+			}
+
+			ch <- metric
+		}
+	}
 }
