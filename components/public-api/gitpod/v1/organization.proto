@@ -94,9 +94,9 @@ message UpdateOrganizationSettingsRequest {
   // organization_id is the ID of the organization to update the settings for.
   string organization_id = 1;
 
-  // pass empty string to reset to the installation default workspace image
   optional bool workspace_sharing_disabled = 3;
 
+  // pass empty string to reset to the installation default workspace image
   optional string default_workspace_image = 4;
 }
 

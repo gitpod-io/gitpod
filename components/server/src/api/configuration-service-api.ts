@@ -7,7 +7,7 @@
 import { HandlerContext, ServiceImpl } from "@connectrpc/connect";
 import { inject, injectable } from "inversify";
 import { ConfigurationService as ConfigurationServiceInterface } from "@gitpod/public-api/lib/gitpod/v1/configuration_connect";
-import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
+import { PublicAPIConverter, PartialConfiguration } from "@gitpod/gitpod-protocol/lib/public-api-converter";
 import { ProjectsService } from "../projects/projects-service";
 import {
     CreateConfigurationRequest,
@@ -17,6 +17,9 @@ import {
     GetConfigurationRequest,
     ListConfigurationsRequest,
     ListConfigurationsResponse,
+    PrebuildSettings,
+    UpdateConfigurationRequest,
+    WorkspaceSettings,
 } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -24,6 +27,23 @@ import { validate as uuidValidate } from "uuid";
 import { PaginationToken, generatePaginationToken, parsePaginationToken } from "./pagination";
 import { ctxUserId } from "../util/request-context";
 import { UserService } from "../user/user-service";
+import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
+
+function buildUpdateObject<T extends Record<string, any>>(obj: T): Partial<T> {
+    const update: Partial<T> = {};
+    Object.keys(obj).forEach((key) => {
+        const property = obj[key];
+        if (property !== undefined) {
+            if (property !== null && typeof property === "object" && !Array.isArray(property)) {
+                // Recursively build update object for nested properties
+                update[key as keyof T] = buildUpdateObject(property) as any;
+            } else {
+                update[key as keyof T] = property;
+            }
+        }
+    });
+    return update;
+}
 
 @injectable()
 export class ConfigurationServiceAPI implements ServiceImpl<typeof ConfigurationServiceInterface> {
@@ -127,6 +147,46 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         }
 
         return response;
+    }
+
+    async updateConfiguration(req: UpdateConfigurationRequest, _: HandlerContext) {
+        if (!req.configurationId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configuration_id is required");
+        }
+
+        const userId = ctxUserId();
+        const installer = await this.userService.findUserById(userId, userId);
+        if (!installer) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "user not found");
+        }
+
+        const update: PartialConfiguration = {
+            id: req.configurationId,
+        };
+
+        if (typeof req.name === "string") {
+            update.name = req.name;
+        }
+
+        if (req.prebuildSettings !== undefined) {
+            update.prebuildSettings = buildUpdateObject<DeepPartial<PrebuildSettings>>(req.prebuildSettings);
+        }
+
+        if (req.workspaceSettings !== undefined) {
+            update.workspaceSettings = buildUpdateObject<DeepPartial<WorkspaceSettings>>(req.workspaceSettings);
+        }
+
+        if (Object.keys(update).length <= 1) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "nothing to update");
+        }
+
+        const project = this.apiConverter.fromPartialConfiguration(update);
+
+        const updatedProject = await this.projectService.updateProject(installer, project);
+
+        return {
+            configuration: this.apiConverter.toConfiguration(updatedProject),
+        };
     }
 
     async deleteConfiguration(req: DeleteConfigurationRequest, _: HandlerContext) {

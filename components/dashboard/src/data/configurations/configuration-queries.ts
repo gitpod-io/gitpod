@@ -7,7 +7,8 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { configurationClient } from "../../service/public-api";
-import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import type { Configuration, UpdateConfigurationRequest } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import type { PartialMessage } from "@bufbuild/protobuf";
 
 const BASE_KEY = "configurations";
 
@@ -82,8 +83,36 @@ export const useDeleteConfiguration = () => {
             });
         },
         onSuccess: (_, { configurationId }) => {
+            // todo: look into updating the cache instad of invalidating it
             queryClient.invalidateQueries({ queryKey: ["configurations", "list"] });
             queryClient.invalidateQueries({ queryKey: getConfigurationQueryKey(configurationId) });
+        },
+    });
+};
+
+export type PartialConfiguration = PartialMessage<UpdateConfigurationRequest> &
+    Pick<UpdateConfigurationRequest, "configurationId">;
+
+export const useConfigurationMutation = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation<Configuration, Error, PartialConfiguration>({
+        mutationFn: async (configuration) => {
+            const updated = await configurationClient.updateConfiguration({
+                configurationId: configuration.configurationId,
+                name: configuration.name,
+                workspaceSettings: configuration.workspaceSettings,
+                prebuildSettings: configuration.prebuildSettings,
+            });
+
+            if (!updated.configuration) {
+                throw new Error("Failed to update configuration");
+            }
+
+            queryClient.invalidateQueries({ queryKey: ["configurations", "list"] });
+            queryClient.invalidateQueries({ queryKey: getConfigurationQueryKey(configuration.configurationId) });
+
+            return updated.configuration;
         },
     });
 };

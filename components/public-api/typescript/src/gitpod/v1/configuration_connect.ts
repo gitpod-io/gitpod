@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateConfigurationRequest, CreateConfigurationResponse, DeleteConfigurationRequest, DeleteConfigurationResponse, GetConfigurationRequest, GetConfigurationResponse, ListConfigurationsRequest, ListConfigurationsResponse } from "./configuration_pb.js";
+import { CreateConfigurationRequest, CreateConfigurationResponse, DeleteConfigurationRequest, DeleteConfigurationResponse, GetConfigurationRequest, GetConfigurationResponse, ListConfigurationsRequest, ListConfigurationsResponse, UpdateConfigurationRequest, UpdateConfigurationResponse } from "./configuration_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -49,6 +49,17 @@ export const ConfigurationService = {
       name: "ListConfigurations",
       I: ListConfigurationsRequest,
       O: ListConfigurationsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Updates a configuration.
+     *
+     * @generated from rpc gitpod.v1.ConfigurationService.UpdateConfiguration
+     */
+    updateConfiguration: {
+      name: "UpdateConfiguration",
+      I: UpdateConfigurationRequest,
+      O: UpdateConfigurationResponse,
       kind: MethodKind.Unary,
     },
     /**

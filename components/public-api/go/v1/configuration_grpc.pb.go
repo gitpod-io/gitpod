@@ -32,6 +32,8 @@ type ConfigurationServiceClient interface {
 	GetConfiguration(ctx context.Context, in *GetConfigurationRequest, opts ...grpc.CallOption) (*GetConfigurationResponse, error)
 	// Lists configurations.
 	ListConfigurations(ctx context.Context, in *ListConfigurationsRequest, opts ...grpc.CallOption) (*ListConfigurationsResponse, error)
+	// Updates a configuration.
+	UpdateConfiguration(ctx context.Context, in *UpdateConfigurationRequest, opts ...grpc.CallOption) (*UpdateConfigurationResponse, error)
 	// Deletes a configuration.
 	DeleteConfiguration(ctx context.Context, in *DeleteConfigurationRequest, opts ...grpc.CallOption) (*DeleteConfigurationResponse, error)
 }
@@ -71,6 +73,15 @@ func (c *configurationServiceClient) ListConfigurations(ctx context.Context, in 
 	return out, nil
 }
 
+func (c *configurationServiceClient) UpdateConfiguration(ctx context.Context, in *UpdateConfigurationRequest, opts ...grpc.CallOption) (*UpdateConfigurationResponse, error) {
+	out := new(UpdateConfigurationResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.ConfigurationService/UpdateConfiguration", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *configurationServiceClient) DeleteConfiguration(ctx context.Context, in *DeleteConfigurationRequest, opts ...grpc.CallOption) (*DeleteConfigurationResponse, error) {
 	out := new(DeleteConfigurationResponse)
 	err := c.cc.Invoke(ctx, "/gitpod.v1.ConfigurationService/DeleteConfiguration", in, out, opts...)
@@ -90,6 +101,8 @@ type ConfigurationServiceServer interface {
 	GetConfiguration(context.Context, *GetConfigurationRequest) (*GetConfigurationResponse, error)
 	// Lists configurations.
 	ListConfigurations(context.Context, *ListConfigurationsRequest) (*ListConfigurationsResponse, error)
+	// Updates a configuration.
+	UpdateConfiguration(context.Context, *UpdateConfigurationRequest) (*UpdateConfigurationResponse, error)
 	// Deletes a configuration.
 	DeleteConfiguration(context.Context, *DeleteConfigurationRequest) (*DeleteConfigurationResponse, error)
 	mustEmbedUnimplementedConfigurationServiceServer()
@@ -107,6 +120,9 @@ func (UnimplementedConfigurationServiceServer) GetConfiguration(context.Context,
 }
 func (UnimplementedConfigurationServiceServer) ListConfigurations(context.Context, *ListConfigurationsRequest) (*ListConfigurationsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListConfigurations not implemented")
+}
+func (UnimplementedConfigurationServiceServer) UpdateConfiguration(context.Context, *UpdateConfigurationRequest) (*UpdateConfigurationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateConfiguration not implemented")
 }
 func (UnimplementedConfigurationServiceServer) DeleteConfiguration(context.Context, *DeleteConfigurationRequest) (*DeleteConfigurationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteConfiguration not implemented")
@@ -178,6 +194,24 @@ func _ConfigurationService_ListConfigurations_Handler(srv interface{}, ctx conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConfigurationService_UpdateConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateConfigurationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConfigurationServiceServer).UpdateConfiguration(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.ConfigurationService/UpdateConfiguration",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConfigurationServiceServer).UpdateConfiguration(ctx, req.(*UpdateConfigurationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ConfigurationService_DeleteConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteConfigurationRequest)
 	if err := dec(in); err != nil {
@@ -214,6 +248,10 @@ var ConfigurationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListConfigurations",
 			Handler:    _ConfigurationService_ListConfigurations_Handler,
+		},
+		{
+			MethodName: "UpdateConfiguration",
+			Handler:    _ConfigurationService_UpdateConfiguration_Handler,
 		},
 		{
 			MethodName: "DeleteConfiguration",

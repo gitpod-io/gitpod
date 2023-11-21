@@ -14,7 +14,7 @@ export interface ProjectDB extends TransactionalDB<ProjectDB> {
     findProjects(orgID: string): Promise<Project[]>;
     findProjectsBySearchTerm(args: FindProjectsBySearchTermArgs): Promise<{ total: number; rows: Project[] }>;
     storeProject(project: Project): Promise<Project>;
-    updateProject(partialProject: PartialProject): Promise<void>;
+    updateProject(partialProject: PartialProject): Promise<Project>;
     markDeleted(projectId: string): Promise<void>;
     findProjectEnvironmentVariable(
         projectId: string,
