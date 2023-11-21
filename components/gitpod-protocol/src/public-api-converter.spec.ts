@@ -14,7 +14,7 @@ import {
     WorkspacePort_Protocol,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { expect } from "chai";
-import { PublicAPIConverter } from "./public-api-converter";
+import { PartialConfiguration, PublicAPIConverter } from "./public-api-converter";
 import { OrgMemberInfo, Project, PrebuildSettings as PrebuildSettingsProtocol } from "./teams-projects-protocol";
 import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import {
@@ -88,6 +88,39 @@ describe("PublicAPIConverter", () => {
             expect(converter.fromOrgMemberRole(OrganizationRole.OWNER)).to.equal("owner");
             expect(converter.fromOrgMemberRole(OrganizationRole.MEMBER)).to.equal("member");
             expect(() => converter.fromOrgMemberRole(OrganizationRole.UNSPECIFIED)).to.throw(Error);
+        });
+    });
+
+    describe("fromPartialConfiguration", () => {
+        it("should convert a configuration name change to a Project", () => {
+            const config: PartialConfiguration = {
+                id: "123",
+                name: "My Config",
+            };
+            const result = converter.fromPartialConfiguration(config);
+            expect(result.id).to.equal(config.id);
+            expect(result.settings).to.be.undefined;
+        });
+        it("should carry over Configuration settings correctly", () => {
+            const config: PartialConfiguration = {
+                id: "123",
+                name: undefined,
+                workspaceSettings: {
+                    workspaceClass: "huge",
+                },
+                prebuildSettings: {
+                    enabled: true,
+                    prebuildInterval: 5,
+                },
+            };
+            const result = converter.fromPartialConfiguration(config);
+            expect(result.id).to.equal(config.id);
+            expect(result.settings?.workspaceClasses?.regular).to.deep.equal("huge");
+            expect(result.settings?.prebuilds?.enable).to.deep.equal(true);
+            expect(result.settings?.prebuilds?.prebuildInterval).to.deep.equal(5);
+            expect(result).to.not.have.property("name");
+            expect(result).to.not.have.deep.property("result.settings.prebuilds.workspaceClass");
+            expect(result).to.not.have.deep.property("result.settings.prebuilds.branchStrategy");
         });
     });
 

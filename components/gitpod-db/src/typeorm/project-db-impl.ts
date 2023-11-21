@@ -113,13 +113,19 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
         return repo.save(project);
     }
 
-    public async updateProject(partialProject: PartialProject): Promise<void> {
+    public async updateProject(partialProject: PartialProject): Promise<DBProject> {
         const repo = await this.getRepo();
         const count = await repo.count({ id: partialProject.id, markedDeleted: false });
         if (count < 1) {
-            throw new Error("A project with this ID could not be found");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `project with ID ${partialProject.id} not found`);
         }
         await repo.update(partialProject.id, partialProject);
+        const project = await repo.findOne({ id: partialProject.id, markedDeleted: false });
+        if (!project) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `project with ID ${partialProject.id} not found`);
+        }
+
+        return project;
     }
 
     public async markDeleted(projectId: string): Promise<void> {

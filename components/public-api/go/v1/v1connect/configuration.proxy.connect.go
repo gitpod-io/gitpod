@@ -49,6 +49,16 @@ func (s *ProxyConfigurationServiceHandler) ListConfigurations(ctx context.Contex
 	return connect_go.NewResponse(resp), nil
 }
 
+func (s *ProxyConfigurationServiceHandler) UpdateConfiguration(ctx context.Context, req *connect_go.Request[v1.UpdateConfigurationRequest]) (*connect_go.Response[v1.UpdateConfigurationResponse], error) {
+	resp, err := s.Client.UpdateConfiguration(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
 func (s *ProxyConfigurationServiceHandler) DeleteConfiguration(ctx context.Context, req *connect_go.Request[v1.DeleteConfigurationRequest]) (*connect_go.Response[v1.DeleteConfigurationResponse], error) {
 	resp, err := s.Client.DeleteConfiguration(ctx, req.Msg)
 	if err != nil {

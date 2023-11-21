@@ -61,6 +61,7 @@ import {
     WithPrebuild,
     WorkspaceContext,
     WorkspaceInfo,
+    WorkspaceClasses,
     UserEnvVarValue,
     ProjectEnvVar,
     PrebuiltWorkspaceState,
@@ -69,6 +70,7 @@ import {
     OrgMemberInfo,
     OrgMemberRole,
     OrganizationSettings as OrganizationSettingsProtocol,
+    PartialProject,
     PrebuildSettings as PrebuildSettingsProtocol,
     PrebuildWithStatus,
     Project,
@@ -83,6 +85,9 @@ import {
     WorkspaceInstancePort,
 } from "./workspace-instance";
 import { Author, Commit } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
+import type { DeepPartial } from "./util/deep-partial";
+
+export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
 
 const applicationErrorCode = "application-error-code";
 const applicationErrorData = "application-error-data";
@@ -427,6 +432,69 @@ export class PublicAPIConverter {
             default:
                 throw new Error(`unknown org member role ${role}`);
         }
+    }
+
+    fromWorkspaceSettings(workspaceClass?: string): WorkspaceClasses {
+        const result: WorkspaceClasses = {};
+        if (workspaceClass) {
+            result.regular = workspaceClass;
+        }
+        return result;
+    }
+
+    fromBranchMatchingStrategy(
+        branchStrategy?: BranchMatchingStrategy,
+    ): PrebuildSettingsProtocol.BranchStrategy | undefined {
+        switch (branchStrategy) {
+            case BranchMatchingStrategy.DEFAULT_BRANCH:
+                return "default-branch";
+            case BranchMatchingStrategy.ALL_BRANCHES:
+                return "all-branches";
+            case BranchMatchingStrategy.MATCHED_BRANCHES:
+                return "matched-branches";
+            default:
+                return undefined;
+        }
+    }
+
+    fromPartialPrebuildSettings(prebuilds?: DeepPartial<PrebuildSettings>): DeepPartial<PrebuildSettingsProtocol> {
+        const result: PrebuildSettingsProtocol = {};
+        if (prebuilds) {
+            result.enable = !!prebuilds.enabled;
+            result.branchMatchingPattern = prebuilds.branchMatchingPattern;
+            result.branchStrategy = this.fromBranchMatchingStrategy(prebuilds.branchStrategy);
+            result.prebuildInterval = prebuilds.prebuildInterval;
+            result.workspaceClass = prebuilds.workspaceClass;
+        }
+        return result;
+    }
+
+    fromCreationTime(creationTime?: Timestamp): string {
+        if (!creationTime) {
+            return "";
+        }
+        return creationTime.toDate().toISOString();
+    }
+
+    fromPartialConfiguration(configuration: PartialConfiguration): PartialProject {
+        const prebuilds = this.fromPartialPrebuildSettings(configuration.prebuildSettings);
+        const workspaceClasses = this.fromWorkspaceSettings(configuration.workspaceSettings?.workspaceClass);
+        const result: PartialProject = {
+            id: configuration.id,
+        };
+
+        if (configuration.name !== undefined) {
+            result.name = configuration.name;
+        }
+
+        if (Object.keys(prebuilds).length > 0 || Object.keys(workspaceClasses).length > 0) {
+            result.settings = {
+                prebuilds,
+                workspaceClasses,
+            };
+        }
+
+        return result;
     }
 
     toOrganizationSettings(settings: OrganizationSettingsProtocol): OrganizationSettings {

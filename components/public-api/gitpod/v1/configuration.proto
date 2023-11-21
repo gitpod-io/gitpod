@@ -3,8 +3,8 @@ syntax = "proto3";
 package gitpod.v1;
 
 import "gitpod/v1/pagination.proto";
-import "google/protobuf/timestamp.proto";
 import "gitpod/v1/sorting.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
 
@@ -33,24 +33,26 @@ enum BranchMatchingStrategy {
   BRANCH_MATCHING_STRATEGY_MATCHED_BRANCHES = 3;
 }
 
-message WorkspaceSettings { string workspace_class = 1; }
+message WorkspaceSettings {
+  string workspace_class = 1;
+}
 
 service ConfigurationService {
   // Creates a new configuration.
-  rpc CreateConfiguration(CreateConfigurationRequest)
-      returns (CreateConfigurationResponse) {}
+  rpc CreateConfiguration(CreateConfigurationRequest) returns (CreateConfigurationResponse) {}
 
   // Retrieves a configuration.
-  rpc GetConfiguration(GetConfigurationRequest)
-      returns (GetConfigurationResponse) {}
+  rpc GetConfiguration(GetConfigurationRequest) returns (GetConfigurationResponse) {}
 
   // Lists configurations.
-  rpc ListConfigurations(ListConfigurationsRequest)
-      returns (ListConfigurationsResponse) {}
+  rpc ListConfigurations(ListConfigurationsRequest) returns (ListConfigurationsResponse) {}
+
+  // Updates a configuration.
+  rpc UpdateConfiguration(UpdateConfigurationRequest) returns (UpdateConfigurationResponse) {}
+
 
   // Deletes a configuration.
-  rpc DeleteConfiguration(DeleteConfigurationRequest)
-      returns (DeleteConfigurationResponse) {}
+  rpc DeleteConfiguration(DeleteConfigurationRequest) returns (DeleteConfigurationResponse) {}
 }
 
 message CreateConfigurationRequest {
@@ -59,11 +61,17 @@ message CreateConfigurationRequest {
   string clone_url = 3;
 }
 
-message CreateConfigurationResponse { Configuration configuration = 1; }
+message CreateConfigurationResponse {
+  Configuration configuration = 1;
+}
 
-message GetConfigurationRequest { string configuration_id = 1; }
+message GetConfigurationRequest {
+  string configuration_id = 1;
+}
 
-message GetConfigurationResponse { Configuration configuration = 1; }
+message GetConfigurationResponse {
+  Configuration configuration = 1;
+}
 
 message ListConfigurationsRequest {
   string organization_id = 1;
@@ -78,6 +86,29 @@ message ListConfigurationsResponse {
   PaginationResponse pagination = 2;
 }
 
-message DeleteConfigurationRequest { string configuration_id = 1; }
+message UpdateConfigurationRequest {
+  message PrebuildSettings {
+    optional bool enabled = 1;
+    optional string branch_matching_pattern = 2;
+    optional BranchMatchingStrategy branch_strategy = 3;
+    optional int32 prebuild_interval = 4;
+    optional string workspace_class = 5;
+  }
+  message WorkspaceSettings {
+    optional string workspace_class = 1;
+  }
+  string configuration_id = 1;
+  optional string name = 2;
+  optional PrebuildSettings prebuild_settings = 3;
+  optional WorkspaceSettings workspace_settings = 4;
+}
+
+message UpdateConfigurationResponse {
+  Configuration configuration = 1;
+}
+
+message DeleteConfigurationRequest {
+  string configuration_id = 1;
+}
 
 message DeleteConfigurationResponse {}
