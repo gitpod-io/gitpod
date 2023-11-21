@@ -483,7 +483,7 @@ export class PublicAPIConverter {
             id: configuration.id,
         };
 
-        if (Object.keys(configuration).includes("name")) {
+        if (configuration.name !== undefined) {
             result.name = configuration.name;
         }
 
