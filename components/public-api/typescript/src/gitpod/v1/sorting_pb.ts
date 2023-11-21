@@ -43,6 +43,8 @@ proto3.util.setEnumType(SortOrder, "gitpod.v1.SortOrder", [
  */
 export class Sort extends Message<Sort> {
   /**
+   * Field name to sort by, in camelCase.
+   *
    * @generated from field: string field = 1;
    */
   field = "";

@@ -78,6 +78,7 @@ type Sort struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Field name to sort by, in camelCase.
 	Field string    `protobuf:"bytes,1,opt,name=field,proto3" json:"field,omitempty"`
 	Order SortOrder `protobuf:"varint,2,opt,name=order,proto3,enum=gitpod.v1.SortOrder" json:"order,omitempty"`
 }

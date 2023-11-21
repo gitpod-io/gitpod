@@ -11,6 +11,7 @@ enum SortOrder {
 }
 
 message Sort {
+  // Field name to sort by, in camelCase.
   string field = 1;
   SortOrder order = 2;
 }
