@@ -84,7 +84,7 @@ import {
     WorkspaceInstanceConditions,
     WorkspaceInstancePort,
 } from "./workspace-instance";
-import type { Author, Commit } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
+import { Author, Commit } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import type { DeepPartial } from "./util/deep-partial";
 
 export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
