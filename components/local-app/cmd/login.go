@@ -155,17 +155,13 @@ var loginCmd = &cobra.Command{
 						Selected: "Selected organization {{ . }}",
 					},
 				}
-
 				selectedIndex, selectedValue, err := prompt.Run()
-
 				if selectedValue == "" {
 					return fmt.Errorf("no organization selected")
 				}
-
 				if err != nil {
 					return err
 				}
-
 				orgID = orgs[selectedIndex].Id
 			}
 			cfg.Contexts[contextName].OrganizationID = orgID
