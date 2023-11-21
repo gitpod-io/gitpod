@@ -24,7 +24,7 @@ export const Blocked: FunctionComponent = () => {
                 .
             </Subheading>
             <a className="mx-auto" href="mailto:support@gitpod.io?Subject=Blocked">
-                <Button className="secondary">Contact Support</Button>
+                <Button variant="secondary">Contact Support</Button>
             </a>
         </div>
     );
