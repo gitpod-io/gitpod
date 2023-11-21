@@ -14,7 +14,6 @@ import {
     RunningWorkspaceInfo,
     Snapshot,
     SnapshotState,
-    WhitelistedRepository,
     Workspace,
     WorkspaceAndInstance,
     WorkspaceInfo,
@@ -44,7 +43,6 @@ import {
 import { DBPrebuildInfo } from "./entity/db-prebuild-info-entry";
 import { DBPrebuiltWorkspace } from "./entity/db-prebuilt-workspace";
 import { DBPrebuiltWorkspaceUpdatable } from "./entity/db-prebuilt-workspace-updatable";
-import { DBRepositoryWhiteList } from "./entity/db-repository-whitelist";
 import { DBSnapshot } from "./entity/db-snapshot";
 import { DBWorkspace } from "./entity/db-workspace";
 import { DBWorkspaceInstance } from "./entity/db-workspace-instance";
@@ -86,10 +84,6 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
 
     private async getWorkspaceInstanceUserRepo(): Promise<Repository<DBWorkspaceInstanceUser>> {
         return (await this.getEntityManager()).getRepository<DBWorkspaceInstanceUser>(DBWorkspaceInstanceUser);
-    }
-
-    private async getRepositoryWhitelist(): Promise<Repository<DBRepositoryWhiteList>> {
-        return (await this.getEntityManager()).getRepository<DBRepositoryWhiteList>(DBRepositoryWhiteList);
     }
 
     private async getSnapshotRepo(): Promise<Repository<DBSnapshot>> {
@@ -626,31 +620,6 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             delete raw.workspace;
             const wsi = raw;
             return map(wsi, ws);
-        });
-    }
-
-    public async isWhitelisted(repositoryUrl: string): Promise<boolean> {
-        const whitelist = await this.getRepositoryWhitelist();
-        const repoCount = await whitelist
-            .createQueryBuilder("rwl")
-            .select("1")
-            .where("rwl.url = :url", { url: repositoryUrl })
-            .getCount();
-        return repoCount > 0;
-    }
-
-    public async getFeaturedRepositories(): Promise<Partial<WhitelistedRepository>[]> {
-        const whitelist = await this.getRepositoryWhitelist();
-        const allRepos = await whitelist
-            .createQueryBuilder("rwl")
-            .where("rwl.priority >= :minPrio", { minPrio: DBRepositoryWhiteList.MIN_FEATURED_REPOSITORY_PRIO })
-            .orderBy("priority", "DESC")
-            .getMany();
-        return allRepos.map((repo) => {
-            return {
-                url: repo.url,
-                description: repo.description,
-            };
         });
     }
 

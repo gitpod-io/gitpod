@@ -342,21 +342,6 @@ func (mr *MockAPIInterfaceMockRecorder) GetEnvVars(ctx interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEnvVars", reflect.TypeOf((*MockAPIInterface)(nil).GetEnvVars), ctx)
 }
 
-// GetFeaturedRepositories mocks base method.
-func (m *MockAPIInterface) GetFeaturedRepositories(ctx context.Context) ([]*WhitelistedRepository, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetFeaturedRepositories", ctx)
-	ret0, _ := ret[0].([]*WhitelistedRepository)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetFeaturedRepositories indicates an expected call of GetFeaturedRepositories.
-func (mr *MockAPIInterfaceMockRecorder) GetFeaturedRepositories(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeaturedRepositories", reflect.TypeOf((*MockAPIInterface)(nil).GetFeaturedRepositories), ctx)
-}
-
 // GetGenericInvite mocks base method.
 func (m *MockAPIInterface) GetGenericInvite(ctx context.Context, teamID string) (*TeamMembershipInvite, error) {
 	m.ctrl.T.Helper()

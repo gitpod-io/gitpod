@@ -11,7 +11,6 @@ import {
     WorkspaceInfo,
     WorkspaceInstance,
     WorkspaceInstanceUser,
-    WhitelistedRepository,
     Snapshot,
     PrebuiltWorkspace,
     PrebuiltWorkspaceUpdatable,
@@ -141,9 +140,6 @@ export interface WorkspaceDB {
         userId?: string,
         includeStopping?: boolean,
     ): Promise<RunningWorkspaceInfo[]>;
-
-    isWhitelisted(repositoryUrl: string): Promise<boolean>;
-    getFeaturedRepositories(): Promise<Partial<WhitelistedRepository>[]>;
 
     findSnapshotById(snapshotId: string): Promise<Snapshot | undefined>;
     findSnapshotsWithState(
