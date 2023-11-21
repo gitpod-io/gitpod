@@ -2,12 +2,10 @@ syntax = "proto3";
 
 package gitpod.experimental.v1;
 
-option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1";
-
+import "gitpod/experimental/v1/pagination.proto";
 import "google/protobuf/timestamp.proto";
 
-import "gitpod/experimental/v1/pagination.proto";
-
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1";
 
 // Configuration of an OpenID client.
 //
@@ -131,25 +129,24 @@ message UserInfoKeys {
 // The status of an OIDC client configuration.
 message OIDCClientConfigStatus {}
 
-
 service OIDCService {
   // Creates a new OIDC client configuration.
-  rpc CreateClientConfig(CreateClientConfigRequest) returns (CreateClientConfigResponse) {};
+  rpc CreateClientConfig(CreateClientConfigRequest) returns (CreateClientConfigResponse) {}
 
   // Retrieves an OIDC client configuration by ID.
-  rpc GetClientConfig(GetClientConfigRequest) returns (GetClientConfigResponse) {};
+  rpc GetClientConfig(GetClientConfigRequest) returns (GetClientConfigResponse) {}
 
   // Lists OIDC client configurations.
-  rpc ListClientConfigs(ListClientConfigsRequest) returns (ListClientConfigsResponse) {};
+  rpc ListClientConfigs(ListClientConfigsRequest) returns (ListClientConfigsResponse) {}
 
   // Updates modifiable properties of an existing OIDC client configuration.
-  rpc UpdateClientConfig(UpdateClientConfigRequest) returns (UpdateClientConfigResponse) {};
+  rpc UpdateClientConfig(UpdateClientConfigRequest) returns (UpdateClientConfigResponse) {}
 
   // Removes an OIDC client configuration by ID.
-  rpc DeleteClientConfig(DeleteClientConfigRequest) returns (DeleteClientConfigResponse) {};
+  rpc DeleteClientConfig(DeleteClientConfigRequest) returns (DeleteClientConfigResponse) {}
 
   // Activates an OIDC client configuration by ID.
-  rpc SetClientConfigActivation(SetClientConfigActivationRequest) returns (SetClientConfigActivationResponse) {};
+  rpc SetClientConfigActivation(SetClientConfigActivationRequest) returns (SetClientConfigActivationResponse) {}
 }
 
 message CreateClientConfigRequest {

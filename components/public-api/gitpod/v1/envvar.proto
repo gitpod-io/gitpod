@@ -2,57 +2,44 @@ syntax = "proto3";
 
 package gitpod.v1;
 
-option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
 import "gitpod/v1/pagination.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
 
 service EnvironmentVariableService {
   // ListUserEnvironmentVariables returns all environment variables for the
   // authenticated user.
-  rpc ListUserEnvironmentVariables(ListUserEnvironmentVariablesRequest)
-      returns (ListUserEnvironmentVariablesResponse) {}
+  rpc ListUserEnvironmentVariables(ListUserEnvironmentVariablesRequest) returns (ListUserEnvironmentVariablesResponse) {}
 
   // UpdateUserEnvironmentVariable updates an environment variable for the
   // authenticated user.
-  rpc UpdateUserEnvironmentVariable(UpdateUserEnvironmentVariableRequest)
-      returns (UpdateUserEnvironmentVariableResponse) {}
+  rpc UpdateUserEnvironmentVariable(UpdateUserEnvironmentVariableRequest) returns (UpdateUserEnvironmentVariableResponse) {}
 
   // CreateUserEnvironmentVariable creates a new environment variable for the
   // authenticated user.
-  rpc CreateUserEnvironmentVariable(CreateUserEnvironmentVariableRequest)
-      returns (CreateUserEnvironmentVariableResponse) {}
+  rpc CreateUserEnvironmentVariable(CreateUserEnvironmentVariableRequest) returns (CreateUserEnvironmentVariableResponse) {}
 
   // DeleteUserEnvironmentVariable deletes an environment variable for the
   // authenticated user.
-  rpc DeleteUserEnvironmentVariable(DeleteUserEnvironmentVariableRequest)
-      returns (DeleteUserEnvironmentVariableResponse) {}
+  rpc DeleteUserEnvironmentVariable(DeleteUserEnvironmentVariableRequest) returns (DeleteUserEnvironmentVariableResponse) {}
 
   // ListConfigurationEnvironmentVariables returns all environment variables in
   // a configuration.
-  rpc ListConfigurationEnvironmentVariables(
-      ListConfigurationEnvironmentVariablesRequest)
-      returns (ListConfigurationEnvironmentVariablesResponse) {}
+  rpc ListConfigurationEnvironmentVariables(ListConfigurationEnvironmentVariablesRequest) returns (ListConfigurationEnvironmentVariablesResponse) {}
 
   // UpdateConfigurationEnvironmentVariable updates an environment variable in
   // a configuration.
-  rpc UpdateConfigurationEnvironmentVariable(
-      UpdateConfigurationEnvironmentVariableRequest)
-      returns (UpdateConfigurationEnvironmentVariableResponse) {}
+  rpc UpdateConfigurationEnvironmentVariable(UpdateConfigurationEnvironmentVariableRequest) returns (UpdateConfigurationEnvironmentVariableResponse) {}
 
   // CreateConfigurationEnvironmentVariable creates a new environment variable
   // in a configuration.
-  rpc CreateConfigurationEnvironmentVariable(
-      CreateConfigurationEnvironmentVariableRequest)
-      returns (CreateConfigurationEnvironmentVariableResponse) {}
+  rpc CreateConfigurationEnvironmentVariable(CreateConfigurationEnvironmentVariableRequest) returns (CreateConfigurationEnvironmentVariableResponse) {}
 
   // DeleteConfigurationEnvironmentVariable deletes an environment variable in
   // a configuration.
-  rpc DeleteConfigurationEnvironmentVariable(
-      DeleteConfigurationEnvironmentVariableRequest)
-      returns (DeleteConfigurationEnvironmentVariableResponse) {}
+  rpc DeleteConfigurationEnvironmentVariable(DeleteConfigurationEnvironmentVariableRequest) returns (DeleteConfigurationEnvironmentVariableResponse) {}
 
-  rpc ResolveWorkspaceEnvironmentVariables(
-      ResolveWorkspaceEnvironmentVariablesRequest)
-      returns (ResolveWorkspaceEnvironmentVariablesResponse) {}
+  rpc ResolveWorkspaceEnvironmentVariables(ResolveWorkspaceEnvironmentVariablesRequest) returns (ResolveWorkspaceEnvironmentVariablesResponse) {}
 }
 
 message UserEnvironmentVariable {
@@ -92,7 +79,9 @@ message CreateUserEnvironmentVariableResponse {
   UserEnvironmentVariable environment_variable = 1;
 }
 
-message DeleteUserEnvironmentVariableRequest { string env_var_id = 1; }
+message DeleteUserEnvironmentVariableRequest {
+  string env_var_id = 1;
+}
 
 message DeleteUserEnvironmentVariableResponse {}
 
@@ -142,11 +131,15 @@ message CreateConfigurationEnvironmentVariableResponse {
   ConfigurationEnvironmentVariable environment_variable = 1;
 }
 
-message DeleteConfigurationEnvironmentVariableRequest { string env_var_id = 1; }
+message DeleteConfigurationEnvironmentVariableRequest {
+  string env_var_id = 1;
+}
 
 message DeleteConfigurationEnvironmentVariableResponse {}
 
-message ResolveWorkspaceEnvironmentVariablesRequest { string workspace_id = 1; }
+message ResolveWorkspaceEnvironmentVariablesRequest {
+  string workspace_id = 1;
+}
 
 message ResolveWorkspaceEnvironmentVariablesResponse {
   message EnvironmentVariable {

@@ -2,189 +2,188 @@ syntax = "proto3";
 
 package gitpod.experimental.v1;
 
-option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1";
-
 import "google/protobuf/timestamp.proto";
 
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1";
+
 message Team {
-    // id is a UUID of the Team
-    string id = 1;
+  // id is a UUID of the Team
+  string id = 1;
 
-    // name is the name of the Team
-    string name = 2;
+  // name is the name of the Team
+  string name = 2;
 
-    // slug is the slug of the Team
-    string slug = 3;
+  // slug is the slug of the Team
+  string slug = 3;
 
-    // members are the team members of this Team
-    repeated TeamMember members = 4;
+  // members are the team members of this Team
+  repeated TeamMember members = 4;
 
-    // team_invitation is the team invitation.
-    TeamInvitation team_invitation = 5;
+  // team_invitation is the team invitation.
+  TeamInvitation team_invitation = 5;
 }
 
 message TeamMember {
-    // user_id is the identifier of the user
-    string user_id = 1;
+  // user_id is the identifier of the user
+  string user_id = 1;
 
-    // role is the role this member is assigned
-    TeamRole role = 2;
+  // role is the role this member is assigned
+  TeamRole role = 2;
 
-    // member_since is the timestamp when the member joined the team
-    google.protobuf.Timestamp member_since = 3;
+  // member_since is the timestamp when the member joined the team
+  google.protobuf.Timestamp member_since = 3;
 
-    // avatar_url is the URL for the TeamMember
-    string avatar_url = 4;
+  // avatar_url is the URL for the TeamMember
+  string avatar_url = 4;
 
-    // full_name is the name of the TeamMember
-    string full_name = 5;
+  // full_name is the name of the TeamMember
+  string full_name = 5;
 
-    // primary_email is the primary email of the TeamMember
-    string primary_email = 6;
+  // primary_email is the primary email of the TeamMember
+  string primary_email = 6;
 
-    // owned_by_organization indicates if the TeamMember is owned by the organization
-    bool owned_by_organization = 7;
+  // owned_by_organization indicates if the TeamMember is owned by the organization
+  bool owned_by_organization = 7;
 }
 
 enum TeamRole {
-    // TEAM_ROLE_UNKNOWN is the unkwnon state.
-    TEAM_ROLE_UNSPECIFIED = 0;
+  // TEAM_ROLE_UNKNOWN is the unkwnon state.
+  TEAM_ROLE_UNSPECIFIED = 0;
 
-    // TEAM_ROLE_OWNER is the owner of the team.
-    // A team can have multiple owners, but there must always be at least one owner.
-    TEAM_ROLE_OWNER = 1;
+  // TEAM_ROLE_OWNER is the owner of the team.
+  // A team can have multiple owners, but there must always be at least one owner.
+  TEAM_ROLE_OWNER = 1;
 
-    // TEAM_ROLE_MEMBER is a regular member of a team.
-    TEAM_ROLE_MEMBER = 2;
+  // TEAM_ROLE_MEMBER is a regular member of a team.
+  TEAM_ROLE_MEMBER = 2;
 }
 
 message TeamInvitation {
-    // id is the invitation ID.
-    string id = 1;
+  // id is the invitation ID.
+  string id = 1;
 }
 
 service TeamsService {
-    // CreateTeam creates a new Team.
-    rpc CreateTeam(CreateTeamRequest) returns (CreateTeamResponse) {};
+  // CreateTeam creates a new Team.
+  rpc CreateTeam(CreateTeamRequest) returns (CreateTeamResponse) {}
 
-    // GetTeam retrieves a single Team.
-    rpc GetTeam(GetTeamRequest) returns (GetTeamResponse) {}
+  // GetTeam retrieves a single Team.
+  rpc GetTeam(GetTeamRequest) returns (GetTeamResponse) {}
 
-    // ListTeams lists the caller has access to.
-    rpc ListTeams(ListTeamsRequest) returns (ListTeamsResponse) {};
+  // ListTeams lists the caller has access to.
+  rpc ListTeams(ListTeamsRequest) returns (ListTeamsResponse) {}
 
-    // DeleteTeam deletes the specified team.
-    rpc DeleteTeam(DeleteTeamRequest) returns (DeleteTeamResponse) {};
+  // DeleteTeam deletes the specified team.
+  rpc DeleteTeam(DeleteTeamRequest) returns (DeleteTeamResponse) {}
 
-    // GetTeamInvitation retrieves the invitation for a Team.
-    rpc GetTeamInvitation(GetTeamInvitationRequest) returns (GetTeamInvitationResponse) {};
+  // GetTeamInvitation retrieves the invitation for a Team.
+  rpc GetTeamInvitation(GetTeamInvitationRequest) returns (GetTeamInvitationResponse) {}
 
-    // JoinTeam makes the caller a TeamMember of the Team.
-    rpc JoinTeam(JoinTeamRequest) returns (JoinTeamResponse) {};
+  // JoinTeam makes the caller a TeamMember of the Team.
+  rpc JoinTeam(JoinTeamRequest) returns (JoinTeamResponse) {}
 
-    // ResetTeamInvitation resets the invitation_id for a Team.
-    rpc ResetTeamInvitation(ResetTeamInvitationRequest) returns (ResetTeamInvitationResponse) {};
+  // ResetTeamInvitation resets the invitation_id for a Team.
+  rpc ResetTeamInvitation(ResetTeamInvitationRequest) returns (ResetTeamInvitationResponse) {}
 
-    // ListTeamMembers lists the members of a Team.
-    rpc ListTeamMembers(ListTeamMembersRequest) returns (ListTeamMembersResponse) {};
+  // ListTeamMembers lists the members of a Team.
+  rpc ListTeamMembers(ListTeamMembersRequest) returns (ListTeamMembersResponse) {}
 
-    // UpdateTeamMember updates team membership properties.
-    rpc UpdateTeamMember(UpdateTeamMemberRequest) returns (UpdateTeamMemberResponse) {};
+  // UpdateTeamMember updates team membership properties.
+  rpc UpdateTeamMember(UpdateTeamMemberRequest) returns (UpdateTeamMemberResponse) {}
 
-    // DeleteTeamMember removes a TeamMember from the Team.
-    rpc DeleteTeamMember(DeleteTeamMemberRequest) returns (DeleteTeamMemberResponse) {};
+  // DeleteTeamMember removes a TeamMember from the Team.
+  rpc DeleteTeamMember(DeleteTeamMemberRequest) returns (DeleteTeamMemberResponse) {}
 }
 
 message CreateTeamRequest {
-    // name is the team name
-    string name = 1;
+  // name is the team name
+  string name = 1;
 }
 
 message CreateTeamResponse {
-    Team team = 1;
+  Team team = 1;
 }
 
 message GetTeamRequest {
-    // team_id is the unique identifier of the Team to retreive.
-    string team_id = 1;
+  // team_id is the unique identifier of the Team to retreive.
+  string team_id = 1;
 }
 
 message GetTeamResponse {
-    Team team = 1;
+  Team team = 1;
 }
 
 message ListTeamsRequest {
-    // TODO: pagination options
+  // TODO: pagination options
 }
 
 message ListTeamsResponse {
-    repeated Team teams = 1;
+  repeated Team teams = 1;
 }
 
 message DeleteTeamRequest {
-    // team_id is the ID of the team to delete
-    string team_id = 1;
+  // team_id is the ID of the team to delete
+  string team_id = 1;
 }
 
-message DeleteTeamResponse {
-}
+message DeleteTeamResponse {}
 
 message GetTeamInvitationRequest {
-    string team_id = 1;
+  string team_id = 1;
 }
 
 message GetTeamInvitationResponse {
-    // team_invitation is the invitation for the team.
-    TeamInvitation team_invitation = 1;
+  // team_invitation is the invitation for the team.
+  TeamInvitation team_invitation = 1;
 }
 
 message JoinTeamRequest {
-    // invitation_id is the invitation ID for a Team
-    string invitation_id = 1;
+  // invitation_id is the invitation ID for a Team
+  string invitation_id = 1;
 }
 
 message JoinTeamResponse {
-    // team is the team the user has just joined
-    Team team = 1;
+  // team is the team the user has just joined
+  Team team = 1;
 }
 
 message ResetTeamInvitationRequest {
-    string team_id = 1;
+  string team_id = 1;
 }
 
 message ResetTeamInvitationResponse {
-    // team_invitation is the new invitation for the team.
-    TeamInvitation team_invitation = 1;
+  // team_invitation is the new invitation for the team.
+  TeamInvitation team_invitation = 1;
 }
 
 message ListTeamMembersRequest {
-    // team_id is the ID of the team that contains the members to list
-    string team_id = 1;
+  // team_id is the ID of the team that contains the members to list
+  string team_id = 1;
 }
 
 message ListTeamMembersResponse {
-    // members are the team members of this Team
-    repeated TeamMember members = 1;
+  // members are the team members of this Team
+  repeated TeamMember members = 1;
 }
 
 message UpdateTeamMemberRequest {
-    // team_id is the ID of the team in which the role is to be updated
-    string team_id = 1;
+  // team_id is the ID of the team in which the role is to be updated
+  string team_id = 1;
 
-    // team_member is the team member being updated.
-    TeamMember team_member = 2;
+  // team_member is the team member being updated.
+  TeamMember team_member = 2;
 }
 
 message UpdateTeamMemberResponse {
-    TeamMember team_member = 2;
+  TeamMember team_member = 2;
 }
 
 message DeleteTeamMemberRequest {
-    // team_id is the ID of the team in which a member should be deleted.
-    string team_id = 1;
+  // team_id is the ID of the team in which a member should be deleted.
+  string team_id = 1;
 
-    // team_member_id is the ID of the TeamMember that should be deleted from the team.
-    string team_member_id = 2;
+  // team_member_id is the ID of the TeamMember that should be deleted from the team.
+  string team_member_id = 2;
 }
 
 message DeleteTeamMemberResponse {}

@@ -2,8 +2,8 @@ syntax = "proto3";
 
 package gitpod.v1;
 
-import "google/protobuf/timestamp.proto";
 import "gitpod/v1/pagination.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
 
@@ -17,8 +17,7 @@ service WorkspaceService {
   // WatchWorkspaceStatus watchs the workspaces status changes
   //
   // workspace_id +return NOT_FOUND Workspace does not exist
-  rpc WatchWorkspaceStatus(WatchWorkspaceStatusRequest)
-      returns (stream WatchWorkspaceStatusResponse) {}
+  rpc WatchWorkspaceStatus(WatchWorkspaceStatusRequest) returns (stream WatchWorkspaceStatusResponse) {}
 
   // ListWorkspaces returns a list of workspaces that match the query.
   rpc ListWorkspaces(ListWorkspacesRequest) returns (ListWorkspacesResponse) {}
@@ -31,7 +30,9 @@ message GetWorkspaceRequest {
   string workspace_id = 1;
 }
 
-message GetWorkspaceResponse { Workspace workspace = 1; }
+message GetWorkspaceResponse {
+  Workspace workspace = 1;
+}
 
 message WatchWorkspaceStatusRequest {
   // workspace_id specifies the workspace to watch
