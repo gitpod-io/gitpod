@@ -13,9 +13,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var configSetContext = &cobra.Command{
-	Use:     "set-context <name | --current>",
-	Short:   "Set a context entry in the gitpod CLI config",
+var configContextModifyCmd = &cobra.Command{
+	Use:     "modify <name | --current>",
+	Short:   "Modifies a context entry in the gitpod CLI config",
 	Aliases: []string{"add-context"},
 	Args:    cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -23,7 +23,7 @@ var configSetContext = &cobra.Command{
 
 		cfg := config.FromContext(cmd.Context())
 		var targetContext string
-		if configSetContextOpts.Current {
+		if configContextModifyOpts.Current {
 			if len(args) > 0 {
 				return prettyprint.AddResolution(fmt.Errorf("cannot use --current and specify a context name"),
 					"modify current context with `{gitpod} config set-context --current`",
@@ -47,17 +47,17 @@ var configSetContext = &cobra.Command{
 			cfg.Contexts[targetContext] = gpctx
 		}
 		if cmd.Flags().Changed("host") {
-			host, err := url.Parse(configSetContextOpts.Host)
+			host, err := url.Parse(configContextModifyOpts.Host)
 			if err != nil {
 				return fmt.Errorf("invalid host: %w", err)
 			}
 			gpctx.Host = &config.YamlURL{URL: host}
 		}
 		if cmd.Flags().Changed("organization-id") {
-			gpctx.OrganizationID = configSetContextOpts.OrganizationID
+			gpctx.OrganizationID = configContextModifyOpts.OrganizationID
 		}
 		if cmd.Flags().Changed("token") {
-			gpctx.Token = configSetContextOpts.Token
+			gpctx.Token = configContextModifyOpts.Token
 		}
 
 		err := config.SaveConfig(cfg.Filename, cfg)
@@ -68,7 +68,7 @@ var configSetContext = &cobra.Command{
 	},
 }
 
-var configSetContextOpts struct {
+var configContextModifyOpts struct {
 	Current        bool
 	Host           string
 	OrganizationID string
@@ -76,10 +76,10 @@ var configSetContextOpts struct {
 }
 
 func init() {
-	configCmd.AddCommand(configSetContext)
+	configContextCmd.AddCommand(configContextModifyCmd)
 
-	configSetContext.Flags().BoolVar(&configSetContextOpts.Current, "current", false, "modify the current context")
-	configSetContext.Flags().StringVar(&configSetContextOpts.Host, "host", "", "the host to use for the context")
-	configSetContext.Flags().StringVar(&configSetContextOpts.OrganizationID, "organization-id", "", "the organization ID to use for the context")
-	configSetContext.Flags().StringVar(&configSetContextOpts.Token, "token", "", "the token to use for the context")
+	configContextModifyCmd.Flags().BoolVar(&configContextModifyOpts.Current, "current", false, "modify the current context")
+	configContextModifyCmd.Flags().StringVar(&configContextModifyOpts.Host, "host", "", "the host to use for the context")
+	configContextModifyCmd.Flags().StringVar(&configContextModifyOpts.OrganizationID, "organization-id", "", "the organization ID to use for the context")
+	configContextModifyCmd.Flags().StringVar(&configContextModifyOpts.Token, "token", "", "the token to use for the context")
 }

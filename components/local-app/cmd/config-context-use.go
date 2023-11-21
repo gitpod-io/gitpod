@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var configUseContextCmd = &cobra.Command{
-	Use:   "use-context <name>",
+var configContextUseCmd = &cobra.Command{
+	Use:   "use <name>",
 	Short: "Sets the active context",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -33,5 +33,5 @@ var configUseContextCmd = &cobra.Command{
 }
 
 func init() {
-	configCmd.AddCommand(configUseContextCmd)
+	configContextCmd.AddCommand(configContextUseCmd)
 }
