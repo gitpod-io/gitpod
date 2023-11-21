@@ -27,7 +27,7 @@ import { AuthProviderEntry, AuthProviderInfo, User } from "@gitpod/gitpod-protoc
 import { Unauthenticated } from "./unauthenticated";
 import { validate as uuidValidate } from "uuid";
 import { selectPage } from "./pagination";
-import { ctxUserId } from "../util/request-context";
+import { ctxTrySubjectId, ctxUserId } from "../util/request-context";
 import { UserService } from "../user/user-service";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
@@ -120,7 +120,7 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
         request: ListAuthProviderDescriptionsRequest,
         _: HandlerContext,
     ): Promise<ListAuthProviderDescriptionsResponse> {
-        const userId = ctxUserId();
+        const userId = ctxTrySubjectId()?.userId();
         let user: User | undefined = undefined;
         if (userId) {
             user = await this.userService.findUserById(userId, userId);
