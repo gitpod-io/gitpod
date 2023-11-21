@@ -1,0 +1,10 @@
+version: v1
+plugins:
+  - name: go
+    out: .
+    opt:
+     - module=github.com/gitpod-io/gitpod/components/ws-cluster-manager/api
+  - name: connect-go
+    out: .
+    opt:
+     - module=github.com/gitpod-io/gitpod/components/ws-cluster-manager/api

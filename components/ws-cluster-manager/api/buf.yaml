@@ -1,0 +1,10 @@
+version: v1
+
+breaking:
+  use:
+    - WIRE_JSON
+lint:
+  use:
+    - DEFAULT
+  ignore:
+    - google

@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package v1;
+
+option go_package = "github.com/gitpod-io/gitpod/components/ws-cluster-manager/api/v1";
+
+import "definition/workspace.proto";
+
+message Resource {
+    oneof resource {
+        Workspace workspace = 1;
+    }
+}

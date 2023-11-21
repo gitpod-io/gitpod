@@ -1,0 +1,226 @@
+syntax = "proto3";
+
+package v1;
+
+option go_package = "github.com/gitpod-io/gitpod/components/ws-cluster-manager/api/v1";
+
+import "definition/metadata.proto";
+import "google/protobuf/duration.proto";
+
+message Workspace {
+  ResourceMetadata metadata = 1;
+  WorkspaceSpec spec = 2;
+  WorkspaceStatus status = 3;
+}
+
+message WorkspaceSpec {
+    WorkspaceType type = 1;
+
+    // Class denotes the class of the workspace we ought to start
+    string class = 2;
+
+    // envvars are user-defined environment variables which ought to be available in the workspace
+    repeated EnvironmentVariable envvars = 3;
+
+    // ports is the set of ports which ought to be exposed to the internet
+    repeated PortSpec ports = 4;
+
+    // admission controlls who can access the workspace and its ports.
+    AdmissionLevel admission = 5;
+
+    // Git configures the Git user in the workspace
+    GitSpec git = 6;
+
+    // ssh_public_keys is user's uploaded ssh public keys
+    repeated string ssh_public_keys = 7;
+
+    // timeout is the maximum time the workspace is allowed to run without activity
+    google.protobuf.Duration timeout = 8;
+
+    // initializer is the initializer to use to create the workspace content
+    bytes initializer = 9;
+  }
+
+  // WorkspaceType specifies the purpose/use of a workspace. Different workspace types are handled differently by all parts of the system.
+  enum WorkspaceType {
+    WORKSPACE_TYPE_UNSPECIFIED = 0;
+    WORKSPACE_TYPE_REGULAR = 1;
+    WORKSPACE_TYPE_PREBUILD = 2;
+  }
+
+  message EnvironmentVariable {
+    string name = 1;
+    string value = 2;
+  }
+
+  // PortSpec describes a networking port exposed on a workspace
+  message PortSpec {
+    uint32 port = 1;
+    AdmissionLevel admission = 2;
+  }
+
+  enum AdmissionLevel {
+    ADMISSION_LEVEL_UNSPECIFIED = 0;
+
+    // ADMISION_LEVEL_OWNER_ONLY means the workspace can only be accessed using the owner token
+    ADMISSION_LEVEL_OWNER_ONLY = 1;
+
+    // ADMISION_LEVEL_EVERYONE means the workspace (including ports) can be accessed by everyone.
+    ADMISSION_LEVEL_EVERYONE = 2;
+  }
+
+  // GitSpec configures the Git available within the workspace
+  message GitSpec {
+    // The Git username
+    string username = 1;
+
+    // The Git email address
+    string email = 2;
+  }
+
+  message WorkspaceContent {
+    oneof spec {
+      WorkspaceContentEmpty empty = 1;
+      WorkspaceContentGit git = 2;
+      WorkspaceContentSnapshot snapshot = 3;
+      WorkspaceContentPrebuild prebuild = 4;
+      WorkspaceContentComposite composite = 5;
+    }
+  }
+
+  // Composite uses a collection of initializer to produce workspace content.
+  // All initializer are executed in the order they're provided.
+  message WorkspaceContentComposite {
+    repeated WorkspaceContent content = 1;
+  }
+
+  message WorkspaceContentEmpty {}
+
+  message WorkspaceContentGit {
+    // remote_uri is the Git remote origin
+    string remote_uri = 1;
+
+    // upstream_remote_uri is the fork upstream of a repository
+    string upstream_remote_uri = 2;
+
+    // the target mode determines what gets checked out
+    CloneTargetMode target_mode = 3;
+
+    // the value for the clone target mode - use depends on the target mode
+    string clone_taget = 4;
+
+    // a path relative to the workspace root in which the code will be checked out to
+    string checkout_location = 5;
+
+    // config specifies the Git configuration for this workspace
+    GitConfig config = 6;
+  }
+
+  // CloneTargetMode is the target state in which we want to leave a GitWorkspace
+  enum CloneTargetMode {
+    CLONE_TARGET_MODE_UNSPECIFIED = 0;
+
+    // REMOTE_HEAD has the local WS point at the remote branch head
+    CLONE_TARGET_MODE_REMOTE_HEAD = 1;
+
+    // REMOTE_COMMIT has the local WS point at a specific commit
+    CLONE_TARGET_MODE_REMOTE_COMMIT = 2;
+
+    // REMOTE_BRANCH has the local WS point at a remote branch
+    CLONE_TARGET_MODE_REMOTE_BRANCH = 3;
+
+    // LOCAL_BRANCH creates a local branch in the workspace
+    CLONE_TARGET_MODE_LOCAL_BRANCH = 4;
+  }
+
+  message GitConfig {
+    // custom config values to be set on clone provided through `.gitpod.yml`
+    map<string, string> custom_config = 1;
+
+    // authentication method
+    GitAuthMethod authentication = 2;
+
+    // auth_user is the username used to authenticate the clone
+    string auth_user = 3;
+
+    // auth_password is the password used to authenticate the clone (can also be an API token)
+    string auth_password = 4;
+
+    // auth_ots is a URL where one can download the authentication secret (<username>:<password>)
+    // using a GET request.
+    string auth_ots = 5;
+  }
+
+  // GitAuthMethod is the means of authentication used during clone
+  enum GitAuthMethod {
+    GIT_AUTH_METHOD_UNSPECIFIED = 0;
+
+    // NO_AUTH disables authentication during clone
+    GIT_AUTH_METHOD_NO_AUTH = 1;
+
+    // BASIC_AUTH uses HTTP basic auth during clone (fails if repo is not cloned through http)
+    GIT_AUTH_METHOD_BASIC_AUTH = 2;
+
+    // BASIC_AUTH_OTS uses HTTP basic auth during the clone with the secrets coming from the OTS URL.
+    // Fails if either the OTS download or the clone fail.
+    GIT_AUTH_METHOD_BASIC_AUTH_OTS = 3;
+  }
+
+  message WorkspaceContentSnapshot {
+    // name of the snapshot to restore
+    string snapshot = 1;
+    // if snapshot string is volume snapshot and not GCS url
+    bool from_volume_snapshot = 2;
+  }
+
+  // A prebuild initializer combines snapshots with Git: first we try the snapshot, then apply the Git clone target.
+  // If restoring the snapshot fails, we fall back to a regular Git initializer, which might be composite git initializer for multi-repo projects.
+  message WorkspaceContentPrebuild {
+    WorkspaceContentSnapshot prebuild = 1;
+    repeated WorkspaceContentGit git = 2;
+  }
+
+  message WorkspaceStatus {
+    WorkspacePhase phase = 1;
+    map<string, Condition> conditions = 2;
+    string owner_token = 3;
+    string url = 4;
+  }
+
+  // WorkspacePhase is a simple, high-level summary of where the workspace is in its lifecycle.
+  // The phase is not intended to be a comprehensive rollup of observations of the workspace state,
+  // nor is it intended to be a comprehensive state machine.
+  // (based on  https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase)
+  enum WorkspacePhase {
+    // Unknown indicates an issue within the workspace manager in that it cannot determine the actual phase of
+    // a workspace. This phase is usually accompanied by an error.
+    WORKSPACE_PHASE_UNSPECIFIED = 0;
+
+    // Pending means the workspace does not yet consume resources in the cluster, but rather is looking for
+    // some space within the cluster. If for example the cluster needs to scale up to accomodate the
+    // workspace, the workspace will be in Pending state until that happened.
+    WORKSPACE_PHASE_PENDING = 1;
+
+    // Creating means the workspace is currently being created. That includes downloading the images required
+    // to run the workspace over the network. The time spent in this phase varies widely and depends on the current
+    // network speed, image size and cache states.
+    WORKSPACE_PHASE_CREATING = 2;
+
+    // Initializing is the phase in which the workspace is executing the appropriate workspace initializer (e.g. Git
+    // clone or backup download). After this phase one can expect the workspace to either be Running or Failed.
+    WORKSPACE_PHASE_INITIALIZING = 3;
+
+    // Running means the workspace is able to actively perform work, either by serving a user through Theia,
+    // or as a headless workspace.
+    WORKSPACE_PHASE_RUNNING = 4;
+
+    // Interrupted is an exceptional state where the container should be running but is temporarily unavailable.
+    // When in this state, we expect it to become running or stopping anytime soon.
+    WORKSPACE_PHASE_INTERRUPTED = 7;
+
+    // Stopping means that the workspace is currently shutting down. It could go to stopped every moment.
+    WORKSPACE_PHASE_STOPPING = 5;
+
+    // Stopped means the workspace ended regularly because it was shut down.
+    WORKSPACE_PHASE_STOPPED = 6;
+  }

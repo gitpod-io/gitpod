@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package v1;
+
+option go_package = "github.com/gitpod-io/gitpod/components/ws-cluster-manager/api/v1";
+
+import "google/protobuf/timestamp.proto";
+
+message ResourceMetadata {
+    string name = 1;
+    string owner = 2;
+    string organization = 3;
+    map<string, string> annotations = 4;
+    google.protobuf.Timestamp creation_time = 5;
+  }
+
+  message Condition {
+    google.protobuf.Timestamp last_transition_time = 1;
+    bool status = 2;
+    string message = 3;
+    string reason = 4;
+  }

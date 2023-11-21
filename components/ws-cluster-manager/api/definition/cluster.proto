@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package v1;
+
+option go_package = "github.com/gitpod-io/gitpod/components/ws-cluster-manager/api/v1";
+
+import "definition/resource.proto";
+
+service ClusterService {
+  rpc PullSpecs(PullSpecsRequest) returns (PullSpecsResponse) {};
+  rpc Notify(NotifyRequest) returns (stream NotifyResponse) {};
+}
+
+message PullSpecsRequest {
+  string state_token = 1;
+}
+message PullSpecsResponse {
+  string state_token = 1;
+  repeated Resource resources = 2;
+}
+
+message NotifyRequest {}
+message NotifyResponse {
+  string state_token = 1;
+}
