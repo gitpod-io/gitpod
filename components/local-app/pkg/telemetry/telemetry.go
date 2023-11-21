@@ -25,7 +25,7 @@ import (
 )
 
 // Injected at build time
-var segmentKey = "TgiJIVvFsBGwmxbnnt5NeeDaian9nr3n"
+var segmentKey = "untrusted-dummy-key"
 
 var opts struct {
 	Enabled  bool
@@ -36,7 +36,7 @@ var opts struct {
 }
 
 // Init initializes the telemetry
-func Init(enabled bool, identity, version string, logLevel slog.Level) {
+func Init(enabled bool, identity, version string, logLevel slog.Level, host string) {
 	opts.Enabled = enabled
 	if !enabled {
 		return
@@ -56,7 +56,8 @@ func Init(enabled bool, identity, version string, logLevel slog.Level) {
 			logger = segment.StdLogger(log)
 		}
 		opts.client, _ = segment.NewWithConfig(segmentKey, segment.Config{
-			Logger: logger,
+			Logger:   logger,
+			Endpoint: host + "/analytics",
 		})
 	}
 }
