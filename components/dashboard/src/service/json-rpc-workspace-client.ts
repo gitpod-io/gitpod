@@ -8,8 +8,12 @@ import { CallOptions, PromiseClient } from "@connectrpc/connect";
 import { PartialMessage } from "@bufbuild/protobuf";
 import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/v1/workspace_connect";
 import {
+    CreateAndStartWorkspaceRequest,
+    CreateAndStartWorkspaceResponse,
     GetWorkspaceRequest,
     GetWorkspaceResponse,
+    StartWorkspaceRequest,
+    StartWorkspaceResponse,
     WatchWorkspaceStatusRequest,
     WatchWorkspaceStatusResponse,
     ListWorkspacesRequest,
@@ -108,5 +112,51 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
         response.pagination = new PaginationResponse();
         response.pagination.total = resultTotal;
         return response;
+    }
+
+    async createAndStartWorkspace(
+        request: PartialMessage<CreateAndStartWorkspaceRequest>,
+        _options?: CallOptions | undefined,
+    ) {
+        if (request.source?.case !== "contextUrl") {
+            throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+        }
+        if (!request.organizationId || !uuidValidate(request.organizationId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
+        }
+        if (!request.editor) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "editor is required");
+        }
+        if (!request.source.value) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "source is required");
+        }
+        const response = await getGitpodService().server.createWorkspace({
+            organizationId: request.organizationId,
+            ignoreRunningWorkspaceOnSameCommit: true,
+            contextUrl: request.source.value,
+            forceDefaultConfig: request.forceDefaultConfig,
+            workspaceClass: request.workspaceClass,
+            ideSettings: {
+                defaultIde: request.editor.name,
+                useLatestVersion: request.editor.version === "latest",
+            },
+        });
+        const workspace = await this.getWorkspace({ workspaceId: response.createdWorkspaceId });
+        const result = new CreateAndStartWorkspaceResponse();
+        result.workspace = workspace.workspace;
+        return result;
+    }
+
+    async startWorkspace(request: PartialMessage<StartWorkspaceRequest>, _options?: CallOptions | undefined) {
+        if (!request.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        await getGitpodService().server.startWorkspace(request.workspaceId, {
+            forceDefaultImage: request.forceDefaultConfig,
+        });
+        const workspace = await this.getWorkspace({ workspaceId: request.workspaceId });
+        const result = new StartWorkspaceResponse();
+        result.workspace = workspace.workspace;
+        return result;
     }
 }

@@ -33,6 +33,7 @@ export const useToggleWorkspaceSharedMutation = () => {
             if (level === AdmissionLevel.UNSPECIFIED) {
                 return;
             }
+            // TODO: use `useUpdateWorkspaceInCache` after respond Workspace object, see EXP-960
             const queryKey = getListWorkspacesQueryKey(org.data?.id);
 
             // Update workspace.shareable to the level we set so it's reflected immediately

@@ -128,6 +128,7 @@ import { WorkspaceStarter } from "./workspace/workspace-starter";
 import { DefaultWorkspaceImageValidator } from "./orgs/default-workspace-image-validator";
 import { ContextAwareAnalyticsWriter } from "./analytics";
 import { ScmService } from "./scm/scm-service";
+import { ContextService } from "./workspace/context-service";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -170,6 +171,8 @@ export const productionContainerModule = new ContainerModule(
 
         bind(ServerFactory).toAutoFactory(GitpodServerImpl);
         bind(UserController).toSelf().inSingletonScope();
+
+        bind(ContextService).toSelf().inSingletonScope();
 
         bind(GitpodServerImpl).toSelf();
         bind(WebsocketConnectionManager)

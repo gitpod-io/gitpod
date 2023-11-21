@@ -23,6 +23,7 @@ export const useUpdateWorkspaceDescriptionMutation = () => {
             return await getGitpodService().server.setWorkspaceDescription(workspaceId, newDescription);
         },
         onSuccess: (_, { workspaceId, newDescription }) => {
+            // TODO: use `useUpdateWorkspaceInCache` after respond Workspace object, see EXP-960
             const queryKey = getListWorkspacesQueryKey(org.data?.id);
 
             // pro-actively update workspace description rather than reload all workspaces

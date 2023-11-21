@@ -17,7 +17,6 @@ import { BlockedRepositoryDB } from "@gitpod/gitpod-db/lib/blocked-repository-db
 import {
     AuthProviderEntry,
     AuthProviderInfo,
-    CommitContext,
     Configuration,
     DisposableCollection,
     GetWorkspaceTimeoutResult,
@@ -27,7 +26,6 @@ import {
     GitpodTokenType,
     PermissionName,
     PrebuiltWorkspace,
-    PrebuiltWorkspaceContext,
     SetWorkspaceTimeoutResult,
     StartWorkspaceResult,
     Token,
@@ -51,13 +49,11 @@ import {
     Project,
     ProviderRepository,
     TeamMemberRole,
-    WithDefaultConfig,
     FindPrebuildsParams,
     PrebuildWithStatus,
     StartPrebuildResult,
     ClientHeaderFields,
     Permission,
-    SnapshotContext,
     SSHPublicKeyValue,
     UserSSHPublicKeyValue,
     RoleOrPermission,
@@ -111,6 +107,7 @@ import { ContextParser } from "./context-parser-service";
 import { isClusterMaintenanceError } from "./workspace-starter";
 import { HeadlessLogUrls } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { ConfigProvider } from "./config-provider";
+import { InvalidGitpodYMLError } from "./config-provider";
 import { ProjectsService } from "../projects/projects-service";
 import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import {
@@ -123,7 +120,6 @@ import {
     EmailDomainFilterEntry,
     EnvVarWithValue,
     LinkedInProfile,
-    OpenPrebuildContext,
     ProjectEnvVar,
     UserEnvVar,
     UserFeatureSettings,
@@ -140,7 +136,6 @@ import { createCookielessId, maskIp } from "../analytics";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { LinkedInService } from "../linkedin-service";
 import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
-import { IncrementalWorkspaceService } from "../prebuilds/incremental-workspace-service";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { StripeService } from "../billing/stripe-service";
 import {
@@ -162,6 +157,7 @@ import { EnvVarService } from "../user/env-var-service";
 import { SubjectId } from "../auth/subject-id";
 import { runWithSubjectId } from "../util/request-context";
 import { ScmService } from "../scm/scm-service";
+import { ContextService } from "./context-service";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -183,8 +179,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(ContextParser) private contextParser: ContextParser,
 
         @inject(PrebuildManager) private readonly prebuildManager: PrebuildManager,
-        @inject(IncrementalWorkspaceService) private readonly incrementalPrebuildsService: IncrementalWorkspaceService,
-        @inject(ConfigProvider) private readonly configProvider: ConfigProvider,
         @inject(WorkspaceService) private readonly workspaceService: WorkspaceService,
         @inject(SnapshotService) private readonly snapshotService: SnapshotService,
         @inject(WorkspaceManagerClientProvider)
@@ -224,6 +218,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(EmailDomainFilterDB) private emailDomainFilterdb: EmailDomainFilterDB,
 
         @inject(RedisSubscriber) private readonly subscriber: RedisSubscriber,
+
+        @inject(ContextService) private readonly contextService: ContextService,
     ) {}
 
     /** Id the uniquely identifies this server instance */
@@ -305,71 +301,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             allProjects.push(...(await this.projectsService.getProjects(this.userID, team.id)));
         }
         return allProjects;
-    }
-
-    private async findPrebuiltWorkspace(
-        parentCtx: TraceContext,
-        user: User,
-        projectId: string,
-        context: WorkspaceContext,
-        organizationId?: string,
-    ): Promise<PrebuiltWorkspaceContext | undefined> {
-        const ctx = TraceContext.childContext("findPrebuiltWorkspace", parentCtx);
-        try {
-            if (!(CommitContext.is(context) && context.repository.cloneUrl && context.revision)) {
-                return;
-            }
-
-            const commitSHAs = CommitContext.computeHash(context);
-
-            const logCtx: LogContext = { userId: user.id };
-            const cloneUrl = context.repository.cloneUrl;
-            let prebuiltWorkspace: PrebuiltWorkspace | undefined;
-            const logPayload = {
-                cloneUrl,
-                commit: commitSHAs,
-                prebuiltWorkspace,
-            };
-            if (OpenPrebuildContext.is(context)) {
-                prebuiltWorkspace = await this.workspaceDb.trace(ctx).findPrebuildByID(context.openPrebuildID);
-                if (prebuiltWorkspace?.cloneURL !== cloneUrl) {
-                    // prevent users from opening arbitrary prebuilds this way - they must match the clone URL so that the resource guards are correct.
-                    return undefined;
-                }
-            } else {
-                log.debug(logCtx, "Looking for prebuilt workspace: ", logPayload);
-                const configPromise = this.configProvider.fetchConfig({}, user, context, organizationId);
-                const history = await this.incrementalPrebuildsService.getCommitHistoryForContext(context, user);
-                const { config } = await configPromise;
-                prebuiltWorkspace = await this.incrementalPrebuildsService.findGoodBaseForIncrementalBuild(
-                    context,
-                    config,
-                    history,
-                    user,
-                    projectId,
-                );
-            }
-            if (!prebuiltWorkspace?.projectId) {
-                return undefined;
-            }
-
-            // check if the user has access to the project
-            if (!(await this.auth.hasPermissionOnProject(user.id, "read_prebuild", prebuiltWorkspace.projectId))) {
-                return undefined;
-            }
-            log.info(logCtx, `Found prebuilt workspace for ${cloneUrl}:${commitSHAs}`, logPayload);
-            const result: PrebuiltWorkspaceContext = {
-                title: context.title,
-                originalContext: context,
-                prebuiltWorkspace,
-            };
-            return result;
-        } catch (e) {
-            TraceContext.setError(ctx, e);
-            throw e;
-        } finally {
-            ctx.span.finish();
-        }
     }
 
     private listenForWorkspaceInstanceUpdates(): void {
@@ -963,57 +894,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             .getWorkspaceUsers(workspaceId, this.config.workspaceHeartbeat.timeoutSeconds * 1000);
     }
 
-    private async findRunningInstancesForContext(
-        ctx: TraceContext,
-        contextPromise: Promise<WorkspaceContext>,
-        contextUrl: string,
-        runningInstancesPromise: Promise<WorkspaceInstance[]>,
-    ): Promise<WorkspaceInfo[]> {
-        const span = TraceContext.startSpan("findRunningInstancesForContext", ctx);
-        try {
-            const runningInstances = (await runningInstancesPromise).filter(
-                (instance) => instance.status.phase !== "stopping",
-            );
-            const runningInfos = await Promise.all(
-                runningInstances.map(async (workspaceInstance) => {
-                    const workspace = await this.workspaceDb.trace(ctx).findById(workspaceInstance.workspaceId);
-                    if (!workspace) {
-                        return;
-                    }
-
-                    const result: WorkspaceInfo = {
-                        workspace,
-                        latestInstance: workspaceInstance,
-                    };
-                    return result;
-                }),
-            );
-
-            let context: WorkspaceContext;
-            try {
-                context = await contextPromise;
-            } catch {
-                return [];
-            }
-            const sameContext = (ws: WorkspaceInfo) => {
-                return (
-                    ws.workspace.contextURL === contextUrl &&
-                    CommitContext.is(ws.workspace.context) &&
-                    CommitContext.is(context) &&
-                    ws.workspace.context.revision === context.revision
-                );
-            };
-            return runningInfos
-                .filter((info) => info && info.workspace.type === "regular" && sameContext(info))
-                .map((info) => info!);
-        } catch (e) {
-            TraceContext.setError(ctx, e);
-            throw e;
-        } finally {
-            span.finish();
-        }
-    }
-
     public async isPrebuildDone(ctx: TraceContext, pwsId: string): Promise<boolean> {
         traceAPIParams(ctx, { pwsId });
 
@@ -1045,111 +925,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
             logContext = { userId: user.id };
 
-            //TODO(se) remove this implicit check and let instead clients do the checking.
-            // Credit check runs in parallel with the other operations up until we start consuming resources.
-            // Make sure to await for the creditCheck promise in the right places.
-            const runningInstancesPromise = this.workspaceDb.trace(ctx).findRegularRunningInstances(user.id);
             normalizedContextUrl = this.contextParser.normalizeContextURL(contextUrl);
-            let runningForContextPromise: Promise<WorkspaceInfo[]> = Promise.resolve([]);
-            const contextPromise = this.contextParser.handle(ctx, user, normalizedContextUrl);
-            if (!options.ignoreRunningWorkspaceOnSameCommit) {
-                runningForContextPromise = this.findRunningInstancesForContext(
-                    ctx,
-                    contextPromise,
-                    normalizedContextUrl,
-                    runningInstancesPromise,
-                );
-            }
 
-            // make sure we've checked that the user has enough credit before consuming any resources.
-            // Be sure to check this before prebuilds and create workspace, too!
-            let context = await contextPromise;
-
-            if (SnapshotContext.is(context)) {
-                // TODO(janx): Remove snapshot access tracking once we're certain that enforcing repository read access doesn't disrupt the snapshot UX.
-                this.trackEvent(ctx, {
-                    event: "snapshot_access_request",
-                    properties: { snapshot_id: context.snapshotId },
-                }).catch((err) => log.error("cannot track event", err));
-                const snapshot = await this.workspaceDb.trace(ctx).findSnapshotById(context.snapshotId);
-                if (!snapshot) {
-                    throw new ApplicationError(
-                        ErrorCodes.NOT_FOUND,
-                        "No snapshot with id '" + context.snapshotId + "' found.",
-                    );
-                }
-                const workspace = await this.workspaceDb.trace(ctx).findById(snapshot.originalWorkspaceId);
-                if (!workspace) {
-                    throw new ApplicationError(
-                        ErrorCodes.NOT_FOUND,
-                        "No workspace with id '" + snapshot.originalWorkspaceId + "' found.",
-                    );
-                }
-                try {
-                    await this.guardAccess({ kind: "snapshot", subject: snapshot, workspace }, "get");
-                } catch (error) {
-                    this.trackEvent(ctx, {
-                        event: "snapshot_access_denied",
-                        properties: { snapshot_id: context.snapshotId, error: String(error) },
-                    }).catch((err) => log.error("cannot track event", err));
-                    if (error instanceof UnauthorizedRepositoryAccessError) {
-                        throw error;
-                    }
-                    throw new ApplicationError(
-                        ErrorCodes.PERMISSION_DENIED,
-                        `Snapshot URLs require read access to the underlying repository. Please request access from the repository owner.`,
-                    );
-                }
-                this.trackEvent(ctx, {
-                    event: "snapshot_access_granted",
-                    properties: { snapshot_id: context.snapshotId },
-                }).catch((err) => log.error("cannot track event", err));
-            }
-
-            // if we're forced to use the default config, mark the context as such
-            if (!!options.forceDefaultConfig) {
-                context = WithDefaultConfig.mark(context);
-            }
-
-            if (!options.ignoreRunningWorkspaceOnSameCommit && !context.forceCreateNewWorkspace) {
-                const runningForContext = await runningForContextPromise;
-                if (runningForContext.length > 0) {
-                    return { existingWorkspaces: runningForContext };
-                }
-            }
-
-            let project: Project | undefined = undefined;
-            if (options.projectId) {
-                project = await this.projectsService.getProject(user.id, options.projectId);
-            } else if (CommitContext.is(context)) {
-                const projects = await this.projectsService.findProjectsByCloneUrl(
-                    user.id,
-                    context.repository.cloneUrl,
-                );
-                if (projects.length > 1) {
-                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Multiple projects found for clone URL.");
-                }
-                if (projects.length === 1) {
-                    project = projects[0];
-                }
-            }
-
-            const mayStartWorkspacePromise = this.workspaceService.mayStartWorkspace(
-                ctx,
-                user,
-                options.organizationId,
-                runningInstancesPromise,
-            );
-
-            const prebuiltWorkspace = project?.settings?.prebuilds?.enable
-                ? await this.findPrebuiltWorkspace(ctx, user, project.id, context, options.organizationId)
-                : undefined;
-            if (WorkspaceContext.is(prebuiltWorkspace)) {
-                ctx.span?.log({ prebuild: "available" });
-                context = prebuiltWorkspace;
-            }
-
-            await mayStartWorkspacePromise;
+            const { context, project } = await this.contextService.parseContext(user, contextUrl, {
+                projectId: options.projectId,
+                organizationId: options.organizationId,
+            });
 
             const workspace = await this.workspaceService.createWorkspace(
                 ctx,

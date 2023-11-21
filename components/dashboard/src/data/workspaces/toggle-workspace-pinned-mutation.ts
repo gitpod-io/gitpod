@@ -23,6 +23,7 @@ export const useToggleWorkspacedPinnedMutation = () => {
             return await getGitpodService().server.updateWorkspaceUserPin(workspaceId, "toggle");
         },
         onSuccess: (_, { workspaceId }) => {
+            // TODO: use `useUpdateWorkspaceInCache` after respond Workspace object, see EXP-960
             const queryKey = getListWorkspacesQueryKey(org.data?.id);
 
             // Update workspace.pinned to account for the toggle so it's reflected immediately

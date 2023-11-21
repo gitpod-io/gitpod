@@ -157,6 +157,7 @@ export class API {
                         requestMethod: `${grpc_service}/${prop as string}`,
                         startTime: performance.now(),
                         signal: connectContext.signal,
+                        headers: connectContext.requestHeader,
                     };
 
                     const withRequestContext = <T>(fn: () => T): T => runWithRequestContext(requestContext, fn);
