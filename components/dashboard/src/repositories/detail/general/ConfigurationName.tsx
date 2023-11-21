@@ -42,8 +42,8 @@ export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
                     name: configurationName,
                 },
                 {
-                    onSuccess: () => {
-                        toast(`Configuration name set to "${configurationName}".`);
+                    onSuccess: (configuration) => {
+                        toast(`Configuration name set to "${configuration.name}".`);
                     },
                     onError: (err) => {
                         toast(`Updating configuration name failed: ${err.message}`);
