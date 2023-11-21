@@ -8,29 +8,23 @@ option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
 
 service AuthProviderService {
   // CreateAuthProvider creates a new auth provider.
-  rpc CreateAuthProvider(CreateAuthProviderRequest)
-      returns (CreateAuthProviderResponse) {}
+  rpc CreateAuthProvider(CreateAuthProviderRequest) returns (CreateAuthProviderResponse) {}
 
   // GetAuthProvider returns a single auth provider.
-  rpc GetAuthProvider(GetAuthProviderRequest)
-      returns (GetAuthProviderResponse) {}
+  rpc GetAuthProvider(GetAuthProviderRequest) returns (GetAuthProviderResponse) {}
 
   // ListAuthProviders lists auth providers.
-  rpc ListAuthProviders(ListAuthProvidersRequest)
-      returns (ListAuthProvidersResponse) {}
+  rpc ListAuthProviders(ListAuthProvidersRequest) returns (ListAuthProvidersResponse) {}
 
   // ListAuthProviderDescriptions lists publicly available descriptions of
   // authproviders.
-  rpc ListAuthProviderDescriptions(ListAuthProviderDescriptionsRequest)
-      returns (ListAuthProviderDescriptionsResponse) {}
+  rpc ListAuthProviderDescriptions(ListAuthProviderDescriptionsRequest) returns (ListAuthProviderDescriptionsResponse) {}
 
   // UpdateAuthProvider updates an auth provider.
-  rpc UpdateAuthProvider(UpdateAuthProviderRequest)
-      returns (UpdateAuthProviderResponse) {}
+  rpc UpdateAuthProvider(UpdateAuthProviderRequest) returns (UpdateAuthProviderResponse) {}
 
   // DeleteAuthProvider deletes the specified auth provider.
-  rpc DeleteAuthProvider(DeleteAuthProviderRequest)
-      returns (DeleteAuthProviderResponse) {}
+  rpc DeleteAuthProvider(DeleteAuthProviderRequest) returns (DeleteAuthProviderResponse) {}
 }
 
 message CreateAuthProviderRequest {
@@ -45,11 +39,17 @@ message CreateAuthProviderRequest {
   OAuth2Config oauth2_config = 5;
 }
 
-message CreateAuthProviderResponse { AuthProvider auth_provider = 1; }
+message CreateAuthProviderResponse {
+  AuthProvider auth_provider = 1;
+}
 
-message GetAuthProviderRequest { string auth_provider_id = 1; }
+message GetAuthProviderRequest {
+  string auth_provider_id = 1;
+}
 
-message GetAuthProviderResponse { AuthProvider auth_provider = 1; }
+message GetAuthProviderResponse {
+  AuthProvider auth_provider = 1;
+}
 
 message ListAuthProvidersRequest {
   PaginationRequest pagination = 1;
@@ -83,9 +83,13 @@ message UpdateAuthProviderRequest {
   optional string client_secret = 3;
 }
 
-message UpdateAuthProviderResponse { AuthProvider auth_provider = 1; }
+message UpdateAuthProviderResponse {
+  AuthProvider auth_provider = 1;
+}
 
-message DeleteAuthProviderRequest { string auth_provider_id = 1; }
+message DeleteAuthProviderRequest {
+  string auth_provider_id = 1;
+}
 
 message DeleteAuthProviderResponse {}
 
