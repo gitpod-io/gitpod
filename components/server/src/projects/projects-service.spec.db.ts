@@ -139,6 +139,26 @@ describe("ProjectsService", async () => {
                 },
             }),
         );
+
+        await expectError(ErrorCodes.BAD_REQUEST, () =>
+            ps.updateProject(member, {
+                id: project.id,
+                name: " ",
+                settings: {
+                    prebuilds: { prebuildInterval: 3 },
+                },
+            }),
+        );
+
+        await expectError(ErrorCodes.BAD_REQUEST, () =>
+            ps.updateProject(member, {
+                id: project.id,
+                name: "",
+                settings: {
+                    prebuilds: { prebuildInterval: 3 },
+                },
+            }),
+        );
     });
 
     describe("enablePrebuild handling", async () => {

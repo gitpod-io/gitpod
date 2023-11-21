@@ -379,7 +379,7 @@ export class ProjectsService {
     async updateProject(user: User, partialProject: PartialProject): Promise<Project> {
         await this.auth.checkPermissionOnProject(user.id, "write_info", partialProject.id);
 
-        if (partialProject.name) {
+        if (typeof partialProject.name !== "undefined") {
             partialProject.name = partialProject.name.trim();
             if (partialProject.name.length > MAX_PROJECT_NAME_LENGTH) {
                 throw new ApplicationError(
