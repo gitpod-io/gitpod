@@ -154,7 +154,7 @@ const DateDisplay = forwardRef<any, DateDisplayProps>(({ value, onClick }, ref) 
             onClick={onClick}
             ref={ref}
             className={classNames(
-                "w-40 bg-transparent",
+                "w-40",
                 "px-4 py-2 my-auto rounded-md",
                 "justify-start text-left",
                 "bg-white dark:bg-gray-800",
