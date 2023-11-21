@@ -24,6 +24,7 @@ import search from "../icons/search.svg";
 import Tooltip from "../components/Tooltip";
 import { prebuildClient, watchPrebuild } from "../service/public-api";
 import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { Button } from "@podkit/buttons/Button";
 
 export default function PrebuildsPage(props: { project?: Project; isAdminDashboard?: boolean }) {
     const currentProject = useCurrentProject();
@@ -173,7 +174,7 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
                         <DropDown prefix="Prebuild Status: " customClasses="w-32" entries={statusFilterEntries()} />
                     </div>
                     {!props.isAdminDashboard && (
-                        <button
+                        <Button
                             onClick={() => runPrebuild(null)}
                             disabled={isRunningPrebuild}
                             className="ml-2 flex items-center space-x-2"
@@ -182,7 +183,7 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
                                 <img alt="" className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
                             )}
                             <span>Run Prebuild</span>
-                        </button>
+                        </Button>
                     )}
                 </div>
                 <ItemsList className="mt-2">

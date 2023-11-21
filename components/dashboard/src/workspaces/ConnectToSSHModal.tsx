@@ -12,6 +12,7 @@ import { settingsPathSSHKeys } from "../user-settings/settings.routes";
 import { getGitpodService } from "../service/service";
 import { InputWithCopy } from "../components/InputWithCopy";
 import { Link } from "react-router-dom";
+import { Button } from "@podkit/buttons/Button";
 
 interface SSHProps {
     workspaceId: string;
@@ -110,9 +111,9 @@ export default function ConnectToSSHModal(props: {
                 <SSHView workspaceId={props.workspaceId} ownerToken={props.ownerToken} ideUrl={props.ideUrl} />
             </ModalBody>
             <ModalFooter>
-                <button className={"ml-2 secondary"} onClick={() => props.onClose()}>
+                <Button variant="secondary" onClick={() => props.onClose()}>
                     Close
-                </button>
+                </Button>
             </ModalFooter>
         </Modal>
     );

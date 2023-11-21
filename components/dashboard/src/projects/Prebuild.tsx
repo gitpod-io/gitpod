@@ -16,6 +16,7 @@ import { shortCommitMessage } from "./render-utils";
 import { prebuildClient, watchPrebuild } from "../service/public-api";
 import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { gitpodHostUrl } from "../service/service";
+import { Button } from "@podkit/buttons/Button";
 
 export default function PrebuildPage() {
     const history = useHistory();
@@ -136,8 +137,9 @@ export default function PrebuildPage() {
                     {[PrebuildPhase_Phase.BUILDING, PrebuildPhase_Phase.QUEUED].includes(
                         prebuild?.status?.phase?.name || PrebuildPhase_Phase.UNSPECIFIED,
                     ) ? (
-                        <button
-                            className="danger flex items-center space-x-2"
+                        <Button
+                            variant="destructive"
+                            className="flex items-center space-x-2"
                             disabled={isCancellingPrebuild}
                             onClick={cancelPrebuild}
                         >
@@ -145,11 +147,12 @@ export default function PrebuildPage() {
                                 <img alt="" className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
                             )}
                             <span>Cancel Prebuild</span>
-                        </button>
+                        </Button>
                     ) : (
                         <>
-                            <button
-                                className="secondary flex items-center space-x-2"
+                            <Button
+                                variant="secondary"
+                                className="flex items-center space-x-2"
                                 disabled={isRerunningPrebuild}
                                 onClick={rerunPrebuild}
                             >
@@ -157,7 +160,7 @@ export default function PrebuildPage() {
                                     <img alt="" className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
                                 )}
                                 <span>Rerun Prebuild ({prebuild?.ref})</span>
-                            </button>
+                            </Button>
                             {prebuild?.status?.phase?.name === PrebuildPhase_Phase.AVAILABLE ? (
                                 <a
                                     className="my-auto"
@@ -165,10 +168,10 @@ export default function PrebuildPage() {
                                         .withContext(`open-prebuild/${prebuild?.id}/${prebuild?.contextUrl}`)
                                         .toString()}
                                 >
-                                    <button>New Workspace (with this prebuild)</button>
+                                    <Button>New Workspace (with this prebuild)</Button>
                                 </a>
                             ) : (
-                                <button disabled={true}>New Workspace (with this prebuild)</button>
+                                <Button disabled={true}>New Workspace (with this prebuild)</Button>
                             )}
                         </>
                     )}

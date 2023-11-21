@@ -3,6 +3,7 @@ syntax = "proto3";
 package gitpod.v1;
 
 import "gitpod/v1/pagination.proto";
+import "gitpod/v1/sorting.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
@@ -47,8 +48,8 @@ service ConfigurationService {
   rpc ListConfigurations(ListConfigurationsRequest) returns (ListConfigurationsResponse) {}
 
   // Updates a configuration.
-  rpc UpdateConfiguration(UpdateConfigurationRequest)
-      returns (UpdateConfigurationResponse) {};
+  rpc UpdateConfiguration(UpdateConfigurationRequest) returns (UpdateConfigurationResponse) {}
+
 
   // Deletes a configuration.
   rpc DeleteConfiguration(DeleteConfigurationRequest) returns (DeleteConfigurationResponse) {}
@@ -76,6 +77,8 @@ message ListConfigurationsRequest {
   string organization_id = 1;
   string search_term = 2;
   PaginationRequest pagination = 3;
+  // Configurations can be sorted by "name" OR "creationTime"
+  repeated Sort sort = 4;
 }
 
 message ListConfigurationsResponse {
@@ -91,14 +94,18 @@ message UpdateConfigurationRequest {
     optional int32 prebuild_interval = 4;
     optional string workspace_class = 5;
   }
-  message WorkspaceSettings { optional string workspace_class = 1; }
+  message WorkspaceSettings {
+    optional string workspace_class = 1;
+  }
   string configuration_id = 1;
   optional string name = 2;
   optional PrebuildSettings prebuild_settings = 3;
   optional WorkspaceSettings workspace_settings = 4;
 }
 
-message UpdateConfigurationResponse { Configuration configuration = 1; }
+message UpdateConfigurationResponse {
+  Configuration configuration = 1;
+}
 
 message DeleteConfigurationRequest {
   string configuration_id = 1;

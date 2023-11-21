@@ -7,7 +7,7 @@
 import { cn } from "@podkit/lib/cn";
 import React from "react";
 
-type HideableCellProps = {
+export type HideableCellProps = {
     hideOnSmallScreen?: boolean;
 };
 

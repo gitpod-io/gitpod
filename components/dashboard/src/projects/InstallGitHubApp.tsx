@@ -4,6 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { Button } from "@podkit/buttons/Button";
 import InfoBox from "../components/InfoBox";
 import { gitpodHostUrl } from "../service/service";
 
@@ -21,7 +22,7 @@ export default function InstallGitHubApp() {
                         </div>
                         <InfoBox>Gitpod no longer requires to install the GitHub App on repositories.</InfoBox>
                         <div className="mt-6">
-                            <button onClick={goToApp}>Go to Dashboard</button>
+                            <Button onClick={goToApp}>Go to Dashboard</Button>
                         </div>
                     </div>
                 </div>

@@ -15,7 +15,7 @@ import dayjs from "dayjs";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { Heading2, Subheading } from "../components/typography/headings";
 import { EmptyMessage } from "../components/EmptyMessage";
-import { Button } from "../components/Button";
+import { Button } from "@podkit/buttons/Button";
 
 interface AddModalProps {
     value: SSHPublicKeyValue;
@@ -110,10 +110,10 @@ export function AddSSHKeyModal(props: AddModalProps) {
                 </div>
             </ModalBody>
             <ModalFooter>
-                <Button type="secondary" onClick={props.onClose}>
+                <Button variant="secondary" onClick={props.onClose}>
                     Cancel
                 </Button>
-                <Button htmlType="submit">Add SSH Key</Button>
+                <Button type="submit">Add SSH Key</Button>
             </ModalFooter>
         </Modal>
     );
@@ -199,9 +199,9 @@ export default function SSHKeys() {
                 </div>
                 {dataList.length !== 0 ? (
                     <div className="mt-3 flex">
-                        <button onClick={addOne} className="ml-2">
+                        <Button onClick={addOne} className="ml-2">
                             New SSH Key
-                        </button>
+                        </Button>
                     </div>
                 ) : null}
             </div>

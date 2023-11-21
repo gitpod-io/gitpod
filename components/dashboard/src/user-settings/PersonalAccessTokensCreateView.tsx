@@ -8,7 +8,6 @@ import { PersonalAccessToken } from "@gitpod/public-api/lib/gitpod/experimental/
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { Redirect, useHistory, useParams } from "react-router";
-import { Link } from "react-router-dom";
 import Alert from "../components/Alert";
 import { CheckboxInputField, CheckboxListField } from "../components/forms/CheckboxInputField";
 import DateSelector from "../components/DateSelector";
@@ -22,6 +21,8 @@ import { Timestamp } from "@bufbuild/protobuf";
 import arrowDown from "../images/sort-arrow.svg";
 import { Heading2, Subheading } from "../components/typography/headings";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { LinkButton } from "@podkit/buttons/LinkButton";
+import { Button } from "@podkit/buttons/Button";
 
 interface EditPATData {
     name: string;
@@ -152,21 +153,14 @@ function PersonalAccessTokenCreateView() {
         <div>
             <PageWithSettingsSubMenu>
                 <div className="mb-4 flex gap-2">
-                    <Link to={settingsPathPersonalAccessTokens}>
-                        <button className="secondary">
-                            <div className="flex place-content-center">
-                                <img src={arrowDown} className="w-4 mr-2 transform rotate-90 mb-0" alt="Back arrow" />
-                                <span>Back to list</span>
-                            </div>
-                        </button>
-                    </Link>
+                    <LinkButton variant="secondary" href={settingsPathPersonalAccessTokens}>
+                        <img src={arrowDown} className="w-4 mr-2 transform rotate-90 mb-0" alt="Back arrow" />
+                        <span>Back to list</span>
+                    </LinkButton>
                     {editToken && (
-                        <button
-                            className="danger bg-red-50 dark:bg-red-600 text-red-600 dark:text-red-50"
-                            onClick={() => setModalData({ token: editToken })}
-                        >
+                        <Button variant="destructive" onClick={() => setModalData({ token: editToken })}>
                             Regenerate
-                        </button>
+                        </Button>
                     )}
                 </div>
                 {errorMsg.length > 0 && (
@@ -256,15 +250,13 @@ function PersonalAccessTokenCreateView() {
                     </div>
                     <div className="flex gap-2">
                         {isEditing && (
-                            <Link to={settingsPathPersonalAccessTokens}>
-                                <button className="secondary" onClick={handleConfirm}>
-                                    Cancel
-                                </button>
-                            </Link>
+                            <LinkButton variant="secondary" href={settingsPathPersonalAccessTokens}>
+                                Cancel
+                            </LinkButton>
                         )}
-                        <button onClick={handleConfirm} disabled={isEditing && !editToken}>
+                        <Button onClick={handleConfirm} disabled={isEditing && !editToken}>
                             {isEditing ? "Update" : "Create"} Access Token
-                        </button>
+                        </Button>
                     </div>
                 </SpinnerOverlayLoader>
             </PageWithSettingsSubMenu>

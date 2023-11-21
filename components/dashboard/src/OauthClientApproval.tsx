@@ -4,6 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { Button } from "@podkit/buttons/Button";
 import gitpodIcon from "./icons/gitpod.svg";
 
 export default function OAuthClientApproval() {
@@ -42,12 +43,12 @@ export default function OAuthClientApproval() {
                                 </h4>
                             </div>
                             <div className="flex justify-center mt-6">
-                                <button className="secondary" onClick={() => updateClientApproval(false)}>
+                                <Button variant="secondary" onClick={() => updateClientApproval(false)}>
                                     Cancel
-                                </button>
-                                <button key={"button-yes"} className="ml-2" onClick={() => updateClientApproval(true)}>
+                                </Button>
+                                <Button key={"button-yes"} className="ml-2" onClick={() => updateClientApproval(true)}>
                                     Authorize
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     </div>

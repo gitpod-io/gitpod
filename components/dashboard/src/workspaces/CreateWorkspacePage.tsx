@@ -18,7 +18,6 @@ import { FC, FunctionComponent, useCallback, useContext, useEffect, useMemo, use
 import { useHistory, useLocation } from "react-router";
 import Alert from "../components/Alert";
 import { AuthorizeGit, useNeedsGitAuthorization } from "../components/AuthorizeGit";
-import { Button } from "../components/Button";
 import { LinkButton } from "../components/LinkButton";
 import Modal from "../components/Modal";
 import RepositoryFinder from "../components/RepositoryFinder";
@@ -45,6 +44,8 @@ import { settingsPathIntegrations } from "../user-settings/settings.routes";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { Button } from "@podkit/buttons/Button";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
 
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
@@ -422,15 +423,15 @@ export function CreateWorkspacePage() {
                     </InputField>
                 </div>
                 <div className="w-full flex justify-end mt-3 space-x-2 px-6">
-                    <Button
+                    <LoadingButton
                         onClick={onClickCreate}
                         autoFocus={true}
-                        size="block"
-                        loading={createWorkspaceMutation.isStarting || autostart}
+                        className="w-full"
+                        loading={createWorkspaceMutation.isStarting || !!autostart}
                         disabled={continueButtonDisabled}
                     >
                         {createWorkspaceMutation.isStarting ? "Opening Workspace ..." : "Continue"}
-                    </Button>
+                    </LoadingButton>
                 </div>
                 {existingWorkspaces.length > 0 && !createWorkspaceMutation.isStarting && (
                     <div className="w-full flex flex-col justify-end px-6">
@@ -662,10 +663,10 @@ export function LimitReachedModal(p: { children: React.ReactNode }) {
             </div>
             <div className="flex justify-end mt-6">
                 <a href={gitpodHostUrl.asDashboard().toString()}>
-                    <button className="secondary">Go to Dashboard</button>
+                    <Button variant="secondary">Go to Dashboard</Button>
                 </a>
                 <a href={gitpodHostUrl.with({ pathname: "plans" }).toString()} className="ml-2">
-                    <button>Upgrade</button>
+                    <Button>Upgrade</Button>
                 </a>
             </div>
         </Modal>

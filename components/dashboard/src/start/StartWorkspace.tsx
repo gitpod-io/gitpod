@@ -28,6 +28,7 @@ import Alert from "../components/Alert";
 import { workspaceClient, workspacesService } from "../service/public-api";
 import { GetWorkspaceRequest, Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { watchWorkspaceStatus } from "../data/workspaces/listen-to-workspace-ws-messages";
+import { Button } from "@podkit/buttons/Button";
 
 const sessionId = v4();
 
@@ -586,12 +587,12 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                         },
                                     ]}
                                 >
-                                    <button className="secondary">
+                                    <Button variant="secondary">
                                         More Actions...
                                         <Arrow direction={"down"} />
-                                    </button>
+                                    </Button>
                                 </ContextMenu>
-                                <button onClick={() => this.openDesktopLink(openLink)}>{openLinkLabel}</button>
+                                <Button onClick={() => this.openDesktopLink(openLink)}>{openLinkLabel}</Button>
                             </div>
                             {!useLatest && (
                                 <Alert type="info" className="mt-4 w-96">
@@ -659,7 +660,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                         </div>
                         <div className="mt-10 flex justify-center">
                             <a target="_parent" href={gitpodHostUrl.asWorkspacePage().toString()}>
-                                <button className="secondary">Go to Dashboard</button>
+                                <Button variant="secondary">Go to Dashboard</Button>
                             </a>
                         </div>
                     </div>
@@ -705,10 +706,10 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                         <PendingChangesDropdown gitStatus={this.state.workspace.status.gitStatus} />
                         <div className="mt-10 justify-center flex space-x-2">
                             <a target="_parent" href={gitpodHostUrl.asWorkspacePage().toString()}>
-                                <button className="secondary">Go to Dashboard</button>
+                                <Button variant="secondary">Go to Dashboard</Button>
                             </a>
                             <a target="_parent" href={gitpodHostUrl.asStart(this.state.workspace.id).toString()}>
-                                <button>Open Workspace</button>
+                                <Button>Open Workspace</Button>
                             </a>
                         </div>
                     </div>
@@ -802,9 +803,9 @@ function ImageBuildView(props: ImageBuildViewProps) {
                             </a>
                         </p>
                     </div>
-                    <button className="mt-6 secondary" onClick={props.onStartWithDefaultImage}>
+                    <Button variant="secondary" className="mt-6" onClick={props.onStartWithDefaultImage}>
                         Continue with Default Image
-                    </button>
+                    </Button>
                 </>
             )}
         </StartPage>

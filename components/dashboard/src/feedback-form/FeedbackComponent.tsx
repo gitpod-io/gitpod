@@ -12,6 +12,8 @@ import crying from "../images/feedback/crying-emoji.svg";
 import { trackEvent, TrackFeedback } from "../Analytics";
 import { StartWorkspaceError } from "../start/StartPage";
 import { Heading2 } from "../components/typography/headings";
+import { Button } from "@podkit/buttons/Button";
+import { cn } from "@podkit/lib/cn";
 
 function FeedbackComponent(props: {
     onClose?: () => void;
@@ -60,15 +62,15 @@ function FeedbackComponent(props: {
             { id: 4, name: "starry", src: starry },
         ];
         return emojiList.map((emoji) => (
-            <button
-                className={
-                    "hover:scale-150 transform bg-transparent bottom-5 right-5 cursor-pointer " +
-                    (selectedEmoji === emoji.id ? "" : "grayed")
-                }
-                onClick={() => handleClick(emoji.id)}
-            >
-                <img src={emoji.src} alt={`${emoji.name} emoji`} width={width || "24px"} title={emoji.name} />
-            </button>
+            <Button variant="ghost" onClick={() => handleClick(emoji.id)}>
+                <img
+                    src={emoji.src}
+                    alt={`${emoji.name} emoji`}
+                    width={width || "24px"}
+                    title={emoji.name}
+                    className={cn("hover:scale-150 transition-all", selectedEmoji !== emoji.id && "grayed")}
+                />
+            </Button>
         ));
     };
 
@@ -94,7 +96,9 @@ function FeedbackComponent(props: {
                         {props.message}
                     </p>
 
-                    <div className="flex items-center justify-center w-full">{emojiGroup(props.initialSize || 50)}</div>
+                    <div className="mt-4 flex items-center justify-center w-full">
+                        {emojiGroup(props.initialSize || 50)}
+                    </div>
                 </div>
             )}
             {expandedWithTextView && (
@@ -130,12 +134,12 @@ function FeedbackComponent(props: {
                     <div className="flex justify-between mt-6">
                         <div className="flex bottom-5 right-5 -space-x-3">{emojiGroup(24)}</div>
                         <div>
-                            <button className="secondary" onClick={onClose}>
+                            <Button variant="secondary" onClick={onClose}>
                                 Cancel
-                            </button>
-                            <button className="ml-2" onClick={onSubmit}>
+                            </Button>
+                            <Button className="ml-2" onClick={onSubmit}>
                                 Send Feedback
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>

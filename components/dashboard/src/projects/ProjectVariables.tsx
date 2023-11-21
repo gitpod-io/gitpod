@@ -15,13 +15,14 @@ import Modal, { ModalBody, ModalFooter, ModalFooterAlert, ModalHeader } from "..
 import { Heading2, Subheading } from "../components/typography/headings";
 import { useCurrentProject } from "./project-context";
 import { ProjectSettingsPage } from "./ProjectSettings";
-import { Button } from "../components/Button";
 import { useSetProjectEnvVar } from "../data/projects/set-project-env-var-mutation";
 import { envVarClient } from "../service/public-api";
 import {
     ConfigurationEnvironmentVariable,
     EnvironmentVariableAdmission,
 } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
+import { Button } from "@podkit/buttons/Button";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
 
 export default function ProjectVariablesPage() {
     const { project, loading } = useCurrentProject();
@@ -69,7 +70,7 @@ export default function ProjectVariablesPage() {
                     <Heading2>Environment Variables</Heading2>
                     <Subheading>Manage project-specific environment variables.</Subheading>
                 </div>
-                {envVars.length > 0 && <button onClick={() => setShowAddVariableModal(true)}>New Variable</button>}
+                {envVars.length > 0 && <Button onClick={() => setShowAddVariableModal(true)}>New Variable</Button>}
             </div>
             {envVars.length === 0 ? (
                 <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full py-28 flex flex-col items-center justify-center space-y-3">
@@ -78,7 +79,7 @@ export default function ProjectVariablesPage() {
                         All <strong>project-specific environment variables</strong> will be visible in prebuilds and
                         optionally in workspaces for this project.
                     </Subheading>
-                    <button onClick={() => setShowAddVariableModal(true)}>New Variable</button>
+                    <Button onClick={() => setShowAddVariableModal(true)}>New Variable</Button>
                 </div>
             ) : (
                 <ItemsList>
@@ -200,12 +201,12 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
                     ) : null
                 }
             >
-                <Button type="secondary" onClick={props.onClose}>
+                <Button variant="secondary" onClick={props.onClose}>
                     Cancel
                 </Button>
-                <Button htmlType="submit" loading={setProjectEnvVar.isLoading}>
+                <LoadingButton type="submit" loading={setProjectEnvVar.isLoading}>
                     Add Variable
-                </Button>
+                </LoadingButton>
             </ModalFooter>
         </Modal>
     );
