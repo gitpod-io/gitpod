@@ -118,7 +118,9 @@ describe("PublicAPIConverter", () => {
             expect(result.settings?.workspaceClasses?.regular).to.deep.equal("huge");
             expect(result.settings?.prebuilds?.enable).to.deep.equal(true);
             expect(result.settings?.prebuilds?.prebuildInterval).to.deep.equal(5);
-            expect(Object.keys(result).includes("name")).to.be.false;
+            expect(result).to.not.have.property("name");
+            expect(result).to.not.have.deep.property("result.settings.prebuilds.workspaceClass");
+            expect(result).to.not.have.deep.property("result.settings.prebuilds.branchStrategy");
         });
     });
 
