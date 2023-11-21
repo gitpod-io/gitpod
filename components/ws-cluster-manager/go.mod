@@ -11,9 +11,21 @@ require (
 )
 
 require (
+	github.com/Microsoft/go-winio v0.6.1 // indirect
+	github.com/distribution/reference v0.5.0 // indirect
+	github.com/docker/distribution v2.8.3+incompatible // indirect
+	github.com/docker/go-connections v0.4.0 // indirect
+	github.com/docker/go-units v0.4.0 // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
+	golang.org/x/mod v0.10.0 // indirect
+	golang.org/x/tools v0.9.1 // indirect
+)
+
+require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/docker/docker v24.0.7+incompatible
 	github.com/gitpod-io/gitpod/components/scrubber v0.0.0-00010101000000-000000000000 // indirect
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
@@ -34,6 +46,7 @@ require (
 	github.com/prometheus/procfs v0.10.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/slok/go-http-metrics v0.10.0 // indirect
+	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.1 // indirect
 	github.com/uber/jaeger-client-go v2.29.1+incompatible // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect

@@ -20,31 +20,63 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+type ClusterRegistration struct {
+	Name      string
+	LastHello time.Time
+}
+
 func NewClusterService() *ClusterService {
 	return &ClusterService{
+		Cluster:    NewInMemoryDatabase[ClusterRegistration](),
 		Workspaces: NewInMemoryDatabase[v1.Workspace](),
 	}
 }
 
 type ClusterService struct {
+	Cluster    Database[ClusterRegistration]
 	Workspaces Database[v1.Workspace]
 }
 
 func (srv *ClusterService) WorkspaceManagerServer() api.WorkspaceManagerServer {
 	return &workspaceManagerServer{
+		Cluster:    srv.Cluster,
 		Workspaces: srv.Workspaces,
 	}
 }
 
 func (srv *ClusterService) ClusterServiceHandler() v1connect.ClusterServiceHandler {
 	return &clusterService{
+		Cluster:    srv.Cluster,
 		Workspaces: srv.Workspaces,
 	}
 }
 
 type clusterService struct {
+	Cluster    Database[ClusterRegistration]
 	Workspaces Database[v1.Workspace]
 	v1connect.UnimplementedClusterServiceHandler
+}
+
+func (srv *clusterService) Hello(ctx context.Context, req *connect.Request[v1.HelloRequest]) (*connect.Response[v1.HelloResponse], error) {
+	// Note(cw): in a real implementation we'd have to check the cluster's identity here and prefix the name with the user's ID
+	// to make sure one user cannot impersonate another.
+	err := srv.Cluster.Create(ctx, req.Msg.Name, &ClusterRegistration{
+		Name:      req.Msg.Name,
+		LastHello: time.Now(),
+	})
+	if errors.Is(err, ErrAlreadyExists) {
+		err = srv.Cluster.UpdateResource(ctx, req.Msg.Name, func(cr *ClusterRegistration) (update bool, err error) {
+			cr.LastHello = time.Now()
+			return true, nil
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &connect.Response[v1.HelloResponse]{
+		Msg: &v1.HelloResponse{},
+	}, nil
 }
 
 // Notify implements v1connect.ClusterServiceHandler.
@@ -60,8 +92,8 @@ func (srv *clusterService) Notify(ctx context.Context, req *connect.Request[v1.N
 	return nil
 }
 
-// PullSpecs implements v1connect.ClusterServiceHandler.
-func (srv *clusterService) PullSpecs(ctx context.Context, req *connect.Request[v1.PullSpecsRequest]) (*connect.Response[v1.PullSpecsResponse], error) {
+// PullResources implements v1connect.ClusterServiceHandler.
+func (srv *clusterService) PullResources(ctx context.Context, req *connect.Request[v1.PullResourcesRequest]) (*connect.Response[v1.PullResourcesResponse], error) {
 	resp, err := srv.Workspaces.List(ctx, req.Msg.StateToken)
 	if err != nil {
 		return nil, err
@@ -74,14 +106,36 @@ func (srv *clusterService) PullSpecs(ctx context.Context, req *connect.Request[v
 			},
 		})
 	}
-	return &connect.Response[v1.PullSpecsResponse]{
-		Msg: &v1.PullSpecsResponse{
+	return &connect.Response[v1.PullResourcesResponse]{
+		Msg: &v1.PullResourcesResponse{
 			Resources: resources,
 		},
 	}, nil
 }
 
+func (srv *clusterService) UpdateResource(ctx context.Context, req *connect.Request[v1.UpdateResourceRequest]) (*connect.Response[v1.UpdateResourceResponse], error) {
+	switch {
+	case req.Msg.Resource.GetWorkspace() != nil:
+		wsUpdate := req.Msg.Resource.GetWorkspace()
+		err := srv.Workspaces.UpdateResource(ctx, wsUpdate.Metadata.Name, func(ws *v1.Workspace) (update bool, err error) {
+			if ws == nil {
+				return false, status.Error(codes.NotFound, "workspace not found")
+			}
+
+			ws.Status = wsUpdate.Status
+			return true, nil
+		})
+		if err != nil {
+			return nil, err
+		}
+		return &connect.Response[v1.UpdateResourceResponse]{Msg: &v1.UpdateResourceResponse{StateToken: ""}}, nil
+	default:
+		return nil, status.Error(codes.InvalidArgument, "unknown resource type")
+	}
+}
+
 type workspaceManagerServer struct {
+	Cluster    Database[ClusterRegistration]
 	Workspaces Database[v1.Workspace]
 	api.UnimplementedWorkspaceManagerServer
 }
@@ -152,7 +206,27 @@ func (srv *workspaceManagerServer) ControlPort(ctx context.Context, req *api.Con
 
 // DescribeCluster implements api.WorkspaceManagerServer.
 func (srv *workspaceManagerServer) DescribeCluster(context.Context, *api.DescribeClusterRequest) (*api.DescribeClusterResponse, error) {
-	panic("unimplemented")
+	cluster, err := srv.Cluster.List(context.Background(), "")
+	if err != nil {
+		return nil, err
+	}
+
+	var preferredClass string
+	classes := make([]*api.WorkspaceClass, 0, len(cluster))
+	for _, cl := range cluster {
+		id := "local-" + cl.Name
+		preferredClass = id
+		classes = append(classes, &api.WorkspaceClass{
+			Id:               id,
+			DisplayName:      "Local on " + cl.Name,
+			Description:      "local machine with limited resources",
+			CreditsPerMinute: 0,
+		})
+	}
+	return &api.DescribeClusterResponse{
+		WorkspaceClasses:        classes,
+		PreferredWorkspaceClass: preferredClass,
+	}, nil
 }
 
 // DescribeWorkspace implements api.WorkspaceManagerServer.
@@ -171,22 +245,28 @@ func (srv *workspaceManagerServer) DescribeWorkspace(ctx context.Context, req *a
 }
 
 func convertWorkspaceToV1(ws *v1.Workspace) *api.WorkspaceStatus {
-	var phase api.WorkspacePhase
-	switch ws.Status.Phase {
-	case v1.WorkspacePhase_WORKSPACE_PHASE_CREATING:
-		phase = api.WorkspacePhase_CREATING
-	case v1.WorkspacePhase_WORKSPACE_PHASE_RUNNING:
-		phase = api.WorkspacePhase_RUNNING
-	case v1.WorkspacePhase_WORKSPACE_PHASE_STOPPING:
-		phase = api.WorkspacePhase_STOPPING
-	case v1.WorkspacePhase_WORKSPACE_PHASE_STOPPED:
-		phase = api.WorkspacePhase_STOPPED
-	case v1.WorkspacePhase_WORKSPACE_PHASE_INITIALIZING:
-		phase = api.WorkspacePhase_INITIALIZING
-	case v1.WorkspacePhase_WORKSPACE_PHASE_PENDING:
-		phase = api.WorkspacePhase_PENDING
-	default:
-		phase = api.WorkspacePhase_UNKNOWN
+	var (
+		phase api.WorkspacePhase
+		url   string
+	)
+	if ws.Status != nil {
+		url = ws.Status.Url
+		switch ws.Status.Phase {
+		case v1.WorkspacePhase_WORKSPACE_PHASE_CREATING:
+			phase = api.WorkspacePhase_CREATING
+		case v1.WorkspacePhase_WORKSPACE_PHASE_RUNNING:
+			phase = api.WorkspacePhase_RUNNING
+		case v1.WorkspacePhase_WORKSPACE_PHASE_STOPPING:
+			phase = api.WorkspacePhase_STOPPING
+		case v1.WorkspacePhase_WORKSPACE_PHASE_STOPPED:
+			phase = api.WorkspacePhase_STOPPED
+		case v1.WorkspacePhase_WORKSPACE_PHASE_INITIALIZING:
+			phase = api.WorkspacePhase_INITIALIZING
+		case v1.WorkspacePhase_WORKSPACE_PHASE_PENDING:
+			phase = api.WorkspacePhase_PENDING
+		default:
+			phase = api.WorkspacePhase_UNKNOWN
+		}
 	}
 	return &api.WorkspaceStatus{
 		Id:            ws.Metadata.Name,
@@ -199,12 +279,16 @@ func convertWorkspaceToV1(ws *v1.Workspace) *api.WorkspaceStatus {
 		},
 		Spec: &api.WorkspaceSpec{
 			Headless: false,
-			Url:      ws.Status.Url,
+			Url:      url,
 			Type:     api.WorkspaceType_REGULAR,
 			Class:    ws.Spec.Class,
 			Timeout:  ws.Spec.Timeout.AsDuration().String(),
 		},
-		Phase: phase,
+		Phase:      phase,
+		Conditions: &api.WorkspaceConditions{},
+		Runtime: &api.WorkspaceRuntimeInfo{
+			NodeName: "localhost",
+		},
 	}
 }
 
@@ -285,12 +369,25 @@ func (srv *workspaceManagerServer) StartWorkspace(ctx context.Context, req *api.
 	}
 	timeout, err := time.ParseDuration(req.Spec.Timeout)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid timeout: %w", err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid timeout: %v", err)
 	}
 
 	initializer, err := proto.Marshal(req.Spec.Initializer)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid initializer: %w", err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid initializer: %v", err)
+	}
+
+	var organization string
+	if req.Metadata.Team != nil {
+		organization = *req.Metadata.Team
+	}
+
+	var gitSpec *v1.GitSpec
+	if req.Spec.Git != nil {
+		gitSpec = &v1.GitSpec{
+			Username: req.Spec.Git.Username,
+			Email:    req.Spec.Git.Email,
+		}
 	}
 
 	err = srv.Workspaces.Create(ctx, req.Id, &v1.Workspace{
@@ -298,19 +395,16 @@ func (srv *workspaceManagerServer) StartWorkspace(ctx context.Context, req *api.
 			Name:         req.Id,
 			Owner:        req.Metadata.Owner,
 			Annotations:  req.Metadata.Annotations,
-			Organization: *req.Metadata.Team,
+			Organization: organization,
 			CreationTime: timestamppb.Now(),
 		},
 		Spec: &v1.WorkspaceSpec{
-			Type:      v1.WorkspaceType_WORKSPACE_TYPE_REGULAR,
-			Class:     req.Spec.Class,
-			Envvars:   envvars,
-			Ports:     ports,
-			Admission: admission,
-			Git: &v1.GitSpec{
-				Username: req.Spec.Git.Username,
-				Email:    req.Spec.Git.Email,
-			},
+			Type:          v1.WorkspaceType_WORKSPACE_TYPE_REGULAR,
+			Class:         req.Spec.Class,
+			Envvars:       envvars,
+			Ports:         ports,
+			Admission:     admission,
+			Git:           gitSpec,
 			SshPublicKeys: req.Spec.SshPublicKeys,
 			Timeout:       durationpb.New(timeout),
 			Initializer:   initializer,

@@ -7,16 +7,30 @@ option go_package = "github.com/gitpod-io/gitpod/components/ws-cluster-manager/a
 import "definition/resource.proto";
 
 service ClusterService {
-  rpc PullSpecs(PullSpecsRequest) returns (PullSpecsResponse) {};
+  rpc Hello(HelloRequest) returns (HelloResponse) {};
+  rpc PullResources(PullResourcesRequest) returns (PullResourcesResponse) {};
+  rpc UpdateResource(UpdateResourceRequest) returns (UpdateResourceResponse) {};
   rpc Notify(NotifyRequest) returns (stream NotifyResponse) {};
 }
 
-message PullSpecsRequest {
+message HelloRequest {
+  string name = 1;
+}
+message HelloResponse {}
+
+message PullResourcesRequest {
   string state_token = 1;
 }
-message PullSpecsResponse {
+message PullResourcesResponse {
   string state_token = 1;
   repeated Resource resources = 2;
+}
+
+message UpdateResourceRequest {
+  Resource resource = 1;
+}
+message UpdateResourceResponse {
+  string state_token = 1;
 }
 
 message NotifyRequest {}

@@ -31,7 +31,9 @@ const (
 
 // ClusterServiceClient is a client for the v1.ClusterService service.
 type ClusterServiceClient interface {
-	PullSpecs(context.Context, *connect_go.Request[v1.PullSpecsRequest]) (*connect_go.Response[v1.PullSpecsResponse], error)
+	Hello(context.Context, *connect_go.Request[v1.HelloRequest]) (*connect_go.Response[v1.HelloResponse], error)
+	PullResources(context.Context, *connect_go.Request[v1.PullResourcesRequest]) (*connect_go.Response[v1.PullResourcesResponse], error)
+	UpdateResource(context.Context, *connect_go.Request[v1.UpdateResourceRequest]) (*connect_go.Response[v1.UpdateResourceResponse], error)
 	Notify(context.Context, *connect_go.Request[v1.NotifyRequest]) (*connect_go.ServerStreamForClient[v1.NotifyResponse], error)
 }
 
@@ -45,9 +47,19 @@ type ClusterServiceClient interface {
 func NewClusterServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) ClusterServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &clusterServiceClient{
-		pullSpecs: connect_go.NewClient[v1.PullSpecsRequest, v1.PullSpecsResponse](
+		hello: connect_go.NewClient[v1.HelloRequest, v1.HelloResponse](
 			httpClient,
-			baseURL+"/v1.ClusterService/PullSpecs",
+			baseURL+"/v1.ClusterService/Hello",
+			opts...,
+		),
+		pullResources: connect_go.NewClient[v1.PullResourcesRequest, v1.PullResourcesResponse](
+			httpClient,
+			baseURL+"/v1.ClusterService/PullResources",
+			opts...,
+		),
+		updateResource: connect_go.NewClient[v1.UpdateResourceRequest, v1.UpdateResourceResponse](
+			httpClient,
+			baseURL+"/v1.ClusterService/UpdateResource",
 			opts...,
 		),
 		notify: connect_go.NewClient[v1.NotifyRequest, v1.NotifyResponse](
@@ -60,13 +72,25 @@ func NewClusterServiceClient(httpClient connect_go.HTTPClient, baseURL string, o
 
 // clusterServiceClient implements ClusterServiceClient.
 type clusterServiceClient struct {
-	pullSpecs *connect_go.Client[v1.PullSpecsRequest, v1.PullSpecsResponse]
-	notify    *connect_go.Client[v1.NotifyRequest, v1.NotifyResponse]
+	hello          *connect_go.Client[v1.HelloRequest, v1.HelloResponse]
+	pullResources  *connect_go.Client[v1.PullResourcesRequest, v1.PullResourcesResponse]
+	updateResource *connect_go.Client[v1.UpdateResourceRequest, v1.UpdateResourceResponse]
+	notify         *connect_go.Client[v1.NotifyRequest, v1.NotifyResponse]
 }
 
-// PullSpecs calls v1.ClusterService.PullSpecs.
-func (c *clusterServiceClient) PullSpecs(ctx context.Context, req *connect_go.Request[v1.PullSpecsRequest]) (*connect_go.Response[v1.PullSpecsResponse], error) {
-	return c.pullSpecs.CallUnary(ctx, req)
+// Hello calls v1.ClusterService.Hello.
+func (c *clusterServiceClient) Hello(ctx context.Context, req *connect_go.Request[v1.HelloRequest]) (*connect_go.Response[v1.HelloResponse], error) {
+	return c.hello.CallUnary(ctx, req)
+}
+
+// PullResources calls v1.ClusterService.PullResources.
+func (c *clusterServiceClient) PullResources(ctx context.Context, req *connect_go.Request[v1.PullResourcesRequest]) (*connect_go.Response[v1.PullResourcesResponse], error) {
+	return c.pullResources.CallUnary(ctx, req)
+}
+
+// UpdateResource calls v1.ClusterService.UpdateResource.
+func (c *clusterServiceClient) UpdateResource(ctx context.Context, req *connect_go.Request[v1.UpdateResourceRequest]) (*connect_go.Response[v1.UpdateResourceResponse], error) {
+	return c.updateResource.CallUnary(ctx, req)
 }
 
 // Notify calls v1.ClusterService.Notify.
@@ -76,7 +100,9 @@ func (c *clusterServiceClient) Notify(ctx context.Context, req *connect_go.Reque
 
 // ClusterServiceHandler is an implementation of the v1.ClusterService service.
 type ClusterServiceHandler interface {
-	PullSpecs(context.Context, *connect_go.Request[v1.PullSpecsRequest]) (*connect_go.Response[v1.PullSpecsResponse], error)
+	Hello(context.Context, *connect_go.Request[v1.HelloRequest]) (*connect_go.Response[v1.HelloResponse], error)
+	PullResources(context.Context, *connect_go.Request[v1.PullResourcesRequest]) (*connect_go.Response[v1.PullResourcesResponse], error)
+	UpdateResource(context.Context, *connect_go.Request[v1.UpdateResourceRequest]) (*connect_go.Response[v1.UpdateResourceResponse], error)
 	Notify(context.Context, *connect_go.Request[v1.NotifyRequest], *connect_go.ServerStream[v1.NotifyResponse]) error
 }
 
@@ -87,9 +113,19 @@ type ClusterServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewClusterServiceHandler(svc ClusterServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
 	mux := http.NewServeMux()
-	mux.Handle("/v1.ClusterService/PullSpecs", connect_go.NewUnaryHandler(
-		"/v1.ClusterService/PullSpecs",
-		svc.PullSpecs,
+	mux.Handle("/v1.ClusterService/Hello", connect_go.NewUnaryHandler(
+		"/v1.ClusterService/Hello",
+		svc.Hello,
+		opts...,
+	))
+	mux.Handle("/v1.ClusterService/PullResources", connect_go.NewUnaryHandler(
+		"/v1.ClusterService/PullResources",
+		svc.PullResources,
+		opts...,
+	))
+	mux.Handle("/v1.ClusterService/UpdateResource", connect_go.NewUnaryHandler(
+		"/v1.ClusterService/UpdateResource",
+		svc.UpdateResource,
 		opts...,
 	))
 	mux.Handle("/v1.ClusterService/Notify", connect_go.NewServerStreamHandler(
@@ -103,8 +139,16 @@ func NewClusterServiceHandler(svc ClusterServiceHandler, opts ...connect_go.Hand
 // UnimplementedClusterServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedClusterServiceHandler struct{}
 
-func (UnimplementedClusterServiceHandler) PullSpecs(context.Context, *connect_go.Request[v1.PullSpecsRequest]) (*connect_go.Response[v1.PullSpecsResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("v1.ClusterService.PullSpecs is not implemented"))
+func (UnimplementedClusterServiceHandler) Hello(context.Context, *connect_go.Request[v1.HelloRequest]) (*connect_go.Response[v1.HelloResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("v1.ClusterService.Hello is not implemented"))
+}
+
+func (UnimplementedClusterServiceHandler) PullResources(context.Context, *connect_go.Request[v1.PullResourcesRequest]) (*connect_go.Response[v1.PullResourcesResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("v1.ClusterService.PullResources is not implemented"))
+}
+
+func (UnimplementedClusterServiceHandler) UpdateResource(context.Context, *connect_go.Request[v1.UpdateResourceRequest]) (*connect_go.Response[v1.UpdateResourceResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("v1.ClusterService.UpdateResource is not implemented"))
 }
 
 func (UnimplementedClusterServiceHandler) Notify(context.Context, *connect_go.Request[v1.NotifyRequest], *connect_go.ServerStream[v1.NotifyResponse]) error {
