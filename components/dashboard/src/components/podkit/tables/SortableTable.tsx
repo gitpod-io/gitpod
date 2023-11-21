@@ -7,7 +7,7 @@
 import React, { useCallback } from "react";
 import { HideableCellProps, TableHead } from "./Table";
 import { Button } from "@podkit/buttons/Button";
-import { ChevronUpIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { cn } from "@podkit/lib/cn";
 
 export type TableSortOrder = "asc" | "desc";
@@ -35,7 +35,7 @@ export const SortableTableHead = React.forwardRef<
                 {children}
                 {/* keep element in dom to preserve space */}
                 <span className={cn(!sortOrder && "invisible")}>
-                    {sortOrder === "asc" ? <ChevronUpIcon /> : <ChevronUpIcon />}
+                    {sortOrder === "asc" ? <ChevronUpIcon /> : <ChevronDownIcon />}
                 </span>
             </Button>
         </TableHead>

@@ -26,17 +26,26 @@ const RepositoryListPage: FC = () => {
 
     const params = useQueryParams();
     const [searchTerm, setSearchTerm, searchTermDebounced] = useStateWithDebounce(params.get("search") || "");
+    const [sortBy, setSortBy] = useState(parseSortBy(params));
+    const [sortOrder, setSortOrder] = useState<TableSortOrder>(parseSortOrder(params));
     const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
 
-    // TODO: add type for these columns in query
-    const [sortBy, setSortBy] = useState("name");
-    const [sortOrder, setSortOrder] = useState<TableSortOrder>("asc");
-
+    // TODO: abstract this into a more generic hook for next sortable table
     // Search/Filter params tracked in url query params
     useEffect(() => {
-        const params = searchTermDebounced ? `?search=${encodeURIComponent(searchTermDebounced)}` : "";
-        history.replace({ search: params });
-    }, [history, searchTermDebounced]);
+        const params = new URLSearchParams();
+        if (searchTermDebounced) {
+            params.set("search", searchTermDebounced);
+        }
+        if (sortBy) {
+            params.set("sortBy", sortBy);
+        }
+        if (sortOrder) {
+            params.set("sortOrder", sortOrder);
+        }
+        params.toString();
+        history.replace({ search: `?${params.toString()}` });
+    }, [history, searchTermDebounced, sortBy, sortOrder]);
 
     // TODO: handle isError case
     const { data, isLoading, isFetching, isFetchingNextPage, isPreviousData, hasNextPage, fetchNextPage } =
@@ -117,3 +126,19 @@ const RepositoryListPage: FC = () => {
 };
 
 export default RepositoryListPage;
+
+const parseSortOrder = (params: URLSearchParams) => {
+    const sortOrder = params.get("sortOrder");
+    if (sortOrder === "asc" || sortOrder === "desc") {
+        return sortOrder;
+    }
+    return "asc";
+};
+
+const parseSortBy = (params: URLSearchParams) => {
+    const sortBy = params.get("sortBy");
+    if (sortBy === "name" || sortBy === "creationTime") {
+        return sortBy;
+    }
+    return "name";
+};
