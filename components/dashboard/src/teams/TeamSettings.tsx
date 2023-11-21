@@ -7,7 +7,6 @@
 import { Organization, OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import React, { Children, ReactNode, useCallback, useMemo, useState } from "react";
 import Alert from "../components/Alert";
-import { Button } from "../components/Button";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { InputWithCopy } from "../components/InputWithCopy";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
@@ -28,6 +27,7 @@ import { gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
 import { ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { Button } from "@podkit/buttons/Button";
 
 export default function TeamSettingsPage() {
     const user = useCurrentUser();
@@ -112,7 +112,7 @@ export default function TeamSettingsPage() {
                     />
 
                     {isOwner && (
-                        <Button className="mt-4" htmlType="submit" disabled={org?.name === teamName || !orgFormIsValid}>
+                        <Button className="mt-4" type="submit" disabled={org?.name === teamName || !orgFormIsValid}>
                             Update Organization
                         </Button>
                     )}
@@ -128,9 +128,9 @@ export default function TeamSettingsPage() {
                             workspaces. Deleted organizations cannot be restored!
                         </Subheading>
 
-                        <button className="danger secondary" onClick={() => setModal(true)}>
+                        <Button variant="destructive" onClick={() => setModal(true)}>
                             Delete Organization
-                        </button>
+                        </Button>
                     </>
                 )}
             </OrgSettingsPage>
@@ -321,13 +321,7 @@ function WorkspaceImageButton(props: {
                         <span className="truncate text-gray-500 dark:text-gray-400">{parseDockerImage(image).tag}</span>
                     </div>
                     {!props.disabled && (
-                        <Button
-                            htmlType="button"
-                            type="transparent"
-                            spacing="compact"
-                            className="text-blue-500 flex-none"
-                            onClick={props.onClick}
-                        >
+                        <Button variant="link" onClick={props.onClick}>
                             Change
                         </Button>
                     )}
@@ -398,7 +392,7 @@ function OrgDefaultWorkspaceImageModal(props: OrgDefaultWorkspaceImageModalProps
                 </div>
             </ModalBody>
             <ModalFooter>
-                <Button htmlType="submit">Update Workspace Default Image</Button>
+                <Button type="submit">Update Workspace Default Image</Button>
             </ModalFooter>
         </Modal>
     );

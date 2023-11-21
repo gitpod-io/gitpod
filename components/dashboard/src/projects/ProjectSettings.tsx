@@ -16,13 +16,13 @@ import { Heading2, Subheading } from "../components/typography/headings";
 import { RemoveProjectModal } from "./RemoveProjectModal";
 import SelectWorkspaceClassComponent from "../components/SelectWorkspaceClassComponent";
 import { TextInputField } from "../components/forms/TextInputField";
-import { Button } from "../components/Button";
 import { useRefreshAllProjects } from "../data/projects/list-all-projects-query";
 import { useToast } from "../components/toasts/Toasts";
 import classNames from "classnames";
 import { InputField } from "../components/forms/InputField";
 import { SelectInputField } from "../components/forms/SelectInputField";
 import debounce from "lodash.debounce";
+import { Button } from "@podkit/buttons/Button";
 
 const MAX_PROJECT_NAME_LENGTH = 100;
 
@@ -229,7 +229,7 @@ export default function ProjectSettingsView() {
                     onChange={setProjectName}
                 />
 
-                <Button className="mt-4" htmlType="submit" disabled={project?.name === projectName || !!badProjectName}>
+                <Button className="mt-4" type="submit" disabled={project?.name === projectName || !!badProjectName}>
                     Update Name
                 </Button>
             </form>
@@ -364,9 +364,9 @@ export default function ProjectSettingsView() {
                     This will delete the project and all project-level environment variables you've set for this
                     project.
                 </Subheading>
-                <button className="danger secondary" onClick={() => setShowRemoveModal(true)}>
+                <Button variant="destructive" onClick={() => setShowRemoveModal(true)}>
                     Remove Project
-                </button>
+                </Button>
             </div>
             {showRemoveModal && (
                 <RemoveProjectModal

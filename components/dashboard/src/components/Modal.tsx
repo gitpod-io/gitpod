@@ -13,6 +13,7 @@ import Alert, { AlertProps } from "./Alert";
 import "./modal.css";
 import classNames from "classnames";
 import { useTrackEvent } from "../data/tracking/track-event-mutation";
+import { Button } from "@podkit/buttons/Button";
 
 type CloseModalManner = "esc" | "enter" | "x" | "click_outside";
 
@@ -239,17 +240,17 @@ type ModalCloseIconProps = {
 };
 const ModalCloseIcon: FC<ModalCloseIconProps> = ({ onClose }) => {
     return (
-        // TODO: Create an IconButton component
-        <button
+        <Button
+            variant="ghost"
             type="button"
             aria-label="Close modal"
-            className="bg-transparent absolute right-7 top-6 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md p-2"
+            className="absolute right-7 top-6"
             onClick={onClose}
         >
             <svg version="1.1" width="14px" height="14px" viewBox="0 0 100 100">
                 <line x1="0" y1="0" x2="100" y2="100" stroke="currentColor" strokeWidth="10px" />
                 <line x1="0" y1="100" x2="100" y2="0" stroke="currentColor" strokeWidth="10px" />
             </svg>
-        </button>
+        </Button>
     );
 };

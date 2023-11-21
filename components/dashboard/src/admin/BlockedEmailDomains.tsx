@@ -16,7 +16,7 @@ import searchIcon from "../icons/search.svg";
 import { getGitpodService } from "../service/service";
 import { AdminPageHeader } from "./AdminPageHeader";
 import Pagination from "../Pagination/Pagination";
-import { Button } from "../components/Button";
+import { Button } from "@podkit/buttons/Button";
 
 export function BlockedEmailDomains() {
     return (
@@ -127,7 +127,7 @@ export function BlockedEmailDomainsList(props: Props) {
                         />
                     </div>
                     <div className="flex space-x-2">
-                        <button onClick={add}>Add Domain</button>
+                        <Button onClick={add}>Add Domain</Button>
                     </div>
                 </div>
             </div>
@@ -231,10 +231,10 @@ function AddBlockedDomainModal(p: AddBlockedDomainModalProps) {
                 <Details br={br} update={update} error={error} />
             </ModalBody>
             <ModalFooter>
-                <Button type="secondary" onClick={p.onClose}>
+                <Button variant="secondary" onClick={p.onClose}>
                     Cancel
                 </Button>
-                <Button htmlType="submit">Add Blocked Domain</Button>
+                <Button type="submit">Add Blocked Domain</Button>
             </ModalFooter>
         </Modal>
     );

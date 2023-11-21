@@ -9,6 +9,7 @@ import { ErrorBoundary, ErrorBoundaryProps, FallbackProps } from "react-error-bo
 import gitpodIcon from "../../icons/gitpod.svg";
 import { Heading1, Subheading } from "../typography/headings";
 import { reportError } from "../../service/metrics";
+import { Button } from "@podkit/buttons/Button";
 
 export type CaughtError = Error & { code?: number };
 
@@ -48,7 +49,7 @@ export const ReloadPageErrorFallback: FC<Pick<FallbackProps, "error">> = ({ erro
                 .
             </Subheading>
             <div>
-                <button onClick={handleReset}>Reload</button>
+                <Button onClick={handleReset}>Reload</Button>
             </div>
             <div className="flex flex-col items-center space-y-2">
                 {caughtError.code && (

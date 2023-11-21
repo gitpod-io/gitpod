@@ -17,6 +17,7 @@ import { hoursBefore, isDateSmallerOrEqual } from "@gitpod/gitpod-protocol/lib/u
 import { useDeleteInactiveWorkspacesMutation } from "../data/workspaces/delete-inactive-workspaces-mutation";
 import { useToast } from "../components/toasts/Toasts";
 import { Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { Button } from "@podkit/buttons/Button";
 
 const WorkspacesPage: FunctionComponent = () => {
     const [limit, setLimit] = useState(50);
@@ -105,7 +106,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                 return <WorkspaceEntry key={info.id} info={info} />;
                             })}
                             {filteredActiveWorkspaces.length > 0 && <div className="py-6"></div>}
-                            {filteredInactiveWorkspaces.length > 0 && (
+                            {filteredActiveWorkspaces.length > 0 && (
                                 <div>
                                     <div
                                         onClick={() => setShowInactive(!showInactive)}
@@ -137,15 +138,18 @@ const WorkspacesPage: FunctionComponent = () => {
                                         </div>
                                         <div className="self-center">
                                             {showInactive ? (
-                                                <button
+                                                <Button
+                                                    variant="ghost"
+                                                    // TODO: Remove these classes once we decide on the new button style
+                                                    // Leaving these to emulate the old button's danger.secondary style until we decide if we want that style or not
+                                                    className="bg-red-50 dark:bg-red-300 hover:bg-red-100 dark:hover:bg-red-200 text-red-600 hover:text-red-700 hover:opacity-100"
                                                     onClick={(evt) => {
                                                         setDeleteModalVisible(true);
                                                         evt.stopPropagation();
                                                     }}
-                                                    className="secondary danger"
                                                 >
                                                     Delete Inactive Workspaces
-                                                </button>
+                                                </Button>
                                             ) : null}
                                         </div>
                                     </div>

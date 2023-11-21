@@ -16,6 +16,7 @@ import { WorkspaceStatusIndicator } from "../workspaces/WorkspaceStatusIndicator
 import Property from "./Property";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { converter } from "../service/public-api";
+import { Button } from "@podkit/buttons/Button";
 
 export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance }) {
     const [workspace, setWorkspace] = useState(props.workspace);
@@ -78,8 +79,9 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                         )}
                     </Subheading>
                 </div>
-                <button
-                    className="secondary ml-3"
+                <Button
+                    variant="secondary"
+                    className="ml-3"
                     onClick={() => {
                         window.location.href = new GitpodHostUrl(window.location.href)
                             .with({
@@ -89,14 +91,15 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                     }}
                 >
                     Download Workspace
-                </button>
-                <button
-                    className="danger ml-3"
+                </Button>
+                <Button
+                    variant="destructive"
+                    className="ml-3"
                     disabled={activity || workspace.phase === "stopped"}
                     onClick={stopWorkspace}
                 >
                     Stop Workspace
-                </button>
+                </Button>
             </div>
             <div className="flex mt-6">
                 <div className="flex flex-col w-full">

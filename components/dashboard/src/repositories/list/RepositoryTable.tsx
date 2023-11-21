@@ -7,34 +7,41 @@
 import { FC } from "react";
 import { TextInput } from "../../components/forms/TextInputField";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@podkit/tables/Table";
-import { LoaderIcon } from "lucide-react";
 import { RepositoryListItem } from "./RepoListItem";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { TextMuted } from "@podkit/typography/TextMuted";
 import { Subheading } from "@podkit/typography/Headings";
 import { cn } from "@podkit/lib/cn";
+import { SortableTableHead, TableSortOrder } from "@podkit/tables/SortableTable";
+import { LoadingState } from "@podkit/loading/LoadingState";
 
 type Props = {
     configurations: Configuration[];
     searchTerm: string;
+    sortBy: string;
+    sortOrder: "asc" | "desc";
     hasNextPage: boolean;
     hasMoreThanOnePage: boolean;
     isSearching: boolean;
     isFetchingNextPage: boolean;
     onSearchTermChange: (val: string) => void;
     onLoadNextPage: () => void;
+    onSort: (columnName: string, direction: TableSortOrder) => void;
 };
 
 export const RepositoryTable: FC<Props> = ({
     searchTerm,
     configurations,
+    sortOrder,
+    sortBy,
     hasNextPage,
     hasMoreThanOnePage,
     isSearching,
     isFetchingNextPage,
     onSearchTermChange,
     onLoadNextPage,
+    onSort,
 }) => {
     return (
         <>
@@ -54,14 +61,26 @@ export const RepositoryTable: FC<Props> = ({
             <div className="relative w-full overflow-auto mt-2">
                 {configurations.length > 0 ? (
                     <Table>
-                        {/* TODO: Add sorting controls */}
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-52">Name</TableHead>
+                                <SortableTableHead
+                                    className="w-52"
+                                    columnName="name"
+                                    sortOrder={sortBy === "name" ? sortOrder : undefined}
+                                    onSort={onSort}
+                                >
+                                    Name
+                                </SortableTableHead>
                                 <TableHead hideOnSmallScreen>Repository</TableHead>
-                                <TableHead className="w-32" hideOnSmallScreen>
+                                <SortableTableHead
+                                    className="w-32"
+                                    columnName="creationTime"
+                                    sortOrder={sortBy === "creationTime" ? sortOrder : undefined}
+                                    onSort={onSort}
+                                    hideOnSmallScreen
+                                >
                                     Created
-                                </TableHead>
+                                </SortableTableHead>
                                 <TableHead className="w-24" hideOnSmallScreen>
                                     Prebuilds
                                 </TableHead>
@@ -69,11 +88,7 @@ export const RepositoryTable: FC<Props> = ({
                                 <TableHead className="w-24 text-right">
                                     {isSearching && (
                                         <div className="flex flex-right justify-end items-center">
-                                            {/* TODO: Make a LoadingIcon component */}
-                                            <LoaderIcon
-                                                className="animate-spin text-gray-500 dark:text-gray-300"
-                                                size={20}
-                                            />
+                                            <LoadingState delay={false} />
                                         </div>
                                     )}
                                 </TableHead>

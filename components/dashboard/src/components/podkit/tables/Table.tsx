@@ -4,12 +4,10 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Button } from "@podkit/buttons/Button";
 import { cn } from "@podkit/lib/cn";
-import { ChevronUpIcon } from "lucide-react";
-import React, { useCallback } from "react";
+import React from "react";
 
-type HideableCellProps = {
+export type HideableCellProps = {
     hideOnSmallScreen?: boolean;
 };
 
@@ -51,29 +49,6 @@ export const TableHead = React.forwardRef<
     return <th ref={ref} className={cn(hideOnSmallScreen && "hidden md:table-cell", className)} {...props} />;
 });
 TableHead.displayName = "TableHead";
-
-type SortableTableHeadProps = {
-    sortOrder?: "asc" | "desc";
-    onSort: (sortDirection: "asc" | "desc") => void;
-} & HideableCellProps;
-export const SortableTableHead = React.forwardRef<
-    HTMLTableCellElement,
-    React.HTMLAttributes<HTMLTableCellElement> & SortableTableHeadProps
->(({ sortOrder, children, onSort, ...props }, ref) => {
-    const handleClick = useCallback(() => {
-        onSort(sortOrder === "asc" ? "desc" : "asc");
-    }, [onSort, sortOrder]);
-
-    return (
-        <TableHead ref={ref} {...props}>
-            <Button variant="ghost" onClick={handleClick}>
-                {children}
-                {sortOrder === "asc" ? <ChevronUpIcon /> : <ChevronUpIcon />}
-            </Button>
-        </TableHead>
-    );
-});
-SortableTableHead.displayName = "SortableTableHead";
 
 export const TableBody = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(
     ({ className, ...props }, ref) => {

@@ -11,6 +11,7 @@ import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
 import { Subheading } from "../components/typography/headings";
 import dayjs, { Dayjs } from "dayjs";
 import { useToast } from "../components/toasts/Toasts";
+import { Button } from "@podkit/buttons/Button";
 
 const MAX_HOURS = 300 * 24; // 300 days
 
@@ -148,14 +149,14 @@ type DateDisplayProps = {
 };
 const DateDisplay = forwardRef<any, DateDisplayProps>(({ value, onClick }, ref) => {
     return (
-        // TODO: Turn this into something like a <InputButton showIcon />
-        <button
+        <Button
+            variant="ghost"
             onClick={onClick}
             ref={ref}
             className={classNames(
                 "w-40 bg-transparent",
                 "px-4 py-2 my-auto rounded-md",
-                "text-left",
+                "justify-start text-left",
                 "bg-white dark:bg-gray-800",
                 "text-gray-600 dark:text-gray-400",
                 "border border-gray-300 dark:border-gray-500",
@@ -179,7 +180,7 @@ const DateDisplay = forwardRef<any, DateDisplayProps>(({ value, onClick }, ref) 
                 />
                 <title>Change Date</title>
             </svg>
-        </button>
+        </Button>
     );
 });
 

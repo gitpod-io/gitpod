@@ -9,6 +9,7 @@ import { useCurrentOrg } from "../organizations/orgs-query";
 import { configurationClient } from "../../service/public-api";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
+import { TableSortOrder } from "@podkit/tables/SortableTable";
 
 const BASE_KEY = "configurations";
 
@@ -16,7 +17,7 @@ type ListConfigurationsArgs = {
     pageSize?: number;
     searchTerm?: string;
     sortBy: string;
-    sortOrder: "asc" | "desc";
+    sortOrder: TableSortOrder;
 };
 
 export const useListConfigurations = ({ searchTerm = "", pageSize, sortBy, sortOrder }: ListConfigurationsArgs) => {

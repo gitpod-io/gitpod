@@ -17,6 +17,7 @@ import { RepoListEmptyState } from "./RepoListEmptyState";
 import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
 import { RepositoryTable } from "./RepositoryTable";
 import { LoadingState } from "@podkit/loading/LoadingState";
+import { TableSortOrder } from "@podkit/tables/SortableTable";
 
 const RepositoryListPage: FC = () => {
     useDocumentTitle("Imported repositories");
@@ -27,8 +28,9 @@ const RepositoryListPage: FC = () => {
     const [searchTerm, setSearchTerm, searchTermDebounced] = useStateWithDebounce(params.get("search") || "");
     const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
 
-    // const [sortBy, setSortBy] = useState<"name" | "creationTime">("name");
-    // const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+    // TODO: add type for these columns in query
+    const [sortBy, setSortBy] = useState("name");
+    const [sortOrder, setSortOrder] = useState<TableSortOrder>("asc");
 
     // Search/Filter params tracked in url query params
     useEffect(() => {
@@ -36,11 +38,12 @@ const RepositoryListPage: FC = () => {
         history.replace({ search: params });
     }, [history, searchTermDebounced]);
 
+    // TODO: handle isError case
     const { data, isLoading, isFetching, isFetchingNextPage, isPreviousData, hasNextPage, fetchNextPage } =
         useListConfigurations({
             searchTerm: searchTermDebounced,
-            sortBy: "name",
-            sortOrder: "asc",
+            sortBy: sortBy,
+            sortOrder: sortOrder,
         });
 
     const handleRepoImported = useCallback(
@@ -48,6 +51,14 @@ const RepositoryListPage: FC = () => {
             history.push(`/repositories/${configuration.id}`);
         },
         [history],
+    );
+
+    const handleSort = useCallback(
+        (columnName: string, newSortOrder: TableSortOrder) => {
+            setSortBy(columnName);
+            setSortOrder(newSortOrder);
+        },
+        [setSortOrder],
     );
 
     const configurations = useMemo(() => {
@@ -79,6 +90,8 @@ const RepositoryListPage: FC = () => {
                     <RepositoryTable
                         searchTerm={searchTerm}
                         configurations={configurations}
+                        sortBy={sortBy}
+                        sortOrder={sortOrder}
                         // we check isPreviousData too so we don't show spinner if it's a background refresh
                         isSearching={isFetching && isPreviousData}
                         isFetchingNextPage={isFetchingNextPage}
@@ -86,6 +99,7 @@ const RepositoryListPage: FC = () => {
                         hasMoreThanOnePage={hasMoreThanOnePage}
                         onLoadNextPage={() => fetchNextPage()}
                         onSearchTermChange={setSearchTerm}
+                        onSort={handleSort}
                     />
                 )}
 

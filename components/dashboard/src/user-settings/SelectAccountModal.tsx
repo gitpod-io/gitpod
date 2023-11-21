@@ -10,6 +10,7 @@ import { gitpodHostUrl } from "../service/service";
 import InfoBox from "../components/InfoBox";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import SelectableCard from "../components/SelectableCard";
+import { Button } from "@podkit/buttons/Button";
 
 export function SelectAccountModal(
     props: SelectAccountPayload & {
@@ -99,7 +100,7 @@ export function SelectAccountModal(
             </ModalBody>
 
             <ModalFooter>
-                <button
+                <Button
                     className={"ml-2"}
                     onClick={() => {
                         if (useAccount === "other") {
@@ -110,7 +111,7 @@ export function SelectAccountModal(
                     }}
                 >
                     Continue
-                </button>
+                </Button>
             </ModalFooter>
         </Modal>
     );

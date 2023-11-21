@@ -23,6 +23,7 @@ import { OrganizationMember, OrganizationRole } from "@gitpod/public-api/lib/git
 import { useListOrganizationMembers, useOrganizationMembersInvalidator } from "../data/organizations/members-query";
 import { useInvitationId, useInviteInvalidator } from "../data/organizations/invite-query";
 import { Delayed } from "@podkit/loading/Delayed";
+import { Button } from "@podkit/buttons/Button";
 
 export default function MembersPage() {
     const user = useCurrentUser();
@@ -149,7 +150,7 @@ export default function MembersPage() {
                     </div>
                     <div className="flex-1" />
                     {isOwner && (
-                        <button
+                        <Button
                             onClick={() => {
                                 trackEvent("invite_url_requested", {
                                     invite_url: inviteUrl || "",
@@ -159,7 +160,7 @@ export default function MembersPage() {
                             className="ml-2"
                         >
                             Invite Members
-                        </button>
+                        </Button>
                     )}
                 </div>
                 <ItemsList className="mt-2">
@@ -284,13 +285,13 @@ export default function MembersPage() {
                     </ModalBody>
                     <ModalFooter>
                         {!!inviteId && (
-                            <button className="secondary" onClick={() => resetInviteLink()}>
+                            <Button variant="secondary" onClick={() => resetInviteLink()}>
                                 Reset Invite Link
-                            </button>
+                            </Button>
                         )}
-                        <button className="secondary" onClick={() => setShowInviteModal(false)}>
+                        <Button variant="secondary" onClick={() => setShowInviteModal(false)}>
                             Close
-                        </button>
+                        </Button>
                     </ModalFooter>
                 </Modal>
             )}

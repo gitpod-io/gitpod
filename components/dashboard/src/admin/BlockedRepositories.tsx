@@ -17,7 +17,7 @@ import { ContextMenuEntry } from "../components/ContextMenu";
 import Alert from "../components/Alert";
 import { SpinnerLoader } from "../components/Loader";
 import searchIcon from "../icons/search.svg";
-import { Button } from "../components/Button";
+import { Button } from "@podkit/buttons/Button";
 
 export function BlockedRepositories() {
     return (
@@ -144,7 +144,7 @@ export function BlockedRepositoriesList(props: Props) {
                         />
                     </div>
                     <div className="flex space-x-2">
-                        <button onClick={add}>New Blocked Repository</button>
+                        <Button onClick={add}>New Blocked Repository</Button>
                     </div>
                 </div>
             </div>
@@ -235,10 +235,10 @@ function AddBlockedRepositoryModal(p: AddBlockedRepositoryModalProps) {
                 <Details br={br} update={update} error={error} />
             </ModalBody>
             <ModalFooter>
-                <Button type="secondary" onClick={p.onClose}>
+                <Button variant="secondary" onClick={p.onClose}>
                     Cancel
                 </Button>
-                <Button htmlType="submit">Add Blocked Repository</Button>
+                <Button type="submit">Add Blocked Repository</Button>
             </ModalFooter>
         </Modal>
     );
