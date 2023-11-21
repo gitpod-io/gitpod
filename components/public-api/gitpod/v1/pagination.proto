@@ -12,7 +12,7 @@ message PaginationRequest {
   // Page is the page number of results to retrieve.
   // The first page starts at 1.
   // Defaults to 1.
-  int32 page = 2 [ deprecated = true ];
+  int32 page = 2 [deprecated = true];
 
   // Token for the next set of results that was returned as next_token of a
   // PaginationResponse
@@ -21,7 +21,7 @@ message PaginationRequest {
 
 message PaginationResponse {
   // Total is the total number of results available.
-  int32 total = 1 [ deprecated = true ];
+  int32 total = 1 [deprecated = true];
 
   // Token passed for retreiving the next set of results. Empty if there are no
   // more results

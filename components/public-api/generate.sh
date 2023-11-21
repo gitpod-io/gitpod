@@ -22,6 +22,9 @@ install_dependencies
 
 lint
 
+# Format all proto files
+buf format -w
+
 # Run breaking change detector
 buf breaking --against "https://github.com/gitpod-io/gitpod.git#branch=main,subdir=components/public-api"
 

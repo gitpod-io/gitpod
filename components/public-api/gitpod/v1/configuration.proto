@@ -2,8 +2,8 @@ syntax = "proto3";
 
 package gitpod.v1;
 
-import "google/protobuf/timestamp.proto";
 import "gitpod/v1/pagination.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
 
@@ -32,28 +32,26 @@ enum BranchMatchingStrategy {
   BRANCH_MATCHING_STRATEGY_MATCHED_BRANCHES = 3;
 }
 
-message WorkspaceSettings { string workspace_class = 1; }
+message WorkspaceSettings {
+  string workspace_class = 1;
+}
 
 service ConfigurationService {
   // Creates a new configuration.
-  rpc CreateConfiguration(CreateConfigurationRequest)
-      returns (CreateConfigurationResponse) {};
+  rpc CreateConfiguration(CreateConfigurationRequest) returns (CreateConfigurationResponse) {}
 
   // Retrieves a configuration.
-  rpc GetConfiguration(GetConfigurationRequest)
-      returns (GetConfigurationResponse) {};
+  rpc GetConfiguration(GetConfigurationRequest) returns (GetConfigurationResponse) {}
 
   // Lists configurations.
-  rpc ListConfigurations(ListConfigurationsRequest)
-      returns (ListConfigurationsResponse) {};
+  rpc ListConfigurations(ListConfigurationsRequest) returns (ListConfigurationsResponse) {}
 
   // Updates a configuration.
   rpc UpdateConfiguration(UpdateConfigurationRequest)
       returns (UpdateConfigurationResponse) {};
 
   // Deletes a configuration.
-  rpc DeleteConfiguration(DeleteConfigurationRequest)
-      returns (DeleteConfigurationResponse) {};
+  rpc DeleteConfiguration(DeleteConfigurationRequest) returns (DeleteConfigurationResponse) {}
 }
 
 message CreateConfigurationRequest {
@@ -62,11 +60,17 @@ message CreateConfigurationRequest {
   string clone_url = 3;
 }
 
-message CreateConfigurationResponse { Configuration configuration = 1; }
+message CreateConfigurationResponse {
+  Configuration configuration = 1;
+}
 
-message GetConfigurationRequest { string configuration_id = 1; }
+message GetConfigurationRequest {
+  string configuration_id = 1;
+}
 
-message GetConfigurationResponse { Configuration configuration = 1; }
+message GetConfigurationResponse {
+  Configuration configuration = 1;
+}
 
 message ListConfigurationsRequest {
   string organization_id = 1;
@@ -96,6 +100,8 @@ message UpdateConfigurationRequest {
 
 message UpdateConfigurationResponse { Configuration configuration = 1; }
 
-message DeleteConfigurationRequest { string configuration_id = 1; }
+message DeleteConfigurationRequest {
+  string configuration_id = 1;
+}
 
 message DeleteConfigurationResponse {}

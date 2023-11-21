@@ -5,14 +5,13 @@ package gitpod.experimental.v1;
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1";
 
 service StatsService {
-    // Retrieves the current user stats
-    rpc GetUserStats(GetUserStatsRequest) returns (GetUserStatsResponse) {}
+  // Retrieves the current user stats
+  rpc GetUserStats(GetUserStatsRequest) returns (GetUserStatsResponse) {}
 }
 
-message GetUserStatsRequest {
-}
+message GetUserStatsRequest {}
 
 message GetUserStatsResponse {
-    // All users that have an active Gitpod (not deleted) account at the time of asking.
-    uint32 registered_users = 1;
+  // All users that have an active Gitpod (not deleted) account at the time of asking.
+  uint32 registered_users = 1;
 }
