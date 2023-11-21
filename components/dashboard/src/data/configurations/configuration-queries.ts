@@ -9,8 +9,6 @@ import { useCurrentOrg } from "../organizations/orgs-query";
 import { configurationClient } from "../../service/public-api";
 import type { Configuration, UpdateConfigurationRequest } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import type { PartialMessage } from "@bufbuild/protobuf";
-import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
-import { useEffect } from "react";
 
 const BASE_KEY = "configurations";
 
@@ -85,6 +83,7 @@ export const useDeleteConfiguration = () => {
             });
         },
         onSuccess: (_, { configurationId }) => {
+            // todo: look into updating the cache instad of invalidating it
             queryClient.invalidateQueries({ queryKey: ["configurations", "list"] });
             queryClient.invalidateQueries({ queryKey: getConfigurationQueryKey(configurationId) });
         },
