@@ -4,10 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { PartialMessage } from "@bufbuild/protobuf";
 import { MethodKind, ServiceType } from "@bufbuild/protobuf";
-import { Code, ConnectError, PromiseClient, createPromiseClient } from "@connectrpc/connect";
+import { CallOptions, Code, ConnectError, PromiseClient, createPromiseClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
-import { User } from "@gitpod/gitpod-protocol";
+import { Disposable, User } from "@gitpod/gitpod-protocol";
 import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
 import { Project as ProtocolProject } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connect";
@@ -19,6 +20,7 @@ import { WorkspacesService as WorkspaceV1Service } from "@gitpod/public-api/lib/
 import { OrganizationService } from "@gitpod/public-api/lib/gitpod/v1/organization_connect";
 import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/v1/workspace_connect";
 import { ConfigurationService } from "@gitpod/public-api/lib/gitpod/v1/configuration_connect";
+import { PrebuildService } from "@gitpod/public-api/lib/gitpod/v1/prebuild_connect";
 import { getMetricsInterceptor } from "@gitpod/public-api/lib/metrics";
 import { getExperimentsClient } from "../experiments/client";
 import { JsonRpcOrganizationClient } from "./json-rpc-organization-client";
@@ -27,6 +29,9 @@ import { JsonRpcAuthProviderClient } from "./json-rpc-authprovider-client";
 import { AuthProviderService } from "@gitpod/public-api/lib/gitpod/v1/authprovider_connect";
 import { EnvironmentVariableService } from "@gitpod/public-api/lib/gitpod/v1/envvar_connect";
 import { JsonRpcEnvvarClient } from "./json-rpc-envvar-client";
+import { Prebuild, WatchPrebuildRequest, WatchPrebuildResponse } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { JsonRpcPrebuildClient } from "./json-rpc-prebuild-client";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
@@ -52,6 +57,7 @@ export const organizationClient = createServiceClient(
 );
 // No jsonrcp client for the configuration service as it's only used in new UI of the dashboard
 export const configurationClient = createServiceClient(ConfigurationService);
+export const prebuildClient = createServiceClient(PrebuildService, new JsonRpcPrebuildClient());
 
 export const authProviderClient = createServiceClient(AuthProviderService, new JsonRpcAuthProviderClient());
 
@@ -186,4 +192,47 @@ function createServiceClient<T extends ServiceType>(
             };
         },
     });
+}
+
+export function watchPrebuild(
+    request: PartialMessage<WatchPrebuildRequest>,
+    cb: (prebuild: Prebuild) => void,
+): Disposable {
+    return stream<WatchPrebuildResponse>(
+        (options) => prebuildClient.watchPrebuild(request, options),
+        (response) => cb(response.prebuild!),
+    );
+}
+
+export function stream<Response>(
+    factory: (options: CallOptions) => AsyncIterable<Response>,
+    cb: (response: Response) => void,
+): Disposable {
+    const MAX_BACKOFF = 60000;
+    const BASE_BACKOFF = 3000;
+    let backoff = BASE_BACKOFF;
+    const abort = new AbortController();
+    (async () => {
+        while (!abort.signal.aborted) {
+            try {
+                for await (const response of factory({
+                    signal: abort.signal,
+                })) {
+                    backoff = BASE_BACKOFF;
+                    cb(response);
+                }
+            } catch (e) {
+                if (ApplicationError.hasErrorCode(e) && e.code === ErrorCodes.CANCELLED) {
+                    return;
+                }
+                backoff = Math.min(2 * backoff, MAX_BACKOFF);
+                console.error("failed to watch prebuild:", e);
+            }
+            const jitter = Math.random() * 0.3 * backoff;
+            const delay = backoff + jitter;
+            await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+    })();
+
+    return Disposable.create(() => abort.abort());
 }

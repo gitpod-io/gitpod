@@ -65,9 +65,6 @@ export const ErrorCodes = {
     // 404 Not Found
     NOT_FOUND: 404 as const,
 
-    // 408 Request Timeout
-    REQUEST_TIMEOUT: 408 as const,
-
     // 409 Conflict (e.g. already existing)
     CONFLICT: 409 as const,
 
@@ -112,6 +109,9 @@ export const ErrorCodes = {
 
     // 490 Too Many Running Workspace
     TOO_MANY_RUNNING_WORKSPACES: 490 as const,
+
+    // 498 The operation was cancelled, typically by the caller.
+    CANCELLED: 498 as const,
 
     // 500 Internal Server Error
     INTERNAL_SERVER_ERROR: 500 as const,

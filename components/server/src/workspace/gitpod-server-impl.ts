@@ -1280,48 +1280,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("triggerPrebuild");
 
-        const project = await this.projectsService.getProject(user.id, projectId);
         await this.guardProjectOperation(user, projectId, "update");
-        await this.auth.checkPermissionOnProject(user.id, "write_prebuild", projectId);
-
-        const branchDetails = !!branchName
-            ? await this.projectsService.getBranchDetails(user, project, branchName)
-            : (await this.projectsService.getBranchDetails(user, project)).filter((b) => b.isDefault);
-        if (branchDetails.length !== 1) {
-            log.debug({ userId: user.id }, "Cannot find branch details.", { project, branchName });
-            throw new ApplicationError(
-                ErrorCodes.NOT_FOUND,
-                `Could not find ${!branchName ? "a default branch" : `branch '${branchName}'`} in repository ${
-                    project.cloneUrl
-                }`,
-            );
-        }
-        const contextURL = branchDetails[0].url;
-
-        const context = (await this.contextParser.handle(ctx, user, contextURL)) as CommitContext;
-
-        // HACK: treat manual triggered prebuild as a reset for the inactivity state
-        await this.projectsService.markActive(user.id, project.id);
-
-        const prebuild = await this.prebuildManager.startPrebuild(ctx, {
-            context,
-            user,
-            project,
-            forcePrebuild: true,
-        });
-
-        this.analytics.track({
-            userId: user.id,
-            event: "prebuild_triggered",
-            properties: {
-                context_url: contextURL,
-                clone_url: project.cloneUrl,
-                commit: context.revision,
-                branch: branchDetails[0].name,
-                project_id: project.id,
-            },
-        });
-
+        const prebuild = await this.prebuildManager.triggerPrebuild(ctx, user, projectId, branchName);
         return prebuild;
     }
 
@@ -2151,29 +2111,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { prebuildId });
         const user = await this.checkAndBlockUser("getPrebuild");
 
-        const pbws = await this.workspaceDb.trace(ctx).findPrebuiltWorkspaceById(prebuildId);
-        if (!pbws) {
-            return undefined;
-        }
-        const [info, workspace] = await Promise.all([
-            this.workspaceDb
-                .trace(ctx)
-                .findPrebuildInfos([prebuildId])
-                .then((infos) => (infos.length > 0 ? infos[0] : undefined)),
-            this.workspaceDb.trace(ctx).findById(pbws.buildWorkspaceId),
-        ]);
-        if (!info || !workspace) {
-            return undefined;
-        }
-
-        const teamMembers = await this.organizationService.listMembers(user.id, workspace.organizationId);
-        await this.guardAccess({ kind: "prebuild", subject: pbws, workspace, teamMembers }, "get");
-        await this.auth.checkPermissionOnProject(user.id, "read_prebuild", workspace.projectId!);
-        const result: PrebuildWithStatus = { info, status: pbws.state };
-        if (pbws.error) {
-            result.error = pbws.error;
-        }
-        return result;
+        return await this.prebuildManager.getPrebuild(ctx, user.id, prebuildId, async (pbws, workspace) => {
+            const teamMembers = await this.organizationService.listMembers(user.id, workspace.organizationId);
+            await this.guardAccess({ kind: "prebuild", subject: pbws, workspace, teamMembers }, "get");
+        });
     }
 
     public async findPrebuildByWorkspaceID(
@@ -2183,18 +2124,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { workspaceId });
         const user = await this.checkAndBlockUser("findPrebuildByWorkspaceID");
 
-        const [pbws, workspace] = await Promise.all([
-            this.workspaceDb.trace(ctx).findPrebuildByWorkspaceID(workspaceId),
-            this.workspaceDb.trace(ctx).findById(workspaceId),
-        ]);
-        if (!pbws || !workspace) {
-            return undefined;
-        }
-
-        const teamMembers = await this.organizationService.listMembers(user.id, workspace.organizationId);
-        await this.guardAccess({ kind: "prebuild", subject: pbws, workspace, teamMembers }, "get");
-        await this.auth.checkPermissionOnProject(user.id, "read_prebuild", workspace.projectId!);
-        return pbws;
+        return await this.prebuildManager.findPrebuildByWorkspaceID(
+            ctx,
+            user.id,
+            workspaceId,
+            async (pbws, workspace) => {
+                const teamMembers = await this.organizationService.listMembers(user.id, workspace.organizationId);
+                await this.guardAccess({ kind: "prebuild", subject: pbws, workspace, teamMembers }, "get");
+            },
+        );
     }
 
     public async getProjectOverview(ctx: TraceContext, projectId: string): Promise<Project.Overview | undefined> {
