@@ -31,7 +31,7 @@ const (
 	workspaceBackupFailuresTotal  string = "workspace_backups_failure_total"
 	workspaceRestoresTotal        string = "workspace_restores_total"
 	workspaceRestoresFailureTotal string = "workspace_restores_failure_total"
-	workspaceNodeCapacity         string = "workspace_node_capacity"
+	workspaceNodeUtilization      string = "workspace_node_utilization"
 )
 
 type StopReason string
@@ -61,7 +61,7 @@ type controllerMetrics struct {
 	workspacePhases *phaseTotalVec
 	timeoutSettings *timeoutSettingsVec
 
-	workspaceNodeCapacity *nodeCapacityVec
+	workspaceNodeUtilization *nodeUtilizationVec
 
 	// used to prevent recording metrics multiple times
 	cache *lru.Cache
@@ -132,10 +132,10 @@ func newControllerMetrics(r *WorkspaceReconciler) (*controllerMetrics, error) {
 			Help:      "total number of workspace restore failures",
 		}, []string{"type", "class"}),
 
-		workspacePhases:       newPhaseTotalVec(r),
-		timeoutSettings:       newTimeoutSettingsVec(r),
-		workspaceNodeCapacity: newNodeCapacityVec(r),
-		cache:                 cache,
+		workspacePhases:          newPhaseTotalVec(r),
+		timeoutSettings:          newTimeoutSettingsVec(r),
+		workspaceNodeUtilization: newNodeUtilizationVec(r),
+		cache:                    cache,
 	}, nil
 }
 
@@ -304,7 +304,7 @@ func (m *controllerMetrics) Describe(ch chan<- *prometheus.Desc) {
 
 	m.workspacePhases.Describe(ch)
 	m.timeoutSettings.Describe(ch)
-	m.workspaceNodeCapacity.Describe(ch)
+	m.workspaceNodeUtilization.Describe(ch)
 }
 
 // Collect implements Collector.
@@ -322,7 +322,7 @@ func (m *controllerMetrics) Collect(ch chan<- prometheus.Metric) {
 
 	m.workspacePhases.Collect(ch)
 	m.timeoutSettings.Collect(ch)
-	m.workspaceNodeCapacity.Collect(ch)
+	m.workspaceNodeUtilization.Collect(ch)
 }
 
 // phaseTotalVec returns a gauge vector counting the workspaces per phase
@@ -467,21 +467,26 @@ func (m *maintenanceEnabledGauge) Collect(ch chan<- prometheus.Metric) {
 	ch <- metric
 }
 
-type nodeCapacityVec struct {
+// nodeUtilizationVec provides metrics per workspace node on:
+// - the amount of cpu/memory requested by workspaces on the node (size of the workspace class)
+// CPU is measured in cores, memory in bytes.
+// Differentiates between headless and regular workspace nodes using the type label.
+// Useful to determine node utilization and capacity.
+type nodeUtilizationVec struct {
 	name       string
 	desc       *prometheus.Desc
 	reconciler *WorkspaceReconciler
 }
 
-func newNodeCapacityVec(r *WorkspaceReconciler) *nodeCapacityVec {
-	name := prometheus.BuildFQName(metricsNamespace, metricsWorkspaceSubsystem, workspaceNodeCapacity)
+func newNodeUtilizationVec(r *WorkspaceReconciler) *nodeUtilizationVec {
+	name := prometheus.BuildFQName(metricsNamespace, metricsWorkspaceSubsystem, workspaceNodeUtilization)
 	desc := prometheus.NewDesc(
 		name,
-		"Amount of resource capacity on the node (cpu/memory, metric for `total` on the node vs `requested` by workspaces)",
-		[]string{"node", "resource", "metric"},
+		"Amount of resources requested by workspaces on the node (cpu/memory, workspace type)",
+		[]string{"node", "resource", "type"},
 		prometheus.Labels(map[string]string{}),
 	)
-	return &nodeCapacityVec{
+	return &nodeUtilizationVec{
 		name:       name,
 		reconciler: r,
 		desc:       desc,
@@ -489,58 +494,52 @@ func newNodeCapacityVec(r *WorkspaceReconciler) *nodeCapacityVec {
 }
 
 // Describe implements Collector. It will send exactly one Desc to the provided channel.
-func (n *nodeCapacityVec) Describe(ch chan<- *prometheus.Desc) {
+func (n *nodeUtilizationVec) Describe(ch chan<- *prometheus.Desc) {
 	ch <- n.desc
 }
 
 // Collect implements Collector.
-func (n *nodeCapacityVec) Collect(ch chan<- prometheus.Metric) {
+func (n *nodeUtilizationVec) Collect(ch chan<- prometheus.Metric) {
 	ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
 	defer cancel()
 
 	var nodes corev1.NodeList
 	err := n.reconciler.List(ctx, &nodes)
 	if err != nil {
-		log.FromContext(ctx).Error(err, "cannot list nodes for node capacity metric")
+		log.FromContext(ctx).Error(err, "cannot list nodes for node utilization metric")
 		return
 	}
 
-	nodeMap := make(map[string]corev1.Node)
+	var (
+		nodeUtilization = make(map[string]map[corev1.ResourceName]float64)
+		nodeTypes       = make(map[string]string)
+	)
 	for _, node := range nodes.Items {
-		// Only collect metrics for workspace nodes.
-		if node.Labels["gitpod.io/workload_workspace_regular"] != "true" && node.Labels["gitpod.io/workload_workspace_headless"] != "true" {
+		isRegular := node.Labels["gitpod.io/workload_workspace_regular"] == "true"
+		isHeadless := node.Labels["gitpod.io/workload_workspace_headless"] == "true"
+		if !isRegular && !isHeadless {
+			// Ignore non-workspace nodes.
 			continue
 		}
 
-		nodeMap[node.Name] = node
-
-		// Record node total capacity.
-		for _, resource := range []corev1.ResourceName{corev1.ResourceCPU, corev1.ResourceMemory} {
-			capacity := node.Status.Capacity[resource]
-			var value int64
-			if resource == corev1.ResourceCPU {
-				value = capacity.MilliValue()
-			} else {
-				value = capacity.Value()
-			}
-			metric, err := prometheus.NewConstMetric(n.desc, prometheus.GaugeValue, float64(value), node.Name, resource.String(), "total")
-			if err != nil {
-				log.FromContext(ctx).Error(err, "cannot create node capacity metric", "node", node.Name, "resource", resource.String(), "metric", "total")
-				continue
-			}
-
-			ch <- metric
+		nodeUtilization[node.Name] = map[corev1.ResourceName]float64{
+			corev1.ResourceCPU:    0,
+			corev1.ResourceMemory: 0,
+		}
+		nodeTypes[node.Name] = "regular"
+		if !isRegular && isHeadless {
+			// In case a node is both regular and headless (e.g. a preview env), mark it as regular.
+			nodeTypes[node.Name] = "headless"
 		}
 	}
 
 	var workspaces workspacev1.WorkspaceList
 	if err = n.reconciler.List(ctx, &workspaces, client.InNamespace(n.reconciler.Config.Namespace)); err != nil {
-		log.FromContext(ctx).Error(err, "cannot list workspaces for node capacity metric")
+		log.FromContext(ctx).Error(err, "cannot list workspaces for node utilization metric")
 		return
 	}
 
-	// we're only interested in the total capacity of the node
-	nodeCapacity := make(map[string]map[corev1.ResourceName]int64)
+	// Aggregate workspace resource requests per node.
 	for _, ws := range workspaces.Items {
 		if ws.Status.Runtime == nil {
 			continue
@@ -556,8 +555,8 @@ func (n *nodeCapacityVec) Collect(ch chan<- prometheus.Metric) {
 			continue
 		}
 
-		if _, ok := nodeCapacity[nodeName]; !ok {
-			nodeCapacity[nodeName] = map[corev1.ResourceName]int64{
+		if _, ok := nodeUtilization[nodeName]; !ok {
+			nodeUtilization[nodeName] = map[corev1.ResourceName]float64{
 				corev1.ResourceCPU:    0,
 				corev1.ResourceMemory: 0,
 			}
@@ -565,25 +564,26 @@ func (n *nodeCapacityVec) Collect(ch chan<- prometheus.Metric) {
 
 		class, ok := n.reconciler.Config.WorkspaceClasses[ws.Spec.Class]
 		if !ok {
-			log.FromContext(ctx).Error(err, "cannot find workspace class for node capacity metric", "class", ws.Spec.Class)
+			log.FromContext(ctx).Error(err, "cannot find workspace class for node utilization metric", "class", ws.Spec.Class)
 			continue
 		}
 
 		requests, err := class.Container.Requests.ResourceList()
 		if err != nil {
-			log.FromContext(ctx).Error(err, "cannot get resource requests for node capacity metric", "class", ws.Spec.Class)
+			log.FromContext(ctx).Error(err, "cannot get resource requests for node utilization metric", "class", ws.Spec.Class)
 			continue
 		}
 
-		nodeCapacity[nodeName][corev1.ResourceCPU] += requests.Cpu().MilliValue()
-		nodeCapacity[nodeName][corev1.ResourceMemory] += requests.Memory().Value()
+		nodeUtilization[nodeName][corev1.ResourceCPU] += float64(requests.Cpu().MilliValue()) / 1000.0
+		nodeUtilization[nodeName][corev1.ResourceMemory] += float64(requests.Memory().Value())
 	}
 
-	for nodeName, metrics := range nodeCapacity {
+	for nodeName, metrics := range nodeUtilization {
 		for resource, value := range metrics {
-			metric, err := prometheus.NewConstMetric(n.desc, prometheus.GaugeValue, float64(value), nodeName, resource.String(), "requested")
+			nodeType := nodeTypes[nodeName]
+			metric, err := prometheus.NewConstMetric(n.desc, prometheus.GaugeValue, value, nodeName, resource.String(), nodeType)
 			if err != nil {
-				log.FromContext(ctx).Error(err, "cannot create node capacity metric", "node", nodeName, "resource", resource.String(), "metric", "requested")
+				log.FromContext(ctx).Error(err, "cannot create node utilization metric", "node", nodeName, "resource", resource.String(), "type", nodeType)
 				continue
 			}
 
