@@ -53,7 +53,9 @@ var loginCmd = &cobra.Command{
 			token = os.Getenv("GITPOD_TOKEN")
 		}
 		if token == "" {
-			if !loginOpts.NonInteractive {
+			if loginOpts.NonInteractive {
+				return fmt.Errorf("no token provided")
+			} else {
 				var err error
 				token, err = auth.Login(context.Background(), auth.LoginOpts{
 					GitpodURL:   loginOpts.Host,
@@ -64,8 +66,6 @@ var loginCmd = &cobra.Command{
 				if err != nil {
 					return err
 				}
-			} else {
-				return fmt.Errorf("no token provided")
 			}
 		}
 
