@@ -88,8 +88,7 @@ export const Toast: FC<Props> = ({ id, message, duration = 5000, autoHide = true
                     variant="ghost"
                     // TODO: Determine if we can lift this button style into a variant
                     className={cn(
-                        "cursor-pointer p-2 ml-2 -mt-1",
-                        "bg-transparent hover:bg-transparent",
+                        "p-2 ml-2 -mt-1",
                         "text-white hover:text-gray-300 dark:text-gray-800 dark:hover:text-gray-600",
                     )}
                     onClick={handleRemove}
