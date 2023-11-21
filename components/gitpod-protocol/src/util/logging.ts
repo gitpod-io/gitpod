@@ -44,6 +44,14 @@ export namespace LogContext {
     }
 }
 
+let logItemHook: LogHook.Hook | undefined = undefined;
+export namespace LogHook {
+    export type Hook = (item: LogItem) => void;
+    export function setHook(hook: Hook): void {
+        logItemHook = hook;
+    }
+}
+
 export interface LogPayload {
     // placeholder to indicate that only dictionary-style objects should be passed as payload
 }
@@ -333,7 +341,7 @@ function makeLogItem(
     payloadArgs = payloadArgs.map((arg) => scrubPayload(arg, plainLogging));
     const payload: unknown =
         payloadArgs.length == 0 ? undefined : payloadArgs.length == 1 ? payloadArgs[0] : payloadArgs;
-    const logItem = {
+    const logItem: LogItem = {
         // undefined fields get eliminated in JSON.stringify()
         ...reportedErrorEvent,
         component,
@@ -345,6 +353,11 @@ function makeLogItem(
         payload,
         loggedViaConsole: calledViaConsole ? true : undefined,
     };
+    if (logItemHook) {
+        try {
+            logItemHook(logItem);
+        } catch (err) {}
+    }
     if (plainLogging) {
         return `[${logItem.severity}] [${logItem.component}] ${logItem.message}
             ${JSON.stringify(payload || "", undefined, "              ")}
@@ -401,8 +414,9 @@ function makeReportedErrorEvent(error: Error | undefined): {} {
 
 type LogItem = {
     component?: string;
-    severity?: string;
+    severity: string;
     time?: string;
+    context?: LogContext;
     environment?: string;
     region?: string;
     message?: string;
@@ -410,6 +424,7 @@ type LogItem = {
     errorStub?: string;
     error?: unknown;
     payload?: unknown;
+    loggedViaConsole?: boolean;
 };
 
 function makeLogItemStub(logItem: LogItem): LogItem {
