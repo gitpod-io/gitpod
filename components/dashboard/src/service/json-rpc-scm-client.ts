@@ -27,13 +27,9 @@ export class JsonRpcScmClient implements PromiseClient<typeof SCMService> {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "host is required");
         }
         const response = new SearchSCMTokensResponse();
-        try {
-            const token = await getGitpodService().server.getToken({ host });
-            if (token) {
-                response.tokens.push(converter.toSCMToken(token));
-            }
-        } catch (error) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "token not found");
+        const token = await getGitpodService().server.getToken({ host });
+        if (token) {
+            response.tokens.push(converter.toSCMToken(token));
         }
         return response;
     }
@@ -53,7 +49,7 @@ export class JsonRpcScmClient implements PromiseClient<typeof SCMService> {
         });
         return new GuessTokenScopesResponse({
             message: response.message,
-            scopes: response.scopes,
+            scopes: response.scopes || [],
         });
     }
 
