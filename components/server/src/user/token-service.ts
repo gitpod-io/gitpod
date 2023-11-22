@@ -11,6 +11,7 @@ import { UserDB } from "@gitpod/gitpod-db/lib";
 import { v4 as uuidv4 } from "uuid";
 import { TokenProvider } from "./token-provider";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { GarbageCollectedCache } from "@gitpod/gitpod-protocol/lib/util/garbage-collected-cache";
 
 @injectable()
 export class TokenService implements TokenProvider {
@@ -19,9 +20,12 @@ export class TokenService implements TokenProvider {
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(UserDB) protected readonly userDB: UserDB;
 
-    protected getTokenForHostCache = new Map<string, Promise<Token>>();
+    // Introducing GC to token cache to guard from potentialy stale fetch requests. This is setting
+    // a hard limit at 10s (+5s) after which after which compteting request will trigger a new request,
+    // if applicable.
+    private readonly getTokenForHostCache = new GarbageCollectedCache<Promise<Token | undefined>>(10, 5);
 
-    async getTokenForHost(user: User | string, host: string): Promise<Token> {
+    async getTokenForHost(user: User | string, host: string): Promise<Token | undefined> {
         const userId = User.is(user) ? user.id : user;
         // (AT) when it comes to token renewal, the awaited http requests may
         // cause "parallel" calls to repeat the renewal, which will fail.
@@ -36,7 +40,7 @@ export class TokenService implements TokenProvider {
         return promise;
     }
 
-    private async doGetTokenForHost(userId: string, host: string): Promise<Token> {
+    private async doGetTokenForHost(userId: string, host: string): Promise<Token | undefined> {
         const user = await this.userDB.findUserById(userId);
         if (!user) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `User (${userId}) not found.`);
@@ -44,10 +48,7 @@ export class TokenService implements TokenProvider {
         const identity = this.getIdentityForHost(user, host);
         let token = await this.userDB.findTokenForIdentity(identity);
         if (!token) {
-            throw new ApplicationError(
-                ErrorCodes.NOT_FOUND,
-                `SCM Token not found: (${userId}/${identity?.authId}/${identity?.authName}).`,
-            );
+            return undefined;
         }
         const aboutToExpireTime = new Date();
         aboutToExpireTime.setTime(aboutToExpireTime.getTime() + 5 * 60 * 1000);

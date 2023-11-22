@@ -634,7 +634,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const { host } = query;
         try {
             const token = await this.scmService.getToken(user.id, { host });
-            await this.guardAccess({ kind: "token", subject: token, tokenOwnerID: user.id }, "get");
+            if (token) {
+                await this.guardAccess({ kind: "token", subject: token, tokenOwnerID: user.id }, "get");
+            }
 
             return token;
         } catch (error) {

@@ -15,7 +15,7 @@ export class GitTokenScopeGuesser {
 
     async guessGitTokenScopes(
         authProvider: AuthProviderInfo,
-        params: GuessGitTokenScopesParams & { currentToken: string },
+        params: GuessGitTokenScopesParams & { currentToken?: string },
     ): Promise<GuessedGitTokenScopes> {
         const { repoUrl, gitCommand, currentToken } = params;
 
@@ -27,7 +27,7 @@ export class GitTokenScopeGuesser {
         const { host, repo, owner, repoKind } = parsedRepoUrl;
 
         // in case of git operation which require write access to a remote
-        if (gitCommand === "push") {
+        if (currentToken && gitCommand === "push") {
             const validationResult = await this.tokenValidator.checkWriteAccess({
                 host,
                 owner,

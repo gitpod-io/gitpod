@@ -36,7 +36,15 @@ export class ScmService {
         @inject(GitTokenScopeGuesser) private readonly gitTokenScopeGuesser: GitTokenScopeGuesser,
     ) {}
 
-    public async getToken(userId: string, query: { host: string }): Promise<Token> {
+    /**
+     *
+     * @param userId subject and current user.
+     * @param query specifies the `host` of the auth provider to search for a token.
+     * @returns promise which resolves to a `Token`, or `undefined` if no token for the specified user and host exists.
+     *
+     * @throws 404/NOT_FOUND if the user is not found.
+     */
+    public async getToken(userId: string, query: { host: string }): Promise<Token | undefined> {
         // FIXME(at) this doesn't sound right. "token" is pretty overloaded, thus `read_scm_tokens` would be correct
         await this.auth.checkPermissionOnUser(userId, "read_tokens", userId);
         const { host } = query;
@@ -73,7 +81,8 @@ export class ScmService {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Auth provider not found.`);
         }
 
-        const { value: currentToken } = await this.getToken(userId, { host });
+        const token = await this.getToken(userId, { host });
+        const currentToken = token?.value;
         return await this.gitTokenScopeGuesser.guessGitTokenScopes(provider, {
             host,
             repoUrl,

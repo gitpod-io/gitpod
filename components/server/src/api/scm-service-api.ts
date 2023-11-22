@@ -38,11 +38,9 @@ export class ScmServiceAPI implements ServiceImpl<typeof ScmServiceInterface> {
     async searchSCMTokens(request: SearchSCMTokensRequest, _: HandlerContext): Promise<SearchSCMTokensResponse> {
         const userId = ctxUserId();
         const response = new SearchSCMTokensResponse();
-        try {
-            const token = await this.scmService.getToken(userId, request);
+        const token = await this.scmService.getToken(userId, request);
+        if (token) {
             response.tokens.push(this.apiConverter.toSCMToken(token));
-        } catch (error) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Token not found.");
         }
         return response;
     }
