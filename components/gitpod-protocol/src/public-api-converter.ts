@@ -43,6 +43,7 @@ import {
     EnvironmentVariableAdmission,
     UserEnvironmentVariable,
 } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
+import { SCMToken, SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import { ContextURL } from "./context-url";
 import {
     Prebuild,
@@ -65,6 +66,8 @@ import {
     UserEnvVarValue,
     ProjectEnvVar,
     PrebuiltWorkspaceState,
+    Token,
+    SuggestedRepository as SuggestedRepositoryProtocol,
 } from "./protocol";
 import {
     OrgMemberInfo,
@@ -674,5 +677,26 @@ export class PublicAPIConverter {
                 return PrebuildPhase_Phase.FAILED;
         }
         return PrebuildPhase_Phase.UNSPECIFIED;
+    }
+
+    toSCMToken(t: Token): SCMToken {
+        return new SCMToken({
+            username: t.username,
+            value: t.value,
+            refreshToken: t.refreshToken,
+            expiryDate: t.expiryDate ? Timestamp.fromDate(new Date(t.expiryDate)) : undefined,
+            updateDate: t.updateDate ? Timestamp.fromDate(new Date(t.updateDate)) : undefined,
+            scopes: t.scopes,
+            idToken: t.idToken,
+        });
+    }
+
+    toSuggestedRepository(r: SuggestedRepositoryProtocol): SuggestedRepository {
+        return new SuggestedRepository({
+            url: r.url,
+            repoName: r.repositoryName,
+            configurationId: r.projectId,
+            configurationName: r.projectName,
+        });
     }
 }

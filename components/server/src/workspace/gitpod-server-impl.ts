@@ -104,10 +104,8 @@ import { GuardedResource, ResourceAccessGuard, ResourceAccessOp } from "../auth/
 import { Config } from "../config";
 import { NotFoundError, UnauthorizedError } from "../errors";
 import { AuthorizationService } from "../user/authorization-service";
-import { TokenProvider } from "../user/token-provider";
 import { UserAuthentication } from "../user/user-authentication";
 import { ContextParser } from "./context-parser-service";
-import { GitTokenScopeGuesser } from "./git-token-scope-guesser";
 import { isClusterMaintenanceError } from "./workspace-starter";
 import { HeadlessLogUrls } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { ConfigProvider, InvalidGitpodYMLError } from "./config-provider";
@@ -159,15 +157,9 @@ import { SSHKeyService } from "../user/sshkey-service";
 import { StartWorkspaceOptions, WorkspaceService } from "./workspace-service";
 import { GitpodTokenService } from "../user/gitpod-token-service";
 import { EnvVarService } from "../user/env-var-service";
-import {
-    SuggestedRepositoryWithSorting,
-    sortSuggestedRepositories,
-    suggestionFromProject,
-    suggestionFromRecentWorkspace,
-    suggestionFromUserRepo,
-} from "./suggested-repos-sorter";
 import { SubjectId } from "../auth/subject-id";
 import { runWithSubjectId } from "../util/request-context";
+import { ScmService } from "../scm/scm-service";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -199,7 +191,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         @inject(UserDB) private readonly userDB: UserDB,
         @inject(BlockedRepositoryDB) private readonly blockedRepostoryDB: BlockedRepositoryDB,
-        @inject(TokenProvider) private readonly tokenProvider: TokenProvider,
         @inject(UserAuthentication) private readonly userAuthentication: UserAuthentication,
         @inject(UserService) private readonly userService: UserService,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
@@ -215,8 +206,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         @inject(AuthProviderService) private readonly authProviderService: AuthProviderService,
 
-        @inject(GitTokenScopeGuesser) private readonly gitTokenScopeGuesser: GitTokenScopeGuesser,
-
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
 
         @inject(IDEService) private readonly ideService: IDEService,
@@ -224,6 +213,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(VerificationService) private readonly verificationService: VerificationService,
 
         @inject(Authorizer) private readonly auth: Authorizer,
+
+        @inject(ScmService) private readonly scmService: ScmService,
 
         @inject(BillingModes) private readonly billingModes: BillingModes,
         @inject(StripeService) private readonly stripeService: StripeService,
@@ -638,16 +629,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { query });
 
         const user = await this.checkUser("getToken");
-        const logCtx = { userId: user.id, host: query.host };
-
         const { host } = query;
         try {
-            const token = await this.tokenProvider.getTokenForHost(user, host);
-            await this.guardAccess({ kind: "token", subject: token, tokenOwnerID: user.id }, "get");
+            const token = await this.scmService.getToken(user.id, { host });
+            if (token) {
+                await this.guardAccess({ kind: "token", subject: token, tokenOwnerID: user.id }, "get");
+            }
 
             return token;
         } catch (error) {
-            log.error(logCtx, "failed to find token: ", error);
             return undefined;
         }
     }
@@ -1268,167 +1258,20 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId must be a valid UUID");
         }
 
-        const logCtx: LogContext = { userId: user.id };
-
-        const fetchProjects = async (): Promise<SuggestedRepositoryWithSorting[]> => {
-            const span = TraceContext.startSpan("getSuggestedRepositories.fetchProjects", ctx);
-            const projects = await this.projectsService.getProjects(user.id, organizationId);
-
-            const projectRepos = projects.map((project) => {
-                return suggestionFromProject({
-                    url: project.cloneUrl.replace(/\.git$/, ""),
-                    projectId: project.id,
-                    projectName: project.name,
-                });
-            });
-
-            span.finish();
-
-            return projectRepos;
-        };
-
-        // Load user repositories (from Git hosts directly)
-        const fetchUserRepos = async (): Promise<SuggestedRepositoryWithSorting[]> => {
-            const span = TraceContext.startSpan("getSuggestedRepositories.fetchUserRepos", ctx);
-            const authProviders = await this.getAuthProviders(ctx);
-
-            const providerRepos = await Promise.all(
-                authProviders.map(async (p): Promise<SuggestedRepositoryWithSorting[]> => {
-                    try {
-                        span.setTag("host", p.host);
-
-                        const hostContext = this.hostContextProvider.get(p.host);
-                        const services = hostContext?.services;
-                        if (!services) {
-                            log.error(logCtx, "Unsupported repository host: " + p.host);
-                            return [];
-                        }
-                        const userRepos = await services.repositoryProvider.getUserRepos(user);
-
-                        return userRepos.map((r) =>
-                            suggestionFromUserRepo({
-                                url: r.url.replace(/\.git$/, ""),
-                                repositoryName: r.name,
-                            }),
-                        );
-                    } catch (error) {
-                        log.debug(logCtx, "Could not get user repositories from host " + p.host, error);
-                    }
-
-                    return [];
-                }),
-            );
-
-            span.finish();
-
-            return providerRepos.flat();
-        };
-
-        const fetchRecentRepos = async (): Promise<SuggestedRepositoryWithSorting[]> => {
-            const span = TraceContext.startSpan("getSuggestedRepositories.fetchRecentRepos", ctx);
-
-            const workspaces = await this.getWorkspaces(ctx, { organizationId });
-            const recentRepos: SuggestedRepositoryWithSorting[] = [];
-
-            for (const ws of workspaces) {
-                let repoUrl;
-                let repoName;
-                if (CommitContext.is(ws.workspace.context)) {
-                    repoUrl = ws.workspace.context?.repository?.cloneUrl?.replace(/\.git$/, "");
-                    repoName = ws.workspace.context?.repository?.name;
-                }
-                if (!repoUrl) {
-                    repoUrl = ws.workspace.contextURL;
-                }
-                if (repoUrl) {
-                    const lastUse = WorkspaceInfo.lastActiveISODate(ws);
-
-                    recentRepos.push(
-                        suggestionFromRecentWorkspace(
-                            {
-                                url: repoUrl,
-                                projectId: ws.workspace.projectId,
-                                repositoryName: repoName || "",
-                            },
-                            lastUse,
-                        ),
-                    );
-                }
-            }
-
-            span.finish();
-
-            return recentRepos;
-        };
-
-        const repoResults = await Promise.allSettled([
-            fetchProjects().catch((e) => log.error(logCtx, "Could not fetch projects", e)),
-            fetchUserRepos().catch((e) => log.error(logCtx, "Could not fetch user repositories", e)),
-            fetchRecentRepos().catch((e) => log.error(logCtx, "Could not fetch recent repositories", e)),
-        ]);
-
-        const sortedRepos = sortSuggestedRepositories(
-            repoResults.map((r) => (r.status === "fulfilled" ? r.value || [] : [])).flat(),
-        );
-
-        // Convert to SuggestedRepository (drops sorting props)
-        return sortedRepos.map(
-            (repo): SuggestedRepository => ({
-                url: repo.url,
-                projectId: repo.projectId,
-                projectName: repo.projectName,
-                repositoryName: repo.repositoryName,
-            }),
-        );
+        const projectsPromise = this.projectsService.getProjects(user.id, organizationId);
+        const workspacesPromise = this.workspaceService.getWorkspaces(user.id, { organizationId });
+        const repos = await this.scmService.listSuggestedRepositories(user.id, { projectsPromise, workspacesPromise });
+        return repos;
     }
 
     public async searchRepositories(
         ctx: TraceContext,
         params: SearchRepositoriesParams,
     ): Promise<SuggestedRepository[]> {
+        traceAPIParams(ctx, { params });
         const user = await this.checkAndBlockUser("searchRepositories");
 
-        const logCtx: LogContext = { userId: user.id };
-        const limit: number = params.limit || 30;
-
-        // Search repos across scm providers for this user
-        // Will search personal, and org repos
-        const authProviders = await this.getAuthProviders(ctx);
-
-        const providerRepos = await Promise.all(
-            authProviders.map(async (p): Promise<SuggestedRepositoryWithSorting[]> => {
-                try {
-                    const hostContext = this.hostContextProvider.get(p.host);
-                    const services = hostContext?.services;
-                    if (!services) {
-                        log.error(logCtx, "Unsupported repository host: " + p.host);
-                        return [];
-                    }
-                    const repos = await services.repositoryProvider.searchRepos(user, params.searchString, limit);
-
-                    return repos.map((r) =>
-                        suggestionFromUserRepo({
-                            url: r.url.replace(/\.git$/, ""),
-                            repositoryName: r.name,
-                        }),
-                    );
-                } catch (error) {
-                    log.warn(logCtx, "Could not search repositories from host " + p.host, error);
-                }
-
-                return [];
-            }),
-        );
-
-        const sortedRepos = sortSuggestedRepositories(providerRepos.flat());
-
-        //return only the first 'limit' results
-        return sortedRepos.slice(0, limit).map(
-            (repo): SuggestedRepository => ({
-                url: repo.url,
-                repositoryName: repo.repositoryName,
-            }),
-        );
+        return await this.scmService.searchRepositories(user.id, params);
     }
 
     public async setWorkspaceTimeout(
@@ -2240,13 +2083,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async guessGitTokenScopes(ctx: TraceContext, params: GuessGitTokenScopesParams): Promise<GuessedGitTokenScopes> {
-        traceAPIParams(ctx, { params: censor(params, "currentToken") });
+        traceAPIParams(ctx, { params: censor(params as any, "currentToken") });
 
-        const authProviders = await this.getAuthProviders(ctx);
-        return this.gitTokenScopeGuesser.guessGitTokenScopes(
-            authProviders.find((p) => p.host == params.host),
-            params,
-        );
+        const user = await this.checkAndBlockUser("guessGitTokenScopes");
+
+        return await this.scmService.guessTokenScopes(user.id, { ...params });
     }
 
     async adminGetUser(ctx: TraceContext, userId: string): Promise<User> {

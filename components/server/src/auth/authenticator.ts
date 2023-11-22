@@ -293,23 +293,25 @@ export class Authenticator {
         const state = await this.signInJWT.sign({ host, returnTo, overrideScopes: override });
         authProvider.authorize(req, res, next, this.deriveAuthState(state), wantedScopes);
     }
-    protected mergeScopes(a: string[], b: string[]) {
+    private mergeScopes(a: string[], b: string[]) {
         const set = new Set(a);
         b.forEach((s) => set.add(s));
         return Array.from(set).sort();
     }
-    protected async getCurrentScopes(user: any, authProvider: AuthProvider) {
+    private async getCurrentScopes(user: any, authProvider: AuthProvider) {
         if (User.is(user)) {
             try {
                 const token = await this.tokenProvider.getTokenForHost(user, authProvider.params.host);
-                return token.scopes;
+                if (token) {
+                    return token.scopes;
+                }
             } catch {
                 // no token
             }
         }
         return [];
     }
-    protected getSorryUrl(message: string) {
+    private getSorryUrl(message: string) {
         return this.config.hostUrl.asSorry(message).toString();
     }
 }

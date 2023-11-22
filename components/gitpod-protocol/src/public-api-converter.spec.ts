@@ -22,7 +22,15 @@ import {
     PrebuildSettings,
     WorkspaceSettings,
 } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
-import { AuthProviderEntry, AuthProviderInfo, ProjectEnvVar, UserEnvVarValue, WithEnvvarsContext } from "./protocol";
+import {
+    AuthProviderEntry,
+    AuthProviderInfo,
+    ProjectEnvVar,
+    SuggestedRepository,
+    Token,
+    UserEnvVarValue,
+    WithEnvvarsContext,
+} from "./protocol";
 import {
     AuthProvider,
     AuthProviderDescription,
@@ -948,6 +956,45 @@ describe("PublicAPIConverter", () => {
                     },
                     startTime: "2023-11-17T10:42:00Z",
                 },
+            });
+        });
+    });
+    describe("toSCMToken", () => {
+        it("should convert a token", () => {
+            const t1 = new Date();
+            const token: Token = {
+                scopes: ["foo"],
+                value: "secret",
+                refreshToken: "refresh!",
+                username: "root",
+                idToken: "nope",
+                expiryDate: t1.toISOString(),
+                updateDate: t1.toISOString(),
+            };
+            expect(converter.toSCMToken(token).toJson()).to.deep.equal({
+                expiryDate: t1.toISOString(),
+                idToken: "nope",
+                refreshToken: "refresh!",
+                scopes: ["foo"],
+                updateDate: t1.toISOString(),
+                username: "root",
+                value: "secret",
+            });
+        });
+    });
+    describe("toSuggestedRepository", () => {
+        it("should convert a repo", () => {
+            const repo: SuggestedRepository = {
+                url: "https://github.com/gitpod-io/gitpod",
+                projectId: "123",
+                projectName: "Gitpod",
+                repositoryName: "gitpod",
+            };
+            expect(converter.toSuggestedRepository(repo).toJson()).to.deep.equal({
+                url: "https://github.com/gitpod-io/gitpod",
+                configurationId: "123",
+                configurationName: "Gitpod",
+                repoName: "gitpod",
             });
         });
     });
