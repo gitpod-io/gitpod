@@ -8,7 +8,6 @@ import { RepositoryService } from "../repohost/repo-service";
 import { User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { GitLabApi, GitLab } from "../gitlab/api";
-import { AuthProviderParams } from "../auth/auth-provider";
 import { GitLabApp } from "./gitlab-app";
 import { Config } from "../config";
 import { TokenService } from "../user/token-service";
@@ -19,25 +18,13 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 export class GitlabService extends RepositoryService {
     static PREBUILD_TOKEN_SCOPE = "prebuilds";
 
-    @inject(GitLabApi) protected api: GitLabApi;
-    @inject(Config) protected readonly config: Config;
-    @inject(AuthProviderParams) protected authProviderConfig: AuthProviderParams;
-    @inject(TokenService) protected tokenService: TokenService;
-    @inject(GitlabContextParser) protected gitlabContextParser: GitlabContextParser;
-
-    async canInstallAutomatedPrebuilds(user: User, cloneUrl: string): Promise<boolean> {
-        const { host, owner, repoName } = await this.gitlabContextParser.parseURL(user, cloneUrl);
-        if (host !== this.authProviderConfig.host) {
-            return false;
-        }
-        const api = await this.api.create(user);
-        const response = (await api.Projects.show(`${owner}/${repoName}`)) as unknown as GitLab.Project;
-        if (GitLab.ApiError.is(response)) {
-            throw response;
-        }
-        // one need to have at least the access level of a maintainer (40) in order to install webhooks on a project
-        // cf. https://docs.gitlab.com/ee/api/members.html#valid-access-levels
-        return GitLab.Permissions.hasMaintainerAccess(response);
+    constructor(
+        @inject(GitLabApi) protected api: GitLabApi,
+        @inject(Config) private readonly config: Config,
+        @inject(TokenService) private readonly tokenService: TokenService,
+        @inject(GitlabContextParser) private readonly gitlabContextParser: GitlabContextParser,
+    ) {
+        super();
     }
 
     async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<void> {
@@ -69,7 +56,7 @@ export class GitlabService extends RepositoryService {
         log.info("Installed Webhook for " + cloneUrl, { cloneUrl, userId: user.id });
     }
 
-    protected getHookUrl() {
+    private getHookUrl() {
         return this.config.hostUrl
             .asPublicServices()
             .with({
