@@ -37,6 +37,7 @@ export class ScmService {
     ) {}
 
     /**
+     * `getToken` allows clients to retrieve SCM tokens based on the specified host.
      *
      * @param userId subject and current user.
      * @param query specifies the `host` of the auth provider to search for a token.
@@ -66,7 +67,14 @@ export class ScmService {
     }
 
     /**
-     * `guessTokenScopes` requires the same permissions as `getToken`.
+     * `guessTokenScopes` allows clients to retrieve scopes that would be necessary for a specified
+     * git operation on a specified repository.
+     *
+     * This method requires the same permissions as `getToken`. If no token is found, this will
+     * return the default scopes for the provider of the specified host.
+     *
+     * @throws 404/NOT_FOUND if the user is not found.
+     * @throws 404/NOT_FOUND if the provider is not found.
      */
     public async guessTokenScopes(
         userId: string,
