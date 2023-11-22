@@ -207,11 +207,18 @@ func ReplaceSelf(ctx context.Context, manifest *Manifest) error {
 	defer resp.Body.Close()
 
 	dgst, _ := hex.DecodeString(binary.Digest.Hex())
-	return update.Apply(resp.Body, update.Options{
+	err = update.Apply(resp.Body, update.Options{
 		Checksum:   dgst,
 		Hash:       crypto.SHA256,
 		TargetMode: 0755,
 	})
+	if err != nil && strings.Contains(err.Error(), "permission denied") && runtime.GOOS != "windows" {
+		cfgfn := config.FromContext(ctx).Filename
+		err = prettyprint.AddResolution(err,
+			fmt.Sprintf("run `sudo {gitpod} --config %s version update`", cfgfn),
+		)
+	}
+	return err
 }
 
 var ErrNoBinaryAvailable = errors.New("no binary available for this platform")
