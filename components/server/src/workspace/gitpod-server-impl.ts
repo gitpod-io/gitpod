@@ -99,7 +99,6 @@ import { v4 as uuidv4, validate as uuidValidate } from "uuid";
 import { Disposable, CancellationToken } from "vscode-jsonrpc";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { AuthProviderService } from "../auth/auth-provider-service";
-import { HostContextProvider } from "../auth/host-context-provider";
 import { GuardedResource, ResourceAccessGuard, ResourceAccessOp } from "../auth/resource-access";
 import { Config } from "../config";
 import { NotFoundError, UnauthorizedError } from "../errors";
@@ -179,7 +178,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(Config) private readonly config: Config,
         @inject(TracedWorkspaceDB) private readonly workspaceDb: DBWithTracing<WorkspaceDB>,
         @inject(ContextParser) private contextParser: ContextParser,
-        @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
 
         @inject(PrebuildManager) private readonly prebuildManager: PrebuildManager,
         @inject(IncrementalWorkspaceService) private readonly incrementalPrebuildsService: IncrementalWorkspaceService,

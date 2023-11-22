@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-leeway-pigz-gha.18593
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:se-update-leeway-gha.20594
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
@@ -57,12 +57,9 @@ tasks:
           (cd install/installer && make deps)
           exit 0
     - name: Java
-      command: |
-          if [ -z "$RUN_GRADLE_TASK" ]; then
-            read -r -p "Press enter to continue Java gradle task"
-          fi
-          leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib -- ./gradlew build
-          leeway exec --package components/ide/jetbrains/backend-plugin:plugin-latest --package components/ide/jetbrains/gateway-plugin:publish-latest --parallel -- ./gradlew buildPlugin
+      init: |
+          leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib --cache-key gradle_build -- ./gradlew build
+          leeway exec --package components/ide/jetbrains/backend-plugin:plugin-latest --package components/ide/jetbrains/gateway-plugin:publish-latest --parallel --cache-key gradle_buildPlugin -- ./gradlew buildPlugin
     - name: TypeScript
       init: yarn --network-timeout 100000 && yarn build
     - name: Go
