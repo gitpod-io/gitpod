@@ -46,7 +46,7 @@ export class JsonRpcSSHClient implements PromiseClient<typeof SSHService> {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "sshKeyId is required");
         }
 
-        await getGitpodService().server.deleteSSHPublicKey(eq.sshKeyId);
+        await getGitpodService().server.deleteSSHPublicKey(req.sshKeyId);
 
         const response = new DeleteSSHPublicKeyResponse();
         return response;

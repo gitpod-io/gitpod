@@ -38,6 +38,13 @@ export class SSHServiceAPI implements ServiceImpl<typeof SSHServiceInterface> {
     }
 
     async createSSHPublicKey(req: CreateSSHPublicKeyRequest, _: HandlerContext): Promise<CreateSSHPublicKeyResponse> {
+        if (!req.name) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "name is required");
+        }
+        if (!req.key) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "key is required");
+        }
+
         const response = new CreateSSHPublicKeyResponse();
 
         const result = await this.sshKeyService.addSSHPublicKey(ctxUserId(), ctxUserId(), {
