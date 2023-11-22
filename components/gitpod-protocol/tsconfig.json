@@ -1,5 +1,6 @@
 {
     "compilerOptions": {
+        "incremental": true,
         "strict": true,
         "noEmitOnError": false,
         "noUnusedLocals": true,

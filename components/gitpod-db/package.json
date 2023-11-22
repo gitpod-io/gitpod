@@ -3,8 +3,8 @@
   "license": "AGPL-3.0",
   "version": "0.1.5",
   "scripts": {
-    "build": "yarn lint && npx tsc",
-    "build:clean": "yarn clean && yarn build",
+    "build": "npx tsc",
+    "build:clean": "yarn clean && yarn lint && yarn build",
     "lint": "yarn eslint src/*.ts src/**/*.ts",
     "lint:fix": "yarn eslint src/*.ts src/**/*.ts --fix",
     "rebuild": "yarn build:clean",

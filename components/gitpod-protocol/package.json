@@ -38,7 +38,8 @@
     },
     "scripts": {
         "clean": "rimraf lib",
-        "build": "yarn lint && tsc",
+        "build": "tsc",
+        "build:clean": "yarn clean && yarn lint && yarn build",
         "lint": "yarn eslint src/*.ts src/**/*.ts",
         "lint:fix": "yarn eslint src/*.ts src/**/*.ts --fix",
         "test": "mocha './**/*.spec.js' --exclude './node_modules/**' --exit",
