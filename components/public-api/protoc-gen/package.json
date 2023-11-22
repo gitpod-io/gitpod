@@ -1,0 +1,17 @@
+{
+  "name": "@gitpod/protoc-gen-public-api",
+  "version": "0.1.5",
+  "license": "AGPL-3.0",
+  "dependencies": {
+    "@bufbuild/protobuf": "^1.3.3",
+    "@bufbuild/protoplugin": "^1.3.3",
+    "@gitpod/public-api": "0.1.5"
+  },
+  "devDependencies": {
+    "typescript": "~4.4.2"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w"
+  }
+}

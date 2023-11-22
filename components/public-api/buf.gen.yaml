@@ -26,3 +26,7 @@ plugins:
     out: typescript/src
     opt: target=ts
     path: typescript/node_modules/.bin/protoc-gen-connect-es
+  - plugin: protoc-gen-public-api
+    path: protoc-gen-public-api
+    opt: target=ts
+    out: /workspace/gitpod/components/server/src/api

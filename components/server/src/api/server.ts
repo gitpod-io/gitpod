@@ -49,7 +49,6 @@ import { ConfigurationServiceAPI } from "./configuration-service-api";
 import { AuthProviderServiceAPI } from "./auth-provider-service-api";
 import { EnvironmentVariableServiceAPI } from "./envvar-service-api";
 import { SSHServiceAPI } from "./ssh-service-api";
-import { Unauthenticated } from "./unauthenticated";
 import { SubjectId } from "../auth/subject-id";
 import { BearerAuth } from "../auth/bearer-authenticator";
 import { ScmServiceAPI } from "./scm-service-api";
@@ -57,6 +56,8 @@ import { SCMService } from "@gitpod/public-api/lib/gitpod/v1/scm_connect";
 import { SSHService } from "@gitpod/public-api/lib/gitpod/v1/ssh_connect";
 import { PrebuildServiceAPI } from "./prebuild-service-api";
 import { PrebuildService } from "@gitpod/public-api/lib/gitpod/v1/prebuild_connect";
+import { serviceMethodOptions } from "./service-method-options";
+import { ServiceMethodOptions } from "@gitpod/public-api/lib/gitpod/v1/options_pb";
 
 decorate(injectable(), PublicAPIConverter);
 
@@ -155,6 +156,7 @@ export class API {
     private interceptService<T extends ServiceType>(type: T): ProxyHandler<ServiceImpl<T>> {
         const grpc_service = type.typeName;
         const self = this;
+        const options = serviceMethodOptions[grpc_service] || {};
         return {
             get(target, prop) {
                 return (...args: any[]) => {
@@ -192,24 +194,37 @@ export class API {
                         grpc_type = "bidi_stream";
                     }
 
+                    const methodOptions = options[prop as string] || new ServiceMethodOptions();
+
+                    let allowedErrorCode = true;
+                    const allowedErrorCodes = new Set<Code>(
+                        methodOptions.allowedErrorCodes.map((code) => code as number as Code),
+                    );
+                    const isException = (err: ConnectError) =>
+                        err.code === Code.Internal || err.code === Code.Unknown || err.code === Code.DataLoss;
+                    const verifyErrorCode = (err: ConnectError) => !isException(err) && allowedErrorCodes.has(err.code);
+
                     grpcServerStarted.labels(grpc_service, grpc_method, grpc_type).inc();
                     const stopTimer = grpcServerHandling.startTimer({ grpc_service, grpc_method, grpc_type });
                     const done = (err?: ConnectError) => {
                         const grpc_code = err ? Code[err.code] : "OK";
-                        grpcServerHandled.labels(grpc_service, grpc_method, grpc_type, grpc_code).inc();
+                        const grpc_allowed_code = allowedErrorCode ? "true" : "false";
+                        grpcServerHandled
+                            .labels(grpc_service, grpc_method, grpc_type, grpc_code, grpc_allowed_code)
+                            .inc();
                         stopTimer({ grpc_code });
                         log.debug("public api: done", { grpc_code });
                     };
+
                     const handleError = (reason: unknown) => {
                         let err = self.apiConverter.toError(reason);
-                        if (reason != err && err.code === Code.Internal) {
-                            log.error("public api: unexpected internal error", reason);
-                            err = new ConnectError(
-                                `Oops! Something went wrong.`,
-                                Code.Internal,
-                                // pass metadata to preserve the application error
-                                err.metadata,
-                            );
+                        if (reason != err && isException(err)) {
+                            log.error("public api: unexpected exception", reason);
+                            err = new ConnectError(`Oops! Something went wrong.`, Code.Internal);
+                        }
+                        if (!verifyErrorCode(err)) {
+                            log.error("public api: error code is not allowed", reason);
+                            allowedErrorCode = false;
                         }
                         done(err);
                         throw err;
@@ -240,13 +255,16 @@ export class API {
                         // Authenticate
                         const subjectId = await self.verify(connectContext);
                         const isAuthenticated = !!subjectId;
-                        const requiresAuthentication = !Unauthenticated.get(target, prop);
+                        const requiresAuthentication = !options.unauthenticated;
                         if (!isAuthenticated && requiresAuthentication) {
+                            allowedErrorCodes.add(Code.Unauthenticated);
                             throw new ConnectError("unauthenticated", Code.Unauthenticated);
                         }
 
                         if (isAuthenticated) {
+                            allowedErrorCodes.add(Code.ResourceExhausted);
                             await rateLimit(subjectId.toString());
+                            allowedErrorCodes.add(Code.PermissionDenied);
                             await self.ensureFgaMigration(subjectId);
                         }
                         // TODO(at) if unauthenticated, we still need to apply enforece a rate limit

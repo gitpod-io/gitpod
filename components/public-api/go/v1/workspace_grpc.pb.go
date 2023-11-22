@@ -27,9 +27,6 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type WorkspaceServiceClient interface {
 	// GetWorkspace returns a single workspace.
-	//
-	// +return NOT_FOUND User does not have access to a workspace with the given
-	// ID +return NOT_FOUND Workspace does not exist
 	GetWorkspace(ctx context.Context, in *GetWorkspaceRequest, opts ...grpc.CallOption) (*GetWorkspaceResponse, error)
 	// WatchWorkspaceStatus watches the workspaces status changes
 	//
@@ -125,9 +122,6 @@ func (c *workspaceServiceClient) StartWorkspace(ctx context.Context, in *StartWo
 // for forward compatibility
 type WorkspaceServiceServer interface {
 	// GetWorkspace returns a single workspace.
-	//
-	// +return NOT_FOUND User does not have access to a workspace with the given
-	// ID +return NOT_FOUND Workspace does not exist
 	GetWorkspace(context.Context, *GetWorkspaceRequest) (*GetWorkspaceResponse, error)
 	// WatchWorkspaceStatus watches the workspaces status changes
 	//

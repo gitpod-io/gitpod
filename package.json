@@ -21,7 +21,8 @@
             "components/*",
             "components/*/typescript",
             "components/*/typescript-*",
-            "components/supervisor/frontend"
+            "components/supervisor/frontend",
+            "components/public-api/protoc-gen"
         ]
     }
 }

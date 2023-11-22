@@ -70,10 +70,13 @@ message InvalidArgumentDetails {
   message FieldViolation {
     // A path that leads to a field in the request body.
     string field_path = 1;
+
     // message is a human readable description why the request element is bad.
     string message = 2;
+
     Reason reason = 3;
   }
+
   repeated FieldViolation fields = 1;
 }
 }*/

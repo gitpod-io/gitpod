@@ -24,7 +24,6 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { AuthProviderService } from "../auth/auth-provider-service";
 import { AuthProviderEntry, AuthProviderInfo, User } from "@gitpod/gitpod-protocol";
-import { Unauthenticated } from "./unauthenticated";
 import { validate as uuidValidate } from "uuid";
 import { selectPage } from "./pagination";
 import { ctxTrySubjectId, ctxUserId } from "../util/request-context";
@@ -115,7 +114,6 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
     /**
      * Listing descriptions of auth providers doesn't require authentication.
      */
-    @Unauthenticated()
     async listAuthProviderDescriptions(
         request: ListAuthProviderDescriptionsRequest,
         _: HandlerContext,

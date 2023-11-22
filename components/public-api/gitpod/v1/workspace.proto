@@ -3,6 +3,7 @@ syntax = "proto3";
 package gitpod.v1;
 
 import "gitpod/v1/editor.proto";
+import "gitpod/v1/options.proto";
 import "gitpod/v1/pagination.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -10,10 +11,16 @@ option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
 
 service WorkspaceService {
   // GetWorkspace returns a single workspace.
-  //
-  // +return NOT_FOUND User does not have access to a workspace with the given
-  // ID +return NOT_FOUND Workspace does not exist
-  rpc GetWorkspace(GetWorkspaceRequest) returns (GetWorkspaceResponse) {}
+  rpc GetWorkspace(GetWorkspaceRequest) returns (GetWorkspaceResponse) {
+    option (service_method_options) = {
+      // workspace ID is not provided or invalid
+      error_codes: ERROR_CODE_INVALID_ARGUMENT;
+      // workspace does not exist
+      error_codes: ERROR_CODE_NOT_FOUND;
+      // caller does not have permission to access the workspace
+      error_codes: ERROR_CODE_PERMISSION_DENIED;
+    };
+  }
 
   // WatchWorkspaceStatus watches the workspaces status changes
   //

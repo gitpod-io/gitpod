@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package gitpod.v1;
 
+import "gitpod/v1/options.proto";
 import "gitpod/v1/pagination.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
@@ -18,7 +19,11 @@ service AuthProviderService {
 
   // ListAuthProviderDescriptions lists publicly available descriptions of
   // authproviders.
-  rpc ListAuthProviderDescriptions(ListAuthProviderDescriptionsRequest) returns (ListAuthProviderDescriptionsResponse) {}
+  rpc ListAuthProviderDescriptions(ListAuthProviderDescriptionsRequest) returns (ListAuthProviderDescriptionsResponse) {
+    option (service_method_options) = {
+      unauthenticated: true
+    };
+  }
 
   // UpdateAuthProvider updates an auth provider.
   rpc UpdateAuthProvider(UpdateAuthProviderRequest) returns (UpdateAuthProviderResponse) {}

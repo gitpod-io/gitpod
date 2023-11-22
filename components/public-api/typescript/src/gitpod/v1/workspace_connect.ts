@@ -21,9 +21,6 @@ export const WorkspaceService = {
     /**
      * GetWorkspace returns a single workspace.
      *
-     * +return NOT_FOUND User does not have access to a workspace with the given
-     * ID +return NOT_FOUND Workspace does not exist
-     *
      * @generated from rpc gitpod.v1.WorkspaceService.GetWorkspace
      */
     getWorkspace: {

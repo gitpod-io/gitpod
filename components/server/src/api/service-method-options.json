@@ -1,0 +1,238 @@
+{
+  "gitpod.v1.AuthProviderService": {
+    "CreateAuthProvider": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "GetAuthProvider": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "ListAuthProviders": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "ListAuthProviderDescriptions": {
+      "allowedErrorCodes": [],
+      "unauthenticated": true
+    },
+    "UpdateAuthProvider": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "DeleteAuthProvider": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    }
+  },
+  "gitpod.v1.ConfigurationService": {
+    "CreateConfiguration": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "GetConfiguration": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "ListConfigurations": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "UpdateConfiguration": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "DeleteConfiguration": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    }
+  },
+  "gitpod.v1.EnvironmentVariableService": {
+    "ListUserEnvironmentVariables": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "UpdateUserEnvironmentVariable": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "CreateUserEnvironmentVariable": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "DeleteUserEnvironmentVariable": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "ListConfigurationEnvironmentVariables": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "UpdateConfigurationEnvironmentVariable": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "CreateConfigurationEnvironmentVariable": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "DeleteConfigurationEnvironmentVariable": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "ResolveWorkspaceEnvironmentVariables": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    }
+  },
+  "gitpod.v1.OrganizationService": {
+    "CreateOrganization": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "GetOrganization": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "UpdateOrganization": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "ListOrganizations": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "DeleteOrganization": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "GetOrganizationInvitation": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "JoinOrganization": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "ResetOrganizationInvitation": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "ListOrganizationMembers": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "UpdateOrganizationMember": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "DeleteOrganizationMember": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "GetOrganizationSettings": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "UpdateOrganizationSettings": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    }
+  },
+  "gitpod.v1.SCMService": {
+    "SearchSCMTokens": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "GuessTokenScopes": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "SearchRepositories": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "ListSuggestedRepositories": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    }
+  },
+  "gitpod.v1.PrebuildService": {
+    "StartPrebuild": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "CancelPrebuild": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "GetPrebuild": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "ListPrebuilds": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "WatchPrebuild": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    }
+  },
+  "gitpod.v1.SSHService": {
+    "ListSSHPublicKeys": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "CreateSSHPublicKey": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "DeleteSSHPublicKey": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    }
+  },
+  "gitpod.v1.UserService": {
+    "GetAuthenticatedUser": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    }
+  },
+  "gitpod.v1.VerificationService": {
+    "SendPhoneNumberVerificationToken": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "VerifyPhoneNumberVerificationToken": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    }
+  },
+  "gitpod.v1.WorkspaceService": {
+    "GetWorkspace": {
+      "allowedErrorCodes": [
+        3,
+        5,
+        7
+      ],
+      "unauthenticated": false
+    },
+    "WatchWorkspaceStatus": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "ListWorkspaces": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "CreateAndStartWorkspace": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    },
+    "StartWorkspace": {
+      "allowedErrorCodes": [],
+      "unauthenticated": false
+    }
+  }
+}

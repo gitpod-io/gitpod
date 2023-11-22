@@ -4,6 +4,7 @@ components/ee/*/lib/
 components/*/typescript/lib/
 components/local-app-api/*/lib/
 components/supervisor/frontend/lib/
+components/public-api/protoc-gen/lib/
 src-gen/
 css-gen/
 node_modules/

@@ -42,6 +42,7 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         if (!req.workspaceId) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
         }
+        // TODO validate workspace ID
         const info = await this.workspaceService.getWorkspace(ctxUserId(), req.workspaceId);
         const response = new GetWorkspaceResponse();
         response.workspace = this.apiConverter.toWorkspace(info);
@@ -53,6 +54,7 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         _: HandlerContext,
     ): AsyncIterable<WatchWorkspaceStatusResponse> {
         if (req.workspaceId) {
+            // TODO validate workspace ID
             const instance = await this.workspaceService.getCurrentInstance(ctxUserId(), req.workspaceId);
             const status = this.apiConverter.toWorkspace(instance).status;
             if (status) {
@@ -86,6 +88,7 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         if (!uuidValidate(req.organizationId)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
+        // TODO should not we validate access to the organization before running a query?
         const results = await this.workspaceService.getWorkspaces(ctxUserId(), {
             organizationId: req.organizationId,
             limit,

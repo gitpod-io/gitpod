@@ -32,9 +32,6 @@ const (
 // WorkspaceServiceClient is a client for the gitpod.v1.WorkspaceService service.
 type WorkspaceServiceClient interface {
 	// GetWorkspace returns a single workspace.
-	//
-	// +return NOT_FOUND User does not have access to a workspace with the given
-	// ID +return NOT_FOUND Workspace does not exist
 	GetWorkspace(context.Context, *connect_go.Request[v1.GetWorkspaceRequest]) (*connect_go.Response[v1.GetWorkspaceResponse], error)
 	// WatchWorkspaceStatus watches the workspaces status changes
 	//
@@ -124,9 +121,6 @@ func (c *workspaceServiceClient) StartWorkspace(ctx context.Context, req *connec
 // WorkspaceServiceHandler is an implementation of the gitpod.v1.WorkspaceService service.
 type WorkspaceServiceHandler interface {
 	// GetWorkspace returns a single workspace.
-	//
-	// +return NOT_FOUND User does not have access to a workspace with the given
-	// ID +return NOT_FOUND Workspace does not exist
 	GetWorkspace(context.Context, *connect_go.Request[v1.GetWorkspaceRequest]) (*connect_go.Response[v1.GetWorkspaceResponse], error)
 	// WatchWorkspaceStatus watches the workspaces status changes
 	//

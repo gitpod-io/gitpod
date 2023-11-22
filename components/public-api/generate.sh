@@ -8,7 +8,14 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/../../
+COMPONENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+ROOT_DIR=$COMPONENT_DIR/../../
+
+# build protoc-gen-public-api
+yarn --cwd "$COMPONENT_DIR/protoc-gen" build
+
+# add bin/protoc-gen-public-api to PATH
+export PATH="$COMPONENT_DIR/bin:$PATH"
 
 # include protoc bash functions
 # shellcheck disable=SC1090,SC1091
