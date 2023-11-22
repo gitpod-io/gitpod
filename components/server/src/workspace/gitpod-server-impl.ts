@@ -74,11 +74,7 @@ import {
     AdminModifyRoleOrPermissionRequest,
     WorkspaceAndInstance,
 } from "@gitpod/gitpod-protocol/lib/admin-protocol";
-import {
-    ApplicationError,
-    ErrorCodes,
-    UnauthorizedRepositoryAccessError,
-} from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import {
     InterfaceWithTraceContext,
@@ -106,8 +102,6 @@ import { UserAuthentication } from "../user/user-authentication";
 import { ContextParser } from "./context-parser-service";
 import { isClusterMaintenanceError } from "./workspace-starter";
 import { HeadlessLogUrls } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
-import { ConfigProvider } from "./config-provider";
-import { InvalidGitpodYMLError } from "./config-provider";
 import { ProjectsService } from "../projects/projects-service";
 import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import {
