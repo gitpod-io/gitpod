@@ -1284,10 +1284,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId must be a valid UUID");
         }
 
-        if (!uuidValidate(organizationId)) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId must be a valid UUID");
-        }
-
         const projectsPromise = this.projectsService.getProjects(user.id, organizationId);
         const workspacesPromise = this.workspaceService.getWorkspaces(user.id, { organizationId });
         const repos = await this.scmService.listSuggestedRepositories(user.id, { projectsPromise, workspacesPromise });
