@@ -111,9 +111,7 @@ export function StartPage(props: StartPageProps) {
                     <ProgressBar phase={phase} error={!!error} />
                 )}
                 {error && error.code === ErrorCodes.NEEDS_VERIFICATION && <VerifyModal />}
-                {error && error.code === ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED && (
-                    <UsageLimitReachedModal hints={error?.data} />
-                )}
+                {error && error.code === ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED && <UsageLimitReachedModal />}
                 {error && <StartError error={error} />}
                 {props.children}
                 <WarningView

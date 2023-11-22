@@ -10,7 +10,7 @@ import Alert from "./Alert";
 import Modal from "./Modal";
 import { Heading2 } from "./typography/headings";
 
-export function UsageLimitReachedModal(p: { hints: any; onClose?: () => void }) {
+export function UsageLimitReachedModal(p: { onClose?: () => void }) {
     const currentOrg = useCurrentOrg();
 
     const orgName = currentOrg.data?.name;
