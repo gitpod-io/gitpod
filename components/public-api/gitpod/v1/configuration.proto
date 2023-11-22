@@ -50,7 +50,6 @@ service ConfigurationService {
   // Updates a configuration.
   rpc UpdateConfiguration(UpdateConfigurationRequest) returns (UpdateConfigurationResponse) {}
 
-
   // Deletes a configuration.
   rpc DeleteConfiguration(DeleteConfigurationRequest) returns (DeleteConfigurationResponse) {}
 }

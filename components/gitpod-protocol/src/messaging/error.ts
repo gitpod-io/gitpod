@@ -144,6 +144,9 @@ export const ErrorCodes = {
     // 501 EE Feature
     EE_FEATURE: 501 as const,
 
+    // 521 Unimplemented
+    UNIMPLEMENTED: 521 as const,
+
     // 555 EE License Required
     EE_LICENSE_REQUIRED: 555 as const,
 

@@ -293,6 +293,12 @@ const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound,
         authProviderConfigs: [],
         installationShortname: "gitpod",
         auth: mockAuthConfig,
+        prebuildLimiter: {
+            "*": {
+                limit: 50,
+                period: 50,
+            },
+        },
     });
     rebind(IAnalyticsWriter).toConstantValue(NullAnalyticsWriter);
     rebind(HostContextProviderFactory)

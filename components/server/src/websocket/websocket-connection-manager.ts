@@ -36,7 +36,7 @@ import {
     RepositoryResourceGuard,
     FGAResourceAccessGuard,
 } from "../auth/resource-access";
-import { clientIp, takeFirst } from "../express-util";
+import { clientIp, takeFirst, toHeaders } from "../express-util";
 import {
     increaseApiCallCounter,
     increaseApiConnectionClosedCounter,
@@ -104,6 +104,7 @@ export interface ClientMetadata {
     origin: ClientOrigin;
     version?: string;
     userAgent?: string;
+    headers?: Headers;
 }
 interface ClientOrigin {
     workspaceId?: string;
@@ -120,7 +121,7 @@ export namespace ClientMetadata {
             id = userId;
             authLevel = "user";
         }
-        return { id, authLevel, userId, ...data, origin: data?.origin || {} };
+        return { id, authLevel, userId, ...data, origin: data?.origin || {}, headers: data?.headers };
     }
 
     export function fromRequest(req: any) {
@@ -135,7 +136,13 @@ export namespace ClientMetadata {
             instanceId,
             workspaceId,
         };
-        return ClientMetadata.from(user?.id, { type, origin, version, userAgent });
+        return ClientMetadata.from(user?.id, {
+            type,
+            origin,
+            version,
+            userAgent,
+            headers: toHeaders(expressReq.headers),
+        });
     }
 
     function getOriginWorkspaceId(req: express.Request): string | undefined {
@@ -389,6 +396,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
                 signal: abortController.signal,
                 subjectId: userId ? SubjectId.fromUserId(userId) : undefined,
                 traceId: span.context().toTraceId(),
+                headers: this.clientMetadata.headers,
             },
             async () => {
                 try {

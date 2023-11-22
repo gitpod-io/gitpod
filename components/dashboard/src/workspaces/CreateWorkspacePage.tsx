@@ -4,13 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import {
-    AdditionalUserData,
-    CommitContext,
-    GitpodServer,
-    SuggestedRepository,
-    WithReferrerContext,
-} from "@gitpod/gitpod-protocol";
+import { AdditionalUserData, CommitContext, SuggestedRepository, WithReferrerContext } from "@gitpod/gitpod-protocol";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
@@ -46,6 +40,8 @@ import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_
 import { WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { Button } from "@podkit/buttons/Button";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
+import { CreateAndStartWorkspaceRequest } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { PartialMessage } from "@bufbuild/protobuf";
 
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
@@ -176,27 +172,10 @@ export function CreateWorkspacePage() {
     const [selectAccountError, setSelectAccountError] = useState<SelectAccountPayload | undefined>(undefined);
 
     const createWorkspace = useCallback(
-        async (options?: Omit<GitpodServer.CreateWorkspaceOptions, "contextUrl" | "organizationId">) => {
+        async (options?: Omit<PartialMessage<CreateAndStartWorkspaceRequest>, "contextUrl" | "organizationId">) => {
             // add options from search params
             const opts = options || {};
 
-            // we already have shown running workspaces to the user
-            opts.ignoreRunningWorkspaceOnSameCommit = true;
-
-            // if user received an INVALID_GITPOD_YML yml for their contextURL they can choose to proceed using default configuration
-            if (workspaceContext.error?.code === ErrorCodes.INVALID_GITPOD_YML) {
-                opts.forceDefaultConfig = true;
-            }
-
-            if (!opts.workspaceClass) {
-                opts.workspaceClass = selectedWsClass;
-            }
-            if (!opts.ideSettings) {
-                opts.ideSettings = {
-                    defaultIde: selectedIde,
-                    useLatestVersion: useLatestIde,
-                };
-            }
             if (!contextURL) {
                 return;
             }
@@ -208,6 +187,21 @@ export function CreateWorkspacePage() {
                 return;
             }
 
+            // if user received an INVALID_GITPOD_YML yml for their contextURL they can choose to proceed using default configuration
+            if (workspaceContext.error?.code === ErrorCodes.INVALID_GITPOD_YML) {
+                opts.forceDefaultConfig = true;
+            }
+
+            if (!opts.workspaceClass) {
+                opts.workspaceClass = selectedWsClass;
+            }
+            if (!opts.editor) {
+                opts.editor = {
+                    name: selectedIde,
+                    version: useLatestIde ? "latest" : undefined,
+                };
+            }
+
             try {
                 if (createWorkspaceMutation.isStarting) {
                     console.log("Skipping duplicate createWorkspace call.");
@@ -215,18 +209,22 @@ export function CreateWorkspacePage() {
                 }
                 // we wait at least 5 secs
                 const timeout = new Promise((resolve) => setTimeout(resolve, 5000));
+
                 const result = await createWorkspaceMutation.createWorkspace({
-                    contextUrl: contextURL,
-                    organizationId,
-                    projectId: selectedProjectID,
+                    source: {
+                        case: "contextUrl",
+                        value: contextURL,
+                    },
                     ...opts,
+                    organizationId,
+                    configurationId: selectedProjectID,
                 });
                 await storeAutoStartOptions();
                 await timeout;
-                if (result.workspaceURL) {
-                    window.location.href = result.workspaceURL;
-                } else if (result.createdWorkspaceId) {
-                    history.push(`/start/#${result.createdWorkspaceId}`);
+                if (result.workspace?.status?.workspaceUrl) {
+                    window.location.href = result.workspace.status.workspaceUrl;
+                } else if (result.workspace!.id) {
+                    history.push(`/start/#${result.workspace!.id}`);
                 }
             } catch (error) {
                 console.log(error);
