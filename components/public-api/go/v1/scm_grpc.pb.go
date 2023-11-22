@@ -26,7 +26,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SCMServiceClient interface {
-	GetSCMToken(ctx context.Context, in *GetSCMTokenRequest, opts ...grpc.CallOption) (*GetSCMTokenResponse, error)
+	SearchSCMTokens(ctx context.Context, in *SearchSCMTokensRequest, opts ...grpc.CallOption) (*SearchSCMTokensResponse, error)
 	GuessTokenScopes(ctx context.Context, in *GuessTokenScopesRequest, opts ...grpc.CallOption) (*GuessTokenScopesResponse, error)
 	SearchRepositories(ctx context.Context, in *SearchRepositoriesRequest, opts ...grpc.CallOption) (*SearchRepositoriesResponse, error)
 	ListSuggestedRepositories(ctx context.Context, in *ListSuggestedRepositoriesRequest, opts ...grpc.CallOption) (*ListSuggestedRepositoriesResponse, error)
@@ -40,9 +40,9 @@ func NewSCMServiceClient(cc grpc.ClientConnInterface) SCMServiceClient {
 	return &sCMServiceClient{cc}
 }
 
-func (c *sCMServiceClient) GetSCMToken(ctx context.Context, in *GetSCMTokenRequest, opts ...grpc.CallOption) (*GetSCMTokenResponse, error) {
-	out := new(GetSCMTokenResponse)
-	err := c.cc.Invoke(ctx, "/gitpod.v1.SCMService/GetSCMToken", in, out, opts...)
+func (c *sCMServiceClient) SearchSCMTokens(ctx context.Context, in *SearchSCMTokensRequest, opts ...grpc.CallOption) (*SearchSCMTokensResponse, error) {
+	out := new(SearchSCMTokensResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.SCMService/SearchSCMTokens", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (c *sCMServiceClient) ListSuggestedRepositories(ctx context.Context, in *Li
 // All implementations must embed UnimplementedSCMServiceServer
 // for forward compatibility
 type SCMServiceServer interface {
-	GetSCMToken(context.Context, *GetSCMTokenRequest) (*GetSCMTokenResponse, error)
+	SearchSCMTokens(context.Context, *SearchSCMTokensRequest) (*SearchSCMTokensResponse, error)
 	GuessTokenScopes(context.Context, *GuessTokenScopesRequest) (*GuessTokenScopesResponse, error)
 	SearchRepositories(context.Context, *SearchRepositoriesRequest) (*SearchRepositoriesResponse, error)
 	ListSuggestedRepositories(context.Context, *ListSuggestedRepositoriesRequest) (*ListSuggestedRepositoriesResponse, error)
@@ -91,8 +91,8 @@ type SCMServiceServer interface {
 type UnimplementedSCMServiceServer struct {
 }
 
-func (UnimplementedSCMServiceServer) GetSCMToken(context.Context, *GetSCMTokenRequest) (*GetSCMTokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetSCMToken not implemented")
+func (UnimplementedSCMServiceServer) SearchSCMTokens(context.Context, *SearchSCMTokensRequest) (*SearchSCMTokensResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchSCMTokens not implemented")
 }
 func (UnimplementedSCMServiceServer) GuessTokenScopes(context.Context, *GuessTokenScopesRequest) (*GuessTokenScopesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GuessTokenScopes not implemented")
@@ -116,20 +116,20 @@ func RegisterSCMServiceServer(s grpc.ServiceRegistrar, srv SCMServiceServer) {
 	s.RegisterService(&SCMService_ServiceDesc, srv)
 }
 
-func _SCMService_GetSCMToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetSCMTokenRequest)
+func _SCMService_SearchSCMTokens_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchSCMTokensRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SCMServiceServer).GetSCMToken(ctx, in)
+		return srv.(SCMServiceServer).SearchSCMTokens(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gitpod.v1.SCMService/GetSCMToken",
+		FullMethod: "/gitpod.v1.SCMService/SearchSCMTokens",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SCMServiceServer).GetSCMToken(ctx, req.(*GetSCMTokenRequest))
+		return srv.(SCMServiceServer).SearchSCMTokens(ctx, req.(*SearchSCMTokensRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -196,8 +196,8 @@ var SCMService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*SCMServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetSCMToken",
-			Handler:    _SCMService_GetSCMToken_Handler,
+			MethodName: "SearchSCMTokens",
+			Handler:    _SCMService_SearchSCMTokens_Handler,
 		},
 		{
 			MethodName: "GuessTokenScopes",
