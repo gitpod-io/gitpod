@@ -48,8 +48,6 @@ message CreateSSHPublicKeyResponse {
   SSHPublicKey ssh_key = 1;
 }
 
-message DeleteSSHPublicKeyRequest {
-  string id = 1;
-}
+message DeleteSSHPublicKeyRequest { string ssh_key_id = 1; }
 
 message DeleteSSHPublicKeyResponse {}

@@ -51,6 +51,7 @@ import {
     WorkspacePort_Protocol,
     WorkspaceStatus,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { SSHPublicKey } from "@gitpod/public-api/lib/gitpod/v1/ssh_pb";
 import {
     ConfigurationEnvironmentVariable,
     EnvironmentVariableAdmission,
@@ -87,6 +88,7 @@ import {
     PrebuiltWorkspaceState,
     Token,
     SuggestedRepository as SuggestedRepositoryProtocol,
+    UserSSHPublicKeyValue,
 } from "./protocol";
 import {
     OrgMemberInfo,
@@ -896,5 +898,16 @@ export class PublicAPIConverter {
             configurationId: r.projectId,
             configurationName: r.projectName,
         });
+    }
+
+    toSSHPublicKey(sshKey: UserSSHPublicKeyValue): SSHPublicKey {
+        const result = new SSHPublicKey();
+        result.id = sshKey.id;
+        result.name = sshKey.name;
+        result.key = sshKey.key;
+        result.fingerprint = sshKey.fingerprint;
+        result.creationTime = Timestamp.fromDate(new Date(sshKey.creationTime));
+        result.lastUsedTime = Timestamp.fromDate(new Date(sshKey.lastUsedTime || sshKey.creationTime));
+        return result;
     }
 }
