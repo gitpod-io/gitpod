@@ -23,8 +23,7 @@ service WorkspaceService {
   rpc ListWorkspaces(ListWorkspacesRequest) returns (ListWorkspacesResponse) {}
 
   // CreateAndStartWorkspace creates a new workspace and starts it.
-  rpc CreateAndStartWorkspace(CreateAndStartWorkspaceRequest)
-      returns (CreateAndStartWorkspaceResponse) {}
+  rpc CreateAndStartWorkspace(CreateAndStartWorkspaceRequest) returns (CreateAndStartWorkspaceResponse) {}
 
   // StartWorkspace starts an existing workspace.
   // If the specified workspace is not in stopped phase, this will return the workspace as is.
@@ -82,7 +81,6 @@ message ListWorkspacesResponse {
 }
 
 message CreateAndStartWorkspaceRequest {
-
   message Git {
     // clone_url is the URL of the repository to clone
     string clone_url = 1;
@@ -108,7 +106,6 @@ message CreateAndStartWorkspaceRequest {
   //
   // +required
   oneof source {
-
     // git describes the source refer of workspace
     // Obtain available git using the ContextService.ParseContext operation if
     // not sure about it.
@@ -116,7 +113,7 @@ message CreateAndStartWorkspaceRequest {
 
     // context_url is for backward compatiblity with the current dashboard, use
     // ContextService.ParseContext get get a Git source instead
-    string context_url = 4 [ deprecated = true ];
+    string context_url = 4 [deprecated = true];
   }
 
   // additional_env_variables provide additional environment variables to the
@@ -143,7 +140,9 @@ message CreateAndStartWorkspaceRequest {
   bool force_default_config = 11;
 }
 
-message CreateAndStartWorkspaceResponse { Workspace workspace = 1; }
+message CreateAndStartWorkspaceResponse {
+  Workspace workspace = 1;
+}
 
 message StartWorkspaceRequest {
   // workspace_id specifies the workspace that is going to start
@@ -154,7 +153,9 @@ message StartWorkspaceRequest {
   bool force_default_config = 2;
 }
 
-message StartWorkspaceResponse { Workspace workspace = 1; }
+message StartWorkspaceResponse {
+  Workspace workspace = 1;
+}
 
 // +resource get workspace
 message Workspace {
