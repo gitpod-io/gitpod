@@ -325,7 +325,8 @@ export interface GetProviderRepositoriesParams {
     maxPages?: number;
 }
 export interface SearchRepositoriesParams {
-    organizationId: string;
+    /** @deprecated unused */
+    organizationId?: string;
     searchString: string;
     limit?: number; // defaults to 30
 }

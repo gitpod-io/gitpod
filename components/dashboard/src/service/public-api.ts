@@ -32,6 +32,8 @@ import { JsonRpcEnvvarClient } from "./json-rpc-envvar-client";
 import { Prebuild, WatchPrebuildRequest, WatchPrebuildResponse } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 import { JsonRpcPrebuildClient } from "./json-rpc-prebuild-client";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { JsonRpcScmClient } from "./json-rpc-scm-client";
+import { SCMService } from "@gitpod/public-api/lib/gitpod/v1/scm_connect";
 
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
@@ -60,6 +62,8 @@ export const configurationClient = createServiceClient(ConfigurationService);
 export const prebuildClient = createServiceClient(PrebuildService, new JsonRpcPrebuildClient());
 
 export const authProviderClient = createServiceClient(AuthProviderService, new JsonRpcAuthProviderClient());
+
+export const scmClient = createServiceClient(SCMService, new JsonRpcScmClient());
 
 export const envVarClient = createServiceClient(EnvironmentVariableService, new JsonRpcEnvvarClient());
 

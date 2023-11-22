@@ -35,7 +35,7 @@ import {
     AuthProviderDescription,
     AuthProviderType,
 } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
-import { authProviderClient } from "../service/public-api";
+import { authProviderClient, scmClient } from "../service/public-api";
 import { useCreateUserAuthProviderMutation } from "../data/auth-providers/create-user-auth-provider-mutation";
 import { useUpdateUserAuthProviderMutation } from "../data/auth-providers/update-user-auth-provider-mutation";
 import { useDeleteUserAuthProviderMutation } from "../data/auth-providers/delete-user-auth-provider-mutation";
@@ -77,7 +77,7 @@ function GitProviders() {
                 if (!provider) {
                     continue;
                 }
-                const token = await getGitpodService().server.getToken({ host: provider.host });
+                const token = (await scmClient.searchSCMTokens({ host: provider.host })).tokens[0];
                 scopesByProvider.set(provider.id, token?.scopes?.slice() || []);
             }
             setAllScopes(scopesByProvider);
@@ -182,7 +182,7 @@ function GitProviders() {
     const startEditPermissions = async (provider: AuthProviderDescription) => {
         // todo: add spinner
 
-        const token = await getGitpodService().server.getToken({ host: provider.host });
+        const token = (await scmClient.searchSCMTokens({ host: provider.host })).tokens[0];
         if (token) {
             setEditModal({ provider, prevScopes: new Set(token.scopes), nextScopes: new Set(token.scopes) });
         }
