@@ -1662,7 +1662,7 @@ export class WorkspaceStarter {
         return gitSpec;
     }
 
-    private async createInitializer(
+    public async createInitializer(
         traceCtx: TraceContext,
         workspace: Workspace,
         context: WorkspaceContext,
