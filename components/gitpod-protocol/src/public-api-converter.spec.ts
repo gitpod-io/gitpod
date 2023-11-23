@@ -29,7 +29,6 @@ import {
     SuggestedRepository,
     Token,
     UserEnvVarValue,
-    UserEnvVarValue,
     UserSSHPublicKey,
     WithEnvvarsContext,
 } from "./protocol";
@@ -1007,7 +1006,7 @@ describe("PublicAPIConverter", () => {
             });
         });
     });
-    
+
     describe("toSuggestedRepository", () => {
         it("should convert a repo", () => {
             const repo: SuggestedRepository = {
