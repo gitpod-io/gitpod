@@ -93,6 +93,9 @@ func (c *ConfigCat) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 	arr := strings.Split(r.URL.Path, "/")
 	configVersion := arr[len(arr)-1]
 
+	// ensure that the browser must revalidate it, but still cache it
+	w.Header().Set("Cache-Control", "no-cache")
+
 	if c.configCatConfigDir != "" {
 		c.ServeFromFile(w, r, configVersion)
 		return nil
