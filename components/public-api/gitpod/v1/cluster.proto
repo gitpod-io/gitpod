@@ -26,14 +26,6 @@ service ClusterService {
 }
 
 message RegisterClusterRequest {
-  enum Scope {
-    // Scope is not set
-    SCOPE_UNSPECIFIED = 0;
-    // The cluster is registered for an entire organisation
-    SCOPE_ORGANIZATION = 1;
-    // The cluster is registered for a single user
-    SCOPE_USER = 2;
-  }
   message WorkspaceClass {
     string id = 1;
     string display_name = 2;
@@ -50,11 +42,11 @@ message RegisterClusterRequest {
     CLUSTER_TYPE_MULTI_TENANT = 2;
   }
 
-  // The cluster's ID - must be unique within the scope
-  string id = 1;
-
   // The cluster's scope
-  Scope scope = 2;
+  oneof scope {
+    string organization_id = 1;
+    string user_id = 2;
+  }
 
   // The cluster's type
   ClusterType type = 3;
@@ -67,28 +59,28 @@ message RegisterClusterRequest {
 }
 
 message RegisterClusterResponse {
-  // The cluster's registration token. This token identifies the cluster and must be used
+  // The cluster's ID which identifies the cluster and must be used
   // in all subsequent requests.
-  string registration_token = 1;
+  string cluster_id = 1;
 }
 
 message RenewClusterRegistrationRequest {
-  // The cluster's registration token
-  string registration_token = 1;
+  // The cluster's identity
+  string cluster_id = 1;
 }
 
-message RenewClusterRegistrationResponse {
-  // The cluster's registration token. This token identifies the cluster and must be used
-  // in all subsequent requests.
-  string registration_token = 1;
-}
+message RenewClusterRegistrationResponse { }
 
 message GetClusterWorkspacesRequest {
   // pagination contains the pagination options for listing workspaces
   PaginationRequest pagination = 1;
 
-  // The cluster's registration token
-  string registration_token = 2;
+  // The cluster's identity
+  string cluster_id = 2;
+
+  // An optional list of workspace IDs to fetch. If this list is empty/not provided
+  // all workspaces that ought to run on the cluster are returned.
+  repeated string workspace_ids = 3;
 }
 
 message GetClusterWorkspacesResponse {
@@ -156,6 +148,13 @@ message GetClusterWorkspacesResponse {
     // ide_image_layers are contains the images needed for the ide to run,
     // including ide-desktop, desktop-plugin and so on
     repeated string ide_image_layers = 17;
+
+    // last_user_activity is the time when the user last interacted with the workspace
+    google.protobuf.Timestamp last_user_activity = 99;
+
+    // log_url is the URL where we stream the workspace's logs to.
+    // Can be changed when the workspace is PENDING or STOPPED.
+    string log_url = 100;
   }
 
   // WorkspaceMetadata is data associated with a workspace that's required for other parts of the system to function
@@ -212,42 +211,30 @@ message UpdateClusterWorkspaceStatusRequest {
   // WorkspaceCondition gives more detailed information as to the state of the workspace. Which condition actually
   // has a value depends on the phase the workspace is in.
   message WorkspaceConditions {
+    enum FailedReason {
+      FAILED_REASON_UNSPECIFIED = 0;
+      FAILED_REASON_CONTENT_INITIALIZATION_FAILED = 1;
+      FAILED_REASON_BACKUP_FAILED = 2;
+      FAILED_REASON_IMAGE_PULL_FAILURE = 3;
+      FAILED_REASON_UNEXPECTED_TERMINATION = 4;
+    }
+
     // failed contains the reason the workspace failed to operate. If this field is empty, the workspace has not failed.
     string failed = 1;
 
+    FailedReason failed_reason = 2;
+
     // timeout contains the reason the workspace has timed out. If this field is empty, the workspace has not timed out.
-    string timeout = 2;
+    string timeout = 3;
+  }
 
-    // pulling_images marks if the workspace is currently pulling its images. This condition can only be set during PhaseCreating
-    WorkspaceConditionBool pulling_images = 3;
+  message PrebuildResult {
+    // Snapshot points to the content of the prebuild. This string is opaque to the cluster manager,
+    // and must be returned unaltered.
+    string snapshot = 1;
 
-    // snapshot contains a snapshot URL if a snapshot was produced prior to shutting the workspace down. This condition is only used for headless workspaces.
-    string snapshot = 5;
-
-    // final_backup_complete determines if the last state of the workspace has been backed up to remote storage.
-    // Once this is true, a new workspace with the same ID will be able to use this backup.
-    WorkspaceConditionBool final_backup_complete = 6;
-
-    // deployed indicates if a workspace container is currently deployed. If this condition is false, there is no means for the user to alter the workspace content.
-    WorkspaceConditionBool deployed = 7;
-
-    // network_not_ready indicates if a workspace container is currently experiencing a network problem.
-    WorkspaceConditionBool network_not_ready = 8;
-
-    // first_user_activity is the time when MarkActive was first called on the workspace
-    google.protobuf.Timestamp first_user_activity = 9;
-
-    // headless_task_failed indicates that a headless workspace task failed
-    string headless_task_failed = 10;
-
-    // stopped_by_request is true if the workspace was stopped using a StopWorkspace call
-    WorkspaceConditionBool stopped_by_request = 11;
-
-    // volume_snapshot contains info about volume snapshot that was used to save persistent volume
-    string volume_snapshot = 12;
-
-    // aborted is true if StopWorkspace was called with StopWorkspacePolicy set to ABORT
-    WorkspaceConditionBool aborted = 13;
+    // The prebuild's error message
+    string error_message = 2;
   }
 
   // WorkspaceACK is a simple acknowledgement of a workspace status update
@@ -265,44 +252,41 @@ message UpdateClusterWorkspaceStatusRequest {
 
   // WorkspaceStatus describes a workspace status
   message WorkspaceStatus {
-    // ID is the unique identifier of the workspace
-    string id = 1;
-
     // version of the status update. Workspace instances themselves are unversioned,
     // but their statuus has different versions.
     // The value of this field has no semantic meaning (e.g. don't interpret it as
     // as a timestemp), but it can be used to impose a partial order.
     // If a.status_version < b.status_version then a was the status before b.
-    uint64 status_version = 10;
+    uint64 status_version = 1;
 
     // the phase of a workspace is a simple, high-level summary of where the workspace is in its lifecycle
-    WorkspacePhase.Phase phase = 4;
+    WorkspacePhase phase = 2;
 
     // conditions detail the current state of the workspace
-    WorkspaceConditions conditions = 5;
+    WorkspaceConditions conditions = 3;
 
-    // message is an optional human-readable message detailing the current phase
-    string message = 6;
+    // prebuild_result contains the result of a prebuild. Only if the workspace is
+    PrebuildResult prebuild_result = 7;
 
     // repo details the Git working copy status of the workspace.
     // Note: this is a best-effort field and more often than not will not be present. Its absence does not
     // indicate the absence of a working copy.
-    WorkspaceGitStatus repo = 7;
-
-    // auth provides authentication information about the workspace. This info is primarily used by ws-proxy.
-    string owner_token = 9;
+    WorkspaceGitStatus repo = 5;
   }
 
-  // The cluster's registration token
-  string registration_token = 1;
+  // The cluster's identity
+  string cluster_id = 1;
 
   // The workspace's ID
   string workspace_id = 2;
 
-  WorkspaceACK ack = 3;
+  oneof update {
+    // The workspace's status
+    WorkspaceStatus status = 3;
 
-  // The workspace's status
-  WorkspaceStatus status = 4;
+    // The workspace's status
+    WorkspaceACK ack = 4;
+  }
 }
 
 message UpdateClusterWorkspaceStatusResponse {}
