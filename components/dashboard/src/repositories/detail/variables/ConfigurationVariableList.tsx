@@ -5,9 +5,7 @@
  */
 
 import { useState } from "react";
-import { getGitpodService } from "../../../service/service";
 import { ConfigurationSettingsField } from "../ConfigurationSettingsField";
-import type { ProjectEnvVar } from "@gitpod/gitpod-protocol";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { Button } from "@podkit/buttons/Button";
 import { AddVariableModal } from "./ConfigurationAddVariableModal";
@@ -15,25 +13,21 @@ import { Heading2, Subheading } from "@podkit/typography/Headings";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@podkit/tables/Table";
 import { DropdownActions } from "@podkit/dropdown/DropDownActions";
 import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
+import { useListConfigurationVariables } from "../../../data/configurations/configuration-queries";
+import { LoadingState } from "@podkit/loading/LoadingState";
+import { EnvironmentVariableAdmission } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
 
 type Props = {
     configuration: Configuration;
 };
 
 export const ConfigurationVariableList = ({ configuration }: Props) => {
-    const [envVars, setEnvVars] = useState<ProjectEnvVar[]>([]);
+    const { data, isLoading } = useListConfigurationVariables(configuration.id);
     const [showAddVariableModal, setShowAddVariableModal] = useState<boolean>(false);
 
-    const updateEnvVars = async () => {
-        const vars = await getGitpodService().server.getProjectEnvironmentVariables(configuration.id);
-        const sortedVars = vars.sort((a, b) => (a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1));
-        setEnvVars(sortedVars);
-    };
-
-    // const deleteEnvVar = async (variableId: string) => {
-    //     await getGitpodService().server.deleteProjectEnvironmentVariable(variableId);
-    //     updateEnvVars();
-    // };
+    if (isLoading || !data) {
+        return <LoadingState />;
+    }
 
     return (
         <ConfigurationSettingsField>
@@ -41,7 +35,6 @@ export const ConfigurationVariableList = ({ configuration }: Props) => {
                 <AddVariableModal
                     configuration={configuration}
                     onClose={() => {
-                        updateEnvVars();
                         setShowAddVariableModal(false);
                     }}
                 />
@@ -52,7 +45,7 @@ export const ConfigurationVariableList = ({ configuration }: Props) => {
                     <Subheading>Manage repository-specific environment variables.</Subheading>
                 </div>
             </div>
-            {envVars.length === 0 ? (
+            {data.length === 0 ? (
                 <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full py-28 flex flex-col items-center justify-center space-y-3">
                     <Heading2 color="light">No environment variables are set</Heading2>
                     <Subheading className="text-center w-96">
@@ -70,11 +63,15 @@ export const ConfigurationVariableList = ({ configuration }: Props) => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {envVars.map((variable) => {
+                        {data.map((variable) => {
                             return (
                                 <TableRow key={variable.id}>
                                     <TableCell className="truncate">{variable.name}</TableCell>
-                                    <TableCell>{variable.censored ? "Hidden" : "Shown"}</TableCell>
+                                    <TableCell>
+                                        {variable.admission === EnvironmentVariableAdmission.PREBUILD
+                                            ? "Hidden"
+                                            : "Shown"}
+                                    </TableCell>
                                     <TableCell className="flex justify-end">
                                         <DropdownActions>
                                             <DropdownMenuItem>Edit</DropdownMenuItem>

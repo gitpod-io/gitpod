@@ -11,6 +11,8 @@ import { SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
 import { TableSortOrder } from "@podkit/tables/SortableTable";
 import type { Configuration, UpdateConfigurationRequest } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import type { PartialMessage } from "@bufbuild/protobuf";
+import { envVarClient } from "../../service/public-api";
+import type { ConfigurationEnvironmentVariable } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
 
 const BASE_KEY = "configurations";
 
@@ -70,6 +72,12 @@ export const getListConfigurationsQueryKey = (orgId: string, args?: ListConfigur
     return key;
 };
 
+export const getListConfigurationsVariablesQueryKey = (configurationId: string) => {
+    const key: any[] = [BASE_KEY, "list", "variable", { configurationId }];
+
+    return key;
+};
+
 export const useConfiguration = (configurationId: string) => {
     return useQuery<Configuration | undefined, Error>(getConfigurationQueryKey(configurationId), async () => {
         const { configuration } = await configurationClient.getConfiguration({
@@ -93,7 +101,7 @@ export const useDeleteConfiguration = () => {
             });
         },
         onSuccess: (_, { configurationId }) => {
-            // todo: look into updating the cache instad of invalidating it
+            // todo: look into updating the cache instead of invalidating it
             queryClient.invalidateQueries({ queryKey: ["configurations", "list"] });
             queryClient.invalidateQueries({ queryKey: getConfigurationQueryKey(configurationId) });
         },
@@ -133,6 +141,12 @@ export const getConfigurationQueryKey = (configurationId: string) => {
     return key;
 };
 
+export const getConfigurationVariableQueryKey = (variableId: string) => {
+    const key: any[] = [BASE_KEY, "variable", { configurationId: variableId }];
+
+    return key;
+};
+
 export type CreateConfigurationArgs = {
     name: string;
     cloneUrl: string;
@@ -166,6 +180,38 @@ export const useCreateConfiguration = () => {
         onSuccess: (configuration) => {
             queryClient.setQueryData(getConfigurationQueryKey(configuration.id), configuration);
             queryClient.invalidateQueries({ queryKey: ["configurations", "list"] });
+        },
+    });
+};
+
+export const useListConfigurationVariables = (configurationId: string) => {
+    return useQuery<ConfigurationEnvironmentVariable[]>([], {
+        queryFn: async () => {
+            const { environmentVariables } = await envVarClient.listConfigurationEnvironmentVariables({
+                configurationId,
+            });
+            return environmentVariables;
+        },
+        cacheTime: 1000 * 60 * 60 * 24, // one day
+    });
+};
+
+type DeleteVariableArgs = {
+    variableId: string;
+    configurationId: string;
+};
+export const useDeleteConfigurationVariable = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ variableId }: DeleteVariableArgs) => {
+            return await envVarClient.deleteConfigurationEnvironmentVariable({
+                environmentVariableId: variableId,
+            });
+        },
+        onSuccess: (_, { configurationId, variableId }) => {
+            queryClient.invalidateQueries({ queryKey: getListConfigurationsVariablesQueryKey(configurationId) });
+            queryClient.invalidateQueries({ queryKey: getConfigurationVariableQueryKey(variableId) });
         },
     });
 };

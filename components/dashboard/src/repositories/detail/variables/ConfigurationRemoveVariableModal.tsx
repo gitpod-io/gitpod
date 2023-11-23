@@ -5,38 +5,38 @@
  */
 
 import { FunctionComponent, useCallback } from "react";
-import { useDeleteWorkspaceMutation } from "../../../data/workspaces/delete-workspace-mutation";
 import { useToast } from "../../../components/toasts/Toasts";
 import ConfirmationModal from "../../../components/ConfirmationModal";
-import type { WorkspaceEnvironmentVariable } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { useDeleteConfigurationVariable } from "../../../data/configurations/configuration-queries";
+import type { ConfigurationEnvironmentVariable } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
 
 type Props = {
-    variable: WorkspaceEnvironmentVariable;
+    variable: ConfigurationEnvironmentVariable;
+    configurationId: string;
     onClose(): void;
 };
-export const DeleteWorkspaceModal: FunctionComponent<Props> = ({ variable, onClose }) => {
-    const deleteWorkspace = useDeleteWorkspaceMutation();
+export const DeleteVariableModal: FunctionComponent<Props> = ({ variable, configurationId, onClose }) => {
+    const deleteVariable = useDeleteConfigurationVariable();
     const { toast } = useToast();
 
     const handleConfirmation = useCallback(async () => {
         try {
-            await deleteWorkspace.mutateAsync({ workspaceId: variable.id });
+            await deleteVariable.mutateAsync({ variableId: variable.id, configurationId });
 
-            toast("Your workspace was deleted");
+            toast("Your variable was deleted");
             onClose();
         } catch (e) {}
-    }, [deleteWorkspace, onClose, toast, variable.id]);
+    }, [configurationId, deleteVariable, onClose, toast, variable.id]);
 
     return (
         <ConfirmationModal
             title="Delete variable"
             areYouSureText="Are you sure you want to delete this variable?"
             children={{
-                name: variable.id,
-                description: variable.description,
+                name: variable.name,
             }}
-            buttonText="Delete Workspace"
-            warningText={deleteWorkspace.isError ? "There was a problem deleting your workspace." : undefined}
+            buttonText="Delete Variable"
+            warningText={deleteVariable.isError ? "There was a problem deleting this variable." : undefined}
             onClose={onClose}
             onConfirm={handleConfirmation}
             visible
