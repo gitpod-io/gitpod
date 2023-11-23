@@ -10,7 +10,6 @@ import { ConfigurationService as ConfigurationServiceInterface } from "@gitpod/p
 import { PublicAPIConverter, PartialConfiguration } from "@gitpod/gitpod-protocol/lib/public-api-converter";
 import { ProjectsService } from "../projects/projects-service";
 import {
-    Configuration,
     CreateConfigurationRequest,
     CreateConfigurationResponse,
     DeleteConfigurationRequest,
