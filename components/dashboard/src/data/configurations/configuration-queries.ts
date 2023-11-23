@@ -185,7 +185,7 @@ export const useCreateConfiguration = () => {
 };
 
 export const useListConfigurationVariables = (configurationId: string) => {
-    return useQuery<ConfigurationEnvironmentVariable[]>([], {
+    return useQuery<ConfigurationEnvironmentVariable[]>(getListConfigurationsVariablesQueryKey(configurationId), {
         queryFn: async () => {
             const { environmentVariables } = await envVarClient.listConfigurationEnvironmentVariables({
                 configurationId,
