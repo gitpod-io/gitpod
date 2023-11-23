@@ -9,10 +9,10 @@ import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal"
 import Alert from "../components/Alert";
 import TabMenuItem from "../components/TabMenuItem";
 import { settingsPathSSHKeys } from "../user-settings/settings.routes";
-import { getGitpodService } from "../service/service";
 import { InputWithCopy } from "../components/InputWithCopy";
 import { Link } from "react-router-dom";
 import { Button } from "@podkit/buttons/Button";
+import { sshClient } from "../service/public-api";
 
 interface SSHProps {
     workspaceId: string;
@@ -25,10 +25,10 @@ function SSHView(props: SSHProps) {
     const [selectSSHKey, setSelectSSHKey] = useState(true);
 
     useEffect(() => {
-        getGitpodService()
-            .server.hasSSHPublicKey()
-            .then((d) => {
-                setHasSSHKey(d);
+        sshClient
+            .listSSHPublicKeys({})
+            .then((r) => {
+                setHasSSHKey(r.sshKeys.length > 0);
             })
             .catch(console.error);
     }, []);

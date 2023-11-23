@@ -34,6 +34,8 @@ import { JsonRpcPrebuildClient } from "./json-rpc-prebuild-client";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { JsonRpcScmClient } from "./json-rpc-scm-client";
 import { SCMService } from "@gitpod/public-api/lib/gitpod/v1/scm_connect";
+import { SSHService } from "@gitpod/public-api/lib/gitpod/v1/ssh_connect";
+import { JsonRpcSSHClient } from "./json-rpc-ssh-client";
 
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
@@ -66,6 +68,8 @@ export const authProviderClient = createServiceClient(AuthProviderService, new J
 export const scmClient = createServiceClient(SCMService, new JsonRpcScmClient());
 
 export const envVarClient = createServiceClient(EnvironmentVariableService, new JsonRpcEnvvarClient());
+
+export const sshClient = createServiceClient(SSHService, new JsonRpcSSHClient());
 
 export async function listAllProjects(opts: { orgId: string }): Promise<ProtocolProject[]> {
     let pagination = {

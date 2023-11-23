@@ -29,6 +29,7 @@ import {
     SuggestedRepository,
     Token,
     UserEnvVarValue,
+    UserSSHPublicKey,
     WithEnvvarsContext,
 } from "./protocol";
 import {
@@ -62,6 +63,7 @@ import {
     ImageBuildLogsNotYetAvailableError,
     TooManyRunningWorkspacesError,
 } from "@gitpod/public-api/lib/gitpod/v1/error_pb";
+import { SSHPublicKey } from "@gitpod/public-api/lib/gitpod/v1/ssh_pb";
 
 describe("PublicAPIConverter", () => {
     const converter = new PublicAPIConverter();
@@ -980,6 +982,7 @@ describe("PublicAPIConverter", () => {
             });
         });
     });
+
     describe("toSCMToken", () => {
         it("should convert a token", () => {
             const t1 = new Date();
@@ -1003,6 +1006,7 @@ describe("PublicAPIConverter", () => {
             });
         });
     });
+
     describe("toSuggestedRepository", () => {
         it("should convert a repo", () => {
             const repo: SuggestedRepository = {
@@ -1344,6 +1348,30 @@ describe("PublicAPIConverter", () => {
             const appError = converter.fromError(connectError);
             expect(appError.code).to.equal(ErrorCodes.INTERNAL_SERVER_ERROR);
             expect(appError.message).to.equal("unknown");
+        });
+    });
+
+    describe("toSSHPublicKey", () => {
+        const envVar: UserSSHPublicKey = {
+            id: "1",
+            userId: "1",
+            name: "FOO",
+            key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDCnrN9UdK1bNGPmZfenTWXLuYYDjlYvZE8S+WOfP08WpR1GETzX5ZvgYOEZGwEE8KUPHC9cge4Hvo/ydIS9aqbZ5MiVGJ8cAIq1Ic89SjlDWU6fl8TwIqOPCi2imAASlEDP4q8vMLK1N6UOW1EVbxyL3uybGd10ysC1t1FxFPveIGNsYE/MOQeuEWS16AplpXYXIfVRSlgAskeBft2w8Ud3B4gNe8ECLA/FXu96UpvZkdtOarA3JZ9Z27GveNJg9Mtmmw0+US0KXiO9x9NyH7G8+mqVDwDY+nNvaFA5gtQxkkl/uY2oz9k/B4Rjlj3jOiUXe5uQs3XUm5m8g9a9fh62DabLpA2fEvtfg+a/VqNe52dNa5YjupwvBd6Inb5uMW/TYjNl6bNHPlXFKw/nwLOVzukpkjxMZUKS6+4BGkpoasj6y2rTU/wkpbdD8J7yjI1p6J9aKkC6KksIWgN7xGmHkv2PCGDqMHTNbnQyowtNKMgA/667vAYJ0qW7HAHBFXJRs6uRi/DI3+c1QV2s4wPCpEHDIYApovQ0fbON4WDPoGMyHd7kPh9xB/bX7Dj0uMXImu1pdTd62fQ/1XXX64+vjAAXS/P9RSCD0RCRt/K3LPKl2m7GPI3y1niaE52XhxZw+ms9ays6NasNVMw/ZC+f02Ti+L5FBEVf8230RVVRQ== notfound@gitpod.io",
+            fingerprint: "ykjP/b5aqoa3envmXzWpPMCGgEFMu3QvubfSTNrJCMA=",
+            creationTime: "2023-10-16T20:18:24.923Z",
+            lastUsedTime: "2023-10-16T20:18:24.923Z",
+        };
+        const userEnvVar = new SSHPublicKey({
+            id: "1",
+            name: "FOO",
+            key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDCnrN9UdK1bNGPmZfenTWXLuYYDjlYvZE8S+WOfP08WpR1GETzX5ZvgYOEZGwEE8KUPHC9cge4Hvo/ydIS9aqbZ5MiVGJ8cAIq1Ic89SjlDWU6fl8TwIqOPCi2imAASlEDP4q8vMLK1N6UOW1EVbxyL3uybGd10ysC1t1FxFPveIGNsYE/MOQeuEWS16AplpXYXIfVRSlgAskeBft2w8Ud3B4gNe8ECLA/FXu96UpvZkdtOarA3JZ9Z27GveNJg9Mtmmw0+US0KXiO9x9NyH7G8+mqVDwDY+nNvaFA5gtQxkkl/uY2oz9k/B4Rjlj3jOiUXe5uQs3XUm5m8g9a9fh62DabLpA2fEvtfg+a/VqNe52dNa5YjupwvBd6Inb5uMW/TYjNl6bNHPlXFKw/nwLOVzukpkjxMZUKS6+4BGkpoasj6y2rTU/wkpbdD8J7yjI1p6J9aKkC6KksIWgN7xGmHkv2PCGDqMHTNbnQyowtNKMgA/667vAYJ0qW7HAHBFXJRs6uRi/DI3+c1QV2s4wPCpEHDIYApovQ0fbON4WDPoGMyHd7kPh9xB/bX7Dj0uMXImu1pdTd62fQ/1XXX64+vjAAXS/P9RSCD0RCRt/K3LPKl2m7GPI3y1niaE52XhxZw+ms9ays6NasNVMw/ZC+f02Ti+L5FBEVf8230RVVRQ== notfound@gitpod.io",
+            fingerprint: "ykjP/b5aqoa3envmXzWpPMCGgEFMu3QvubfSTNrJCMA=",
+            creationTime: Timestamp.fromDate(new Date("2023-10-16T20:18:24.923Z")),
+            lastUsedTime: Timestamp.fromDate(new Date("2023-10-16T20:18:24.923Z")),
+        });
+        it("should convert ssh public key variable types", () => {
+            const result = converter.toSSHPublicKey(envVar);
+            expect(result).to.deep.equal(userEnvVar);
         });
     });
 });
