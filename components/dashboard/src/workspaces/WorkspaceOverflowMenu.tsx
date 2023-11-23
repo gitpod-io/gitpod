@@ -11,12 +11,12 @@ import { ItemFieldContextMenu } from "../components/ItemsList";
 import { useStopWorkspaceMutation } from "../data/workspaces/stop-workspace-mutation";
 import { useToggleWorkspacedPinnedMutation } from "../data/workspaces/toggle-workspace-pinned-mutation";
 import { useToggleWorkspaceSharedMutation } from "../data/workspaces/toggle-workspace-shared-mutation";
-import { getGitpodService } from "../service/service";
 import ConnectToSSHModal from "./ConnectToSSHModal";
 import { DeleteWorkspaceModal } from "./DeleteWorkspaceModal";
 import { useToast } from "../components/toasts/Toasts";
 import { RenameWorkspaceModal } from "./RenameWorkspaceModal";
 import { AdmissionLevel, Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { workspaceClient } from "../service/public-api";
 
 type WorkspaceEntryOverflowMenuProps = {
     info: Workspace;
@@ -42,8 +42,8 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
 
     //TODO: shift this into ConnectToSSHModal
     const handleConnectViaSSHClick = useCallback(async () => {
-        const ot = await getGitpodService().server.getOwnerToken(workspace.id);
-        setOwnerToken(ot);
+        const response = await workspaceClient.getWorkspaceOwnerToken({ workspaceId: workspace.id });
+        setOwnerToken(response.ownerToken);
         setSSHModalVisible(true);
     }, [workspace.id]);
 

@@ -253,7 +253,7 @@ type User struct {
 	//
 	// +optional if not set, this account is owned by the installation.
 	OrganizationId string `protobuf:"bytes,2,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
-	// name is the username
+	// name is the full name of the user
 	Name string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	// avatar_url is a link to the user avatar
 	AvatarUrl string `protobuf:"bytes,4,opt,name=avatar_url,json=avatarUrl,proto3" json:"avatar_url,omitempty"`

@@ -47,6 +47,16 @@ type WorkspaceServiceClient interface {
 	// StartWorkspace starts an existing workspace.
 	// If the specified workspace is not in stopped phase, this will return the workspace as is.
 	StartWorkspace(context.Context, *connect_go.Request[v1.StartWorkspaceRequest]) (*connect_go.Response[v1.StartWorkspaceResponse], error)
+	// GetWorkspaceDefaultImage returns the default workspace image of specified
+	// workspace.
+	GetWorkspaceDefaultImage(context.Context, *connect_go.Request[v1.GetWorkspaceDefaultImageRequest]) (*connect_go.Response[v1.GetWorkspaceDefaultImageResponse], error)
+	// SendHeartBeat sends a heartbeat to activate the workspace
+	SendHeartBeat(context.Context, *connect_go.Request[v1.SendHeartBeatRequest]) (*connect_go.Response[v1.SendHeartBeatResponse], error)
+	// GetWorkspaceOwnerToken returns an owner token of workspace.
+	GetWorkspaceOwnerToken(context.Context, *connect_go.Request[v1.GetWorkspaceOwnerTokenRequest]) (*connect_go.Response[v1.GetWorkspaceOwnerTokenResponse], error)
+	// GetWorkspaceEditorCredentials returns an credentials that is used in editor
+	// to encrypt and decrypt secrets
+	GetWorkspaceEditorCredentials(context.Context, *connect_go.Request[v1.GetWorkspaceEditorCredentialsRequest]) (*connect_go.Response[v1.GetWorkspaceEditorCredentialsResponse], error)
 }
 
 // NewWorkspaceServiceClient constructs a client for the gitpod.v1.WorkspaceService service. By
@@ -84,16 +94,40 @@ func NewWorkspaceServiceClient(httpClient connect_go.HTTPClient, baseURL string,
 			baseURL+"/gitpod.v1.WorkspaceService/StartWorkspace",
 			opts...,
 		),
+		getWorkspaceDefaultImage: connect_go.NewClient[v1.GetWorkspaceDefaultImageRequest, v1.GetWorkspaceDefaultImageResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.WorkspaceService/GetWorkspaceDefaultImage",
+			opts...,
+		),
+		sendHeartBeat: connect_go.NewClient[v1.SendHeartBeatRequest, v1.SendHeartBeatResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.WorkspaceService/SendHeartBeat",
+			opts...,
+		),
+		getWorkspaceOwnerToken: connect_go.NewClient[v1.GetWorkspaceOwnerTokenRequest, v1.GetWorkspaceOwnerTokenResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.WorkspaceService/GetWorkspaceOwnerToken",
+			opts...,
+		),
+		getWorkspaceEditorCredentials: connect_go.NewClient[v1.GetWorkspaceEditorCredentialsRequest, v1.GetWorkspaceEditorCredentialsResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.WorkspaceService/GetWorkspaceEditorCredentials",
+			opts...,
+		),
 	}
 }
 
 // workspaceServiceClient implements WorkspaceServiceClient.
 type workspaceServiceClient struct {
-	getWorkspace            *connect_go.Client[v1.GetWorkspaceRequest, v1.GetWorkspaceResponse]
-	watchWorkspaceStatus    *connect_go.Client[v1.WatchWorkspaceStatusRequest, v1.WatchWorkspaceStatusResponse]
-	listWorkspaces          *connect_go.Client[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse]
-	createAndStartWorkspace *connect_go.Client[v1.CreateAndStartWorkspaceRequest, v1.CreateAndStartWorkspaceResponse]
-	startWorkspace          *connect_go.Client[v1.StartWorkspaceRequest, v1.StartWorkspaceResponse]
+	getWorkspace                  *connect_go.Client[v1.GetWorkspaceRequest, v1.GetWorkspaceResponse]
+	watchWorkspaceStatus          *connect_go.Client[v1.WatchWorkspaceStatusRequest, v1.WatchWorkspaceStatusResponse]
+	listWorkspaces                *connect_go.Client[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse]
+	createAndStartWorkspace       *connect_go.Client[v1.CreateAndStartWorkspaceRequest, v1.CreateAndStartWorkspaceResponse]
+	startWorkspace                *connect_go.Client[v1.StartWorkspaceRequest, v1.StartWorkspaceResponse]
+	getWorkspaceDefaultImage      *connect_go.Client[v1.GetWorkspaceDefaultImageRequest, v1.GetWorkspaceDefaultImageResponse]
+	sendHeartBeat                 *connect_go.Client[v1.SendHeartBeatRequest, v1.SendHeartBeatResponse]
+	getWorkspaceOwnerToken        *connect_go.Client[v1.GetWorkspaceOwnerTokenRequest, v1.GetWorkspaceOwnerTokenResponse]
+	getWorkspaceEditorCredentials *connect_go.Client[v1.GetWorkspaceEditorCredentialsRequest, v1.GetWorkspaceEditorCredentialsResponse]
 }
 
 // GetWorkspace calls gitpod.v1.WorkspaceService.GetWorkspace.
@@ -121,6 +155,26 @@ func (c *workspaceServiceClient) StartWorkspace(ctx context.Context, req *connec
 	return c.startWorkspace.CallUnary(ctx, req)
 }
 
+// GetWorkspaceDefaultImage calls gitpod.v1.WorkspaceService.GetWorkspaceDefaultImage.
+func (c *workspaceServiceClient) GetWorkspaceDefaultImage(ctx context.Context, req *connect_go.Request[v1.GetWorkspaceDefaultImageRequest]) (*connect_go.Response[v1.GetWorkspaceDefaultImageResponse], error) {
+	return c.getWorkspaceDefaultImage.CallUnary(ctx, req)
+}
+
+// SendHeartBeat calls gitpod.v1.WorkspaceService.SendHeartBeat.
+func (c *workspaceServiceClient) SendHeartBeat(ctx context.Context, req *connect_go.Request[v1.SendHeartBeatRequest]) (*connect_go.Response[v1.SendHeartBeatResponse], error) {
+	return c.sendHeartBeat.CallUnary(ctx, req)
+}
+
+// GetWorkspaceOwnerToken calls gitpod.v1.WorkspaceService.GetWorkspaceOwnerToken.
+func (c *workspaceServiceClient) GetWorkspaceOwnerToken(ctx context.Context, req *connect_go.Request[v1.GetWorkspaceOwnerTokenRequest]) (*connect_go.Response[v1.GetWorkspaceOwnerTokenResponse], error) {
+	return c.getWorkspaceOwnerToken.CallUnary(ctx, req)
+}
+
+// GetWorkspaceEditorCredentials calls gitpod.v1.WorkspaceService.GetWorkspaceEditorCredentials.
+func (c *workspaceServiceClient) GetWorkspaceEditorCredentials(ctx context.Context, req *connect_go.Request[v1.GetWorkspaceEditorCredentialsRequest]) (*connect_go.Response[v1.GetWorkspaceEditorCredentialsResponse], error) {
+	return c.getWorkspaceEditorCredentials.CallUnary(ctx, req)
+}
+
 // WorkspaceServiceHandler is an implementation of the gitpod.v1.WorkspaceService service.
 type WorkspaceServiceHandler interface {
 	// GetWorkspace returns a single workspace.
@@ -139,6 +193,16 @@ type WorkspaceServiceHandler interface {
 	// StartWorkspace starts an existing workspace.
 	// If the specified workspace is not in stopped phase, this will return the workspace as is.
 	StartWorkspace(context.Context, *connect_go.Request[v1.StartWorkspaceRequest]) (*connect_go.Response[v1.StartWorkspaceResponse], error)
+	// GetWorkspaceDefaultImage returns the default workspace image of specified
+	// workspace.
+	GetWorkspaceDefaultImage(context.Context, *connect_go.Request[v1.GetWorkspaceDefaultImageRequest]) (*connect_go.Response[v1.GetWorkspaceDefaultImageResponse], error)
+	// SendHeartBeat sends a heartbeat to activate the workspace
+	SendHeartBeat(context.Context, *connect_go.Request[v1.SendHeartBeatRequest]) (*connect_go.Response[v1.SendHeartBeatResponse], error)
+	// GetWorkspaceOwnerToken returns an owner token of workspace.
+	GetWorkspaceOwnerToken(context.Context, *connect_go.Request[v1.GetWorkspaceOwnerTokenRequest]) (*connect_go.Response[v1.GetWorkspaceOwnerTokenResponse], error)
+	// GetWorkspaceEditorCredentials returns an credentials that is used in editor
+	// to encrypt and decrypt secrets
+	GetWorkspaceEditorCredentials(context.Context, *connect_go.Request[v1.GetWorkspaceEditorCredentialsRequest]) (*connect_go.Response[v1.GetWorkspaceEditorCredentialsResponse], error)
 }
 
 // NewWorkspaceServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -173,6 +237,26 @@ func NewWorkspaceServiceHandler(svc WorkspaceServiceHandler, opts ...connect_go.
 		svc.StartWorkspace,
 		opts...,
 	))
+	mux.Handle("/gitpod.v1.WorkspaceService/GetWorkspaceDefaultImage", connect_go.NewUnaryHandler(
+		"/gitpod.v1.WorkspaceService/GetWorkspaceDefaultImage",
+		svc.GetWorkspaceDefaultImage,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.WorkspaceService/SendHeartBeat", connect_go.NewUnaryHandler(
+		"/gitpod.v1.WorkspaceService/SendHeartBeat",
+		svc.SendHeartBeat,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.WorkspaceService/GetWorkspaceOwnerToken", connect_go.NewUnaryHandler(
+		"/gitpod.v1.WorkspaceService/GetWorkspaceOwnerToken",
+		svc.GetWorkspaceOwnerToken,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.WorkspaceService/GetWorkspaceEditorCredentials", connect_go.NewUnaryHandler(
+		"/gitpod.v1.WorkspaceService/GetWorkspaceEditorCredentials",
+		svc.GetWorkspaceEditorCredentials,
+		opts...,
+	))
 	return "/gitpod.v1.WorkspaceService/", mux
 }
 
@@ -197,4 +281,20 @@ func (UnimplementedWorkspaceServiceHandler) CreateAndStartWorkspace(context.Cont
 
 func (UnimplementedWorkspaceServiceHandler) StartWorkspace(context.Context, *connect_go.Request[v1.StartWorkspaceRequest]) (*connect_go.Response[v1.StartWorkspaceResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.StartWorkspace is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) GetWorkspaceDefaultImage(context.Context, *connect_go.Request[v1.GetWorkspaceDefaultImageRequest]) (*connect_go.Response[v1.GetWorkspaceDefaultImageResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.GetWorkspaceDefaultImage is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) SendHeartBeat(context.Context, *connect_go.Request[v1.SendHeartBeatRequest]) (*connect_go.Response[v1.SendHeartBeatResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.SendHeartBeat is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) GetWorkspaceOwnerToken(context.Context, *connect_go.Request[v1.GetWorkspaceOwnerTokenRequest]) (*connect_go.Response[v1.GetWorkspaceOwnerTokenResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.GetWorkspaceOwnerToken is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) GetWorkspaceEditorCredentials(context.Context, *connect_go.Request[v1.GetWorkspaceEditorCredentialsRequest]) (*connect_go.Response[v1.GetWorkspaceEditorCredentialsResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.GetWorkspaceEditorCredentials is not implemented"))
 }

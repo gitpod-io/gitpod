@@ -17,6 +17,15 @@ import {
     WatchWorkspaceStatusResponse,
     ListWorkspacesRequest,
     ListWorkspacesResponse,
+    GetWorkspaceDefaultImageRequest,
+    GetWorkspaceDefaultImageResponse,
+    GetWorkspaceEditorCredentialsRequest,
+    GetWorkspaceEditorCredentialsResponse,
+    GetWorkspaceOwnerTokenRequest,
+    GetWorkspaceOwnerTokenResponse,
+    SendHeartBeatRequest,
+    SendHeartBeatResponse,
+    GetWorkspaceDefaultImageResponse_Source,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { inject, injectable } from "inversify";
 import { WorkspaceService } from "../workspace/workspace-service";
@@ -172,6 +181,70 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         const info = await this.workspaceService.getWorkspace(ctxUserId(), workspace.id);
         const response = new StartWorkspaceResponse();
         response.workspace = this.apiConverter.toWorkspace(info);
+        return response;
+    }
+
+    async getWorkspaceDefaultImage(
+        req: GetWorkspaceDefaultImageRequest,
+        _: HandlerContext,
+    ): Promise<GetWorkspaceDefaultImageResponse> {
+        if (!req.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        const result = await this.workspaceService.getWorkspaceDefaultImage(ctxUserId(), req.workspaceId);
+        const response = new GetWorkspaceDefaultImageResponse({
+            defaultWorkspaceImage: result.image,
+        });
+        switch (result.source) {
+            case "organization":
+                response.source = GetWorkspaceDefaultImageResponse_Source.ORGANIZATION;
+                break;
+            case "installation":
+                response.source = GetWorkspaceDefaultImageResponse_Source.INSTALLATION;
+                break;
+        }
+        return response;
+    }
+
+    async sendHeartBeat(req: SendHeartBeatRequest, _: HandlerContext): Promise<SendHeartBeatResponse> {
+        if (!req.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        const info = await this.workspaceService.getWorkspace(ctxUserId(), req.workspaceId);
+        if (!info.latestInstance?.id || info.latestInstance.status.phase !== "running") {
+            throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "workspace is not running");
+        }
+        await this.workspaceService.sendHeartBeat(ctxUserId(), {
+            instanceId: info.latestInstance.id,
+            wasClosed: req.disconnected === true,
+        });
+
+        return new SendHeartBeatResponse();
+    }
+
+    async getWorkspaceOwnerToken(
+        req: GetWorkspaceOwnerTokenRequest,
+        _: HandlerContext,
+    ): Promise<GetWorkspaceOwnerTokenResponse> {
+        if (!req.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        const ownerToken = await this.workspaceService.getOwnerToken(ctxUserId(), req.workspaceId);
+        const response = new GetWorkspaceOwnerTokenResponse();
+        response.ownerToken = ownerToken;
+        return response;
+    }
+
+    async getWorkspaceEditorCredentials(
+        req: GetWorkspaceEditorCredentialsRequest,
+        _: HandlerContext,
+    ): Promise<GetWorkspaceEditorCredentialsResponse> {
+        if (!req.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        const credentials = await this.workspaceService.getIDECredentials(ctxUserId(), req.workspaceId);
+        const response = new GetWorkspaceEditorCredentialsResponse();
+        response.editorCredentials = credentials;
         return response;
     }
 }
