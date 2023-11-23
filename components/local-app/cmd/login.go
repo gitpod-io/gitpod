@@ -97,6 +97,9 @@ var loginCmd = &cobra.Command{
 			if err != nil {
 				return fmt.Errorf("cannot connect to Gitpod with this context: %w", err)
 			}
+			if !loginOpts.NonInteractive {
+				fmt.Println("loading your organizations...")
+			}
 			orgsList, err := clnt.Teams.ListTeams(cmd.Context(), connect.NewRequest(&v1.ListTeamsRequest{}))
 			if err != nil {
 				var (
@@ -123,7 +126,6 @@ var loginCmd = &cobra.Command{
 				}
 			}
 
-			fmt.Println("loading your organizations...")
 			orgs := orgsList.Msg.GetTeams()
 			fmt.Print("\033[A\033[K")
 
