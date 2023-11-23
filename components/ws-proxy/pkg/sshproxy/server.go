@@ -39,6 +39,16 @@ var (
 		Name: "gitpod_ws_proxy_ssh_attempt_total",
 		Help: "Total number of SSH attempt",
 	}, []string{"status", "error_type"})
+
+	SSHTunnelOpenedTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "gitpod_ws_proxy_ssh_tunnel_opened_total",
+		Help: "Total number of SSH tunnels opened by the ws-proxy",
+	}, []string{})
+
+	SSHTunnelClosedTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "gitpod_ws_proxy_ssh_tunnel_closed_total",
+		Help: "Total number of SSH tunnels closed by the ws-proxy",
+	}, []string{"code"})
 )
 
 var (
@@ -103,6 +113,8 @@ func init() {
 	metrics.Registry.MustRegister(
 		SSHConnectionCount,
 		SSHAttemptTotal,
+		SSHTunnelClosedTotal,
+		SSHTunnelOpenedTotal,
 	)
 }
 
@@ -132,6 +144,7 @@ func New(signers []ssh.Signer, workspaceInfoProvider common.WorkspaceInfoProvide
 		if err != nil {
 			return nil, err
 		}
+		log.WithField(common.WorkspaceIDIdentifier, workspaceId).Info("success auth via websocket")
 		return &ssh.Permissions{
 			Extensions: map[string]string{
 				"workspaceId":    workspaceId,

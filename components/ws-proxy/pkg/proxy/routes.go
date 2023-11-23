@@ -179,6 +179,17 @@ func (ir *ideRoutes) HandleSSHHostKeyRoute(route *mux.Route, hostKeyList []ssh.S
 	})
 }
 
+var websocketCloseErrorPattern = regexp.MustCompile(`websocket: close (\d+)`)
+
+func extractCloseErrorCode(errStr string) string {
+	matches := websocketCloseErrorPattern.FindStringSubmatch(errStr)
+	if len(matches) < 2 {
+		return "unknown"
+	}
+
+	return matches[1]
+}
+
 func (ir *ideRoutes) HandleSSHOverWebsocketTunnel(route *mux.Route, sshGatewayServer *sshproxy.Server) {
 	r := route.Subrouter()
 	r.Use(logRouteHandlerHandler("HandleSSHOverWebsocketTunnel"))
@@ -187,6 +198,18 @@ func (ir *ideRoutes) HandleSSHOverWebsocketTunnel(route *mux.Route, sshGatewaySe
 	r.Use(ir.Config.WorkspaceAuthHandler)
 
 	r.NewRoute().HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
+		sshproxy.SSHTunnelOpenedTotal.WithLabelValues().Inc()
+		defer func() {
+			code := "unknown"
+			if err != nil {
+				code = extractCloseErrorCode(err.Error())
+			}
+			sshproxy.SSHTunnelClosedTotal.WithLabelValues(code).Inc()
+		}()
+		startTime := time.Now()
+		log := log.WithField("userAgent", r.Header.Get("user-agent")).WithField("remoteAddr", r.RemoteAddr)
+
 		upgrader := websocket.Upgrader{}
 		wsConn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
@@ -205,7 +228,9 @@ func (ir *ideRoutes) HandleSSHOverWebsocketTunnel(route *mux.Route, sshGatewaySe
 			log.WithError(err).Error("tunnel ssh: upgrade to the WebSocket protocol failed")
 			return
 		}
+		log.Debugf("tunnel ssh: Connected from %s", conn.RemoteAddr())
 		sshGatewayServer.HandleConn(conn)
+		log.WithField("duration", time.Since(startTime).Seconds()).Debugf("tunnel ssh: Disconnect from %s", conn.RemoteAddr())
 	})
 }
 
