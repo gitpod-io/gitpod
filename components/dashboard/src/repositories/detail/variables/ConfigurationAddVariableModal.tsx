@@ -11,6 +11,7 @@ import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import Modal, { ModalHeader, ModalBody, ModalFooter, ModalFooterAlert } from "../../../components/Modal";
 import { CheckboxInputField } from "../../../components/forms/CheckboxInputField";
 import { Button } from "@podkit/buttons/Button";
+import { EnvironmentVariableAdmission } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
 
 type Props = {
     configuration: Configuration;
@@ -26,10 +27,12 @@ export const AddVariableModal = ({ configuration, onClose }: Props) => {
     const addVariable = useCallback(async () => {
         await setProjectEnvVar.mutateAsync(
             {
-                projectId: configuration.id,
+                configurationId: configuration.id,
                 name,
                 value,
-                censored: prebuildOnly,
+                admission: prebuildOnly
+                    ? EnvironmentVariableAdmission.PREBUILD
+                    : EnvironmentVariableAdmission.EVERYWHERE,
             },
             { onSuccess: onClose },
         );
