@@ -37,6 +37,7 @@ import { TokenProvider } from "../user/token-provider";
 import { GitHubScope } from "../github/scopes";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import * as crypto from "crypto";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 const signingKeyPair = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
 const validatingKeyPair1 = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
@@ -110,9 +111,6 @@ const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound,
                         installAutomatedPrebuilds: async (user: any, cloneUrl: string) => {
                             webhooks.add(cloneUrl);
                         },
-                        canInstallAutomatedPrebuilds: async () => {
-                            throw "not expected to be called";
-                        },
                     },
                     repositoryProvider: {
                         hasReadAccess: async (user: any, owner: string, repo: string) => {
@@ -124,7 +122,10 @@ const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound,
         },
     });
     rebind(TokenProvider).toConstantValue(<TokenProvider>{
-        getTokenForHost: async () => {
+        getTokenForHost: async (user, host) => {
+            if (host != "github.com") {
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, `SCM Token not found.`);
+            }
             return {
                 value: "test",
                 scopes: [GitHubScope.EMAIL, GitHubScope.PUBLIC, GitHubScope.PRIVATE],
@@ -292,6 +293,12 @@ const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound,
         authProviderConfigs: [],
         installationShortname: "gitpod",
         auth: mockAuthConfig,
+        prebuildLimiter: {
+            "*": {
+                limit: 50,
+                period: 50,
+            },
+        },
     });
     rebind(IAnalyticsWriter).toConstantValue(NullAnalyticsWriter);
     rebind(HostContextProviderFactory)

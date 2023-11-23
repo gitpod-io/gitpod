@@ -19,8 +19,8 @@ type ProxySCMServiceHandler struct {
 	UnimplementedSCMServiceHandler
 }
 
-func (s *ProxySCMServiceHandler) GetSCMToken(ctx context.Context, req *connect_go.Request[v1.GetSCMTokenRequest]) (*connect_go.Response[v1.GetSCMTokenResponse], error) {
-	resp, err := s.Client.GetSCMToken(ctx, req.Msg)
+func (s *ProxySCMServiceHandler) SearchSCMTokens(ctx context.Context, req *connect_go.Request[v1.SearchSCMTokensRequest]) (*connect_go.Response[v1.SearchSCMTokensResponse], error) {
+	resp, err := s.Client.SearchSCMTokens(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err

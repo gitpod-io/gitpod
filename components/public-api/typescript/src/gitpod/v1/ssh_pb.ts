@@ -245,9 +245,9 @@ export class CreateSSHPublicKeyResponse extends Message<CreateSSHPublicKeyRespon
  */
 export class DeleteSSHPublicKeyRequest extends Message<DeleteSSHPublicKeyRequest> {
   /**
-   * @generated from field: string id = 1;
+   * @generated from field: string ssh_key_id = 1;
    */
-  id = "";
+  sshKeyId = "";
 
   constructor(data?: PartialMessage<DeleteSSHPublicKeyRequest>) {
     super();
@@ -257,7 +257,7 @@ export class DeleteSSHPublicKeyRequest extends Message<DeleteSSHPublicKeyRequest
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.DeleteSSHPublicKeyRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 1, name: "ssh_key_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteSSHPublicKeyRequest {

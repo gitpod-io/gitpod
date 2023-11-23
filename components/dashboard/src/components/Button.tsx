@@ -26,6 +26,9 @@ export type ButtonProps = {
 // Allow w/ or w/o handling event argument
 type ButtonOnClickHandler = React.DOMAttributes<HTMLButtonElement>["onClick"] | (() => void);
 
+/**
+ * @deprecated use `@podkit/buttons/Button` instead
+ */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     (
         {

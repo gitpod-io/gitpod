@@ -47,17 +47,17 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
     async updateUserEnvironmentVariable(
         req: PartialMessage<UpdateUserEnvironmentVariableRequest>,
     ): Promise<UpdateUserEnvironmentVariableResponse> {
-        if (!req.envVarId) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "envVarId is required");
+        if (!req.environmentVariableId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "environmentVariableId is required");
         }
 
         const response = new UpdateUserEnvironmentVariableResponse();
 
         const userEnvVars = await getGitpodService().server.getAllEnvVars();
-        const userEnvVarfound = userEnvVars.find((i) => i.id === req.envVarId);
+        const userEnvVarfound = userEnvVars.find((i) => i.id === req.environmentVariableId);
         if (userEnvVarfound) {
             const variable: UserEnvVarValue = {
-                id: req.envVarId,
+                id: req.environmentVariableId,
                 name: req.name ?? userEnvVarfound.name,
                 value: req.value ?? userEnvVarfound.value,
                 repositoryPattern: req.repositoryPattern ?? userEnvVarfound.repositoryPattern,
@@ -67,7 +67,7 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
             await getGitpodService().server.setEnvVar(variable);
 
             const updatedUserEnvVars = await getGitpodService().server.getAllEnvVars();
-            const updatedUserEnvVar = updatedUserEnvVars.find((i) => i.id === req.envVarId);
+            const updatedUserEnvVar = updatedUserEnvVars.find((i) => i.id === req.environmentVariableId);
             if (!updatedUserEnvVar) {
                 throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "could not update env variable");
             }
@@ -113,12 +113,12 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
     async deleteUserEnvironmentVariable(
         req: PartialMessage<DeleteUserEnvironmentVariableRequest>,
     ): Promise<DeleteUserEnvironmentVariableResponse> {
-        if (!req.envVarId) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "envVarId is required");
+        if (!req.environmentVariableId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "environmentVariableId is required");
         }
 
         const variable: UserEnvVarValue = {
-            id: req.envVarId,
+            id: req.environmentVariableId,
             name: "",
             value: "",
             repositoryPattern: "",
@@ -147,8 +147,8 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
     async updateConfigurationEnvironmentVariable(
         req: PartialMessage<UpdateConfigurationEnvironmentVariableRequest>,
     ): Promise<UpdateConfigurationEnvironmentVariableResponse> {
-        if (!req.envVarId) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "envVarId is required");
+        if (!req.environmentVariableId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "environmentVariableId is required");
         }
         if (!req.configurationId) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configurationId is required");
@@ -157,7 +157,7 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
         const response = new UpdateConfigurationEnvironmentVariableResponse();
 
         const projectEnvVars = await getGitpodService().server.getProjectEnvironmentVariables(req.configurationId);
-        const projectEnvVarfound = projectEnvVars.find((i) => i.id === req.envVarId);
+        const projectEnvVarfound = projectEnvVars.find((i) => i.id === req.environmentVariableId);
         if (projectEnvVarfound) {
             await getGitpodService().server.setProjectEnvironmentVariable(
                 req.configurationId,
@@ -169,7 +169,7 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
             const updatedProjectEnvVars = await getGitpodService().server.getProjectEnvironmentVariables(
                 req.configurationId,
             );
-            const updatedProjectEnvVar = updatedProjectEnvVars.find((i) => i.id === req.envVarId);
+            const updatedProjectEnvVar = updatedProjectEnvVars.find((i) => i.id === req.environmentVariableId);
             if (!updatedProjectEnvVar) {
                 throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "could not update env variable");
             }
@@ -213,11 +213,11 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
     async deleteConfigurationEnvironmentVariable(
         req: PartialMessage<DeleteConfigurationEnvironmentVariableRequest>,
     ): Promise<DeleteConfigurationEnvironmentVariableResponse> {
-        if (!req.envVarId) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "envVarId is required");
+        if (!req.environmentVariableId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "environmentVariableId is required");
         }
 
-        await getGitpodService().server.deleteProjectEnvironmentVariable(req.envVarId);
+        await getGitpodService().server.deleteProjectEnvironmentVariable(req.environmentVariableId);
 
         const response = new DeleteConfigurationEnvironmentVariableResponse();
         return response;

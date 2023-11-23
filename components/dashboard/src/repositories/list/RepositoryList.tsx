@@ -17,6 +17,7 @@ import { RepoListEmptyState } from "./RepoListEmptyState";
 import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
 import { RepositoryTable } from "./RepositoryTable";
 import { LoadingState } from "@podkit/loading/LoadingState";
+import { TableSortOrder } from "@podkit/tables/SortableTable";
 
 const RepositoryListPage: FC = () => {
     useDocumentTitle("Imported repositories");
@@ -25,17 +26,33 @@ const RepositoryListPage: FC = () => {
 
     const params = useQueryParams();
     const [searchTerm, setSearchTerm, searchTermDebounced] = useStateWithDebounce(params.get("search") || "");
+    const [sortBy, setSortBy] = useState(parseSortBy(params));
+    const [sortOrder, setSortOrder] = useState<TableSortOrder>(parseSortOrder(params));
     const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
 
+    // TODO: abstract this into a more generic hook for next sortable table
     // Search/Filter params tracked in url query params
     useEffect(() => {
-        const params = searchTermDebounced ? `?search=${encodeURIComponent(searchTermDebounced)}` : "";
-        history.replace({ search: params });
-    }, [history, searchTermDebounced]);
+        const params = new URLSearchParams();
+        if (searchTermDebounced) {
+            params.set("search", searchTermDebounced);
+        }
+        if (sortBy) {
+            params.set("sortBy", sortBy);
+        }
+        if (sortOrder) {
+            params.set("sortOrder", sortOrder);
+        }
+        params.toString();
+        history.replace({ search: `?${params.toString()}` });
+    }, [history, searchTermDebounced, sortBy, sortOrder]);
 
+    // TODO: handle isError case
     const { data, isLoading, isFetching, isFetchingNextPage, isPreviousData, hasNextPage, fetchNextPage } =
         useListConfigurations({
             searchTerm: searchTermDebounced,
+            sortBy: sortBy,
+            sortOrder: sortOrder,
         });
 
     const handleRepoImported = useCallback(
@@ -43,6 +60,14 @@ const RepositoryListPage: FC = () => {
             history.push(`/repositories/${configuration.id}`);
         },
         [history],
+    );
+
+    const handleSort = useCallback(
+        (columnName: string, newSortOrder: TableSortOrder) => {
+            setSortBy(columnName);
+            setSortOrder(newSortOrder);
+        },
+        [setSortOrder],
     );
 
     const configurations = useMemo(() => {
@@ -74,6 +99,8 @@ const RepositoryListPage: FC = () => {
                     <RepositoryTable
                         searchTerm={searchTerm}
                         configurations={configurations}
+                        sortBy={sortBy}
+                        sortOrder={sortOrder}
                         // we check isPreviousData too so we don't show spinner if it's a background refresh
                         isSearching={isFetching && isPreviousData}
                         isFetchingNextPage={isFetchingNextPage}
@@ -81,6 +108,7 @@ const RepositoryListPage: FC = () => {
                         hasMoreThanOnePage={hasMoreThanOnePage}
                         onLoadNextPage={() => fetchNextPage()}
                         onSearchTermChange={setSearchTerm}
+                        onSort={handleSort}
                     />
                 )}
 
@@ -98,3 +126,19 @@ const RepositoryListPage: FC = () => {
 };
 
 export default RepositoryListPage;
+
+const parseSortOrder = (params: URLSearchParams) => {
+    const sortOrder = params.get("sortOrder");
+    if (sortOrder === "asc" || sortOrder === "desc") {
+        return sortOrder;
+    }
+    return "asc";
+};
+
+const parseSortBy = (params: URLSearchParams) => {
+    const sortBy = params.get("sortBy");
+    if (sortBy === "name" || sortBy === "creationTime") {
+        return sortBy;
+    }
+    return "name";
+};

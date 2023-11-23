@@ -891,13 +891,6 @@ export interface GuessGitTokenScopesParams {
     host: string;
     repoUrl: string;
     gitCommand: string;
-    currentToken: GitToken;
-}
-
-export interface GitToken {
-    token: string;
-    user: string;
-    scopes: string[];
 }
 
 export interface GuessedGitTokenScopes {

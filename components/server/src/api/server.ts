@@ -48,9 +48,13 @@ import { WorkspaceServiceAPI } from "./workspace-service-api";
 import { ConfigurationServiceAPI } from "./configuration-service-api";
 import { AuthProviderServiceAPI } from "./auth-provider-service-api";
 import { EnvironmentVariableServiceAPI } from "./envvar-service-api";
+import { SSHServiceAPI } from "./ssh-service-api";
 import { Unauthenticated } from "./unauthenticated";
 import { SubjectId } from "../auth/subject-id";
 import { BearerAuth } from "../auth/bearer-authenticator";
+import { ScmServiceAPI } from "./scm-service-api";
+import { SCMService } from "@gitpod/public-api/lib/gitpod/v1/scm_connect";
+import { SSHService } from "@gitpod/public-api/lib/gitpod/v1/ssh_connect";
 
 decorate(injectable(), PublicAPIConverter);
 
@@ -67,6 +71,8 @@ export class API {
     @inject(ConfigurationServiceAPI) private readonly configurationServiceApi: ConfigurationServiceAPI;
     @inject(AuthProviderServiceAPI) private readonly authProviderServiceApi: AuthProviderServiceAPI;
     @inject(EnvironmentVariableServiceAPI) private readonly envvarServiceApi: EnvironmentVariableServiceAPI;
+    @inject(ScmServiceAPI) private readonly scmServiceAPI: ScmServiceAPI;
+    @inject(SSHServiceAPI) private readonly sshServiceApi: SSHServiceAPI;
     @inject(StatsServiceAPI) private readonly tatsServiceApi: StatsServiceAPI;
     @inject(HelloServiceAPI) private readonly helloServiceApi: HelloServiceAPI;
     @inject(SessionHandler) private readonly sessionHandler: SessionHandler;
@@ -121,6 +127,8 @@ export class API {
                         service(ConfigurationService, this.configurationServiceApi),
                         service(AuthProviderService, this.authProviderServiceApi),
                         service(EnvironmentVariableService, this.envvarServiceApi),
+                        service(SCMService, this.scmServiceAPI),
+                        service(SSHService, this.sshServiceApi),
                     ]) {
                         router.service(type, new Proxy(impl, this.interceptService(type)));
                     }
@@ -153,6 +161,7 @@ export class API {
                         requestMethod: `${grpc_service}/${prop as string}`,
                         startTime: performance.now(),
                         signal: connectContext.signal,
+                        headers: connectContext.requestHeader,
                     };
 
                     const withRequestContext = <T>(fn: () => T): T => runWithRequestContext(requestContext, fn);
@@ -372,6 +381,8 @@ export class API {
         bind(ConfigurationServiceAPI).toSelf().inSingletonScope();
         bind(AuthProviderServiceAPI).toSelf().inSingletonScope();
         bind(EnvironmentVariableServiceAPI).toSelf().inSingletonScope();
+        bind(ScmServiceAPI).toSelf().inSingletonScope();
+        bind(SSHServiceAPI).toSelf().inSingletonScope();
         bind(StatsServiceAPI).toSelf().inSingletonScope();
         bind(API).toSelf().inSingletonScope();
     }

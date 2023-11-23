@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspacesRequest, ListWorkspacesResponse, WatchWorkspaceStatusRequest, WatchWorkspaceStatusResponse } from "./workspace_pb.js";
+import { CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspacesRequest, ListWorkspacesResponse, StartWorkspaceRequest, StartWorkspaceResponse, WatchWorkspaceStatusRequest, WatchWorkspaceStatusResponse } from "./workspace_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -33,7 +33,7 @@ export const WorkspaceService = {
       kind: MethodKind.Unary,
     },
     /**
-     * WatchWorkspaceStatus watchs the workspaces status changes
+     * WatchWorkspaceStatus watches the workspaces status changes
      *
      * workspace_id +return NOT_FOUND Workspace does not exist
      *
@@ -56,6 +56,28 @@ export const WorkspaceService = {
       O: ListWorkspacesResponse,
       kind: MethodKind.Unary,
     },
+    /**
+     * CreateAndStartWorkspace creates a new workspace and starts it.
+     *
+     * @generated from rpc gitpod.v1.WorkspaceService.CreateAndStartWorkspace
+     */
+    createAndStartWorkspace: {
+      name: "CreateAndStartWorkspace",
+      I: CreateAndStartWorkspaceRequest,
+      O: CreateAndStartWorkspaceResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * StartWorkspace starts an existing workspace.
+     * If the specified workspace is not in stopped phase, this will return the workspace as is.
+     *
+     * @generated from rpc gitpod.v1.WorkspaceService.StartWorkspace
+     */
+    startWorkspace: {
+      name: "StartWorkspace",
+      I: StartWorkspaceRequest,
+      O: StartWorkspaceResponse,
+      kind: MethodKind.Unary,
+    },
   }
 } as const;
-

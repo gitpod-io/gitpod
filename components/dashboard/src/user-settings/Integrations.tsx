@@ -35,10 +35,11 @@ import {
     AuthProviderDescription,
     AuthProviderType,
 } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
-import { authProviderClient } from "../service/public-api";
+import { authProviderClient, scmClient } from "../service/public-api";
 import { useCreateUserAuthProviderMutation } from "../data/auth-providers/create-user-auth-provider-mutation";
 import { useUpdateUserAuthProviderMutation } from "../data/auth-providers/update-user-auth-provider-mutation";
 import { useDeleteUserAuthProviderMutation } from "../data/auth-providers/delete-user-auth-provider-mutation";
+import { Button } from "@podkit/buttons/Button";
 
 export default function Integrations() {
     return (
@@ -76,7 +77,7 @@ function GitProviders() {
                 if (!provider) {
                     continue;
                 }
-                const token = await getGitpodService().server.getToken({ host: provider.host });
+                const token = (await scmClient.searchSCMTokens({ host: provider.host })).tokens[0];
                 scopesByProvider.set(provider.id, token?.scopes?.slice() || []);
             }
             setAllScopes(scopesByProvider);
@@ -181,7 +182,7 @@ function GitProviders() {
     const startEditPermissions = async (provider: AuthProviderDescription) => {
         // todo: add spinner
 
-        const token = await getGitpodService().server.getToken({ host: provider.host });
+        const token = (await scmClient.searchSCMTokens({ host: provider.host })).tokens[0];
         if (token) {
             setEditModal({ provider, prevScopes: new Set(token.scopes), nextScopes: new Set(token.scopes) });
         }
@@ -332,12 +333,12 @@ function GitProviders() {
                         </CheckboxListField>
                     </ModalBody>
                     <ModalFooter>
-                        <button
+                        <Button
                             onClick={() => updatePermissions()}
                             disabled={equals(editModal.nextScopes, editModal.prevScopes)}
                         >
                             Update Permissions
-                        </button>
+                        </Button>
                     </ModalFooter>
                 </Modal>
             )}
@@ -486,10 +487,10 @@ function GitIntegrations() {
                 </div>
                 {/* Hide create button if ff is disabled */}
                 {userGitAuthProviders && (providers || []).length !== 0 ? (
-                    <div className="mt-3 flex mt-0">
-                        <button onClick={() => setModal({ mode: "new" })} className="ml-2">
+                    <div className="flex mt-0">
+                        <Button onClick={() => setModal({ mode: "new" })} className="ml-2">
                             New Integration
-                        </button>
+                        </Button>
                     </div>
                 ) : null}
             </div>
@@ -504,9 +505,7 @@ function GitIntegrations() {
                             In addition to the default Git Providers you can authorize
                             <br /> with a self-hosted instance of a provider.
                         </Subheading>
-                        <button className="self-center" onClick={() => setModal({ mode: "new" })}>
-                            New Integration
-                        </button>
+                        <Button onClick={() => setModal({ mode: "new" })}>New Integration</Button>
                     </div>
                 </div>
             )}
@@ -895,9 +894,9 @@ export function GitIntegrationModal(
                 )}
             </div>
             <div className="flex justify-end mt-6">
-                <button onClick={() => validate() && activate()} disabled={!!validationError || busy}>
+                <Button onClick={() => validate() && activate()} disabled={!!validationError || busy}>
                     Activate Integration
-                </button>
+                </Button>
             </div>
         </Modal>
     );

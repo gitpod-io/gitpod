@@ -25,6 +25,7 @@ import search from "../icons/search.svg";
 import Tooltip from "../components/Tooltip";
 import { prebuildClient } from "../service/public-api";
 import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { Button } from "@podkit/buttons/Button";
 
 export default function ProjectsPage() {
     const history = useHistory();
@@ -224,12 +225,9 @@ export default function ProjectsPage() {
                                 Authorize {showAuthBanner.host} <br />
                                 to access branch information.
                             </div>
-                            <button
-                                className={`primary mr-2 py-2`}
-                                onClick={() => onConfirmShowAuthModal(showAuthBanner.host)}
-                            >
+                            <Button className={`mr-2 py-2`} onClick={() => onConfirmShowAuthModal(showAuthBanner.host)}>
                                 Authorize Provider
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 ) : (
@@ -283,12 +281,9 @@ export default function ProjectsPage() {
                                         </span>
                                     )}
                                     {!isResuming && (
-                                        <button
-                                            className="gp-link hover:text-gray-600"
-                                            onClick={() => resumePrebuilds()}
-                                        >
+                                        <Button variant="link" onClick={() => resumePrebuilds()}>
                                             Resume prebuilds
-                                        </button>
+                                        </Button>
                                     )}
                                 </Alert>
                             )}
@@ -376,11 +371,11 @@ export default function ProjectsPage() {
                                                     </a>
                                                     <span className="flex-grow" />
                                                     <a href={gitpodHostUrl.withContext(`${branch.url}`).toString()}>
-                                                        <button
-                                                            className={`primary mr-2 py-2 opacity-0 group-hover:opacity-100`}
+                                                        <Button
+                                                            className={`mr-2 py-2 opacity-0 group-hover:opacity-100`}
                                                         >
                                                             New Workspace
-                                                        </button>
+                                                        </Button>
                                                     </a>
                                                     <ItemFieldContextMenu
                                                         className="py-0.5"

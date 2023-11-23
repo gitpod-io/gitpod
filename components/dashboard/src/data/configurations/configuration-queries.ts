@@ -7,6 +7,8 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { configurationClient } from "../../service/public-api";
+import { SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
+import { TableSortOrder } from "@podkit/tables/SortableTable";
 import type { Configuration, UpdateConfigurationRequest } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import type { PartialMessage } from "@bufbuild/protobuf";
 
@@ -15,13 +17,15 @@ const BASE_KEY = "configurations";
 type ListConfigurationsArgs = {
     pageSize?: number;
     searchTerm?: string;
+    sortBy: string;
+    sortOrder: TableSortOrder;
 };
 
-export const useListConfigurations = ({ searchTerm = "", pageSize }: ListConfigurationsArgs) => {
+export const useListConfigurations = ({ searchTerm = "", pageSize, sortBy, sortOrder }: ListConfigurationsArgs) => {
     const { data: org } = useCurrentOrg();
 
     return useInfiniteQuery(
-        getListConfigurationsQueryKey(org?.id || "", { searchTerm, pageSize }),
+        getListConfigurationsQueryKey(org?.id || "", { searchTerm, pageSize, sortBy, sortOrder }),
         // QueryFn receives the past page's pageParam as it's argument
         async ({ pageParam: nextToken }) => {
             if (!org) {
@@ -32,6 +36,12 @@ export const useListConfigurations = ({ searchTerm = "", pageSize }: ListConfigu
                 organizationId: org.id,
                 searchTerm,
                 pagination: { pageSize, token: nextToken },
+                sort: [
+                    {
+                        field: sortBy,
+                        order: sortOrder === "desc" ? SortOrder.DESC : SortOrder.ASC,
+                    },
+                ],
             });
 
             return {

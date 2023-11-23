@@ -21,6 +21,8 @@ import { useAuthProviderDescriptions } from "./data/auth-providers/auth-provider
 import { SetupPending } from "./login/SetupPending";
 import { useNeedsSetup } from "./dedicated-setup/use-needs-setup";
 import { AuthProviderDescription } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import { Button, ButtonProps } from "@podkit/buttons/Button";
+import { cn } from "@podkit/lib/cn";
 
 export function markLoggedIn() {
     document.cookie = GitpodCookie.generateCookie(window.location.hostname);
@@ -153,28 +155,23 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
 
                                 <div className="w-56 mx-auto flex flex-col space-y-3 items-center">
                                     {providerFromContext ? (
-                                        <button
+                                        <LoginButton
                                             key={"button" + providerFromContext.host}
-                                            className="btn-login flex-none w-56 h-10 p-0 inline-flex rounded-xl"
                                             onClick={() => openLogin(providerFromContext!.host)}
                                         >
                                             {iconForAuthProvider(providerFromContext.type)}
                                             <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
                                                 Continue with {simplifyProviderName(providerFromContext.host)}
                                             </span>
-                                        </button>
+                                        </LoginButton>
                                     ) : (
                                         authProviders.data?.map((ap) => (
-                                            <button
-                                                key={"button" + ap.host}
-                                                className="btn-login flex-none w-56 h-10 p-0 inline-flex rounded-xl"
-                                                onClick={() => openLogin(ap.host)}
-                                            >
+                                            <LoginButton key={"button" + ap.host} onClick={() => openLogin(ap.host)}>
                                                 {iconForAuthProvider(ap.type)}
                                                 <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
                                                     Continue with {simplifyProviderName(ap.host)}
                                                 </span>
-                                            </button>
+                                            </LoginButton>
                                         ))
                                     )}
                                     <SSOLoginForm
@@ -213,5 +210,26 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                 </div>
             </div>
         </div>
+    );
+};
+
+// TODO: Do we really want a different style button for the login page, or could we use our normal secondary variant?
+type LoginButtonProps = {
+    onClick: ButtonProps["onClick"];
+};
+const LoginButton: FC<LoginButtonProps> = ({ children, onClick }) => {
+    return (
+        <Button
+            // Using ghost here to avoid the default button styles
+            variant="ghost"
+            // TODO: Determine if we want this one-off style of button
+            className={cn(
+                "border-none bg-gray-100 hover:bg-gray-200 text-gray-500 dark:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-600 hover:opacity-100",
+                "flex-none w-56 h-10 p-0 inline-flex rounded-xl",
+            )}
+            onClick={onClick}
+        >
+            {children}
+        </Button>
     );
 };

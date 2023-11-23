@@ -11,10 +11,10 @@ import { Item, ItemField, ItemsList } from "../components/ItemsList";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { EnvironmentVariableEntry } from "./EnvironmentVariableEntry";
-import { Button } from "../components/Button";
 import { Heading2, Subheading } from "../components/typography/headings";
 import { envVarClient } from "../service/public-api";
 import { UserEnvironmentVariable } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
+import { Button } from "@podkit/buttons/Button";
 
 interface EnvVarModalProps {
     envVar: UserEnvVarValue;
@@ -101,10 +101,10 @@ function AddEnvVarModal(p: EnvVarModalProps) {
                 </div>
             </ModalBody>
             <ModalFooter>
-                <Button type="secondary" onClick={p.onClose}>
+                <Button variant="secondary" onClick={p.onClose}>
                     Cancel
                 </Button>
-                <Button htmlType="submit">{isNew ? "Add" : "Update"} Variable</Button>
+                <Button type="submit">{isNew ? "Add" : "Update"} Variable</Button>
             </ModalFooter>
         </Modal>
     );
@@ -189,7 +189,7 @@ export default function EnvVars() {
     const save = async (variable: UserEnvVarValue) => {
         if (variable.id) {
             await envVarClient.updateUserEnvironmentVariable({
-                envVarId: variable.id,
+                environmentVariableId: variable.id,
                 name: variable.name,
                 value: variable.value,
                 repositoryPattern: variable.repositoryPattern,
@@ -207,7 +207,7 @@ export default function EnvVars() {
 
     const deleteVariable = async (variable: UserEnvVarValue) => {
         await envVarClient.deleteUserEnvironmentVariable({
-            envVarId: variable.id,
+            environmentVariableId: variable.id,
         });
         await update();
     };
@@ -258,10 +258,10 @@ export default function EnvVars() {
                     </Subheading>
                 </div>
                 {envVars.length !== 0 ? (
-                    <div className="mt-3 flex mt-0">
-                        <button onClick={add} className="ml-2">
+                    <div className="flex mt-0">
+                        <Button onClick={add} className="ml-2">
                             New Variable
-                        </button>
+                        </Button>
                     </div>
                 ) : null}
             </div>
@@ -275,7 +275,7 @@ export default function EnvVars() {
                             In addition to user-specific environment variables you can also pass variables through a
                             workspace creation URL.
                         </Subheading>
-                        <button onClick={add}>New Variable</button>
+                        <Button onClick={add}>New Variable</Button>
                     </div>
                 </div>
             ) : (

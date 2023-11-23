@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { GetSCMTokenRequest, GetSCMTokenResponse, GuessTokenScopesRequest, GuessTokenScopesResponse, ListSuggestedRepositoriesRequest, ListSuggestedRepositoriesResponse, SearchRepositoriesRequest, SearchRepositoriesResponse } from "./scm_pb.js";
+import { GuessTokenScopesRequest, GuessTokenScopesResponse, ListSuggestedRepositoriesRequest, ListSuggestedRepositoriesResponse, SearchRepositoriesRequest, SearchRepositoriesResponse, SearchSCMTokensRequest, SearchSCMTokensResponse } from "./scm_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -19,12 +19,12 @@ export const SCMService = {
   typeName: "gitpod.v1.SCMService",
   methods: {
     /**
-     * @generated from rpc gitpod.v1.SCMService.GetSCMToken
+     * @generated from rpc gitpod.v1.SCMService.SearchSCMTokens
      */
-    getSCMToken: {
-      name: "GetSCMToken",
-      I: GetSCMTokenRequest,
-      O: GetSCMTokenResponse,
+    searchSCMTokens: {
+      name: "SearchSCMTokens",
+      I: SearchSCMTokensRequest,
+      O: SearchSCMTokensResponse,
       kind: MethodKind.Unary,
     },
     /**

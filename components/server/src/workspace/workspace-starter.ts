@@ -1822,19 +1822,15 @@ export class WorkspaceStarter {
         }
 
         const gitToken = await this.tokenProvider.getTokenForHost(user, host);
+        if (!gitToken) {
+            throw new Error(`No token for host: ${host}`);
+        }
         const username = gitToken.username || "oauth2";
 
         const gitConfig = new GitConfig();
         gitConfig.setAuthentication(GitAuthMethod.BASIC_AUTH);
         gitConfig.setAuthUser(username);
         gitConfig.setAuthPassword(gitToken.value);
-
-        if (this.config.insecureNoDomain) {
-            const token = await this.tokenProvider.getTokenForHost(user, host);
-            gitConfig.setAuthentication(GitAuthMethod.BASIC_AUTH);
-            gitConfig.setAuthUser(token.username || "oauth2");
-            gitConfig.setAuthPassword(token.value);
-        }
 
         const userGitConfig = workspace.config.gitConfig;
         if (!!userGitConfig) {

@@ -27,6 +27,8 @@ import { validate as uuidValidate } from "uuid";
 import { PaginationToken, generatePaginationToken, parsePaginationToken } from "./pagination";
 import { ctxUserId } from "../util/request-context";
 import { UserService } from "../user/user-service";
+import { SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
+import { Project } from "@gitpod/gitpod-protocol";
 import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 
 function buildUpdateObject<T extends Record<string, any>>(obj: T): Partial<T> {
@@ -118,12 +120,23 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
 
         const paginationToken = parsePaginationToken(req.pagination?.token);
 
+        // grab the first sort entry - only 1 supported here
+        const sort = req.sort?.[0];
+        // defaults to name
+        const orderBy = sort?.field || "name";
+        const sortOrder = sort?.order || SortOrder.ASC;
+        // defaults to ascending
+        const orderDir: "ASC" | "DESC" = sortOrder === SortOrder.DESC ? "DESC" : "ASC";
+
+        if (!["name", "creationTime"].includes(orderBy as string)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "orderBy must be one of 'name' or 'creationTime'");
+        }
+
         const { rows } = await this.projectService.findProjects(ctxUserId(), {
             organizationId: req.organizationId,
             searchTerm: req.searchTerm,
-            // TODO: support sorting params from req.pagination
-            orderBy: "name",
-            orderDir: "ASC",
+            orderBy: orderBy as keyof Project,
+            orderDir,
             // We request 1 additional record to help determine if there are more results
             limit: limit + 1,
             offset: paginationToken.offset,

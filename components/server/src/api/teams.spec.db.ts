@@ -29,6 +29,10 @@ import { ProjectsService } from "../projects/projects-service";
 import { AuthProviderService } from "../auth/auth-provider-service";
 import { BearerAuth } from "../auth/bearer-authenticator";
 import { EnvVarService } from "../user/env-var-service";
+import { ScmService } from "../scm/scm-service";
+import { ContextService } from "../workspace/context-service";
+import { ContextParser } from "../workspace/context-parser-service";
+import { SSHKeyService } from "../user/sshkey-service";
 
 const expect = chai.expect;
 
@@ -55,6 +59,10 @@ export class APITeamsServiceSpec {
         this.container.bind(ProjectsService).toConstantValue({} as ProjectsService);
         this.container.bind(AuthProviderService).toConstantValue({} as AuthProviderService);
         this.container.bind(EnvVarService).toConstantValue({} as EnvVarService);
+        this.container.bind(ScmService).toConstantValue({} as ScmService);
+        this.container.bind(ContextService).toConstantValue({} as ContextService);
+        this.container.bind(ContextParser).toConstantValue({} as ContextParser);
+        this.container.bind(SSHKeyService).toConstantValue({} as SSHKeyService);
 
         // Clean-up database
         const typeorm = testContainer.get<TypeORM>(TypeORM);

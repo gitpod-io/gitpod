@@ -7,6 +7,7 @@
 import { FunctionComponent } from "react";
 import { Heading1, Subheading } from "../components/typography/headings";
 import gitpodIcon from "../icons/gitpod.svg";
+import { Button } from "@podkit/buttons/Button";
 
 export const Blocked: FunctionComponent = () => {
     return (
@@ -23,7 +24,7 @@ export const Blocked: FunctionComponent = () => {
                 .
             </Subheading>
             <a className="mx-auto" href="mailto:support@gitpod.io?Subject=Blocked">
-                <button className="secondary">Contact Support</button>
+                <Button variant="secondary">Contact Support</Button>
             </a>
         </div>
     );

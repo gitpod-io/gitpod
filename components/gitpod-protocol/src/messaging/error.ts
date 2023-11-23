@@ -5,9 +5,15 @@
  */
 
 import { scrubber } from "../util/scrubbing";
+import { PlainMessage } from "@bufbuild/protobuf";
+import {
+    InvalidGitpodYMLError as InvalidGitpodYMLErrorData,
+    RepositoryNotFoundError as RepositoryNotFoundErrorData,
+    RepositoryUnauthorizedError as RepositoryUnauthorizedErrorData,
+} from "@gitpod/public-api/lib/gitpod/v1/error_pb";
 
 export class ApplicationError extends Error {
-    constructor(public readonly code: ErrorCode, message: string, public readonly data?: any) {
+    constructor(readonly code: ErrorCode, readonly message: string, readonly data?: any) {
         super(message);
         this.data = scrubber.scrub(this.data, true);
     }
@@ -18,6 +24,25 @@ export class ApplicationError extends Error {
             message: this.message,
             data: this.data,
         };
+    }
+}
+
+export class RepositoryNotFoundError extends ApplicationError {
+    constructor(readonly info: PlainMessage<RepositoryNotFoundErrorData>) {
+        // on gRPC we remap to PRECONDITION_FAILED, all error code for backwards compatibility with the dashboard
+        super(ErrorCodes.NOT_FOUND, "Repository not found.", info);
+    }
+}
+export class UnauthorizedRepositoryAccessError extends ApplicationError {
+    constructor(readonly info: PlainMessage<RepositoryUnauthorizedErrorData>) {
+        // on gRPC we remap to PRECONDITION_FAILED, all error code for backwards compatibility with the dashboard
+        super(ErrorCodes.NOT_AUTHENTICATED, "Repository unauthorized.", info);
+    }
+}
+export class InvalidGitpodYMLError extends ApplicationError {
+    constructor(readonly info: PlainMessage<InvalidGitpodYMLErrorData>) {
+        // on gRPC we remap to PRECONDITION_FAILED, all error code for backwards compatibility with the dashboard
+        super(ErrorCodes.INVALID_GITPOD_YML, "Invalid gitpod.yml: " + info.violations.join(","), info);
     }
 }
 
@@ -118,6 +143,9 @@ export const ErrorCodes = {
 
     // 501 EE Feature
     EE_FEATURE: 501 as const,
+
+    // 521 Unimplemented
+    UNIMPLEMENTED: 521 as const,
 
     // 555 EE License Required
     EE_LICENSE_REQUIRED: 555 as const,

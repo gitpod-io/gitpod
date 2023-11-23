@@ -4,13 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import {
-    AdditionalUserData,
-    CommitContext,
-    GitpodServer,
-    SuggestedRepository,
-    WithReferrerContext,
-} from "@gitpod/gitpod-protocol";
+import { AdditionalUserData, CommitContext, SuggestedRepository, WithReferrerContext } from "@gitpod/gitpod-protocol";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
@@ -18,7 +12,6 @@ import { FC, FunctionComponent, useCallback, useContext, useEffect, useMemo, use
 import { useHistory, useLocation } from "react-router";
 import Alert from "../components/Alert";
 import { AuthorizeGit, useNeedsGitAuthorization } from "../components/AuthorizeGit";
-import { Button } from "../components/Button";
 import { LinkButton } from "../components/LinkButton";
 import Modal from "../components/Modal";
 import RepositoryFinder from "../components/RepositoryFinder";
@@ -45,6 +38,10 @@ import { settingsPathIntegrations } from "../user-settings/settings.routes";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { Button } from "@podkit/buttons/Button";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
+import { CreateAndStartWorkspaceRequest } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { PartialMessage } from "@bufbuild/protobuf";
 
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
@@ -175,27 +172,10 @@ export function CreateWorkspacePage() {
     const [selectAccountError, setSelectAccountError] = useState<SelectAccountPayload | undefined>(undefined);
 
     const createWorkspace = useCallback(
-        async (options?: Omit<GitpodServer.CreateWorkspaceOptions, "contextUrl" | "organizationId">) => {
+        async (options?: Omit<PartialMessage<CreateAndStartWorkspaceRequest>, "contextUrl" | "organizationId">) => {
             // add options from search params
             const opts = options || {};
 
-            // we already have shown running workspaces to the user
-            opts.ignoreRunningWorkspaceOnSameCommit = true;
-
-            // if user received an INVALID_GITPOD_YML yml for their contextURL they can choose to proceed using default configuration
-            if (workspaceContext.error?.code === ErrorCodes.INVALID_GITPOD_YML) {
-                opts.forceDefaultConfig = true;
-            }
-
-            if (!opts.workspaceClass) {
-                opts.workspaceClass = selectedWsClass;
-            }
-            if (!opts.ideSettings) {
-                opts.ideSettings = {
-                    defaultIde: selectedIde,
-                    useLatestVersion: useLatestIde,
-                };
-            }
             if (!contextURL) {
                 return;
             }
@@ -207,6 +187,21 @@ export function CreateWorkspacePage() {
                 return;
             }
 
+            // if user received an INVALID_GITPOD_YML yml for their contextURL they can choose to proceed using default configuration
+            if (workspaceContext.error?.code === ErrorCodes.INVALID_GITPOD_YML) {
+                opts.forceDefaultConfig = true;
+            }
+
+            if (!opts.workspaceClass) {
+                opts.workspaceClass = selectedWsClass;
+            }
+            if (!opts.editor) {
+                opts.editor = {
+                    name: selectedIde,
+                    version: useLatestIde ? "latest" : undefined,
+                };
+            }
+
             try {
                 if (createWorkspaceMutation.isStarting) {
                     console.log("Skipping duplicate createWorkspace call.");
@@ -214,18 +209,22 @@ export function CreateWorkspacePage() {
                 }
                 // we wait at least 5 secs
                 const timeout = new Promise((resolve) => setTimeout(resolve, 5000));
+
                 const result = await createWorkspaceMutation.createWorkspace({
-                    contextUrl: contextURL,
-                    organizationId,
-                    projectId: selectedProjectID,
+                    source: {
+                        case: "contextUrl",
+                        value: contextURL,
+                    },
                     ...opts,
+                    organizationId,
+                    configurationId: selectedProjectID,
                 });
                 await storeAutoStartOptions();
                 await timeout;
-                if (result.workspaceURL) {
-                    window.location.href = result.workspaceURL;
-                } else if (result.createdWorkspaceId) {
-                    history.push(`/start/#${result.createdWorkspaceId}`);
+                if (result.workspace?.status?.workspaceUrl) {
+                    window.location.href = result.workspace.status.workspaceUrl;
+                } else if (result.workspace!.id) {
+                    history.push(`/start/#${result.workspace!.id}`);
                 }
             } catch (error) {
                 console.log(error);
@@ -422,15 +421,15 @@ export function CreateWorkspacePage() {
                     </InputField>
                 </div>
                 <div className="w-full flex justify-end mt-3 space-x-2 px-6">
-                    <Button
+                    <LoadingButton
                         onClick={onClickCreate}
                         autoFocus={true}
-                        size="block"
-                        loading={createWorkspaceMutation.isStarting || autostart}
+                        className="w-full"
+                        loading={createWorkspaceMutation.isStarting || !!autostart}
                         disabled={continueButtonDisabled}
                     >
                         {createWorkspaceMutation.isStarting ? "Opening Workspace ..." : "Continue"}
-                    </Button>
+                    </LoadingButton>
                 </div>
                 {existingWorkspaces.length > 0 && !createWorkspaceMutation.isStarting && (
                     <div className="w-full flex flex-col justify-end px-6">
@@ -521,7 +520,7 @@ const ErrorMessage: FunctionComponent<ErrorMessageProps> = ({ error, reset, setS
         case ErrorCodes.INVALID_COST_CENTER:
             return <RepositoryInputError title={`The organization '${error.data}' is not valid.`} />;
         case ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED:
-            return <UsageLimitReachedModal onClose={reset} hints={error?.data} />;
+            return <UsageLimitReachedModal onClose={reset} />;
         case ErrorCodes.NEEDS_VERIFICATION:
             return <VerifyModal />;
         default:
@@ -662,10 +661,10 @@ export function LimitReachedModal(p: { children: React.ReactNode }) {
             </div>
             <div className="flex justify-end mt-6">
                 <a href={gitpodHostUrl.asDashboard().toString()}>
-                    <button className="secondary">Go to Dashboard</button>
+                    <Button variant="secondary">Go to Dashboard</Button>
                 </a>
                 <a href={gitpodHostUrl.with({ pathname: "plans" }).toString()} className="ml-2">
-                    <button>Upgrade</button>
+                    <Button>Upgrade</Button>
                 </a>
             </div>
         </Modal>

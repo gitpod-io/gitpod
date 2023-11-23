@@ -6,11 +6,17 @@
 
 import { Loader2 } from "lucide-react";
 import { Delayed } from "./Delayed";
+import { FC } from "react";
 
-export const LoadingState = () => {
-    return (
-        <Delayed>
-            <Loader2 className="animate-spin" />
-        </Delayed>
-    );
+type Props = {
+    delay?: boolean;
+};
+export const LoadingState: FC<Props> = ({ delay = true }) => {
+    const loader = <Loader2 className="animate-spin" />;
+
+    if (!delay) {
+        return loader;
+    }
+
+    return <Delayed>{loader}</Delayed>;
 };

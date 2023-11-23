@@ -49,7 +49,7 @@ message CreateSSHPublicKeyResponse {
 }
 
 message DeleteSSHPublicKeyRequest {
-  string id = 1;
+  string ssh_key_id = 1;
 }
 
 message DeleteSSHPublicKeyResponse {}

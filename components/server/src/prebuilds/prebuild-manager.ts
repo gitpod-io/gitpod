@@ -17,7 +17,6 @@ import {
     User,
     Workspace,
     WorkspaceConfig,
-    WorkspaceInstance,
 } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
@@ -41,12 +40,6 @@ import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { generateAsyncGenerator } from "@gitpod/gitpod-protocol/lib/generate-async-generator";
 import { RedisSubscriber } from "../messaging/redis-subscriber";
 import { ctxSignal } from "../util/request-context";
-
-export class WorkspaceRunningError extends Error {
-    constructor(msg: string, public instance: WorkspaceInstance) {
-        super(msg);
-    }
-}
 
 export interface StartPrebuildParams {
     user: User;
@@ -394,41 +387,6 @@ export class PrebuildManager {
                     organizationId,
                 },
             );
-        }
-    }
-
-    async retriggerPrebuild(
-        ctx: TraceContext,
-        user: User,
-        project: Project | undefined,
-        workspaceId: string,
-    ): Promise<StartPrebuildResult> {
-        const span = TraceContext.startSpan("retriggerPrebuild", ctx);
-        span.setTag("workspaceId", workspaceId);
-        try {
-            const workspacePromise = this.workspaceDB.trace({ span }).findById(workspaceId);
-            const prebuildPromise = this.workspaceDB.trace({ span }).findPrebuildByWorkspaceID(workspaceId);
-            const runningInstance = await this.workspaceDB.trace({ span }).findRunningInstance(workspaceId);
-            if (runningInstance !== undefined) {
-                throw new WorkspaceRunningError("Workspace is still runnning", runningInstance);
-            }
-            span.setTag("starting", true);
-            const workspace = await workspacePromise;
-            if (!workspace) {
-                console.error("Unknown workspace id.", { workspaceId });
-                throw new Error("Unknown workspace " + workspaceId);
-            }
-            const prebuild = await prebuildPromise;
-            if (!prebuild) {
-                throw new Error("No prebuild found for workspace " + workspaceId);
-            }
-            await this.workspaceService.startWorkspace({ span }, user, workspaceId, {}, false);
-            return { prebuildId: prebuild.id, wsid: workspace.id, done: false };
-        } catch (err) {
-            TraceContext.setError({ span }, err);
-            throw err;
-        } finally {
-            span.finish();
         }
     }
 

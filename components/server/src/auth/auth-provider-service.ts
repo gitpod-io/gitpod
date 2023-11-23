@@ -86,44 +86,52 @@ export class AuthProviderService {
         return result.map(toPublic);
     }
 
+    async findAuthProviderDescription(user: User, host: string): Promise<AuthProviderInfo | undefined> {
+        const provider =
+            this.config.authProviderConfigs.find((p) => p.host.toLowerCase() === host?.toLowerCase()) ||
+            (await this.getAllAuthProviderParams()).find((p) => p.host.toLowerCase() === host?.toLowerCase());
+        return provider ? this.toInfo(provider) : undefined;
+    }
+
+    // explicitly copy to avoid bleeding sensitive details
+    private toInfo(ap: AuthProviderParams): AuthProviderInfo {
+        return {
+            authProviderId: ap.id,
+            authProviderType: ap.type,
+            ownerId: ap.ownerId,
+            organizationId: ap.organizationId,
+            verified: ap.verified,
+            host: ap.host,
+            icon: ap.icon,
+            hiddenOnDashboard: ap.hiddenOnDashboard,
+            disallowLogin: ap.disallowLogin,
+            description: ap.description,
+            scopes: getScopesOfProvider(ap),
+            requirements: getRequiredScopes(ap),
+        };
+    }
+
     async getAuthProviderDescriptions(user: User): Promise<AuthProviderInfo[]> {
         const { builtinAuthProvidersConfigured } = this.config;
 
         const authProviders = [...(await this.getAllAuthProviderParams()), ...this.config.authProviderConfigs];
 
-        // explicitly copy to avoid bleeding sensitive details
-        const toInfo = (ap: AuthProviderParams) =>
-            <AuthProviderInfo>{
-                authProviderId: ap.id,
-                authProviderType: ap.type,
-                ownerId: ap.ownerId,
-                organizationId: ap.organizationId,
-                verified: ap.verified,
-                host: ap.host,
-                icon: ap.icon,
-                hiddenOnDashboard: ap.hiddenOnDashboard,
-                disallowLogin: ap.disallowLogin,
-                description: ap.description,
-                scopes: getScopesOfProvider(ap),
-                requirements: getRequiredScopes(ap),
-            };
-
         const result: AuthProviderInfo[] = [];
         for (const p of authProviders) {
             const identity = user.identities.find((i) => i.authProviderId === p.id);
             if (identity) {
-                result.push(toInfo(p));
+                result.push(this.toInfo(p));
                 continue;
             }
             if (p.ownerId === user.id) {
-                result.push(toInfo(p));
+                result.push(this.toInfo(p));
                 continue;
             }
             if (builtinAuthProvidersConfigured && !this.isBuiltIn(p)) {
                 continue;
             }
             if (this.isNotHidden(p) && this.isVerified(p)) {
-                result.push(toInfo(p));
+                result.push(this.toInfo(p));
             }
         }
         return result;

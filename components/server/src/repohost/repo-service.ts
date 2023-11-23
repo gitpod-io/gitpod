@@ -17,10 +17,6 @@ export class RepositoryService {
         return [];
     }
 
-    async canInstallAutomatedPrebuilds(user: User, cloneUrl: string): Promise<boolean> {
-        return false;
-    }
-
     async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<void> {
         throw new Error("unsupported");
     }

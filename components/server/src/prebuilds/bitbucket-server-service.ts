@@ -8,7 +8,6 @@ import { RepositoryService } from "../repohost/repo-service";
 import { ProviderRepository, User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { BitbucketServerApi } from "../bitbucket-server/bitbucket-server-api";
-import { AuthProviderParams } from "../auth/auth-provider";
 import { BitbucketServerContextParser } from "../bitbucket-server/bitbucket-server-context-parser";
 import { Config } from "../config";
 import { TokenService } from "../user/token-service";
@@ -19,11 +18,14 @@ import { CancellationToken } from "vscode-jsonrpc";
 export class BitbucketServerService extends RepositoryService {
     static PREBUILD_TOKEN_SCOPE = "prebuilds";
 
-    @inject(BitbucketServerApi) protected api: BitbucketServerApi;
-    @inject(Config) protected readonly config: Config;
-    @inject(AuthProviderParams) protected authProviderConfig: AuthProviderParams;
-    @inject(TokenService) protected tokenService: TokenService;
-    @inject(BitbucketServerContextParser) protected contextParser: BitbucketServerContextParser;
+    constructor(
+        @inject(BitbucketServerApi) private readonly api: BitbucketServerApi,
+        @inject(Config) private readonly config: Config,
+        @inject(TokenService) private readonly tokenService: TokenService,
+        @inject(BitbucketServerContextParser) private readonly contextParser: BitbucketServerContextParser,
+    ) {
+        super();
+    }
 
     async getRepositoriesForAutomatedPrebuilds(
         user: User,
@@ -42,29 +44,6 @@ export class BitbucketServerService extends RepositoryService {
                 // updatedAt: TODO(at): this isn't provided directly
             };
         });
-    }
-
-    async canInstallAutomatedPrebuilds(user: User, cloneUrl: string): Promise<boolean> {
-        const { host, repoKind, owner, repoName } = await this.contextParser.parseURL(user, cloneUrl);
-        if (host !== this.authProviderConfig.host) {
-            return false;
-        }
-
-        const identity = user.identities.find((i) => i.authProviderId === this.authProviderConfig.id);
-        if (!identity) {
-            console.error(`BBS: no identity found.`, { host: this.authProviderConfig.host, userId: user.id, cloneUrl });
-            return false;
-        }
-
-        try {
-            await this.api.getWebhooks(user, { repoKind, repositorySlug: repoName, owner });
-            // reading webhooks to check if admin scope is provided
-        } catch (error) {
-            console.log(`BBS: could not read webhooks.`, error, { error, cloneUrl });
-            return false;
-        }
-        // return true once it can get webhooks, fallback to let SCM itself to check permission
-        return true;
     }
 
     async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<void> {
