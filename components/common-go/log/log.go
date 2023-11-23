@@ -54,6 +54,8 @@ func Init(service, version string, json, verbose bool) {
 	Log = log.WithFields(ServiceContext(service, version))
 	log.SetReportCaller(true)
 
+	log.AddHook(NewLogHook(DefaultMetrics))
+
 	if json {
 		Log.Logger.SetFormatter(newGcpFormatter(false))
 	} else {

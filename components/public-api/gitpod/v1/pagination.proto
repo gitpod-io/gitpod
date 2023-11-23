@@ -5,17 +5,25 @@ package gitpod.v1;
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
 
 message PaginationRequest {
-    // Page size is the maximum number of results to retrieve per page.
-    // Defaults to 25. Maximum 100.
-    int32 page_size = 1;
+  // Page size is the maximum number of results to retrieve per page.
+  // Defaults to 25. Maximum 100.
+  int32 page_size = 1;
 
-    // Page is the page number of results to retrieve.
-    // The first page starts at 1.
-    // Defaults to 1.
-    int32 page = 2;
+  // Page is the page number of results to retrieve.
+  // The first page starts at 1.
+  // Defaults to 1.
+  int32 page = 2 [deprecated = true];
+
+  // Token for the next set of results that was returned as next_token of a
+  // PaginationResponse
+  string token = 3;
 }
 
 message PaginationResponse {
-    // Total is the total number of results available.
-    int32 total = 1;
+  // Total is the total number of results available.
+  int32 total = 1 [deprecated = true];
+
+  // Token passed for retreiving the next set of results. Empty if there are no
+  // more results
+  string next_token = 2;
 }

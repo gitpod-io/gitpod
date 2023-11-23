@@ -5,7 +5,7 @@
  */
 
 import { PartialMessage } from "@bufbuild/protobuf";
-import { Code, ConnectError, PromiseClient } from "@connectrpc/connect";
+import { PromiseClient } from "@connectrpc/connect";
 import { AuthProviderService } from "@gitpod/public-api/lib/gitpod/v1/authprovider_connect";
 import {
     CreateAuthProviderRequest,
@@ -23,6 +23,7 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { converter } from "./public-api";
 import { getGitpodService } from "./service";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 export class JsonRpcAuthProviderClient implements PromiseClient<typeof AuthProviderService> {
     async createAuthProvider(request: PartialMessage<CreateAuthProviderRequest>): Promise<CreateAuthProviderResponse> {
@@ -30,13 +31,13 @@ export class JsonRpcAuthProviderClient implements PromiseClient<typeof AuthProvi
         const organizationId = request.owner?.case === "organizationId" ? request.owner.value : undefined;
 
         if (!organizationId && !ownerId) {
-            throw new ConnectError("organizationId or ownerId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId or ownerId is required");
         }
         if (!request.type) {
-            throw new ConnectError("type is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "type is required");
         }
         if (!request.host) {
-            throw new ConnectError("host is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "host is required");
         }
 
         if (organizationId) {
@@ -64,12 +65,12 @@ export class JsonRpcAuthProviderClient implements PromiseClient<typeof AuthProvi
             return new CreateAuthProviderResponse({ authProvider: converter.toAuthProvider(result) });
         }
 
-        throw new ConnectError("organizationId or ownerId is required", Code.InvalidArgument);
+        throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId or ownerId is required");
     }
 
     async getAuthProvider(request: PartialMessage<GetAuthProviderRequest>): Promise<GetAuthProviderResponse> {
         if (!request.authProviderId) {
-            throw new ConnectError("authProviderId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "authProviderId is required");
         }
 
         const provider = await getGitpodService().server.getAuthProvider(request.authProviderId);
@@ -80,13 +81,13 @@ export class JsonRpcAuthProviderClient implements PromiseClient<typeof AuthProvi
 
     async listAuthProviders(request: PartialMessage<ListAuthProvidersRequest>): Promise<ListAuthProvidersResponse> {
         if (!request.id?.case) {
-            throw new ConnectError("id is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "id is required");
         }
         const organizationId = request.id.case === "organizationId" ? request.id.value : undefined;
         const userId = request.id.case === "userId" ? request.id.value : undefined;
 
         if (!organizationId && !userId) {
-            throw new ConnectError("organizationId or userId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId or userId is required");
         }
 
         const authProviders = !!organizationId
@@ -95,7 +96,7 @@ export class JsonRpcAuthProviderClient implements PromiseClient<typeof AuthProvi
               })
             : await getGitpodService().server.getOwnAuthProviders();
         const response = new ListAuthProvidersResponse({
-            authProviders: authProviders.map(converter.toAuthProvider),
+            authProviders: authProviders.map(converter.toAuthProvider.bind(converter)),
         });
         return response;
     }
@@ -111,12 +112,12 @@ export class JsonRpcAuthProviderClient implements PromiseClient<typeof AuthProvi
 
     async updateAuthProvider(request: PartialMessage<UpdateAuthProviderRequest>): Promise<UpdateAuthProviderResponse> {
         if (!request.authProviderId) {
-            throw new ConnectError("authProviderId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "authProviderId is required");
         }
-        const clientId = request?.clientId;
-        const clientSecret = request?.clientSecret;
-        if (!clientId || !clientSecret) {
-            throw new ConnectError("clientId or clientSecret are required", Code.InvalidArgument);
+        const clientId = request?.clientId || "";
+        const clientSecret = request?.clientSecret || "";
+        if (!clientId && !clientSecret) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "clientId or clientSecret are required");
         }
 
         const entry = await getGitpodService().server.updateAuthProvider(request.authProviderId, {
@@ -130,7 +131,7 @@ export class JsonRpcAuthProviderClient implements PromiseClient<typeof AuthProvi
 
     async deleteAuthProvider(request: PartialMessage<DeleteAuthProviderRequest>): Promise<DeleteAuthProviderResponse> {
         if (!request.authProviderId) {
-            throw new ConnectError("authProviderId is required", Code.InvalidArgument);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "authProviderId is required");
         }
         await getGitpodService().server.deleteAuthProvider(request.authProviderId);
         return new DeleteAuthProviderResponse();

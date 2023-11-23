@@ -11,12 +11,13 @@ import {
     WorkspaceImageBuild,
     HEADLESS_LOG_STREAM_STATUS_CODE_REGEX,
     Disposable,
-    PrebuildWithStatus,
 } from "@gitpod/gitpod-protocol";
 import { getGitpodService } from "../service/service";
 import { PrebuildStatus } from "../projects/Prebuilds";
-import { converter, workspaceClient } from "../service/public-api";
+import { watchWorkspaceStatus } from "../data/workspaces/listen-to-workspace-ws-messages";
+import { prebuildClient, watchPrebuild, workspaceClient } from "../service/public-api";
 import { GetWorkspaceRequest, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
 
 const WorkspaceLogs = React.lazy(() => import("./WorkspaceLogs"));
 
@@ -37,15 +38,19 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
     >();
     const [error, setError] = useState<Error | undefined>();
     const [logsEmitter] = useState(new EventEmitter());
-    const [prebuild, setPrebuild] = useState<PrebuildWithStatus | undefined>();
+    const [prebuild, setPrebuild] = useState<Prebuild | undefined>();
 
     const handlePrebuildUpdate = useCallback(
-        (prebuild: PrebuildWithStatus) => {
-            if (prebuild.info.buildWorkspaceId === props.workspaceId) {
+        (prebuild: Prebuild) => {
+            if (prebuild.workspaceId === props.workspaceId) {
                 setPrebuild(prebuild);
 
                 // In case the Prebuild got "aborted" or "time(d)out" we want to user to proceed anyway
-                if (props.onIgnorePrebuild && (prebuild.status === "aborted" || prebuild.status === "timeout")) {
+                if (
+                    props.onIgnorePrebuild &&
+                    (prebuild.status?.phase?.name === PrebuildPhase_Phase.ABORTED ||
+                        prebuild.status?.phase?.name === PrebuildPhase_Phase.TIMEOUT)
+                ) {
                     props.onIgnorePrebuild();
                 }
                 // TODO(gpl) We likely want to move the "happy path" logic (for status "available")
@@ -78,31 +83,19 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
                 setError(err);
             }
 
-            // Try get hold of a recent Prebuild
-            try {
-                const pbws = await getGitpodService().server.findPrebuildByWorkspaceID(props.workspaceId);
-                if (pbws) {
-                    const foundPrebuild = await getGitpodService().server.getPrebuild(pbws.id);
-                    if (foundPrebuild) {
-                        handlePrebuildUpdate(foundPrebuild);
-                    }
-                }
-            } catch (err) {
-                console.error(err);
-                setError(err);
-            }
-
             // Register for future updates
             disposables.push(
+                watchWorkspaceStatus(props.workspaceId, (resp) => {
+                    if (resp.status?.instanceId && resp.status?.phase?.name) {
+                        setWorkspace({
+                            instanceId: resp.status.instanceId,
+                            phase: resp.status.phase.name,
+                        });
+                    }
+                }),
+            );
+            disposables.push(
                 getGitpodService().registerClient({
-                    onInstanceUpdate: (instance) => {
-                        if (props.workspaceId === instance.workspaceId) {
-                            setWorkspace({
-                                instanceId: instance.id,
-                                phase: converter.toPhase(instance),
-                            });
-                        }
-                    },
                     onWorkspaceImageBuildLogs: (
                         info: WorkspaceImageBuild.StateInfo,
                         content?: WorkspaceImageBuild.LogContent,
@@ -112,13 +105,32 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
                         }
                         logsEmitter.emit("logs", content.text);
                     },
-                    onPrebuildUpdate(update: PrebuildWithStatus) {
-                        if (update.info) {
-                            handlePrebuildUpdate(update);
-                        }
-                    },
                 }),
             );
+
+            try {
+                const response = await prebuildClient.listPrebuilds({ workspaceId: props.workspaceId });
+                const prebuild = response.prebuilds[0];
+                if (prebuild) {
+                    handlePrebuildUpdate(prebuild);
+                    disposables.push(
+                        watchPrebuild(
+                            {
+                                scope: {
+                                    case: "prebuildId",
+                                    value: prebuild.id,
+                                },
+                            },
+                            handlePrebuildUpdate,
+                        ),
+                    );
+                } else {
+                    setError(new Error("Prebuild not found"));
+                }
+            } catch (err) {
+                console.error(err);
+                setError(err);
+            }
         })();
         return function cleanup() {
             disposables.dispose();
@@ -164,7 +176,7 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
                     <WorkspaceLogs classes="h-full w-full" logsEmitter={logsEmitter} errorMessage={error?.message} />
                 </Suspense>
             </div>
-            <div className="w-full bottom-0 h-20 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 flex space-x-2">
+            <div className="w-full bottom-0 h-20 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 flex flex-row items-center space-x-2">
                 {prebuild && <PrebuildStatus prebuild={prebuild} />}
                 <div className="flex-grow" />
                 {props.children}

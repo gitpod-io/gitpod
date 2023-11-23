@@ -12,9 +12,9 @@
         "typescript": "~4.4.4"
     },
     "scripts": {
-        "build": "leeway exec --filter-type yarn --components -- yarn build",
+        "build": "leeway exec --filter-type yarn --cache-key yarn_build -- yarn build",
         "watch": "leeway exec --package components:all --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput",
-        "clean": "leeway exec --filter-type yarn --components -- yarn clean && rm -rf node_modules"
+        "clean": "leeway exec --filter-type yarn -- yarn clean && rm -rf node_modules"
     },
     "workspaces": {
         "packages": [

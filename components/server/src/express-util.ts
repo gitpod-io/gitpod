@@ -7,6 +7,7 @@
 import { URL } from "url";
 import express from "express";
 import * as crypto from "crypto";
+import { IncomingHttpHeaders } from "http";
 
 export const query = (...tuples: [string, string][]) => {
     if (tuples.length === 0) {
@@ -133,4 +134,12 @@ export function clientIp(req: express.Request): string | undefined {
         return undefined;
     }
     return clientIp.split(",")[0];
+}
+
+export function toHeaders(headers: IncomingHttpHeaders): Headers {
+    const result = new Headers();
+    for (const [key, value] of Object.entries(headers)) {
+        result.set(key, value as string);
+    }
+    return result;
 }

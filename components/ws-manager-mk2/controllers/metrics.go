@@ -15,7 +15,9 @@ import (
 	"github.com/go-logr/logr"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/prometheus/client_golang/prometheus"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
@@ -29,6 +31,7 @@ const (
 	workspaceBackupFailuresTotal  string = "workspace_backups_failure_total"
 	workspaceRestoresTotal        string = "workspace_restores_total"
 	workspaceRestoresFailureTotal string = "workspace_restores_failure_total"
+	workspaceNodeUtilization      string = "workspace_node_utilization"
 )
 
 type StopReason string
@@ -57,6 +60,8 @@ type controllerMetrics struct {
 
 	workspacePhases *phaseTotalVec
 	timeoutSettings *timeoutSettingsVec
+
+	workspaceNodeUtilization *nodeUtilizationVec
 
 	// used to prevent recording metrics multiple times
 	cache *lru.Cache
@@ -127,9 +132,10 @@ func newControllerMetrics(r *WorkspaceReconciler) (*controllerMetrics, error) {
 			Help:      "total number of workspace restore failures",
 		}, []string{"type", "class"}),
 
-		workspacePhases: newPhaseTotalVec(r),
-		timeoutSettings: newTimeoutSettingsVec(r),
-		cache:           cache,
+		workspacePhases:          newPhaseTotalVec(r),
+		timeoutSettings:          newTimeoutSettingsVec(r),
+		workspaceNodeUtilization: newNodeUtilizationVec(r),
+		cache:                    cache,
 	}, nil
 }
 
@@ -298,6 +304,7 @@ func (m *controllerMetrics) Describe(ch chan<- *prometheus.Desc) {
 
 	m.workspacePhases.Describe(ch)
 	m.timeoutSettings.Describe(ch)
+	m.workspaceNodeUtilization.Describe(ch)
 }
 
 // Collect implements Collector.
@@ -315,6 +322,7 @@ func (m *controllerMetrics) Collect(ch chan<- prometheus.Metric) {
 
 	m.workspacePhases.Collect(ch)
 	m.timeoutSettings.Collect(ch)
+	m.workspaceNodeUtilization.Collect(ch)
 }
 
 // phaseTotalVec returns a gauge vector counting the workspaces per phase
@@ -457,4 +465,129 @@ func (m *maintenanceEnabledGauge) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	ch <- metric
+}
+
+// nodeUtilizationVec provides metrics per workspace node on:
+// - the amount of cpu/memory requested by workspaces on the node (size of the workspace class)
+// CPU is measured in cores, memory in bytes.
+// Differentiates between headless and regular workspace nodes using the type label.
+// Useful to determine node utilization and capacity.
+type nodeUtilizationVec struct {
+	name       string
+	desc       *prometheus.Desc
+	reconciler *WorkspaceReconciler
+}
+
+func newNodeUtilizationVec(r *WorkspaceReconciler) *nodeUtilizationVec {
+	name := prometheus.BuildFQName(metricsNamespace, metricsWorkspaceSubsystem, workspaceNodeUtilization)
+	desc := prometheus.NewDesc(
+		name,
+		"Amount of resources requested by workspaces on the node (cpu/memory, workspace type)",
+		[]string{"node", "resource", "type"},
+		prometheus.Labels(map[string]string{}),
+	)
+	return &nodeUtilizationVec{
+		name:       name,
+		reconciler: r,
+		desc:       desc,
+	}
+}
+
+// Describe implements Collector. It will send exactly one Desc to the provided channel.
+func (n *nodeUtilizationVec) Describe(ch chan<- *prometheus.Desc) {
+	ch <- n.desc
+}
+
+// Collect implements Collector.
+func (n *nodeUtilizationVec) Collect(ch chan<- prometheus.Metric) {
+	ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
+	defer cancel()
+
+	var nodes corev1.NodeList
+	err := n.reconciler.List(ctx, &nodes)
+	if err != nil {
+		log.FromContext(ctx).Error(err, "cannot list nodes for node utilization metric")
+		return
+	}
+
+	var (
+		nodeUtilization = make(map[string]map[corev1.ResourceName]float64)
+		nodeTypes       = make(map[string]string)
+	)
+	for _, node := range nodes.Items {
+		isRegular := node.Labels["gitpod.io/workload_workspace_regular"] == "true"
+		isHeadless := node.Labels["gitpod.io/workload_workspace_headless"] == "true"
+		if !isRegular && !isHeadless {
+			// Ignore non-workspace nodes.
+			continue
+		}
+
+		nodeUtilization[node.Name] = map[corev1.ResourceName]float64{
+			corev1.ResourceCPU:    0,
+			corev1.ResourceMemory: 0,
+		}
+		nodeTypes[node.Name] = "regular"
+		if !isRegular && isHeadless {
+			// In case a node is both regular and headless (e.g. a preview env), mark it as regular.
+			nodeTypes[node.Name] = "headless"
+		}
+	}
+
+	var workspaces workspacev1.WorkspaceList
+	if err = n.reconciler.List(ctx, &workspaces, client.InNamespace(n.reconciler.Config.Namespace)); err != nil {
+		log.FromContext(ctx).Error(err, "cannot list workspaces for node utilization metric")
+		return
+	}
+
+	// Aggregate workspace resource requests per node.
+	for _, ws := range workspaces.Items {
+		if ws.Status.Runtime == nil {
+			continue
+		}
+		nodeName := ws.Status.Runtime.NodeName
+		if nodeName == "" {
+			// Not yet scheduled.
+			continue
+		}
+
+		if ws.Status.Phase == workspacev1.WorkspacePhaseStopped {
+			// Stopped, no longer consuming resources on the node.
+			continue
+		}
+
+		if _, ok := nodeUtilization[nodeName]; !ok {
+			nodeUtilization[nodeName] = map[corev1.ResourceName]float64{
+				corev1.ResourceCPU:    0,
+				corev1.ResourceMemory: 0,
+			}
+		}
+
+		class, ok := n.reconciler.Config.WorkspaceClasses[ws.Spec.Class]
+		if !ok {
+			log.FromContext(ctx).Error(err, "cannot find workspace class for node utilization metric", "class", ws.Spec.Class)
+			continue
+		}
+
+		requests, err := class.Container.Requests.ResourceList()
+		if err != nil {
+			log.FromContext(ctx).Error(err, "cannot get resource requests for node utilization metric", "class", ws.Spec.Class)
+			continue
+		}
+
+		nodeUtilization[nodeName][corev1.ResourceCPU] += float64(requests.Cpu().MilliValue()) / 1000.0
+		nodeUtilization[nodeName][corev1.ResourceMemory] += float64(requests.Memory().Value())
+	}
+
+	for nodeName, metrics := range nodeUtilization {
+		for resource, value := range metrics {
+			nodeType := nodeTypes[nodeName]
+			metric, err := prometheus.NewConstMetric(n.desc, prometheus.GaugeValue, value, nodeName, resource.String(), nodeType)
+			if err != nil {
+				log.FromContext(ctx).Error(err, "cannot create node utilization metric", "node", nodeName, "resource", resource.String(), "type", nodeType)
+				continue
+			}
+
+			ch <- metric
+		}
+	}
 }

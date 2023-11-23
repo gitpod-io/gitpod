@@ -6,7 +6,7 @@ package cmd
 
 import (
 	"github.com/gitpod-io/gitpod/common-go/log"
-	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
+	v1 "github.com/gitpod-io/gitpod/components/public-api/go/v1"
 	"github.com/spf13/cobra"
 )
 
@@ -22,7 +22,7 @@ var publicApiWorkspacesGetCmd = &cobra.Command{
 			log.Log.WithError(err).Fatal()
 		}
 
-		service := v1.NewWorkspacesServiceClient(conn)
+		service := v1.NewWorkspaceServiceClient(conn)
 
 		log.Log.Debugf("Retrieving workspace ID: %s", workspaceID)
 		resp, err := service.GetWorkspace(cmd.Context(), &v1.GetWorkspaceRequest{WorkspaceId: workspaceID})
@@ -31,11 +31,11 @@ var publicApiWorkspacesGetCmd = &cobra.Command{
 			return
 		}
 
-		tpl := `ID:	{{ .Result.WorkspaceId }}
-Owner:	{{ .Result.OwnerId }}
-ContextURL:	{{ .Result.Context.ContextUrl }}
-InstanceID:	{{ .Result.Status.Instance.InstanceId }}
-InstanceStatus:	{{ .Result.Status.Instance.Status.Phase }}
+		tpl := `ID:	{{ .Workspace.Id }}
+OrganizationID:	{{ .Workspace.OrganizationId }}
+ContextURL:	{{ .Workspace.ContextUrl }}
+InstanceID:	{{ .Workspace.Status.InstanceId }}
+InstanceStatus:	{{ .Workspace.Status.Phase.Name }}
 `
 		err = getOutputFormat(tpl, "{..result.workspace_id}").Print(resp)
 		if err != nil {

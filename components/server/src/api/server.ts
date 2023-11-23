@@ -7,7 +7,6 @@
 import { MethodKind, ServiceType } from "@bufbuild/protobuf";
 import { Code, ConnectError, ConnectRouter, HandlerContext, ServiceImpl } from "@connectrpc/connect";
 import { expressConnectMiddleware } from "@connectrpc/connect-express";
-import { User } from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -19,6 +18,7 @@ import { OrganizationService } from "@gitpod/public-api/lib/gitpod/v1/organizati
 import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/v1/workspace_connect";
 import { ConfigurationService } from "@gitpod/public-api/lib/gitpod/v1/configuration_connect";
 import { AuthProviderService } from "@gitpod/public-api/lib/gitpod/v1/authprovider_connect";
+import { EnvironmentVariableService } from "@gitpod/public-api/lib/gitpod/v1/envvar_connect";
 import express from "express";
 import * as http from "http";
 import { decorate, inject, injectable, interfaces } from "inversify";
@@ -47,8 +47,14 @@ import { APIUserService as UserServiceAPI } from "./user";
 import { WorkspaceServiceAPI } from "./workspace-service-api";
 import { ConfigurationServiceAPI } from "./configuration-service-api";
 import { AuthProviderServiceAPI } from "./auth-provider-service-api";
+import { EnvironmentVariableServiceAPI } from "./envvar-service-api";
+import { SSHServiceAPI } from "./ssh-service-api";
 import { Unauthenticated } from "./unauthenticated";
 import { SubjectId } from "../auth/subject-id";
+import { BearerAuth } from "../auth/bearer-authenticator";
+import { ScmServiceAPI } from "./scm-service-api";
+import { SCMService } from "@gitpod/public-api/lib/gitpod/v1/scm_connect";
+import { SSHService } from "@gitpod/public-api/lib/gitpod/v1/ssh_connect";
 
 decorate(injectable(), PublicAPIConverter);
 
@@ -64,6 +70,9 @@ export class API {
     @inject(OrganizationServiceAPI) private readonly organizationServiceApi: OrganizationServiceAPI;
     @inject(ConfigurationServiceAPI) private readonly configurationServiceApi: ConfigurationServiceAPI;
     @inject(AuthProviderServiceAPI) private readonly authProviderServiceApi: AuthProviderServiceAPI;
+    @inject(EnvironmentVariableServiceAPI) private readonly envvarServiceApi: EnvironmentVariableServiceAPI;
+    @inject(ScmServiceAPI) private readonly scmServiceAPI: ScmServiceAPI;
+    @inject(SSHServiceAPI) private readonly sshServiceApi: SSHServiceAPI;
     @inject(StatsServiceAPI) private readonly tatsServiceApi: StatsServiceAPI;
     @inject(HelloServiceAPI) private readonly helloServiceApi: HelloServiceAPI;
     @inject(SessionHandler) private readonly sessionHandler: SessionHandler;
@@ -71,6 +80,7 @@ export class API {
     @inject(Redis) private readonly redis: Redis;
     @inject(Config) private readonly config: Config;
     @inject(UserService) private readonly userService: UserService;
+    @inject(BearerAuth) private readonly bearerAuthenticator: BearerAuth;
 
     listenPrivate(): http.Server {
         const app = express();
@@ -116,6 +126,9 @@ export class API {
                         service(OrganizationService, this.organizationServiceApi),
                         service(ConfigurationService, this.configurationServiceApi),
                         service(AuthProviderService, this.authProviderServiceApi),
+                        service(EnvironmentVariableService, this.envvarServiceApi),
+                        service(SCMService, this.scmServiceAPI),
+                        service(SSHService, this.sshServiceApi),
                     ]) {
                         router.service(type, new Proxy(impl, this.interceptService(type)));
                     }
@@ -148,6 +161,7 @@ export class API {
                         requestMethod: `${grpc_service}/${prop as string}`,
                         startTime: performance.now(),
                         signal: connectContext.signal,
+                        headers: connectContext.requestHeader,
                     };
 
                     const withRequestContext = <T>(fn: () => T): T => runWithRequestContext(requestContext, fn);
@@ -220,20 +234,20 @@ export class API {
                     // actually call the RPC handler
                     const auth = async () => {
                         // Authenticate
-                        const userId = await self.verify(connectContext);
-                        const isAuthenticated = !!userId;
+                        const subjectId = await self.verify(connectContext);
+                        const isAuthenticated = !!subjectId;
                         const requiresAuthentication = !Unauthenticated.get(target, prop);
                         if (!isAuthenticated && requiresAuthentication) {
                             throw new ConnectError("unauthenticated", Code.Unauthenticated);
                         }
 
                         if (isAuthenticated) {
-                            await rateLimit(userId);
-                            await self.ensureFgaMigration(userId);
+                            await rateLimit(subjectId.toString());
+                            await self.ensureFgaMigration(subjectId);
                         }
                         // TODO(at) if unauthenticated, we still need to apply enforece a rate limit
 
-                        return userId ? SubjectId.fromUserId(userId) : undefined;
+                        return subjectId;
                     };
 
                     const apply = async <T>(): Promise<T> => {
@@ -293,30 +307,46 @@ export class API {
         };
     }
 
-    private async verify(context: HandlerContext): Promise<string | undefined> {
+    private async verify(context: HandlerContext): Promise<SubjectId | undefined> {
+        // 1. Try Bearer token first
+        try {
+            const subjectId = await this.bearerAuthenticator.tryAuthFromHeaders(context.requestHeader);
+            if (subjectId) {
+                return subjectId;
+            }
+            // fall-through to session JWT
+        } catch (err) {
+            log.warn("error authenticating subject by Bearer token", err);
+        }
+
+        // 2. Try for session JWT in the "cookie" header
         const cookieHeader = (context.requestHeader.get("cookie") || "") as string;
         try {
             const claims = await this.sessionHandler.verifyJWTCookie(cookieHeader);
             const userId = claims?.sub;
-            return userId;
-        } catch (error) {
-            log.warn("Failed to authenticate user with JWT Session", error);
+            return !!userId ? SubjectId.fromUserId(userId) : undefined;
+        } catch (err) {
+            log.warn("Failed to authenticate user with JWT Session", err);
             return undefined;
         }
     }
 
-    private async ensureFgaMigration(userId: string): Promise<User> {
-        const fgaChecksEnabled = await isFgaChecksEnabled(userId);
+    private async ensureFgaMigration(subjectId: SubjectId): Promise<void> {
+        const fgaChecksEnabled = await isFgaChecksEnabled(subjectId.userId());
         if (!fgaChecksEnabled) {
             throw new ConnectError("unauthorized", Code.PermissionDenied);
         }
-        try {
-            return await this.userService.findUserById(userId, userId);
-        } catch (e) {
-            if (e instanceof ApplicationError && e.code === ErrorCodes.NOT_FOUND) {
-                throw new ConnectError("unauthorized", Code.PermissionDenied);
+
+        if (subjectId.kind === "user") {
+            const userId = subjectId.userId()!;
+            try {
+                await this.userService.findUserById(userId, userId);
+            } catch (e) {
+                if (e instanceof ApplicationError && e.code === ErrorCodes.NOT_FOUND) {
+                    throw new ConnectError("unauthorized", Code.PermissionDenied);
+                }
+                throw e;
             }
-            throw e;
         }
     }
 
@@ -350,6 +380,9 @@ export class API {
         bind(OrganizationServiceAPI).toSelf().inSingletonScope();
         bind(ConfigurationServiceAPI).toSelf().inSingletonScope();
         bind(AuthProviderServiceAPI).toSelf().inSingletonScope();
+        bind(EnvironmentVariableServiceAPI).toSelf().inSingletonScope();
+        bind(ScmServiceAPI).toSelf().inSingletonScope();
+        bind(SSHServiceAPI).toSelf().inSingletonScope();
         bind(StatsServiceAPI).toSelf().inSingletonScope();
         bind(API).toSelf().inSingletonScope();
     }

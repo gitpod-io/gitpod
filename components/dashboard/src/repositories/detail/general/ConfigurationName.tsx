@@ -11,7 +11,7 @@ import { TextInputField } from "../../../components/forms/TextInputField";
 import { useToast } from "../../../components/toasts/Toasts";
 import { useOnBlurError } from "../../../hooks/use-onblur-error";
 import { ConfigurationSettingsField } from "../ConfigurationSettingsField";
-import { useUpdateConfiguration } from "../../../data/configurations/configuration-queries";
+import { useConfigurationMutation } from "../../../data/configurations/configuration-queries";
 
 const MAX_LENGTH = 100;
 
@@ -21,7 +21,7 @@ type Props = {
 
 export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
     const { toast } = useToast();
-    const updateConfiguration = useUpdateConfiguration();
+    const updateConfiguration = useConfigurationMutation();
     const [configurationName, setConfigurationName] = useState(configuration.name);
 
     const nameChanged = configurationName !== configuration.name;
@@ -38,12 +38,15 @@ export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
 
             updateConfiguration.mutate(
                 {
-                    id: configuration.id,
+                    configurationId: configuration.id,
                     name: configurationName,
                 },
                 {
-                    onSuccess: () => {
-                        toast(`Configuration name set to "${configurationName}".`);
+                    onSuccess: (configuration) => {
+                        toast(`Configuration name set to "${configuration.name}".`);
+                    },
+                    onError: (err) => {
+                        toast(`Updating configuration name failed: ${err.message}`);
                     },
                 },
             );

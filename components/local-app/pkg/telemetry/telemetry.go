@@ -8,6 +8,8 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"io"
+	"log"
 	"log/slog"
 	"math/rand"
 	"net"
@@ -33,8 +35,8 @@ var opts struct {
 	client segment.Client
 }
 
-// Init initialises the telemetry
-func Init(enabled bool, identity, version string) {
+// Init initializes the telemetry
+func Init(enabled bool, identity, version string, logLevel slog.Level) {
 	opts.Enabled = enabled
 	if !enabled {
 		return
@@ -44,7 +46,18 @@ func Init(enabled bool, identity, version string) {
 	opts.Identity = identity
 
 	if segmentKey != "" {
-		opts.client = segment.New(segmentKey)
+		var logger segment.Logger
+		if logLevel == slog.LevelDebug {
+			logger = segment.StdLogger(log.New(os.Stderr, "telemetry ", log.LstdFlags))
+		} else {
+			// we don't want to log anything
+			log := log.New(os.Stderr, "telemetry ", log.LstdFlags)
+			log.SetOutput(io.Discard)
+			logger = segment.StdLogger(log)
+		}
+		opts.client, _ = segment.NewWithConfig(segmentKey, segment.Config{
+			Logger: logger,
+		})
 	}
 }
 

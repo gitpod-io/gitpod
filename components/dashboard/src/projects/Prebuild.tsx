@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { PrebuildWithStatus } from "@gitpod/gitpod-protocol";
 import dayjs from "dayjs";
 import { useEffect, useMemo, useState } from "react";
 import { Redirect, useHistory, useParams } from "react-router";
@@ -12,9 +11,12 @@ import Header from "../components/Header";
 import PrebuildLogs from "../components/PrebuildLogs";
 import { Subheading } from "../components/typography/headings";
 import Spinner from "../icons/Spinner.svg";
-import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { useCurrentProject } from "./project-context";
 import { shortCommitMessage } from "./render-utils";
+import { prebuildClient, watchPrebuild } from "../service/public-api";
+import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { gitpodHostUrl } from "../service/service";
+import { Button } from "@podkit/buttons/Button";
 
 export default function PrebuildPage() {
     const history = useHistory();
@@ -22,7 +24,7 @@ export default function PrebuildPage() {
 
     const { prebuildId } = useParams<{ prebuildId: string }>();
 
-    const [prebuild, setPrebuild] = useState<PrebuildWithStatus | undefined>();
+    const [prebuild, setPrebuild] = useState<Prebuild | undefined>();
     const [isRerunningPrebuild, setIsRerunningPrebuild] = useState<boolean>(false);
     const [isCancellingPrebuild, setIsCancellingPrebuild] = useState<boolean>(false);
 
@@ -30,55 +32,41 @@ export default function PrebuildPage() {
         if (!project || !prebuildId) {
             return;
         }
-        (async () => {
-            const prebuilds = await getGitpodService().server.findPrebuilds({
-                projectId: project.id,
-                prebuildId,
-            });
-            setPrebuild(prebuilds[0]);
-        })();
-
-        return getGitpodService().registerClient({
-            onPrebuildUpdate(update: PrebuildWithStatus) {
-                if (update.info.id !== prebuildId) {
-                    return;
-                }
-
-                setPrebuild(update);
+        const toCancelWatch = watchPrebuild(
+            {
+                scope: {
+                    case: "prebuildId",
+                    value: prebuildId,
+                },
             },
-        }).dispose;
+            (prebuild) => setPrebuild(prebuild),
+        );
+        return () => toCancelWatch.dispose();
     }, [prebuildId, project]);
 
     const title = useMemo(() => {
         if (!prebuild) {
             return "unknown prebuild";
         }
-        return prebuild.info.branch;
+        return prebuild.ref;
     }, [prebuild]);
 
     const renderSubtitle = () => {
         if (!prebuild) {
             return "";
         }
-        const startedByAvatar = prebuild.info.startedByAvatar && (
-            <img
-                className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2"
-                src={prebuild.info.startedByAvatar || ""}
-                alt={prebuild.info.startedBy}
-            />
-        );
         return (
             <div className="flex">
                 <div className="my-auto">
-                    <Subheading>
-                        {startedByAvatar}Triggered {dayjs(prebuild.info.startedAt).fromNow()}
-                    </Subheading>
+                    <Subheading>Triggered {dayjs(prebuild.status?.startTime?.toDate()).fromNow()}</Subheading>
                 </div>
                 <p className="mx-2 my-auto">·</p>
                 <div className="my-auto">
-                    <p className="text-gray-500 dark:text-gray-50">{shortCommitMessage(prebuild.info.changeTitle)}</p>
+                    <p className="text-gray-500 dark:text-gray-50">
+                        {shortCommitMessage(prebuild.commit?.message || "")}
+                    </p>
                 </div>
-                {!!prebuild.info.basedOnPrebuildId && (
+                {!!prebuild.basedOnPrebuildId && (
                     <>
                         <p className="mx-2 my-auto">·</p>
                         <div className="my-auto">
@@ -86,8 +74,8 @@ export default function PrebuildPage() {
                                 Incremental Prebuild (
                                 <a
                                     className="gp-link"
-                                    title={prebuild.info.basedOnPrebuildId}
-                                    href={`./${prebuild.info.basedOnPrebuildId}`}
+                                    title={prebuild.basedOnPrebuildId}
+                                    href={`./${prebuild.basedOnPrebuildId}`}
                                 >
                                     base
                                 </a>
@@ -106,7 +94,10 @@ export default function PrebuildPage() {
         }
         try {
             setIsRerunningPrebuild(true);
-            await getGitpodService().server.triggerPrebuild(prebuild.info.projectId, prebuild.info.branch);
+            await prebuildClient.startPrebuild({
+                configurationId: prebuild.configurationId,
+                gitRef: prebuild.ref,
+            });
             // TODO: Open a Prebuilds page that's specific to `prebuild.info.branch`?
             if (project) {
                 history.push(`/projects/${project.id}/prebuilds`);
@@ -124,7 +115,9 @@ export default function PrebuildPage() {
         }
         try {
             setIsCancellingPrebuild(true);
-            await getGitpodService().server.cancelPrebuild(prebuild.info.projectId, prebuild.info.id);
+            await prebuildClient.cancelPrebuild({
+                prebuildId: prebuild.id,
+            });
         } catch (error) {
             console.error("Could not cancel prebuild", error);
         } finally {
@@ -140,10 +133,13 @@ export default function PrebuildPage() {
         <>
             <Header title={title} subtitle={renderSubtitle()} />
             <div className="app-container mt-8">
-                <PrebuildLogs workspaceId={prebuild?.info?.buildWorkspaceId}>
-                    {["building", "queued"].includes(prebuild?.status || "") ? (
-                        <button
-                            className="danger flex items-center space-x-2"
+                <PrebuildLogs workspaceId={prebuild?.workspaceId}>
+                    {[PrebuildPhase_Phase.BUILDING, PrebuildPhase_Phase.QUEUED].includes(
+                        prebuild?.status?.phase?.name || PrebuildPhase_Phase.UNSPECIFIED,
+                    ) ? (
+                        <Button
+                            variant="destructive"
+                            className="flex items-center space-x-2"
                             disabled={isCancellingPrebuild}
                             onClick={cancelPrebuild}
                         >
@@ -151,30 +147,31 @@ export default function PrebuildPage() {
                                 <img alt="" className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
                             )}
                             <span>Cancel Prebuild</span>
-                        </button>
+                        </Button>
                     ) : (
                         <>
-                            <button
-                                className="secondary flex items-center space-x-2"
+                            <Button
+                                variant="secondary"
+                                className="flex items-center space-x-2"
                                 disabled={isRerunningPrebuild}
                                 onClick={rerunPrebuild}
                             >
                                 {isRerunningPrebuild && (
                                     <img alt="" className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
                                 )}
-                                <span>Rerun Prebuild ({prebuild?.info.branch})</span>
-                            </button>
-                            {prebuild?.status === "available" ? (
+                                <span>Rerun Prebuild ({prebuild?.ref})</span>
+                            </Button>
+                            {prebuild?.status?.phase?.name === PrebuildPhase_Phase.AVAILABLE ? (
                                 <a
                                     className="my-auto"
                                     href={gitpodHostUrl
-                                        .withContext(`open-prebuild/${prebuild?.info.id}/${prebuild?.info.changeUrl}`)
+                                        .withContext(`open-prebuild/${prebuild?.id}/${prebuild?.contextUrl}`)
                                         .toString()}
                                 >
-                                    <button>New Workspace (with this prebuild)</button>
+                                    <Button>New Workspace (with this prebuild)</Button>
                                 </a>
                             ) : (
-                                <button disabled={true}>New Workspace (with this prebuild)</button>
+                                <Button disabled={true}>New Workspace (with this prebuild)</Button>
                             )}
                         </>
                     )}

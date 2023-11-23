@@ -15,7 +15,7 @@ import { ConfigurationSettingsField } from "../ConfigurationSettingsField";
 import { useToast } from "../../../components/toasts/Toasts";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { LoadingState } from "@podkit/loading/LoadingState";
-import { useUpdateConfiguration } from "../../../data/configurations/configuration-queries";
+import { useConfigurationMutation } from "../../../data/configurations/configuration-queries";
 
 interface Props {
     configuration: Configuration;
@@ -27,7 +27,7 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
     );
     const classChanged = selectedValue !== configuration.workspaceSettings?.workspaceClass;
 
-    const updateConfiguration = useUpdateConfiguration();
+    const updateConfiguration = useConfigurationMutation();
     const { data: classes, isError, isLoading } = useWorkspaceClasses();
 
     const { toast } = useToast();
@@ -38,7 +38,7 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
 
             updateConfiguration.mutate(
                 {
-                    id: configuration.id,
+                    configurationId: configuration.id,
                     workspaceSettings: {
                         workspaceClass: selectedValue,
                     },

@@ -891,13 +891,6 @@ export interface GuessGitTokenScopesParams {
     host: string;
     repoUrl: string;
     gitCommand: string;
-    currentToken: GitToken;
-}
-
-export interface GitToken {
-    token: string;
-    user: string;
-    scopes: string[];
 }
 
 export interface GuessedGitTokenScopes {
@@ -1070,13 +1063,6 @@ export interface PrebuiltWorkspaceUpdatable {
     commitSHA?: string;
     issue?: string;
     contextUrl?: string;
-}
-
-export interface WhitelistedRepository {
-    url: string;
-    name: string;
-    description?: string;
-    avatar?: string;
 }
 
 export type PortOnOpen = "open-browser" | "open-preview" | "notify" | "ignore";

@@ -85,20 +85,20 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                 ) : prebuild ? (
                     <div className="flex flex-row h-full text-sm space-x-4">
                         <Link
-                            to={`/projects/${project.id}/${prebuild?.info?.id}`}
+                            to={`/projects/${project.id}/${prebuild?.id}`}
                             className="flex-grow flex items-center group space-x-2 truncate"
                         >
                             {prebuildStatusIcon(prebuild)}
                             <div
                                 className="font-semibold text-gray-500 dark:text-gray-400 truncate"
-                                title={prebuild?.info?.branch}
+                                title={prebuild?.ref}
                             >
-                                {prebuild?.info?.branch}
+                                {prebuild.ref}
                             </div>
                             <span className="flex-shrink-0 mx-1 text-gray-400 dark:text-gray-600">·</span>
-                            <Tooltip content={dayjs(prebuild?.info?.startedAt).format("MMM D, YYYY")}>
+                            <Tooltip content={dayjs(prebuild?.status?.startTime?.toDate()).format("MMM D, YYYY")}>
                                 <div className="flex-shrink-0 text-gray-400 dark:text-gray-500 group-hover:text-gray-800 dark:group-hover:text-gray-300">
-                                    {dayjs(prebuild?.info?.startedAt).fromNow()}
+                                    {dayjs(prebuild?.status?.startTime?.toDate()).fromNow()}
                                 </div>
                             </Tooltip>
                         </Link>

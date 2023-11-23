@@ -32,6 +32,7 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { Config } from "../config";
 import { EntitlementService } from "../billing/entitlement-service";
 import { TeamDB } from "@gitpod/gitpod-db/lib";
+import { InvalidGitpodYMLError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 const POD_PATH_WORKSPACE_BASE = "/workspace";
 
@@ -149,7 +150,9 @@ export class ConfigProvider {
                 customConfig = parseResult.config;
                 customConfig._origin = "additional-content";
                 if (parseResult.validationErrors) {
-                    const err = new InvalidGitpodYMLError(parseResult.validationErrors);
+                    const err = new InvalidGitpodYMLError({
+                        violations: parseResult.validationErrors,
+                    });
                     // this is not a system error but a user misconfiguration
                     log.info(logContext, err.message, {
                         repoCloneUrl: commit.repository.cloneUrl,
@@ -186,7 +189,9 @@ export class ConfigProvider {
                     const parseResult = this.gitpodParser.parse(customConfigString);
                     customConfig = parseResult.config;
                     if (parseResult.validationErrors) {
-                        const err = new InvalidGitpodYMLError(parseResult.validationErrors);
+                        const err = new InvalidGitpodYMLError({
+                            violations: parseResult.validationErrors,
+                        });
                         // this is not a system error but a user misconfiguration
                         log.info(logContext, err.message, {
                             repoCloneUrl: commit.repository.cloneUrl,
@@ -300,19 +305,5 @@ export class ConfigProvider {
     private leavesWorkspaceBase(normalizedPath: string) {
         const pathSegments = normalizedPath.split(path.sep);
         return normalizedPath.includes("..") || pathSegments.slice(0, 2).join("/") != POD_PATH_WORKSPACE_BASE;
-    }
-}
-
-export class InvalidGitpodYMLError extends Error {
-    public readonly errorType = "invalidGitpodYML";
-
-    constructor(public readonly validationErrors: string[]) {
-        super("Invalid gitpod.yml: " + validationErrors.join(","));
-    }
-}
-
-export namespace InvalidGitpodYMLError {
-    export function is(obj: any): obj is InvalidGitpodYMLError {
-        return "errorType" in obj && (obj as any).errorType === "invalidGitpodYML" && "validationErrors" in obj;
     }
 }

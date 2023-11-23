@@ -2,112 +2,110 @@ syntax = "proto3";
 
 package gitpod.experimental.v1;
 
-option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1";
-
-import "google/protobuf/timestamp.proto";
-import "google/protobuf/field_mask.proto";
 import "gitpod/experimental/v1/pagination.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1";
 
 // PersonalAccessToken represents details of an access token for personal use.
 message PersonalAccessToken {
-    // id is the unique identifier of this token
-    // Read only.
-    string id = 1;
+  // id is the unique identifier of this token
+  // Read only.
+  string id = 1;
 
-    // value is the secret value of the token
-    // The value property is only populated when the PersonalAccessToken is first created, and never again.
-    // Read only.
-    string value = 2;
+  // value is the secret value of the token
+  // The value property is only populated when the PersonalAccessToken is first created, and never again.
+  // Read only.
+  string value = 2;
 
-    // name is the name of the token for humans, set by the user.
-    // Must match regexp ^[a-zA-Z0-9-_ ]{3,63}$
-    string name = 3;
+  // name is the name of the token for humans, set by the user.
+  // Must match regexp ^[a-zA-Z0-9-_ ]{3,63}$
+  string name = 3;
 
-    // expiration_time is the time when the token expires
-    // Read only.
-    google.protobuf.Timestamp expiration_time = 4;
+  // expiration_time is the time when the token expires
+  // Read only.
+  google.protobuf.Timestamp expiration_time = 4;
 
-    // scopes are the permission scopes attached to this token.
-    // By default, no scopes are attached and therefore no access is granted to this token.
-    // Specifying '*' grants all permissions the owner of the token has.
-    repeated string scopes = 5;
+  // scopes are the permission scopes attached to this token.
+  // By default, no scopes are attached and therefore no access is granted to this token.
+  // Specifying '*' grants all permissions the owner of the token has.
+  repeated string scopes = 5;
 
-    // created_time is the time when the token was first created.
-    google.protobuf.Timestamp created_at = 6;
+  // created_time is the time when the token was first created.
+  google.protobuf.Timestamp created_at = 6;
 }
 
 service TokensService {
+  // CreatePersonalAccessTokenRequest creates a new token.
+  rpc CreatePersonalAccessToken(CreatePersonalAccessTokenRequest) returns (CreatePersonalAccessTokenResponse) {}
 
-    // CreatePersonalAccessTokenRequest creates a new token.
-    rpc CreatePersonalAccessToken(CreatePersonalAccessTokenRequest) returns (CreatePersonalAccessTokenResponse) {}
+  // ListPersonalAccessTokens returns token by ID.
+  rpc GetPersonalAccessToken(GetPersonalAccessTokenRequest) returns (GetPersonalAccessTokenResponse) {}
 
-    // ListPersonalAccessTokens returns token by ID.
-    rpc GetPersonalAccessToken(GetPersonalAccessTokenRequest) returns (GetPersonalAccessTokenResponse) {}
+  // ListPersonalAccessTokens returns a list of tokens.
+  rpc ListPersonalAccessTokens(ListPersonalAccessTokensRequest) returns (ListPersonalAccessTokensResponse) {}
 
-    // ListPersonalAccessTokens returns a list of tokens.
-    rpc ListPersonalAccessTokens(ListPersonalAccessTokensRequest) returns (ListPersonalAccessTokensResponse) {}
+  // RegeneratePersonalAccessToken generates a new token and replaces the previous one.
+  rpc RegeneratePersonalAccessToken(RegeneratePersonalAccessTokenRequest) returns (RegeneratePersonalAccessTokenResponse) {}
 
-    // RegeneratePersonalAccessToken generates a new token and replaces the previous one.
-    rpc RegeneratePersonalAccessToken(RegeneratePersonalAccessTokenRequest) returns (RegeneratePersonalAccessTokenResponse) {}
+  // UpdatePersonalAccessToken updates writable properties of a PersonalAccessToken.
+  rpc UpdatePersonalAccessToken(UpdatePersonalAccessTokenRequest) returns (UpdatePersonalAccessTokenResponse) {}
 
-    // UpdatePersonalAccessToken updates writable properties of a PersonalAccessToken.
-    rpc UpdatePersonalAccessToken(UpdatePersonalAccessTokenRequest) returns (UpdatePersonalAccessTokenResponse) {}
-
-    // DeletePersonalAccessToken removes token by ID.
-    rpc DeletePersonalAccessToken(DeletePersonalAccessTokenRequest) returns (DeletePersonalAccessTokenResponse) {}
+  // DeletePersonalAccessToken removes token by ID.
+  rpc DeletePersonalAccessToken(DeletePersonalAccessTokenRequest) returns (DeletePersonalAccessTokenResponse) {}
 }
 
 message CreatePersonalAccessTokenRequest {
-    PersonalAccessToken token = 1;
+  PersonalAccessToken token = 1;
 }
 
 message CreatePersonalAccessTokenResponse {
-    PersonalAccessToken token = 1;
+  PersonalAccessToken token = 1;
 }
 
 message GetPersonalAccessTokenRequest {
-    string id = 1;
+  string id = 1;
 }
 
 message GetPersonalAccessTokenResponse {
-    PersonalAccessToken token = 1;
+  PersonalAccessToken token = 1;
 }
 
 message ListPersonalAccessTokensRequest {
-    // Page information
-    Pagination pagination = 1;
+  // Page information
+  Pagination pagination = 1;
 }
 
 message ListPersonalAccessTokensResponse {
-    repeated PersonalAccessToken tokens = 1;
+  repeated PersonalAccessToken tokens = 1;
 
-    int64 total_results = 2;
+  int64 total_results = 2;
 }
 
 message RegeneratePersonalAccessTokenRequest {
-    // id is the ID of the PersonalAccessToken
-    string id = 1;
+  // id is the ID of the PersonalAccessToken
+  string id = 1;
 
-    // expiration time is the time when the new token should expire
-    google.protobuf.Timestamp expiration_time = 2;
+  // expiration time is the time when the new token should expire
+  google.protobuf.Timestamp expiration_time = 2;
 }
 
 message RegeneratePersonalAccessTokenResponse {
-    PersonalAccessToken token = 1;
+  PersonalAccessToken token = 1;
 }
 
 message UpdatePersonalAccessTokenRequest {
-    PersonalAccessToken token = 1;
-    google.protobuf.FieldMask update_mask = 2;
+  PersonalAccessToken token = 1;
+  google.protobuf.FieldMask update_mask = 2;
 }
 
 message UpdatePersonalAccessTokenResponse {
-    PersonalAccessToken token = 1;
+  PersonalAccessToken token = 1;
 }
 
 message DeletePersonalAccessTokenRequest {
-    string id = 1;
+  string id = 1;
 }
 
-message DeletePersonalAccessTokenResponse {
-}
+message DeletePersonalAccessTokenResponse {}

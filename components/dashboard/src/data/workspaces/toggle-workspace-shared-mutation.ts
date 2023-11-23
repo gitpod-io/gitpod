@@ -4,15 +4,15 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { GitpodServer } from "@gitpod/gitpod-protocol";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
 import { getListWorkspacesQueryKey, ListWorkspacesQueryResult } from "./list-workspaces-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
+import { AdmissionLevel, Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 type ToggleWorkspaceSharedArgs = {
     workspaceId: string;
-    level: GitpodServer.AdmissionLevel;
+    level: AdmissionLevel;
 };
 
 export const useToggleWorkspaceSharedMutation = () => {
@@ -21,25 +21,33 @@ export const useToggleWorkspaceSharedMutation = () => {
 
     return useMutation({
         mutationFn: async ({ workspaceId, level }: ToggleWorkspaceSharedArgs) => {
-            return await getGitpodService().server.controlAdmission(workspaceId, level);
+            if (level === AdmissionLevel.UNSPECIFIED) {
+                return;
+            }
+            return await getGitpodService().server.controlAdmission(
+                workspaceId,
+                level === AdmissionLevel.EVERYONE ? "everyone" : "owner",
+            );
         },
         onSuccess: (_, { workspaceId, level }) => {
+            if (level === AdmissionLevel.UNSPECIFIED) {
+                return;
+            }
+            // TODO: use `useUpdateWorkspaceInCache` after respond Workspace object, see EXP-960
             const queryKey = getListWorkspacesQueryKey(org.data?.id);
 
             // Update workspace.shareable to the level we set so it's reflected immediately
             queryClient.setQueryData<ListWorkspacesQueryResult>(queryKey, (oldWorkspacesData) => {
                 return oldWorkspacesData?.map((info) => {
-                    if (info.workspace.id !== workspaceId) {
+                    if (info.id !== workspaceId) {
                         return info;
                     }
 
-                    return {
-                        ...info,
-                        workspace: {
-                            ...info.workspace,
-                            shareable: level === "everyone" ? true : false,
-                        },
-                    };
+                    const workspace = new Workspace(info);
+                    if (workspace.status) {
+                        workspace.status.admission = level;
+                    }
+                    return workspace;
                 });
             });
 

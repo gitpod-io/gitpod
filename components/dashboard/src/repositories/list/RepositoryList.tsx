@@ -4,52 +4,56 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, useCallback, useEffect, useState } from "react";
-import { LoaderIcon } from "lucide-react";
+import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom";
-import { RepositoryListItem } from "./RepoListItem";
 import { useListConfigurations } from "../../data/configurations/configuration-queries";
-import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
-import { TextInput } from "../../components/forms/TextInputField";
-import { TextMuted } from "@podkit/typography/TextMuted";
 import { PageHeading } from "@podkit/layout/PageHeading";
 import { Button } from "@podkit/buttons/Button";
 import { useDocumentTitle } from "../../hooks/use-document-title";
-import { PaginationControls, PaginationCountText } from "./PaginationControls";
-import { Table, TableBody, TableHead, TableHeader, TableRow } from "@podkit/tables/Table";
 import { ImportRepositoryModal } from "../create/ImportRepositoryModal";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { useQueryParams } from "../../hooks/use-query-params";
+import { RepoListEmptyState } from "./RepoListEmptyState";
+import { useStateWithDebounce } from "../../hooks/use-state-with-debounce";
+import { RepositoryTable } from "./RepositoryTable";
+import { LoadingState } from "@podkit/loading/LoadingState";
+import { TableSortOrder } from "@podkit/tables/SortableTable";
 
 const RepositoryListPage: FC = () => {
     useDocumentTitle("Imported repositories");
 
     const history = useHistory();
 
-    // TODO: Move this state into url search params
-    const [currentPage, setCurrentPage] = useState(1);
-    const [searchTerm, setSearchTerm, debouncedSearchTerm] = useStateWithDebounce("");
-
-    // Reset to page 1 when debounced search term changes (when we perform a new search)
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [debouncedSearchTerm]);
-
-    // Have this set to a low value for now to test pagination while we develop this
-    // TODO: move this into state and add control for changing it
-    const pageSize = 5;
-
-    const { data, isFetching, isPreviousData } = useListConfigurations({
-        searchTerm: debouncedSearchTerm,
-        page: currentPage,
-        pageSize,
-    });
+    const params = useQueryParams();
+    const [searchTerm, setSearchTerm, searchTermDebounced] = useStateWithDebounce(params.get("search") || "");
+    const [sortBy, setSortBy] = useState(parseSortBy(params));
+    const [sortOrder, setSortOrder] = useState<TableSortOrder>(parseSortOrder(params));
     const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
 
-    // TODO: Adding these to response payload to avoid having to calculate them here
-    // This will fix issues w/ relying on some server provided state and some client state (like current page)
-    const rowCount = data?.configurations.length ?? 0;
-    const totalRows = data?.pagination?.total ?? 0;
-    const totalPages = Math.ceil(totalRows / pageSize);
+    // TODO: abstract this into a more generic hook for next sortable table
+    // Search/Filter params tracked in url query params
+    useEffect(() => {
+        const params = new URLSearchParams();
+        if (searchTermDebounced) {
+            params.set("search", searchTermDebounced);
+        }
+        if (sortBy) {
+            params.set("sortBy", sortBy);
+        }
+        if (sortOrder) {
+            params.set("sortOrder", sortOrder);
+        }
+        params.toString();
+        history.replace({ search: `?${params.toString()}` });
+    }, [history, searchTermDebounced, sortBy, sortOrder]);
+
+    // TODO: handle isError case
+    const { data, isLoading, isFetching, isFetchingNextPage, isPreviousData, hasNextPage, fetchNextPage } =
+        useListConfigurations({
+            searchTerm: searchTermDebounced,
+            sortBy: sortBy,
+            sortOrder: sortOrder,
+        });
 
     const handleRepoImported = useCallback(
         (configuration: Configuration) => {
@@ -58,90 +62,57 @@ const RepositoryListPage: FC = () => {
         [history],
     );
 
+    const handleSort = useCallback(
+        (columnName: string, newSortOrder: TableSortOrder) => {
+            setSortBy(columnName);
+            setSortOrder(newSortOrder);
+        },
+        [setSortOrder],
+    );
+
+    const configurations = useMemo(() => {
+        return data?.pages.map((page) => page.configurations).flat() ?? [];
+    }, [data?.pages]);
+
+    const hasMoreThanOnePage = (data?.pages.length ?? 0) > 1;
+
+    // This tracks any filters/search params applied
+    const hasFilters = !!searchTermDebounced;
+
+    // Show the table once we're done loading and either have results, or have filters applied
+    const showTable = !isLoading && (configurations.length > 0 || hasFilters);
+
     return (
         <>
-            <div className="app-container">
+            <div className="app-container mb-8">
                 <PageHeading
                     title="Imported repositories"
                     subtitle="Configure and refine the experience of working with a repository in Gitpod"
-                    action={<Button onClick={() => setShowCreateProjectModal(true)}>Import Repository</Button>}
+                    action={
+                        showTable && <Button onClick={() => setShowCreateProjectModal(true)}>Import Repository</Button>
+                    }
                 />
 
-                {/* Search/Filter bar */}
-                <div className="flex flex-row flex-wrap justify-between items-center">
-                    <div className="flex flex-row flex-wrap gap-2 items-center">
-                        {/* TODO: Add search icon on left and decide on pulling Inputs into podkit */}
-                        <TextInput
-                            className="w-80"
-                            value={searchTerm}
-                            onChange={setSearchTerm}
-                            placeholder="Search imported repositories"
-                        />
-                        {/* TODO: Add prebuild status filter dropdown */}
-                    </div>
-                    {/* Account for variation of message when totalRows is greater than smallest page size option (20?) */}
-                    <div>
-                        <TextMuted className="text-sm">
-                            {rowCount < totalRows ? (
-                                <PaginationCountText
-                                    currentPage={currentPage}
-                                    pageSize={pageSize}
-                                    currentRows={rowCount}
-                                    totalRows={totalRows}
-                                    includePrefix
-                                />
-                            ) : (
-                                <>{totalRows === 1 ? "Showing 1 repo" : `Showing ${totalRows} repos`}</>
-                            )}
-                        </TextMuted>
-                    </div>
-                </div>
+                {isLoading && <LoadingState />}
 
-                <div className="relative w-full overflow-auto mt-2">
-                    <Table>
-                        {/* TODO: Add sorting controls */}
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-52">Name</TableHead>
-                                <TableHead hideOnSmallScreen>Repository</TableHead>
-                                <TableHead className="w-32" hideOnSmallScreen>
-                                    Created
-                                </TableHead>
-                                <TableHead className="w-24" hideOnSmallScreen>
-                                    Prebuilds
-                                </TableHead>
-                                {/* Action column, loading status in header */}
-                                <TableHead className="w-24 text-right">
-                                    {isFetching && isPreviousData && (
-                                        <div className="flex flex-right justify-end items-center">
-                                            {/* TODO: Make a LoadingIcon component */}
-                                            <LoaderIcon
-                                                className="animate-spin text-gray-500 dark:text-gray-300"
-                                                size={20}
-                                            />
-                                        </div>
-                                    )}
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {data?.configurations.map((configuration) => (
-                                <RepositoryListItem key={configuration.id} configuration={configuration} />
-                            ))}
-                        </TableBody>
-                    </Table>
+                {showTable && (
+                    <RepositoryTable
+                        searchTerm={searchTerm}
+                        configurations={configurations}
+                        sortBy={sortBy}
+                        sortOrder={sortOrder}
+                        // we check isPreviousData too so we don't show spinner if it's a background refresh
+                        isSearching={isFetching && isPreviousData}
+                        isFetchingNextPage={isFetchingNextPage}
+                        hasNextPage={!!hasNextPage}
+                        hasMoreThanOnePage={hasMoreThanOnePage}
+                        onLoadNextPage={() => fetchNextPage()}
+                        onSearchTermChange={setSearchTerm}
+                        onSort={handleSort}
+                    />
+                )}
 
-                    {totalPages > 1 && (
-                        <PaginationControls
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            totalRows={totalRows}
-                            pageSize={pageSize}
-                            currentRows={rowCount}
-                            onPageChanged={setCurrentPage}
-                        />
-                    )}
-                </div>
+                {!showTable && !isLoading && <RepoListEmptyState onImport={() => setShowCreateProjectModal(true)} />}
             </div>
 
             {showCreateProjectModal && (
@@ -155,3 +126,19 @@ const RepositoryListPage: FC = () => {
 };
 
 export default RepositoryListPage;
+
+const parseSortOrder = (params: URLSearchParams) => {
+    const sortOrder = params.get("sortOrder");
+    if (sortOrder === "asc" || sortOrder === "desc") {
+        return sortOrder;
+    }
+    return "asc";
+};
+
+const parseSortBy = (params: URLSearchParams) => {
+    const sortBy = params.get("sortBy");
+    if (sortBy === "name" || sortBy === "creationTime") {
+        return sortBy;
+    }
+    return "name";
+};

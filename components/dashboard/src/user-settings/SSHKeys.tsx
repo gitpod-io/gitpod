@@ -9,13 +9,14 @@ import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal"
 import Alert from "../components/Alert";
 import { Item, ItemField, ItemFieldContextMenu } from "../components/ItemsList";
 import ConfirmationModal from "../components/ConfirmationModal";
-import { SSHPublicKeyValue, UserSSHPublicKeyValue } from "@gitpod/gitpod-protocol";
-import { getGitpodService } from "../service/service";
+import { SSHPublicKeyValue } from "@gitpod/gitpod-protocol";
 import dayjs from "dayjs";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { Heading2, Subheading } from "../components/typography/headings";
 import { EmptyMessage } from "../components/EmptyMessage";
-import { Button } from "../components/Button";
+import { Button } from "@podkit/buttons/Button";
+import { sshClient } from "../service/public-api";
+import { SSHPublicKey } from "@gitpod/public-api/lib/gitpod/v1/ssh_pb";
 
 interface AddModalProps {
     value: SSHPublicKeyValue;
@@ -24,7 +25,7 @@ interface AddModalProps {
 }
 
 interface DeleteModalProps {
-    value: UserSSHPublicKeyValue;
+    value: SSHPublicKey;
     onConfirm: () => void;
     onClose: () => void;
 }
@@ -50,7 +51,7 @@ export function AddSSHKeyModal(props: AddModalProps) {
             return;
         }
         try {
-            await getGitpodService().server.addSSHPublicKey(value);
+            await sshClient.createSSHPublicKey(value);
             props.onClose();
             props.onSave();
         } catch (e) {
@@ -110,10 +111,10 @@ export function AddSSHKeyModal(props: AddModalProps) {
                 </div>
             </ModalBody>
             <ModalFooter>
-                <Button type="secondary" onClick={props.onClose}>
+                <Button variant="secondary" onClick={props.onClose}>
                     Cancel
                 </Button>
-                <Button htmlType="submit">Add SSH Key</Button>
+                <Button type="submit">Add SSH Key</Button>
             </ModalFooter>
         </Modal>
     );
@@ -121,7 +122,7 @@ export function AddSSHKeyModal(props: AddModalProps) {
 
 export function DeleteSSHKeyModal(props: DeleteModalProps) {
     const confirmDelete = useCallback(async () => {
-        await getGitpodService().server.deleteSSHPublicKey(props.value.id!);
+        await sshClient.deleteSSHPublicKey({ sshKeyId: props.value.id! });
         props.onConfirm();
         props.onClose();
     }, [props]);
@@ -142,16 +143,14 @@ export function DeleteSSHKeyModal(props: DeleteModalProps) {
 }
 
 export default function SSHKeys() {
-    const [dataList, setDataList] = useState<UserSSHPublicKeyValue[]>([]);
+    const [dataList, setDataList] = useState<SSHPublicKey[]>([]);
     const [currentData, setCurrentData] = useState<SSHPublicKeyValue>({ name: "", key: "" });
-    const [currentDelData, setCurrentDelData] = useState<UserSSHPublicKeyValue>();
+    const [currentDelData, setCurrentDelData] = useState<SSHPublicKey>();
     const [showAddModal, setShowAddModal] = useState(false);
     const [showDelModal, setShowDelModal] = useState(false);
 
     const loadData = () => {
-        getGitpodService()
-            .server.getSSHPublicKeys()
-            .then((r) => setDataList(r));
+        sshClient.listSSHPublicKeys({}).then((r) => setDataList(r.sshKeys));
     };
 
     useEffect(() => {
@@ -164,7 +163,7 @@ export default function SSHKeys() {
         setShowDelModal(false);
     };
 
-    const deleteOne = (value: UserSSHPublicKeyValue) => {
+    const deleteOne = (value: SSHPublicKey) => {
         setCurrentDelData(value);
         setShowAddModal(false);
         setShowDelModal(true);
@@ -199,9 +198,9 @@ export default function SSHKeys() {
                 </div>
                 {dataList.length !== 0 ? (
                     <div className="mt-3 flex">
-                        <button onClick={addOne} className="ml-2">
+                        <Button onClick={addOne} className="ml-2">
                             New SSH Key
-                        </button>
+                        </Button>
                     </div>
                 ) : null}
             </div>
@@ -243,15 +242,17 @@ export default function SSHKeys() {
     );
 }
 
-function KeyItem(props: { sshKey: UserSSHPublicKeyValue }) {
+function KeyItem(props: { sshKey: SSHPublicKey }) {
     const key = props.sshKey;
     return (
         <ItemField className="flex flex-col gap-y box-border overflow-hidden">
             <p className="truncate text-gray-400 dark:text-gray-600">SHA256:{key.fingerprint}</p>
             <div className="truncate my-1 text-xl text-gray-800 dark:text-gray-100 font-semibold">{key.name}</div>
-            <p className="truncate mt-4">Added on {dayjs(key.creationTime).format("MMM D, YYYY, hh:mm A")}</p>
+            <p className="truncate mt-4">Added on {dayjs(key.creationTime!.toDate()).format("MMM D, YYYY, hh:mm A")}</p>
             {!!key.lastUsedTime && (
-                <p className="truncate">Last used on {dayjs(key.lastUsedTime).format("MMM D, YYYY, hh:mm A")}</p>
+                <p className="truncate">
+                    Last used on {dayjs(key.lastUsedTime!.toDate()).format("MMM D, YYYY, hh:mm A")}
+                </p>
             )}
         </ItemField>
     );

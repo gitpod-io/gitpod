@@ -71,6 +71,7 @@ jobs:
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
           infrastructure_provider: ${{ needs.configuration.outputs.infrastructure_provider }}
           large_vm: false
+          preemptible: true
       - name: Deploy Gitpod to the preview environment
         id: deploy-gitpod
         uses: ./.github/actions/deploy-gitpod
@@ -85,7 +86,7 @@ jobs:
     if: ${{ needs.configuration.outputs.skip == 'false' }}
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-leeway-pigz-gha.18593
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:se-update-leeway-gha.20594
       volumes:
         - /var/tmp:/var/tmp
         - /tmp:/tmp

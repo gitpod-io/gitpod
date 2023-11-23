@@ -36,10 +36,17 @@ type WorkspaceServiceClient interface {
 	// +return NOT_FOUND User does not have access to a workspace with the given
 	// ID +return NOT_FOUND Workspace does not exist
 	GetWorkspace(context.Context, *connect_go.Request[v1.GetWorkspaceRequest]) (*connect_go.Response[v1.GetWorkspaceResponse], error)
-	// WatchWorkspaceStatus watchs the workspaces status changes
+	// WatchWorkspaceStatus watches the workspaces status changes
 	//
 	// workspace_id +return NOT_FOUND Workspace does not exist
 	WatchWorkspaceStatus(context.Context, *connect_go.Request[v1.WatchWorkspaceStatusRequest]) (*connect_go.ServerStreamForClient[v1.WatchWorkspaceStatusResponse], error)
+	// ListWorkspaces returns a list of workspaces that match the query.
+	ListWorkspaces(context.Context, *connect_go.Request[v1.ListWorkspacesRequest]) (*connect_go.Response[v1.ListWorkspacesResponse], error)
+	// CreateAndStartWorkspace creates a new workspace and starts it.
+	CreateAndStartWorkspace(context.Context, *connect_go.Request[v1.CreateAndStartWorkspaceRequest]) (*connect_go.Response[v1.CreateAndStartWorkspaceResponse], error)
+	// StartWorkspace starts an existing workspace.
+	// If the specified workspace is not in stopped phase, this will return the workspace as is.
+	StartWorkspace(context.Context, *connect_go.Request[v1.StartWorkspaceRequest]) (*connect_go.Response[v1.StartWorkspaceResponse], error)
 }
 
 // NewWorkspaceServiceClient constructs a client for the gitpod.v1.WorkspaceService service. By
@@ -62,13 +69,31 @@ func NewWorkspaceServiceClient(httpClient connect_go.HTTPClient, baseURL string,
 			baseURL+"/gitpod.v1.WorkspaceService/WatchWorkspaceStatus",
 			opts...,
 		),
+		listWorkspaces: connect_go.NewClient[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.WorkspaceService/ListWorkspaces",
+			opts...,
+		),
+		createAndStartWorkspace: connect_go.NewClient[v1.CreateAndStartWorkspaceRequest, v1.CreateAndStartWorkspaceResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.WorkspaceService/CreateAndStartWorkspace",
+			opts...,
+		),
+		startWorkspace: connect_go.NewClient[v1.StartWorkspaceRequest, v1.StartWorkspaceResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.WorkspaceService/StartWorkspace",
+			opts...,
+		),
 	}
 }
 
 // workspaceServiceClient implements WorkspaceServiceClient.
 type workspaceServiceClient struct {
-	getWorkspace         *connect_go.Client[v1.GetWorkspaceRequest, v1.GetWorkspaceResponse]
-	watchWorkspaceStatus *connect_go.Client[v1.WatchWorkspaceStatusRequest, v1.WatchWorkspaceStatusResponse]
+	getWorkspace            *connect_go.Client[v1.GetWorkspaceRequest, v1.GetWorkspaceResponse]
+	watchWorkspaceStatus    *connect_go.Client[v1.WatchWorkspaceStatusRequest, v1.WatchWorkspaceStatusResponse]
+	listWorkspaces          *connect_go.Client[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse]
+	createAndStartWorkspace *connect_go.Client[v1.CreateAndStartWorkspaceRequest, v1.CreateAndStartWorkspaceResponse]
+	startWorkspace          *connect_go.Client[v1.StartWorkspaceRequest, v1.StartWorkspaceResponse]
 }
 
 // GetWorkspace calls gitpod.v1.WorkspaceService.GetWorkspace.
@@ -81,6 +106,21 @@ func (c *workspaceServiceClient) WatchWorkspaceStatus(ctx context.Context, req *
 	return c.watchWorkspaceStatus.CallServerStream(ctx, req)
 }
 
+// ListWorkspaces calls gitpod.v1.WorkspaceService.ListWorkspaces.
+func (c *workspaceServiceClient) ListWorkspaces(ctx context.Context, req *connect_go.Request[v1.ListWorkspacesRequest]) (*connect_go.Response[v1.ListWorkspacesResponse], error) {
+	return c.listWorkspaces.CallUnary(ctx, req)
+}
+
+// CreateAndStartWorkspace calls gitpod.v1.WorkspaceService.CreateAndStartWorkspace.
+func (c *workspaceServiceClient) CreateAndStartWorkspace(ctx context.Context, req *connect_go.Request[v1.CreateAndStartWorkspaceRequest]) (*connect_go.Response[v1.CreateAndStartWorkspaceResponse], error) {
+	return c.createAndStartWorkspace.CallUnary(ctx, req)
+}
+
+// StartWorkspace calls gitpod.v1.WorkspaceService.StartWorkspace.
+func (c *workspaceServiceClient) StartWorkspace(ctx context.Context, req *connect_go.Request[v1.StartWorkspaceRequest]) (*connect_go.Response[v1.StartWorkspaceResponse], error) {
+	return c.startWorkspace.CallUnary(ctx, req)
+}
+
 // WorkspaceServiceHandler is an implementation of the gitpod.v1.WorkspaceService service.
 type WorkspaceServiceHandler interface {
 	// GetWorkspace returns a single workspace.
@@ -88,10 +128,17 @@ type WorkspaceServiceHandler interface {
 	// +return NOT_FOUND User does not have access to a workspace with the given
 	// ID +return NOT_FOUND Workspace does not exist
 	GetWorkspace(context.Context, *connect_go.Request[v1.GetWorkspaceRequest]) (*connect_go.Response[v1.GetWorkspaceResponse], error)
-	// WatchWorkspaceStatus watchs the workspaces status changes
+	// WatchWorkspaceStatus watches the workspaces status changes
 	//
 	// workspace_id +return NOT_FOUND Workspace does not exist
 	WatchWorkspaceStatus(context.Context, *connect_go.Request[v1.WatchWorkspaceStatusRequest], *connect_go.ServerStream[v1.WatchWorkspaceStatusResponse]) error
+	// ListWorkspaces returns a list of workspaces that match the query.
+	ListWorkspaces(context.Context, *connect_go.Request[v1.ListWorkspacesRequest]) (*connect_go.Response[v1.ListWorkspacesResponse], error)
+	// CreateAndStartWorkspace creates a new workspace and starts it.
+	CreateAndStartWorkspace(context.Context, *connect_go.Request[v1.CreateAndStartWorkspaceRequest]) (*connect_go.Response[v1.CreateAndStartWorkspaceResponse], error)
+	// StartWorkspace starts an existing workspace.
+	// If the specified workspace is not in stopped phase, this will return the workspace as is.
+	StartWorkspace(context.Context, *connect_go.Request[v1.StartWorkspaceRequest]) (*connect_go.Response[v1.StartWorkspaceResponse], error)
 }
 
 // NewWorkspaceServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -111,6 +158,21 @@ func NewWorkspaceServiceHandler(svc WorkspaceServiceHandler, opts ...connect_go.
 		svc.WatchWorkspaceStatus,
 		opts...,
 	))
+	mux.Handle("/gitpod.v1.WorkspaceService/ListWorkspaces", connect_go.NewUnaryHandler(
+		"/gitpod.v1.WorkspaceService/ListWorkspaces",
+		svc.ListWorkspaces,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.WorkspaceService/CreateAndStartWorkspace", connect_go.NewUnaryHandler(
+		"/gitpod.v1.WorkspaceService/CreateAndStartWorkspace",
+		svc.CreateAndStartWorkspace,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.WorkspaceService/StartWorkspace", connect_go.NewUnaryHandler(
+		"/gitpod.v1.WorkspaceService/StartWorkspace",
+		svc.StartWorkspace,
+		opts...,
+	))
 	return "/gitpod.v1.WorkspaceService/", mux
 }
 
@@ -123,4 +185,16 @@ func (UnimplementedWorkspaceServiceHandler) GetWorkspace(context.Context, *conne
 
 func (UnimplementedWorkspaceServiceHandler) WatchWorkspaceStatus(context.Context, *connect_go.Request[v1.WatchWorkspaceStatusRequest], *connect_go.ServerStream[v1.WatchWorkspaceStatusResponse]) error {
 	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.WatchWorkspaceStatus is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) ListWorkspaces(context.Context, *connect_go.Request[v1.ListWorkspacesRequest]) (*connect_go.Response[v1.ListWorkspacesResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.ListWorkspaces is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) CreateAndStartWorkspace(context.Context, *connect_go.Request[v1.CreateAndStartWorkspaceRequest]) (*connect_go.Response[v1.CreateAndStartWorkspaceResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.CreateAndStartWorkspace is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) StartWorkspace(context.Context, *connect_go.Request[v1.StartWorkspaceRequest]) (*connect_go.Response[v1.StartWorkspaceResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.StartWorkspace is not implemented"))
 }

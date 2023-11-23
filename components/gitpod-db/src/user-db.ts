@@ -114,8 +114,8 @@ export interface UserDB extends OAuthUserRepository, OAuthTokenRepository, Trans
     findUsersByEmail(email: string): Promise<User[]>;
 
     findEnvVar(userId: string, envVar: UserEnvVarValue): Promise<UserEnvVar | undefined>;
-    addEnvVar(userId: string, envVar: UserEnvVarValue): Promise<void>;
-    updateEnvVar(userId: string, envVar: UserEnvVarValue): Promise<void>;
+    addEnvVar(userId: string, envVar: UserEnvVarValue): Promise<UserEnvVar>;
+    updateEnvVar(userId: string, envVar: Partial<UserEnvVarValue>): Promise<UserEnvVar | undefined>;
     deleteEnvVar(envVar: UserEnvVar): Promise<void>;
     getEnvVars(userId: string): Promise<UserEnvVar[]>;
 

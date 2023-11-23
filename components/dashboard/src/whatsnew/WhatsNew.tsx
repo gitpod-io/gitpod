@@ -11,6 +11,7 @@ import { WhatsNewEntry202106 } from "./WhatsNew-2021-06";
 import { UserContext } from "../user-context";
 import { useContext, useState } from "react";
 import { getGitpodService } from "../service/service";
+import { Button } from "@podkit/buttons/Button";
 
 const allEntries: WhatsNewEntry[] = [WhatsNewEntry202106, WhatsNewEntry202104];
 
@@ -77,16 +78,16 @@ export function WhatsNew(props: { onClose: () => void }) {
                     <div className="text-sm mr-auto italic">
                         {unseenEntries.length} more update{unseenEntries.length > 1 ? "s" : ""}
                     </div>
-                    <button className="ml-2 secondary" onClick={internalClose}>
+                    <Button variant="secondary" className="ml-2" onClick={internalClose}>
                         Dismiss All
-                    </button>
-                    <button className="ml-2" onClick={next}>
+                    </Button>
+                    <Button className="ml-2" onClick={next}>
                         Next
-                    </button>
+                    </Button>
                 </div>
             ) : (
                 <div className="flex justify-end mt-6 space-x-2">
-                    <button onClick={internalClose}>Continue</button>
+                    <Button onClick={internalClose}>Continue</Button>
                 </div>
             )}
         </Modal>

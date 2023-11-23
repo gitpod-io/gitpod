@@ -389,7 +389,7 @@ func newUsageFromInstance(instance db.WorkspaceInstanceForUsage, pricer *Workspa
 	}
 
 	draft := true
-	if stopTime.IsSet() {
+	if instance.StoppedTime.IsSet() {
 		draft = false
 	}
 

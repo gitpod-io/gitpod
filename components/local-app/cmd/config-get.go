@@ -18,11 +18,24 @@ var configGetCmd = &cobra.Command{
 
 		cfg := config.FromContext(cmd.Context())
 
+		host := "not set"
+		organizationID := "not set"
+
+		gpctx, ok := cfg.Contexts[cfg.ActiveContext]
+		if !ok {
+			gpctx = &config.ConnectionContext{}
+		} else {
+			host = gpctx.Host.Host
+			organizationID = gpctx.OrganizationID
+		}
+
 		return WriteTabular([]struct {
-			Telemetry  bool `header:"Telemetry"`
-			Autoupdate bool `header:"Autoupdate"`
+			Telemetry      bool   `header:"Telemetry"`
+			Autoupdate     bool   `header:"Autoupdate"`
+			Host           string `header:"Host"`
+			OrganizationID string `header:"OrganizationID" print:"organization id"`
 		}{
-			{Telemetry: cfg.Telemetry.Enabled, Autoupdate: cfg.Autoupdate},
+			{Telemetry: cfg.Telemetry.Enabled, Autoupdate: cfg.Autoupdate, Host: host, OrganizationID: organizationID},
 		}, configGetOpts.Format, prettyprint.WriterFormatNarrow)
 	},
 }

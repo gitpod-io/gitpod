@@ -8,6 +8,7 @@ import { Container } from "inversify";
 import * as express from "express";
 import * as prometheusClient from "prom-client";
 import { log, LogrusLogLevel } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { installLogCountMetric } from "@gitpod/gitpod-protocol/lib/util/logging-node";
 import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
 import { TypeORM } from "@gitpod/gitpod-db/lib/typeorm/typeorm";
 import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
@@ -17,6 +18,7 @@ import { AppClusterWorkspaceInstancesController } from "./app-cluster-instance-c
 import { redisMetricsRegistry } from "@gitpod/gitpod-db/lib";
 
 log.enableJSONLogging("ws-manager-bridge", undefined, LogrusLogLevel.getFromEnv());
+installLogCountMetric();
 
 export const start = async (container: Container) => {
     process.on("uncaughtException", function (err) {

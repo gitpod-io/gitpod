@@ -34,7 +34,7 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { PrebuildManager } from "./prebuild-manager";
 import { PrebuildStatusMaintainer } from "./prebuilt-status-maintainer";
 import { Options, ApplicationFunctionOptions } from "probot/lib/types";
-import { asyncHandler } from "../express-util";
+import { asyncHandler, toHeaders } from "../express-util";
 import { ContextParser } from "../workspace/context-parser-service";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
@@ -122,6 +122,7 @@ export class GithubApp {
                         requestKind: "probot",
                         requestMethod: req.path,
                         signal: new AbortController().signal,
+                        headers: toHeaders(req.headers),
                     },
                     () => next(),
                 );

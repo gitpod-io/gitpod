@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AuthProviderEntry } from "@gitpod/gitpod-protocol";
 import { FunctionComponent, useCallback, useState } from "react";
 import { Button } from "../../components/Button";
 import { EmptyMessage } from "../../components/EmptyMessage";
@@ -12,9 +11,10 @@ import { Item, ItemField, ItemFieldIcon, ItemsList } from "../../components/Item
 import { Heading2, Subheading } from "../../components/typography/headings";
 import { GitIntegrationListItem } from "./GitIntegrationListItem";
 import { GitIntegrationModal } from "./GitIntegrationModal";
+import { AuthProvider } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 
 type Props = {
-    providers: AuthProviderEntry[];
+    providers: AuthProvider[];
 };
 export const GitIntegrationsList: FunctionComponent<Props> = ({ providers }) => {
     const [showCreateModal, setShowCreateModal] = useState(false);

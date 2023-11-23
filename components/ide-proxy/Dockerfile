@@ -2,12 +2,12 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:5fd82be4dfccc650c1985d57847f1af556bf23a8a5d86ec5fddf7d417ab147a4 as compress
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:d0897c7c6a7b52f1df6a8989e17cbc5dcc627b8f9dcc3198ea099cb28d0ee085 as compress
 
 RUN apk add brotli gzip
 
 # Gitpod CLI and Local App
-COPY components-local-app--app/bin/* /bin/
+COPY components-local-app--app-with-manifest/bin/* /bin/
 
 RUN for FILE in `ls /bin/gitpod-local-companion*`;do \
   gzip -v -f -9 -k "$FILE"; \

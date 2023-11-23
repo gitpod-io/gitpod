@@ -2,8 +2,8 @@ syntax = "proto3";
 
 package gitpod.v1;
 
-import "google/protobuf/timestamp.proto";
 import "gitpod/v1/pagination.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
 
@@ -37,57 +37,44 @@ message OrganizationSettings {
 
 service OrganizationService {
   // CreateOrganization creates a new Organization.
-  rpc CreateOrganization(CreateOrganizationRequest)
-      returns (CreateOrganizationResponse) {};
+  rpc CreateOrganization(CreateOrganizationRequest) returns (CreateOrganizationResponse) {}
 
   // GetOrganization retrieves a single Organization.
-  rpc GetOrganization(GetOrganizationRequest)
-      returns (GetOrganizationResponse) {}
+  rpc GetOrganization(GetOrganizationRequest) returns (GetOrganizationResponse) {}
 
   // UpdateOrganization updates the properties of an Organization.
-  rpc UpdateOrganization(UpdateOrganizationRequest)
-      returns (UpdateOrganizationResponse) {};
+  rpc UpdateOrganization(UpdateOrganizationRequest) returns (UpdateOrganizationResponse) {}
 
   // ListOrganizations lists all organization the caller has access to.
-  rpc ListOrganizations(ListOrganizationsRequest)
-      returns (ListOrganizationsResponse) {};
+  rpc ListOrganizations(ListOrganizationsRequest) returns (ListOrganizationsResponse) {}
 
   // DeleteOrganization deletes the specified organization.
-  rpc DeleteOrganization(DeleteOrganizationRequest)
-      returns (DeleteOrganizationResponse) {};
+  rpc DeleteOrganization(DeleteOrganizationRequest) returns (DeleteOrganizationResponse) {}
 
   // GetOrganizationInvitation retrieves the invitation for a Organization.
-  rpc GetOrganizationInvitation(GetOrganizationInvitationRequest)
-      returns (GetOrganizationInvitationResponse) {};
+  rpc GetOrganizationInvitation(GetOrganizationInvitationRequest) returns (GetOrganizationInvitationResponse) {}
 
   // JoinOrganization makes the caller a OrganizationMember of the Organization.
-  rpc JoinOrganization(JoinOrganizationRequest)
-      returns (JoinOrganizationResponse) {};
+  rpc JoinOrganization(JoinOrganizationRequest) returns (JoinOrganizationResponse) {}
 
   // ResetOrganizationInvitation resets the invitation_id for a Organization.
-  rpc ResetOrganizationInvitation(ResetOrganizationInvitationRequest)
-      returns (ResetOrganizationInvitationResponse) {};
+  rpc ResetOrganizationInvitation(ResetOrganizationInvitationRequest) returns (ResetOrganizationInvitationResponse) {}
 
   // ListOrganizationMembers lists the members of a Organization.
-  rpc ListOrganizationMembers(ListOrganizationMembersRequest)
-      returns (ListOrganizationMembersResponse) {};
+  rpc ListOrganizationMembers(ListOrganizationMembersRequest) returns (ListOrganizationMembersResponse) {}
 
   // UpdateOrganizationMember updates organization membership properties.
-  rpc UpdateOrganizationMember(UpdateOrganizationMemberRequest)
-      returns (UpdateOrganizationMemberResponse) {};
+  rpc UpdateOrganizationMember(UpdateOrganizationMemberRequest) returns (UpdateOrganizationMemberResponse) {}
 
   // DeleteOrganizationMember removes a OrganizationMember from the
   // Organization.
-  rpc DeleteOrganizationMember(DeleteOrganizationMemberRequest)
-      returns (DeleteOrganizationMemberResponse) {};
+  rpc DeleteOrganizationMember(DeleteOrganizationMemberRequest) returns (DeleteOrganizationMemberResponse) {}
 
   // GetOrganizationSettings retrieves the settings of a Organization.
-  rpc GetOrganizationSettings(GetOrganizationSettingsRequest)
-      returns (GetOrganizationSettingsResponse) {};
+  rpc GetOrganizationSettings(GetOrganizationSettingsRequest) returns (GetOrganizationSettingsResponse) {}
 
   // UpdateOrganizationSettings updates the settings of a Organization.
-  rpc UpdateOrganizationSettings(UpdateOrganizationSettingsRequest)
-      returns (UpdateOrganizationSettingsResponse) {};
+  rpc UpdateOrganizationSettings(UpdateOrganizationSettingsRequest) returns (UpdateOrganizationSettingsResponse) {}
 }
 
 message UpdateOrganizationRequest {

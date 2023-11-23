@@ -4,14 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import {
-    DisposableCollection,
-    GitpodServer,
-    RateLimiterError,
-    StartWorkspaceResult,
-    WorkspaceImageBuild,
-    WorkspaceInstance,
-} from "@gitpod/gitpod-protocol";
+import { DisposableCollection, RateLimiterError, WorkspaceImageBuild } from "@gitpod/gitpod-protocol";
 import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import EventEmitter from "events";
@@ -26,8 +19,11 @@ import { getGitpodService, gitpodHostUrl, getIDEFrontendService, IDEFrontendServ
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
 import Alert from "../components/Alert";
-import { converter, workspaceClient, workspacesService } from "../service/public-api";
-import { GetWorkspaceRequest, Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { workspaceClient, workspacesService } from "../service/public-api";
+import { watchWorkspaceStatus } from "../data/workspaces/listen-to-workspace-ws-messages";
+import { Button } from "@podkit/buttons/Button";
+import { GetWorkspaceRequest, StartWorkspaceRequest, StartWorkspaceResponse, Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { PartialMessage } from "@bufbuild/protobuf";
 
 const sessionId = v4();
 
@@ -96,6 +92,7 @@ export interface StartWorkspaceState {
     ownerToken?: string;
 }
 
+// TODO: use Function Components
 export default class StartWorkspace extends React.Component<StartWorkspaceProps, StartWorkspaceState> {
     private ideFrontendService: IDEFrontendService | undefined;
 
@@ -125,11 +122,21 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         }
 
         try {
+            const watchDispose = watchWorkspaceStatus(this.state.workspace?.id, (resp) => {
+                if (resp.workspaceId !== this.state.workspace?.id || !resp.status) {
+                    return;
+                }
+                this.onWorkspaceUpdate(
+                    new Workspace({
+                        ...this.state.workspace,
+                        status: resp.status,
+                    }),
+                );
+            });
+            this.toDispose.push(watchDispose);
             this.toDispose.push(
                 getGitpodService().registerClient({
                     notifyDidOpenConnection: () => this.fetchWorkspaceInfo(undefined),
-                    onInstanceUpdate: (workspaceInstance: WorkspaceInstance) =>
-                        this.onInstanceUpdate(workspaceInstance),
                 }),
             );
         } catch (error) {
@@ -184,7 +191,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         }
     }
 
-    async startWorkspace(restart = false, forceDefaultImage = false) {
+    async startWorkspace(restart = false, forceDefaultConfig = false) {
         const state = this.state;
         if (state) {
             if (!restart && state.startedInstanceId /* || state.errorMessage */) {
@@ -195,22 +202,23 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
         const { workspaceId } = this.props;
         try {
-            const result = await this.startWorkspaceRateLimited(workspaceId, { forceDefaultImage });
+            const result = await this.startWorkspaceRateLimited(workspaceId, { forceDefaultConfig });
             if (!result) {
                 throw new Error("No result!");
             }
-            console.log("/start: started workspace instance: " + result.instanceID);
+            console.log("/start: started workspace instance: " + result.workspace?.status?.instanceId);
 
             // redirect to workspaceURL if we are not yet running in an iframe
-            if (!this.props.runsInIFrame && result.workspaceURL) {
+            if (!this.props.runsInIFrame && result.workspace?.status?.workspaceUrl) {
                 // before redirect, make sure we actually have the auth cookie set!
-                await this.ensureWorkspaceAuth(result.instanceID, true);
-                this.redirectTo(result.workspaceURL);
+                await this.ensureWorkspaceAuth(result.workspace.status.instanceId, true);
+                this.redirectTo(result.workspace.status.workspaceUrl);
                 return;
             }
+            // TODO: Remove this once we use `useStartWorkspaceMutation`
             // Start listening too instance updates - and explicitly query state once to guarantee we get at least one update
             // (needed for already started workspaces, and not hanging in 'Starting ...' for too long)
-            this.fetchWorkspaceInfo(result.instanceID);
+            this.fetchWorkspaceInfo(result.workspace?.status?.instanceId);
         } catch (error) {
             const normalizedError = typeof error === "string" ? { message: error } : error;
             console.error(normalizedError);
@@ -231,12 +239,16 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
      */
     protected async startWorkspaceRateLimited(
         workspaceId: string,
-        options: GitpodServer.StartWorkspaceOptions,
-    ): Promise<StartWorkspaceResult> {
+        options: PartialMessage<StartWorkspaceRequest>,
+    ): Promise<StartWorkspaceResponse> {
         let retries = 0;
         while (true) {
             try {
-                return await getGitpodService().server.startWorkspace(workspaceId, options);
+                // TODO: use `useStartWorkspaceMutation`
+                return await workspaceClient.startWorkspace({
+                    ...options,
+                    workspaceId,
+                });
             } catch (err) {
                 if (err?.code !== ErrorCodes.TOO_MANY_REQUESTS) {
                     throw err;
@@ -296,15 +308,6 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     protected async fetchIDEOptions() {
         const ideOptions = await getGitpodService().server.getIDEOptions();
         this.setState({ ideOptions });
-    }
-
-    private async onInstanceUpdate(instance: WorkspaceInstance) {
-        const workspace = this.state.workspace;
-        if (!workspace || instance.workspaceId !== workspace?.id) {
-            return;
-        }
-        const newWorkspace = converter.toWorkspace(instance, workspace.clone());
-        this.onWorkspaceUpdate(newWorkspace);
     }
 
     private async onWorkspaceUpdate(workspace: Workspace) {
@@ -585,12 +588,12 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                         },
                                     ]}
                                 >
-                                    <button className="secondary">
+                                    <Button variant="secondary">
                                         More Actions...
                                         <Arrow direction={"down"} />
-                                    </button>
+                                    </Button>
                                 </ContextMenu>
-                                <button onClick={() => this.openDesktopLink(openLink)}>{openLinkLabel}</button>
+                                <Button onClick={() => this.openDesktopLink(openLink)}>{openLinkLabel}</Button>
                             </div>
                             {!useLatest && (
                                 <Alert type="info" className="mt-4 w-96">
@@ -658,7 +661,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                         </div>
                         <div className="mt-10 flex justify-center">
                             <a target="_parent" href={gitpodHostUrl.asWorkspacePage().toString()}>
-                                <button className="secondary">Go to Dashboard</button>
+                                <Button variant="secondary">Go to Dashboard</Button>
                             </a>
                         </div>
                     </div>
@@ -704,10 +707,10 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                         <PendingChangesDropdown gitStatus={this.state.workspace.status.gitStatus} />
                         <div className="mt-10 justify-center flex space-x-2">
                             <a target="_parent" href={gitpodHostUrl.asWorkspacePage().toString()}>
-                                <button className="secondary">Go to Dashboard</button>
+                                <Button variant="secondary">Go to Dashboard</Button>
                             </a>
                             <a target="_parent" href={gitpodHostUrl.asStart(this.state.workspace.id).toString()}>
-                                <button>Open Workspace</button>
+                                <Button>Open Workspace</Button>
                             </a>
                         </div>
                     </div>
@@ -801,9 +804,9 @@ function ImageBuildView(props: ImageBuildViewProps) {
                             </a>
                         </p>
                     </div>
-                    <button className="mt-6 secondary" onClick={props.onStartWithDefaultImage}>
+                    <Button variant="secondary" className="mt-6" onClick={props.onStartWithDefaultImage}>
                         Continue with Default Image
-                    </button>
+                    </Button>
                 </>
             )}
         </StartPage>

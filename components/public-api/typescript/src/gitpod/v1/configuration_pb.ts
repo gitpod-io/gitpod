@@ -12,6 +12,7 @@
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message, proto3, Timestamp } from "@bufbuild/protobuf";
 import { PaginationRequest, PaginationResponse } from "./pagination_pb.js";
+import { Sort } from "./sorting_pb.js";
 
 /**
  * @generated from enum gitpod.v1.BranchMatchingStrategy
@@ -395,6 +396,13 @@ export class ListConfigurationsRequest extends Message<ListConfigurationsRequest
    */
   pagination?: PaginationRequest;
 
+  /**
+   * Configurations can be sorted by "name" OR "creationTime"
+   *
+   * @generated from field: repeated gitpod.v1.Sort sort = 4;
+   */
+  sort: Sort[] = [];
+
   constructor(data?: PartialMessage<ListConfigurationsRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -406,6 +414,7 @@ export class ListConfigurationsRequest extends Message<ListConfigurationsRequest
     { no: 1, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "search_term", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "pagination", kind: "message", T: PaginationRequest },
+    { no: 4, name: "sort", kind: "message", T: Sort, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListConfigurationsRequest {
@@ -478,9 +487,9 @@ export class UpdateConfigurationRequest extends Message<UpdateConfigurationReque
   configurationId = "";
 
   /**
-   * @generated from field: string name = 2;
+   * @generated from field: optional string name = 2;
    */
-  name = "";
+  name?: string;
 
   /**
    * @generated from field: optional gitpod.v1.UpdateConfigurationRequest.PrebuildSettings prebuild_settings = 3;
@@ -501,7 +510,7 @@ export class UpdateConfigurationRequest extends Message<UpdateConfigurationReque
   static readonly typeName = "gitpod.v1.UpdateConfigurationRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "configuration_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 3, name: "prebuild_settings", kind: "message", T: UpdateConfigurationRequest_PrebuildSettings, opt: true },
     { no: 4, name: "workspace_settings", kind: "message", T: UpdateConfigurationRequest_WorkspaceSettings, opt: true },
   ]);

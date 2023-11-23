@@ -9,9 +9,10 @@ import { performance } from "node:perf_hooks";
 import { v4 } from "uuid";
 import { SubjectId } from "../auth/subject-id";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { takeFirst } from "../express-util";
 
 /**
- * ReqeuestContext is the context that all our request-handling code runs in.
+ * RequestContext is the context that all our request-handling code runs in.
  * All code has access to the contained fields by using the exported "ctx...()" functions below.
  *
  * It's meant to be the host all concerns we have for a request. For now, those are:
@@ -62,6 +63,11 @@ export interface RequestContext {
      * The SubjectId this request is authenticated with.
      */
     readonly subjectId?: SubjectId;
+
+    /**
+     * Headers of this request
+     */
+    readonly headers?: Headers;
 }
 
 const asyncLocalStorage = new AsyncLocalStorage<RequestContext>();
@@ -99,11 +105,22 @@ export function ctxUserId(): string {
 }
 
 /**
- * @throws 408/REQUEST_TIMEOUT if the request has been aborted
+ * @returns The region code with current request (provided by GLB).
+ */
+export function ctxClientRegion(): string | undefined {
+    const headers = ctxGet().headers;
+    if (!headers) {
+        return;
+    }
+    return takeFirst(headers.get("x-glb-client-region") || undefined);
+}
+
+/**
+ * @throws 408/CANCELLED if the request has been aborted
  */
 export function ctxCheckAborted() {
     if (ctxGet().signal.aborted) {
-        throw new ApplicationError(ErrorCodes.REQUEST_TIMEOUT, "Request aborted");
+        throw new ApplicationError(ErrorCodes.CANCELLED, "Request aborted");
     }
 }
 

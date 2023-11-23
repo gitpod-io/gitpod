@@ -4,26 +4,30 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { configurationClient } from "../../service/public-api";
-import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
-import type { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
+import { SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
+import { TableSortOrder } from "@podkit/tables/SortableTable";
+import type { Configuration, UpdateConfigurationRequest } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import type { PartialMessage } from "@bufbuild/protobuf";
 
 const BASE_KEY = "configurations";
 
 type ListConfigurationsArgs = {
+    pageSize?: number;
     searchTerm?: string;
-    page: number;
-    pageSize: number;
+    sortBy: string;
+    sortOrder: TableSortOrder;
 };
 
-export const useListConfigurations = ({ searchTerm = "", page, pageSize }: ListConfigurationsArgs) => {
+export const useListConfigurations = ({ searchTerm = "", pageSize, sortBy, sortOrder }: ListConfigurationsArgs) => {
     const { data: org } = useCurrentOrg();
 
-    return useQuery(
-        getListConfigurationsQueryKey(org?.id || "", { searchTerm, page, pageSize }),
-        async () => {
+    return useInfiniteQuery(
+        getListConfigurationsQueryKey(org?.id || "", { searchTerm, pageSize, sortBy, sortOrder }),
+        // QueryFn receives the past page's pageParam as it's argument
+        async ({ pageParam: nextToken }) => {
             if (!org) {
                 throw new Error("No org currently selected");
             }
@@ -31,7 +35,13 @@ export const useListConfigurations = ({ searchTerm = "", page, pageSize }: ListC
             const { configurations, pagination } = await configurationClient.listConfigurations({
                 organizationId: org.id,
                 searchTerm,
-                pagination: { page, pageSize },
+                pagination: { pageSize, token: nextToken },
+                sort: [
+                    {
+                        field: sortBy,
+                        order: sortOrder === "desc" ? SortOrder.DESC : SortOrder.ASC,
+                    },
+                ],
             });
 
             return {
@@ -42,6 +52,11 @@ export const useListConfigurations = ({ searchTerm = "", page, pageSize }: ListC
         {
             enabled: !!org,
             keepPreviousData: true,
+            // This enables the query to know if there are more pages, and passes the last page's nextToken to the queryFn
+            getNextPageParam: (lastPage) => {
+                // Must ensure we return undefined if there are no more pages
+                return lastPage.pagination?.nextToken || undefined;
+            },
         },
     );
 };
@@ -78,27 +93,34 @@ export const useDeleteConfiguration = () => {
             });
         },
         onSuccess: (_, { configurationId }) => {
+            // todo: look into updating the cache instad of invalidating it
             queryClient.invalidateQueries({ queryKey: ["configurations", "list"] });
             queryClient.invalidateQueries({ queryKey: getConfigurationQueryKey(configurationId) });
         },
     });
 };
 
-type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
+export type PartialConfiguration = PartialMessage<UpdateConfigurationRequest> &
+    Pick<UpdateConfigurationRequest, "configurationId">;
 
-export const useUpdateConfiguration = () => {
+export const useConfigurationMutation = () => {
     const queryClient = useQueryClient();
 
     return useMutation<Configuration, Error, PartialConfiguration>({
         mutationFn: async (configuration) => {
             const updated = await configurationClient.updateConfiguration({
-                configurationId: configuration.id,
+                configurationId: configuration.configurationId,
                 name: configuration.name,
                 workspaceSettings: configuration.workspaceSettings,
                 prebuildSettings: configuration.prebuildSettings,
             });
+
+            if (!updated.configuration) {
+                throw new Error("Failed to update configuration");
+            }
+
             queryClient.invalidateQueries({ queryKey: ["configurations", "list"] });
-            queryClient.invalidateQueries({ queryKey: getConfigurationQueryKey(configuration.id) });
+            queryClient.invalidateQueries({ queryKey: getConfigurationQueryKey(configuration.configurationId) });
 
             return updated.configuration;
         },

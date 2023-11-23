@@ -104,6 +104,8 @@ export class WorkspaceService {
         context: WorkspaceContext,
         normalizedContextURL: string,
     ): Promise<Workspace> {
+        await this.mayStartWorkspace(ctx, user, organizationId, this.db.findRegularRunningInstances(user.id));
+
         await this.auth.checkPermissionOnOrganization(user.id, "create_workspace", organizationId);
 
         // We don't want to be doing this in a transaction, because it calls out to external systems.
@@ -502,14 +504,13 @@ export class WorkspaceService {
     }
 
     /**
-     * @deprecated TODO (gpl) This should be private, but in favor of smaller PRs, will be public for now.
      * @param ctx
      * @param user
      * @param organizationId
      * @param runningInstances
      * @returns
      */
-    public async mayStartWorkspace(
+    private async mayStartWorkspace(
         ctx: TraceContext,
         user: User,
         organizationId: string,

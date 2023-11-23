@@ -9,20 +9,24 @@ import { GitpodTokenType, User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import * as crypto from "crypto";
 import express from "express";
-import { IncomingHttpHeaders } from "http";
 import { inject, injectable } from "inversify";
 import { Config } from "../config";
-import { AllAccessFunctionGuard, ExplicitFunctionAccessGuard, WithFunctionAccessGuard } from "./function-access";
+import {
+    AllAccessFunctionGuard,
+    ExplicitFunctionAccessGuard,
+    FunctionAccessGuard,
+    WithFunctionAccessGuard,
+} from "./function-access";
 import { TokenResourceGuard, WithResourceAccessGuard } from "./resource-access";
 import { UserService } from "../user/user-service";
+import { SubjectId } from "./subject-id";
 
-export function getBearerToken(headers: IncomingHttpHeaders): string | undefined {
-    const authorizationHeader = headers["authorization"];
+export function getBearerToken(authorizationHeader: string | undefined | null): string | undefined {
     if (!authorizationHeader || !(typeof authorizationHeader === "string")) {
-        return;
+        return undefined;
     }
     if (!authorizationHeader.startsWith("Bearer ")) {
-        return;
+        return undefined;
     }
 
     return authorizationHeader.substring("Bearer ".length);
@@ -51,7 +55,7 @@ export class BearerAuth {
     get restHandler(): express.RequestHandler {
         return async (req, res, next) => {
             try {
-                await this.auth(req);
+                await this.authExpressRequest(req);
             } catch (e) {
                 if (isBearerAuthError(e)) {
                     // (AT) while investigating https://github.com/gitpod-io/gitpod/issues/8703 we
@@ -71,7 +75,7 @@ export class BearerAuth {
     get restHandlerOptionally(): express.RequestHandler {
         return async (req, res, next) => {
             try {
-                await this.auth(req);
+                await this.authExpressRequest(req);
             } catch (e) {
                 // don't error the request, we just have not bearer authentication token
             }
@@ -79,8 +83,8 @@ export class BearerAuth {
         };
     }
 
-    async auth(req: express.Request): Promise<void> {
-        const token = getBearerToken(req.headers);
+    async authExpressRequest(req: express.Request): Promise<void> {
+        const token = getBearerToken(req.headers["authorization"]);
         if (!token) {
             throw createBearerAuthError("missing Bearer token");
         }
@@ -90,10 +94,8 @@ export class BearerAuth {
         const resourceGuard = new TokenResourceGuard(user.id, scopes);
         (req as WithResourceAccessGuard).resourceGuard = resourceGuard;
 
-        const functionScopes = scopes
-            .filter((s) => s.startsWith("function:"))
-            .map((s) => s.substring("function:".length));
-        if (functionScopes.length === 1 && functionScopes[0] === "*") {
+        const { isAllAccessFunctionGuard, functionScopes } = FunctionAccessGuard.extractFunctionScopes(scopes);
+        if (isAllAccessFunctionGuard) {
             (req as WithFunctionAccessGuard).functionGuard = new AllAccessFunctionGuard();
         } else {
             // We always install a function access guard. If the token has no scopes, it's not allowed to do anything.
@@ -101,6 +103,22 @@ export class BearerAuth {
         }
 
         req.user = user;
+    }
+
+    async tryAuthFromHeaders(headers: Headers): Promise<SubjectId | undefined> {
+        const token = getBearerToken(headers.get("authorization"));
+        if (!token) {
+            return undefined;
+        }
+        const { user, scopes } = await this.userAndScopesFromToken(token);
+
+        // gpl: Once we move PAT to FGA-backed scopes, this special case will go away, and covered by a different SubjectIdKind.
+        const { isAllAccessFunctionGuard } = FunctionAccessGuard.extractFunctionScopes(scopes);
+        if (!isAllAccessFunctionGuard) {
+            return undefined;
+        }
+
+        return SubjectId.fromUserId(user.id);
     }
 
     private async userAndScopesFromToken(token: string): Promise<{ user: User; scopes: string[] }> {

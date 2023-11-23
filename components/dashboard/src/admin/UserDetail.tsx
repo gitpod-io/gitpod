@@ -21,6 +21,7 @@ import Property from "./Property";
 import { AdminPageHeader } from "./AdminPageHeader";
 import { CheckboxInputField, CheckboxListField } from "../components/forms/CheckboxInputField";
 import { Heading2, Subheading } from "../components/typography/headings";
+import { Button } from "@podkit/buttons/Button";
 
 export default function UserDetail(p: { user: User }) {
     const [activity, setActivity] = useState(false);
@@ -92,16 +93,16 @@ export default function UserDetail(p: { user: User }) {
                             </Subheading>
                         </div>
                         {!user.lastVerificationTime ? (
-                            <button className="secondary ml-3" disabled={activity} onClick={verifyUser}>
+                            <Button variant="secondary" className="ml-3" disabled={activity} onClick={verifyUser}>
                                 Verify User
-                            </button>
+                            </Button>
                         ) : null}
-                        <button className="secondary danger ml-3" disabled={activity} onClick={toggleBlockUser}>
+                        <Button variant="destructive" className="ml-3" disabled={activity} onClick={toggleBlockUser}>
                             {user.blocked ? "Unblock" : "Block"} User
-                        </button>
-                        <button className="danger ml-3" disabled={activity} onClick={deleteUser}>
+                        </Button>
+                        <Button variant="destructive" className="ml-3" disabled={activity} onClick={deleteUser}>
                             Delete User
-                        </button>
+                        </Button>
                     </div>
                     <div className="flex mt-6">
                         <div className="w-40">
@@ -151,9 +152,9 @@ export default function UserDetail(p: { user: User }) {
                 onClose={() => setEditFeatureFlags(false)}
                 title="Edit Feature Flags"
                 buttons={[
-                    <button className="secondary" onClick={() => setEditFeatureFlags(false)}>
+                    <Button variant="secondary" onClick={() => setEditFeatureFlags(false)}>
                         Done
-                    </button>,
+                    </Button>,
                 ]}
             >
                 <CheckboxListField
@@ -176,9 +177,9 @@ export default function UserDetail(p: { user: User }) {
                 onClose={() => setEditRoles(false)}
                 title="Edit Roles"
                 buttons={[
-                    <button className="secondary" onClick={() => setEditRoles(false)}>
+                    <Button variant="secondary" onClick={() => setEditRoles(false)}>
                         Done
-                    </button>,
+                    </Button>,
                 ]}
             >
                 <CheckboxListField

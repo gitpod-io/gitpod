@@ -4,11 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Workspace } from "@gitpod/gitpod-protocol";
 import { FunctionComponent, useCallback, useState } from "react";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { useUpdateWorkspaceDescriptionMutation } from "../data/workspaces/update-workspace-description-mutation";
 import { Button } from "../components/Button";
+import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 type Props = {
     workspace: Workspace;
@@ -16,7 +16,7 @@ type Props = {
 };
 export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onClose }) => {
     const [errorMessage, setErrorMessage] = useState("");
-    const [description, setDescription] = useState(workspace.description || "");
+    const [description, setDescription] = useState(workspace.name || "");
     const updateDescription = useUpdateWorkspaceDescriptionMutation();
 
     const updateWorkspaceDescription = useCallback(async () => {

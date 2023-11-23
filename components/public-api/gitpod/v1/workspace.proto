@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package gitpod.v1;
 
+import "gitpod/v1/pagination.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
@@ -13,15 +14,32 @@ service WorkspaceService {
   // ID +return NOT_FOUND Workspace does not exist
   rpc GetWorkspace(GetWorkspaceRequest) returns (GetWorkspaceResponse) {}
 
-  // WatchWorkspaceStatus watchs the workspaces status changes
+  // WatchWorkspaceStatus watches the workspaces status changes
   //
   // workspace_id +return NOT_FOUND Workspace does not exist
   rpc WatchWorkspaceStatus(WatchWorkspaceStatusRequest) returns (stream WatchWorkspaceStatusResponse) {}
+
+  // ListWorkspaces returns a list of workspaces that match the query.
+  rpc ListWorkspaces(ListWorkspacesRequest) returns (ListWorkspacesResponse) {}
+
+  // CreateAndStartWorkspace creates a new workspace and starts it.
+  rpc CreateAndStartWorkspace(CreateAndStartWorkspaceRequest) returns (CreateAndStartWorkspaceResponse) {}
+
+  // StartWorkspace starts an existing workspace.
+  // If the specified workspace is not in stopped phase, this will return the workspace as is.
+  rpc StartWorkspace(StartWorkspaceRequest) returns (StartWorkspaceResponse) {}
 }
 
-message GetWorkspaceRequest { string workspace_id = 1; }
+message GetWorkspaceRequest {
+  // workspace_id specifies the workspace to get
+  //
+  // +required
+  string workspace_id = 1;
+}
 
-message GetWorkspaceResponse { Workspace workspace = 1; }
+message GetWorkspaceResponse {
+  Workspace workspace = 1;
+}
 
 message WatchWorkspaceStatusRequest {
   // workspace_id specifies the workspace to watch
@@ -36,6 +54,107 @@ message WatchWorkspaceStatusResponse {
 
   // status is the updated status of workspace
   WorkspaceStatus status = 2;
+}
+
+message ListWorkspacesRequest {
+  // pagination contains the pagination options for listing workspaces
+  PaginationRequest pagination = 1;
+
+  // organization_id is the ID of the organization that contains the workspaces
+  //
+  // +required
+  string organization_id = 2;
+
+  // pinned indicates whether to list only pinned workspaces
+  bool pinned = 3;
+
+  // search_term is a search term to filter workspaces by name
+  string search_term = 4;
+}
+
+message ListWorkspacesResponse {
+  // workspaces are the workspaces that matched the query
+  repeated Workspace workspaces = 1;
+
+  // pagination contains the pagination options for listing workspaces
+  PaginationResponse pagination = 2;
+}
+
+message CreateAndStartWorkspaceRequest {
+  message Git {
+    // clone_url is the URL of the repository to clone
+    string clone_url = 1;
+
+    // ref is an alternatively symbolic. e.g. refs/tags/v1.0,
+    // empty string means the default branch of the repository
+    string ref = 2;
+
+    // create_local_branch is the branch you want to create based on provided
+    // clone_url and ref when workspace started
+    string create_local_branch = 3;
+  }
+
+  // organization_id is the ID of the organization to create the workspace
+  //
+  // +required
+  string organization_id = 1;
+
+  // configuration_id is the ID of the configuration to use
+  string configuration_id = 2;
+
+  // source describes the source refer of workspace.
+  //
+  // +required
+  oneof source {
+    // git describes the source refer of workspace
+    // Obtain available git using the ContextService.ParseContext operation if
+    // not sure about it.
+    Git git = 3;
+
+    // context_url is for backward compatiblity with the current dashboard, use
+    // ContextService.ParseContext get get a Git source instead
+    string context_url = 4 [deprecated = true];
+  }
+
+  // additional_env_variables provide additional environment variables to the
+  // workspace.
+  // It will take precedence over environment variables provided by
+  // the user and the configuration
+  repeated WorkspaceEnvironmentVariable additional_env_variables = 5;
+
+  string region = 6;
+
+  // workspace_class is the class of the workspace
+
+  string workspace_class = 7;
+
+  EditorReference editor = 8;
+
+  string name = 9;
+
+  bool pinned = 10;
+
+  // force_default_config indicates that the workspace should be created with
+  // the default configuration instead of the configuration provided in
+  // `.gitpod.yml` file
+  bool force_default_config = 11;
+}
+
+message CreateAndStartWorkspaceResponse {
+  Workspace workspace = 1;
+}
+
+message StartWorkspaceRequest {
+  // workspace_id specifies the workspace that is going to start
+  //
+  // +required
+  string workspace_id = 1;
+
+  bool force_default_config = 2;
+}
+
+message StartWorkspaceResponse {
+  Workspace workspace = 1;
 }
 
 // +resource get workspace

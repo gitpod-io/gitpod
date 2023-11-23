@@ -6,7 +6,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
-import { getGitpodService } from "../../service/service";
+import { scmClient } from "../../service/public-api";
 
 export const useSuggestedRepositories = () => {
     const { data: org } = useCurrentOrg();
@@ -18,7 +18,8 @@ export const useSuggestedRepositories = () => {
                 throw new Error("No org selected");
             }
 
-            return await getGitpodService().server.getSuggestedRepositories(org.id);
+            const { repositories } = await scmClient.listSuggestedRepositories({ organizationId: org.id });
+            return repositories;
         },
         {
             // Keeps data in cache for 7 days - will still refresh though

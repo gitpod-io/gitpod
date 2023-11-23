@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+package gitpod.v1;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+
+// details for PERMISSION_DENIED status code
+message PermissionDeniedDetails {
+  oneof reason {
+    UserBlockedError user_blocked = 1;
+    NeedsVerificationError needs_verification = 2;
+  }
+}
+
+message UserBlockedError {}
+message NeedsVerificationError {}
+
+// details for FAILED_PRECONDITION status code
+message FailedPreconditionDetails {
+  oneof reason {
+    PaymentSpendingLimitReachedError payment_spending_limit_reached = 1;
+    InvalidCostCenterError invalid_cost_center = 2;
+    TooManyRunningWorkspacesError too_many_running_workspaces = 3;
+    InvalidGitpodYMLError invalid_gitpod_yml = 4;
+    RepositoryNotFoundError repository_not_found = 5;
+    RepositoryUnauthorizedError repository_unauthorized = 6;
+    ImageBuildLogsNotYetAvailableError image_build_logs_not_yet_available = 7;
+  }
+}
+
+message PaymentSpendingLimitReachedError {}
+
+message InvalidCostCenterError {
+  string attribution_id = 1;
+}
+
+message TooManyRunningWorkspacesError {}
+
+message InvalidGitpodYMLError {
+  repeated string violations = 1;
+}
+
+message RepositoryNotFoundError {
+  string host = 1;
+  string owner = 2;
+  bool user_is_owner = 3;
+  repeated string user_scopes = 4;
+  string last_update = 5;
+}
+
+message RepositoryUnauthorizedError {
+  string host = 1;
+  repeated string scopes = 2;
+}
+
+message ImageBuildLogsNotYetAvailableError {}
+
+/*
+// details for INVALID_ARGUMENT status code
+// TODO: this is not yet implemented in the backend
+message InvalidArgumentDetails {
+  enum Reason {
+    REASON_UNSPECIFIED = 0;
+    REASON_TOO_LONG = 1;
+    // define other reasons
+  }
+  // A message type used to describe a single bad request field.
+  message FieldViolation {
+    // A path that leads to a field in the request body.
+    string field_path = 1;
+    // message is a human readable description why the request element is bad.
+    string message = 2;
+    Reason reason = 3;
+  }
+  repeated FieldViolation fields = 1;
+}
+}*/

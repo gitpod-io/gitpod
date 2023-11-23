@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Link } from "react-router-dom";
+import { LinkButton } from "@podkit/buttons/LinkButton";
 
 export default function FromReferrer() {
     const contextUrl = document.referrer;
@@ -36,9 +36,9 @@ export default function FromReferrer() {
                         </p>
                     </div>
                     <span>
-                        <Link to="/">
-                            <button className="secondary">Go to Dashboard</button>
-                        </Link>
+                        <LinkButton variant="secondary" href="/">
+                            Go to Dashboard
+                        </LinkButton>
                     </span>
                 </div>
             </div>

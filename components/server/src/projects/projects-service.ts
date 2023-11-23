@@ -28,8 +28,9 @@ import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messag
 import { URL } from "url";
 import { Authorizer, SYSTEM_USER } from "../authorization/authorizer";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
-import { ScmService } from "./scm-service";
 import { daysBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import deepmerge from "deepmerge";
+import { ScmService } from "../scm/scm-service";
 
 const MAX_PROJECT_NAME_LENGTH = 100;
 
@@ -378,8 +379,7 @@ export class ProjectsService {
     async updateProject(user: User, partialProject: PartialProject): Promise<Project> {
         await this.auth.checkPermissionOnProject(user.id, "write_info", partialProject.id);
 
-        const partial: PartialProject = { id: partialProject.id };
-        if (partialProject.name) {
+        if (typeof partialProject.name !== "undefined") {
             partialProject.name = partialProject.name.trim();
             if (partialProject.name.length > MAX_PROJECT_NAME_LENGTH) {
                 throw new ApplicationError(
@@ -391,14 +391,21 @@ export class ProjectsService {
                 throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Project name must not be empty.");
             }
         }
-        const allowedFields: (keyof Project)[] = ["settings", "name"];
-        for (const f of allowedFields) {
-            if (f in partialProject) {
-                (partial as any)[f] = partialProject[f];
-            }
+
+        const existingProject = await this.projectDB.findProjectById(partialProject.id);
+        if (!existingProject) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${partialProject.id} not found.`);
         }
-        await this.handleEnablePrebuild(user, partialProject);
-        return this.projectDB.updateProject(partialProject);
+
+        if (!partialProject.settings?.prebuilds && !partialProject.settings?.workspaceClasses) {
+            // No nested settings update, just update the project partially
+            return this.projectDB.updateProject(partialProject);
+        }
+
+        const update = deepmerge(existingProject, partialProject);
+
+        await this.handleEnablePrebuild(user, update);
+        return this.projectDB.updateProject(update);
     }
 
     private async handleEnablePrebuild(user: User, partialProject: PartialProject): Promise<void> {

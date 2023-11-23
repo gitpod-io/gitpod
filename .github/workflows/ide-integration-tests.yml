@@ -31,7 +31,7 @@ jobs:
     runs-on: ${{ needs.create-runner.outputs.label }}
     needs: [create-runner]
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-leeway-pigz-gha.18593
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:se-update-leeway-gha.20594
     outputs:
       name: ${{ steps.configuration.outputs.name }}
       version: ${{ steps.configuration.outputs.version }}
@@ -86,6 +86,7 @@ jobs:
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
           infrastructure_provider: gce
           large_vm: true
+          preemptible: true
       - name: Deploy Gitpod to the preview environment
         id: deploy-gitpod
         if: github.event.inputs.skip_deploy != 'true'
@@ -100,7 +101,7 @@ jobs:
     needs: [configuration, infrastructure, create-runner]
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-leeway-pigz-gha.18593
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:se-update-leeway-gha.20594
       volumes:
         - /var/tmp:/var/tmp
         - /tmp:/tmp

@@ -17,7 +17,7 @@ import { UserController } from "./user/user-controller";
 import { EventEmitter } from "events";
 import { createWebSocketConnection, toIWebSocket } from "@gitpod/gitpod-protocol/lib/messaging/node/connection";
 import { WsExpressHandler, WsRequestHandler } from "./express/ws-handler";
-import { isAllowedWebsocketDomain, bottomErrorHandler, unhandledToError } from "./express-util";
+import { isAllowedWebsocketDomain, bottomErrorHandler, unhandledToError, toHeaders } from "./express-util";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { AddressInfo } from "net";
 import { WorkspaceDownloadService } from "./workspace/workspace-download-service";
@@ -150,6 +150,7 @@ export class Server {
                     requestMethod: req.path,
                     signal: new AbortController().signal,
                     subjectId: userId ? SubjectId.fromUserId(userId) : undefined, // TODO(gpl) Can we assume this? E.g., has this been verified? It should: It means we could decode the cookie, right?
+                    headers: toHeaders(req.headers),
                 },
                 () => next(),
             );
@@ -191,7 +192,7 @@ export class Server {
                     }
 
                     try {
-                        await this.bearerAuth.auth(info.req as express.Request);
+                        await this.bearerAuth.authExpressRequest(info.req as express.Request);
                         authenticatedUsingBearerToken = true;
                     } catch (e) {
                         if (isBearerAuthError(e)) {

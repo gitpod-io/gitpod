@@ -19,6 +19,7 @@ import (
 	"github.com/gitpod-io/local-app/pkg/auth"
 	"github.com/gitpod-io/local-app/pkg/config"
 	"github.com/gitpod-io/local-app/pkg/prettyprint"
+	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 )
 
@@ -27,6 +28,7 @@ var loginOpts struct {
 	Host           string
 	ContextName    string
 	OrganizationID string
+	NonInteractive bool
 }
 
 // loginCmd represents the login command
@@ -51,15 +53,19 @@ var loginCmd = &cobra.Command{
 			token = os.Getenv("GITPOD_TOKEN")
 		}
 		if token == "" {
-			var err error
-			token, err = auth.Login(context.Background(), auth.LoginOpts{
-				GitpodURL:   loginOpts.Host,
-				AuthTimeout: 5 * time.Minute,
-				// Request CLI scopes (extended compared to the local companion app)
-				ExtendScopes: true,
-			})
-			if err != nil {
-				return err
+			if loginOpts.NonInteractive {
+				return fmt.Errorf("no token provided")
+			} else {
+				var err error
+				token, err = auth.Login(context.Background(), auth.LoginOpts{
+					GitpodURL:   loginOpts.Host,
+					AuthTimeout: 5 * time.Minute,
+					// Request CLI scopes (extended compared to the local companion app)
+					ExtendScopes: true,
+				})
+				if err != nil {
+					return err
+				}
 			}
 		}
 
@@ -91,6 +97,9 @@ var loginCmd = &cobra.Command{
 			if err != nil {
 				return fmt.Errorf("cannot connect to Gitpod with this context: %w", err)
 			}
+			if !loginOpts.NonInteractive {
+				fmt.Println("loading your organizations...")
+			}
 			orgsList, err := clnt.Teams.ListTeams(cmd.Context(), connect.NewRequest(&v1.ListTeamsRequest{}))
 			if err != nil {
 				var (
@@ -117,15 +126,47 @@ var loginCmd = &cobra.Command{
 				}
 			}
 
+			orgs := orgsList.Msg.GetTeams()
+			fmt.Print("\033[A\033[K")
+
+			resolutions := []string{
+				"pass an organization ID using --organization-id",
+			}
+
 			var orgID string
-			switch len(orgsList.Msg.GetTeams()) {
+			switch len(orgs) {
 			case 0:
-				return fmt.Errorf("no organizations found. Please pass an organization ID using --organization-id")
+				return prettyprint.AddResolution(fmt.Errorf("no organizations found"), resolutions...)
 			case 1:
-				orgID = orgsList.Msg.GetTeams()[0].Id
+				orgID = orgs[0].Id
 			default:
-				orgID = orgsList.Msg.GetTeams()[0].Id
-				slog.Info("found more than one organization and choose the first one", "org", orgID)
+				if loginOpts.NonInteractive {
+					resolutions = append(resolutions,
+						"omit --non-interactive and select an organization interactively",
+					)
+					return prettyprint.AddResolution(fmt.Errorf("found more than one organization"), resolutions...)
+				}
+
+				var orgNames []string
+				for _, org := range orgs {
+					orgNames = append(orgNames, org.Name)
+				}
+
+				prompt := promptui.Select{
+					Label: "What organization would you like to use?",
+					Items: orgNames,
+					Templates: &promptui.SelectTemplates{
+						Selected: "Selected organization {{ . }}",
+					},
+				}
+				selectedIndex, selectedValue, err := prompt.Run()
+				if selectedValue == "" {
+					return fmt.Errorf("no organization selected")
+				}
+				if err != nil {
+					return err
+				}
+				orgID = orgs[selectedIndex].Id
 			}
 			cfg.Contexts[contextName].OrganizationID = orgID
 		}
@@ -144,7 +185,7 @@ var loginCmd = &cobra.Command{
 			return err
 		}
 
-		slog.Info("Login succesfull")
+		slog.Info("login successful")
 		fmt.Println()
 		return WriteTabular(who, formatOpts{}, prettyprint.WriterFormatNarrow)
 	},
@@ -161,4 +202,5 @@ func init() {
 	loginCmd.Flags().StringVar(&loginOpts.Token, "token", "", "The token to use for authentication (defaults to $GITPOD_TOKEN)")
 	loginCmd.Flags().StringVarP(&loginOpts.ContextName, "context-name", "n", "default", "The name of the context to create")
 	loginCmd.Flags().StringVar(&loginOpts.OrganizationID, "org", "", "The organization ID to use for the context")
+	loginCmd.Flags().BoolVar(&loginOpts.NonInteractive, "non-interactive", false, "Disable opening the browser and prompt to select an organization")
 }

@@ -100,10 +100,10 @@ export class ListPrebuildsRequest extends Message<ListPrebuildsRequest> {
   /**
    * it is for backward compatiblity with the current dashboard, use prebuild_id instead
    *
-   * @generated from field: string build_workspace_id = 2 [deprecated = true];
+   * @generated from field: string workspace_id = 2 [deprecated = true];
    * @deprecated
    */
-  buildWorkspaceId = "";
+  workspaceId = "";
 
   /**
    * @generated from field: string configuration_id = 3;
@@ -124,7 +124,7 @@ export class ListPrebuildsRequest extends Message<ListPrebuildsRequest> {
   static readonly typeName = "gitpod.v1.ListPrebuildsRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "pagination", kind: "message", T: PaginationRequest },
-    { no: 2, name: "build_workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "configuration_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "git_ref", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
@@ -342,9 +342,21 @@ export class CancelPrebuildResponse extends Message<CancelPrebuildResponse> {
  */
 export class WatchPrebuildRequest extends Message<WatchPrebuildRequest> {
   /**
-   * @generated from field: repeated string prebuild_ids = 1;
+   * @generated from oneof gitpod.v1.WatchPrebuildRequest.scope
    */
-  prebuildIds: string[] = [];
+  scope: {
+    /**
+     * @generated from field: string prebuild_id = 1;
+     */
+    value: string;
+    case: "prebuildId";
+  } | {
+    /**
+     * @generated from field: string configuration_id = 2;
+     */
+    value: string;
+    case: "configurationId";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   constructor(data?: PartialMessage<WatchPrebuildRequest>) {
     super();
@@ -354,7 +366,8 @@ export class WatchPrebuildRequest extends Message<WatchPrebuildRequest> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.WatchPrebuildRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "prebuild_ids", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 1, name: "prebuild_id", kind: "scalar", T: 9 /* ScalarType.STRING */, oneof: "scope" },
+    { no: 2, name: "configuration_id", kind: "scalar", T: 9 /* ScalarType.STRING */, oneof: "scope" },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WatchPrebuildRequest {
@@ -421,12 +434,12 @@ export class Prebuild extends Message<Prebuild> {
   id = "";
 
   /**
-   * it is for backward compatiblity with the current dashboard, use prebuild_id instead
+   * it is for backward compatiblity with the current dashboard, use id instead
    *
-   * @generated from field: string build_workspace_id = 2 [deprecated = true];
+   * @generated from field: string workspace_id = 2 [deprecated = true];
    * @deprecated
    */
-  buildWorkspaceId = "";
+  workspaceId = "";
 
   /**
    * @generated from field: string based_on_prebuild_id = 3;
@@ -467,7 +480,7 @@ export class Prebuild extends Message<Prebuild> {
   static readonly typeName = "gitpod.v1.Prebuild";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "build_workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "based_on_prebuild_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "configuration_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "ref", kind: "scalar", T: 9 /* ScalarType.STRING */ },

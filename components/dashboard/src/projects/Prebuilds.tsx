@@ -5,7 +5,7 @@
  */
 
 import dayjs from "dayjs";
-import { PrebuildWithStatus, PrebuiltWorkspaceState, Project } from "@gitpod/gitpod-protocol";
+import { Project } from "@gitpod/gitpod-protocol";
 import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import DropDown, { DropDownEntry } from "../components/DropDown";
@@ -16,57 +16,56 @@ import StatusFailed from "../icons/StatusFailed.svg";
 import StatusCanceled from "../icons/StatusCanceled.svg";
 import StatusPaused from "../icons/StatusPaused.svg";
 import StatusRunning from "../icons/StatusRunning.svg";
-import { getGitpodService } from "../service/service";
 import { shortCommitMessage } from "./render-utils";
 import { Link, Redirect } from "react-router-dom";
-import { Disposable } from "vscode-jsonrpc";
 import { useCurrentProject } from "./project-context";
 import { getProjectTabs } from "./projects.routes";
 import search from "../icons/search.svg";
 import Tooltip from "../components/Tooltip";
+import { prebuildClient, watchPrebuild } from "../service/public-api";
+import { Prebuild, PrebuildPhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
+import { Button } from "@podkit/buttons/Button";
 
 export default function PrebuildsPage(props: { project?: Project; isAdminDashboard?: boolean }) {
     const currentProject = useCurrentProject();
     const project = props.project || currentProject.project;
 
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
-    const [statusFilter, setStatusFilter] = useState<PrebuiltWorkspaceState | undefined>();
+    const [statusFilter, setStatusFilter] = useState<PrebuildPhase_Phase | undefined>();
 
     const [isLoadingPrebuilds, setIsLoadingPrebuilds] = useState<boolean>(true);
-    const [prebuilds, setPrebuilds] = useState<PrebuildWithStatus[]>([]);
+    const [prebuilds, setPrebuilds] = useState<Prebuild[]>([]);
     const [isRunningPrebuild, setIsRunningPrebuild] = useState<boolean>(false);
 
     useEffect(() => {
-        let registration: Disposable;
         if (!project) {
             return;
-        }
-        // This call is excluded in the Admin dashboard
-        if (!props.isAdminDashboard) {
-            registration = getGitpodService().registerClient({
-                onPrebuildUpdate: (update: PrebuildWithStatus) => {
-                    if (update.info.projectId === project.id) {
-                        setPrebuilds((prev) => [update, ...prev.filter((p) => p.info.id !== update.info.id)]);
-                        setIsLoadingPrebuilds(false);
-                    }
-                },
-            });
         }
 
         (async () => {
             setIsLoadingPrebuilds(true);
-            const prebuilds =
-                props && props.isAdminDashboard
-                    ? await getGitpodService().server.adminFindPrebuilds({ projectId: project.id })
-                    : await getGitpodService().server.findPrebuilds({ projectId: project.id });
-            setPrebuilds(prebuilds);
+            const response = await prebuildClient.listPrebuilds({
+                configurationId: project.id,
+            });
+            setPrebuilds(response.prebuilds);
             setIsLoadingPrebuilds(false);
         })();
 
+        // This call is excluded in the Admin dashboard
         if (!props.isAdminDashboard) {
-            return () => {
-                registration.dispose();
-            };
+            const toCancelWatch = watchPrebuild(
+                {
+                    scope: {
+                        case: "configurationId",
+                        value: project.id,
+                    },
+                },
+                (prebuild) => {
+                    setPrebuilds((prev) => [prebuild, ...prev.filter((p) => p.id !== prebuild.id)]);
+                    setIsLoadingPrebuilds(false);
+                },
+            );
+            return () => toCancelWatch.dispose();
         }
     }, [project, props]);
 
@@ -84,29 +83,37 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
         });
         entries.push({
             title: "READY",
-            onClick: () => setStatusFilter("available"),
+            onClick: () => setStatusFilter(PrebuildPhase_Phase.AVAILABLE),
         });
         return entries;
     };
 
-    const filter = (p: PrebuildWithStatus) => {
-        if (statusFilter && statusFilter !== p.status) {
+    const filter = (p: Prebuild) => {
+        if (statusFilter && statusFilter !== p.status?.phase?.name) {
             return false;
         }
         if (
             searchFilter &&
-            `${p.info.changeTitle} ${p.info.branch}`.toLowerCase().includes(searchFilter.toLowerCase()) === false
+            `${p.commit?.message} ${p.ref}`.toLowerCase().includes(searchFilter.toLowerCase()) === false
         ) {
             return false;
         }
         return true;
     };
 
-    const prebuildSorter = (a: PrebuildWithStatus, b: PrebuildWithStatus) => {
-        if (a.info.startedAt < b.info.startedAt) {
+    const prebuildSorter = (a: Prebuild, b: Prebuild) => {
+        const aDate = a.status?.startTime?.toDate();
+        const bDate = b.status?.startTime?.toDate();
+        if (!aDate) {
             return 1;
         }
-        if (a.info.startedAt === b.info.startedAt) {
+        if (!bDate) {
+            return -1;
+        }
+        if (aDate < bDate) {
+            return 1;
+        }
+        if (aDate === bDate) {
             return 0;
         }
         return -1;
@@ -118,7 +125,10 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
         }
         setIsRunningPrebuild(true);
         try {
-            await getGitpodService().server.triggerPrebuild(project.id, branchName);
+            await prebuildClient.startPrebuild({
+                configurationId: project.id,
+                gitRef: branchName || undefined,
+            });
         } catch (error) {
             console.error("Could not run prebuild", error);
         } finally {
@@ -126,7 +136,7 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
         }
     };
 
-    const formatDate = (date: string | undefined) => {
+    const formatDate = (date: Date | undefined) => {
         return date ? dayjs(date).fromNow() : "";
     };
 
@@ -164,7 +174,7 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
                         <DropDown prefix="Prebuild Status: " customClasses="w-32" entries={statusFilterEntries()} />
                     </div>
                     {!props.isAdminDashboard && (
-                        <button
+                        <Button
                             onClick={() => runPrebuild(null)}
                             disabled={isRunningPrebuild}
                             className="ml-2 flex items-center space-x-2"
@@ -173,7 +183,7 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
                                 <img alt="" className="h-4 w-4 animate-spin filter brightness-150" src={Spinner} />
                             )}
                             <span>Run Prebuild</span>
-                        </button>
+                        </Button>
                     )}
                 </div>
                 <ItemsList className="mt-2">
@@ -198,8 +208,8 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
                         .filter(filter)
                         .sort(prebuildSorter)
                         .map((p, index) => (
-                            <Link to={`/projects/${project?.id ?? ""}/${p.info.id}`} className="cursor-pointer">
-                                <Item key={`prebuild-${p.info.id}`}>
+                            <Link to={`/projects/${project?.id ?? ""}/${p.id}`} className="cursor-pointer">
+                                <Item key={`prebuild-${p.id}`}>
                                     <ItemField
                                         className={`flex items-center my-auto md:w-3/12 xl:w-4/12 ${
                                             props.isAdminDashboard ? "pointer-events-none" : ""
@@ -216,51 +226,46 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
                                                 {prebuildStatusLabel(p)}
                                             </div>
                                             <p>
-                                                {p.info.startedByAvatar && (
-                                                    <img
-                                                        className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2"
-                                                        src={p.info.startedByAvatar || ""}
-                                                        alt={p.info.startedBy}
-                                                    />
-                                                )}
-                                                <Tooltip content={dayjs(p.info.startedAt).format("MMM D, YYYY")}>
-                                                    Triggered {formatDate(p.info.startedAt)}
+                                                <Tooltip
+                                                    content={dayjs(p.status?.startTime?.toDate()).format("MMM D, YYYY")}
+                                                >
+                                                    Triggered {formatDate(p.status?.startTime?.toDate())}
                                                 </Tooltip>
                                             </p>
                                         </div>
                                     </ItemField>
                                     <ItemField className="flex items-center my-auto w-5/12">
                                         <div className="truncate">
-                                            <a href={p.info.changeUrl} className="cursor-pointer">
+                                            <a href={p?.contextUrl} className="cursor-pointer">
                                                 <div
                                                     className="text-base text-gray-500 dark:text-gray-50 font-medium mb-1 truncate"
-                                                    title={shortCommitMessage(p.info.changeTitle)}
+                                                    title={shortCommitMessage(p.commit?.message || "")}
                                                 >
-                                                    {shortCommitMessage(p.info.changeTitle)}
+                                                    {shortCommitMessage(p.commit?.message || "")}
                                                 </div>
                                             </a>
                                             <p>
-                                                {p.info.changeAuthorAvatar && (
+                                                {p.commit?.author && (
                                                     <img
                                                         className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2 overflow-hidden"
-                                                        src={p.info.changeAuthorAvatar || ""}
-                                                        alt={p.info.changeAuthor}
+                                                        src={p.commit.author.avatarUrl || ""}
+                                                        alt={p.commit.author.name || ""}
                                                     />
                                                 )}
-                                                Authored {formatDate(p.info.changeDate)} ·{" "}
-                                                {p.info.changeHash?.substring(0, 8)}
+                                                Authored {formatDate(p.commit?.authorDate?.toDate())} ·{" "}
+                                                {p.commit?.sha?.substring(0, 8)}
                                             </p>
                                         </div>
                                     </ItemField>
                                     <ItemField className="flex w-3/12">
                                         <div className="truncate">
-                                            <a href={p.info.changeUrl} className="cursor-pointer">
+                                            <a href={p.contextUrl} className="cursor-pointer">
                                                 <div className="flex space-x-2 truncate">
                                                     <span
                                                         className="font-medium text-gray-500 dark:text-gray-50 truncate"
-                                                        title={p.info.branch}
+                                                        title={p.ref}
                                                     >
-                                                        {p.info.branch}
+                                                        {p.ref}
                                                     </span>
                                                 </div>
                                             </a>
@@ -279,63 +284,67 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
     );
 }
 
-export function prebuildStatusLabel(prebuild?: PrebuildWithStatus) {
-    switch (prebuild?.status) {
-        case undefined: // Fall through
-        case "queued":
+export function prebuildStatusLabel(prebuild?: Prebuild) {
+    switch (prebuild?.status?.phase?.name) {
+        case PrebuildPhase_Phase.UNSPECIFIED: // Fall through
+        case PrebuildPhase_Phase.QUEUED:
             return <span className="font-medium text-orange-500 uppercase">pending</span>;
-        case "building":
+        case PrebuildPhase_Phase.BUILDING:
             return <span className="font-medium text-blue-500 uppercase">running</span>;
-        case "aborted":
+        case PrebuildPhase_Phase.ABORTED:
             return <span className="font-medium text-gray-500 uppercase">canceled</span>;
-        case "failed":
+        case PrebuildPhase_Phase.FAILED:
             return <span className="font-medium text-red-500 uppercase">system error</span>;
-        case "timeout":
+        case PrebuildPhase_Phase.TIMEOUT:
             return <span className="font-medium text-red-500 uppercase">timed out</span>;
-        case "available":
-            if (prebuild?.error) {
+        case PrebuildPhase_Phase.AVAILABLE:
+            if (prebuild?.status?.message) {
                 return <span className="font-medium text-red-500 uppercase">failed</span>;
             }
             return <span className="font-medium text-green-500 uppercase">ready</span>;
     }
 }
 
-export function prebuildStatusIcon(prebuild?: PrebuildWithStatus) {
-    switch (prebuild?.status) {
-        case undefined: // Fall through
-        case "queued":
+export function prebuildStatusIcon(prebuild?: Prebuild) {
+    switch (prebuild?.status?.phase?.name) {
+        case PrebuildPhase_Phase.UNSPECIFIED: // Fall through
+        case PrebuildPhase_Phase.QUEUED:
             return <img alt="" className="h-4 w-4" src={StatusPaused} />;
-        case "building":
+        case PrebuildPhase_Phase.BUILDING:
             return <img alt="" className="h-4 w-4" src={StatusRunning} />;
-        case "aborted":
+        case PrebuildPhase_Phase.ABORTED:
             return <img alt="" className="h-4 w-4" src={StatusCanceled} />;
-        case "failed":
+        case PrebuildPhase_Phase.FAILED:
             return <img alt="" className="h-4 w-4" src={StatusFailed} />;
-        case "timeout":
+        case PrebuildPhase_Phase.TIMEOUT:
             return <img alt="" className="h-4 w-4" src={StatusFailed} />;
-        case "available":
-            if (prebuild?.error) {
+        case PrebuildPhase_Phase.AVAILABLE:
+            if (prebuild?.status?.message) {
                 return <img alt="" className="h-4 w-4" src={StatusFailed} />;
             }
             return <img alt="" className="h-4 w-4" src={StatusDone} />;
     }
 }
 
-function getPrebuildStatusDescription(prebuild: PrebuildWithStatus): string {
-    switch (prebuild.status) {
-        case "queued":
+function getPrebuildStatusDescription(prebuild: Prebuild): string {
+    switch (prebuild.status?.phase?.name) {
+        case PrebuildPhase_Phase.QUEUED:
             return `Prebuild is queued and will be processed when there is execution capacity.`;
-        case "building":
+        case PrebuildPhase_Phase.BUILDING:
             return `Prebuild is currently in progress.`;
-        case "aborted":
-            return `Prebuild has been cancelled. Either a newer commit was pushed to the same branch, a user cancelled it manually, or the prebuild rate limit has been exceeded. ${prebuild.error}`;
-        case "failed":
-            return `Prebuild failed for system reasons. Please contact support. ${prebuild.error}`;
-        case "timeout":
-            return `Prebuild timed out. Either the image, or the prebuild tasks took too long. ${prebuild.error}`;
-        case "available":
-            if (prebuild.error) {
-                return `The tasks executed in the prebuild returned a non-zero exit code. ${prebuild.error}`;
+        case PrebuildPhase_Phase.ABORTED:
+            return `Prebuild has been cancelled. Either a newer commit was pushed to the same branch, a user cancelled it manually, or the prebuild rate limit has been exceeded. ${
+                prebuild.status?.message || ""
+            }`;
+        case PrebuildPhase_Phase.FAILED:
+            return `Prebuild failed for system reasons. Please contact support. ${prebuild.status?.message || ""}`;
+        case PrebuildPhase_Phase.TIMEOUT:
+            return `Prebuild timed out. Either the image, or the prebuild tasks took too long. ${
+                prebuild.status?.message || ""
+            }`;
+        case PrebuildPhase_Phase.AVAILABLE:
+            if (prebuild.status?.message) {
+                return `The tasks executed in the prebuild returned a non-zero exit code. ${prebuild.status.message}`;
             }
             return `Prebuild completed successfully.`;
         default:
@@ -343,7 +352,7 @@ function getPrebuildStatusDescription(prebuild: PrebuildWithStatus): string {
     }
 }
 
-export function PrebuildStatus(props: { prebuild: PrebuildWithStatus }) {
+export function PrebuildStatus(props: { prebuild: Prebuild }) {
     const prebuild = props.prebuild;
 
     return (

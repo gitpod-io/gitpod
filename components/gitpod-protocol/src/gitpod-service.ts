@@ -9,7 +9,6 @@ import {
     WorkspaceInfo,
     WorkspaceCreationResult,
     WorkspaceInstanceUser,
-    WhitelistedRepository,
     WorkspaceImageBuild,
     AuthProviderInfo,
     Token,
@@ -109,7 +108,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getWorkspaces(options: GitpodServer.GetWorkspacesOptions): Promise<WorkspaceInfo[]>;
     getWorkspaceOwner(workspaceId: string): Promise<UserInfo | undefined>;
     getWorkspaceUsers(workspaceId: string): Promise<WorkspaceInstanceUser[]>;
-    getFeaturedRepositories(): Promise<WhitelistedRepository[]>;
     getSuggestedRepositories(organizationId: string): Promise<SuggestedRepository[]>;
     searchRepositories(params: SearchRepositoriesParams): Promise<SuggestedRepository[]>;
     /**
@@ -187,6 +185,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getOnboardingState(): Promise<GitpodServer.OnboardingState>;
 
     // Projects
+    /** @deprecated no-op */
     getProviderRepositoriesForUser(
         params: GetProviderRepositoriesParams,
         cancellationToken?: CancellationToken,
@@ -326,7 +325,8 @@ export interface GetProviderRepositoriesParams {
     maxPages?: number;
 }
 export interface SearchRepositoriesParams {
-    organizationId: string;
+    /** @deprecated unused */
+    organizationId?: string;
     searchString: string;
     limit?: number; // defaults to 30
 }

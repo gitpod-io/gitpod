@@ -56,12 +56,9 @@ import { BillingModes } from "./billing/billing-mode";
 import { EntitlementService, EntitlementServiceImpl } from "./billing/entitlement-service";
 import { EntitlementServiceUBP } from "./billing/entitlement-service-ubp";
 import { StripeService } from "./billing/stripe-service";
-import { BitbucketAppSupport } from "./bitbucket/bitbucket-app-support";
 import { CodeSyncService } from "./code-sync/code-sync-service";
 import { Config, ConfigFile } from "./config";
 import { ConfigurationService } from "./config/configuration-service";
-import { GitHubAppSupport } from "./github/github-app-support";
-import { GitLabAppSupport } from "./gitlab/gitlab-app-support";
 import { IamSessionApp } from "./iam/iam-session-app";
 import { IDEService } from "./ide-service";
 import { DatabaseGarbageCollector } from "./jobs/database-gc";
@@ -89,7 +86,6 @@ import { IncrementalWorkspaceService } from "./prebuilds/incremental-workspace-s
 import { PrebuildManager } from "./prebuilds/prebuild-manager";
 import { PrebuildStatusMaintainer } from "./prebuilds/prebuilt-status-maintainer";
 import { ProjectsService } from "./projects/projects-service";
-import { ScmService } from "./projects/scm-service";
 import { RedisMutex } from "./redis/mutex";
 import { Server } from "./server";
 import { SessionHandler } from "./session-handler";
@@ -131,6 +127,8 @@ import { WorkspaceStartController } from "./workspace/workspace-start-controller
 import { WorkspaceStarter } from "./workspace/workspace-starter";
 import { DefaultWorkspaceImageValidator } from "./orgs/default-workspace-image-validator";
 import { ContextAwareAnalyticsWriter } from "./analytics";
+import { ScmService } from "./scm/scm-service";
+import { ContextService } from "./workspace/context-service";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -173,6 +171,8 @@ export const productionContainerModule = new ContainerModule(
 
         bind(ServerFactory).toAutoFactory(GitpodServerImpl);
         bind(UserController).toSelf().inSingletonScope();
+
+        bind(ContextService).toSelf().inSingletonScope();
 
         bind(GitpodServerImpl).toSelf();
         bind(WebsocketConnectionManager)
@@ -341,13 +341,10 @@ export const productionContainerModule = new ContainerModule(
 
         bind(PrebuildManager).toSelf().inSingletonScope();
         bind(GithubApp).toSelf().inSingletonScope();
-        bind(GitHubAppSupport).toSelf().inSingletonScope();
         bind(GithubAppRules).toSelf().inSingletonScope();
         bind(PrebuildStatusMaintainer).toSelf().inSingletonScope();
         bind(GitLabApp).toSelf().inSingletonScope();
-        bind(GitLabAppSupport).toSelf().inSingletonScope();
         bind(BitbucketApp).toSelf().inSingletonScope();
-        bind(BitbucketAppSupport).toSelf().inSingletonScope();
         bind(GitHubEnterpriseApp).toSelf().inSingletonScope();
         bind(BitbucketServerApp).toSelf().inSingletonScope();
         bind(IncrementalWorkspaceService).toSelf().inSingletonScope();
