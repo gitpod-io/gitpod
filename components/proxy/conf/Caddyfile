@@ -173,10 +173,14 @@ api.{$GITPOD_DOMAIN} {
 	}
 
 	handle /gitpod.v1.* {
-		import server_public_api
+		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3001
 	}
 
-	reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002
+	handle /gitpod.experimental.v1.* {
+		reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002
+	}
+
+	respond 400 "Bad Request"
 }
 
 # always redirect to HTTPS
