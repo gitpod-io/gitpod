@@ -203,32 +203,6 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         };
     }
 
-    async updateConfiguration(req: UpdateConfigurationRequest, _: HandlerContext) {
-        if (!req.configurationId) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configuration_id is required");
-        }
-
-        const userId = ctxUserId();
-        const installer = await this.userService.findUserById(userId, userId);
-        if (!installer) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "user not found");
-        }
-
-        const configuration = new Configuration();
-        configuration.id = req.configurationId;
-        configuration.name = req.name;
-        configuration.prebuildSettings = new PrebuildSettings(req.prebuildSettings);
-        configuration.workspaceSettings = new Workspace(req.workspaceSettings);
-
-        const project = this.apiConverter.fromConfiguration(configuration);
-
-        const updatedProject = await this.projectService.updateProject(installer, project);
-
-        return {
-            configuration: this.apiConverter.toConfiguration(updatedProject),
-        };
-    }
-
     async deleteConfiguration(req: DeleteConfigurationRequest, _: HandlerContext) {
         if (!req.configurationId) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "configuration_id is required");
