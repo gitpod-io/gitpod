@@ -136,6 +136,7 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
             contextUrl: request.source.value,
             forceDefaultConfig: request.forceDefaultConfig,
             workspaceClass: request.workspaceClass,
+            projectId: request.configurationId,
             ideSettings: {
                 defaultIde: request.editor.name,
                 useLatestVersion: request.editor.version === "latest",
