@@ -123,7 +123,9 @@ var loginCmd = &cobra.Command{
 				}
 			}
 
+			fmt.Println("loading your organizations...")
 			orgs := orgsList.Msg.GetTeams()
+			fmt.Print("\033[A\033[K")
 
 			resolutions := []string{
 				"pass an organization ID using --organization-id",
@@ -181,7 +183,7 @@ var loginCmd = &cobra.Command{
 			return err
 		}
 
-		slog.Info("Login successful")
+		slog.Info("login successful")
 		fmt.Println()
 		return WriteTabular(who, formatOpts{}, prettyprint.WriterFormatNarrow)
 	},
