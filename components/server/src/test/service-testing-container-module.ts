@@ -38,6 +38,9 @@ import { GitHubScope } from "../github/scopes";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import * as crypto from "crypto";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { Subject, SubjectId } from "../auth/subject-id";
+import { User } from "@gitpod/gitpod-protocol";
+import { runWithRequestContext } from "../util/request-context";
 
 const signingKeyPair = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
 const validatingKeyPair1 = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
@@ -328,4 +331,16 @@ export function createTestContainer() {
     container.load(productionContainerModule);
     container.load(mockApplyingContainerModule);
     return container;
+}
+
+export function withTestCtx<T>(subject: Subject | User, p: () => Promise<T>): Promise<T> {
+    return runWithRequestContext(
+        {
+            requestKind: "testContext",
+            requestMethod: "testMethod",
+            signal: new AbortController().signal,
+            subjectId: SubjectId.is(subject) ? subject : SubjectId.fromUserId(User.is(subject) ? subject.id : subject),
+        },
+        p,
+    );
 }

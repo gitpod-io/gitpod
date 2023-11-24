@@ -31,7 +31,6 @@ import { Redis } from "ioredis";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { runWithRequestContext } from "../util/request-context";
 import { SYSTEM_USER } from "../authorization/authorizer";
-import { SubjectId } from "../auth/subject-id";
 
 const UNDEFINED_KEY = "undefined";
 
@@ -61,7 +60,7 @@ export class RedisSubscriber {
                 signal: new AbortController().signal,
                 requestKind: "redis-subscriber",
                 requestMethod: channel,
-                subjectId: SubjectId.fromUserId(SYSTEM_USER),
+                subjectId: SYSTEM_USER,
             };
             await runWithRequestContext(ctx, async () => {
                 reportRedisUpdateReceived(channel);

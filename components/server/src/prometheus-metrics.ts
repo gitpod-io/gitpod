@@ -35,6 +35,8 @@ export function registerServerMetrics(registry: prometheusClient.Registry) {
     registry.registerMetric(dbConnectionsFree);
     registry.registerMetric(grpcServerStarted);
     registry.registerMetric(grpcServerHandling);
+    registry.registerMetric(spicedbCheckRequestsTotal);
+    registry.registerMetric(authorizerSubjectId);
 }
 
 export const grpcServerStarted = new prometheusClient.Counter({
@@ -367,4 +369,14 @@ export type SpiceDBCheckConsistency =
     | "undefined";
 export function incSpiceDBRequestsCheckTotal(consistency: SpiceDBCheckConsistency) {
     spicedbCheckRequestsTotal.labels(consistency).inc();
+}
+
+export const authorizerSubjectId = new prometheusClient.Counter({
+    name: "gitpod_authorizer_subject_id_total",
+    help: "Counter for the number of authorizer permission checks",
+    labelNames: ["match"],
+});
+type AuthorizerSubjectIdMatch = "ctx-user-id-missing" | "match" | "mismatch";
+export function reportAuthorizerSubjectId(match: AuthorizerSubjectIdMatch) {
+    authorizerSubjectId.labels(match).inc();
 }

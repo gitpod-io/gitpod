@@ -332,7 +332,7 @@ export class API {
     }
 
     private async ensureFgaMigration(subjectId: SubjectId): Promise<void> {
-        const fgaChecksEnabled = await isFgaChecksEnabled(subjectId.userId());
+        const fgaChecksEnabled = await isFgaChecksEnabled(subjectId);
         if (!fgaChecksEnabled) {
             throw new ConnectError("unauthorized", Code.PermissionDenied);
         }
