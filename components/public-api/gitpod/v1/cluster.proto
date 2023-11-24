@@ -4,7 +4,6 @@ package gitpod.v1;
 
 import "gitpod/v1/pagination.proto";
 import "gitpod/v1/workspace.proto";
-import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
 
@@ -18,8 +17,11 @@ service ClusterService {
   // to keep the cluster registered.
   rpc RenewClusterRegistration(RenewClusterRegistrationRequest) returns (RenewClusterRegistrationResponse) {}
 
-  // GetClusterWorkspaces returns the workspaces running on a cluster.
-  rpc GetClusterWorkspaces(GetClusterWorkspacesRequest) returns (GetClusterWorkspacesResponse) {}
+  // ListClusterWorkspaces returns the workspaces running on a cluster.
+  rpc ListClusterWorkspaces(ListClusterWorkspacesRequest) returns (ListClusterWorkspacesResponse) {}
+
+  // WatchClusterWorkspaces returns a stream of workspaces that ought to run on a cluster.
+  rpc WatchClusterWorkspaces(WatchClusterWorkspacesRequest) returns (stream WatchClusterWorkspacesResponse) {}
 
   // UpdateClusterWorkspaceStatus updates the status of a workspace running on a cluster.
   rpc UpdateClusterWorkspaceStatus(UpdateClusterWorkspaceStatusRequest) returns (UpdateClusterWorkspaceStatusResponse) {}
@@ -31,6 +33,7 @@ message RegisterClusterRequest {
     string display_name = 2;
     string description = 3;
   }
+
   enum ClusterType {
     // Cluster type is not set
     CLUSTER_TYPE_UNSPECIFIED = 0;
@@ -69,9 +72,9 @@ message RenewClusterRegistrationRequest {
   string cluster_id = 1;
 }
 
-message RenewClusterRegistrationResponse { }
+message RenewClusterRegistrationResponse {}
 
-message GetClusterWorkspacesRequest {
+message ListClusterWorkspacesRequest {
   // pagination contains the pagination options for listing workspaces
   PaginationRequest pagination = 1;
 
@@ -83,160 +86,42 @@ message GetClusterWorkspacesRequest {
   repeated string workspace_ids = 3;
 }
 
-message GetClusterWorkspacesResponse {
-  // Timeout configures the workspace timeout
-  message Timeout {
-    // timeout optionally sets a custom workspace timeout
-    string default = 1;
-    // timeout optionally sets a custom closed timeout
-    string closed = 2;
-    // maximum lifetime of the workspace
-    string maximum_lifetime = 3;
-  }
+message ClusterWorkspace {
+  // ID is a unique identifier of this workspace. No other workspace with the same name must be managed by this workspace manager
+  string id = 1;
 
-  // GitSpec configures the Git available within the workspace
-  message GitSpec {
-    // The Git username
-    string username = 1;
+  // Metadata is data associated with this workspace that's required for other parts of Gitpod to function
+  WorkspaceMetadata metadata = 2;
 
-    // The Git email address
-    string email = 2;
-  }
+  // Spec is the configuration of the workspace that's required for the ws-manager to start the workspace
+  WorkspaceSpec spec = 3;
 
-  // EnvironmentVariable defines a single environment variable
-  message EnvironmentVariable {
-    string name = 1;
-    string value = 2;
-  }
+  // Phase is the desired phase of the workspace
+  WorkspacePhase.Phase desired_phase = 5;
+}
 
-  // WorkspaceType specifies the purpose/use of a workspace. Different workspace types are handled differently by all parts of the system.
-  enum WorkspaceType {
-    WORKSPACE_TYPE_UNSPECIFIED = 0;
-
-    // Regular workspaces are your off-the-mill workspaces intended for users. They are directly user-facing and hence are most important.
-    WORKSPACE_TYPE_REGULAR = 1;
-
-    // Prebuild workspaces are workspaces used to pre-build the content of other workspaces. They run headless and have no direct user-interaction.
-    WORKSPACE_TYPE_PREBUILD = 2;
-  }
-
-  // WorkspaceSpec specifies the configuration of a workspace for a workspace start
-  message WorkspaceSpec {
-    // initializer configures how the workspace is to be initialized
-    bytes initializer = 4;
-
-    // ports is the set of ports which ought to be exposed to the internet
-    repeated WorkspacePort ports = 5;
-
-    // envvars are user-defined environment variables which ought to be available in the workspace
-    repeated EnvironmentVariable envvars = 6;
-
-    // Git configures the Git user in the workspace
-    GitSpec git = 9;
-
-    Timeout timeout = 10;
-
-    // admission controlls who can access the workspace and its ports.
-    AdmissionLevel admission = 11;
-
-    // Class denotes the class of the workspace we ought to start
-    string class = 13;
-
-    // ssh_public_keys is user's uploaded ssh public keys
-    repeated string ssh_public_keys = 15;
-
-    // ide_image_layers are contains the images needed for the ide to run,
-    // including ide-desktop, desktop-plugin and so on
-    repeated string ide_image_layers = 17;
-
-    // last_user_activity is the time when the user last interacted with the workspace
-    google.protobuf.Timestamp last_user_activity = 99;
-
-    // log_url is the URL where we stream the workspace's logs to.
-    // Can be changed when the workspace is PENDING or STOPPED.
-    string log_url = 100;
-  }
-
-  // WorkspaceMetadata is data associated with a workspace that's required for other parts of the system to function
-  message WorkspaceMetadata {
-    // owner is the ID of the Gitpod user to whom we'll bill this workspace and who we consider responsible for its content
-    string owner = 1;
-
-    // meta_id is the workspace ID of this currently running workspace instance on the "meta pool" side
-    string meta_id = 2;
-
-    // started_at is the time when this workspace was started. Consider this field read-only, i.e. setting in a request will have no effect.
-    google.protobuf.Timestamp started_at = 3;
-
-    // Annotations are key/value pairs that gets attached to the workspace.
-    // This is primarily intended for annotating headless workspace loads.
-    map<string, string> annotations = 4;
-
-    // team the workspace belongs to, if the workspace is not associated with a team, this property will be empty
-    optional string team = 5;
-
-    // project the workspace belongs to, if the workspace is not associated with a project, this property will be empty
-    optional string project = 6;
-  }
-
-  message Workspace {
-    // ID is a unique identifier of this workspace. No other workspace with the same name must be managed by this workspace manager
-    string id = 1;
-
-    // Metadata is data associated with this workspace that's required for other parts of Gitpod to function
-    WorkspaceMetadata metadata = 2;
-
-    // Spec is the configuration of the workspace that's required for the ws-manager to start the workspace
-    WorkspaceSpec spec = 3;
-
-    // Type denots the kind of workspace we ought to start
-    WorkspaceType type = 4;
-  }
-
+message ListClusterWorkspacesResponse {
   // pagination contains the pagination options for listing workspaces
   PaginationResponse pagination = 1;
 
   // The workspaces running on the cluster
-  repeated Workspace workspaces = 2;
+  repeated ClusterWorkspace workspaces = 2;
+}
+
+message WatchClusterWorkspacesRequest {
+  // The cluster's identity
+  string cluster_id = 1;
+}
+
+message WatchClusterWorkspacesResponse {
+  // The cluster's identity
+  string cluster_id = 1;
+
+  // The workspace's ID
+  Workspace workspace = 2;
 }
 
 message UpdateClusterWorkspaceStatusRequest {
-  // WorkspaceConditionBool is a trinary bool: true/false/empty
-  enum WorkspaceConditionBool {
-    WORKSPACE_CONDITION_BOOL_UNSPECIFIED = 0;
-    WORKSPACE_CONDITION_BOOL_TRUE = 1;
-    WORKSPACE_CONDITION_BOOL_FALSE = 2;
-  }
-
-  // WorkspaceCondition gives more detailed information as to the state of the workspace. Which condition actually
-  // has a value depends on the phase the workspace is in.
-  message WorkspaceConditions {
-    enum FailedReason {
-      FAILED_REASON_UNSPECIFIED = 0;
-      FAILED_REASON_CONTENT_INITIALIZATION_FAILED = 1;
-      FAILED_REASON_BACKUP_FAILED = 2;
-      FAILED_REASON_IMAGE_PULL_FAILURE = 3;
-      FAILED_REASON_UNEXPECTED_TERMINATION = 4;
-    }
-
-    // failed contains the reason the workspace failed to operate. If this field is empty, the workspace has not failed.
-    string failed = 1;
-
-    FailedReason failed_reason = 2;
-
-    // timeout contains the reason the workspace has timed out. If this field is empty, the workspace has not timed out.
-    string timeout = 3;
-  }
-
-  message PrebuildResult {
-    // Snapshot points to the content of the prebuild. This string is opaque to the cluster manager,
-    // and must be returned unaltered.
-    string snapshot = 1;
-
-    // The prebuild's error message
-    string error_message = 2;
-  }
-
   // WorkspaceACK is a simple acknowledgement of a workspace status update
   message WorkspaceACK {
     enum StatusCode {
@@ -248,30 +133,6 @@ message UpdateClusterWorkspaceStatusRequest {
     }
     StatusCode status_code = 1;
     string message = 2;
-  }
-
-  // WorkspaceStatus describes a workspace status
-  message WorkspaceStatus {
-    // version of the status update. Workspace instances themselves are unversioned,
-    // but their statuus has different versions.
-    // The value of this field has no semantic meaning (e.g. don't interpret it as
-    // as a timestemp), but it can be used to impose a partial order.
-    // If a.status_version < b.status_version then a was the status before b.
-    uint64 status_version = 1;
-
-    // the phase of a workspace is a simple, high-level summary of where the workspace is in its lifecycle
-    WorkspacePhase phase = 2;
-
-    // conditions detail the current state of the workspace
-    WorkspaceConditions conditions = 3;
-
-    // prebuild_result contains the result of a prebuild. Only if the workspace is
-    PrebuildResult prebuild_result = 7;
-
-    // repo details the Git working copy status of the workspace.
-    // Note: this is a best-effort field and more often than not will not be present. Its absence does not
-    // indicate the absence of a working copy.
-    WorkspaceGitStatus repo = 5;
   }
 
   // The cluster's identity
