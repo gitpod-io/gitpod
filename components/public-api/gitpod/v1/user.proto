@@ -74,8 +74,8 @@ message User {
     bool feature_preview = 4;
 
     // +optional
-    IDESettings ide_settings = 5;
-    message IDESettings {
+    EditoSettings editor_settings = 5;
+    message EditoSettings {
       // +optional
       string setting_version = 1;
       // +optional
@@ -154,7 +154,7 @@ message User {
       string organization_id = 2;
       string workspace_class = 3;
       // +optional
-      IDESettings ide_settings = 4;
+      EditoSettings editor_settings = 4;
       // +optional
       string region = 5;
     }

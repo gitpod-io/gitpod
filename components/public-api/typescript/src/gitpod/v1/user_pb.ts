@@ -373,9 +373,9 @@ export class User_AdditionalUserData extends Message<User_AdditionalUserData> {
   /**
    * +optional
    *
-   * @generated from field: gitpod.v1.User.AdditionalUserData.IDESettings ide_settings = 5;
+   * @generated from field: gitpod.v1.User.AdditionalUserData.EditoSettings editor_settings = 5;
    */
-  ideSettings?: User_AdditionalUserData_IDESettings;
+  editorSettings?: User_AdditionalUserData_EditoSettings;
 
   /**
    * Git clone URL pointing to the user's dotfile repo
@@ -425,7 +425,7 @@ export class User_AdditionalUserData extends Message<User_AdditionalUserData> {
     { no: 2, name: "disabled_closed_timeout", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 3, name: "email_notification_settings", kind: "message", T: User_AdditionalUserData_EmailNotificationSettings },
     { no: 4, name: "feature_preview", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 5, name: "ide_settings", kind: "message", T: User_AdditionalUserData_IDESettings },
+    { no: 5, name: "editor_settings", kind: "message", T: User_AdditionalUserData_EditoSettings },
     { no: 6, name: "dotfile_repo", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 7, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 8, name: "profile", kind: "message", T: User_AdditionalUserData_ProfileDetails },
@@ -505,9 +505,9 @@ export class User_AdditionalUserData_EmailNotificationSettings extends Message<U
 }
 
 /**
- * @generated from message gitpod.v1.User.AdditionalUserData.IDESettings
+ * @generated from message gitpod.v1.User.AdditionalUserData.EditoSettings
  */
-export class User_AdditionalUserData_IDESettings extends Message<User_AdditionalUserData_IDESettings> {
+export class User_AdditionalUserData_EditoSettings extends Message<User_AdditionalUserData_EditoSettings> {
   /**
    * +optional
    *
@@ -529,33 +529,33 @@ export class User_AdditionalUserData_IDESettings extends Message<User_Additional
    */
   useLatestVersion = false;
 
-  constructor(data?: PartialMessage<User_AdditionalUserData_IDESettings>) {
+  constructor(data?: PartialMessage<User_AdditionalUserData_EditoSettings>) {
     super();
     proto3.util.initPartial(data, this);
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.User.AdditionalUserData.IDESettings";
+  static readonly typeName = "gitpod.v1.User.AdditionalUserData.EditoSettings";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "setting_version", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "default_ide", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "use_latest_version", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): User_AdditionalUserData_IDESettings {
-    return new User_AdditionalUserData_IDESettings().fromBinary(bytes, options);
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): User_AdditionalUserData_EditoSettings {
+    return new User_AdditionalUserData_EditoSettings().fromBinary(bytes, options);
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): User_AdditionalUserData_IDESettings {
-    return new User_AdditionalUserData_IDESettings().fromJson(jsonValue, options);
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): User_AdditionalUserData_EditoSettings {
+    return new User_AdditionalUserData_EditoSettings().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): User_AdditionalUserData_IDESettings {
-    return new User_AdditionalUserData_IDESettings().fromJsonString(jsonString, options);
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): User_AdditionalUserData_EditoSettings {
+    return new User_AdditionalUserData_EditoSettings().fromJsonString(jsonString, options);
   }
 
-  static equals(a: User_AdditionalUserData_IDESettings | PlainMessage<User_AdditionalUserData_IDESettings> | undefined, b: User_AdditionalUserData_IDESettings | PlainMessage<User_AdditionalUserData_IDESettings> | undefined): boolean {
-    return proto3.util.equals(User_AdditionalUserData_IDESettings, a, b);
+  static equals(a: User_AdditionalUserData_EditoSettings | PlainMessage<User_AdditionalUserData_EditoSettings> | undefined, b: User_AdditionalUserData_EditoSettings | PlainMessage<User_AdditionalUserData_EditoSettings> | undefined): boolean {
+    return proto3.util.equals(User_AdditionalUserData_EditoSettings, a, b);
   }
 }
 
@@ -722,9 +722,9 @@ export class User_AdditionalUserData_WorkspaceAutostartOption extends Message<Us
   /**
    * +optional
    *
-   * @generated from field: gitpod.v1.User.AdditionalUserData.IDESettings ide_settings = 4;
+   * @generated from field: gitpod.v1.User.AdditionalUserData.EditoSettings editor_settings = 4;
    */
-  ideSettings?: User_AdditionalUserData_IDESettings;
+  editorSettings?: User_AdditionalUserData_EditoSettings;
 
   /**
    * +optional
@@ -744,7 +744,7 @@ export class User_AdditionalUserData_WorkspaceAutostartOption extends Message<Us
     { no: 1, name: "clone_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 4, name: "ide_settings", kind: "message", T: User_AdditionalUserData_IDESettings },
+    { no: 4, name: "editor_settings", kind: "message", T: User_AdditionalUserData_EditoSettings },
     { no: 5, name: "region", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
