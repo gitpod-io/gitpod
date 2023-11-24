@@ -1,0 +1,153 @@
+syntax = "proto3";
+
+package gitpod.v1;
+
+import "gitpod/v1/pagination.proto";
+import "gitpod/v1/workspace.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+
+service WorkspaceRunnerService {
+  // RegisterRunner registers a new cluster with the server. Registrations are very
+  // short-lived and must be renewed every 30 seconds. Runners can be registered for
+  // an entire organisation or a single user.
+  rpc RegisterRunner(RegisterRunnerRequest) returns (RegisterRunnerResponse) {}
+
+  // RenewRunnerRegistration renews a cluster's registration. This must be called every 30 seconds
+  // to keep the cluster registered.
+  rpc RenewRunnerRegistration(RenewRunnerRegistrationRequest) returns (RenewRunnerRegistrationResponse) {}
+
+  // ListRunnerWorkspaces returns the workspaces running on a cluster.
+  rpc ListRunnerWorkspaces(ListRunnerWorkspacesRequest) returns (ListRunnerWorkspacesResponse) {}
+
+  // WatchRunnerWorkspaces returns a stream of workspaces that ought to run on a cluster.
+  rpc WatchRunnerWorkspaces(WatchRunnerWorkspacesRequest) returns (stream WatchRunnerWorkspacesResponse) {}
+
+  // UpdateRunnerWorkspaceStatus updates the status of a workspace running on a cluster.
+  rpc UpdateRunnerWorkspaceStatus(UpdateRunnerWorkspaceStatusRequest) returns (UpdateRunnerWorkspaceStatusResponse) {}
+}
+
+message RegisterRunnerRequest {
+  message WorkspaceClass {
+    string id = 1;
+    string display_name = 2;
+    string description = 3;
+  }
+
+  enum RunnerType {
+    // Runner type is not set
+    RUNNER_TYPE_UNSPECIFIED = 0;
+    // The cluster is a local workspace runner running on a user's machine. It
+    // can only run workspaces of a single tenant (the user themselves) at a time.
+    RUNNER_TYPE_LOCAL = 1;
+    // The cluster is a Cloud workspace cluster which is managed by Gitpod
+    // and can run multiple tenants.
+    RUNNER_TYPE_MULTI_TENANT = 2;
+  }
+
+  // The cluster's scope
+  oneof scope {
+    string organization_id = 1;
+    string user_id = 2;
+  }
+
+  // The cluster's type
+  RunnerType type = 3;
+
+  // The cluster's name which is shown to users
+  string name = 4;
+
+  // The workspace classes this cluster has to offer
+  repeated WorkspaceClass workspace_classes = 5;
+}
+
+message RegisterRunnerResponse {
+  // The cluster's ID which identifies the cluster and must be used
+  // in all subsequent requests.
+  string cluster_id = 1;
+}
+
+message RenewRunnerRegistrationRequest {
+  // The cluster's identity
+  string cluster_id = 1;
+}
+
+message RenewRunnerRegistrationResponse {}
+
+message ListRunnerWorkspacesRequest {
+  // pagination contains the pagination options for listing workspaces
+  PaginationRequest pagination = 1;
+
+  // The cluster's identity
+  string cluster_id = 2;
+
+  // An optional list of workspace IDs to fetch. If this list is empty/not provided
+  // all workspaces that ought to run on the cluster are returned.
+  repeated string workspace_ids = 3;
+}
+
+message RunnerWorkspace {
+  // ID is a unique identifier of this workspace. No other workspace with the same name must be managed by this workspace manager
+  string id = 1;
+
+  // Metadata is data associated with this workspace that's required for other parts of Gitpod to function
+  WorkspaceMetadata metadata = 2;
+
+  // Spec is the configuration of the workspace that's required for the ws-manager to start the workspace
+  WorkspaceSpec spec = 3;
+
+  // Phase is the desired phase of the workspace
+  WorkspacePhase.Phase desired_phase = 5;
+}
+
+message ListRunnerWorkspacesResponse {
+  // pagination contains the pagination options for listing workspaces
+  PaginationResponse pagination = 1;
+
+  // The workspaces running on the cluster
+  repeated RunnerWorkspace workspaces = 2;
+}
+
+message WatchRunnerWorkspacesRequest {
+  // The cluster's identity
+  string cluster_id = 1;
+}
+
+message WatchRunnerWorkspacesResponse {
+  // The cluster's identity
+  string cluster_id = 1;
+
+  // The workspace's ID
+  Workspace workspace = 2;
+}
+
+message UpdateRunnerWorkspaceStatusRequest {
+  // WorkspaceACK is a simple acknowledgement of a workspace status update
+  message WorkspaceACK {
+    enum StatusCode {
+      STATUS_CODE_UNSPECIFIED = 0;
+      STATUS_CODE_UNKNOWN = 1;
+      STATUS_CODE_OK = 2;
+      STATUS_CODE_INVALID_RESOURCE = 3;
+      STATUS_CODE_FAILED_PRECONDITION = 4;
+    }
+    StatusCode status_code = 1;
+    string message = 2;
+  }
+
+  // The cluster's identity
+  string cluster_id = 1;
+
+  // The workspace's ID
+  string workspace_id = 2;
+
+  oneof update {
+    // The workspace's status
+    WorkspaceStatus status = 3;
+
+    // The workspace's status
+    WorkspaceACK ack = 4;
+  }
+}
+
+message UpdateRunnerWorkspaceStatusResponse {}
