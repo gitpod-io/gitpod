@@ -299,23 +299,40 @@ func (s *Server) HandleConn(c net.Conn) {
 	if debugWorkspace {
 		supervisorPort = "24999"
 	}
-	key, userName, err := s.GetWorkspaceSSHKey(ctx, wsInfo.IPAddress, supervisorPort)
-	if err != nil {
-		cancel()
-		s.TrackSSHConnection(wsInfo, "connect", ErrCreateSSHKey)
-		ReportSSHAttemptMetrics(ErrCreateSSHKey)
-		log.WithField("instanceId", wsInfo.InstanceID).WithError(err).Error("failed to create private pair in workspace")
-		return
-	}
-	cancel()
+
+	var key ssh.Signer
+	var userName string
 
 	session := &Session{
-		Conn:                clientConn,
-		WorkspaceID:         workspaceId,
-		InstanceID:          wsInfo.InstanceID,
-		OwnerUserId:         wsInfo.OwnerUserId,
-		WorkspacePrivateKey: key,
+		Conn:        clientConn,
+		WorkspaceID: workspaceId,
+		InstanceID:  wsInfo.InstanceID,
+		OwnerUserId: wsInfo.OwnerUserId,
 	}
+
+	if wsInfo.SSHKey != nil {
+		key, err = ssh.ParsePrivateKey([]byte(wsInfo.SSHKey.Private))
+		if err != nil {
+			cancel()
+			return
+		}
+
+		session.WorkspacePrivateKey = key
+	} else {
+		key, userName, err = s.GetWorkspaceSSHKey(ctx, wsInfo.IPAddress, supervisorPort)
+		if err != nil {
+			cancel()
+			s.TrackSSHConnection(wsInfo, "connect", ErrCreateSSHKey)
+			ReportSSHAttemptMetrics(ErrCreateSSHKey)
+			log.WithField("instanceId", wsInfo.InstanceID).WithError(err).Error("failed to create private pair in workspace")
+			return
+		}
+
+		session.WorkspacePrivateKey = key
+	}
+
+	cancel()
+
 	sshPort := "23001"
 	if debugWorkspace {
 		sshPort = "25001"
