@@ -15,39 +15,31 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/namegen"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/common"
 )
 
 const (
-	// Used as key for storing the workspace port in the requests mux.Vars() map.
-	workspacePortIdentifier = "workspacePort"
-
-	// Used as key for storing the workspace ID in the requests mux.Vars() map.
-	workspaceIDIdentifier = "workspaceID"
-
 	// The header that is used to communicate the "Host" from proxy -> ws-proxy in scenarios where ws-proxy is _not_ directly exposed.
 	forwardedHostnameHeader = "x-wsproxy-host"
 
 	// This pattern matches v4 UUIDs as well as the new generated workspace ids (e.g. pink-panda-ns35kd21).
-	workspacePortRegex = "(?P<" + workspacePortIdentifier + ">[0-9]+)-"
+	workspacePortRegex = "(?P<" + common.WorkspacePortIdentifier + ">[0-9]+)-"
 
-	debugWorkspaceIdentifier = "debugWorkspace"
-	debugWorkspaceRegex      = "(?P<" + debugWorkspaceIdentifier + ">debug-)?"
-
-	workspacePathPrefixIdentifier = "workspacePathPrefix"
+	debugWorkspaceRegex = "(?P<" + common.DebugWorkspaceIdentifier + ">debug-)?"
 )
 
 // This pattern matches v4 UUIDs as well as the new generated workspace ids (e.g. pink-panda-ns35kd21).
 // "(?P<" + workspaceIDIdentifier + ">[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-z]{2,16}-[0-9a-z]{2,16}-[0-9a-z]{8,11})"
-var workspaceIDRegex = fmt.Sprintf("(?P<%s>%s)", workspaceIDIdentifier, strings.Join(namegen.PossibleWorkspaceIDPatterns, "|"))
+var workspaceIDRegex = fmt.Sprintf("(?P<%s>%s)", common.WorkspaceIDIdentifier, strings.Join(namegen.PossibleWorkspaceIDPatterns, "|"))
 
 // WorkspaceRouter is a function that configures subrouters (one for theia, one for the exposed ports) on the given router
 // which resolve workspace coordinates (ID, port?) from each request. The contract is to store those in the request's mux.Vars
 // with the keys workspacePortIdentifier and workspaceIDIdentifier.
-type WorkspaceRouter func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (ideRouter *mux.Router, portRouter *mux.Router, blobserveRouter *mux.Router)
+type WorkspaceRouter func(r *mux.Router, wsInfoProvider common.WorkspaceInfoProvider) (ideRouter *mux.Router, portRouter *mux.Router, blobserveRouter *mux.Router)
 
 // HostBasedRouter is a WorkspaceRouter that routes simply based on the "Host" header.
 func HostBasedRouter(header, wsHostSuffix string, wsHostSuffixRegex string) WorkspaceRouter {
-	return func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (*mux.Router, *mux.Router, *mux.Router) {
+	return func(r *mux.Router, wsInfoProvider common.WorkspaceInfoProvider) (*mux.Router, *mux.Router, *mux.Router) {
 		allClusterWsHostSuffixRegex := wsHostSuffixRegex
 		if allClusterWsHostSuffixRegex == "" {
 			allClusterWsHostSuffixRegex = wsHostSuffix
@@ -150,12 +142,12 @@ func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 		if m.Vars == nil {
 			m.Vars = make(map[string]string)
 		}
-		m.Vars[workspaceIDIdentifier] = workspaceID
+		m.Vars[common.WorkspaceIDIdentifier] = workspaceID
 		if workspacePort != "" {
-			m.Vars[workspacePortIdentifier] = workspacePort
+			m.Vars[common.WorkspacePortIdentifier] = workspacePort
 		}
 		if debugWorkspace != "" {
-			m.Vars[debugWorkspaceIdentifier] = debugWorkspace
+			m.Vars[common.DebugWorkspaceIdentifier] = debugWorkspace
 		}
 
 		return true
@@ -216,21 +208,21 @@ func matchForeignHostHeader(wsHostSuffix string, headerProvider hostHeaderProvid
 			m.Vars = make(map[string]string)
 		}
 
-		m.Vars[workspacePathPrefixIdentifier] = strings.TrimRight(pathPrefix, "/")
-		m.Vars[workspaceIDIdentifier] = workspaceID
-		m.Vars[debugWorkspaceIdentifier] = debugWorkspace
-		m.Vars[workspacePortIdentifier] = workspacePort
+		m.Vars[common.WorkspacePathPrefixIdentifier] = strings.TrimRight(pathPrefix, "/")
+		m.Vars[common.WorkspaceIDIdentifier] = workspaceID
+		m.Vars[common.DebugWorkspaceIdentifier] = debugWorkspace
+		m.Vars[common.WorkspacePortIdentifier] = workspacePort
 
 		return
 	}
 }
 
-func getWorkspaceCoords(req *http.Request) WorkspaceCoords {
+func getWorkspaceCoords(req *http.Request) common.WorkspaceCoords {
 	vars := mux.Vars(req)
-	return WorkspaceCoords{
-		ID:    vars[workspaceIDIdentifier],
-		Port:  vars[workspacePortIdentifier],
-		Debug: vars[debugWorkspaceIdentifier] == "true",
+	return common.WorkspaceCoords{
+		ID:    vars[common.WorkspaceIDIdentifier],
+		Port:  vars[common.WorkspacePortIdentifier],
+		Debug: vars[common.DebugWorkspaceIdentifier] == "true",
 	}
 }
 

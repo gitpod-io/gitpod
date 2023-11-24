@@ -14,9 +14,10 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/analytics"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 	tracker "github.com/gitpod-io/gitpod/ws-proxy/pkg/analytics"
-	"github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/common"
 	"github.com/gitpod-io/golang-crypto/ssh"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/xerrors"
@@ -38,6 +39,16 @@ var (
 		Name: "gitpod_ws_proxy_ssh_attempt_total",
 		Help: "Total number of SSH attempt",
 	}, []string{"status", "error_type"})
+
+	SSHTunnelOpenedTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "gitpod_ws_proxy_ssh_tunnel_opened_total",
+		Help: "Total number of SSH tunnels opened by the ws-proxy",
+	}, []string{})
+
+	SSHTunnelClosedTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "gitpod_ws_proxy_ssh_tunnel_closed_total",
+		Help: "Total number of SSH tunnels closed by the ws-proxy",
+	}, []string{"code"})
 )
 
 var (
@@ -93,32 +104,62 @@ type Session struct {
 type Server struct {
 	Heartbeater Heartbeat
 
+	HostKeys              []ssh.Signer
 	sshConfig             *ssh.ServerConfig
-	workspaceInfoProvider proxy.WorkspaceInfoProvider
+	workspaceInfoProvider common.WorkspaceInfoProvider
 }
 
 func init() {
 	metrics.Registry.MustRegister(
 		SSHConnectionCount,
 		SSHAttemptTotal,
+		SSHTunnelClosedTotal,
+		SSHTunnelOpenedTotal,
 	)
 }
 
 // New creates a new SSH proxy server
 
-func New(signers []ssh.Signer, workspaceInfoProvider proxy.WorkspaceInfoProvider, heartbeat Heartbeat) *Server {
+func New(signers []ssh.Signer, workspaceInfoProvider common.WorkspaceInfoProvider, heartbeat Heartbeat) *Server {
 	server := &Server{
 		workspaceInfoProvider: workspaceInfoProvider,
 		Heartbeater:           &noHeartbeat{},
+		HostKeys:              signers,
 	}
 	if heartbeat != nil {
 		server.Heartbeater = heartbeat
+	}
+
+	authWithWebsocketTunnel := func(conn ssh.ConnMetadata) (*ssh.Permissions, error) {
+		wsConn, ok := conn.RawConn().(*gitpod.WebsocketConnection)
+		if !ok {
+			return nil, ErrAuthFailed
+		}
+		info, ok := wsConn.Ctx.Value(common.WorkspaceInfoIdentifier).(map[string]string)
+		if !ok || info == nil {
+			return nil, ErrAuthFailed
+		}
+		workspaceId := info[common.WorkspaceIDIdentifier]
+		_, err := server.GetWorkspaceInfo(workspaceId)
+		if err != nil {
+			return nil, err
+		}
+		log.WithField(common.WorkspaceIDIdentifier, workspaceId).Info("success auth via websocket")
+		return &ssh.Permissions{
+			Extensions: map[string]string{
+				"workspaceId":    workspaceId,
+				"debugWorkspace": info[common.DebugWorkspaceIdentifier],
+			},
+		}, nil
 	}
 
 	server.sshConfig = &ssh.ServerConfig{
 		ServerVersion: "SSH-2.0-GITPOD-GATEWAY",
 		NoClientAuth:  true,
 		NoClientAuthCallback: func(conn ssh.ConnMetadata) (*ssh.Permissions, error) {
+			if perm, err := authWithWebsocketTunnel(conn); err == nil {
+				return perm, nil
+			}
 			args := strings.Split(conn.User(), "#")
 			workspaceId := args[0]
 			var debugWorkspace string
@@ -170,6 +211,9 @@ func New(signers []ssh.Signer, workspaceInfoProvider proxy.WorkspaceInfoProvider
 			}, nil
 		},
 		PublicKeyCallback: func(conn ssh.ConnMetadata, pk ssh.PublicKey) (perm *ssh.Permissions, err error) {
+			if perm, err := authWithWebsocketTunnel(conn); err == nil {
+				return perm, nil
+			}
 			workspaceId := conn.User()
 			var debugWorkspace string
 			if strings.HasPrefix(workspaceId, "debug-") {
@@ -350,7 +394,7 @@ func (s *Server) HandleConn(c net.Conn) {
 	cancel()
 }
 
-func (s *Server) GetWorkspaceInfo(workspaceId string) (*proxy.WorkspaceInfo, error) {
+func (s *Server) GetWorkspaceInfo(workspaceId string) (*common.WorkspaceInfo, error) {
 	wsInfo := s.workspaceInfoProvider.WorkspaceInfo(workspaceId)
 	if wsInfo == nil {
 		if matched, _ := regexp.Match(workspaceIDRegex, []byte(workspaceId)); matched {
@@ -364,7 +408,7 @@ func (s *Server) GetWorkspaceInfo(workspaceId string) (*proxy.WorkspaceInfo, err
 	return wsInfo, nil
 }
 
-func (s *Server) TrackSSHConnection(wsInfo *proxy.WorkspaceInfo, phase string, err error) {
+func (s *Server) TrackSSHConnection(wsInfo *common.WorkspaceInfo, phase string, err error) {
 	// if we didn't find an associated user, we don't want to track
 	if wsInfo == nil {
 		return
@@ -387,7 +431,7 @@ func (s *Server) TrackSSHConnection(wsInfo *proxy.WorkspaceInfo, phase string, e
 	})
 }
 
-func (s *Server) VerifyPublicKey(ctx context.Context, wsInfo *proxy.WorkspaceInfo, pk ssh.PublicKey) (bool, error) {
+func (s *Server) VerifyPublicKey(ctx context.Context, wsInfo *common.WorkspaceInfo, pk ssh.PublicKey) (bool, error) {
 	for _, keyStr := range wsInfo.SSHPublicKeys {
 		key, _, _, _, err := ssh.ParseAuthorizedKey([]byte(keyStr))
 		if err != nil {

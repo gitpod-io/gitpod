@@ -8,6 +8,7 @@ packages:
       - "public/**"
     deps:
       - components/common-go:lib
+      - components/gitpod-protocol/go:lib
       - components/content-service-api/go:lib
       - components/content-service:lib
       - components/registry-facade-api/go:lib
@@ -45,6 +46,7 @@ packages:
       - "public/**"
     deps:
       - components/common-go:lib
+      - components/gitpod-protocol/go:lib
       - components/content-service-api/go:lib
       - components/content-service:lib
       - components/registry-facade-api/go:lib
