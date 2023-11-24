@@ -39,7 +39,6 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import {
     AdmissionLevel,
-    EditorReference,
     Workspace,
     WorkspaceConditions,
     WorkspaceEnvironmentVariable,
@@ -51,6 +50,7 @@ import {
     WorkspacePort_Protocol,
     WorkspaceStatus,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { EditorReference } from "@gitpod/public-api/lib/gitpod/v1/editor_pb";
 import { SSHPublicKey } from "@gitpod/public-api/lib/gitpod/v1/ssh_pb";
 import {
     ConfigurationEnvironmentVariable,
