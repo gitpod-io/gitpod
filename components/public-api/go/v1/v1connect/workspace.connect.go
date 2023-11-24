@@ -49,6 +49,14 @@ type WorkspaceServiceClient interface {
 	StartWorkspace(context.Context, *connect_go.Request[v1.StartWorkspaceRequest]) (*connect_go.Response[v1.StartWorkspaceResponse], error)
 	// UpdateWorkspace updates the workspace.
 	UpdateWorkspace(context.Context, *connect_go.Request[v1.UpdateWorkspaceRequest]) (*connect_go.Response[v1.UpdateWorkspaceResponse], error)
+	// StopWorkspace stops a running workspace.
+	StopWorkspace(context.Context, *connect_go.Request[v1.StopWorkspaceRequest]) (*connect_go.Response[v1.StopWorkspaceResponse], error)
+	// DeleteWorkspace deletes a workspace.
+	// When the workspace is running, it will be stopped as well.
+	// Deleted workspaces cannot be started again.
+	DeleteWorkspace(context.Context, *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error)
+	// ListWorkspaceClasses enumerates all available workspace classes.
+	ListWorkspaceClasses(context.Context, *connect_go.Request[v1.ListWorkspaceClassesRequest]) (*connect_go.Response[v1.ListWorkspaceClassesResponse], error)
 	// ParseContextURL parses a context URL and returns the workspace metadata and spec.
 	// Not implemented yet.
 	ParseContextURL(context.Context, *connect_go.Request[v1.ParseContextURLRequest]) (*connect_go.Response[v1.ParseContextURLResponse], error)
@@ -104,6 +112,21 @@ func NewWorkspaceServiceClient(httpClient connect_go.HTTPClient, baseURL string,
 			baseURL+"/gitpod.v1.WorkspaceService/UpdateWorkspace",
 			opts...,
 		),
+		stopWorkspace: connect_go.NewClient[v1.StopWorkspaceRequest, v1.StopWorkspaceResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.WorkspaceService/StopWorkspace",
+			opts...,
+		),
+		deleteWorkspace: connect_go.NewClient[v1.DeleteWorkspaceRequest, v1.DeleteWorkspaceResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.WorkspaceService/DeleteWorkspace",
+			opts...,
+		),
+		listWorkspaceClasses: connect_go.NewClient[v1.ListWorkspaceClassesRequest, v1.ListWorkspaceClassesResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.WorkspaceService/ListWorkspaceClasses",
+			opts...,
+		),
 		parseContextURL: connect_go.NewClient[v1.ParseContextURLRequest, v1.ParseContextURLResponse](
 			httpClient,
 			baseURL+"/gitpod.v1.WorkspaceService/ParseContextURL",
@@ -140,6 +163,9 @@ type workspaceServiceClient struct {
 	createAndStartWorkspace       *connect_go.Client[v1.CreateAndStartWorkspaceRequest, v1.CreateAndStartWorkspaceResponse]
 	startWorkspace                *connect_go.Client[v1.StartWorkspaceRequest, v1.StartWorkspaceResponse]
 	updateWorkspace               *connect_go.Client[v1.UpdateWorkspaceRequest, v1.UpdateWorkspaceResponse]
+	stopWorkspace                 *connect_go.Client[v1.StopWorkspaceRequest, v1.StopWorkspaceResponse]
+	deleteWorkspace               *connect_go.Client[v1.DeleteWorkspaceRequest, v1.DeleteWorkspaceResponse]
+	listWorkspaceClasses          *connect_go.Client[v1.ListWorkspaceClassesRequest, v1.ListWorkspaceClassesResponse]
 	parseContextURL               *connect_go.Client[v1.ParseContextURLRequest, v1.ParseContextURLResponse]
 	getWorkspaceDefaultImage      *connect_go.Client[v1.GetWorkspaceDefaultImageRequest, v1.GetWorkspaceDefaultImageResponse]
 	sendHeartBeat                 *connect_go.Client[v1.SendHeartBeatRequest, v1.SendHeartBeatResponse]
@@ -175,6 +201,21 @@ func (c *workspaceServiceClient) StartWorkspace(ctx context.Context, req *connec
 // UpdateWorkspace calls gitpod.v1.WorkspaceService.UpdateWorkspace.
 func (c *workspaceServiceClient) UpdateWorkspace(ctx context.Context, req *connect_go.Request[v1.UpdateWorkspaceRequest]) (*connect_go.Response[v1.UpdateWorkspaceResponse], error) {
 	return c.updateWorkspace.CallUnary(ctx, req)
+}
+
+// StopWorkspace calls gitpod.v1.WorkspaceService.StopWorkspace.
+func (c *workspaceServiceClient) StopWorkspace(ctx context.Context, req *connect_go.Request[v1.StopWorkspaceRequest]) (*connect_go.Response[v1.StopWorkspaceResponse], error) {
+	return c.stopWorkspace.CallUnary(ctx, req)
+}
+
+// DeleteWorkspace calls gitpod.v1.WorkspaceService.DeleteWorkspace.
+func (c *workspaceServiceClient) DeleteWorkspace(ctx context.Context, req *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error) {
+	return c.deleteWorkspace.CallUnary(ctx, req)
+}
+
+// ListWorkspaceClasses calls gitpod.v1.WorkspaceService.ListWorkspaceClasses.
+func (c *workspaceServiceClient) ListWorkspaceClasses(ctx context.Context, req *connect_go.Request[v1.ListWorkspaceClassesRequest]) (*connect_go.Response[v1.ListWorkspaceClassesResponse], error) {
+	return c.listWorkspaceClasses.CallUnary(ctx, req)
 }
 
 // ParseContextURL calls gitpod.v1.WorkspaceService.ParseContextURL.
@@ -222,6 +263,14 @@ type WorkspaceServiceHandler interface {
 	StartWorkspace(context.Context, *connect_go.Request[v1.StartWorkspaceRequest]) (*connect_go.Response[v1.StartWorkspaceResponse], error)
 	// UpdateWorkspace updates the workspace.
 	UpdateWorkspace(context.Context, *connect_go.Request[v1.UpdateWorkspaceRequest]) (*connect_go.Response[v1.UpdateWorkspaceResponse], error)
+	// StopWorkspace stops a running workspace.
+	StopWorkspace(context.Context, *connect_go.Request[v1.StopWorkspaceRequest]) (*connect_go.Response[v1.StopWorkspaceResponse], error)
+	// DeleteWorkspace deletes a workspace.
+	// When the workspace is running, it will be stopped as well.
+	// Deleted workspaces cannot be started again.
+	DeleteWorkspace(context.Context, *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error)
+	// ListWorkspaceClasses enumerates all available workspace classes.
+	ListWorkspaceClasses(context.Context, *connect_go.Request[v1.ListWorkspaceClassesRequest]) (*connect_go.Response[v1.ListWorkspaceClassesResponse], error)
 	// ParseContextURL parses a context URL and returns the workspace metadata and spec.
 	// Not implemented yet.
 	ParseContextURL(context.Context, *connect_go.Request[v1.ParseContextURLRequest]) (*connect_go.Response[v1.ParseContextURLResponse], error)
@@ -272,6 +321,21 @@ func NewWorkspaceServiceHandler(svc WorkspaceServiceHandler, opts ...connect_go.
 	mux.Handle("/gitpod.v1.WorkspaceService/UpdateWorkspace", connect_go.NewUnaryHandler(
 		"/gitpod.v1.WorkspaceService/UpdateWorkspace",
 		svc.UpdateWorkspace,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.WorkspaceService/StopWorkspace", connect_go.NewUnaryHandler(
+		"/gitpod.v1.WorkspaceService/StopWorkspace",
+		svc.StopWorkspace,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.WorkspaceService/DeleteWorkspace", connect_go.NewUnaryHandler(
+		"/gitpod.v1.WorkspaceService/DeleteWorkspace",
+		svc.DeleteWorkspace,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.WorkspaceService/ListWorkspaceClasses", connect_go.NewUnaryHandler(
+		"/gitpod.v1.WorkspaceService/ListWorkspaceClasses",
+		svc.ListWorkspaceClasses,
 		opts...,
 	))
 	mux.Handle("/gitpod.v1.WorkspaceService/ParseContextURL", connect_go.NewUnaryHandler(
@@ -327,6 +391,18 @@ func (UnimplementedWorkspaceServiceHandler) StartWorkspace(context.Context, *con
 
 func (UnimplementedWorkspaceServiceHandler) UpdateWorkspace(context.Context, *connect_go.Request[v1.UpdateWorkspaceRequest]) (*connect_go.Response[v1.UpdateWorkspaceResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.UpdateWorkspace is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) StopWorkspace(context.Context, *connect_go.Request[v1.StopWorkspaceRequest]) (*connect_go.Response[v1.StopWorkspaceResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.StopWorkspace is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) DeleteWorkspace(context.Context, *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.DeleteWorkspace is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) ListWorkspaceClasses(context.Context, *connect_go.Request[v1.ListWorkspaceClassesRequest]) (*connect_go.Response[v1.ListWorkspaceClassesResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.ListWorkspaceClasses is not implemented"))
 }
 
 func (UnimplementedWorkspaceServiceHandler) ParseContextURL(context.Context, *connect_go.Request[v1.ParseContextURLRequest]) (*connect_go.Response[v1.ParseContextURLResponse], error) {

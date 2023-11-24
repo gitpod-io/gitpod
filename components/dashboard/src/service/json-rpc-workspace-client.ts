@@ -32,6 +32,13 @@ import {
     ParseContextURLResponse,
     UpdateWorkspaceRequest,
     UpdateWorkspaceResponse,
+    DeleteWorkspaceRequest,
+    DeleteWorkspaceResponse,
+    ListWorkspaceClassesRequest,
+    ListWorkspaceClassesResponse,
+    StopWorkspaceRequest,
+    StopWorkspaceResponse,
+    AdmissionLevel,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { converter } from "./public-api";
 import { getGitpodService } from "./service";
@@ -248,7 +255,85 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
         request: PartialMessage<UpdateWorkspaceRequest>,
         _options?: CallOptions | undefined,
     ): Promise<UpdateWorkspaceResponse> {
-        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+        if (!request.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+
+        // check if user can access workspace first
+        await this.getWorkspace({ workspaceId: request.workspaceId });
+
+        const server = getGitpodService().server;
+        const tasks: Array<Promise<any>> = [];
+
+        if (request.metadata) {
+            if (request.metadata.name) {
+                tasks.push(server.setWorkspaceDescription(request.workspaceId, request.metadata.name));
+            }
+            if (request.metadata.pinned !== undefined) {
+                tasks.push(
+                    server.updateWorkspaceUserPin(request.workspaceId, request.metadata.pinned ? "pin" : "unpin"),
+                );
+            }
+        }
+
+        if (request.spec) {
+            if (request.spec?.admission) {
+                if (request.spec?.admission === AdmissionLevel.OWNER_ONLY) {
+                    tasks.push(server.controlAdmission(request.workspaceId, "owner"));
+                } else if (request.spec?.admission === AdmissionLevel.EVERYONE) {
+                    tasks.push(server.controlAdmission(request.workspaceId, "everyone"));
+                }
+            }
+
+            if ((request.spec?.timeout?.disconnected?.seconds ?? 0) > 0) {
+                const timeout = converter.toDurationString(request.spec!.timeout!.disconnected!);
+                tasks.push(server.setWorkspaceTimeout(request.workspaceId, timeout));
+            }
+        }
+
+        if (request.gitStatus) {
+            tasks.push(
+                server.updateGitStatus(request.workspaceId, {
+                    branch: request.gitStatus.branch!,
+                    latestCommit: request.gitStatus.latestCommit!,
+                    uncommitedFiles: request.gitStatus.uncommitedFiles!,
+                    totalUncommitedFiles: request.gitStatus.totalUncommitedFiles!,
+                    untrackedFiles: request.gitStatus.untrackedFiles!,
+                    totalUntrackedFiles: request.gitStatus.totalUntrackedFiles!,
+                    unpushedCommits: request.gitStatus.unpushedCommits!,
+                    totalUnpushedCommits: request.gitStatus.totalUnpushedCommits!,
+                }),
+            );
+        }
+        await Promise.allSettled(tasks);
+        const result = new UpdateWorkspaceResponse();
+        const workspace = await this.getWorkspace({ workspaceId: request.workspaceId });
+        result.workspace = workspace.workspace;
+        return result;
+    }
+
+    async stopWorkspace(
+        request: PartialMessage<StopWorkspaceRequest>,
+        _options?: CallOptions | undefined,
+    ): Promise<StopWorkspaceResponse> {
+        if (!request.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        await getGitpodService().server.stopWorkspace(request.workspaceId);
+        const result = new StopWorkspaceResponse();
+        return result;
+    }
+
+    async deleteWorkspace(
+        request: PartialMessage<DeleteWorkspaceRequest>,
+        _options?: CallOptions | undefined,
+    ): Promise<DeleteWorkspaceResponse> {
+        if (!request.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        await getGitpodService().server.deleteWorkspace(request.workspaceId);
+        const result = new DeleteWorkspaceResponse();
+        return result;
     }
 
     async parseContextURL(
@@ -256,5 +341,16 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
         _options?: CallOptions | undefined,
     ): Promise<ParseContextURLResponse> {
         throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+    }
+
+    async listWorkspaceClasses(
+        request: PartialMessage<ListWorkspaceClassesRequest>,
+        _options?: CallOptions | undefined,
+    ): Promise<ListWorkspaceClassesResponse> {
+        const list = await getGitpodService().server.getSupportedWorkspaceClasses();
+        const response = new ListWorkspaceClassesResponse();
+        response.pagination = new PaginationResponse();
+        response.workspaceClasses = list.map((i) => converter.toWorkspaceClass(i));
+        return response;
     }
 }
