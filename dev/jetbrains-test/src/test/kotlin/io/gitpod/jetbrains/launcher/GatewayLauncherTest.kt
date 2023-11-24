@@ -64,6 +64,8 @@ class GatewayLauncherTest {
         setPreferences("jetbrains.privacy_policy.accepted_version", "999.999")
         setPreferences("jetbrains.privacy_policy.cwmguesteua_accepted_version", "999.999")
         setPreferences("jetbrains.privacy_policy.ij_euaeap_accepted_version", "999.999")
+        setPreferences("jetbrains.privacy_policy.eua_accepted_version", "999.999")
+        Preferences.userRoot().flush()
 
         val gatewayLink = System.getProperty("gateway_link")
         val gatewayPluginPath = System.getProperty("gateway_plugin_path")
