@@ -24,9 +24,6 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-// Injected at build time
-var segmentKey = "TgiJIVvFsBGwmxbnnt5NeeDaian9nr3n"
-
 var opts struct {
 	Enabled  bool
 	Identity string
@@ -36,7 +33,7 @@ var opts struct {
 }
 
 // Init initializes the telemetry
-func Init(enabled bool, identity, version string, logLevel slog.Level) {
+func Init(enabled bool, identity, version string, logLevel slog.Level, host string) {
 	opts.Enabled = enabled
 	if !enabled {
 		return
@@ -45,20 +42,19 @@ func Init(enabled bool, identity, version string, logLevel slog.Level) {
 	opts.Version = version
 	opts.Identity = identity
 
-	if segmentKey != "" {
-		var logger segment.Logger
-		if logLevel == slog.LevelDebug {
-			logger = segment.StdLogger(log.New(os.Stderr, "telemetry ", log.LstdFlags))
-		} else {
-			// we don't want to log anything
-			log := log.New(os.Stderr, "telemetry ", log.LstdFlags)
-			log.SetOutput(io.Discard)
-			logger = segment.StdLogger(log)
-		}
-		opts.client, _ = segment.NewWithConfig(segmentKey, segment.Config{
-			Logger: logger,
-		})
+	var logger segment.Logger
+	if logLevel == slog.LevelDebug {
+		logger = segment.StdLogger(log.New(os.Stderr, "telemetry ", log.LstdFlags))
+	} else {
+		// we don't want to log anything
+		log := log.New(os.Stderr, "telemetry ", log.LstdFlags)
+		log.SetOutput(io.Discard)
+		logger = segment.StdLogger(log)
 	}
+	opts.client, _ = segment.NewWithConfig("untrusted-dummy-key", segment.Config{
+		Logger:   logger,
+		Endpoint: host + "/analytics",
+	})
 }
 
 // DoNotTrack returns true if the user opted out of telemetry
