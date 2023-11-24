@@ -193,7 +193,7 @@ export class GitLabApp {
                         prebuildId: ws.prebuildId,
                     });
                 } catch (error) {
-                    log.error("Error processing Bitbucket Server webhook event", error);
+                    log.error("Error processing GitLab webhook event", error);
                 }
             }
         } catch (e) {
