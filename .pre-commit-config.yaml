@@ -79,5 +79,6 @@ repos:
         entry: leeway run components/dashboard:lint
         language: system
         pass_filenames: false
+        files: ^components/dashboard/
 
 exclude: ^install/installer/.*/.*\.golden$
