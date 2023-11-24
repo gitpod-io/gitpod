@@ -55,6 +55,8 @@ import { BearerAuth } from "../auth/bearer-authenticator";
 import { ScmServiceAPI } from "./scm-service-api";
 import { SCMService } from "@gitpod/public-api/lib/gitpod/v1/scm_connect";
 import { SSHService } from "@gitpod/public-api/lib/gitpod/v1/ssh_connect";
+import { WorkspaceRunnerServiceAPI } from "./workspace-runner-service-api";
+import { WorkspaceRunnerService } from "@gitpod/public-api/lib/gitpod/v1/workspace_runner_connect";
 
 decorate(injectable(), PublicAPIConverter);
 
@@ -68,6 +70,7 @@ export class API {
     @inject(TeamsServiceAPI) private readonly teamServiceApi: TeamsServiceAPI;
     @inject(WorkspaceServiceAPI) private readonly workspaceServiceApi: WorkspaceServiceAPI;
     @inject(OrganizationServiceAPI) private readonly organizationServiceApi: OrganizationServiceAPI;
+    @inject(WorkspaceRunnerServiceAPI) private readonly workspaceRunnerServiceApi: WorkspaceRunnerServiceAPI;
     @inject(ConfigurationServiceAPI) private readonly configurationServiceApi: ConfigurationServiceAPI;
     @inject(AuthProviderServiceAPI) private readonly authProviderServiceApi: AuthProviderServiceAPI;
     @inject(EnvironmentVariableServiceAPI) private readonly envvarServiceApi: EnvironmentVariableServiceAPI;
@@ -123,6 +126,7 @@ export class API {
                     for (const [type, impl] of [
                         service(HelloService, this.helloServiceApi),
                         service(WorkspaceService, this.workspaceServiceApi),
+                        service(WorkspaceRunnerService, this.workspaceRunnerServiceApi),
                         service(OrganizationService, this.organizationServiceApi),
                         service(ConfigurationService, this.configurationServiceApi),
                         service(AuthProviderService, this.authProviderServiceApi),
@@ -384,6 +388,7 @@ export class API {
         bind(ScmServiceAPI).toSelf().inSingletonScope();
         bind(SSHServiceAPI).toSelf().inSingletonScope();
         bind(StatsServiceAPI).toSelf().inSingletonScope();
+        bind(WorkspaceRunnerServiceAPI).toSelf().inSingletonScope();
         bind(API).toSelf().inSingletonScope();
     }
 }
