@@ -74,3 +74,16 @@ export class SubjectId {
  * Interface type meant for backwards compatibility
  */
 export type Subject = string | SubjectId;
+export namespace Subject {
+    export function toId(subject: Subject): SubjectId {
+        if (SubjectId.is(subject)) {
+            return subject;
+        }
+        if (typeof subject === "string") {
+            // either a subjectId string or a userId string
+            const parsed = SubjectId.parse(subject);
+            return parsed || SubjectId.fromUserId(subject);
+        }
+        throw new Error("Invalid Subject");
+    }
+}

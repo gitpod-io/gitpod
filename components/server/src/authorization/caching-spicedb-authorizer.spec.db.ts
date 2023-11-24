@@ -10,34 +10,16 @@ import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-s
 import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
-import { createTestContainer } from "../test/service-testing-container-module";
-import { Authorizer, SYSTEM_USER } from "./authorizer";
+import { createTestContainer, withTestCtx } from "../test/service-testing-container-module";
+import { Authorizer, SYSTEM_USER, SYSTEM_USER_ID } from "./authorizer";
 import { OrganizationService } from "../orgs/organization-service";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { UserService } from "../user/user-service";
 import { ConfigProvider } from "../workspace/config-provider";
 import { v1 } from "@authzed/authzed-node";
-import { runWithRequestContext } from "../util/request-context";
 import { RequestLocalZedTokenCache } from "./spicedb-authorizer";
-import { Subject, SubjectId } from "../auth/subject-id";
 
 const expect = chai.expect;
-
-const withCtx = <T>(subject: Subject | User, p: Promise<T> | (() => Promise<T>)) =>
-    runWithRequestContext(
-        {
-            requestKind: "testContext",
-            requestMethod: "testMethod",
-            signal: new AbortController().signal,
-            subjectId: SubjectId.is(subject) ? subject : SubjectId.fromUserId(User.is(subject) ? subject.id : subject),
-        },
-        () => {
-            if (typeof p === "function") {
-                return p();
-            }
-            return p;
-        },
-    );
 
 describe("CachingSpiceDBAuthorizer", async () => {
     let container: Container;
@@ -75,8 +57,7 @@ describe("CachingSpiceDBAuthorizer", async () => {
     it("should avoid new-enemy after removal", async () => {
         // userB and userC are members of org1, userA is owner.
         // All users are installation owned.
-        const userA = await withCtx(
-            SYSTEM_USER,
+        const userA = await withTestCtx(SYSTEM_USER, () =>
             userSvc.createUser({
                 organizationId: undefined,
                 identity: {
@@ -86,10 +67,9 @@ describe("CachingSpiceDBAuthorizer", async () => {
                 },
             }),
         );
-        const org1 = await withCtx(userA, orgSvc.createOrganization(userA.id, "org1"));
-        await withCtx(SYSTEM_USER, orgSvc.addOrUpdateMember(SYSTEM_USER, org1.id, userA.id, "owner"));
-        const userB = await withCtx(
-            SYSTEM_USER,
+        const org1 = await withTestCtx(userA, () => orgSvc.createOrganization(userA.id, "org1"));
+        await withTestCtx(SYSTEM_USER, () => orgSvc.addOrUpdateMember(SYSTEM_USER_ID, org1.id, userA.id, "owner"));
+        const userB = await withTestCtx(SYSTEM_USER, () =>
             userSvc.createUser({
                 organizationId: undefined,
                 identity: {
@@ -99,9 +79,8 @@ describe("CachingSpiceDBAuthorizer", async () => {
                 },
             }),
         );
-        await withCtx(SYSTEM_USER, orgSvc.addOrUpdateMember(SYSTEM_USER, org1.id, userB.id, "member"));
-        const userC = await withCtx(
-            SYSTEM_USER,
+        await withTestCtx(SYSTEM_USER, () => orgSvc.addOrUpdateMember(SYSTEM_USER_ID, org1.id, userB.id, "member"));
+        const userC = await withTestCtx(SYSTEM_USER, () =>
             userSvc.createUser({
                 organizationId: undefined,
                 identity: {
@@ -111,38 +90,38 @@ describe("CachingSpiceDBAuthorizer", async () => {
                 },
             }),
         );
-        await withCtx(SYSTEM_USER, orgSvc.addOrUpdateMember(SYSTEM_USER, org1.id, userC.id, "member"));
+        await withTestCtx(SYSTEM_USER, () => orgSvc.addOrUpdateMember(SYSTEM_USER_ID, org1.id, userC.id, "member"));
 
         // userA creates a workspace when userB is still member of the org
         // All members have "read_info" (derived from membership)
-        const ws1 = await withCtx(userA, createTestWorkspace(org1, userA));
+        const ws1 = await withTestCtx(userA, () => createTestWorkspace(org1, userA));
 
         expect(
-            await withCtx(userB, authorizer.hasPermissionOnWorkspace(userB.id, "read_info", ws1.id)),
+            await withTestCtx(userB, () => authorizer.hasPermissionOnWorkspace(userB.id, "read_info", ws1.id)),
             "userB should have read_info after removal",
         ).to.be.true;
         expect(
-            await withCtx(userA, authorizer.hasPermissionOnWorkspace(userA.id, "read_info", ws1.id)),
+            await withTestCtx(userA, () => authorizer.hasPermissionOnWorkspace(userA.id, "read_info", ws1.id)),
             "userA should have read_info after removal of userB",
         ).to.be.true;
         expect(
-            await withCtx(userC, authorizer.hasPermissionOnWorkspace(userC.id, "read_info", ws1.id)),
+            await withTestCtx(userC, () => authorizer.hasPermissionOnWorkspace(userC.id, "read_info", ws1.id)),
             "userC should have read_info after removal of userB",
         ).to.be.true;
 
         // userB is removed from the org
-        await withCtx(SYSTEM_USER, orgSvc.removeOrganizationMember(SYSTEM_USER, org1.id, userB.id));
+        await withTestCtx(SYSTEM_USER, () => orgSvc.removeOrganizationMember(SYSTEM_USER_ID, org1.id, userB.id));
 
         expect(
-            await withCtx(userB, authorizer.hasPermissionOnWorkspace(userB.id, "read_info", ws1.id)),
+            await withTestCtx(userB, () => authorizer.hasPermissionOnWorkspace(userB.id, "read_info", ws1.id)),
             "userB should have read_info after removal",
         ).to.be.false;
         expect(
-            await withCtx(userA, authorizer.hasPermissionOnWorkspace(userA.id, "read_info", ws1.id)),
+            await withTestCtx(userA, () => authorizer.hasPermissionOnWorkspace(userA.id, "read_info", ws1.id)),
             "userA should have read_info after removal of userB",
         ).to.be.true;
         expect(
-            await withCtx(userC, authorizer.hasPermissionOnWorkspace(userC.id, "read_info", ws1.id)),
+            await withTestCtx(userC, () => authorizer.hasPermissionOnWorkspace(userC.id, "read_info", ws1.id)),
             "userC should have read_info after removal of userB",
         ).to.be.true;
     });
@@ -171,8 +150,7 @@ describe("CachingSpiceDBAuthorizer", async () => {
     it("should avoid read-your-writes problem when adding a new user", async () => {
         // userB and userC are members of org1, userA is owner.
         // All users are installation owned.
-        const userA = await withCtx(
-            SYSTEM_USER,
+        const userA = await withTestCtx(SYSTEM_USER, () =>
             userSvc.createUser({
                 organizationId: undefined,
                 identity: {
@@ -182,10 +160,9 @@ describe("CachingSpiceDBAuthorizer", async () => {
                 },
             }),
         );
-        const org1 = await withCtx(userA, orgSvc.createOrganization(userA.id, "org1"));
-        await withCtx(SYSTEM_USER, orgSvc.addOrUpdateMember(SYSTEM_USER, org1.id, userA.id, "owner"));
-        const userC = await withCtx(
-            SYSTEM_USER,
+        const org1 = await withTestCtx(userA, () => orgSvc.createOrganization(userA.id, "org1"));
+        await withTestCtx(SYSTEM_USER, () => orgSvc.addOrUpdateMember(SYSTEM_USER_ID, org1.id, userA.id, "owner"));
+        const userC = await withTestCtx(SYSTEM_USER, () =>
             userSvc.createUser({
                 organizationId: undefined,
                 identity: {
@@ -195,23 +172,22 @@ describe("CachingSpiceDBAuthorizer", async () => {
                 },
             }),
         );
-        await withCtx(SYSTEM_USER, orgSvc.addOrUpdateMember(SYSTEM_USER, org1.id, userC.id, "member"));
+        await withTestCtx(SYSTEM_USER, () => orgSvc.addOrUpdateMember(SYSTEM_USER_ID, org1.id, userC.id, "member"));
 
         // userA creates a workspace before userB is member of the org
-        const ws1 = await withCtx(userA, createTestWorkspace(org1, userA));
+        const ws1 = await withTestCtx(userA, () => createTestWorkspace(org1, userA));
 
         expect(
-            await withCtx(SYSTEM_USER, authorizer.hasPermissionOnWorkspace(userA.id, "read_info", ws1.id)),
+            await withTestCtx(SYSTEM_USER, () => authorizer.hasPermissionOnWorkspace(userA.id, "read_info", ws1.id)),
             "userA should have read_info after removal of userB",
         ).to.be.true;
         expect(
-            await withCtx(userC, authorizer.hasPermissionOnWorkspace(userC.id, "read_info", ws1.id)),
+            await withTestCtx(userC, () => authorizer.hasPermissionOnWorkspace(userC.id, "read_info", ws1.id)),
             "userC should have read_info after removal of userB",
         ).to.be.true;
 
         // userB is added to the org
-        const userB = await withCtx(
-            SYSTEM_USER,
+        const userB = await withTestCtx(SYSTEM_USER, () =>
             userSvc.createUser({
                 organizationId: undefined,
                 identity: {
@@ -221,18 +197,18 @@ describe("CachingSpiceDBAuthorizer", async () => {
                 },
             }),
         );
-        await withCtx(SYSTEM_USER, orgSvc.addOrUpdateMember(SYSTEM_USER, org1.id, userB.id, "member"));
+        await withTestCtx(SYSTEM_USER, () => orgSvc.addOrUpdateMember(SYSTEM_USER_ID, org1.id, userB.id, "member"));
 
         expect(
-            await withCtx(userB, authorizer.hasPermissionOnWorkspace(userB.id, "read_info", ws1.id)),
+            await withTestCtx(userB, () => authorizer.hasPermissionOnWorkspace(userB.id, "read_info", ws1.id)),
             "userB should have read_info after removal",
         ).to.be.true;
         expect(
-            await withCtx(userA, authorizer.hasPermissionOnWorkspace(userA.id, "read_info", ws1.id)),
+            await withTestCtx(userA, () => authorizer.hasPermissionOnWorkspace(userA.id, "read_info", ws1.id)),
             "userA should have read_info after removal of userB",
         ).to.be.true;
         expect(
-            await withCtx(userC, authorizer.hasPermissionOnWorkspace(userC.id, "read_info", ws1.id)),
+            await withTestCtx(userC, () => authorizer.hasPermissionOnWorkspace(userC.id, "read_info", ws1.id)),
             "userC should have read_info after removal of userB",
         ).to.be.true;
     });
@@ -274,7 +250,7 @@ describe("RequestLocalZedTokenCache", async () => {
     });
 
     it("should store token", async () => {
-        await withCtx(SYSTEM_USER, async () => {
+        await withTestCtx(SYSTEM_USER, async () => {
             expect(await cache.get(ws1)).to.be.undefined;
             await cache.set([ws1, rawToken1]);
             expect(await cache.get(ws1)).to.equal(rawToken1);
@@ -282,7 +258,7 @@ describe("RequestLocalZedTokenCache", async () => {
     });
 
     it("should return newest token", async () => {
-        await withCtx(SYSTEM_USER, async () => {
+        await withTestCtx(SYSTEM_USER, async () => {
             await cache.set([ws1, rawToken1]);
             await cache.set([ws1, rawToken2]);
             expect(await cache.get(ws1)).to.equal(rawToken2);
@@ -292,7 +268,7 @@ describe("RequestLocalZedTokenCache", async () => {
     });
 
     it("should return proper consistency", async () => {
-        await withCtx(SYSTEM_USER, async () => {
+        await withTestCtx(SYSTEM_USER, async () => {
             expect(await cache.consistency(ws1)).to.deep.equal(fullyConsistent());
             await cache.set([ws1, rawToken1]);
             expect(await cache.consistency(ws1)).to.deep.equal(atLeastAsFreshAs(rawToken1));
@@ -300,7 +276,7 @@ describe("RequestLocalZedTokenCache", async () => {
     });
 
     it("should clear cache", async () => {
-        await withCtx(SYSTEM_USER, async () => {
+        await withTestCtx(SYSTEM_USER, async () => {
             await cache.set([ws1, rawToken1]);
             expect(await cache.get(ws1)).to.equal(rawToken1);
             await cache.set([ws1, undefined]); // this should trigger a clear
