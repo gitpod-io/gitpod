@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package gitpod.v1;
 
+import "gitpod/v1/editor.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
@@ -47,8 +48,9 @@ message User {
   // verification_phone_number is the phone number used for the last verification.
   string verification_phone_number = 9;
 
-  AdditionalUserData additional_user_data = 10;
-  message AdditionalUserData {
+  // +optional
+  WorkspaceTimeoutSettings timeout_settings = 10;
+  message WorkspaceTimeoutSettings {
     // user globol workspace timeout
     //
     // +optional
@@ -58,114 +60,103 @@ message User {
     //
     // +optional
     bool disabled_closed_timeout = 2;
+  }
 
+  // +optional
+  EmailNotificationSettings email_notification_settings = 11;
+  message EmailNotificationSettings {
     // +optional
-    EmailNotificationSettings email_notification_settings = 3;
-    message EmailNotificationSettings {
-      // +optional
-      bool allows_changelog_mail = 1;
-      // +optional
-      bool allows_devx_mail = 2;
-      // +optional
-      bool allows_onboarding_mail = 3;
-    }
-
+    bool allows_changelog_mail = 1;
     // +optional
-    bool feature_preview = 4;
-
+    bool allows_devx_mail = 2;
     // +optional
-    EditoSettings editor_settings = 5;
-    message EditoSettings {
-      // +optional
-      string setting_version = 1;
-      // +optional
-      string default_ide = 2;
-      // +optional
-      bool use_latest_version = 3;
-    }
+    bool allows_onboarding_mail = 3;
+  }
 
-    // Git clone URL pointing to the user's dotfile repo
-    //
-    // // +optional
-    string dotfile_repo = 6;
+  // +optional
+  EditorReference editor_settings = 12;
 
-    // preferred workspace class
-    //
-    // +optional
-    string workspace_class = 7;
+  // Git clone URL pointing to the user's dotfile repo
+  //
+  // // +optional
+  string dotfile_repo = 13;
 
-    // additional user profile data
+  // preferred workspace class
+  //
+  // +optional
+  string workspace_class = 14;
+
+  // additional user profile data
+  //
+  // +optional
+  ProfileDetails profile = 15;
+  message ProfileDetails {
+    // when was the last time the user updated their profile information or has been nudged to do so.
     //
     // +optional
-    ProfileDetails profile = 8;
-    message ProfileDetails {
-      // when was the last time the user updated their profile information or has been nudged to do so.
-      //
-      // +optional
-      string last_updated_details_nudge = 1;
-      // when was the last time the user has accepted our privacy policy
-      //
-      // +optional
-      string accepted_privacy_policy_date = 2;
-      // the user's company name
-      //
-      // +optional
-      string company_name = 3;
-      // the user's email
-      //
-      // +optional
-      string email_address = 4;
-      // type of role user has in their job
-      //
-      // +optional
-      string job_role = 5;
-      // freeform entry for job role user works in (when jobRole is "other")
-      //
-      // +optional
-      string job_role_other = 6;
-      // Reasons user is exploring Gitpod when they signed up
-      //
-      // +optional
-      repeated string exploration_reasons = 7;
-      // what user hopes to accomplish when they signed up
-      //
-      // +optional
-      repeated string signup_goals = 8;
-      // freeform entry for signup goals (when signupGoals is "other")
-      //
-      // +optional
-      string signup_goals_other = 10;
-      // Set after a user completes the onboarding flow
-      //
-      // +optional
-      string onboarded_timestamp = 11;
-      // Onboarding question about a user's company size
-      //
-      // +optional
-      string company_size = 12;
-    }
-
-    // remembered workspace auto start options
+    string last_updated_details_nudge = 1;
+    // when was the last time the user has accepted our privacy policy
     //
     // +optional
-    repeated WorkspaceAutostartOption workspace_autostart_options = 9;
-    message WorkspaceAutostartOption {
-      string clone_url = 1;
-      string organization_id = 2;
-      string workspace_class = 3;
-      // +optional
-      EditoSettings editor_settings = 4;
-      // +optional
-      string region = 5;
-    }
+    string accepted_privacy_policy_date = 2;
+    // the user's company name
+    //
+    // +optional
+    string company_name = 3;
+    // the user's email
+    //
+    // +optional
+    string email_address = 4;
+    // type of role user has in their job
+    //
+    // +optional
+    string job_role = 5;
+    // freeform entry for job role user works in (when jobRole is "other")
+    //
+    // +optional
+    string job_role_other = 6;
+    // Reasons user is exploring Gitpod when they signed up
+    //
+    // +optional
+    repeated string exploration_reasons = 7;
+    // what user hopes to accomplish when they signed up
+    //
+    // +optional
+    repeated string signup_goals = 8;
+    // freeform entry for signup goals (when signupGoals is "other")
+    //
+    // +optional
+    string signup_goals_other = 10;
+    // Set after a user completes the onboarding flow
+    //
+    // +optional
+    string onboarded_timestamp = 11;
+    // Onboarding question about a user's company size
+    //
+    // +optional
+    string company_size = 12;
+  }
+
+  // remembered workspace auto start options
+  //
+  // +optional
+  repeated WorkspaceAutostartOption workspace_autostart_options = 16;
+  message WorkspaceAutostartOption {
+    string clone_url = 1;
+    string organization_id = 2;
+    string workspace_class = 3;
+    // +optional
+    EditorReference editor_settings = 4;
+    // +optional
+    string region = 5;
   }
 
   // usage_attribution_id specifies the organization or account to which all of the
   // user's workspace usage is attributed to, e.g. for billing purposes
-  string usage_attribution_id = 11;
+  string usage_attribution_id = 17;
 
   // per-user settings to control workspace behavior
-  repeated UserFeatureFlag workspace_feature_flags = 12;
+  repeated UserFeatureFlag workspace_feature_flags = 18;
   enum UserFeatureFlag {
     USER_FEATURE_FLAG_UNSPECIFIED = 0;
     USER_FEATURE_FLAG_FULL_WORKSPACE_BACKUP = 1;
@@ -175,7 +166,7 @@ message User {
   }
 
   // specifies the permissions and/or roles the user has
-  repeated RoleOrPermission roles_or_permissions = 13;
+  repeated RoleOrPermission roles_or_permissions = 19;
   enum RoleOrPermission {
     ROLE_OR_PERMISSION_UNSPECIFIED = 0;
     ROLE_OR_PERMISSION_DEVOPS = 1;
