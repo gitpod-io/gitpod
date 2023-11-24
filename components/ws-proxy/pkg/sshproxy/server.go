@@ -257,7 +257,7 @@ func (s *Server) HandleConn(c net.Conn) {
 	}
 
 	var key ssh.Signer
-	var userName string
+	userName := "gitpod"
 
 	session := &Session{
 		Conn:        clientConn,

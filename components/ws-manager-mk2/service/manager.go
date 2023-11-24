@@ -230,11 +230,6 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 		return nil, status.Errorf(codes.InvalidArgument, "cannot serialise content initializer: %v", err)
 	}
 
-	keyPair, err := GenerateSSHKeyPair()
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "cannot generate SSH key: %v", err)
-	}
-
 	ws := workspacev1.Workspace{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: workspacev1.GroupVersion.String(),
@@ -282,10 +277,6 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 			Ports:         ports,
 			SshPublicKeys: req.Spec.SshPublicKeys,
 			StorageQuota:  int(storage.Value()),
-			SSHKey: &workspacev1.SSHKey{
-				Public:  keyPair.PublicKey,
-				Private: keyPair.PrivateKey,
-			},
 		},
 	}
 	controllerutil.AddFinalizer(&ws, workspacev1.GitpodFinalizerName)
