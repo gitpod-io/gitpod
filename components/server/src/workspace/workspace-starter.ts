@@ -1583,6 +1583,7 @@ export class WorkspaceStarter {
             // Without this scope the workspace cannot produce ID tokens.
             "function:getIDToken",
             "function:getDefaultWorkspaceImage",
+            "function:updateWorkspaceUserPin",
 
             "resource:" +
                 ScopedResourceGuard.marshalResourceScope({
