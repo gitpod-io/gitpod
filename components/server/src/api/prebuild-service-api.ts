@@ -24,7 +24,7 @@ import { ProjectsService } from "../projects/projects-service";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { validate as uuidValidate } from "uuid";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { ctxUserId } from "../util/request-context";
+import { ctxSignal, ctxUserId } from "../util/request-context";
 import { UserService } from "../user/user-service";
 
 @injectable()
@@ -120,7 +120,9 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
             });
             configurationId = resp.prebuild!.configurationId;
         }
-        const it = this.prebuildManager.watchPrebuildStatus(ctxUserId(), configurationId);
+        const it = await this.prebuildManager.watchPrebuildStatus(ctxUserId(), configurationId, {
+            signal: ctxSignal(),
+        });
         for await (const pb of it) {
             if (request.scope.case === "prebuildId") {
                 if (pb.info.id !== request.scope.value) {

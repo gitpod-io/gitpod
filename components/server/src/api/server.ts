@@ -55,6 +55,8 @@ import { BearerAuth } from "../auth/bearer-authenticator";
 import { ScmServiceAPI } from "./scm-service-api";
 import { SCMService } from "@gitpod/public-api/lib/gitpod/v1/scm_connect";
 import { SSHService } from "@gitpod/public-api/lib/gitpod/v1/ssh_connect";
+import { PrebuildServiceAPI } from "./prebuild-service-api";
+import { PrebuildService } from "@gitpod/public-api/lib/gitpod/v1/prebuild_connect";
 
 decorate(injectable(), PublicAPIConverter);
 
@@ -81,6 +83,7 @@ export class API {
     @inject(Config) private readonly config: Config;
     @inject(UserService) private readonly userService: UserService;
     @inject(BearerAuth) private readonly bearerAuthenticator: BearerAuth;
+    @inject(PrebuildServiceAPI) private readonly prebuildServiceApi: PrebuildServiceAPI;
 
     listenPrivate(): http.Server {
         const app = express();
@@ -129,6 +132,7 @@ export class API {
                         service(EnvironmentVariableService, this.envvarServiceApi),
                         service(SCMService, this.scmServiceAPI),
                         service(SSHService, this.sshServiceApi),
+                        service(PrebuildService, this.prebuildServiceApi),
                     ]) {
                         router.service(type, new Proxy(impl, this.interceptService(type)));
                     }
@@ -384,6 +388,7 @@ export class API {
         bind(ScmServiceAPI).toSelf().inSingletonScope();
         bind(SSHServiceAPI).toSelf().inSingletonScope();
         bind(StatsServiceAPI).toSelf().inSingletonScope();
+        bind(PrebuildServiceAPI).toSelf().inSingletonScope();
         bind(API).toSelf().inSingletonScope();
     }
 }

@@ -33,6 +33,7 @@ import { ScmService } from "../scm/scm-service";
 import { ContextService } from "../workspace/context-service";
 import { ContextParser } from "../workspace/context-parser-service";
 import { SSHKeyService } from "../user/sshkey-service";
+import { PrebuildManager } from "../prebuilds/prebuild-manager";
 
 const expect = chai.expect;
 
@@ -63,6 +64,7 @@ export class APITeamsServiceSpec {
         this.container.bind(ContextService).toConstantValue({} as ContextService);
         this.container.bind(ContextParser).toConstantValue({} as ContextParser);
         this.container.bind(SSHKeyService).toConstantValue({} as SSHKeyService);
+        this.container.bind(PrebuildManager).toConstantValue({} as PrebuildManager);
 
         // Clean-up database
         const typeorm = testContainer.get<TypeORM>(TypeORM);

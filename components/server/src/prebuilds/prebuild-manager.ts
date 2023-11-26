@@ -39,7 +39,6 @@ import { ContextParser } from "../workspace/context-parser-service";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { generateAsyncGenerator } from "@gitpod/gitpod-protocol/lib/generate-async-generator";
 import { RedisSubscriber } from "../messaging/redis-subscriber";
-import { ctxSignal } from "../util/request-context";
 
 export interface StartPrebuildParams {
     user: User;
@@ -80,29 +79,28 @@ export class PrebuildManager {
         return undefined;
     }
 
-    public async *watchPrebuildStatus(userId: string, configurationId: string): AsyncGenerator<PrebuildWithStatus> {
+    public async watchPrebuildStatus(
+        userId: string,
+        configurationId: string,
+        opts: { signal: AbortSignal },
+    ): Promise<AsyncIterable<PrebuildWithStatus>> {
         await this.auth.checkPermissionOnProject(userId, "read_prebuild", configurationId);
-        return generateAsyncGenerator<PrebuildWithStatus>(
-            (sink) => {
-                try {
-                    const toDispose = this.subscriber.listenForPrebuildUpdates(configurationId, (_ctx, prebuild) => {
-                        sink.push(prebuild);
-                    });
-                    return () => {
-                        toDispose.dispose();
-                    };
-                } catch (e) {
-                    if (e instanceof Error) {
-                        sink.fail(e);
-                    } else {
-                        sink.fail(new Error(String(e) || "unknown"));
-                    }
+        return generateAsyncGenerator<PrebuildWithStatus>((sink) => {
+            try {
+                const toDispose = this.subscriber.listenForPrebuildUpdates(configurationId, (_ctx, prebuild) => {
+                    sink.push(prebuild);
+                });
+                return () => {
+                    toDispose.dispose();
+                };
+            } catch (e) {
+                if (e instanceof Error) {
+                    sink.fail(e);
+                } else {
+                    sink.fail(new Error(String(e) || "unknown"));
                 }
-            },
-            {
-                signal: ctxSignal(),
-            },
-        );
+            }
+        }, opts);
     }
 
     async triggerPrebuild(ctx: TraceContext, user: User, projectId: string, branchName: string | null) {
