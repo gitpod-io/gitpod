@@ -155,9 +155,9 @@ export class User extends Message<User> {
    *
    * +optional
    *
-   * @generated from field: gitpod.v1.User.WorkspaceTimeoutSettings timeout_settings = 10;
+   * @generated from field: gitpod.v1.User.WorkspaceTimeoutSettings workspace_timeout_settings = 10;
    */
-  timeoutSettings?: User_WorkspaceTimeoutSettings;
+  workspaceTimeoutSettings?: User_WorkspaceTimeoutSettings;
 
   /**
    * +optional
@@ -248,7 +248,7 @@ export class User extends Message<User> {
     { no: 7, name: "blocked", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 8, name: "last_verification_time", kind: "message", T: Timestamp },
     { no: 9, name: "verification_phone_number", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 10, name: "timeout_settings", kind: "message", T: User_WorkspaceTimeoutSettings },
+    { no: 10, name: "workspace_timeout_settings", kind: "message", T: User_WorkspaceTimeoutSettings },
     { no: 11, name: "email_notification_settings", kind: "message", T: User_EmailNotificationSettings },
     { no: 12, name: "editor_settings", kind: "message", T: EditorReference },
     { no: 13, name: "dotfile_repo", kind: "scalar", T: 9 /* ScalarType.STRING */ },
@@ -407,19 +407,11 @@ export class User_WorkspaceTimeoutSettings extends Message<User_WorkspaceTimeout
   inactivity?: Duration;
 
   /**
-   * inacitivity is the maximum time of disconnection before the workspace is stopped or paused
-   * set to zero to disable.
-   *
-   * @generated from field: google.protobuf.Duration disconnected = 2;
-   */
-  disconnected?: Duration;
-
-  /**
    * control whether to enable the closed timeout of a workspace, i.e. close web ide, disconnect ssh connection
    *
    * +optional
    *
-   * @generated from field: bool disabled_disconnected = 3;
+   * @generated from field: bool disabled_disconnected = 2;
    */
   disabledDisconnected = false;
 
@@ -432,8 +424,7 @@ export class User_WorkspaceTimeoutSettings extends Message<User_WorkspaceTimeout
   static readonly typeName = "gitpod.v1.User.WorkspaceTimeoutSettings";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "inactivity", kind: "message", T: Duration },
-    { no: 2, name: "disconnected", kind: "message", T: Duration },
-    { no: 3, name: "disabled_disconnected", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "disabled_disconnected", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): User_WorkspaceTimeoutSettings {

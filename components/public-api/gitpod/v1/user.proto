@@ -52,17 +52,14 @@ message User {
   // user global workspace timeout settings
   //
   // +optional
-  WorkspaceTimeoutSettings timeout_settings = 10;
+  WorkspaceTimeoutSettings workspace_timeout_settings = 10;
   message WorkspaceTimeoutSettings {
     // inacitivity is the maximum time of inactivity before the workspace is stopped or paused
     google.protobuf.Duration inactivity = 1;
-    // inacitivity is the maximum time of disconnection before the workspace is stopped or paused
-    // set to zero to disable.
-    google.protobuf.Duration disconnected = 2;
     // control whether to enable the closed timeout of a workspace, i.e. close web ide, disconnect ssh connection
     //
     // +optional
-    bool disabled_disconnected = 3;
+    bool disabled_disconnected = 2;
   }
 
   // +optional
