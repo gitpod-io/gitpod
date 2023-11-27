@@ -518,10 +518,14 @@ func workspaceSSHUsername(ctx context.Context, workspaceIP string, workspacekitP
 	}
 	defer resp.Body.Close()
 
-	username, err := io.ReadAll(resp.Body)
+	result, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
 
-	return string(username), nil
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf(fmt.Sprintf("unexpected status: %v (%v)", string(result), resp.StatusCode))
+	}
+
+	return string(result), nil
 }
