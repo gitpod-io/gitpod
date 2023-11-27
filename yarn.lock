@@ -1511,9 +1511,9 @@
   integrity sha512-P6omY1zv5MItm93kLM8s2vr1HICJH8v0dvddDhysbIuZ+vcjOHg5Zbkf1mTkcmi2JA9oBG2anOkRnW8WJTS8Og==
 
 "@fastify/busboy@^2.0.0":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@fastify/busboy/-/busboy-2.0.0.tgz#f22824caff3ae506b18207bad4126dbc6ccdb6b8"
-  integrity sha512-JUFJad5lv7jxj926GPgymrWQxxjPYuJNiNjNMzqT+HiuP6Vl3dk5xzG+8sTX96np0ZAluvaMzPsjhHZ5rNuNQQ==
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@fastify/busboy/-/busboy-2.1.0.tgz#0709e9f4cb252351c609c6e6d8d6779a8d25edff"
+  integrity sha512-+KpH+QxZU7O4675t3mnkQKcZZg56u+K/Ct2K+N2AZYNVK8kyeo/bI18tI8aPm3tvNNRyTWfj6s5tnGNlcbQRsA==
 
 "@floating-ui/core@^1.4.2":
   version "1.5.0"
@@ -3129,22 +3129,10 @@
     "@tanstack/query-core" "4.29.19"
     use-sync-external-store "^1.2.0"
 
-"@testdeck/core@^0.1.2":
-  version "0.1.2"
-  resolved "https://registry.npmjs.org/@testdeck/core/-/core-0.1.2.tgz"
-  integrity sha512-rggcFQqSejqtkqK1JcwZE/utD4oNsM1JMHwrYxH1PKYx0uL2cMs0Q4zMVLKw0oacIASCfkIUSdXx7rDNdCDlvA==
-
 "@testdeck/core@^0.3.3":
   version "0.3.3"
   resolved "https://registry.yarnpkg.com/@testdeck/core/-/core-0.3.3.tgz#0e0fad0de65c661dbb26d61726b0950a1c3bbaa4"
   integrity sha512-yu1yh7yluqnNDLe6Z18/y7kcmxBBEdfZAg3msG8covKkYPRbsCVr1+HmxReqJMKgeoh/UoEW1pi9Sz0fb/GYVQ==
-
-"@testdeck/mocha@0.1.2":
-  version "0.1.2"
-  resolved "https://registry.npmjs.org/@testdeck/mocha/-/mocha-0.1.2.tgz"
-  integrity sha512-yn3OkFUlO9EkdBkDV08bPV0r26U2FC/8KvU9FdiS0ligOsjB5Ry4sp3eUQJAFxjrGJBpih0t7rZ/GzdsgCv/EQ==
-  dependencies:
-    "@testdeck/core" "^0.1.2"
 
 "@testdeck/mocha@^0.3.3":
   version "0.3.3"
@@ -15035,9 +15023,9 @@ undici-types@~5.26.4:
   integrity sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==
 
 undici@^5.25.4:
-  version "5.25.4"
-  resolved "https://registry.yarnpkg.com/undici/-/undici-5.25.4.tgz#7d8ef81d94f84cd384986271e5e5599b6dff4296"
-  integrity sha512-450yJxT29qKMf3aoudzFpIciqpx6Pji3hEWaXqXmanbXF58LTAGCKxcJjxMXWu3iG+Mudgo3ZUfDB6YDFd/dAw==
+  version "5.28.1"
+  resolved "https://registry.yarnpkg.com/undici/-/undici-5.28.1.tgz#1052d37bd1a2e8cf3e188d7caebff833fdc06fa7"
+  integrity sha512-xcIIvj1LOQH9zAL54iWFkuDEaIVEjLrru7qRpa3GrEEHk6OBhb/LycuUY2m7VCcTuDeLziXCxobQVyKExyGeIA==
   dependencies:
     "@fastify/busboy" "^2.0.0"
 

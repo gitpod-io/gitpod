@@ -8,7 +8,7 @@ import { User, Token } from "@gitpod/gitpod-protocol";
 import {
     RepositoryNotFoundError,
     UnauthorizedRepositoryAccessError,
-} from "@gitpod/gitpod-protocol/lib/messaging/error";
+} from "@gitpod/public-api-common/lib/public-api-errors";
 
 export namespace NotFoundError {
     export async function create(token: Token | undefined, user: User, host: string, owner: string, repoName: string) {

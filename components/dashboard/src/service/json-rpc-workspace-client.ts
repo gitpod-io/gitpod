@@ -24,7 +24,7 @@ import { getGitpodService } from "./service";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import { generateAsyncGenerator } from "@gitpod/gitpod-protocol/lib/generate-async-generator";
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
-import { parsePagination } from "@gitpod/gitpod-protocol/lib/public-api-pagination";
+import { parsePagination } from "@gitpod/public-api-common/lib/public-api-pagination";
 import { validate as uuidValidate } from "uuid";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 

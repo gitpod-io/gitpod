@@ -8,7 +8,7 @@ import { HandlerContext, ServiceImpl } from "@connectrpc/connect";
 import { SSHService as SSHServiceInterface } from "@gitpod/public-api/lib/gitpod/v1/ssh_connect";
 import { inject, injectable } from "inversify";
 import { SSHKeyService } from "../user/sshkey-service";
-import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
+import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
 import {
     CreateSSHPublicKeyRequest,
     CreateSSHPublicKeyResponse,

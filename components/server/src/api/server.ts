@@ -8,7 +8,7 @@ import { MethodKind, ServiceType } from "@bufbuild/protobuf";
 import { Code, ConnectError, ConnectRouter, HandlerContext, ServiceImpl } from "@connectrpc/connect";
 import { expressConnectMiddleware } from "@connectrpc/connect-express";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
+import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connect";
 import { StatsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/stats_connect";

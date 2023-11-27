@@ -17,6 +17,7 @@ packages:
       - components/usage-api/typescript:lib
       - components/ide-service-api/typescript:lib
       - components/public-api/typescript:lib
+      - components/public-api/typescript-common:lib
       - components/gitpod-db:dbtest-init
       - components/spicedb:lib
       - components/spicedb/typescript:lib

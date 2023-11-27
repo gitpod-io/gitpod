@@ -8,7 +8,7 @@ import { serverUrl, workspaceUrl } from "../shared/urls";
 const commit = require("../../config.json").commit;
 import { v4 } from "uuid";
 
-import { MetricsReporter } from "@gitpod/public-api/lib/metrics";
+import { MetricsReporter } from "@gitpod/gitpod-protocol/lib/metrics";
 
 export const metricsReporter = new MetricsReporter({
     gitpodUrl: serverUrl.toString(),

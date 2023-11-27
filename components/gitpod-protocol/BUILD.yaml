@@ -14,8 +14,6 @@ packages:
       - .eslintrc
       - mocha.opts
       - package.json
-    deps:
-      - components/public-api/typescript:lib
     config:
       packaging: library
       yarnLock: ${coreYarnLockBase}/yarn.lock

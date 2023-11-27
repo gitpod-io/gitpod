@@ -28,34 +28,16 @@
   "scripts": {
     "build": "yarn run build:cjs && yarn run build:esm",
     "build:cjs": "tsc",
-    "build:esm": "tsc --module es2015 --outDir ./lib/esm",
-    "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput",
-    "test": "mocha './**/*.spec.ts' --exclude './node_modules/**' --exit",
-    "test:brk": "yarn test --inspect-brk"
-  },
-  "mocha": {
-    "require": [
-      "ts-node/register",
-      "reflect-metadata/Reflect",
-      "source-map-support/register"
-    ],
-    "extensions": [
-      "ts"
-    ],
-    "exit": true
+    "build:esm": "tsc --module es2015 --outDir ./lib/esm"
   },
   "dependencies": {
     "@connectrpc/connect-node": "1.1.2",
     "@connectrpc/connect": "1.1.2",
-    "@bufbuild/protobuf": "^1.3.3",
-    "prom-client": "^14.2.0"
+    "@bufbuild/protobuf": "^1.3.3"
   },
   "devDependencies": {
     "@connectrpc/protoc-gen-connect-es": "1.1.2",
     "@bufbuild/protoc-gen-es": "1.3.3",
-    "@testdeck/mocha": "0.1.2",
-    "@types/chai": "^4.1.2",
-    "@types/node": "^16.11.0",
     "typescript": "~4.4.2"
   }
 }

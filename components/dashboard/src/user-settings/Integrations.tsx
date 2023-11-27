@@ -4,7 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User, getScopesForAuthProviderType } from "@gitpod/gitpod-protocol";
+import { User } from "@gitpod/gitpod-protocol";
+import { getScopesForAuthProviderType } from "@gitpod/public-api-common/lib/auth-providers";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";

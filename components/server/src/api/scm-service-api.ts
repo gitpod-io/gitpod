@@ -7,7 +7,7 @@
 import { HandlerContext, ServiceImpl } from "@connectrpc/connect";
 import { SCMService as ScmServiceInterface } from "@gitpod/public-api/lib/gitpod/v1/scm_connect";
 import { inject, injectable } from "inversify";
-import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
+import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
 import { ScmService } from "../scm/scm-service";
 import {
     GuessTokenScopesRequest,

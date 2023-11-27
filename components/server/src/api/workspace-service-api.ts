@@ -20,9 +20,9 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { inject, injectable } from "inversify";
 import { WorkspaceService } from "../workspace/workspace-service";
-import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
+import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
 import { ctxClientRegion, ctxSignal, ctxUserId } from "../util/request-context";
-import { parsePagination } from "@gitpod/gitpod-protocol/lib/public-api-pagination";
+import { parsePagination } from "@gitpod/public-api-common/lib/public-api-pagination";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import { validate as uuidValidate } from "uuid";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
