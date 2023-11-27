@@ -25,6 +25,7 @@ import {
 import {
     AuthProviderEntry,
     AuthProviderInfo,
+    EmailDomainFilterEntry,
     ProjectEnvVar,
     SuggestedRepository,
     Token,
@@ -64,6 +65,7 @@ import {
     TooManyRunningWorkspacesError,
 } from "@gitpod/public-api/lib/gitpod/v1/error_pb";
 import { SSHPublicKey } from "@gitpod/public-api/lib/gitpod/v1/ssh_pb";
+import { BlockedRepository as ProtocolBlockedRepository } from "./blocked-repositories-protocol";
 
 describe("PublicAPIConverter", () => {
     const converter = new PublicAPIConverter();
@@ -979,6 +981,40 @@ describe("PublicAPIConverter", () => {
                     },
                     startTime: "2023-11-17T10:42:00Z",
                 },
+            });
+        });
+    });
+
+    describe("toBlockedRepository", () => {
+        it("should convert a token", () => {
+            const t1 = new Date();
+            const t2 = new Date();
+            const repo: ProtocolBlockedRepository = {
+                id: 2023,
+                urlRegexp: "*/*",
+                blockUser: false,
+                createdAt: t1.toISOString(),
+                updatedAt: t2.toISOString(),
+            };
+            expect(converter.toBlockedRepository(repo).toJson()).to.deep.equal({
+                id: 2023,
+                blockUser: false,
+                name: "*/*",
+                creationTime: t1.toISOString(),
+                updateTime: t2.toISOString(),
+            });
+        });
+    });
+
+    describe("toBlockedEmailDomain", () => {
+        it("should convert a token", () => {
+            const item: EmailDomainFilterEntry = {
+                domain: "example.com",
+                negative: false,
+            };
+            expect(converter.toBlockedEmailDomain(item).toJson()).to.deep.equal({
+                domain: "example.com",
+                negative: false,
             });
         });
     });
