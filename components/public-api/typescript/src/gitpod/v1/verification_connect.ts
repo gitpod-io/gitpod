@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateBlockedEmailDomainRequest, CreateBlockedEmailDomainResponse, CreateBlockedRepositoryRequest, CreateBlockedRepositoryResponse, DeleteBlockedRepositoryRequest, DeleteBlockedRepositoryResponse, ListBlockedEmailDomainsRequest, ListBlockedEmailDomainsResponse, ListBlockedRepositoriesRequest, ListBlockedRepositoriesResponse, SendPhoneNumberVerificationTokenRequest, SendPhoneNumberVerificationTokenResponse, VerifyPhoneNumberVerificationTokenRequest, VerifyPhoneNumberVerificationTokenResponse } from "./verification_pb.js";
+import { SendPhoneNumberVerificationTokenRequest, SendPhoneNumberVerificationTokenResponse, VerifyPhoneNumberVerificationTokenRequest, VerifyPhoneNumberVerificationTokenResponse } from "./verification_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -40,61 +40,6 @@ export const VerificationService = {
       name: "VerifyPhoneNumberVerificationToken",
       I: VerifyPhoneNumberVerificationTokenRequest,
       O: VerifyPhoneNumberVerificationTokenResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * ListBlockedRepositories lists blocked repositories.
-     *
-     * @generated from rpc gitpod.v1.VerificationService.ListBlockedRepositories
-     */
-    listBlockedRepositories: {
-      name: "ListBlockedRepositories",
-      I: ListBlockedRepositoriesRequest,
-      O: ListBlockedRepositoriesResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * CreateBlockedRepository creates a new blocked repository.
-     *
-     * @generated from rpc gitpod.v1.VerificationService.CreateBlockedRepository
-     */
-    createBlockedRepository: {
-      name: "CreateBlockedRepository",
-      I: CreateBlockedRepositoryRequest,
-      O: CreateBlockedRepositoryResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * DeleteBlockedRepository deletes a blocked repository.
-     *
-     * @generated from rpc gitpod.v1.VerificationService.DeleteBlockedRepository
-     */
-    deleteBlockedRepository: {
-      name: "DeleteBlockedRepository",
-      I: DeleteBlockedRepositoryRequest,
-      O: DeleteBlockedRepositoryResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * ListBlockedEmailDomains lists blocked email domains.
-     *
-     * @generated from rpc gitpod.v1.VerificationService.ListBlockedEmailDomains
-     */
-    listBlockedEmailDomains: {
-      name: "ListBlockedEmailDomains",
-      I: ListBlockedEmailDomainsRequest,
-      O: ListBlockedEmailDomainsResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * CreateBlockedEmailDomain creates a new blocked email domain.
-     *
-     * @generated from rpc gitpod.v1.VerificationService.CreateBlockedEmailDomain
-     */
-    createBlockedEmailDomain: {
-      name: "CreateBlockedEmailDomain",
-      I: CreateBlockedEmailDomainRequest,
-      O: CreateBlockedEmailDomainResponse,
       kind: MethodKind.Unary,
     },
   }

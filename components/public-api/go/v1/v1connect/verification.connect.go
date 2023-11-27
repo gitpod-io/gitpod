@@ -37,16 +37,6 @@ type VerificationServiceClient interface {
 	// VerifyPhoneNumberVerificationToken verifies the specified verification
 	// token.
 	VerifyPhoneNumberVerificationToken(context.Context, *connect_go.Request[v1.VerifyPhoneNumberVerificationTokenRequest]) (*connect_go.Response[v1.VerifyPhoneNumberVerificationTokenResponse], error)
-	// ListBlockedRepositories lists blocked repositories.
-	ListBlockedRepositories(context.Context, *connect_go.Request[v1.ListBlockedRepositoriesRequest]) (*connect_go.Response[v1.ListBlockedRepositoriesResponse], error)
-	// CreateBlockedRepository creates a new blocked repository.
-	CreateBlockedRepository(context.Context, *connect_go.Request[v1.CreateBlockedRepositoryRequest]) (*connect_go.Response[v1.CreateBlockedRepositoryResponse], error)
-	// DeleteBlockedRepository deletes a blocked repository.
-	DeleteBlockedRepository(context.Context, *connect_go.Request[v1.DeleteBlockedRepositoryRequest]) (*connect_go.Response[v1.DeleteBlockedRepositoryResponse], error)
-	// ListBlockedEmailDomains lists blocked email domains.
-	ListBlockedEmailDomains(context.Context, *connect_go.Request[v1.ListBlockedEmailDomainsRequest]) (*connect_go.Response[v1.ListBlockedEmailDomainsResponse], error)
-	// CreateBlockedEmailDomain creates a new blocked email domain.
-	CreateBlockedEmailDomain(context.Context, *connect_go.Request[v1.CreateBlockedEmailDomainRequest]) (*connect_go.Response[v1.CreateBlockedEmailDomainResponse], error)
 }
 
 // NewVerificationServiceClient constructs a client for the gitpod.v1.VerificationService service.
@@ -69,31 +59,6 @@ func NewVerificationServiceClient(httpClient connect_go.HTTPClient, baseURL stri
 			baseURL+"/gitpod.v1.VerificationService/VerifyPhoneNumberVerificationToken",
 			opts...,
 		),
-		listBlockedRepositories: connect_go.NewClient[v1.ListBlockedRepositoriesRequest, v1.ListBlockedRepositoriesResponse](
-			httpClient,
-			baseURL+"/gitpod.v1.VerificationService/ListBlockedRepositories",
-			opts...,
-		),
-		createBlockedRepository: connect_go.NewClient[v1.CreateBlockedRepositoryRequest, v1.CreateBlockedRepositoryResponse](
-			httpClient,
-			baseURL+"/gitpod.v1.VerificationService/CreateBlockedRepository",
-			opts...,
-		),
-		deleteBlockedRepository: connect_go.NewClient[v1.DeleteBlockedRepositoryRequest, v1.DeleteBlockedRepositoryResponse](
-			httpClient,
-			baseURL+"/gitpod.v1.VerificationService/DeleteBlockedRepository",
-			opts...,
-		),
-		listBlockedEmailDomains: connect_go.NewClient[v1.ListBlockedEmailDomainsRequest, v1.ListBlockedEmailDomainsResponse](
-			httpClient,
-			baseURL+"/gitpod.v1.VerificationService/ListBlockedEmailDomains",
-			opts...,
-		),
-		createBlockedEmailDomain: connect_go.NewClient[v1.CreateBlockedEmailDomainRequest, v1.CreateBlockedEmailDomainResponse](
-			httpClient,
-			baseURL+"/gitpod.v1.VerificationService/CreateBlockedEmailDomain",
-			opts...,
-		),
 	}
 }
 
@@ -101,11 +66,6 @@ func NewVerificationServiceClient(httpClient connect_go.HTTPClient, baseURL stri
 type verificationServiceClient struct {
 	sendPhoneNumberVerificationToken   *connect_go.Client[v1.SendPhoneNumberVerificationTokenRequest, v1.SendPhoneNumberVerificationTokenResponse]
 	verifyPhoneNumberVerificationToken *connect_go.Client[v1.VerifyPhoneNumberVerificationTokenRequest, v1.VerifyPhoneNumberVerificationTokenResponse]
-	listBlockedRepositories            *connect_go.Client[v1.ListBlockedRepositoriesRequest, v1.ListBlockedRepositoriesResponse]
-	createBlockedRepository            *connect_go.Client[v1.CreateBlockedRepositoryRequest, v1.CreateBlockedRepositoryResponse]
-	deleteBlockedRepository            *connect_go.Client[v1.DeleteBlockedRepositoryRequest, v1.DeleteBlockedRepositoryResponse]
-	listBlockedEmailDomains            *connect_go.Client[v1.ListBlockedEmailDomainsRequest, v1.ListBlockedEmailDomainsResponse]
-	createBlockedEmailDomain           *connect_go.Client[v1.CreateBlockedEmailDomainRequest, v1.CreateBlockedEmailDomainResponse]
 }
 
 // SendPhoneNumberVerificationToken calls
@@ -120,31 +80,6 @@ func (c *verificationServiceClient) VerifyPhoneNumberVerificationToken(ctx conte
 	return c.verifyPhoneNumberVerificationToken.CallUnary(ctx, req)
 }
 
-// ListBlockedRepositories calls gitpod.v1.VerificationService.ListBlockedRepositories.
-func (c *verificationServiceClient) ListBlockedRepositories(ctx context.Context, req *connect_go.Request[v1.ListBlockedRepositoriesRequest]) (*connect_go.Response[v1.ListBlockedRepositoriesResponse], error) {
-	return c.listBlockedRepositories.CallUnary(ctx, req)
-}
-
-// CreateBlockedRepository calls gitpod.v1.VerificationService.CreateBlockedRepository.
-func (c *verificationServiceClient) CreateBlockedRepository(ctx context.Context, req *connect_go.Request[v1.CreateBlockedRepositoryRequest]) (*connect_go.Response[v1.CreateBlockedRepositoryResponse], error) {
-	return c.createBlockedRepository.CallUnary(ctx, req)
-}
-
-// DeleteBlockedRepository calls gitpod.v1.VerificationService.DeleteBlockedRepository.
-func (c *verificationServiceClient) DeleteBlockedRepository(ctx context.Context, req *connect_go.Request[v1.DeleteBlockedRepositoryRequest]) (*connect_go.Response[v1.DeleteBlockedRepositoryResponse], error) {
-	return c.deleteBlockedRepository.CallUnary(ctx, req)
-}
-
-// ListBlockedEmailDomains calls gitpod.v1.VerificationService.ListBlockedEmailDomains.
-func (c *verificationServiceClient) ListBlockedEmailDomains(ctx context.Context, req *connect_go.Request[v1.ListBlockedEmailDomainsRequest]) (*connect_go.Response[v1.ListBlockedEmailDomainsResponse], error) {
-	return c.listBlockedEmailDomains.CallUnary(ctx, req)
-}
-
-// CreateBlockedEmailDomain calls gitpod.v1.VerificationService.CreateBlockedEmailDomain.
-func (c *verificationServiceClient) CreateBlockedEmailDomain(ctx context.Context, req *connect_go.Request[v1.CreateBlockedEmailDomainRequest]) (*connect_go.Response[v1.CreateBlockedEmailDomainResponse], error) {
-	return c.createBlockedEmailDomain.CallUnary(ctx, req)
-}
-
 // VerificationServiceHandler is an implementation of the gitpod.v1.VerificationService service.
 type VerificationServiceHandler interface {
 	// SendPhoneNumberVerificationToken sends a verification token to the
@@ -153,16 +88,6 @@ type VerificationServiceHandler interface {
 	// VerifyPhoneNumberVerificationToken verifies the specified verification
 	// token.
 	VerifyPhoneNumberVerificationToken(context.Context, *connect_go.Request[v1.VerifyPhoneNumberVerificationTokenRequest]) (*connect_go.Response[v1.VerifyPhoneNumberVerificationTokenResponse], error)
-	// ListBlockedRepositories lists blocked repositories.
-	ListBlockedRepositories(context.Context, *connect_go.Request[v1.ListBlockedRepositoriesRequest]) (*connect_go.Response[v1.ListBlockedRepositoriesResponse], error)
-	// CreateBlockedRepository creates a new blocked repository.
-	CreateBlockedRepository(context.Context, *connect_go.Request[v1.CreateBlockedRepositoryRequest]) (*connect_go.Response[v1.CreateBlockedRepositoryResponse], error)
-	// DeleteBlockedRepository deletes a blocked repository.
-	DeleteBlockedRepository(context.Context, *connect_go.Request[v1.DeleteBlockedRepositoryRequest]) (*connect_go.Response[v1.DeleteBlockedRepositoryResponse], error)
-	// ListBlockedEmailDomains lists blocked email domains.
-	ListBlockedEmailDomains(context.Context, *connect_go.Request[v1.ListBlockedEmailDomainsRequest]) (*connect_go.Response[v1.ListBlockedEmailDomainsResponse], error)
-	// CreateBlockedEmailDomain creates a new blocked email domain.
-	CreateBlockedEmailDomain(context.Context, *connect_go.Request[v1.CreateBlockedEmailDomainRequest]) (*connect_go.Response[v1.CreateBlockedEmailDomainResponse], error)
 }
 
 // NewVerificationServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -182,31 +107,6 @@ func NewVerificationServiceHandler(svc VerificationServiceHandler, opts ...conne
 		svc.VerifyPhoneNumberVerificationToken,
 		opts...,
 	))
-	mux.Handle("/gitpod.v1.VerificationService/ListBlockedRepositories", connect_go.NewUnaryHandler(
-		"/gitpod.v1.VerificationService/ListBlockedRepositories",
-		svc.ListBlockedRepositories,
-		opts...,
-	))
-	mux.Handle("/gitpod.v1.VerificationService/CreateBlockedRepository", connect_go.NewUnaryHandler(
-		"/gitpod.v1.VerificationService/CreateBlockedRepository",
-		svc.CreateBlockedRepository,
-		opts...,
-	))
-	mux.Handle("/gitpod.v1.VerificationService/DeleteBlockedRepository", connect_go.NewUnaryHandler(
-		"/gitpod.v1.VerificationService/DeleteBlockedRepository",
-		svc.DeleteBlockedRepository,
-		opts...,
-	))
-	mux.Handle("/gitpod.v1.VerificationService/ListBlockedEmailDomains", connect_go.NewUnaryHandler(
-		"/gitpod.v1.VerificationService/ListBlockedEmailDomains",
-		svc.ListBlockedEmailDomains,
-		opts...,
-	))
-	mux.Handle("/gitpod.v1.VerificationService/CreateBlockedEmailDomain", connect_go.NewUnaryHandler(
-		"/gitpod.v1.VerificationService/CreateBlockedEmailDomain",
-		svc.CreateBlockedEmailDomain,
-		opts...,
-	))
 	return "/gitpod.v1.VerificationService/", mux
 }
 
@@ -219,24 +119,4 @@ func (UnimplementedVerificationServiceHandler) SendPhoneNumberVerificationToken(
 
 func (UnimplementedVerificationServiceHandler) VerifyPhoneNumberVerificationToken(context.Context, *connect_go.Request[v1.VerifyPhoneNumberVerificationTokenRequest]) (*connect_go.Response[v1.VerifyPhoneNumberVerificationTokenResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.VerificationService.VerifyPhoneNumberVerificationToken is not implemented"))
-}
-
-func (UnimplementedVerificationServiceHandler) ListBlockedRepositories(context.Context, *connect_go.Request[v1.ListBlockedRepositoriesRequest]) (*connect_go.Response[v1.ListBlockedRepositoriesResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.VerificationService.ListBlockedRepositories is not implemented"))
-}
-
-func (UnimplementedVerificationServiceHandler) CreateBlockedRepository(context.Context, *connect_go.Request[v1.CreateBlockedRepositoryRequest]) (*connect_go.Response[v1.CreateBlockedRepositoryResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.VerificationService.CreateBlockedRepository is not implemented"))
-}
-
-func (UnimplementedVerificationServiceHandler) DeleteBlockedRepository(context.Context, *connect_go.Request[v1.DeleteBlockedRepositoryRequest]) (*connect_go.Response[v1.DeleteBlockedRepositoryResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.VerificationService.DeleteBlockedRepository is not implemented"))
-}
-
-func (UnimplementedVerificationServiceHandler) ListBlockedEmailDomains(context.Context, *connect_go.Request[v1.ListBlockedEmailDomainsRequest]) (*connect_go.Response[v1.ListBlockedEmailDomainsResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.VerificationService.ListBlockedEmailDomains is not implemented"))
-}
-
-func (UnimplementedVerificationServiceHandler) CreateBlockedEmailDomain(context.Context, *connect_go.Request[v1.CreateBlockedEmailDomainRequest]) (*connect_go.Response[v1.CreateBlockedEmailDomainResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.VerificationService.CreateBlockedEmailDomain is not implemented"))
 }

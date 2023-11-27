@@ -2,10 +2,6 @@ syntax = "proto3";
 
 package gitpod.v1;
 
-import "gitpod/v1/pagination.proto";
-import "gitpod/v1/sorting.proto";
-import "google/protobuf/timestamp.proto";
-
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
 
 service VerificationService {
@@ -16,21 +12,6 @@ service VerificationService {
   // VerifyPhoneNumberVerificationToken verifies the specified verification
   // token.
   rpc VerifyPhoneNumberVerificationToken(VerifyPhoneNumberVerificationTokenRequest) returns (VerifyPhoneNumberVerificationTokenResponse) {}
-
-  // ListBlockedRepositories lists blocked repositories.
-  rpc ListBlockedRepositories(ListBlockedRepositoriesRequest) returns (ListBlockedRepositoriesResponse) {}
-
-  // CreateBlockedRepository creates a new blocked repository.
-  rpc CreateBlockedRepository(CreateBlockedRepositoryRequest) returns (CreateBlockedRepositoryResponse) {}
-
-  // DeleteBlockedRepository deletes a blocked repository.
-  rpc DeleteBlockedRepository(DeleteBlockedRepositoryRequest) returns (DeleteBlockedRepositoryResponse) {}
-
-  // ListBlockedEmailDomains lists blocked email domains.
-  rpc ListBlockedEmailDomains(ListBlockedEmailDomainsRequest) returns (ListBlockedEmailDomainsResponse) {}
-
-  // CreateBlockedEmailDomain creates a new blocked email domain.
-  rpc CreateBlockedEmailDomain(CreateBlockedEmailDomainRequest) returns (CreateBlockedEmailDomainResponse) {}
 }
 
 // Required fields:
@@ -61,95 +42,4 @@ message VerifyPhoneNumberVerificationTokenRequest {
 message VerifyPhoneNumberVerificationTokenResponse {
   // verified indicates if the verification was successful
   bool verified = 1;
-}
-
-message ListBlockedRepositoriesRequest {
-  // pagination contains the pagination options for listing blocked repositories
-  PaginationRequest pagination = 1;
-
-  // sort contains the sort options for listing blocked repositories
-  // BlockedRepositories can be sorted by "urlRegexp"
-  repeated Sort sort = 2;
-
-  // search_term is a search term to filter blocked repositories by url_regexp
-  string search_term = 3;
-}
-
-message ListBlockedRepositoriesResponse {
-  // pagination contains the pagination options for listing blocked repositories
-  PaginationResponse pagination = 1;
-
-  // blocked_repositories are the blocked repositories
-  repeated BlockedRepository blocked_repositories = 2;
-}
-
-message CreateBlockedRepositoryRequest {
-  // url_regexp is the regular expression for the repository URL
-  string url_regexp = 1;
-
-  // block_user indicates if the user should be blocked from accessing the
-  // repository
-  bool block_user = 2;
-}
-
-message CreateBlockedRepositoryResponse {
-  BlockedRepository blocked_repository = 1;
-}
-
-message DeleteBlockedRepositoryRequest {
-  // blocked_repository_id is the ID of the blocked repository
-  uint32 blocked_repository_id = 1;
-}
-
-message DeleteBlockedRepositoryResponse {}
-
-message ListBlockedEmailDomainsRequest {
-  // pagination contains the pagination options for listing blocked email
-  // domains
-  PaginationRequest pagination = 1;
-}
-
-message ListBlockedEmailDomainsResponse {
-  // pagination contains the pagination options for listing blocked email
-  // domains
-  PaginationResponse pagination = 1;
-
-  // blocked_email_domains are the blocked email domains
-  repeated BlockedEmailDomain blocked_email_domains = 2;
-}
-
-message CreateBlockedEmailDomainRequest {
-  // domain is the blocked email domain
-  string domain = 1;
-
-  bool negative = 2;
-}
-
-message CreateBlockedEmailDomainResponse {
-  BlockedEmailDomain blocked_email_domain = 1;
-}
-
-message BlockedRepository {
-  // id is the ID of the blocked repository
-  uint32 id = 1;
-
-  // url_regexp is the regular expression for the repository URL
-  string url_regexp = 2;
-
-  // block_user indicates if the user should be blocked from accessing the
-  // repository
-  bool block_user = 3;
-
-  google.protobuf.Timestamp creation_time = 4;
-  google.protobuf.Timestamp update_time = 5;
-}
-
-message BlockedEmailDomain {
-  // id is the ID of the blocked email domain
-  string id = 1;
-
-  // domain is the blocked email domain
-  string domain = 2;
-
-  bool negative = 3;
 }
