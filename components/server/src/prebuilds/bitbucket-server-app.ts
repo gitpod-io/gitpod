@@ -19,6 +19,8 @@ import { UserService } from "../user/user-service";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { URL } from "url";
 import { ProjectsService } from "../projects/projects-service";
+import { SubjectId } from "../auth/subject-id";
+import { runWithSubjectId } from "../util/request-context";
 
 @injectable()
 export class BitbucketServerApp {
@@ -155,23 +157,25 @@ export class BitbucketServerApp {
 
                     log.debug("Bitbucket Server push event: Starting prebuild.", { contextUrl });
 
-                    const commitInfo = await this.getCommitInfo(user, cloneURL, commit);
-                    const ws = await this.prebuildManager.startPrebuild(
-                        { span },
-                        {
-                            user: projectOwner,
-                            project: project,
-                            context,
-                            commitInfo,
-                        },
-                    );
-                    if (!ws.done) {
-                        await this.webhookEvents.updateEvent(event.id, {
-                            prebuildStatus: "prebuild_triggered",
-                            status: "processed",
-                            prebuildId: ws.prebuildId,
-                        });
-                    }
+                    await runWithSubjectId(SubjectId.fromUserId(projectOwner.id), async () => {
+                        const commitInfo = await this.getCommitInfo(user, cloneURL, commit);
+                        const ws = await this.prebuildManager.startPrebuild(
+                            { span },
+                            {
+                                user: projectOwner,
+                                project: project,
+                                context,
+                                commitInfo,
+                            },
+                        );
+                        if (!ws.done) {
+                            await this.webhookEvents.updateEvent(event.id, {
+                                prebuildStatus: "prebuild_triggered",
+                                status: "processed",
+                                prebuildId: ws.prebuildId,
+                            });
+                        }
+                    });
                 } catch (error) {
                     log.error("Error processing Bitbucket Server webhook event", error);
                 }
@@ -214,7 +218,9 @@ export class BitbucketServerApp {
             const hostContext = this.hostCtxProvider.get(new URL(project.cloneUrl).host);
             const authProviderId = hostContext?.authProvider.authProviderId;
             for (const teamMember of teamMembers) {
-                const user = await this.userService.findUserById(webhookInstaller.id, teamMember.userId);
+                const user = await runWithSubjectId(SubjectId.fromUserId(webhookInstaller.id), () =>
+                    this.userService.findUserById(webhookInstaller.id, teamMember.userId),
+                );
                 if (user && user.identities.some((i) => i.authProviderId === authProviderId)) {
                     return user;
                 }

@@ -43,6 +43,7 @@ import { UserService } from "../user/user-service";
 import { ProjectsService } from "../projects/projects-service";
 import { SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
 import { runWithSubjectId, runWithRequestContext } from "../util/request-context";
+import { SubjectId } from "../auth/subject-id";
 
 /**
  * GitHub app urls:
@@ -115,7 +116,7 @@ export class GithubApp {
 
         // Use RequestContext
         options.getRouter &&
-            options.getRouter().use((req, res, next) => {
+            options.getRouter("/*").use((req, res, next) => {
                 runWithRequestContext(
                     {
                         requestKind: "probot",
@@ -330,28 +331,30 @@ export class GithubApp {
                             status: "processed",
                             message: prebuildPrecondition.reason,
                         });
-                        return;
+                        continue;
                     }
 
-                    const commitInfo = await this.getCommitInfo(user, repo.html_url, ctx.payload.after);
-                    this.prebuildManager
-                        .startPrebuild({ span }, { user, context, project: project!, commitInfo })
-                        .then(async (result) => {
-                            if (!result.done) {
+                    await runWithSubjectId(SubjectId.fromUserId(user.id), async () => {
+                        const commitInfo = await this.getCommitInfo(user, repo.html_url, ctx.payload.after);
+                        this.prebuildManager
+                            .startPrebuild({ span }, { user, context, project: project!, commitInfo })
+                            .then(async (result) => {
+                                if (!result.done) {
+                                    await this.webhookEvents.updateEvent(event.id, {
+                                        prebuildStatus: "prebuild_triggered",
+                                        status: "processed",
+                                        prebuildId: result.prebuildId,
+                                    });
+                                }
+                            })
+                            .catch(async (err) => {
+                                log.error(logCtx, "Error while starting prebuild", err, { contextURL });
                                 await this.webhookEvents.updateEvent(event.id, {
-                                    prebuildStatus: "prebuild_triggered",
+                                    prebuildStatus: "prebuild_trigger_failed",
                                     status: "processed",
-                                    prebuildId: result.prebuildId,
                                 });
-                            }
-                        })
-                        .catch(async (err) => {
-                            log.error(logCtx, "Error while starting prebuild", err, { contextURL });
-                            await this.webhookEvents.updateEvent(event.id, {
-                                prebuildStatus: "prebuild_trigger_failed",
-                                status: "processed",
                             });
-                        });
+                    });
                 } catch (error) {
                     log.error("Error processing Bitbucket Server webhook event", error);
                 }
@@ -543,12 +546,14 @@ export class GithubApp {
 
         const prebuildPrecondition = this.prebuildManager.checkPrebuildPrecondition({ config, project, context });
         if (prebuildPrecondition.shouldRun) {
-            const commitInfo = await this.getCommitInfo(user, ctx.payload.repository.html_url, pr.head.sha);
-            const result = await this.prebuildManager.startPrebuild(tracecContext, {
-                user,
-                context,
-                project: project!,
-                commitInfo,
+            const result = await runWithSubjectId(SubjectId.fromUserId(user.id), async () => {
+                const commitInfo = await this.getCommitInfo(user, ctx.payload.repository.html_url, pr.head.sha);
+                return await this.prebuildManager.startPrebuild(tracecContext, {
+                    user,
+                    context,
+                    project: project!,
+                    commitInfo,
+                });
             });
             if (result?.done) {
                 return undefined;
@@ -645,7 +650,9 @@ export class GithubApp {
             return installationOwner;
         }
         for (const teamMember of teamMembers) {
-            const user = await this.userService.findUserById(teamMember.userId, teamMember.userId);
+            const user = await runWithSubjectId(SubjectId.fromUserId(teamMember.userId), () =>
+                this.userService.findUserById(teamMember.userId, teamMember.userId),
+            );
             if (user && user.identities.some((i) => i.authProviderId === "Public-GitHub")) {
                 return user;
             }
