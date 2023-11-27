@@ -4,16 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import {
-    UserDB,
-    WorkspaceDB,
-    DBWithTracing,
-    TracedWorkspaceDB,
-    EmailDomainFilterDB,
-    TeamDB,
-    DBGitpodToken,
-} from "@gitpod/gitpod-db/lib";
-import { BlockedRepositoryDB } from "@gitpod/gitpod-db/lib/blocked-repository-db";
+import { UserDB, WorkspaceDB, DBWithTracing, TracedWorkspaceDB, TeamDB, DBGitpodToken } from "@gitpod/gitpod-db/lib";
 import {
     AuthProviderEntry,
     AuthProviderInfo,
@@ -179,7 +170,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         private readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider,
 
         @inject(UserDB) private readonly userDB: UserDB,
-        @inject(BlockedRepositoryDB) private readonly blockedRepostoryDB: BlockedRepositoryDB,
         @inject(UserAuthentication) private readonly userAuthentication: UserAuthentication,
         @inject(UserService) private readonly userService: UserService,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
@@ -209,7 +199,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(StripeService) private readonly stripeService: StripeService,
         @inject(UsageService) private readonly usageService: UsageService,
         @inject(BillingServiceDefinition.name) private readonly billingService: BillingServiceClient,
-        @inject(EmailDomainFilterDB) private emailDomainFilterdb: EmailDomainFilterDB,
 
         @inject(RedisSubscriber) private readonly subscriber: RedisSubscriber,
 
