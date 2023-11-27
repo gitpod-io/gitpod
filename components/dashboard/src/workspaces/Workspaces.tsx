@@ -106,7 +106,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                 return <WorkspaceEntry key={info.id} info={info} />;
                             })}
                             {filteredActiveWorkspaces.length > 0 && <div className="py-6"></div>}
-                            {filteredActiveWorkspaces.length > 0 && (
+                            {filteredInactiveWorkspaces.length > 0 && (
                                 <div>
                                     <div
                                         onClick={() => setShowInactive(!showInactive)}
