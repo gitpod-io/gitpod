@@ -173,10 +173,20 @@ api.{$GITPOD_DOMAIN} {
 	}
 
 	handle /gitpod.v1.* {
-		import server_public_api
+		reverse_proxy {
+			dynamic a server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN} 3001
+		}
 	}
 
-	reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002
+	handle /gitpod.experimental.v1.* {
+		reverse_proxy {
+		dynamic a public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN} 9002
+		}
+	}
+
+	# Catch all case, specifically useful for debugging
+	header +Content-Type {http.request.header.Content-Type}
+	respond "Not Implemented" 501
 }
 
 # always redirect to HTTPS
