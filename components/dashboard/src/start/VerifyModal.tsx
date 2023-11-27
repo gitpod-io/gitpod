@@ -7,13 +7,13 @@
 import { useState } from "react";
 import Alert, { AlertType } from "../components/Alert";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
-import { getGitpodService } from "../service/service";
 import PhoneInput from "react-intl-tel-input";
 import "react-intl-tel-input/dist/main.css";
 import "./phone-input.css";
 import { Button } from "../components/Button";
 import { LinkButton } from "../components/LinkButton";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { verificationClient } from "../service/public-api";
 
 interface VerifyModalState {
     phoneNumber?: string;
@@ -41,7 +41,9 @@ export function VerifyModal() {
                     message: undefined,
                     sending: true,
                 });
-                const resp = await getGitpodService().server.sendPhoneNumberVerificationToken(state.phoneNumber || "");
+                const resp = await verificationClient.sendPhoneNumberVerificationToken({
+                    phoneNumber: state.phoneNumber || "",
+                });
                 setVerificationId(resp.verificationId);
                 setState({
                     ...state,
@@ -123,11 +125,12 @@ export function VerifyModal() {
         };
         const verifyToken = async () => {
             try {
-                const verified = await getGitpodService().server.verifyPhoneNumberVerificationToken(
-                    state.phoneNumber!,
-                    state.token!,
+                const resp = await verificationClient.verifyPhoneNumberVerificationToken({
                     verificationId,
-                );
+                    token: state.token,
+                    phoneNumber: state.phoneNumber,
+                });
+                const verified = resp.verified;
                 if (verified) {
                     setState({
                         ...state,
