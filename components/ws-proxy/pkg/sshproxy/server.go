@@ -7,7 +7,10 @@ package sshproxy
 import (
 	"context"
 	"crypto/subtle"
+	"fmt"
+	"io"
 	"net"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -301,6 +304,7 @@ func (s *Server) HandleConn(c net.Conn) {
 	}
 
 	var key ssh.Signer
+	//nolint:ineffassign
 	userName := "gitpod"
 
 	session := &Session{
@@ -318,6 +322,13 @@ func (s *Server) HandleConn(c net.Conn) {
 		}
 
 		session.WorkspacePrivateKey = key
+
+		// obtain the SSH username from workspacekit.
+		workspacekitPort := "22998"
+		userName, err = workspaceSSHUsername(ctx, wsInfo.IPAddress, workspacekitPort)
+		if err != nil {
+			log.WithField("instanceId", wsInfo.InstanceID).WithError(err).Warn("failed to retrieve the SSH username. Using the default.")
+		}
 	} else {
 		key, userName, err = s.GetWorkspaceSSHKey(ctx, wsInfo.IPAddress, supervisorPort)
 		if err != nil {
@@ -493,4 +504,28 @@ func (s *Server) Serve(l net.Listener) error {
 
 		go s.HandleConn(conn)
 	}
+}
+
+func workspaceSSHUsername(ctx context.Context, workspaceIP string, workspacekitPort string) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("http://%v:%v/ssh/username", workspaceIP, workspacekitPort), nil)
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	result, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf(fmt.Sprintf("unexpected status: %v (%v)", string(result), resp.StatusCode))
+	}
+
+	return string(result), nil
 }
