@@ -74,10 +74,6 @@ function instrumentWebSocketConnection(connectionProvider: WebSocketConnectionPr
 export function getGitpodService(): GitpodService {
     const w = window as any;
     const _gp = w._gp || (w._gp = {});
-    if (window.location.search.includes("service=mock")) {
-        const service = _gp.gitpodService || (_gp.gitpodService = require("./service-mock").gitpodServiceMock);
-        return service;
-    }
     let service = _gp.gitpodService;
     if (!service) {
         service = _gp.gitpodService = createGitpodService();
