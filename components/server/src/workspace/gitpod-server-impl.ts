@@ -1891,14 +1891,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.auth.checkPermissionOnInstallation(admin.id, "configure");
 
         try {
-            const res = await this.blockedRepostoryDB.findAllBlockedRepositories(
-                req.offset,
-                req.limit,
-                req.orderBy,
-                req.orderDir === "asc" ? "ASC" : "DESC",
-                req.searchTerm,
-            );
-            return res;
+            return await this.verificationService.adminGetBlockedRepositories(admin.id, req);
         } catch (e) {
             throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, String(e));
         }
@@ -1918,7 +1911,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         );
         await this.auth.checkPermissionOnInstallation(admin.id, "configure");
 
-        return await this.blockedRepostoryDB.createBlockedRepository(urlRegexp, blockUser);
+        return await this.verificationService.adminCreateBlockedRepository(admin.id, {
+            urlRegexp,
+            blockUser,
+        });
     }
 
     async adminDeleteBlockedRepository(ctx: TraceContext, id: number): Promise<void> {
@@ -1927,7 +1923,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const admin = await this.guardAdminAccess("adminDeleteBlockedRepository", { id }, Permission.ADMIN_USERS);
         await this.auth.checkPermissionOnInstallation(admin.id, "configure");
 
-        await this.blockedRepostoryDB.deleteBlockedRepository(id);
+        await this.verificationService.adminDeleteBlockedRepository(admin.id, id);
     }
 
     async adminBlockUser(ctx: TraceContext, req: AdminBlockUserRequest): Promise<User> {
@@ -2988,7 +2984,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("adminGetBlockedEmailDomains");
         await this.guardAdminAccess("adminGetBlockedEmailDomains", { id: user.id }, Permission.ADMIN_USERS);
         await this.auth.checkPermissionOnInstallation(user.id, "configure");
-        return await this.emailDomainFilterdb.getFilterEntries();
+        return this.verificationService.adminGetBlockedEmailDomains(user.id);
     }
 
     async adminSaveBlockedEmailDomain(
@@ -2998,6 +2994,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("adminSaveBlockedEmailDomain");
         await this.guardAdminAccess("adminSaveBlockedEmailDomain", { id: user.id }, Permission.ADMIN_USERS);
         await this.auth.checkPermissionOnInstallation(user.id, "configure");
-        await this.emailDomainFilterdb.storeFilterEntry(domainFilterentry);
+        await this.verificationService.adminCreateBlockedEmailDomain(user.id, domainFilterentry);
     }
 }

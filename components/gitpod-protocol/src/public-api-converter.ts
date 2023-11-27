@@ -51,6 +51,7 @@ import {
     WorkspacePort_Protocol,
     WorkspaceStatus,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { BlockedEmailDomain, BlockedRepository } from "@gitpod/public-api/lib/gitpod/v1/verification_pb";
 import { SSHPublicKey } from "@gitpod/public-api/lib/gitpod/v1/ssh_pb";
 import {
     ConfigurationEnvironmentVariable,
@@ -89,6 +90,7 @@ import {
     Token,
     SuggestedRepository as SuggestedRepositoryProtocol,
     UserSSHPublicKeyValue,
+    EmailDomainFilterEntry,
 } from "./protocol";
 import {
     OrgMemberInfo,
@@ -109,6 +111,7 @@ import {
 } from "./workspace-instance";
 import { Author, Commit } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import type { DeepPartial } from "./util/deep-partial";
+import { BlockedRepository as ProtocolBlockedRepository } from "./blocked-repositories-protocol";
 
 export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
 
@@ -877,6 +880,24 @@ export class PublicAPIConverter {
                 return PrebuildPhase_Phase.FAILED;
         }
         return PrebuildPhase_Phase.UNSPECIFIED;
+    }
+
+    toBlockedRepository(repo: ProtocolBlockedRepository): BlockedRepository {
+        return new BlockedRepository({
+            id: repo.id,
+            urlRegexp: repo.urlRegexp,
+            blockUser: repo.blockUser,
+            creationTime: Timestamp.fromDate(new Date(repo.createdAt)),
+            updateTime: Timestamp.fromDate(new Date(repo.updatedAt)),
+        });
+    }
+
+    toBlockedEmailDomain(item: EmailDomainFilterEntry): BlockedEmailDomain {
+        return new BlockedEmailDomain({
+            id: "",
+            domain: item.domain,
+            negative: item.negative,
+        });
     }
 
     toSCMToken(t: Token): SCMToken {

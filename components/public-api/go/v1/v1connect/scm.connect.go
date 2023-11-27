@@ -31,9 +31,17 @@ const (
 
 // SCMServiceClient is a client for the gitpod.v1.SCMService service.
 type SCMServiceClient interface {
+	// SearchSCMTokens allows clients to retrieve SCM tokens based on the
+	// specified host.
 	SearchSCMTokens(context.Context, *connect_go.Request[v1.SearchSCMTokensRequest]) (*connect_go.Response[v1.SearchSCMTokensResponse], error)
+	// GuessTokenScopes allows clients to retrieve scopes their SCM token would
+	// require for the specified git command.
 	GuessTokenScopes(context.Context, *connect_go.Request[v1.GuessTokenScopesRequest]) (*connect_go.Response[v1.GuessTokenScopesResponse], error)
+	// SearchRepositories allows clients to search for suggested repositories of
+	// SCM providers they are connected with.
 	SearchRepositories(context.Context, *connect_go.Request[v1.SearchRepositoriesRequest]) (*connect_go.Response[v1.SearchRepositoriesResponse], error)
+	// ListSuggestedRepositories allows clients to list suggested repositories
+	// based on recent workspaces and accessible repo configurations.
 	ListSuggestedRepositories(context.Context, *connect_go.Request[v1.ListSuggestedRepositoriesRequest]) (*connect_go.Response[v1.ListSuggestedRepositoriesResponse], error)
 }
 
@@ -100,9 +108,17 @@ func (c *sCMServiceClient) ListSuggestedRepositories(ctx context.Context, req *c
 
 // SCMServiceHandler is an implementation of the gitpod.v1.SCMService service.
 type SCMServiceHandler interface {
+	// SearchSCMTokens allows clients to retrieve SCM tokens based on the
+	// specified host.
 	SearchSCMTokens(context.Context, *connect_go.Request[v1.SearchSCMTokensRequest]) (*connect_go.Response[v1.SearchSCMTokensResponse], error)
+	// GuessTokenScopes allows clients to retrieve scopes their SCM token would
+	// require for the specified git command.
 	GuessTokenScopes(context.Context, *connect_go.Request[v1.GuessTokenScopesRequest]) (*connect_go.Response[v1.GuessTokenScopesResponse], error)
+	// SearchRepositories allows clients to search for suggested repositories of
+	// SCM providers they are connected with.
 	SearchRepositories(context.Context, *connect_go.Request[v1.SearchRepositoriesRequest]) (*connect_go.Response[v1.SearchRepositoriesResponse], error)
+	// ListSuggestedRepositories allows clients to list suggested repositories
+	// based on recent workspaces and accessible repo configurations.
 	ListSuggestedRepositories(context.Context, *connect_go.Request[v1.ListSuggestedRepositoriesRequest]) (*connect_go.Response[v1.ListSuggestedRepositoriesResponse], error)
 }
 
