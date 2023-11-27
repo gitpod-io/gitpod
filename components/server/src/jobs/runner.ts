@@ -89,7 +89,7 @@ export class JobRunner {
                     subjectId: SYSTEM_USER,
                 };
                 await runWithRequestContext(ctx, async () => {
-                    log.info(`Acquired lock for job ${job.name}.`, logCtx);
+                    log.debug(`Acquired lock for job ${job.name}.`, logCtx);
                     // we want to hold the lock for the entire duration of the job, so we return earliest after frequencyMs
                     const timeout = new Promise<void>((resolve) => setTimeout(resolve, job.frequencyMs));
                     const timer = jobsDurationSeconds.startTimer({ name: job.name });
@@ -97,7 +97,7 @@ export class JobRunner {
                     const now = new Date().getTime();
                     try {
                         await job.run();
-                        log.info(`Successfully finished job ${job.name}`, {
+                        log.debug(`Successfully finished job ${job.name}`, {
                             ...logCtx,
                             jobTookSec: `${(new Date().getTime() - now) / 1000}s`,
                         });
