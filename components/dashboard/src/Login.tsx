@@ -5,8 +5,7 @@
  */
 
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
-import { useContext, useEffect, useState, useMemo, useCallback, FC } from "react";
-import { UserContext } from "./user-context";
+import { useEffect, useState, useMemo, useCallback, FC } from "react";
 import { getGitpodService } from "./service/service";
 import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName } from "./provider-utils";
 import gitpod from "./images/gitpod.svg";
@@ -23,6 +22,7 @@ import { useNeedsSetup } from "./dedicated-setup/use-needs-setup";
 import { AuthProviderDescription } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { Button, ButtonProps } from "@podkit/buttons/Button";
 import { cn } from "@podkit/lib/cn";
+import { useAuthenticatedUser } from "./data/current-user/authenticated-user-query";
 
 export function markLoggedIn() {
     document.cookie = GitpodCookie.generateCookie(window.location.hostname);
@@ -36,7 +36,7 @@ type LoginProps = {
     onLoggedIn?: () => void;
 };
 export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
-    const { setUser } = useContext(UserContext);
+    const { refetch: reloadUser } = useAuthenticatedUser();
 
     const urlHash = useMemo(() => getURLHash(), []);
 
@@ -67,10 +67,9 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
 
     const updateUser = useCallback(async () => {
         await getGitpodService().reconnect();
-        const user = await getGitpodService().server.getLoggedInUser();
-        setUser(user);
+        reloadUser();
         markLoggedIn();
-    }, [setUser]);
+    }, [reloadUser]);
 
     const authorizeSuccessful = useCallback(async () => {
         updateUser().catch(console.error);

@@ -6,12 +6,11 @@
 
 import { FC, lazy } from "react";
 import { useShowDedicatedSetup } from "../dedicated-setup/use-show-dedicated-setup";
-import { useCurrentUser } from "../user-context";
-import { MigrationPage, useShouldSeeMigrationPage } from "../whatsnew/MigrationPage";
 import { useShowUserOnboarding } from "../onboarding/use-show-user-onboarding";
 import { useHistory } from "react-router";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { OrgNamingStep } from "../dedicated-setup/OrgNamingStep";
+import { useAuthenticatedUser } from "../data/current-user/authenticated-user-query";
 
 const UserOnboarding = lazy(() => import(/* webpackPrefetch: true */ "../onboarding/UserOnboarding"));
 const DedicatedSetup = lazy(() => import(/* webpackPrefetch: true */ "../dedicated-setup/DedicatedSetup"));
@@ -20,20 +19,14 @@ const DedicatedSetup = lazy(() => import(/* webpackPrefetch: true */ "../dedicat
 // Since this runs before the app is rendered, we should avoid adding any lengthy async calls that would delay the app from loading.
 export const AppBlockingFlows: FC = ({ children }) => {
     const history = useHistory();
-    const user = useCurrentUser();
+    const { data: user } = useAuthenticatedUser();
     const org = useCurrentOrg();
-    const shouldSeeMigrationPage = useShouldSeeMigrationPage();
     const showDedicatedSetup = useShowDedicatedSetup();
     const showUserOnboarding = useShowUserOnboarding();
 
     // This shouldn't happen, but if it does don't render anything yet
     if (!user) {
         return <></>;
-    }
-
-    // If orgOnlyAttribution is enabled and the user hasn't been migrated, yet, we need to show the migration page
-    if (shouldSeeMigrationPage) {
-        return <MigrationPage />;
     }
 
     // Handle dedicated setup if necessary
@@ -52,7 +45,7 @@ export const AppBlockingFlows: FC = ({ children }) => {
     }
 
     // New user onboarding flow
-    if (showUserOnboarding) {
+    if (showUserOnboarding && user) {
         return <UserOnboarding user={user} />;
     }
 

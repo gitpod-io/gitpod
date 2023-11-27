@@ -4,9 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useState } from "react";
 import { getGitpodService } from "../service/service";
-import { UserContext } from "../user-context";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { ThemeSelector } from "../components/ThemeSelector";
 import { Link } from "react-router-dom";
@@ -16,20 +15,28 @@ import SelectIDE from "./SelectIDE";
 import { InputField } from "../components/forms/InputField";
 import { TextInput } from "../components/forms/TextInputField";
 import { useToast } from "../components/toasts/Toasts";
-import { useUpdateCurrentUserDotfileRepoMutation } from "../data/current-user/update-mutation";
-import { AdditionalUserData } from "@gitpod/gitpod-protocol";
+import {
+    useUpdateCurrentUserDotfileRepoMutation,
+    useUpdateCurrentUserMutation,
+} from "../data/current-user/update-mutation";
 import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
+import { useAuthenticatedUser } from "../data/current-user/authenticated-user-query";
+import { converter } from "../service/public-api";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 
 export default function Preferences() {
     const { toast } = useToast();
-    const { user, setUser } = useContext(UserContext);
+    const { data: user, refetch: reloadUser } = useAuthenticatedUser();
+    const updateUser = useUpdateCurrentUserMutation();
     const billingMode = useOrgBillingMode();
     const updateDotfileRepo = useUpdateCurrentUserDotfileRepoMutation();
 
-    const [dotfileRepo, setDotfileRepo] = useState<string>(user?.additionalData?.dotfileRepo || "");
-    const [workspaceTimeout, setWorkspaceTimeout] = useState<string>(user?.additionalData?.workspaceTimeout ?? "");
+    const [dotfileRepo, setDotfileRepo] = useState<string>(user?.dotfileRepo || "");
+
+    const [workspaceTimeout, setWorkspaceTimeout] = useState<string>(
+        converter.fromDuration(user?.workspaceTimeoutSettings?.inactivity),
+    );
     const [timeoutUpdating, setTimeoutUpdating] = useState(false);
     const [creationError, setCreationError] = useState<Error>();
 
@@ -37,11 +44,11 @@ export default function Preferences() {
         async (e) => {
             e.preventDefault();
 
-            const updatedUser = await updateDotfileRepo.mutateAsync(dotfileRepo);
-            setUser(updatedUser);
+            await updateDotfileRepo.mutateAsync(dotfileRepo);
+            await reloadUser();
             toast("Your dotfiles repository was updated.");
         },
-        [updateDotfileRepo, dotfileRepo, setUser, toast],
+        [updateDotfileRepo, dotfileRepo, reloadUser, toast],
     );
 
     const saveWorkspaceTimeout = useCallback(
@@ -54,8 +61,7 @@ export default function Preferences() {
                 await getGitpodService().server.updateWorkspaceTimeoutSetting({ workspaceTimeout: workspaceTimeout });
 
                 // TODO: Once current user is in react-query, we can instead invalidate the query vs. refetching here
-                const updatedUser = await getGitpodService().server.getLoggedInUser();
-                setUser(updatedUser);
+                await reloadUser();
 
                 let toastMessage = <>Default workspace timeout was updated.</>;
                 if (billingMode.data?.mode === "usage-based") {
@@ -80,18 +86,21 @@ export default function Preferences() {
                 setTimeoutUpdating(false);
             }
         },
-        [toast, setUser, workspaceTimeout, billingMode],
+        [toast, reloadUser, workspaceTimeout, billingMode],
     );
 
     const clearCreateWorkspaceOptions = useCallback(async () => {
         if (!user) {
             return;
         }
-        AdditionalUserData.set(user, { workspaceAutostartOptions: [] });
-        setUser(user);
-        await getGitpodService().server.updateLoggedInUser(user);
+        await updateUser.mutateAsync({
+            additionalData: {
+                workspaceAutostartOptions: [],
+            },
+        });
+        await reloadUser();
         toast("Workspace options have been cleared.");
-    }, [setUser, toast, user]);
+    }, [updateUser, reloadUser, toast, user]);
 
     return (
         <div>
@@ -136,10 +145,7 @@ export default function Preferences() {
                             <Button
                                 htmlType="submit"
                                 loading={updateDotfileRepo.isLoading}
-                                disabled={
-                                    updateDotfileRepo.isLoading ||
-                                    (dotfileRepo === user?.additionalData?.dotfileRepo ?? "")
-                                }
+                                disabled={updateDotfileRepo.isLoading || (dotfileRepo === user?.dotfileRepo ?? "")}
                             >
                                 Save
                             </Button>
@@ -173,7 +179,10 @@ export default function Preferences() {
                                     <Button
                                         htmlType="submit"
                                         loading={timeoutUpdating}
-                                        disabled={workspaceTimeout === user?.additionalData?.workspaceTimeout ?? ""}
+                                        disabled={
+                                            workspaceTimeout ===
+                                                converter.fromDuration(user?.workspaceTimeoutSettings?.inactivity) ?? ""
+                                        }
                                     >
                                         Save
                                     </Button>

@@ -4,35 +4,34 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, useCallback, useContext } from "react";
+import { FC, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
 import { openAuthorizeWindow } from "../provider-utils";
-import { getGitpodService } from "../service/service";
-import { UserContext, useCurrentUser } from "../user-context";
 import { Button } from "./Button";
 import { Heading2, Heading3, Subheading } from "./typography/headings";
 import classNames from "classnames";
 import { iconForAuthProvider, simplifyProviderName } from "../provider-utils";
 import { useIsOwner } from "../data/organizations/members-query";
 import { AuthProviderDescription } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import { useAuthenticatedUser } from "../data/current-user/authenticated-user-query";
 
 export function useNeedsGitAuthorization() {
-    const authProviders = useAuthProviderDescriptions();
-    const user = useCurrentUser();
-    if (!user || !authProviders.data) {
+    const { data: user } = useAuthenticatedUser();
+    const { data: authProviders } = useAuthProviderDescriptions();
+    if (!user || !authProviders) {
         return false;
     }
-    return !authProviders.data.some((ap) => user.identities.some((i) => ap.id === i.authProviderId));
+    return !authProviders.some((ap) => user.identities.some((i) => ap.id === i.authProviderId));
 }
 
 export const AuthorizeGit: FC<{ className?: string }> = ({ className }) => {
-    const { setUser } = useContext(UserContext);
+    const { refetch: reloadUser } = useAuthenticatedUser();
     const owner = useIsOwner();
     const { data: authProviders } = useAuthProviderDescriptions();
-    const updateUser = useCallback(() => {
-        getGitpodService().server.getLoggedInUser().then(setUser);
-    }, [setUser]);
+    const updateUser = useCallback(async () => {
+        await reloadUser();
+    }, [reloadUser]);
 
     const connect = useCallback(
         (ap: AuthProviderDescription) => {

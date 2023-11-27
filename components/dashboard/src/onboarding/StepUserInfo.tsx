@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { LinkedInProfile, User } from "@gitpod/gitpod-protocol";
+import { LinkedInProfile } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useState } from "react";
 import { TextInputField } from "../components/forms/TextInputField";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
@@ -12,6 +12,8 @@ import { useOnBlurError } from "../hooks/use-onblur-error";
 import { OnboardingStep } from "./OnboardingStep";
 import { LinkedInBanner } from "./LinkedInBanner";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
+import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 
 type Props = {
     user: User;
@@ -29,18 +31,13 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
     const [emailAddress, setEmailAddress] = useState("");
 
     const handleSubmit = useCallback(async () => {
-        const additionalData = user.additionalData || {};
-        const profile = additionalData.profile || {};
-
         const updates = {
             // we only split these out currently for form collection, but combine in the db
             fullName: `${firstName} ${lastName}`,
             additionalData: {
-                ...additionalData,
                 profile: {
-                    ...profile,
                     // If still no email provided, default to "primary" email
-                    emailAddress: emailAddress || User.getPrimaryEmail(user),
+                    emailAddress: emailAddress || getPrimaryEmail(user),
                     lastUpdatedDetailsNudge: new Date().toISOString(),
                 },
             },
@@ -92,7 +89,7 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
         >
             {user.avatarUrl && (
                 <div className="my-4 flex justify-center">
-                    <img className="rounded-full w-24 h-24" src={user.avatarUrl} alt={user.fullName || user.name} />
+                    <img className="rounded-full w-24 h-24" src={user.avatarUrl} alt={user.name} />
                 </div>
             )}
 
@@ -137,7 +134,7 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
 
 // Intentionally not using User.getName() here to avoid relying on identity.authName (likely not user's real name)
 const getInitialNameParts = (user: User) => {
-    const name = user.fullName || user.name || "";
+    const name = user.name || "";
     let first = name;
     let last = "";
 

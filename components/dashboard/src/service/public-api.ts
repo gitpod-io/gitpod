@@ -8,7 +8,7 @@ import { PartialMessage } from "@bufbuild/protobuf";
 import { MethodKind, ServiceType } from "@bufbuild/protobuf";
 import { CallOptions, Code, ConnectError, PromiseClient, createPromiseClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
-import { Disposable, User } from "@gitpod/gitpod-protocol";
+import { Disposable } from "@gitpod/gitpod-protocol";
 import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
 import { Project as ProtocolProject } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connect";
@@ -35,11 +35,14 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 import { JsonRpcScmClient } from "./json-rpc-scm-client";
 import { SCMService } from "@gitpod/public-api/lib/gitpod/v1/scm_connect";
 import { SSHService } from "@gitpod/public-api/lib/gitpod/v1/ssh_connect";
+import { UserService } from "@gitpod/public-api/lib/gitpod/v1/user_connect";
 import { JsonRpcSSHClient } from "./json-rpc-ssh-client";
 import { JsonRpcVerificationClient } from "./json-rpc-verification-client";
 import { VerificationService } from "@gitpod/public-api/lib/gitpod/v1/verification_connect";
 import { JsonRpcInstallationClient } from "./json-rpc-installation-client";
 import { InstallationService } from "@gitpod/public-api/lib/gitpod/v1/installation_connect";
+import { JsonRpcUserClient } from "./json-rpc-user-client";
+import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
@@ -89,6 +92,11 @@ export const scmClient = createServiceClient(SCMService, {
 export const envVarClient = createServiceClient(EnvironmentVariableService, {
     client: new JsonRpcEnvvarClient(),
     featureFlagSuffix: "envvar",
+});
+
+export const userClient = createServiceClient(UserService, {
+    client: new JsonRpcUserClient(),
+    featureFlagSuffix: "user",
 });
 
 export const sshClient = createServiceClient(SSHService, {
@@ -183,7 +191,7 @@ function createServiceClient<T extends ServiceType>(
                 const resolvedFlags = await Promise.all(
                     featureFlags.map((ff) =>
                         experimentsClient.getValueAsync(ff, false, {
-                            user,
+                            user: { id: user?.id || "" },
                             gitpodHost: window.location.host,
                         }),
                     ),

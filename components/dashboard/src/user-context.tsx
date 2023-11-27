@@ -4,11 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/gitpod-protocol";
 import { useQueryClient } from "@tanstack/react-query";
-import React, { createContext, useState, useContext, useMemo, useCallback } from "react";
+import React, { createContext, useState, useMemo, useCallback } from "react";
 import { updateCommonErrorDetails } from "./service/metrics";
 import { updateUser } from "./service/public-api";
+import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 
 const UserContext = createContext<{
     user?: User;
@@ -17,6 +17,7 @@ const UserContext = createContext<{
     setUser: () => null,
 });
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const UserContextProvider: React.FC = ({ children }) => {
     const [user, setUser] = useState<User>();
 
@@ -66,9 +67,9 @@ const UserContextProvider: React.FC = ({ children }) => {
     return <UserContext.Provider value={ctxValue}>{children}</UserContext.Provider>;
 };
 
-export { UserContext, UserContextProvider };
+// export { UserContext, UserContextProvider };
 
-export const useCurrentUser = () => {
-    const { user } = useContext(UserContext);
-    return user;
-};
+// export const useCurrentUser = () => {
+//     const { user } = useContext(UserContext);
+//     return user;
+// };

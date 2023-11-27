@@ -4,17 +4,16 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useContext } from "react";
-import { UserContext } from "../user-context";
-import { getGitpodService } from "../service/service";
 import { trackLocation } from "../Analytics";
 import { useQuery } from "@tanstack/react-query";
 import { noPersistence } from "../data/setup";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { userClient } from "../service/public-api";
+import { useAuthenticatedUser } from "../data/current-user/authenticated-user-query";
 
 export const useUserLoader = () => {
-    const { user, setUser } = useContext(UserContext);
+    const { data: user, refetch: reloadUser } = useAuthenticatedUser();
     const doRetryUserLoader = useFeatureFlag("doRetryUserLoader");
 
     // For now, we're using the user context to store the user, but letting react-query handle the loading
@@ -22,7 +21,7 @@ export const useUserLoader = () => {
     const { isLoading } = useQuery({
         queryKey: noPersistence(["current-user"]),
         queryFn: async () => {
-            const user = await getGitpodService().server.getLoggedInUser();
+            const user = (await userClient.getAuthenticatedUser({})).user;
 
             return user || null;
         },
@@ -41,7 +40,9 @@ export const useUserLoader = () => {
         cacheTime: 1000 * 60 * 60 * 1, // 1 hour
         staleTime: 1000 * 60 * 60 * 1, // 1 hour
         onSuccess: (loadedUser) => {
-            setUser(loadedUser);
+            if (loadedUser) {
+                reloadUser();
+            }
         },
         onSettled: (loadedUser) => {
             trackLocation(!!loadedUser);

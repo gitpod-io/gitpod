@@ -4,11 +4,10 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/gitpod-protocol";
 import { getScopesForAuthProviderType } from "@gitpod/public-api-common/lib/auth-providers";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { useQuery } from "@tanstack/react-query";
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Alert from "../components/Alert";
 import { CheckboxInputField, CheckboxListField } from "../components/forms/CheckboxInputField";
 import ConfirmationModal from "../components/ConfirmationModal";
@@ -21,8 +20,7 @@ import { Heading2, Subheading } from "../components/typography/headings";
 import copy from "../images/copy.svg";
 import exclamation from "../images/exclamation.svg";
 import { openAuthorizeWindow, toAuthProviderLabel } from "../provider-utils";
-import { getGitpodService, gitpodHostUrl } from "../service/service";
-import { UserContext } from "../user-context";
+import { gitpodHostUrl } from "../service/service";
 import { AuthEntryItem } from "./AuthEntryItem";
 import { IntegrationEntryItem } from "./IntegrationItemEntry";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
@@ -41,6 +39,8 @@ import { useCreateUserAuthProviderMutation } from "../data/auth-providers/create
 import { useUpdateUserAuthProviderMutation } from "../data/auth-providers/update-user-auth-provider-mutation";
 import { useDeleteUserAuthProviderMutation } from "../data/auth-providers/delete-user-auth-provider-mutation";
 import { Button } from "@podkit/buttons/Button";
+import { useAuthenticatedUser } from "../data/current-user/authenticated-user-query";
+import { isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
 
 export default function Integrations() {
     return (
@@ -55,7 +55,7 @@ export default function Integrations() {
 }
 
 function GitProviders() {
-    const { user, setUser } = useContext(UserContext);
+    const { data: user, refetch: reloadUser } = useAuthenticatedUser();
 
     const authProviders = useAuthProviderDescriptions();
     const [allScopes, setAllScopes] = useState<Map<string, string[]>>(new Map());
@@ -124,7 +124,7 @@ function GitProviders() {
                 });
             }
             const canDisconnect =
-                (user && User.isOrganizationOwned(user)) ||
+                (user && isOrganizationOwned(user)) ||
                 authProviders.data?.some((p) => p.id !== provider.id && isConnected(p.id));
             if (canDisconnect) {
                 result.push({
@@ -172,7 +172,7 @@ function GitProviders() {
                 }
                 return res;
             })
-            .then((response) => updateUser())
+            .then((response) => reloadUser())
             .catch((error) =>
                 setErrorMessage(
                     "You cannot disconnect this integration because it is required for authentication and logging in with this account.",
@@ -189,18 +189,13 @@ function GitProviders() {
         }
     };
 
-    const updateUser = async () => {
-        const user = await getGitpodService().server.getLoggedInUser();
-        setUser(user);
-    };
-
     const doAuthorize = async (host: string, scopes?: string[]) => {
         try {
             await openAuthorizeWindow({
                 host,
                 scopes,
                 overrideScopes: true,
-                onSuccess: () => updateUser(),
+                onSuccess: () => reloadUser(),
                 onError: (error) => {
                     if (typeof error === "string") {
                         try {
@@ -378,7 +373,7 @@ function GitProviders() {
 }
 
 function GitIntegrations() {
-    const { user } = useContext(UserContext);
+    const { data: user } = useAuthenticatedUser();
     const userGitAuthProviders = useFeatureFlag("userGitAuthProviders");
 
     const deleteUserAuthProvider = useDeleteUserAuthProviderMutation();

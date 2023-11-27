@@ -24,13 +24,13 @@ import { useOnBlurError } from "../hooks/use-onblur-error";
 import { ReactComponent as Stack } from "../icons/Stack.svg";
 import { organizationClient } from "../service/public-api";
 import { gitpodHostUrl } from "../service/service";
-import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
 import { ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Button } from "@podkit/buttons/Button";
+import { useAuthenticatedUser } from "../data/current-user/authenticated-user-query";
 
 export default function TeamSettingsPage() {
-    const user = useCurrentUser();
+    const { data: user } = useAuthenticatedUser();
     const org = useCurrentOrg().data;
     const isOwner = useIsOwner();
     const invalidateOrgs = useOrganizationsInvalidator();

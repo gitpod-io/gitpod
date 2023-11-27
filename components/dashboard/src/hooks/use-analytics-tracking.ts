@@ -9,11 +9,11 @@ import { useHistory } from "react-router";
 import { trackButtonOrAnchor, trackPathChange } from "../Analytics";
 import { useTheme } from "../theme-context";
 import { useOrbital } from "./use-orbital";
-import { useCurrentUser } from "../user-context";
+import { useAuthenticatedUser } from "../data/current-user/authenticated-user-query";
 
 export const useAnalyticsTracking = () => {
     const history = useHistory();
-    const user = useCurrentUser();
+    const { data: user } = useAuthenticatedUser();
     const { isDark } = useTheme();
 
     const { orbital, isLoaded: isOrbitalLoaded, discoveryIds } = useOrbital("4aErj3uvRbye");
@@ -59,7 +59,7 @@ export const useAnalyticsTracking = () => {
     }, []);
 
     useEffect(() => {
-        if (!user || !user.additionalData?.profile?.onboardedTimestamp || !isOrbitalLoaded) {
+        if (!user || !user.profile?.onboardedTimestamp || !isOrbitalLoaded) {
             return;
         }
 

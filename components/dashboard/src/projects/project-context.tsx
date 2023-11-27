@@ -9,8 +9,8 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import { useHistory, useLocation, useRouteMatch } from "react-router";
 import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
 import { listAllProjects } from "../service/public-api";
-import { useCurrentUser } from "../user-context";
 import { useListAllProjectsQuery } from "../data/projects/list-all-projects-query";
+import { useAuthenticatedUser } from "../data/current-user/authenticated-user-query";
 
 export const ProjectContext = createContext<{
     project?: Project;
@@ -30,7 +30,7 @@ export const ProjectContextProvider: React.FC = ({ children }) => {
 export function useCurrentProject(): { project: Project | undefined; loading: boolean } {
     const { project, setProject } = useContext(ProjectContext);
     const [loading, setLoading] = useState(true);
-    const user = useCurrentUser();
+    const { data: user } = useAuthenticatedUser();
     const org = useCurrentOrg();
     const orgs = useOrganizations();
     const projectIdFromRoute = useRouteMatch<{ projectId?: string }>("/projects/:projectId")?.params?.projectId;

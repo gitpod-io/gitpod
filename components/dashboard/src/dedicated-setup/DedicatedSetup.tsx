@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, useCallback, useContext, useMemo, useState } from "react";
+import { FC, useCallback, useMemo, useState } from "react";
 import { GettingStartedStep } from "./GettingStartedStep";
 import { OrgNamingStep } from "./OrgNamingStep";
 import { SSOSetupStep } from "./SSOSetupStep";
@@ -14,13 +14,13 @@ import { useOIDCClientsQuery } from "../data/oidc-clients/oidc-clients-query";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { SpinnerLoader } from "../components/Loader";
 import { getGitpodService } from "../service/service";
-import { UserContext } from "../user-context";
 import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
 import { useQueryParams } from "../hooks/use-query-params";
 import { useDocumentTitle } from "../hooks/use-document-title";
 import { forceDedicatedSetupParam } from "./use-show-dedicated-setup";
 import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { Delayed } from "@podkit/loading/Delayed";
+import { useAuthenticatedUser } from "../data/current-user/authenticated-user-query";
 
 type Props = {
     onComplete: () => void;
@@ -73,7 +73,7 @@ type DedicatedSetupStepsProps = {
     onComplete: () => void;
 };
 const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, ssoConfig, onComplete }) => {
-    const { setUser } = useContext(UserContext);
+    const { refetch: reloadUser } = useAuthenticatedUser();
     const params = useQueryParams();
 
     // If we have an org w/ a name, we can skip the first step and go to sso setup
@@ -97,9 +97,8 @@ const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, ssoConfig, onC
 
     const updateUser = useCallback(async () => {
         await getGitpodService().reconnect();
-        const user = await getGitpodService().server.getLoggedInUser();
-        setUser(user);
-    }, [setUser]);
+        await reloadUser();
+    }, [reloadUser]);
 
     const handleEndSetup = useCallback(async () => {
         await updateUser();

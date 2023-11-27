@@ -6,14 +6,14 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { authProviderClient } from "../../service/public-api";
-import { useCurrentUser } from "../../user-context";
 import {
     AuthProviderDescription,
     ListAuthProviderDescriptionsRequest,
 } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import { useAuthenticatedUser } from "../current-user/authenticated-user-query";
 
 export const useAuthProviderDescriptions = () => {
-    const user = useCurrentUser();
+    const { data: user } = useAuthenticatedUser();
     const query = useQuery<AuthProviderDescription[]>({
         queryKey: getAuthProviderDescriptionsQueryKey(),
         queryFn: async () => {

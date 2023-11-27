@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Timestamp, toPlainMessage } from "@bufbuild/protobuf";
+import { Timestamp, toPlainMessage, Duration } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@connectrpc/connect";
 import {
     FailedPreconditionDetails,
@@ -25,6 +25,15 @@ import {
     AuthProviderType,
     OAuth2Config,
 } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import {
+    Identity,
+    User,
+    User_EmailNotificationSettings,
+    User_RoleOrPermission,
+    User_UserFeatureFlag,
+    User_WorkspaceAutostartOption,
+    User_WorkspaceTimeoutSettings,
+} from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import {
     BranchMatchingStrategy,
     Configuration,
@@ -79,6 +88,8 @@ import {
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { InvalidGitpodYMLError, RepositoryNotFoundError, UnauthorizedRepositoryAccessError } from "./public-api-errors";
 import {
+    User as UserProtocol,
+    Identity as IdentityProtocol,
     AuthProviderEntry as AuthProviderProtocol,
     AuthProviderInfo,
     CommitContext,
@@ -97,6 +108,9 @@ import {
     UserSSHPublicKeyValue,
     SnapshotContext,
     EmailDomainFilterEntry,
+    NamedWorkspaceFeatureFlag,
+    WorkspaceAutostartOption,
+    IDESettings,
 } from "@gitpod/gitpod-protocol/lib/protocol";
 import {
     OrgMemberInfo,
@@ -114,10 +128,12 @@ import {
     WorkspaceInstance,
     WorkspaceInstanceConditions,
     WorkspaceInstancePort,
-} from "@gitpod/gitpod-protocol/lib//workspace-instance";
+} from "@gitpod/gitpod-protocol/lib/workspace-instance";
 import { Author, Commit } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import type { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 import { BlockedRepository as ProtocolBlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
+import { RoleOrPermission } from "@gitpod/gitpod-protocol/lib/permission";
+import { parseGoDurationToMs } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 
 export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
 
@@ -1025,5 +1041,180 @@ export class PublicAPIConverter {
         result.creationTime = Timestamp.fromDate(new Date(sshKey.creationTime));
         result.lastUsedTime = Timestamp.fromDate(new Date(sshKey.lastUsedTime || sshKey.creationTime));
         return result;
+    }
+
+    toUser(from: UserProtocol): User {
+        const {
+            id,
+            name,
+            fullName,
+            creationDate,
+            identities,
+            additionalData,
+            avatarUrl,
+            featureFlags,
+            organizationId,
+            rolesOrPermissions,
+            usageAttributionId,
+            blocked,
+            lastVerificationTime,
+            verificationPhoneNumber,
+        } = from;
+        const {
+            disabledClosedTimeout,
+            dotfileRepo,
+            emailNotificationSettings,
+            ideSettings,
+            profile,
+            workspaceAutostartOptions,
+            workspaceClasses,
+            workspaceTimeout,
+        } = additionalData || {};
+
+        return new User({
+            id,
+            name: fullName || name,
+            createdAt: this.toTimestamp(creationDate),
+            avatarUrl,
+            organizationId,
+            usageAttributionId,
+            blocked,
+            identities: identities?.map((i) => this.toIdentity(i)),
+            rolesOrPermissions: rolesOrPermissions?.map((rp) => this.toRoleOrPermission(rp)),
+            workspaceFeatureFlags: featureFlags?.permanentWSFeatureFlags?.map((ff) => this.toUserFeatureFlags(ff)),
+            workspaceTimeoutSettings: new User_WorkspaceTimeoutSettings({
+                inactivity: this.toDuration(workspaceTimeout),
+                disabledDisconnected: disabledClosedTimeout,
+            }),
+            dotfileRepo,
+            emailNotificationSettings: new User_EmailNotificationSettings({
+                allowsChangelogMail: emailNotificationSettings?.allowsChangelogMail,
+                allowsDevxMail: emailNotificationSettings?.allowsDevXMail,
+                allowsOnboardingMail: emailNotificationSettings?.allowsOnboardingMail,
+            }),
+            editorSettings: this.toEditorReference(ideSettings),
+            lastVerificationTime: this.toTimestamp(lastVerificationTime),
+            verificationPhoneNumber,
+            workspaceClass: workspaceClasses?.regular,
+            workspaceAutostartOptions: workspaceAutostartOptions?.map((o) => this.toWorkspaceAutostartOption(o)),
+            profile,
+        });
+    }
+
+    toDuration(from?: string): Duration | undefined {
+        if (!from) {
+            return undefined;
+        }
+        const millis = parseGoDurationToMs(from);
+        const seconds = BigInt(Math.floor(millis / 1000));
+        const nanos = (millis % 1000) * 1000000;
+        return new Duration({
+            seconds,
+            nanos,
+        });
+    }
+
+    fromDuration(d?: Duration) {
+        if (!d) {
+            return "";
+        }
+        return String(d.seconds);
+    }
+
+    toTimestamp(from?: string | undefined): Timestamp | undefined {
+        return from ? Timestamp.fromDate(new Date(from)) : undefined;
+    }
+
+    toIdentity(from: IdentityProtocol): Identity {
+        const { authId, authName, authProviderId, lastSigninTime, primaryEmail } = from;
+        return new Identity({
+            authProviderId,
+            authId,
+            authName,
+            lastSigninTime: this.toTimestamp(lastSigninTime),
+            primaryEmail,
+        });
+    }
+
+    toRoleOrPermission(from: RoleOrPermission): User_RoleOrPermission {
+        switch (from) {
+            case "admin":
+                return User_RoleOrPermission.ADMIN;
+            case "devops":
+                return User_RoleOrPermission.DEVOPS;
+            case "viewer":
+                return User_RoleOrPermission.VIEWER;
+            case "developer":
+                return User_RoleOrPermission.DEVELOPER;
+            case "registry-access":
+                return User_RoleOrPermission.REGISTRY_ACCESS;
+            case "admin-permissions":
+                return User_RoleOrPermission.ADMIN_PERMISSIONS;
+            case "admin-users":
+                return User_RoleOrPermission.ADMIN_USERS;
+            case "admin-workspace-content":
+                return User_RoleOrPermission.ADMIN_WORKSPACE_CONTENT;
+            case "admin-workspaces":
+                return User_RoleOrPermission.ADMIN_WORKSPACES;
+            case "admin-projects":
+                return User_RoleOrPermission.ADMIN_PROJECTS;
+            case "new-workspace-cluster":
+                return User_RoleOrPermission.NEW_WORKSPACE_CLUSTER;
+        }
+        return User_RoleOrPermission.UNSPECIFIED;
+    }
+
+    toUserFeatureFlags(from: NamedWorkspaceFeatureFlag): User_UserFeatureFlag {
+        switch (from) {
+            case "full_workspace_backup":
+                return User_UserFeatureFlag.FULL_WORKSPACE_BACKUP;
+            case "workspace_class_limiting":
+                return User_UserFeatureFlag.WORKSPACE_CLASS_LIMITING;
+            case "workspace_connection_limiting":
+                return User_UserFeatureFlag.WORKSPACE_CONNECTION_LIMITING;
+            case "workspace_psi":
+                return User_UserFeatureFlag.WORKSPACE_PSI;
+        }
+        return User_UserFeatureFlag.UNSPECIFIED;
+    }
+
+    toEditorReference(from?: IDESettings): EditorReference | undefined {
+        if (!from) {
+            return undefined;
+        }
+        return new EditorReference({
+            name: from.defaultIde,
+            version: from.useLatestVersion ? "latest" : "stable",
+        });
+    }
+
+    fromEditorReference(e?: EditorReference): IDESettings | undefined {
+        if (!e) {
+            return undefined;
+        }
+        return <IDESettings>{
+            defaultIde: e.name,
+            useLatestVersion: e.version === "latest",
+        };
+    }
+
+    toWorkspaceAutostartOption(from: WorkspaceAutostartOption): User_WorkspaceAutostartOption {
+        return new User_WorkspaceAutostartOption({
+            cloneUrl: from.cloneURL,
+            editorSettings: this.toEditorReference(from.ideSettings),
+            organizationId: from.organizationId,
+            region: from.region,
+            workspaceClass: from.workspaceClass,
+        });
+    }
+
+    fromWorkspaceAutostartOption(o: User_WorkspaceAutostartOption): WorkspaceAutostartOption {
+        return <WorkspaceAutostartOption>{
+            cloneURL: o.cloneUrl,
+            editorSettings: this.fromEditorReference(o.editorSettings),
+            organizationId: o.organizationId,
+            region: o.region,
+            workspaceClass: o.workspaceClass,
+        };
     }
 }

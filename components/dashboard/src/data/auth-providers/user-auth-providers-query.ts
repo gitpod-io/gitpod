@@ -7,11 +7,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { authProviderClient } from "../../service/public-api";
 import { AuthProvider, ListAuthProvidersRequest } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
-import { useCurrentUser } from "../../user-context";
+import { useAuthenticatedUser } from "../current-user/authenticated-user-query";
 
 export type OrgAuthProvidersQueryResult = AuthProvider[];
 export const useOrgAuthProvidersQuery = () => {
-    const user = useCurrentUser();
+    const { data: user } = useAuthenticatedUser();
 
     return useQuery<OrgAuthProvidersQueryResult>({
         queryKey: getUserAuthProvidersQueryKey(user?.id ?? ""),

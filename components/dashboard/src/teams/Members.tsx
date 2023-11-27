@@ -15,7 +15,6 @@ import Tooltip from "../components/Tooltip";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import searchIcon from "../icons/search.svg";
 import { organizationClient } from "../service/public-api";
-import { useCurrentUser } from "../user-context";
 import { SpinnerLoader } from "../components/Loader";
 import { InputField } from "../components/forms/InputField";
 import { InputWithCopy } from "../components/InputWithCopy";
@@ -24,9 +23,10 @@ import { useListOrganizationMembers, useOrganizationMembersInvalidator } from ".
 import { useInvitationId, useInviteInvalidator } from "../data/organizations/invite-query";
 import { Delayed } from "@podkit/loading/Delayed";
 import { Button } from "@podkit/buttons/Button";
+import { useAuthenticatedUser } from "../data/current-user/authenticated-user-query";
 
 export default function MembersPage() {
-    const user = useCurrentUser();
+    const { data: user } = useAuthenticatedUser();
     const org = useCurrentOrg();
     const membersQuery = useListOrganizationMembers();
     const members: OrganizationMember[] = useMemo(() => membersQuery.data || [], [membersQuery.data]);

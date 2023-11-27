@@ -4,17 +4,17 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/gitpod-protocol";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useLocation } from "react-router";
 import { organizationClient } from "../../service/public-api";
-import { useCurrentUser } from "../../user-context";
 import { noPersistence } from "../setup";
 import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import { useAuthenticatedUser } from "../current-user/authenticated-user-query";
+import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 
 export function useOrganizationsInvalidator() {
-    const user = useCurrentUser();
+    const { data: user } = useAuthenticatedUser();
     const queryClient = useQueryClient();
     return useCallback(() => {
         console.log("Invalidating orgs... " + JSON.stringify(getQueryKey(user)));
@@ -23,7 +23,7 @@ export function useOrganizationsInvalidator() {
 }
 
 export function useOrganizations() {
-    const user = useCurrentUser();
+    const { data: user } = useAuthenticatedUser();
     const query = useQuery<Organization[], Error>(
         getQueryKey(user),
         async () => {
@@ -55,7 +55,7 @@ function getQueryKey(user?: User) {
 export function useCurrentOrg(): { data?: Organization; isLoading: boolean } {
     const location = useLocation();
     const orgs = useOrganizations();
-    const user = useCurrentUser();
+    const user = useAuthenticatedUser();
 
     if (orgs.isLoading || !orgs.data || !user) {
         return { data: undefined, isLoading: true };

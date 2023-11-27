@@ -4,10 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/gitpod-protocol";
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useState } from "react";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
-import { UserContext } from "../user-context";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { Button } from "../components/Button";
@@ -18,19 +16,25 @@ import isEmail from "validator/lib/isEmail";
 import { useToast } from "../components/toasts/Toasts";
 import { InputWithCopy } from "../components/InputWithCopy";
 import { InputField } from "../components/forms/InputField";
+import { useAuthenticatedUser } from "../data/current-user/authenticated-user-query";
+import { getPrimaryEmail, getProfile, isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
+import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
+import { User as UserProtocol } from "@gitpod/gitpod-protocol";
+import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 
 export default function Account() {
-    const { user, setUser } = useContext(UserContext);
+    const { data: user, refetch: reloadUser } = useAuthenticatedUser();
     const [modal, setModal] = useState(false);
     const [typedEmail, setTypedEmail] = useState("");
-    const original = User.getProfile(user!);
+    const original = getProfile(user!);
     const [profileState, setProfileState] = useState(original);
     const [errorMessage, setErrorMessage] = useState("");
-    const canUpdateEmail = user && !User.isOrganizationOwned(user);
+    const canUpdateEmail = user && !isOrganizationOwned(user);
     const { toast } = useToast();
+    const updateUser = useUpdateCurrentUserMutation();
 
-    const saveProfileState = useCallback(() => {
-        if (!user) {
+    const saveProfileState = useCallback(async () => {
+        if (!user || !profileState) {
             return;
         }
 
@@ -49,14 +53,17 @@ export default function Account() {
                 return;
             }
         } else {
-            profileState.email = User.getPrimaryEmail(user) || "";
+            profileState.email = getPrimaryEmail(user) || "";
         }
 
-        const updatedUser = User.setProfile(user, profileState);
-        setUser(updatedUser);
-        getGitpodService().server.updateLoggedInUser(updatedUser);
+        await updateUser.mutateAsync({
+            additionalData: {
+                profile: profileState,
+            },
+        });
+        reloadUser();
         toast("Your profile information has been updated.");
-    }, [canUpdateEmail, profileState, setUser, toast, user]);
+    }, [updateUser, canUpdateEmail, profileState, reloadUser, toast, user]);
 
     const deleteAccount = useCallback(async () => {
         await getGitpodService().server.deleteAccount();
@@ -125,8 +132,8 @@ export default function Account() {
 }
 
 function ProfileInformation(props: {
-    profileState: User.Profile;
-    setProfileState: (newState: User.Profile) => void;
+    profileState: UserProtocol.Profile;
+    setProfileState: (newState: UserProtocol.Profile) => void;
     errorMessage: string;
     emailIsReadonly?: boolean;
     user?: User;

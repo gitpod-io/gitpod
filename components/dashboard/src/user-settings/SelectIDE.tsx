@@ -4,13 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useCallback, useContext, useEffect, useState } from "react";
-import { UserContext } from "../user-context";
+import { useCallback, useState } from "react";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
-import { User } from "@gitpod/gitpod-protocol";
 import SelectIDEComponent from "../components/SelectIDEComponent";
 import PillLabel from "../components/PillLabel";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
+import { useAuthenticatedUser } from "../data/current-user/authenticated-user-query";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 interface SelectIDEProps {
@@ -18,40 +17,27 @@ interface SelectIDEProps {
 }
 
 export default function SelectIDE(props: SelectIDEProps) {
-    const { user, setUser } = useContext(UserContext);
+    const { data: user, refetch: reloadUser } = useAuthenticatedUser();
     const updateUser = useUpdateCurrentUserMutation();
 
-    // Only exec once when we access this component
-    useEffect(() => {
-        user && User.migrationIDESettings(user);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    const [defaultIde, setDefaultIde] = useState<string>(user?.additionalData?.ideSettings?.defaultIde || "code");
-    const [useLatestVersion, setUseLatestVersion] = useState<boolean>(
-        user?.additionalData?.ideSettings?.useLatestVersion ?? false,
-    );
+    const [defaultIde, setDefaultIde] = useState<string>(user?.editorSettings?.name || "code");
+    const [useLatestVersion, setUseLatestVersion] = useState<boolean>(user?.editorSettings?.version === "latest");
 
     const actualUpdateUserIDEInfo = useCallback(
         async (selectedIde: string, useLatestVersion: boolean) => {
-            const additionalData = user?.additionalData || {};
-            const ideSettings = additionalData.ideSettings || {};
-
             const updates = {
                 additionalData: {
-                    ...additionalData,
                     ideSettings: {
-                        ...ideSettings,
                         settingVersion: "2.0",
                         defaultIde: selectedIde,
                         useLatestVersion: useLatestVersion,
                     },
                 },
             };
-            const newUserData = await updateUser.mutateAsync(updates);
-            setUser(newUserData);
+            await updateUser.mutateAsync(updates);
+            await reloadUser();
         },
-        [setUser, updateUser, user?.additionalData],
+        [reloadUser, updateUser],
     );
 
     const actuallySetDefaultIde = useCallback(

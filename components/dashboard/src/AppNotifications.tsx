@@ -5,13 +5,14 @@
  */
 
 import dayjs from "dayjs";
-import deepMerge from "deepmerge";
 import { useCallback, useEffect, useState } from "react";
 import Alert, { AlertType } from "./components/Alert";
 import { useUserLoader } from "./hooks/use-user-loader";
-import { getGitpodService } from "./service/service";
 import { isGitpodIo } from "./utils";
 import { trackEvent } from "./Analytics";
+import { useUpdateCurrentUserMutation } from "./data/current-user/update-mutation";
+import { User as UserProtocol } from "@gitpod/gitpod-protocol";
+import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 
 const KEY_APP_DISMISSED_NOTIFICATIONS = "gitpod-app-notifications-dismissed";
 const PRIVACY_POLICY_LAST_UPDATED = "2023-10-17";
@@ -24,59 +25,60 @@ interface Notification {
     onClose?: () => void;
 }
 
-const UPDATED_PRIVACY_POLICY: Notification = {
-    id: "privacy-policy-update",
-    type: "info",
-    preventDismiss: true,
-    onClose: async () => {
-        let dismissSuccess = false;
-        try {
-            const userUpdates = { additionalData: { profile: { acceptedPrivacyPolicyDate: dayjs().toISOString() } } };
-            const previousUser = await getGitpodService().server.getLoggedInUser();
-            const updatedUser = await getGitpodService().server.updateLoggedInUser(
-                deepMerge(previousUser, userUpdates),
-            );
-            dismissSuccess = !!updatedUser;
-        } catch (err) {
-            console.error("Failed to update user's privacy policy acceptance date", err);
-            dismissSuccess = false;
-        } finally {
-            trackEvent("privacy_policy_update_accepted", {
-                path: window.location.pathname,
-                success: dismissSuccess,
-            });
-        }
-    },
-    message: (
-        <span className="text-md">
-            We've updated our Privacy Policy. You can review it{" "}
-            <a className="gp-link" href="https://www.gitpod.io/privacy" target="_blank" rel="noreferrer">
-                here
-            </a>
-            .
-        </span>
-    ),
+const UPDATED_PRIVACY_POLICY = (updateUser: (user: Partial<UserProtocol>) => Promise<User>) => {
+    return {
+        id: "privacy-policy-update",
+        type: "info",
+        preventDismiss: true,
+        onClose: async () => {
+            let dismissSuccess = false;
+            try {
+                const updatedUser = await updateUser({
+                    additionalData: { profile: { acceptedPrivacyPolicyDate: dayjs().toISOString() } },
+                });
+                dismissSuccess = !!updatedUser;
+            } catch (err) {
+                console.error("Failed to update user's privacy policy acceptance date", err);
+                dismissSuccess = false;
+            } finally {
+                trackEvent("privacy_policy_update_accepted", {
+                    path: window.location.pathname,
+                    success: dismissSuccess,
+                });
+            }
+        },
+        message: (
+            <span className="text-md">
+                We've updated our Privacy Policy. You can review it{" "}
+                <a className="gp-link" href="https://www.gitpod.io/privacy" target="_blank" rel="noreferrer">
+                    here
+                </a>
+                .
+            </span>
+        ),
+    } as Notification;
 };
 
 export function AppNotifications() {
     const [topNotification, setTopNotification] = useState<Notification | undefined>(undefined);
     const { user, loading } = useUserLoader();
+    const updateUser = useUpdateCurrentUserMutation();
 
     useEffect(() => {
         const notifications = [];
         if (!loading && isGitpodIo()) {
             if (
-                !user?.additionalData?.profile?.acceptedPrivacyPolicyDate ||
-                new Date(PRIVACY_POLICY_LAST_UPDATED) > new Date(user.additionalData.profile.acceptedPrivacyPolicyDate)
+                !user?.profile?.acceptedPrivacyPolicyDate ||
+                new Date(PRIVACY_POLICY_LAST_UPDATED) > new Date(user.profile.acceptedPrivacyPolicyDate)
             ) {
-                notifications.push(UPDATED_PRIVACY_POLICY);
+                notifications.push(UPDATED_PRIVACY_POLICY((u: Partial<UserProtocol>) => updateUser.mutateAsync(u)));
             }
         }
 
         const dismissedNotifications = getDismissedNotifications();
         const topNotification = notifications.find((n) => !dismissedNotifications.includes(n.id));
         setTopNotification(topNotification);
-    }, [loading, setTopNotification, user]);
+    }, [loading, updateUser, setTopNotification, user]);
 
     const dismissNotification = useCallback(() => {
         if (!topNotification) {

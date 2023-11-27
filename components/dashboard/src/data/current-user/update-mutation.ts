@@ -4,24 +4,35 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/gitpod-protocol";
+import { User as UserProtocol } from "@gitpod/gitpod-protocol";
 import { useMutation } from "@tanstack/react-query";
 import { trackEvent } from "../../Analytics";
 import { getGitpodService } from "../../service/service";
-import { useCurrentUser } from "../../user-context";
+import { useAuthenticatedUser } from "./authenticated-user-query";
+import { converter } from "../../service/public-api";
 
-type UpdateCurrentUserArgs = Partial<User>;
+type UpdateCurrentUserArgs = Partial<UserProtocol>;
 
 export const useUpdateCurrentUserMutation = () => {
     return useMutation({
         mutationFn: async (partialUser: UpdateCurrentUserArgs) => {
-            return await getGitpodService().server.updateLoggedInUser(partialUser);
+            const current = await getGitpodService().server.getLoggedInUser();
+            const update: UpdateCurrentUserArgs = {
+                id: current.id,
+                fullName: partialUser.fullName || current.fullName,
+                additionalData: {
+                    ...current.additionalData,
+                    ...partialUser.additionalData,
+                },
+            };
+            const user = await getGitpodService().server.updateLoggedInUser(update);
+            return converter.toUser(user);
         },
     });
 };
 
 export const useUpdateCurrentUserDotfileRepoMutation = () => {
-    const user = useCurrentUser();
+    const { data: user } = useAuthenticatedUser();
     const updateUser = useUpdateCurrentUserMutation();
 
     return useMutation({
@@ -31,7 +42,6 @@ export const useUpdateCurrentUserDotfileRepoMutation = () => {
             }
 
             const additionalData = {
-                ...(user.additionalData || {}),
                 dotfileRepo,
             };
             const updatedUser = await updateUser.mutateAsync({ additionalData });
@@ -40,14 +50,14 @@ export const useUpdateCurrentUserDotfileRepoMutation = () => {
         },
         onMutate: async () => {
             return {
-                previousDotfileRepo: user?.additionalData?.dotfileRepo || "",
+                previousDotfileRepo: user?.dotfileRepo || "",
             };
         },
         onSuccess: (updatedUser, _, context) => {
-            if (updatedUser?.additionalData?.dotfileRepo !== context?.previousDotfileRepo) {
+            if (updatedUser?.dotfileRepo !== context?.previousDotfileRepo) {
                 trackEvent("dotfile_repo_changed", {
                     previous: context?.previousDotfileRepo ?? "",
-                    current: updatedUser?.additionalData?.dotfileRepo ?? "",
+                    current: updatedUser?.dotfileRepo ?? "",
                 });
             }
         },

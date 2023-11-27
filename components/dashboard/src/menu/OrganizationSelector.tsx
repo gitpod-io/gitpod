@@ -7,16 +7,16 @@
 import { FunctionComponent, useCallback } from "react";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
 import { OrgIcon, OrgIconProps } from "../components/org-icon/OrgIcon";
-import { useCurrentUser } from "../user-context";
 import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
 import { useLocation } from "react-router";
-import { User } from "@gitpod/gitpod-protocol";
 import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { useIsOwner, useListOrganizationMembers } from "../data/organizations/members-query";
+import { useAuthenticatedUser } from "../data/current-user/authenticated-user-query";
+import { isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
 
 export default function OrganizationSelector() {
-    const user = useCurrentUser();
+    const { data: user } = useAuthenticatedUser();
     const orgs = useOrganizations();
     const currentOrg = useCurrentOrg();
     const members = useListOrganizationMembers().data || [];
@@ -26,9 +26,9 @@ export default function OrganizationSelector() {
     const repoConfigListAndDetail = useFeatureFlag("repoConfigListAndDetail");
 
     // we should have an API to ask for permissions, until then we duplicate the logic here
-    const canCreateOrgs = user && !User.isOrganizationOwned(user);
+    const canCreateOrgs = user && !isOrganizationOwned(user);
 
-    const userFullName = user?.fullName || user?.name || "...";
+    const userFullName = user?.name || "...";
 
     let activeOrgEntry = !currentOrg.data
         ? {

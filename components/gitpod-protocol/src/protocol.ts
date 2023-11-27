@@ -278,7 +278,7 @@ export interface AdditionalUserData extends Partial<WorkspaceTimeoutSetting> {
     workspaceAutostartOptions?: WorkspaceAutostartOption[];
 }
 
-interface WorkspaceAutostartOption {
+export interface WorkspaceAutostartOption {
     cloneURL: string;
     organizationId: string;
     workspaceClass?: string;

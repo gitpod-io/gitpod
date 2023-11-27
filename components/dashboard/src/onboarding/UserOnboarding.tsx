@@ -4,19 +4,19 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/gitpod-protocol";
-import { FunctionComponent, useCallback, useContext, useState } from "react";
+import { FunctionComponent, useCallback, useState } from "react";
 import gitpodIcon from "../icons/gitpod.svg";
 import { Separator } from "../components/Separator";
 import { useHistory, useLocation } from "react-router";
 import { StepUserInfo } from "./StepUserInfo";
-import { UserContext } from "../user-context";
 import { StepOrgInfo } from "./StepOrgInfo";
 import { StepPersonalize } from "./StepPersonalize";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 import Alert from "../components/Alert";
 import { useConfetti } from "../contexts/ConfettiContext";
 import { getGitpodService } from "../service/service";
+import { useAuthenticatedUser } from "../data/current-user/authenticated-user-query";
+import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 
 // This param is optionally present to force an onboarding flow
 // Can be used if other conditions aren't true, i.e. if user has already onboarded, but we want to force the flow again
@@ -34,7 +34,7 @@ type Props = {
 const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
     const history = useHistory();
     const location = useLocation();
-    const { setUser } = useContext(UserContext);
+    const { refetch: reloadUser } = useAuthenticatedUser();
     const updateUser = useUpdateCurrentUserMutation();
     const { dropConfetti } = useConfetti();
 
@@ -54,19 +54,12 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
     const onboardingComplete = useCallback(
         async (updatedUser: User) => {
             try {
-                const additionalData = updatedUser.additionalData || {};
-                const profile = additionalData.profile || {};
-                const ideSettings = additionalData.ideSettings || {};
-
                 const updates = {
                     additionalData: {
-                        ...additionalData,
                         profile: {
-                            ...profile,
                             onboardedTimestamp: new Date().toISOString(),
                         },
                         ideSettings: {
-                            ...ideSettings,
                             settingVersion: "2.0",
                             defaultIde: ideOptions.ide,
                             useLatestVersion: ideOptions.useLatest,
@@ -83,13 +76,13 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
                     getGitpodService().server.trackEvent({
                         event: "ide_configuration_changed",
                         properties: {
-                            ...(onboardedUser.additionalData?.ideSettings ?? {}),
+                            ...(onboardedUser?.editorSettings ?? {}),
                             location: "onboarding",
                         },
                     });
 
                     dropConfetti();
-                    setUser(onboardedUser);
+                    await reloadUser();
 
                     // Look for the `onboarding=force` query param, and remove if present
                     const queryParams = new URLSearchParams(location.search);
@@ -117,7 +110,7 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
             location.hash,
             location.pathname,
             location.search,
-            setUser,
+            reloadUser,
             dropConfetti,
             updateUser,
         ],
@@ -135,7 +128,7 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
                         <StepUserInfo
                             user={user}
                             onComplete={(updatedUser) => {
-                                setUser(updatedUser);
+                                reloadUser();
                                 setStep(STEPS.TWO);
                             }}
                         />

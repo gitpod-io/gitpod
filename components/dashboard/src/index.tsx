@@ -25,7 +25,6 @@ import "./index.css";
 import { PaymentContextProvider } from "./payment-context";
 import { ProjectContextProvider } from "./projects/project-context";
 import { ThemeContextProvider } from "./theme-context";
-import { UserContextProvider } from "./user-context";
 import { getURLHash, isGitpodIo, isWebsiteSlug } from "./utils";
 
 const bootApp = () => {
@@ -67,13 +66,11 @@ const bootApp = () => {
                             <QueryErrorBoundary>
                                 <ConfettiContextProvider>
                                     <ToastContextProvider>
-                                        <UserContextProvider>
-                                            <PaymentContextProvider>
-                                                <ProjectContextProvider>
-                                                    <RootAppRouter />
-                                                </ProjectContextProvider>
-                                            </PaymentContextProvider>
-                                        </UserContextProvider>
+                                        <PaymentContextProvider>
+                                            <ProjectContextProvider>
+                                                <RootAppRouter />
+                                            </ProjectContextProvider>
+                                        </PaymentContextProvider>
                                     </ToastContextProvider>
                                 </ConfettiContextProvider>
                             </QueryErrorBoundary>

@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useMemo, useState } from "react";
 import { CheckboxInputField, CheckboxListField } from "../components/forms/CheckboxInputField";
 import { SelectInputField } from "../components/forms/SelectInputField";
@@ -18,6 +17,7 @@ import { getSignupGoalsOptions, SIGNUP_GOALS_OTHER } from "./signup-goals";
 import { getCompanySizeOptions } from "./company-size";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { useCreateOrgMutation } from "../data/organizations/create-org-mutation";
+import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 
 type Props = {
     user: User;
@@ -32,14 +32,12 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
     const currentOrg = useCurrentOrg();
     const createOrg = useCreateOrgMutation();
 
-    const [jobRole, setJobRole] = useState(user.additionalData?.profile?.jobRole ?? "");
-    const [jobRoleOther, setJobRoleOther] = useState(user.additionalData?.profile?.jobRoleOther ?? "");
-    const [explorationReasons, setExplorationReasons] = useState<string[]>(
-        user.additionalData?.profile?.explorationReasons ?? [],
-    );
-    const [signupGoals, setSignupGoals] = useState<string[]>(user.additionalData?.profile?.signupGoals ?? []);
-    const [signupGoalsOther, setSignupGoalsOther] = useState(user.additionalData?.profile?.signupGoalsOther ?? "");
-    const [companySize, setCompanySize] = useState(user.additionalData?.profile?.companySize ?? "");
+    const [jobRole, setJobRole] = useState(user.profile?.jobRole ?? "");
+    const [jobRoleOther, setJobRoleOther] = useState(user.profile?.jobRoleOther ?? "");
+    const [explorationReasons, setExplorationReasons] = useState<string[]>(user.profile?.explorationReasons ?? []);
+    const [signupGoals, setSignupGoals] = useState<string[]>(user.profile?.signupGoals ?? []);
+    const [signupGoalsOther, setSignupGoalsOther] = useState(user.profile?.signupGoalsOther ?? "");
+    const [companySize, setCompanySize] = useState(user.profile?.companySize ?? "");
 
     const addSignupGoal = useCallback(
         (goal: string) => {
@@ -104,16 +102,10 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
             if (user.name) {
                 orgName = orgify(user.name);
             }
-            if (user.fullName) {
-                orgName = orgify(user.fullName);
-            }
             await createOrg.mutateAsync({
                 name: orgName,
             });
         }
-
-        const additionalData = user.additionalData || {};
-        const profile = additionalData.profile || {};
 
         // Filter out any values not present in options
         const filteredReasons = explorationReasons.filter((val) =>
@@ -123,9 +115,7 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
 
         const updates = {
             additionalData: {
-                ...additionalData,
                 profile: {
-                    ...profile,
                     jobRole,
                     jobRoleOther,
                     explorationReasons: filteredReasons,
@@ -155,8 +145,6 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
         signupGoalsOptions,
         signupGoalsOther,
         updateUser,
-        user.additionalData,
-        user.fullName,
         user.name,
     ]);
 

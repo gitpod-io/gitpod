@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FunctionComponent, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { FunctionComponent, useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "../../components/Button";
 import { InputField } from "../../components/forms/InputField";
 import { SelectInputField } from "../../components/forms/SelectInputField";
@@ -16,13 +16,13 @@ import { useInvalidateOrgAuthProvidersQuery } from "../../data/auth-providers/or
 import { useCurrentOrg } from "../../data/organizations/orgs-query";
 import { useOnBlurError } from "../../hooks/use-onblur-error";
 import { openAuthorizeWindow, toAuthProviderLabel } from "../../provider-utils";
-import { getGitpodService, gitpodHostUrl } from "../../service/service";
-import { UserContext } from "../../user-context";
+import { gitpodHostUrl } from "../../service/service";
 import { useToast } from "../../components/toasts/Toasts";
 import { AuthProvider, AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { useCreateOrgAuthProviderMutation } from "../../data/auth-providers/create-org-auth-provider-mutation";
 import { useUpdateOrgAuthProviderMutation } from "../../data/auth-providers/update-org-auth-provider-mutation";
 import { authProviderClient } from "../../service/public-api";
+import { useAuthenticatedUser } from "../../data/current-user/authenticated-user-query";
 
 type Props = {
     provider?: AuthProvider;
@@ -30,7 +30,7 @@ type Props = {
 };
 
 export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
-    const { setUser } = useContext(UserContext);
+    const { refetch: reloadUser } = useAuthenticatedUser();
     const { toast } = useToast();
     const team = useCurrentOrg().data;
     const [type, setType] = useState<AuthProviderType>(props.provider?.type ?? AuthProviderType.GITLAB);
@@ -149,9 +149,8 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                 onSuccess: (payload) => {
                     invalidateOrgAuthProviders();
 
-                    // Refresh the current user - they may have a new identity record now
-                    // setup a promise and don't wait so we can close the modal right away
-                    getGitpodService().server.getLoggedInUser().then(setUser);
+                    reloadUser();
+
                     toast(`${toAuthProviderLabel(newProvider.type)} integration has been activated.`);
 
                     props.onClose();
@@ -182,7 +181,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
         isNew,
         props,
         savedProvider?.id,
-        setUser,
+        reloadUser,
         team,
         toast,
         type,

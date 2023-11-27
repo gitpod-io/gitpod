@@ -7,8 +7,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { getExperimentsClient } from "../experiments/client";
 import { useCurrentProject } from "../projects/project-context";
-import { useCurrentUser } from "../user-context";
 import { useCurrentOrg } from "./organizations/orgs-query";
+import { useAuthenticatedUser } from "./current-user/authenticated-user-query";
 
 const featureFlags = {
     personalAccessTokensEnabled: false,
@@ -32,7 +32,7 @@ const featureFlags = {
 type FeatureFlags = typeof featureFlags;
 
 export const useFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): FeatureFlags[K] | boolean => {
-    const user = useCurrentUser();
+    const { data: user } = useAuthenticatedUser();
     const org = useCurrentOrg().data;
     const project = useCurrentProject().project;
 

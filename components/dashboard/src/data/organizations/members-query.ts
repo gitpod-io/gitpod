@@ -8,8 +8,8 @@ import { OrganizationMember, OrganizationRole } from "@gitpod/public-api/lib/git
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { organizationClient } from "../../service/public-api";
-import { useCurrentUser } from "../../user-context";
 import { useCurrentOrg } from "./orgs-query";
+import { useAuthenticatedUser } from "../current-user/authenticated-user-query";
 
 export function useOrganizationMembersInvalidator() {
     const organizationId = useCurrentOrg().data?.id;
@@ -41,7 +41,7 @@ export function useListOrganizationMembers() {
 }
 
 export function useIsOwner(): boolean {
-    const user = useCurrentUser();
+    const { data: user } = useAuthenticatedUser();
     const members = useListOrganizationMembers();
     const isOwner = useMemo(() => {
         return members?.data?.some((m) => m.userId === user?.id && m.role === OrganizationRole.OWNER);
