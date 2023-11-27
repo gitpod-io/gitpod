@@ -29,6 +29,7 @@ import {
 import {
     AuthProviderEntry,
     AuthProviderInfo,
+    EmailDomainFilterEntry,
     ProjectEnvVar,
     SuggestedRepository,
     Token,
@@ -64,6 +65,8 @@ import {
     TooManyRunningWorkspacesError,
 } from "@gitpod/public-api/lib/gitpod/v1/error_pb";
 import { SSHPublicKey } from "@gitpod/public-api/lib/gitpod/v1/ssh_pb";
+import { BlockedRepository as ProtocolBlockedRepository } from "./blocked-repositories-protocol";
+import { BlockedEmailDomain, BlockedRepository } from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
 
 describe("PublicAPIConverter", () => {
     const converter = new PublicAPIConverter();
@@ -1070,6 +1073,43 @@ describe("PublicAPIConverter", () => {
                     startTime: "2023-11-17T10:42:00Z",
                 },
             });
+        });
+    });
+
+    describe("toBlockedRepository", () => {
+        it("should convert a token", () => {
+            const t1 = new Date();
+            const t2 = new Date();
+            const repo: ProtocolBlockedRepository = {
+                id: 2023,
+                urlRegexp: "*/*",
+                blockUser: false,
+                createdAt: t1.toISOString(),
+                updatedAt: t2.toISOString(),
+            };
+            const blockedRepo = new BlockedRepository({
+                id: 2023,
+                urlRegexp: "*/*",
+                blockUser: false,
+                creationTime: Timestamp.fromDate(new Date(repo.createdAt)),
+                updateTime: Timestamp.fromDate(new Date(repo.updatedAt)),
+            });
+            expect(converter.toBlockedRepository(repo)).to.deep.equal(blockedRepo);
+        });
+    });
+
+    describe("toBlockedEmailDomain", () => {
+        it("should convert a token", () => {
+            const item: EmailDomainFilterEntry = {
+                domain: "example.com",
+                negative: false,
+            };
+            const blockedEmail = new BlockedEmailDomain({
+                id: "",
+                domain: item.domain,
+                negative: item.negative,
+            });
+            expect(converter.toBlockedEmailDomain(item)).to.deep.equal(blockedEmail);
         });
     });
 

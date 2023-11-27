@@ -47,6 +47,7 @@ import { HostContextProviderImpl } from "./auth/host-context-provider-impl";
 import { AuthJWT, SignInJWT } from "./auth/jwt";
 import { LoginCompletionHandler } from "./auth/login-completion-handler";
 import { VerificationService } from "./auth/verification-service";
+import { InstallationService } from "./auth/installation-service";
 import { Authorizer, createInitializingAuthorizer } from "./authorization/authorizer";
 import { RelationshipUpdater } from "./authorization/relationship-updater";
 import { RelationshipUpdateJob } from "./authorization/relationship-updater-job";
@@ -302,6 +303,8 @@ export const productionContainerModule = new ContainerModule(
             .inSingletonScope();
 
         bind(VerificationService).toSelf().inSingletonScope();
+
+        bind(InstallationService).toSelf().inSingletonScope();
 
         bind(UsageService).toSelf().inSingletonScope();
 
