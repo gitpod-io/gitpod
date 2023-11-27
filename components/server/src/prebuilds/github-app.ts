@@ -34,7 +34,7 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { PrebuildManager } from "./prebuild-manager";
 import { PrebuildStatusMaintainer } from "./prebuilt-status-maintainer";
 import { Options, ApplicationFunctionOptions } from "probot/lib/types";
-import { asyncHandler, toHeaders } from "../express-util";
+import { asyncHandler } from "../express-util";
 import { ContextParser } from "../workspace/context-parser-service";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
@@ -114,90 +114,70 @@ export class GithubApp {
                     res.redirect(301, this.getBadgeImageURL());
                 });
 
-        // Use RequestContext
-        options.getRouter &&
-            options.getRouter("/*").use((req, res, next) => {
-                runWithRequestContext(
-                    {
-                        requestKind: "probot",
-                        requestMethod: req.path,
-                        signal: new AbortController().signal,
-                        headers: toHeaders(req.headers),
-                    },
-                    () => next(),
-                );
-            });
-
         app.on("installation.created", (ctx: Context<"installation.created">) => {
-            catchError(
-                (async () => {
-                    const targetAccountName = `${ctx.payload.installation.account.login}`;
-                    const installationId = `${ctx.payload.installation.id}`;
+            handleEvent(ctx.name, async () => {
+                const targetAccountName = `${ctx.payload.installation.account.login}`;
+                const installationId = `${ctx.payload.installation.id}`;
 
-                    // cf. https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#installation
-                    const authId = `${ctx.payload.sender.id}`;
+                // cf. https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#installation
+                const authId = `${ctx.payload.sender.id}`;
 
-                    const user = await this.userDB.findUserByIdentity({
-                        authProviderId: this.config.githubApp?.authProviderId || "unknown",
-                        authId,
-                    });
-                    const userId = user ? user.id : undefined;
-                    await this.appInstallationDB.recordNewInstallation(
-                        "github",
-                        "platform",
-                        installationId,
-                        userId,
-                        authId,
-                    );
-                    log.debug({ userId }, "New installation recorded", { userId, authId, targetAccountName });
-                })(),
-            );
+                const user = await this.userDB.findUserByIdentity({
+                    authProviderId: this.config.githubApp?.authProviderId || "unknown",
+                    authId,
+                });
+                const userId = user ? user.id : undefined;
+                await this.appInstallationDB.recordNewInstallation(
+                    "github",
+                    "platform",
+                    installationId,
+                    userId,
+                    authId,
+                );
+                log.debug({ userId }, "New installation recorded", { userId, authId, targetAccountName });
+            });
         });
         app.on("installation.deleted", (ctx: Context<"installation.deleted">) => {
-            catchError(
-                (async () => {
-                    const installationId = `${ctx.payload.installation.id}`;
-                    await this.appInstallationDB.recordUninstallation("github", "platform", installationId);
-                })(),
-            );
+            handleEvent(ctx.name, async () => {
+                const installationId = `${ctx.payload.installation.id}`;
+                await this.appInstallationDB.recordUninstallation("github", "platform", installationId);
+            });
         });
 
         app.on("repository.renamed", (ctx: Context<"repository.renamed">) => {
-            catchError(
-                (async () => {
-                    const { action, repository, installation } = ctx.payload;
-                    if (!installation) {
-                        return;
-                    }
-                    if (action === "renamed") {
-                        // HINT(AT): This is undocumented, but the event payload contains something like
-                        // "changes": { "repository": { "name": { "from": "test-repo-123" } } }
-                        // To implement this in a more robust way, we'd need to store `repository.id` with the project, next to the cloneUrl.
-                        const oldName = (ctx.payload as any)?.changes?.repository?.name?.from;
-                        if (oldName) {
-                            const projects = await runWithSubjectId(SYSTEM_USER, async () =>
-                                this.projectService.findProjectsByCloneUrl(
-                                    SYSTEM_USER_ID,
-                                    `https://github.com/${repository.owner.login}/${oldName}.git`,
-                                ),
-                            );
-                            for (const project of projects) {
-                                project.cloneUrl = repository.clone_url;
-                                await this.projectDB.storeProject(project);
-                            }
+            handleEvent(ctx.name, async () => {
+                const { action, repository, installation } = ctx.payload;
+                if (!installation) {
+                    return;
+                }
+                if (action === "renamed") {
+                    // HINT(AT): This is undocumented, but the event payload contains something like
+                    // "changes": { "repository": { "name": { "from": "test-repo-123" } } }
+                    // To implement this in a more robust way, we'd need to store `repository.id` with the project, next to the cloneUrl.
+                    const oldName = (ctx.payload as any)?.changes?.repository?.name?.from;
+                    if (oldName) {
+                        const projects = await runWithSubjectId(SYSTEM_USER, async () =>
+                            this.projectService.findProjectsByCloneUrl(
+                                SYSTEM_USER_ID,
+                                `https://github.com/${repository.owner.login}/${oldName}.git`,
+                            ),
+                        );
+                        for (const project of projects) {
+                            project.cloneUrl = repository.clone_url;
+                            await this.projectDB.storeProject(project);
                         }
                     }
-                })(),
-            );
+                }
+            });
             // TODO(at): handle deleted as well
         });
 
         app.on("push", (ctx: Context<"push">) => {
-            catchError(this.handlePushEvent(ctx));
+            handleEvent(ctx.name, () => this.handlePushEvent(ctx));
         });
 
         app.on(["pull_request.opened", "pull_request.synchronize", "pull_request.reopened"], (ctx) => {
-            catchError(this.handlePullRequest(ctx));
+            handleEvent(ctx.name, () => this.handlePullRequest(ctx));
         });
 
         options.getRouter &&
@@ -427,9 +407,8 @@ export class GithubApp {
             }
             const context = (await this.contextParser.handle({ span }, installationOwner, contextURL)) as CommitContext;
 
-            const projects = await this.projectService.findProjectsByCloneUrl(
-                installationOwner.id,
-                context.repository.cloneUrl,
+            const projects = await runWithSubjectId(SubjectId.fromUserId(installationOwner.id), () =>
+                this.projectService.findProjectsByCloneUrl(installationOwner.id, context.repository.cloneUrl),
             );
             for (const project of projects) {
                 const user = await this.findProjectOwner(project, installationOwner);
@@ -685,15 +664,24 @@ export class GithubApp {
     }
 }
 
-function catchError<R>(p: Promise<R>): void {
-    p.catch((err) => {
-        let logger = log.error;
-        if (ApplicationError.hasErrorCode(err)) {
-            logger = ErrorCode.isUserError(err.code) ? log.info : log.error;
-        }
+function handleEvent(eventName: string, p: () => Promise<any>): void {
+    runWithRequestContext(
+        {
+            requestKind: "probot",
+            requestMethod: eventName,
+            signal: new AbortController().signal,
+        },
+        () => {
+            p().catch((err) => {
+                let logger = log.error;
+                if (ApplicationError.hasErrorCode(err)) {
+                    logger = ErrorCode.isUserError(err.code) ? log.info : log.error;
+                }
 
-        logger("Failed to handle github event", err);
-    });
+                logger("Failed to handle github event", err);
+            });
+        },
+    );
 }
 
 export namespace GithubApp {

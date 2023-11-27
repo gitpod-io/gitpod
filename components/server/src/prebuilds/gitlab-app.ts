@@ -21,6 +21,7 @@ import { UserService } from "../user/user-service";
 import { ProjectsService } from "../projects/projects-service";
 import { runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
+import { SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
 
 @injectable()
 export class GitLabApp {
@@ -143,7 +144,9 @@ export class GitLabApp {
         const span = TraceContext.startSpan("GitLapApp.handlePushHook", ctx);
         try {
             const cloneUrl = this.getCloneUrl(body);
-            const projects = await this.projectService.findProjectsByCloneUrl(user.id, cloneUrl);
+            const projects = await runWithSubjectId(SYSTEM_USER, () =>
+                this.projectService.findProjectsByCloneUrl(SYSTEM_USER_ID, cloneUrl),
+            );
             for (const project of projects) {
                 try {
                     const projectOwner = await this.findProjectOwner(project, user);

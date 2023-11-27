@@ -154,7 +154,9 @@ export class GitHubEnterpriseApp {
             const cloneURL = payload.repository.clone_url;
             const contextURL = this.createContextUrl(payload);
             const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
-            const projects = await this.projectService.findProjectsByCloneUrl(user.id, context.repository.cloneUrl);
+            const projects = await runWithSubjectId(SYSTEM_USER, () =>
+                this.projectService.findProjectsByCloneUrl(SYSTEM_USER_ID, context.repository.cloneUrl),
+            );
             span.setTag("contextURL", contextURL);
             for (const project of projects) {
                 try {

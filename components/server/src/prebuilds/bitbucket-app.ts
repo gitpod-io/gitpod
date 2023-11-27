@@ -21,6 +21,7 @@ import { URL } from "url";
 import { ProjectsService } from "../projects/projects-service";
 import { SubjectId } from "../auth/subject-id";
 import { runWithSubjectId } from "../util/request-context";
+import { SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
 
 @injectable()
 export class BitbucketApp {
@@ -122,7 +123,9 @@ export class BitbucketApp {
         const span = TraceContext.startSpan("Bitbucket.handlePushHook", ctx);
         try {
             const cloneURL = data.gitCloneUrl;
-            const projects = await this.projectService.findProjectsByCloneUrl(user.id, cloneURL);
+            const projects = await runWithSubjectId(SYSTEM_USER, () =>
+                this.projectService.findProjectsByCloneUrl(SYSTEM_USER_ID, cloneURL),
+            );
             for (const project of projects) {
                 try {
                     const projectOwner = await this.findProjectOwner(project, user);
