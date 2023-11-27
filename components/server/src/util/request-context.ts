@@ -125,6 +125,14 @@ export function ctxCheckAborted() {
 }
 
 /**
+ * @throws If there is no context available
+ * @returns Whether the request has been aborted
+ */
+export function ctxIsAborted(): boolean {
+    return ctxGet().signal.aborted;
+}
+
+/**
  * @returns The AbortSignal associated with the current request.
  */
 export function ctxSignal() {
