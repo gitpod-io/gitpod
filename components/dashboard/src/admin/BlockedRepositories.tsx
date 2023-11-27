@@ -16,7 +16,6 @@ import { SpinnerLoader } from "../components/Loader";
 import searchIcon from "../icons/search.svg";
 import { Button } from "@podkit/buttons/Button";
 import { verificationClient } from "../service/public-api";
-import { PaginationRequest } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import { Sort, SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
 import { BlockedRepository, ListBlockedRepositoriesResponse } from "@gitpod/public-api/lib/gitpod/v1/verification_pb";
 import { PartialMessage } from "@bufbuild/protobuf";
@@ -54,10 +53,11 @@ export function BlockedRepositoriesList(props: Props) {
         setSearching(true);
         try {
             const result = await verificationClient.listBlockedRepositories({
-                pagination: new PaginationRequest({
-                    token: Buffer.from(JSON.stringify({ offset: 0 })).toString("base64"),
-                    pageSize: 100,
-                }),
+                // Don't need, added it in json-rpc implement to make life easier.
+                // pagination: new PaginationRequest({
+                //     token: Buffer.from(JSON.stringify({ offset: 0 })).toString("base64"),
+                //     pageSize: 100,
+                // }),
                 sort: [
                     new Sort({
                         field: "urlRegexp",
