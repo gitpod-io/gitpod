@@ -21,7 +21,7 @@ import { ApplicationError, ErrorCodes } from "./messaging/error";
 export function generateAsyncGenerator<T>(
     setup: (queue: Queue<T>) => (() => void) | void,
     opts: { signal: AbortSignal },
-) {
+): AsyncIterable<T> {
     return new EventIterator<T>((queue) => {
         opts.signal.addEventListener("abort", () => {
             queue.fail(new ApplicationError(ErrorCodes.CANCELLED, "cancelled"));

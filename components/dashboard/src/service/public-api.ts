@@ -46,6 +46,9 @@ export const converter = new PublicAPIConverter();
 
 export const helloService = createPromiseClient(HelloService, transport);
 export const personalAccessTokensService = createPromiseClient(TokensService, transport);
+/**
+ * @deprecated use configurationClient instead
+ */
 export const projectsService = createPromiseClient(ProjectsService, transport);
 /**
  * @deprecated use workspaceClient instead
@@ -53,23 +56,40 @@ export const projectsService = createPromiseClient(ProjectsService, transport);
 export const workspacesService = createPromiseClient(WorkspaceV1Service, transport);
 export const oidcService = createPromiseClient(OIDCService, transport);
 
-export const workspaceClient = createServiceClient(WorkspaceService, new JsonRpcWorkspaceClient());
-export const organizationClient = createServiceClient(
-    OrganizationService,
-    new JsonRpcOrganizationClient(),
-    "organization",
-);
+export const workspaceClient = createServiceClient(WorkspaceService, {
+    client: new JsonRpcWorkspaceClient(),
+    featureFlagSuffix: "workspace",
+});
+export const organizationClient = createServiceClient(OrganizationService, {
+    client: new JsonRpcOrganizationClient(),
+    featureFlagSuffix: "organization",
+});
 // No jsonrcp client for the configuration service as it's only used in new UI of the dashboard
 export const configurationClient = createServiceClient(ConfigurationService);
-export const prebuildClient = createServiceClient(PrebuildService, new JsonRpcPrebuildClient());
+export const prebuildClient = createServiceClient(PrebuildService, {
+    client: new JsonRpcPrebuildClient(),
+    featureFlagSuffix: "prebuild",
+});
 
-export const authProviderClient = createServiceClient(AuthProviderService, new JsonRpcAuthProviderClient());
+export const authProviderClient = createServiceClient(AuthProviderService, {
+    client: new JsonRpcAuthProviderClient(),
+    featureFlagSuffix: "authprovider",
+});
 
-export const scmClient = createServiceClient(SCMService, new JsonRpcScmClient());
+export const scmClient = createServiceClient(SCMService, {
+    client: new JsonRpcScmClient(),
+    featureFlagSuffix: "scm",
+});
 
-export const envVarClient = createServiceClient(EnvironmentVariableService, new JsonRpcEnvvarClient());
+export const envVarClient = createServiceClient(EnvironmentVariableService, {
+    client: new JsonRpcEnvvarClient(),
+    featureFlagSuffix: "envvar",
+});
 
-export const sshClient = createServiceClient(SSHService, new JsonRpcSSHClient());
+export const sshClient = createServiceClient(SSHService, {
+    client: new JsonRpcSSHClient(),
+    featureFlagSuffix: "ssh",
+});
 
 export async function listAllProjects(opts: { orgId: string }): Promise<ProtocolProject[]> {
     let pagination = {
@@ -128,22 +148,24 @@ export function updateUser(newUser: User | undefined) {
 
 function createServiceClient<T extends ServiceType>(
     type: T,
-    jsonRpcClient?: PromiseClient<T>,
-    featureFlagSuffix?: string,
+    jsonRpcOptions?: {
+        client: PromiseClient<T>;
+        featureFlagSuffix: string;
+    },
 ): PromiseClient<T> {
     return new Proxy(createPromiseClient(type, transport), {
         get(grpcClient, prop) {
             const experimentsClient = getExperimentsClient();
             // TODO(ak) remove after migration
             async function resolveClient(): Promise<PromiseClient<T>> {
-                if (!jsonRpcClient) {
+                if (!jsonRpcOptions) {
                     return grpcClient;
                 }
-                const featureFlags = ["dashboard_public_api_enabled", "centralizedPermissions"];
-                if (featureFlagSuffix) {
-                    featureFlags.push(`dashboard_public_api_${featureFlagSuffix}_enabled`);
-                }
-                // TODO(ak): is not going to work for getLoggedInUser itself
+                const featureFlags = [
+                    "dashboard_public_api_enabled",
+                    `dashboard_public_api_${jsonRpcOptions.featureFlagSuffix}_enabled`,
+                    "centralizedPermissions",
+                ];
                 const resolvedFlags = await Promise.all(
                     featureFlags.map((ff) =>
                         experimentsClient.getValueAsync(ff, false, {
@@ -155,7 +177,7 @@ function createServiceClient<T extends ServiceType>(
                 if (resolvedFlags.every((f) => f === true)) {
                     return grpcClient;
                 }
-                return jsonRpcClient;
+                return jsonRpcOptions.client;
             }
             /**
              * The original application error is retained using gRPC metadata to ensure that existing error handling remains intact.
