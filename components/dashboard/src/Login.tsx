@@ -23,6 +23,7 @@ import { useNeedsSetup } from "./dedicated-setup/use-needs-setup";
 import { AuthProviderDescription } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { Button, ButtonProps } from "@podkit/buttons/Button";
 import { cn } from "@podkit/lib/cn";
+import { userClient } from "./service/public-api";
 
 export function markLoggedIn() {
     document.cookie = GitpodCookie.generateCookie(window.location.hostname);
@@ -67,9 +68,11 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
 
     const updateUser = useCallback(async () => {
         await getGitpodService().reconnect();
-        const user = await getGitpodService().server.getLoggedInUser();
-        setUser(user);
-        markLoggedIn();
+        const { user } = await userClient.getAuthenticatedUser({});
+        if (user) {
+            setUser(user);
+            markLoggedIn();
+        }
     }, [setUser]);
 
     const authorizeSuccessful = useCallback(async () => {

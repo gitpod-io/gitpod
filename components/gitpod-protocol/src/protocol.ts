@@ -194,23 +194,6 @@ export namespace User {
         };
     }
 
-    export function setProfile(user: User, profile: Profile): User {
-        user.fullName = profile.name;
-        user.avatarUrl = profile.avatarURL;
-
-        if (!user.additionalData) {
-            user.additionalData = {};
-        }
-        if (!user.additionalData.profile) {
-            user.additionalData.profile = {};
-        }
-        user.additionalData.profile.emailAddress = profile.email;
-        user.additionalData.profile.companyName = profile.company;
-        user.additionalData.profile.lastUpdatedDetailsNudge = new Date().toISOString();
-
-        return user;
-    }
-
     // TODO: refactor where this is referenced so it's more clearly tied to just analytics-tracking
     // Let other places rely on the ProfileDetails type since that's what we store
     // This is the profile data we send to our Segment analytics tracking pipeline
@@ -278,7 +261,7 @@ export interface AdditionalUserData extends Partial<WorkspaceTimeoutSetting> {
     workspaceAutostartOptions?: WorkspaceAutostartOption[];
 }
 
-interface WorkspaceAutostartOption {
+export interface WorkspaceAutostartOption {
     cloneURL: string;
     organizationId: string;
     workspaceClass?: string;

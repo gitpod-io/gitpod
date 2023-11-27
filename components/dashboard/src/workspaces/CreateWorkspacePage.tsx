@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AdditionalUserData, CommitContext, SuggestedRepository, WithReferrerContext } from "@gitpod/gitpod-protocol";
+import { CommitContext, SuggestedRepository, WithReferrerContext } from "@gitpod/gitpod-protocol";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
@@ -28,7 +28,7 @@ import { useListWorkspacesQuery } from "../data/workspaces/list-workspaces-query
 import { useWorkspaceContext } from "../data/workspaces/resolve-context-query";
 import { useDirtyState } from "../hooks/use-dirty-state";
 import { openAuthorizeWindow } from "../provider-utils";
-import { getGitpodService, gitpodHostUrl } from "../service/service";
+import { gitpodHostUrl } from "../service/service";
 import { StartWorkspaceError } from "../start/StartPage";
 import { VerifyModal } from "../start/VerifyModal";
 import { StartWorkspaceOptions } from "../start/start-workspace-options";
@@ -45,9 +45,14 @@ import { Button } from "@podkit/buttons/Button";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { CreateAndStartWorkspaceRequest } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { PartialMessage } from "@bufbuild/protobuf";
+import { User_WorkspaceAutostartOption } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
+import { EditorReference } from "@gitpod/public-api/lib/gitpod/v1/editor_pb";
+import { converter } from "../service/public-api";
+import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
+    const updateUser = useUpdateCurrentUserMutation();
     const currentOrg = useCurrentOrg().data;
     const projects = useListAllProjectsQuery();
     const workspaces = useListWorkspacesQuery({ limit: 50 });
@@ -60,12 +65,10 @@ export function CreateWorkspacePage() {
     const defaultLatestIde =
         props.ideSettings?.useLatestVersion !== undefined
             ? props.ideSettings.useLatestVersion
-            : !!user?.additionalData?.ideSettings?.useLatestVersion;
+            : user?.editorSettings?.version === "latest";
     const [useLatestIde, setUseLatestIde] = useState(defaultLatestIde);
     const defaultIde =
-        props.ideSettings?.defaultIde !== undefined
-            ? props.ideSettings.defaultIde
-            : user?.additionalData?.ideSettings?.defaultIde;
+        props.ideSettings?.defaultIde !== undefined ? props.ideSettings.defaultIde : user?.editorSettings?.name;
     const [selectedIde, setSelectedIde, selectedIdeIsDirty] = useDirtyState(defaultIde);
     const defaultWorkspaceClass = props.workspaceClass;
     const [selectedWsClass, setSelectedWsClass, selectedWsClassIsDirty] = useDirtyState(defaultWorkspaceClass);
@@ -89,29 +92,34 @@ export function CreateWorkspacePage() {
         if (!cloneURL) {
             return;
         }
-        let workspaceAutoStartOptions = (user.additionalData?.workspaceAutostartOptions || []).filter(
-            (e) => !(e.cloneURL === cloneURL && e.organizationId === currentOrg.id),
+        let workspaceAutoStartOptions = (user.workspaceAutostartOptions || []).filter(
+            (e) => !(e.cloneUrl === cloneURL && e.organizationId === currentOrg.id),
         );
 
         // we only keep the last 40 options
         workspaceAutoStartOptions = workspaceAutoStartOptions.slice(-40);
 
         // remember options
-        workspaceAutoStartOptions.push({
-            cloneURL,
-            organizationId: currentOrg.id,
-            ideSettings: {
-                defaultIde: selectedIde,
-                useLatestVersion: useLatestIde,
+        workspaceAutoStartOptions.push(
+            new User_WorkspaceAutostartOption({
+                cloneUrl: cloneURL,
+                organizationId: currentOrg.id,
+                workspaceClass: selectedWsClass,
+                editorSettings: new EditorReference({
+                    name: selectedIde,
+                    version: useLatestIde ? "latest" : "stable",
+                }),
+            }),
+        );
+        const updatedUser = await updateUser.mutateAsync({
+            additionalData: {
+                workspaceAutostartOptions: workspaceAutoStartOptions.map((o) =>
+                    converter.fromWorkspaceAutostartOption(o),
+                ),
             },
-            workspaceClass: selectedWsClass,
         });
-        AdditionalUserData.set(user, {
-            workspaceAutostartOptions: workspaceAutoStartOptions,
-        });
-        setUser(user);
-        await getGitpodService().server.updateLoggedInUser(user);
-    }, [currentOrg, selectedIde, selectedWsClass, setUser, useLatestIde, user, workspaceContext.data]);
+        setUser(updatedUser);
+    }, [updateUser, currentOrg, selectedIde, selectedWsClass, setUser, useLatestIde, user, workspaceContext.data]);
 
     // see if we have a matching project based on context url and project's repo url
     const project = useMemo(() => {
@@ -279,13 +287,13 @@ export function CreateWorkspacePage() {
         if (!cloneURL) {
             return undefined;
         }
-        const rememberedOptions = (user?.additionalData?.workspaceAutostartOptions || []).find(
-            (e) => e.cloneURL === cloneURL && e.organizationId === currentOrg?.id,
+        const rememberedOptions = (user?.workspaceAutostartOptions || []).find(
+            (e) => e.cloneUrl === cloneURL && e.organizationId === currentOrg?.id,
         );
         if (rememberedOptions) {
             if (!selectedIdeIsDirty) {
-                setSelectedIde(rememberedOptions.ideSettings?.defaultIde, false);
-                setUseLatestIde(!!rememberedOptions.ideSettings?.useLatestVersion);
+                setSelectedIde(rememberedOptions.editorSettings?.name, false);
+                setUseLatestIde(rememberedOptions.editorSettings?.version === "latest");
             }
 
             if (!selectedWsClassIsDirty) {

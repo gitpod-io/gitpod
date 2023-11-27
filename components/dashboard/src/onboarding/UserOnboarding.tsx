@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/gitpod-protocol";
+import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { FunctionComponent, useCallback, useContext, useState } from "react";
 import gitpodIcon from "../icons/gitpod.svg";
 import { Separator } from "../components/Separator";
@@ -54,19 +54,12 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
     const onboardingComplete = useCallback(
         async (updatedUser: User) => {
             try {
-                const additionalData = updatedUser.additionalData || {};
-                const profile = additionalData.profile || {};
-                const ideSettings = additionalData.ideSettings || {};
-
                 const updates = {
                     additionalData: {
-                        ...additionalData,
                         profile: {
-                            ...profile,
                             onboardedTimestamp: new Date().toISOString(),
                         },
                         ideSettings: {
-                            ...ideSettings,
                             settingVersion: "2.0",
                             defaultIde: ideOptions.ide,
                             useLatestVersion: ideOptions.useLatest,
@@ -83,7 +76,7 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
                     getGitpodService().server.trackEvent({
                         event: "ide_configuration_changed",
                         properties: {
-                            ...(onboardedUser.additionalData?.ideSettings ?? {}),
+                            ...(onboardedUser?.editorSettings ?? {}),
                             location: "onboarding",
                         },
                     });

@@ -35,6 +35,10 @@ describe("PublicAPIConverter", () => {
     const converter = new PublicAPIConverter();
 
     describe("golden tests", () => {
+        it("toUser", async () => {
+            await startFixtureTest("../fixtures/toUser_*.json", async (input) => converter.toUser(input));
+        });
+
         it("toOrganization", async () => {
             await startFixtureTest("../fixtures/toOrganization_*.json", async (input) =>
                 converter.toOrganization(input),

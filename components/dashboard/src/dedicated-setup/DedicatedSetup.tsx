@@ -21,6 +21,7 @@ import { useDocumentTitle } from "../hooks/use-document-title";
 import { forceDedicatedSetupParam } from "./use-show-dedicated-setup";
 import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { Delayed } from "@podkit/loading/Delayed";
+import { userClient } from "../service/public-api";
 
 type Props = {
     onComplete: () => void;
@@ -96,9 +97,13 @@ const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, ssoConfig, onC
     }, [dropConfetti]);
 
     const updateUser = useCallback(async () => {
+        // TODO(at) this is still required if the FE shim is used per FF
         await getGitpodService().reconnect();
-        const user = await getGitpodService().server.getLoggedInUser();
-        setUser(user);
+
+        const response = await userClient.getAuthenticatedUser({});
+        if (response.user) {
+            setUser(response.user);
+        }
     }, [setUser]);
 
     const handleEndSetup = useCallback(async () => {
