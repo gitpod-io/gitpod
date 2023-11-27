@@ -1,3 +1,4 @@
 {
+    // TODO(cw): do better than worksapce-full
     "image": "gitpod/workspace-full"
 }
