@@ -6,6 +6,8 @@ package sshproxy
 
 import (
 	"context"
+	"crypto/ed25519"
+	"crypto/rand"
 	"crypto/subtle"
 	"fmt"
 	"io"
@@ -110,6 +112,7 @@ type Server struct {
 	HostKeys              []ssh.Signer
 	sshConfig             *ssh.ServerConfig
 	workspaceInfoProvider common.WorkspaceInfoProvider
+	caKey                 ssh.Signer
 }
 
 func init() {
@@ -123,11 +126,12 @@ func init() {
 
 // New creates a new SSH proxy server
 
-func New(signers []ssh.Signer, workspaceInfoProvider common.WorkspaceInfoProvider, heartbeat Heartbeat) *Server {
+func New(signers []ssh.Signer, workspaceInfoProvider common.WorkspaceInfoProvider, heartbeat Heartbeat, caKey ssh.Signer) *Server {
 	server := &Server{
 		workspaceInfoProvider: workspaceInfoProvider,
 		Heartbeater:           &noHeartbeat{},
 		HostKeys:              signers,
+		caKey:                 caKey,
 	}
 	if heartbeat != nil {
 		server.Heartbeater = heartbeat
@@ -329,6 +333,14 @@ func (s *Server) HandleConn(c net.Conn) {
 		if err != nil {
 			log.WithField("instanceId", wsInfo.InstanceID).WithError(err).Warn("failed to retrieve the SSH username. Using the default.")
 		}
+	} else if s.caKey != nil && wsInfo.IsEnabledSSHCA {
+		key, err = s.GenerateSSHCert(ctx, userName)
+		if err != nil {
+			cancel()
+			return
+		}
+
+		session.WorkspacePrivateKey = key
 	} else {
 		key, userName, err = s.GetWorkspaceSSHKey(ctx, wsInfo.IPAddress, supervisorPort)
 		if err != nil {
@@ -493,6 +505,58 @@ func (s *Server) GetWorkspaceSSHKey(ctx context.Context, workspaceIP string, sup
 		userName = "gitpod"
 	}
 	return key, userName, nil
+}
+
+func (s *Server) GenerateSSHCert(ctx context.Context, userName string) (ssh.Signer, error) {
+	// prepare certificate for signing
+	nonce := make([]byte, 32)
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return nil, xerrors.Errorf("failed to generate signed SSH key: error generating random nonce: %w", err)
+	}
+
+	pk, pv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		return nil, err
+	}
+	b, err := ssh.NewPublicKey(pk)
+	if err != nil {
+		return nil, err
+	}
+
+	priv, err := ssh.NewSignerFromSigner(pv)
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now()
+
+	certificate := &ssh.Certificate{
+		Serial:          0,
+		Key:             b,
+		KeyId:           "ws-proxy",
+		ValidPrincipals: []string{userName},
+		ValidAfter:      uint64(now.Add(-10 * time.Minute).In(time.UTC).Unix()),
+		ValidBefore:     uint64(now.Add(10 * time.Minute).In(time.UTC).Unix()),
+		CertType:        ssh.UserCert,
+		Permissions: ssh.Permissions{
+			Extensions: map[string]string{
+				"permit-pty":            "",
+				"permit-user-rc":        "",
+				"permit-X11-forwarding": "",
+			},
+		},
+		Nonce:        nonce,
+		SignatureKey: s.caKey.PublicKey(),
+	}
+	err = certificate.SignCert(rand.Reader, s.caKey)
+	if err != nil {
+		return nil, err
+	}
+	certSigner, err := ssh.NewCertSigner(certificate, priv)
+	if err != nil {
+		return nil, err
+	}
+	return certSigner, nil
 }
 
 func (s *Server) Serve(l net.Listener) error {

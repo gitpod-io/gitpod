@@ -45,6 +45,23 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ReadOnly:  true,
 		})
 	}
+	if ctx.Config.SSHGatewayCAKey != nil {
+		volumes = append(volumes, corev1.Volume{
+			Name: "ca-key",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: ctx.Config.SSHGatewayCAKey.Name,
+				},
+			},
+		})
+
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "ca-key",
+			MountPath: "/mnt/ca-key/ca.pem",
+			SubPath:   "ca.pem",
+			ReadOnly:  true,
+		})
+	}
 
 	podSpec := corev1.PodSpec{
 		PriorityClassName:         common.SystemNodeCritical,

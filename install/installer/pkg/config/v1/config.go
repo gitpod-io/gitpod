@@ -140,6 +140,8 @@ type Config struct {
 
 	SSHGatewayHostKey *ObjectRef `json:"sshGatewayHostKey,omitempty"`
 
+	SSHGatewayCAKey *ObjectRef `json:"sshGatewayCAKey,omitempty"`
+
 	DisableDefinitelyGP bool `json:"disableDefinitelyGp"`
 
 	CustomCACert *ObjectRef `json:"customCACert,omitempty"`

@@ -169,6 +169,8 @@ spec:
                 - privateKey
                 - publicKey
                 type: object
+              sshCAKey:
+                type: string
               sshPublicKeys:
                 items:
                   type: string

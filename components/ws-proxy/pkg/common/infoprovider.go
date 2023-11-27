@@ -66,4 +66,6 @@ type WorkspaceInfo struct {
 	IsRunning     bool
 
 	SSHKey *workspacev1.SSHKey
+
+	IsEnabledSSHCA bool
 }

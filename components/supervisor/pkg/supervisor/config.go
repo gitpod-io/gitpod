@@ -329,6 +329,8 @@ type WorkspaceConfig struct {
 
 	// ConfigcatEnabled controls whether configcat is enabled
 	ConfigcatEnabled bool `env:"GITPOD_CONFIGCAT_ENABLED"`
+
+	SSHCAKey string `env:"GITPOD_SSH_CA_KEY"`
 }
 
 // WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service.

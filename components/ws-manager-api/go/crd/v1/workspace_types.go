@@ -63,6 +63,8 @@ type WorkspaceSpec struct {
 	// the XFS quota to enforce on the workspace's /workspace folder
 	StorageQuota int `json:"storageQuota,omitempty"`
 
+	SSHCAKey string `json:"sshCAKey,omitempty"`
+
 	SSHKey *SSHKey `json:"ssh,omitempty"`
 }
 

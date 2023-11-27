@@ -324,5 +324,11 @@ func getConfig(fn string) (*config.ServiceConfiguration, error) {
 		return nil, fmt.Errorf("cannot decode configuration from %s: %w", fn, err)
 	}
 
+	ca, err := os.ReadFile("/mnt/ca-key/ca.pem")
+	if err != nil {
+		return &cfg, nil
+	}
+	cfg.Manager.SSHGatewayCAKey = string(ca)
+
 	return &cfg, nil
 }
