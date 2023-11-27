@@ -535,7 +535,7 @@ func componentWaiterContainer(ctx *RenderContext, component, labels, image strin
 			"--gitpod-host",
 			ctx.Config.Domain,
 			"--ide-metrics-host",
-			"http://" + IDEMetricsComponent + ":" + strconv.Itoa(IDEMetricsPort),
+			ClusterURL("http", IDEProxyComponent, ctx.Namespace, IDEProxyPort),
 			"--namespace",
 			ctx.Namespace,
 			"--component",

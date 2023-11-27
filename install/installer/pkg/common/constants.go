@@ -65,6 +65,8 @@ const (
 	DashboardComponent          = "dashboard"
 	IDEMetricsComponent         = "ide-metrics"
 	IDEMetricsPort              = 3000
+	IDEProxyComponent           = "ide-proxy"
+	IDEProxyPort                = 80
 )
 
 var (
