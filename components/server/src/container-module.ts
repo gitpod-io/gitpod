@@ -130,6 +130,7 @@ import { DefaultWorkspaceImageValidator } from "./orgs/default-workspace-image-v
 import { ContextAwareAnalyticsWriter } from "./analytics";
 import { ScmService } from "./scm/scm-service";
 import { ContextService } from "./workspace/context-service";
+import { annotateMeasurement } from "@gitpod/gitpod-protocol/lib/util/measure";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -198,7 +199,7 @@ export const productionContainerModule = new ContainerModule(
         /* The binding order of the context parser does not configure preference/a working order. Each context parser must be able
          * to decide for themselves, independently and without overlap to the other parsers what to do.
          */
-        bind(ContextParser).toSelf().inSingletonScope();
+        bind(ContextParser).toSelf().inSingletonScope().onActivation(annotateMeasurement);
         bind(SnapshotContextParser).toSelf().inSingletonScope();
         bind(IContextParser).to(SnapshotContextParser).inSingletonScope();
         bind(IPrefixContextParser).to(ReferrerPrefixParser).inSingletonScope();
@@ -212,12 +213,13 @@ export const productionContainerModule = new ContainerModule(
         bind(MonitoringEndpointsApp).toSelf().inSingletonScope();
 
         bind(HostContainerMapping).toSelf().inSingletonScope();
-        bind(HostContextProviderFactory)
+        bind<HostContextProviderFactory>(HostContextProviderFactory)
             .toDynamicValue(({ container }) => ({
                 createHostContext: (config: AuthProviderParams) =>
                     HostContextProviderImpl.createHostContext(container, config),
             }))
-            .inSingletonScope();
+            .inSingletonScope()
+            .onActivation(annotateMeasurement);
         bind(HostContextProvider).to(HostContextProviderImpl).inSingletonScope();
 
         bind(WorkspaceManagerClientProvider).toSelf().inSingletonScope();
@@ -343,17 +345,17 @@ export const productionContainerModule = new ContainerModule(
         bind(SignInJWT).toSelf().inSingletonScope();
 
         bind(PrebuildManager).toSelf().inSingletonScope();
-        bind(GithubApp).toSelf().inSingletonScope();
-        bind(GithubAppRules).toSelf().inSingletonScope();
+        bind(GithubApp).toSelf().inSingletonScope().onActivation(annotateMeasurement);
+        bind(GithubAppRules).toSelf().inSingletonScope().onActivation(annotateMeasurement);
         bind(PrebuildStatusMaintainer).toSelf().inSingletonScope();
-        bind(GitLabApp).toSelf().inSingletonScope();
-        bind(BitbucketApp).toSelf().inSingletonScope();
-        bind(GitHubEnterpriseApp).toSelf().inSingletonScope();
-        bind(BitbucketServerApp).toSelf().inSingletonScope();
+        bind(GitLabApp).toSelf().inSingletonScope().onActivation(annotateMeasurement);
+        bind(BitbucketApp).toSelf().inSingletonScope().onActivation(annotateMeasurement);
+        bind(GitHubEnterpriseApp).toSelf().inSingletonScope().onActivation(annotateMeasurement);
+        bind(BitbucketServerApp).toSelf().inSingletonScope().onActivation(annotateMeasurement);
         bind(IncrementalWorkspaceService).toSelf().inSingletonScope();
 
         // payment/billing
-        bind(StripeService).toSelf().inSingletonScope();
+        bind(StripeService).toSelf().inSingletonScope().onActivation(annotateMeasurement);
 
         bind(EntitlementServiceUBP).toSelf().inSingletonScope();
         bind(EntitlementServiceImpl).toSelf().inSingletonScope();

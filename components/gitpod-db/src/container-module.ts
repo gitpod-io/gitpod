@@ -45,6 +45,7 @@ import { LinkedInProfileDB } from "./linked-in-profile-db";
 import { DataCache, DataCacheNoop } from "./data-cache";
 import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { EncryptionService, GlobalEncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
+import { annotateMeasurement } from "@gitpod/gitpod-protocol/lib/util/measure";
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = (cacheClass = DataCacheNoop) =>
@@ -65,20 +66,20 @@ export const dbContainerModule = (cacheClass = DataCacheNoop) =>
         bind(TypeORMBlockedRepositoryDBImpl).toSelf().inSingletonScope();
         bind(BlockedRepositoryDB).toService(TypeORMBlockedRepositoryDBImpl);
 
-        bind(TypeORMUserDBImpl).toSelf().inSingletonScope();
+        bind(TypeORMUserDBImpl).toSelf().inSingletonScope().onActivation(annotateMeasurement);
         bind(UserDB).toService(TypeORMUserDBImpl);
         bindDbWithTracing(TracedUserDB, bind, UserDB).inSingletonScope();
 
         bind(AuthProviderEntryDB).to(AuthProviderEntryDBImpl).inSingletonScope();
 
-        bind(TypeORMWorkspaceDBImpl).toSelf().inSingletonScope();
+        bind(TypeORMWorkspaceDBImpl).toSelf().inSingletonScope().onActivation(annotateMeasurement);
         bind(WorkspaceDB).toService(TypeORMWorkspaceDBImpl);
         bindDbWithTracing(TracedWorkspaceDB, bind, WorkspaceDB).inSingletonScope();
 
-        bind(TypeORMAppInstallationDBImpl).toSelf().inSingletonScope();
+        bind(TypeORMAppInstallationDBImpl).toSelf().inSingletonScope().onActivation(annotateMeasurement);
         bind(AppInstallationDB).toService(TypeORMAppInstallationDBImpl);
 
-        bind(TypeORMOneTimeSecretDBImpl).toSelf().inSingletonScope();
+        bind(TypeORMOneTimeSecretDBImpl).toSelf().inSingletonScope().onActivation(annotateMeasurement);
         bind(OneTimeSecretDB).toService(TypeORMOneTimeSecretDBImpl);
         bindDbWithTracing(TracedOneTimeSecretDB, bind, OneTimeSecretDB).inSingletonScope();
 
@@ -96,24 +97,30 @@ export const dbContainerModule = (cacheClass = DataCacheNoop) =>
         bind(TableDescriptionProvider).toService(GitpodTableDescriptionProvider);
         bind(PeriodicDbDeleter).toSelf().inSingletonScope();
 
-        bind(CodeSyncResourceDB).toSelf().inSingletonScope();
+        bind(CodeSyncResourceDB).toSelf().inSingletonScope().onActivation(annotateMeasurement);
 
-        bind(WorkspaceClusterDB).to(WorkspaceClusterDBImpl).inSingletonScope();
+        bind<WorkspaceClusterDB>(WorkspaceClusterDB)
+            .to(WorkspaceClusterDBImpl)
+            .inSingletonScope()
+            .onActivation(annotateMeasurement);
 
-        bind(AuthCodeRepositoryDB).toSelf().inSingletonScope();
+        bind(AuthCodeRepositoryDB).toSelf().inSingletonScope().onActivation(annotateMeasurement);
 
-        bind(TeamDBImpl).toSelf().inSingletonScope();
+        bind(TeamDBImpl).toSelf().inSingletonScope().onActivation(annotateMeasurement);
         bind(TeamDB).toService(TeamDBImpl);
-        bind(ProjectDBImpl).toSelf().inSingletonScope();
+        bind(ProjectDBImpl).toSelf().inSingletonScope().onActivation(annotateMeasurement);
         bind(ProjectDB).toService(ProjectDBImpl);
-        bind(WebhookEventDBImpl).toSelf().inSingletonScope();
+        bind(WebhookEventDBImpl).toSelf().inSingletonScope().onActivation(annotateMeasurement);
         bind(WebhookEventDB).toService(WebhookEventDBImpl);
 
-        bind(PersonalAccessTokenDBImpl).toSelf().inSingletonScope();
+        bind(PersonalAccessTokenDBImpl).toSelf().inSingletonScope().onActivation(annotateMeasurement);
         bind(PersonalAccessTokenDB).toService(PersonalAccessTokenDBImpl);
 
         // com concerns
-        bind(EmailDomainFilterDB).to(EmailDomainFilterDBImpl).inSingletonScope();
-        bind(LinkedInProfileDBImpl).toSelf().inSingletonScope();
+        bind<EmailDomainFilterDB>(EmailDomainFilterDB)
+            .to(EmailDomainFilterDBImpl)
+            .inSingletonScope()
+            .onActivation(annotateMeasurement);
+        bind(LinkedInProfileDBImpl).toSelf().inSingletonScope().onActivation(annotateMeasurement);
         bind(LinkedInProfileDB).toService(LinkedInProfileDBImpl);
     });
