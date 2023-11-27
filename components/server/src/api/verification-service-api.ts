@@ -20,13 +20,11 @@ import { ctxUserId } from "../util/request-context";
 import { UserService } from "../user/user-service";
 import { formatPhoneNumber } from "../user/phone-numbers";
 import { validate as uuidValidate } from "uuid";
-import { UserDB } from "@gitpod/gitpod-db/lib";
 
 @injectable()
 export class VerificationServiceAPI implements ServiceImpl<typeof VerificationServiceInterface> {
     @inject(VerificationService) private readonly verificationService: VerificationService;
     @inject(UserService) private readonly userService: UserService;
-    @inject(UserDB) private readonly userDB: UserDB;
 
     async sendPhoneNumberVerificationToken(
         req: SendPhoneNumberVerificationTokenRequest,

@@ -4,20 +4,17 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AdminGetListRequest, AdminGetListResult, EmailDomainFilterEntry, User } from "@gitpod/gitpod-protocol";
+import { User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable, postConstruct } from "inversify";
 import { Config } from "../config";
 import { Twilio } from "twilio";
 import { ServiceContext } from "twilio/lib/rest/verify/v2/service";
-import { EmailDomainFilterDB, TeamDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { TeamDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { VerificationInstance } from "twilio/lib/rest/verify/v2/service/verification";
 import { v4 as uuidv4, validate as uuidValidate } from "uuid";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
-import { Authorizer } from "../authorization/authorizer";
-import { BlockedRepositoryDB } from "@gitpod/gitpod-db/lib/blocked-repository-db";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { UserService } from "../user/user-service";
 
@@ -27,9 +24,6 @@ export class VerificationService {
     @inject(WorkspaceDB) protected workspaceDB: WorkspaceDB;
     @inject(UserDB) protected userDB: UserDB;
     @inject(TeamDB) protected teamDB: TeamDB;
-    @inject(Authorizer) private readonly auth: Authorizer;
-    @inject(BlockedRepositoryDB) private readonly blockedRepositoryDB: BlockedRepositoryDB;
-    @inject(EmailDomainFilterDB) private readonly emailDomainFilterDB: EmailDomainFilterDB;
     @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter;
     @inject(UserService) private readonly userService: UserService;
 
@@ -172,46 +166,5 @@ export class VerificationService {
         }
 
         return verified;
-    }
-
-    public async adminGetBlockedRepositories(
-        userId: string,
-        opts: AdminGetListRequest<BlockedRepository>,
-    ): Promise<AdminGetListResult<BlockedRepository>> {
-        await this.auth.checkPermissionOnInstallation(userId, "configure");
-        const results = await this.blockedRepositoryDB.findAllBlockedRepositories(
-            opts.offset,
-            opts.limit,
-            opts.orderBy,
-            opts.orderDir === "asc" ? "ASC" : "DESC",
-            opts.searchTerm,
-        );
-        return results;
-    }
-
-    public async adminCreateBlockedRepository(
-        userId: string,
-        opts: Pick<BlockedRepository, "urlRegexp" | "blockUser">,
-    ): Promise<BlockedRepository> {
-        await this.auth.checkPermissionOnInstallation(userId, "configure");
-        return this.blockedRepositoryDB.createBlockedRepository(opts.urlRegexp, opts.blockUser);
-    }
-
-    public async adminDeleteBlockedRepository(userId: string, blockedRepositoryId: number): Promise<void> {
-        await this.auth.checkPermissionOnInstallation(userId, "configure");
-        return this.blockedRepositoryDB.deleteBlockedRepository(blockedRepositoryId);
-    }
-
-    public async adminGetBlockedEmailDomains(userId: string): Promise<EmailDomainFilterEntry[]> {
-        await this.auth.checkPermissionOnInstallation(userId, "configure");
-        return this.emailDomainFilterDB.getFilterEntries();
-    }
-
-    public async adminCreateBlockedEmailDomain(
-        userId: string,
-        opts: EmailDomainFilterEntry,
-    ): Promise<EmailDomainFilterEntry> {
-        await this.auth.checkPermissionOnInstallation(userId, "configure");
-        return this.emailDomainFilterDB.storeFilterEntry(opts);
     }
 }
