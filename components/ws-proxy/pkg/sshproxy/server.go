@@ -304,6 +304,7 @@ func (s *Server) HandleConn(c net.Conn) {
 	}
 
 	var key ssh.Signer
+	//nolint:ineffassign
 	userName := "gitpod"
 
 	session := &Session{
