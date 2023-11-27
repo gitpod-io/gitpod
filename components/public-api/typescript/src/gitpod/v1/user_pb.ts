@@ -365,9 +365,9 @@ export enum User_RoleOrPermission {
   ADMIN_WORKSPACE_CONTENT = 8,
 
   /**
-   * @generated from enum value: ROLE_OR_PERMISSION_ADMIN_WORKSPACE = 9;
+   * @generated from enum value: ROLE_OR_PERMISSION_ADMIN_WORKSPACES = 9;
    */
-  ADMIN_WORKSPACE = 9,
+  ADMIN_WORKSPACES = 9,
 
   /**
    * @generated from enum value: ROLE_OR_PERMISSION_ADMIN_PROJECTS = 10;
@@ -390,7 +390,7 @@ proto3.util.setEnumType(User_RoleOrPermission, "gitpod.v1.User.RoleOrPermission"
   { no: 6, name: "ROLE_OR_PERMISSION_ADMIN_PERMISSIONS" },
   { no: 7, name: "ROLE_OR_PERMISSION_ADMIN_USERS" },
   { no: 8, name: "ROLE_OR_PERMISSION_ADMIN_WORKSPACE_CONTENT" },
-  { no: 9, name: "ROLE_OR_PERMISSION_ADMIN_WORKSPACE" },
+  { no: 9, name: "ROLE_OR_PERMISSION_ADMIN_WORKSPACES" },
   { no: 10, name: "ROLE_OR_PERMISSION_ADMIN_PROJECTS" },
   { no: 11, name: "ROLE_OR_PERMISSION_NEW_WORKSPACE_CLUSTER" },
 ]);
