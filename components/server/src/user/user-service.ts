@@ -302,4 +302,13 @@ export class UserService {
             },
         });
     }
+
+    public async markUserAsVerified(user: User, phoneNumber: string | undefined) {
+        user.lastVerificationTime = new Date().toISOString();
+        if (phoneNumber) {
+            user.verificationPhoneNumber = phoneNumber;
+        }
+        await this.userDb.updateUserPartial(user);
+        log.info("User verified", { userId: user.id });
+    }
 }

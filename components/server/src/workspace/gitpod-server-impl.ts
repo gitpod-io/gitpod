@@ -4,7 +4,16 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { UserDB, WorkspaceDB, DBWithTracing, TracedWorkspaceDB, TeamDB, DBGitpodToken } from "@gitpod/gitpod-db/lib";
+import {
+    UserDB,
+    WorkspaceDB,
+    DBWithTracing,
+    TracedWorkspaceDB,
+    EmailDomainFilterDB,
+    TeamDB,
+    DBGitpodToken,
+} from "@gitpod/gitpod-db/lib";
+import { BlockedRepositoryDB } from "@gitpod/gitpod-db/lib/blocked-repository-db";
 import {
     AuthProviderEntry,
     AuthProviderInfo,
@@ -170,6 +179,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         private readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider,
 
         @inject(UserDB) private readonly userDB: UserDB,
+        @inject(BlockedRepositoryDB) private readonly blockedRepostoryDB: BlockedRepositoryDB,
         @inject(UserAuthentication) private readonly userAuthentication: UserAuthentication,
         @inject(UserService) private readonly userService: UserService,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
@@ -199,6 +209,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(StripeService) private readonly stripeService: StripeService,
         @inject(UsageService) private readonly usageService: UsageService,
         @inject(BillingServiceDefinition.name) private readonly billingService: BillingServiceClient,
+        @inject(EmailDomainFilterDB) private emailDomainFilterdb: EmailDomainFilterDB,
 
         @inject(RedisSubscriber) private readonly subscriber: RedisSubscriber,
 
@@ -491,34 +502,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const phoneNumber = formatPhoneNumber(rawPhoneNumber);
         const user = await this.checkUser("verifyPhoneNumberVerificationToken");
 
-        const { verified, channel } = await this.verificationService.verifyVerificationToken(
-            phoneNumber,
-            token,
-            verificationId,
-        );
-        if (!verified) {
-            this.analytics.track({
-                event: "phone_verification_failed",
-                userId: user.id,
-                properties: {
-                    channel,
-                    verification_id: verificationId,
-                },
-            });
-            return false;
-        }
-        this.verificationService.markVerified(user);
-        user.verificationPhoneNumber = phoneNumber;
-        await this.userDB.updateUserPartial(user);
-        this.analytics.track({
-            event: "phone_verification_completed",
-            userId: user.id,
-            properties: {
-                channel,
-                verification_id: verificationId,
-            },
-        });
-        return true;
+        return await this.verificationService.verifyVerificationToken(user, phoneNumber, token, verificationId);
     }
 
     public async getClientRegion(ctx: TraceContext): Promise<string | undefined> {
@@ -1547,7 +1531,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                         AttributionId.render({ kind: "team", teamId: org.id }),
                     )) !== undefined
                 ) {
-                    await this.verificationService.verifyUser(user);
+                    await this.userService.markUserAsVerified(user, undefined);
                 }
             } catch (e) {
                 log.warn("Failed to verify new org member", e);
@@ -1880,7 +1864,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.auth.checkPermissionOnInstallation(admin.id, "configure");
 
         try {
-            return await this.verificationService.adminGetBlockedRepositories(admin.id, req);
+            const res = await this.blockedRepostoryDB.findAllBlockedRepositories(
+                req.offset,
+                req.limit,
+                req.orderBy,
+                req.orderDir === "asc" ? "ASC" : "DESC",
+                req.searchTerm,
+            );
+            return res;
         } catch (e) {
             throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, String(e));
         }
@@ -1900,10 +1891,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         );
         await this.auth.checkPermissionOnInstallation(admin.id, "configure");
 
-        return await this.verificationService.adminCreateBlockedRepository(admin.id, {
-            urlRegexp,
-            blockUser,
-        });
+        return await this.blockedRepostoryDB.createBlockedRepository(urlRegexp, blockUser);
     }
 
     async adminDeleteBlockedRepository(ctx: TraceContext, id: number): Promise<void> {
@@ -1912,7 +1900,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const admin = await this.guardAdminAccess("adminDeleteBlockedRepository", { id }, Permission.ADMIN_USERS);
         await this.auth.checkPermissionOnInstallation(admin.id, "configure");
 
-        await this.verificationService.adminDeleteBlockedRepository(admin.id, id);
+        await this.blockedRepostoryDB.deleteBlockedRepository(id);
     }
 
     async adminBlockUser(ctx: TraceContext, req: AdminBlockUserRequest): Promise<User> {
@@ -1950,9 +1938,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const admin = await this.guardAdminAccess("adminVerifyUser", { id: userId }, Permission.ADMIN_USERS);
         await this.auth.checkPermissionOnUser(admin.id, "admin_control", userId);
         const user = await this.userService.findUserById(admin.id, userId);
-
-        this.verificationService.markVerified(user);
-        await this.userDB.updateUserPartial(user);
+        await this.userService.markUserAsVerified(user, undefined);
         return user;
     }
 
@@ -2973,7 +2959,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("adminGetBlockedEmailDomains");
         await this.guardAdminAccess("adminGetBlockedEmailDomains", { id: user.id }, Permission.ADMIN_USERS);
         await this.auth.checkPermissionOnInstallation(user.id, "configure");
-        return this.verificationService.adminGetBlockedEmailDomains(user.id);
+        return await this.emailDomainFilterdb.getFilterEntries();
     }
 
     async adminSaveBlockedEmailDomain(
@@ -2983,6 +2969,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("adminSaveBlockedEmailDomain");
         await this.guardAdminAccess("adminSaveBlockedEmailDomain", { id: user.id }, Permission.ADMIN_USERS);
         await this.auth.checkPermissionOnInstallation(user.id, "configure");
-        await this.verificationService.adminCreateBlockedEmailDomain(user.id, domainFilterentry);
+        await this.emailDomainFilterdb.storeFilterEntry(domainFilterentry);
     }
 }

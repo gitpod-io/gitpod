@@ -4,8 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { AdminGetListResult } from "@gitpod/gitpod-protocol";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getGitpodService } from "../service/service";
 import { AdminPageHeader } from "./AdminPageHeader";
+import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import ConfirmationModal from "../components/ConfirmationModal";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
@@ -15,10 +18,6 @@ import Alert from "../components/Alert";
 import { SpinnerLoader } from "../components/Loader";
 import searchIcon from "../icons/search.svg";
 import { Button } from "@podkit/buttons/Button";
-import { verificationClient } from "../service/public-api";
-import { Sort, SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
-import { BlockedRepository, ListBlockedRepositoriesResponse } from "@gitpod/public-api/lib/gitpod/v1/verification_pb";
-import { PartialMessage } from "@bufbuild/protobuf";
 
 export function BlockedRepositories() {
     return (
@@ -28,22 +27,20 @@ export function BlockedRepositories() {
     );
 }
 
-type NewBlockedRepository = Pick<PartialMessage<BlockedRepository>, "urlRegexp" | "blockUser">;
-type ExistingBlockedRepository = Pick<PartialMessage<BlockedRepository>, "id" | "urlRegexp" | "blockUser">;
+type NewBlockedRepository = Pick<BlockedRepository, "urlRegexp" | "blockUser">;
+type ExistingBlockedRepository = Pick<BlockedRepository, "id" | "urlRegexp" | "blockUser">;
 
 interface Props {}
 
 export function BlockedRepositoriesList(props: Props) {
-    const [searchResult, setSearchResult] = useState<PartialMessage<ListBlockedRepositoriesResponse>>({
-        blockedRepositories: [],
-    });
+    const [searchResult, setSearchResult] = useState<AdminGetListResult<BlockedRepository>>({ rows: [], total: 0 });
     const [queryTerm, setQueryTerm] = useState("");
     const [searching, setSearching] = useState(false);
 
     const [isAddModalVisible, setAddModalVisible] = useState(false);
     const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
 
-    const [currentBlockedRepository, setCurrentBlockedRepository] = useState<PartialMessage<BlockedRepository>>({
+    const [currentBlockedRepository, setCurrentBlockedRepository] = useState<ExistingBlockedRepository>({
         id: 0,
         urlRegexp: "",
         blockUser: false,
@@ -52,18 +49,11 @@ export function BlockedRepositoriesList(props: Props) {
     const search = async () => {
         setSearching(true);
         try {
-            const result = await verificationClient.listBlockedRepositories({
-                // Don't need, added it in json-rpc implement to make life easier.
-                // pagination: new PaginationRequest({
-                //     token: Buffer.from(JSON.stringify({ offset: 0 })).toString("base64"),
-                //     pageSize: 100,
-                // }),
-                sort: [
-                    new Sort({
-                        field: "urlRegexp",
-                        order: SortOrder.ASC,
-                    }),
-                ],
+            const result = await getGitpodService().server.adminGetBlockedRepositories({
+                limit: 100,
+                orderBy: "urlRegexp",
+                offset: 0,
+                orderDir: "asc",
                 searchTerm: queryTerm,
             });
             setSearchResult(result);
@@ -86,10 +76,10 @@ export function BlockedRepositoriesList(props: Props) {
     };
 
     const save = async (blockedRepository: NewBlockedRepository) => {
-        await verificationClient.createBlockedRepository({
-            urlRegexp: blockedRepository.urlRegexp ?? "",
-            blockUser: blockedRepository.blockUser ?? false,
-        });
+        await getGitpodService().server.adminCreateBlockedRepository(
+            blockedRepository.urlRegexp,
+            blockedRepository.blockUser,
+        );
         setAddModalVisible(false);
         search();
     };
@@ -101,13 +91,11 @@ export function BlockedRepositoriesList(props: Props) {
     };
 
     const deleteBlockedRepository = async (blockedRepository: ExistingBlockedRepository) => {
-        await verificationClient.deleteBlockedRepository({
-            blockedRepositoryId: blockedRepository.id,
-        });
+        await getGitpodService().server.adminDeleteBlockedRepository(blockedRepository.id);
         search();
     };
 
-    const confirmDeleteBlockedRepository = (blockedRepository: PartialMessage<BlockedRepository>) => {
+    const confirmDeleteBlockedRepository = (blockedRepository: ExistingBlockedRepository) => {
         setCurrentBlockedRepository(blockedRepository);
         setAddModalVisible(false);
         setDeleteModalVisible(true);
@@ -170,7 +158,7 @@ export function BlockedRepositoriesList(props: Props) {
                     <div className="w-1/12">Block Users</div>
                     <div className="w-1/12"></div>
                 </div>
-                {searchResult.blockedRepositories!.map((br) => (
+                {searchResult.rows.map((br) => (
                     <BlockedRepositoryEntry br={br} confirmedDelete={confirmDeleteBlockedRepository} />
                 ))}
             </div>
@@ -178,10 +166,7 @@ export function BlockedRepositoriesList(props: Props) {
     );
 }
 
-function BlockedRepositoryEntry(props: {
-    br: PartialMessage<BlockedRepository>;
-    confirmedDelete: (br: PartialMessage<BlockedRepository>) => void;
-}) {
+function BlockedRepositoryEntry(props: { br: BlockedRepository; confirmedDelete: (br: BlockedRepository) => void }) {
     const menuEntries: ContextMenuEntry[] = [
         {
             title: "Delete",
@@ -310,7 +295,7 @@ function Details(props: {
             <CheckboxInputField
                 label="Block Users"
                 hint="Block any user that tries to open a workspace for a repository URL that matches this RegEx."
-                checked={props.br.blockUser!}
+                checked={props.br.blockUser}
                 disabled={!props.update}
                 onChange={(checked) => {
                     if (!!props.update) {

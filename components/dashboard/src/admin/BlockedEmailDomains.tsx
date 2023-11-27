@@ -13,10 +13,10 @@ import { ItemFieldContextMenu } from "../components/ItemsList";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import searchIcon from "../icons/search.svg";
+import { getGitpodService } from "../service/service";
 import { AdminPageHeader } from "./AdminPageHeader";
 import Pagination from "../Pagination/Pagination";
 import { Button } from "@podkit/buttons/Button";
-import { verificationClient } from "../service/public-api";
 
 export function BlockedEmailDomains() {
     return (
@@ -27,7 +27,7 @@ export function BlockedEmailDomains() {
 }
 
 function useBlockedEmailDomains() {
-    return useQuery(["blockedEmailDomains"], () => verificationClient.listBlockedEmailDomains({}), {
+    return useQuery(["blockedEmailDomains"], () => getGitpodService().server.adminGetBlockedEmailDomains(), {
         staleTime: 1000 * 60 * 5, // 5min
     });
 }
@@ -37,15 +37,12 @@ function useUpdateBlockedEmailDomainMutation() {
     const blockedEmailDomains = useBlockedEmailDomains();
     return useMutation(
         async (blockedDomain: EmailDomainFilterEntry) => {
-            await verificationClient.createBlockedEmailDomain({
-                domain: blockedDomain.domain,
-                negative: blockedDomain.negative,
-            });
+            await getGitpodService().server.adminSaveBlockedEmailDomain(blockedDomain);
         },
         {
             onSuccess: (_, blockedDomain) => {
                 const updated = [];
-                for (const entry of blockedEmailDomains.data?.blockedEmailDomains || []) {
+                for (const entry of blockedEmailDomains.data || []) {
                     if (entry.domain !== blockedDomain.domain) {
                         updated.push(entry);
                     } else {
@@ -77,7 +74,7 @@ export function BlockedEmailDomainsList(props: Props) {
         if (!blockedEmailDomains.data) {
             return [];
         }
-        return blockedEmailDomains.data.blockedEmailDomains.filter((entry) =>
+        return blockedEmailDomains.data.filter((entry) =>
             entry.domain.toLowerCase().includes(searchTerm.toLowerCase()),
         );
     }, [blockedEmailDomains.data, searchTerm]);

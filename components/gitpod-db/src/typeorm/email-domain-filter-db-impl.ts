@@ -24,9 +24,9 @@ export class EmailDomainFilterDBImpl implements EmailDomainFilterDB {
         return (await this.getManager()).getRepository<DBEmailDomainFilterEntry>(DBEmailDomainFilterEntry);
     }
 
-    async storeFilterEntry(entry: EmailDomainFilterEntry): Promise<EmailDomainFilterEntry> {
+    async storeFilterEntry(entry: EmailDomainFilterEntry): Promise<void> {
         const repo = await this.getRepo();
-        return await repo.save(entry);
+        await repo.save(entry);
     }
 
     async getFilterEntries(): Promise<EmailDomainFilterEntry[]> {

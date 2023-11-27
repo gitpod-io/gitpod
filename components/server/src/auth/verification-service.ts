@@ -18,6 +18,8 @@ import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/expe
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import { Authorizer } from "../authorization/authorizer";
 import { BlockedRepositoryDB } from "@gitpod/gitpod-db/lib/blocked-repository-db";
+import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
+import { UserService } from "../user/user-service";
 
 @injectable()
 export class VerificationService {
@@ -28,6 +30,8 @@ export class VerificationService {
     @inject(Authorizer) private readonly auth: Authorizer;
     @inject(BlockedRepositoryDB) private readonly blockedRepositoryDB: BlockedRepositoryDB;
     @inject(EmailDomainFilterDB) private readonly emailDomainFilterDB: EmailDomainFilterDB;
+    @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter;
+    @inject(UserService) private readonly userService: UserService;
 
     protected verifyService: ServiceContext;
 
@@ -60,27 +64,14 @@ export class VerificationService {
         return isPhoneVerificationEnabled;
     }
 
-    public markVerified(user: User): User {
-        user.lastVerificationTime = new Date().toISOString();
-        return user;
-    }
-
     public async verifyOrgMembers(organizationId: string): Promise<void> {
         const members = await this.teamDB.findMembersByTeam(organizationId);
         for (const member of members) {
             const user = await this.userDB.findUserById(member.userId);
-            if (user) {
-                await this.verifyUser(user);
+            if (user && (await this.needsVerification(user))) {
+                await this.userService.markUserAsVerified(user, undefined);
             }
         }
-    }
-
-    public async verifyUser(user: User): Promise<User> {
-        if (await this.needsVerification(user)) {
-            user = await this.userDB.storeUser(this.markVerified(user));
-            log.info("User verified", { userId: user.id });
-        }
-        return user;
     }
 
     public async sendVerificationToken(
@@ -134,10 +125,11 @@ export class VerificationService {
     }
 
     public async verifyVerificationToken(
+        user: User,
         phoneNumber: string,
         oneTimePassword: string,
         verificationId: string,
-    ): Promise<{ verified: boolean; channel: string }> {
+    ): Promise<boolean> {
         if (!this.verifyService) {
             throw new Error("No verification service configured.");
         }
@@ -157,10 +149,29 @@ export class VerificationService {
             channel: verification_check.channel,
         });
 
-        return {
-            verified: verification_check.status === "approved",
-            channel: verification_check.channel,
-        };
+        const verified = verification_check.status === "approved";
+        if (verified) {
+            await this.userService.markUserAsVerified(user, phoneNumber);
+            this.analytics.track({
+                event: "phone_verification_completed",
+                userId: user.id,
+                properties: {
+                    channel: verification_check.channel,
+                    verification_id: verificationId,
+                },
+            });
+        } else {
+            this.analytics.track({
+                event: "phone_verification_failed",
+                userId: user.id,
+                properties: {
+                    channel: verification_check.channel,
+                    verification_id: verificationId,
+                },
+            });
+        }
+
+        return verified;
     }
 
     public async adminGetBlockedRepositories(
