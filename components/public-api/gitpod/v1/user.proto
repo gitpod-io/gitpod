@@ -3,6 +3,7 @@ syntax = "proto3";
 package gitpod.v1;
 
 import "gitpod/v1/editor.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
@@ -48,18 +49,20 @@ message User {
   // verification_phone_number is the phone number used for the last verification.
   string verification_phone_number = 9;
 
+  // user global workspace timeout settings
+  //
   // +optional
   WorkspaceTimeoutSettings timeout_settings = 10;
   message WorkspaceTimeoutSettings {
-    // user globol workspace timeout
-    //
-    // +optional
-    string workspace_timeout = 1;
-
+    // inacitivity is the maximum time of inactivity before the workspace is stopped or paused
+    google.protobuf.Duration inactivity = 1;
+    // inacitivity is the maximum time of disconnection before the workspace is stopped or paused
+    // set to zero to disable.
+    google.protobuf.Duration disconnected = 2;
     // control whether to enable the closed timeout of a workspace, i.e. close web ide, disconnect ssh connection
     //
     // +optional
-    bool disabled_closed_timeout = 2;
+    bool disabled_disconnected = 3;
   }
 
   // +optional

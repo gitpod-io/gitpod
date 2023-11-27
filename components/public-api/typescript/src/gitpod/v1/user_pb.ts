@@ -10,7 +10,7 @@
 // @ts-nocheck
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { Message, proto3, Timestamp } from "@bufbuild/protobuf";
+import { Duration, Message, proto3, Timestamp } from "@bufbuild/protobuf";
 import { EditorReference } from "./editor_pb.js";
 
 /**
@@ -151,6 +151,8 @@ export class User extends Message<User> {
   verificationPhoneNumber = "";
 
   /**
+   * user global workspace timeout settings
+   *
    * +optional
    *
    * @generated from field: gitpod.v1.User.WorkspaceTimeoutSettings timeout_settings = 10;
@@ -398,22 +400,28 @@ proto3.util.setEnumType(User_RoleOrPermission, "gitpod.v1.User.RoleOrPermission"
  */
 export class User_WorkspaceTimeoutSettings extends Message<User_WorkspaceTimeoutSettings> {
   /**
-   * user globol workspace timeout
+   * inacitivity is the maximum time of inactivity before the workspace is stopped or paused
    *
-   * +optional
-   *
-   * @generated from field: string workspace_timeout = 1;
+   * @generated from field: google.protobuf.Duration inactivity = 1;
    */
-  workspaceTimeout = "";
+  inactivity?: Duration;
+
+  /**
+   * inacitivity is the maximum time of disconnection before the workspace is stopped or paused
+   * set to zero to disable.
+   *
+   * @generated from field: google.protobuf.Duration disconnected = 2;
+   */
+  disconnected?: Duration;
 
   /**
    * control whether to enable the closed timeout of a workspace, i.e. close web ide, disconnect ssh connection
    *
    * +optional
    *
-   * @generated from field: bool disabled_closed_timeout = 2;
+   * @generated from field: bool disabled_disconnected = 3;
    */
-  disabledClosedTimeout = false;
+  disabledDisconnected = false;
 
   constructor(data?: PartialMessage<User_WorkspaceTimeoutSettings>) {
     super();
@@ -423,8 +431,9 @@ export class User_WorkspaceTimeoutSettings extends Message<User_WorkspaceTimeout
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.User.WorkspaceTimeoutSettings";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "workspace_timeout", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "disabled_closed_timeout", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 1, name: "inactivity", kind: "message", T: Duration },
+    { no: 2, name: "disconnected", kind: "message", T: Duration },
+    { no: 3, name: "disabled_disconnected", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): User_WorkspaceTimeoutSettings {
