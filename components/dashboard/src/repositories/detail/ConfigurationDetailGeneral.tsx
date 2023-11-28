@@ -5,29 +5,19 @@
  */
 
 import { FC } from "react";
-import { useParams } from "react-router";
 import { ConfigurationNameForm } from "./general/ConfigurationName";
-import { ConfigurationDetailPage } from "./ConfigurationDetailPage";
-import { useConfiguration } from "../../data/configurations/configuration-queries";
 import { RemoveConfiguration } from "./general/RemoveConfiguration";
+import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 
-type PageRouteParams = {
-    id: string;
+type Props = {
+    configuration: Configuration;
 };
-const ConfigurationDetailGeneral: FC = () => {
-    const { id } = useParams<PageRouteParams>();
-    const configurationQuery = useConfiguration(id);
-    const { data } = configurationQuery;
-
+export const ConfigurationDetailGeneral: FC<Props> = ({ configuration }) => {
     return (
-        <ConfigurationDetailPage configurationQuery={configurationQuery} id={id}>
-            {data && (
-                <>
-                    <ConfigurationNameForm configuration={data} />
-                    <RemoveConfiguration configuration={data} />
-                </>
-            )}
-        </ConfigurationDetailPage>
+        <>
+            <ConfigurationNameForm configuration={configuration} />
+            <RemoveConfiguration configuration={configuration} />
+        </>
     );
 };
 

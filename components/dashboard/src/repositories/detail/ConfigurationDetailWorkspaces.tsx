@@ -5,24 +5,14 @@
  */
 
 import { FC } from "react";
-import { useParams } from "react-router";
-import { ConfigurationDetailPage } from "./ConfigurationDetailPage";
-import { useConfiguration } from "../../data/configurations/configuration-queries";
 import { ConfigurationWorkspaceSizeOptions } from "./workspaces/WorkpaceSizeOptions";
+import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 
-type PageRouteParams = {
-    id: string;
+type Props = {
+    configuration: Configuration;
 };
-const ConfigurationDetailWorkspaces: FC = () => {
-    const { id } = useParams<PageRouteParams>();
-    const configurationQuery = useConfiguration(id);
-    const { data } = configurationQuery;
-
-    return (
-        <ConfigurationDetailPage configurationQuery={configurationQuery} id={id}>
-            {data && <ConfigurationWorkspaceSizeOptions configuration={data} />}
-        </ConfigurationDetailPage>
-    );
+const ConfigurationDetailWorkspaces: FC<Props> = ({ configuration }) => {
+    return <ConfigurationWorkspaceSizeOptions configuration={configuration} />;
 };
 
 export default ConfigurationDetailWorkspaces;
