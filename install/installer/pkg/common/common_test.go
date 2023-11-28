@@ -6,7 +6,6 @@ package common_test
 
 import (
 	"fmt"
-	"strconv"
 	"testing"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
@@ -59,8 +58,8 @@ func TestPublicApiServerComponentWaiterContainer(t *testing.T) {
 	container := common.PublicApiServerComponentWaiterContainer(ctx)
 	labels := common.DefaultLabelSelector(common.PublicApiComponent)
 	require.Equal(t, labels, "app=gitpod,component=public-api-server")
-	ideMetricsHost := "http://" + common.IDEMetricsComponent + ":" + strconv.Itoa(common.IDEMetricsPort)
-	require.Equal(t, []string{"-v", "component", "--gitpod-host", ctx.Config.Domain, "--ide-metrics-host", ideMetricsHost, "--namespace", "test_namespace", "--component", common.PublicApiComponent, "--labels", labels, "--image", ctx.Config.Repository + "/public-api-server:" + "happy_path_papi_image"}, container.Args)
+	ideProxyHost := common.ClusterURL("http", common.IDEProxyComponent, ctx.Namespace, common.IDEProxyPort)
+	require.Equal(t, []string{"-v", "component", "--gitpod-host", ctx.Config.Domain, "--ide-metrics-host", ideProxyHost, "--namespace", "test_namespace", "--component", common.PublicApiComponent, "--labels", labels, "--image", ctx.Config.Repository + "/public-api-server:" + "happy_path_papi_image"}, container.Args)
 }
 
 func TestServerComponentWaiterContainer(t *testing.T) {
@@ -73,6 +72,6 @@ func TestServerComponentWaiterContainer(t *testing.T) {
 	container := common.ServerComponentWaiterContainer(ctx)
 	labels := common.DefaultLabelSelector(common.ServerComponent)
 	require.Equal(t, labels, "app=gitpod,component=server")
-	ideMetricsHost := "http://" + common.IDEMetricsComponent + ":" + strconv.Itoa(common.IDEMetricsPort)
-	require.Equal(t, []string{"-v", "component", "--gitpod-host", ctx.Config.Domain, "--ide-metrics-host", ideMetricsHost, "--namespace", "test_namespace", "--component", common.ServerComponent, "--labels", labels, "--image", ctx.Config.Repository + "/server:" + "happy_path_server_image"}, container.Args)
+	ideProxyHost := common.ClusterURL("http", common.IDEProxyComponent, ctx.Namespace, common.IDEProxyPort)
+	require.Equal(t, []string{"-v", "component", "--gitpod-host", ctx.Config.Domain, "--ide-metrics-host", ideProxyHost, "--namespace", "test_namespace", "--component", common.ServerComponent, "--labels", labels, "--image", ctx.Config.Repository + "/server:" + "happy_path_server_image"}, container.Args)
 }
