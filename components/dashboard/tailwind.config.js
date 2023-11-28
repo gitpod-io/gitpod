@@ -7,6 +7,26 @@
 // tailwind.config.js
 const colors = require("tailwindcss/colors");
 
+const podkitColors = {
+    black: "#161616",
+    white: "#FFFFFF",
+    gray: {
+        900: "#12100C",
+        850: "#151310",
+        800: "#23211E",
+        750: "#2C2B28",
+        700: "#514F4D",
+        600: "#565451",
+        500: "#666564",
+        450: "#999795",
+        400: "#747372",
+        300: "#DADADA",
+        200: "#ECE7E5",
+        100: "#F5F4F4",
+        50: "#F9F9F9",
+    },
+};
+
 module.exports = {
     jit: true,
     content: ["./public/**/*.html", "./src/**/*.{js,ts,tsx}"],
@@ -21,23 +41,38 @@ module.exports = {
                 teal: colors.teal,
                 sky: colors.sky,
                 rose: colors.rose,
-                "gitpod-black": "#161616",
+                "gitpod-black": podkitColors.black,
                 "gitpod-red": "#CE4A3E",
                 "kumquat-dark": "#FF8A00",
                 "kumquat-base": "#FFAE33",
                 "kumquat-ripe": "#FFB45B",
                 "kumquat-light": "#FFE4BC",
                 "kumquat-gradient": "linear-gradient(137.41deg, #FFAD33 14.37%, #FF8A00 91.32%)",
-                "gray-900": "#12100C",
-                "gray-800": "#23211E",
-                "gray-700": "#514F4D",
-                "gray-600": "#565451",
-                "gray-500": "#666564",
-                "gray-400": "#999795",
-                "gray-300": "#DADADA",
-                "gray-200": "#ECE7E5",
-                "gray-100": "#F5F4F4",
-                "gray-50": "#F9F9F9",
+                gray: podkitColors.gray,
+                // Podkit colors - eventually we'll only use these colors
+                // Once migrated, we can remove the colors above and shift this up under theme directly instead of extend
+                "pk-content": {
+                    primary: podkitColors.gray["900"],
+                    "primary-dark": podkitColors.gray["200"],
+                    secondary: podkitColors.gray["600"],
+                    "secondary-dark": podkitColors.gray["450"],
+                    // tertiary: "#747372",
+                    // disabled: podkitColors.gray["450"],
+                    // "invert-primary": podkitColors.gray["200"],
+                    // "invert-secondary": podkitColors.gray["450"],
+                },
+                // "pk-surface": {
+                //     primary: podkitColors.white,
+                //     "primary-dark": podkitColors.gray["850"],
+                //     secondary: podkitColors.gray["50"],
+                //     "secondary-dark": podkitColors.gray["800"],
+                //     tertiary: podkitColors.gray["100"],
+                //     "tertiary-dark": podkitColors.gray["750"],
+                //     labels: podkitColors.gray["200"],
+                //     "labels-dark": podkitColors.gray["700"],
+                //     invert: podkitColors.gray["850"],
+                //     "invert-dark": podkitColors.gray["50"],
+                // },
             },
             container: {
                 center: true,

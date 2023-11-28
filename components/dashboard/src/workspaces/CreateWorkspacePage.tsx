@@ -13,7 +13,7 @@ import { useHistory, useLocation } from "react-router";
 import Alert from "../components/Alert";
 import { AuthorizeGit, useNeedsGitAuthorization } from "../components/AuthorizeGit";
 import { LinkButton } from "../components/LinkButton";
-import Modal from "../components/Modal";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import RepositoryFinder from "../components/RepositoryFinder";
 import SelectIDEComponent from "../components/SelectIDEComponent";
 import SelectWorkspaceClassComponent from "../components/SelectWorkspaceClassComponent";
@@ -652,21 +652,21 @@ export function LimitReachedModal(p: { children: React.ReactNode }) {
     return (
         // TODO: Use title and buttons props
         <Modal visible={true} closeable={false} onClose={() => {}}>
-            <h3 className="flex">
-                <span className="flex-grow">Limit Reached</span>
-                <img className="rounded-full w-8 h-8" src={user?.avatarUrl || ""} alt={user?.name || "Anonymous"} />
-            </h3>
-            <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
-                {p.children}
-            </div>
-            <div className="flex justify-end mt-6">
+            <ModalHeader>
+                <div className="flex">
+                    <span className="flex-grow">Limit Reached</span>
+                    <img className="rounded-full w-8 h-8" src={user?.avatarUrl || ""} alt={user?.name || "Anonymous"} />
+                </div>
+            </ModalHeader>
+            <ModalBody>{p.children}</ModalBody>
+            <ModalFooter>
                 <a href={gitpodHostUrl.asDashboard().toString()}>
                     <Button variant="secondary">Go to Dashboard</Button>
                 </a>
                 <a href={gitpodHostUrl.with({ pathname: "plans" }).toString()} className="ml-2">
                     <Button>Upgrade</Button>
                 </a>
-            </div>
+            </ModalFooter>
         </Modal>
     );
 }
