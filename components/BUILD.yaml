@@ -268,7 +268,7 @@ scripts:
         echo "No input."
       else
         echo "User: $user"
-        query="update d_b_user set rolesOrPermissions = '[\"admin\"]' where name=\"$user\";"
+        query="update d_b_user set rolesOrPermissions = '[\"admin\"]', fgaRelationshipsVersion=0 where name=\"$user\";"
         mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
       fi
       kill $PID || true
