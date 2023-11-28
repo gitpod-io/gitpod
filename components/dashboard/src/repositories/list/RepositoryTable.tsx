@@ -96,7 +96,7 @@ export const RepositoryTable: FC<Props> = ({
                                 <TableHead className="w-24 text-right">
                                     {isSearching && (
                                         <div className="flex flex-right justify-end items-center">
-                                            <LoadingState delay={false} />
+                                            <LoadingState delay={false} size={16} />
                                         </div>
                                     )}
                                 </TableHead>

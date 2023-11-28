@@ -9,10 +9,11 @@ import { Delayed } from "./Delayed";
 import { FC } from "react";
 
 type Props = {
+    size?: number;
     delay?: boolean;
 };
-export const LoadingState: FC<Props> = ({ delay = true }) => {
-    const loader = <Loader2 className="animate-spin" />;
+export const LoadingState: FC<Props> = ({ delay = true, size = 24 }) => {
+    const loader = <Loader2 className="animate-spin" size={size} />;
 
     if (!delay) {
         return loader;
