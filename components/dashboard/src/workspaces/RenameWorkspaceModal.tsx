@@ -51,7 +51,6 @@ export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
                     <div className="bg-kumquat-light rounded-md p-3 text-gitpod-red text-sm mb-2">{errorMessage}</div>
                 ) : null}
                 <input
-                    autoFocus
                     className="w-full truncate"
                     type="text"
                     value={description}

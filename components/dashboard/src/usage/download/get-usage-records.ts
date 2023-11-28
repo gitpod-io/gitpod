@@ -40,7 +40,7 @@ export const getAllUsageRecords = async ({
         totalPages = resp.pagination?.totalPages ?? 0;
 
         if (totalPages > 0) {
-            onProgress && onProgress(Math.ceil((page / totalPages) * 100));
+            onProgress?.(Math.ceil((page / totalPages) * 100));
         }
 
         // ensure we only call once per second

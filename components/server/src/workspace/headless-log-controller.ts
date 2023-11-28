@@ -71,7 +71,7 @@ export class HeadlessLogController {
                     }
                     const { workspace, instance } = ws;
 
-                    const logCtx = { userId: user.id, instanceId, workspaceId: workspace!.id };
+                    const logCtx = { userId: user.id, instanceId, workspaceId: workspace?.id };
                     log.debug(logCtx, HEADLESS_LOGS_PATH_PREFIX);
 
                     const aborted = new Deferred<boolean>();
@@ -167,7 +167,7 @@ export class HeadlessLogController {
                     }
                     const { workspace, instance } = ws;
 
-                    const logCtx = { userId: user.id, instanceId, workspaceId: workspace!.id };
+                    const logCtx = { userId: user.id, instanceId, workspaceId: workspace?.id };
                     log.debug(logCtx, HEADLESS_LOG_DOWNLOAD_PATH_PREFIX);
 
                     try {

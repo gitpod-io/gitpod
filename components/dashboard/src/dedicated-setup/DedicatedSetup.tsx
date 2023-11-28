@@ -65,7 +65,7 @@ const STEPS = {
     SSO_SETUP: "sso-setup",
     COMPLETE: "complete",
 } as const;
-type StepsValue = typeof STEPS[keyof typeof STEPS];
+type StepsValue = (typeof STEPS)[keyof typeof STEPS];
 
 type DedicatedSetupStepsProps = {
     org?: Organization;
@@ -77,7 +77,7 @@ const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, ssoConfig, onC
     const params = useQueryParams();
 
     // If we have an org w/ a name, we can skip the first step and go to sso setup
-    let initialStep: StepsValue = org && org.name ? STEPS.SSO_SETUP : STEPS.GETTING_STARTED;
+    let initialStep: StepsValue = org?.name ? STEPS.SSO_SETUP : STEPS.GETTING_STARTED;
     // If there's already an active sso config, advance to the complete step
     if (ssoConfig?.active) {
         initialStep = STEPS.COMPLETE;

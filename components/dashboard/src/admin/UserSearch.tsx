@@ -29,7 +29,7 @@ export default function UserSearch() {
     useEffect(() => {
         const userId = location.pathname.split("/")[3];
         if (userId) {
-            let user = searchResult.rows.find((u) => u.id === userId);
+            const user = searchResult.rows.find((u) => u.id === userId);
             if (user) {
                 setCurrentUserState(user);
             } else {
@@ -48,7 +48,7 @@ export default function UserSearch() {
         return <UserDetail user={currentUser} />;
     }
 
-    const search = async (page: number = 1) => {
+    const search = async (page = 1) => {
         setSearching(true);
         try {
             const result = await getGitpodService().server.adminGetUsers({
@@ -131,7 +131,7 @@ function UserEntry(p: { user: User }) {
     }
     const email = User.getPrimaryEmail(p.user) || "---";
     return (
-        <Link key={p.user.id} to={"/admin/users/" + p.user.id} data-analytics='{"button_type":"sidebar_menu"}'>
+        <Link key={p.user.id} to={`/admin/users/${p.user.id}`} data-analytics='{"button_type":"sidebar_menu"}'>
             <div className="rounded-xl whitespace-nowrap flex space-x-2 py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-kumquat-light group">
                 <div className="pr-3 self-center w-1/12">
                     <img className="rounded-full" src={p.user.avatarUrl} alt={p.user.fullName || p.user.name} />

@@ -10,7 +10,7 @@ import { describe } from "mocha";
 
 describe("PersonalAccessToken", () => {
     it("should parse token successfully", () => {
-        const token = "gitpod_pat_GrvGthczSRf3ypqFhNtcRiN5fK6CV7rdCkkPLfpbc_4." + "test".repeat(10);
+        const token = `gitpod_pat_GrvGthczSRf3ypqFhNtcRiN5fK6CV7rdCkkPLfpbc_4.${"test".repeat(10)}`;
 
         const parsed = PersonalAccessToken.parse(token);
         const expected = new PersonalAccessToken("GrvGthczSRf3ypqFhNtcRiN5fK6CV7rdCkkPLfpbc_4", "test".repeat(10));

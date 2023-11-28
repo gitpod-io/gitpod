@@ -76,7 +76,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                     }
                     case "issues": {
                         const issueNr = parseInt(moreSegments[1], 10);
-                        if (isNaN(issueNr)) break;
+                        if (Number.isNaN(issueNr)) break;
                         return await this.handleIssueContext({ span }, user, host, owner, repoName, issueNr);
                     }
                     case "commit": {
@@ -145,15 +145,15 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                 );
             }
             const defaultBranch = result.data.repository.defaultBranchRef;
-            const ref = (defaultBranch && defaultBranch.name) || undefined;
+            const ref = defaultBranch?.name || undefined;
             const refType = ref ? "branch" : undefined;
             return {
                 isFile: false,
                 path: "",
-                title: `${owner}/${repoName} ${defaultBranch ? "- " + defaultBranch.name : ""}`,
+                title: `${owner}/${repoName} ${defaultBranch ? `- ${defaultBranch.name}` : ""}`,
                 ref,
                 refType,
-                revision: (defaultBranch && defaultBranch.target?.oid) || "",
+                revision: defaultBranch?.target?.oid || "",
                 repository: this.toRepository(host, result.data.repository),
             };
         } catch (e) {
@@ -229,7 +229,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                     );
                 }
 
-                const isFile = !!(repo.path && repo.path.oid);
+                const isFile = !!repo.path?.oid;
                 const repository = this.toRepository(host, repo);
                 if (repo.ref !== null) {
                     return {
@@ -273,7 +273,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                 return "branch";
             }
             default: {
-                log.warn(logCtx, "Unexpected refPrefix: " + refPrefix, logPayload);
+                log.warn(logCtx, `Unexpected refPrefix: ${refPrefix}`, logPayload);
                 return "branch";
             }
         }
@@ -289,7 +289,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
     ): Promise<NavigatorContext> {
         const span = TraceContext.startSpan("handleCommitContext", ctx);
 
-        if (sha.length != 40) {
+        if (sha.length !== 40) {
             throw new Error(`Invalid commit ID ${sha}.`);
         }
 
@@ -358,7 +358,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
         owner: string,
         repoName: string,
         pullRequestNr: number,
-        tryIssueContext: boolean = true,
+        tryIssueContext = true,
     ): Promise<IssueContext | PullRequestContext> {
         const span = TraceContext.startSpan("handlePullRequestContext", ctx);
 
@@ -421,11 +421,10 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                 log.info(`PR ${owner}/${repoName}/pull/${pullRequestNr} not found. Trying issue context.`);
                 if (tryIssueContext) {
                     return this.handleIssueContext({ span }, user, host, owner, repoName, pullRequestNr, false);
-                } else {
-                    throw new Error(
-                        `Could not find issue or pull request #${pullRequestNr} in repository ${owner}/${repoName}.`,
-                    );
                 }
+                throw new Error(
+                    `Could not find issue or pull request #${pullRequestNr} in repository ${owner}/${repoName}.`,
+                );
             }
             if (pr.headRef === null) {
                 throw new Error(
@@ -460,7 +459,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
         owner: string,
         repoName: string,
         issueNr: number,
-        tryPullrequestContext: boolean = true,
+        tryPullrequestContext = true,
     ): Promise<IssueContext | PullRequestContext> {
         const span = TraceContext.startSpan("handleIssueContext", ctx);
 
@@ -500,14 +499,11 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                 if (tryPullrequestContext) {
                     log.info(`Issue ${owner}/${repoName}/issues/${issueNr} not found. Trying issue context.`);
                     return this.handlePullRequestContext({ span }, user, host, owner, repoName, issueNr, false);
-                } else {
-                    throw new Error(
-                        `Couldn't find issue or pull request #${issueNr} in repository ${owner}/${repoName}.`,
-                    );
                 }
+                throw new Error(`Couldn't find issue or pull request #${issueNr} in repository ${owner}/${repoName}.`);
             }
             const branchRef = result.data.repository.defaultBranchRef;
-            const ref = (branchRef && branchRef.name) || undefined;
+            const ref = branchRef?.name || undefined;
             const refType = ref ? "branch" : undefined;
 
             return <IssueContext>{
@@ -521,7 +517,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                 ),
                 ref,
                 refType,
-                revision: (branchRef && branchRef.target.oid) || "",
+                revision: branchRef?.target.oid || "",
                 repository: this.toRepository(host, result.data.repository),
             };
         } catch (e) {
@@ -538,7 +534,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
         }
         const defaultBranch = repoQueryResult?.defaultBranchRef?.name;
         const result: Repository = {
-            cloneUrl: repoQueryResult.url + ".git",
+            cloneUrl: `${repoQueryResult.url}.git`,
             host,
             defaultBranch,
             name: repoQueryResult.name,
@@ -554,7 +550,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
         return result;
     }
 
-    protected repoProperties(parents: number = 10): string {
+    protected repoProperties(parents = 10): string {
         return `
             name,
             owner {

@@ -27,7 +27,7 @@ import { instrumentWebSocket } from "./metrics";
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
 function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
-    let host = gitpodHostUrl.asWebsocket().with({ pathname: GitpodServerPath }).withApi();
+    const host = gitpodHostUrl.asWebsocket().with({ pathname: GitpodServerPath }).withApi();
 
     const connectionProvider = new WebSocketConnectionProvider();
     instrumentWebSocketConnection(connectionProvider);
@@ -55,8 +55,8 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
 }
 
 function instrumentWebSocketConnection(connectionProvider: WebSocketConnectionProvider): void {
-    const originalCreateWebSocket = connectionProvider["createWebSocket"];
-    connectionProvider["createWebSocket"] = (url: string) => {
+    const originalCreateWebSocket = connectionProvider.createWebSocket;
+    connectionProvider.createWebSocket = (url: string) => {
         return originalCreateWebSocket.call(
             connectionProvider,
             url,
@@ -94,7 +94,7 @@ function testPublicAPI(service: any): void {
     let user: any;
     service.server = new Proxy(service.server, {
         get(target, propKey) {
-            return async function (...args: any[]) {
+            return async (...args: any[]) => {
                 if (propKey === "getLoggedInUser") {
                     user = await target[propKey](...args);
                     return user;
@@ -263,7 +263,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
 
     private parseInfo(workspace: WorkspaceInfo): IDEFrontendDashboardService.Info {
         return {
-            loggedUserId: this.user!.id,
+            loggedUserId: this.user?.id,
             workspaceID: this.workspaceID,
             instanceId: workspace.latestInstance?.id,
             ideUrl: workspace.latestInstance?.ideUrl,

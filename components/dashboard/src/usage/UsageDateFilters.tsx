@@ -49,7 +49,7 @@ export const UsageDateFilters: FC<Props> = ({ startDate, endDate, onDateRangeCha
             if (!date) {
                 return;
             }
-            let end = dayjs(date).endOf("day");
+            const end = dayjs(date).endOf("day");
 
             let start;
 

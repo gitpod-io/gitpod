@@ -90,7 +90,7 @@ export class JsonRpcAuthProviderClient implements PromiseClient<typeof AuthProvi
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId or userId is required");
         }
 
-        const authProviders = !!organizationId
+        const authProviders = organizationId
             ? await getGitpodService().server.getOrgAuthProviders({
                   organizationId,
               })

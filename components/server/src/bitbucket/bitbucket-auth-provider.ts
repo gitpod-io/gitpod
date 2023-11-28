@@ -78,7 +78,9 @@ export class BitbucketAuthProvider extends GenericAuthProvider {
 
             const currentScopes = this.normalizeScopes(
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                (headers as any)["x-oauth-scopes"].split(",").map((s: string) => s.trim()),
+                (headers as any)["x-oauth-scopes"]
+                    .split(",")
+                    .map((s: string) => s.trim()),
             );
 
             return <AuthUserSetup>{
@@ -87,7 +89,7 @@ export class BitbucketAuthProvider extends GenericAuthProvider {
                     authName: user.username,
                     primaryEmail: primaryEmail,
                     name: user.display_name,
-                    avatarUrl: user.links!.avatar!.href,
+                    avatarUrl: user.links?.avatar?.href,
                     company: user.website,
                 },
                 currentScopes,

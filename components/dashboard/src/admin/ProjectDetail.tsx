@@ -18,7 +18,7 @@ export default function ProjectDetail(props: { project: Project; owner: string |
                 <div className="flex-1">
                     <div className="flex">
                         <Heading2>{props.project.name}</Heading2>
-                        <span className="my-auto"></span>
+                        <span className="my-auto" />
                     </div>
                     <Subheading>{props.project.cloneUrl}</Subheading>
                 </div>
@@ -37,7 +37,7 @@ export default function ProjectDetail(props: { project: Project; owner: string |
                     <Property name="Owner">
                         <Link
                             className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400 truncate"
-                            to={"/admin/orgs/" + props.project.teamId}
+                            to={`/admin/orgs/${props.project.teamId}`}
                         >
                             {props.owner}
                         </Link>

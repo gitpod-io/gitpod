@@ -119,7 +119,7 @@ export class EntitlementServiceImpl implements EntitlementService {
                 case "usage-based":
                     return this.ubp.mayStartWorkspace(user, organizationId, runningInstances);
                 default:
-                    throw new Error("Unsupported billing mode: " + (billingMode as any).mode); // safety net
+                    throw new Error(`Unsupported billing mode: ${(billingMode as any).mode}`); // safety net
             }
         } catch (err) {
             log.warn({ userId: user.id }, "EntitlementService error: mayStartWorkspace", err);

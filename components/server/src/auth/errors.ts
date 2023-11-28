@@ -19,7 +19,7 @@ export namespace AuthException {
     }
 }
 
-export interface EMailDomainFilterException extends AuthException {}
+export type EMailDomainFilterException = AuthException;
 export namespace EMailDomainFilterException {
     const type = "EMailDomainFilterException";
     const message = "We do not allow disposable email addresses.";
@@ -31,7 +31,7 @@ export namespace EMailDomainFilterException {
     }
 }
 
-export interface UnconfirmedUserException extends AuthException {}
+export type UnconfirmedUserException = AuthException;
 export namespace UnconfirmedUserException {
     const type = "UnconfirmedUserException";
     export function create(message: string, payload: any) {
@@ -55,7 +55,7 @@ export namespace SelectAccountException {
     }
 }
 
-export interface EmailAddressAlreadyTakenException extends AuthException {}
+export type EmailAddressAlreadyTakenException = AuthException;
 export namespace EmailAddressAlreadyTakenException {
     const type = "EmailAddressAlreadyTakenException";
     export function create(message: string, payload: object | undefined) {

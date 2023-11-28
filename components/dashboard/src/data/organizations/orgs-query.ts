@@ -17,7 +17,7 @@ export function useOrganizationsInvalidator() {
     const user = useCurrentUser();
     const queryClient = useQueryClient();
     return useCallback(() => {
-        console.log("Invalidating orgs... " + JSON.stringify(getQueryKey(user)));
+        console.log(`Invalidating orgs... ${JSON.stringify(getQueryKey(user))}`);
         queryClient.invalidateQueries(getQueryKey(user));
     }, [user, queryClient]);
 }
@@ -27,7 +27,7 @@ export function useOrganizations() {
     const query = useQuery<Organization[], Error>(
         getQueryKey(user),
         async () => {
-            console.log("Fetching orgs... " + JSON.stringify(getQueryKey(user)));
+            console.log(`Fetching orgs... ${JSON.stringify(getQueryKey(user))}`);
             if (!user) {
                 console.log("useOrganizations with empty user");
                 return [];

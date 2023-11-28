@@ -30,7 +30,7 @@ export class WsConnectionHandler implements Disposable {
             this.clients.forEach((ws) => {
                 try {
                     switch (ws.readyState) {
-                        case websocket.CLOSED:
+                        case websocket.CLOSED: {
                             // (AT) for unknown reasons the expected `close` event was not emitted, otherwise this websocket would
                             // no longer be contained in the list of clients iterated over. make sure we release all resources bound
                             // to this client connection.
@@ -47,11 +47,12 @@ export class WsConnectionHandler implements Disposable {
                                 );
                             }
                             return;
+                        }
                         case websocket.CONNECTING:
                             // ws should not be in the clients list, yet
                             log.warn("websocket in strange state", { readyState: ws.readyState });
                             return;
-                        case websocket.CLOSING:
+                        case websocket.CLOSING: {
                             const closingTimestamp = getOrSetClosingTimestamp(ws);
                             if (closingTimestamp + CLOSING_TIMEOUT <= Date.now()) {
                                 log.warn("websocket in CLOSING state for too long, terminating.");
@@ -60,6 +61,7 @@ export class WsConnectionHandler implements Disposable {
                             }
                             log.warn("websocket in CLOSING state, giving it a last chance...");
                             return;
+                        }
                     }
 
                     const pingSent = getPingSent(ws);

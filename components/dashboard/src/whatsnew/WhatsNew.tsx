@@ -35,8 +35,8 @@ export function WhatsNew(props: { onClose: () => void }) {
             return;
         }
 
-        for (const n of news.filter((x) => x && x.actionAfterSeen)) {
-            user = await n!.actionAfterSeen!(user);
+        for (const n of news.filter((x) => x?.actionAfterSeen)) {
+            user = await n?.actionAfterSeen?.(user);
         }
 
         const additionalData = (user.additionalData = user.additionalData || {});
@@ -72,7 +72,7 @@ export function WhatsNew(props: { onClose: () => void }) {
         // TODO: Use title and buttons props
         <Modal visible={!!visibleEntry} onClose={internalClose}>
             <ModalHeader>What's New 🎁</ModalHeader>
-            <>{visibleEntry && user ? visibleEntry.children(user, setUser) : <></>}</>
+            {visibleEntry && user ? visibleEntry.children(user, setUser) : <></>}
             {hasNext() ? (
                 <div className="flex items-center justify-end mt-6 space-x-2">
                     <div className="text-sm mr-auto italic">

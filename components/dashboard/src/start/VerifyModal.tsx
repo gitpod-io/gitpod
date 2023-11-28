@@ -107,7 +107,7 @@ export function VerifyModal() {
                         onPhoneNumberChange={(isValid, phoneNumberRaw, countryData) => {
                             let phoneNumber = phoneNumberRaw;
                             if (!phoneNumber.startsWith("+") && !phoneNumber.startsWith("00")) {
-                                phoneNumber = "+" + countryData.dialCode + phoneNumber;
+                                phoneNumber = `+${countryData.dialCode}${phoneNumber}`;
                             }
                             setState({
                                 ...state,
@@ -119,7 +119,8 @@ export function VerifyModal() {
                 </div>
             </Modal>
         );
-    } else if (!state.verified) {
+    }
+    if (!state.verified) {
         const isTokenFilled = () => {
             return state.token && /\d{6}/.test(state.token);
         };
@@ -142,7 +143,7 @@ export function VerifyModal() {
                         ...state,
                         message: {
                             type: "error",
-                            text: `Invalid verification code.`,
+                            text: "Invalid verification code.",
                         },
                     });
                 }
@@ -205,7 +206,6 @@ export function VerifyModal() {
                 <div className="mt-4">
                     <h4>Verification Code</h4>
                     <input
-                        autoFocus={true}
                         className="w-full"
                         type="text"
                         placeholder={
@@ -221,22 +221,21 @@ export function VerifyModal() {
                 </div>
             </Modal>
         );
-    } else {
-        const continueStartWorkspace = () => {
-            window.location.reload();
-        };
-        return (
-            <Modal onClose={continueStartWorkspace} closeable={false} onSubmit={continueStartWorkspace} visible={true}>
-                <ModalHeader>User Validation Successful</ModalHeader>
-                <ModalBody>
-                    <Alert type="success" className="mt-2">
-                        Your account has been successfully verified.
-                    </Alert>
-                </ModalBody>
-                <ModalFooter>
-                    <Button htmlType="submit">Continue</Button>
-                </ModalFooter>
-            </Modal>
-        );
     }
+    const continueStartWorkspace = () => {
+        window.location.reload();
+    };
+    return (
+        <Modal onClose={continueStartWorkspace} closeable={false} onSubmit={continueStartWorkspace} visible={true}>
+            <ModalHeader>User Validation Successful</ModalHeader>
+            <ModalBody>
+                <Alert type="success" className="mt-2">
+                    Your account has been successfully verified.
+                </Alert>
+            </ModalBody>
+            <ModalFooter>
+                <Button htmlType="submit">Continue</Button>
+            </ModalFooter>
+        </Modal>
+    );
 }

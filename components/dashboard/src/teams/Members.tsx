@@ -45,10 +45,10 @@ export default function MembersPage() {
         // orgs without an invitation id invite members through their own login page
         const link = new URL(window.location.href);
         if (!inviteId) {
-            link.pathname = "/login/" + org.data.slug;
+            link.pathname = `/login/${org.data.slug}`;
         } else {
             link.pathname = "/orgs/join";
-            link.search = "?inviteId=" + inviteId;
+            link.search = `?inviteId=${inviteId}`;
         }
         return link.href;
     }, [org.data, inviteId]);
@@ -129,8 +129,8 @@ export default function MembersPage() {
                                 roleFilter === OrganizationRole.OWNER
                                     ? "Owners"
                                     : roleFilter === OrganizationRole.MEMBER
-                                    ? "Members"
-                                    : "All"
+                                      ? "Members"
+                                      : "All"
                             }
                             entries={[
                                 {
@@ -257,15 +257,15 @@ export default function MembersPage() {
                                                       },
                                                   ]
                                                 : isOwner
-                                                ? [
-                                                      {
-                                                          title: "Remove",
-                                                          customFontStyle:
-                                                              "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
-                                                          onClick: () => removeTeamMember(m.userId),
-                                                      },
-                                                  ]
-                                                : []
+                                                  ? [
+                                                          {
+                                                              title: "Remove",
+                                                              customFontStyle:
+                                                                  "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
+                                                              onClick: () => removeTeamMember(m.userId),
+                                                          },
+                                                      ]
+                                                  : []
                                         }
                                     />
                                 </ItemField>

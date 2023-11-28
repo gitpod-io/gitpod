@@ -37,9 +37,8 @@ describe("OrganizationService", async () => {
             centralizedPermissions: true,
         });
         validateDefaultWorkspaceImage = undefined;
-        container
-            .rebind<DefaultWorkspaceImageValidator>(DefaultWorkspaceImageValidator)
-            .toDynamicValue(() => async (userId, imageRef) => {
+        container.rebind<DefaultWorkspaceImageValidator>(DefaultWorkspaceImageValidator).toDynamicValue(() =>
+            async (userId, imageRef) => {
                 if (validateDefaultWorkspaceImage) {
                     await validateDefaultWorkspaceImage(userId, imageRef);
                 }
@@ -254,9 +253,9 @@ describe("OrganizationService", async () => {
             expected: OrganizationSettings,
         ) => {
             const updated = await os.updateSettings(adminId, myOrg.id, update);
-            expect(updated).to.deep.eq(expected, message + " (update)");
+            expect(updated).to.deep.eq(expected, `${message} (update)`);
             const verified = await os.getSettings(adminId, myOrg.id);
-            expect(verified).to.deep.eq(expected, message + " (get)");
+            expect(verified).to.deep.eq(expected, `${message} (get)`);
         };
 
         await assertUpdateSettings(

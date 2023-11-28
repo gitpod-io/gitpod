@@ -17,13 +17,13 @@ export type SpiceDBClient = v1.ZedPromiseClientInterface;
 type Client = v1.ZedClientInterface & grpc.Client;
 
 export function spiceDBConfigFromEnv(): SpiceDBClientConfig | undefined {
-    const token = process.env["SPICEDB_PRESHARED_KEY"];
+    const token = process.env.SPICEDB_PRESHARED_KEY;
     if (!token) {
         log.error("[spicedb] No preshared key configured.");
         return undefined;
     }
 
-    const address = process.env["SPICEDB_ADDRESS"];
+    const address = process.env.SPICEDB_ADDRESS;
     if (!address) {
         log.error("[spicedb] No service address configured.");
         return undefined;

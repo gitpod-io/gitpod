@@ -62,7 +62,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
         message: hostError,
         onBlur: hostOnBlurErrorTracking,
         isValid: hostValid,
-    } = useOnBlurError(`Provider Host Name is missing.`, host.trim().length > 0);
+    } = useOnBlurError("Provider Host Name is missing.", host.trim().length > 0);
 
     const {
         message: clientIdError,
@@ -296,7 +296,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
 };
 
 const callbackUrl = () => {
-    const pathname = `/auth/callback`;
+    const pathname = "/auth/callback";
     return gitpodHostUrl.with({ pathname }).toString();
 };
 
@@ -319,16 +319,17 @@ type RedirectUrlDescriptionProps = {
     type: AuthProviderType;
 };
 const RedirectUrlDescription: FunctionComponent<RedirectUrlDescriptionProps> = ({ type }) => {
-    let docsUrl = ``;
+    let docsUrl = "";
     switch (type) {
         case AuthProviderType.GITHUB:
-            docsUrl = `https://www.gitpod.io/docs/configure/authentication/github-enterprise`;
+            docsUrl = "https://www.gitpod.io/docs/configure/authentication/github-enterprise";
             break;
         case AuthProviderType.GITLAB:
-            docsUrl = `https://www.gitpod.io/docs/configure/authentication/gitlab#registering-a-self-hosted-gitlab-installation`;
+            docsUrl =
+                "https://www.gitpod.io/docs/configure/authentication/gitlab#registering-a-self-hosted-gitlab-installation";
             break;
         case AuthProviderType.BITBUCKET:
-            docsUrl = `https://www.gitpod.io/docs/configure/authentication`;
+            docsUrl = "https://www.gitpod.io/docs/configure/authentication";
             break;
         case AuthProviderType.BITBUCKET_SERVER:
             docsUrl = "https://www.gitpod.io/docs/configure/authentication/bitbucket-server";

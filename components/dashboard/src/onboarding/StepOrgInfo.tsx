@@ -95,11 +95,11 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
         if (!currentOrg.data) {
             let orgName = "My Org";
             function orgify(name: string) {
-                let result = name.split(" ")[0];
+                const result = name.split(" ")[0];
                 if (result.endsWith("s")) {
-                    return result + `' Org`;
+                    return `${result}' Org`;
                 }
-                return result + `'s Org`;
+                return `${result}'s Org`;
             }
             if (user.name) {
                 orgName = orgify(user.name);

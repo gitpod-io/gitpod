@@ -37,11 +37,11 @@ export class RelationshipUpdater {
      * @param user
      * @returns
      */
-    public async migrate(user: User, forceAwait: boolean = false): Promise<User> {
+    public async migrate(user: User, forceAwait = false): Promise<User> {
         const isEnabled = await isFgaWritesEnabled(user.id);
         if (!isEnabled) {
             if (user.fgaRelationshipsVersion !== undefined) {
-                log.info({ userId: user.id }, `User has been removed from FGA.`);
+                log.info({ userId: user.id }, "User has been removed from FGA.");
                 // reset the fgaRelationshipsVersion to undefined, so the migration is triggered again when the feature is enabled
                 await this.setFgaRelationshipsVersion(user, undefined);
             }
@@ -80,7 +80,7 @@ export class RelationshipUpdater {
                 if (await this.isMigrated(user)) {
                     return user;
                 }
-                log.info({ userId: user.id }, `Updating FGA relationships for user.`, {
+                log.info({ userId: user.id }, "Updating FGA relationships for user.", {
                     fromVersion: user?.fgaRelationshipsVersion,
                     toVersion: RelationshipUpdater.version,
                 });
@@ -93,13 +93,13 @@ export class RelationshipUpdater {
                 }
                 await this.updateWorkspaces(user);
                 await this.setFgaRelationshipsVersion(user, RelationshipUpdater.version);
-                log.info({ userId: user.id }, `Finished updating relationships.`, {
+                log.info({ userId: user.id }, "Finished updating relationships.", {
                     duration: new Date().getTime() - before,
                 });
 
                 // let's double check the migration worked.
                 if (!(await this.isMigrated(user))) {
-                    log.error({ userId: user.id }, `User migration failed.`, {
+                    log.error({ userId: user.id }, "User migration failed.", {
                         markedMigrated: user.fgaRelationshipsVersion === RelationshipUpdater.version,
                     });
                 }

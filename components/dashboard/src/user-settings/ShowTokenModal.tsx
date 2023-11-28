@@ -44,7 +44,7 @@ function ShowTokenModal(props: TokenModalProps) {
                 <div className="p-4 mt-2 rounded-xl bg-gray-50 dark:bg-gray-800">
                     <div className="font-semibold text-gray-700 dark:text-gray-200">{props.token.name}</div>
                     <div className="font-medium text-gray-400 dark:text-gray-300">
-                        Expires on {dayjs(props.token.expirationTime!.toDate()).format("MMM D, YYYY")}
+                        Expires on {dayjs(props.token.expirationTime?.toDate()).format("MMM D, YYYY")}
                     </div>
                 </div>
                 <div className="mt-4">

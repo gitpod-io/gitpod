@@ -112,7 +112,7 @@ function ListAccessTokensView() {
     }, [location.state]);
 
     const handleCopyToken = () => {
-        copyToClipboard(tokenInfo!.data.value);
+        copyToClipboard(tokenInfo?.data.value);
     };
 
     const handleDeleteToken = async (tokenId: string) => {
@@ -142,7 +142,7 @@ function ListAccessTokensView() {
         }
     };
 
-    const loadPage = (page: number = 1) => {
+    const loadPage = (page = 1) => {
         setCurrentPage(page);
     };
 
@@ -202,10 +202,10 @@ function ListAccessTokensView() {
                         </div>
                         <div className="text-gray-400 dark:text-gray-300">
                             <span>
-                                Expires on {dayjs(tokenInfo.data.expirationTime!.toDate()).format("MMM D, YYYY")}
+                                Expires on {dayjs(tokenInfo.data.expirationTime?.toDate()).format("MMM D, YYYY")}
                             </span>
                             <span> · </span>
-                            <span>Created on {dayjs(tokenInfo.data.createdAt!.toDate()).format("MMM D, YYYY")}</span>
+                            <span>Created on {dayjs(tokenInfo.data.createdAt?.toDate()).format("MMM D, YYYY")}</span>
                         </div>
                     </div>
                     <div className="pt-2">
@@ -240,7 +240,7 @@ function ListAccessTokensView() {
                                 <Subheading className="w-4/12">Token Name</Subheading>
                                 <Subheading className="w-4/12">Permissions</Subheading>
                                 <Subheading className="w-3/12">Expires</Subheading>
-                                <div className="w-1/12"></div>
+                                <div className="w-1/12" />
                             </div>
                             {tokens.map((t: PersonalAccessToken) => (
                                 <TokenEntry

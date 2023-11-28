@@ -27,7 +27,7 @@ describe("ScmService", async () => {
     let container: Container;
     let currentUser: User;
 
-    const addBuiltInProvider = (host: string = "github.com") => {
+    const addBuiltInProvider = (host = "github.com") => {
         const config = container.get<Config>(Config);
         config.builtinAuthProvidersConfigured = true;
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument

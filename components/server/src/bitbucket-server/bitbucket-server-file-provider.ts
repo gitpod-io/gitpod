@@ -35,7 +35,7 @@ export class BitbucketServerFileProvider implements FileProvider {
             repositorySlug: name,
             query: { limit: 1, path, shaOrRevision: revisionOrBranch },
         });
-        return result.values![0].id;
+        return result.values?.[0].id;
     }
 
     public async getFileContent(commit: Commit, user: User, path: string) {

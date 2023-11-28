@@ -36,12 +36,12 @@ export class RelationshipUpdateJob implements Job {
                         migrated++;
                     }
                 } catch (error) {
-                    log.error(this.name + ": error running relationship update job", error);
+                    log.error(`${this.name}: error running relationship update job`, error);
                 }
             }
-            log.info(this.name + ": updated " + migrated + " users in " + (Date.now() - now) + "ms");
+            log.info(`${this.name}: updated ${migrated} users in ${Date.now() - now}ms`);
         } catch (error) {
-            log.error(this.name + ": error running relationship update job", error);
+            log.error(`${this.name}: error running relationship update job`, error);
         }
     }
 }

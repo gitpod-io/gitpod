@@ -56,12 +56,14 @@ export class WorkspaceFactory {
                 throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Cannot start prebuild without a project.");
             }
             return this.createForStartPrebuild(ctx, user, project?.id, organizationId, context, normalizedContextURL);
-        } else if (PrebuiltWorkspaceContext.is(context)) {
+        }
+        if (PrebuiltWorkspaceContext.is(context)) {
             return this.createForPrebuiltWorkspace(ctx, user, organizationId, project, context, normalizedContextURL);
         }
         if (SnapshotContext.is(context)) {
             return this.createForSnapshot(ctx, user, organizationId, context);
-        } else if (CommitContext.is(context)) {
+        }
+        if (CommitContext.is(context)) {
             return this.createForCommit(ctx, user, organizationId, project, context, normalizedContextURL);
         }
 
@@ -181,7 +183,7 @@ export class WorkspaceFactory {
             }
             const config = { ...buildWorkspace.config };
             config.vscode = {
-                extensions: (config && config.vscode && config.vscode.extensions) || [],
+                extensions: config?.vscode?.extensions || [],
             };
 
             let projectId: string | undefined;
@@ -204,7 +206,7 @@ export class WorkspaceFactory {
                         // If the current context has a newer/different commit hash than the prebuild
                         // we force the checkout of the revision rather than the ref/branch.
                         // Otherwise we'd get the correct prebuild with the "wrong" Git ref.
-                        delete buildWorkspace.context.ref;
+                        buildWorkspace.context.ref = undefined;
                     }
                 }
 
@@ -256,10 +258,7 @@ export class WorkspaceFactory {
         try {
             const snapshot = await this.db.trace({ span }).findSnapshotById(context.snapshotId);
             if (!snapshot) {
-                throw new ApplicationError(
-                    ErrorCodes.NOT_FOUND,
-                    "No snapshot with id '" + context.snapshotId + "' found.",
-                );
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, `No snapshot with id '${context.snapshotId}' found.`);
             }
             const workspace = await this.db.trace({ span }).findById(snapshot.originalWorkspaceId);
             if (!workspace) {
@@ -268,7 +267,7 @@ export class WorkspaceFactory {
                 );
             }
             if (workspace.deleted || !workspace.context || !CommitContext.is(workspace.context)) {
-                throw new Error(`The original workspace has been deleted - cannot open this snapshot.`);
+                throw new Error("The original workspace has been deleted - cannot open this snapshot.");
             }
 
             const id = await this.generateWorkspaceID(context);

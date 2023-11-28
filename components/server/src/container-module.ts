@@ -386,8 +386,7 @@ export const productionContainerModule = new ContainerModule(
                 async (userId: string, imageRef: string) => {
                     const user = await ctx.container.get(UserService).findUserById(userId, userId);
                     await ctx.container.get(WorkspaceService).validateImageRef({}, user, imageRef);
-                },
-            )
+                })
             .inSingletonScope();
     },
 );

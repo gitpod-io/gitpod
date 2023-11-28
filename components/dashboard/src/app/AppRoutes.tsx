@@ -110,7 +110,7 @@ export const AppRoutes = () => {
     // TODO: Try and encapsulate this in a route for "/" (check for hash in route component, render or redirect accordingly)
     const isCreation = location.pathname === "/" && hash !== "";
     if (isCreation) {
-        return <Redirect to={"/new" + location.pathname + location.search + location.hash} />;
+        return <Redirect to={`/new${location.pathname}${location.search}${location.hash}`} />;
     }
 
     // TODO: Try and make this a <Route/> entry instead
@@ -121,11 +121,11 @@ export const AppRoutes = () => {
 
     // TODO: Add some context to what this logic is for
     if (/^(github|gitlab)\.com\/.+?/i.test(window.location.pathname)) {
-        let url = new URL(window.location.href);
+        const url = new URL(window.location.href);
         url.hash = url.pathname;
         url.pathname = "/";
         window.location.replace(url);
-        return <div></div>;
+        return <div />;
     }
 
     return (
@@ -167,7 +167,7 @@ export const AppRoutes = () => {
                         component={PersonalAccessTokenCreateView}
                     />
                     <Route
-                        path={settingsPathPersonalAccessTokenEdit + "/:tokenId"}
+                        path={`${settingsPathPersonalAccessTokenEdit}/:tokenId`}
                         exact
                         component={PersonalAccessTokenCreateView}
                     />
@@ -212,11 +212,11 @@ export const AppRoutes = () => {
                     <Route exact path="/billing" component={TeamUsageBasedBilling} />
                     <Route exact path="/sso" component={SSO} />
 
-                    <Route exact path={`/projects/:projectSlug`} component={Project} />
-                    <Route exact path={`/projects/:projectSlug/prebuilds`} component={Prebuilds} />
-                    <Route exact path={`/projects/:projectSlug/settings`} component={ProjectSettings} />
-                    <Route exact path={`/projects/:projectSlug/variables`} component={ProjectVariables} />
-                    <Route exact path={`/projects/:projectSlug/:prebuildId`} component={Prebuild} />
+                    <Route exact path={"/projects/:projectSlug"} component={Project} />
+                    <Route exact path={"/projects/:projectSlug/prebuilds"} component={Prebuilds} />
+                    <Route exact path={"/projects/:projectSlug/settings"} component={ProjectSettings} />
+                    <Route exact path={"/projects/:projectSlug/variables"} component={ProjectVariables} />
+                    <Route exact path={"/projects/:projectSlug/:prebuildId"} component={Prebuild} />
 
                     {repoConfigListAndDetail && (
                         <>
@@ -273,7 +273,7 @@ export const AppRoutes = () => {
                                 </div>
                             );
                         }}
-                    ></Route>
+                    />
                 </Switch>
             </div>
             <WebsocketClients />

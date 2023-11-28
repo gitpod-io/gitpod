@@ -1,9 +1,9 @@
 {
     "extends": "./tsconfig.json",
     "compilerOptions": {
-        "allowJs": false,       // Necessary to make "declaration": true work
-        "declaration": true,    // We want .d.ts files
-        "declarationMap": true, // We want .d.ts files for source maps for editor integration
+        "allowJs": false,
+        "declaration": true,
+        "declarationMap": true,
         "rootDir": ".",
         "outDir": "lib",
         "baseUrl": "."

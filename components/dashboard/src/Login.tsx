@@ -75,7 +75,7 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
     const authorizeSuccessful = useCallback(async () => {
         updateUser().catch(console.error);
 
-        onLoggedIn && onLoggedIn();
+        onLoggedIn?.();
 
         const returnToPath = new URLSearchParams(window.location.search).get("returnToPath");
         if (returnToPath) {
@@ -156,8 +156,8 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                                 <div className="w-56 mx-auto flex flex-col space-y-3 items-center">
                                     {providerFromContext ? (
                                         <LoginButton
-                                            key={"button" + providerFromContext.host}
-                                            onClick={() => openLogin(providerFromContext!.host)}
+                                            key={`button${providerFromContext.host}`}
+                                            onClick={() => openLogin(providerFromContext?.host)}
                                         >
                                             {iconForAuthProvider(providerFromContext.type)}
                                             <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
@@ -166,7 +166,7 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                                         </LoginButton>
                                     ) : (
                                         authProviders.data?.map((ap) => (
-                                            <LoginButton key={"button" + ap.host} onClick={() => openLogin(ap.host)}>
+                                            <LoginButton key={`button${ap.host}`} onClick={() => openLogin(ap.host)}>
                                                 {iconForAuthProvider(ap.type)}
                                                 <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
                                                     Continue with {simplifyProviderName(ap.host)}

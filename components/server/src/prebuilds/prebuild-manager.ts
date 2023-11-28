@@ -108,7 +108,7 @@ export class PrebuildManager {
 
         const project = await this.projectService.getProject(user.id, projectId);
 
-        const branchDetails = !!branchName
+        const branchDetails = branchName
             ? await this.projectService.getBranchDetails(user, project, branchName)
             : (await this.projectService.getBranchDetails(user, project)).filter((b) => b.isDefault);
         if (branchDetails.length !== 1) {
@@ -378,7 +378,7 @@ export class PrebuildManager {
             log.error({ userId: user.id }, "EntitlementService.mayStartWorkspace error", err);
             return; // we don't want to block workspace starts because of internal errors
         }
-        if (!!result.usageLimitReachedOnCostCenter) {
+        if (result.usageLimitReachedOnCostCenter) {
             throw new ApplicationError(
                 ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED,
                 "Increase usage limit and try again.",
@@ -436,7 +436,7 @@ export class PrebuildManager {
             for (let pattern of prebuildSettings.branchMatchingPattern.split(",")) {
                 // prepending `**/` as branch names can be 'refs/heads/something/feature-x'
                 // and we want to allow simple patterns like: `feature-*`
-                pattern = "**/" + pattern.trim();
+                pattern = `**/${pattern.trim()}`;
                 try {
                     if (globMatch(branchName, pattern)) {
                         return { shouldRun: true, reason: "branch-matched" };

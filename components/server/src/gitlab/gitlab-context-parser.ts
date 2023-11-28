@@ -89,7 +89,7 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
         const segments = [owner, repoName, ...moreSegments.filter((s) => s !== "-")]
             // Replace URL encoded '#' sign. Don't use decodeURI() because GitLab seems to be inconsistent in what needs to be decoded and what not.
             .map((x) => x.replace(/%23/g, "#"));
-        let moreSegmentsStart: number = 2;
+        let moreSegmentsStart = 2;
         /*
             We cannot deduce the namespace (aka `owner`) and project name (aka `repoName`) from the URI with certainty.
 
@@ -164,11 +164,7 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
                     repository,
                 };
             } catch (error) {
-                if (
-                    error &&
-                    error.message &&
-                    (error.message as string).startsWith("Cannot find tag/branch for context")
-                ) {
+                if (error?.message && (error.message as string).startsWith("Cannot find tag/branch for context")) {
                     // the repo is empty (has no branches)
                     return <NavigatorContext>{
                         isFile: false,
@@ -177,9 +173,8 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
                         revision: "",
                         repository,
                     };
-                } else {
-                    throw error;
                 }
+                throw error;
             }
         } catch (error) {
             if (UnauthorizedError.is(error)) {
@@ -209,9 +204,9 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
                 isFile: false,
                 path: "",
                 title: `${owner}/${repoName}` + (branchOrTag ? ` - ${branchOrTag.name}` : ""),
-                ref: branchOrTag && branchOrTag.name,
-                revision: branchOrTag && branchOrTag.revision,
-                refType: branchOrTag && branchOrTag.type,
+                ref: branchOrTag?.name,
+                revision: branchOrTag?.revision,
+                refType: branchOrTag?.type,
                 repository,
             };
             if (!branchOrTag) {
@@ -229,13 +224,12 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
             });
             if (GitLab.ApiError.is(result)) {
                 throw new Error(`Error reading TREE ${owner}/${repoName}/tree/${segments.join("/")}: ${result}`);
-            } else {
-                const object = result.find((o) => o.path === branchOrTag.fullPath);
-                if (object) {
-                    const isFile = object.type === "blob";
-                    context.isFile = isFile;
-                    context.path = branchOrTag.fullPath;
-                }
+            }
+            const object = result.find((o) => o.path === branchOrTag.fullPath);
+            if (object) {
+                const isFile = object.type === "blob";
+                context.isFile = isFile;
+                context.path = branchOrTag.fullPath;
             }
             return context;
         } catch (e) {

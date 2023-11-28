@@ -42,7 +42,7 @@ export class SnapshotsJob implements Job {
             if (!workspace) {
                 log.error(
                     { workspaceId: snapshot.originalWorkspaceId },
-                    `snapshots: unable to find workspace for snapshot`,
+                    "snapshots: unable to find workspace for snapshot",
                     { snapshotId: snapshot.id },
                 );
                 continue;

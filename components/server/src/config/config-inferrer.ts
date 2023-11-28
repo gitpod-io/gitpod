@@ -54,19 +54,19 @@ export class ConfigInferrer {
         if ((await ctx.exists("pnpm-lock.yaml")) || pckjson?.packageManager?.startsWith("pnpm")) {
             command = "pnpm";
         }
-        this.addCommand(ctx.config, command + " install", "init");
+        this.addCommand(ctx.config, `${command} install`, "init");
         if (pckjson.scripts) {
             if (pckjson.scripts.build) {
-                this.addCommand(ctx.config, command + " run build", "init");
+                this.addCommand(ctx.config, `${command} run build`, "init");
             } else if (pckjson.scripts.compile) {
-                this.addCommand(ctx.config, command + " run compile", "init");
+                this.addCommand(ctx.config, `${command} run compile`, "init");
             }
             if (pckjson.scripts.start) {
-                this.addCommand(ctx.config, command + " run start", "command");
+                this.addCommand(ctx.config, `${command} run start`, "command");
             } else if (pckjson.scripts.dev) {
-                this.addCommand(ctx.config, command + " run dev", "command");
+                this.addCommand(ctx.config, `${command} run dev`, "command");
             } else if (pckjson.scripts.watch) {
-                this.addCommand(ctx.config, command + " run watch", "command");
+                this.addCommand(ctx.config, `${command} run watch`, "command");
             }
         }
         this.addExtension(ctx, "dbaeumer.vscode-eslint");
@@ -78,7 +78,7 @@ export class ConfigInferrer {
             if (await ctx.exists("gradlew")) {
                 cmd = "./gradlew";
             }
-            this.addCommand(ctx.config, cmd + " build", "init");
+            this.addCommand(ctx.config, `${cmd} build`, "init");
             this.addExtension(ctx, "redhat.java");
             this.addExtension(ctx, "vscjava.vscode-java-debug");
             return;
@@ -89,7 +89,7 @@ export class ConfigInferrer {
             if (await ctx.exists("gradlew")) {
                 cmd = "./gradlew";
             }
-            this.addCommand(ctx.config, cmd + " build", "init");
+            this.addCommand(ctx.config, `${cmd} build`, "init");
             this.addExtension(ctx, "fwcd.kotlin");
             return;
         }
@@ -98,7 +98,7 @@ export class ConfigInferrer {
             if (await ctx.exists("mvnw")) {
                 cmd = "./mvnw";
             }
-            this.addCommand(ctx.config, cmd + " install -DskipTests=false", "init");
+            this.addCommand(ctx.config, `${cmd} install -DskipTests=false`, "init");
             this.addExtension(ctx, "redhat.java");
             this.addExtension(ctx, "vscjava.vscode-java-debug");
             this.addExtension(ctx, "vscjava.vscode-maven");
@@ -116,7 +116,7 @@ export class ConfigInferrer {
             };
         }
         if (ctx.config.vscode.extensions?.indexOf(extensionName) === -1)
-            ctx.config.vscode.extensions!.push(extensionName);
+            ctx.config.vscode.extensions?.push(extensionName);
     }
 
     protected async isMake(ctx: Context) {
@@ -209,7 +209,7 @@ export class ConfigInferrer {
             // skip
             return;
         }
-        config.tasks[0][phase] = (existing ? existing + " && " : "") + command;
+        config.tasks[0][phase] = (existing ? `${existing} && ` : "") + command;
     }
 
     toYaml(config: WorkspaceConfig): string {

@@ -101,11 +101,11 @@ const WorkspacesPage: FunctionComponent = () => {
                             onSearchTermUpdated={setSearchTerm}
                         />
                         <ItemsList className="app-container pb-40">
-                            <div className="border-t border-gray-200 dark:border-gray-800"></div>
+                            <div className="border-t border-gray-200 dark:border-gray-800" />
                             {filteredActiveWorkspaces.map((info) => {
                                 return <WorkspaceEntry key={info.id} info={info} />;
                             })}
-                            {filteredActiveWorkspaces.length > 0 && <div className="py-6"></div>}
+                            {filteredActiveWorkspaces.length > 0 && <div className="py-6" />}
                             {filteredInactiveWorkspaces.length > 0 && (
                                 <div>
                                     <div
@@ -186,7 +186,7 @@ const sortWorkspaces = (a: Workspace, b: Workspace) => {
  * Given a WorkspaceInfo, return a ISO string of the last related activitiy
  */
 function workspaceActiveDate(info: Workspace): string {
-    return info.status!.phase!.lastTransitionTime!.toDate().toISOString();
+    return info.status?.phase?.lastTransitionTime?.toDate().toISOString();
 }
 
 /**
@@ -197,7 +197,7 @@ function workspaceActiveDate(info: Workspace): string {
  * @returns boolean If workspace is considered active
  */
 function isWorkspaceActive(info: Workspace): boolean {
-    const lastSessionStart = info.status!.phase!.lastTransitionTime!.toDate().toISOString();
+    const lastSessionStart = info.status?.phase?.lastTransitionTime?.toDate().toISOString();
     const twentyfourHoursAgo = hoursBefore(new Date().toISOString(), 24);
 
     const isStopped = info.status?.phase?.name === WorkspacePhase_Phase.STOPPED;

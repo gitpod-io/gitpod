@@ -276,9 +276,9 @@ describe("EnvVarService", async () => {
 
         const envVars = await es.resolveEnvVariables(member.id, undefined, "regular", commitContext);
         envVars.workspace.forEach((e) => {
-            delete (e as any).id;
-            delete (e as any).userId;
-            delete (e as any).deleted;
+            (e as any).id = undefined;
+            (e as any).userId = undefined;
+            (e as any).deleted = undefined;
         });
         expect(envVars.project.length).to.be.equal(0);
         expect(envVars.workspace).to.have.deep.members([fooAnyUserEnvVar, barUserCommitEnvVar]);
@@ -309,17 +309,17 @@ describe("EnvVarService", async () => {
 
         const envVars = await es.resolveEnvVariables(member.id, project.id, "regular", commitContext);
         envVars.project.forEach((e) => {
-            delete (e as any).id;
-            delete (e as any).projectId;
-            delete (e as any).creationTime;
-            delete (e as any).deleted;
+            (e as any).id = undefined;
+            (e as any).projectId = undefined;
+            (e as any).creationTime = undefined;
+            (e as any).deleted = undefined;
         });
         envVars.workspace.forEach((e) => {
-            delete (e as any).id;
-            delete (e as any).projectId;
-            delete (e as any).userId;
-            delete (e as any).creationTime;
-            delete (e as any).deleted;
+            (e as any).id = undefined;
+            (e as any).projectId = undefined;
+            (e as any).userId = undefined;
+            (e as any).creationTime = undefined;
+            (e as any).deleted = undefined;
         });
         expect(envVars.project).to.have.deep.members(
             [barProjectCensoredEnvVar, bazProjectEnvVar].map((e) => ({
@@ -340,16 +340,16 @@ describe("EnvVarService", async () => {
 
         const envVars = await es.resolveEnvVariables(member.id, project.id, "prebuild", commitContext);
         envVars.project.forEach((e) => {
-            delete (e as any).id;
-            delete (e as any).projectId;
-            delete (e as any).creationTime;
-            delete (e as any).deleted;
+            (e as any).id = undefined;
+            (e as any).projectId = undefined;
+            (e as any).creationTime = undefined;
+            (e as any).deleted = undefined;
         });
         envVars.workspace.forEach((e) => {
-            delete (e as any).id;
-            delete (e as any).projectId;
-            delete (e as any).creationTime;
-            delete (e as any).deleted;
+            (e as any).id = undefined;
+            (e as any).projectId = undefined;
+            (e as any).creationTime = undefined;
+            (e as any).deleted = undefined;
         });
         expect(envVars.project).to.have.deep.members(
             [barProjectCensoredEnvVar, bazProjectEnvVar].map((e) => ({
@@ -391,9 +391,9 @@ describe("EnvVarService", async () => {
             ...contextEnvVars,
         });
         envVars.workspace.forEach((e) => {
-            delete (e as any).id;
-            delete (e as any).userId;
-            delete (e as any).deleted;
+            (e as any).id = undefined;
+            (e as any).userId = undefined;
+            (e as any).deleted = undefined;
         });
         expect(envVars.project.length).to.be.equal(0);
         expect(envVars.workspace).to.have.deep.members([fooAnyUserEnvVar, barContextEnvVar]);
@@ -412,18 +412,18 @@ describe("EnvVarService", async () => {
             ...contextEnvVars,
         });
         envVars.project.forEach((e) => {
-            delete (e as any).id;
-            delete (e as any).projectId;
-            delete (e as any).userId;
-            delete (e as any).creationTime;
-            delete (e as any).deleted;
+            (e as any).id = undefined;
+            (e as any).projectId = undefined;
+            (e as any).userId = undefined;
+            (e as any).creationTime = undefined;
+            (e as any).deleted = undefined;
         });
         envVars.workspace.forEach((e) => {
-            delete (e as any).id;
-            delete (e as any).projectId;
-            delete (e as any).userId;
-            delete (e as any).creationTime;
-            delete (e as any).deleted;
+            (e as any).id = undefined;
+            (e as any).projectId = undefined;
+            (e as any).userId = undefined;
+            (e as any).creationTime = undefined;
+            (e as any).deleted = undefined;
         });
         expect(envVars.project).to.have.deep.members(
             [barProjectCensoredEnvVar, bazProjectEnvVar].map((e) => ({
@@ -466,13 +466,13 @@ describe("EnvVarService", async () => {
             for (let j = 0; j < inputVars.length; j++) {
                 await es.addUserEnvVar(member.id, member.id, inputVars[j]);
             }
-            expectedVars.forEach((e) => delete (e as any).id);
+            expectedVars.forEach((e) => ((e as any).id = undefined));
 
             const envVars = await es.resolveEnvVariables(member.id, project.id, "regular", { ...commitContext });
             envVars.workspace.forEach((e) => {
-                delete (e as any).id;
-                delete (e as any).userId;
-                delete (e as any).deleted;
+                (e as any).id = undefined;
+                (e as any).userId = undefined;
+                (e as any).deleted = undefined;
             });
             expect(envVars, `test case: ${i}`).to.deep.equal({
                 project: [],
@@ -541,9 +541,9 @@ describe("EnvVarService", async () => {
             ...gitlabSubgroupCommitContext,
         });
         envVars.workspace.forEach((e) => {
-            delete (e as any).id;
-            delete (e as any).userId;
-            delete (e as any).deleted;
+            (e as any).id = undefined;
+            (e as any).userId = undefined;
+            (e as any).deleted = undefined;
         });
         expect(envVars.project.length).to.be.equal(0);
         expect(envVars.workspace).to.have.deep.members(userEnvVars.filter((ev) => ev.value === "true"));

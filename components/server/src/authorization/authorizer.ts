@@ -40,13 +40,12 @@ export function createInitializingAuthorizer(spiceDbAuthorizer: SpiceDBAuthorize
             const originalMethod = target[propKey as keyof typeof target];
 
             if (typeof originalMethod === "function") {
-                return async function (...args: any[]) {
+                return async (...args: any[]) => {
                     await initialized;
                     return (originalMethod as any).apply(target, args);
                 };
-            } else {
-                return originalMethod;
             }
+            return originalMethod;
         },
     });
 }
@@ -557,7 +556,7 @@ async function getSubjectFromCtx(passed: Subject): Promise<SubjectId> {
     }
 
     if (!ctxSubjectId || match === "mismatch") {
-        const err = new ApplicationError(ErrorCodes.PERMISSION_DENIED, `Cannot authorize request`);
+        const err = new ApplicationError(ErrorCodes.PERMISSION_DENIED, "Cannot authorize request");
         log.error("Authorizer: Cannot authorize request", err, { match, ctxSubjectId, ctxUserId, passedUserId });
         throw err;
     }
@@ -567,7 +566,7 @@ async function getSubjectFromCtx(passed: Subject): Promise<SubjectId> {
 function getUserId(subjectId: SubjectId): string {
     const userId = subjectId.userId();
     if (!userId) {
-        throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `No userId available`);
+        throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "No userId available");
     }
     return userId;
 }

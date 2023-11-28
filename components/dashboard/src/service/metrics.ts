@@ -32,12 +32,12 @@ window.addEventListener("unhandledrejection", (event) => {
 window.addEventListener("error", (event) => {
     let message = "Unhandled error";
     if (event.message) {
-        message += ": " + event.message;
+        message += `: ${event.message}`;
     }
     reportError(message, event.error);
 });
 
-console.error = function (...args) {
+console.error = (...args) => {
     originalConsoleError.apply(console, args);
     reportError(...args);
 };
@@ -59,12 +59,12 @@ export function reportError(...args: any[]) {
     } else if (typeof args[0] === "string") {
         err = new Error(args[0]);
         if (args[1] instanceof Error) {
-            err.message += ": " + args[1].message;
+            err.message += `: ${args[1].message}`;
             err.name = args[1].name;
             err.stack = args[1].stack;
             details = args[2];
         } else if (typeof args[1] === "string") {
-            err.message += ": " + args[1];
+            err.message += `: ${args[1]}`;
             details = args[2];
         } else {
             details = args[1];

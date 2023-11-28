@@ -95,7 +95,7 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
                 props.classes || "mt-6 h-72 w-11/12 lg:w-3/5 rounded-xl overflow-hidden"
             } bg-gray-100 dark:bg-gray-800 relative`}
         >
-            <div className="absolute top-0 left-0 bottom-0 right-0 m-6" ref={xTermParentRef}></div>
+            <div className="absolute top-0 left-0 bottom-0 right-0 m-6" ref={xTermParentRef} />
         </div>
     );
 }

@@ -24,8 +24,8 @@ export const consistentClassname = (id: string) => {
     const guid = id.replaceAll("-", "").substring(0, 32).padEnd(32, "0");
 
     // Map guid into a 0,1 range by dividing by the max guid
-    var quotient = parseInt(guid, 16) / parseInt(GUID_MAX, 16);
-    var idx = Math.floor(quotient * (BG_CLASSES.length - 1));
+    const quotient = parseInt(guid, 16) / parseInt(GUID_MAX, 16);
+    const idx = Math.floor(quotient * (BG_CLASSES.length - 1));
 
     return BG_CLASSES[idx];
 };

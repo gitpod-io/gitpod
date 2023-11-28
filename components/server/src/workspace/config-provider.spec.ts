@@ -50,10 +50,10 @@ class TestConfigProvider {
                             services: {
                                 fileProvider: {
                                     getGitpodFileContent: async () => {
-                                        return hostname === "HAS_IMAGE" ? "image: " + baseYamlImage : undefined;
+                                        return hostname === "HAS_IMAGE" ? `image: ${baseYamlImage}` : undefined;
                                     },
                                     getFileContent: async () => {
-                                        return hostname === "HAS_IMAGE" ? "image: " + baseYamlImage : undefined;
+                                        return hostname === "HAS_IMAGE" ? `image: ${baseYamlImage}` : undefined;
                                     },
                                 },
                             },

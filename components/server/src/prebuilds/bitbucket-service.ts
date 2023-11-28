@@ -35,10 +35,7 @@ export class BitbucketService extends RepositoryService {
                 workspace: owner,
             });
             const hookUrl = this.getHookUrl();
-            if (
-                existing.data.values &&
-                existing.data.values.some((hook) => hook.url && hook.url.indexOf(hookUrl) !== -1)
-            ) {
+            if (existing.data.values?.some((hook) => hook.url && hook.url.indexOf(hookUrl) !== -1)) {
                 console.log(`bitbucket webhook already installed on ${owner}/${repoName}`);
                 return;
             }
@@ -53,7 +50,7 @@ export class BitbucketService extends RepositoryService {
                 // see https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Bworkspace%7D/%7Brepo_slug%7D/hooks#post
                 _body: {
                     description: `Gitpod Prebuilds for ${this.config.hostUrl}.`,
-                    url: hookUrl + `?token=${user.id + "|" + tokenEntry.token.value}`,
+                    url: hookUrl + `?token=${`${user.id}|${tokenEntry.token.value}`}`,
                     active: true,
                     events: ["repo:push"],
                 },
@@ -61,9 +58,9 @@ export class BitbucketService extends RepositoryService {
             if (response.status !== 201) {
                 throw new Error(`Couldn't install webhook for ${cloneUrl}: ${response.status}`);
             }
-            console.log("Installed Bitbucket Webhook for " + cloneUrl);
+            console.log(`Installed Bitbucket Webhook for ${cloneUrl}`);
         } catch (error) {
-            console.error("Failed to install Bitbucket webhook for " + cloneUrl, error);
+            console.error(`Failed to install Bitbucket webhook for ${cloneUrl}`, error);
         }
     }
 

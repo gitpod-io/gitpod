@@ -37,7 +37,7 @@ interface BearerAuthError extends Error {
     code: typeof bearerAuthCode;
 }
 export function isBearerAuthError(error: any): error is BearerAuthError {
-    return "code" in error && (error as any)["code"] === bearerAuthCode;
+    return "code" in error && (error as any).code === bearerAuthCode;
 }
 function createBearerAuthError(message: string): BearerAuthError {
     return Object.assign(new Error(message), { code: bearerAuthCode } as { code: typeof bearerAuthCode });
@@ -84,7 +84,7 @@ export class BearerAuth {
     }
 
     async authExpressRequest(req: express.Request): Promise<void> {
-        const token = getBearerToken(req.headers["authorization"]);
+        const token = getBearerToken(req.headers.authorization);
         if (!token) {
             throw createBearerAuthError("missing Bearer token");
         }

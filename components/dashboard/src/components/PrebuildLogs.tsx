@@ -241,7 +241,7 @@ function watchHeadlessLogs(
         const retryBackoff = async (reason: string, err?: Error) => {
             delayInSeconds = Math.min(delayInSeconds * backoffFactor, maxBackoffSeconds);
 
-            console.debug("re-trying headless-logs because: " + reason, err);
+            console.debug(`re-trying headless-logs because: ${reason}`, err);
             await new Promise((resolve) => {
                 setTimeout(resolve, delayInSeconds * 1000);
             });
@@ -263,7 +263,7 @@ function watchHeadlessLogs(
             }
 
             const streamUrl = logSources.streams[streamIds[0]];
-            console.log("fetching from streamUrl: " + streamUrl);
+            console.log(`fetching from streamUrl: ${streamUrl}`);
             response = await fetch(streamUrl, {
                 method: "GET",
                 cache: "no-cache",
@@ -290,7 +290,7 @@ function watchHeadlessLogs(
                 const matches = msg.match(HEADLESS_LOG_STREAM_STATUS_CODE_REGEX);
                 if (matches) {
                     if (matches.length < 2) {
-                        console.debug("error parsing log stream status code. msg: " + msg);
+                        console.debug(`error parsing log stream status code. msg: ${msg}`);
                     } else {
                         const code = parseStatusCode(matches[1]);
                         if (code !== 200) {

@@ -129,7 +129,8 @@ function ContextMenu(props: ContextMenuProps) {
                                         {entry}
                                     </Link>
                                 );
-                            } else if (e.href) {
+                            }
+                            if (e.href) {
                                 return (
                                     <a
                                         key={key}
@@ -141,13 +142,12 @@ function ContextMenu(props: ContextMenuProps) {
                                         {entry}
                                     </a>
                                 );
-                            } else {
-                                return (
-                                    <div key={key} onClick={e.onClick}>
-                                        {entry}
-                                    </div>
-                                );
                             }
+                            return (
+                                <div key={key} onClick={e.onClick}>
+                                    {entry}
+                                </div>
+                            );
                         })
                     )}
                 </div>
@@ -194,7 +194,7 @@ export const MenuEntry: FunctionComponent<MenuEntryProps> = ({
             {customContent || (
                 <>
                     <div className="truncate w-52">{title}</div>
-                    <div className="flex-1"></div>
+                    <div className="flex-1" />
                     {active ? <div className="pl-1 font-semibold">&#x2713;</div> : null}
                 </>
             )}

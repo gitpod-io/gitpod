@@ -55,8 +55,8 @@ export class BitbucketServerService extends RepositoryService {
             owner,
         });
         const hookUrl = this.getHookUrl();
-        if (existing.values && existing.values.some((hook) => hook.url && hook.url.indexOf(hookUrl) !== -1)) {
-            console.log(`BBS webhook already installed.`, { cloneUrl });
+        if (existing.values?.some((hook) => hook.url && hook.url.indexOf(hookUrl) !== -1)) {
+            console.log("BBS webhook already installed.", { cloneUrl });
             return;
         }
         const tokenEntry = await this.tokenService.createGitpodToken(
@@ -74,13 +74,13 @@ export class BitbucketServerService extends RepositoryService {
                     configuration: {
                         secret: "foobar123-secret",
                     },
-                    url: hookUrl + `?token=${encodeURIComponent(user.id + "|" + tokenEntry.token.value)}`,
+                    url: hookUrl + `?token=${encodeURIComponent(`${user.id}|${tokenEntry.token.value}`)}`,
                     events: ["repo:refs_changed"],
                 },
             );
             console.log("BBS: webhook installed.", { cloneUrl });
         } catch (error) {
-            console.error(`BBS: webhook installation failed.`, error, { cloneUrl, error });
+            console.error("BBS: webhook installation failed.", error, { cloneUrl, error });
         }
     }
 

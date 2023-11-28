@@ -113,7 +113,7 @@ describe("PrebuildManager", () => {
             reason: "prebuilds-not-enabled",
             config,
             context,
-            project: clone(project, (p) => (p.settings!.prebuilds!.enable = false)),
+            project: clone(project, (p) => (p.settings?.prebuilds!.enable = false)),
         },
         {
             title: "default-branch-only/matched(1)",
@@ -171,7 +171,7 @@ describe("PrebuildManager", () => {
             shouldRun: false,
             reason: "default-branch-missing-in-commit-context",
             config,
-            context: clone(context, (c) => delete c.repository.defaultBranch),
+            context: clone(context, (c) => (c.repository.defaultBranch = undefined)),
             project: clone(
                 project,
                 (p) =>
@@ -205,7 +205,7 @@ describe("PrebuildManager", () => {
             shouldRun: false,
             reason: "branch-name-missing-in-commit-context",
             config,
-            context: clone(context, (c) => delete c.ref),
+            context: clone(context, (c) => (c.ref = undefined)),
             project: clone(
                 project,
                 (p) =>

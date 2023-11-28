@@ -96,7 +96,7 @@ function toKeyPair(
  *  - replaces the analytics writer with a null analytics writer
  */
 const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound, rebind) => {
-    const webhooks = new Set<String>();
+    const webhooks = new Set<string>();
     bind("webhooks").toConstantValue(webhooks);
     rebind(HostContextProvider).toConstantValue({
         get: () => {
@@ -126,8 +126,8 @@ const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound,
     });
     rebind(TokenProvider).toConstantValue(<TokenProvider>{
         getTokenForHost: async (user, host) => {
-            if (host != "github.com") {
-                throw new ApplicationError(ErrorCodes.NOT_FOUND, `SCM Token not found.`);
+            if (host !== "github.com") {
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, "SCM Token not found.");
             }
             return {
                 value: "test",
@@ -204,7 +204,7 @@ const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound,
     rebind(WorkspaceManagerClientProvider)
         .toSelf()
         .onActivation((_, provider) => {
-            provider["createConnection"] = () => {
+            provider.createConnection = () => {
                 const channel = <Partial<grpc.Channel>>{
                     getConnectivityState() {
                         return grpc.connectivityState.READY;
@@ -233,8 +233,8 @@ const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound,
                                 logInfo.setUrl("https://ws.gitpod.io/my-test-image-build/logs");
                                 buildInfo.setLogInfo(logInfo);
                                 response.setInfo(buildInfo);
-                                listeners.get("data")!(response);
-                                listeners.get("end")!();
+                                listeners.get("data")?.(response);
+                                listeners.get("end")?.();
                             });
                             return {
                                 on(event, callback) {
@@ -276,7 +276,7 @@ const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound,
             passlist: [],
         },
         redis: {
-            address: (env.REDIS_HOST || "127.0.0.1") + ":" + (env.REDIS_PORT || "6379"),
+            address: `${env.REDIS_HOST || "127.0.0.1"}:${env.REDIS_PORT || "6379"}`,
         },
         workspaceDefaults: {
             workspaceImage: "gitpod/workspace-full",

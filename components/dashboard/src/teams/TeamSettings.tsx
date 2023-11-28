@@ -162,12 +162,7 @@ export default function TeamSettingsPage() {
                 <p className="pt-4 pb-2 text-gray-600 dark:text-gray-400 text-base font-semibold">
                     Type <code>{org?.name}</code> to confirm
                 </p>
-                <input
-                    autoFocus
-                    className="w-full"
-                    type="text"
-                    onChange={(e) => setTeamNameToDelete(e.target.value)}
-                ></input>
+                <input className="w-full" type="text" onChange={(e) => setTeamNameToDelete(e.target.value)} />
             </ConfirmationModal>
         </>
     );
@@ -261,8 +256,10 @@ function WorkspaceImageButton(props: {
 }) {
     function parseDockerImage(image: string) {
         // https://docs.docker.com/registry/spec/api/
-        let registry, repository, tag;
-        let parts = image.split("/");
+        let registry;
+        let repository;
+        let tag;
+        const parts = image.split("/");
 
         if (parts.length > 1 && parts[0].includes(".")) {
             registry = parts.shift();
@@ -300,7 +297,7 @@ function WorkspaceImageButton(props: {
         return Children.toArray(descList).reduce((acc: ReactNode[], child, index) => {
             acc.push(child);
             if (index < descList.length - 1) {
-                acc.push(<>&nbsp;&middot;&nbsp;</>);
+                acc.push("&nbsp;&middot;&nbsp;");
             }
             return acc;
         }, []);
@@ -354,7 +351,7 @@ function OrgDefaultWorkspaceImageModal(props: OrgDefaultWorkspaceImageModalProps
                 });
                 props.onClose();
             } catch (error) {
-                if (!ErrorCode.isUserError(error["code"])) {
+                if (!ErrorCode.isUserError(error.code)) {
                     console.error(error);
                 }
                 setErrorMsg(error.message);

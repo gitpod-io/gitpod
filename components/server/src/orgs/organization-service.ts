@@ -50,8 +50,8 @@ export class OrganizationService {
             // apply ordering
             if (req.orderBy) {
                 result.sort((a, b) => {
-                    const aVal = a[req.orderBy!];
-                    const bVal = b[req.orderBy!];
+                    const aVal = req.orderBy?.[req.orderBy];
+                    const bVal = req.orderBy?.[req.orderBy];
                     if (!aVal && !bVal) {
                         return 0;
                     }
@@ -348,7 +348,7 @@ export class OrganizationService {
                 await this.auth.addOrganizationRole(orgId, memberId, membership.role);
             }
             const code = ApplicationError.hasErrorCode(err) ? err.code : ErrorCodes.INTERNAL_SERVER_ERROR;
-            const message = ApplicationError.hasErrorCode(err) ? err.message : "" + err;
+            const message = ApplicationError.hasErrorCode(err) ? err.message : `${err}`;
             throw new ApplicationError(code, message);
         }
         this.analytics.track({

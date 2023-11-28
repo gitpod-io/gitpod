@@ -72,7 +72,7 @@ export const UsageView: FC<UsageViewProps> = ({ attributionId }) => {
         [updatePageParams],
     );
 
-    let errorMessage = useMemo(() => {
+    const errorMessage = useMemo(() => {
         let errorMessage = "";
 
         if (usagePage.error) {
@@ -158,7 +158,7 @@ export const UsageView: FC<UsageViewProps> = ({ attributionId }) => {
                         )}
                     </ItemsList>
 
-                    {usagePage.data && usagePage.data.pagination && usagePage.data.pagination.totalPages > 1 && (
+                    {usagePage.data?.pagination && usagePage.data.pagination.totalPages > 1 && (
                         <Pagination
                             currentPage={usagePage.data.pagination.page}
                             setPage={handlePageChange}

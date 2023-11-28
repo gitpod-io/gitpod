@@ -10,6 +10,6 @@ export function oauthUrls(host: string) {
     return {
         authorizationUrl: `https://${host}/rest/oauth2/latest/authorize`,
         tokenUrl: `https://${host}/rest/oauth2/latest/token`,
-        settingsUrl: ``,
+        settingsUrl: "",
     };
 }

@@ -26,7 +26,7 @@ export enum StartPhase {
 }
 
 function getPhaseTitle(phase?: StartPhase, error?: StartWorkspaceError) {
-    if (!!error) {
+    if (error) {
         return "Oh, no! Something went wrong!";
     }
     switch (phase) {
@@ -70,7 +70,7 @@ function ProgressBar(props: { phase: number; error: boolean }) {
                     // This phase is currently running
                     classes += " bg-green-400 animate-pulse";
                 }
-                return <div key={"phase-" + i} className={classes} />;
+                return <div key={`phase-${i}`} className={classes} />;
             })}
         </div>
     );
@@ -93,12 +93,12 @@ export interface StartWorkspaceError {
 
 export function StartPage(props: StartPageProps) {
     const { phase, error, workspaceId } = props;
-    let title = props.title || getPhaseTitle(phase, error);
+    const title = props.title || getPhaseTitle(phase, error);
     useDocumentTitle("Starting");
     return (
         <div className="w-screen h-screen align-middle">
             <div className="flex flex-col mx-auto items-center text-center h-screen">
-                <div className="h-1/3"></div>
+                <div className="h-1/3" />
                 <img
                     src={gitpodIcon}
                     alt="Gitpod's logo"

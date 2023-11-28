@@ -5,6 +5,8 @@ repos:
       #- id: check-yaml
       #  args: [--allow-multiple-documents]
       - id: check-json
+        exclude: |
+          components/dashboard/tsconfig.lib.json
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: check-symlinks
@@ -30,13 +32,6 @@ repos:
       - id: shellcheck
         args: [-e, "SC1090,SC1091"]
         exclude: .*/gradlew$
-
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v2.6.2"
-    hooks:
-      - id: prettier
-        # Only enabled for WebApp components initially, to build consensus and incrementally onboard others
-        files: ^components\/(server|gitpod-protocol|gitpod-db|dashboard|ws-manager-bridge)\/.*\.ts(x?)$
 
   - repo: https://github.com/dnephin/pre-commit-golang
     rev: "v0.5.0"
@@ -71,14 +66,5 @@ repos:
     rev: v8.15.0
     hooks:
       - id: gitleaks
-
-  - repo: local
-    hooks:
-      - id: dashboard-linter
-        name: dashboard-linter
-        entry: leeway run components/dashboard:lint
-        language: system
-        pass_filenames: false
-        files: ^components/dashboard/
 
 exclude: ^install/installer/.*/.*\.golden$

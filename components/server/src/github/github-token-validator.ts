@@ -60,7 +60,7 @@ export class GitHubTokenValidator implements IGitTokenValidator {
                 await this.githubGraphQLEndpoint.runQueryWithToken(token, request);
             } catch (error) {
                 const errors = error.result?.errors;
-                if (errors && errors[0] && (errors[0] as any)["type"] === "FORBIDDEN") {
+                if (errors?.[0] && (errors[0] as any).type === "FORBIDDEN") {
                     writeAccessToRepo = false;
                 } else {
                     log.error("Error getting organization information from GitHub", error, {

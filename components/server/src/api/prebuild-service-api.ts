@@ -118,7 +118,7 @@ export class PrebuildServiceAPI implements ServiceImpl<typeof PrebuildServiceInt
             yield new WatchPrebuildResponse({
                 prebuild: resp.prebuild,
             });
-            configurationId = resp.prebuild!.configurationId;
+            configurationId = resp.prebuild?.configurationId;
         }
         const it = await this.prebuildManager.watchPrebuildStatus(ctxUserId(), configurationId, {
             signal: ctxSignal(),

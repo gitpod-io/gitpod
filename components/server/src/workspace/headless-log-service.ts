@@ -79,7 +79,7 @@ export class HeadlessLogService {
         logCtx: LogContext,
         wsi: WorkspaceInstance,
         ownerId: string,
-        maxTimeoutSecs: number = 30,
+        maxTimeoutSecs = 30,
     ): Promise<HeadlessLogUrls | undefined> {
         if (isSupervisorAvailableSoon(wsi)) {
             const logEndpoint = HeadlessLogEndpoint.fromWithOwnerToken(wsi);
@@ -381,7 +381,7 @@ export class HeadlessLogService {
         aborted: Deferred<boolean>,
     ): Promise<T | undefined> {
         let retry = true;
-        const retryFunction = (doRetry: boolean = true) => {
+        const retryFunction = (doRetry = true) => {
             retry = doRetry;
         };
 
@@ -400,7 +400,6 @@ export class HeadlessLogService {
 
                 log.debug(`unable to ${description}, retrying...`, err);
                 await new Promise((resolve) => setTimeout(resolve, 2000));
-                continue;
             }
         }
         return undefined;

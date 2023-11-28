@@ -31,7 +31,7 @@ export class ContextParser {
 
     public normalizeContextURL(contextURL: string): string {
         for (const parser of [...this.prefixParser, ...this.allContextParsers]) {
-            const normalizedURL = parser.normalize && parser.normalize(contextURL);
+            const normalizedURL = parser.normalize?.(contextURL);
             if (normalizedURL) {
                 return normalizedURL;
             }

@@ -88,7 +88,7 @@ export class Authenticator {
                 log.info(`Auth Provider Callback. Host: ${host}`);
                 await hostContext.authProvider.callback(req, res, next);
             } catch (error) {
-                log.error(`Failed to handle callback.`, error, { url: req.url });
+                log.error("Failed to handle callback.", error, { url: req.url });
             }
         } else {
             // Otherwise proceed with other handlers
@@ -123,12 +123,12 @@ export class Authenticator {
 
     protected async getAuthProviderForHost(host: string): Promise<AuthProvider | undefined> {
         const hostContext = this.hostContextProvider.get(host);
-        return hostContext && hostContext.authProvider;
+        return hostContext?.authProvider;
     }
 
     async authenticate(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> {
         if (req.isAuthenticated()) {
-            log.info(`User is already authenticated. Continue.`, { "login-flow": true });
+            log.info("User is already authenticated. Continue.", { "login-flow": true });
             return next();
         }
         let returnTo: string | undefined = req.query.returnTo?.toString();
@@ -141,8 +141,8 @@ export class Authenticator {
         const host: string = req.query.host?.toString() || "";
         const authProvider = host && (await this.getAuthProviderForHost(host));
         if (!host || !authProvider) {
-            log.info(`Bad request: missing parameters.`, { "login-flow": true });
-            res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
+            log.info("Bad request: missing parameters.", { "login-flow": true });
+            res.redirect(this.getSorryUrl("Bad request: missing parameters."));
             return;
         }
         // Logins with organizational Git Auth is not permitted
@@ -155,7 +155,7 @@ export class Authenticator {
             return;
         }
         if (this.config.disableDynamicAuthProviderLogin && !authProvider.params.builtin) {
-            log.info(`Auth Provider is not allowed.`, { ap: authProvider.info });
+            log.info("Auth Provider is not allowed.", { ap: authProvider.info });
             res.redirect(this.getSorryUrl(`Login with ${authProvider.params.host} is not allowed.`));
             return;
         }
@@ -182,8 +182,8 @@ export class Authenticator {
     async deauthorize(req: express.Request, res: express.Response, next: express.NextFunction) {
         const user = req.user;
         if (!req.isAuthenticated() || !User.is(user)) {
-            log.info(`User is not authenticated.`);
-            res.redirect(this.getSorryUrl(`Not authenticated. Please login.`));
+            log.info("User is not authenticated.");
+            res.redirect(this.getSorryUrl("Not authenticated. Please login."));
             return;
         }
         const returnTo: string = req.query.returnTo?.toString() || this.config.hostUrl.asDashboard().toString();
@@ -192,8 +192,8 @@ export class Authenticator {
         const authProvider = host && (await this.getAuthProviderForHost(host));
 
         if (!host || !authProvider) {
-            log.warn(`Bad request: missing parameters.`);
-            res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
+            log.warn("Bad request: missing parameters.");
+            res.redirect(this.getSorryUrl("Bad request: missing parameters."));
             return;
         }
 
@@ -202,13 +202,13 @@ export class Authenticator {
             res.redirect(returnTo);
         } catch (error) {
             next(error);
-            log.error(`Failed to disconnect a provider.`, error, {
+            log.error("Failed to disconnect a provider.", error, {
                 host,
                 userId: user.id,
             });
             res.redirect(
                 this.getSorryUrl(
-                    `Failed to disconnect a provider: ${error && error.message ? error.message : "unknown reason"}`,
+                    `Failed to disconnect a provider: ${error?.message ? error.message : "unknown reason"}`,
                 ),
             );
         }
@@ -217,8 +217,8 @@ export class Authenticator {
     async authorize(req: express.Request, res: express.Response, next: express.NextFunction) {
         const user = req.user;
         if (!req.isAuthenticated() || !User.is(user)) {
-            log.info(`User is not authenticated.`, { "authorize-flow": true });
-            res.redirect(this.getSorryUrl(`Not authenticated. Please login.`));
+            log.info("User is not authenticated.", { "authorize-flow": true });
+            res.redirect(this.getSorryUrl("Not authenticated. Please login."));
             return;
         }
         const returnTo: string | undefined = req.query.returnTo?.toString();
@@ -227,8 +227,8 @@ export class Authenticator {
         const override = req.query.override === "true";
         const authProvider = host && (await this.getAuthProviderForHost(host));
         if (!returnTo || !host || !authProvider) {
-            log.info(`Bad request: missing parameters.`, { "authorize-flow": true });
-            res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
+            log.info("Bad request: missing parameters.", { "authorize-flow": true });
+            res.redirect(this.getSorryUrl("Bad request: missing parameters."));
             return;
         }
 

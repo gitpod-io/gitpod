@@ -81,7 +81,7 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
         () =>
             new GitpodHostUrl(window.location.href).with({
                 pathname: "/start/",
-                hash: "#" + workspace.id,
+                hash: `#${workspace.id}`,
             }),
         [workspace.id],
     );

@@ -202,10 +202,10 @@ export class API {
                     };
                     const handleError = (reason: unknown) => {
                         let err = self.apiConverter.toError(reason);
-                        if (reason != err && err.code === Code.Internal) {
+                        if (reason !== err && err.code === Code.Internal) {
                             log.error("public api: unexpected internal error", reason);
                             err = new ConnectError(
-                                `Oops! Something went wrong.`,
+                                "Oops! Something went wrong.",
                                 Code.Internal,
                                 // pass metadata to preserve the application error
                                 err.metadata,
@@ -328,7 +328,7 @@ export class API {
         try {
             const claims = await this.sessionHandler.verifyJWTCookie(cookieHeader);
             const userId = claims?.sub;
-            return !!userId ? SubjectId.fromUserId(userId) : undefined;
+            return userId ? SubjectId.fromUserId(userId) : undefined;
         } catch (err) {
             log.warn("Failed to authenticate user with JWT Session", err);
             return undefined;

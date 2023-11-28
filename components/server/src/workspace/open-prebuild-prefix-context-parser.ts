@@ -27,7 +27,7 @@ export class OpenPrebuildPrefixContextParser implements IPrefixContextParser {
     public async handle(user: User, prefix: string, context: WorkspaceContext): Promise<WorkspaceContext> {
         const match = OpenPrebuildPrefixContextParser.PREFIX.exec(prefix);
         if (!match) {
-            log.error("Could not parse prefix " + prefix);
+            log.error(`Could not parse prefix ${prefix}`);
             return context;
         }
 

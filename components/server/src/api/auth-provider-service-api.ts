@@ -60,17 +60,16 @@ export class AuthProviderServiceAPI implements ServiceImpl<typeof AuthProviderSe
             });
 
             return new CreateAuthProviderResponse({ authProvider: this.apiConverter.toAuthProvider(result) });
-        } else {
-            const result = await this.authProviderService.createAuthProviderOfUser(ctxUserId(), {
-                host: request.host,
-                ownerId: ctxUserId(),
-                type: this.apiConverter.fromAuthProviderType(request.type),
-                clientId: request.oauth2Config?.clientId,
-                clientSecret: request.oauth2Config?.clientSecret,
-            });
-
-            return new CreateAuthProviderResponse({ authProvider: this.apiConverter.toAuthProvider(result) });
         }
+        const result = await this.authProviderService.createAuthProviderOfUser(ctxUserId(), {
+            host: request.host,
+            ownerId: ctxUserId(),
+            type: this.apiConverter.fromAuthProviderType(request.type),
+            clientId: request.oauth2Config?.clientId,
+            clientSecret: request.oauth2Config?.clientSecret,
+        });
+
+        return new CreateAuthProviderResponse({ authProvider: this.apiConverter.toAuthProvider(result) });
     }
     async getAuthProvider(request: GetAuthProviderRequest, _: HandlerContext): Promise<GetAuthProviderResponse> {
         if (!request.authProviderId) {

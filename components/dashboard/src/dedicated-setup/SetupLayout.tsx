@@ -64,7 +64,7 @@ export const SetupLayout: FC<Props> = ({
                             ))}
                         </div>
                     ) : null}
-                    <>{children}</>
+                    {children}
                 </div>
             </div>
         </div>
@@ -78,9 +78,9 @@ const ProgressElement: FC<{ i: number; current: number }> = ({ current, i }) => 
                 <img src={check} width={15} height={15} alt="checkmark" />
             </div>
         );
-    } else if (i === current) {
-        return <div className="w-5 h-5 rounded-full bg-gray-400" />;
-    } else {
-        return <div className="w-5 h-5 rounded-full border-2 border-dashed border-gray-400" />;
     }
+    if (i === current) {
+        return <div className="w-5 h-5 rounded-full bg-gray-400" />;
+    }
+    return <div className="w-5 h-5 rounded-full border-2 border-dashed border-gray-400" />;
 };

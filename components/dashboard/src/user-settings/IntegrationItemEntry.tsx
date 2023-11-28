@@ -14,13 +14,12 @@ export const IntegrationEntryItem = (props: {
     gitProviderMenu: (provider: AuthProvider) => ContextMenuEntry[];
 }) => {
     return (
-        <Item key={"ap-" + props.ap.id} className="h-16">
+        <Item key={`ap-${props.ap.id}`} className="h-16">
             <ItemFieldIcon>
                 <div
-                    className={
-                        "rounded-full w-3 h-3 text-sm align-middle m-auto " +
-                        (props.ap.verified ? "bg-green-500" : "bg-gray-400")
-                    }
+                    className={`rounded-full w-3 h-3 text-sm align-middle m-auto ${
+                        props.ap.verified ? "bg-green-500" : "bg-gray-400"
+                    }`}
                 >
                     &nbsp;
                 </div>

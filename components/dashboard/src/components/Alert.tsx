@@ -53,37 +53,37 @@ const infoMap: Record<AlertType, AlertInfo> = {
     success: {
         bgCls: "bg-green-100 dark:bg-green-800",
         txtCls: "text-green-700 dark:text-green-50",
-        icon: <Check className="w-4 h-4"></Check>,
+        icon: <Check className="w-4 h-4" />,
         iconColor: "text-green-700 dark:text-green-100",
     },
     warning: {
         bgCls: "bg-yellow-100 dark:bg-yellow-700",
         txtCls: "text-yellow-600 dark:text-yellow-50",
-        icon: <Exclamation2 className="w-4 h-4"></Exclamation2>,
+        icon: <Exclamation2 className="w-4 h-4" />,
         iconColor: "text-yellow-400 dark:text-yellow-900",
     },
     info: {
         bgCls: "bg-gray-100 dark:bg-gray-700",
         txtCls: "text-gray-500 dark:text-gray-300",
-        icon: <InfoSvg className="w-4 h-4"></InfoSvg>,
+        icon: <InfoSvg className="w-4 h-4" />,
         iconColor: "text-gray-400",
     },
     message: {
         bgCls: "bg-blue-50 dark:bg-blue-800",
         txtCls: "text-blue-800 dark:text-blue-100",
-        icon: <InfoSvg className="w-4 h-4"></InfoSvg>,
+        icon: <InfoSvg className="w-4 h-4" />,
         iconColor: "text-blue-400",
     },
     error: {
         bgCls: "bg-red-50 dark:bg-red-800 dark:bg-opacity-50",
         txtCls: "text-red-600 dark:text-red-200",
-        icon: <Exclamation className="w-4 h-4"></Exclamation>,
+        icon: <Exclamation className="w-4 h-4" />,
         iconColor: "text-red-400",
     },
     danger: {
         bgCls: "bg-red-600 dark:bg-red-600",
         txtCls: "text-white",
-        icon: <Exclamation className="w-4 h-4"></Exclamation>,
+        icon: <Exclamation className="w-4 h-4" />,
         iconColor: "filter-brightness-10",
         closeIconColor: "text-white",
     },
@@ -123,7 +123,7 @@ export default function Alert(props: AlertProps) {
             {showIcon && <span className={`mt-1 mr-4 h-4 w-4 ${info.iconColor}`}>{props.icon ?? info.icon}</span>}
             <span className="flex-1 text-left">{props.children}</span>
             {props.closable && (
-                <span className={`ml-4`}>
+                <span className={"ml-4"}>
                     {/* Use an IconButton component once we make it */}
                     <Button
                         type="transparent"

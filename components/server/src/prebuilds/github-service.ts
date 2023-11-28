@@ -71,7 +71,7 @@ export class GitHubService extends RepositoryService {
         const config = {
             url: this.getHookUrl(),
             content_type: "json",
-            secret: user.id + "|" + tokenEntry.token.value,
+            secret: `${user.id}|${tokenEntry.token.value}`,
         };
         await this.githubApi.run(user, (gh) => gh.repos.createWebhook({ owner, repo, config }));
     }

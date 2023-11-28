@@ -89,7 +89,7 @@ function websocketRequest(options: TransportOptions): Transport {
                 headers,
             });
             ws.binaryType = "arraybuffer";
-            ws.onopen = function () {
+            ws.onopen = () => {
                 options.debug && debug("websocketRequest.onopen");
                 ws.send(headersToBytes(metadata));
 
@@ -99,16 +99,16 @@ function websocketRequest(options: TransportOptions): Transport {
                 });
             };
 
-            ws.onclose = function (closeEvent) {
+            ws.onclose = (closeEvent) => {
                 options.debug && debug("websocketRequest.onclose", closeEvent);
                 options.onEnd();
             };
 
-            ws.onerror = function (error) {
+            ws.onerror = (error) => {
                 options.debug && debug("websocketRequest.onerror", error);
             };
 
-            ws.onmessage = function (e) {
+            ws.onmessage = (e) => {
                 // @ts-ignore This is copied from an external library; we won't fix this here
                 options.onChunk(new Uint8Array(Buffer.from(e.data)));
             };
@@ -123,7 +123,8 @@ function websocketRequest(options: TransportOptions): Transport {
 function constructWebSocketAddress(url: string) {
     if (url.substr(0, 8) === "https://") {
         return `wss://${url.substr(8)}`;
-    } else if (url.substr(0, 7) === "http://") {
+    }
+    if (url.substr(0, 7) === "http://") {
         return `ws://${url.substr(7)}`;
     }
     throw new Error("Websocket transport constructed with non-https:// or http:// host.");

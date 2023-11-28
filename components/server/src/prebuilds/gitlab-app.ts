@@ -108,8 +108,9 @@ export class GitLabApp {
             const [userid, tokenValue] = secretToken.split("|");
             const user = await this.userService.findUserById(userid, userid);
             if (!user) {
-                throw new Error("No user found for " + secretToken + " found.");
-            } else if (!!user.blocked) {
+                throw new Error(`No user found for ${secretToken} found.`);
+            }
+            if (user.blocked) {
                 throw new Error(`Blocked user ${user.id} tried to start prebuild.`);
             }
             const identity = user.identities.find((i) => i.authProviderId === TokenService.GITPOD_AUTH_PROVIDER_ID);
@@ -254,7 +255,7 @@ export class GitLabApp {
                 const user = await runWithSubjectId(SubjectId.fromUserId(teamMember.userId), () =>
                     this.userService.findUserById(teamMember.userId, teamMember.userId),
                 );
-                if (user && user.identities.some((i) => i.authProviderId === "Public-GitLab")) {
+                if (user?.identities.some((i) => i.authProviderId === "Public-GitLab")) {
                     return user;
                 }
             }

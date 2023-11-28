@@ -85,7 +85,6 @@ export function AddSSHKeyModal(props: AddModalProps) {
                 <div className="mt-2">
                     <h4>Key</h4>
                     <textarea
-                        autoFocus
                         style={{ height: "160px" }}
                         className="w-full resize-none"
                         value={value.key}
@@ -136,7 +135,7 @@ export function DeleteSSHKeyModal(props: DeleteModalProps) {
             onConfirm={confirmDelete}
         >
             <Item solid>
-                <KeyItem sshKey={props.value}></KeyItem>
+                <KeyItem sshKey={props.value} />
             </Item>
         </ConfirmationModal>
     );
@@ -221,7 +220,7 @@ export default function SSHKeys() {
                     {dataList.map((key) => {
                         return (
                             <Item key={key.id} solid className="items-start">
-                                <KeyItem sshKey={key}></KeyItem>
+                                <KeyItem sshKey={key} />
                                 <ItemFieldContextMenu
                                     position="start"
                                     menuEntries={[
@@ -248,10 +247,10 @@ function KeyItem(props: { sshKey: SSHPublicKey }) {
         <ItemField className="flex flex-col gap-y box-border overflow-hidden">
             <p className="truncate text-gray-400 dark:text-gray-600">SHA256:{key.fingerprint}</p>
             <div className="truncate my-1 text-xl text-gray-800 dark:text-gray-100 font-semibold">{key.name}</div>
-            <p className="truncate mt-4">Added on {dayjs(key.creationTime!.toDate()).format("MMM D, YYYY, hh:mm A")}</p>
+            <p className="truncate mt-4">Added on {dayjs(key.creationTime?.toDate()).format("MMM D, YYYY, hh:mm A")}</p>
             {!!key.lastUsedTime && (
                 <p className="truncate">
-                    Last used on {dayjs(key.lastUsedTime!.toDate()).format("MMM D, YYYY, hh:mm A")}
+                    Last used on {dayjs(key.lastUsedTime?.toDate()).format("MMM D, YYYY, hh:mm A")}
                 </p>
             )}
         </ItemField>

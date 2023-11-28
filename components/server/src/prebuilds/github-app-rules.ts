@@ -58,14 +58,13 @@ export class GithubAppRules {
         if (isPR) {
             if (isFork) {
                 return !!prebuildCfg.pullRequestsFromForks;
-            } else {
-                return !!prebuildCfg.pullRequests;
             }
-        } else if (isDefaultBranch) {
-            return !!prebuildCfg.master;
-        } else {
-            return !!prebuildCfg.branches;
+            return !!prebuildCfg.pullRequests;
         }
+        if (isDefaultBranch) {
+            return !!prebuildCfg.master;
+        }
+        return !!prebuildCfg.branches;
     }
 
     public shouldDo(
@@ -81,15 +80,17 @@ export class GithubAppRules {
 
         if (action === "addCheck") {
             return !!prebuildCfg.addCheck;
-        } else if (action === "addBadge") {
-            return !!prebuildCfg.addBadge;
-        } else if (action === "addLabel") {
-            return !!prebuildCfg.addLabel;
-        } else if (action === "addComment") {
-            return !!prebuildCfg.addComment;
-        } else {
-            log.warn("In GitHub app we asked whether we should do an unknown action. This is a bug!", { action });
-            return false;
         }
+        if (action === "addBadge") {
+            return !!prebuildCfg.addBadge;
+        }
+        if (action === "addLabel") {
+            return !!prebuildCfg.addLabel;
+        }
+        if (action === "addComment") {
+            return !!prebuildCfg.addComment;
+        }
+        log.warn("In GitHub app we asked whether we should do an unknown action. This is a bug!", { action });
+        return false;
     }
 }

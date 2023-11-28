@@ -67,9 +67,8 @@ export class WsLayerImpl implements WsLayer {
     async next(ws: websocket, req: express.Request, err?: any) {
         if (err) {
             return this.handleError(err, ws, req, async (err) => this.nextLayer.next(ws, req, err));
-        } else {
-            return this.handleRequest(ws, req, async (err) => this.nextLayer.next(ws, req, err));
         }
+        return this.handleRequest(ws, req, async (err) => this.nextLayer.next(ws, req, err));
     }
 }
 

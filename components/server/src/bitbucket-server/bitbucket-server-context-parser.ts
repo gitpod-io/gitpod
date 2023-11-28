@@ -90,7 +90,7 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
         let moreSegmentsStart;
         if (firstSegment === "scm") {
             repoKind = "projects";
-            if (owner && owner.startsWith("~")) {
+            if (owner?.startsWith("~")) {
                 repoKind = "users";
                 owner = owner.substring(1);
             }
@@ -101,7 +101,7 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
             repoName = segments[3];
             moreSegmentsStart = 4;
         } else {
-            throw new Error("Unexpected repo kind: " + firstSegment);
+            throw new Error(`Unexpected repo kind: ${firstSegment}`);
         }
         const endsWithRepoName = segments.length === moreSegmentsStart;
 
@@ -196,7 +196,6 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
                         }
                         break;
                     }
-                    case "revision":
                     default: {
                         const tipCommitOnDefaultBranch = await this.api.getCommits(user, {
                             repoKind,
@@ -207,10 +206,8 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
                         const commits = tipCommitOnDefaultBranch?.values || [];
                         if (commits.length === 0) {
                             break;
-                        } else {
-                            more.revision = commits[0].id;
-                            // more.refType = "revision";
                         }
+                        more.revision = commits[0].id;
                     }
                 }
                 if (!more.revision) {
@@ -224,7 +221,7 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
             return <NavigatorContext>{
                 isFile: false,
                 path: "",
-                title: `${owner}/${repoName} - ${more.ref || more.revision}${more.path ? ":" + more.path : ""}`,
+                title: `${owner}/${repoName} - ${more.ref || more.revision}${more.path ? `:${more.path}` : ""}`,
                 ref: more.ref,
                 refType: more.refType,
                 revision: more.revision,

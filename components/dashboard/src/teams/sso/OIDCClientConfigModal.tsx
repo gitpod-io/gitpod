@@ -47,7 +47,7 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onSaved, onClos
             }
 
             // There should always be a configId, but just to type-guard
-            if (!!configId) {
+            if (configId) {
                 onSaved(configId);
             }
             onClose();
@@ -62,8 +62,8 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onSaved, onClos
                 {isNew
                     ? "New SSO Configuration"
                     : clientConfig?.active
-                    ? "View SSO Configuration"
-                    : "Edit SSO Configuration"}
+                      ? "View SSO Configuration"
+                      : "Edit SSO Configuration"}
             </ModalHeader>
             <ModalBody>
                 {clientConfig?.active && (

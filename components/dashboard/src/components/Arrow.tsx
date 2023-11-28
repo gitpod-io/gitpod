@@ -17,11 +17,10 @@ function Arrow(props: { direction: string; customBorderClasses?: string }) {
     };
     return (
         <span
-            className={
-                "mx-2 " +
-                (customBorderClasses ||
-                    "border-gray-400 dark:border-gray-500 group-hover:border-gray-600 dark:group-hover:border-gray-400")
-            }
+            className={`mx-2 ${
+                customBorderClasses ||
+                "border-gray-400 dark:border-gray-500 group-hover:border-gray-600 dark:group-hover:border-gray-400"
+            }`}
             style={{
                 marginTop: 2,
                 marginBottom: 2,
@@ -30,7 +29,7 @@ function Arrow(props: { direction: string; customBorderClasses?: string }) {
                 display: "inline-block",
                 transform: `rotate(${directionMap[direction]})`,
             }}
-        ></span>
+        />
     );
 }
 

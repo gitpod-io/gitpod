@@ -44,11 +44,11 @@ export type CodeSyncConfig = Partial<{
 function getBasePrefix(resource: ServerResource, collection: string | undefined) {
     if (resource === "editSessions") {
         return "edit-sessions/";
-    } else if (collection) {
-        return "code-sync-collection/";
-    } else {
-        return "code-sync/";
     }
+    if (collection) {
+        return "code-sync-collection/";
+    }
+    return "code-sync/";
 }
 
 function toObjectName(resource: ServerResource, rev: string, collection: string | undefined): string {
@@ -57,10 +57,10 @@ function toObjectName(resource: ServerResource, rev: string, collection: string 
         if (collection === "all") {
             return name;
         }
-        name += collection + "/";
+        name += `${collection}/`;
     }
 
-    name += resource + "/";
+    name += `${resource}/`;
     if (rev === "all") {
         return name;
     }
@@ -238,7 +238,7 @@ export class CodeSyncService {
         }
 
         const result: { url: string; created: number }[] = revs.map((e) => ({
-            url: req.originalUrl + "/" + e.rev,
+            url: `${req.originalUrl}/${e.rev}`,
             created: Date.parse(e.created) / 1000 /* client expects in seconds */,
         }));
         res.json(result);

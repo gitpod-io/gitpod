@@ -44,7 +44,7 @@ export class BitbucketApp {
             try {
                 if (req.header("X-Event-Key") === "repo:push") {
                     const span = TraceContext.startSpan("BitbucketApp.handleEvent", {});
-                    const secretToken = req.query["token"] as string;
+                    const secretToken = req.query.token as string;
                     const event = await this.webhookEvents.createEvent({
                         type: "push",
                         status: "received",
@@ -95,8 +95,9 @@ export class BitbucketApp {
             const [userid, tokenValue] = secretToken.split("|");
             const user = await this.userService.findUserById(userid, userid);
             if (!user) {
-                throw new Error("No user found for " + secretToken + " found.");
-            } else if (!!user.blocked) {
+                throw new Error(`No user found for ${secretToken} found.`);
+            }
+            if (user.blocked) {
                 throw new Error(`Blocked user ${user.id} tried to start prebuild.`);
             }
             const identity = user.identities.find((i) => i.authProviderId === TokenService.GITPOD_AUTH_PROVIDER_ID);
@@ -228,7 +229,7 @@ export class BitbucketApp {
                 const user = await runWithSubjectId(SubjectId.fromUserId(teamMember.userId), () =>
                     this.userService.findUserById(teamMember.userId, teamMember.userId),
                 );
-                if (user && user.identities.some((i) => i.authProviderId === authProviderId)) {
+                if (user?.identities.some((i) => i.authProviderId === authProviderId)) {
                     return user;
                 }
             }
@@ -258,7 +259,7 @@ function toData(body: BitbucketPushHook): ParsedRequestData | undefined {
         branchName,
         commitHash,
         repoUrl: body.repository.links.html.href,
-        gitCloneUrl: body.repository.links.html.href + ".git",
+        gitCloneUrl: `${body.repository.links.html.href}.git`,
     };
     if (!result.commitHash || !result.repoUrl) {
         console.error("Bitbucket push event: unexpected request body.");

@@ -223,8 +223,8 @@ export function CreateWorkspacePage() {
                 await timeout;
                 if (result.workspace?.status?.workspaceUrl) {
                     window.location.href = result.workspace.status.workspaceUrl;
-                } else if (result.workspace!.id) {
-                    history.push(`/start/#${result.workspace!.id}`);
+                } else if (result.workspace?.id) {
+                    history.push(`/start/#${result.workspace?.id}`);
                 }
             } catch (error) {
                 console.log(error);
@@ -584,8 +584,8 @@ export const RepositoryNotFound: FC<{ error: StartWorkspaceError }> = ({ error }
         authProvider.type === AuthProviderType.GITHUB
             ? "repo"
             : authProvider.type === AuthProviderType.GITLAB
-            ? "api"
-            : "";
+              ? "api"
+              : "";
     const authorizeURL = gitpodHostUrl
         .withApi({
             pathname: "/authorize",

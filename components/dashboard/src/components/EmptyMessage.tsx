@@ -18,7 +18,7 @@ type Props = {
 };
 export const EmptyMessage: FC<Props> = ({ title, subtitle, buttonText, onClick, className }) => {
     const handleClick = useCallback(() => {
-        onClick && onClick();
+        onClick?.();
     }, [onClick]);
     return (
         <div

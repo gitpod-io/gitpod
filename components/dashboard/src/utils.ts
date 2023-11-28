@@ -44,9 +44,8 @@ export const poll = async <T>(
         if (done) {
             opts.success(result);
             return;
-        } else {
-            delayInSeconds = opts.backoffFactor * delayInSeconds;
         }
+        delayInSeconds = opts.backoffFactor * delayInSeconds;
     }
 };
 
@@ -115,5 +114,5 @@ export function isWebsiteSlug(pathName: string) {
         "values",
         "webinars",
     ];
-    return slugs.some((slug) => pathName.startsWith("/" + slug + "/") || pathName === "/" + slug);
+    return slugs.some((slug) => pathName.startsWith(`/${slug}/`) || pathName === `/${slug}`);
 }

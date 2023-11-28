@@ -60,8 +60,7 @@ export default function NewTeamPage() {
                     <br />
                     <h4>Organization Name</h4>
                     <input
-                        autoFocus
-                        className={`w-full${!!creationError ? " error" : ""}`}
+                        className={`w-full${creationError ? " error" : ""}`}
                         type="text"
                         onChange={(event) => setName(event.target.value)}
                     />

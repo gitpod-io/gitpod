@@ -22,7 +22,13 @@ import Alert from "../components/Alert";
 import { workspaceClient, workspacesService } from "../service/public-api";
 import { watchWorkspaceStatus } from "../data/workspaces/listen-to-workspace-ws-messages";
 import { Button } from "@podkit/buttons/Button";
-import { GetWorkspaceRequest, StartWorkspaceRequest, StartWorkspaceResponse, Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import {
+    GetWorkspaceRequest,
+    StartWorkspaceRequest,
+    StartWorkspaceResponse,
+    Workspace,
+    WorkspacePhase_Phase,
+} from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { PartialMessage } from "@bufbuild/protobuf";
 
 const sessionId = v4();
@@ -63,7 +69,7 @@ function parseParameters(search?: string): { notFound?: boolean } {
             return {};
         }
         const params = queryString.parse(search, { parseBooleans: true });
-        const notFound = !!(params && params["not_found"]);
+        const notFound = !!params?.not_found;
         return {
             notFound,
         };
@@ -163,7 +169,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     componentDidUpdate(prevPros: StartWorkspaceProps, prevState: StartWorkspaceState) {
         const newPhase = this.state?.workspace?.status?.phase?.name;
         const oldPhase = prevState.workspace?.status?.phase?.name;
-        const type = !!this.state.workspace?.prebuild ? "prebuild" : "regular";
+        const type = this.state.workspace?.prebuild ? "prebuild" : "regular";
         if (newPhase !== oldPhase) {
             getGitpodService().server.trackEvent({
                 event: "status_rendered",
@@ -206,7 +212,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             if (!result) {
                 throw new Error("No result!");
             }
-            console.log("/start: started workspace instance: " + result.workspace?.status?.instanceId);
+            console.log(`/start: started workspace instance: ${result.workspace?.status?.instanceId}`);
 
             // redirect to workspaceURL if we are not yet running in an iframe
             if (!this.props.runsInIFrame && result.workspace?.status?.workspaceUrl) {
@@ -348,8 +354,8 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 // At this point we cannot be certain that we already have the relevant cookie in multi-cluster
                 // scenarios with distributed workspace bridges (control loops): We might receive the update, but the backend might not have the token, yet.
                 // So we have to ask again, and wait until we're actually successful (it returns immediately on the happy path)
-                await this.ensureWorkspaceAuth(workspace.status!.instanceId, true);
-                this.redirectTo(workspace.status!.workspaceUrl);
+                await this.ensureWorkspaceAuth(workspace.status?.instanceId, true);
+                this.redirectTo(workspace.status?.workspaceUrl);
             })().catch(console.error);
             return;
         }
@@ -456,8 +462,8 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         let phase: StartPhase | undefined = StartPhase.Preparing;
         let title = undefined;
         let isStoppingOrStoppedPhase = false;
-        let isError = error ? true : false;
-        let statusMessage = !!error ? undefined : <p className="text-base text-gray-400">Preparing workspace …</p>;
+        const isError = error ? true : false;
+        let statusMessage = error ? undefined : <p className="text-base text-gray-400">Preparing workspace …</p>;
         const contextURL = this.state.workspace?.contextUrl;
         const useLatest = this.state.workspace?.editor?.version === "latest";
 

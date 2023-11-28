@@ -207,7 +207,7 @@ export class Server {
                 if (!authenticatedUsingBearerToken) {
                     // Connection attempt with cookie/session based authentication: be strict about where we accept connections from!
                     if (!verifyOrigin(info.origin)) {
-                        log.debug("Websocket connection attempt with non-matching Origin header: " + info.origin);
+                        log.debug(`Websocket connection attempt with non-matching Origin header: ${info.origin}`);
                         return callback(false, 403);
                     }
                 }
@@ -216,12 +216,11 @@ export class Server {
             };
 
             // Materialize user into req.user
-            const initSessionHandlers = this.authenticator.initHandlers.map<WsRequestHandler>(
-                (handler) => (ws, req, next) => {
+            const initSessionHandlers = this.authenticator.initHandlers.map<WsRequestHandler>((handler) =>
+                (ws, req, next) => {
                     // The fake response needs to be create in a per-request context to avoid memory leaks
                     handler(req, {} as express.Response, next);
-                },
-            );
+                });
 
             const wsPingPongHandler = new WsConnectionHandler();
             // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -317,16 +316,16 @@ export class Server {
             log.info("GitHub app disabled");
         }
 
-        log.info("Registered GitLab app at " + GitLabApp.path);
+        log.info(`Registered GitLab app at ${GitLabApp.path}`);
         app.use(GitLabApp.path, this.gitLabApp.router);
 
-        log.info("Registered Bitbucket app at " + BitbucketApp.path);
+        log.info(`Registered Bitbucket app at ${BitbucketApp.path}`);
         app.use(BitbucketApp.path, this.bitbucketApp.router);
 
-        log.info("Registered GitHub EnterpriseApp app at " + GitHubEnterpriseApp.path);
+        log.info(`Registered GitHub EnterpriseApp app at ${GitHubEnterpriseApp.path}`);
         app.use(GitHubEnterpriseApp.path, this.gitHubEnterpriseApp.router);
 
-        log.info("Registered Bitbucket Server app at " + BitbucketServerApp.path);
+        log.info(`Registered Bitbucket Server app at ${BitbucketServerApp.path}`);
         app.use(BitbucketServerApp.path, this.bitbucketServerApp.router);
     }
 
@@ -344,7 +343,7 @@ export class Server {
         if (this.monitoringApp) {
             this.monitoringHttpServer = this.monitoringApp.listen(9500, "localhost", () => {
                 log.info(
-                    `monitoring app listening on port: ${(<AddressInfo>this.monitoringHttpServer!.address()).port}`,
+                    `monitoring app listening on port: ${(<AddressInfo>this.monitoringHttpServer?.address()).port}`,
                 );
             });
         }
@@ -352,7 +351,7 @@ export class Server {
         if (this.iamSessionApp) {
             this.iamSessionAppServer = this.iamSessionApp.listen(9876, () => {
                 log.info(
-                    `IAM session server listening on port: ${(<AddressInfo>this.iamSessionAppServer!.address()).port}`,
+                    `IAM session server listening on port: ${(<AddressInfo>this.iamSessionAppServer?.address()).port}`,
                 );
             });
         }
@@ -374,7 +373,7 @@ export class Server {
                     resolve();
                 }, ms),
             );
-            await Promise.race([workLoad.catch((e) => log.error("error running " + task, e)), timeout]).then(() => {
+            await Promise.race([workLoad.catch((e) => log.error(`error running ${task}`, e)), timeout]).then(() => {
                 const duration = Date.now() - before;
                 if (timedOut) {
                     log.error(`task ${task} timed out after ${duration}ms`);
@@ -403,7 +402,7 @@ export class Server {
         return new Promise((resolve) =>
             server.close((err: any) => {
                 if (err) {
-                    log.warn(`error on server close.`, { err });
+                    log.warn("error on server close.", { err });
                 }
                 resolve();
             }),
@@ -412,7 +411,7 @@ export class Server {
 
     protected installWebsocketConnectionGauge() {
         const gauge = new prom.Gauge({
-            name: `server_websocket_connection_count`,
+            name: "server_websocket_connection_count",
             help: "Currently served websocket connections",
             labelNames: ["clientType"],
         });
@@ -426,7 +425,7 @@ export class Server {
 
     protected installWebsocketClientContextGauge() {
         const gauge = new prom.Gauge({
-            name: `server_websocket_client_context_count`,
+            name: "server_websocket_client_context_count",
             help: "Currently served client contexts",
             labelNames: ["authLevel"],
         });

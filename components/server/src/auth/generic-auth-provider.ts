@@ -276,7 +276,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
         if (!state) {
             log.error(cxt, `(${strategyName}) No state present on callback request.`, { clientInfo });
             response.redirect(
-                this.getSorryUrl(`No state was present on the authentication callback. Please try again.`),
+                this.getSorryUrl("No state was present on the authentication callback. Please try again."),
             );
             return;
         }
@@ -286,7 +286,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
             log.error(`(${strategyName}) Auth flow state is missing.`);
 
             reportLoginCompleted("failed", "git");
-            response.redirect(this.getSorryUrl(`Auth flow state is missing.`));
+            response.redirect(this.getSorryUrl("Auth flow state is missing."));
             return;
         }
 
@@ -308,7 +308,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
             reportLoginCompleted("failed_client", "git");
 
             log.error(cxt, `(${strategyName}) No session found during auth callback.`, { clientInfo });
-            response.redirect(this.getSorryUrl(`Please allow Cookies in your browser and try to log in again.`));
+            response.redirect(this.getSorryUrl("Please allow Cookies in your browser and try to log in again."));
             return;
         }
 
@@ -316,7 +316,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
             reportLoginCompleted("failed", "git");
 
             log.error(cxt, `(${strategyName}) Host does not match.`, { clientInfo });
-            response.redirect(this.getSorryUrl(`Host does not match.`));
+            response.redirect(this.getSorryUrl("Host does not match."));
             return;
         }
 
@@ -451,19 +451,18 @@ export abstract class GenericAuthProvider implements AuthProvider {
                     const { returnTo } = authFlow;
                     response.redirect(returnTo);
                     return;
-                } else {
-                    // Complete login into an existing account
-
-                    log.info(context, `(${strategyName}) Directly log in and proceed.`, logPayload);
-
-                    const { host, returnTo } = authFlow;
-                    await this.loginCompletionHandler.complete(request, response, {
-                        user,
-                        returnToUrl: returnTo,
-                        authHost: host,
-                        elevateScopes,
-                    });
                 }
+                // Complete login into an existing account
+
+                log.info(context, `(${strategyName}) Directly log in and proceed.`, logPayload);
+
+                const { host, returnTo } = authFlow;
+                await this.loginCompletionHandler.complete(request, response, {
+                    user,
+                    returnToUrl: returnTo,
+                    authHost: host,
+                    elevateScopes,
+                });
             }
         }
     }
@@ -511,7 +510,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
         const url = this.config.hostUrl
             .with({
                 pathname: "/complete-auth",
-                search: "message=error:" + Buffer.from(JSON.stringify(error), "utf-8").toString("base64"),
+                search: `message=error:${Buffer.from(JSON.stringify(error), "utf-8").toString("base64")}`,
             })
             .toString();
         response.redirect(url);
@@ -566,7 +565,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
                     (i) => i.authProviderId === this.authProviderId,
                 );
                 if (currentIdentity && currentIdentity.authId !== candidate.authId) {
-                    log.warn(`User is trying to connect with another provider identity.`, {
+                    log.warn("User is trying to connect with another provider identity.", {
                         ...defaultLogPayload,
                         authUser,
                         candidate,
@@ -593,7 +592,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
                         candidate,
                     );
                 } catch (error) {
-                    log.warn(`User is trying to connect a provider identity twice.`, {
+                    log.warn("User is trying to connect a provider identity twice.", {
                         ...defaultLogPayload,
                         authUser,
                         candidate,
@@ -612,7 +611,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
                     try {
                         await this.userAuthentication.asserNoAccountWithEmail(primaryEmail);
                     } catch (error) {
-                        log.warn(`Login attempt with matching email address.`, {
+                        log.warn("Login attempt with matching email address.", {
                             ...defaultLogPayload,
                             authUser,
                             candidate,
@@ -736,7 +735,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
     }
 
     protected isOAuthError(err: any): boolean {
-        if (typeof err === "object" && (err.name == "InternalOAuthError" || err.name === "AuthorizationError")) {
+        if (typeof err === "object" && (err.name === "InternalOAuthError" || err.name === "AuthorizationError")) {
             return true;
         }
         return false;

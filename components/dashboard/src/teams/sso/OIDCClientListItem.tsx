@@ -80,14 +80,13 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig, hasActiveConfig, o
                 <ItemFieldIcon>
                     <Tooltip content={clientConfig.active ? "Active" : clientConfig.verified ? "Verified" : "Inactive"}>
                         <div
-                            className={
-                                "rounded-full w-3 h-3 text-sm align-middle m-auto " +
-                                (clientConfig.active
+                            className={`rounded-full w-3 h-3 text-sm align-middle m-auto ${
+                                clientConfig.active
                                     ? "bg-green-500"
                                     : clientConfig.verified
-                                    ? "bg-kumquat-ripe"
-                                    : "bg-gray-400")
-                            }
+                                      ? "bg-kumquat-ripe"
+                                      : "bg-gray-400"
+                            }`}
                         >
                             &nbsp;
                         </div>

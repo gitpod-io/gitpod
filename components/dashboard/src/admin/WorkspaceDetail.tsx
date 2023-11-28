@@ -110,7 +110,7 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                         <Property name="User">
                             <Link
                                 className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400"
-                                to={"/admin/users/" + props.workspace.ownerId}
+                                to={`/admin/users/${props.workspace.ownerId}`}
                             >
                                 {user?.name || props.workspace.ownerId}
                             </Link>
@@ -154,7 +154,7 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                         <Property name="Organization">
                             <Link
                                 className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400"
-                                to={"/admin/orgs/" + workspace.organizationId}
+                                to={`/admin/orgs/${workspace.organizationId}`}
                             >
                                 {workspace.organizationId}
                             </Link>
@@ -177,7 +177,7 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
             </div>
             <div className="flex flex-col space-y-2">
                 <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-b border-gray-200 dark:border-gray-800 mb-2">
-                    <span className="my-auto ml-3"></span>
+                    <span className="my-auto ml-3" />
                     <div className="w-4/12">InstanceId</div>
                     <div className="w-2/12">Started</div>
                     <div className="w-2/12">Duration</div>
@@ -201,7 +201,7 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                                     {attributionId && attributionId?.kind === "team" ? (
                                         <Link
                                             className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400"
-                                            to={"/admin/orgs/" + attributionId.teamId}
+                                            to={`/admin/orgs/${attributionId.teamId}`}
                                         >
                                             {attributionId.teamId}
                                         </Link>
@@ -212,7 +212,7 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                             </div>
                         );
                     })}
-                <div className="py-20"></div>
+                <div className="py-20" />
             </div>
         </div>
     );

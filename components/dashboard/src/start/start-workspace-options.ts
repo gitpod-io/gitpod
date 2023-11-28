@@ -53,10 +53,10 @@ export namespace StartWorkspaceOptions {
         if (options.workspaceClass) {
             params.set(StartWorkspaceOptions.WORKSPACE_CLASS, options.workspaceClass);
         }
-        if (options.ideSettings && options.ideSettings.defaultIde) {
+        if (options.ideSettings?.defaultIde) {
             const ide = options.ideSettings.defaultIde;
             const latest = options.ideSettings.useLatestVersion;
-            params.set(StartWorkspaceOptions.EDITOR, latest ? ide + "-latest" : ide);
+            params.set(StartWorkspaceOptions.EDITOR, latest ? `${ide}-latest` : ide);
         }
         if (options.autostart) {
             params.set(StartWorkspaceOptions.AUTOSTART, "true");
@@ -65,7 +65,7 @@ export namespace StartWorkspaceOptions {
     }
 
     export function parseContextUrl(locationHash: string): string {
-        let result = locationHash.replace(/^[#/]+/, "").trim();
+        const result = locationHash.replace(/^[#/]+/, "").trim();
         return result;
     }
 }

@@ -80,7 +80,7 @@ function AddPaymentMethodForm({ attributionId }: { attributionId: string }) {
             }
         } catch (error) {
             console.error("Unable to confirm payment method.", error);
-            let message = error?.message || String(error) || "Unable to confirm your payment method.";
+            const message = error?.message || String(error) || "Unable to confirm your payment method.";
             throw new Error(message);
         }
     });

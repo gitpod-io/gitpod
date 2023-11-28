@@ -85,7 +85,7 @@ export default function RepositoryFinder({
 
         // This means we found a matching project, but the context url is different
         // user may be using a pr or branch url, so we want to make sure and use that w/ the matching project
-        if (match && match.configurationId && selectedContextURL && match.url !== selectedContextURL) {
+        if (match?.configurationId && selectedContextURL && match.url !== selectedContextURL) {
             match.url = selectedContextURL;
         }
 
@@ -125,7 +125,7 @@ export default function RepositoryFinder({
                     element: (
                         <div className="text-sm text-gray-400 dark:text-gray-500">
                             <div className="flex items-center">
-                                <Exclamation2 className="w-4 h-4"></Exclamation2>
+                                <Exclamation2 className="w-4 h-4" />
                                 <span className="ml-2">Bitbucket Server only supports searching by prefix.</span>
                             </div>
                         </div>
@@ -199,7 +199,7 @@ const SuggestedRepositoryOption: FC<SuggestedRepositoryOptionProps> = ({ repo })
             aria-label={`${repo.configurationId ? "Project" : "Repo"}: ${repo.url}`}
         >
             <span className={"pr-2"}>
-                <RepositoryIcon className={`w-5 h-5 text-gray-400`} />
+                <RepositoryIcon className={"w-5 h-5 text-gray-400"} />
             </span>
 
             {name && (

@@ -29,8 +29,8 @@ export const InputField: FunctionComponent<Props> = memo(
                             disabled
                                 ? "text-gray-400 dark:text-gray-400"
                                 : error
-                                ? "text-red-600 dark:text-red-400"
-                                : "text-gray-600 dark:text-gray-100",
+                                  ? "text-red-600 dark:text-red-400"
+                                  : "text-gray-600 dark:text-gray-100",
                         )}
                         htmlFor={id}
                     >

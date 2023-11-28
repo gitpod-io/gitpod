@@ -84,7 +84,7 @@ vscode:
     - timonwong.shellcheck
     - fwcd.kotlin
     - dbaeumer.vscode-eslint
-    - esbenp.prettier-vscode
+    - biomejs.biome
     - akosyakov.gitpod-monitor
     - hbenl.vscode-mocha-test-adapter
 jetbrains:

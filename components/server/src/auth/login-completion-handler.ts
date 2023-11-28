@@ -48,7 +48,7 @@ export class LoginCompletionHandler {
             });
         } catch (err) {
             reportLoginCompleted("failed", "git");
-            log.error(logContext, `Failed to login user. Redirecting to /sorry on login.`, err);
+            log.error(logContext, "Failed to login user. Redirecting to /sorry on login.", err);
             response.redirect(this.config.hostUrl.asSorry("Oops! Something went wrong during login.").toString());
             return;
         }
@@ -97,7 +97,7 @@ export class LoginCompletionHandler {
                 try {
                     await this.authProviderService.markAsVerified({ id, userId: user.id });
                 } catch (error) {
-                    log.error(LogContext.from({ user }), `Failed to mark AuthProvider as verified!`, { error });
+                    log.error(LogContext.from({ user }), "Failed to mark AuthProvider as verified!", { error });
                 }
             }
         }

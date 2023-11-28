@@ -5,7 +5,7 @@
  */
 
 import { injectable, inject } from "inversify";
-import { AuthProviderEntry as AuthProviderEntry, AuthProviderInfo, OAuth2Config, User } from "@gitpod/gitpod-protocol";
+import { AuthProviderEntry, AuthProviderInfo, OAuth2Config, User } from "@gitpod/gitpod-protocol";
 import { AuthProviderParams } from "./auth-provider";
 import { AuthProviderEntryDB, TeamDB } from "@gitpod/gitpod-db/lib";
 import { Config } from "../config";
@@ -198,24 +198,24 @@ export class AuthProviderService {
     async createAuthProviderOfUser(userId: string, entry: AuthProviderEntry.NewEntry): Promise<AuthProviderEntry> {
         await this.auth.checkPermissionOnUser(userId, "write_info", userId);
 
-        const host = entry.host && entry.host.toLowerCase();
+        const host = entry.host?.toLowerCase();
 
         // reachability test
         if (!(await this.isHostReachable(host))) {
-            log.info(`Host could not be reached.`, { entry });
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Host could not be reached.`);
+            log.info("Host could not be reached.", { entry });
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Host could not be reached.");
         }
 
         // checking for already existing runtime providers
         const isBuiltInProvider = this.isBuiltInProvider(host);
         if (isBuiltInProvider) {
-            log.info(`Attempt to override an existing provider.`, { entry });
-            throw new ApplicationError(ErrorCodes.CONFLICT, `Attempt to override an existing provider.`);
+            log.info("Attempt to override an existing provider.", { entry });
+            throw new ApplicationError(ErrorCodes.CONFLICT, "Attempt to override an existing provider.");
         }
         const existing = await this.authProviderDB.findByHost(entry.host);
         if (existing) {
-            log.info(`Provider for this host already exists.`, { entry });
-            throw new ApplicationError(ErrorCodes.CONFLICT, `Provider for this host already exists.`);
+            log.info("Provider for this host already exists.", { entry });
+            throw new ApplicationError(ErrorCodes.CONFLICT, "Provider for this host already exists.");
         }
 
         const authProvider = this.initializeNewProvider(entry);
@@ -264,24 +264,24 @@ export class AuthProviderService {
         await this.auth.checkPermissionOnOrganization(userId, "write_git_provider", newEntry.organizationId);
 
         // on creating we're are checking for already existing runtime providers
-        const host = newEntry.host && newEntry.host.toLowerCase();
+        const host = newEntry.host?.toLowerCase();
 
         if (!(await this.isHostReachable(host))) {
-            log.info(`Host could not be reached.`, { newEntry });
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Host could not be reached.`);
+            log.info("Host could not be reached.", { newEntry });
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Host could not be reached.");
         }
 
         const isBuiltInProvider = this.isBuiltInProvider(host);
         if (isBuiltInProvider) {
-            log.info(`Attempt to override an existing provider.`, { newEntry });
-            throw new ApplicationError(ErrorCodes.CONFLICT, `Attempt to override an existing provider.`);
+            log.info("Attempt to override an existing provider.", { newEntry });
+            throw new ApplicationError(ErrorCodes.CONFLICT, "Attempt to override an existing provider.");
         }
 
         const orgProviders = await this.authProviderDB.findByOrgId(newEntry.organizationId);
         const existing = orgProviders.find((p) => p.host === host);
         if (existing) {
-            log.info(`Provider for this host already exists.`, { newEntry });
-            throw new ApplicationError(ErrorCodes.CONFLICT, `Provider for this host already exists.`);
+            log.info("Provider for this host already exists.", { newEntry });
+            throw new ApplicationError(ErrorCodes.CONFLICT, "Provider for this host already exists.");
         }
 
         const authProvider = this.initializeNewProvider(newEntry);
@@ -409,7 +409,7 @@ export class AuthProviderService {
     }
 
     private callbackUrl = () => {
-        const pathname = `/auth/callback`;
+        const pathname = "/auth/callback";
         return this.config.hostUrl.with({ pathname }).toString();
     };
 

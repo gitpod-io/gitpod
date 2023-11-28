@@ -25,12 +25,12 @@ export const inMemoryClientRepository: OAuthClientRepository = {
 
     async isClientValid(grantType: GrantIdentifier, client: OAuthClient, clientSecret?: string): Promise<boolean> {
         if (client.secret !== clientSecret) {
-            log.warn(`isClientValid: bad secret`);
+            log.warn("isClientValid: bad secret");
             return false;
         }
 
         if (!client.allowedGrants.includes(grantType)) {
-            log.warn(`isClientValid: bad grant`);
+            log.warn("isClientValid: bad grant");
             return false;
         }
 

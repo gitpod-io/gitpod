@@ -38,8 +38,8 @@ class TestAuthJWT {
             algorithms: ["RS512"],
         });
 
-        expect(decoded["sub"]).to.equal(subject);
-        expect(decoded["iss"]).to.equal("https://mp-server-d7650ec945.preview.gitpod-dev.com");
+        expect(decoded.sub).to.equal(subject);
+        expect(decoded.iss).to.equal("https://mp-server-d7650ec945.preview.gitpod-dev.com");
     }
 
     @test
@@ -51,8 +51,8 @@ class TestAuthJWT {
 
         const decoded = await sut.verify(encoded);
 
-        expect(decoded["sub"]).to.equal(subject);
-        expect(decoded["iss"]).to.equal("https://mp-server-d7650ec945.preview.gitpod-dev.com");
+        expect(decoded.sub).to.equal(subject);
+        expect(decoded.iss).to.equal("https://mp-server-d7650ec945.preview.gitpod-dev.com");
     }
 
     @test
@@ -72,8 +72,8 @@ class TestAuthJWT {
         // should use the second validating key and succesfully verify
         const decoded = await sut.verify(encoded);
 
-        expect(decoded["sub"]).to.equal(subject);
-        expect(decoded["iss"]).to.equal("https://mp-server-d7650ec945.preview.gitpod-dev.com");
+        expect(decoded.sub).to.equal(subject);
+        expect(decoded.iss).to.equal("https://mp-server-d7650ec945.preview.gitpod-dev.com");
     }
 }
 

@@ -29,7 +29,7 @@ describe("GitHub app", () => {
     it("should behave well with individual configuration", async () => {
         const rules = container.get(GithubAppRules) as GithubAppRules;
 
-        const checkConfig = function (pbcfg: GithubAppPrebuildConfig, expectation: boolean[]) {
+        const checkConfig = (pbcfg: GithubAppPrebuildConfig, expectation: boolean[]) => {
             const cfg: WorkspaceConfig = {
                 github: {
                     prebuilds: pbcfg,

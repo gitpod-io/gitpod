@@ -76,7 +76,7 @@ export class PrebuildStatusMaintainer implements Disposable {
                 throw new Error("unable to authenticate GitHub app");
             }
 
-            if (pws.state == "queued" || pws.state == "building") {
+            if (pws.state === "queued" || pws.state === "building") {
                 await this.workspaceDB.trace({ span }).attachUpdatableToPrebuild(pws.id, {
                     id: uuidv4(),
                     owner: cri.owner,
@@ -105,7 +105,8 @@ export class PrebuildStatusMaintainer implements Disposable {
                     sha: cri.head_sha,
                     target_url: cri.details_url,
                     context: "Gitpod",
-                    description: conclusion == "success" ? DEFAULT_STATUS_DESCRIPTION : NON_PREBUILT_STATUS_DESCRIPTION,
+                    description:
+                        conclusion === "success" ? DEFAULT_STATUS_DESCRIPTION : NON_PREBUILT_STATUS_DESCRIPTION,
                     state: config?.github?.prebuilds?.addCheck === "prevent-merge-on-error" ? conclusion : "success",
                 });
             }
@@ -120,25 +121,30 @@ export class PrebuildStatusMaintainer implements Disposable {
     protected getConclusionFromPrebuildState(pws: PrebuiltWorkspace): "error" | "failure" | "pending" | "success" {
         if (pws.state === "aborted") {
             return "error";
-        } else if (pws.state === "failed") {
-            return "error";
-        } else if (pws.state === "timeout") {
-            return "error";
-        } else if (pws.state === "queued") {
-            return "pending";
-        } else if (pws.state === "building") {
-            return "pending";
-        } else if (pws.state === "available" && !pws.error) {
-            return "success";
-        } else if (pws.state === "available" && !!pws.error) {
-            return "failure";
-        } else {
-            log.warn(
-                "Should have updated prebuilt workspace updatable, but don't know how. Resorting to error conclusion.",
-                { pws },
-            );
+        }
+        if (pws.state === "failed") {
             return "error";
         }
+        if (pws.state === "timeout") {
+            return "error";
+        }
+        if (pws.state === "queued") {
+            return "pending";
+        }
+        if (pws.state === "building") {
+            return "pending";
+        }
+        if (pws.state === "available" && !pws.error) {
+            return "success";
+        }
+        if (pws.state === "available" && !!pws.error) {
+            return "failure";
+        }
+        log.warn(
+            "Should have updated prebuilt workspace updatable, but don't know how. Resorting to error conclusion.",
+            { pws },
+        );
+        return "error";
     }
 
     protected async handlePrebuildFinished(ctx: TraceContext, msg: HeadlessWorkspaceEvent) {
@@ -180,7 +186,7 @@ export class PrebuildStatusMaintainer implements Disposable {
             if (!!updatable.contextUrl && !!workspace) {
                 const conclusion = this.getConclusionFromPrebuildState(pws);
                 if (conclusion === "pending") {
-                    log.info(`Prebuild is still running.`, { prebuiltWorkspaceId: updatable.prebuiltWorkspaceId });
+                    log.info("Prebuild is still running.", { prebuiltWorkspaceId: updatable.prebuiltWorkspaceId });
                     return;
                 }
 
@@ -192,7 +198,7 @@ export class PrebuildStatusMaintainer implements Disposable {
                         sha: updatable.commitSHA || pws.commit,
                         target_url: updatable.contextUrl,
                         description:
-                            conclusion == "success" ? DEFAULT_STATUS_DESCRIPTION : NON_PREBUILT_STATUS_DESCRIPTION,
+                            conclusion === "success" ? DEFAULT_STATUS_DESCRIPTION : NON_PREBUILT_STATUS_DESCRIPTION,
                         state:
                             workspace?.config?.github?.prebuilds?.addCheck === "prevent-merge-on-error"
                                 ? conclusion
@@ -206,7 +212,7 @@ export class PrebuildStatusMaintainer implements Disposable {
 
                 await this.workspaceDB.trace({ span }).markUpdatableResolved(updatable.id);
                 log.info(`Resolved updatable. Marked check on ${updatable.contextUrl} as ${conclusion}`);
-            } else if (!!updatable.issue) {
+            } else if (updatable.issue) {
                 // this updatable updates a label
                 log.debug("Update label on a PR - we're not using this yet");
             }

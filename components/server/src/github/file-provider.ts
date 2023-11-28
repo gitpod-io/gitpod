@@ -41,7 +41,7 @@ export class GithubFileProvider implements FileProvider {
             )
         ).data;
 
-        const lastCommit = commits && commits[0];
+        const lastCommit = commits?.[0];
         if (!lastCommit) {
             throw new Error(`File ${path} does not exist in repository ${repository.owner}/${repository.name}`);
         }

@@ -53,7 +53,7 @@ class TestBitbucketFileProvider {
                 bind(BitbucketApiFactory).to(BasicAuthBitbucketApiFactory).inSingletonScope();
                 bind(HostContextProvider).toConstantValue({
                     get: (hostname: string) => {
-                        authProvider: {
+                        {
                             ("Public-Bitbucket");
                         }
                     },

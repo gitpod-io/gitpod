@@ -164,7 +164,7 @@ export class SpiceDBAuthorizer {
 
     async deleteRelationships(req: v1.DeleteRelationshipsRequest): Promise<v1.ReadRelationshipsResponse[]> {
         const result = await this.deleteRelationshipsInternal(req);
-        log.info(`[spicedb] Deletion result`, { result });
+        log.info("[spicedb] Deletion result", { result });
         const deletedAt = result?.deletedAt;
         if (deletedAt) {
             await this.tokenCache.set(
@@ -253,8 +253,6 @@ const ctxCacheGetZedToken = (): StoredZedToken | undefined => {
  * To make this work we make the "assumption" that ZedTokens string (meant to be opaque) represent a timestamp which we can order. This is at least true for the MySQL datastore we are using.
  */
 export class RequestLocalZedTokenCache implements ZedTokenCache {
-    constructor() {}
-
     async get(objectRef: v1.ObjectReference | undefined): Promise<string | undefined> {
         return ctxCacheGetZedToken()?.token;
     }
@@ -272,7 +270,7 @@ export class RequestLocalZedTokenCache implements ZedTokenCache {
 
         try {
             const allTokens = [
-                ...kvs.map(([_, v]) => (!!v ? StoredZedToken.fromToken(v) : undefined)),
+                ...kvs.map(([_, v]) => (v ? StoredZedToken.fromToken(v) : undefined)),
                 ctxCacheGetZedToken(),
             ].filter((v) => !!v) as StoredZedToken[];
             const freshest = this.freshest(...allTokens);

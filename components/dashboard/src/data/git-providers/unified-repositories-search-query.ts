@@ -38,7 +38,7 @@ export const useUnifiedRepositorySearch = ({ searchString, excludeProjects = fal
 
 export function deduplicateAndFilterRepositories(
     searchString: string,
-    excludeProjects = false,
+    excludeProjects,
     suggestedRepos: SuggestedRepository[],
 ): SuggestedRepository[] {
     const normalizedSearchString = searchString.trim().toLowerCase();

@@ -104,7 +104,9 @@ export class GitHubAuthProvider extends GenericAuthProvider {
             // e.g. X-OAuth-Scopes: repo, user
             const currentScopes = this.normalizeScopes(
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                (headers as any)["x-oauth-scopes"].split(this.oauthConfig.scopeSeparator!).map((s: string) => s.trim()),
+                (headers as any)["x-oauth-scopes"]
+                    .split(this.oauthConfig.scopeSeparator!)
+                    .map((s: string) => s.trim()),
             );
 
             const filterPrimaryEmail = (emails: typeof userEmails) => {

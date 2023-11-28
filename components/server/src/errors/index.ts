@@ -12,10 +12,10 @@ import {
 
 export namespace NotFoundError {
     export async function create(token: Token | undefined, user: User, host: string, owner: string, repoName: string) {
-        const lastUpdate = (token && token.updateDate) || "";
+        const lastUpdate = token?.updateDate || "";
         const userScopes = token ? [...token.scopes] : [];
 
-        const userIsOwner = owner == user.name; // TODO: shouldn't this be a comparison with `identity.authName`?
+        const userIsOwner = owner === user.name; // TODO: shouldn't this be a comparison with `identity.authName`?
         return new RepositoryNotFoundError({
             host,
             owner,

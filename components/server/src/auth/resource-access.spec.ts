@@ -392,7 +392,7 @@ class TestResourceAccess {
             {
                 name: "explicit scope",
                 guard: new TokenResourceGuard(workspaceResource.subject.ownerId, [
-                    "resource:" + ScopedResourceGuard.marshalResourceScopeFromResource(workspaceResource, ["get"]),
+                    `resource:${ScopedResourceGuard.marshalResourceScopeFromResource(workspaceResource, ["get"])}`,
                 ]),
                 expectation: true,
             },
@@ -400,32 +400,30 @@ class TestResourceAccess {
                 name: "default and explicit scope",
                 guard: new TokenResourceGuard(workspaceResource.subject.ownerId, [
                     "resource:default",
-                    "resource:" + ScopedResourceGuard.marshalResourceScopeFromResource(workspaceResource, ["create"]),
+                    `resource:${ScopedResourceGuard.marshalResourceScopeFromResource(workspaceResource, ["create"])}`,
                 ]),
                 expectation: true,
             },
             {
                 name: "delegate scopes delegate to owner resource guard",
                 guard: new TokenResourceGuard(workspaceResource.subject.ownerId, [
-                    "resource:" +
-                        ScopedResourceGuard.marshalResourceScope({
-                            kind: "workspace",
-                            subjectID: "*",
-                            operations: ["get"],
-                        }),
+                    `resource:${ScopedResourceGuard.marshalResourceScope({
+                        kind: "workspace",
+                        subjectID: "*",
+                        operations: ["get"],
+                    })}`,
                 ]),
                 expectation: true,
             },
             {
                 name: "snaphshot create",
                 guard: new TokenResourceGuard(workspaceResource.subject.ownerId, [
-                    "resource:" +
-                        ScopedResourceGuard.marshalResourceScope({
-                            kind: "snapshot",
-                            subjectID:
-                                ScopedResourceGuard.SNAPSHOT_WORKSPACE_SUBJECT_ID_PREFIX + workspaceResource.subject.id,
-                            operations: ["create"],
-                        }),
+                    `resource:${ScopedResourceGuard.marshalResourceScope({
+                        kind: "snapshot",
+                        subjectID:
+                            ScopedResourceGuard.SNAPSHOT_WORKSPACE_SUBJECT_ID_PREFIX + workspaceResource.subject.id,
+                        operations: ["create"],
+                    })}`,
                 ]),
                 resource: { kind: "snapshot", subject: undefined, workspace: workspaceResource.subject },
                 operation: "create",
@@ -434,12 +432,11 @@ class TestResourceAccess {
             {
                 name: "snaphshot create missing prefix fails",
                 guard: new TokenResourceGuard(workspaceResource.subject.ownerId, [
-                    "resource:" +
-                        ScopedResourceGuard.marshalResourceScope({
-                            kind: "snapshot",
-                            subjectID: workspaceResource.subject.id,
-                            operations: ["create"],
-                        }),
+                    `resource:${ScopedResourceGuard.marshalResourceScope({
+                        kind: "snapshot",
+                        subjectID: workspaceResource.subject.id,
+                        operations: ["create"],
+                    })}`,
                 ]),
                 resource: { kind: "snapshot", subject: undefined, workspace: workspaceResource.subject },
                 operation: "create",
@@ -448,12 +445,11 @@ class TestResourceAccess {
             {
                 name: "snaphshot create other user fails",
                 guard: new TokenResourceGuard(workspaceResource.subject.ownerId, [
-                    "resource:" +
-                        ScopedResourceGuard.marshalResourceScope({
-                            kind: "snapshot",
-                            subjectID: workspaceResource.subject.id,
-                            operations: ["create"],
-                        }),
+                    `resource:${ScopedResourceGuard.marshalResourceScope({
+                        kind: "snapshot",
+                        subjectID: workspaceResource.subject.id,
+                        operations: ["create"],
+                    })}`,
                 ]),
                 resource: {
                     kind: "snapshot",
@@ -466,13 +462,12 @@ class TestResourceAccess {
             {
                 name: "snaphshot get",
                 guard: new TokenResourceGuard(workspaceResource.subject.ownerId, [
-                    "resource:" +
-                        ScopedResourceGuard.marshalResourceScope({
-                            kind: "snapshot",
-                            subjectID:
-                                ScopedResourceGuard.SNAPSHOT_WORKSPACE_SUBJECT_ID_PREFIX + workspaceResource.subject.id,
-                            operations: ["get"],
-                        }),
+                    `resource:${ScopedResourceGuard.marshalResourceScope({
+                        kind: "snapshot",
+                        subjectID:
+                            ScopedResourceGuard.SNAPSHOT_WORKSPACE_SUBJECT_ID_PREFIX + workspaceResource.subject.id,
+                        operations: ["get"],
+                    })}`,
                 ]),
                 resource: { kind: "snapshot", subject: undefined, workspace: workspaceResource.subject },
                 operation: "get",
@@ -1130,7 +1125,7 @@ class TestResourceAccess {
                 new MockedRepositoryResourceGuard(!!t.repositoryAccess),
             ]);
             const teamMembers: TeamMemberInfo[] = [];
-            if (!!t.teamRole) {
+            if (t.teamRole) {
                 teamMembers.push({
                     userId: user.id,
                     role: t.teamRole,
@@ -1156,7 +1151,7 @@ class TestResourceAccess {
                 resource = { kind, subject: prebuild, workspace, teamMembers };
             }
             if (!resource) {
-                throw new Error("unhandled GuardedResourceKind" + kind);
+                throw new Error(`unhandled GuardedResourceKind${kind}`);
             }
 
             const actual = await resourceGuard.canAccess(resource, "get");

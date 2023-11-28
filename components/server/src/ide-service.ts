@@ -39,10 +39,9 @@ export class IDEService {
         } catch (e) {
             console.error("failed get ide config:", e);
             if (this.cacheConfig == null) {
-                throw new Error("failed get ide config:" + e.message);
-            } else {
-                return this.cacheConfig;
+                throw new Error(`failed get ide config:${e.message}`);
             }
+            return this.cacheConfig;
         }
     }
 
@@ -91,7 +90,7 @@ export class IDEService {
             },
         };
         for (let attempt = 0; attempt < 15; attempt++) {
-            if (attempt != 0) {
+            if (attempt !== 0) {
                 await new Promise((resolve) => setTimeout(resolve, 1000));
             }
             try {

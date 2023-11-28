@@ -60,7 +60,7 @@ export const OnboardingStep: FC<Props> = ({
 
                 {error && <Alert type="error">{error}</Alert>}
 
-                <div className={"mt-4" + (onCancel ? " flex space-x-2" : "")}>
+                <div className={`mt-4${onCancel ? " flex space-x-2" : ""}`}>
                     {onCancel && (
                         <Button
                             htmlType="button"

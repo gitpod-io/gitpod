@@ -34,20 +34,19 @@ export class DataCacheRedis implements DataCache {
         reportRedisCacheRequest(result !== null);
         if (result) {
             return JSON.parse(result);
-        } else {
-            const value = await provider();
-            if (value) {
-                const stopSetTimer = redisCacheSetLatencyHistogram.startTimer({ cache_group });
-                try {
-                    await this.redis.set(cacheKey, JSON.stringify(value), "EX", TTL_SEC);
-                } catch (error) {
-                    log.error("Error while setting cache value", error, { cacheKey });
-                } finally {
-                    stopSetTimer();
-                }
-            }
-            return value;
         }
+        const value = await provider();
+        if (value) {
+            const stopSetTimer = redisCacheSetLatencyHistogram.startTimer({ cache_group });
+            try {
+                await this.redis.set(cacheKey, JSON.stringify(value), "EX", TTL_SEC);
+            } catch (error) {
+                log.error("Error while setting cache value", error, { cacheKey });
+            } finally {
+                stopSetTimer();
+            }
+        }
+        return value;
     }
 
     async invalidate(cacheKeyPattern: string): Promise<void> {

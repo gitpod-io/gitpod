@@ -81,7 +81,7 @@ export default function Menu() {
                         {/* hidden on smaller screens - TODO: move to user menu on smaller screen */}
                         <nav className="hidden md:block flex-1">
                             <ul className="flex flex-1 items-center justify-between text-base text-gray-500 dark:text-gray-400 space-x-2">
-                                <li className="flex-1"></li>
+                                <li className="flex-1" />
                                 {user?.rolesOrPermissions?.includes("admin") && (
                                     <li className="cursor-pointer">
                                         <PillMenuItem
@@ -136,7 +136,7 @@ const OrgPagesNav: FC<OrgPagesNavProps> = ({ className }) => {
             },
             {
                 title: "Projects",
-                link: `/projects`,
+                link: "/projects",
                 alternatives: [] as string[],
             },
         ],
@@ -241,5 +241,5 @@ const UserMenu: FC<UserMenuProps> = ({ user, className, withAdminLink, withFeedb
 function isSelected(entry: Entry, location: Location<any>) {
     const all = [entry.link, ...(entry.alternatives || [])].map((l) => l.toLowerCase());
     const path = location.pathname.toLowerCase();
-    return all.some((n) => n === path || n + "/" === path);
+    return all.some((n) => n === path || `${n}/` === path);
 }

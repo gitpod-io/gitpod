@@ -15,7 +15,7 @@ export default function FromReferrer() {
         url.pathname = "/";
         url.hash = contextUrl;
         window.location.href = url.toString();
-        return <div></div>;
+        return <div />;
     }
 
     return (

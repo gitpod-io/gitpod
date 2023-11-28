@@ -242,7 +242,7 @@ export class EnvVarService {
             await this.auth.checkPermissionOnProject(requestorId, "read_env_var", projectId);
         }
 
-        const workspaceEnvVars = new Map<String, EnvVar>();
+        const workspaceEnvVars = new Map<string, EnvVar>();
         const merge = (envs: EnvVar[]) => {
             for (const env of envs) {
                 workspaceEnvVars.set(env.name, env);

@@ -146,7 +146,7 @@ export namespace ClientMetadata {
     }
 
     function getOriginWorkspaceId(req: express.Request): string | undefined {
-        const origin = req.headers["origin"];
+        const origin = req.headers.origin;
         if (!origin) {
             return undefined;
         }
@@ -227,9 +227,9 @@ export class WebsocketConnectionManager implements ConnectionHandler {
 
         let resourceGuard: ResourceAccessGuard;
         const explicitGuard = (expressReq as WithResourceAccessGuard).resourceGuard;
-        if (!!explicitGuard) {
+        if (explicitGuard) {
             resourceGuard = explicitGuard;
-        } else if (!!user) {
+        } else if (user) {
             resourceGuard = new CompositeResourceAccessGuard([
                 new OwnerResourceGuard(user.id),
                 new TeamMemberResourceGuard(user.id),
@@ -472,20 +472,16 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
                     },
                 );
                 throw new ResponseError(e.code, e.message, e.data);
-            } else {
-                TraceContext.setError(ctx, e); // this is a "real" error
-
-                const err = new ApplicationError(
-                    ErrorCodes.INTERNAL_SERVER_ERROR,
-                    `Internal server error: '${e.message}'`,
-                );
-                increaseApiCallCounter(method, err.code);
-                observeAPICallsDuration(method, err.code, timer());
-                TraceContext.setJsonRPCError(ctx, method, err, true);
-
-                log.error({ userId }, `Request ${method} failed with internal server error`, e, { method, args });
-                throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, String(e));
             }
+            TraceContext.setError(ctx, e); // this is a "real" error
+
+            const err = new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `Internal server error: '${e.message}'`);
+            increaseApiCallCounter(method, err.code);
+            observeAPICallsDuration(method, err.code, timer());
+            TraceContext.setJsonRPCError(ctx, method, err, true);
+
+            log.error({ userId }, `Request ${method} failed with internal server error`, e, { method, args });
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, String(e));
         }
     }
 

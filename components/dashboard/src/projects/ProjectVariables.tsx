@@ -86,7 +86,7 @@ export default function ProjectVariablesPage() {
                     <Item header={true} className="grid grid-cols-3 items-center">
                         <ItemField>Name</ItemField>
                         <ItemField>Visibility in Workspaces</ItemField>
-                        <ItemField></ItemField>
+                        <ItemField />
                     </Item>
                     {envVars.map((variable) => {
                         return (
@@ -154,7 +154,6 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
                 <div className="mt-8">
                     <h4>Name</h4>
                     <input
-                        autoFocus
                         className="w-full"
                         type="text"
                         name="name"

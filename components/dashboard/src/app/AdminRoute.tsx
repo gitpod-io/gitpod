@@ -16,7 +16,7 @@ export function AdminRoute({ component }: any) {
         <Route
             render={({ location }: any) =>
                 user?.rolesOrPermissions?.includes("admin") ? (
-                    <Route component={component}></Route>
+                    <Route component={component} />
                 ) : (
                     <Redirect
                         to={{

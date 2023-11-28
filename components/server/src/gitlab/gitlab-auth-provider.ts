@@ -96,10 +96,9 @@ export class GitLabAuthProvider extends GenericAuthProvider {
                 // If GitLab is configured to disallow OAuth-token based API access for unconfirmed users, we need to reject this attempt
                 // 403 Forbidden  - You (@...) must accept the Terms of Service in order to perform this action. Please access GitLab from a web browser to accept these terms.
                 throw UnconfirmedUserException.create(error.description as string, error);
-            } else {
-                log.error(`(${this.strategyName}) Reading current user info failed`, error, { accessToken, error });
-                throw error;
             }
+            log.error(`(${this.strategyName}) Reading current user info failed`, error, { accessToken, error });
+            throw error;
         }
     }
 

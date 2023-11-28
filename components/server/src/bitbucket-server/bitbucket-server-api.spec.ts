@@ -50,14 +50,14 @@ class TestBitbucketServerApi {
                 bind(TokenProvider).toConstantValue(<TokenProvider>{
                     getTokenForHost: async () => {
                         return {
-                            value: process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"] || "undefined",
+                            value: process.env.GITPOD_TEST_TOKEN_BITBUCKET_SERVER || "undefined",
                             scopes: [],
                         };
                     },
                 });
                 bind(HostContextProvider).toConstantValue({
                     get: (hostname: string) => {
-                        authProvider: {
+                        {
                             ("BBS");
                         }
                     },
@@ -79,12 +79,12 @@ class TestBitbucketServerApi {
     }
 
     @test.skip async test_currentUsername_ok() {
-        const result = await this.api.currentUsername(process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"]!);
+        const result = await this.api.currentUsername(process.env.GITPOD_TEST_TOKEN_BITBUCKET_SERVER!);
         expect(result).to.equal("AlexTugarev");
     }
 
     @test.skip async test_getUserProfile_ok() {
-        const result = await this.api.getUserProfile(process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"]!, "AlexTugarev");
+        const result = await this.api.getUserProfile(process.env.GITPOD_TEST_TOKEN_BITBUCKET_SERVER!, "AlexTugarev");
         expect(result).to.deep.include({
             id: 105, // Identity.authId
             name: "AlexTugarev", // Identity.authName
@@ -94,7 +94,7 @@ class TestBitbucketServerApi {
     }
 
     @test async test_getRepos_no_searchString() {
-        const result = await this.api.getRepos(process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"]!, {
+        const result = await this.api.getRepos(process.env.GITPOD_TEST_TOKEN_BITBUCKET_SERVER!, {
             permission: "REPO_READ",
         });
         expect(result.length).to.be.equal(9177);
@@ -113,7 +113,7 @@ class TestBitbucketServerApi {
     }
 
     @test async test_getRepos_cap_no_searchstring() {
-        const result = await this.api.getRepos(process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"]!, {
+        const result = await this.api.getRepos(process.env.GITPOD_TEST_TOKEN_BITBUCKET_SERVER!, {
             permission: "REPO_READ",
             maxPages: 3,
         });
@@ -126,7 +126,7 @@ class TestBitbucketServerApi {
     }
 
     @test async test_getRepos_searchString() {
-        const result = await this.api.getRepos(process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"]!, {
+        const result = await this.api.getRepos(process.env.GITPOD_TEST_TOKEN_BITBUCKET_SERVER!, {
             permission: "REPO_READ",
             searchString: "zero",
         });
@@ -139,7 +139,7 @@ class TestBitbucketServerApi {
     }
 
     @test async test_getRepos_searchString_2() {
-        const result = await this.api.getRepos(process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"]!, {
+        const result = await this.api.getRepos(process.env.GITPOD_TEST_TOKEN_BITBUCKET_SERVER!, {
             permission: "REPO_READ",
             searchString: "zero-minus-1",
         });
@@ -151,7 +151,7 @@ class TestBitbucketServerApi {
     }
 
     @test async test_getRepos_searchString_works_for_prefix_only() {
-        const result = await this.api.getRepos(process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"]!, {
+        const result = await this.api.getRepos(process.env.GITPOD_TEST_TOKEN_BITBUCKET_SERVER!, {
             permission: "REPO_READ",
             searchString: "-minus-1",
         });
@@ -163,7 +163,7 @@ class TestBitbucketServerApi {
     }
 
     @test async test_getRepos_searchString_wildcards_are_not_supported() {
-        const result = await this.api.getRepos(process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"]!, {
+        const result = await this.api.getRepos(process.env.GITPOD_TEST_TOKEN_BITBUCKET_SERVER!, {
             permission: "REPO_READ",
             searchString: "*-minus-1",
         });
@@ -175,7 +175,7 @@ class TestBitbucketServerApi {
     }
 
     @test async test_getRepos_searchString_single_char_is_ignored() {
-        const result = await this.api.getRepos(process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"]!, {
+        const result = await this.api.getRepos(process.env.GITPOD_TEST_TOKEN_BITBUCKET_SERVER!, {
             permission: "REPO_READ",
             searchString: "t",
         });
@@ -204,7 +204,7 @@ class TestBitbucketServerApi {
     }
 
     @test async test_getRepos_searchString_unmatched() {
-        const result = await this.api.getRepos(process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"]!, {
+        const result = await this.api.getRepos(process.env.GITPOD_TEST_TOKEN_BITBUCKET_SERVER!, {
             permission: "REPO_READ",
             searchString: "RANDOM_asd8sdh7s8hsdhvisduh",
         });

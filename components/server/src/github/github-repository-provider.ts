@@ -21,7 +21,7 @@ export class GithubRepositoryProvider implements RepositoryProvider {
     async getRepo(user: User, owner: string, repo: string): Promise<Repository> {
         const repository = await this.github.getRepository(user, { owner, repo });
         const cloneUrl = repository.clone_url;
-        const host = RepoURL.parseRepoUrl(cloneUrl)!.host;
+        const host = RepoURL.parseRepoUrl(cloneUrl)?.host;
         const description = repository.description;
         const avatarUrl = repository.owner.avatar_url;
         const webUrl = repository.html_url;
@@ -37,7 +37,7 @@ export class GithubRepositoryProvider implements RepositoryProvider {
     async getBranches(user: User, owner: string, repo: string): Promise<Branch[]> {
         const branches: Branch[] = [];
         let endCursor: string | undefined;
-        let hasNextPage: boolean = true;
+        let hasNextPage = true;
 
         while (hasNextPage) {
             const result: any = await this.githubQueryApi.runQuery(
@@ -121,10 +121,10 @@ export class GithubRepositoryProvider implements RepositoryProvider {
         owner: string,
         repo: string,
         ref: string,
-        maxDepth: number = 100,
+        maxDepth = 100,
     ): Promise<string[]> {
         try {
-            if (ref.length != 40) {
+            if (ref.length !== 40) {
                 throw new Error(`Invalid commit ID ${ref}.`);
             }
 

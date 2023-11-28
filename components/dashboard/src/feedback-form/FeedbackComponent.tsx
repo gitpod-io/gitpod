@@ -82,16 +82,14 @@ function FeedbackComponent(props: {
             {props.isModal && !isFeedbackSubmitted && <Heading2 className="mb-4">Send Feedback</Heading2>}
             {minimisedFirstView && (
                 <div
-                    className={
-                        "flex flex-col justify-center px-6 py-4 border-gray-200 dark:border-gray-800 " +
-                        (props.isError ? "mt-20 bg-gray-100 dark:bg-gray-800 rounded-xl" : "border-t")
-                    }
+                    className={`flex flex-col justify-center px-6 py-4 border-gray-200 dark:border-gray-800 ${
+                        props.isError ? "mt-20 bg-gray-100 dark:bg-gray-800 rounded-xl" : "border-t"
+                    }`}
                 >
                     <p
-                        className={
-                            "text-center text-base mb-3 dark:text-gray-400 " +
-                            (props.isError ? "text-gray-400" : "text-gray-500")
-                        }
+                        className={`text-center text-base mb-3 dark:text-gray-400 ${
+                            props.isError ? "text-gray-400" : "text-gray-500"
+                        }`}
                     >
                         {props.message}
                     </p>
@@ -103,17 +101,13 @@ function FeedbackComponent(props: {
             )}
             {expandedWithTextView && (
                 <div
-                    className={
-                        "flex flex-col px-6 py-4 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 " +
-                        (props.isError
-                            ? "w-96 mt-6 bg-gray-100 dark:bg-gray-800 rounded-xl"
-                            : "-mx-6 border-t border-b")
-                    }
+                    className={`flex flex-col px-6 py-4 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 ${
+                        props.isError ? "w-96 mt-6 bg-gray-100 dark:bg-gray-800 rounded-xl" : "-mx-6 border-t border-b"
+                    }`}
                 >
                     <div className="relative">
                         <textarea
                             style={{ height: "160px", borderRadius: "6px" }}
-                            autoFocus
                             className="w-full resize-none text-gray-400 dark:text-gray-400 focus:ring-0 focus:border-gray-400 dark:focus:border-gray-400 rounded-md border dark:bg-gray-800 dark:border-gray-500 border-gray-500"
                             name="name"
                             value={text}
@@ -146,12 +140,11 @@ function FeedbackComponent(props: {
             )}
             {isFeedbackSubmitted && (
                 <div
-                    className={
-                        "flex flex-col px-6 py-4 border-gray-200 dark:border-gray-800 " +
-                        (props.isError ? "mt-20 bg-gray-100 dark:bg-gray-800 rounded-xl" : "")
-                    }
+                    className={`flex flex-col px-6 py-4 border-gray-200 dark:border-gray-800 ${
+                        props.isError ? "mt-20 bg-gray-100 dark:bg-gray-800 rounded-xl" : ""
+                    }`}
                 >
-                    <p className={"text-center text-base " + (props.isError ? "text-gray-400" : "text-gray-500")}>
+                    <p className={`text-center text-base ${props.isError ? "text-gray-400" : "text-gray-500"}`}>
                         Thanks for your feedback, we appreciate it.
                     </p>
                 </div>

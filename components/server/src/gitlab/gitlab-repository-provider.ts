@@ -26,7 +26,7 @@ export class GitlabRepositoryProvider implements RepositoryProvider {
         }
         const cloneUrl = response.http_url_to_repo;
         const description = response.default_branch;
-        const host = RepoURL.parseRepoUrl(cloneUrl)!.host;
+        const host = RepoURL.parseRepoUrl(cloneUrl)?.host;
         const avatarUrl = response.owner?.avatar_url || undefined;
         const webUrl = response.web_url;
         const defaultBranch = response.default_branch;
@@ -120,7 +120,7 @@ export class GitlabRepositoryProvider implements RepositoryProvider {
         owner: string,
         repo: string,
         ref: string,
-        maxDepth: number = 100,
+        maxDepth = 100,
     ): Promise<string[]> {
         // TODO(janx): To get more results than GitLab API's max per_page (seems to be 100), pagination should be handled.
         const projectId = `${owner}/${repo}`;

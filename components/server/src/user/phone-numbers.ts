@@ -13,11 +13,11 @@
 export function formatPhoneNumber(phoneNumber: string): string {
     let cleanPhoneNumber = phoneNumber.trim();
     if (cleanPhoneNumber.startsWith("+")) {
-        cleanPhoneNumber = "00" + cleanPhoneNumber.substring(1);
+        cleanPhoneNumber = `00${cleanPhoneNumber.substring(1)}`;
     }
     cleanPhoneNumber = cleanPhoneNumber.replace(/\D/g, "");
     if (cleanPhoneNumber.startsWith("00")) {
-        cleanPhoneNumber = "+" + cleanPhoneNumber.substring(2);
+        cleanPhoneNumber = `+${cleanPhoneNumber.substring(2)}`;
     }
     return cleanPhoneNumber;
 }

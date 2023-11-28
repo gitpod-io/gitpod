@@ -51,9 +51,9 @@ export class GitlabService extends RepositoryService {
         await api.ProjectHooks.add(gitlabProjectId, this.getHookUrl(), <Partial<GitLab.ProjectHook>>{
             ...existingProps,
             push_events: true,
-            token: user.id + "|" + tokenEntry.token.value,
+            token: `${user.id}|${tokenEntry.token.value}`,
         });
-        log.info("Installed Webhook for " + cloneUrl, { cloneUrl, userId: user.id });
+        log.info(`Installed Webhook for ${cloneUrl}`, { cloneUrl, userId: user.id });
     }
 
     private getHookUrl() {

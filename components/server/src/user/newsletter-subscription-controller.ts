@@ -55,7 +55,7 @@ export class NewsletterSubscriptionController {
                 const user = (await this.userDb.findUsersByEmail(email))[0];
                 const successPageUrl: string = "https://www.gitpod.io/unsubscribe";
 
-                if (user && user.additionalData && user.additionalData.emailNotificationSettings) {
+                if (user?.additionalData?.emailNotificationSettings) {
                     await this.userDb.updateUserPartial({
                         ...user,
                         additionalData: {

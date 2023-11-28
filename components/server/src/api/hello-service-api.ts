@@ -19,7 +19,7 @@ import { ctxCheckAborted, ctxTrySubjectId } from "../util/request-context";
 export class HelloServiceAPI implements ServiceImpl<typeof HelloService> {
     async sayHello(req: SayHelloRequest, _: HandlerContext): Promise<SayHelloResponse> {
         const response = new SayHelloResponse();
-        response.reply = "Hello " + getSubject();
+        response.reply = `Hello ${getSubject()}`;
         return response;
     }
     async *lotsOfReplies(req: LotsOfRepliesRequest, _: HandlerContext): AsyncGenerator<LotsOfRepliesResponse> {

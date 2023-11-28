@@ -18,7 +18,7 @@ export const ErrorPageLayout: FC = ({ children }) => {
                 <div className="flex items-center justify-center items-center py-3">
                     <img src={isDark ? gitpodDarkIcon : gitpodIcon} className="h-8" alt="Gitpod's logo" />
                 </div>
-                <div className={`mt-24 max-w-lg mx-auto text-center`}>
+                <div className={"mt-24 max-w-lg mx-auto text-center"}>
                     <div>{children}</div>
                 </div>
             </div>

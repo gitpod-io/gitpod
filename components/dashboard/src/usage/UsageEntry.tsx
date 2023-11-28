@@ -115,7 +115,7 @@ const getMinutes = (usage: Usage) => {
     const start = new Date(metaData.startTime).getTime();
     const lengthOfUsage = Math.floor(end - start);
     const inMinutes = (lengthOfUsage / (1000 * 60)).toFixed(1);
-    return inMinutes + " min";
+    return `${inMinutes} min`;
 };
 
 const displayTime = (time: string | number) => {

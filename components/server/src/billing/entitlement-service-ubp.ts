@@ -44,9 +44,8 @@ export class EntitlementServiceUBP implements EntitlementService {
                     current,
                     max,
                 };
-            } else {
-                return undefined;
             }
+            return undefined;
         };
         const [usageLimitReachedOnCostCenter, hitParallelWorkspaceLimit] = await Promise.all([
             this.checkUsageLimitReached(user.id, organizationId),
@@ -69,9 +68,8 @@ export class EntitlementServiceUBP implements EntitlementService {
     private async getMaxParallelWorkspaces(userId: string, organizationId: string): Promise<number> {
         if (await this.hasPaidSubscription(userId, organizationId)) {
             return MAX_PARALLEL_WORKSPACES_PAID;
-        } else {
-            return MAX_PARALLEL_WORKSPACES_FREE;
         }
+        return MAX_PARALLEL_WORKSPACES_FREE;
     }
 
     async maySetTimeout(userId: string, organizationId: string): Promise<boolean> {
@@ -81,17 +79,15 @@ export class EntitlementServiceUBP implements EntitlementService {
     async getDefaultWorkspaceTimeout(userId: string, organizationId: string): Promise<WorkspaceTimeoutDuration> {
         if (await this.hasPaidSubscription(userId, organizationId)) {
             return WORKSPACE_TIMEOUT_DEFAULT_LONG;
-        } else {
-            return WORKSPACE_TIMEOUT_DEFAULT_SHORT;
         }
+        return WORKSPACE_TIMEOUT_DEFAULT_SHORT;
     }
 
     async getDefaultWorkspaceLifetime(userId: string, organizationId: string): Promise<WorkspaceTimeoutDuration> {
         if (await this.hasPaidSubscription(userId, organizationId)) {
             return WORKSPACE_LIFETIME_LONG;
-        } else {
-            return WORKSPACE_LIFETIME_SHORT;
         }
+        return WORKSPACE_LIFETIME_SHORT;
     }
 
     /**

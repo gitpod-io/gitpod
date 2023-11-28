@@ -80,19 +80,19 @@ function getOrgSettingsMenu(params: {
     const result = [
         {
             title: "General",
-            link: [`/settings`],
+            link: ["/settings"],
         },
     ];
     if (isOwner && ssoEnabled) {
         result.push({
             title: "SSO",
-            link: [`/sso`],
+            link: ["/sso"],
         });
     }
     if (isOwner && orgGitAuthProviders) {
         result.push({
             title: "Git Providers",
-            link: [`/settings/git`],
+            link: ["/settings/git"],
         });
     }
     if (isOwner && billingMode?.mode !== "none") {

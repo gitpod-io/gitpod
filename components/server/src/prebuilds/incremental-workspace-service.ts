@@ -129,7 +129,7 @@ export class IncrementalWorkspaceService {
         }
 
         // we are only considering full prebuilds
-        if (!!candidateWorkspace.basedOnPrebuildId) {
+        if (candidateWorkspace.basedOnPrebuildId) {
             return false;
         }
 
@@ -158,7 +158,7 @@ export class IncrementalWorkspaceService {
 
         // ensure the image source hasn't changed (skips older images)
         if (JSON.stringify(imageSource) !== JSON.stringify(candidateWorkspace.imageSource)) {
-            log.debug(`Skipping parent prebuild: Outdated image`, {
+            log.debug("Skipping parent prebuild: Outdated image", {
                 imageSource,
                 parentImageSource: candidateWorkspace.imageSource,
             });
@@ -178,7 +178,7 @@ export class IncrementalWorkspaceService {
         const prebuildTasks = filterPrebuildTasks(config.tasks);
         const parentPrebuildTasks = filterPrebuildTasks(candidateWorkspace.config.tasks);
         if (JSON.stringify(prebuildTasks) !== JSON.stringify(parentPrebuildTasks)) {
-            log.debug(`Skipping parent prebuild: Outdated prebuild tasks`, {
+            log.debug("Skipping parent prebuild: Outdated prebuild tasks", {
                 prebuildTasks,
                 parentPrebuildTasks,
             });

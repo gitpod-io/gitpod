@@ -332,8 +332,8 @@ export class WorkspaceService {
 
         const status = desc.getStatus()!;
         const ports = status
-            .getSpec()!
-            .getExposedPortsList()
+            .getSpec()
+            ?.getExposedPortsList()
             .map(
                 (p) =>
                     <WorkspaceInstancePort>{
@@ -403,7 +403,6 @@ export class WorkspaceService {
     private portVisibilityFromProto(visibility: ProtoPortVisibility): PortVisibility {
         switch (visibility) {
             default: // the default in the protobuf def is: private
-            case ProtoPortVisibility.PORT_VISIBILITY_PRIVATE:
                 return "private";
             case ProtoPortVisibility.PORT_VISIBILITY_PUBLIC:
                 return "public";
@@ -413,7 +412,6 @@ export class WorkspaceService {
     private portVisibilityToProto(visibility: PortVisibility | undefined): ProtoPortVisibility {
         switch (visibility) {
             default: // the default for requests is: private
-            case "private":
                 return ProtoPortVisibility.PORT_VISIBILITY_PRIVATE;
             case "public":
                 return ProtoPortVisibility.PORT_VISIBILITY_PUBLIC;
@@ -423,7 +421,6 @@ export class WorkspaceService {
     private portProtocolFromProto(protocol: ProtoPortProtocol): PortProtocol {
         switch (protocol) {
             default: // the default in the protobuf def is: http
-            case ProtoPortProtocol.PORT_PROTOCOL_HTTP:
                 return "http";
             case ProtoPortProtocol.PORT_PROTOCOL_HTTPS:
                 return "https";
@@ -433,7 +430,6 @@ export class WorkspaceService {
     private portProtocolToProto(protocol: PortProtocol | undefined): ProtoPortProtocol {
         switch (protocol) {
             default: // the default for requests is: http
-            case "http":
                 return ProtoPortProtocol.PORT_PROTOCOL_HTTP;
             case "https":
                 return ProtoPortProtocol.PORT_PROTOCOL_HTTPS;
@@ -480,7 +476,7 @@ export class WorkspaceService {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Cannot (re-)start irregular workspace.");
         }
 
-        if (!!workspace.softDeleted) {
+        if (workspace.softDeleted) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Workspace not found!");
         }
 
@@ -524,10 +520,10 @@ export class WorkspaceService {
             TraceContext.setError(ctx, err);
             return; // we don't want to block workspace starts because of internal errors
         }
-        if (!!result.needsVerification) {
-            throw new ApplicationError(ErrorCodes.NEEDS_VERIFICATION, `Please verify your account.`);
+        if (result.needsVerification) {
+            throw new ApplicationError(ErrorCodes.NEEDS_VERIFICATION, "Please verify your account.");
         }
-        if (!!result.usageLimitReachedOnCostCenter) {
+        if (result.usageLimitReachedOnCostCenter) {
             throw new ApplicationError(
                 ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED,
                 "Increase usage limit and try again.",
@@ -536,7 +532,7 @@ export class WorkspaceService {
                 },
             );
         }
-        if (!!result.hitParallelWorkspaceLimit) {
+        if (result.hitParallelWorkspaceLimit) {
             throw new ApplicationError(
                 ErrorCodes.TOO_MANY_RUNNING_WORKSPACES,
                 `You cannot run more than ${result.hitParallelWorkspaceLimit.max} workspaces at the same time. Please stop a workspace before starting another one.`,
@@ -635,7 +631,7 @@ export class WorkspaceService {
                 });
             });
             allClasses.sort((a, b) => a.displayName.localeCompare(b.displayName));
-            const uniqueClasses = allClasses.filter((v, i, a) => a.map((c) => c.id).indexOf(v.id) == i);
+            const uniqueClasses = allClasses.filter((v, i, a) => a.map((c) => c.id).indexOf(v.id) === i);
 
             return uniqueClasses;
         }
@@ -681,7 +677,7 @@ export class WorkspaceService {
         req.setId(instance.id);
         const client = await this.clientProvider.get(instance.region);
         const desc = await client.describeWorkspace({}, req);
-        const duration = desc.getStatus()!.getSpec()!.getTimeout();
+        const duration = desc.getStatus()?.getSpec()?.getTimeout();
 
         return { duration, canChange, humanReadableDuration: goDurationToHumanReadable(duration) };
     }
@@ -698,7 +694,7 @@ export class WorkspaceService {
         try {
             validatedDuration = WorkspaceTimeoutDuration.validate(duration);
         } catch (err) {
-            throw new ApplicationError(ErrorCodes.INVALID_VALUE, "Invalid duration : " + err.message);
+            throw new ApplicationError(ErrorCodes.INVALID_VALUE, `Invalid duration : ${err.message}`);
         }
 
         const workspace = await this.doGetWorkspace(userId, workspaceId);
@@ -735,7 +731,7 @@ export class WorkspaceService {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Prebuild for instanceId ${instanceId} not found`);
         }
         if (workspace.type !== "prebuild" || !workspace.projectId) {
-            throw new ApplicationError(ErrorCodes.CONFLICT, `Workspace is not a prebuild`);
+            throw new ApplicationError(ErrorCodes.CONFLICT, "Workspace is not a prebuild");
         }
 
         await this.auth.checkPermissionOnProject(userId, "read_prebuild", workspace.projectId);
@@ -769,9 +765,8 @@ export class WorkspaceService {
                 if (e instanceof Error) {
                     sink.fail(e);
                     return;
-                } else {
-                    sink.fail(new Error(String(e) || "unknown"));
                 }
+                sink.fail(new Error(String(e) || "unknown"));
             }
         }, opts);
     }
@@ -786,7 +781,7 @@ export class WorkspaceService {
         const logCtx: LogContext = { userId, workspaceId };
         let instance = await this.db.findCurrentInstance(workspaceId);
         if (!instance || instance.status.phase === "stopped") {
-            log.debug(logCtx, `No running instance for workspaceId.`);
+            log.debug(logCtx, "No running instance for workspaceId.");
             return;
         }
 
@@ -879,7 +874,7 @@ export class WorkspaceService {
             const workspace = await this.doGetWorkspace(userId, workspaceId);
             await check(instance, workspace);
 
-            const wasClosed = !!(options && options.wasClosed);
+            const wasClosed = !!options?.wasClosed;
             await this.db.updateLastHeartbeat(instanceId, userId, new Date(), wasClosed);
 
             const req = new MarkActiveRequest();
@@ -889,13 +884,12 @@ export class WorkspaceService {
             const client = await this.clientProvider.get(instance.region);
             await client.markActive({}, req);
         } catch (e) {
-            if (e.message && typeof e.message === "string" && (e.message as String).endsWith("does not exist")) {
+            if (e.message && typeof e.message === "string" && (e.message as string).endsWith("does not exist")) {
                 // This is an old tab with open workspace: drop silently
                 return;
-            } else {
-                e = mapGrpcError(e);
-                throw e;
             }
+            e = mapGrpcError(e);
+            throw e;
         }
     }
 
@@ -954,8 +948,8 @@ export class WorkspaceService {
             // TODO(ak) ideally we won't check a message (subject to change)
             // but ws-manager does not return INTERNAL for invalid image refs provided by a user
             // otherwise we report it as internal error in observability
-            const code = e["code"];
-            const details = e["details"];
+            const code = e.code;
+            const details = e.details;
             if (
                 typeof details === "string" &&
                 (code === grpc.status.INVALID_ARGUMENT || details.includes("cannot resolve image"))

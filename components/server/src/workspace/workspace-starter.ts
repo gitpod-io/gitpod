@@ -183,7 +183,7 @@ export async function getWorkspaceClassForInstance(
 
 class StartInstanceError extends Error {
     constructor(public readonly reason: FailedInstanceStartReason, public readonly cause: any) {
-        super("Starting workspace instance failed: " + cause.message);
+        super(`Starting workspace instance failed: ${cause.message}`);
     }
 }
 
@@ -194,9 +194,9 @@ export function isResourceExhaustedError(err: any): boolean {
 export function isClusterMaintenanceError(err: any): boolean {
     return (
         "code" in err &&
-        err.code == grpc.status.FAILED_PRECONDITION &&
+        err.code === grpc.status.FAILED_PRECONDITION &&
         "details" in err &&
-        err.details == "under maintenance"
+        err.details === "under maintenance"
     );
 }
 
@@ -323,7 +323,7 @@ export class WorkspaceStarter {
                 options.workspaceClass,
             );
             // we run the actual creation of a new instance in a distributed lock, to make sure we always only start one instance per workspace.
-            await this.redisMutex.using(["workspace-start-" + workspace.id], 2000, async () => {
+            await this.redisMutex.using([`workspace-start-${workspace.id}`], 2000, async () => {
                 const runningInstance = await this.workspaceDb.trace({ span }).findRunningInstance(workspace.id);
                 if (runningInstance) {
                     throw new Error(`Workspace ${workspace.id} is already running`);
@@ -399,7 +399,7 @@ export class WorkspaceStarter {
         // by another server process (cmp. WorkspaceStartController).
         this.redisMutex
             .using(
-                ["workspace-instance-start-" + instanceId],
+                [`workspace-instance-start-${instanceId}`],
                 5000, // After 5s without extension the lock is released
                 doReconcileWorkspaceStart,
                 { retryCount: 4, retryDelay: 500 }, // We wait at most 2s until we give up, and conclude that someone else is already starting this instance
@@ -729,9 +729,11 @@ export class WorkspaceStarter {
             } catch (err: any) {
                 if (isResourceExhaustedError(err)) {
                     throw err;
-                } else if (isClusterMaintenanceError(err)) {
+                }
+                if (isClusterMaintenanceError(err)) {
                     throw err;
-                } else if ("code" in err && err.code !== grpc.status.OK && lastInstallation !== "") {
+                }
+                if ("code" in err && err.code !== grpc.status.OK && lastInstallation !== "") {
                     log.error({ instanceId: instance.id }, "cannot start workspace on cluster, might retry", err, {
                         cluster: lastInstallation,
                     });
@@ -756,7 +758,7 @@ export class WorkspaceStarter {
         (imageAuthValue.value || "")
             .split(",")
             .map((e) => e.trim().split(":"))
-            .filter((e) => e.length == 2)
+            .filter((e) => e.length === 2)
             .forEach((e) => res.set(e[0], e[1]));
         return res;
     }
@@ -909,7 +911,7 @@ export class WorkspaceStarter {
 
             let featureFlags: NamedWorkspaceFeatureFlag[] = workspace.config._featureFlags || [];
             featureFlags = featureFlags.concat(this.config.workspaceDefaults.defaultFeatureFlags);
-            if (user.featureFlags && user.featureFlags.permanentWSFeatureFlags) {
+            if (user.featureFlags?.permanentWSFeatureFlags) {
                 // Workspace-persisted feature flags are inherited from and controlled by workspace.config._featureFlags
                 // Make sure we do not overide them, here.
                 const nonWorkspacePersistentFeatureFlags = user.featureFlags.permanentWSFeatureFlags.filter(
@@ -920,7 +922,7 @@ export class WorkspaceStarter {
 
             // if the user has feature preview enabled, we need to add the respective feature flags.
             // Beware: all feature flags we add here are not workspace-persistent feature flags, e.g. no full-workspace backup.
-            if (!!user.additionalData?.featurePreview) {
+            if (user.additionalData?.featurePreview) {
                 featureFlags = featureFlags.concat(
                     this.config.workspaceDefaults.previewFeatureFlags.filter((f) => !featureFlags.includes(f)),
                 );
@@ -947,7 +949,7 @@ export class WorkspaceStarter {
 
             featureFlags = featureFlags.concat(["workspace_class_limiting"]);
 
-            if (!!featureFlags) {
+            if (featureFlags) {
                 // only set feature flags if there actually are any. Otherwise we waste the
                 // few bytes of JSON in the database for no good reason.
                 configuration.featureFlags = featureFlags;
@@ -1005,7 +1007,7 @@ export class WorkspaceStarter {
         imgsrc: WorkspaceImageSource,
         user: User,
         additionalAuth: Map<string, string>,
-        ignoreBaseImageresolvedAndRebuildBase: boolean = false,
+        ignoreBaseImageresolvedAndRebuildBase = false,
     ): Promise<{ src: BuildSource; auth: BuildRegistryAuth; disposable?: Disposable }> {
         const span = TraceContext.startSpan("prepareBuildRequest", ctx);
 
@@ -1095,7 +1097,7 @@ export class WorkspaceStarter {
                 }
 
                 const context = (workspace.config.image as ImageConfigFile).context;
-                const contextPath = !!context ? path.join(checkoutLocation, context) : checkoutLocation;
+                const contextPath = context ? path.join(checkoutLocation, context) : checkoutLocation;
                 const dockerFilePath = path.join(checkoutLocation, imgsrc.dockerFilePath);
 
                 const file = new BuildSourceDockerfile();
@@ -1132,8 +1134,8 @@ export class WorkspaceStarter {
         workspace: Workspace,
         instance: WorkspaceInstance,
         additionalAuth: Map<string, string>,
-        ignoreBaseImageresolvedAndRebuildBase: boolean = false,
-        forceRebuild: boolean = false,
+        ignoreBaseImageresolvedAndRebuildBase = false,
+        forceRebuild = false,
         region?: WorkspaceRegion,
     ): Promise<WorkspaceInstance> {
         const span = TraceContext.startSpan("buildWorkspaceImage", ctx);
@@ -1220,16 +1222,11 @@ export class WorkspaceStarter {
             try {
                 // ...and wait for the build to finish
                 buildResult = await result.buildPromise;
-                if (buildResult.getStatus() == BuildStatus.DONE_FAILURE) {
+                if (buildResult.getStatus() === BuildStatus.DONE_FAILURE) {
                     throw new Error(buildResult.getMessage());
                 }
             } catch (err) {
-                if (
-                    err &&
-                    err.message &&
-                    err.message.includes("base image does not exist") &&
-                    !ignoreBaseImageresolvedAndRebuildBase
-                ) {
+                if (err?.message?.includes("base image does not exist") && !ignoreBaseImageresolvedAndRebuildBase) {
                     // we've attempted to add the base layer for a workspace whoose base image has gone missing.
                     // Ignore the previously built (now missing) base image and force a rebuild.
                     return this.buildWorkspaceImage(
@@ -1242,12 +1239,11 @@ export class WorkspaceStarter {
                         forceRebuild,
                         region,
                     );
-                } else {
-                    throw err;
                 }
+                throw err;
             } finally {
                 // clean any created one time secrets, so they don't hang around unnecessarily
-                if (!!disposable) {
+                if (disposable) {
                     disposable.dispose();
                 }
             }
@@ -1260,7 +1256,7 @@ export class WorkspaceStarter {
             // We have just found out how our base image is called - remember that.
             // Note: it's intentional that we overwrite existing baseImageNameResolved values here so that one by one the refs here become absolute (i.e. digested form).
             //       This prevents the "rebuilds" for old workspaces.
-            if (!!buildResult.getBaseRef() && buildResult.getBaseRef() != workspace.baseImageNameResolved) {
+            if (!!buildResult.getBaseRef() && buildResult.getBaseRef() !== workspace.baseImageNameResolved) {
                 span.log({ oldBaseRef: workspace.baseImageNameResolved, newBaseRef: buildResult.getBaseRef() });
 
                 workspace.baseImageNameResolved = buildResult.getBaseRef();
@@ -1271,7 +1267,7 @@ export class WorkspaceStarter {
         } catch (err) {
             // Notify error
             let message = "Error building image!";
-            if (err && err.message) {
+            if (err?.message) {
                 message = err.message;
             }
 
@@ -1344,7 +1340,7 @@ export class WorkspaceStarter {
         envvars.push(contextEnv);
 
         const info = this.config.workspaceClasses.find((cls) => cls.id === instance.workspaceClass);
-        if (!!info) {
+        if (info) {
             const workspaceClassInfoEnv = new EnvironmentVariable();
             workspaceClassInfoEnv.setName("GITPOD_WORKSPACE_CLASS_INFO");
             workspaceClassInfoEnv.setValue(JSON.stringify(info));
@@ -1438,12 +1434,12 @@ export class WorkspaceStarter {
                 const spec = new PortSpec();
                 spec.setPort(p.port);
                 spec.setVisibility(
-                    p.visibility == "public"
+                    p.visibility === "public"
                         ? PortVisibility.PORT_VISIBILITY_PUBLIC
                         : PortVisibility.PORT_VISIBILITY_PRIVATE,
                 );
                 spec.setProtocol(
-                    p.protocol == "https" ? PortProtocol.PORT_PROTOCOL_HTTPS : PortProtocol.PORT_PROTOCOL_HTTP,
+                    p.protocol === "https" ? PortProtocol.PORT_PROTOCOL_HTTPS : PortProtocol.PORT_PROTOCOL_HTTP,
                 );
                 return spec;
             })
@@ -1482,7 +1478,7 @@ export class WorkspaceStarter {
             workspace.organizationId,
         );
 
-        const featureFlags = instance.configuration!.featureFlags || [];
+        const featureFlags = instance.configuration?.featureFlags || [];
 
         const sysEnvvars: EnvironmentVariable[] = [];
         const ideEnvVars = instance.configuration.ideSetup?.envvars || [];
@@ -1576,54 +1572,50 @@ export class WorkspaceStarter {
             "function:getIDToken",
             "function:getDefaultWorkspaceImage",
 
-            "resource:" +
-                ScopedResourceGuard.marshalResourceScope({
-                    kind: "workspace",
-                    subjectID: workspace.id,
-                    operations: ["get", "update"],
-                }),
-            "resource:" +
-                ScopedResourceGuard.marshalResourceScope({
-                    kind: "workspaceInstance",
-                    subjectID: instance.id,
-                    operations: ["get", "update", "delete"],
-                }),
-            "resource:" +
-                ScopedResourceGuard.marshalResourceScope({
-                    kind: "snapshot",
-                    subjectID: ScopedResourceGuard.SNAPSHOT_WORKSPACE_SUBJECT_ID_PREFIX + workspace.id,
-                    operations: ["create"],
-                }),
-            "resource:" +
-                ScopedResourceGuard.marshalResourceScope({
-                    kind: "gitpodToken",
-                    subjectID: "*",
-                    operations: ["create"],
-                }),
-            "resource:" +
-                ScopedResourceGuard.marshalResourceScope({
-                    kind: "userStorage",
-                    subjectID: "*",
-                    operations: ["create", "get", "update"],
-                }),
-            "resource:" +
-                ScopedResourceGuard.marshalResourceScope({ kind: "token", subjectID: "*", operations: ["get"] }),
-            "resource:" +
-                ScopedResourceGuard.marshalResourceScope({
-                    kind: "contentBlob",
-                    subjectID: "*",
-                    operations: ["create", "get"],
-                }),
+            `resource:${ScopedResourceGuard.marshalResourceScope({
+                kind: "workspace",
+                subjectID: workspace.id,
+                operations: ["get", "update"],
+            })}`,
+            `resource:${ScopedResourceGuard.marshalResourceScope({
+                kind: "workspaceInstance",
+                subjectID: instance.id,
+                operations: ["get", "update", "delete"],
+            })}`,
+            `resource:${ScopedResourceGuard.marshalResourceScope({
+                kind: "snapshot",
+                subjectID: ScopedResourceGuard.SNAPSHOT_WORKSPACE_SUBJECT_ID_PREFIX + workspace.id,
+                operations: ["create"],
+            })}`,
+            `resource:${ScopedResourceGuard.marshalResourceScope({
+                kind: "gitpodToken",
+                subjectID: "*",
+                operations: ["create"],
+            })}`,
+            `resource:${ScopedResourceGuard.marshalResourceScope({
+                kind: "userStorage",
+                subjectID: "*",
+                operations: ["create", "get", "update"],
+            })}`,
+            `resource:${ScopedResourceGuard.marshalResourceScope({
+                kind: "token",
+                subjectID: "*",
+                operations: ["get"],
+            })}`,
+            `resource:${ScopedResourceGuard.marshalResourceScope({
+                kind: "contentBlob",
+                subjectID: "*",
+                operations: ["create", "get"],
+            })}`,
         ];
         if (CommitContext.is(workspace.context)) {
-            const subjectID = workspace.context.repository.owner + "/" + workspace.context.repository.name;
+            const subjectID = `${workspace.context.repository.owner}/${workspace.context.repository.name}`;
             scopes.push(
-                "resource:" +
-                    ScopedResourceGuard.marshalResourceScope({
-                        kind: "envVar",
-                        subjectID,
-                        operations: ["create", "get", "update", "delete"],
-                    }),
+                `resource:${ScopedResourceGuard.marshalResourceScope({
+                    kind: "envVar",
+                    subjectID,
+                    operations: ["create", "get", "update", "delete"],
+                })}`,
             );
         }
         return scopes;
@@ -1707,7 +1699,7 @@ export class WorkspaceStarter {
             const additionalInit = new FileDownloadInitializer();
 
             const getDigest = (contents: string) => {
-                return "sha256:" + crypto.createHash("sha256").update(contents).digest("hex");
+                return `sha256:${crypto.createHash("sha256").update(contents).digest("hex")}`;
             };
 
             const tokenExpirationTime = new Date();
@@ -1824,7 +1816,7 @@ export class WorkspaceStarter {
         gitConfig.setAuthPassword(gitToken.value);
 
         const userGitConfig = workspace.config.gitConfig;
-        if (!!userGitConfig) {
+        if (userGitConfig) {
             Object.keys(userGitConfig)
                 .filter((k) => userGitConfig.hasOwnProperty(k))
                 .forEach((k) => gitConfig.getCustomConfigMap().set(k, userGitConfig[k]));
@@ -1833,12 +1825,12 @@ export class WorkspaceStarter {
         const result = new GitInitializer();
         result.setConfig(gitConfig);
         result.setCheckoutLocation(context.checkoutLocation || context.repository.name);
-        if (!!cloneTarget) {
+        if (cloneTarget) {
             result.setCloneTaget(cloneTarget);
         }
         result.setRemoteUri(cloneUrl);
         result.setTargetMode(targetMode);
-        if (!!context.upstreamRemoteURI) {
+        if (context.upstreamRemoteURI) {
             result.setUpstreamRemoteUri(context.upstreamRemoteURI);
         }
 

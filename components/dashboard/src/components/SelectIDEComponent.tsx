@@ -70,7 +70,7 @@ export default function SelectIDEComponent({
                     });
                 } else if (ide.latestImage) {
                     result.push({
-                        id: ide.id + "-latest",
+                        id: `${ide.id}-latest`,
                         element: <IdeOptionElementInDropDown option={ide} useLatest={true} />,
                         isSelectable: true,
                     });
@@ -131,7 +131,9 @@ function capitalize(label?: string) {
 }
 
 const IdeOptionElementSelected: FC<IdeOptionElementProps> = ({ option, useLatest, loading = false }) => {
-    let version: string | undefined, label: string | undefined, title: string;
+    let version: string | undefined;
+    let label: string | undefined;
+    let title: string;
     if (!option) {
         title = "Select Editor";
     } else {

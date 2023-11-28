@@ -120,12 +120,12 @@ export namespace IssueContexts {
             .replace(/[^a-z]/g, "-")
             .split("-")
             .filter((w) => w.length > 0);
-        let localBranch = (user.name + "/").toLowerCase();
+        let localBranch = `${user.name}/`.toLowerCase();
         for (const segment of titleWords) {
             if (localBranch.length > maxBaseBranchLength) {
                 break;
             }
-            localBranch += segment + "-";
+            localBranch += `${segment}-`;
         }
         localBranch += issueNr;
         return sanitizedRefName(localBranch);

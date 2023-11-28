@@ -20,16 +20,16 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
     async getRepo(user: User, owner: string, name: string): Promise<Repository> {
         const api = await this.apiFactory.create(user);
         const repo = (await api.repositories.get({ workspace: owner, repo_slug: name })).data;
-        let cloneUrl = repo.links!.clone!.find((x: any) => x.name === "https")!.href!;
+        let cloneUrl = repo.links?.clone?.find((x: any) => x.name === "https")?.href!;
         if (cloneUrl) {
             const url = new URL(cloneUrl);
             url.username = "";
             cloneUrl = url.toString();
         }
-        const host = RepoURL.parseRepoUrl(cloneUrl)!.host;
+        const host = RepoURL.parseRepoUrl(cloneUrl)?.host;
         const description = repo.description;
-        const avatarUrl = repo.owner!.links!.avatar!.href;
-        const webUrl = repo.links!.html!.href;
+        const avatarUrl = repo.owner?.links?.avatar?.href;
+        const webUrl = repo.links?.html?.href;
         const defaultBranch = repo.mainbranch?.name;
         return { host, owner, name, cloneUrl, description, avatarUrl, webUrl, defaultBranch };
     }
@@ -139,7 +139,7 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
         owner: string,
         repo: string,
         revision: string,
-        maxDepth: number = 100,
+        maxDepth = 100,
     ): Promise<string[]> {
         const api = await this.apiFactory.create(user);
         // TODO(janx): To get more results than Bitbucket API's max pagelen (seems to be 100), pagination should be handled.
@@ -201,11 +201,9 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
         const repos: RepositoryInfo[] = [];
 
         results
-            .map((result) => {
+            .flatMap((result) => {
                 return result.data.values ?? [];
             })
-            // flatten out the array of arrays
-            .flat()
             // convert into the format we want to return
             .forEach((repo) => {
                 const name = repo.name;

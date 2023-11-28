@@ -188,7 +188,7 @@ const instanceStartsSuccessTotal = new prometheusClient.Counter({
     labelNames: ["retries"],
 });
 
-export function increaseSuccessfulInstanceStartCounter(retries: number = 0) {
+export function increaseSuccessfulInstanceStartCounter(retries = 0) {
     instanceStartsSuccessTotal.inc({ retries });
 }
 

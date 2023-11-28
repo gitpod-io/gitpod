@@ -14,7 +14,7 @@ const DefaultError = lazy(() => import("./DefaultError"));
 // Mounted under the `/error` path
 // Intended to handle error pages we can redirect to w/ distinct urls
 export const ErrorPages: FC = () => {
-    let match = useRouteMatch();
+    const match = useRouteMatch();
 
     return (
         <Suspense fallback={<AppLoading />}>

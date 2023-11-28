@@ -49,10 +49,10 @@ export class OAuthController {
         res: express.Response,
     ): Promise<boolean> {
         // Have they just authorized, or not, the local-app?
-        const wasApproved = req.query["approved"] || "";
+        const wasApproved = req.query.approved || "";
         if (wasApproved === "no") {
             const additionalData = user?.additionalData;
-            if (additionalData && additionalData.oauthClientsApproved) {
+            if (additionalData?.oauthClientsApproved) {
                 delete additionalData.oauthClientsApproved[clientID];
                 await this.userDb.updateUserPartial(user);
             }
@@ -89,7 +89,8 @@ export class OAuthController {
             redirectUri.searchParams.append("approved", "no");
             res.redirect(redirectUri.toString());
             return false;
-        } else if (wasApproved == "yes") {
+        }
+        if (wasApproved === "yes") {
             const additionalData = (user.additionalData = user.additionalData || {});
             additionalData.oauthClientsApproved = {
                 ...additionalData.oauthClientsApproved,
@@ -105,11 +106,10 @@ export class OAuthController {
                     const redirectTo = `${this.config.hostUrl}oauth-approval?clientID=${client.id}&clientName=${client.name}&returnToPath=${returnToPath}`;
                     res.redirect(redirectTo);
                     return false;
-                } else {
-                    log.error(`/oauth/authorize unknown client id: "${clientID}"`);
-                    res.sendStatus(400);
-                    return false;
                 }
+                log.error(`/oauth/authorize unknown client id: "${clientID}"`);
+                res.sendStatus(400);
+                return false;
             }
         }
         return true;
@@ -166,7 +166,7 @@ export class OAuthController {
                 try {
                     handleExpressError(e, res);
                 } catch (error) {
-                    log.error(`Authorization request handling failed.`, error, { request });
+                    log.error("Authorization request handling failed.", error, { request });
                     res.sendStatus(500);
                 }
             }
@@ -181,7 +181,7 @@ export class OAuthController {
                 try {
                     handleExpressError(e, res);
                 } catch (error) {
-                    log.error(`Access token request handling failed.`, error);
+                    log.error("Access token request handling failed.", error);
                     res.sendStatus(500);
                 }
             }

@@ -49,7 +49,7 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
         });
         const cloneUrl = repo.links.clone.find((u) => u.name === "http")?.href!;
         const webUrl = repo.links?.self[0]?.href?.replace(/\/browse$/, "");
-        const host = RepoURL.parseRepoUrl(cloneUrl)!.host;
+        const host = RepoURL.parseRepoUrl(cloneUrl)?.host;
         const avatarUrl = this.api.getAvatarUrl(owner);
         return {
             host,
@@ -133,7 +133,7 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
             query: { shaOrRevision: ref, limit: 1 },
         });
 
-        if (commitsResult.values && commitsResult.values[0]) {
+        if (commitsResult.values?.[0]) {
             const commit = commitsResult.values[0];
             return {
                 sha: commit.id,

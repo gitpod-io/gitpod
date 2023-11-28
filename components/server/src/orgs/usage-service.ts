@@ -104,13 +104,13 @@ export class UsageService {
                 return {
                     id: u.id,
                     attributionId: u.attributionId,
-                    effectiveTime: u.effectiveTime && u.effectiveTime.getTime(),
+                    effectiveTime: u.effectiveTime?.getTime(),
                     credits: u.credits,
                     description: u.description,
                     draft: u.draft,
                     workspaceInstanceId: u.workspaceInstanceId,
                     kind: u.kind === Usage_Kind.KIND_WORKSPACE_INSTANCE ? "workspaceinstance" : "invoice",
-                    metadata: !!u.metadata ? JSON.parse(u.metadata) : undefined,
+                    metadata: u.metadata ? JSON.parse(u.metadata) : undefined,
                 };
             }),
             pagination: response.pagination
@@ -159,7 +159,8 @@ export class UsageService {
                 reached: true,
                 attributionId,
             };
-        } else if (currentInvoiceCredits > usageLimit * 0.8) {
+        }
+        if (currentInvoiceCredits > usageLimit * 0.8) {
             log.info({ userId, organizationId }, "Usage limit almost reached", {
                 attributionId,
                 currentInvoiceCredits: new TrustedValue(currentInvoiceCredits),

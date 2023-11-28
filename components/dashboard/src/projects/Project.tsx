@@ -225,7 +225,7 @@ export default function ProjectsPage() {
                                 Authorize {showAuthBanner.host} <br />
                                 to access branch information.
                             </div>
-                            <Button className={`mr-2 py-2`} onClick={() => onConfirmShowAuthModal(showAuthBanner.host)}>
+                            <Button className={"mr-2 py-2"} onClick={() => onConfirmShowAuthModal(showAuthBanner.host)}>
                                 Authorize Provider
                             </Button>
                         </div>
@@ -372,7 +372,7 @@ export default function ProjectsPage() {
                                                     <span className="flex-grow" />
                                                     <a href={gitpodHostUrl.withContext(`${branch.url}`).toString()}>
                                                         <Button
-                                                            className={`mr-2 py-2 opacity-0 group-hover:opacity-100`}
+                                                            className={"mr-2 py-2 opacity-0 group-hover:opacity-100"}
                                                         >
                                                             New Workspace
                                                         </Button>
@@ -407,7 +407,7 @@ export default function ProjectsPage() {
                     </>
                 )}
             </div>
-            <div></div>
+            <div />
         </>
     );
 }

@@ -71,7 +71,7 @@ const RepositoryListPage: FC = () => {
     );
 
     const configurations = useMemo(() => {
-        return data?.pages.map((page) => page.configurations).flat() ?? [];
+        return data?.pages.flatMap((page) => page.configurations) ?? [];
     }, [data?.pages]);
 
     const hasMoreThanOnePage = (data?.pages.length ?? 0) > 1;

@@ -39,7 +39,7 @@ export function ProjectsSearch() {
     useEffect(() => {
         const projectId = location.pathname.split("/")[3];
         if (projectId && searchResult) {
-            let currentProject = searchResult.rows.find((project) => project.id === projectId);
+            const currentProject = searchResult.rows.find((project) => project.id === projectId);
             if (currentProject) {
                 setCurrentProject(currentProject);
             } else {
@@ -69,7 +69,7 @@ export function ProjectsSearch() {
         return <ProjectDetail project={currentProject} owner={currentProjectOwner} />;
     }
 
-    const search = async (page: number = 1) => {
+    const search = async (page = 1) => {
         setSearching(true);
         try {
             const result = await getGitpodService().server.adminGetProjectsBySearchTerm({
@@ -136,8 +136,8 @@ export function ProjectsSearch() {
     function ProjectResultItem(p: { project: Project }) {
         return (
             <Link
-                key={"pr-" + p.project.name}
-                to={"/admin/projects/" + p.project.id}
+                key={`pr-${p.project.name}`}
+                to={`/admin/projects/${p.project.id}`}
                 data-analytics='{"button_type":"sidebar_menu"}'
             >
                 <div className="rounded-xl whitespace-nowrap flex py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-kumquat-light group">

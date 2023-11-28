@@ -30,7 +30,7 @@ export function BlockedRepositories() {
 type NewBlockedRepository = Pick<BlockedRepository, "urlRegexp" | "blockUser">;
 type ExistingBlockedRepository = Pick<BlockedRepository, "id" | "urlRegexp" | "blockUser">;
 
-interface Props {}
+type Props = {};
 
 export function BlockedRepositoriesList(props: Props) {
     const [searchResult, setSearchResult] = useState<AdminGetListResult<BlockedRepository>>({ rows: [], total: 0 });
@@ -156,7 +156,7 @@ export function BlockedRepositoriesList(props: Props) {
                 <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
                     <div className="w-9/12">Repository URL (RegEx)</div>
                     <div className="w-1/12">Block Users</div>
-                    <div className="w-1/12"></div>
+                    <div className="w-1/12" />
                 </div>
                 {searchResult.rows.map((br) => (
                     <BlockedRepositoryEntry br={br} confirmedDelete={confirmDeleteBlockedRepository} />
@@ -215,7 +215,7 @@ function AddBlockedRepositoryModal(p: AddBlockedRepositoryModalProps) {
     const save = useCallback(() => {
         const v = ref.current;
         const newError = p.validate(v);
-        if (!!newError) {
+        if (newError) {
             setError(newError);
         }
 
@@ -278,14 +278,13 @@ function Details(props: {
             <div>
                 <h4>Repository URL RegEx</h4>
                 <input
-                    autoFocus
                     className="w-full"
                     type="text"
                     value={props.br.urlRegexp}
                     placeholder={'e.g. "https://github.com/malicious-user/*"'}
                     disabled={!props.update}
                     onChange={(v) => {
-                        if (!!props.update) {
+                        if (props.update) {
                             props.update({ urlRegexp: v.target.value });
                         }
                     }}
@@ -298,7 +297,7 @@ function Details(props: {
                 checked={props.br.blockUser}
                 disabled={!props.update}
                 onChange={(checked) => {
-                    if (!!props.update) {
+                    if (props.update) {
                         props.update({ blockUser: checked });
                     }
                 }}

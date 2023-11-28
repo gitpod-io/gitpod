@@ -50,7 +50,7 @@ export class BitbucketServerApp {
                         rawEvent: JSON.stringify(req.body),
                     });
                     const span = TraceContext.startSpan("BitbucketApp.handleEvent", {});
-                    let queryToken = req.query["token"] as string;
+                    let queryToken = req.query.token as string;
                     if (typeof queryToken === "string") {
                         queryToken = decodeURIComponent(queryToken);
                     }
@@ -74,7 +74,7 @@ export class BitbucketServerApp {
                         span.finish();
                     }
                 } else {
-                    log.warn(`Ignoring unsupported BBS event.`, { headers: req.headers });
+                    log.warn("Ignoring unsupported BBS event.", { headers: req.headers });
                 }
             } catch (err) {
                 log.error(`Couldn't handle request.`, err, { headers: req.headers });
@@ -92,8 +92,9 @@ export class BitbucketServerApp {
             const [userid, tokenValue] = secretToken.split("|");
             const user = await this.userService.findUserById(userid, userid);
             if (!user) {
-                throw new Error("No user found for " + secretToken + " found.");
-            } else if (!!user.blocked) {
+                throw new Error(`No user found for ${secretToken} found.`);
+            }
+            if (user.blocked) {
                 throw new Error(`Blocked user ${user.id} tried to start prebuild.`);
             }
             const identity = user.identities.find((i) => i.authProviderId === TokenService.GITPOD_AUTH_PROVIDER_ID);
@@ -224,7 +225,7 @@ export class BitbucketServerApp {
                 const user = await runWithSubjectId(SubjectId.fromUserId(webhookInstaller.id), () =>
                     this.userService.findUserById(webhookInstaller.id, teamMember.userId),
                 );
-                if (user && user.identities.some((i) => i.authProviderId === authProviderId)) {
+                if (user?.identities.some((i) => i.authProviderId === authProviderId)) {
                     return user;
                 }
             }
@@ -314,6 +315,6 @@ interface PushEventPayload {
 }
 namespace PushEventPayload {
     export function is(payload: any): payload is PushEventPayload {
-        return typeof payload === "object" && "eventKey" in payload && payload["eventKey"] === "repo:refs_changed";
+        return typeof payload === "object" && "eventKey" in payload && payload.eventKey === "repo:refs_changed";
     }
 }

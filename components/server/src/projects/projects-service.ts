@@ -442,7 +442,7 @@ export class ProjectsService {
     }
 
     private async migratePrebuildSettingsOnDemand(project: Project): Promise<Project> {
-        if (!!project.settings?.prebuilds) {
+        if (project.settings?.prebuilds) {
             return project; // already migrated
         }
         const projectSettings = project.settings as OldProjectSettings | undefined;
@@ -467,7 +467,7 @@ export class ProjectsService {
                         defaults.prebuildInterval,
                     );
 
-                    newPrebuildSettings.branchStrategy = !!projectSettings?.prebuildBranchPattern
+                    newPrebuildSettings.branchStrategy = projectSettings?.prebuildBranchPattern
                         ? "matched-branches"
                         : defaults.branchStrategy;
                     newPrebuildSettings.branchMatchingPattern =
@@ -481,18 +481,18 @@ export class ProjectsService {
             if (!project) {
                 throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "Not found");
             }
-            if (!!projectSettings?.prebuilds) {
+            if (projectSettings?.prebuilds) {
                 return project; // already migrated
             }
             const newSettings = { ...projectSettings };
             newSettings.prebuilds = newPrebuildSettings;
-            delete newSettings.enablePrebuilds;
-            delete newSettings.prebuildBranchPattern;
-            delete newSettings.prebuildDefaultBranchOnly;
-            delete newSettings.prebuildEveryNthCommit;
-            delete newSettings.allowUsingPreviousPrebuilds;
-            delete newSettings.keepOutdatedPrebuildsRunning;
-            delete newSettings.useIncrementalPrebuilds;
+            newSettings.enablePrebuilds = undefined;
+            newSettings.prebuildBranchPattern = undefined;
+            newSettings.prebuildDefaultBranchOnly = undefined;
+            newSettings.prebuildEveryNthCommit = undefined;
+            newSettings.allowUsingPreviousPrebuilds = undefined;
+            newSettings.keepOutdatedPrebuildsRunning = undefined;
+            newSettings.useIncrementalPrebuilds = undefined;
             delete newSettings.workspaceClasses?.prebuild;
             await this.projectDB.updateProject({
                 id: project.id,

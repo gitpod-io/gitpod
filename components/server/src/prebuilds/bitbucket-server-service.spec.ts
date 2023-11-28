@@ -60,7 +60,7 @@ class TestBitbucketServerService {
                 bind(TokenProvider).toConstantValue(<TokenProvider>{
                     getTokenForHost: async () => {
                         return {
-                            value: process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER"] || "undefined",
+                            value: process.env.GITPOD_TEST_TOKEN_BITBUCKET_SERVER || "undefined",
                             scopes: [],
                         };
                     },
@@ -68,7 +68,7 @@ class TestBitbucketServerService {
                 bind(BitbucketServerApi).toSelf().inSingletonScope();
                 bind(HostContextProvider).toConstantValue({
                     get: (hostname: string) => {
-                        authProvider: {
+                        {
                             ("BBS");
                         }
                     },

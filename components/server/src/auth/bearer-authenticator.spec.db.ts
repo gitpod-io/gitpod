@@ -94,7 +94,7 @@ describe("BearerAuth", () => {
 
         const req = {
             headers: {
-                authorization: `Bearer `, // missing
+                authorization: "Bearer ", // missing
             },
         } as Request;
         await expectError(async () => bearerAuth.authExpressRequest(req), "missing bearer token header");
@@ -125,7 +125,7 @@ describe("BearerAuth", () => {
         await insertPat(testUser.id, "pat-1");
 
         const headers = new Headers();
-        headers.set("authorization", `Bearer `); // missing
+        headers.set("authorization", "Bearer "); // missing
         expect(await bearerAuth.tryAuthFromHeaders(headers)).to.be.undefined;
     });
 

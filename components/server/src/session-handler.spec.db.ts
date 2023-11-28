@@ -39,11 +39,11 @@ describe("SessionHandler", () => {
                     result.status = statusCode;
                     return this;
                 },
-                send: function (value: string) {
+                send: (value: string) => {
                     result.value = value;
                     deferred.resolve(result);
                 },
-                cookie: function (name: string, value: string, opts: express.CookieOptions) {
+                cookie: (name: string, value: string, opts: express.CookieOptions) => {
                     result.cookie = `${name}=${value}; `;
                 },
             } as any as express.Response,
@@ -110,9 +110,9 @@ describe("SessionHandler", () => {
             const decoded = await sessionHandler.verifyJWTCookie(`${name}=${token}`);
             expect(decoded, "Verify the JWT is valid").to.not.be.null;
 
-            expect(decoded!.sub).to.equal("1", "Check the 'sub' claim");
-            expect(decoded!.iat || 0).to.be.greaterThanOrEqual(issuedAfter, "Check the 'iat' claim");
-            expect(decoded!.exp || 0).to.be.greaterThanOrEqual(expiresAfter, "Check the 'exp' claim");
+            expect(decoded?.sub).to.equal("1", "Check the 'sub' claim");
+            expect(decoded?.iat || 0).to.be.greaterThanOrEqual(issuedAfter, "Check the 'iat' claim");
+            expect(decoded?.exp || 0).to.be.greaterThanOrEqual(expiresAfter, "Check the 'exp' claim");
 
             // Check cookie options
             expect(opts.httpOnly).to.equal(true);

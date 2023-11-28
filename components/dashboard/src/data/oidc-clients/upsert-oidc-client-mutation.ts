@@ -26,11 +26,10 @@ export const useUpsertOIDCClientMutation = () => {
                 return await oidcService.updateClientConfig({
                     config,
                 });
-            } else {
-                return await oidcService.createClientConfig({
-                    config,
-                });
             }
+            return await oidcService.createClientConfig({
+                config,
+            });
         },
         onSuccess(resp, { config = {} }) {
             if (!config || !config.organizationId) {

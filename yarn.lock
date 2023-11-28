@@ -1289,6 +1289,52 @@
   resolved "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
+"@biomejs/biome@^1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@biomejs/biome/-/biome-1.4.0.tgz#b512e1e7a4f3ec0bc0aceaa99fab8eded2bd95c9"
+  integrity sha512-/rDlao6ra38nhxo4IYCqWCzfTJcpMk4YHjSVBI9yN/ifdhnzSwirL25xDVH7G9hZdNhpF9g78FaPJhFa9DX0Cw==
+  optionalDependencies:
+    "@biomejs/cli-darwin-arm64" "1.4.0"
+    "@biomejs/cli-darwin-x64" "1.4.0"
+    "@biomejs/cli-linux-arm64" "1.4.0"
+    "@biomejs/cli-linux-x64" "1.4.0"
+    "@biomejs/cli-win32-arm64" "1.4.0"
+    "@biomejs/cli-win32-x64" "1.4.0"
+
+"@biomejs/cli-darwin-arm64@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@biomejs/cli-darwin-arm64/-/cli-darwin-arm64-1.4.0.tgz#08e9e19ae72fd980be65307844a71cd7ba96f4f2"
+  integrity sha512-nBrtVRwr4IlTtxLOHwBwLv1sWvggf9/DnT5/ALIANJZOpoING6u8jHWipods69wK8kGa8Ld7iwHm3W5BrJJFFQ==
+
+"@biomejs/cli-darwin-x64@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@biomejs/cli-darwin-x64/-/cli-darwin-x64-1.4.0.tgz#ae04f06a4446fa718dfeba863af6250a0b4185e6"
+  integrity sha512-nny0VgOj3ksUGzU5GblgtQEvrAZFgFe1IJBoYOP978OQdDrg7BpS+GX5udfof87Dl4ZlHPRBU951ceHOxF7BTg==
+
+"@biomejs/cli-linux-arm64@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@biomejs/cli-linux-arm64/-/cli-linux-arm64-1.4.0.tgz#40fbd94cff2c8437d18136d25801ead441ac6739"
+  integrity sha512-gyLkT/Yh9xfW1T9yjQs/2txkCeG0e+LRs0adLugMwN0ptcNTRyusBvUoiHnpB+9rS6hWu9ZCedGMNmKQ8v2GSw==
+
+"@biomejs/cli-linux-x64@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@biomejs/cli-linux-x64/-/cli-linux-x64-1.4.0.tgz#813d191b020a90aa829a5fc37dfeea393696a0f1"
+  integrity sha512-LIxTuU2zSbIHM9XDYjQphJ5UU8h2eS7yR8uIvGYSba7Qt9AKqfbenyVJTsVnoj1CXxxgKNVSc/wVmlOlGz5DBQ==
+
+"@biomejs/cli-win32-arm64@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@biomejs/cli-win32-arm64/-/cli-win32-arm64-1.4.0.tgz#a6edb984d48d9a9db5971e13c3047ab19fd592c2"
+  integrity sha512-U2jT1/0wZLJIRqnU8qHAfi/A/+yUwlL3sYJgqs+wO0BbR22WGQZlj03u5FdpEoyLXdsLv1pbeIcjNp+V0NYXWA==
+
+"@biomejs/cli-win32-x64@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@biomejs/cli-win32-x64/-/cli-win32-x64-1.4.0.tgz#0bb1292c5e279198912b6ec35649124ba8349b72"
+  integrity sha512-gN6DgyyBxIwoCovAUFJHFWVallb0cLosayDRtNyxU3MDv/atZxSXOWQezfVKBIbgmFPxYWJObd+awvbPYXwwww==
+
+"@biomejs/monorepo@https://github.com/biomejs/biome":
+  version "0.0.0"
+  resolved "https://github.com/biomejs/biome#fbe62cece9f57f2f6a6845401f461e32d5ae99d2"
+
 "@bufbuild/protobuf@1.3.3", "@bufbuild/protobuf@^1.3.3":
   version "1.3.3"
   resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.3.3.tgz#814562a5db0233a1ececda97b930c2dde5897de8"
@@ -12322,11 +12368,6 @@ prelude-ls@~1.1.2:
   version "1.1.2"
   resolved "https://registry.npmjs.org/prelude-ls/-/prelude-ls-1.1.2.tgz"
   integrity sha1-IZMqVJ9eUv/ZqCf1cOBL5iqX2lQ=
-
-prettier@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/prettier/-/prettier-3.0.0.tgz#e7b19f691245a21d618c68bc54dc06122f6105ae"
-  integrity sha512-zBf5eHpwHOGPC47h0zrPyNn+eAEIdEzfywMoYn2XPi0P44Zp0tSq64rq0xAREh4auw2cJZHo9QUob+NqCQky4g==
 
 pretty-bytes@^5.3.0, pretty-bytes@^5.4.1:
   version "5.6.0"

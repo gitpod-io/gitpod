@@ -376,8 +376,9 @@ export namespace ConfigFile {
 
         if (config.workspaceClasses.filter((c) => c.isDefault).length !== 1) {
             log.error(
-                "Exactly one default workspace class needs to be configured: " +
-                    JSON.stringify(config.workspaceClasses),
+                `Exactly one default workspace class needs to be configured: ${JSON.stringify(
+                    config.workspaceClasses,
+                )}`,
             );
         }
 

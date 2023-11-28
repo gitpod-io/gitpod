@@ -22,9 +22,9 @@ type Props = {
 };
 
 export const SSOConfigForm: FC<Props> = ({ config, readOnly = false, onChange }) => {
-    const redirectUrl = gitpodHostUrl.with({ pathname: `/iam/oidc/callback` }).toString();
+    const redirectUrl = gitpodHostUrl.with({ pathname: "/iam/oidc/callback" }).toString();
 
-    const issuerError = useOnBlurError(`Please enter a valid URL.`, isValidIssuer(config.issuer));
+    const issuerError = useOnBlurError("Please enter a valid URL.", isValidIssuer(config.issuer));
     const clientIdError = useOnBlurError("Client ID is missing.", isValidClientID(config.clientId));
     const clientSecretError = useOnBlurError("Client Secret is missing.", isValidClientSecret(config.clientSecret));
 

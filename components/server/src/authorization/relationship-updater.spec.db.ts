@@ -283,7 +283,7 @@ describe("RelationshipUpdater", async () => {
         await expected(rel.project(project.id).org.organization(org.id));
     });
 
-    it("should create relationships for all user workspaces", async function () {
+    it("should create relationships for all user workspaces", async () => {
         const user = await userDB.newUser();
         const org = await orgDB.createTeam(user.id, "MyOrg");
         const totalWorkspaces = 50;

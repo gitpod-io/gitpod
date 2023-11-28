@@ -44,7 +44,7 @@ export class JsonRpcPrebuildClient implements PromiseClient<typeof PrebuildServi
         options?: CallOptions,
     ): Promise<CancelPrebuildResponse> {
         const response = await this.getPrebuild(request, options);
-        await getGitpodService().server.cancelPrebuild(response.prebuild!.configurationId, response.prebuild!.id);
+        await getGitpodService().server.cancelPrebuild(response.prebuild?.configurationId, response.prebuild?.id);
         return new CancelPrebuildResponse();
     }
 

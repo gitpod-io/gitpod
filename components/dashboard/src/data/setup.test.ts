@@ -17,9 +17,9 @@ test("set and get proto message", async () => {
         slug: "test-slug",
     });
 
-    expect(rehydrate(org).creationTime!.toDate()).toStrictEqual(now);
-    expect(rehydrate([org])[0].creationTime!.toDate()).toStrictEqual(now);
-    expect(rehydrate({ foo: org }).foo.creationTime!.toDate()).toStrictEqual(now);
+    expect(rehydrate(org).creationTime?.toDate()).toStrictEqual(now);
+    expect(rehydrate([org])[0].creationTime?.toDate()).toStrictEqual(now);
+    expect(rehydrate({ foo: org }).foo.creationTime?.toDate()).toStrictEqual(now);
 });
 
 function rehydrate<T>(obj: T): T {

@@ -33,10 +33,10 @@ export class GitLabTokenValidator implements IGitTokenValidator {
             if (response.ok) {
                 found = true;
                 const json = (await response.json()) as any;
-                const project = json.data && json.data.project;
+                const project = json.data?.project;
                 if (project) {
                     isPrivateRepo = project.visibility !== "public";
-                    const pushCode = project.userPermissions && project.userPermissions.pushCode;
+                    const pushCode = project.userPermissions?.pushCode;
                     writeAccessToRepo = pushCode === true;
                 }
             } else {

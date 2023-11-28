@@ -56,7 +56,7 @@ export function WorkspaceSearch(props: Props) {
     useEffect(() => {
         const workspaceId = location.pathname.split("/")[3];
         if (workspaceId) {
-            let user = searchResult.rows.find((ws) => ws.workspaceId === workspaceId);
+            const user = searchResult.rows.find((ws) => ws.workspaceId === workspaceId);
             if (user) {
                 setCurrentWorkspaceState(user);
             } else {
@@ -82,7 +82,7 @@ export function WorkspaceSearch(props: Props) {
         return <WorkspaceDetail workspace={currentWorkspace} />;
     }
 
-    const search = async (page: number = 1) => {
+    const search = async (page = 1) => {
         // Disables empty search on the workspace search page
         if (isGitpodIo() && !props.user && queryTerm.length === 0) {
             return;
@@ -173,8 +173,8 @@ function WorkspaceEntry(p: { ws: WorkspaceAndInstance }) {
     });
     return (
         <Link
-            key={"ws-" + p.ws.workspaceId}
-            to={"/admin/workspaces/" + p.ws.workspaceId}
+            key={`ws-${p.ws.workspaceId}`}
+            to={`/admin/workspaces/${p.ws.workspaceId}`}
             data-analytics='{"button_type":"sidebar_menu"}'
         >
             <div className="rounded-xl whitespace-nowrap flex py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-kumquat-light group">

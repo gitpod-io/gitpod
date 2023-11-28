@@ -25,7 +25,7 @@ const localClient: OAuthClient = {
     name: "Gitpod local control client",
     // Set of valid redirect URIs
     // NOTE: these need to be kept in sync with the port range in the local app
-    redirectUris: Array.from({ length: 10 }, (_, i) => "http://127.0.0.1:" + (63110 + i)),
+    redirectUris: Array.from({ length: 10 }, (_, i) => `http://127.0.0.1:${63110}${i}`),
     allowedGrants: ["authorization_code"],
     scopes: [
         { name: "function:getGitpodTokenScopes" },
@@ -43,7 +43,7 @@ const localCli: OAuthClient = {
     name: "Gitpod CLI",
     // Set of valid redirect URIs
     // NOTE: these need to be kept in sync with the port range in the local app
-    redirectUris: Array.from({ length: 10 }, (_, i) => "http://127.0.0.1:" + (63110 + i)),
+    redirectUris: Array.from({ length: 10 }, (_, i) => `http://127.0.0.1:${63110}${i}`),
     allowedGrants: ["authorization_code"],
     scopes: [
         { name: "function:listenForWorkspaceInstanceUpdates" },
@@ -95,7 +95,7 @@ function createVSCodeClient(protocol: string, displayName: string): OAuthClient 
     return {
         id: `${protocol}-gitpod`,
         name: `${displayName}: Gitpod extension`,
-        redirectUris: [protocol + "://gitpod.gitpod-desktop/complete-gitpod-auth"],
+        redirectUris: [`${protocol}://gitpod.gitpod-desktop/complete-gitpod-auth`],
         allowedGrants: ["authorization_code"],
         scopes: [
             { name: "function:getGitpodTokenScopes" },

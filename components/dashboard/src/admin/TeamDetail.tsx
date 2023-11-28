@@ -64,8 +64,8 @@ export default function TeamDetail(props: { team: Team }) {
     });
 
     const setTeamMemberRole = async (userId: string, role: TeamMemberRole) => {
-        await getGitpodService().server.adminSetTeamMemberRole(team!.id, userId, role);
-        setTeamMembers(await getGitpodService().server.adminGetTeamMembers(team!.id));
+        await getGitpodService().server.adminSetTeamMemberRole(team?.id, userId, role);
+        setTeamMembers(await getGitpodService().server.adminGetTeamMembers(team?.id));
     };
     return (
         <>
@@ -175,8 +175,7 @@ export default function TeamDetail(props: { team: Team }) {
                 {team.markedDeleted || !filteredMembers || filteredMembers.length === 0 ? (
                     <p className="pt-16 text-center">No members found</p>
                 ) : (
-                    filteredMembers &&
-                    filteredMembers.map((m) => (
+                    filteredMembers?.map((m) => (
                         <Item className="grid grid-cols-3" key={m.userId}>
                             <ItemField className="flex items-center my-auto">
                                 <div className="w-14">
@@ -188,7 +187,7 @@ export default function TeamDetail(props: { team: Team }) {
                                         />
                                     )}
                                 </div>
-                                <Link to={"/admin/users/" + m.userId}>
+                                <Link to={`/admin/users/${m.userId}`}>
                                     <div>
                                         <div className="text-base text-gray-900 dark:text-gray-50 font-medium">
                                             {m.fullName}

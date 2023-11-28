@@ -123,7 +123,7 @@ export class VerificationService {
         if (!this.verifyService) {
             return false;
         }
-        if (!!user.lastVerificationTime) {
+        if (user.lastVerificationTime) {
             return false;
         }
         // we treat existing users (created before we introduced phone vwerification) as verified

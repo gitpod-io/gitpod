@@ -32,11 +32,12 @@ export const ConfettiContextProvider: FC = ({ children }) => {
     return (
         <ConfettiContext.Provider value={value}>
             {children}
-            {isConfettiDropping && (
-                <Suspense fallback={<></>}>
+            {isConfettiDropping &&
+                (
+                    <Suspense fallback=>
                     <Confetti recycle={false} numberOfPieces={300} onConfettiComplete={value.hideConfetti} />
                 </Suspense>
-            )}
+                )}
         </ConfettiContext.Provider>
     );
 };

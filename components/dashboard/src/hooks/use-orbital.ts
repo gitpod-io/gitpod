@@ -40,7 +40,7 @@ export const useOrbital = (spaceId: string) => {
         orbitalScript.addEventListener(
             "load",
             () => {
-                if (typeof window["orbital"] === "undefined") {
+                if (typeof window.orbital === "undefined") {
                     console.error("Orbital script failed to load.");
                     return;
                 }
@@ -58,6 +58,6 @@ export const useOrbital = (spaceId: string) => {
     return {
         isLoaded,
         discoveryIds,
-        orbital: window["orbital"],
+        orbital: window.orbital,
     };
 };

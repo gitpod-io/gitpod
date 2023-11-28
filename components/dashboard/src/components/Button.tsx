@@ -87,7 +87,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                 )}
                 ref={ref}
                 disabled={disabled}
-                autoFocus={autoFocus}
                 onClick={onClick}
             >
                 <ButtonContent loading={loading} icon={icon}>

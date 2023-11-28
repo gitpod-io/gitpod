@@ -36,8 +36,8 @@ export class BitbucketTokenValidator implements IGitTokenValidator {
                 console.warn(`checkWriteAccessForBitbucketRepo: Found more than one repo for ${repoFullName}.`);
             }
             result.found = true;
-            result.isPrivateRepo = repos[0].repository!.is_private;
-            const matchingRepo = repos.find((r) => r.permission == "write" || r.permission == "admin");
+            result.isPrivateRepo = repos[0].repository?.is_private;
+            const matchingRepo = repos.find((r) => r.permission === "write" || r.permission === "admin");
             if (matchingRepo) {
                 result.writeAccessToRepo = true;
             }

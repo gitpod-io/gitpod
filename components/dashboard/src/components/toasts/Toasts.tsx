@@ -37,7 +37,7 @@ export const ToastContextProvider: FC = ({ children }) => {
             isToastObj = true;
         }
 
-        let newToast: ToastEntry = {
+        const newToast: ToastEntry = {
             ...(isToastObj
                 ? {
                       id: `${Math.random()}`,

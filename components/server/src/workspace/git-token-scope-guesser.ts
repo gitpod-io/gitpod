@@ -39,13 +39,12 @@ export class GitTokenScopeGuesser {
             if (hasWriteAccess) {
                 const isPublic = validationResult && !validationResult.isPrivateRepo;
                 const requiredScopesForGitCommand = isPublic
-                    ? authProvider.requirements!.publicRepo
-                    : authProvider.requirements!.privateRepo;
+                    ? authProvider.requirements?.publicRepo
+                    : authProvider.requirements?.privateRepo;
                 return { scopes: requiredScopesForGitCommand };
-            } else {
-                return { message: `The remote repository "${repoUrl}" is not accessible with the current token.` };
             }
+            return { message: `The remote repository "${repoUrl}" is not accessible with the current token.` };
         }
-        return { scopes: authProvider.requirements!.default };
+        return { scopes: authProvider.requirements?.default };
     }
 }

@@ -33,7 +33,7 @@ export const SetupCompleteStep: FC<Props> = ({ onComplete }) => {
             <div className="flex flex-row items-center space-x-2 mt-4">
                 <div className="flex flex-row items-center space-x-1 font-mono text-sm text-gray-500 dark:text-gray-600">
                     {/* Keep the caret in a separate tag so triple clicking url doesn't select caret too */}
-                    <pre>{`>`}</pre>
+                    <pre>{">"}</pre>
                     <pre>{url}</pre>
                 </div>
                 <div className="cursor-pointer" onClick={handleCopyToClipboard}>

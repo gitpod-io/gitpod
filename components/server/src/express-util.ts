@@ -13,7 +13,7 @@ export const query = (...tuples: [string, string][]) => {
     if (tuples.length === 0) {
         return "";
     }
-    return "?" + tuples.map((t) => `${t[0]}=${encodeURIComponent(t[1])}`).join("&");
+    return `?${tuples.map((t) => `${t[0]}=${encodeURIComponent(t[1])}`).join("&")}`;
 };
 
 // Strict: We only allow connections from the base domain, so disallow connections from all other Origins
@@ -98,7 +98,7 @@ export function bottomErrorHandler(log: (...args: any[]) => void): express.Error
         let msg = "undefined";
         let status = 500;
         if (err instanceof Error) {
-            msg = err.toString() + "\nStack: " + err.stack;
+            msg = `${err.toString()}\nStack: ${err.stack}`;
             status = typeof (err as any).status === "number" ? (err as any).status : 500;
         } else {
             msg = err.toString();

@@ -146,8 +146,8 @@ export class CachingHeadlessLogServiceClientProvider extends CachingClientProvid
 function isConnectionAlive(client: grpc.Client) {
     const cs = client.getChannel().getConnectivityState(false);
     return (
-        cs == grpc.connectivityState.CONNECTING ||
-        cs == grpc.connectivityState.IDLE ||
-        cs == grpc.connectivityState.READY
+        cs === grpc.connectivityState.CONNECTING ||
+        cs === grpc.connectivityState.IDLE ||
+        cs === grpc.connectivityState.READY
     );
 }

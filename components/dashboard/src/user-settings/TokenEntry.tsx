@@ -18,7 +18,7 @@ interface TokenEntryProps {
 }
 
 function TokenEntry(props: TokenEntryProps) {
-    const expirationDay = dayjs(props.token.expirationTime!.toDate());
+    const expirationDay = dayjs(props.token.expirationTime?.toDate());
     const expired = expirationDay.isBefore(dayjs());
     const expirationDateString = expirationDay.format("MMM D, YYYY, hh:mm A");
 
@@ -29,9 +29,8 @@ function TokenEntry(props: TokenEntryProps) {
         const permissions = AllPermissions.filter((e) => e.scopes.every((v) => props.token.scopes.includes(v)));
         if (permissions.length > 0) {
             return permissions.map((e) => e.name).join("\n");
-        } else {
-            return "No access";
         }
+        return "No access";
     };
 
     return (
@@ -43,7 +42,7 @@ function TokenEntry(props: TokenEntryProps) {
                 <span className="truncate whitespace-pre-line">{getScopes()}</span>
             </div>
             <div className="flex items-center w-3/12 text-gray-400">
-                <span className={"flex items-center gap-1 truncate" + (expired ? " text-orange-600" : "")}>
+                <span className={`flex items-center gap-1 truncate${expired ? " text-orange-600" : ""}`}>
                     <span>{expirationDay.format("MMM D, YYYY")}</span>
                     {expired && (
                         <Tooltip content={expirationDateString}>

@@ -33,7 +33,7 @@ function SSHView(props: SSHProps) {
             .catch(console.error);
     }, []);
 
-    const host = props.ideUrl.replace(props.workspaceId, props.workspaceId + ".ssh");
+    const host = props.ideUrl.replace(props.workspaceId, `${props.workspaceId}.ssh`);
     const sshAccessTokenCommand = `ssh '${props.workspaceId}#${props.ownerToken}@${host}'`;
     const sshKeyCommand = `ssh '${props.workspaceId}@${host}'`;
 
@@ -57,7 +57,7 @@ function SSHView(props: SSHProps) {
                     }}
                 />
             </div>
-            <div className="border-gray-200 dark:border-gray-800 border-b"></div>
+            <div className="border-gray-200 dark:border-gray-800 border-b" />
             <div className="space-y-4 mt-4">
                 {!selectSSHKey && (
                     <Alert type="warning" className="whitespace-normal">

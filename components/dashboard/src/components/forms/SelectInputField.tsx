@@ -80,12 +80,12 @@ export const SelectInput: FunctionComponent<SelectInputProps> = memo(
     ({ value, className, id, disabled = false, required = false, children, onChange, onBlur }) => {
         const handleChange = useCallback(
             (e) => {
-                onChange && onChange(e.target.value);
+                onChange?.(e.target.value);
             },
             [onChange],
         );
 
-        const handleBlur = useCallback(() => onBlur && onBlur(), [onBlur]);
+        const handleBlur = useCallback(() => onBlur?.(), [onBlur]);
 
         return (
             <select

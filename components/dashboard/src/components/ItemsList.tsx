@@ -14,7 +14,7 @@ export function Item(props: { children?: React.ReactNode; className?: string; he
     // cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700
     const solidClassName = props.solid ? "bg-gray-100 dark:bg-gray-800" : "hover:bg-gray-100 dark:hover:bg-gray-800";
     const headerClassName = "text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800";
-    const notHeaderClassName = "rounded-xl focus:bg-kumquat-light " + solidClassName;
+    const notHeaderClassName = `rounded-xl focus:bg-kumquat-light ${solidClassName}`;
     return (
         <div
             className={`flex flex-grow flex-row w-full p-3 justify-between transition ease-in-out ${
@@ -40,7 +40,7 @@ export function ItemFieldContextMenu(props: {
     position?: "start" | "center" | "end";
     changeMenuState?: (state: boolean) => void;
 }) {
-    const cls = "self-" + (props.position ?? "center");
+    const cls = `self-${props.position ?? "center"}`;
 
     return (
         <div

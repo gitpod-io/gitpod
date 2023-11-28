@@ -306,7 +306,7 @@ export class UserController {
                 [" ", "-", "."].forEach((c) => (cookiePrefix = cookiePrefix.split(c).join("_")));
                 const name = `_${cookiePrefix}_ws_${instanceID}_owner_`;
 
-                if (!!req.cookies[name]) {
+                if (req.cookies[name]) {
                     // cookie is already set - do nothing. This prevents server from drowning in load
                     // if the dashboard is ill-behaved.
                     res.sendStatus(200);
@@ -325,7 +325,7 @@ export class UserController {
                     });
                     return;
                 }
-                if (workspace && user.id != workspace.ownerId) {
+                if (workspace && user.id !== workspace.ownerId) {
                     // [cw] The user is not the workspace owner, which means they don't get the owner cookie.
                     // [cw] In the future, when we introduce per-user tokens we can set the user-specific token here.
 
@@ -457,24 +457,22 @@ export class UserController {
                     const tokenHash = crypto.createHash("sha256").update(token, "utf8").digest("hex");
                     const dbToken: GitpodToken = {
                         tokenHash,
-                        name: `local-app`,
+                        name: "local-app",
                         type: GitpodTokenType.MACHINE_AUTH_TOKEN,
                         userId: req.user.id,
                         scopes: [
                             "function:getWorkspaces",
                             "function:listenForWorkspaceInstanceUpdates",
-                            "resource:" +
-                                ScopedResourceGuard.marshalResourceScope({
-                                    kind: "workspace",
-                                    subjectID: "*",
-                                    operations: ["get"],
-                                }),
-                            "resource:" +
-                                ScopedResourceGuard.marshalResourceScope({
-                                    kind: "workspaceInstance",
-                                    subjectID: "*",
-                                    operations: ["get"],
-                                }),
+                            `resource:${ScopedResourceGuard.marshalResourceScope({
+                                kind: "workspace",
+                                subjectID: "*",
+                                operations: ["get"],
+                            })}`,
+                            `resource:${ScopedResourceGuard.marshalResourceScope({
+                                kind: "workspaceInstance",
+                                subjectID: "*",
+                                operations: ["get"],
+                            })}`,
                         ],
                         created: new Date().toISOString(),
                     };
@@ -505,7 +503,7 @@ export class UserController {
                 const workspaceId = parseWorkspaceIdFromHostname(req.hostname);
                 if (workspaceId) {
                     const workspace = await this.workspaceDB.findById(workspaceId);
-                    if (workspace && user.id != workspace.ownerId && !workspace.shareable) {
+                    if (workspace && user.id !== workspace.ownerId && !workspace.shareable) {
                         log.info({ userId: user.id, workspaceId }, "User does not own private workspace. Denied");
                         res.sendStatus(403);
                         return;
@@ -574,7 +572,7 @@ export class UserController {
 
             if (!!contextUrlHost && authProvidersOnDashboard.find((a) => a === contextUrlHost)) {
                 req.query.host = contextUrlHost;
-                log.debug("Guessed auth provider from returnTo URL: " + contextUrlHost, {
+                log.debug(`Guessed auth provider from returnTo URL: ${contextUrlHost}`, {
                     "login-flow": true,
                     query: req.query,
                 });

@@ -107,12 +107,11 @@ export class GithubApp {
         });
 
         // Backward-compatibility: Redirect old badge URLs (e.g. "/api/apps/github/pbs/github.com/gitpod-io/gitpod/5431d5735c32ab7d5d840a4d1a7d7c688d1f0ce9.svg")
-        options.getRouter &&
-            options
-                .getRouter("/pbs")
-                .get("/*", (req: express.Request, res: express.Response, next: express.NextFunction) => {
-                    res.redirect(301, this.getBadgeImageURL());
-                });
+        options
+            .getRouter?.("/pbs")
+            .get("/*", (req: express.Request, res: express.Response, next: express.NextFunction) => {
+                res.redirect(301, this.getBadgeImageURL());
+            });
 
         app.on("installation.created", (ctx: Context<"installation.created">) => {
             handleEvent(ctx.name, async () => {
@@ -180,53 +179,50 @@ export class GithubApp {
             handleEvent(ctx.name, () => this.handlePullRequest(ctx));
         });
 
-        options.getRouter &&
-            options.getRouter("/reconfigure").get(
-                "/",
-                asyncHandler(async (req: express.Request, res: express.Response) => {
-                    try {
-                        const gh = await app.auth();
-                        const data = await gh.apps.getAuthenticated();
-                        const slug = data.data.slug;
+        options.getRouter?.("/reconfigure").get(
+            "/",
+            asyncHandler(async (req: express.Request, res: express.Response) => {
+                try {
+                    const gh = await app.auth();
+                    const data = await gh.apps.getAuthenticated();
+                    const slug = data.data.slug;
 
-                        const state = req.query.state;
-                        res.redirect(`https://github.com/apps/${slug}/installations/new?state=${state}`);
-                    } catch (error) {
-                        console.error(error, { error });
-                        res.status(500).send("GitHub App is not configured.");
-                    }
-                }),
-            );
-        options.getRouter &&
-            options.getRouter("/setup").get("/", (req: express.Request, res: express.Response) => {
-                const state = req.query.state;
-                const installationId = req.query.installation_id;
-                const setupAction = req.query.setup_action;
-                const payload = { installationId, setupAction };
-                req.query;
-
-                if (state) {
-                    const url = this.config.hostUrl
-                        .with({
-                            pathname: "/complete-auth",
-                            search:
-                                "message=payload:" + Buffer.from(JSON.stringify(payload), "utf-8").toString("base64"),
-                        })
-                        .toString();
-                    res.redirect(url);
-                } else {
-                    const url = this.config.hostUrl
-                        .with({ pathname: "install-github-app", search: `installation_id=${installationId}` })
-                        .toString();
-                    res.redirect(url);
+                    const state = req.query.state;
+                    res.redirect(`https://github.com/apps/${slug}/installations/new?state=${state}`);
+                } catch (error) {
+                    console.error(error, { error });
+                    res.status(500).send("GitHub App is not configured.");
                 }
-            });
+            }),
+        );
+        options.getRouter?.("/setup").get("/", (req: express.Request, res: express.Response) => {
+            const state = req.query.state;
+            const installationId = req.query.installation_id;
+            const setupAction = req.query.setup_action;
+            const payload = { installationId, setupAction };
+            req.query;
+
+            if (state) {
+                const url = this.config.hostUrl
+                    .with({
+                        pathname: "/complete-auth",
+                        search: `message=payload:${Buffer.from(JSON.stringify(payload), "utf-8").toString("base64")}`,
+                    })
+                    .toString();
+                res.redirect(url);
+            } else {
+                const url = this.config.hostUrl
+                    .with({ pathname: "install-github-app", search: `installation_id=${installationId}` })
+                    .toString();
+                res.redirect(url);
+            }
+        });
     }
 
     private async findProjectOwner(project: Project, installationOwner: User): Promise<User> {
         const user = await this.selectUserForPrebuild(installationOwner, project);
         if (!user) {
-            log.info(`Did not find user for installation. Probably an incomplete app installation.`, {
+            log.info("Did not find user for installation. Probably an incomplete app installation.", {
                 repo: project.cloneUrl,
                 project,
             });
@@ -259,8 +255,8 @@ export class GithubApp {
                 });
                 return;
             }
-            if (!!installationOwner.blocked) {
-                log.info(`Blocked user tried to start prebuild`, { repo: ctx.payload.repository });
+            if (installationOwner.blocked) {
+                log.info("Blocked user tried to start prebuild", { repo: ctx.payload.repository });
                 await this.webhookEvents.updateEvent(event.id, { status: "dismissed_unauthorized" });
                 return;
             }
@@ -303,7 +299,7 @@ export class GithubApp {
                     });
 
                     if (!prebuildPrecondition.shouldRun) {
-                        const reason = `GitHub push event: No prebuild.`;
+                        const reason = "GitHub push event: No prebuild.";
                         log.debug(logCtx, reason, { contextURL });
                         span.log({ "not-running": reason, config: config });
                         await this.webhookEvents.updateEvent(event.id, {
@@ -514,7 +510,7 @@ export class GithubApp {
 
         const isFork = pr.head.repo.id !== pr.base.repo.id;
         if (isFork) {
-            log.debug({ userId: user.id }, `GitHub PR event from fork.`, {
+            log.debug({ userId: user.id }, "GitHub PR event from fork.", {
                 contextURL,
                 userId: user.id,
                 project,
@@ -538,14 +534,13 @@ export class GithubApp {
                 return undefined;
             }
             return result;
-        } else {
-            log.debug({ userId: user.id }, `GitHub push event: No prebuild.`, {
-                contextURL,
-                userId: user.id,
-                project,
-            });
-            return;
         }
+        log.debug({ userId: user.id }, "GitHub push event: No prebuild.", {
+            contextURL,
+            userId: user.id,
+            project,
+        });
+        return;
     }
 
     private onPrAddBadge(
@@ -632,7 +627,7 @@ export class GithubApp {
             const user = await runWithSubjectId(SubjectId.fromUserId(teamMember.userId), () =>
                 this.userService.findUserById(teamMember.userId, teamMember.userId),
             );
-            if (user && user.identities.some((i) => i.authProviderId === "Public-GitHub")) {
+            if (user?.identities.some((i) => i.authProviderId === "Public-GitHub")) {
                 return user;
             }
         }

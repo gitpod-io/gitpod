@@ -205,7 +205,7 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
 
             return {
                 ...more,
-                title: `${owner}/${repoName} - ${more.ref || more.revision}${more.path ? ":" + more.path : ""}`,
+                title: `${owner}/${repoName} - ${more.ref || more.revision}${more.path ? `:${more.path}` : ""}`,
                 repository,
             } as NavigatorContext;
         } catch (e) {
@@ -245,25 +245,25 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
 
             const destRepo = (
                 await api.repositories.get({
-                    workspace: destination.repository!.full_name!.split("/")[0],
-                    repo_slug: destination.repository!.full_name!.split("/")[1],
+                    workspace: destination.repository?.full_name?.split("/")[0],
+                    repo_slug: destination.repository?.full_name?.split("/")[1],
                 })
             ).data;
             const sourceRepo = (
                 await api.repositories.get({
-                    workspace: source.repository!.full_name!.split("/")[0],
-                    repo_slug: source.repository!.full_name!.split("/")[1],
+                    workspace: source.repository?.full_name?.split("/")[0],
+                    repo_slug: source.repository?.full_name?.split("/")[1],
                 })
             ).data;
 
             return <PullRequestContext>{
                 repository: await this.toRepository(user, host, sourceRepo),
-                ref: source.branch!.name,
+                ref: source.branch?.name,
                 refType: "branch",
-                revision: source.commit!.hash,
+                revision: source.commit?.hash,
                 base: {
                     repository: await this.toRepository(user, host, destRepo),
-                    ref: destination.branch!.name,
+                    ref: destination.branch?.name,
                     refType: "branch",
                 },
                 ...more,
@@ -316,7 +316,7 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
         }
         // full_name: string
         // The concatenation of the repository owner's username and the slugified name, e.g. "evzijst/interruptingcow". This is the same string used in Bitbucket URLs.
-        const fullName = repo.full_name!.split("/");
+        const fullName = repo.full_name?.split("/");
         const owner = fullName[0];
         const name = fullName[1];
 
@@ -332,8 +332,8 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
             const api = await this.api(user);
             const parentRepo = (
                 await api.repositories.get({
-                    workspace: repo.parent!.full_name!.split("/")[0],
-                    repo_slug: repo.parent!.full_name!.split("/")[1],
+                    workspace: repo.parent?.full_name?.split("/")[0],
+                    repo_slug: repo.parent?.full_name?.split("/")[1],
                 })
             ).data;
             result.fork = {

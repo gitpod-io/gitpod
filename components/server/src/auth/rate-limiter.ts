@@ -264,7 +264,7 @@ export class UserRateLimiter {
             log.warn(`method '${method}' is not configured for a rate limiter, using 'default'`);
         }
 
-        const limiter = this.limiters[group] || this.limiters["default"];
+        const limiter = this.limiters[group] || this.limiters.default;
         if (!(group in this.limiters)) {
             log.warn(
                 `method '${method}' is configured for a rate limiter '${group}' but this rate limiter does not exist, using 'default' instead`,

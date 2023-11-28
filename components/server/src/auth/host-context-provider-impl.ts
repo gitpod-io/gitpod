@@ -44,7 +44,7 @@ export class HostContextProviderImpl implements HostContextProvider {
         try {
             await this.updateDynamicHosts({});
         } catch (error) {
-            log.error(`Failed to update dynamic hosts.`, error);
+            log.error("Failed to update dynamic hosts.", error);
         }
 
         // schedule periodic update of dynamic hosts
@@ -53,7 +53,7 @@ export class HostContextProviderImpl implements HostContextProvider {
             try {
                 await this.updateDynamicHosts({ span });
             } catch (error) {
-                log.error(`Failed to update dynamic hosts.`, error);
+                log.error("Failed to update dynamic hosts.", error);
             } finally {
                 span.finish();
             }
@@ -82,11 +82,11 @@ export class HostContextProviderImpl implements HostContextProvider {
             const { host } = config;
 
             const existingContext = this.dynamicHosts.get(host);
-            const existingConfig = existingContext && existingContext.authProvider.params;
+            const existingConfig = existingContext?.authProvider.params;
             if (existingConfig && config.id === existingConfig.id) {
                 const sameHost = config.host === existingConfig.host;
                 if (!sameHost) {
-                    log.warn("Ignoring host update for dynamic Auth Provider: " + host, { config, existingConfig });
+                    log.warn(`Ignoring host update for dynamic Auth Provider: ${host}`, { config, existingConfig });
                     continue;
                 }
                 const sameOwner = config.ownerId === existingConfig.ownerId;
@@ -96,16 +96,16 @@ export class HostContextProviderImpl implements HostContextProvider {
                 if (sameOwner && sameStatus && sameOAuthRevision) {
                     continue;
                 }
-                log.debug("Updating existing dynamic Auth Provider: " + host, { config, existingConfig });
+                log.debug(`Updating existing dynamic Auth Provider: ${host}`, { config, existingConfig });
             } else {
-                log.debug("Creating new dynamic Auth Provider: " + host, { config });
+                log.debug(`Creating new dynamic Auth Provider: ${host}`, { config });
             }
 
             const container = this.factory.createHostContext(config);
             if (container) {
                 this.dynamicHosts.set(host, container);
             } else {
-                log.warn("Did not update dynamic Auth Provider " + host, { config });
+                log.warn(`Did not update dynamic Auth Provider ${host}`, { config });
             }
         }
 
@@ -115,7 +115,7 @@ export class HostContextProviderImpl implements HostContextProvider {
         // HINT: values of `currentHosts` are expected to be lower case
         const tobeRemoved = [...this.dynamicHosts.keys()].filter((h) => !currentHosts.has(h));
         for (const host of tobeRemoved) {
-            log.debug("Disposing dynamic Auth Provider: " + host);
+            log.debug(`Disposing dynamic Auth Provider: ${host}`);
 
             this.dynamicHosts.delete(host);
         }
@@ -137,7 +137,7 @@ export class HostContextProviderImpl implements HostContextProvider {
         hostname = hostname.toLowerCase();
         const hostContext = this.fixedHosts.get(hostname) || this.dynamicHosts.get(hostname);
         if (!hostContext) {
-            log.debug("No HostContext for " + hostname);
+            log.debug(`No HostContext for ${hostname}`);
         }
         return hostContext;
     }

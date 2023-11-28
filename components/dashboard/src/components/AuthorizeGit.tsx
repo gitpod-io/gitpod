@@ -54,7 +54,7 @@ export const AuthorizeGit: FC<{ className?: string }> = ({ className }) => {
             {authProviders.length === 0 ? (
                 <>
                     <Heading3 className="pb-2">No Git integrations</Heading3>
-                    {!!owner ? (
+                    {owner ? (
                         <div className="px-6">
                             <Subheading>You need to configure at least one Git integration.</Subheading>
                             <Link to="/settings/git">
@@ -84,7 +84,7 @@ export const AuthorizeGit: FC<{ className?: string }> = ({ className }) => {
                                 <Button
                                     onClick={() => connect(ap)}
                                     type="secondary"
-                                    key={"button" + ap.host}
+                                    key={`button${ap.host}`}
                                     className="mt-3 btn-login flex-none w-56 px-0 py-0.5 inline-flex"
                                 >
                                     <div className="flex relative -left-4 w-56">

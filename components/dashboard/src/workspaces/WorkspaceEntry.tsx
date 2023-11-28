@@ -40,7 +40,7 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
             new GitpodHostUrl(window.location.href)
                 .with({
                     pathname: "/start/",
-                    hash: "#" + workspace.id,
+                    hash: `#${workspace.id}`,
                 })
                 .toString(),
         [workspace.id],
@@ -57,8 +57,8 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
                         {info.id}
                     </div>
                 </a>
-                <Tooltip content={project ? "https://" + project : ""} allowWrap={true}>
-                    <a href={project ? "https://" + project : undefined}>
+                <Tooltip content={project ? `https://${project}` : ""} allowWrap={true}>
+                    <a href={project ? `https://${project}` : undefined}>
                         <div className="text-sm overflow-ellipsis truncate text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400">
                             {project || "Unknown"}
                         </div>
@@ -88,7 +88,7 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
                     <ItemField className="w-2/12 flex my-auto">
                         <Tooltip
                             content={`Last Activate ${dayjs(
-                                info.status!.phase!.lastTransitionTime!.toDate(),
+                                info.status?.phase?.lastTransitionTime?.toDate(),
                             ).fromNow()}`}
                         >
                             <div className="text-sm w-full text-gray-400 overflow-ellipsis truncate">

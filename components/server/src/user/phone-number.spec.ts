@@ -20,7 +20,7 @@ export class PhoneNumberSpec {
         ];
 
         for (const test of tests) {
-            expect(formatPhoneNumber(test[0]), "Values : " + JSON.stringify(test)).to.eq(test[1]);
+            expect(formatPhoneNumber(test[0]), `Values : ${JSON.stringify(test)}`).to.eq(test[1]);
         }
     }
 }

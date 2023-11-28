@@ -32,9 +32,7 @@ function SelectableCard(props: SelectableCardProps) {
                     {props.title}
                 </p>
                 <input
-                    className={
-                        "text-green-500 " + (props.selected ? "opacity-100" : "opacity-0 group-hover:opacity-100")
-                    }
+                    className={`text-green-500 ${props.selected ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
                     type="radio"
                     checked={props.selected}
                 />

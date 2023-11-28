@@ -161,7 +161,7 @@ export class UserAuthentication {
                 authProviderType: authProviderTypeOfOtherUser!,
             },
         };
-        throw SelectAccountException.create(`User is trying to connect a provider identity twice.`, payload);
+        throw SelectAccountException.create("User is trying to connect a provider identity twice.", payload);
     }
 
     async asserNoAccountWithEmail(email: string) {
@@ -179,7 +179,7 @@ export class UserAuthentication {
             this.hostContextProvider.getAll().find((c) => c.authProvider.authProviderId === authProviderId)
                 ?.authProvider?.info?.host || "unknown";
 
-        throw EmailAddressAlreadyTakenException.create(`Email address is already in use.`, { host });
+        throw EmailAddressAlreadyTakenException.create("Email address is already in use.", { host });
     }
 
     /**
@@ -192,7 +192,7 @@ export class UserAuthentication {
     }
 
     async isBlocked(params: CheckIsBlockedParams): Promise<boolean> {
-        if (params.user && params.user.blocked) {
+        if (params.user?.blocked) {
             return true;
         }
         if (params.primaryEmail) {
@@ -205,7 +205,7 @@ export class UserAuthentication {
     private parseMail(email: string): { user: string; domain: string } {
         const parts = email.split("@");
         if (parts.length !== 2) {
-            throw new Error("Invalid E-Mail address: " + email);
+            throw new Error(`Invalid E-Mail address: ${email}`);
         }
         return { user: parts[0], domain: parts[1].toLowerCase() };
     }

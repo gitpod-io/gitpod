@@ -46,7 +46,7 @@ export default function Integrations() {
         <div>
             <PageWithSettingsSubMenu>
                 <GitProviders />
-                <div className="h-12"></div>
+                <div className="h-12" />
                 <GitIntegrations />
             </PageWithSettingsSubMenu>
         </div>
@@ -73,7 +73,7 @@ function GitProviders() {
             const connectedProviders = user.identities.map((i) =>
                 authProviders.data?.find((ap) => ap.id === i.authProviderId),
             );
-            for (let provider of connectedProviders) {
+            for (const provider of connectedProviders) {
                 if (!provider) {
                     continue;
                 }
@@ -510,7 +510,9 @@ function GitIntegrations() {
                 </div>
             )}
             <ItemsList className="pt-6">
-                {providers && providers.map((ap) => <IntegrationEntryItem ap={ap} gitProviderMenu={gitProviderMenu} />)}
+                {providers?.map((ap) => (
+                    <IntegrationEntryItem ap={ap} gitProviderMenu={gitProviderMenu} />
+                ))}
             </ItemsList>
         </div>
     );
@@ -535,7 +537,7 @@ export function GitIntegrationModal(
         onAuthorize?: (payload?: string) => void;
     },
 ) {
-    const callbackUrl = useMemo(() => gitpodHostUrl.with({ pathname: `/auth/callback` }).toString(), []);
+    const callbackUrl = useMemo(() => gitpodHostUrl.with({ pathname: "/auth/callback" }).toString(), []);
 
     const [mode, setMode] = useState<"new" | "edit">("new");
     const [providerEntry, setProviderEntry] = useState<AuthProvider | undefined>(undefined);
@@ -569,8 +571,8 @@ export function GitIntegrationModal(
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [clientId, clientSecret, type]);
 
-    const onClose = () => props.onClose && props.onClose();
-    const onUpdate = () => props.onUpdate && props.onUpdate();
+    const onClose = () => props.onClose?.();
+    const onUpdate = () => props.onUpdate?.();
 
     const activate = async () => {
         setBusy(true);
@@ -620,7 +622,7 @@ export function GitIntegrationModal(
                 onSuccess: (payload) => {
                     updateProviderEntry();
                     onUpdate();
-                    props.onAuthorize && props.onAuthorize(payload);
+                    props.onAuthorize?.(payload);
                     onClose();
                 },
                 onError: (payload) => {
@@ -682,14 +684,13 @@ export function GitIntegrationModal(
         if (errors.length === 0) {
             setValidationError(undefined);
             return true;
-        } else {
-            setValidationError(errors.join("\n"));
-            return false;
         }
+        setValidationError(errors.join("\n"));
+        return false;
     };
 
     const getRedirectUrlDescription = (type: AuthProviderType, host: string) => {
-        let settingsUrl = ``;
+        let settingsUrl = "";
         switch (type) {
             case AuthProviderType.GITHUB:
                 settingsUrl = `${host}/settings/developers`;
@@ -700,13 +701,13 @@ export function GitIntegrationModal(
             default:
                 return undefined;
         }
-        let docsUrl = ``;
+        let docsUrl = "";
         switch (type) {
             case AuthProviderType.GITHUB:
-                docsUrl = `https://www.gitpod.io/docs/github-integration/#oauth-application`;
+                docsUrl = "https://www.gitpod.io/docs/github-integration/#oauth-application";
                 break;
             case AuthProviderType.GITLAB:
-                docsUrl = `https://www.gitpod.io/docs/gitlab-integration/#oauth-application`;
+                docsUrl = "https://www.gitpod.io/docs/gitlab-integration/#oauth-application";
                 break;
             default:
                 return undefined;

@@ -30,22 +30,22 @@ export function getPaginationNumbers(totalNumberOfPages: number, currentPage: nu
         toTheLeftOfCurrent > minimumAmountInBetweenToShowEllipsis; // e.g. 1 ... 5 6 7"
 
     if (showRightEllipsis && !showLeftEllipsis) {
-        let leftSideNumbers = Math.max(numberOfPagesToShowOnTheSide, currentPage + adjacentToCurrentPage);
-        let leftPageNumbersAsArray = pageNumbersAsArray(1, leftSideNumbers);
+        const leftSideNumbers = Math.max(numberOfPagesToShowOnTheSide, currentPage + adjacentToCurrentPage);
+        const leftPageNumbersAsArray = pageNumbersAsArray(1, leftSideNumbers);
         return [...leftPageNumbersAsArray, "...", totalNumberOfPages];
     }
 
     if (showLeftEllipsis && !showRightEllipsis) {
-        let rightSideNumbers = Math.max(
+        const rightSideNumbers = Math.max(
             numberOfPagesToShowOnTheSide,
             totalNumberOfPages - currentPage + adjacentToCurrentPage,
         );
-        let rightPageNumbersAsArray = pageNumbersAsArray(totalNumberOfPages - rightSideNumbers, totalNumberOfPages);
+        const rightPageNumbersAsArray = pageNumbersAsArray(totalNumberOfPages - rightSideNumbers, totalNumberOfPages);
         return [1, "...", ...rightPageNumbersAsArray];
     }
 
     if (showRightEllipsis && showLeftEllipsis) {
-        let middleNumbers = pageNumbersAsArray(toTheLeftOfCurrent, toTheRightOfCurrent);
+        const middleNumbers = pageNumbersAsArray(toTheLeftOfCurrent, toTheRightOfCurrent);
         return [1, "...", ...middleNumbers, "...", totalNumberOfPages];
     }
 

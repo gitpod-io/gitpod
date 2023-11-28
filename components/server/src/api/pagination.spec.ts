@@ -18,28 +18,28 @@ import { ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 const expect = chai.expect;
 
-describe("selectPage", function () {
+describe("selectPage", () => {
     const a1000 = Array.from({ length: 1000 }, (_, i) => `item${i + 1}`);
     const a10 = Array.from({ length: 10 }, (_, i) => `item${i + 1}`);
 
-    it(`should return first ${PAGE_SIZE_DEFAULT} if pagination is not specified`, function () {
+    it(`should return first ${PAGE_SIZE_DEFAULT} if pagination is not specified`, () => {
         const selection = selectPage(a1000);
         expect(selection).to.have.lengthOf(PAGE_SIZE_DEFAULT);
         expect(selection[0]).to.equal(`item${PAGE_DEFAULT}`);
     });
-    it(`should return first ${PAGE_SIZE_MAX} if page size exceed max`, function () {
+    it(`should return first ${PAGE_SIZE_MAX} if page size exceed max`, () => {
         const selection = selectPage(a1000, new PaginationRequest({ pageSize: PAGE_SIZE_MAX + 1 }));
         expect(selection).to.have.lengthOf(PAGE_SIZE_MAX);
         expect(selection[0]).to.equal(`item${PAGE_DEFAULT}`);
     });
-    it(`should return second page`, function () {
+    it("should return second page", () => {
         const paginationToken = generatePaginationToken({ offset: 50 });
         const selection = selectPage(a1000, new PaginationRequest({ token: paginationToken, pageSize: 50 }));
         expect(selection).to.have.lengthOf(50);
         expect(selection[0]).to.equal(`item${1 * 50 + 1}`);
         expect(selection[selection.length - 1]).to.equal(`item${2 * 50}`);
     });
-    it(`should return all if it fits into a page`, function () {
+    it("should return all if it fits into a page", () => {
         const selection = selectPage(a10, new PaginationRequest({ pageSize: 50 }));
         expect(selection).to.have.lengthOf(10);
         expect(selection[0]).to.equal(`item${1}`);
@@ -48,7 +48,7 @@ describe("selectPage", function () {
 });
 
 describe("generatePaginationToken", () => {
-    it(`should generate a token`, () => {
+    it("should generate a token", () => {
         const token = generatePaginationToken({ offset: 50 });
         expect(token).to.equal("eyJvZmZzZXQiOjUwfQ==");
     });

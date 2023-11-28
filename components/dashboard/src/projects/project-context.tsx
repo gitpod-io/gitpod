@@ -71,7 +71,7 @@ export function useCurrentProject(): { project: Project | undefined; loading: bo
                     const project = projects.find((p) => p.id === projectIdFromRoute);
                     if (project) {
                         // redirect to the other org
-                        history.push(location.pathname + "?org=" + t.id);
+                        history.push(`${location.pathname}?org=${t.id}`);
                     }
                 }
             }

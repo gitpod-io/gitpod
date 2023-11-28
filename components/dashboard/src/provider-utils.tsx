@@ -73,7 +73,7 @@ interface OpenAuthorizeWindowParams extends WindowMessageHandler {
 async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
     const { login, host, scopes, overrideScopes } = params;
     const successKey = getUniqueSuccessKey();
-    let search = `message=${successKey}`;
+    const search = `message=${successKey}`;
     const returnTo = gitpodHostUrl.with({ pathname: "complete-auth", search: search }).toString();
     const requestedScopes = scopes || [];
     const url = login
@@ -121,14 +121,14 @@ function attachMessageListener(successKey: string, { onSuccess, onError }: Windo
             window.removeEventListener("message", eventListener);
 
             if (event.source && "close" in event.source && event.source.close) {
-                console.log(`Received Auth Window Result. Closing Window.`);
+                console.log("Received Auth Window Result. Closing Window.");
                 event.source.close();
             }
         };
 
         if (typeof event.data === "string" && event.data.startsWith(successKey)) {
             killAuthWindow();
-            onSuccess && onSuccess(event.data);
+            onSuccess?.(event.data);
         }
         if (typeof event.data === "string" && event.data.startsWith("error:")) {
             let error: string | { error: string; description?: string } = atob(event.data.substring("error:".length));
@@ -142,7 +142,7 @@ function attachMessageListener(successKey: string, { onSuccess, onError }: Windo
             }
 
             killAuthWindow();
-            onError && onError(error);
+            onError?.(error);
         }
     };
     window.addEventListener("message", eventListener);
@@ -158,7 +158,7 @@ interface OpenOIDCStartWindowParams extends WindowMessageHandler {
 async function openOIDCStartWindow(params: OpenOIDCStartWindowParams) {
     const { orgSlug, configId, activate = false, verify = false } = params;
     const successKey = getUniqueSuccessKey();
-    let search = `message=${successKey}`;
+    const search = `message=${successKey}`;
     const returnTo = gitpodHostUrl.with({ pathname: "complete-auth", search }).toString();
     const searchParams = new URLSearchParams({ returnTo });
     if (orgSlug) {
@@ -175,7 +175,7 @@ async function openOIDCStartWindow(params: OpenOIDCStartWindowParams) {
 
     const url = gitpodHostUrl
         .with((url) => ({
-            pathname: `/iam/oidc/start`,
+            pathname: "/iam/oidc/start",
             search: searchParams.toString(),
         }))
         .toString();

@@ -95,16 +95,13 @@ export class ContextService {
             // TODO(janx): Remove snapshot access tracking once we're certain that enforcing repository read access doesn't disrupt the snapshot UX.
             const snapshot = await this.workspaceDb.trace({}).findSnapshotById(context.snapshotId);
             if (!snapshot) {
-                throw new ApplicationError(
-                    ErrorCodes.NOT_FOUND,
-                    "No snapshot with id '" + context.snapshotId + "' found.",
-                );
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, `No snapshot with id '${context.snapshotId}' found.`);
             }
             const workspace = await this.workspaceDb.trace({}).findById(snapshot.originalWorkspaceId);
             if (!workspace) {
                 throw new ApplicationError(
                     ErrorCodes.NOT_FOUND,
-                    "No workspace with id '" + snapshot.originalWorkspaceId + "' found.",
+                    `No workspace with id '${snapshot.originalWorkspaceId}' found.`,
                 );
             }
 
@@ -112,7 +109,7 @@ export class ContextService {
         }
 
         // if we're forced to use the default config, mark the context as such
-        if (!!options?.forceDefaultConfig) {
+        if (options?.forceDefaultConfig) {
             context = WithDefaultConfig.mark(context);
         }
 

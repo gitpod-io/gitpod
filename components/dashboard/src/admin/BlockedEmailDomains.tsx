@@ -56,7 +56,7 @@ function useUpdateBlockedEmailDomainMutation() {
     );
 }
 
-interface Props {}
+type Props = {};
 
 export function BlockedEmailDomainsList(props: Props) {
     const blockedEmailDomains = useBlockedEmailDomains();
@@ -136,7 +136,7 @@ export function BlockedEmailDomainsList(props: Props) {
                 <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
                     <div className="w-9/12">Domain</div>
                     <div className="w-1/12">Block Users</div>
-                    <div className="w-1/12"></div>
+                    <div className="w-1/12" />
                 </div>
                 {searchResult.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((br) => (
                     <BlockedDomainEntry
@@ -210,7 +210,7 @@ function AddBlockedDomainModal(p: AddBlockedDomainModalProps) {
     const save = () => {
         const v = ref.current;
         const newError = p.validate(v);
-        if (!!newError) {
+        if (newError) {
             setError(newError);
         }
 
@@ -253,14 +253,13 @@ function Details(props: {
             <div>
                 <h4>Domain (may contain '%' as wild card)</h4>
                 <input
-                    autoFocus
                     className="w-full"
                     type="text"
                     value={props.br.domain}
                     placeholder={'e.g. "mailicous-domain.com"'}
                     disabled={!props.update}
                     onChange={(v) => {
-                        if (!!props.update) {
+                        if (props.update) {
                             props.update({ domain: v.target.value });
                         }
                     }}
@@ -273,7 +272,7 @@ function Details(props: {
                 checked={props.br.negative}
                 disabled={!props.update}
                 onChange={(checked) => {
-                    if (!!props.update) {
+                    if (props.update) {
                         props.update({ negative: checked });
                     }
                 }}

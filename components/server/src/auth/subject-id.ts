@@ -47,11 +47,11 @@ export class SubjectId {
     public static tryParse(str: string): SubjectId {
         const parts = str.split(SubjectId.SEPARATOR);
         if (parts.length < 2) {
-            throw new Error(`Unable to parse SubjectId`);
+            throw new Error("Unable to parse SubjectId");
         }
         const kind = SubjectKindByShortName.get(parts[0]);
         if (!kind) {
-            throw new Error(`Unable to parse SubjectId: unknown SubjectKind!`);
+            throw new Error("Unable to parse SubjectId: unknown SubjectKind!");
         }
         const value = parts.slice(1).join();
         return new SubjectId(kind, value);

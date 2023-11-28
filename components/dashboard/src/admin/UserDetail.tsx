@@ -244,7 +244,7 @@ function getFlags(user: User, updateUser: UpdateUserFunction): Entry[] {
 
 function getRopEntries(user: User, updateUser: UpdateUserFunction): Entry[] {
     const createRopEntry = (name: RoleOrPermission, role?: boolean) => {
-        const checked = user.rolesOrPermissions?.includes(name)!!;
+        const checked = user.rolesOrPermissions?.includes(name)!;
         return {
             title: (role ? "Role: " : "Permission: ") + name,
             checked,

@@ -71,7 +71,8 @@ function getHeadingColor(color: HeadingProps["color"] = "dark") {
 function getTracking(tracking: HeadingProps["tracking"]) {
     if (tracking === "wide") {
         return "tracking-wide";
-    } else if (tracking === "tight") {
+    }
+    if (tracking === "tight") {
         return "tracking-tight";
     }
 

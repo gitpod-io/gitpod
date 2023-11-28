@@ -247,7 +247,7 @@ class TestGitlabContextParser {
             if (GitLab.ApiError.is(e)) {
                 expect(e.code).equals(404);
             } else {
-                chai.assert.fail("Unknown Error: " + JSON.stringify(e));
+                chai.assert.fail(`Unknown Error: ${JSON.stringify(e)}`);
             }
         }
     }

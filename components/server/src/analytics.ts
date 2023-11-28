@@ -61,7 +61,7 @@ export function maskIp(ip?: string) {
         return;
     }
     const octets = ip.split(".");
-    return octets?.length == 4 ? octets.slice(0, 3).concat(["0"]).join(".") : undefined;
+    return octets?.length === 4 ? octets.slice(0, 3).concat(["0"]).join(".") : undefined;
 }
 
 async function fullIdentify(user: User, request: Request, analytics: IAnalyticsWriter) {
@@ -79,8 +79,8 @@ async function fullIdentify(user: User, request: Request, analytics: IAnalyticsW
                 city: request.get("x-glb-client-city"),
                 country: request.get("x-glb-client-region"),
                 region: request.get("x-glb-client-region-subdivision"),
-                latitude: coords?.length == 2 ? coords[0] : undefined,
-                longitude: coords?.length == 2 ? coords[1] : undefined,
+                latitude: coords?.length === 2 ? coords[0] : undefined,
+                longitude: coords?.length === 2 ? coords[1] : undefined,
             },
         },
         traits: {
@@ -103,7 +103,7 @@ function getAnonymousId(request: Request) {
 }
 
 function resolveIdentities(user: User) {
-    const identities: { github_slug?: String; gitlab_slug?: String; bitbucket_slug?: String } = {};
+    const identities: { github_slug?: string; gitlab_slug?: string; bitbucket_slug?: string } = {};
     user.identities.forEach((value) => {
         switch (value.authProviderId) {
             case "Public-GitHub": {
@@ -124,11 +124,10 @@ function resolveIdentities(user: User) {
 }
 
 function stripCookie(cookie: string) {
-    if (cookie && cookie.length >= 2 && cookie.charAt(0) == '"' && cookie.charAt(cookie.length - 1) == '"') {
+    if (cookie && cookie.length >= 2 && cookie.charAt(0) === '"' && cookie.charAt(cookie.length - 1) === '"') {
         return cookie.substring(1, cookie.length - 1);
-    } else {
-        return cookie;
     }
+    return cookie;
 }
 
 export class ContextAwareAnalyticsWriter implements IAnalyticsWriter {

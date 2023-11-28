@@ -23,7 +23,7 @@ export default function Notifications() {
     const [isDevXMail, setDevXMail] = useState(!!user?.additionalData?.emailNotificationSettings?.allowsDevXMail);
 
     const toggleOnboardingMail = async () => {
-        if (user && user.additionalData && user.additionalData.emailNotificationSettings) {
+        if (user?.additionalData?.emailNotificationSettings) {
             const newIsOnboardingMail = !isOnboardingMail;
             user.additionalData.emailNotificationSettings.allowsOnboardingMail = newIsOnboardingMail;
             await getGitpodService().server.updateLoggedInUser({
@@ -42,7 +42,7 @@ export default function Notifications() {
     };
 
     const toggleChangelogMail = async () => {
-        if (user && user.additionalData && user.additionalData.emailNotificationSettings) {
+        if (user?.additionalData?.emailNotificationSettings) {
             const newIsChangelogMail = !isChangelogMail;
             user.additionalData.emailNotificationSettings.allowsChangelogMail = newIsChangelogMail;
             await getGitpodService().server.updateLoggedInUser({
@@ -61,7 +61,7 @@ export default function Notifications() {
     };
 
     const toggleDevXMail = async () => {
-        if (user && user.additionalData && user.additionalData.emailNotificationSettings) {
+        if (user?.additionalData?.emailNotificationSettings) {
             const newIsDevXMail = !isDevXMail;
             user.additionalData.emailNotificationSettings.allowsDevXMail = newIsDevXMail;
             await getGitpodService().server.updateLoggedInUser({

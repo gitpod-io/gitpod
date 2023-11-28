@@ -87,7 +87,7 @@ export default function Account() {
                 <p className="pt-4 pb-2 text-gray-600 dark:text-gray-400 text-base font-semibold">
                     Type your email to confirm
                 </p>
-                <input autoFocus className="w-full" type="text" onChange={(e) => setTypedEmail(e.target.value)}></input>
+                <input className="w-full" type="text" onChange={(e) => setTypedEmail(e.target.value)} />
             </ConfirmationModal>
 
             <PageWithSettingsSubMenu>

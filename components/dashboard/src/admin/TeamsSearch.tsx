@@ -40,7 +40,7 @@ export function TeamsSearch() {
     useEffect(() => {
         const teamId = location.pathname.split("/")[3];
         if (teamId && searchResult) {
-            let foundTeam = searchResult.rows.find((team) => team.id === teamId);
+            const foundTeam = searchResult.rows.find((team) => team.id === teamId);
             if (foundTeam) {
                 setCurrentTeam(foundTeam);
             } else {
@@ -59,7 +59,7 @@ export function TeamsSearch() {
         return <TeamDetail team={currentTeam} />;
     }
 
-    const search = async (page: number = 1) => {
+    const search = async (page = 1) => {
         setSearching(true);
         try {
             const result = await getGitpodService().server.adminGetTeams({
@@ -134,8 +134,8 @@ export function TeamsSearch() {
     function TeamResultItem(props: { team: Team }) {
         return (
             <Link
-                key={"pr-" + props.team.name}
-                to={"/admin/orgs/" + props.team.id}
+                key={`pr-${props.team.name}`}
+                to={`/admin/orgs/${props.team.id}`}
                 data-analytics='{"button_type":"sidebar_menu"}'
             >
                 <div className="rounded-xl whitespace-nowrap flex py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-kumquat-light group">

@@ -256,9 +256,9 @@ export class SharedWorkspaceAccessGuard implements ResourceAccessGuard {
     async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
         switch (resource.kind) {
             case "workspace":
-                return operation == "get" && resource.subject.shareable === true;
+                return operation === "get" && resource.subject.shareable === true;
             case "workspaceInstance":
-                return operation == "get" && !!resource.workspace.shareable;
+                return operation === "get" && !!resource.workspace.shareable;
             default:
                 return false;
         }
@@ -355,7 +355,7 @@ export namespace ScopedResourceGuard {
 
     export function unmarshalResourceScope(scope: string): ResourceScope {
         const segs = scope.split("::");
-        if (segs.length != 3) {
+        if (segs.length !== 3) {
             throw new Error("invalid scope");
         }
         const kind = segs[0];
@@ -568,7 +568,7 @@ export class RepositoryResourceGuard implements ResourceAccessGuard {
                 const identity = User.getIdentity(this.user, authProvider.authProviderId);
                 if (!identity) {
                     throw UnauthorizedError.create(
-                        repoUrl!.host,
+                        repoUrl?.host,
                         authProvider.info.requirements?.default || [],
                         "missing-identity",
                     );

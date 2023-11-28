@@ -211,7 +211,6 @@ export const Combobox: FunctionComponent<ComboboxProps> = ({
                             <input
                                 ref={inputEl}
                                 type="text"
-                                autoFocus
                                 className={"w-full focus rounded-lg"}
                                 placeholder={searchPlaceholder}
                                 value={search}
@@ -310,17 +309,17 @@ type ComboboxItemProps = {
 };
 
 export const ComboboxItem: FC<ComboboxItemProps> = ({ element, isActive, onSelected, onFocused }) => {
-    let selectionClasses = `dark:bg-gray-800 cursor-pointer`;
+    let selectionClasses = "dark:bg-gray-800 cursor-pointer";
     if (isActive) {
-        selectionClasses = `bg-gray-200 dark:bg-gray-700 cursor-pointer focus:outline-none focus:ring-0`;
+        selectionClasses = "bg-gray-200 dark:bg-gray-700 cursor-pointer focus:outline-none focus:ring-0";
     }
     if (!element.isSelectable) {
-        selectionClasses = ``;
+        selectionClasses = "";
     }
     return (
         <li
             id={element.id}
-            className={"h-min rounded-lg flex items-center px-2 py-1.5 " + selectionClasses}
+            className={`h-min rounded-lg flex items-center px-2 py-1.5 ${selectionClasses}`}
             onMouseDown={() => {
                 if (element.isSelectable) {
                     onSelected(element.id);

@@ -73,7 +73,7 @@ async function resolveLine(line) {
     const consumer = new SourceMapConsumer(rawSourceMap);
     const originalPosition = consumer.originalPositionFor({ line: lineNum, column: colNum });
 
-    if (originalPosition && originalPosition.source) {
+    if (originalPosition?.source) {
         const fullPath = path.join(BASE_PATH, originalPosition.source);
         const originalFunctionName = originalPosition.name || functionName;
         return `    at ${originalFunctionName} (${fullPath}:${originalPosition.line}:${originalPosition.column})`;
@@ -84,11 +84,11 @@ async function resolveLine(line) {
 
 let obfuscatedTrace = "";
 
-process.stdin.on("data", function (data) {
+process.stdin.on("data", (data) => {
     obfuscatedTrace += data;
 });
 
-process.stdin.on("end", async function () {
+process.stdin.on("end", async () => {
     const lines = obfuscatedTrace.split("\n");
     const resolvedLines = await Promise.all(lines.map(resolveLine));
     const resolvedTrace = resolvedLines.join("\n");

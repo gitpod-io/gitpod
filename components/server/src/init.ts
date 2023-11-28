@@ -31,8 +31,8 @@ process.on("SIGUSR1", () => {
             session.post("Profiler.stop", (err, { profile }) => {
                 // Write profile to disk, upload, etc.
                 if (!err) {
-                    const filename = path.join(os.tmpdir(), Date.now() + ".cpuprofile");
-                    console.log("preparing cpuprofile: " + filename);
+                    const filename = path.join(os.tmpdir(), `${Date.now()}.cpuprofile`);
+                    console.log(`preparing cpuprofile: ${filename}`);
                     fs.promises
                         .writeFile(filename, JSON.stringify(profile))
                         .catch((err) => console.error("error writing cpuprofile", err));
@@ -96,9 +96,9 @@ export async function start(container: Container) {
     const port = 3000;
     const app = express();
 
-    process.on("uncaughtException", function (err) {
+    process.on("uncaughtException", (err) => {
         // fix for https://github.com/grpc/grpc-node/blob/master/packages/grpc-js/src/load-balancer-pick-first.ts#L309
-        if (err && err.message && err.message.includes("reading 'startConnecting'")) {
+        if (err?.message?.includes("reading 'startConnecting'")) {
             log.error("uncaughtException", err);
         } else {
             throw err;
@@ -122,7 +122,7 @@ export async function start(container: Container) {
             }
         }, 5000);
 
-        pool.on("enqueue", function () {
+        pool.on("enqueue", () => {
             try {
                 dbConnectionsEnqueued.inc();
             } catch (error) {

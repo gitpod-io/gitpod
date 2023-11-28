@@ -346,7 +346,7 @@ export class GitHubRestApi {
     }
 }
 
-export interface GitHubResult<T> extends OctokitResponse<T> {}
+export type GitHubResult<T> = OctokitResponse<T>;
 export namespace GitHubResult {
     export function actualScopes(result: OctokitResponse<any>): string[] {
         return (result.headers["x-oauth-scopes"] || "").split(",").map((s: any) => s.trim());
@@ -634,9 +634,7 @@ export interface Label {
     default: boolean;
 }
 
-export interface Milestone {
-    // ??? Not relevant yet
-}
+export type Milestone = {};
 
 export interface Issue {
     id: number;

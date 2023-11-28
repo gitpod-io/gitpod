@@ -156,7 +156,6 @@
         "go.lintTool": "golangci-lint",
         "gopls": {
             "allowModfileModifications": true
-        },
-        "prettier.configPath": "/workspace/gitpod/.prettierrc.json"
+        }
     }
 }

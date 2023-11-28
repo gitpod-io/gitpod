@@ -83,7 +83,7 @@ class TestFileProvider {
                 if (GitLab.ApiError.is(project)) {
                     console.error(`attempt ${i} error: ${JSON.stringify(project.message)}`);
                 } else {
-                    console.log(project.name_with_namespace + " created ✅");
+                    console.log(`${project.name_with_namespace} created ✅`);
                 }
                 await new Promise((resolve) => setTimeout(resolve, 500));
             } catch (error) {

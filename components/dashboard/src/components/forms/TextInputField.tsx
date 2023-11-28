@@ -87,12 +87,12 @@ export const TextInput: FunctionComponent<TextInputProps> = memo(
     ({ type = "text", value, className, id, placeholder, disabled = false, required = false, onChange, onBlur }) => {
         const handleChange = useCallback(
             (e) => {
-                onChange && onChange(e.target.value);
+                onChange?.(e.target.value);
             },
             [onChange],
         );
 
-        const handleBlur = useCallback(() => onBlur && onBlur(), [onBlur]);
+        const handleBlur = useCallback(() => onBlur?.(), [onBlur]);
 
         return (
             <input

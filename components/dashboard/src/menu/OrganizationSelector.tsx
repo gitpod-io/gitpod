@@ -30,7 +30,7 @@ export default function OrganizationSelector() {
 
     const userFullName = user?.fullName || user?.name || "...";
 
-    let activeOrgEntry = !currentOrg.data
+    const activeOrgEntry = !currentOrg.data
         ? {
               title: userFullName,
               customContent: <CurrentOrgEntry title={userFullName} subtitle="Personal Account" />,
@@ -263,7 +263,7 @@ const useGetOrgURL = () => {
 
             // If we're on the new workspace page, try to maintain the location and context url
             if (/^\/new(\/$)?$/.test(location.pathname)) {
-                path = `/new`;
+                path = "/new";
                 hash = location.hash;
                 search.append("autostart", "false");
             }

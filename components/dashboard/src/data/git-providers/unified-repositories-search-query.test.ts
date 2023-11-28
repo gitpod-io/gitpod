@@ -54,7 +54,7 @@ test("it should match entries in url as well as poject name", () => {
         repo("bar", "someFootest"),
         repo("bar", "FOOtest"),
     ];
-    var deduplicated = deduplicateAndFilterRepositories("foo", false, suggestedRepos);
+    let deduplicated = deduplicateAndFilterRepositories("foo", false, suggestedRepos);
     expect(deduplicated.length).toEqual(6);
     deduplicated = deduplicateAndFilterRepositories("foot", false, suggestedRepos);
     expect(deduplicated.length).toEqual(4);

@@ -166,12 +166,12 @@ function initializeMessages() {
 initializeMessages();
 
 export function dehydrate(message: any): any {
-    if (message instanceof Array) {
+    if (Array.isArray(message)) {
         return message.map(dehydrate);
     }
     if (message instanceof Message) {
         // store the constuctor index so we can deserialize it later
-        return "|" + (message.constructor as any).typeName + "|" + message.toJsonString();
+        return `|${(message.constructor as any).typeName}|${message.toJsonString()}`;
     }
     if (message instanceof Object) {
         const result: any = {};
@@ -184,7 +184,7 @@ export function dehydrate(message: any): any {
 }
 
 export function hydrate(value: any): any {
-    if (value instanceof Array) {
+    if (Array.isArray(value)) {
         return value.map(hydrate);
     }
     if (typeof value === "string" && value.startsWith("|") && value.lastIndexOf("|") > 1) {

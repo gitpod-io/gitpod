@@ -100,7 +100,7 @@ export class GitHubEnterpriseApp {
             }
             const hostContext = this.hostContextProvider.get(host || "");
             if (!hostContext) {
-                throw new Error("Unsupported GitHub Enterprise host: " + host);
+                throw new Error(`Unsupported GitHub Enterprise host: ${host}`);
             }
             const cloneURL = payload.repository.clone_url;
             const projectOwners = await this.findProjectOwners(cloneURL);
@@ -123,16 +123,14 @@ export class GitHubEnterpriseApp {
                     },
                 );
                 const signatureMatched = tokenEntries.some((tokenEntry) => {
-                    const sig =
-                        "sha256=" +
-                        createHmac("sha256", user.id + "|" + tokenEntry.token.value)
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                            .update(body)
-                            .digest("hex");
+                    const sig = `sha256=${createHmac("sha256", `${user.id}|${tokenEntry.token.value}`)
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+                        .update(body)
+                        .digest("hex")}`;
                     return timingSafeEqual(Buffer.from(sig), Buffer.from(signature ?? ""));
                 });
                 if (signatureMatched) {
-                    if (!!user.blocked) {
+                    if (user.blocked) {
                         throw new Error(`Blocked user ${user.id} tried to start prebuild.`);
                     }
                     return user;
@@ -254,7 +252,7 @@ export class GitHubEnterpriseApp {
                 const user = await runWithSubjectId(SubjectId.fromUserId(webhookInstaller.id), () =>
                     this.userService.findUserById(webhookInstaller.id, teamMember.userId),
                 );
-                if (user && user.identities.some((i) => i.authProviderId === authProviderId)) {
+                if (user?.identities.some((i) => i.authProviderId === authProviderId)) {
                     return user;
                 }
             }
@@ -281,7 +279,7 @@ export class GitHubEnterpriseApp {
                     const user = await runWithSubjectId(SubjectId.fromUserId(teamMember.userId), () =>
                         this.userService.findUserById(teamMember.userId, teamMember.userId),
                     );
-                    if (user && user.identities.some((i) => i.authProviderId === authProviderId)) {
+                    if (user?.identities.some((i) => i.authProviderId === authProviderId)) {
                         users.push(user);
                     }
                 }

@@ -149,7 +149,7 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
             {!props.isAdminDashboard && (
                 <Header
                     title={project?.name || "Unknown project"}
-                    subtitle={`View recent prebuilds for active branches.`}
+                    subtitle={"View recent prebuilds for active branches."}
                     tabs={getProjectTabs(project)}
                 />
             )}
@@ -286,7 +286,8 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
 
 export function prebuildStatusLabel(prebuild?: Prebuild) {
     switch (prebuild?.status?.phase?.name) {
-        case PrebuildPhase_Phase.UNSPECIFIED: // Fall through
+        case PrebuildPhase_Phase.UNSPECIFIED:
+        // Fall through
         case PrebuildPhase_Phase.QUEUED:
             return <span className="font-medium text-orange-500 uppercase">pending</span>;
         case PrebuildPhase_Phase.BUILDING:
@@ -307,7 +308,8 @@ export function prebuildStatusLabel(prebuild?: Prebuild) {
 
 export function prebuildStatusIcon(prebuild?: Prebuild) {
     switch (prebuild?.status?.phase?.name) {
-        case PrebuildPhase_Phase.UNSPECIFIED: // Fall through
+        case PrebuildPhase_Phase.UNSPECIFIED:
+        // Fall through
         case PrebuildPhase_Phase.QUEUED:
             return <img alt="" className="h-4 w-4" src={StatusPaused} />;
         case PrebuildPhase_Phase.BUILDING:
@@ -329,9 +331,9 @@ export function prebuildStatusIcon(prebuild?: Prebuild) {
 function getPrebuildStatusDescription(prebuild: Prebuild): string {
     switch (prebuild.status?.phase?.name) {
         case PrebuildPhase_Phase.QUEUED:
-            return `Prebuild is queued and will be processed when there is execution capacity.`;
+            return "Prebuild is queued and will be processed when there is execution capacity.";
         case PrebuildPhase_Phase.BUILDING:
-            return `Prebuild is currently in progress.`;
+            return "Prebuild is currently in progress.";
         case PrebuildPhase_Phase.ABORTED:
             return `Prebuild has been cancelled. Either a newer commit was pushed to the same branch, a user cancelled it manually, or the prebuild rate limit has been exceeded. ${
                 prebuild.status?.message || ""
@@ -346,9 +348,9 @@ function getPrebuildStatusDescription(prebuild: Prebuild): string {
             if (prebuild.status?.message) {
                 return `The tasks executed in the prebuild returned a non-zero exit code. ${prebuild.status.message}`;
             }
-            return `Prebuild completed successfully.`;
+            return "Prebuild completed successfully.";
         default:
-            return `Unknown prebuild status.`;
+            return "Unknown prebuild status.";
     }
 }
 

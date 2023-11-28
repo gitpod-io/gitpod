@@ -78,7 +78,7 @@ export class StripeService {
             });
         });
         if (result.data.length > 1) {
-            log.error(`Stripe customer has more than one subscription!`, {
+            log.error("Stripe customer has more than one subscription!", {
                 attributionId,
                 customerId,
                 subscriptions: result.data.map((s) => s.id),
@@ -98,13 +98,13 @@ export class StripeService {
         oldAttributionId: string,
     ): Promise<boolean> {
         if (stripeCustomerId.length === 0) {
-            throw new Error(`Cannot update Stripe customer with empty stripeCustomerId`);
+            throw new Error("Cannot update Stripe customer with empty stripeCustomerId");
         }
         if (newAttributionId.length === 0) {
-            throw new Error(`Cannot update Stripe customer with empty newAttributionId`);
+            throw new Error("Cannot update Stripe customer with empty newAttributionId");
         }
         if (oldAttributionId.length === 0) {
-            throw new Error(`Cannot update Stripe customer with empty oldAttributionId`);
+            throw new Error("Cannot update Stripe customer with empty oldAttributionId");
         }
         const result = await this.getStripe().customers.search({
             query: `metadata['attributionId']:'${oldAttributionId}'`,
@@ -112,7 +112,7 @@ export class StripeService {
         if (result.data.length > 0) {
             for (const customer of result.data) {
                 if (customer.id !== stripeCustomerId) {
-                    log.error(`Found unexpected Stripe customer with old attribution ID`, {
+                    log.error("Found unexpected Stripe customer with old attribution ID", {
                         oldAttributionId,
                         newAttributionId,
                         expectedStripeCustomerId: stripeCustomerId,
@@ -121,10 +121,10 @@ export class StripeService {
                 }
             }
         } else {
-            log.info(`No Stripe customer found for old attribution ID`, { oldAttributionId, stripeCustomerId });
+            log.info("No Stripe customer found for old attribution ID", { oldAttributionId, stripeCustomerId });
             return false;
         }
-        log.info(`Updating Stripe customer in stripe`, {
+        log.info("Updating Stripe customer in stripe", {
             oldAttributionId,
             newAttributionId,
             stripeCustomerId,

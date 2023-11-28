@@ -38,7 +38,7 @@ export const useAnalyticsTracking = () => {
     // Track button/anchor clicks
     useEffect(() => {
         const handleButtonOrAnchorTracking = (props: MouseEvent) => {
-            var curr = props.target as HTMLElement;
+            let curr = props.target as HTMLElement;
 
             // TODO: Look at using curr.closest('a,button') instead - determine if divs w/ onClick are being used
             //check if current target or any ancestor up to document is button or anchor

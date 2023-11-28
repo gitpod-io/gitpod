@@ -40,10 +40,10 @@ function AddEnvVarModal(p: EnvVarModalProps) {
     }, [p.envVar]);
 
     const isNew = !p.envVar.id;
-    let save = useCallback(async () => {
+    const save = useCallback(async () => {
         const v = ref.current;
         const errorMsg = p.validate(v);
-        if (!!errorMsg) {
+        if (errorMsg) {
             setError(errorMsg);
         } else {
             await p.save(v);
@@ -61,7 +61,6 @@ function AddEnvVarModal(p: EnvVarModalProps) {
                 <div>
                     <h4>Name</h4>
                     <input
-                        autoFocus
                         className="w-full"
                         type="text"
                         value={ev.name}

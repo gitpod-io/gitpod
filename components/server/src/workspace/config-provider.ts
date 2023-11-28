@@ -64,7 +64,7 @@ export class ConfigProvider {
 
             if (!WithDefaultConfig.is(commit)) {
                 const cc = await this.fetchCustomConfig(ctx, user, commit);
-                if (!!cc) {
+                if (cc) {
                     customConfig = cc.customConfig;
                     configBasePath = cc.configBasePath;
                     literalConfig = cc.literalConfig;
@@ -78,7 +78,7 @@ export class ConfigProvider {
                 });
                 const config = await this.defaultConfig(organizationId);
                 if (!ImageConfigString.is(config.image)) {
-                    throw new Error(`Default config must contain a base image!`);
+                    throw new Error("Default config must contain a base image!");
                 }
                 config._origin = "default";
                 return { config, literalConfig };
@@ -108,7 +108,7 @@ export class ConfigProvider {
             }
 
             config.vscode = {
-                extensions: (config && config.vscode && config.vscode.extensions) || [],
+                extensions: config?.vscode?.extensions || [],
             };
             await this.validateConfig(config, user);
 
@@ -116,9 +116,9 @@ export class ConfigProvider {
              * Some feature flags get attached to any workspace they create - others remain specific to the user.
              * Here we attach the workspace-persisted feature flags to the workspace.
              */
-            delete config._featureFlags;
-            if (!!user.featureFlags) {
-                config._featureFlags = (user.featureFlags!.permanentWSFeatureFlags || []).filter(
+            config._featureFlags = undefined;
+            if (user.featureFlags) {
+                config._featureFlags = (user.featureFlags?.permanentWSFeatureFlags || []).filter(
                     NamedWorkspaceFeatureFlag.isWorkspacePersisted,
                 );
             }
@@ -304,6 +304,6 @@ export class ConfigProvider {
 
     private leavesWorkspaceBase(normalizedPath: string) {
         const pathSegments = normalizedPath.split(path.sep);
-        return normalizedPath.includes("..") || pathSegments.slice(0, 2).join("/") != POD_PATH_WORKSPACE_BASE;
+        return normalizedPath.includes("..") || pathSegments.slice(0, 2).join("/") !== POD_PATH_WORKSPACE_BASE;
     }
 }

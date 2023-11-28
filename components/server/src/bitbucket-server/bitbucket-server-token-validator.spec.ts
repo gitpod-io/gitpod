@@ -70,7 +70,7 @@ class TestBitbucketServerTokenValidator {
     }
 
     @test(skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER_READ"))) async test_checkWriteAccess_read_only() {
-        const token = process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER_READ"]!;
+        const token = process.env.GITPOD_TEST_TOKEN_BITBUCKET_SERVER_READ!;
         const result = await this.getValidator(token).checkWriteAccess(Object.assign({}, this.checkParams, { token }));
         expect(result).to.deep.equal({
             found: true,
@@ -81,7 +81,7 @@ class TestBitbucketServerTokenValidator {
 
     @test(skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER_WRITE")))
     async test_checkWriteAccess_write_permissions() {
-        const token = process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER_WRITE"]!;
+        const token = process.env.GITPOD_TEST_TOKEN_BITBUCKET_SERVER_WRITE!;
         const result = await this.getValidator(token).checkWriteAccess(Object.assign({}, this.checkParams, { token }));
         expect(result).to.deep.equal({
             found: true,
@@ -92,7 +92,7 @@ class TestBitbucketServerTokenValidator {
 
     @test(skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER_ADMIN")))
     async test_checkWriteAccess_admin_permissions() {
-        const token = process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER_ADMIN"]!;
+        const token = process.env.GITPOD_TEST_TOKEN_BITBUCKET_SERVER_ADMIN!;
         const result = await this.getValidator(token).checkWriteAccess(Object.assign({}, this.checkParams, { token }));
         expect(result).to.deep.equal({
             found: true,

@@ -18,18 +18,13 @@ export class BitbucketServerApi {
     @inject(AuthProviderParams) protected readonly config: AuthProviderParams;
     @inject(BitbucketServerTokenHelper) protected readonly tokenHelper: BitbucketServerTokenHelper;
 
-    public async runQuery<T>(
-        userOrToken: User | string,
-        urlPath: string,
-        method: string = "GET",
-        body?: string,
-    ): Promise<T> {
+    public async runQuery<T>(userOrToken: User | string, urlPath: string, method = "GET", body?: string): Promise<T> {
         const token =
             typeof userOrToken === "string"
                 ? userOrToken
                 : (await this.tokenHelper.getTokenWithScopes(userOrToken, [])).value;
         const fullUrl = `${this.baseUrl}${urlPath}`;
-        let result: string = "OK";
+        let result = "OK";
         try {
             const response = await fetch(fullUrl, {
                 timeout: 10000,
@@ -57,7 +52,7 @@ export class BitbucketServerApi {
             }
             return (await response.json()) as T;
         } catch (error) {
-            result = "error " + error?.message;
+            result = `error ${error?.message}`;
             throw error;
         } finally {
             console.log(`BBS: ${method} ${fullUrl} - ${result}`);
@@ -67,7 +62,7 @@ export class BitbucketServerApi {
     public async fetchContent(user: User, urlPath: string): Promise<string> {
         const token = (await this.tokenHelper.getTokenWithScopes(user, [])).value;
         const fullUrl = `${this.baseUrl}${urlPath}`;
-        let result: string = "OK";
+        let result = "OK";
         try {
             const response = await fetch(fullUrl, {
                 timeout: 10000,
@@ -82,7 +77,7 @@ export class BitbucketServerApi {
             }
             return await response.text();
         } catch (error) {
-            result = "error " + error?.message;
+            result = `error ${error?.message}`;
             throw error;
         } finally {
             console.debug(`BBS GET ${fullUrl} - ${result}`);
@@ -91,7 +86,7 @@ export class BitbucketServerApi {
 
     public async currentUsername(accessToken: string): Promise<string> {
         const fullUrl = `https://${this.config.host}/plugins/servlet/applinks/whoami`;
-        let result: string = "OK";
+        let result = "OK";
         try {
             const response = await fetch(fullUrl, {
                 timeout: 10000,
@@ -201,7 +196,7 @@ export class BitbucketServerApi {
             filterText: params.branch,
             boostMatches: true,
         });
-        const q = "?" + queryParam;
+        const q = `?${queryParam}`;
         const list = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.Branch>>(
             user,
             `/${params.repoKind}/${params.owner}/repos/${params.repositorySlug}/branches${q}`,
@@ -223,7 +218,7 @@ export class BitbucketServerApi {
         const queryParam = qs.stringify({
             filterText: params.tag,
         });
-        const q = "?" + queryParam;
+        const q = `?${queryParam}`;
         const list = await this.runQuery<BitbucketServer.Paginated<BitbucketServer.Tag>>(
             user,
             `/${params.repoKind}/${params.owner}/repos/${params.repositorySlug}/tags${q}`,
@@ -260,7 +255,7 @@ export class BitbucketServerApi {
             user,
             `/${params.repoKind}/${params.owner}/repos/${params.repositorySlug}/branches?details=true&filterText=${params.branchName}&boostMatches=true`,
         );
-        const first = result.values && result.values[0];
+        const first = result.values?.[0];
         if (first && first.displayId === params.branchName) {
             first.latestCommitMetadata =
                 first.metadata["com.atlassian.bitbucket.server.bitbucket-branch:latest-commit-metadata"];
@@ -424,9 +419,8 @@ export class BitbucketServerApi {
             }
 
             return Array.from(results.values());
-        } else {
-            return await fetchRepos(baseParams);
         }
+        return await fetchRepos(baseParams);
     }
 
     async getRecentRepos(userOrToken: User | string, options: { limit: number }) {

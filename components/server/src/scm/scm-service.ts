@@ -86,7 +86,7 @@ export class ScmService {
 
         const provider = await this.authProviderService.findAuthProviderDescription(user, host);
         if (!provider) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Auth provider not found.`);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Auth provider not found.");
         }
 
         const token = await this.getToken(userId, { host });
@@ -122,7 +122,7 @@ export class ScmService {
                         }),
                     );
                 } catch (error) {
-                    log.warn("Could not search repositories from host " + host, error);
+                    log.warn(`Could not search repositories from host ${host}`, error);
                 }
 
                 return [];
@@ -174,7 +174,7 @@ export class ScmService {
                         const hostContext = this.hostContextProvider.get(p.host);
                         const services = hostContext?.services;
                         if (!services) {
-                            log.error(logCtx, "Unsupported repository host: " + p.host);
+                            log.error(logCtx, `Unsupported repository host: ${p.host}`);
                             return [];
                         }
                         const userRepos = await services.repositoryProvider.getUserRepos(user);
@@ -186,7 +186,7 @@ export class ScmService {
                             }),
                         );
                     } catch (error) {
-                        log.debug(logCtx, "Could not get user repositories from host " + p.host, error);
+                        log.debug(logCtx, `Could not get user repositories from host ${p.host}`, error);
                     }
 
                     return [];
@@ -235,7 +235,7 @@ export class ScmService {
         ]);
 
         const sortedRepos = sortSuggestedRepositories(
-            repoResults.map((r) => (r.status === "fulfilled" ? r.value || [] : [])).flat(),
+            repoResults.flatMap((r) => (r.status === "fulfilled" ? r.value || [] : [])),
         );
 
         // Convert to SuggestedRepository (drops sorting props)

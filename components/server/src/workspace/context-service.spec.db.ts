@@ -89,10 +89,8 @@ describe("ContextService", async () => {
 
         const bindContextParser = () => {
             container.rebind(ContextParser).toConstantValue({
-                normalizeContextURL: function (contextURL: string): string {
-                    return contextURL + "normalizeContextURL";
-                },
-                handle: function (ctx: TraceContext, user: User, contextURL: string): Promise<WorkspaceContext> {
+                normalizeContextURL: (contextURL: string): string => `${contextURL}normalizeContextURL`,
+                handle: (ctx: TraceContext, user: User, contextURL: string): Promise<WorkspaceContext> => {
                     const url = contextURL.replace("normalizeContextURL", "");
                     switch (url) {
                         case "https://github.com/gitpod-io/empty":

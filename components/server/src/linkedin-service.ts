@@ -43,7 +43,7 @@ export class LinkedInService {
         });
         const data = await response.json();
         if (data.error) {
-            throw new Error("Could not get LinkedIn access token: " + data.error_description);
+            throw new Error(`Could not get LinkedIn access token: ${data.error_description}`);
         }
         return data.access_token as string;
     }
@@ -73,7 +73,7 @@ export class LinkedInService {
 
         const profileData = await profileResponse.json();
         if (profileData.error) {
-            throw new Error("Could not get LinkedIn lite profile: " + profileData.error_description);
+            throw new Error(`Could not get LinkedIn lite profile: ${profileData.error_description}`);
         }
         if (!profileData.id) {
             throw new Error("Missing LinkedIn profile ID");
@@ -81,7 +81,7 @@ export class LinkedInService {
 
         const emailData = await emailResponse.json();
         if (emailData.error) {
-            throw new Error("Could not get LinkedIn email address: " + emailData.error_description);
+            throw new Error(`Could not get LinkedIn email address: ${emailData.error_description}`);
         }
         if (!emailData.elements || emailData.elements.length < 1 || !emailData.elements[0]["handle~"]?.emailAddress) {
             throw new Error("Missing LinkedIn email address");

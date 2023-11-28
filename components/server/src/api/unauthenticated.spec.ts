@@ -16,13 +16,13 @@ class Foo {
     async foo() {}
 }
 
-describe("Unauthenticated decorator", function () {
+describe("Unauthenticated decorator", () => {
     const foo = new Foo();
 
-    it("function is decorated", function () {
+    it("function is decorated", () => {
         expect(Unauthenticated.get(foo, "fooUnauthenticated")).to.be.true;
     });
-    it("function is not decorated", function () {
+    it("function is not decorated", () => {
         expect(Unauthenticated.get(foo, "foo")).to.be.false;
     });
 });
