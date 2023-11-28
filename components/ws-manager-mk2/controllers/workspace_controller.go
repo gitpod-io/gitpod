@@ -321,6 +321,13 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 		lastState.recordedFailure = true
 	}
 
+	if lastState.pendingStartTime.IsZero() && workspace.Status.Phase == workspacev1.WorkspacePhasePending {
+		lastState.pendingStartTime = time.Now()
+	} else if !lastState.pendingStartTime.IsZero() && workspace.Status.Phase != workspacev1.WorkspacePhasePending {
+		r.metrics.recordWorkspacePendingTime(&log, workspace, lastState.pendingStartTime)
+		lastState.pendingStartTime = time.Time{}
+	}
+
 	if lastState.creatingStartTime.IsZero() && workspace.Status.Phase == workspacev1.WorkspacePhaseCreating {
 		lastState.creatingStartTime = time.Now()
 	} else if !lastState.creatingStartTime.IsZero() && workspace.Status.Phase != workspacev1.WorkspacePhaseCreating {
