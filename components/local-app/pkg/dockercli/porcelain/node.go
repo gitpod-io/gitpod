@@ -179,10 +179,10 @@ type NodeUpdateOpts struct {
 	Help bool
 
 	// Add or update a node label (`key=value`).
-	LabelAdd string
+	LabelAdd []string
 
 	// Remove a node label if exists.
-	LabelRm string
+	LabelRm []string
 
 	// Role of the node (`worker`, `manager`).
 	Role string

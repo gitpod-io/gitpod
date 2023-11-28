@@ -30,7 +30,7 @@ type NetworkConnectOpts struct {
 	Ip6 string
 
 	// Add link to another container.
-	Link string
+	Link []string
 
 	// Add a link-local address for the container.
 	LinkLocalIp string
@@ -90,7 +90,7 @@ type NetworkCreateOpts struct {
 	Ipv6 bool
 
 	// Set metadata on a network.
-	Label string
+	Label []string
 
 	// Set driver specific options.
 	Opt string

@@ -44,17 +44,19 @@ func runCtrCmd(subcommand []string, args []string, opts interface{}, optpos int)
 	var cmd *exec.Cmd
 
 	cmdargs := append(Cli, subcommand...)
-	for i := 0; i < len(args); i++ {
-		if optpos > -1 && i == optpos {
-			if !reflect.ValueOf(opts).IsNil() {
-				cmdargs = append(cmdargs, optsToArgs(opts)...)
-			}
-			optpos = -1
-			i--
-		} else if !reflect.ValueOf(args[i]).IsZero() {
-			cmdargs = append(cmdargs, args[i])
-		}
+	cmdargs = append(cmdargs, args...)
+	if !reflect.ValueOf(opts).IsNil() {
+		cmdargs = append(cmdargs, optsToArgs(opts)...)
 	}
+
+	// for i := 0; i < len(args); i++ {
+	// 	if optpos > -1 && i == optpos {
+	// 		optpos = -1
+	// 		i--
+	// 	} else if !reflect.ValueOf(args[i]).IsZero() {
+	// 		cmdargs = append(cmdargs, args[i])
+	// 	}
+	// }
 
 	if !reflect.ValueOf(opts).IsNil() {
 		var ok bool
@@ -122,13 +124,24 @@ func optsToArgs(opts interface{}) []string {
 		if field.Type.Kind() == reflect.Bool && !value.Bool() {
 			continue
 		}
-		result = append(result, fieldToFlag(field.Name))
 
 		switch field.Type.Kind() {
 		case reflect.Int:
+			result = append(result, fieldToFlag(field.Name))
 			result = append(result, strconv.FormatInt(value.Int(), 10))
 		case reflect.String:
+			result = append(result, fieldToFlag(field.Name))
 			result = append(result, value.String())
+		case reflect.Slice:
+			for i := 0; i < value.Len(); i++ {
+				result = append(result, value.Index(i).String())
+			}
+		case reflect.Bool:
+			if value.Bool() {
+				result = append(result, fieldToFlag(field.Name))
+			}
+		default:
+			panic(fmt.Sprintf("unsupported type %v in %s", field.Type, field.Name))
 		}
 	}
 

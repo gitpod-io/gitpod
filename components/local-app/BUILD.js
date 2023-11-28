@@ -13,6 +13,7 @@ const generatePackage = function (goos, goarch, binaryName, mainFile) {
             "components/gitpod-protocol/go:lib",
             "components/local-app-api/go:lib",
             "components/public-api/go:lib",
+            "components/content-service:lib",
         ],
         env: ["GOOS=" + goos, "GOARCH=" + goarch, "CGO_ENABLED=0"],
         config: {

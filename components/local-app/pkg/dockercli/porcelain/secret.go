@@ -21,7 +21,7 @@ type SecretCreateOpts struct {
 	Help bool
 
 	// Secret labels.
-	Label string
+	Label []string
 
 	// Template driver.
 	TemplateDriver string

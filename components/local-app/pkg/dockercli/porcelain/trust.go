@@ -162,7 +162,7 @@ type TrustSignerAddOpts struct {
 	Help bool
 
 	// Path to the signer's public key file.
-	Key string
+	Key []string
 }
 
 // Add a signer.

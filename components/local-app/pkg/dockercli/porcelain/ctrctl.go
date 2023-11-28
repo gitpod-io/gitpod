@@ -27,7 +27,7 @@ type DockerOpts struct {
 	Help bool
 
 	// Daemon socket to connect to.
-	Host string
+	Host []string
 
 	// Set the logging level (`debug`, `info`, `warn`, `error`, `fatal`).
 	LogLevel string
@@ -90,10 +90,10 @@ type BuildOpts struct {
 	Cmd *exec.Cmd
 
 	// Add a custom host-to-IP mapping (`host:ip`).
-	AddHost string
+	AddHost []string
 
 	// Set build-time variables.
-	BuildArg string
+	BuildArg []string
 
 	// Images to consider as cache sources.
 	CacheFrom string
@@ -138,7 +138,7 @@ type BuildOpts struct {
 	Isolation string
 
 	// Set metadata for an image.
-	Label string
+	Label []string
 
 	// Memory limit.
 	Memory string
@@ -174,7 +174,7 @@ type BuildOpts struct {
 	Squash bool
 
 	// Name and optionally a tag in the `name:tag` format.
-	Tag string
+	Tag []string
 
 	// Set the target build stage to build.
 	Target string
@@ -237,7 +237,7 @@ type CommitOpts struct {
 	Author string
 
 	// Apply Dockerfile instruction to the created image.
-	Change string
+	Change []string
 
 	// Print usage.
 	Help bool
@@ -345,25 +345,25 @@ type CreateOpts struct {
 	Cmd *exec.Cmd
 
 	// Add a custom host-to-IP mapping (host:ip).
-	AddHost string
+	AddHost []string
 
 	// Add an annotation to the container (passed through to the OCI runtime).
 	Annotation string
 
 	// Attach to STDIN, STDOUT or STDERR.
-	Attach string
+	Attach []string
 
 	// Block IO (relative weight), between 10 and 1000, or 0 to disable (default 0).
 	BlkioWeight string
 
 	// Block IO weight (relative device weight).
-	BlkioWeightDevice string
+	BlkioWeightDevice []string
 
 	// Add Linux capabilities.
-	CapAdd string
+	CapAdd []string
 
 	// Drop Linux capabilities.
-	CapDrop string
+	CapDrop []string
 
 	// Optional parent cgroup for the container.
 	CgroupParent string
@@ -409,37 +409,37 @@ type CreateOpts struct {
 	CpusetMems string
 
 	// Add a host device to the container.
-	Device string
+	Device []string
 
 	// Add a rule to the cgroup allowed devices list.
-	DeviceCgroupRule string
+	DeviceCgroupRule []string
 
 	// Limit read rate (bytes per second) from a device.
-	DeviceReadBps string
+	DeviceReadBps []string
 
 	// Limit read rate (IO per second) from a device.
-	DeviceReadIops string
+	DeviceReadIops []string
 
 	// Limit write rate (bytes per second) to a device.
-	DeviceWriteBps string
+	DeviceWriteBps []string
 
 	// Limit write rate (IO per second) to a device.
-	DeviceWriteIops string
+	DeviceWriteIops []string
 
 	// Skip image verification.
 	DisableContentTrust bool
 
 	// Set custom DNS servers.
-	Dns string
+	Dns []string
 
 	// Set DNS options.
-	DnsOpt string
+	DnsOpt []string
 
 	// Set DNS options.
-	DnsOption string
+	DnsOption []string
 
 	// Set custom DNS search domains.
-	DnsSearch string
+	DnsSearch []string
 
 	// Container NIS domain name.
 	Domainname string
@@ -448,19 +448,19 @@ type CreateOpts struct {
 	Entrypoint string
 
 	// Set environment variables.
-	Env string
+	Env []string
 
 	// Read in a file of environment variables.
-	EnvFile string
+	EnvFile []string
 
 	// Expose a port or a range of ports.
-	Expose string
+	Expose []string
 
 	// GPU devices to add to the container ('all' to pass all GPUs).
 	Gpus string
 
 	// Add additional groups to join.
-	GroupAdd string
+	GroupAdd []string
 
 	// Command to run to check health.
 	HealthCmd string
@@ -511,22 +511,22 @@ type CreateOpts struct {
 	KernelMemory string
 
 	// Set meta data on a container.
-	Label string
+	Label []string
 
 	// Read in a line delimited file of labels.
-	LabelFile string
+	LabelFile []string
 
 	// Add link to another container.
-	Link string
+	Link []string
 
 	// Container IPv4/IPv6 link-local addresses.
-	LinkLocalIp string
+	LinkLocalIp []string
 
 	// Logging driver for the container.
 	LogDriver string
 
 	// Log driver options.
-	LogOpt string
+	LogOpt []string
 
 	// Container MAC address (e.g., 92:d0:c6:0a:29:33).
 	MacAddress string
@@ -553,13 +553,13 @@ type CreateOpts struct {
 	Net string
 
 	// Add network-scoped alias for the container.
-	NetAlias string
+	NetAlias []string
 
 	// Connect a container to a network.
 	Network string
 
 	// Add network-scoped alias for the container.
-	NetworkAlias string
+	NetworkAlias []string
 
 	// Disable any container-specified HEALTHCHECK.
 	NoHealthcheck bool
@@ -583,7 +583,7 @@ type CreateOpts struct {
 	Privileged bool
 
 	// Publish a container's port(s) to the host.
-	Publish string
+	Publish []string
 
 	// Publish all exposed ports to random ports.
 	PublishAll bool
@@ -607,7 +607,7 @@ type CreateOpts struct {
 	Runtime string
 
 	// Security Options.
-	SecurityOpt string
+	SecurityOpt []string
 
 	// Size of /dev/shm.
 	ShmSize string
@@ -619,13 +619,13 @@ type CreateOpts struct {
 	StopTimeout *int
 
 	// Storage driver options for the container.
-	StorageOpt string
+	StorageOpt []string
 
 	// Sysctl options.
 	Sysctl string
 
 	// Mount a tmpfs directory.
-	Tmpfs string
+	Tmpfs []string
 
 	// Allocate a pseudo-TTY.
 	Tty bool
@@ -643,13 +643,13 @@ type CreateOpts struct {
 	Uts string
 
 	// Bind mount a volume.
-	Volume string
+	Volume []string
 
 	// Optional volume driver for the container.
 	VolumeDriver string
 
 	// Mount volumes from the specified container(s).
-	VolumesFrom string
+	VolumesFrom []string
 
 	// Working directory inside the container.
 	Workdir string
@@ -724,10 +724,10 @@ type ExecOpts struct {
 	DetachKeys string
 
 	// Set environment variables.
-	Env string
+	Env []string
 
 	// Read in a file of environment variables.
-	EnvFile string
+	EnvFile []string
 
 	// Print usage.
 	Help bool
@@ -878,7 +878,7 @@ type ImportOpts struct {
 	Cmd *exec.Cmd
 
 	// Apply Dockerfile instruction to the created image.
-	Change string
+	Change []string
 
 	// Print usage.
 	Help bool
@@ -1408,25 +1408,25 @@ type RunOpts struct {
 	Cmd *exec.Cmd
 
 	// Add a custom host-to-IP mapping (host:ip).
-	AddHost string
+	AddHost []string
 
 	// Add an annotation to the container (passed through to the OCI runtime).
 	Annotation string
 
 	// Attach to STDIN, STDOUT or STDERR.
-	Attach string
+	Attach []string
 
 	// Block IO (relative weight), between 10 and 1000, or 0 to disable (default 0).
 	BlkioWeight string
 
 	// Block IO weight (relative device weight).
-	BlkioWeightDevice string
+	BlkioWeightDevice []string
 
 	// Add Linux capabilities.
-	CapAdd string
+	CapAdd []string
 
 	// Drop Linux capabilities.
-	CapDrop string
+	CapDrop []string
 
 	// Optional parent cgroup for the container.
 	CgroupParent string
@@ -1478,37 +1478,37 @@ type RunOpts struct {
 	DetachKeys string
 
 	// Add a host device to the container.
-	Device string
+	Device []string
 
 	// Add a rule to the cgroup allowed devices list.
-	DeviceCgroupRule string
+	DeviceCgroupRule []string
 
 	// Limit read rate (bytes per second) from a device.
-	DeviceReadBps string
+	DeviceReadBps []string
 
 	// Limit read rate (IO per second) from a device.
-	DeviceReadIops string
+	DeviceReadIops []string
 
 	// Limit write rate (bytes per second) to a device.
-	DeviceWriteBps string
+	DeviceWriteBps []string
 
 	// Limit write rate (IO per second) to a device.
-	DeviceWriteIops string
+	DeviceWriteIops []string
 
 	// Skip image verification.
 	DisableContentTrust bool
 
 	// Set custom DNS servers.
-	Dns string
+	Dns []string
 
 	// Set DNS options.
-	DnsOpt string
+	DnsOpt []string
 
 	// Set DNS options.
-	DnsOption string
+	DnsOption []string
 
 	// Set custom DNS search domains.
-	DnsSearch string
+	DnsSearch []string
 
 	// Container NIS domain name.
 	Domainname string
@@ -1517,19 +1517,19 @@ type RunOpts struct {
 	Entrypoint string
 
 	// Set environment variables.
-	Env string
+	Env []string
 
 	// Read in a file of environment variables.
-	EnvFile string
+	EnvFile []string
 
 	// Expose a port or a range of ports.
-	Expose string
+	Expose []string
 
 	// GPU devices to add to the container ('all' to pass all GPUs).
 	Gpus string
 
 	// Add additional groups to join.
-	GroupAdd string
+	GroupAdd []string
 
 	// Command to run to check health.
 	HealthCmd string
@@ -1580,22 +1580,22 @@ type RunOpts struct {
 	KernelMemory string
 
 	// Set meta data on a container.
-	Label string
+	Label []string
 
 	// Read in a line delimited file of labels.
-	LabelFile string
+	LabelFile []string
 
 	// Add link to another container.
-	Link string
+	Link []string
 
 	// Container IPv4/IPv6 link-local addresses.
-	LinkLocalIp string
+	LinkLocalIp []string
 
 	// Logging driver for the container.
 	LogDriver string
 
 	// Log driver options.
-	LogOpt string
+	LogOpt []string
 
 	// Container MAC address (e.g., 92:d0:c6:0a:29:33).
 	MacAddress string
@@ -1622,13 +1622,13 @@ type RunOpts struct {
 	Net string
 
 	// Add network-scoped alias for the container.
-	NetAlias string
+	NetAlias []string
 
 	// Connect a container to a network.
 	Network string
 
 	// Add network-scoped alias for the container.
-	NetworkAlias string
+	NetworkAlias []string
 
 	// Disable any container-specified HEALTHCHECK.
 	NoHealthcheck bool
@@ -1652,7 +1652,7 @@ type RunOpts struct {
 	Privileged bool
 
 	// Publish a container's port(s) to the host.
-	Publish string
+	Publish []string
 
 	// Publish all exposed ports to random ports.
 	PublishAll bool
@@ -1676,7 +1676,7 @@ type RunOpts struct {
 	Runtime string
 
 	// Security Options.
-	SecurityOpt string
+	SecurityOpt []string
 
 	// Size of /dev/shm.
 	ShmSize string
@@ -1691,13 +1691,13 @@ type RunOpts struct {
 	StopTimeout *int
 
 	// Storage driver options for the container.
-	StorageOpt string
+	StorageOpt []string
 
 	// Sysctl options.
 	Sysctl string
 
 	// Mount a tmpfs directory.
-	Tmpfs string
+	Tmpfs []string
 
 	// Allocate a pseudo-TTY.
 	Tty bool
@@ -1715,13 +1715,13 @@ type RunOpts struct {
 	Uts string
 
 	// Bind mount a volume.
-	Volume string
+	Volume []string
 
 	// Optional volume driver for the container.
 	VolumeDriver string
 
 	// Mount volumes from the specified container(s).
-	VolumesFrom string
+	VolumesFrom []string
 
 	// Working directory inside the container.
 	Workdir string

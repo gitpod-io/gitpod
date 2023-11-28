@@ -27,7 +27,7 @@ type VolumeCreateOpts struct {
 	Help bool
 
 	// Set metadata for a volume.
-	Label string
+	Label []string
 
 	// Minimum size of the Cluster Volume in bytes.
 	LimitBytes string
@@ -51,10 +51,10 @@ type VolumeCreateOpts struct {
 	Sharing string
 
 	// A topology that the Cluster Volume would be preferred in.
-	TopologyPreferred string
+	TopologyPreferred []string
 
 	// A topology that the Cluster Volume must be accessible from.
-	TopologyRequired string
+	TopologyRequired []string
 
 	// Cluster Volume access type (`mount`, `block`).
 	Type string
