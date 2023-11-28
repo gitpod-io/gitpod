@@ -183,14 +183,19 @@ export function dehydrate(message: any): any {
     return message;
 }
 
+// This is used to hydrate protobuf messages from the cache
+// Serialized protobuf messages follow the format: |messageName|jsonstring
 export function hydrate(value: any): any {
     if (value instanceof Array) {
         return value.map(hydrate);
     }
     if (typeof value === "string" && value.startsWith("|") && value.lastIndexOf("|") > 1) {
-        const separatorIdx = value.lastIndexOf("|");
-        const messageName = value.substring(1, separatorIdx);
-        const json = value.substring(separatorIdx + 1);
+        // Remove the leading |
+        const trimmedVal = value.substring(1);
+        // Find the first | after the leading | to get the message name
+        const separatorIdx = trimmedVal.indexOf("|");
+        const messageName = trimmedVal.substring(0, separatorIdx);
+        const json = trimmedVal.substring(separatorIdx + 1);
         const constructor = supportedMessages.get(messageName);
         if (!constructor) {
             console.error("unsupported message type", messageName);
