@@ -47,14 +47,18 @@ const WorkspacesPage: FunctionComponent = () => {
     const { filteredActiveWorkspaces, filteredInactiveWorkspaces } = useMemo(() => {
         const filteredActiveWorkspaces = activeWorkspaces.filter(
             (info) =>
-                `${info.name}${info.id}${info.contextUrl}${info.status?.gitStatus?.cloneUrl}${info.status?.gitStatus?.branch}`
+                `${info.metadata!.name}${info.id}${info.metadata!.originalContextUrl}${
+                    info.status?.gitStatus?.cloneUrl
+                }${info.status?.gitStatus?.branch}`
                     .toLowerCase()
                     .indexOf(searchTerm.toLowerCase()) !== -1,
         );
 
         const filteredInactiveWorkspaces = inactiveWorkspaces.filter(
             (info) =>
-                `${info.name}${info.id}${info.contextUrl}${info.status?.gitStatus?.cloneUrl}${info.status?.gitStatus?.branch}`
+                `${info.metadata!.name}${info.id}${info.metadata!.originalContextUrl}${
+                    info.status?.gitStatus?.cloneUrl
+                }${info.status?.gitStatus?.branch}`
                     .toLowerCase()
                     .indexOf(searchTerm.toLowerCase()) !== -1,
         );
@@ -201,5 +205,5 @@ function isWorkspaceActive(info: Workspace): boolean {
     const twentyfourHoursAgo = hoursBefore(new Date().toISOString(), 24);
 
     const isStopped = info.status?.phase?.name === WorkspacePhase_Phase.STOPPED;
-    return info.pinned || !isStopped || isDateSmallerOrEqual(twentyfourHoursAgo, lastSessionStart);
+    return info.metadata!.pinned || !isStopped || isDateSmallerOrEqual(twentyfourHoursAgo, lastSessionStart);
 }
