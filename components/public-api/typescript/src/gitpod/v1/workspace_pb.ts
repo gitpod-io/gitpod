@@ -1166,6 +1166,11 @@ export class WorkspaceSpec extends Message<WorkspaceSpec> {
    */
   logUrl = "";
 
+  /**
+   * @generated from field: gitpod.v1.EditorReference editor = 13;
+   */
+  editor?: EditorReference;
+
   constructor(data?: PartialMessage<WorkspaceSpec>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1186,6 +1191,7 @@ export class WorkspaceSpec extends Message<WorkspaceSpec> {
     { no: 10, name: "subassembly_references", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 11, name: "last_user_activity", kind: "message", T: Timestamp },
     { no: 12, name: "log_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 13, name: "editor", kind: "message", T: EditorReference },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceSpec {

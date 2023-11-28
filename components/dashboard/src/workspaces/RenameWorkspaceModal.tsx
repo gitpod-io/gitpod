@@ -16,7 +16,7 @@ type Props = {
 };
 export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onClose }) => {
     const [errorMessage, setErrorMessage] = useState("");
-    const [description, setDescription] = useState(workspace.name || "");
+    const [description, setDescription] = useState(workspace.metadata?.name || "");
     const updateDescription = useUpdateWorkspaceDescriptionMutation();
 
     const updateWorkspaceDescription = useCallback(async () => {
