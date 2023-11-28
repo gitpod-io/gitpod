@@ -489,8 +489,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
                     isDateSmaller(authUser.created_at, daysBefore(new Date().toISOString(), 30))
                 ) {
                     // people with an account older than 30 days are treated as trusted
-                    // see this.userService.markUserAsVerified
-                    user.lastVerificationTime = new Date().toISOString();
+                    newUser.lastVerificationTime = new Date().toISOString();
                 }
             },
         });

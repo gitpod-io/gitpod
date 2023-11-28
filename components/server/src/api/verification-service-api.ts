@@ -46,7 +46,7 @@ export class VerificationServiceAPI implements ServiceImpl<typeof VerificationSe
             },
         );
         const channel = phoneVerificationByCall ? "call" : "sms";
-        const { verificationId } = await this.verificationService.sendVerificationToken(
+        const verificationId = await this.verificationService.sendVerificationToken(
             formatPhoneNumber(req.phoneNumber),
             channel,
         );

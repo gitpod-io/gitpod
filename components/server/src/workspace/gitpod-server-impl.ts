@@ -474,19 +474,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const channel = phoneVerificationByCall ? "call" : "sms";
 
-        const { verification, verificationId } = await this.verificationService.sendVerificationToken(
+        const verificationId = await this.verificationService.sendVerificationToken(
+            user.id,
             formatPhoneNumber(rawPhoneNumber),
             channel,
         );
-        this.analytics.track({
-            event: "phone_verification_sent",
-            userId: user.id,
-            properties: {
-                verification_id: verificationId,
-                channel: verification.channel,
-                requested_channel: channel,
-            },
-        });
 
         return {
             verificationId,
