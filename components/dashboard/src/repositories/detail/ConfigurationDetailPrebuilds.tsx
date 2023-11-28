@@ -17,7 +17,7 @@ export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
         <>
             <ConfigurationSettingsField>
                 <Heading3>Prebuilds</Heading3>
-                <Subheading>
+                <Subheading className="max-w-lg">
                     Prebuilds reduce wait time for new workspaces. Enabling requires permissions to configure repository
                     webhooks.{" "}
                     <a href="/docs/configure/projects/prebuilds" className="gp-link">

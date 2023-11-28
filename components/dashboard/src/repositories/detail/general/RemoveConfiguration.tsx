@@ -4,13 +4,13 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Heading2, Subheading } from "@podkit/typography/Headings";
-import { Button } from "../../../components/Button";
+import { Heading3, Subheading } from "@podkit/typography/Headings";
 import { RemoveConfigurationModal } from "./RemoveConfigurationModal";
 import { useHistory } from "react-router";
 import { useCallback, useState } from "react";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { ConfigurationSettingsField } from "../ConfigurationSettingsField";
+import { Button } from "@podkit/buttons/Button";
 
 interface Props {
     configuration: Configuration;
@@ -27,12 +27,13 @@ export const RemoveConfiguration = ({ configuration }: Props) => {
     return (
         <>
             <ConfigurationSettingsField>
-                <Heading2>Remove this Configuration</Heading2>
-                <Subheading className="pb-4 max-w-md dark:text-gray-400">
+                <Heading3>Remove this Configuration</Heading3>
+                <Subheading className="max-w-lg">
                     This will delete the project and all project-level environment variables you've set for this
                     project. It will not delete the repository.
                 </Subheading>
-                <Button type={"danger.secondary"} onClick={() => setShowRemoveModal(true)}>
+
+                <Button variant="destructive" className="mt-4" onClick={() => setShowRemoveModal(true)}>
                     Remove Configuration
                 </Button>
             </ConfigurationSettingsField>

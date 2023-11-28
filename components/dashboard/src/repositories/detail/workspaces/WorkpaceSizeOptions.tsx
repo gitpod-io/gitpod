@@ -9,8 +9,7 @@ import React, { useCallback, useState } from "react";
 import { useWorkspaceClasses } from "../../../data/workspaces/workspace-classes-query";
 import { Label } from "@podkit/forms/Label";
 import { RadioGroup, RadioGroupItem } from "@podkit/forms/RadioListField";
-import { TextMuted } from "@podkit/typography/TextMuted";
-import { Heading2 } from "@podkit/typography/Headings";
+import { Heading3, Subheading } from "@podkit/typography/Headings";
 import { ConfigurationSettingsField } from "../ConfigurationSettingsField";
 import { useToast } from "../../../components/toasts/Toasts";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
@@ -66,13 +65,12 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
     }
 
     return (
-        <ConfigurationSettingsField className="px-8 py-6">
+        <ConfigurationSettingsField>
             <form onSubmit={setWorkspaceClass}>
-                <div className="mb-4">
-                    <Heading2 className="text-base">Workspace Size Options</Heading2>
-                    <TextMuted>Choose the size of your workspace based on the resources you need.</TextMuted>
-                </div>
-                <RadioGroup value={selectedValue} onValueChange={setSelectedValue}>
+                <Heading3>Workspace Size Options</Heading3>
+                <Subheading>Choose the size of your workspace based on the resources you need.</Subheading>
+
+                <RadioGroup value={selectedValue} onValueChange={setSelectedValue} className="mt-4">
                     {classes.map((wsClass) => (
                         <Label className="flex items-start space-x-2 my-2">
                             <RadioGroupItem value={wsClass.id} />

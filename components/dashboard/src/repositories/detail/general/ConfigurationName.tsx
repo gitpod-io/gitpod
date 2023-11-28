@@ -60,6 +60,7 @@ export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
                 <TextInputField
                     label="Configuration name"
                     hint={`The name can be up to ${MAX_LENGTH} characters long.`}
+                    containerClassName="mt-0"
                     value={configurationName}
                     error={nameError.message}
                     onChange={setConfigurationName}
