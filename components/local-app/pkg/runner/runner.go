@@ -7,6 +7,7 @@ package runner
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,7 +15,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/bufbuild/connect-go"
@@ -22,7 +25,6 @@ import (
 	"github.com/gitpod-io/gitpod/components/public-api/go/v1/v1connect"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/local-app/pkg/dockercli"
-	"github.com/gitpod-io/local-app/pkg/dockercli/porcelain"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -109,14 +111,21 @@ type LocalWorkspaceRunner struct {
 	Client v1connect.WorkspaceRunnerServiceClient
 	Docker dockercli.CLI
 
-	WorkDir  string
-	UserID   string
+	WorkDir string
+	UserID  string
+
+	specs    map[string]*v1.RunnerWorkspace
 	runnerID string
 }
 
 func (runner *LocalWorkspaceRunner) Run(ctx context.Context) error {
+	hostname, err := os.Hostname()
+	if err != nil {
+		return err
+	}
 	reg, err := runner.Client.RegisterRunner(ctx, &connect.Request[v1.RegisterRunnerRequest]{
 		Msg: &v1.RegisterRunnerRequest{
+			Name: hostname,
 			Scope: &v1.RegisterRunnerRequest_UserId{
 				UserId: runner.UserID,
 			},
@@ -165,9 +174,7 @@ func (runner *LocalWorkspaceRunner) observeDocker(ctx context.Context) {
 		case <-startImmediately:
 		}
 
-		containers, err := runner.Docker.ContainerList(porcelain.ContainerLsOpts{
-			All: true,
-		})
+		containers, err := runner.Docker.ContainerList()
 		if err != nil {
 			slog.Error("cannot list containers", "err", err)
 			continue
@@ -177,9 +184,8 @@ func (runner *LocalWorkspaceRunner) observeDocker(ctx context.Context) {
 			if !strings.Contains(container.Labels, "gitpod.io/workspaceID") {
 				continue
 			}
-
-			slog.Debug("found workspace container", "workspaceID", container.ID)
-			status, err := getWorkspaceStatusFromDocker(ctx, container.ID, runner.Docker.Inspect)
+			slog.Debug("found workspace container", "workspaceID", container.Names)
+			status, err := getWorkspaceStatusFromDocker(ctx, containerName, runner.Docker)
 			if err != nil {
 				slog.Error("cannot get workspace status", "err", err)
 				continue
@@ -187,7 +193,7 @@ func (runner *LocalWorkspaceRunner) observeDocker(ctx context.Context) {
 			_, err = runner.Client.UpdateRunnerWorkspaceStatus(ctx, &connect.Request[v1.UpdateRunnerWorkspaceStatusRequest]{
 				Msg: &v1.UpdateRunnerWorkspaceStatusRequest{
 					ClusterId:   runner.runnerID,
-					WorkspaceId: container.ID,
+					WorkspaceId: container.Names,
 					Update: &v1.UpdateRunnerWorkspaceStatusRequest_Status{
 						Status: status,
 					},
@@ -202,17 +208,16 @@ func (runner *LocalWorkspaceRunner) observeDocker(ctx context.Context) {
 }
 
 func (runner *LocalWorkspaceRunner) reconcile(ctx context.Context, ws *v1.RunnerWorkspace) (err error) {
-	status, err := getWorkspaceStatusFromDocker(ctx, ws.Id, runner.Docker.Inspect)
-
-	slog.Debug("reconciling workspace", "workspaceID", ws.Id, "status", status, "err", err, "desiredPhase", ws.DesiredPhase)
+	slog.Debug("reconciling workspace", "workspaceID", ws.Id, "desiredPhase", ws.DesiredPhase)
 	switch ws.DesiredPhase {
 	case v1.WorkspacePhase_PHASE_STOPPED:
-		// return runner.stopWorkspaceIfNotStopping(ctx, ws)
+		return runner.stopWorkspace(ctx, ws.Id)
 	case v1.WorkspacePhase_PHASE_RUNNING:
+		_, err := getWorkspaceStatusFromDocker(ctx, ws.Id, runner.Docker)
 		if connect.CodeOf(err) != connect.CodeNotFound {
 			return nil
 		}
-		err := runner.startWorkspace(ctx, ws)
+		err = runner.startWorkspace(ctx, ws)
 		if err != nil {
 			status := &v1.WorkspaceStatus{
 				StatusVersion: uint64(time.Now().UnixMicro()),
@@ -241,8 +246,18 @@ func (runner *LocalWorkspaceRunner) reconcile(ctx context.Context, ws *v1.Runner
 	return nil
 }
 
-func getWorkspaceStatusFromDocker(ctx context.Context, id string, inspector func(ctx context.Context, id string) ([]dockercli.Inspect, error)) (status *v1.WorkspaceStatus, err error) {
-	containers, err := inspector(ctx, id)
+func (runner *LocalWorkspaceRunner) stopWorkspace(ctx context.Context, id string) (err error) {
+	slog.Info("stopping workspace", "workspaceID", id)
+	err = runner.Docker.ContainerStop(ctx, id)
+	if err != nil {
+		return err
+	}
+	slog.Debug("stopped workspace", "workspaceID", id)
+	return nil
+}
+
+func getWorkspaceStatusFromDocker(ctx context.Context, id string, docker dockercli.CLI) (status *v1.WorkspaceStatus, err error) {
+	containers, err := docker.Inspect(ctx, id)
 	if err != nil || len(containers) == 0 {
 		if errors.Is(err, dockercli.ErrNotFound) {
 			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("workspace %s not found", id))
@@ -253,11 +268,18 @@ func getWorkspaceStatusFromDocker(ctx context.Context, id string, inspector func
 
 	var phase v1.WorkspacePhase_Phase
 	switch {
-	case container.State.Dead:
+	case !container.State.Running:
 		phase = v1.WorkspacePhase_PHASE_STOPPED
 	case container.State.Running:
-		// TODO(cw): signal content init progress
-		phase = v1.WorkspacePhase_PHASE_RUNNING
+		phase = v1.WorkspacePhase_PHASE_INITIALIZING
+
+		out, err := docker.Exec(ctx, id, "sh", "-c", "curl -f localhost:22998/readyz && echo ready")
+		if err != nil {
+			slog.Warn("cannot get workspacekit readyz", "err", err, "out", out)
+		}
+		if strings.Contains(out, "ready") {
+			phase = v1.WorkspacePhase_PHASE_RUNNING
+		}
 	}
 
 	var conditions v1.WorkspaceStatus_WorkspaceConditions
@@ -272,9 +294,19 @@ func getWorkspaceStatusFromDocker(ctx context.Context, id string, inspector func
 			Name:               phase,
 			LastTransitionTime: timestamppb.Now(),
 		},
-		WorkspaceUrl: "http://localhost:8080",
+		WorkspaceUrl: fmt.Sprintf("vscode://vscode-remote/attached-container+%s/workspace/%s", hex.EncodeToString([]byte(id)), container.Config.Labels["gitpod.io/workspaceRoot"]),
 		Conditions:   &conditions,
 	}, nil
+}
+
+func getWorkspacePathFromInitializer(init *v1.WorkspaceInitializer) string {
+	for _, spec := range init.Specs {
+		switch spec := spec.Spec.(type) {
+		case *v1.WorkspaceInitializer_Spec_Git:
+			return spec.Git.CheckoutLocation
+		}
+	}
+	return "/workspace"
 }
 
 func (runner *LocalWorkspaceRunner) startWorkspace(ctx context.Context, ws *v1.RunnerWorkspace) (err error) {
@@ -297,6 +329,7 @@ func (runner *LocalWorkspaceRunner) startWorkspace(ctx context.Context, ws *v1.R
 	args = append(args, "-p", "22998:22998") // expose workspacekit API
 	args = append(args, "--label", fmt.Sprintf("gitpod.io/workspaceID=%s", ws.Id))
 	args = append(args, "--label", "gitpod.io/workspace=true")
+	args = append(args, "--label", "gitpod.io/workspaceRoot=%s", getWorkspacePathFromInitializer(ws.Spec.Initializer))
 	args = append(args, "localhost:5000/workspacekit-local-ng:commit-237578143bbd6f61bc18d4b89c643977a2037e77", "inside", "shim", "--docker-workspace-content-location", contentDir, "--mmds", "stdin")
 
 	csapiInit, err := constructContentInit(ws.Spec.Initializer)
@@ -328,6 +361,11 @@ func (runner *LocalWorkspaceRunner) startWorkspace(ctx context.Context, ws *v1.R
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = bytes.NewReader(append(mdJSON, '\n'))
+	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			Setpgid: true,
+		}
+	}
 	if err != nil {
 		return err
 	}

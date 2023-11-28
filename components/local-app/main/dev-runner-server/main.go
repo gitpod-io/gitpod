@@ -7,12 +7,15 @@ package main
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"log/slog"
 	"math/rand"
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/Masterminds/sprig/v3"
 	"github.com/bufbuild/connect-go"
 	gitpod_experimental_v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	gitpod_experimental_v1connect "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
@@ -26,11 +29,15 @@ import (
 
 func main() {
 	hdlr := &handler{
-		cond: sync.NewCond(&sync.Mutex{}),
+		cond:    sync.NewCond(&sync.Mutex{}),
+		Status:  make(map[string]*v1.WorkspaceStatus),
+		Cluster: make(map[string]*Runner),
 	}
 
 	mux := http.NewServeMux()
-	mux.Handle("/api/start/", http.StripPrefix("/api/start/", http.HandlerFunc(hdlr.StartWorkspaceFromContext)))
+	mux.Handle("/api/create/", http.StripPrefix("/api/create/", http.HandlerFunc(hdlr.StartWorkspaceFromContext)))
+	mux.Handle("/api/stop/", http.StripPrefix("/api/stop/", http.HandlerFunc(hdlr.StopWorkspace)))
+	mux.Handle("/api/list", http.StripPrefix("/api/list", http.HandlerFunc(hdlr.ListWorkspces)))
 
 	mux.Handle(gitpod_v1connect.NewWorkspaceRunnerServiceHandler(hdlr))
 	mux.Handle(gitpod_experimental_v1connect.NewUserServiceHandler(&userHandler{}))
@@ -48,10 +55,17 @@ func main() {
 	))
 }
 
+type Runner struct {
+	Details  *v1.RegisterRunnerRequest
+	LastSeen time.Time
+}
+
 type handler struct {
 	gitpod_v1connect.UnimplementedWorkspaceRunnerServiceHandler
 
 	Workspaces []*v1.RunnerWorkspace
+	Status     map[string]*v1.WorkspaceStatus
+	Cluster    map[string]*Runner
 	cond       *sync.Cond
 }
 
@@ -86,6 +100,189 @@ func (h *handler) StartWorkspaceFromContext(rw http.ResponseWriter, req *http.Re
 	defer h.cond.L.Unlock()
 
 	rw.WriteHeader(http.StatusOK)
+}
+
+func (h *handler) StopWorkspace(rw http.ResponseWriter, req *http.Request) {
+	h.cond.L.Lock()
+	defer h.cond.L.Unlock()
+
+	slog.Info("stop workspace", "path", req.URL.Path)
+	var found bool
+
+	for i, ws := range h.Workspaces {
+		if ws.Id == req.URL.Path {
+			found = true
+			break
+		}
+		h.Workspaces[i].DesiredPhase = v1.WorkspacePhase_PHASE_STOPPED
+	}
+	if !found {
+		http.Error(rw, "not found", http.StatusNotFound)
+		return
+	}
+
+	rw.WriteHeader(http.StatusOK)
+}
+
+var listTemplate = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workspace Manager</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #333;
+        color: white;
+        margin: 0;
+        padding: 20px;
+    }
+    .container {
+        width: 80%;
+        margin: auto;
+    }
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .header h1 {
+        margin: 0;
+    }
+    .create-input {
+        padding: 10px;
+        border: none;
+        border-radius: 4px;
+        margin-right: 10px;
+    }
+    .create-button {
+        padding: 10px 20px;
+        background-color: #555;
+        border: none;
+        border-radius: 4px;
+        color: white;
+        cursor: pointer;
+    }
+    .create-button:hover {
+        background-color: #666;
+    }
+    .workspace-list {
+        list-style-type: none;
+        padding: 0;
+    }
+    .workspace-item {
+        background-color: #222;
+        padding: 20px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .workspace-status {
+        margin: 0;
+    }
+    .stop-button {
+        padding: 10px 20px;
+        background-color: #d9534f;
+        border: none;
+        border-radius: 4px;
+        color: white;
+        cursor: pointer;
+    }
+    .stop-button:hover {
+        background-color: #c9302c;
+    }
+
+	a {color: white;}
+</style>
+<script>
+setTimeout(function() {
+	window.location.reload();
+}, 5000);
+</script>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Workspaces</h1>
+        <div>
+            <input type="text" class="create-input" id="contexturl" placeholder="New workspace name">
+            <button class="create-button" onclick="window.open(location.href.substring(0, location.href.lastIndexOf('/'))+'/create/'+document.getElementById('contexturl').value)">Create</button>
+        </div>
+    </div>
+    <ul class="workspace-list">
+        <!-- Workspace items will be added here -->
+		{{ range .Workspaces }}
+        <li class="workspace-item">
+            <div>
+                <a href="{{ .Status.Url }}"><h2 class="workspace-name">{{ .Workspace.Id }}</h2></a>
+				{{ if .Status }}
+                <p class="workspace-status">Actual Phase: {{ .Status.Phase.Name }}</p>
+                <p class="workspace-status">Status: <pre>{{ .Status | toPrettyJson }}</pre></p>
+				{{ end }}
+                <p class="workspace-status">Context URL: <a href="{{ .Workspace.Metadata.OriginalContextUrl }}" target="_blank">{{ .Workspace.Metadata.OriginalContextUrl }}</a></p>
+                <p class="workspace-status">Desired Phase: <code>{{ .Workspace.DesiredPhase }}</code></p>
+            </div>
+            <button class="stop-button" onclick="window.open(location.href.substring(0, location.href.lastIndexOf('/'))+'/stop/{{ .Workspace.Id }}')">Stop Workspace</button>
+        </li>
+		{{ end }}
+    </ul>
+
+	<div class="header">
+		<h1>Cluster</h1>
+	</div>
+	{{ range .Runner }}
+	<li class="workspace-item">
+		<div>
+			<h2 class="workspace-name">{{ .Details.Name }}</h2>
+			<p class="workspace-status">Last Seen: <code>{{ .LastSeen }}</code></p>
+		</div>
+	</li>
+	{{ end }}
+</div>
+</body>
+</html>
+`
+
+func (h *handler) ListWorkspces(rw http.ResponseWriter, req *http.Request) {
+	h.cond.L.Lock()
+	defer h.cond.L.Unlock()
+
+	slog.Info("list workspaces")
+	tpl, err := template.New("list").Funcs(sprig.FuncMap()).Parse(listTemplate)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	type WorkspaceAndStatus struct {
+		Workspace *v1.RunnerWorkspace
+		Status    *v1.WorkspaceStatus
+	}
+	err = tpl.Execute(rw, struct {
+		Workspaces []WorkspaceAndStatus
+		Runner     map[string]*Runner
+	}{
+		Workspaces: func() []WorkspaceAndStatus {
+			var workspaces []WorkspaceAndStatus
+			for _, ws := range h.Workspaces {
+				workspaces = append(workspaces, WorkspaceAndStatus{
+					Workspace: ws,
+					Status:    h.Status[ws.Id],
+				})
+			}
+			return workspaces
+		}(),
+		Runner: h.Cluster,
+	})
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 var (
@@ -135,8 +332,13 @@ func parseContext(contextURL string) (*v1.WorkspaceInitializer, error) {
 		return nil, fmt.Errorf("invalid GitHub URL format")
 	}
 
-	remoteURI := fmt.Sprintf("https://github.com/%s/%s.git", parts[0], parts[1])
-	checkoutLocation := parts[1]
+	var (
+		owner = parts[1]
+		repo  = parts[2]
+
+		remoteURI        = fmt.Sprintf("https://github.com/%s/%s.git", owner, repo)
+		checkoutLocation = repo
+	)
 
 	// Checking for additional parts in the URL (branch or commit)
 	var ref string
@@ -164,6 +366,9 @@ func parseContext(contextURL string) (*v1.WorkspaceInitializer, error) {
 						TargetMode:       v1.GitInitializer_CLONE_TARGET_MODE_REMOTE_BRANCH,
 						CloneTaget:       ref,
 						CheckoutLocation: checkoutLocation,
+						Config: &v1.GitInitializer_GitConfig{
+							Authentication: v1.GitInitializer_AUTH_METHOD_UNSPECIFIED,
+						},
 					},
 				},
 			},
@@ -174,6 +379,13 @@ func parseContext(contextURL string) (*v1.WorkspaceInitializer, error) {
 func (h *handler) RegisterRunner(ctx context.Context, req *connect.Request[v1.RegisterRunnerRequest]) (*connect.Response[v1.RegisterRunnerResponse], error) {
 	runnerID := uuid.Must(uuid.NewRandom()).String()
 	slog.Info("register runner", "scope", req.Msg.Scope, "runnerID", runnerID)
+	h.cond.L.Lock()
+	defer h.cond.L.Unlock()
+	h.Cluster[runnerID] = &Runner{
+		Details:  req.Msg,
+		LastSeen: time.Now(),
+	}
+
 	return &connect.Response[v1.RegisterRunnerResponse]{
 		Msg: &v1.RegisterRunnerResponse{
 			ClusterId: runnerID,
@@ -182,6 +394,16 @@ func (h *handler) RegisterRunner(ctx context.Context, req *connect.Request[v1.Re
 }
 
 func (h *handler) RenewRunnerRegistration(ctx context.Context, req *connect.Request[v1.RenewRunnerRegistrationRequest]) (*connect.Response[v1.RenewRunnerRegistrationResponse], error) {
+	slog.Info("renew runner registration", "runnerID", req.Msg.ClusterId)
+	h.cond.L.Lock()
+	defer h.cond.L.Unlock()
+
+	runner, ok := h.Cluster[req.Msg.ClusterId]
+	if !ok {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("runner not found"))
+	}
+	runner.LastSeen = time.Now()
+
 	return &connect.Response[v1.RenewRunnerRegistrationResponse]{
 		Msg: &v1.RenewRunnerRegistrationResponse{},
 	}, nil
@@ -215,6 +437,14 @@ func (h *handler) WatchRunnerWorkspaces(ctx context.Context, req *connect.Reques
 
 func (h *handler) UpdateRunnerWorkspaceStatus(ctx context.Context, req *connect.Request[v1.UpdateRunnerWorkspaceStatusRequest]) (*connect.Response[v1.UpdateRunnerWorkspaceStatusResponse], error) {
 	slog.Info("update runner workspace status", "workspaceID", req.Msg.WorkspaceId, "status", req.Msg.Update)
+
+	h.cond.L.Lock()
+	defer h.cond.L.Unlock()
+	switch update := req.Msg.Update.(type) {
+	case *v1.UpdateRunnerWorkspaceStatusRequest_Status:
+		h.Status[req.Msg.WorkspaceId] = update.Status
+	}
+
 	return &connect.Response[v1.UpdateRunnerWorkspaceStatusResponse]{
 		Msg: &v1.UpdateRunnerWorkspaceStatusResponse{},
 	}, nil

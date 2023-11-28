@@ -16,26 +16,19 @@ import (
 )
 
 type CLI interface {
-	ContainerList(opts porcelain.ContainerLsOpts) ([]ContainerLS, error)
+	ContainerList() ([]ContainerLS, error)
+	ContainerStop(ctx context.Context, id string) error
+	ContainerRemove(ctx context.Context, id string) error
+
+	Exec(ctx context.Context, containerID string, cmd ...string) (string, error)
 	Inspect(ctx context.Context, id string) ([]Inspect, error)
 	Run(opts porcelain.RunOpts, image, command string, args ...string) (string, error)
 }
 
 type ContainerLS struct {
-	Command      string `json:"Command"`
-	CreatedAt    string `json:"CreatedAt"`
-	ID           string `json:"ID"`
-	Image        string `json:"Image"`
-	Labels       string `json:"Labels"`
-	LocalVolumes string `json:"LocalVolumes"`
-	Mounts       string `json:"Mounts"`
-	Names        string `json:"Names"`
-	Networks     string `json:"Networks"`
-	Ports        string `json:"Ports"`
-	RunningFor   string `json:"RunningFor"`
-	Size         string `json:"Size"`
-	State        string `json:"State"`
-	Status       string `json:"Status"`
+	ID     string `json:"ID"`
+	Labels string `json:"Labels"`
+	Names  string `json:"Names"`
 }
 
 type Inspect struct {
@@ -186,11 +179,10 @@ type Inspect struct {
 			VarLibRegistry struct {
 			} `json:"/var/lib/registry"`
 		} `json:"Volumes"`
-		WorkingDir string   `json:"WorkingDir"`
-		Entrypoint []string `json:"Entrypoint"`
-		OnBuild    any      `json:"OnBuild"`
-		Labels     struct {
-		} `json:"Labels"`
+		WorkingDir string            `json:"WorkingDir"`
+		Entrypoint []string          `json:"Entrypoint"`
+		OnBuild    any               `json:"OnBuild"`
+		Labels     map[string]string `json:"Labels"`
 	} `json:"Config"`
 	NetworkSettings struct {
 		Bridge                 string `json:"Bridge"`
@@ -239,27 +231,24 @@ var Docker CLI = nativeCLI{}
 
 type nativeCLI struct{}
 
-func (nativeCLI) ContainerList(opts porcelain.ContainerLsOpts) ([]ContainerLS, error) {
-	opts.Format = "json"
-	out, err := porcelain.ContainerLs(&opts)
+func (nativeCLI) ContainerList() ([]ContainerLS, error) {
+	out, err := exec.Command("docker", "container", "ls", "--all", "--format", "{{ .ID }}\t{{ .Names }}\t{{ .Labels }}").CombinedOutput()
 	if err != nil {
 		return nil, err
 	}
-	if out == "" {
-		return nil, nil
-	}
 
 	var res []ContainerLS
-	for _, line := range strings.Split(out, "\n") {
-		if line == "" {
+	for _, line := range strings.Split(string(out), "\n") {
+		segs := strings.Split(line, "\t")
+		if line == "" || len(segs) != 3 {
 			continue
 		}
-		var c ContainerLS
-		err := json.Unmarshal([]byte(line), &c)
-		if err != nil {
-			return nil, err
-		}
-		res = append(res, c)
+
+		res = append(res, ContainerLS{
+			ID:     segs[0],
+			Names:  segs[1],
+			Labels: segs[2],
+		})
 	}
 	return res, nil
 }
@@ -285,4 +274,25 @@ func (nativeCLI) Inspect(ctx context.Context, id string) ([]Inspect, error) {
 		return nil, err
 	}
 	return res, nil
+}
+
+func (nativeCLI) ContainerStop(ctx context.Context, id string) error {
+	_, err := exec.Command("docker", "stop", id).CombinedOutput()
+	return err
+}
+
+func (nativeCLI) ContainerRemove(ctx context.Context, id string) error {
+	_, err := exec.Command("docker", "rm", id).CombinedOutput()
+	return err
+}
+
+func (nativeCLI) Exec(ctx context.Context, containerID string, cmd ...string) (string, error) {
+	args := []string{"exec", "-i", containerID}
+	args = append(args, cmd...)
+
+	out, err := exec.Command("docker", args...).CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
 }
