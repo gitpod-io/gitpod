@@ -23,6 +23,7 @@ import (
 const (
 	maintenanceEnabled            string = "maintenance_enabled"
 	workspaceStartupSeconds       string = "workspace_startup_seconds"
+	workspacePendingSeconds       string = "workspace_pending_seconds"
 	workspaceCreatingSeconds      string = "workspace_creating_seconds"
 	workspaceStartFailuresTotal   string = "workspace_starts_failure_total"
 	workspaceFailuresTotal        string = "workspace_failure_total"
@@ -48,6 +49,7 @@ const (
 
 type controllerMetrics struct {
 	startupTimeHistVec           *prometheus.HistogramVec
+	pendingTimeHistVec           *prometheus.HistogramVec
 	creatingTimeHistVec          *prometheus.HistogramVec
 	totalStartsFailureCounterVec *prometheus.CounterVec
 	totalFailuresCounterVec      *prometheus.CounterVec
@@ -79,6 +81,13 @@ func newControllerMetrics(r *WorkspaceReconciler) (*controllerMetrics, error) {
 			Subsystem: metricsWorkspaceSubsystem,
 			Name:      workspaceStartupSeconds,
 			Help:      "time it took for workspace pods to reach the running phase",
+			Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
+		}, []string{"type", "class"}),
+		pendingTimeHistVec: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      workspacePendingSeconds,
+			Help:      "time the workspace spent in pending",
 			Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
 		}, []string{"type", "class"}),
 		creatingTimeHistVec: prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -150,6 +159,18 @@ func (m *controllerMetrics) recordWorkspaceStartupTime(log *logr.Logger, ws *wor
 
 	duration := time.Since(ws.CreationTimestamp.Time)
 	hist.Observe(float64(duration.Seconds()))
+}
+
+func (m *controllerMetrics) recordWorkspacePendingTime(log *logr.Logger, ws *workspacev1.Workspace, pendingTs time.Time) {
+	class := ws.Spec.Class
+	tpe := string(ws.Spec.Type)
+
+	hist, err := m.pendingTimeHistVec.GetMetricWithLabelValues(tpe, class)
+	if err != nil {
+		log.Error(err, "could not record workspace pending time", "type", tpe, "class", class)
+	}
+
+	hist.Observe(time.Since(pendingTs).Seconds())
 }
 
 func (m *controllerMetrics) recordWorkspaceCreatingTime(log *logr.Logger, ws *workspacev1.Workspace, creatingTs time.Time) {
@@ -253,6 +274,7 @@ func (m *controllerMetrics) forgetWorkspace(ws *workspacev1.Workspace) {
 // metricState is used to track which metrics have been recorded for a workspace.
 type metricState struct {
 	phase                   workspacev1.WorkspacePhase
+	pendingStartTime        time.Time
 	creatingStartTime       time.Time
 	recordedStartTime       bool
 	recordedInitFailure     bool
@@ -292,6 +314,7 @@ func (m *controllerMetrics) getWorkspace(log *logr.Logger, ws *workspacev1.Works
 // Describe implements Collector. It will send exactly one Desc to the provided channel.
 func (m *controllerMetrics) Describe(ch chan<- *prometheus.Desc) {
 	m.startupTimeHistVec.Describe(ch)
+	m.pendingTimeHistVec.Describe(ch)
 	m.creatingTimeHistVec.Describe(ch)
 	m.totalStopsCounterVec.Describe(ch)
 	m.totalStartsFailureCounterVec.Describe(ch)
@@ -310,6 +333,7 @@ func (m *controllerMetrics) Describe(ch chan<- *prometheus.Desc) {
 // Collect implements Collector.
 func (m *controllerMetrics) Collect(ch chan<- prometheus.Metric) {
 	m.startupTimeHistVec.Collect(ch)
+	m.pendingTimeHistVec.Collect(ch)
 	m.creatingTimeHistVec.Collect(ch)
 	m.totalStopsCounterVec.Collect(ch)
 	m.totalStartsFailureCounterVec.Collect(ch)
