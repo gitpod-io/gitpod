@@ -18,9 +18,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
+	k8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/constants"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
@@ -254,5 +257,14 @@ func (r *TimeoutReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Named("timeout").
 		WithOptions(controller.Options{MaxConcurrentReconciles: maxConcurrentReconciles}).
 		For(&workspacev1.Workspace{}).
+		WithEventFilter(predicate.NewPredicateFuncs(func(object client.Object) bool {
+			for k, v := range object.GetLabels() {
+				if k == k8s.WorkspaceManagedByLabel && v == constants.ManagedBy {
+					return true
+				}
+			}
+
+			return false
+		})).
 		Complete(r)
 }

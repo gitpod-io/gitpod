@@ -27,8 +27,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/constants"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
@@ -487,6 +489,20 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			MaxConcurrentReconciles: r.Config.WorkspaceMaxConcurrentReconciles,
 		}).
 		For(&workspacev1.Workspace{}).
+		WithEventFilter(predicate.NewPredicateFuncs(func(object client.Object) bool {
+			_, ok := object.(*corev1.Node)
+			if ok {
+				return true
+			}
+
+			for k, v := range object.GetLabels() {
+				if k == wsk8s.WorkspaceManagedByLabel && v == constants.ManagedBy {
+					return true
+				}
+			}
+
+			return false
+		})).
 		Owns(&corev1.Pod{}).
 		// Add a watch for Nodes, so that they're cached in memory and don't require calling the k8s API
 		// when reconciling workspaces.

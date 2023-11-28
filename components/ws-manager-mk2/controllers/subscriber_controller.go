@@ -21,8 +21,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/constants"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
+
+	k8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 )
 
 func NewSubscriberReconciler(c client.Client, cfg *config.Configuration) (*SubscriberReconciler, error) {
@@ -80,22 +83,46 @@ func (r *SubscriberReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 		}
 	}()
 
+	filterByManagedBy := func(ws *workspacev1.Workspace) bool {
+		mgr, ok := ws.Labels[k8s.WorkspaceManagedByLabel]
+		if !ok {
+			return false
+		}
+
+		return mgr == constants.ManagedBy
+	}
+
 	// we need several reconciliation loops during a workspace creation until it reaches a stable state.
 	// this introduces the side effect of multiple notifications to the subscribers with partial information.
 	// the filterByUpdate predicate acts as a filter to avoid this
 	filterByUpdate := predicate.Funcs{
 		CreateFunc: func(ce event.CreateEvent) bool {
-			return true
+			ws := ce.Object.(*workspacev1.Workspace)
+			return filterByManagedBy(ws)
 		},
 		UpdateFunc: func(e event.UpdateEvent) bool {
 			old := e.ObjectOld.(*workspacev1.Workspace)
 			new := e.ObjectNew.(*workspacev1.Workspace)
+
+			mgr, ok := new.Labels[k8s.WorkspaceManagedByLabel]
+			if !ok {
+				return false
+			}
+
+			if mgr != constants.ManagedBy {
+				return false
+			}
 
 			if !cmp.Equal(old.Spec.Ports, new.Spec.Ports) {
 				return true
 			}
 
 			return !cmp.Equal(old.Status, new.Status, cmpopts.IgnoreFields(workspacev1.WorkspaceStatus{}, "LastActivity"))
+		},
+
+		DeleteFunc: func(de event.DeleteEvent) bool {
+			ws := de.Object.(*workspacev1.Workspace)
+			return filterByManagedBy(ws)
 		},
 	}
 

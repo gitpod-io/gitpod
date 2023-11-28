@@ -25,6 +25,7 @@ import (
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/constants"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
 
@@ -767,6 +768,9 @@ func newWorkspace(name, namespace string) *workspacev1.Workspace {
 			Name:       name,
 			Namespace:  namespace,
 			Finalizers: []string{workspacev1.GitpodFinalizerName},
+			Labels: map[string]string{
+				wsk8s.WorkspaceManagedByLabel: constants.ManagedBy,
+			},
 		},
 		Spec: workspacev1.WorkspaceSpec{
 			Ownership: workspacev1.Ownership{

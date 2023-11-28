@@ -27,6 +27,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/constants"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
@@ -690,14 +691,15 @@ func newStartWorkspaceContext(ctx context.Context, cfg *config.Configuration, ws
 
 	return &startWorkspaceContext{
 		Labels: map[string]string{
-			"app":                  "gitpod",
-			"component":            "workspace",
-			wsk8s.MetaIDLabel:      ws.Spec.Ownership.WorkspaceID,
-			wsk8s.WorkspaceIDLabel: ws.Name,
-			wsk8s.OwnerLabel:       ws.Spec.Ownership.Owner,
-			wsk8s.TypeLabel:        strings.ToLower(string(ws.Spec.Type)),
-			instanceIDLabel:        ws.Name,
-			headlessLabel:          strconv.FormatBool(ws.IsHeadless()),
+			"app":                         "gitpod",
+			"component":                   "workspace",
+			wsk8s.MetaIDLabel:             ws.Spec.Ownership.WorkspaceID,
+			wsk8s.WorkspaceIDLabel:        ws.Name,
+			wsk8s.OwnerLabel:              ws.Spec.Ownership.Owner,
+			wsk8s.TypeLabel:               strings.ToLower(string(ws.Spec.Type)),
+			wsk8s.WorkspaceManagedByLabel: constants.ManagedBy,
+			instanceIDLabel:               ws.Name,
+			headlessLabel:                 strconv.FormatBool(ws.IsHeadless()),
 		},
 		Config:         cfg,
 		Workspace:      ws,
