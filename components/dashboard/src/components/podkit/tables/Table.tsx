@@ -27,7 +27,7 @@ export const TableHeader = React.forwardRef<HTMLTableSectionElement, React.HTMLA
         return (
             <thead
                 ref={ref}
-                className="[&_th]:p-3 [&_th]:bg-gray-100 [&_th]:font-semibold dark:[&_th]:bg-gray-800 [&_th:first-child]:rounded-tl-md [&_th:last-child]:rounded-tr-md"
+                className="[&_th]:py-2 [&_th]:px-4 [&_th]:bg-gray-100 [&_th]:font-semibold dark:[&_th]:bg-gray-800 [&_th:first-child]:rounded-tl-md [&_th:last-child]:rounded-tr-md"
                 {...props}
             />
         );
@@ -53,7 +53,11 @@ TableHead.displayName = "TableHead";
 export const TableBody = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(
     ({ className, ...props }, ref) => {
         return (
-            <tbody ref={ref} className="[&_td]:p-3 [&_td:last-child]:text-right [&_tr]:hover:bg-muted/5" {...props} />
+            <tbody
+                ref={ref}
+                className="[&_td]:py-3 [&_td]:px-4 [&_td:last-child]:text-right [&_tr]:hover:bg-muted/5"
+                {...props}
+            />
         );
     },
 );

@@ -31,11 +31,15 @@ export const SortableTableHead = React.forwardRef<
             {...props}
             aria-sort={sortOrder === "asc" ? "ascending" : sortOrder === "desc" ? "descending" : "none"}
         >
-            <Button variant="ghost" onClick={handleClick} className="flex flex-row items-center gap-1 font-semibold">
+            <Button
+                variant="ghost"
+                onClick={handleClick}
+                className="flex flex-row items-center gap-1 font-semibold p-0 -h-9"
+            >
                 {children}
                 {/* keep element in dom to preserve space */}
                 <span className={cn(!sortOrder && "invisible")}>
-                    {sortOrder === "asc" ? <ChevronUpIcon size={20} /> : <ChevronDownIcon size={20} />}
+                    {sortOrder === "asc" ? <ChevronUpIcon size={24} /> : <ChevronDownIcon size={24} />}
                 </span>
             </Button>
         </TableHead>
