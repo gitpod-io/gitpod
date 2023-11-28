@@ -248,6 +248,8 @@ message WorkspaceSpec {
   // log_url is the URL where we stream the workspace's logs to.
   // Can be changed when the workspace is PENDING or STOPPED.
   string log_url = 12;
+
+  EditorReference editor = 13;
 }
 
 // WorkspaceStatus describes a workspace status
