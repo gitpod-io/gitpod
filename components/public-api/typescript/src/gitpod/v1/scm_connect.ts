@@ -19,6 +19,9 @@ export const SCMService = {
   typeName: "gitpod.v1.SCMService",
   methods: {
     /**
+     * SearchSCMTokens allows clients to retrieve SCM tokens based on the
+     * specified host.
+     *
      * @generated from rpc gitpod.v1.SCMService.SearchSCMTokens
      */
     searchSCMTokens: {
@@ -28,6 +31,9 @@ export const SCMService = {
       kind: MethodKind.Unary,
     },
     /**
+     * GuessTokenScopes allows clients to retrieve scopes their SCM token would
+     * require for the specified git command.
+     *
      * @generated from rpc gitpod.v1.SCMService.GuessTokenScopes
      */
     guessTokenScopes: {
@@ -37,6 +43,9 @@ export const SCMService = {
       kind: MethodKind.Unary,
     },
     /**
+     * SearchRepositories allows clients to search for suggested repositories of
+     * SCM providers they are connected with.
+     *
      * @generated from rpc gitpod.v1.SCMService.SearchRepositories
      */
     searchRepositories: {
@@ -46,6 +55,9 @@ export const SCMService = {
       kind: MethodKind.Unary,
     },
     /**
+     * ListSuggestedRepositories allows clients to list suggested repositories
+     * based on recent workspaces and accessible repo configurations.
+     *
      * @generated from rpc gitpod.v1.SCMService.ListSuggestedRepositories
      */
     listSuggestedRepositories: {

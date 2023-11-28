@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package gitpod.v1;
 
+import "gitpod/v1/editor.proto";
 import "gitpod/v1/pagination.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -386,11 +387,6 @@ message WorkspacePhase {
 
   Phase name = 1;
   google.protobuf.Timestamp last_transition_time = 2;
-}
-
-message EditorReference {
-  string name = 1;
-  string version = 2;
 }
 
 message WorkspaceEnvironmentVariable {

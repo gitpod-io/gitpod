@@ -26,9 +26,17 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SCMServiceClient interface {
+	// SearchSCMTokens allows clients to retrieve SCM tokens based on the
+	// specified host.
 	SearchSCMTokens(ctx context.Context, in *SearchSCMTokensRequest, opts ...grpc.CallOption) (*SearchSCMTokensResponse, error)
+	// GuessTokenScopes allows clients to retrieve scopes their SCM token would
+	// require for the specified git command.
 	GuessTokenScopes(ctx context.Context, in *GuessTokenScopesRequest, opts ...grpc.CallOption) (*GuessTokenScopesResponse, error)
+	// SearchRepositories allows clients to search for suggested repositories of
+	// SCM providers they are connected with.
 	SearchRepositories(ctx context.Context, in *SearchRepositoriesRequest, opts ...grpc.CallOption) (*SearchRepositoriesResponse, error)
+	// ListSuggestedRepositories allows clients to list suggested repositories
+	// based on recent workspaces and accessible repo configurations.
 	ListSuggestedRepositories(ctx context.Context, in *ListSuggestedRepositoriesRequest, opts ...grpc.CallOption) (*ListSuggestedRepositoriesResponse, error)
 }
 
@@ -80,9 +88,17 @@ func (c *sCMServiceClient) ListSuggestedRepositories(ctx context.Context, in *Li
 // All implementations must embed UnimplementedSCMServiceServer
 // for forward compatibility
 type SCMServiceServer interface {
+	// SearchSCMTokens allows clients to retrieve SCM tokens based on the
+	// specified host.
 	SearchSCMTokens(context.Context, *SearchSCMTokensRequest) (*SearchSCMTokensResponse, error)
+	// GuessTokenScopes allows clients to retrieve scopes their SCM token would
+	// require for the specified git command.
 	GuessTokenScopes(context.Context, *GuessTokenScopesRequest) (*GuessTokenScopesResponse, error)
+	// SearchRepositories allows clients to search for suggested repositories of
+	// SCM providers they are connected with.
 	SearchRepositories(context.Context, *SearchRepositoriesRequest) (*SearchRepositoriesResponse, error)
+	// ListSuggestedRepositories allows clients to list suggested repositories
+	// based on recent workspaces and accessible repo configurations.
 	ListSuggestedRepositories(context.Context, *ListSuggestedRepositoriesRequest) (*ListSuggestedRepositoriesResponse, error)
 	mustEmbedUnimplementedSCMServiceServer()
 }
