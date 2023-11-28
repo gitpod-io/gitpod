@@ -393,7 +393,7 @@ export function CreateWorkspacePage() {
                         <RepositoryFinder
                             onChange={handleContextURLChange}
                             selectedContextURL={contextURL}
-                            selectedProjectID={selectedProjectID}
+                            selectedConfigurationId={selectedProjectID}
                             expanded={!contextURL}
                             disabled={createWorkspaceMutation.isStarting}
                         />

@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { SuggestedRepository } from "@gitpod/gitpod-protocol";
+import { SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import { useSearchRepositories } from "./search-repositories-query";
 import { useSuggestedRepositories } from "./suggested-repositories-query";
 import { useMemo } from "react";
@@ -47,22 +47,22 @@ export function deduplicateAndFilterRepositories(
     const reposWithProject = new Set<string>();
     if (!excludeProjects) {
         suggestedRepos.forEach((r) => {
-            if (r.projectId) {
+            if (r.configurationId) {
                 reposWithProject.add(r.url);
             }
         });
     }
     for (const repo of suggestedRepos) {
         // filter out project-less entries if an entry with a project exists
-        if (!repo.projectId && reposWithProject.has(repo.url)) {
+        if (!repo.configurationId && reposWithProject.has(repo.url)) {
             continue;
         }
         // filter out entries that don't match the search string
-        if (!`${repo.url}${repo.projectName || ""}`.toLowerCase().includes(normalizedSearchString)) {
+        if (!`${repo.url}${repo.configurationName || ""}`.toLowerCase().includes(normalizedSearchString)) {
             continue;
         }
         // filter out duplicates
-        const key = `${repo.url}:${excludeProjects ? "" : repo.projectId || "no-project"}`;
+        const key = `${repo.url}:${excludeProjects ? "" : repo.configurationId || "no-project"}`;
         if (collected.has(key)) {
             continue;
         }
@@ -74,7 +74,11 @@ export function deduplicateAndFilterRepositories(
         try {
             // If the normalizedSearchString is a URL, and it's not present in the proposed results, "artificially" add it here.
             new URL(normalizedSearchString);
-            results.push({ url: normalizedSearchString });
+            results.push(
+                new SuggestedRepository({
+                    url: normalizedSearchString,
+                }),
+            );
         } catch {}
     }
 
