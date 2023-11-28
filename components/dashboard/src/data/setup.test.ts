@@ -22,6 +22,21 @@ test("set and get proto message", async () => {
     expect(rehydrate({ foo: org }).foo.creationTime!.toDate()).toStrictEqual(now);
 });
 
+test("set and get proto message that include | in the message value", async () => {
+    const now = new Date();
+    const org = new Organization({
+        creationTime: Timestamp.fromDate(now),
+        id: "test-id",
+        name: "test-name|more",
+        slug: "test-slug",
+    });
+
+    expect(rehydrate(org).creationTime!.toDate()).toStrictEqual(now);
+    expect(rehydrate([org])[0].creationTime!.toDate()).toStrictEqual(now);
+    expect(rehydrate({ foo: org }).foo.creationTime!.toDate()).toStrictEqual(now);
+    expect(rehydrate(org).name).toStrictEqual("test-name|more");
+});
+
 function rehydrate<T>(obj: T): T {
     const dehydrated = dehydrate(obj);
     const str = JSON.stringify(dehydrated);
