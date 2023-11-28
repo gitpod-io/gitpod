@@ -27,7 +27,7 @@ export const TableHeader = React.forwardRef<HTMLTableSectionElement, React.HTMLA
         return (
             <thead
                 ref={ref}
-                className="[&_th]:p-3 [&_th]:bg-gray-100 dark:[&_th]:bg-gray-800 [&_th:first-child]:rounded-tl-md [&_th:last-child]:rounded-tr-md text-semibold"
+                className="[&_th]:p-3 [&_th]:bg-gray-100 [&_th]:font-semibold dark:[&_th]:bg-gray-800 [&_th:first-child]:rounded-tl-md [&_th:last-child]:rounded-tr-md"
                 {...props}
             />
         );

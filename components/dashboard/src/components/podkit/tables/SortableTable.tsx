@@ -31,7 +31,7 @@ export const SortableTableHead = React.forwardRef<
             {...props}
             aria-sort={sortOrder === "asc" ? "ascending" : sortOrder === "desc" ? "descending" : "none"}
         >
-            <Button variant="ghost" onClick={handleClick} className="flex flex-row items-center gap-1">
+            <Button variant="ghost" onClick={handleClick} className="flex flex-row items-center gap-1 font-semibold">
                 {children}
                 {/* keep element in dom to preserve space */}
                 <span className={cn(!sortOrder && "invisible")}>
