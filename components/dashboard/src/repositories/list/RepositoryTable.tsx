@@ -15,6 +15,7 @@ import { Subheading } from "@podkit/typography/Headings";
 import { cn } from "@podkit/lib/cn";
 import { SortableTableHead, TableSortOrder } from "@podkit/tables/SortableTable";
 import { LoadingState } from "@podkit/loading/LoadingState";
+import { Button } from "@podkit/buttons/Button";
 
 type Props = {
     configurations: Configuration[];
@@ -25,6 +26,7 @@ type Props = {
     hasMoreThanOnePage: boolean;
     isSearching: boolean;
     isFetchingNextPage: boolean;
+    onImport: () => void;
     onSearchTermChange: (val: string) => void;
     onLoadNextPage: () => void;
     onSort: (columnName: string, direction: TableSortOrder) => void;
@@ -39,6 +41,7 @@ export const RepositoryTable: FC<Props> = ({
     hasMoreThanOnePage,
     isSearching,
     isFetchingNextPage,
+    onImport,
     onSearchTermChange,
     onLoadNextPage,
     onSort,
@@ -47,7 +50,7 @@ export const RepositoryTable: FC<Props> = ({
         <>
             {/* Search/Filter bar */}
             <div className="flex flex-row flex-wrap justify-between items-center">
-                <div className="flex flex-row flex-wrap gap-2 items-center">
+                <div className="flex flex-row flex-wrap items-center">
                     {/* TODO: Add search icon on left and decide on pulling Inputs into podkit */}
                     <TextInput
                         className="w-80"
@@ -57,8 +60,10 @@ export const RepositoryTable: FC<Props> = ({
                     />
                     {/* TODO: Add prebuild status filter dropdown */}
                 </div>
+
+                <Button onClick={onImport}>Import Repository</Button>
             </div>
-            <div className="relative w-full overflow-auto mt-2">
+            <div className="relative w-full overflow-auto mt-4">
                 {configurations.length > 0 ? (
                     <Table>
                         <TableHeader>

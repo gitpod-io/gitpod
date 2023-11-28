@@ -8,7 +8,6 @@ import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { useListConfigurations } from "../../data/configurations/configuration-queries";
 import { PageHeading } from "@podkit/layout/PageHeading";
-import { Button } from "@podkit/buttons/Button";
 import { useDocumentTitle } from "../../hooks/use-document-title";
 import { ImportRepositoryModal } from "../create/ImportRepositoryModal";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
@@ -88,9 +87,6 @@ const RepositoryListPage: FC = () => {
                 <PageHeading
                     title="Imported repositories"
                     subtitle="Configure and refine the experience of working with a repository in Gitpod"
-                    action={
-                        showTable && <Button onClick={() => setShowCreateProjectModal(true)}>Import Repository</Button>
-                    }
                 />
 
                 {isLoading && <LoadingState />}
@@ -106,6 +102,7 @@ const RepositoryListPage: FC = () => {
                         isFetchingNextPage={isFetchingNextPage}
                         hasNextPage={!!hasNextPage}
                         hasMoreThanOnePage={hasMoreThanOnePage}
+                        onImport={() => setShowCreateProjectModal(true)}
                         onLoadNextPage={() => fetchNextPage()}
                         onSearchTermChange={setSearchTerm}
                         onSort={handleSort}
