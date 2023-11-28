@@ -7,12 +7,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"html/template"
 	"log/slog"
 	"math/rand"
 	"net/http"
 	"strings"
 	"sync"
+	"text/template"
 	"time"
 
 	"github.com/Masterminds/sprig/v3"
@@ -21,7 +21,6 @@ import (
 	gitpod_experimental_v1connect "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/v1"
 	gitpod_v1connect "github.com/gitpod-io/gitpod/components/public-api/go/v1/v1connect"
-	"github.com/google/uuid"
 
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -29,9 +28,10 @@ import (
 
 func main() {
 	hdlr := &handler{
-		cond:    sync.NewCond(&sync.Mutex{}),
-		Status:  make(map[string]*v1.WorkspaceStatus),
-		Cluster: make(map[string]*Runner),
+		cond:       sync.NewCond(&sync.Mutex{}),
+		Workspaces: make(map[string]*v1.RunnerWorkspace),
+		Status:     make(map[string]*v1.WorkspaceStatus),
+		Runner:     make(map[string]*Runner),
 	}
 
 	mux := http.NewServeMux()
@@ -63,9 +63,9 @@ type Runner struct {
 type handler struct {
 	gitpod_v1connect.UnimplementedWorkspaceRunnerServiceHandler
 
-	Workspaces []*v1.RunnerWorkspace
+	Workspaces map[string]*v1.RunnerWorkspace
 	Status     map[string]*v1.WorkspaceStatus
-	Cluster    map[string]*Runner
+	Runner     map[string]*Runner
 	cond       *sync.Cond
 }
 
@@ -77,9 +77,10 @@ func (h *handler) StartWorkspaceFromContext(rw http.ResponseWriter, req *http.Re
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 	}
 
+	id := generateRandomWorkspaceID()
 	h.cond.L.Lock()
-	h.Workspaces = append(h.Workspaces, &v1.RunnerWorkspace{
-		Id:           generateRandomWorkspaceID(),
+	h.Workspaces[id] = &v1.RunnerWorkspace{
+		Id:           id,
 		DesiredPhase: v1.WorkspacePhase_PHASE_RUNNING,
 		Metadata: &v1.WorkspaceMetadata{
 			OwnerId:            "test",
@@ -95,11 +96,11 @@ func (h *handler) StartWorkspaceFromContext(rw http.ResponseWriter, req *http.Re
 			Class:     "default",
 			Admission: v1.AdmissionLevel_ADMISSION_LEVEL_EVERYONE,
 		},
-	})
+	}
 	h.cond.Broadcast()
 	defer h.cond.L.Unlock()
 
-	rw.WriteHeader(http.StatusOK)
+	http.Redirect(rw, req, "/api/list", http.StatusFound)
 }
 
 func (h *handler) StopWorkspace(rw http.ResponseWriter, req *http.Request) {
@@ -197,7 +198,9 @@ var listTemplate = `
         background-color: #c9302c;
     }
 
-	a {color: white;}
+	a {
+		color: white;
+	}
 </style>
 <script>
 setTimeout(function() {
@@ -210,8 +213,7 @@ setTimeout(function() {
     <div class="header">
         <h1>Workspaces</h1>
         <div>
-            <input type="text" class="create-input" id="contexturl" placeholder="New workspace name">
-            <button class="create-button" onclick="window.open(location.href.substring(0, location.href.lastIndexOf('/'))+'/create/'+document.getElementById('contexturl').value)">Create</button>
+            <button class="create-button" onclick="location.href=location.href.substring(0, location.href.lastIndexOf('/'))+'/create/'+prompt('Context URL')">Create</button>
         </div>
     </div>
     <ul class="workspace-list">
@@ -219,13 +221,15 @@ setTimeout(function() {
 		{{ range .Workspaces }}
         <li class="workspace-item">
             <div>
-                <a href="{{ .Status.Url }}"><h2 class="workspace-name">{{ .Workspace.Id }}</h2></a>
-				{{ if .Status }}
+			{{ if .Status }}
+				<a href="{{ .Status.WorkspaceUrl }}"><h2 class="workspace-name">{{ if (eq (.Status.Phase.Name | toString) "PHASE_RUNNING") }}🟢{{ else }}🟡{{ end }} {{ .Workspace.Id }}</h2></a>
+                <p class="workspace-status">URL: {{ .Status.WorkspaceUrl }}</p>
                 <p class="workspace-status">Actual Phase: {{ .Status.Phase.Name }}</p>
                 <p class="workspace-status">Status: <pre>{{ .Status | toPrettyJson }}</pre></p>
+				{{ else }}
+				<h2 class="workspace-name">🔘 {{ .Workspace.Id }}</h2>
 				{{ end }}
                 <p class="workspace-status">Context URL: <a href="{{ .Workspace.Metadata.OriginalContextUrl }}" target="_blank">{{ .Workspace.Metadata.OriginalContextUrl }}</a></p>
-                <p class="workspace-status">Desired Phase: <code>{{ .Workspace.DesiredPhase }}</code></p>
             </div>
             <button class="stop-button" onclick="window.open(location.href.substring(0, location.href.lastIndexOf('/'))+'/stop/{{ .Workspace.Id }}')">Stop Workspace</button>
         </li>
@@ -233,12 +237,12 @@ setTimeout(function() {
     </ul>
 
 	<div class="header">
-		<h1>Cluster</h1>
+		<h1>Runner</h1>
 	</div>
 	{{ range .Runner }}
 	<li class="workspace-item">
 		<div>
-			<h2 class="workspace-name">{{ .Details.Name }}</h2>
+			<h2 class="workspace-name">{{ if .Online }}🟢{{ else }}🔴{{ end }} {{ .Details.Name }}</h2>
 			<p class="workspace-status">Last Seen: <code>{{ .LastSeen }}</code></p>
 		</div>
 	</li>
@@ -252,11 +256,24 @@ func (h *handler) ListWorkspces(rw http.ResponseWriter, req *http.Request) {
 	h.cond.L.Lock()
 	defer h.cond.L.Unlock()
 
-	slog.Info("list workspaces")
 	tpl, err := template.New("list").Funcs(sprig.FuncMap()).Parse(listTemplate)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	type Runner struct {
+		Details  *v1.RegisterRunnerRequest
+		LastSeen time.Duration
+		Online   bool
+	}
+	var runner []Runner
+	for _, r := range h.Runner {
+		runner = append(runner, Runner{
+			Details:  r.Details,
+			LastSeen: time.Since(r.LastSeen),
+			Online:   time.Since(r.LastSeen) < 20*time.Second,
+		})
 	}
 
 	type WorkspaceAndStatus struct {
@@ -265,7 +282,7 @@ func (h *handler) ListWorkspces(rw http.ResponseWriter, req *http.Request) {
 	}
 	err = tpl.Execute(rw, struct {
 		Workspaces []WorkspaceAndStatus
-		Runner     map[string]*Runner
+		Runner     []Runner
 	}{
 		Workspaces: func() []WorkspaceAndStatus {
 			var workspaces []WorkspaceAndStatus
@@ -277,7 +294,7 @@ func (h *handler) ListWorkspces(rw http.ResponseWriter, req *http.Request) {
 			}
 			return workspaces
 		}(),
-		Runner: h.Cluster,
+		Runner: runner,
 	})
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
@@ -377,11 +394,11 @@ func parseContext(contextURL string) (*v1.WorkspaceInitializer, error) {
 }
 
 func (h *handler) RegisterRunner(ctx context.Context, req *connect.Request[v1.RegisterRunnerRequest]) (*connect.Response[v1.RegisterRunnerResponse], error) {
-	runnerID := uuid.Must(uuid.NewRandom()).String()
+	runnerID := req.Msg.Name
 	slog.Info("register runner", "scope", req.Msg.Scope, "runnerID", runnerID)
 	h.cond.L.Lock()
 	defer h.cond.L.Unlock()
-	h.Cluster[runnerID] = &Runner{
+	h.Runner[runnerID] = &Runner{
 		Details:  req.Msg,
 		LastSeen: time.Now(),
 	}
@@ -398,7 +415,7 @@ func (h *handler) RenewRunnerRegistration(ctx context.Context, req *connect.Requ
 	h.cond.L.Lock()
 	defer h.cond.L.Unlock()
 
-	runner, ok := h.Cluster[req.Msg.ClusterId]
+	runner, ok := h.Runner[req.Msg.ClusterId]
 	if !ok {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("runner not found"))
 	}
@@ -410,10 +427,15 @@ func (h *handler) RenewRunnerRegistration(ctx context.Context, req *connect.Requ
 }
 
 func (h *handler) ListRunnerWorkspaces(ctx context.Context, req *connect.Request[v1.ListRunnerWorkspacesRequest]) (*connect.Response[v1.ListRunnerWorkspacesResponse], error) {
+	wss := make([]*v1.RunnerWorkspace, 0, len(h.Workspaces))
+	for _, ws := range h.Workspaces {
+		wss = append(wss, ws)
+	}
+
 	return &connect.Response[v1.ListRunnerWorkspacesResponse]{
 		Msg: &v1.ListRunnerWorkspacesResponse{
 			Pagination: &v1.PaginationResponse{Total: int32(len(h.Workspaces))},
-			Workspaces: h.Workspaces,
+			Workspaces: wss,
 		},
 	}, nil
 }
@@ -424,7 +446,7 @@ func (h *handler) WatchRunnerWorkspaces(ctx context.Context, req *connect.Reques
 		h.cond.Wait()
 		for _, ws := range h.Workspaces {
 			err := srv.Send(&v1.WatchRunnerWorkspacesResponse{
-				ClusterId: "cluster-id-goes-here",
+				ClusterId: "runner-id-goes-here",
 				Workspace: ws,
 			})
 			if err != nil {
@@ -440,6 +462,11 @@ func (h *handler) UpdateRunnerWorkspaceStatus(ctx context.Context, req *connect.
 
 	h.cond.L.Lock()
 	defer h.cond.L.Unlock()
+
+	if _, ok := h.Workspaces[req.Msg.WorkspaceId]; !ok {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("workspace not found"))
+	}
+
 	switch update := req.Msg.Update.(type) {
 	case *v1.UpdateRunnerWorkspaceStatusRequest_Status:
 		h.Status[req.Msg.WorkspaceId] = update.Status

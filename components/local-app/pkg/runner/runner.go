@@ -114,7 +114,6 @@ type LocalWorkspaceRunner struct {
 	WorkDir string
 	UserID  string
 
-	specs    map[string]*v1.RunnerWorkspace
 	runnerID string
 }
 
@@ -137,7 +136,7 @@ func (runner *LocalWorkspaceRunner) Run(ctx context.Context) error {
 	runner.runnerID = reg.Msg.ClusterId
 	slog.Info("registered runner", "runnerID", runner.runnerID)
 
-	go renewRegistration(ctx, runner.Client, runner.runnerID)
+	go runner.renewRegistration(ctx)
 	go runner.observeDocker(ctx)
 
 	existing, err := getExistingWorkspaces(ctx, runner.Client, runner.runnerID)
@@ -162,7 +161,7 @@ func (runner *LocalWorkspaceRunner) Run(ctx context.Context) error {
 }
 
 func (runner *LocalWorkspaceRunner) observeDocker(ctx context.Context) {
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 	startImmediately := make(chan struct{}, 1)
 	startImmediately <- struct{}{}
@@ -184,11 +183,13 @@ func (runner *LocalWorkspaceRunner) observeDocker(ctx context.Context) {
 			if !strings.Contains(container.Labels, "gitpod.io/workspaceID") {
 				continue
 			}
-			slog.Debug("found workspace container", "workspaceID", container.Names)
-			status, err := getWorkspaceStatusFromDocker(ctx, containerName, runner.Docker)
+			status, err := getWorkspaceStatusFromDocker(ctx, container.ID, runner.Docker)
 			if err != nil {
 				slog.Error("cannot get workspace status", "err", err)
 				continue
+			}
+			if status.Phase.Name == v1.WorkspacePhase_PHASE_STOPPED {
+				_ = runner.Docker.ContainerRemove(ctx, container.ID)
 			}
 			_, err = runner.Client.UpdateRunnerWorkspaceStatus(ctx, &connect.Request[v1.UpdateRunnerWorkspaceStatusRequest]{
 				Msg: &v1.UpdateRunnerWorkspaceStatusRequest{
@@ -199,6 +200,10 @@ func (runner *LocalWorkspaceRunner) observeDocker(ctx context.Context) {
 					},
 				},
 			})
+			if connect.CodeOf(err) == connect.CodeNotFound {
+				slog.Warn("control plane does not know about workspace - stopping it", "workspaceID", container.Names)
+				err = runner.stopWorkspace(ctx, container.Names)
+			}
 			if err != nil {
 				slog.Error("cannot update workspace status", "err", err)
 				continue
@@ -273,10 +278,7 @@ func getWorkspaceStatusFromDocker(ctx context.Context, id string, docker dockerc
 	case container.State.Running:
 		phase = v1.WorkspacePhase_PHASE_INITIALIZING
 
-		out, err := docker.Exec(ctx, id, "sh", "-c", "curl -f localhost:22998/readyz && echo ready")
-		if err != nil {
-			slog.Warn("cannot get workspacekit readyz", "err", err, "out", out)
-		}
+		out, _ := docker.Exec(ctx, id, "sh", "-c", "curl -f localhost:22998/readyz && echo ready")
 		if strings.Contains(out, "ready") {
 			phase = v1.WorkspacePhase_PHASE_RUNNING
 		}
@@ -294,7 +296,7 @@ func getWorkspaceStatusFromDocker(ctx context.Context, id string, docker dockerc
 			Name:               phase,
 			LastTransitionTime: timestamppb.Now(),
 		},
-		WorkspaceUrl: fmt.Sprintf("vscode://vscode-remote/attached-container+%s/workspace/%s", hex.EncodeToString([]byte(id)), container.Config.Labels["gitpod.io/workspaceRoot"]),
+		WorkspaceUrl: fmt.Sprintf("vscode://vscode-remote/attached-container+%s%s", hex.EncodeToString([]byte(id)), container.Config.Labels["gitpod.io/workspaceRoot"]),
 		Conditions:   &conditions,
 	}, nil
 }
@@ -303,7 +305,7 @@ func getWorkspacePathFromInitializer(init *v1.WorkspaceInitializer) string {
 	for _, spec := range init.Specs {
 		switch spec := spec.Spec.(type) {
 		case *v1.WorkspaceInitializer_Spec_Git:
-			return spec.Git.CheckoutLocation
+			return filepath.Join("/workspace", spec.Git.CheckoutLocation)
 		}
 	}
 	return "/workspace"
@@ -326,11 +328,10 @@ func (runner *LocalWorkspaceRunner) startWorkspace(ctx context.Context, ws *v1.R
 	} {
 		args = append(args, "-v", vs)
 	}
-	args = append(args, "-p", "22998:22998") // expose workspacekit API
 	args = append(args, "--label", fmt.Sprintf("gitpod.io/workspaceID=%s", ws.Id))
 	args = append(args, "--label", "gitpod.io/workspace=true")
-	args = append(args, "--label", "gitpod.io/workspaceRoot=%s", getWorkspacePathFromInitializer(ws.Spec.Initializer))
-	args = append(args, "localhost:5000/workspacekit-local-ng:commit-237578143bbd6f61bc18d4b89c643977a2037e77", "inside", "shim", "--docker-workspace-content-location", contentDir, "--mmds", "stdin")
+	args = append(args, "--label", fmt.Sprintf("gitpod.io/workspaceRoot=%s", getWorkspacePathFromInitializer(ws.Spec.Initializer)))
+	args = append(args, "localhost:5000/workspacekit-local-ng:dev", "inside", "shim", "--docker-workspace-content-location", contentDir, "--mmds", "stdin")
 
 	csapiInit, err := constructContentInit(ws.Spec.Initializer)
 	if err != nil {
@@ -357,6 +358,7 @@ func (runner *LocalWorkspaceRunner) startWorkspace(ctx context.Context, ws *v1.R
 		return err
 	}
 
+	slog.Debug("starting container", "args", args)
 	cmd := exec.CommandContext(ctx, "docker", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -429,16 +431,38 @@ func constructContentInit(init *v1.WorkspaceInitializer) (*csapi.WorkspaceInitia
 	}
 }
 
-func renewRegistration(ctx context.Context, client v1connect.WorkspaceRunnerServiceClient, runnerID string) {
+func (runner *LocalWorkspaceRunner) renewRegistration(ctx context.Context) {
 	for {
 		if ctx.Err() != nil {
 			return
 		}
-		_, err := client.RenewRunnerRegistration(ctx, &connect.Request[v1.RenewRunnerRegistrationRequest]{
+
+		_, err := runner.Client.RenewRunnerRegistration(ctx, &connect.Request[v1.RenewRunnerRegistrationRequest]{
 			Msg: &v1.RenewRunnerRegistrationRequest{
-				ClusterId: runnerID,
+				ClusterId: runner.runnerID,
 			},
 		})
+		if connect.CodeOf(err) == connect.CodeNotFound {
+			slog.Warn("runner registration not found - re-registering")
+			hostname, err := os.Hostname()
+			if err != nil {
+				slog.Warn("cannot renew runner registration", "err", err)
+				continue
+			}
+			reg, err := runner.Client.RegisterRunner(ctx, &connect.Request[v1.RegisterRunnerRequest]{
+				Msg: &v1.RegisterRunnerRequest{
+					Name: hostname,
+					Scope: &v1.RegisterRunnerRequest_UserId{
+						UserId: runner.UserID,
+					},
+				},
+			})
+			if err != nil {
+				slog.Warn("cannot renew runner registration", "err", err)
+				continue
+			}
+			runner.runnerID = reg.Msg.ClusterId
+		}
 		if err != nil {
 			slog.Warn("cannot renew runner registration", "err", err)
 		}
