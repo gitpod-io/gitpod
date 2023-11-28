@@ -284,7 +284,7 @@ export class PrebuildManager {
             const prebuildInterval = prebuildSettings.prebuildInterval;
             if (!forcePrebuild && prebuildInterval > 0) {
                 const history = {
-                    commitHistory: commitHistory?.slice(0, prebuildInterval),
+                    commitHistory: commitHistory?.slice(0, prebuildInterval + 1),
                     additionalRepositoryCommitHistories: additionalRepositoryCommitHistories?.map((repoHist) => ({
                         cloneUrl: repoHist.cloneUrl,
                         commitHistory: repoHist.commitHistory.slice(0, prebuildInterval),
@@ -296,6 +296,7 @@ export class PrebuildManager {
                     history,
                     user,
                     project.id,
+                    true,
                 );
                 if (prebuild) {
                     return { prebuildId: prebuild.id, wsid: prebuild.buildWorkspaceId, done: true };

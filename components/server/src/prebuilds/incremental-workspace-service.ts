@@ -15,7 +15,7 @@ import {
     WorkspaceImageSource,
 } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { WithCommitHistory } from "@gitpod/gitpod-protocol/lib/protocol";
+import { PrebuiltWorkspaceState, WithCommitHistory } from "@gitpod/gitpod-protocol/lib/protocol";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { Config } from "../config";
 import { ConfigProvider } from "../workspace/config-provider";
@@ -74,6 +74,7 @@ export class IncrementalWorkspaceService {
         history: WithCommitHistory,
         user: User,
         projectId: string,
+        includeUnfinishedPrebuilds?: boolean,
     ): Promise<PrebuiltWorkspace | undefined> {
         if (!history.commitHistory || history.commitHistory.length < 1) {
             return;
@@ -93,6 +94,7 @@ export class IncrementalWorkspaceService {
                     imageSource,
                     recentPrebuild.prebuild,
                     recentPrebuild.workspace,
+                    includeUnfinishedPrebuilds,
                 )
             ) {
                 return recentPrebuild.prebuild;
@@ -107,6 +109,7 @@ export class IncrementalWorkspaceService {
         imageSource: WorkspaceImageSource,
         candidatePrebuild: PrebuiltWorkspace,
         candidateWorkspace: Workspace,
+        includeUnfinishedPrebuilds?: boolean,
     ): boolean {
         if (!history.commitHistory || history.commitHistory.length === 0) {
             return false;
@@ -115,8 +118,13 @@ export class IncrementalWorkspaceService {
             return false;
         }
 
-        // we are only considering available prebuilds
-        if (candidatePrebuild.state !== "available") {
+        const acceptableStates: PrebuiltWorkspaceState[] = ["available"];
+        if (includeUnfinishedPrebuilds) {
+            acceptableStates.push("building");
+            acceptableStates.push("queued");
+        }
+
+        if (!acceptableStates.includes(candidatePrebuild.state)) {
             return false;
         }
 
