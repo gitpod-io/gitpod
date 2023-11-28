@@ -30,7 +30,7 @@ export const RepositoryListItem: FC<Props> = ({ configuration }) => {
                 <div className="flex flex-col gap-1">
                     <Text className="font-semibold">{configuration.name}</Text>
                     {/* We show the url on a 2nd line for smaller screens since we hide the column */}
-                    <TextMuted className="inline md:hidden text-sm">{url}</TextMuted>
+                    <TextMuted className="inline md:hidden text-sm break-all">{url}</TextMuted>
                 </div>
             </TableCell>
 
