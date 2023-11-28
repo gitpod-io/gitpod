@@ -496,12 +496,17 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			}
 
 			for k, v := range object.GetLabels() {
-				if k == wsk8s.WorkspaceManagedByLabel && v == constants.ManagedBy {
-					return true
+				if k == wsk8s.WorkspaceManagedByLabel {
+					switch v {
+					case constants.ManagedBy:
+						return true
+					default:
+						return false
+					}
 				}
 			}
 
-			return false
+			return true
 		})).
 		Owns(&corev1.Pod{}).
 		// Add a watch for Nodes, so that they're cached in memory and don't require calling the k8s API

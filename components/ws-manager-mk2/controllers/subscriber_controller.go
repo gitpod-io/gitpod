@@ -86,7 +86,7 @@ func (r *SubscriberReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 	filterByManagedBy := func(ws *workspacev1.Workspace) bool {
 		mgr, ok := ws.Labels[k8s.WorkspaceManagedByLabel]
 		if !ok {
-			return false
+			return true
 		}
 
 		return mgr == constants.ManagedBy
@@ -106,7 +106,7 @@ func (r *SubscriberReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 
 			mgr, ok := new.Labels[k8s.WorkspaceManagedByLabel]
 			if !ok {
-				return false
+				return true
 			}
 
 			if mgr != constants.ManagedBy {

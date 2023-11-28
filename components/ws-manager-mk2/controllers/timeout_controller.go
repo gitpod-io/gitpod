@@ -259,12 +259,17 @@ func (r *TimeoutReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&workspacev1.Workspace{}).
 		WithEventFilter(predicate.NewPredicateFuncs(func(object client.Object) bool {
 			for k, v := range object.GetLabels() {
-				if k == k8s.WorkspaceManagedByLabel && v == constants.ManagedBy {
-					return true
+				if k == k8s.WorkspaceManagedByLabel {
+					switch v {
+					case constants.ManagedBy:
+						return true
+					default:
+						return false
+					}
 				}
 			}
 
-			return false
+			return true
 		})).
 		Complete(r)
 }
