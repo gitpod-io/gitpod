@@ -27,7 +27,7 @@ message User {
   // +optional if not set, this account is owned by the installation.
   string organization_id = 2;
 
-  // name is the username
+  // name is the full name of the user
   string name = 3;
 
   // avatar_url is a link to the user avatar
