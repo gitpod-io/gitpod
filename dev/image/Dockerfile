@@ -267,3 +267,6 @@ RUN curl -fsSL https://github.com/csweichel/oci-tool/releases/download/v0.2.0/oc
 RUN go install -v github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
 RUN sudo install-packages pigz
+
+# Install pre-commit hooks under /workspace during prebuilds
+ENV PRE_COMMIT_HOME=/workspace/.pre-commit
