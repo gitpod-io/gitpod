@@ -97,7 +97,8 @@ export const TextInput: FunctionComponent<TextInputProps> = memo(
         return (
             <input
                 id={id}
-                className={cn("w-full max-w-lg dark:text-[#A8A29E]", className)}
+                // 5px top/bottom padding ensures height matches buttons (36px)
+                className={cn("py-[5px] w-full max-w-lg rounded-lg dark:text-[#A8A29E]", className)}
                 value={value}
                 type={type}
                 placeholder={placeholder}
