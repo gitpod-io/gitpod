@@ -31,7 +31,6 @@ import { Blocked } from "./Blocked";
 
 // TODO: Can we bundle-split/lazy load these like other pages?
 import { BlockedRepositories } from "../admin/BlockedRepositories";
-import { Heading1, Subheading } from "../components/typography/headings";
 import PersonalAccessTokenCreateView from "../user-settings/PersonalAccessTokensCreateView";
 import { CreateWorkspacePage } from "../workspaces/CreateWorkspacePage";
 import { WebsocketClients } from "./WebsocketClients";
@@ -39,6 +38,7 @@ import { BlockedEmailDomains } from "../admin/BlockedEmailDomains";
 import { AppNotifications } from "../AppNotifications";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { projectsPathInstallGitHubApp } from "../projects/projects.routes";
+import { Heading1, Subheading } from "@podkit/typography/Headings";
 
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Account"));
@@ -184,7 +184,7 @@ export const AppRoutes = () => {
                     </Route>
                     <Route path="/sorry" exact>
                         <div className="mt-48 text-center">
-                            <Heading1 color="light">Oh, no! Something went wrong!</Heading1>
+                            <Heading1>Oh, no! Something went wrong!</Heading1>
                             <Subheading className="mt-4 text-gitpod-red">{decodeURIComponent(getURLHash())}</Subheading>
                         </div>
                     </Route>
