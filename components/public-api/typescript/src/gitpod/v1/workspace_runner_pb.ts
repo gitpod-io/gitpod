@@ -12,7 +12,7 @@
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message, proto3 } from "@bufbuild/protobuf";
 import { PaginationRequest, PaginationResponse } from "./pagination_pb.js";
-import { Workspace, WorkspaceMetadata, WorkspacePhase_Phase, WorkspaceSpec, WorkspaceStatus } from "./workspace_pb.js";
+import { WorkspaceMetadata, WorkspacePhase_Phase, WorkspaceSpec, WorkspaceStatus } from "./workspace_pb.js";
 
 /**
  * @generated from message gitpod.v1.RegisterRunnerRequest
@@ -502,9 +502,9 @@ export class WatchRunnerWorkspacesResponse extends Message<WatchRunnerWorkspaces
   /**
    * The workspace's ID
    *
-   * @generated from field: gitpod.v1.Workspace workspace = 2;
+   * @generated from field: gitpod.v1.RunnerWorkspace workspace = 2;
    */
-  workspace?: Workspace;
+  workspace?: RunnerWorkspace;
 
   constructor(data?: PartialMessage<WatchRunnerWorkspacesResponse>) {
     super();
@@ -515,7 +515,7 @@ export class WatchRunnerWorkspacesResponse extends Message<WatchRunnerWorkspaces
   static readonly typeName = "gitpod.v1.WatchRunnerWorkspacesResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "cluster_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "workspace", kind: "message", T: Workspace },
+    { no: 2, name: "workspace", kind: "message", T: RunnerWorkspace },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WatchRunnerWorkspacesResponse {

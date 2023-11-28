@@ -118,7 +118,7 @@ message WatchRunnerWorkspacesResponse {
   string cluster_id = 1;
 
   // The workspace's ID
-  Workspace workspace = 2;
+  RunnerWorkspace workspace = 2;
 }
 
 message UpdateRunnerWorkspaceStatusRequest {

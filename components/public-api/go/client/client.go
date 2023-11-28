@@ -11,6 +11,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	gitpod_experimental_v1connect "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
+	gitpod_v1connect "github.com/gitpod-io/gitpod/components/public-api/go/v1/v1connect"
 )
 
 type Gitpod struct {
@@ -23,6 +24,8 @@ type Gitpod struct {
 	PersonalAccessTokens gitpod_experimental_v1connect.TokensServiceClient
 	IdentityProvider     gitpod_experimental_v1connect.IdentityProviderServiceClient
 	User                 gitpod_experimental_v1connect.UserServiceClient
+
+	Runner gitpod_v1connect.WorkspaceRunnerServiceClient
 }
 
 func New(options ...Option) (*Gitpod, error) {
@@ -53,6 +56,7 @@ func New(options ...Option) (*Gitpod, error) {
 		Editors:              gitpod_experimental_v1connect.NewEditorServiceClient(client, url, serviceOpts...),
 		IdentityProvider:     gitpod_experimental_v1connect.NewIdentityProviderServiceClient(client, url, serviceOpts...),
 		User:                 gitpod_experimental_v1connect.NewUserServiceClient(client, url, serviceOpts...),
+		Runner:               gitpod_v1connect.NewWorkspaceRunnerServiceClient(client, url, serviceOpts...),
 	}, nil
 }
 
