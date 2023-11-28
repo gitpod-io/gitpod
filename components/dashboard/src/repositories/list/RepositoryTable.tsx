@@ -51,7 +51,7 @@ export const RepositoryTable: FC<Props> = ({
             {/* Search/Filter bar */}
             <div className="flex flex-col-reverse md:flex-row flex-wrap justify-between items-center gap-2">
                 <div className="flex flex-row flex-wrap items-center w-full md:w-auto">
-                    {/* TODO: Add search icon on left and decide on pulling Inputs into podkit */}
+                    {/* TODO: Add search icon on left - need to revisit TextInputs for podkit - and remove global styles */}
                     <TextInput
                         className="w-full max-w-none md:w-80"
                         value={searchTerm}
