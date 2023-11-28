@@ -21,6 +21,7 @@ import (
 func NewLocalWorkspaceRunner(client v1connect.WorkspaceRunnerServiceClient, userID string) *LocalWorkspaceRunner {
 	return &LocalWorkspaceRunner{
 		Client: client,
+		Docker: dockercli.Docker,
 		UserID: userID,
 	}
 }
@@ -86,6 +87,8 @@ func (runner *LocalWorkspaceRunner) reconcile(ctx context.Context, ws *v1.Runner
 }
 
 func (runner *LocalWorkspaceRunner) getWorkspaceStatus(ctx context.Context, ws *v1.RunnerWorkspace) (status *v1.WorkspaceStatus, err error) {
+	slog.Debug("getWorkspaceStatus", "workspaceID", ws)
+
 	container, err := runner.Docker.ContainerList(porcelain.ContainerLsOpts{Filter: "label=gitpod-workspace-id=" + ws.Id})
 	if err != nil {
 		return nil, err
@@ -173,7 +176,6 @@ func getExistingWorkspaces(ctx context.Context, client v1connect.WorkspaceRunner
 
 	result := make(chan *v1.RunnerWorkspace, 1)
 	go func() {
-		defer close(result)
 		for _, ws := range resp.Msg.Workspaces {
 			result <- ws
 		}
