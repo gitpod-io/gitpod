@@ -210,7 +210,7 @@ export class GitHubEnterpriseApp {
                         }
                     });
                 } catch (error) {
-                    log.error("Error processing Bitbucket Server webhook event", error);
+                    log.error("Error processing GitHub webhook event", error);
                 }
             }
         } catch (e) {

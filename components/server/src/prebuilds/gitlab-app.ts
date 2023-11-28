@@ -201,7 +201,7 @@ export class GitLabApp {
                         });
                     });
                 } catch (error) {
-                    log.error("Error processing Bitbucket Server webhook event", error);
+                    log.error("Error processing GitLab webhook event", error);
                 }
             }
         } catch (e) {

@@ -187,7 +187,7 @@ export class BitbucketApp {
                         }
                     });
                 } catch (error) {
-                    log.error("Error processing Bitbucket Server webhook event", error);
+                    log.error("Error processing Bitbucket webhook event", error);
                 }
             }
         } catch (e) {
