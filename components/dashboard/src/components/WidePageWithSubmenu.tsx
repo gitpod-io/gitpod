@@ -29,7 +29,7 @@ export function WidePageWithSubMenu(p: PageWithSubMenuProps) {
                             // Handle flipping between row and column layout
                             "flex flex-row md:flex-col items-center",
                             "w-full md:w-52 overflow-auto md:overflow-visible",
-                            "pt-4 pb-4 md:pb-0",
+                            "pt-4 pb-4 md:pt-0 md:pb-0",
                             "space-x-2 md:space-x-0 md:space-y-2",
                             "tracking-wide text-gray-500",
                         )}
@@ -39,6 +39,7 @@ export function WidePageWithSubMenu(p: PageWithSubMenuProps) {
                         })}
                     </ul>
                 </nav>
+                {/* TODO: see if we want the content w/ top padding and not aligned on purpose */}
                 <div className="md:ml-4 w-full pt-1 mb-40">
                     <Separator className="md:hidden" />
                     <div className="pt-4 md:pt-0">{p.children}</div>

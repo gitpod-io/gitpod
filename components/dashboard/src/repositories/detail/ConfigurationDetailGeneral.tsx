@@ -20,5 +20,3 @@ export const ConfigurationDetailGeneral: FC<Props> = ({ configuration }) => {
         </>
     );
 };
-
-export default ConfigurationDetailGeneral;

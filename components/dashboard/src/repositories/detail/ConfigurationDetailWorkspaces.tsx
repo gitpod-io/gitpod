@@ -11,8 +11,6 @@ import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb
 type Props = {
     configuration: Configuration;
 };
-const ConfigurationDetailWorkspaces: FC<Props> = ({ configuration }) => {
+export const ConfigurationDetailWorkspaces: FC<Props> = ({ configuration }) => {
     return <ConfigurationWorkspaceSizeOptions configuration={configuration} />;
 };
-
-export default ConfigurationDetailWorkspaces;

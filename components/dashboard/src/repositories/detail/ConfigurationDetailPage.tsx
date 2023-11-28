@@ -13,8 +13,9 @@ import { WidePageWithSubMenu } from "../../components/WidePageWithSubmenu";
 import type { SubmenuItemProps } from "../../components/PageWithSubMenu";
 import { Route, Switch, useParams, useRouteMatch } from "react-router";
 import { useConfiguration } from "../../data/configurations/configuration-queries";
-import ConfigurationDetailGeneral from "./ConfigurationDetailGeneral";
-import ConfigurationDetailWorkspaces from "./ConfigurationDetailWorkspaces";
+import { ConfigurationDetailGeneral } from "./ConfigurationDetailGeneral";
+import { ConfigurationDetailWorkspaces } from "./ConfigurationDetailWorkspaces";
+import { ConfigurationDetailPrebuilds } from "./ConfigurationDetailPrebuilds";
 
 type PageRouteParams = {
     id: string;
@@ -79,14 +80,19 @@ const ConfigurationDetailPage: FC = () => {
                         // TODO: add a better not-found UI w/ link back to repositories
                         <div>Sorry, we couldn't find that repository configuration.</div>
                     ) : (
-                        <Switch>
-                            <Route exact path={path}>
-                                <ConfigurationDetailGeneral configuration={data} />
-                            </Route>
-                            <Route exact path={`${path}/workspaces`}>
-                                <ConfigurationDetailWorkspaces configuration={data} />
-                            </Route>
-                        </Switch>
+                        <div className="flex flex-col gap-4">
+                            <Switch>
+                                <Route exact path={path}>
+                                    <ConfigurationDetailGeneral configuration={data} />
+                                </Route>
+                                <Route exact path={`${path}/workspaces`}>
+                                    <ConfigurationDetailWorkspaces configuration={data} />
+                                </Route>
+                                <Route exact path={`${path}/prebuilds`}>
+                                    <ConfigurationDetailPrebuilds configuration={data} />
+                                </Route>
+                            </Switch>
+                        </div>
                     ))
                 )}
             </WidePageWithSubMenu>
