@@ -563,43 +563,40 @@ func (n *nodeUtilizationVec) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	// Aggregate workspace resource requests per node.
+	// Aggregate workspace pod resource requests per node.
 	for _, ws := range workspaces.Items {
-		if ws.Status.Runtime == nil {
-			continue
-		}
-		nodeName := ws.Status.Runtime.NodeName
-		if nodeName == "" {
-			// Not yet scheduled.
-			continue
-		}
-
-		if ws.Status.Phase == workspacev1.WorkspacePhaseStopped {
-			// Stopped, no longer consuming resources on the node.
+		// This list is indexed and reads from memory, so it's not that expensive to do this for every workspace.
+		pods, err := n.reconciler.listWorkspacePods(ctx, &ws)
+		if err != nil {
+			log.FromContext(ctx).Error(err, "cannot list workspace pods for node utilization metric", "workspace", ws.Name)
 			continue
 		}
 
-		if _, ok := nodeUtilization[nodeName]; !ok {
-			nodeUtilization[nodeName] = map[corev1.ResourceName]float64{
-				corev1.ResourceCPU:    0,
-				corev1.ResourceMemory: 0,
+		if len(pods.Items) == 0 {
+			// No pods (yet), not consuming resources on the node.
+			continue
+		}
+
+		for _, pod := range pods.Items {
+			nodeName := pod.Spec.NodeName
+			if nodeName == "" {
+				// Not yet scheduled.
+				continue
+			}
+
+			if _, ok := nodeUtilization[nodeName]; !ok {
+				nodeUtilization[nodeName] = map[corev1.ResourceName]float64{
+					corev1.ResourceCPU:    0,
+					corev1.ResourceMemory: 0,
+				}
+			}
+
+			for _, container := range pod.Spec.Containers {
+				requests := container.Resources.Requests
+				nodeUtilization[nodeName][corev1.ResourceCPU] += float64(requests.Cpu().MilliValue()) / 1000.0
+				nodeUtilization[nodeName][corev1.ResourceMemory] += float64(requests.Memory().Value())
 			}
 		}
-
-		class, ok := n.reconciler.Config.WorkspaceClasses[ws.Spec.Class]
-		if !ok {
-			log.FromContext(ctx).Error(err, "cannot find workspace class for node utilization metric", "class", ws.Spec.Class)
-			continue
-		}
-
-		requests, err := class.Container.Requests.ResourceList()
-		if err != nil {
-			log.FromContext(ctx).Error(err, "cannot get resource requests for node utilization metric", "class", ws.Spec.Class)
-			continue
-		}
-
-		nodeUtilization[nodeName][corev1.ResourceCPU] += float64(requests.Cpu().MilliValue()) / 1000.0
-		nodeUtilization[nodeName][corev1.ResourceMemory] += float64(requests.Memory().Value())
 	}
 
 	for nodeName, metrics := range nodeUtilization {
