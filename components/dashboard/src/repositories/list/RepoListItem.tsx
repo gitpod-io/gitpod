@@ -35,7 +35,7 @@ export const RepositoryListItem: FC<Props> = ({ configuration }) => {
             </TableCell>
 
             <TableCell hideOnSmallScreen>
-                <TextMuted className="text-sm">{url}</TextMuted>
+                <TextMuted className="text-sm break-all">{url}</TextMuted>
             </TableCell>
 
             <TableCell hideOnSmallScreen>{created}</TableCell>
