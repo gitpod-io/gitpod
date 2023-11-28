@@ -49,11 +49,11 @@ export const RepositoryTable: FC<Props> = ({
     return (
         <>
             {/* Search/Filter bar */}
-            <div className="flex flex-row flex-wrap justify-between items-center">
-                <div className="flex flex-row flex-wrap items-center">
+            <div className="flex flex-col-reverse md:flex-row flex-wrap justify-between items-center gap-2">
+                <div className="flex flex-row flex-wrap items-center w-full md:w-auto">
                     {/* TODO: Add search icon on left and decide on pulling Inputs into podkit */}
                     <TextInput
-                        className="w-80"
+                        className="w-full max-w-none md:w-80"
                         value={searchTerm}
                         onChange={onSearchTermChange}
                         placeholder="Search imported repositories"
@@ -61,7 +61,10 @@ export const RepositoryTable: FC<Props> = ({
                     {/* TODO: Add prebuild status filter dropdown */}
                 </div>
 
-                <Button onClick={onImport}>Import Repository</Button>
+                {/* TODO: Consider making all podkit buttons behave this way, full width on small screen */}
+                <Button className="w-full md:w-auto" onClick={onImport}>
+                    Import Repository
+                </Button>
             </div>
             <div className="relative w-full overflow-auto mt-4">
                 {configurations.length > 0 ? (
