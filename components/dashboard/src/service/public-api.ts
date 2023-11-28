@@ -36,6 +36,8 @@ import { JsonRpcScmClient } from "./json-rpc-scm-client";
 import { SCMService } from "@gitpod/public-api/lib/gitpod/v1/scm_connect";
 import { SSHService } from "@gitpod/public-api/lib/gitpod/v1/ssh_connect";
 import { JsonRpcSSHClient } from "./json-rpc-ssh-client";
+import { JsonRpcVerificationClient } from "./json-rpc-verification-client";
+import { VerificationService } from "@gitpod/public-api/lib/gitpod/v1/verification_connect";
 
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
@@ -89,6 +91,11 @@ export const envVarClient = createServiceClient(EnvironmentVariableService, {
 export const sshClient = createServiceClient(SSHService, {
     client: new JsonRpcSSHClient(),
     featureFlagSuffix: "ssh",
+});
+
+export const verificationClient = createServiceClient(VerificationService, {
+    client: new JsonRpcVerificationClient(),
+    featureFlagSuffix: "verification",
 });
 
 export async function listAllProjects(opts: { orgId: string }): Promise<ProtocolProject[]> {

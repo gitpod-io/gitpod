@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package gitpod.v1;
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+
+service VerificationService {
+  // SendPhoneNumberVerificationToken sends a verification token to the
+  // specified phone number.
+  rpc SendPhoneNumberVerificationToken(SendPhoneNumberVerificationTokenRequest) returns (SendPhoneNumberVerificationTokenResponse) {}
+
+  // VerifyPhoneNumberVerificationToken verifies the specified verification
+  // token.
+  rpc VerifyPhoneNumberVerificationToken(VerifyPhoneNumberVerificationTokenRequest) returns (VerifyPhoneNumberVerificationTokenResponse) {}
+}
+
+// Required fields:
+// - phone_number
+message SendPhoneNumberVerificationTokenRequest {
+  // phone_number in E.164 format
+  string phone_number = 1;
+}
+
+message SendPhoneNumberVerificationTokenResponse {
+  // verification_id is used to VerifyPhoneNumberVerificationToken
+  string verification_id = 1;
+}
+
+// Required fields:
+// - phone_number
+// - verification_id
+// - token
+message VerifyPhoneNumberVerificationTokenRequest {
+  // phone_number in E.164 format
+  string phone_number = 1;
+  // verification_id is returned by SendPhoneNumberVerificationToken
+  string verification_id = 2;
+  // token is the verification token from providers
+  string token = 3;
+}
+
+message VerifyPhoneNumberVerificationTokenResponse {
+  // verified indicates if the verification was successful
+  bool verified = 1;
+}

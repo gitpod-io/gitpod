@@ -474,19 +474,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const channel = phoneVerificationByCall ? "call" : "sms";
 
-        const { verification, verificationId } = await this.verificationService.sendVerificationToken(
+        const verificationId = await this.verificationService.sendVerificationToken(
+            user.id,
             formatPhoneNumber(rawPhoneNumber),
             channel,
         );
-        this.analytics.track({
-            event: "phone_verification_sent",
-            userId: user.id,
-            properties: {
-                verification_id: verificationId,
-                channel: verification.channel,
-                requested_channel: channel,
-            },
-        });
 
         return {
             verificationId,
@@ -502,34 +494,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const phoneNumber = formatPhoneNumber(rawPhoneNumber);
         const user = await this.checkUser("verifyPhoneNumberVerificationToken");
 
-        const { verified, channel } = await this.verificationService.verifyVerificationToken(
-            phoneNumber,
-            token,
-            verificationId,
-        );
-        if (!verified) {
-            this.analytics.track({
-                event: "phone_verification_failed",
-                userId: user.id,
-                properties: {
-                    channel,
-                    verification_id: verificationId,
-                },
-            });
-            return false;
-        }
-        this.verificationService.markVerified(user);
-        user.verificationPhoneNumber = phoneNumber;
-        await this.userDB.updateUserPartial(user);
-        this.analytics.track({
-            event: "phone_verification_completed",
-            userId: user.id,
-            properties: {
-                channel,
-                verification_id: verificationId,
-            },
-        });
-        return true;
+        return await this.verificationService.verifyVerificationToken(user, phoneNumber, token, verificationId);
     }
 
     public async getClientRegion(ctx: TraceContext): Promise<string | undefined> {
@@ -1558,7 +1523,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                         AttributionId.render({ kind: "team", teamId: org.id }),
                     )) !== undefined
                 ) {
-                    await this.verificationService.verifyUser(user);
+                    await this.userService.markUserAsVerified(user, undefined);
                 }
             } catch (e) {
                 log.warn("Failed to verify new org member", e);
@@ -1965,9 +1930,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const admin = await this.guardAdminAccess("adminVerifyUser", { id: userId }, Permission.ADMIN_USERS);
         await this.auth.checkPermissionOnUser(admin.id, "admin_control", userId);
         const user = await this.userService.findUserById(admin.id, userId);
-
-        this.verificationService.markVerified(user);
-        await this.userDB.updateUserPartial(user);
+        await this.userService.markUserAsVerified(user, undefined);
         return user;
     }
 
