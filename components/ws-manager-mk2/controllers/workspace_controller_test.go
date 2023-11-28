@@ -310,6 +310,9 @@ var _ = Describe("WorkspaceController", func() {
 					Name:       fmt.Sprintf("ws-%s", ws.Name),
 					Namespace:  ws.Namespace,
 					Finalizers: []string{workspacev1.GitpodFinalizerName},
+					Labels: map[string]string{
+						wsk8s.WorkspaceManagedByLabel: constants.ManagedBy,
+					},
 				},
 				Spec: corev1.PodSpec{
 					NodeName: node.Name,
@@ -331,6 +334,7 @@ var _ = Describe("WorkspaceController", func() {
 			// restore.
 			// This is only necessary because we manually created the pod, normally the Pod creation is the controller's
 			// first reconciliation which ensures the metrics are recorded from the workspace's initial state.
+
 			Eventually(func(g Gomega) {
 				g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ws.Name, Namespace: ws.Namespace}, ws)).To(Succeed())
 				g.Expect(ws.Status.Runtime).ToNot(BeNil())
