@@ -51,6 +51,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
 					SecretName: ctx.Config.SSHGatewayCAKey.Name,
+					Optional:   pointer.Bool(true),
 				},
 			},
 		})
