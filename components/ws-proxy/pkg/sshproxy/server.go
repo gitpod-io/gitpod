@@ -336,6 +336,7 @@ func (s *Server) HandleConn(c net.Conn) {
 	} else if s.caKey != nil && wsInfo.IsEnabledSSHCA {
 		key, err = s.GenerateSSHCert(ctx, userName)
 		if err != nil {
+			log.WithField("workspaceId", workspaceId).WithError(err).Error("failed to generate ssh cert")
 			cancel()
 			return
 		}

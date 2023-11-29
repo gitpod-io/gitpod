@@ -133,11 +133,23 @@ var runCmd = &cobra.Command{
 		// SSH Gateway
 
 		var caKey ssh.Signer
-		if caPrivateKeyB, err := os.ReadFile("/mnt/ca-key/ca.key"); err == nil && len(caPrivateKeyB) > 0 {
-			if c, err := ssh.ParsePrivateKey(caPrivateKeyB); err == nil {
-				caKey = c
+		readCAKeyFile := func() {
+			caPrivateKeyB, err := os.ReadFile(cfg.Proxy.SSHGatewayCAKeyFile)
+			if err != nil {
+				log.WithError(err).Error("cannot read SSH Gateway CA key")
+				return
 			}
+			c, err := ssh.ParsePrivateKey(caPrivateKeyB)
+			if err != nil {
+				log.WithError(err).Error("cannot prase SSH Gateway CA key")
+			}
+			caKey = c
 		}
+
+		if cfg.Proxy.SSHGatewayCAKeyFile != "" {
+			readCAKeyFile()
+		}
+
 		var signers []ssh.Signer
 		var sshGatewayServer *sshproxy.Server
 		flist, err := os.ReadDir("/mnt/host-key")

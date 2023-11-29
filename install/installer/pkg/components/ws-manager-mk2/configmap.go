@@ -273,6 +273,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		wsmcfg.Manager.EnableCustomSSLCertificate = true
 	}
 
+	if ctx.Config.SSHGatewayCAKey == nil {
+		wsmcfg.Manager.SSHGatewayCAPublicKeyFile = "/mnt/ca-key/ca.pem"
+	}
+
 	fc, err := common.ToJSONString(wsmcfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal ws-manager config: %w", err)
