@@ -57,6 +57,7 @@ export default function Account() {
         }
 
         await updateUser.mutateAsync({
+            fullName: profileState.name,
             additionalData: {
                 profile: profileState,
             },
