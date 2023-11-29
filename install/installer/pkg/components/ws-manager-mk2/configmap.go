@@ -101,7 +101,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				return err
 			}
 			classes[k] = &config.WorkspaceClass{
-				Name: c.Name,
+				Name:        c.Name,
+				Description: c.Description,
 				Container: config.ContainerConfiguration{
 					Requests: &config.ResourceRequestConfiguration{
 						CPU:              quantityString(c.Resources.Requests, corev1.ResourceCPU),

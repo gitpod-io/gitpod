@@ -140,9 +140,10 @@ type Configuration struct {
 }
 
 type WorkspaceClass struct {
-	Name      string                            `json:"name"`
-	Container ContainerConfiguration            `json:"container"`
-	Templates WorkspacePodTemplateConfiguration `json:"templates"`
+	Name        string                            `json:"name"`
+	Description string                            `json:"description"`
+	Container   ContainerConfiguration            `json:"container"`
+	Templates   WorkspacePodTemplateConfiguration `json:"templates"`
 
 	// CreditsPerMinute is the cost per minute for this workspace class in credits
 	CreditsPerMinute float32 `json:"creditsPerMinute"`
