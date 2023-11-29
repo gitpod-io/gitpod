@@ -30,7 +30,7 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
 import { inject, injectable } from "inversify";
 import { EnvVarService } from "../user/env-var-service";
-import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
+import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
 import { ProjectEnvVarWithValue, UserEnvVarValue } from "@gitpod/gitpod-protocol";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { ctxUserId } from "../util/request-context";

@@ -36,7 +36,7 @@ import {
     UpdateOrganizationSettingsResponse,
     ListOrganizationsRequest_Scope,
 } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
-import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
+import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
 import { OrganizationService } from "../orgs/organization-service";
 import { OrganizationSettings as ProtocolOrganizationSettings } from "@gitpod/gitpod-protocol";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";

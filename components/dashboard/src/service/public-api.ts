@@ -9,7 +9,7 @@ import { MethodKind, ServiceType } from "@bufbuild/protobuf";
 import { CallOptions, Code, ConnectError, PromiseClient, createPromiseClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { Disposable, User } from "@gitpod/gitpod-protocol";
-import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
+import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
 import { Project as ProtocolProject } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connect";
 import { OIDCService } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_connect";
@@ -21,7 +21,7 @@ import { OrganizationService } from "@gitpod/public-api/lib/gitpod/v1/organizati
 import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/v1/workspace_connect";
 import { ConfigurationService } from "@gitpod/public-api/lib/gitpod/v1/configuration_connect";
 import { PrebuildService } from "@gitpod/public-api/lib/gitpod/v1/prebuild_connect";
-import { getMetricsInterceptor } from "@gitpod/public-api/lib/metrics";
+import { getMetricsInterceptor } from "@gitpod/gitpod-protocol/lib/metrics";
 import { getExperimentsClient } from "../experiments/client";
 import { JsonRpcOrganizationClient } from "./json-rpc-organization-client";
 import { JsonRpcWorkspaceClient } from "./json-rpc-workspace-client";

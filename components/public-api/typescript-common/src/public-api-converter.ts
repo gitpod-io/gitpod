@@ -58,20 +58,15 @@ import {
     UserEnvironmentVariable,
 } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
 import { SCMToken, SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
-import { ContextURL } from "./context-url";
+import { ContextURL } from "@gitpod/gitpod-protocol/lib/context-url";
 import {
     Prebuild,
     PrebuildStatus,
     PrebuildPhase,
     PrebuildPhase_Phase,
 } from "@gitpod/public-api/lib/gitpod/v1/prebuild_pb";
-import {
-    ApplicationError,
-    ErrorCodes,
-    InvalidGitpodYMLError,
-    RepositoryNotFoundError,
-    UnauthorizedRepositoryAccessError,
-} from "./messaging/error";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { InvalidGitpodYMLError, RepositoryNotFoundError, UnauthorizedRepositoryAccessError } from "./public-api-errors";
 import {
     AuthProviderEntry as AuthProviderProtocol,
     AuthProviderInfo,
@@ -89,7 +84,7 @@ import {
     Token,
     SuggestedRepository as SuggestedRepositoryProtocol,
     UserSSHPublicKeyValue,
-} from "./protocol";
+} from "@gitpod/gitpod-protocol/lib//protocol";
 import {
     OrgMemberInfo,
     OrgMemberRole,
@@ -99,16 +94,16 @@ import {
     PrebuildWithStatus,
     Project,
     Organization as ProtocolOrganization,
-} from "./teams-projects-protocol";
+} from "@gitpod/gitpod-protocol/lib//teams-projects-protocol";
 import {
     ConfigurationIdeConfig,
     PortProtocol,
     WorkspaceInstance,
     WorkspaceInstanceConditions,
     WorkspaceInstancePort,
-} from "./workspace-instance";
+} from "@gitpod/gitpod-protocol/lib//workspace-instance";
 import { Author, Commit } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
-import type { DeepPartial } from "./util/deep-partial";
+import type { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 
 export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
 

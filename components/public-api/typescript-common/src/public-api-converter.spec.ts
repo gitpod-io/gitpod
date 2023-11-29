@@ -15,7 +15,11 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { expect } from "chai";
 import { PartialConfiguration, PublicAPIConverter } from "./public-api-converter";
-import { OrgMemberInfo, Project, PrebuildSettings as PrebuildSettingsProtocol } from "./teams-projects-protocol";
+import {
+    OrgMemberInfo,
+    Project,
+    PrebuildSettings as PrebuildSettingsProtocol,
+} from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import {
     BranchMatchingStrategy,
@@ -31,7 +35,7 @@ import {
     UserEnvVarValue,
     UserSSHPublicKey,
     WithEnvvarsContext,
-} from "./protocol";
+} from "@gitpod/gitpod-protocol/lib/protocol";
 import {
     AuthProvider,
     AuthProviderDescription,
@@ -42,13 +46,8 @@ import {
     EnvironmentVariableAdmission,
     UserEnvironmentVariable,
 } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
-import {
-    ApplicationError,
-    ErrorCodes,
-    InvalidGitpodYMLError,
-    RepositoryNotFoundError,
-    UnauthorizedRepositoryAccessError,
-} from "./messaging/error";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { InvalidGitpodYMLError, RepositoryNotFoundError, UnauthorizedRepositoryAccessError } from "./public-api-errors";
 import { Code, ConnectError } from "@connectrpc/connect";
 import {
     FailedPreconditionDetails,

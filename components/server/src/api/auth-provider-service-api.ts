@@ -7,7 +7,7 @@
 import { HandlerContext, ServiceImpl } from "@connectrpc/connect";
 import { AuthProviderService as AuthProviderServiceInterface } from "@gitpod/public-api/lib/gitpod/v1/authprovider_connect";
 import { inject, injectable } from "inversify";
-import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
+import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
 import {
     CreateAuthProviderRequest,
     CreateAuthProviderResponse,

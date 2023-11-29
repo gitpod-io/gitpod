@@ -331,6 +331,7 @@ export class MetricsReporter {
         while (this.pendingRequests.length) {
             const request = this.pendingRequests.shift();
             if (request) {
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.send(request);
             }
         }
@@ -393,6 +394,7 @@ export class MetricsReporter {
             [key: string]: string | undefined;
         },
     ): void {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.asyncReportError(error, data);
     }
 

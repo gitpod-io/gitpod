@@ -5,7 +5,7 @@
  */
 
 import { ServiceImpl } from "@connectrpc/connect";
-import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
+import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
 import { PrebuildService as PrebuildServiceInterface } from "@gitpod/public-api/lib/gitpod/v1/prebuild_connect";
 import {
     GetPrebuildRequest,

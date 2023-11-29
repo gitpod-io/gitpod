@@ -7,7 +7,7 @@
 import { HandlerContext, ServiceImpl } from "@connectrpc/connect";
 import { inject, injectable } from "inversify";
 import { ConfigurationService as ConfigurationServiceInterface } from "@gitpod/public-api/lib/gitpod/v1/configuration_connect";
-import { PublicAPIConverter, PartialConfiguration } from "@gitpod/gitpod-protocol/lib/public-api-converter";
+import { PublicAPIConverter, PartialConfiguration } from "@gitpod/public-api-common/lib/public-api-converter";
 import { ProjectsService } from "../projects/projects-service";
 import {
     CreateConfigurationRequest,
