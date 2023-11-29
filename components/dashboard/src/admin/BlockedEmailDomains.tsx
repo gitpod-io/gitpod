@@ -17,6 +17,7 @@ import { AdminPageHeader } from "./AdminPageHeader";
 import Pagination from "../Pagination/Pagination";
 import { Button } from "@podkit/buttons/Button";
 import { installationClient } from "../service/public-api";
+import { ListBlockedEmailDomainsResponse } from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
 
 export function BlockedEmailDomains() {
     return (
@@ -39,20 +40,19 @@ function useUpdateBlockedEmailDomainMutation() {
         async (blockedDomain: EmailDomainFilterEntry) => {
             await installationClient.createBlockedEmailDomain({
                 domain: blockedDomain.domain,
-                negative: blockedDomain.negative,
+                negative: blockedDomain.negative ?? false,
             });
         },
         {
             onSuccess: (_, blockedDomain) => {
-                const updated = [];
-                for (const entry of blockedEmailDomains.data?.blockedEmailDomains || []) {
+                const data = new ListBlockedEmailDomainsResponse(blockedEmailDomains.data);
+                data.blockedEmailDomains.map((entry) => {
                     if (entry.domain !== blockedDomain.domain) {
-                        updated.push(entry);
-                    } else {
-                        updated.push(blockedDomain);
+                        return entry;
                     }
-                }
-                queryClient.setQueryData(["blockedEmailDomains"], updated);
+                    return blockedDomain;
+                });
+                queryClient.setQueryData(["blockedEmailDomains"], data);
                 blockedEmailDomains.refetch();
             },
         },

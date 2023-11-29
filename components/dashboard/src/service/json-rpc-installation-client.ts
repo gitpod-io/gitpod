@@ -50,7 +50,7 @@ export class JsonRpcInstallationClient implements PromiseClient<typeof Installat
         if (!request.urlRegexp) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "urlRegexp is required");
         }
-        if (!request.blockUser) {
+        if (request.blockUser === undefined) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "blockUser is required");
         }
         const info = await getGitpodService().server.adminCreateBlockedRepository(request.urlRegexp, request.blockUser);
