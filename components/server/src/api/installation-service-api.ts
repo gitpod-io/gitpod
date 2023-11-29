@@ -25,7 +25,7 @@ import { ctxUserId } from "../util/request-context";
 import { PaginationToken, generatePaginationToken, parsePaginationToken } from "./pagination";
 import { parseSorting } from "./sorting";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
-import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
+import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
 
 @injectable()
 export class InstallationServiceAPI implements ServiceImpl<typeof InstallationServiceInterface> {
