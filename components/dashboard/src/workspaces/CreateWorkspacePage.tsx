@@ -37,7 +37,7 @@ import { SelectAccountModal } from "../user-settings/SelectAccountModal";
 import { settingsPathIntegrations } from "../user-settings/settings.routes";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
-import { WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { WorkspaceMetadata, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { Button } from "@podkit/buttons/Button";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { CreateAndStartWorkspaceRequest } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
@@ -172,7 +172,14 @@ export function CreateWorkspacePage() {
     const [selectAccountError, setSelectAccountError] = useState<SelectAccountPayload | undefined>(undefined);
 
     const createWorkspace = useCallback(
-        async (options?: Omit<PartialMessage<CreateAndStartWorkspaceRequest>, "contextUrl" | "organizationId">) => {
+        /**
+         * options will omit
+         * - source.url
+         * - source.workspaceClass
+         * - metadata.organizationId
+         * - metadata.configurationId
+         */
+        async (options?: PartialMessage<CreateAndStartWorkspaceRequest>) => {
             // add options from search params
             const opts = options || {};
 
@@ -192,16 +199,6 @@ export function CreateWorkspacePage() {
                 opts.forceDefaultConfig = true;
             }
 
-            if (!opts.workspaceClass) {
-                opts.workspaceClass = selectedWsClass;
-            }
-            if (!opts.editor) {
-                opts.editor = {
-                    name: selectedIde,
-                    version: useLatestIde ? "latest" : undefined,
-                };
-            }
-
             try {
                 if (createWorkspaceMutation.isStarting) {
                     console.log("Skipping duplicate createWorkspace call.");
@@ -210,14 +207,28 @@ export function CreateWorkspacePage() {
                 // we wait at least 5 secs
                 const timeout = new Promise((resolve) => setTimeout(resolve, 5000));
 
+                if (!opts.metadata) {
+                    opts.metadata = new WorkspaceMetadata();
+                }
+                opts.metadata.organizationId = organizationId;
+                opts.metadata.configurationId = selectedProjectID;
+
                 const result = await createWorkspaceMutation.createWorkspace({
                     source: {
                         case: "contextUrl",
-                        value: contextURL,
+                        value: {
+                            url: contextURL,
+                            workspaceClass: selectedWsClass,
+                            editor:
+                                opts.source?.case === "contextUrl" && opts.source.value.editor
+                                    ? opts.source.value.editor
+                                    : {
+                                          name: selectedIde,
+                                          version: useLatestIde ? "latest" : undefined,
+                                      },
+                        },
                     },
                     ...opts,
-                    organizationId,
-                    configurationId: selectedProjectID,
                 });
                 await storeAutoStartOptions();
                 await timeout;

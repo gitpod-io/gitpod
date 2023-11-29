@@ -31,7 +31,7 @@ import * as SSHClasses from "@gitpod/public-api/lib/gitpod/v1/ssh_pb";
 // This is used to version the cache
 // If data we cache changes in a non-backwards compatible way, increment this version
 // That will bust any previous cache versions a client may have stored
-const CACHE_VERSION = "10";
+const CACHE_VERSION = "11";
 
 export function noPersistence(queryKey: QueryKey): QueryKey {
     return [...queryKey, "no-persistence"];
