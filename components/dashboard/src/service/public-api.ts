@@ -38,6 +38,8 @@ import { SSHService } from "@gitpod/public-api/lib/gitpod/v1/ssh_connect";
 import { JsonRpcSSHClient } from "./json-rpc-ssh-client";
 import { JsonRpcVerificationClient } from "./json-rpc-verification-client";
 import { VerificationService } from "@gitpod/public-api/lib/gitpod/v1/verification_connect";
+import { JsonRpcInstallationClient } from "./json-rpc-installation-client";
+import { InstallationService } from "@gitpod/public-api/lib/gitpod/v1/installation_connect";
 
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
@@ -66,6 +68,7 @@ export const organizationClient = createServiceClient(OrganizationService, {
     client: new JsonRpcOrganizationClient(),
     featureFlagSuffix: "organization",
 });
+
 // No jsonrcp client for the configuration service as it's only used in new UI of the dashboard
 export const configurationClient = createServiceClient(ConfigurationService);
 export const prebuildClient = createServiceClient(PrebuildService, {
@@ -96,6 +99,11 @@ export const sshClient = createServiceClient(SSHService, {
 export const verificationClient = createServiceClient(VerificationService, {
     client: new JsonRpcVerificationClient(),
     featureFlagSuffix: "verification",
+});
+
+export const installationClient = createServiceClient(InstallationService, {
+    client: new JsonRpcInstallationClient(),
+    featureFlagSuffix: "installation",
 });
 
 export async function listAllProjects(opts: { orgId: string }): Promise<ProtocolProject[]> {

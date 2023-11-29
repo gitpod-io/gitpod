@@ -4,16 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import {
-    UserDB,
-    WorkspaceDB,
-    DBWithTracing,
-    TracedWorkspaceDB,
-    EmailDomainFilterDB,
-    TeamDB,
-    DBGitpodToken,
-} from "@gitpod/gitpod-db/lib";
-import { BlockedRepositoryDB } from "@gitpod/gitpod-db/lib/blocked-repository-db";
+import { UserDB, WorkspaceDB, DBWithTracing, TracedWorkspaceDB, TeamDB, DBGitpodToken } from "@gitpod/gitpod-db/lib";
 import {
     AuthProviderEntry,
     AuthProviderInfo,
@@ -121,6 +112,7 @@ import {
 } from "@gitpod/gitpod-protocol/lib/protocol";
 import { ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
 import { VerificationService } from "../auth/verification-service";
+import { InstallationService } from "../auth/installation-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { formatPhoneNumber } from "../user/phone-numbers";
 import { IDEService } from "../ide-service";
@@ -179,7 +171,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         private readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider,
 
         @inject(UserDB) private readonly userDB: UserDB,
-        @inject(BlockedRepositoryDB) private readonly blockedRepostoryDB: BlockedRepositoryDB,
         @inject(UserAuthentication) private readonly userAuthentication: UserAuthentication,
         @inject(UserService) private readonly userService: UserService,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
@@ -201,6 +192,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         @inject(VerificationService) private readonly verificationService: VerificationService,
 
+        @inject(InstallationService) private readonly installationService: InstallationService,
+
         @inject(Authorizer) private readonly auth: Authorizer,
 
         @inject(ScmService) private readonly scmService: ScmService,
@@ -209,7 +202,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(StripeService) private readonly stripeService: StripeService,
         @inject(UsageService) private readonly usageService: UsageService,
         @inject(BillingServiceDefinition.name) private readonly billingService: BillingServiceClient,
-        @inject(EmailDomainFilterDB) private emailDomainFilterdb: EmailDomainFilterDB,
 
         @inject(RedisSubscriber) private readonly subscriber: RedisSubscriber,
 
@@ -1853,17 +1845,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { req: censor(req, "searchTerm") }); // searchTerm may contain PII
 
         const admin = await this.guardAdminAccess("adminGetBlockedRepositories", { req }, Permission.ADMIN_USERS);
-        await this.auth.checkPermissionOnInstallation(admin.id, "configure");
 
         try {
-            const res = await this.blockedRepostoryDB.findAllBlockedRepositories(
-                req.offset,
-                req.limit,
-                req.orderBy,
-                req.orderDir === "asc" ? "ASC" : "DESC",
-                req.searchTerm,
-            );
-            return res;
+            return await this.installationService.adminGetBlockedRepositories(admin.id, req);
         } catch (e) {
             throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, String(e));
         }
@@ -1881,18 +1865,19 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             { urlRegexp, blockUser },
             Permission.ADMIN_USERS,
         );
-        await this.auth.checkPermissionOnInstallation(admin.id, "configure");
 
-        return await this.blockedRepostoryDB.createBlockedRepository(urlRegexp, blockUser);
+        return await this.installationService.adminCreateBlockedRepository(admin.id, {
+            urlRegexp,
+            blockUser,
+        });
     }
 
     async adminDeleteBlockedRepository(ctx: TraceContext, id: number): Promise<void> {
         traceAPIParams(ctx, { id });
 
         const admin = await this.guardAdminAccess("adminDeleteBlockedRepository", { id }, Permission.ADMIN_USERS);
-        await this.auth.checkPermissionOnInstallation(admin.id, "configure");
 
-        await this.blockedRepostoryDB.deleteBlockedRepository(id);
+        await this.installationService.adminDeleteBlockedRepository(admin.id, id);
     }
 
     async adminBlockUser(ctx: TraceContext, req: AdminBlockUserRequest): Promise<User> {
@@ -2950,8 +2935,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async adminGetBlockedEmailDomains(ctx: TraceContextWithSpan): Promise<EmailDomainFilterEntry[]> {
         const user = await this.checkAndBlockUser("adminGetBlockedEmailDomains");
         await this.guardAdminAccess("adminGetBlockedEmailDomains", { id: user.id }, Permission.ADMIN_USERS);
-        await this.auth.checkPermissionOnInstallation(user.id, "configure");
-        return await this.emailDomainFilterdb.getFilterEntries();
+        return await this.installationService.adminGetBlockedEmailDomains(user.id);
     }
 
     async adminSaveBlockedEmailDomain(
@@ -2960,7 +2944,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<void> {
         const user = await this.checkAndBlockUser("adminSaveBlockedEmailDomain");
         await this.guardAdminAccess("adminSaveBlockedEmailDomain", { id: user.id }, Permission.ADMIN_USERS);
-        await this.auth.checkPermissionOnInstallation(user.id, "configure");
-        await this.emailDomainFilterdb.storeFilterEntry(domainFilterentry);
+        await this.installationService.adminCreateBlockedEmailDomain(user.id, domainFilterentry);
     }
 }

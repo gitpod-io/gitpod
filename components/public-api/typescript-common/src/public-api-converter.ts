@@ -60,6 +60,7 @@ import {
     WorkspaceStatus_WorkspaceConditions,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { EditorReference } from "@gitpod/public-api/lib/gitpod/v1/editor_pb";
+import { BlockedEmailDomain, BlockedRepository } from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
 import { SSHPublicKey } from "@gitpod/public-api/lib/gitpod/v1/ssh_pb";
 import {
     ConfigurationEnvironmentVariable,
@@ -95,7 +96,8 @@ import {
     SuggestedRepository as SuggestedRepositoryProtocol,
     UserSSHPublicKeyValue,
     SnapshotContext,
-} from "@gitpod/gitpod-protocol/lib//protocol";
+    EmailDomainFilterEntry,
+} from "@gitpod/gitpod-protocol/lib/protocol";
 import {
     OrgMemberInfo,
     OrgMemberRole,
@@ -105,7 +107,7 @@ import {
     PrebuildWithStatus,
     Project,
     Organization as ProtocolOrganization,
-} from "@gitpod/gitpod-protocol/lib//teams-projects-protocol";
+} from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import {
     ConfigurationIdeConfig,
     PortProtocol,
@@ -115,6 +117,7 @@ import {
 } from "@gitpod/gitpod-protocol/lib//workspace-instance";
 import { Author, Commit } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import type { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
+import { BlockedRepository as ProtocolBlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 
 export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
 
@@ -972,6 +975,24 @@ export class PublicAPIConverter {
                 return PrebuildPhase_Phase.FAILED;
         }
         return PrebuildPhase_Phase.UNSPECIFIED;
+    }
+
+    toBlockedRepository(repo: ProtocolBlockedRepository): BlockedRepository {
+        return new BlockedRepository({
+            id: repo.id,
+            urlRegexp: repo.urlRegexp,
+            blockUser: repo.blockUser,
+            creationTime: Timestamp.fromDate(new Date(repo.createdAt)),
+            updateTime: Timestamp.fromDate(new Date(repo.updatedAt)),
+        });
+    }
+
+    toBlockedEmailDomain(item: EmailDomainFilterEntry): BlockedEmailDomain {
+        return new BlockedEmailDomain({
+            id: "",
+            domain: item.domain,
+            negative: item.negative,
+        });
     }
 
     toSCMToken(t: Token): SCMToken {

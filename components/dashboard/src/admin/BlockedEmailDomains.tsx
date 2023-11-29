@@ -13,10 +13,11 @@ import { ItemFieldContextMenu } from "../components/ItemsList";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import searchIcon from "../icons/search.svg";
-import { getGitpodService } from "../service/service";
 import { AdminPageHeader } from "./AdminPageHeader";
 import Pagination from "../Pagination/Pagination";
 import { Button } from "@podkit/buttons/Button";
+import { installationClient } from "../service/public-api";
+import { ListBlockedEmailDomainsResponse } from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
 
 export function BlockedEmailDomains() {
     return (
@@ -27,7 +28,7 @@ export function BlockedEmailDomains() {
 }
 
 function useBlockedEmailDomains() {
-    return useQuery(["blockedEmailDomains"], () => getGitpodService().server.adminGetBlockedEmailDomains(), {
+    return useQuery(["blockedEmailDomains"], () => installationClient.listBlockedEmailDomains({}), {
         staleTime: 1000 * 60 * 5, // 5min
     });
 }
@@ -37,19 +38,21 @@ function useUpdateBlockedEmailDomainMutation() {
     const blockedEmailDomains = useBlockedEmailDomains();
     return useMutation(
         async (blockedDomain: EmailDomainFilterEntry) => {
-            await getGitpodService().server.adminSaveBlockedEmailDomain(blockedDomain);
+            await installationClient.createBlockedEmailDomain({
+                domain: blockedDomain.domain,
+                negative: blockedDomain.negative ?? false,
+            });
         },
         {
             onSuccess: (_, blockedDomain) => {
-                const updated = [];
-                for (const entry of blockedEmailDomains.data || []) {
+                const data = new ListBlockedEmailDomainsResponse(blockedEmailDomains.data);
+                data.blockedEmailDomains.map((entry) => {
                     if (entry.domain !== blockedDomain.domain) {
-                        updated.push(entry);
-                    } else {
-                        updated.push(blockedDomain);
+                        return entry;
                     }
-                }
-                queryClient.setQueryData(["blockedEmailDomains"], updated);
+                    return blockedDomain;
+                });
+                queryClient.setQueryData(["blockedEmailDomains"], data);
                 blockedEmailDomains.refetch();
             },
         },
@@ -74,7 +77,7 @@ export function BlockedEmailDomainsList(props: Props) {
         if (!blockedEmailDomains.data) {
             return [];
         }
-        return blockedEmailDomains.data.filter((entry) =>
+        return blockedEmailDomains.data.blockedEmailDomains.filter((entry) =>
             entry.domain.toLowerCase().includes(searchTerm.toLowerCase()),
         );
     }, [blockedEmailDomains.data, searchTerm]);
