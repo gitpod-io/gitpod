@@ -30,6 +30,9 @@ type UserServiceClient interface {
 	GetAuthenticatedUser(ctx context.Context, in *GetAuthenticatedUserRequest, opts ...grpc.CallOption) (*GetAuthenticatedUserResponse, error)
 	// UpdateUser updates the properties of a user.
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error)
+	// SetWorkspaceAutoStartOptions updates the auto start options for the Gitpod Dashboard.
+	// +internal - only used by the Gitpod Dashboard.
+	SetWorkspaceAutoStartOptions(ctx context.Context, in *SetWorkspaceAutoStartOptionsRequest, opts ...grpc.CallOption) (*SetWorkspaceAutoStartOptionsResponse, error)
 }
 
 type userServiceClient struct {
@@ -58,6 +61,15 @@ func (c *userServiceClient) UpdateUser(ctx context.Context, in *UpdateUserReques
 	return out, nil
 }
 
+func (c *userServiceClient) SetWorkspaceAutoStartOptions(ctx context.Context, in *SetWorkspaceAutoStartOptionsRequest, opts ...grpc.CallOption) (*SetWorkspaceAutoStartOptionsResponse, error) {
+	out := new(SetWorkspaceAutoStartOptionsResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.UserService/SetWorkspaceAutoStartOptions", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
@@ -66,6 +78,9 @@ type UserServiceServer interface {
 	GetAuthenticatedUser(context.Context, *GetAuthenticatedUserRequest) (*GetAuthenticatedUserResponse, error)
 	// UpdateUser updates the properties of a user.
 	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
+	// SetWorkspaceAutoStartOptions updates the auto start options for the Gitpod Dashboard.
+	// +internal - only used by the Gitpod Dashboard.
+	SetWorkspaceAutoStartOptions(context.Context, *SetWorkspaceAutoStartOptionsRequest) (*SetWorkspaceAutoStartOptionsResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -78,6 +93,9 @@ func (UnimplementedUserServiceServer) GetAuthenticatedUser(context.Context, *Get
 }
 func (UnimplementedUserServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
+}
+func (UnimplementedUserServiceServer) SetWorkspaceAutoStartOptions(context.Context, *SetWorkspaceAutoStartOptionsRequest) (*SetWorkspaceAutoStartOptionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetWorkspaceAutoStartOptions not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 
@@ -128,6 +146,24 @@ func _UserService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_SetWorkspaceAutoStartOptions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetWorkspaceAutoStartOptionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).SetWorkspaceAutoStartOptions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.UserService/SetWorkspaceAutoStartOptions",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).SetWorkspaceAutoStartOptions(ctx, req.(*SetWorkspaceAutoStartOptionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -142,6 +178,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateUser",
 			Handler:    _UserService_UpdateUser_Handler,
+		},
+		{
+			MethodName: "SetWorkspaceAutoStartOptions",
+			Handler:    _UserService_SetWorkspaceAutoStartOptions_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

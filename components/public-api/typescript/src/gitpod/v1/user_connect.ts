@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { GetAuthenticatedUserRequest, GetAuthenticatedUserResponse, UpdateUserRequest, UpdateUserResponse } from "./user_pb.js";
+import { GetAuthenticatedUserRequest, GetAuthenticatedUserResponse, SetWorkspaceAutoStartOptionsRequest, SetWorkspaceAutoStartOptionsResponse, UpdateUserRequest, UpdateUserResponse } from "./user_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -38,6 +38,18 @@ export const UserService = {
       name: "UpdateUser",
       I: UpdateUserRequest,
       O: UpdateUserResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * SetWorkspaceAutoStartOptions updates the auto start options for the Gitpod Dashboard.
+     * +internal - only used by the Gitpod Dashboard.
+     *
+     * @generated from rpc gitpod.v1.UserService.SetWorkspaceAutoStartOptions
+     */
+    setWorkspaceAutoStartOptions: {
+      name: "SetWorkspaceAutoStartOptions",
+      I: SetWorkspaceAutoStartOptionsRequest,
+      O: SetWorkspaceAutoStartOptionsResponse,
       kind: MethodKind.Unary,
     },
   }

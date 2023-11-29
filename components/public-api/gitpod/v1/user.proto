@@ -14,12 +14,29 @@ service UserService {
 
   // UpdateUser updates the properties of a user.
   rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {}
+
+  // SetWorkspaceAutoStartOptions updates the auto start options for the Gitpod Dashboard.
+  // +internal - only used by the Gitpod Dashboard.
+  rpc SetWorkspaceAutoStartOptions(SetWorkspaceAutoStartOptionsRequest) returns (SetWorkspaceAutoStartOptionsResponse) {}
 }
 
 message GetAuthenticatedUserRequest {}
 message GetAuthenticatedUserResponse {
   User user = 1;
 }
+
+message SetWorkspaceAutoStartOptionsRequest {
+  string user_id = 1;
+  repeated WorkspaceAutostartOption workspace_autostart_options = 2;
+  message WorkspaceAutostartOption {
+    string clone_url = 1;
+    string organization_id = 2;
+    optional string workspace_class = 3;
+    optional EditorReference editor_settings = 4;
+    optional string region = 5;
+  }
+}
+message SetWorkspaceAutoStartOptionsResponse {}
 
 message UpdateUserRequest {
   string user_id = 1;
@@ -47,15 +64,7 @@ message UpdateUserRequest {
     optional bool allows_devx_mail = 2;
     optional bool allows_onboarding_mail = 3;
   }
-  repeated WorkspaceAutostartOption workspace_autostart_options = 8;
-  message WorkspaceAutostartOption {
-    string clone_url = 1;
-    string organization_id = 2;
-    string workspace_class = 3;
-    EditorReference editor_settings = 4;
-    string region = 5;
-  }
-  optional WorkspaceTimeoutSettings workspace_timeout_settings = 9;
+  optional WorkspaceTimeoutSettings workspace_timeout_settings = 8;
   message WorkspaceTimeoutSettings {
     optional google.protobuf.Duration inactivity = 1;
     optional bool disabled_disconnected = 2;

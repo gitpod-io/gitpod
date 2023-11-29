@@ -38,3 +38,13 @@ func (s *ProxyUserServiceHandler) UpdateUser(ctx context.Context, req *connect_g
 
 	return connect_go.NewResponse(resp), nil
 }
+
+func (s *ProxyUserServiceHandler) SetWorkspaceAutoStartOptions(ctx context.Context, req *connect_go.Request[v1.SetWorkspaceAutoStartOptionsRequest]) (*connect_go.Response[v1.SetWorkspaceAutoStartOptionsResponse], error) {
+	resp, err := s.Client.SetWorkspaceAutoStartOptions(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}

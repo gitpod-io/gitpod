@@ -82,6 +82,141 @@ export class GetAuthenticatedUserResponse extends Message<GetAuthenticatedUserRe
 }
 
 /**
+ * @generated from message gitpod.v1.SetWorkspaceAutoStartOptionsRequest
+ */
+export class SetWorkspaceAutoStartOptionsRequest extends Message<SetWorkspaceAutoStartOptionsRequest> {
+  /**
+   * @generated from field: string user_id = 1;
+   */
+  userId = "";
+
+  /**
+   * @generated from field: repeated gitpod.v1.SetWorkspaceAutoStartOptionsRequest.WorkspaceAutostartOption workspace_autostart_options = 2;
+   */
+  workspaceAutostartOptions: SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption[] = [];
+
+  constructor(data?: PartialMessage<SetWorkspaceAutoStartOptionsRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.SetWorkspaceAutoStartOptionsRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "workspace_autostart_options", kind: "message", T: SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SetWorkspaceAutoStartOptionsRequest {
+    return new SetWorkspaceAutoStartOptionsRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SetWorkspaceAutoStartOptionsRequest {
+    return new SetWorkspaceAutoStartOptionsRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SetWorkspaceAutoStartOptionsRequest {
+    return new SetWorkspaceAutoStartOptionsRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SetWorkspaceAutoStartOptionsRequest | PlainMessage<SetWorkspaceAutoStartOptionsRequest> | undefined, b: SetWorkspaceAutoStartOptionsRequest | PlainMessage<SetWorkspaceAutoStartOptionsRequest> | undefined): boolean {
+    return proto3.util.equals(SetWorkspaceAutoStartOptionsRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.SetWorkspaceAutoStartOptionsRequest.WorkspaceAutostartOption
+ */
+export class SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption extends Message<SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption> {
+  /**
+   * @generated from field: string clone_url = 1;
+   */
+  cloneUrl = "";
+
+  /**
+   * @generated from field: string organization_id = 2;
+   */
+  organizationId = "";
+
+  /**
+   * @generated from field: optional string workspace_class = 3;
+   */
+  workspaceClass?: string;
+
+  /**
+   * @generated from field: optional gitpod.v1.EditorReference editor_settings = 4;
+   */
+  editorSettings?: EditorReference;
+
+  /**
+   * @generated from field: optional string region = 5;
+   */
+  region?: string;
+
+  constructor(data?: PartialMessage<SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.SetWorkspaceAutoStartOptionsRequest.WorkspaceAutostartOption";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "clone_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 4, name: "editor_settings", kind: "message", T: EditorReference, opt: true },
+    { no: 5, name: "region", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption {
+    return new SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption {
+    return new SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption {
+    return new SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption | PlainMessage<SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption> | undefined, b: SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption | PlainMessage<SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption> | undefined): boolean {
+    return proto3.util.equals(SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.SetWorkspaceAutoStartOptionsResponse
+ */
+export class SetWorkspaceAutoStartOptionsResponse extends Message<SetWorkspaceAutoStartOptionsResponse> {
+  constructor(data?: PartialMessage<SetWorkspaceAutoStartOptionsResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.SetWorkspaceAutoStartOptionsResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SetWorkspaceAutoStartOptionsResponse {
+    return new SetWorkspaceAutoStartOptionsResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SetWorkspaceAutoStartOptionsResponse {
+    return new SetWorkspaceAutoStartOptionsResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SetWorkspaceAutoStartOptionsResponse {
+    return new SetWorkspaceAutoStartOptionsResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SetWorkspaceAutoStartOptionsResponse | PlainMessage<SetWorkspaceAutoStartOptionsResponse> | undefined, b: SetWorkspaceAutoStartOptionsResponse | PlainMessage<SetWorkspaceAutoStartOptionsResponse> | undefined): boolean {
+    return proto3.util.equals(SetWorkspaceAutoStartOptionsResponse, a, b);
+  }
+}
+
+/**
  * @generated from message gitpod.v1.UpdateUserRequest
  */
 export class UpdateUserRequest extends Message<UpdateUserRequest> {
@@ -121,12 +256,7 @@ export class UpdateUserRequest extends Message<UpdateUserRequest> {
   emailNotificationSettings?: UpdateUserRequest_EmailNotificationSettings;
 
   /**
-   * @generated from field: repeated gitpod.v1.UpdateUserRequest.WorkspaceAutostartOption workspace_autostart_options = 8;
-   */
-  workspaceAutostartOptions: UpdateUserRequest_WorkspaceAutostartOption[] = [];
-
-  /**
-   * @generated from field: optional gitpod.v1.UpdateUserRequest.WorkspaceTimeoutSettings workspace_timeout_settings = 9;
+   * @generated from field: optional gitpod.v1.UpdateUserRequest.WorkspaceTimeoutSettings workspace_timeout_settings = 8;
    */
   workspaceTimeoutSettings?: UpdateUserRequest_WorkspaceTimeoutSettings;
 
@@ -145,8 +275,7 @@ export class UpdateUserRequest extends Message<UpdateUserRequest> {
     { no: 5, name: "email_address", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 6, name: "editor_settings", kind: "message", T: EditorReference, opt: true },
     { no: 7, name: "email_notification_settings", kind: "message", T: UpdateUserRequest_EmailNotificationSettings, opt: true },
-    { no: 8, name: "workspace_autostart_options", kind: "message", T: UpdateUserRequest_WorkspaceAutostartOption, repeated: true },
-    { no: 9, name: "workspace_timeout_settings", kind: "message", T: UpdateUserRequest_WorkspaceTimeoutSettings, opt: true },
+    { no: 8, name: "workspace_timeout_settings", kind: "message", T: UpdateUserRequest_WorkspaceTimeoutSettings, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateUserRequest {
@@ -309,67 +438,6 @@ export class UpdateUserRequest_EmailNotificationSettings extends Message<UpdateU
 
   static equals(a: UpdateUserRequest_EmailNotificationSettings | PlainMessage<UpdateUserRequest_EmailNotificationSettings> | undefined, b: UpdateUserRequest_EmailNotificationSettings | PlainMessage<UpdateUserRequest_EmailNotificationSettings> | undefined): boolean {
     return proto3.util.equals(UpdateUserRequest_EmailNotificationSettings, a, b);
-  }
-}
-
-/**
- * @generated from message gitpod.v1.UpdateUserRequest.WorkspaceAutostartOption
- */
-export class UpdateUserRequest_WorkspaceAutostartOption extends Message<UpdateUserRequest_WorkspaceAutostartOption> {
-  /**
-   * @generated from field: string clone_url = 1;
-   */
-  cloneUrl = "";
-
-  /**
-   * @generated from field: string organization_id = 2;
-   */
-  organizationId = "";
-
-  /**
-   * @generated from field: string workspace_class = 3;
-   */
-  workspaceClass = "";
-
-  /**
-   * @generated from field: gitpod.v1.EditorReference editor_settings = 4;
-   */
-  editorSettings?: EditorReference;
-
-  /**
-   * @generated from field: string region = 5;
-   */
-  region = "";
-
-  constructor(data?: PartialMessage<UpdateUserRequest_WorkspaceAutostartOption>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.UpdateUserRequest.WorkspaceAutostartOption";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "clone_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 4, name: "editor_settings", kind: "message", T: EditorReference },
-    { no: 5, name: "region", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateUserRequest_WorkspaceAutostartOption {
-    return new UpdateUserRequest_WorkspaceAutostartOption().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateUserRequest_WorkspaceAutostartOption {
-    return new UpdateUserRequest_WorkspaceAutostartOption().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateUserRequest_WorkspaceAutostartOption {
-    return new UpdateUserRequest_WorkspaceAutostartOption().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: UpdateUserRequest_WorkspaceAutostartOption | PlainMessage<UpdateUserRequest_WorkspaceAutostartOption> | undefined, b: UpdateUserRequest_WorkspaceAutostartOption | PlainMessage<UpdateUserRequest_WorkspaceAutostartOption> | undefined): boolean {
-    return proto3.util.equals(UpdateUserRequest_WorkspaceAutostartOption, a, b);
   }
 }
 
