@@ -5,7 +5,6 @@
  */
 
 import { MetricsReporter } from "@gitpod/public-api/lib/metrics";
-import { getExperimentsClient } from "../experiments/client";
 import { v4 } from "uuid";
 const commit = require("./config.json").commit;
 
@@ -19,7 +18,7 @@ const metricsReporter = new MetricsReporter({
         error: originalConsoleError.bind(console),
         debug: console.debug.bind(console),
     },
-    isEnabled: () => getExperimentsClient().getValueAsync("dashboard_metrics_enabled", false, {}),
+    isEnabled: () => Promise.resolve(false),
     commonErrorDetails: {
         sessionId: v4(),
     },

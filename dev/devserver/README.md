@@ -4,6 +4,8 @@ The intention of this experiment was to see if there is an easy-ish way to start
 
 This was time-boxed, so there is quite a bunch of ToDos left:
 
+ - for some reason our dashboard is spamming us with ConfigCat requests
+   - there seems to be a loop on failed lookup involving metrics.ts (I silenced it for now)
  - add (and remove) DNS entries for proxy routing in /etc/hosts (form: `server.devserver.localdomain`)
    - or find another way to introduce variance to the Caddyfile
  - resolve port clashes
