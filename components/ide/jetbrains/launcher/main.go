@@ -421,14 +421,15 @@ func launch(launchCtx *LaunchContext) {
 	launchCtx.riderSolutionFile = riderSolutionFile
 	launchCtx.projectContextDir = resolveProjectContextDir(launchCtx)
 	launchCtx.projectConfigDir = fmt.Sprintf("%s/RemoteDev-%s/%s", launchCtx.configDir, launchCtx.info.ProductCode, strings.ReplaceAll(launchCtx.projectContextDir, "/", "_"))
-	launchCtx.env = resolveLaunchContextEnv(launchCtx.configDir, launchCtx.systemDir)
 
-	err = syncInitialContent(launchCtx, Options)
+	alreadySync, err := syncInitialContent(launchCtx, Options)
 	if err != nil {
 		log.WithError(err).Error("failed to sync initial options")
 	}
 
-	err = syncInitialContent(launchCtx, Plugins)
+	launchCtx.env = resolveLaunchContextEnv(launchCtx.configDir, launchCtx.systemDir, !alreadySync)
+
+	_, err = syncInitialContent(launchCtx, Plugins)
 	if err != nil {
 		log.WithError(err).Error("failed to sync initial plugins")
 	}
@@ -539,7 +540,7 @@ func resolveUserEnvs() (userEnvs []string, err error) {
 	return
 }
 
-func resolveLaunchContextEnv(configDir string, systemDir string) []string {
+func resolveLaunchContextEnv(configDir string, systemDir string, enableNewUI bool) []string {
 	var launchCtxEnv []string
 	userEnvs, err := resolveUserEnvs()
 	if err == nil {
@@ -560,6 +561,10 @@ func resolveLaunchContextEnv(configDir string, systemDir string) []string {
 	// otherwise JB will complain to a user on each startup
 	// by default remote dev already set -Xmx2048m, see /ide-desktop/${alias}${qualifier}/backend/plugins/remote-dev-server/bin/launcher.sh
 	launchCtxEnv = append(launchCtxEnv, "JAVA_TOOL_OPTIONS=")
+
+	if enableNewUI {
+		launchCtxEnv = append(launchCtxEnv, "REMOTE_DEV_NEW_UI_ENABLED=1")
+	}
 
 	log.WithField("env", strings.Join(launchCtxEnv, "\n")).Info("resolved launch env")
 
@@ -724,30 +729,30 @@ const (
 	Plugins SyncTarget = "plugins"
 )
 
-func syncInitialContent(launchCtx *LaunchContext, target SyncTarget) error {
+func syncInitialContent(launchCtx *LaunchContext, target SyncTarget) (bool, error) {
 	destDir, err, alreadySynced := ensureInitialSyncDest(launchCtx, target)
 	if alreadySynced {
 		log.Infof("initial %s is already synced, skipping", target)
-		return nil
+		return alreadySynced, nil
 	}
 	if err != nil {
-		return err
+		return alreadySynced, err
 	}
 
 	srcDirs, err := collectSyncSources(launchCtx, target)
 	if err != nil {
-		return err
+		return alreadySynced, err
 	}
 	if len(srcDirs) == 0 {
 		// nothing to sync
-		return nil
+		return alreadySynced, nil
 	}
 
 	for _, srcDir := range srcDirs {
 		if target == Plugins {
 			files, err := ioutil.ReadDir(srcDir)
 			if err != nil {
-				return err
+				return alreadySynced, err
 			}
 
 			for _, file := range files {
@@ -760,11 +765,11 @@ func syncInitialContent(launchCtx *LaunchContext, target SyncTarget) error {
 			cp := exec.Command("cp", "-rf", srcDir+"/.", destDir)
 			err = cp.Run()
 			if err != nil {
-				return err
+				return alreadySynced, err
 			}
 		}
 	}
-	return nil
+	return alreadySynced, nil
 }
 
 func syncPlugin(file fs.FileInfo, srcDir, destDir string) error {
