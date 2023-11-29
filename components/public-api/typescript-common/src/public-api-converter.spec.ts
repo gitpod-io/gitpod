@@ -65,7 +65,7 @@ import {
     TooManyRunningWorkspacesError,
 } from "@gitpod/public-api/lib/gitpod/v1/error_pb";
 import { SSHPublicKey } from "@gitpod/public-api/lib/gitpod/v1/ssh_pb";
-import { BlockedRepository as ProtocolBlockedRepository } from "./blocked-repositories-protocol";
+import { BlockedRepository as ProtocolBlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import { BlockedEmailDomain, BlockedRepository } from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
 
 describe("PublicAPIConverter", () => {
