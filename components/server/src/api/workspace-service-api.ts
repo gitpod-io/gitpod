@@ -121,9 +121,6 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         if (!req.metadata || !req.metadata.organizationId || !uuidValidate(req.metadata.organizationId)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
-        if (req.source.case !== "contextUrl") {
-            throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
-        }
         if (!req.source.value || !req.source.value.url) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "source is required");
         }
