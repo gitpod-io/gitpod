@@ -266,10 +266,10 @@ func ensurePrivsepDir() error {
 }
 
 func ensureSSHCAFile(cfg *Config, caPath string) error {
-	if cfg.SSHCAKey == "" {
+	if cfg.SSHGatewayCAPublicKey == "" {
 		return nil
 	}
-	err := os.WriteFile(caPath, []byte(cfg.SSHCAKey), 0o644)
+	err := os.WriteFile(caPath, []byte(cfg.SSHGatewayCAPublicKey), 0o644)
 	if err != nil {
 		return xerrors.Errorf("cannot write ssh ca pem: %w", err)
 	}

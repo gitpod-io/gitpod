@@ -276,10 +276,10 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 			Admission: workspacev1.AdmissionSpec{
 				Level: admissionLevel,
 			},
-			Ports:         ports,
-			SshPublicKeys: req.Spec.SshPublicKeys,
-			StorageQuota:  int(storage.Value()),
-			SSHCAKey:      wsm.Config.SSHGatewayCAKey,
+			Ports:                 ports,
+			SshPublicKeys:         req.Spec.SshPublicKeys,
+			StorageQuota:          int(storage.Value()),
+			SSHGatewayCAPublicKey: wsm.Config.SSHGatewayCAPublicKey,
 		},
 	}
 	controllerutil.AddFinalizer(&ws, workspacev1.GitpodFinalizerName)

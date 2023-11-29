@@ -328,7 +328,7 @@ func getConfig(fn string) (*config.ServiceConfiguration, error) {
 	if err != nil {
 		return &cfg, nil
 	}
-	cfg.Manager.SSHGatewayCAKey = string(ca)
+	cfg.Manager.SSHGatewayCAPublicKey = string(ca)
 
 	return &cfg, nil
 }

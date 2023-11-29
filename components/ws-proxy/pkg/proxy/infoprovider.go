@@ -152,7 +152,7 @@ func (r *CRDWorkspaceInfoProvider) Reconcile(ctx context.Context, req ctrl.Reque
 		SSHPublicKeys:   ws.Spec.SshPublicKeys,
 		SSHKey:          ws.Spec.SSHKey,
 		IsRunning:       ws.Status.Phase == workspacev1.WorkspacePhaseRunning,
-		IsEnabledSSHCA:  ws.Spec.SSHCAKey != "",
+		IsEnabledSSHCA:  ws.Spec.SSHGatewayCAPublicKey != "",
 	}
 
 	r.store.Update(req.Name, wsinfo)

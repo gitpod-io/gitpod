@@ -169,7 +169,7 @@ spec:
                 - privateKey
                 - publicKey
                 type: object
-              sshCAKey:
+              sshGatewayCAPublicKey:
                 type: string
               sshPublicKeys:
                 items:
