@@ -216,16 +216,16 @@ message Workspace {
 
 // WorkspaceMetadata is data associated with a workspace that's required for other parts of the system to function
 message WorkspaceMetadata {
-  // organization_id is the ID of the organization that contains the workspace
+  // owner_id is the ID of the Gitpod user to whom we'll bill this workspace and who we consider responsible for its content
   string owner_id = 1;
 
-  // owner is the ID of the Gitpod user to whom we'll bill this workspace and who we consider responsible for its content
+  // organization_id is the ID of the organization that contains the workspace
   string organization_id = 2;
 
   // configuration_id is the ID of the configuration used by this workspace
   string configuration_id = 3;
 
-  // Annotations are key/value pairs that gets attached to the workspace.
+  // annotations are key/value pairs that gets attached to the workspace.
   // +internal - not yet implemented
   map<string, string> annotations = 4;
 

@@ -990,14 +990,14 @@ export class Workspace extends Message<Workspace> {
  */
 export class WorkspaceMetadata extends Message<WorkspaceMetadata> {
   /**
-   * organization_id is the ID of the organization that contains the workspace
+   * owner_id is the ID of the Gitpod user to whom we'll bill this workspace and who we consider responsible for its content
    *
    * @generated from field: string owner_id = 1;
    */
   ownerId = "";
 
   /**
-   * owner is the ID of the Gitpod user to whom we'll bill this workspace and who we consider responsible for its content
+   * organization_id is the ID of the organization that contains the workspace
    *
    * @generated from field: string organization_id = 2;
    */
@@ -1011,7 +1011,7 @@ export class WorkspaceMetadata extends Message<WorkspaceMetadata> {
   configurationId = "";
 
   /**
-   * Annotations are key/value pairs that gets attached to the workspace.
+   * annotations are key/value pairs that gets attached to the workspace.
    * +internal - not yet implemented
    *
    * @generated from field: map<string, string> annotations = 4;

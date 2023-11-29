@@ -1576,13 +1576,13 @@ type WorkspaceMetadata struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// organization_id is the ID of the organization that contains the workspace
+	// owner_id is the ID of the Gitpod user to whom we'll bill this workspace and who we consider responsible for its content
 	OwnerId string `protobuf:"bytes,1,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
-	// owner is the ID of the Gitpod user to whom we'll bill this workspace and who we consider responsible for its content
+	// organization_id is the ID of the organization that contains the workspace
 	OrganizationId string `protobuf:"bytes,2,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
 	// configuration_id is the ID of the configuration used by this workspace
 	ConfigurationId string `protobuf:"bytes,3,opt,name=configuration_id,json=configurationId,proto3" json:"configuration_id,omitempty"`
-	// Annotations are key/value pairs that gets attached to the workspace.
+	// annotations are key/value pairs that gets attached to the workspace.
 	// +internal - not yet implemented
 	Annotations map[string]string `protobuf:"bytes,4,rep,name=annotations,proto3" json:"annotations,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// name is the name of the workspace as specified by the user
