@@ -42,34 +42,35 @@ message RegisterRunnerRequest {
     RUNNER_TYPE_LOCAL = 1;
     // The cluster is a Cloud workspace cluster which is managed by Gitpod
     // and can run multiple tenants.
-    RUNNER_TYPE_MULTI_TENANT = 2;
+    RUNNER_TYPE_CLOUD = 2;
   }
+
+  // The runner ID which identifies the cluster and must be used
+  // in all subsequent requests.
+  string runner_id = 1;
 
   // The cluster's scope
   oneof scope {
-    string organization_id = 1;
-    string user_id = 2;
+    bool installation = 2;
+    string organization_id = 3;
+    string user_id = 4;
   }
 
   // The cluster's type
-  RunnerType type = 3;
+  RunnerType type = 5;
 
   // The cluster's name which is shown to users
-  string name = 4;
+  string name = 6;
 
   // The workspace classes this cluster has to offer
-  repeated WorkspaceClass workspace_classes = 5;
+  repeated WorkspaceClass workspace_classes = 7;
 }
 
-message RegisterRunnerResponse {
-  // The cluster's ID which identifies the cluster and must be used
-  // in all subsequent requests.
-  string cluster_id = 1;
-}
+message RegisterRunnerResponse { }
 
 message RenewRunnerRegistrationRequest {
   // The cluster's identity
-  string cluster_id = 1;
+  string runner_id = 1;
 }
 
 message RenewRunnerRegistrationResponse {}
@@ -79,7 +80,7 @@ message ListRunnerWorkspacesRequest {
   PaginationRequest pagination = 1;
 
   // The cluster's identity
-  string cluster_id = 2;
+  string runner_id = 2;
 
   // An optional list of workspace IDs to fetch. If this list is empty/not provided
   // all workspaces that ought to run on the cluster are returned.
@@ -110,14 +111,13 @@ message ListRunnerWorkspacesResponse {
 
 message WatchRunnerWorkspacesRequest {
   // The cluster's identity
-  string cluster_id = 1;
+  string runner_id = 1;
 }
 
 message WatchRunnerWorkspacesResponse {
   // The cluster's identity
-  string cluster_id = 1;
+  string runner_id = 1;
 
-  // The workspace's ID
   RunnerWorkspace workspace = 2;
 }
 
@@ -136,7 +136,7 @@ message UpdateRunnerWorkspaceStatusRequest {
   }
 
   // The cluster's identity
-  string cluster_id = 1;
+  string runner_id = 1;
 
   // The workspace's ID
   string workspace_id = 2;
