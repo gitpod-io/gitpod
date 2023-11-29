@@ -338,7 +338,7 @@ export class CreateAndStartWorkspaceRequest extends Message<CreateAndStartWorksp
   /**
    * metadata is data associated with this workspace that's required for other parts of Gitpod to function
    *
-   * @generated from field: gitpod.v1.WorkspaceMetadata metadata = 2;
+   * @generated from field: gitpod.v1.WorkspaceMetadata metadata = 1;
    */
   metadata?: WorkspaceMetadata;
 
@@ -349,7 +349,7 @@ export class CreateAndStartWorkspaceRequest extends Message<CreateAndStartWorksp
     /**
      * context_url is the URL from which the workspace is created
      *
-     * @generated from field: gitpod.v1.CreateAndStartWorkspaceRequest.ContextURL context_url = 3;
+     * @generated from field: gitpod.v1.CreateAndStartWorkspaceRequest.ContextURL context_url = 2;
      */
     value: CreateAndStartWorkspaceRequest_ContextURL;
     case: "contextUrl";
@@ -357,25 +357,18 @@ export class CreateAndStartWorkspaceRequest extends Message<CreateAndStartWorksp
     /**
      * spec is the configuration of the workspace that's required for the to start the workspace
      *
-     * @generated from field: gitpod.v1.WorkspaceSpec spec = 4;
+     * @generated from field: gitpod.v1.WorkspaceSpec spec = 3;
      */
     value: WorkspaceSpec;
     case: "spec";
   } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
-   * editor specifies the editor that will be used with this workspace.
-   *
-   * @generated from field: gitpod.v1.EditorReference editor = 5;
-   */
-  editor?: EditorReference;
-
-  /**
    * force_default_config indicates that the workspace should be created with
    * the default configuration instead of the configuration provided in
    * `.gitpod.yml` file
    *
-   * @generated from field: bool force_default_config = 7 [deprecated = true];
+   * @generated from field: bool force_default_config = 4 [deprecated = true];
    * @deprecated
    */
   forceDefaultConfig = false;
@@ -388,11 +381,10 @@ export class CreateAndStartWorkspaceRequest extends Message<CreateAndStartWorksp
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.CreateAndStartWorkspaceRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 2, name: "metadata", kind: "message", T: WorkspaceMetadata },
-    { no: 3, name: "context_url", kind: "message", T: CreateAndStartWorkspaceRequest_ContextURL, oneof: "source" },
-    { no: 4, name: "spec", kind: "message", T: WorkspaceSpec, oneof: "source" },
-    { no: 5, name: "editor", kind: "message", T: EditorReference },
-    { no: 7, name: "force_default_config", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 1, name: "metadata", kind: "message", T: WorkspaceMetadata },
+    { no: 2, name: "context_url", kind: "message", T: CreateAndStartWorkspaceRequest_ContextURL, oneof: "source" },
+    { no: 3, name: "spec", kind: "message", T: WorkspaceSpec, oneof: "source" },
+    { no: 4, name: "force_default_config", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateAndStartWorkspaceRequest {
@@ -430,6 +422,13 @@ export class CreateAndStartWorkspaceRequest_ContextURL extends Message<CreateAnd
    */
   workspaceClass = "";
 
+  /**
+   * editor specifies the editor that will be used with this workspace.
+   *
+   * @generated from field: gitpod.v1.EditorReference editor = 3;
+   */
+  editor?: EditorReference;
+
   constructor(data?: PartialMessage<CreateAndStartWorkspaceRequest_ContextURL>) {
     super();
     proto3.util.initPartial(data, this);
@@ -440,6 +439,7 @@ export class CreateAndStartWorkspaceRequest_ContextURL extends Message<CreateAnd
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "editor", kind: "message", T: EditorReference },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateAndStartWorkspaceRequest_ContextURL {

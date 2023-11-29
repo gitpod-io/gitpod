@@ -851,20 +851,18 @@ type CreateAndStartWorkspaceRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	// metadata is data associated with this workspace that's required for other parts of Gitpod to function
-	Metadata *WorkspaceMetadata `protobuf:"bytes,2,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Metadata *WorkspaceMetadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	// Types that are assignable to Source:
 	//
 	//	*CreateAndStartWorkspaceRequest_ContextUrl
 	//	*CreateAndStartWorkspaceRequest_Spec
 	Source isCreateAndStartWorkspaceRequest_Source `protobuf_oneof:"source"`
-	// editor specifies the editor that will be used with this workspace.
-	Editor *EditorReference `protobuf:"bytes,5,opt,name=editor,proto3" json:"editor,omitempty"`
 	// force_default_config indicates that the workspace should be created with
 	// the default configuration instead of the configuration provided in
 	// `.gitpod.yml` file
 	//
 	// Deprecated: Do not use.
-	ForceDefaultConfig bool `protobuf:"varint,7,opt,name=force_default_config,json=forceDefaultConfig,proto3" json:"force_default_config,omitempty"`
+	ForceDefaultConfig bool `protobuf:"varint,4,opt,name=force_default_config,json=forceDefaultConfig,proto3" json:"force_default_config,omitempty"`
 }
 
 func (x *CreateAndStartWorkspaceRequest) Reset() {
@@ -927,13 +925,6 @@ func (x *CreateAndStartWorkspaceRequest) GetSpec() *WorkspaceSpec {
 	return nil
 }
 
-func (x *CreateAndStartWorkspaceRequest) GetEditor() *EditorReference {
-	if x != nil {
-		return x.Editor
-	}
-	return nil
-}
-
 // Deprecated: Do not use.
 func (x *CreateAndStartWorkspaceRequest) GetForceDefaultConfig() bool {
 	if x != nil {
@@ -948,12 +939,12 @@ type isCreateAndStartWorkspaceRequest_Source interface {
 
 type CreateAndStartWorkspaceRequest_ContextUrl struct {
 	// context_url is the URL from which the workspace is created
-	ContextUrl *CreateAndStartWorkspaceRequest_ContextURL `protobuf:"bytes,3,opt,name=context_url,json=contextUrl,proto3,oneof"`
+	ContextUrl *CreateAndStartWorkspaceRequest_ContextURL `protobuf:"bytes,2,opt,name=context_url,json=contextUrl,proto3,oneof"`
 }
 
 type CreateAndStartWorkspaceRequest_Spec struct {
 	// spec is the configuration of the workspace that's required for the to start the workspace
-	Spec *WorkspaceSpec `protobuf:"bytes,4,opt,name=spec,proto3,oneof"`
+	Spec *WorkspaceSpec `protobuf:"bytes,3,opt,name=spec,proto3,oneof"`
 }
 
 func (*CreateAndStartWorkspaceRequest_ContextUrl) isCreateAndStartWorkspaceRequest_Source() {}
@@ -2863,6 +2854,8 @@ type CreateAndStartWorkspaceRequest_ContextURL struct {
 	Url string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
 	// workspace_class is the class of the workspace we ought to start
 	WorkspaceClass string `protobuf:"bytes,2,opt,name=workspace_class,json=workspaceClass,proto3" json:"workspace_class,omitempty"`
+	// editor specifies the editor that will be used with this workspace.
+	Editor *EditorReference `protobuf:"bytes,3,opt,name=editor,proto3" json:"editor,omitempty"`
 }
 
 func (x *CreateAndStartWorkspaceRequest_ContextURL) Reset() {
@@ -2909,6 +2902,13 @@ func (x *CreateAndStartWorkspaceRequest_ContextURL) GetWorkspaceClass() string {
 		return x.WorkspaceClass
 	}
 	return ""
+}
+
+func (x *CreateAndStartWorkspaceRequest_ContextURL) GetEditor() *EditorReference {
+	if x != nil {
+		return x.Editor
+	}
+	return nil
 }
 
 // Timeout configures the workspace timeout
@@ -3665,30 +3665,30 @@ var file_gitpod_v1_workspace_proto_rawDesc = []byte{
 	0x52, 0x0a, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x73, 0x22, 0xa0, 0x03, 0x0a,
 	0x1e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x41, 0x6e, 0x64, 0x53, 0x74, 0x61, 0x72, 0x74, 0x57,
 	0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
-	0x38, 0x0a, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x38, 0x0a, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28,
 	0x0b, 0x32, 0x1c, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x57, 0x6f,
 	0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x52,
 	0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x12, 0x57, 0x0a, 0x0b, 0x63, 0x6f, 0x6e,
-	0x74, 0x65, 0x78, 0x74, 0x5f, 0x75, 0x72, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x34,
+	0x74, 0x65, 0x78, 0x74, 0x5f, 0x75, 0x72, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x34,
 	0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74,
 	0x65, 0x41, 0x6e, 0x64, 0x53, 0x74, 0x61, 0x72, 0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61,
 	0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x78,
 	0x74, 0x55, 0x52, 0x4c, 0x48, 0x00, 0x52, 0x0a, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x55,
-	0x72, 0x6c, 0x12, 0x2e, 0x0a, 0x04, 0x73, 0x70, 0x65, 0x63, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b,
+	0x72, 0x6c, 0x12, 0x2e, 0x0a, 0x04, 0x73, 0x70, 0x65, 0x63, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b,
 	0x32, 0x18, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x57, 0x6f, 0x72,
 	0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x53, 0x70, 0x65, 0x63, 0x48, 0x00, 0x52, 0x04, 0x73, 0x70,
-	0x65, 0x63, 0x12, 0x32, 0x0a, 0x06, 0x65, 0x64, 0x69, 0x74, 0x6f, 0x72, 0x18, 0x05, 0x20, 0x01,
-	0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x45,
-	0x64, 0x69, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x52, 0x06,
-	0x65, 0x64, 0x69, 0x74, 0x6f, 0x72, 0x12, 0x34, 0x0a, 0x14, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x5f,
-	0x64, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x5f, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x18, 0x07,
-	0x20, 0x01, 0x28, 0x08, 0x42, 0x02, 0x18, 0x01, 0x52, 0x12, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x44,
-	0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x1a, 0x47, 0x0a, 0x0a,
-	0x43, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x55, 0x52, 0x4c, 0x12, 0x10, 0x0a, 0x03, 0x75, 0x72,
-	0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x75, 0x72, 0x6c, 0x12, 0x27, 0x0a, 0x0f,
-	0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x5f, 0x63, 0x6c, 0x61, 0x73, 0x73, 0x18,
-	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65,
-	0x43, 0x6c, 0x61, 0x73, 0x73, 0x42, 0x08, 0x0a, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x22,
+	0x65, 0x63, 0x12, 0x34, 0x0a, 0x14, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x5f, 0x64, 0x65, 0x66, 0x61,
+	0x75, 0x6c, 0x74, 0x5f, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x18, 0x04, 0x20, 0x01, 0x28, 0x08,
+	0x42, 0x02, 0x18, 0x01, 0x52, 0x12, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x44, 0x65, 0x66, 0x61, 0x75,
+	0x6c, 0x74, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x1a, 0x7b, 0x0a, 0x0a, 0x43, 0x6f, 0x6e, 0x74,
+	0x65, 0x78, 0x74, 0x55, 0x52, 0x4c, 0x12, 0x10, 0x0a, 0x03, 0x75, 0x72, 0x6c, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x03, 0x75, 0x72, 0x6c, 0x12, 0x27, 0x0a, 0x0f, 0x77, 0x6f, 0x72, 0x6b,
+	0x73, 0x70, 0x61, 0x63, 0x65, 0x5f, 0x63, 0x6c, 0x61, 0x73, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x0e, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x43, 0x6c, 0x61, 0x73,
+	0x73, 0x12, 0x32, 0x0a, 0x06, 0x65, 0x64, 0x69, 0x74, 0x6f, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x45, 0x64,
+	0x69, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x52, 0x06, 0x65,
+	0x64, 0x69, 0x74, 0x6f, 0x72, 0x42, 0x08, 0x0a, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x22,
 	0x55, 0x0a, 0x1f, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x41, 0x6e, 0x64, 0x53, 0x74, 0x61, 0x72,
 	0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
 	0x73, 0x65, 0x12, 0x32, 0x0a, 0x09, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x18,
@@ -4331,9 +4331,9 @@ var file_gitpod_v1_workspace_proto_goTypes = []interface{}{
 	(*UpdateWorkspaceRequest_UpdateWorkspaceSpec)(nil),     // 55: gitpod.v1.UpdateWorkspaceRequest.UpdateWorkspaceSpec
 	(*PaginationRequest)(nil),                              // 56: gitpod.v1.PaginationRequest
 	(*PaginationResponse)(nil),                             // 57: gitpod.v1.PaginationResponse
-	(*EditorReference)(nil),                                // 58: gitpod.v1.EditorReference
-	(*EnvironmentVariable)(nil),                            // 59: gitpod.v1.EnvironmentVariable
-	(*timestamppb.Timestamp)(nil),                          // 60: google.protobuf.Timestamp
+	(*EnvironmentVariable)(nil),                            // 58: gitpod.v1.EnvironmentVariable
+	(*timestamppb.Timestamp)(nil),                          // 59: google.protobuf.Timestamp
+	(*EditorReference)(nil),                                // 60: gitpod.v1.EditorReference
 	(*durationpb.Duration)(nil),                            // 61: google.protobuf.Duration
 }
 var file_gitpod_v1_workspace_proto_depIdxs = []int32{
@@ -4345,41 +4345,41 @@ var file_gitpod_v1_workspace_proto_depIdxs = []int32{
 	27, // 5: gitpod.v1.CreateAndStartWorkspaceRequest.metadata:type_name -> gitpod.v1.WorkspaceMetadata
 	43, // 6: gitpod.v1.CreateAndStartWorkspaceRequest.context_url:type_name -> gitpod.v1.CreateAndStartWorkspaceRequest.ContextURL
 	28, // 7: gitpod.v1.CreateAndStartWorkspaceRequest.spec:type_name -> gitpod.v1.WorkspaceSpec
-	58, // 8: gitpod.v1.CreateAndStartWorkspaceRequest.editor:type_name -> gitpod.v1.EditorReference
-	26, // 9: gitpod.v1.CreateAndStartWorkspaceResponse.workspace:type_name -> gitpod.v1.Workspace
-	26, // 10: gitpod.v1.StartWorkspaceResponse.workspace:type_name -> gitpod.v1.Workspace
-	1,  // 11: gitpod.v1.GetWorkspaceDefaultImageResponse.source:type_name -> gitpod.v1.GetWorkspaceDefaultImageResponse.Source
-	27, // 12: gitpod.v1.Workspace.metadata:type_name -> gitpod.v1.WorkspaceMetadata
-	28, // 13: gitpod.v1.Workspace.spec:type_name -> gitpod.v1.WorkspaceSpec
-	29, // 14: gitpod.v1.Workspace.status:type_name -> gitpod.v1.WorkspaceStatus
-	44, // 15: gitpod.v1.WorkspaceMetadata.annotations:type_name -> gitpod.v1.WorkspaceMetadata.AnnotationsEntry
-	33, // 16: gitpod.v1.WorkspaceSpec.initializer:type_name -> gitpod.v1.WorkspaceInitializer
-	2,  // 17: gitpod.v1.WorkspaceSpec.type:type_name -> gitpod.v1.WorkspaceSpec.WorkspaceType
-	30, // 18: gitpod.v1.WorkspaceSpec.ports:type_name -> gitpod.v1.WorkspacePort
-	59, // 19: gitpod.v1.WorkspaceSpec.environment_variables:type_name -> gitpod.v1.EnvironmentVariable
-	46, // 20: gitpod.v1.WorkspaceSpec.git:type_name -> gitpod.v1.WorkspaceSpec.GitSpec
-	45, // 21: gitpod.v1.WorkspaceSpec.timeout:type_name -> gitpod.v1.WorkspaceSpec.Timeout
-	0,  // 22: gitpod.v1.WorkspaceSpec.admission:type_name -> gitpod.v1.AdmissionLevel
-	60, // 23: gitpod.v1.WorkspaceSpec.last_user_activity:type_name -> google.protobuf.Timestamp
-	58, // 24: gitpod.v1.WorkspaceSpec.editor:type_name -> gitpod.v1.EditorReference
-	32, // 25: gitpod.v1.WorkspaceStatus.phase:type_name -> gitpod.v1.WorkspacePhase
-	47, // 26: gitpod.v1.WorkspaceStatus.conditions:type_name -> gitpod.v1.WorkspaceStatus.WorkspaceConditions
-	48, // 27: gitpod.v1.WorkspaceStatus.prebuild_result:type_name -> gitpod.v1.WorkspaceStatus.PrebuildResult
-	31, // 28: gitpod.v1.WorkspaceStatus.git_status:type_name -> gitpod.v1.WorkspaceGitStatus
-	0,  // 29: gitpod.v1.WorkspacePort.admission:type_name -> gitpod.v1.AdmissionLevel
-	4,  // 30: gitpod.v1.WorkspacePort.protocol:type_name -> gitpod.v1.WorkspacePort.Protocol
-	5,  // 31: gitpod.v1.WorkspacePhase.name:type_name -> gitpod.v1.WorkspacePhase.Phase
-	60, // 32: gitpod.v1.WorkspacePhase.last_transition_time:type_name -> google.protobuf.Timestamp
-	49, // 33: gitpod.v1.WorkspaceInitializer.specs:type_name -> gitpod.v1.WorkspaceInitializer.Spec
-	6,  // 34: gitpod.v1.GitInitializer.target_mode:type_name -> gitpod.v1.GitInitializer.CloneTargetMode
-	50, // 35: gitpod.v1.GitInitializer.config:type_name -> gitpod.v1.GitInitializer.GitConfig
-	52, // 36: gitpod.v1.FileDownloadInitializer.files:type_name -> gitpod.v1.FileDownloadInitializer.FileInfo
-	53, // 37: gitpod.v1.UpdateWorkspaceRequest.metadata:type_name -> gitpod.v1.UpdateWorkspaceRequest.UpdateWorkspaceMetadata
-	55, // 38: gitpod.v1.UpdateWorkspaceRequest.spec:type_name -> gitpod.v1.UpdateWorkspaceRequest.UpdateWorkspaceSpec
-	31, // 39: gitpod.v1.UpdateWorkspaceRequest.git_status:type_name -> gitpod.v1.WorkspaceGitStatus
-	26, // 40: gitpod.v1.UpdateWorkspaceResponse.workspace:type_name -> gitpod.v1.Workspace
-	27, // 41: gitpod.v1.ParseContextURLResponse.metadata:type_name -> gitpod.v1.WorkspaceMetadata
-	28, // 42: gitpod.v1.ParseContextURLResponse.spec:type_name -> gitpod.v1.WorkspaceSpec
+	26, // 8: gitpod.v1.CreateAndStartWorkspaceResponse.workspace:type_name -> gitpod.v1.Workspace
+	26, // 9: gitpod.v1.StartWorkspaceResponse.workspace:type_name -> gitpod.v1.Workspace
+	1,  // 10: gitpod.v1.GetWorkspaceDefaultImageResponse.source:type_name -> gitpod.v1.GetWorkspaceDefaultImageResponse.Source
+	27, // 11: gitpod.v1.Workspace.metadata:type_name -> gitpod.v1.WorkspaceMetadata
+	28, // 12: gitpod.v1.Workspace.spec:type_name -> gitpod.v1.WorkspaceSpec
+	29, // 13: gitpod.v1.Workspace.status:type_name -> gitpod.v1.WorkspaceStatus
+	44, // 14: gitpod.v1.WorkspaceMetadata.annotations:type_name -> gitpod.v1.WorkspaceMetadata.AnnotationsEntry
+	33, // 15: gitpod.v1.WorkspaceSpec.initializer:type_name -> gitpod.v1.WorkspaceInitializer
+	2,  // 16: gitpod.v1.WorkspaceSpec.type:type_name -> gitpod.v1.WorkspaceSpec.WorkspaceType
+	30, // 17: gitpod.v1.WorkspaceSpec.ports:type_name -> gitpod.v1.WorkspacePort
+	58, // 18: gitpod.v1.WorkspaceSpec.environment_variables:type_name -> gitpod.v1.EnvironmentVariable
+	46, // 19: gitpod.v1.WorkspaceSpec.git:type_name -> gitpod.v1.WorkspaceSpec.GitSpec
+	45, // 20: gitpod.v1.WorkspaceSpec.timeout:type_name -> gitpod.v1.WorkspaceSpec.Timeout
+	0,  // 21: gitpod.v1.WorkspaceSpec.admission:type_name -> gitpod.v1.AdmissionLevel
+	59, // 22: gitpod.v1.WorkspaceSpec.last_user_activity:type_name -> google.protobuf.Timestamp
+	60, // 23: gitpod.v1.WorkspaceSpec.editor:type_name -> gitpod.v1.EditorReference
+	32, // 24: gitpod.v1.WorkspaceStatus.phase:type_name -> gitpod.v1.WorkspacePhase
+	47, // 25: gitpod.v1.WorkspaceStatus.conditions:type_name -> gitpod.v1.WorkspaceStatus.WorkspaceConditions
+	48, // 26: gitpod.v1.WorkspaceStatus.prebuild_result:type_name -> gitpod.v1.WorkspaceStatus.PrebuildResult
+	31, // 27: gitpod.v1.WorkspaceStatus.git_status:type_name -> gitpod.v1.WorkspaceGitStatus
+	0,  // 28: gitpod.v1.WorkspacePort.admission:type_name -> gitpod.v1.AdmissionLevel
+	4,  // 29: gitpod.v1.WorkspacePort.protocol:type_name -> gitpod.v1.WorkspacePort.Protocol
+	5,  // 30: gitpod.v1.WorkspacePhase.name:type_name -> gitpod.v1.WorkspacePhase.Phase
+	59, // 31: gitpod.v1.WorkspacePhase.last_transition_time:type_name -> google.protobuf.Timestamp
+	49, // 32: gitpod.v1.WorkspaceInitializer.specs:type_name -> gitpod.v1.WorkspaceInitializer.Spec
+	6,  // 33: gitpod.v1.GitInitializer.target_mode:type_name -> gitpod.v1.GitInitializer.CloneTargetMode
+	50, // 34: gitpod.v1.GitInitializer.config:type_name -> gitpod.v1.GitInitializer.GitConfig
+	52, // 35: gitpod.v1.FileDownloadInitializer.files:type_name -> gitpod.v1.FileDownloadInitializer.FileInfo
+	53, // 36: gitpod.v1.UpdateWorkspaceRequest.metadata:type_name -> gitpod.v1.UpdateWorkspaceRequest.UpdateWorkspaceMetadata
+	55, // 37: gitpod.v1.UpdateWorkspaceRequest.spec:type_name -> gitpod.v1.UpdateWorkspaceRequest.UpdateWorkspaceSpec
+	31, // 38: gitpod.v1.UpdateWorkspaceRequest.git_status:type_name -> gitpod.v1.WorkspaceGitStatus
+	26, // 39: gitpod.v1.UpdateWorkspaceResponse.workspace:type_name -> gitpod.v1.Workspace
+	27, // 40: gitpod.v1.ParseContextURLResponse.metadata:type_name -> gitpod.v1.WorkspaceMetadata
+	28, // 41: gitpod.v1.ParseContextURLResponse.spec:type_name -> gitpod.v1.WorkspaceSpec
+	60, // 42: gitpod.v1.CreateAndStartWorkspaceRequest.ContextURL.editor:type_name -> gitpod.v1.EditorReference
 	61, // 43: gitpod.v1.WorkspaceSpec.Timeout.inactivity:type_name -> google.protobuf.Duration
 	61, // 44: gitpod.v1.WorkspaceSpec.Timeout.disconnected:type_name -> google.protobuf.Duration
 	61, // 45: gitpod.v1.WorkspaceSpec.Timeout.maximum_lifetime:type_name -> google.protobuf.Duration

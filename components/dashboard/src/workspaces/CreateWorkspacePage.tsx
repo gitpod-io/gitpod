@@ -199,8 +199,8 @@ export function CreateWorkspacePage() {
                 opts.forceDefaultConfig = true;
             }
 
-            if (!opts.editor) {
-                opts.editor = {
+            if (opts.source?.case === "contextUrl") {
+                opts.source.value.editor = {
                     name: selectedIde,
                     version: useLatestIde ? "latest" : undefined,
                 };
