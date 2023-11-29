@@ -114,26 +114,26 @@ message CreateAndStartWorkspaceRequest {
 
     // workspace_class is the class of the workspace we ought to start
     string workspace_class = 2;
+
+    // editor specifies the editor that will be used with this workspace.
+    EditorReference editor = 3;
   }
 
   // metadata is data associated with this workspace that's required for other parts of Gitpod to function
-  WorkspaceMetadata metadata = 2;
+  WorkspaceMetadata metadata = 1;
 
   oneof source {
     // context_url is the URL from which the workspace is created
-    ContextURL context_url = 3;
+    ContextURL context_url = 2;
 
     // spec is the configuration of the workspace that's required for the to start the workspace
-    WorkspaceSpec spec = 4;
+    WorkspaceSpec spec = 3;
   }
-
-  // editor specifies the editor that will be used with this workspace.
-  EditorReference editor = 5;
 
   // force_default_config indicates that the workspace should be created with
   // the default configuration instead of the configuration provided in
   // `.gitpod.yml` file
-  bool force_default_config = 7 [deprecated = true];
+  bool force_default_config = 4 [deprecated = true];
 }
 
 message CreateAndStartWorkspaceResponse {
