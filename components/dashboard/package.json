@@ -29,6 +29,7 @@
     "countries-list": "^2.6.1",
     "crypto-browserify": "3.12.0",
     "dayjs": "^1.11.5",
+    "deepmerge": "^4.2.2",
     "file-saver": "^2.0.5",
     "idb-keyval": "^6.2.0",
     "js-cookie": "^3.0.1",

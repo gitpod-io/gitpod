@@ -4,12 +4,13 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User as UserProtocol } from "@gitpod/gitpod-protocol";
+import { AdditionalUserData, User as UserProtocol } from "@gitpod/gitpod-protocol";
 import { useMutation } from "@tanstack/react-query";
 import { trackEvent } from "../../Analytics";
 import { getGitpodService } from "../../service/service";
 import { useAuthenticatedUser } from "./authenticated-user-query";
 import { converter } from "../../service/public-api";
+import deepmerge from "deepmerge";
 
 type UpdateCurrentUserArgs = Partial<UserProtocol>;
 
@@ -20,10 +21,10 @@ export const useUpdateCurrentUserMutation = () => {
             const update: UpdateCurrentUserArgs = {
                 id: current.id,
                 fullName: partialUser.fullName || current.fullName,
-                additionalData: {
-                    ...current.additionalData,
-                    ...partialUser.additionalData,
-                },
+                additionalData: deepmerge<AdditionalUserData>(
+                    current.additionalData || {},
+                    partialUser.additionalData || {},
+                ),
             };
             const user = await getGitpodService().server.updateLoggedInUser(update);
             return converter.toUser(user);
