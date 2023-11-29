@@ -636,6 +636,343 @@ export class StartWorkspaceResponse extends Message<StartWorkspaceResponse> {
 }
 
 /**
+ * @generated from message gitpod.v1.GetWorkspaceDefaultImageRequest
+ */
+export class GetWorkspaceDefaultImageRequest extends Message<GetWorkspaceDefaultImageRequest> {
+  /**
+   * workspace_id specifies the workspace to get default image
+   *
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  constructor(data?: PartialMessage<GetWorkspaceDefaultImageRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.GetWorkspaceDefaultImageRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetWorkspaceDefaultImageRequest {
+    return new GetWorkspaceDefaultImageRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetWorkspaceDefaultImageRequest {
+    return new GetWorkspaceDefaultImageRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetWorkspaceDefaultImageRequest {
+    return new GetWorkspaceDefaultImageRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetWorkspaceDefaultImageRequest | PlainMessage<GetWorkspaceDefaultImageRequest> | undefined, b: GetWorkspaceDefaultImageRequest | PlainMessage<GetWorkspaceDefaultImageRequest> | undefined): boolean {
+    return proto3.util.equals(GetWorkspaceDefaultImageRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.GetWorkspaceDefaultImageResponse
+ */
+export class GetWorkspaceDefaultImageResponse extends Message<GetWorkspaceDefaultImageResponse> {
+  /**
+   * @generated from field: string default_workspace_image = 1;
+   */
+  defaultWorkspaceImage = "";
+
+  /**
+   * @generated from field: gitpod.v1.GetWorkspaceDefaultImageResponse.Source source = 2;
+   */
+  source = GetWorkspaceDefaultImageResponse_Source.UNSPECIFIED;
+
+  constructor(data?: PartialMessage<GetWorkspaceDefaultImageResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.GetWorkspaceDefaultImageResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "default_workspace_image", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "source", kind: "enum", T: proto3.getEnumType(GetWorkspaceDefaultImageResponse_Source) },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetWorkspaceDefaultImageResponse {
+    return new GetWorkspaceDefaultImageResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetWorkspaceDefaultImageResponse {
+    return new GetWorkspaceDefaultImageResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetWorkspaceDefaultImageResponse {
+    return new GetWorkspaceDefaultImageResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetWorkspaceDefaultImageResponse | PlainMessage<GetWorkspaceDefaultImageResponse> | undefined, b: GetWorkspaceDefaultImageResponse | PlainMessage<GetWorkspaceDefaultImageResponse> | undefined): boolean {
+    return proto3.util.equals(GetWorkspaceDefaultImageResponse, a, b);
+  }
+}
+
+/**
+ * @generated from enum gitpod.v1.GetWorkspaceDefaultImageResponse.Source
+ */
+export enum GetWorkspaceDefaultImageResponse_Source {
+  /**
+   * @generated from enum value: SOURCE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: SOURCE_INSTALLATION = 1;
+   */
+  INSTALLATION = 1,
+
+  /**
+   * @generated from enum value: SOURCE_ORGANIZATION = 2;
+   */
+  ORGANIZATION = 2,
+}
+// Retrieve enum metadata with: proto3.getEnumType(GetWorkspaceDefaultImageResponse_Source)
+proto3.util.setEnumType(GetWorkspaceDefaultImageResponse_Source, "gitpod.v1.GetWorkspaceDefaultImageResponse.Source", [
+  { no: 0, name: "SOURCE_UNSPECIFIED" },
+  { no: 1, name: "SOURCE_INSTALLATION" },
+  { no: 2, name: "SOURCE_ORGANIZATION" },
+]);
+
+/**
+ * @generated from message gitpod.v1.SendHeartBeatRequest
+ */
+export class SendHeartBeatRequest extends Message<SendHeartBeatRequest> {
+  /**
+   * workspace_id specifies the workspace to send heartbeat
+   *
+   * +required
+   *
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * disconnected indicates if the editor connection is disconnected.
+   * If set to true, the workspace will be stopped after Timeout.disconnected.
+   *
+   * @generated from field: bool disconnected = 2;
+   */
+  disconnected = false;
+
+  constructor(data?: PartialMessage<SendHeartBeatRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.SendHeartBeatRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "disconnected", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SendHeartBeatRequest {
+    return new SendHeartBeatRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SendHeartBeatRequest {
+    return new SendHeartBeatRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SendHeartBeatRequest {
+    return new SendHeartBeatRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SendHeartBeatRequest | PlainMessage<SendHeartBeatRequest> | undefined, b: SendHeartBeatRequest | PlainMessage<SendHeartBeatRequest> | undefined): boolean {
+    return proto3.util.equals(SendHeartBeatRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.SendHeartBeatResponse
+ */
+export class SendHeartBeatResponse extends Message<SendHeartBeatResponse> {
+  constructor(data?: PartialMessage<SendHeartBeatResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.SendHeartBeatResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SendHeartBeatResponse {
+    return new SendHeartBeatResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SendHeartBeatResponse {
+    return new SendHeartBeatResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SendHeartBeatResponse {
+    return new SendHeartBeatResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SendHeartBeatResponse | PlainMessage<SendHeartBeatResponse> | undefined, b: SendHeartBeatResponse | PlainMessage<SendHeartBeatResponse> | undefined): boolean {
+    return proto3.util.equals(SendHeartBeatResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.GetWorkspaceOwnerTokenRequest
+ */
+export class GetWorkspaceOwnerTokenRequest extends Message<GetWorkspaceOwnerTokenRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  constructor(data?: PartialMessage<GetWorkspaceOwnerTokenRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.GetWorkspaceOwnerTokenRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetWorkspaceOwnerTokenRequest {
+    return new GetWorkspaceOwnerTokenRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetWorkspaceOwnerTokenRequest {
+    return new GetWorkspaceOwnerTokenRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetWorkspaceOwnerTokenRequest {
+    return new GetWorkspaceOwnerTokenRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetWorkspaceOwnerTokenRequest | PlainMessage<GetWorkspaceOwnerTokenRequest> | undefined, b: GetWorkspaceOwnerTokenRequest | PlainMessage<GetWorkspaceOwnerTokenRequest> | undefined): boolean {
+    return proto3.util.equals(GetWorkspaceOwnerTokenRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.GetWorkspaceOwnerTokenResponse
+ */
+export class GetWorkspaceOwnerTokenResponse extends Message<GetWorkspaceOwnerTokenResponse> {
+  /**
+   * @generated from field: string owner_token = 1;
+   */
+  ownerToken = "";
+
+  constructor(data?: PartialMessage<GetWorkspaceOwnerTokenResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.GetWorkspaceOwnerTokenResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "owner_token", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetWorkspaceOwnerTokenResponse {
+    return new GetWorkspaceOwnerTokenResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetWorkspaceOwnerTokenResponse {
+    return new GetWorkspaceOwnerTokenResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetWorkspaceOwnerTokenResponse {
+    return new GetWorkspaceOwnerTokenResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetWorkspaceOwnerTokenResponse | PlainMessage<GetWorkspaceOwnerTokenResponse> | undefined, b: GetWorkspaceOwnerTokenResponse | PlainMessage<GetWorkspaceOwnerTokenResponse> | undefined): boolean {
+    return proto3.util.equals(GetWorkspaceOwnerTokenResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.GetWorkspaceEditorCredentialsRequest
+ */
+export class GetWorkspaceEditorCredentialsRequest extends Message<GetWorkspaceEditorCredentialsRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  constructor(data?: PartialMessage<GetWorkspaceEditorCredentialsRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.GetWorkspaceEditorCredentialsRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetWorkspaceEditorCredentialsRequest {
+    return new GetWorkspaceEditorCredentialsRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetWorkspaceEditorCredentialsRequest {
+    return new GetWorkspaceEditorCredentialsRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetWorkspaceEditorCredentialsRequest {
+    return new GetWorkspaceEditorCredentialsRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetWorkspaceEditorCredentialsRequest | PlainMessage<GetWorkspaceEditorCredentialsRequest> | undefined, b: GetWorkspaceEditorCredentialsRequest | PlainMessage<GetWorkspaceEditorCredentialsRequest> | undefined): boolean {
+    return proto3.util.equals(GetWorkspaceEditorCredentialsRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.GetWorkspaceEditorCredentialsResponse
+ */
+export class GetWorkspaceEditorCredentialsResponse extends Message<GetWorkspaceEditorCredentialsResponse> {
+  /**
+   * @generated from field: string editor_credentials = 1;
+   */
+  editorCredentials = "";
+
+  constructor(data?: PartialMessage<GetWorkspaceEditorCredentialsResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.GetWorkspaceEditorCredentialsResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "editor_credentials", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetWorkspaceEditorCredentialsResponse {
+    return new GetWorkspaceEditorCredentialsResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetWorkspaceEditorCredentialsResponse {
+    return new GetWorkspaceEditorCredentialsResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetWorkspaceEditorCredentialsResponse {
+    return new GetWorkspaceEditorCredentialsResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetWorkspaceEditorCredentialsResponse | PlainMessage<GetWorkspaceEditorCredentialsResponse> | undefined, b: GetWorkspaceEditorCredentialsResponse | PlainMessage<GetWorkspaceEditorCredentialsResponse> | undefined): boolean {
+    return proto3.util.equals(GetWorkspaceEditorCredentialsResponse, a, b);
+  }
+}
+
+/**
  * +resource get workspace
  *
  * @generated from message gitpod.v1.Workspace

@@ -19,7 +19,7 @@ import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url"
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/frontend-dashboard-service";
 import { RemoteTrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
-import { helloService } from "./public-api";
+import { helloService, workspaceClient } from "./public-api";
 import { getExperimentsClient } from "../experiments/client";
 import { ConnectError, Code } from "@connectrpc/connect";
 import { instrumentWebSocket } from "./metrics";
@@ -237,7 +237,9 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
         const [user, listener, ideCredentials] = await Promise.all([
             this.service.server.getLoggedInUser(),
             this.service.listenToInstance(this.workspaceID),
-            this.service.server.getIDECredentials(this.workspaceID),
+            workspaceClient
+                .getWorkspaceEditorCredentials({ workspaceId: this.workspaceID })
+                .then((resp) => resp.editorCredentials),
         ]);
         this.user = user;
         this.ideCredentials = ideCredentials;
@@ -299,8 +301,8 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
     }
 
     private activeHeartbeat(): void {
-        if (this.instanceID) {
-            this.service.server.sendHeartBeat({ instanceId: this.instanceID });
+        if (this.workspaceID) {
+            workspaceClient.sendHeartBeat({ workspaceId: this.workspaceID });
         }
     }
 

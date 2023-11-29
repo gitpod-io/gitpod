@@ -102,7 +102,7 @@ export class User extends Message<User> {
   organizationId = "";
 
   /**
-   * name is the username
+   * name is the full name of the user
    *
    * @generated from field: string name = 3;
    */

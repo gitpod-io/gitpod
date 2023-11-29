@@ -29,6 +29,20 @@ service WorkspaceService {
   // StartWorkspace starts an existing workspace.
   // If the specified workspace is not in stopped phase, this will return the workspace as is.
   rpc StartWorkspace(StartWorkspaceRequest) returns (StartWorkspaceResponse) {}
+
+  // GetWorkspaceDefaultImage returns the default workspace image of specified
+  // workspace.
+  rpc GetWorkspaceDefaultImage(GetWorkspaceDefaultImageRequest) returns (GetWorkspaceDefaultImageResponse) {}
+
+  // SendHeartBeat sends a heartbeat to activate the workspace
+  rpc SendHeartBeat(SendHeartBeatRequest) returns (SendHeartBeatResponse) {}
+
+  // GetWorkspaceOwnerToken returns an owner token of workspace.
+  rpc GetWorkspaceOwnerToken(GetWorkspaceOwnerTokenRequest) returns (GetWorkspaceOwnerTokenResponse) {}
+
+  // GetWorkspaceEditorCredentials returns an credentials that is used in editor
+  // to encrypt and decrypt secrets
+  rpc GetWorkspaceEditorCredentials(GetWorkspaceEditorCredentialsRequest) returns (GetWorkspaceEditorCredentialsResponse) {}
 }
 
 message GetWorkspaceRequest {
@@ -156,6 +170,52 @@ message StartWorkspaceRequest {
 
 message StartWorkspaceResponse {
   Workspace workspace = 1;
+}
+
+message GetWorkspaceDefaultImageRequest {
+  // workspace_id specifies the workspace to get default image
+  string workspace_id = 1;
+}
+
+message GetWorkspaceDefaultImageResponse {
+  enum Source {
+    SOURCE_UNSPECIFIED = 0;
+    SOURCE_INSTALLATION = 1;
+    SOURCE_ORGANIZATION = 2;
+  }
+
+  string default_workspace_image = 1;
+
+  Source source = 2;
+}
+
+message SendHeartBeatRequest {
+  // workspace_id specifies the workspace to send heartbeat
+  //
+  // +required
+  string workspace_id = 1;
+
+  // disconnected indicates if the editor connection is disconnected.
+  // If set to true, the workspace will be stopped after Timeout.disconnected.
+  bool disconnected = 2;
+}
+
+message SendHeartBeatResponse {}
+
+message GetWorkspaceOwnerTokenRequest {
+  string workspace_id = 1;
+}
+
+message GetWorkspaceOwnerTokenResponse {
+  string owner_token = 1;
+}
+
+message GetWorkspaceEditorCredentialsRequest {
+  string workspace_id = 1;
+}
+
+message GetWorkspaceEditorCredentialsResponse {
+  string editor_credentials = 1;
 }
 
 // +resource get workspace

@@ -22,7 +22,13 @@ import Alert from "../components/Alert";
 import { workspaceClient, workspacesService } from "../service/public-api";
 import { watchWorkspaceStatus } from "../data/workspaces/listen-to-workspace-ws-messages";
 import { Button } from "@podkit/buttons/Button";
-import { GetWorkspaceRequest, StartWorkspaceRequest, StartWorkspaceResponse, Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import {
+    GetWorkspaceRequest,
+    StartWorkspaceRequest,
+    StartWorkspaceResponse,
+    Workspace,
+    WorkspacePhase_Phase,
+} from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { PartialMessage } from "@bufbuild/protobuf";
 
 const sessionId = v4();
@@ -575,10 +581,13 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                         {
                                             title: "Connect via SSH",
                                             onClick: async () => {
-                                                const ownerToken = await getGitpodService().server.getOwnerToken(
-                                                    this.props.workspaceId,
-                                                );
-                                                this.setState({ isSSHModalVisible: true, ownerToken });
+                                                const response = await workspaceClient.getWorkspaceOwnerToken({
+                                                    workspaceId: this.props.workspaceId,
+                                                });
+                                                this.setState({
+                                                    isSSHModalVisible: true,
+                                                    ownerToken: response.ownerToken,
+                                                });
                                             },
                                         },
                                         {

@@ -12,7 +12,8 @@ import { useDocumentTitle } from "../hooks/use-document-title";
 import gitpodIcon from "../icons/gitpod.svg";
 import { gitpodHostUrl } from "../service/service";
 import { VerifyModal } from "./VerifyModal";
-import { useDefaultWorkspaceImageQuery } from "../data/workspaces/default-workspace-image-query";
+import { useWorkspaceDefaultImageQuery } from "../data/workspaces/default-workspace-image-query";
+import { GetWorkspaceDefaultImageResponse_Source } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 export enum StartPhase {
     Checking = 0,
@@ -133,9 +134,14 @@ function StartError(props: { error: StartWorkspaceError }) {
 }
 
 function WarningView(props: { workspaceId?: string; showLatestIdeWarning?: boolean; error?: StartWorkspaceError }) {
-    const { data: imageInfo } = useDefaultWorkspaceImageQuery(props.workspaceId);
+    const { data: imageInfo } = useWorkspaceDefaultImageQuery(props.workspaceId ?? "");
     let useWarning: "latestIde" | "orgImage" | undefined = props.showLatestIdeWarning ? "latestIde" : undefined;
-    if (props.error && props.workspaceId && imageInfo?.source === "organization") {
+    if (
+        props.error &&
+        props.workspaceId &&
+        imageInfo &&
+        imageInfo.source === GetWorkspaceDefaultImageResponse_Source.ORGANIZATION
+    ) {
         useWarning = "orgImage";
     }
     return (

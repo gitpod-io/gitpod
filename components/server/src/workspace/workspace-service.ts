@@ -970,6 +970,24 @@ export class WorkspaceService {
             throw e;
         }
     }
+
+    public async getWorkspaceDefaultImage(
+        userId: string,
+        workspaceId: string,
+    ): Promise<{ source: "organization" | "installation"; image: string }> {
+        const workspace = await this.doGetWorkspace(userId, workspaceId);
+        const settings = await this.orgService.getSettings(userId, workspace.organizationId);
+        if (settings.defaultWorkspaceImage) {
+            return {
+                source: "organization",
+                image: settings.defaultWorkspaceImage,
+            };
+        }
+        return {
+            source: "installation",
+            image: this.config.workspaceDefaults.workspaceImage,
+        };
+    }
 }
 
 // TODO(gpl) Make private after FGA rollout
