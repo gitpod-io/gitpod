@@ -199,13 +199,6 @@ export function CreateWorkspacePage() {
                 opts.forceDefaultConfig = true;
             }
 
-            if (opts.source?.case === "contextUrl") {
-                opts.source.value.editor = {
-                    name: selectedIde,
-                    version: useLatestIde ? "latest" : undefined,
-                };
-            }
-
             try {
                 if (createWorkspaceMutation.isStarting) {
                     console.log("Skipping duplicate createWorkspace call.");
@@ -226,6 +219,13 @@ export function CreateWorkspacePage() {
                         value: {
                             url: contextURL,
                             workspaceClass: selectedWsClass,
+                            editor:
+                                opts.source?.case === "contextUrl" && opts.source.value.editor
+                                    ? opts.source.value.editor
+                                    : {
+                                          name: selectedIde,
+                                          version: useLatestIde ? "latest" : undefined,
+                                      },
                         },
                     },
                     ...opts,
