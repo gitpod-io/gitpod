@@ -11,10 +11,57 @@ option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
 service UserService {
   // GetAuthenticatedUser allows to retrieve the current user.
   rpc GetAuthenticatedUser(GetAuthenticatedUserRequest) returns (GetAuthenticatedUserResponse) {}
+
+  // UpdateUser updates the properties of a user.
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {}
 }
 
 message GetAuthenticatedUserRequest {}
 message GetAuthenticatedUserResponse {
+  User user = 1;
+}
+
+message UpdateUserRequest {
+  string user_id = 1;
+  optional string name = 2;
+  optional string accepted_privacy_policy_date = 3;
+  optional ProfileDetails profile = 4;
+  message ProfileDetails {
+    optional string last_updated_details_nudge = 1;
+    optional string accepted_privacy_policy_date = 2;
+    optional string company_name = 3;
+    optional string email_address = 4;
+    optional string job_role = 5;
+    optional string job_role_other = 6;
+    repeated string exploration_reasons = 7;
+    repeated string signup_goals = 8;
+    optional string signup_goals_other = 10;
+    optional string onboarded_timestamp = 11;
+    optional string company_size = 12;
+  }
+  optional string email_address = 5;
+  optional EditorReference editor_settings = 6;
+  optional EmailNotificationSettings email_notification_settings = 7;
+  message EmailNotificationSettings {
+    optional bool allows_changelog_mail = 1;
+    optional bool allows_devx_mail = 2;
+    optional bool allows_onboarding_mail = 3;
+  }
+  repeated WorkspaceAutostartOption workspace_autostart_options = 8;
+  message WorkspaceAutostartOption {
+    string clone_url = 1;
+    string organization_id = 2;
+    string workspace_class = 3;
+    EditorReference editor_settings = 4;
+    string region = 5;
+  }
+  optional WorkspaceTimeoutSettings workspace_timeout_settings = 9;
+  message WorkspaceTimeoutSettings {
+    optional google.protobuf.Duration inactivity = 1;
+    optional bool disabled_disconnected = 2;
+  }
+}
+message UpdateUserResponse {
   User user = 1;
 }
 

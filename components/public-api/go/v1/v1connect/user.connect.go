@@ -33,6 +33,8 @@ const (
 type UserServiceClient interface {
 	// GetAuthenticatedUser allows to retrieve the current user.
 	GetAuthenticatedUser(context.Context, *connect_go.Request[v1.GetAuthenticatedUserRequest]) (*connect_go.Response[v1.GetAuthenticatedUserResponse], error)
+	// UpdateUser updates the properties of a user.
+	UpdateUser(context.Context, *connect_go.Request[v1.UpdateUserRequest]) (*connect_go.Response[v1.UpdateUserResponse], error)
 }
 
 // NewUserServiceClient constructs a client for the gitpod.v1.UserService service. By default, it
@@ -50,12 +52,18 @@ func NewUserServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts
 			baseURL+"/gitpod.v1.UserService/GetAuthenticatedUser",
 			opts...,
 		),
+		updateUser: connect_go.NewClient[v1.UpdateUserRequest, v1.UpdateUserResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.UserService/UpdateUser",
+			opts...,
+		),
 	}
 }
 
 // userServiceClient implements UserServiceClient.
 type userServiceClient struct {
 	getAuthenticatedUser *connect_go.Client[v1.GetAuthenticatedUserRequest, v1.GetAuthenticatedUserResponse]
+	updateUser           *connect_go.Client[v1.UpdateUserRequest, v1.UpdateUserResponse]
 }
 
 // GetAuthenticatedUser calls gitpod.v1.UserService.GetAuthenticatedUser.
@@ -63,10 +71,17 @@ func (c *userServiceClient) GetAuthenticatedUser(ctx context.Context, req *conne
 	return c.getAuthenticatedUser.CallUnary(ctx, req)
 }
 
+// UpdateUser calls gitpod.v1.UserService.UpdateUser.
+func (c *userServiceClient) UpdateUser(ctx context.Context, req *connect_go.Request[v1.UpdateUserRequest]) (*connect_go.Response[v1.UpdateUserResponse], error) {
+	return c.updateUser.CallUnary(ctx, req)
+}
+
 // UserServiceHandler is an implementation of the gitpod.v1.UserService service.
 type UserServiceHandler interface {
 	// GetAuthenticatedUser allows to retrieve the current user.
 	GetAuthenticatedUser(context.Context, *connect_go.Request[v1.GetAuthenticatedUserRequest]) (*connect_go.Response[v1.GetAuthenticatedUserResponse], error)
+	// UpdateUser updates the properties of a user.
+	UpdateUser(context.Context, *connect_go.Request[v1.UpdateUserRequest]) (*connect_go.Response[v1.UpdateUserResponse], error)
 }
 
 // NewUserServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -81,6 +96,11 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect_go.HandlerOpt
 		svc.GetAuthenticatedUser,
 		opts...,
 	))
+	mux.Handle("/gitpod.v1.UserService/UpdateUser", connect_go.NewUnaryHandler(
+		"/gitpod.v1.UserService/UpdateUser",
+		svc.UpdateUser,
+		opts...,
+	))
 	return "/gitpod.v1.UserService/", mux
 }
 
@@ -89,4 +109,8 @@ type UnimplementedUserServiceHandler struct{}
 
 func (UnimplementedUserServiceHandler) GetAuthenticatedUser(context.Context, *connect_go.Request[v1.GetAuthenticatedUserRequest]) (*connect_go.Response[v1.GetAuthenticatedUserResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.UserService.GetAuthenticatedUser is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) UpdateUser(context.Context, *connect_go.Request[v1.UpdateUserRequest]) (*connect_go.Response[v1.UpdateUserResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.UserService.UpdateUser is not implemented"))
 }

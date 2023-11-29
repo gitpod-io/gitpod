@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { GetAuthenticatedUserRequest, GetAuthenticatedUserResponse } from "./user_pb.js";
+import { GetAuthenticatedUserRequest, GetAuthenticatedUserResponse, UpdateUserRequest, UpdateUserResponse } from "./user_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -27,6 +27,17 @@ export const UserService = {
       name: "GetAuthenticatedUser",
       I: GetAuthenticatedUserRequest,
       O: GetAuthenticatedUserResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * UpdateUser updates the properties of a user.
+     *
+     * @generated from rpc gitpod.v1.UserService.UpdateUser
+     */
+    updateUser: {
+      name: "UpdateUser",
+      I: UpdateUserRequest,
+      O: UpdateUserResponse,
       kind: MethodKind.Unary,
     },
   }
