@@ -141,7 +141,8 @@ var runCmd = &cobra.Command{
 			}
 			c, err := ssh.ParsePrivateKey(caPrivateKeyB)
 			if err != nil {
-				log.WithError(err).Error("cannot prase SSH Gateway CA key")
+				log.WithError(err).Error("cannot parse SSH Gateway CA key")
+				return
 			}
 			caKey = c
 		}

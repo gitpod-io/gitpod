@@ -124,7 +124,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		WorkspaceManager:   wsManagerConfig,
 	}
 
-	if ctx.Config.SSHGatewayCAKey == nil {
+	if ctx.Config.SSHGatewayCAKey != nil {
 		wspcfg.Proxy.SSHGatewayCAKeyFile = "/mnt/ca-key/ca.key"
 	}
 

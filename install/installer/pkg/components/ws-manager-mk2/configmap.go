@@ -273,7 +273,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		wsmcfg.Manager.EnableCustomSSLCertificate = true
 	}
 
-	if ctx.Config.SSHGatewayCAKey == nil {
+	if ctx.Config.SSHGatewayCAKey != nil {
 		wsmcfg.Manager.SSHGatewayCAPublicKeyFile = "/mnt/ca-key/ca.pem"
 	}
 
