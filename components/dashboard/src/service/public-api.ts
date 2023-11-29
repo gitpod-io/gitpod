@@ -169,7 +169,6 @@ function createServiceClient<T extends ServiceType>(
                     return grpcClient;
                 }
                 const featureFlags = [
-                    "dashboard_public_api_enabled",
                     `dashboard_public_api_${jsonRpcOptions.featureFlagSuffix}_enabled`,
                     "centralizedPermissions",
                 ];
