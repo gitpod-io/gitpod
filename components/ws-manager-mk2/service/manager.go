@@ -765,12 +765,21 @@ func (wsm *WorkspaceManagerServer) DescribeCluster(ctx context.Context, req *wsm
 	classes := make([]*wsmanapi.WorkspaceClass, 0, len(wsm.Config.WorkspaceClasses))
 	for id, class := range wsm.Config.WorkspaceClasses {
 		var cpu, ram, disk resource.Quantity
-		if class.Container.Limits != nil {
-			cpu, _ = resource.ParseQuantity(class.Container.Limits.CPU.BurstLimit)
-			ram, _ = resource.ParseQuantity(class.Container.Limits.Memory)
-			disk, _ = resource.ParseQuantity(class.Container.Limits.Storage)
+		desc := class.Description
+		if desc == "" {
+			if class.Container.Limits != nil {
+				cpu, _ = resource.ParseQuantity(class.Container.Limits.CPU.BurstLimit)
+				ram, _ = resource.ParseQuantity(class.Container.Limits.Memory)
+				disk, _ = resource.ParseQuantity(class.Container.Limits.Storage)
+			}
+			if cpu.Value() == 0 && class.Container.Requests != nil {
+				cpu, _ = resource.ParseQuantity(class.Container.Requests.CPU)
+			}
+			if ram.Value() == 0 && class.Container.Requests != nil {
+				ram, _ = resource.ParseQuantity(class.Container.Requests.Memory)
+			}
+			desc = fmt.Sprintf("%d vCPU, %dGB memory, %dGB disk", cpu.Value(), ram.ScaledValue(resource.Giga), disk.ScaledValue(resource.Giga))
 		}
-		desc := fmt.Sprintf("%d vCPU, %dGB memory, %dGB disk", cpu.Value(), ram.ScaledValue(resource.Giga), disk.ScaledValue(resource.Giga))
 		classes = append(classes, &wsmanapi.WorkspaceClass{
 			Id:               id,
 			DisplayName:      class.Name,
