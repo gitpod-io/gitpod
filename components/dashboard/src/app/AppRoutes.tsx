@@ -78,12 +78,8 @@ const Usage = React.lazy(() => import(/* webpackPrefetch: true */ "../Usage"));
 const ConfigurationListPage = React.lazy(
     () => import(/* webpackPrefetch: true */ "../repositories/list/RepositoryList"),
 );
-const ConfigurationGeneral = React.lazy(
-    () => import(/* webpackPrefetch: true */ "../repositories/detail/ConfigurationDetailGeneral"),
-);
-
-const ConfigurationWorkspaces = React.lazy(
-    () => import(/* webpackPrefetch: true */ "../repositories/detail/ConfigurationDetailWorkspaces"),
+const ConfigurationDetailPage = React.lazy(
+    () => import(/* webpackPrefetch: true */ "../repositories/detail/ConfigurationDetailPage"),
 );
 
 export const AppRoutes = () => {
@@ -221,8 +217,8 @@ export const AppRoutes = () => {
                     {repoConfigListAndDetail && (
                         <>
                             <Route exact path="/repositories" component={ConfigurationListPage} />
-                            <Route exact path="/repositories/:id" component={ConfigurationGeneral} />
-                            <Route exact path="/repositories/:id/workspaces" component={ConfigurationWorkspaces} />
+                            {/* Handles all /repositories/:id/* routes in a nested router */}
+                            <Route path="/repositories/:id" component={ConfigurationDetailPage} />
                         </>
                     )}
                     {/* basic redirect for old team slugs */}
