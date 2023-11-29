@@ -84,10 +84,10 @@
 }
 
 (ssl_configuration) {
-	tls /etc/caddy/certificates/tls.crt /etc/caddy/certificates/tls.key {
-		protocols tls1.2
-		#ca_root   <pem_file>
-	}
+	# tls /etc/caddy/certificates/tls.crt /etc/caddy/certificates/tls.key {
+	# 	protocols tls1.2
+	# 	#ca_root   <pem_file>
+	# }
 }
 
 (upstream_connection) {
@@ -180,13 +180,13 @@ api.{$GITPOD_DOMAIN} {
 }
 
 # always redirect to HTTPS
-http:// {
-	redir https://{host}{uri} permanent
-}
+# http:// {
+# 	redir https://{host}{uri} permanent
+# }
 
 # The services directly correlate to Public Services exposed by Dedicated
 # When adding new endpoints, please notify Team Engine
-https://services.{$GITPOD_DOMAIN} {
+http://services.{$GITPOD_DOMAIN} {
 	import enable_log
 	import remove_server_header
 	import ssl_configuration
@@ -201,7 +201,7 @@ https://services.{$GITPOD_DOMAIN} {
 	}
 }
 
-https://{$GITPOD_DOMAIN} {
+http://{$GITPOD_DOMAIN} {
 	import enable_log
 	import remove_server_header
 	import ssl_configuration
@@ -379,7 +379,7 @@ https://{$GITPOD_DOMAIN} {
 			gitpod.frontend_dev
 		}
 
-		reverse_proxy dashboard.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3001 {
+		reverse_proxy dashboard.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:4001 {
 			import upstream_connection
 		}
 	}
@@ -395,7 +395,7 @@ https://{$GITPOD_DOMAIN} {
 }
 
 # workspaces
-https://*.*.{$GITPOD_DOMAIN} {
+http://*.*.{$GITPOD_DOMAIN} {
 	import enable_log
 	import workspace_security_headers
 	import remove_server_header

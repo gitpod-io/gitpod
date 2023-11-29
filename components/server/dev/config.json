@@ -1,0 +1,170 @@
+{
+  "version": "devserver",
+  "hostUrl": "${HOST_URL}",
+  "installationShortname": "dev",
+  "insecureNoDomain": false,
+  "license": "",
+  "definitelyGpDisabled": true,
+  "enableLocalApp": true,
+  "disableDynamicAuthProviderLogin": false,
+  "maxEnvvarPerUserCount": 4048,
+  "maxConcurrentPrebuildsPerRef": 10,
+  "makeNewUsersAdmin": false,
+  "defaultBaseImageRegistryWhitelist": [],
+  "runDbDeleter": true,
+  "contentServiceAddr": "localhost:8080",
+  "usageServiceAddr": "localhost:9001",
+  "ideServiceAddr": "localhost:9001",
+  "maximumEventLoopLag": 0.35,
+  "vsxRegistryUrl": "https://open-vsx.${HOST_URL_HOSTNAME}",
+  "stripeSecretsFile": "",
+  "stripeConfigFile": "",
+  "enablePayment": false,
+  "linkedInSecretsFile": "",
+  "patSigningKeyFile": "/secrets/personal-access-token-signing-key",
+  "showSetupModal": false,
+  "auth": {
+    "pki": {
+      "signing": {
+        "id": "0001",
+        "privateKeyPath": "dev/auth-pki/signing/tls.key",
+        "publicKeyPath": "dev/auth-pki/signing/tls.crt"
+      }
+    },
+    "session": {
+      "lifetimeSeconds": 604800,
+      "issuer": "${HOST_URL}",
+      "cookie": {
+        "name": "_localhost_jwt2_",
+        "maxAge": 604800,
+        "sameSite": "lax",
+        "secure": true,
+        "httpOnly": true
+      }
+    }
+  },
+  "isSingleOrgInstallation": false,
+  "workspaceHeartbeat": {
+    "intervalSeconds": 60,
+    "timeoutSeconds": 300
+  },
+  "workspaceDefaults": {
+    "workspaceImage": "docker.io/gitpod/workspace-full:latest",
+    "previewFeatureFlags": [],
+    "defaultFeatureFlags": []
+  },
+  "session": {
+    "maxAgeMs": 259200000,
+    "secret": "Important!Really-Change-This-Key!"
+  },
+  "githubApp": {
+    "enabled": false,
+    "appId": 0,
+    "baseUrl": "",
+    "webhookSecret": "",
+    "authProviderId": "",
+    "certPath": "",
+    "marketplaceName": "",
+    "logLevel": "",
+    "certSecretName": ""
+  },
+  "workspaceGarbageCollection": {
+    "disabled": false,
+    "startDate": 0,
+    "intervalSeconds": 3600,
+    "chunkLimit": 1000,
+    "minAgeDays": 14,
+    "minAgePrebuildDays": 7,
+    "contentRetentionPeriodDays": 21,
+    "contentChunkLimit": 100,
+    "purgeRetentionPeriodDays": 365,
+    "purgeChunkLimit": 5000
+  },
+  "completeSnapshotJob": {
+    "disabled": false
+  },
+  "authProviderConfigFiles": [
+    "dev/authproviders/public-github",
+    "dev/authproviders/public-gitlab",
+    "dev/authproviders/public-bitbucket"
+  ],
+  "incrementalPrebuilds": {
+    "repositoryPasslist": [],
+    "commitHistory": 100
+  },
+  "blockNewUsers": {
+    "enabled": true,
+    "passlist": [
+      "gitpod.io"
+    ]
+  },
+  "oauthServer": {
+    "enabled": true,
+    "jwtSecret": "L24lJ.qi1VN-gsqx0R8R"
+  },
+  "rateLimiter": {
+    "groups": {
+      "inWorkspaceUserAction": {
+        "points": 10,
+        "durationsSec": 2
+      }
+    },
+    "functions": {
+      "closePort": {
+        "group": "inWorkspaceUserAction",
+        "points": 0
+      },
+      "controlAdmission": {
+        "group": "inWorkspaceUserAction",
+        "points": 0
+      },
+      "openPort": {
+        "group": "inWorkspaceUserAction",
+        "points": 0
+      },
+      "shareSnapshot": {
+        "group": "inWorkspaceUserAction",
+        "points": 0
+      }
+    }
+  },
+  "codeSync": {
+    "revLimit": 0,
+    "contentLimit": 0,
+    "resources": null
+  },
+  "admin": {
+    "credentialsPath": "/credentials/admin/admin.json"
+  },
+  "adminLoginKeyFile": "",
+  "prebuildLimiter": {
+    "*": {
+      "limit": 100,
+      "period": 600
+    }
+  },
+  "workspaceClasses": [
+    {
+      "id": "g1-standard",
+      "category": "GENERAL PURPOSE",
+      "displayName": "Standard",
+      "description": "Standard workspace class (10GB disk)",
+      "powerups": 1,
+      "isDefault": true,
+      "deprecated": false
+    },
+    {
+      "id": "g1-small",
+      "category": "GENERAL PURPOSE",
+      "displayName": "Small",
+      "description": "Small workspace class (5GB disk)",
+      "powerups": 2,
+      "isDefault": false,
+      "deprecated": false
+    }
+  ],
+  "inactivityPeriodForReposInDays": 0,
+  "redis": {
+    "address": "localhost:6379"
+  }
+}

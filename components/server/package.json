@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node ./dist/main.js",
     "start-inspect": "node --inspect=0.0.0.0:9229 ./dist/main.js",
+    "devserver": "CONFIG_PATH=${CONFIG_PATH:-./dev/config.json} node --inspect=0.0.0.0:9229 ./dist/main.js",
     "generate": "leeway run components/spicedb:generate-ts > src/authorization/definitions.ts && npx prettier --write src/authorization/definitions.ts",
     "build:clean": "yarn clean && yarn lint && yarn build",
     "build": "yarn generate && npx tsc",

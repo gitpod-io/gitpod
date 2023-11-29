@@ -52,10 +52,11 @@ module.exports = {
         },
     },
     devServer: {
+        port: 4001,
         client: {
             webSocketURL: {
                 hostname: process.env.HMR_HOST ? new URL(process.env.HMR_HOST).hostname : "localhost",
-                port: process.env.HMR_HOST ? 443 : 3001,
+                port: process.env.HMR_HOST ? 443 : 4001,
                 protocol: "wss",
             },
         },
