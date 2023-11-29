@@ -192,6 +192,8 @@ export class API {
                         grpc_type = "bidi_stream";
                     }
 
+                    log.info("public api: start", { grpc_service, grpc_method, grpc_type });
+
                     grpcServerStarted.labels(grpc_service, grpc_method, grpc_type).inc();
                     const stopTimer = grpcServerHandling.startTimer({ grpc_service, grpc_method, grpc_type });
                     const done = (err?: ConnectError) => {
