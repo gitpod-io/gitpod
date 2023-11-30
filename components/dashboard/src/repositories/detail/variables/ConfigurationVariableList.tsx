@@ -18,7 +18,6 @@ import { ConfigurationVariableItem } from "./ConfigurationVariableItem";
 type Props = {
     configuration: Configuration;
 };
-
 export const ConfigurationVariableList = ({ configuration }: Props) => {
     const { data, isLoading } = useListConfigurationVariables(configuration.id);
     const [showAddVariableModal, setShowAddVariableModal] = useState<boolean>(false);

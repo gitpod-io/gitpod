@@ -12,7 +12,7 @@ import { TableSortOrder } from "@podkit/tables/SortableTable";
 import type { Configuration, UpdateConfigurationRequest } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import type { PartialMessage } from "@bufbuild/protobuf";
 import { envVarClient } from "../../service/public-api";
-import type {
+import {
     ConfigurationEnvironmentVariable,
     EnvironmentVariableAdmission,
 } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
@@ -227,14 +227,19 @@ type CreateVariableArgs = {
 export const useCreateConfigurationVariable = () => {
     const queryClient = useQueryClient();
 
-    return useMutation({
-        mutationFn: async ({ configurationId, name, value, admission }: CreateVariableArgs) => {
-            return await envVarClient.createConfigurationEnvironmentVariable({
+    return useMutation<ConfigurationEnvironmentVariable, Error, CreateVariableArgs>({
+        mutationFn: async ({ configurationId, name, value, admission }) => {
+            const { environmentVariable } = await envVarClient.createConfigurationEnvironmentVariable({
                 configurationId,
                 name,
                 value,
                 admission,
             });
+            if (!environmentVariable) {
+                throw new Error("Failed to create environment variable");
+            }
+
+            return environmentVariable;
         },
         onSuccess: (_, { configurationId }) => {
             queryClient.invalidateQueries({ queryKey: getListConfigurationsVariablesQueryKey(configurationId) });
@@ -248,14 +253,20 @@ type UpdateVariableArgs = CreateVariableArgs & {
 export const useUpdateConfigurationVariable = () => {
     const queryClient = useQueryClient();
 
-    return useMutation({
+    return useMutation<ConfigurationEnvironmentVariable, Error, UpdateVariableArgs>({
         mutationFn: async ({ variableId, name, value, admission }: UpdateVariableArgs) => {
-            return await envVarClient.updateConfigurationEnvironmentVariable({
+            const { environmentVariable } = await envVarClient.updateConfigurationEnvironmentVariable({
                 environmentVariableId: variableId,
                 name,
                 value,
                 admission,
             });
+
+            if (!environmentVariable) {
+                throw new Error("Failed to update environment variable");
+            }
+
+            return environmentVariable;
         },
         onSuccess: (_, { configurationId, variableId }) => {
             queryClient.invalidateQueries({ queryKey: getListConfigurationsVariablesQueryKey(configurationId) });

@@ -17,6 +17,7 @@ import {
     useCreateConfigurationVariable,
     useUpdateConfigurationVariable,
 } from "../../../data/configurations/configuration-queries";
+import { useToast } from "../../../components/toasts/Toasts";
 
 type Props = {
     configurationId: string;
@@ -27,6 +28,8 @@ type Props = {
     onClose: () => void;
 };
 export const ModifyVariableModal = ({ configurationId, variable, onClose }: Props) => {
+    const { toast } = useToast();
+
     const [name, setName] = useState<string>(variable?.name ?? "");
     // We do not want to show the previous value of the variable
     const [value, setValue] = useState<string>("");
@@ -47,9 +50,14 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
                     ? EnvironmentVariableAdmission.PREBUILD
                     : EnvironmentVariableAdmission.EVERYWHERE,
             },
-            { onSuccess: onClose },
+            {
+                onSuccess: onClose,
+                onError: (error) => {
+                    toast(`Could not add variable: ${error.message}`);
+                },
+            },
         );
-    }, [prebuildOnly, name, onClose, configurationId, createVariable, value]);
+    }, [createVariable, configurationId, name, value, prebuildOnly, onClose, toast]);
 
     const editVariable = useCallback(() => {
         if (!variable) {
@@ -65,9 +73,14 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
                     ? EnvironmentVariableAdmission.PREBUILD
                     : EnvironmentVariableAdmission.EVERYWHERE,
             },
-            { onSuccess: onClose },
+            {
+                onSuccess: onClose,
+                onError: (error) => {
+                    toast(`Could not edit variable: ${error.message}`);
+                },
+            },
         );
-    }, [variable, updateVariable, configurationId, value, prebuildOnly, onClose]);
+    }, [variable, updateVariable, configurationId, value, prebuildOnly, onClose, toast]);
 
     const submit = useCallback(() => {
         if (isEditing) {
