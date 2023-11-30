@@ -17,7 +17,6 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
-	"github.com/gitpod-io/gitpod/ws-proxy/pkg/common"
 )
 
 func TestWorkspaceAuthHandler(t *testing.T) {
@@ -35,7 +34,7 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 		testPort    = 8080
 	)
 	var (
-		ownerOnlyInfos = map[string]*common.WorkspaceInfo{
+		ownerOnlyInfos = map[string]*WorkspaceInfo{
 			workspaceID: {
 				WorkspaceID: workspaceID,
 				InstanceID:  instanceID,
@@ -46,7 +45,7 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 				Ports: []*api.PortSpec{{Port: testPort, Visibility: api.PortVisibility_PORT_VISIBILITY_PRIVATE}},
 			},
 		}
-		publicPortInfos = map[string]*common.WorkspaceInfo{
+		publicPortInfos = map[string]*WorkspaceInfo{
 			workspaceID: {
 				WorkspaceID: workspaceID,
 				InstanceID:  instanceID,
@@ -57,7 +56,7 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 				Ports: []*api.PortSpec{{Port: testPort, Visibility: api.PortVisibility_PORT_VISIBILITY_PUBLIC}},
 			},
 		}
-		admitEveryoneInfos = map[string]*common.WorkspaceInfo{
+		admitEveryoneInfos = map[string]*WorkspaceInfo{
 			workspaceID: {
 				WorkspaceID: workspaceID,
 				InstanceID:  instanceID,
@@ -67,7 +66,7 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 	)
 	tests := []struct {
 		Name        string
-		Infos       map[string]*common.WorkspaceInfo
+		Infos       map[string]*WorkspaceInfo
 		OwnerCookie string
 		WorkspaceID string
 		Port        string
@@ -235,10 +234,10 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 				setOwnerTokenCookie(req, instanceID, test.OwnerCookie)
 			}
 			vars := map[string]string{
-				common.WorkspaceIDIdentifier: test.WorkspaceID,
+				workspaceIDIdentifier: test.WorkspaceID,
 			}
 			if test.Port != "" {
-				vars[common.WorkspacePortIdentifier] = test.Port
+				vars[workspacePortIdentifier] = test.Port
 			}
 			req = mux.SetURLVars(req, vars)
 

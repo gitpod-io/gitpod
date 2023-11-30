@@ -22,8 +22,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/websocket"
-
 	"github.com/gitpod-io/golang-crypto/ssh"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -31,10 +29,7 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
-	"github.com/gitpod-io/gitpod/ws-proxy/pkg/common"
-	"github.com/gitpod-io/gitpod/ws-proxy/pkg/sshproxy"
 )
 
 // RouteHandlerConfig configures a RouteHandler.
@@ -49,7 +44,7 @@ type RouteHandlerConfig struct {
 type RouteHandlerConfigOpt func(*Config, *RouteHandlerConfig)
 
 // WithDefaultAuth enables workspace access authentication.
-func WithDefaultAuth(infoprov common.WorkspaceInfoProvider) RouteHandlerConfigOpt {
+func WithDefaultAuth(infoprov WorkspaceInfoProvider) RouteHandlerConfigOpt {
 	return func(config *Config, c *RouteHandlerConfig) {
 		c.WorkspaceAuthHandler = WorkspaceAuthHandler(config.GitpodInstallation.HostName, infoprov)
 	}
@@ -78,18 +73,16 @@ func NewRouteHandlerConfig(config *Config, opts ...RouteHandlerConfigOpt) (*Rout
 type RouteHandler = func(r *mux.Router, config *RouteHandlerConfig)
 
 // installWorkspaceRoutes configures routing of workspace and IDE requests.
-func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip common.WorkspaceInfoProvider, sshGatewayServer *sshproxy.Server) error {
+func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip WorkspaceInfoProvider, hostKeyList []ssh.Signer) error {
 	r.Use(logHandler)
 
 	// Note: the order of routes defines their priority.
 	//       Routes registered first have priority over those that come afterwards.
 	routes := newIDERoutes(config, ip)
 
-	// if sshGatewayServer not nil, we use /_ssh/host_keys to provider public host key
-	if sshGatewayServer != nil {
-		routes.HandleSSHHostKeyRoute(r.Path("/_ssh/host_keys"), sshGatewayServer.HostKeys)
-		routes.HandleSSHOverWebsocketTunnel(r.Path("/_supervisor/tunnel/ssh"), sshGatewayServer)
-		routes.HandleSSHOverWebsocketTunnel(r.Path("/_ssh/tunnel"), sshGatewayServer)
+	// if host key is not empty, we use /_ssh/host_keys to provider public host key
+	if len(hostKeyList) > 0 {
+		routes.HandleSSHHostKeyRoute(r.Path("/_ssh/host_keys"), hostKeyList)
 	}
 
 	// The favicon warants special handling, because we pull that from the supervisor frontend
@@ -105,7 +98,7 @@ func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip common
 	routes.HandleSupervisorFrontendRoute(faviconRouter.NewRoute())
 
 	routes.HandleDirectSupervisorRoute(enableCompression(r).PathPrefix("/_supervisor/frontend").MatcherFunc(func(r *http.Request, rm *mux.RouteMatch) bool {
-		return rm.Vars[common.DebugWorkspaceIdentifier] == "true"
+		return rm.Vars[debugWorkspaceIdentifier] == "true"
 	}), false)
 	routes.HandleSupervisorFrontendRoute(enableCompression(r).PathPrefix("/_supervisor/frontend"))
 
@@ -126,7 +119,7 @@ func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip common
 		})
 	})
 	err := installDebugWorkspaceRoutes(rootRouter.MatcherFunc(func(r *http.Request, rm *mux.RouteMatch) bool {
-		return rm.Vars[common.DebugWorkspaceIdentifier] == "true"
+		return rm.Vars[debugWorkspaceIdentifier] == "true"
 	}).Subrouter(), routes.Config, routes.InfoProvider)
 	if err != nil {
 		return err
@@ -141,7 +134,7 @@ func enableCompression(r *mux.Router) *mux.Router {
 	return res
 }
 
-func newIDERoutes(config *RouteHandlerConfig, ip common.WorkspaceInfoProvider) *ideRoutes {
+func newIDERoutes(config *RouteHandlerConfig, ip WorkspaceInfoProvider) *ideRoutes {
 	return &ideRoutes{
 		Config:                    config,
 		InfoProvider:              ip,
@@ -151,7 +144,7 @@ func newIDERoutes(config *RouteHandlerConfig, ip common.WorkspaceInfoProvider) *
 
 type ideRoutes struct {
 	Config       *RouteHandlerConfig
-	InfoProvider common.WorkspaceInfoProvider
+	InfoProvider WorkspaceInfoProvider
 
 	workspaceMustExistHandler mux.MiddlewareFunc
 }
@@ -176,61 +169,6 @@ func (ir *ideRoutes) HandleSSHHostKeyRoute(route *mux.Route, hostKeyList []ssh.S
 	r.NewRoute().HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Add("Content-Type", "application/json")
 		rw.Write(byt)
-	})
-}
-
-var websocketCloseErrorPattern = regexp.MustCompile(`websocket: close (\d+)`)
-
-func extractCloseErrorCode(errStr string) string {
-	matches := websocketCloseErrorPattern.FindStringSubmatch(errStr)
-	if len(matches) < 2 {
-		return "unknown"
-	}
-
-	return matches[1]
-}
-
-func (ir *ideRoutes) HandleSSHOverWebsocketTunnel(route *mux.Route, sshGatewayServer *sshproxy.Server) {
-	r := route.Subrouter()
-	r.Use(logRouteHandlerHandler("HandleSSHOverWebsocketTunnel"))
-	r.Use(ir.Config.CorsHandler)
-	r.Use(ir.workspaceMustExistHandler)
-	r.Use(ir.Config.WorkspaceAuthHandler)
-
-	r.NewRoute().HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var err error
-		sshproxy.SSHTunnelOpenedTotal.WithLabelValues().Inc()
-		defer func() {
-			code := "unknown"
-			if err != nil {
-				code = extractCloseErrorCode(err.Error())
-			}
-			sshproxy.SSHTunnelClosedTotal.WithLabelValues(code).Inc()
-		}()
-		startTime := time.Now()
-		log := log.WithField("userAgent", r.Header.Get("user-agent")).WithField("remoteAddr", r.RemoteAddr)
-
-		upgrader := websocket.Upgrader{}
-		wsConn, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			log.WithError(err).Error("tunnel ssh: upgrade to the WebSocket protocol failed")
-			return
-		}
-		coords := getWorkspaceCoords(r)
-		infomap := make(map[string]string)
-		infomap[common.WorkspaceIDIdentifier] = coords.ID
-		infomap[common.DebugWorkspaceIdentifier] = strconv.FormatBool(coords.Debug)
-		ctx := context.WithValue(r.Context(), common.WorkspaceInfoIdentifier, infomap)
-		conn, err := gitpod.NewWebsocketConnection(ctx, wsConn, func(staleErr error) {
-			log.WithError(staleErr).Error("tunnel ssh: closing stale connection")
-		})
-		if err != nil {
-			log.WithError(err).Error("tunnel ssh: upgrade to the WebSocket protocol failed")
-			return
-		}
-		log.Debugf("tunnel ssh: Connected from %s", conn.RemoteAddr())
-		sshGatewayServer.HandleConn(conn)
-		log.WithField("duration", time.Since(startTime).Seconds()).Debugf("tunnel ssh: Disconnect from %s", conn.RemoteAddr())
 	})
 }
 
@@ -264,7 +202,7 @@ func (ir *ideRoutes) HandleSupervisorFrontendRoute(route *mux.Route) {
 		})
 	})
 	// always hit the blobserver to ensure that blob is downloaded
-	r.NewRoute().HandlerFunc(proxyPass(ir.Config, ir.InfoProvider, func(cfg *Config, infoProvider common.WorkspaceInfoProvider, req *http.Request) (*url.URL, error) {
+	r.NewRoute().HandlerFunc(proxyPass(ir.Config, ir.InfoProvider, func(cfg *Config, infoProvider WorkspaceInfoProvider, req *http.Request) (*url.URL, error) {
 		info := getWorkspaceInfoFromContext(req.Context())
 		return resolveSupervisorURL(cfg, info, req)
 	}, func(h *proxyPassConfig) {
@@ -295,7 +233,7 @@ func (ir *ideRoutes) HandleSupervisorFrontendRoute(route *mux.Route) {
 	}, withUseTargetHost()))
 }
 
-func resolveSupervisorURL(cfg *Config, info *common.WorkspaceInfo, req *http.Request) (*url.URL, error) {
+func resolveSupervisorURL(cfg *Config, info *WorkspaceInfo, req *http.Request) (*url.URL, error) {
 	if info == nil && len(cfg.WorkspacePodConfig.SupervisorImage) == 0 {
 		log.WithFields(log.OWI("", getWorkspaceCoords(req).ID, "")).Warn("no workspace info available - cannot resolve supervisor route")
 		return nil, xerrors.Errorf("no workspace information available - cannot resolve supervisor route")
@@ -393,10 +331,10 @@ func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 	}, withHTTPErrorHandler(directIDEPass), withUseTargetHost()))
 }
 
-func installForeignRoutes(r *mux.Router, config *RouteHandlerConfig, infoProvider common.WorkspaceInfoProvider) error {
+func installForeignRoutes(r *mux.Router, config *RouteHandlerConfig, infoProvider WorkspaceInfoProvider) error {
 	err := installWorkspacePortRoutes(r.MatcherFunc(func(r *http.Request, rm *mux.RouteMatch) bool {
-		workspacePathPrefix := rm.Vars[common.WorkspacePathPrefixIdentifier]
-		if workspacePathPrefix == "" || rm.Vars[common.WorkspacePortIdentifier] == "" {
+		workspacePathPrefix := rm.Vars[workspacePathPrefixIdentifier]
+		if workspacePathPrefix == "" || rm.Vars[workspacePortIdentifier] == "" {
 			return false
 		}
 		r.URL.Path = strings.TrimPrefix(r.URL.Path, workspacePathPrefix)
@@ -406,8 +344,8 @@ func installForeignRoutes(r *mux.Router, config *RouteHandlerConfig, infoProvide
 		return err
 	}
 	err = installDebugWorkspaceRoutes(r.MatcherFunc(func(r *http.Request, rm *mux.RouteMatch) bool {
-		workspacePathPrefix := rm.Vars[common.WorkspacePathPrefixIdentifier]
-		if workspacePathPrefix == "" || rm.Vars[common.DebugWorkspaceIdentifier] != "true" {
+		workspacePathPrefix := rm.Vars[workspacePathPrefixIdentifier]
+		if workspacePathPrefix == "" || rm.Vars[debugWorkspaceIdentifier] != "true" {
 			return false
 		}
 		r.URL.Path = strings.TrimPrefix(r.URL.Path, workspacePathPrefix)
@@ -423,11 +361,11 @@ func installForeignRoutes(r *mux.Router, config *RouteHandlerConfig, infoProvide
 const imagePathSeparator = "/__files__"
 
 // installBlobserveRoutes  implements long-lived caching with versioned URLs, see https://web.dev/http-cache/#versioned-urls
-func installBlobserveRoutes(r *mux.Router, config *RouteHandlerConfig, infoProvider common.WorkspaceInfoProvider) {
+func installBlobserveRoutes(r *mux.Router, config *RouteHandlerConfig, infoProvider WorkspaceInfoProvider) {
 	r.Use(logHandler)
 	r.Use(logRouteHandlerHandler("BlobserveRootHandler"))
 
-	targetResolver := func(cfg *Config, infoProvider common.WorkspaceInfoProvider, req *http.Request) (tgt *url.URL, err error) {
+	targetResolver := func(cfg *Config, infoProvider WorkspaceInfoProvider, req *http.Request) (tgt *url.URL, err error) {
 		segments := strings.SplitN(req.URL.Path, imagePathSeparator, 2)
 		if len(segments) < 2 {
 			return nil, xerrors.Errorf("invalid URL")
@@ -446,7 +384,7 @@ func installBlobserveRoutes(r *mux.Router, config *RouteHandlerConfig, infoProvi
 }
 
 // installDebugWorkspaceRoutes configures for debug workspace.
-func installDebugWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, infoProvider common.WorkspaceInfoProvider) error {
+func installDebugWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, infoProvider WorkspaceInfoProvider) error {
 	showPortNotFoundPage, err := servePortNotFoundPage(config.Config)
 	if err != nil {
 		return err
@@ -462,7 +400,7 @@ func installDebugWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, info
 }
 
 // installWorkspacePortRoutes configures routing for exposed ports.
-func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig, infoProvider common.WorkspaceInfoProvider) error {
+func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig, infoProvider WorkspaceInfoProvider) error {
 	showPortNotFoundPage, err := servePortNotFoundPage(config.Config)
 	if err != nil {
 		return err
@@ -512,7 +450,7 @@ func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig, infoP
 }
 
 // workspacePodResolver resolves to the workspace pod's url from the given request.
-func workspacePodResolver(config *Config, infoProvider common.WorkspaceInfoProvider, req *http.Request) (url *url.URL, err error) {
+func workspacePodResolver(config *Config, infoProvider WorkspaceInfoProvider, req *http.Request) (url *url.URL, err error) {
 	coords := getWorkspaceCoords(req)
 	var port string
 	if coords.Debug {
@@ -525,7 +463,7 @@ func workspacePodResolver(config *Config, infoProvider common.WorkspaceInfoProvi
 }
 
 // workspacePodPortResolver resolves to the workspace pods ports.
-func workspacePodPortResolver(config *Config, infoProvider common.WorkspaceInfoProvider, req *http.Request) (url *url.URL, err error) {
+func workspacePodPortResolver(config *Config, infoProvider WorkspaceInfoProvider, req *http.Request) (url *url.URL, err error) {
 	coords := getWorkspaceCoords(req)
 	workspaceInfo := infoProvider.WorkspaceInfo(coords.ID)
 	var port string
@@ -550,7 +488,7 @@ func workspacePodPortResolver(config *Config, infoProvider common.WorkspaceInfoP
 }
 
 // workspacePodSupervisorResolver resolves to the workspace pods Supervisor url from the given request.
-func workspacePodSupervisorResolver(config *Config, infoProvider common.WorkspaceInfoProvider, req *http.Request) (url *url.URL, err error) {
+func workspacePodSupervisorResolver(config *Config, infoProvider WorkspaceInfoProvider, req *http.Request) (url *url.URL, err error) {
 	coords := getWorkspaceCoords(req)
 	var port string
 	if coords.Debug {
@@ -562,7 +500,7 @@ func workspacePodSupervisorResolver(config *Config, infoProvider common.Workspac
 	return buildWorkspacePodURL(api.PortProtocol_PORT_PROTOCOL_HTTP, workspaceInfo.IPAddress, port)
 }
 
-func dynamicIDEResolver(config *Config, infoProvider common.WorkspaceInfoProvider, req *http.Request) (res *url.URL, err error) {
+func dynamicIDEResolver(config *Config, infoProvider WorkspaceInfoProvider, req *http.Request) (res *url.URL, err error) {
 	info := getWorkspaceInfoFromContext(req.Context())
 	if info == nil {
 		log.WithFields(log.OWI("", getWorkspaceCoords(req).ID, "")).Warn("no workspace info available - cannot resolve Theia route")
@@ -643,8 +581,8 @@ func logHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		var (
 			vars = mux.Vars(req)
-			wsID = vars[common.WorkspaceIDIdentifier]
-			port = vars[common.WorkspacePortIdentifier]
+			wsID = vars[workspaceIDIdentifier]
+			port = vars[workspacePortIdentifier]
 		)
 		entry := logrus.Fields{
 			"workspaceId": wsID,
@@ -721,7 +659,7 @@ func sensitiveCookieHandler(domain string) func(h http.Handler) http.Handler {
 }
 
 // workspaceMustExistHandler redirects if we don't know about a workspace yet.
-func workspaceMustExistHandler(config *Config, infoProvider common.WorkspaceInfoProvider) mux.MiddlewareFunc {
+func workspaceMustExistHandler(config *Config, infoProvider WorkspaceInfoProvider) mux.MiddlewareFunc {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 			coords := getWorkspaceCoords(req)
@@ -738,9 +676,9 @@ func workspaceMustExistHandler(config *Config, infoProvider common.WorkspaceInfo
 }
 
 // getWorkspaceInfoFromContext retrieves workspace information put there by the workspaceMustExistHandler.
-func getWorkspaceInfoFromContext(ctx context.Context) *common.WorkspaceInfo {
+func getWorkspaceInfoFromContext(ctx context.Context) *WorkspaceInfo {
 	r := ctx.Value(infoContextValueKey)
-	rl, ok := r.(*common.WorkspaceInfo)
+	rl, ok := r.(*WorkspaceInfo)
 	if !ok {
 		return nil
 	}

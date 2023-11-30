@@ -28,8 +28,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
-	"github.com/gitpod-io/gitpod/ws-proxy/pkg/common"
-	"github.com/gitpod-io/gitpod/ws-proxy/pkg/sshproxy"
 )
 
 const (
@@ -40,7 +38,7 @@ const (
 
 var (
 	debugWorkspaceURL = "https://debug-amaranth-smelt-9ba20cc1.test-domain.com/"
-	workspaces        = []common.WorkspaceInfo{
+	workspaces        = []WorkspaceInfo{
 		{
 			IDEImage:        "gitpod-io/ide:latest",
 			SupervisorImage: "gitpod-io/supervisor:latest",
@@ -847,11 +845,11 @@ func TestRoutes(t *testing.T) {
 }
 
 type fakeWsInfoProvider struct {
-	infos []common.WorkspaceInfo
+	infos []WorkspaceInfo
 }
 
 // GetWsInfoByID returns the workspace for the given ID.
-func (p *fakeWsInfoProvider) WorkspaceInfo(workspaceID string) *common.WorkspaceInfo {
+func (p *fakeWsInfoProvider) WorkspaceInfo(workspaceID string) *WorkspaceInfo {
 	for _, nfo := range p.infos {
 		if nfo.WorkspaceID == workspaceID {
 			return &nfo
@@ -862,10 +860,10 @@ func (p *fakeWsInfoProvider) WorkspaceInfo(workspaceID string) *common.Workspace
 }
 
 // WorkspaceCoords returns the workspace coords for a public port.
-func (p *fakeWsInfoProvider) WorkspaceCoords(wsProxyPort string) *common.WorkspaceCoords {
+func (p *fakeWsInfoProvider) WorkspaceCoords(wsProxyPort string) *WorkspaceCoords {
 	for _, info := range p.infos {
 		if info.IDEPublicPort == wsProxyPort {
-			return &common.WorkspaceCoords{
+			return &WorkspaceCoords{
 				ID:   info.WorkspaceID,
 				Port: "",
 			}
@@ -873,7 +871,7 @@ func (p *fakeWsInfoProvider) WorkspaceCoords(wsProxyPort string) *common.Workspa
 
 		for _, portInfo := range info.Ports {
 			if fmt.Sprint(portInfo.Port) == wsProxyPort {
-				return &common.WorkspaceCoords{
+				return &WorkspaceCoords{
 					ID:   info.WorkspaceID,
 					Port: strconv.Itoa(int(portInfo.Port)),
 				}
@@ -918,7 +916,7 @@ func TestSSHGatewayRouter(t *testing.T) {
 				Header:       "",
 			}
 
-			proxy := NewWorkspaceProxy(ingress, config, router, &fakeWsInfoProvider{infos: workspaces}, &sshproxy.Server{HostKeys: test.Input})
+			proxy := NewWorkspaceProxy(ingress, config, router, &fakeWsInfoProvider{infos: workspaces}, test.Input)
 			handler, err := proxy.Handler()
 			if err != nil {
 				t.Fatalf("cannot create proxy handler: %q", err)

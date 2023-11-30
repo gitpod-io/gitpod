@@ -19,8 +19,7 @@ import (
 	"github.com/klauspost/cpuid/v2"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/ws-proxy/pkg/common"
-	"github.com/gitpod-io/gitpod/ws-proxy/pkg/sshproxy"
+	"github.com/gitpod-io/golang-crypto/ssh"
 )
 
 // WorkspaceProxy is the entity which forwards all inbound requests to the relevant workspace pods.
@@ -28,18 +27,18 @@ type WorkspaceProxy struct {
 	Ingress               HostBasedIngressConfig
 	Config                Config
 	WorkspaceRouter       WorkspaceRouter
-	WorkspaceInfoProvider common.WorkspaceInfoProvider
-	SSHGatewayServer      *sshproxy.Server
+	WorkspaceInfoProvider WorkspaceInfoProvider
+	SSHHostSigners        []ssh.Signer
 }
 
 // NewWorkspaceProxy creates a new workspace proxy.
-func NewWorkspaceProxy(ingress HostBasedIngressConfig, config Config, workspaceRouter WorkspaceRouter, workspaceInfoProvider common.WorkspaceInfoProvider, sshGatewayServer *sshproxy.Server) *WorkspaceProxy {
+func NewWorkspaceProxy(ingress HostBasedIngressConfig, config Config, workspaceRouter WorkspaceRouter, workspaceInfoProvider WorkspaceInfoProvider, signers []ssh.Signer) *WorkspaceProxy {
 	return &WorkspaceProxy{
 		Ingress:               ingress,
 		Config:                config,
 		WorkspaceRouter:       workspaceRouter,
 		WorkspaceInfoProvider: workspaceInfoProvider,
-		SSHGatewayServer:      sshGatewayServer,
+		SSHHostSigners:        signers,
 	}
 }
 
@@ -140,7 +139,7 @@ func (p *WorkspaceProxy) Handler() (http.Handler, error) {
 		return nil, err
 	}
 	ideRouter, portRouter, foreignRouter := p.WorkspaceRouter(r, p.WorkspaceInfoProvider)
-	err = installWorkspaceRoutes(ideRouter, handlerConfig, p.WorkspaceInfoProvider, p.SSHGatewayServer)
+	err = installWorkspaceRoutes(ideRouter, handlerConfig, p.WorkspaceInfoProvider, p.SSHHostSigners)
 	if err != nil {
 		return nil, err
 	}

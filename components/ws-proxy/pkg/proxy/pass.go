@@ -18,7 +18,6 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/ws-proxy/pkg/common"
 )
 
 // ProxyPassConfig is used as intermediate struct to assemble a configurable proxy.
@@ -41,7 +40,7 @@ type proxyPassOpt func(h *proxyPassConfig)
 type errorHandler func(http.ResponseWriter, *http.Request, error)
 
 // targetResolver is a function that determines to which target to forward the given HTTP request to.
-type targetResolver func(*Config, common.WorkspaceInfoProvider, *http.Request) (*url.URL, error)
+type targetResolver func(*Config, WorkspaceInfoProvider, *http.Request) (*url.URL, error)
 
 type responseHandler func(*http.Response, *http.Request) error
 
@@ -101,7 +100,7 @@ func NewSingleHostReverseProxy(target *url.URL, useTargetHost bool) *httputil.Re
 }
 
 // proxyPass is the function that assembles a ProxyHandler from the config, a resolver and various options and returns a http.HandlerFunc.
-func proxyPass(config *RouteHandlerConfig, infoProvider common.WorkspaceInfoProvider, resolver targetResolver, opts ...proxyPassOpt) http.HandlerFunc {
+func proxyPass(config *RouteHandlerConfig, infoProvider WorkspaceInfoProvider, resolver targetResolver, opts ...proxyPassOpt) http.HandlerFunc {
 	h := proxyPassConfig{
 		Transport: config.DefaultTransport,
 	}

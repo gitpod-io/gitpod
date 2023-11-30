@@ -132,7 +132,6 @@ var runCmd = &cobra.Command{
 
 		// SSH Gateway
 		var signers []ssh.Signer
-		var sshGatewayServer *sshproxy.Server
 		flist, err := os.ReadDir("/mnt/host-key")
 		if err == nil && len(flist) > 0 {
 			for _, f := range flist {
@@ -150,12 +149,12 @@ var runCmd = &cobra.Command{
 				signers = append(signers, hostSigner)
 			}
 			if len(signers) > 0 {
-				sshGatewayServer = sshproxy.New(signers, infoprov, heartbeat)
+				server := sshproxy.New(signers, infoprov, heartbeat)
 				l, err := net.Listen("tcp", ":2200")
 				if err != nil {
 					panic(err)
 				}
-				go sshGatewayServer.Serve(l)
+				go server.Serve(l)
 				log.Info("SSHGateway is up and running")
 			}
 		}
@@ -164,7 +163,7 @@ var runCmd = &cobra.Command{
 
 		go func() {
 			log.Infof("startint proxying on %s", cfg.Ingress.HTTPAddress)
-			proxy.NewWorkspaceProxy(cfg.Ingress, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffixRegex), infoprov, sshGatewayServer).MustServe(ctrlCtx)
+			proxy.NewWorkspaceProxy(cfg.Ingress, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffixRegex), infoprov, signers).MustServe(ctrlCtx)
 		}()
 
 		log.Info("🚪 ws-proxy is up and running")
