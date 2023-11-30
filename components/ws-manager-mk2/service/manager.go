@@ -43,6 +43,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/util"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/constants"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api/config"
@@ -242,8 +243,9 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 			Annotations: annotations,
 			Namespace:   wsm.Config.Namespace,
 			Labels: map[string]string{
-				wsk8s.WorkspaceIDLabel: req.Metadata.MetaId,
-				wsk8s.OwnerLabel:       req.Metadata.Owner,
+				wsk8s.WorkspaceIDLabel:        req.Metadata.MetaId,
+				wsk8s.OwnerLabel:              req.Metadata.Owner,
+				wsk8s.WorkspaceManagedByLabel: constants.ManagedBy,
 			},
 		},
 		Spec: workspacev1.WorkspaceSpec{
