@@ -56,9 +56,16 @@ export async function startFixtureTest(path: string, testResult: (input: any) =>
             }
         }
         if (!existsSync(goldenFile)) {
-            assert.fail("no golden file for " + file.split("/").pop());
+            assert.fail(
+                "no golden file for " + file.split("/").pop() + " file. Try `yarn test:forceUpdate` to generate it",
+            );
         }
         const expected = JSON.parse(readFileSync(goldenFile).toString());
-        expect(actual, "excepted golden results for " + file.split("/").pop()).to.deep.equal(expected);
+        expect(
+            actual,
+            "excepted golden results for " +
+                file.split("/").pop() +
+                " file. Did we changed testResult function? If so, try `yarn test:forceUpdate`. If not, check your testResult function",
+        ).to.deep.equal(expected);
     }
 }
