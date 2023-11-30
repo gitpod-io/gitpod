@@ -254,9 +254,10 @@ export const useUpdateConfigurationVariable = () => {
     const queryClient = useQueryClient();
 
     return useMutation<ConfigurationEnvironmentVariable, Error, UpdateVariableArgs>({
-        mutationFn: async ({ variableId, name, value, admission }: UpdateVariableArgs) => {
+        mutationFn: async ({ variableId, name, value, admission, configurationId }: UpdateVariableArgs) => {
             const { environmentVariable } = await envVarClient.updateConfigurationEnvironmentVariable({
                 environmentVariableId: variableId,
+                configurationId,
                 name,
                 value,
                 admission,

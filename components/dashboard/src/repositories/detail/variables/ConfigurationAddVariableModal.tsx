@@ -43,7 +43,7 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
     const addVariable = useCallback(() => {
         createVariable.mutateAsync(
             {
-                configurationId: configurationId,
+                configurationId,
                 name,
                 value,
                 admission: prebuildOnly
@@ -69,7 +69,7 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
         updateVariable.mutate(
             {
                 variableId: variable.id,
-                configurationId: configurationId,
+                configurationId,
                 name: variable.name,
                 value,
                 admission: prebuildOnly
