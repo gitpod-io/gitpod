@@ -5,13 +5,13 @@
  */
 
 import { useCallback, useState } from "react";
-import { useSetProjectEnvVar } from "../../../data/projects/set-project-env-var-mutation";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import Modal, { ModalHeader, ModalBody, ModalFooter, ModalFooterAlert } from "../../../components/Modal";
 import { CheckboxInputField } from "../../../components/forms/CheckboxInputField";
 import { Button } from "@podkit/buttons/Button";
 import { EnvironmentVariableAdmission } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
+import { useCreateConfigurationVariable } from "../../../data/configurations/configuration-queries";
 
 type Props = {
     configuration: Configuration;
@@ -21,11 +21,13 @@ type Props = {
 export const AddVariableModal = ({ configuration, onClose }: Props) => {
     const [name, setName] = useState<string>("");
     const [value, setValue] = useState<string>("");
-    const [prebuildOnly, setPrebuildOnly] = useState<boolean>(true);
-    const setProjectEnvVar = useSetProjectEnvVar();
+    const [prebuildOnly, setPrebuildOnly] = useState<EnvironmentVariableAdmission>(
+        EnvironmentVariableAdmission.EVERYWHERE,
+    );
+    const createVariable = useCreateConfigurationVariable();
 
     const addVariable = useCallback(async () => {
-        await setProjectEnvVar.mutateAsync(
+        await createVariable.mutateAsync(
             {
                 configurationId: configuration.id,
                 name,
@@ -36,7 +38,7 @@ export const AddVariableModal = ({ configuration, onClose }: Props) => {
             },
             { onSuccess: onClose },
         );
-    }, [prebuildOnly, name, onClose, configuration, setProjectEnvVar, value]);
+    }, [prebuildOnly, name, onClose, configuration, createVariable, value]);
 
     return (
         <Modal visible onClose={onClose} onSubmit={addVariable}>
@@ -67,16 +69,20 @@ export const AddVariableModal = ({ configuration, onClose }: Props) => {
                 </div>
                 <CheckboxInputField
                     label="Only use this variable in Prebuilds"
-                    hint="This will hide the variable in the workspace, however, they may still appear in system logs."
-                    checked={prebuildOnly}
-                    onChange={() => setPrebuildOnly(!prebuildOnly)}
+                    hint="This will hide the variable in the workspace, however, it may still appear in system logs."
+                    checked={prebuildOnly === EnvironmentVariableAdmission.PREBUILD}
+                    onChange={(checked) =>
+                        setPrebuildOnly(
+                            checked ? EnvironmentVariableAdmission.PREBUILD : EnvironmentVariableAdmission.EVERYWHERE,
+                        )
+                    }
                 />
             </ModalBody>
             <ModalFooter
                 alert={
-                    setProjectEnvVar.isError ? (
+                    createVariable.isError ? (
                         <ModalFooterAlert type="danger">
-                            {String(setProjectEnvVar.error).replace(/Error: Request \w+ failed with message: /, "")}
+                            {String(createVariable.error).replace(/Error: Request \w+ failed with message: /, "")}
                         </ModalFooterAlert>
                     ) : null
                 }
@@ -84,7 +90,7 @@ export const AddVariableModal = ({ configuration, onClose }: Props) => {
                 <Button variant="secondary" onClick={onClose}>
                     Cancel
                 </Button>
-                <LoadingButton type="submit" loading={setProjectEnvVar.isLoading}>
+                <LoadingButton type="submit" loading={createVariable.isLoading}>
                     Add Variable
                 </LoadingButton>
             </ModalFooter>

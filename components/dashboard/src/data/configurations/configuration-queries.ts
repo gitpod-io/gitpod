@@ -12,7 +12,10 @@ import { TableSortOrder } from "@podkit/tables/SortableTable";
 import type { Configuration, UpdateConfigurationRequest } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import type { PartialMessage } from "@bufbuild/protobuf";
 import { envVarClient } from "../../service/public-api";
-import type { ConfigurationEnvironmentVariable } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
+import type {
+    ConfigurationEnvironmentVariable,
+    EnvironmentVariableAdmission,
+} from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
 
 const BASE_KEY = "configurations";
 
@@ -205,6 +208,52 @@ export const useDeleteConfigurationVariable = () => {
         mutationFn: async ({ variableId }: DeleteVariableArgs) => {
             return await envVarClient.deleteConfigurationEnvironmentVariable({
                 environmentVariableId: variableId,
+            });
+        },
+        onSuccess: (_, { configurationId, variableId }) => {
+            queryClient.invalidateQueries({ queryKey: getListConfigurationsVariablesQueryKey(configurationId) });
+            queryClient.invalidateQueries({ queryKey: getConfigurationVariableQueryKey(variableId) });
+        },
+    });
+};
+
+type CreateVariableArgs = {
+    configurationId: string;
+    name: string;
+    value: string;
+    admission: EnvironmentVariableAdmission;
+};
+export const useCreateConfigurationVariable = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ configurationId, name, value, admission }: CreateVariableArgs) => {
+            return await envVarClient.createConfigurationEnvironmentVariable({
+                configurationId,
+                name,
+                value,
+                admission,
+            });
+        },
+        onSuccess: (_, { configurationId }) => {
+            queryClient.invalidateQueries({ queryKey: getListConfigurationsVariablesQueryKey(configurationId) });
+        },
+    });
+};
+
+type UpdateVariableArgs = CreateVariableArgs & {
+    variableId: string;
+};
+export const useUpdateConfigurationVariable = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ variableId, name, value, admission }: UpdateVariableArgs) => {
+            return await envVarClient.updateConfigurationEnvironmentVariable({
+                environmentVariableId: variableId,
+                name,
+                value,
+                admission,
             });
         },
         onSuccess: (_, { configurationId, variableId }) => {
