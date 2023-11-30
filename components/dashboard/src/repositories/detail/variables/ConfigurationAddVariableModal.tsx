@@ -51,7 +51,10 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
                     : EnvironmentVariableAdmission.EVERYWHERE,
             },
             {
-                onSuccess: onClose,
+                onSuccess: () => {
+                    toast("Variable added");
+                    onClose();
+                },
                 onError: (error) => {
                     toast(`Could not add variable: ${error.message}`);
                 },
@@ -74,7 +77,10 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
                     : EnvironmentVariableAdmission.EVERYWHERE,
             },
             {
-                onSuccess: onClose,
+                onSuccess: () => {
+                    toast("Variable updated");
+                    onClose();
+                },
                 onError: (error) => {
                     toast(`Could not edit variable: ${error.message}`);
                 },
