@@ -13,6 +13,7 @@ import { TableRow, TableCell } from "@podkit/tables/Table";
 import { useState } from "react";
 import { ConfigurationDeleteVariableModal } from "./ConfigurationRemoveVariableModal";
 import { DropdownMenuItem } from "@podkit/dropdown/DropDown";
+import { ModifyVariableModal } from "./ConfigurationAddVariableModal";
 
 type Props = {
     configurationId: string;
@@ -20,9 +21,17 @@ type Props = {
 };
 export const ConfigurationVariableItem = ({ variable, configurationId }: Props) => {
     const [showRemoveModal, setShowRemoveModal] = useState<boolean>(false);
+    const [showEditModal, setShowEditModal] = useState<boolean>(false);
 
     return (
         <>
+            {showEditModal && (
+                <ModifyVariableModal
+                    configurationId={configurationId}
+                    variable={variable}
+                    onClose={() => setShowEditModal(false)}
+                />
+            )}
             {showRemoveModal && (
                 <ConfigurationDeleteVariableModal
                     variable={variable}
@@ -37,7 +46,7 @@ export const ConfigurationVariableItem = ({ variable, configurationId }: Props) 
                 </TableCell>
                 <TableCell className="flex justify-end">
                     <DropdownActions>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setShowEditModal(true)}>Edit</DropdownMenuItem>
                         <DropdownMenuItem
                             className="text-red-600 dark:text-red-400 focus:text-red-800 dark:focus:text-red-300"
                             onSelect={() => {

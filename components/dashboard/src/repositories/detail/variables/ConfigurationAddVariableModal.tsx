@@ -5,31 +5,41 @@
  */
 
 import { useCallback, useState } from "react";
-import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import Modal, { ModalHeader, ModalBody, ModalFooter, ModalFooterAlert } from "../../../components/Modal";
 import { CheckboxInputField } from "../../../components/forms/CheckboxInputField";
 import { Button } from "@podkit/buttons/Button";
-import { EnvironmentVariableAdmission } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
-import { useCreateConfigurationVariable } from "../../../data/configurations/configuration-queries";
+import {
+    ConfigurationEnvironmentVariable,
+    EnvironmentVariableAdmission,
+} from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
+import {
+    useCreateConfigurationVariable,
+    useUpdateConfigurationVariable,
+} from "../../../data/configurations/configuration-queries";
 
 type Props = {
-    configuration: Configuration;
+    configurationId: string;
+    /**
+     * If set, the modal will be used to edit the variable instead of creating a new one.
+     */
+    variable?: ConfigurationEnvironmentVariable;
     onClose: () => void;
 };
-
-export const AddVariableModal = ({ configuration, onClose }: Props) => {
-    const [name, setName] = useState<string>("");
+export const ModifyVariableModal = ({ configurationId, variable, onClose }: Props) => {
+    const [name, setName] = useState<string>(variable?.name ?? "");
+    // We do not want to show the previous value of the variable
     const [value, setValue] = useState<string>("");
     const [prebuildOnly, setPrebuildOnly] = useState<EnvironmentVariableAdmission>(
         EnvironmentVariableAdmission.EVERYWHERE,
     );
     const createVariable = useCreateConfigurationVariable();
+    const updateVariable = useUpdateConfigurationVariable();
 
     const addVariable = useCallback(() => {
         createVariable.mutateAsync(
             {
-                configurationId: configuration.id,
+                configurationId: configurationId,
                 name,
                 value,
                 admission: prebuildOnly
@@ -38,16 +48,34 @@ export const AddVariableModal = ({ configuration, onClose }: Props) => {
             },
             { onSuccess: onClose },
         );
-    }, [prebuildOnly, name, onClose, configuration, createVariable, value]);
+    }, [prebuildOnly, name, onClose, configurationId, createVariable, value]);
+
+    const editVariable = useCallback(() => {
+        updateVariable.mutate(
+            {
+                variableId: variable?.id ?? "",
+                configurationId: configurationId,
+                name,
+                value,
+                admission: prebuildOnly
+                    ? EnvironmentVariableAdmission.PREBUILD
+                    : EnvironmentVariableAdmission.EVERYWHERE,
+            },
+            { onSuccess: onClose },
+        );
+    }, [prebuildOnly, name, onClose, configurationId, updateVariable, value, variable?.id]);
+
+    const isEditing = !!variable;
 
     return (
-        <Modal visible onClose={onClose} onSubmit={addVariable}>
-            <ModalHeader>Add a variable</ModalHeader>
+        <Modal visible onClose={onClose} onSubmit={isEditing ? editVariable : addVariable}>
+            <ModalHeader>{isEditing ? "Edit" : "Add a"} variable</ModalHeader>
             <ModalBody>
                 <div className="mt-8">
                     <h4>Name</h4>
                     <input
-                        autoFocus
+                        autoFocus={!isEditing}
+                        disabled={isEditing}
                         autoComplete={"off"}
                         className="w-full"
                         type="text"
@@ -60,6 +88,7 @@ export const AddVariableModal = ({ configuration, onClose }: Props) => {
                 <div className="mt-4">
                     <h4>Value</h4>
                     <input
+                        autoFocus={isEditing}
                         autoComplete={"off"}
                         className="w-full"
                         type="text"
@@ -92,9 +121,15 @@ export const AddVariableModal = ({ configuration, onClose }: Props) => {
                 <Button variant="secondary" onClick={onClose}>
                     Cancel
                 </Button>
-                <LoadingButton type="submit" loading={createVariable.isLoading}>
-                    Add Variable
-                </LoadingButton>
+                {isEditing ? (
+                    <LoadingButton type="submit" loading={updateVariable.isLoading}>
+                        Update Variable
+                    </LoadingButton>
+                ) : (
+                    <LoadingButton type="submit" loading={createVariable.isLoading}>
+                        Add Variable
+                    </LoadingButton>
+                )}
             </ModalFooter>
         </Modal>
     );
