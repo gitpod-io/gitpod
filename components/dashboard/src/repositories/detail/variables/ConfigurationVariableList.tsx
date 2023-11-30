@@ -44,12 +44,13 @@ export const ConfigurationVariableList = ({ configuration }: Props) => {
                 </div>
             </div>
             {data.length === 0 ? (
-                <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full py-28 flex flex-col items-center justify-center space-y-3">
-                    <Heading2 color="light">No environment variables are set</Heading2>
-                    <Subheading className="text-center w-96">
+                <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full p-6 flex flex-col items-center justify-center space-y-3">
+                    <span className="font-bold text-base">No environment variables are set</span>
+                    {/* todo: change to podkit color abstractions */}
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
                         All configuration-specific environment variables will be visible in prebuilds and optionally in
                         workspaces for this repository.
-                    </Subheading>
+                    </span>
                 </div>
             ) : (
                 <Table>
