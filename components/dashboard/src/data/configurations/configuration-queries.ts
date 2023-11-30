@@ -204,11 +204,12 @@ type DeleteVariableArgs = {
 export const useDeleteConfigurationVariable = () => {
     const queryClient = useQueryClient();
 
-    return useMutation({
-        mutationFn: async ({ variableId }: DeleteVariableArgs) => {
-            return await envVarClient.deleteConfigurationEnvironmentVariable({
+    return useMutation<void, Error, DeleteVariableArgs>({
+        mutationFn: async ({ variableId }) => {
+            void (await envVarClient.deleteConfigurationEnvironmentVariable({
                 environmentVariableId: variableId,
-            });
+            }));
+            return;
         },
         onSuccess: (_, { configurationId, variableId }) => {
             queryClient.invalidateQueries({ queryKey: getListConfigurationsVariablesQueryKey(configurationId) });

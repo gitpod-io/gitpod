@@ -19,13 +19,19 @@ export const ConfigurationDeleteVariableModal: FunctionComponent<Props> = ({ var
     const deleteVariable = useDeleteConfigurationVariable();
     const { toast } = useToast();
 
-    const handleConfirmation = useCallback(async () => {
-        try {
-            await deleteVariable.mutateAsync({ variableId: variable.id, configurationId });
-
-            toast("Your variable was deleted");
-            onClose();
-        } catch (e) {}
+    const handleConfirmation = useCallback(() => {
+        deleteVariable.mutate(
+            { variableId: variable.id, configurationId },
+            {
+                onSuccess: () => {
+                    toast("Your variable was deleted");
+                    onClose();
+                },
+                onError: (err) => {
+                    toast(`Could not delete variable: ${err.message}`);
+                },
+            },
+        );
     }, [configurationId, deleteVariable, onClose, toast, variable.id]);
 
     return (
