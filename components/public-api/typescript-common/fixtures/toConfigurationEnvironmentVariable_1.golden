@@ -1,0 +1,9 @@
+{
+    "result": {
+        "id": "1",
+        "name": "FOO",
+        "configurationId": "1",
+        "admission": "ENVIRONMENT_VARIABLE_ADMISSION_PREBUILD"
+    },
+    "err": ""
+}

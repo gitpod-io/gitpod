@@ -1,0 +1,9 @@
+{
+    "result": {
+        "id": "1",
+        "name": "FOO",
+        "value": "bar",
+        "repositoryPattern": "*/hello"
+    },
+    "err": ""
+}

@@ -1,0 +1,79 @@
+{
+  "id": "226695b4-f10a-471a-a219-9b657645bf78",
+  "workspaceId": "akosyakov-parceldemo-4crqn25qlwi",
+  "region": "dev",
+  "creationTime": "2023-10-16T20:18:24.923Z",
+  "startedTime": "2023-10-16T20:18:53.451Z",
+  "ideUrl": "https://akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
+  "status": {
+    "phase": "running",
+    "message": "",
+    "timeout": "30m0s",
+    "version": 221053,
+    "conditions": {
+      "failed": "",
+      "timeout": "",
+      "deployed": true,
+      "pullingImages": false,
+      "stoppedByRequest": false,
+      "firstUserActivity": "2023-10-16T20:18:53.000Z",
+      "headlessTaskFailed": ""
+    },
+    "exposedPorts": [
+      {
+        "url": "https://1234-akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
+        "port": 1234,
+        "protocol": "http",
+        "visibility": "public"
+      }
+    ]
+  },
+  "gitStatus": {
+    "branch": "ak/test",
+    "latestCommit": "2203d16573ee3838e6a2a19d5cf678fb706f4885",
+    "uncommitedFiles": [
+      "index.js"
+    ],
+    "unpushedCommits": [
+      "2203d16: tests"
+    ],
+    "totalUncommitedFiles": 1,
+    "totalUnpushedCommits": 1
+  },
+  "phasePersisted": "running",
+  "deleted": false,
+  "configuration": {
+    "ideImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-e77f3a07ea76bbb404d3f6bf4af36269afc45df1",
+    "ideImageLayers": [
+      "eu.gcr.io/gitpod-core-dev/build/ide/gitpod-code-web:commit-49bb715b599dce2356dd02a6ede7ae8cf10d8d12",
+      "eu.gcr.io/gitpod-core-dev/build/ide/code-codehelper:commit-18a48e2ccb779a268355d2b58a167c73de023547"
+    ],
+    "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:commit-cda78d5706672b9a41e15d84a128cdb24357ad87",
+    "ideConfig": {
+      "useLatest": false,
+      "ide": "code"
+    },
+    "ideSetup": {
+      "envvars": [
+        {
+          "name": "GITPOD_CONFIGCAT_ENABLED",
+          "value": "true"
+        },
+        {
+          "name": "GITPOD_IDE_ALIAS",
+          "value": "code"
+        }
+      ],
+      "tasks": []
+    },
+    "regionPreference": "",
+    "fromBackup": false,
+    "featureFlags": [
+      "workspace_connection_limiting",
+      "workspace_class_limiting"
+    ]
+  },
+  "imageBuildInfo": null,
+  "workspaceClass": "g1-standard",
+  "usageAttributionId": "team:ec76db37-9a48-4e2d-a78e-0ec7d2b4d2c0"
+}

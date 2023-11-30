@@ -1,0 +1,12 @@
+{
+    "result": {
+        "userId": "456",
+        "role": "ORGANIZATION_ROLE_OWNER",
+        "memberSince": "2022-01-01T00:00:00Z",
+        "avatarUrl": "https://example.com/avatar.jpg",
+        "fullName": "John Doe",
+        "email": "john.doe@example.com",
+        "ownedByOrganization": true
+    },
+    "err": ""
+}

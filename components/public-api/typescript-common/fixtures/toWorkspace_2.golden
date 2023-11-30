@@ -1,0 +1,56 @@
+{
+    "result": {
+        "id": "",
+        "prebuild": false,
+        "organizationId": "",
+        "name": "",
+        "pinned": false,
+        "status": {
+            "phase": {
+                "name": "PHASE_RUNNING",
+                "lastTransitionTime": "2023-10-16T20:18:53.451Z"
+            },
+            "message": "",
+            "workspaceUrl": "https://akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
+            "gitStatus": {
+                "cloneUrl": "",
+                "branch": "ak/test",
+                "latestCommit": "2203d16573ee3838e6a2a19d5cf678fb706f4885",
+                "uncommitedFiles": [
+                    "index.js"
+                ],
+                "totalUncommitedFiles": 1,
+                "untrackedFiles": [],
+                "totalUntrackedFiles": 0,
+                "unpushedCommits": [
+                    "2203d16: tests"
+                ],
+                "totalUnpushedCommits": 1
+            },
+            "ports": [
+                {
+                    "port": "1234",
+                    "policy": "POLICY_PUBLIC",
+                    "url": "https://1234-akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
+                    "protocol": "PROTOCOL_HTTP"
+                }
+            ],
+            "admission": "ADMISSION_LEVEL_UNSPECIFIED",
+            "instanceId": "226695b4-f10a-471a-a219-9b657645bf78",
+            "conditions": {
+                "failed": "",
+                "timeout": ""
+            }
+        },
+        "additionalEnvironmentVariables": [],
+        "region": "dev",
+        "workspaceClass": "g1-standard",
+        "editor": {
+            "name": "code",
+            "version": "stable"
+        },
+        "contextUrl": "",
+        "prebuildId": ""
+    },
+    "err": ""
+}
