@@ -31,7 +31,7 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
     // We do not want to show the previous value of the variable
     const [value, setValue] = useState<string>("");
     const [prebuildOnly, setPrebuildOnly] = useState<EnvironmentVariableAdmission>(
-        EnvironmentVariableAdmission.EVERYWHERE,
+        variable?.admission || EnvironmentVariableAdmission.EVERYWHERE,
     );
     const createVariable = useCreateConfigurationVariable();
     const updateVariable = useUpdateConfigurationVariable();
@@ -51,11 +51,14 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
     }, [prebuildOnly, name, onClose, configurationId, createVariable, value]);
 
     const editVariable = useCallback(() => {
+        if (!variable) {
+            return;
+        }
         updateVariable.mutate(
             {
-                variableId: variable?.id ?? "",
+                variableId: variable.id,
                 configurationId: configurationId,
-                name,
+                name: variable.name,
                 value,
                 admission: prebuildOnly
                     ? EnvironmentVariableAdmission.PREBUILD
@@ -63,7 +66,7 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
             },
             { onSuccess: onClose },
         );
-    }, [prebuildOnly, name, onClose, configurationId, updateVariable, value, variable?.id]);
+    }, [variable, updateVariable, configurationId, value, prebuildOnly, onClose]);
 
     const isEditing = !!variable;
 
@@ -89,6 +92,7 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
                     <h4>Value</h4>
                     <input
                         autoFocus={isEditing}
+                        required={true}
                         autoComplete={"off"}
                         className="w-full"
                         type="text"
