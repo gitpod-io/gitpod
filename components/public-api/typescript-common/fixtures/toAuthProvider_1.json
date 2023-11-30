@@ -1,0 +1,15 @@
+{
+  "id": "ap123",
+  "type": "GitHub",
+  "host": "localhost",
+  "status": "pending",
+  "ownerId": "userId",
+  "organizationId": "orgId123",
+  "oauth": {
+    "clientId": "clientId123",
+    "clientSecret": "should not appear in result",
+    "callBackUrl": "localhost/callback",
+    "authorizationUrl": "auth.service/authorize",
+    "tokenUrl": "auth.service/token"
+  }
+}

@@ -1,0 +1,10 @@
+{
+    "result": {
+        "enabled": true,
+        "branchMatchingPattern": "main",
+        "branchStrategy": "BRANCH_MATCHING_STRATEGY_DEFAULT_BRANCH",
+        "prebuildInterval": 42,
+        "workspaceClass": "dev"
+    },
+    "err": ""
+}

@@ -1,0 +1,9 @@
+{
+    "result": {
+        "id": "123",
+        "name": "My Org",
+        "creationTime": "2022-01-01T00:00:00Z",
+        "slug": "my-org"
+    },
+    "err": ""
+}

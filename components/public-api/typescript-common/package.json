@@ -17,16 +17,19 @@
     "build:cjs": "tsc",
     "build:esm": "tsc --module es2015 --outDir ./lib/esm",
     "test": "mocha './**/*.spec.js' --exclude './node_modules/**' --exclude './lib/esm/**' --exit",
-    "test:leeway": "yarn build && yarn test"
+    "test:forceUpdate": "mocha './**/*.spec.js' --exclude './node_modules/**' --exclude './lib/esm/**' --exit -force -update && yarn format:fixtures",
+    "test:leeway": "yarn build && yarn test",
+    "format:fixtures": "git ls-files -- 'fixtures/*' | xargs pre-commit run end-of-file-fixer --files > /dev/null || exit 0"
   },
   "dependencies": {
-    "@gitpod/gitpod-protocol": "0.1.5",
-    "@gitpod/public-api": "0.1.5",
+    "@bufbuild/protobuf": "^1.3.3",
     "@connectrpc/connect": "1.1.2",
-    "@bufbuild/protobuf": "^1.3.3"
+    "@gitpod/gitpod-protocol": "0.1.5",
+    "@gitpod/public-api": "0.1.5"
   },
   "devDependencies": {
     "@types/chai-subset": "^1.3.3",
+    "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.1",
     "@types/node": "^16.11.6",
     "chai": "^4.3.4",
