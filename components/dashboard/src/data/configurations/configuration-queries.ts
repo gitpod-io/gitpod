@@ -73,7 +73,7 @@ export const getListConfigurationsQueryKey = (orgId: string, args?: ListConfigur
 };
 
 export const getListConfigurationsVariablesQueryKey = (configurationId: string) => {
-    const key: any[] = [BASE_KEY, "list", "variable", { configurationId }];
+    const key: any[] = [BASE_KEY, "variable", "list", { configurationId }];
 
     return key;
 };
