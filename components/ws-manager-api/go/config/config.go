@@ -137,6 +137,11 @@ type Configuration struct {
 	EnableCustomSSLCertificate bool `json:"enableCustomSSLCertificate"`
 	// WorkspacekitImage points to the default workspacekit image
 	WorkspacekitImage string `json:"workspacekitImage,omitempty"`
+
+	SSHGatewayCAPublicKeyFile string `json:"sshGatewayCAPublicKeyFile,omitempty"`
+
+	// SSHGatewayCAPublicKey is a CA public key
+	SSHGatewayCAPublicKey string
 }
 
 type WorkspaceClass struct {

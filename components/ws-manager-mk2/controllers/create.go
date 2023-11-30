@@ -555,6 +555,8 @@ func createWorkspaceEnvironment(sctx *startWorkspaceContext) ([]corev1.EnvVar, e
 	result = append(result, corev1.EnvVar{Name: "THEIA_WEBVIEW_EXTERNAL_ENDPOINT", Value: "webview-{{hostname}}"})
 	result = append(result, corev1.EnvVar{Name: "THEIA_MINI_BROWSER_HOST_PATTERN", Value: "browser-{{hostname}}"})
 
+	result = append(result, corev1.EnvVar{Name: "GITPOD_SSH_CA_PUBLIC_KEY", Value: sctx.Workspace.Spec.SSHGatewayCAPublicKey})
+
 	// We don't require that Git be configured for workspaces
 	if sctx.Workspace.Spec.Git != nil {
 		result = append(result, corev1.EnvVar{Name: "GITPOD_GIT_USER_NAME", Value: sctx.Workspace.Spec.Git.Username})

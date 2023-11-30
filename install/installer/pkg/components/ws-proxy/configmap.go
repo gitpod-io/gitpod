@@ -124,6 +124,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		WorkspaceManager:   wsManagerConfig,
 	}
 
+	if ctx.Config.SSHGatewayCAKey != nil {
+		wspcfg.Proxy.SSHGatewayCAKeyFile = "/mnt/ca-key/ca.key"
+	}
+
 	fc, err := common.ToJSONString(wspcfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal ws-proxy config: %w", err)
