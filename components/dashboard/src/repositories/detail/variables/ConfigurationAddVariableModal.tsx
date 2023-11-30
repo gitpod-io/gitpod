@@ -35,6 +35,7 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
     );
     const createVariable = useCreateConfigurationVariable();
     const updateVariable = useUpdateConfigurationVariable();
+    const isEditing = !!variable;
 
     const addVariable = useCallback(() => {
         createVariable.mutateAsync(
@@ -68,10 +69,16 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
         );
     }, [variable, updateVariable, configurationId, value, prebuildOnly, onClose]);
 
-    const isEditing = !!variable;
+    const submit = useCallback(() => {
+        if (isEditing) {
+            editVariable();
+        } else {
+            addVariable();
+        }
+    }, [isEditing, editVariable, addVariable]);
 
     return (
-        <Modal visible onClose={onClose} onSubmit={isEditing ? editVariable : addVariable}>
+        <Modal visible onClose={onClose} onSubmit={submit}>
             <ModalHeader>{isEditing ? "Edit" : "Add a"} variable</ModalHeader>
             <ModalBody>
                 <div className="mt-8">
