@@ -62,8 +62,6 @@ type WorkspaceSpec struct {
 
 	// the XFS quota to enforce on the workspace's /workspace folder
 	StorageQuota int `json:"storageQuota,omitempty"`
-
-	SSHKey *SSHKey `json:"ssh,omitempty"`
 }
 
 type Ownership struct {
@@ -116,14 +114,6 @@ type TimeoutSpec struct {
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ms|s|m|h)?)+$"
 	MaximumLifetime *metav1.Duration `json:"maximumLifetime,omitempty"`
-}
-
-// SSHKey temporal generated SSH key required to access the workspace
-type SSHKey struct {
-	// +kubebuilder:validation:Required
-	Public string `json:"publicKey"`
-	// +kubebuilder:validation:Required
-	Private string `json:"privateKey"`
 }
 
 type AdmissionSpec struct {

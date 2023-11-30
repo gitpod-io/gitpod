@@ -9,7 +9,6 @@ import (
 
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	wsapi "github.com/gitpod-io/gitpod/ws-manager/api"
-	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
 
 const (
@@ -64,6 +63,4 @@ type WorkspaceInfo struct {
 	OwnerUserId   string
 	SSHPublicKeys []string
 	IsRunning     bool
-
-	SSHKey *workspacev1.SSHKey
 }

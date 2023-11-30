@@ -299,40 +299,23 @@ func (s *Server) HandleConn(c net.Conn) {
 	if debugWorkspace {
 		supervisorPort = "24999"
 	}
-
-	var key ssh.Signer
-	userName := "gitpod"
-
-	session := &Session{
-		Conn:        clientConn,
-		WorkspaceID: workspaceId,
-		InstanceID:  wsInfo.InstanceID,
-		OwnerUserId: wsInfo.OwnerUserId,
+	key, userName, err := s.GetWorkspaceSSHKey(ctx, wsInfo.IPAddress, supervisorPort)
+	if err != nil {
+		cancel()
+		s.TrackSSHConnection(wsInfo, "connect", ErrCreateSSHKey)
+		ReportSSHAttemptMetrics(ErrCreateSSHKey)
+		log.WithField("instanceId", wsInfo.InstanceID).WithError(err).Error("failed to create private pair in workspace")
+		return
 	}
-
-	if wsInfo.SSHKey != nil {
-		key, err = ssh.ParsePrivateKey([]byte(wsInfo.SSHKey.Private))
-		if err != nil {
-			cancel()
-			return
-		}
-
-		session.WorkspacePrivateKey = key
-	} else {
-		key, userName, err = s.GetWorkspaceSSHKey(ctx, wsInfo.IPAddress, supervisorPort)
-		if err != nil {
-			cancel()
-			s.TrackSSHConnection(wsInfo, "connect", ErrCreateSSHKey)
-			ReportSSHAttemptMetrics(ErrCreateSSHKey)
-			log.WithField("instanceId", wsInfo.InstanceID).WithError(err).Error("failed to create private pair in workspace")
-			return
-		}
-
-		session.WorkspacePrivateKey = key
-	}
-
 	cancel()
 
+	session := &Session{
+		Conn:                clientConn,
+		WorkspaceID:         workspaceId,
+		InstanceID:          wsInfo.InstanceID,
+		OwnerUserId:         wsInfo.OwnerUserId,
+		WorkspacePrivateKey: key,
+	}
 	sshPort := "23001"
 	if debugWorkspace {
 		sshPort = "25001"
