@@ -7,9 +7,12 @@ package proxy
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
+	crand "crypto/rand"
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"math/rand"
@@ -88,8 +91,11 @@ func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip common
 	// if sshGatewayServer not nil, we use /_ssh/host_keys to provider public host key
 	if sshGatewayServer != nil {
 		routes.HandleSSHHostKeyRoute(r.Path("/_ssh/host_keys"), sshGatewayServer.HostKeys)
-		routes.HandleSSHOverWebsocketTunnel(r.Path("/_supervisor/tunnel/ssh"), sshGatewayServer)
 		routes.HandleSSHOverWebsocketTunnel(r.Path("/_ssh/tunnel"), sshGatewayServer)
+
+		// This is for backward compatibility.
+		routes.HandleSSHOverWebsocketTunnel(r.Path("/_supervisor/tunnel/ssh"), sshGatewayServer)
+		routes.HandleCreateKeyRoute(r.Path("/_supervisor/v1/ssh_keys/create"), sshGatewayServer.HostKeys)
 	}
 
 	// The favicon warants special handling, because we pull that from the supervisor frontend
@@ -176,6 +182,58 @@ func (ir *ideRoutes) HandleSSHHostKeyRoute(route *mux.Route, hostKeyList []ssh.S
 	r.NewRoute().HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Add("Content-Type", "application/json")
 		rw.Write(byt)
+	})
+}
+
+func (ir *ideRoutes) HandleCreateKeyRoute(route *mux.Route, hostKeyList []ssh.Signer) {
+	r := route.Subrouter()
+	r.Use(logRouteHandlerHandler("HandleCreateKeyRoute"))
+	r.Use(ir.Config.CorsHandler)
+	r.Use(ir.workspaceMustExistHandler)
+	r.Use(ir.Config.WorkspaceAuthHandler)
+
+	r.NewRoute().HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := struct {
+			Privatekey string `json:"privateKey"`
+			UserName   string `json:"userName"`
+			HostKey    struct {
+				Type  string `json:"type"`
+				Value string `json:"value"`
+			} `json:"hostKey"`
+		}{}
+
+		_, pvk, err := ed25519.GenerateKey(crand.Reader)
+		if err != nil {
+			log.WithError(err).Error("failed to generate key")
+			return
+		}
+		block, err := ssh.MarshalPrivateKey(pvk, "")
+		if err != nil {
+			log.WithError(err).Error("failed to marshal key")
+			return
+		}
+		resp.Privatekey = string(pem.EncodeToMemory(block))
+		resp.UserName = "gitpod"
+
+		var hostKey ssh.Signer
+		for _, hk := range hostKeyList {
+			if hk.PublicKey().Type() != ssh.KeyAlgoRSA {
+				hostKey = hk
+				break
+			}
+			if hostKey == nil {
+				hostKey = hk
+			}
+		}
+		resp.HostKey.Type = hostKey.PublicKey().Type()
+		resp.HostKey.Value = base64.StdEncoding.EncodeToString(hostKey.PublicKey().Marshal())
+		byt, err := json.Marshal(resp)
+		if err != nil {
+			log.WithError(err).Error("cannot marshal response")
+			return
+		}
+		w.Header().Add("Content-Type", "application/json")
+		w.Write(byt)
 	})
 }
 
