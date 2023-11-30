@@ -68,7 +68,7 @@ export const ConfigurationVariableList = ({ configuration }: Props) => {
                 </Table>
             )}
             <Button className="my-4" onClick={() => setShowAddVariableModal(true)}>
-                New Variable
+                Add Variable
             </Button>
         </ConfigurationSettingsField>
     );
