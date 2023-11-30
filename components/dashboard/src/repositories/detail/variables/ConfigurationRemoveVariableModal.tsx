@@ -15,7 +15,7 @@ type Props = {
     configurationId: string;
     onClose(): void;
 };
-export const DeleteVariableModal: FunctionComponent<Props> = ({ variable, configurationId, onClose }) => {
+export const ConfigurationDeleteVariableModal: FunctionComponent<Props> = ({ variable, configurationId, onClose }) => {
     const deleteVariable = useDeleteConfigurationVariable();
     const { toast } = useToast();
 

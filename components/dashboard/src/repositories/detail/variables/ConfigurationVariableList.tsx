@@ -10,12 +10,10 @@ import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configurati
 import { Button } from "@podkit/buttons/Button";
 import { AddVariableModal } from "./ConfigurationAddVariableModal";
 import { Heading2, Subheading } from "@podkit/typography/Headings";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@podkit/tables/Table";
-import { DropdownActions } from "@podkit/dropdown/DropDownActions";
-import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@podkit/tables/Table";
 import { useListConfigurationVariables } from "../../../data/configurations/configuration-queries";
 import { LoadingState } from "@podkit/loading/LoadingState";
-import { EnvironmentVariableAdmission } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
+import { ConfigurationVariableItem } from "./ConfigurationVariableItem";
 
 type Props = {
     configuration: Configuration;
@@ -63,31 +61,9 @@ export const ConfigurationVariableList = ({ configuration }: Props) => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {data.map((variable) => {
-                            return (
-                                <TableRow key={variable.id}>
-                                    <TableCell className="truncate">{variable.name}</TableCell>
-                                    <TableCell>
-                                        {variable.admission === EnvironmentVariableAdmission.PREBUILD
-                                            ? "Hidden"
-                                            : "Shown"}
-                                    </TableCell>
-                                    <TableCell className="flex justify-end">
-                                        <DropdownActions>
-                                            <DropdownMenuItem>Edit</DropdownMenuItem>
-                                            <DropdownMenuItem
-                                                className="text-red-600 dark:text-red-400 focus:text-red-800 dark:focus:text-red-300"
-                                                onSelect={() => {
-                                                    // setShowRemoveModal(true);
-                                                }}
-                                            >
-                                                Delete
-                                            </DropdownMenuItem>
-                                        </DropdownActions>
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        })}
+                        {data.map((variable) => (
+                            <ConfigurationVariableItem configurationId={configuration.id} variable={variable} />
+                        ))}
                     </TableBody>
                 </Table>
             )}
