@@ -6,6 +6,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -38,6 +39,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/common-go/watch"
 	imgbldr "github.com/gitpod-io/gitpod/image-builder/api"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
@@ -194,6 +196,21 @@ func main() {
 		if err = workspaceReconciler.SetupWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to setup workspace controller with manager", "controller", "Workspace")
 			os.Exit(1)
+		}
+
+		// reload the config for WorkspaceController
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		err = watch.File(ctx, configFN, func() {
+			cfg, err := getConfig(configFN)
+			if err != nil {
+				setupLog.Error(err, "cannot reload configuration")
+				return
+			}
+			workspaceReconciler.StoreConfig(&cfg.Manager)
+		})
+		if err != nil {
+			setupLog.Error(err, "cannot start watch of configuration file")
 		}
 	}()
 

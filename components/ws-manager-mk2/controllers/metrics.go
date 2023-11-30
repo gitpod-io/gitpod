@@ -352,7 +352,8 @@ func (ptv *phaseTotalVec) Collect(ch chan<- prometheus.Metric) {
 	defer cancel()
 
 	var workspaces workspacev1.WorkspaceList
-	err := ptv.reconciler.List(ctx, &workspaces, client.InNamespace(ptv.reconciler.Config.Namespace))
+	cfg := ptv.reconciler.LoadConfig()
+	err := ptv.reconciler.List(ctx, &workspaces, client.InNamespace(cfg.Namespace))
 	if err != nil {
 		return
 	}
@@ -409,7 +410,8 @@ func (tsv *timeoutSettingsVec) Collect(ch chan<- prometheus.Metric) {
 	defer cancel()
 
 	var workspaces workspacev1.WorkspaceList
-	err := tsv.reconciler.List(ctx, &workspaces, client.InNamespace(tsv.reconciler.Config.Namespace))
+	cfg := tsv.reconciler.LoadConfig()
+	err := tsv.reconciler.List(ctx, &workspaces, client.InNamespace(cfg.Namespace))
 	if err != nil {
 		return
 	}
@@ -534,7 +536,8 @@ func (n *nodeUtilizationVec) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	var workspaces workspacev1.WorkspaceList
-	if err = n.reconciler.List(ctx, &workspaces, client.InNamespace(n.reconciler.Config.Namespace)); err != nil {
+	cfg := n.reconciler.LoadConfig()
+	if err = n.reconciler.List(ctx, &workspaces, client.InNamespace(cfg.Namespace)); err != nil {
 		log.FromContext(ctx).Error(err, "cannot list workspaces for node utilization metric")
 		return
 	}
@@ -562,7 +565,7 @@ func (n *nodeUtilizationVec) Collect(ch chan<- prometheus.Metric) {
 			}
 		}
 
-		class, ok := n.reconciler.Config.WorkspaceClasses[ws.Spec.Class]
+		class, ok := cfg.WorkspaceClasses[ws.Spec.Class]
 		if !ok {
 			log.FromContext(ctx).Error(err, "cannot find workspace class for node utilization metric", "class", ws.Spec.Class)
 			continue

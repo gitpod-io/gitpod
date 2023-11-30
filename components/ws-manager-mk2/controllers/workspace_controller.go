@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -30,7 +31,8 @@ import (
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
-	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
+	"github.com/gitpod-io/gitpod/ws-manager/api/config"
+
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/go-logr/logr"
 	"github.com/prometheus/client_golang/prometheus"
@@ -45,13 +47,15 @@ const (
 )
 
 func NewWorkspaceReconciler(c client.Client, scheme *runtime.Scheme, recorder record.EventRecorder, cfg *config.Configuration, reg prometheus.Registerer, maintenance maintenance.Maintenance) (*WorkspaceReconciler, error) {
+	var atomicCfg atomic.Value
 	reconciler := &WorkspaceReconciler{
 		Client:      c,
 		Scheme:      scheme,
-		Config:      cfg,
+		Config:      atomicCfg,
 		maintenance: maintenance,
 		Recorder:    recorder,
 	}
+	reconciler.StoreConfig(cfg)
 
 	metrics, err := newControllerMetrics(reconciler)
 	if err != nil {
@@ -68,10 +72,23 @@ type WorkspaceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 
-	Config      *config.Configuration
+	Config      atomic.Value
 	metrics     *controllerMetrics
 	maintenance maintenance.Maintenance
 	Recorder    record.EventRecorder
+}
+
+func (r *WorkspaceReconciler) StoreConfig(cfg *config.Configuration) {
+	log.Log.Info("StoreConfig")
+	r.Config.Store(cfg)
+}
+
+func (r *WorkspaceReconciler) LoadConfig() *config.Configuration {
+	if cfg, ok := r.Config.Load().(*config.Configuration); ok {
+		return cfg
+	}
+	log.Log.Info("LoadConfig was not ok")
+	return nil
 }
 
 //+kubebuilder:rbac:groups=workspace.gitpod.io,resources=workspaces,verbs=get;list;watch;create;update;patch;delete
@@ -91,6 +108,7 @@ type WorkspaceReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/reconcile
 func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
+	cfg := r.LoadConfig()
 
 	var workspace workspacev1.Workspace
 	if err := r.Get(ctx, req.NamespacedName, &workspace); err != nil {
@@ -117,7 +135,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	oldStatus := workspace.Status.DeepCopy()
-	err = r.updateWorkspaceStatus(ctx, &workspace, workspacePods, r.Config)
+	err = r.updateWorkspaceStatus(ctx, &workspace, workspacePods, cfg)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to compute latest workspace status: %w", err)
 	}
@@ -150,6 +168,8 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *workspacev1.Workspace, workspacePods corev1.PodList) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
+	cfg := r.LoadConfig()
+
 	if workspace.Status.Phase != workspacev1.WorkspacePhaseStopped && !r.metrics.containsWorkspace(workspace) {
 		// If the workspace hasn't stopped yet, and we don't know about this workspace yet, remember it.
 		r.metrics.rememberWorkspace(workspace, nil)
@@ -159,7 +179,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		// if there isn't a workspace pod and we're not currently deleting this workspace,// create one.
 		switch {
 		case workspace.Status.PodStarts == 0:
-			sctx, err := newStartWorkspaceContext(ctx, r.Config, workspace)
+			sctx, err := newStartWorkspaceContext(ctx, cfg, workspace)
 			if err != nil {
 				log.Error(err, "unable to create startWorkspace context")
 				return ctrl.Result{Requeue: true}, err
@@ -407,16 +427,18 @@ func (r *WorkspaceReconciler) deleteWorkspacePod(ctx context.Context, pod *corev
 func (r *WorkspaceReconciler) deleteWorkspaceSecrets(ctx context.Context, ws *workspacev1.Workspace) error {
 	log := log.FromContext(ctx)
 
+	cfg := r.LoadConfig()
+
 	// if a secret cannot be deleted we do not return early because we want to attempt
 	// the deletion of the remaining secrets
 	var errs []string
-	err := r.deleteSecret(ctx, fmt.Sprintf("%s-%s", ws.Name, "env"), r.Config.Namespace)
+	err := r.deleteSecret(ctx, fmt.Sprintf("%s-%s", ws.Name, "env"), cfg.Namespace)
 	if err != nil {
 		errs = append(errs, err.Error())
 		log.Error(err, "could not delete environment secret", "workspace", ws.Name)
 	}
 
-	err = r.deleteSecret(ctx, fmt.Sprintf("%s-%s", ws.Name, "tokens"), r.Config.SecretsNamespace)
+	err = r.deleteSecret(ctx, fmt.Sprintf("%s-%s", ws.Name, "tokens"), cfg.SecretsNamespace)
 	if err != nil {
 		errs = append(errs, err.Error())
 		log.Error(err, "could not delete token secret", "workspace", ws.Name)
@@ -481,10 +503,11 @@ var (
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	cfg := r.LoadConfig()
 	return ctrl.NewControllerManagedBy(mgr).
 		Named("workspace").
 		WithOptions(controller.Options{
-			MaxConcurrentReconciles: r.Config.WorkspaceMaxConcurrentReconciles,
+			MaxConcurrentReconciles: cfg.WorkspaceMaxConcurrentReconciles,
 		}).
 		For(&workspacev1.Workspace{}).
 		Owns(&corev1.Pod{}).
