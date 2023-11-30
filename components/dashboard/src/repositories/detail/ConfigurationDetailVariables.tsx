@@ -4,23 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC } from "react";
-import { useParams } from "react-router";
-import { ConfigurationDetailPage } from "./ConfigurationDetailPage";
-import { useConfiguration } from "../../data/configurations/configuration-queries";
 import { ConfigurationVariableList } from "./variables/ConfigurationVariableList";
+import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 
-type PageRouteParams = {
-    id: string;
+type Props = {
+    configuration: Configuration;
 };
-export const ConfigurationDetailVariables: FC = () => {
-    const { id } = useParams<PageRouteParams>();
-    const configurationQuery = useConfiguration(id);
-    const { data } = configurationQuery;
-
-    return (
-        <ConfigurationDetailPage configurationQuery={configurationQuery} id={id}>
-            {data && <ConfigurationVariableList configuration={data} />}
-        </ConfigurationDetailPage>
-    );
+export const ConfigurationDetailVariables = ({ configuration }: Props) => {
+    return <ConfigurationVariableList configuration={configuration} />;
 };
