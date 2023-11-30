@@ -28,10 +28,6 @@ import {
     SendHeartBeatResponse,
     WorkspacePhase_Phase,
     GetWorkspaceDefaultImageResponse_Source,
-    ParseContextURLRequest,
-    ParseContextURLResponse,
-    UpdateWorkspaceRequest,
-    UpdateWorkspaceResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { converter } from "./public-api";
 import { getGitpodService } from "./service";
@@ -135,25 +131,25 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
         if (request.source?.case !== "contextUrl") {
             throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
         }
-        if (!request.metadata || !request.metadata.organizationId || !uuidValidate(request.metadata.organizationId)) {
+        if (!request.organizationId || !uuidValidate(request.organizationId)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
-        if (!request.source.value.editor?.name) {
+        if (!request.editor) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "editor is required");
         }
-        if (!request.source.value.url) {
+        if (!request.source.value) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "source is required");
         }
         const response = await getGitpodService().server.createWorkspace({
-            organizationId: request.metadata.organizationId,
+            organizationId: request.organizationId,
             ignoreRunningWorkspaceOnSameCommit: true,
-            contextUrl: request.source.value.url,
+            contextUrl: request.source.value,
             forceDefaultConfig: request.forceDefaultConfig,
-            workspaceClass: request.source.value.workspaceClass,
-            projectId: request.metadata.configurationId,
+            workspaceClass: request.workspaceClass,
+            projectId: request.configurationId,
             ideSettings: {
-                defaultIde: request.source.value.editor.name,
-                useLatestVersion: request.source.value.editor.version === "latest",
+                defaultIde: request.editor.name,
+                useLatestVersion: request.editor.version === "latest",
             },
         });
         const workspace = await this.getWorkspace({ workspaceId: response.createdWorkspaceId });
@@ -243,19 +239,5 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
         const result = new GetWorkspaceEditorCredentialsResponse();
         result.editorCredentials = credentials;
         return result;
-    }
-
-    async updateWorkspace(
-        request: PartialMessage<UpdateWorkspaceRequest>,
-        _options?: CallOptions | undefined,
-    ): Promise<UpdateWorkspaceResponse> {
-        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
-    }
-
-    async parseContextURL(
-        request: PartialMessage<ParseContextURLRequest>,
-        _options?: CallOptions | undefined,
-    ): Promise<ParseContextURLResponse> {
-        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
     }
 }

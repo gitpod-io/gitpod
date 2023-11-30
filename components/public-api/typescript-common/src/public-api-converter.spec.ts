@@ -8,10 +8,10 @@
 import { Timestamp, toPlainMessage } from "@bufbuild/protobuf";
 import {
     AdmissionLevel,
-    Workspace,
+    WorkspaceEnvironmentVariable,
     WorkspacePhase_Phase,
+    WorkspacePort_Policy,
     WorkspacePort_Protocol,
-    WorkspaceSpec_WorkspaceType,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { expect } from "chai";
 import { PartialConfiguration, PublicAPIConverter } from "./public-api-converter";
@@ -44,7 +44,6 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import {
     ConfigurationEnvironmentVariable,
-    EnvironmentVariable,
     EnvironmentVariableAdmission,
     UserEnvironmentVariable,
 } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
@@ -277,51 +276,18 @@ describe("PublicAPIConverter", () => {
                 },
             } as any);
             expect(workspace).to.deep.equal(
-                new Workspace({
+                {
                     id: "akosyakov-parceldemo-4crqn25qlwi",
-                    spec: {
-                        ports: [],
-                        type: WorkspaceSpec_WorkspaceType.REGULAR,
-                        admission: AdmissionLevel.OWNER_ONLY,
-                        environmentVariables: [],
-                        initializer: {
-                            specs: [
-                                {
-                                    spec: {
-                                        case: "git",
-                                        value: {
-                                            remoteUri: "https://github.com/akosyakov/parcel-demo",
-                                            checkoutLocation: "parcel-demo",
-                                            config: {},
-                                        },
-                                    },
-                                },
-                            ],
-                        },
-                        git: {
-                            username: "",
-                            email: "",
-                        },
-                        class: "g1-standard",
-                        editor: {
-                            name: "code",
-                            version: "stable",
-                        },
-                    },
-                    metadata: {
-                        ownerId: "827df1c8-d42d-4a69-bc38-64089af1f711",
-                        configurationId: "",
-                        organizationId: "ec76db37-9a48-4e2d-a78e-0ec7d2b4d2c0",
-                        name: "akosyakov/parcel-demo - master",
-                        pinned: false,
-                        originalContextUrl: "https://github.com/akosyakov/parcel-demo",
-                    },
+                    prebuild: false,
+                    organizationId: "ec76db37-9a48-4e2d-a78e-0ec7d2b4d2c0",
+                    name: "akosyakov/parcel-demo - master",
+                    pinned: false,
                     status: {
-                        statusVersion: Timestamp.fromDate(new Date("2023-10-16T20:18:24.923Z")).seconds,
                         phase: {
                             name: WorkspacePhase_Phase.CREATING,
                             lastTransitionTime: Timestamp.fromDate(new Date("2023-10-16T20:18:24.923Z")),
                         },
+                        message: "",
                         workspaceUrl:
                             "https://akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
                         gitStatus: {
@@ -335,13 +301,24 @@ describe("PublicAPIConverter", () => {
                             unpushedCommits: [],
                             untrackedFiles: [],
                         },
+                        ports: [],
+                        admission: AdmissionLevel.OWNER_ONLY,
                         instanceId: "226695b4-f10a-471a-a219-9b657645bf78",
                         conditions: {
                             failed: "",
                             timeout: "",
                         },
                     },
-                }),
+                    additionalEnvironmentVariables: [],
+                    region: "dev",
+                    prebuildId: "",
+                    workspaceClass: "g1-standard",
+                    editor: {
+                        name: "code",
+                        version: "stable",
+                    },
+                    contextUrl: "https://github.com/akosyakov/parcel-demo",
+                },
                 "created",
             );
             workspace = converter.toWorkspace(
@@ -422,59 +399,18 @@ describe("PublicAPIConverter", () => {
                 workspace,
             );
             expect(workspace).to.deep.equal(
-                new Workspace({
+                {
                     id: "akosyakov-parceldemo-4crqn25qlwi",
-                    spec: {
-                        type: WorkspaceSpec_WorkspaceType.REGULAR,
-                        editor: {
-                            name: "code",
-                            version: "stable",
-                        },
-                        ports: [
-                            {
-                                admission: AdmissionLevel.EVERYONE,
-                                port: BigInt(1234),
-                                protocol: WorkspacePort_Protocol.HTTP,
-                                url: "https://1234-akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
-                            },
-                        ],
-                        admission: AdmissionLevel.OWNER_ONLY,
-                        environmentVariables: [],
-                        class: "g1-standard",
-                        initializer: {
-                            specs: [
-                                {
-                                    spec: {
-                                        case: "git",
-                                        value: {
-                                            remoteUri: "https://github.com/akosyakov/parcel-demo",
-                                            checkoutLocation: "parcel-demo",
-                                            config: {},
-                                        },
-                                    },
-                                },
-                            ],
-                        },
-                        git: {
-                            username: "",
-                            email: "",
-                        },
-                    },
-                    metadata: {
-                        ownerId: "827df1c8-d42d-4a69-bc38-64089af1f711",
-                        organizationId: "ec76db37-9a48-4e2d-a78e-0ec7d2b4d2c0",
-                        annotations: {},
-                        configurationId: "",
-                        name: "akosyakov/parcel-demo - master",
-                        pinned: false,
-                        originalContextUrl: "https://github.com/akosyakov/parcel-demo",
-                    },
+                    prebuild: false,
+                    organizationId: "ec76db37-9a48-4e2d-a78e-0ec7d2b4d2c0",
+                    name: "akosyakov/parcel-demo - master",
+                    pinned: false,
                     status: {
-                        statusVersion: Timestamp.fromDate(new Date("2023-10-16T20:18:53.451Z")).seconds,
                         phase: {
                             name: WorkspacePhase_Phase.RUNNING,
                             lastTransitionTime: Timestamp.fromDate(new Date("2023-10-16T20:18:53.451Z")),
                         },
+                        message: "",
                         workspaceUrl:
                             "https://akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
                         gitStatus: {
@@ -488,13 +424,31 @@ describe("PublicAPIConverter", () => {
                             unpushedCommits: ["2203d16: tests"],
                             untrackedFiles: [],
                         },
+                        ports: [
+                            {
+                                policy: WorkspacePort_Policy.PUBLIC,
+                                port: BigInt(1234),
+                                protocol: WorkspacePort_Protocol.HTTP,
+                                url: "https://1234-akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
+                            },
+                        ],
+                        admission: AdmissionLevel.OWNER_ONLY,
                         instanceId: "226695b4-f10a-471a-a219-9b657645bf78",
                         conditions: {
                             failed: "",
                             timeout: "",
                         },
                     },
-                }),
+                    additionalEnvironmentVariables: [],
+                    region: "dev",
+                    prebuildId: "",
+                    workspaceClass: "g1-standard",
+                    editor: {
+                        name: "code",
+                        version: "stable",
+                    },
+                    contextUrl: "https://github.com/akosyakov/parcel-demo",
+                },
                 "running",
             );
             workspace = converter.toWorkspace(
@@ -586,59 +540,18 @@ describe("PublicAPIConverter", () => {
                 workspace,
             );
             expect(workspace).to.deep.equal(
-                new Workspace({
+                {
                     id: "akosyakov-parceldemo-4crqn25qlwi",
-                    spec: {
-                        editor: {
-                            name: "code",
-                            version: "stable",
-                        },
-                        ports: [
-                            {
-                                admission: AdmissionLevel.EVERYONE,
-                                port: BigInt(1234),
-                                protocol: WorkspacePort_Protocol.HTTP,
-                                url: "https://1234-akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
-                            },
-                        ],
-                        type: WorkspaceSpec_WorkspaceType.REGULAR,
-                        admission: AdmissionLevel.OWNER_ONLY,
-                        environmentVariables: [],
-                        initializer: {
-                            specs: [
-                                {
-                                    spec: {
-                                        case: "git",
-                                        value: {
-                                            remoteUri: "https://github.com/akosyakov/parcel-demo",
-                                            checkoutLocation: "parcel-demo",
-                                            config: {},
-                                        },
-                                    },
-                                },
-                            ],
-                        },
-                        git: {
-                            username: "",
-                            email: "",
-                        },
-                        class: "g1-standard",
-                    },
-                    metadata: {
-                        ownerId: "827df1c8-d42d-4a69-bc38-64089af1f711",
-                        configurationId: "",
-                        organizationId: "ec76db37-9a48-4e2d-a78e-0ec7d2b4d2c0",
-                        name: "akosyakov/parcel-demo - master",
-                        pinned: false,
-                        originalContextUrl: "https://github.com/akosyakov/parcel-demo",
-                    },
+                    prebuild: false,
+                    organizationId: "ec76db37-9a48-4e2d-a78e-0ec7d2b4d2c0",
+                    name: "akosyakov/parcel-demo - master",
+                    pinned: false,
                     status: {
-                        statusVersion: Timestamp.fromDate(new Date("2023-10-16T20:36:16.205Z")).seconds,
-
                         phase: {
                             name: WorkspacePhase_Phase.STOPPED,
                             lastTransitionTime: Timestamp.fromDate(new Date("2023-10-16T20:36:16.205Z")),
                         },
+                        message: "",
                         workspaceUrl:
                             "https://akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
                         gitStatus: {
@@ -652,13 +565,31 @@ describe("PublicAPIConverter", () => {
                             unpushedCommits: ["2203d16: tests"],
                             untrackedFiles: [],
                         },
+                        ports: [
+                            {
+                                policy: WorkspacePort_Policy.PUBLIC,
+                                port: BigInt(1234),
+                                protocol: WorkspacePort_Protocol.HTTP,
+                                url: "https://1234-akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
+                            },
+                        ],
+                        admission: AdmissionLevel.OWNER_ONLY,
                         instanceId: "226695b4-f10a-471a-a219-9b657645bf78",
                         conditions: {
                             failed: "",
                             timeout: "",
                         },
                     },
-                }),
+                    additionalEnvironmentVariables: [],
+                    region: "dev",
+                    prebuildId: "",
+                    workspaceClass: "g1-standard",
+                    editor: {
+                        name: "code",
+                        version: "stable",
+                    },
+                    contextUrl: "https://github.com/akosyakov/parcel-demo",
+                },
                 "stopped",
             );
             workspace = converter.toWorkspace(
@@ -732,51 +663,18 @@ describe("PublicAPIConverter", () => {
                 workspace,
             );
             expect(workspace).to.deep.equal(
-                new Workspace({
+                {
                     id: "akosyakov-parceldemo-4crqn25qlwi",
-                    metadata: {
-                        ownerId: "827df1c8-d42d-4a69-bc38-64089af1f711",
-                        organizationId: "ec76db37-9a48-4e2d-a78e-0ec7d2b4d2c0",
-                        configurationId: "",
-                        name: "akosyakov/parcel-demo - master",
-                        pinned: false,
-                        originalContextUrl: "https://github.com/akosyakov/parcel-demo",
-                    },
-                    spec: {
-                        editor: {
-                            name: "code",
-                            version: "stable",
-                        },
-                        environmentVariables: [],
-                        type: WorkspaceSpec_WorkspaceType.REGULAR,
-                        git: {
-                            username: "",
-                            email: "",
-                        },
-                        ports: [],
-                        admission: AdmissionLevel.OWNER_ONLY,
-                        class: "g1-standard",
-                        initializer: {
-                            specs: [
-                                {
-                                    spec: {
-                                        case: "git",
-                                        value: {
-                                            remoteUri: "https://github.com/akosyakov/parcel-demo",
-                                            checkoutLocation: "parcel-demo",
-                                            config: {},
-                                        },
-                                    },
-                                },
-                            ],
-                        },
-                    },
+                    prebuild: false,
+                    organizationId: "ec76db37-9a48-4e2d-a78e-0ec7d2b4d2c0",
+                    name: "akosyakov/parcel-demo - master",
+                    pinned: false,
                     status: {
-                        statusVersion: Timestamp.fromDate(new Date("2023-10-16T20:38:51.092Z")).seconds,
                         phase: {
                             name: WorkspacePhase_Phase.RUNNING,
                             lastTransitionTime: Timestamp.fromDate(new Date("2023-10-16T20:38:51.092Z")),
                         },
+                        message: "",
                         workspaceUrl:
                             "https://akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
                         gitStatus: {
@@ -790,13 +688,24 @@ describe("PublicAPIConverter", () => {
                             unpushedCommits: ["2203d16: tests"],
                             untrackedFiles: [],
                         },
+                        ports: [],
+                        admission: AdmissionLevel.OWNER_ONLY,
                         instanceId: "e1148a46-a311-4215-8421-37cd3b907ee9",
                         conditions: {
                             failed: "",
                             timeout: "",
                         },
                     },
-                }),
+                    additionalEnvironmentVariables: [],
+                    region: "dev",
+                    prebuildId: "",
+                    workspaceClass: "g1-standard",
+                    editor: {
+                        name: "code",
+                        version: "stable",
+                    },
+                    contextUrl: "https://github.com/akosyakov/parcel-demo",
+                },
                 "restarted",
             );
         });
@@ -972,7 +881,7 @@ describe("PublicAPIConverter", () => {
         });
     });
 
-    describe("toEnvironmentVariables", () => {
+    describe("toWorkspaceEnvironmentVariables", () => {
         const wsCtx: WithEnvvarsContext = {
             title: "title",
             envvars: [
@@ -982,9 +891,9 @@ describe("PublicAPIConverter", () => {
                 },
             ],
         };
-        const envVars = [new EnvironmentVariable({ name: "FOO", value: "bar" })];
+        const envVars = [new WorkspaceEnvironmentVariable({ name: "FOO", value: "bar" })];
         it("should convert workspace environment variable types", () => {
-            const result = converter.toEnvironmentVariables(wsCtx);
+            const result = converter.toWorkspaceEnvironmentVariables(wsCtx);
             expect(result).to.deep.equal(envVars);
         });
     });

@@ -27,8 +27,8 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
     const workspace = info;
     const currentBranch = gitStatus?.branch || "<unknown>";
     const project = getProjectPath(workspace);
-    const normalizedContextUrl = workspace.metadata!.originalContextUrl;
-    const normalizedContextUrlDescription = workspace.metadata!.originalContextUrl; // Instead of showing nothing, we prefer to show the raw content instead
+    const normalizedContextUrl = workspace.contextUrl;
+    const normalizedContextUrlDescription = workspace.contextUrl; // Instead of showing nothing, we prefer to show the raw content instead
 
     const changeMenuState = (state: boolean) => {
         setMenuActive(state);
@@ -69,7 +69,7 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
                 <>
                     <ItemField className="w-4/12 flex flex-col my-auto">
                         <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate">
-                            {workspace.metadata!.name}
+                            {workspace.name}
                         </div>
                         <a href={normalizedContextUrl}>
                             <div className="text-sm text-gray-400 dark:text-gray-500 overflow-ellipsis truncate hover:text-blue-600 dark:hover:text-blue-400">
@@ -105,5 +105,5 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
 
 export function getProjectPath(ws: Workspace) {
     // TODO: Remove and call papi ContextService
-    return ws.metadata!.originalContextUrl.replace("https://", "");
+    return ws.contextUrl.replace("https://", "");
 }

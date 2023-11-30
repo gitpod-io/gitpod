@@ -142,10 +142,9 @@ message ResolveWorkspaceEnvironmentVariablesRequest {
 }
 
 message ResolveWorkspaceEnvironmentVariablesResponse {
+  message EnvironmentVariable {
+    string name = 1;
+    string value = 2;
+  }
   repeated EnvironmentVariable environment_variables = 1;
-}
-
-message EnvironmentVariable {
-  string name = 1;
-  string value = 2;
 }

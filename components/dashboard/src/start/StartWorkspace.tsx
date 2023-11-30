@@ -28,7 +28,6 @@ import {
     StartWorkspaceResponse,
     Workspace,
     WorkspacePhase_Phase,
-    WorkspaceSpec_WorkspaceType,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { PartialMessage } from "@bufbuild/protobuf";
 
@@ -170,7 +169,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     componentDidUpdate(prevPros: StartWorkspaceProps, prevState: StartWorkspaceState) {
         const newPhase = this.state?.workspace?.status?.phase?.name;
         const oldPhase = prevState.workspace?.status?.phase?.name;
-        const type = this.state.workspace?.spec?.type === WorkspaceSpec_WorkspaceType.PREBUILD ? "prebuild" : "regular";
+        const type = !!this.state.workspace?.prebuild ? "prebuild" : "regular";
         if (newPhase !== oldPhase) {
             getGitpodService().server.trackEvent({
                 event: "status_rendered",
@@ -374,10 +373,10 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         if (
             !error &&
             workspace.status.phase?.name === WorkspacePhase_Phase.STOPPED &&
-            this.state.workspace?.spec?.type === WorkspaceSpec_WorkspaceType.PREBUILD
+            !!this.state.workspace?.prebuild
         ) {
             // here we want to point to the original context, w/o any modifiers "workspace" was started with (as this might have been a manually triggered prebuild!)
-            const contextURL = this.state.workspace.metadata?.originalContextUrl;
+            const contextURL = this.state.workspace.contextUrl;
             if (contextURL) {
                 this.redirectTo(gitpodHostUrl.withContext(contextURL.toString()).toString());
             } else {
@@ -458,20 +457,15 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
     render() {
         const { error } = this.state;
-        const isPrebuild = this.state.workspace?.spec?.type === WorkspaceSpec_WorkspaceType.PREBUILD;
-        let withPrebuild = false;
-        for (const initializer of this.state.workspace?.spec?.initializer?.specs ?? []) {
-            if (initializer.spec.case === "prebuild") {
-                withPrebuild = !!initializer.spec.value.prebuildId;
-            }
-        }
+        const isPrebuild = this.state.workspace?.prebuild;
+        const withPrebuild = !!this.state.workspace?.prebuildId;
         let phase: StartPhase | undefined = StartPhase.Preparing;
         let title = undefined;
         let isStoppingOrStoppedPhase = false;
         let isError = error ? true : false;
         let statusMessage = !!error ? undefined : <p className="text-base text-gray-400">Preparing workspace …</p>;
-        const contextURL = this.state.workspace?.metadata?.originalContextUrl;
-        const useLatest = this.state.workspace?.spec?.editor?.version === "latest";
+        const contextURL = this.state.workspace?.contextUrl;
+        const useLatest = this.state.workspace?.editor?.version === "latest";
 
         switch (this.state?.workspace?.status?.phase?.name) {
             // unknown indicates an issue within the system in that it cannot determine the actual phase of
