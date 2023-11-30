@@ -8,7 +8,6 @@ import (
 	"context"
 	"net/url"
 	"sort"
-	"time"
 
 	"golang.org/x/xerrors"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -20,50 +19,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/ws-manager/api"
 	wsapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/common"
 )
-
-// WorkspaceCoords represents the coordinates of a workspace (port).
-type WorkspaceCoords struct {
-	// The workspace ID
-	ID string
-	// The workspace port
-	Port string
-	// Debug workspace
-	Debug bool
-}
-
-// WorkspaceInfoProvider is an entity that is able to provide workspaces related information.
-type WorkspaceInfoProvider interface {
-	// WorkspaceInfo returns the workspace information of a workspace using it's workspace ID
-	WorkspaceInfo(workspaceID string) *WorkspaceInfo
-}
-
-// WorkspaceInfo is all the infos ws-proxy needs to know about a workspace.
-type WorkspaceInfo struct {
-	WorkspaceID string
-	InstanceID  string
-	URL         string
-
-	IDEImage        string
-	SupervisorImage string
-
-	// (parsed from URL)
-	IDEPublicPort string
-
-	IPAddress string
-
-	Ports []*api.PortSpec
-
-	Auth      *wsapi.WorkspaceAuthentication
-	StartedAt time.Time
-
-	OwnerUserId   string
-	SSHPublicKeys []string
-	IsRunning     bool
-}
 
 const (
 	workspaceIndex = "workspaceIndex"
@@ -100,7 +59,7 @@ func NewCRDWorkspaceInfoProvider(client client.Client, scheme *runtime.Scheme) (
 	// create custom indexer for searches
 	indexers := cache.Indexers{
 		workspaceIndex: func(obj interface{}) ([]string, error) {
-			if workspaceInfo, ok := obj.(*WorkspaceInfo); ok {
+			if workspaceInfo, ok := obj.(*common.WorkspaceInfo); ok {
 				return []string{workspaceInfo.WorkspaceID}, nil
 			}
 
@@ -117,7 +76,7 @@ func NewCRDWorkspaceInfoProvider(client client.Client, scheme *runtime.Scheme) (
 }
 
 // WorkspaceInfo return the WorkspaceInfo available for the given workspaceID.
-func (r *CRDWorkspaceInfoProvider) WorkspaceInfo(workspaceID string) *WorkspaceInfo {
+func (r *CRDWorkspaceInfoProvider) WorkspaceInfo(workspaceID string) *common.WorkspaceInfo {
 	workspaces, err := r.store.ByIndex(workspaceIndex, workspaceID)
 	if err != nil {
 		return nil
@@ -129,13 +88,13 @@ func (r *CRDWorkspaceInfoProvider) WorkspaceInfo(workspaceID string) *WorkspaceI
 		}
 
 		sort.Slice(workspaces, func(i, j int) bool {
-			a := workspaces[i].(*WorkspaceInfo)
-			b := workspaces[j].(*WorkspaceInfo)
+			a := workspaces[i].(*common.WorkspaceInfo)
+			b := workspaces[j].(*common.WorkspaceInfo)
 
 			return a.StartedAt.After(b.StartedAt)
 		})
 
-		return workspaces[0].(*WorkspaceInfo)
+		return workspaces[0].(*common.WorkspaceInfo)
 	}
 
 	return nil
@@ -178,7 +137,7 @@ func (r *CRDWorkspaceInfoProvider) Reconcile(ctx context.Context, req ctrl.Reque
 	if ws.Spec.Admission.Level == workspacev1.AdmissionLevelEveryone {
 		admission = wsapi.AdmissionLevel_ADMIT_EVERYONE
 	}
-	wsinfo := &WorkspaceInfo{
+	wsinfo := &common.WorkspaceInfo{
 		WorkspaceID:     ws.Spec.Ownership.WorkspaceID,
 		InstanceID:      ws.Name,
 		URL:             ws.Status.URL,
@@ -191,6 +150,7 @@ func (r *CRDWorkspaceInfoProvider) Reconcile(ctx context.Context, req ctrl.Reque
 		StartedAt:       ws.CreationTimestamp.Time,
 		OwnerUserId:     ws.Spec.Ownership.Owner,
 		SSHPublicKeys:   ws.Spec.SshPublicKeys,
+		SSHKey:          ws.Spec.SSHKey,
 		IsRunning:       ws.Status.Phase == workspacev1.WorkspacePhaseRunning,
 	}
 
@@ -212,9 +172,9 @@ func (r *CRDWorkspaceInfoProvider) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 // CompositeInfoProvider checks each of its info providers and returns the first info found.
-type CompositeInfoProvider []WorkspaceInfoProvider
+type CompositeInfoProvider []common.WorkspaceInfoProvider
 
-func (c CompositeInfoProvider) WorkspaceInfo(workspaceID string) *WorkspaceInfo {
+func (c CompositeInfoProvider) WorkspaceInfo(workspaceID string) *common.WorkspaceInfo {
 	for _, ip := range c {
 		res := ip.WorkspaceInfo(workspaceID)
 		if res != nil {
@@ -225,11 +185,11 @@ func (c CompositeInfoProvider) WorkspaceInfo(workspaceID string) *WorkspaceInfo 
 }
 
 type fixedInfoProvider struct {
-	Infos map[string]*WorkspaceInfo
+	Infos map[string]*common.WorkspaceInfo
 }
 
 // WorkspaceInfo returns the workspace information of a workspace using it's workspace ID.
-func (fp *fixedInfoProvider) WorkspaceInfo(workspaceID string) *WorkspaceInfo {
+func (fp *fixedInfoProvider) WorkspaceInfo(workspaceID string) *common.WorkspaceInfo {
 	if fp.Infos == nil {
 		return nil
 	}

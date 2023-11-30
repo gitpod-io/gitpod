@@ -9,7 +9,7 @@ import { MethodKind, ServiceType } from "@bufbuild/protobuf";
 import { CallOptions, Code, ConnectError, PromiseClient, createPromiseClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { Disposable, User } from "@gitpod/gitpod-protocol";
-import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
+import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
 import { Project as ProtocolProject } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connect";
 import { OIDCService } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_connect";
@@ -21,7 +21,7 @@ import { OrganizationService } from "@gitpod/public-api/lib/gitpod/v1/organizati
 import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/v1/workspace_connect";
 import { ConfigurationService } from "@gitpod/public-api/lib/gitpod/v1/configuration_connect";
 import { PrebuildService } from "@gitpod/public-api/lib/gitpod/v1/prebuild_connect";
-import { getMetricsInterceptor } from "@gitpod/public-api/lib/metrics";
+import { getMetricsInterceptor } from "@gitpod/gitpod-protocol/lib/metrics";
 import { getExperimentsClient } from "../experiments/client";
 import { JsonRpcOrganizationClient } from "./json-rpc-organization-client";
 import { JsonRpcWorkspaceClient } from "./json-rpc-workspace-client";
@@ -36,6 +36,10 @@ import { JsonRpcScmClient } from "./json-rpc-scm-client";
 import { SCMService } from "@gitpod/public-api/lib/gitpod/v1/scm_connect";
 import { SSHService } from "@gitpod/public-api/lib/gitpod/v1/ssh_connect";
 import { JsonRpcSSHClient } from "./json-rpc-ssh-client";
+import { JsonRpcVerificationClient } from "./json-rpc-verification-client";
+import { VerificationService } from "@gitpod/public-api/lib/gitpod/v1/verification_connect";
+import { JsonRpcInstallationClient } from "./json-rpc-installation-client";
+import { InstallationService } from "@gitpod/public-api/lib/gitpod/v1/installation_connect";
 
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
@@ -46,6 +50,9 @@ export const converter = new PublicAPIConverter();
 
 export const helloService = createPromiseClient(HelloService, transport);
 export const personalAccessTokensService = createPromiseClient(TokensService, transport);
+/**
+ * @deprecated use configurationClient instead
+ */
 export const projectsService = createPromiseClient(ProjectsService, transport);
 /**
  * @deprecated use workspaceClient instead
@@ -53,23 +60,51 @@ export const projectsService = createPromiseClient(ProjectsService, transport);
 export const workspacesService = createPromiseClient(WorkspaceV1Service, transport);
 export const oidcService = createPromiseClient(OIDCService, transport);
 
-export const workspaceClient = createServiceClient(WorkspaceService, new JsonRpcWorkspaceClient());
-export const organizationClient = createServiceClient(
-    OrganizationService,
-    new JsonRpcOrganizationClient(),
-    "organization",
-);
+export const workspaceClient = createServiceClient(WorkspaceService, {
+    client: new JsonRpcWorkspaceClient(),
+    featureFlagSuffix: "workspace",
+});
+export const organizationClient = createServiceClient(OrganizationService, {
+    client: new JsonRpcOrganizationClient(),
+    featureFlagSuffix: "organization",
+});
+
 // No jsonrcp client for the configuration service as it's only used in new UI of the dashboard
 export const configurationClient = createServiceClient(ConfigurationService);
-export const prebuildClient = createServiceClient(PrebuildService, new JsonRpcPrebuildClient());
+export const prebuildClient = createServiceClient(PrebuildService, {
+    client: new JsonRpcPrebuildClient(),
+    featureFlagSuffix: "prebuild",
+});
 
-export const authProviderClient = createServiceClient(AuthProviderService, new JsonRpcAuthProviderClient());
+export const authProviderClient = createServiceClient(AuthProviderService, {
+    client: new JsonRpcAuthProviderClient(),
+    featureFlagSuffix: "authprovider",
+});
 
-export const scmClient = createServiceClient(SCMService, new JsonRpcScmClient());
+export const scmClient = createServiceClient(SCMService, {
+    client: new JsonRpcScmClient(),
+    featureFlagSuffix: "scm",
+});
 
-export const envVarClient = createServiceClient(EnvironmentVariableService, new JsonRpcEnvvarClient());
+export const envVarClient = createServiceClient(EnvironmentVariableService, {
+    client: new JsonRpcEnvvarClient(),
+    featureFlagSuffix: "envvar",
+});
 
-export const sshClient = createServiceClient(SSHService, new JsonRpcSSHClient());
+export const sshClient = createServiceClient(SSHService, {
+    client: new JsonRpcSSHClient(),
+    featureFlagSuffix: "ssh",
+});
+
+export const verificationClient = createServiceClient(VerificationService, {
+    client: new JsonRpcVerificationClient(),
+    featureFlagSuffix: "verification",
+});
+
+export const installationClient = createServiceClient(InstallationService, {
+    client: new JsonRpcInstallationClient(),
+    featureFlagSuffix: "installation",
+});
 
 export async function listAllProjects(opts: { orgId: string }): Promise<ProtocolProject[]> {
     let pagination = {
@@ -128,22 +163,23 @@ export function updateUser(newUser: User | undefined) {
 
 function createServiceClient<T extends ServiceType>(
     type: T,
-    jsonRpcClient?: PromiseClient<T>,
-    featureFlagSuffix?: string,
+    jsonRpcOptions?: {
+        client: PromiseClient<T>;
+        featureFlagSuffix: string;
+    },
 ): PromiseClient<T> {
     return new Proxy(createPromiseClient(type, transport), {
         get(grpcClient, prop) {
             const experimentsClient = getExperimentsClient();
             // TODO(ak) remove after migration
             async function resolveClient(): Promise<PromiseClient<T>> {
-                if (!jsonRpcClient) {
+                if (!jsonRpcOptions) {
                     return grpcClient;
                 }
-                const featureFlags = ["dashboard_public_api_enabled", "centralizedPermissions"];
-                if (featureFlagSuffix) {
-                    featureFlags.push(`dashboard_public_api_${featureFlagSuffix}_enabled`);
-                }
-                // TODO(ak): is not going to work for getLoggedInUser itself
+                const featureFlags = [
+                    `dashboard_public_api_${jsonRpcOptions.featureFlagSuffix}_enabled`,
+                    "centralizedPermissions",
+                ];
                 const resolvedFlags = await Promise.all(
                     featureFlags.map((ff) =>
                         experimentsClient.getValueAsync(ff, false, {
@@ -155,7 +191,7 @@ function createServiceClient<T extends ServiceType>(
                 if (resolvedFlags.every((f) => f === true)) {
                     return grpcClient;
                 }
-                return jsonRpcClient;
+                return jsonRpcOptions.client;
             }
             /**
              * The original application error is retained using gRPC metadata to ensure that existing error handling remains intact.

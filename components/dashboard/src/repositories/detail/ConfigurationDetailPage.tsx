@@ -4,28 +4,51 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { BreadcrumbNav } from "@podkit/breadcrumbs/BreadcrumbNav";
 import { Button } from "@podkit/buttons/Button";
-import type { UseQueryResult } from "@tanstack/react-query";
-import { AlertTriangle, HelpCircle, Loader2 } from "lucide-react";
-import { useMemo } from "react";
+import { AlertTriangle, Loader2 } from "lucide-react";
+import { FC, useMemo } from "react";
 import Alert from "../../components/Alert";
 import { WidePageWithSubMenu } from "../../components/WidePageWithSubmenu";
 import type { SubmenuItemProps } from "../../components/PageWithSubMenu";
+import { Route, Switch, useParams, useRouteMatch } from "react-router";
+import { useConfiguration } from "../../data/configurations/configuration-queries";
+import { ConfigurationDetailGeneral } from "./ConfigurationDetailGeneral";
+import { ConfigurationDetailWorkspaces } from "./ConfigurationDetailWorkspaces";
+import { ConfigurationDetailPrebuilds } from "./ConfigurationDetailPrebuilds";
 
-export interface PageWithAdminSubMenuProps {
-    children: React.ReactNode;
-    configurationQuery: UseQueryResult<Configuration | undefined, Error>;
+type PageRouteParams = {
     id: string;
-}
+};
 
-export function ConfigurationDetailPage({ children, configurationQuery, id }: PageWithAdminSubMenuProps) {
-    const { data, error, isLoading, refetch } = configurationQuery;
+const ConfigurationDetailPage: FC = () => {
+    const { id } = useParams<PageRouteParams>();
+    let { path, url } = useRouteMatch();
+
+    const { data, error, isLoading, refetch } = useConfiguration(id);
 
     const settingsMenu = useMemo(() => {
-        return getConfigurationsMenu(id);
-    }, [id]);
+        const menu: SubmenuItemProps[] = [
+            {
+                title: "General",
+                link: [url],
+            },
+            {
+                title: "Prebuilds",
+                link: [`${url}/prebuilds`],
+                icon: <AlertTriangle size={20} />,
+            },
+            {
+                title: "Environment variables",
+                link: [`${url}/variables`],
+            },
+            {
+                title: "Workspace defaults",
+                link: [`${url}/workspaces`],
+            },
+        ];
+        return menu;
+    }, [url]);
 
     return (
         <div className="w-full">
@@ -57,38 +80,24 @@ export function ConfigurationDetailPage({ children, configurationQuery, id }: Pa
                         // TODO: add a better not-found UI w/ link back to repositories
                         <div>Sorry, we couldn't find that repository configuration.</div>
                     ) : (
-                        children
+                        <div className="flex flex-col gap-4">
+                            <Switch>
+                                <Route exact path={path}>
+                                    <ConfigurationDetailGeneral configuration={data} />
+                                </Route>
+                                <Route exact path={`${path}/workspaces`}>
+                                    <ConfigurationDetailWorkspaces configuration={data} />
+                                </Route>
+                                <Route exact path={`${path}/prebuilds`}>
+                                    <ConfigurationDetailPrebuilds configuration={data} />
+                                </Route>
+                            </Switch>
+                        </div>
                     ))
                 )}
             </WidePageWithSubMenu>
         </div>
     );
-}
+};
 
-function getConfigurationsMenu(id: string): SubmenuItemProps[] {
-    const base = `/repositories/${id}`;
-    return [
-        {
-            title: "General",
-            link: [base],
-        },
-        {
-            title: "Gitpod YAML",
-            link: [`${base}/configuration`],
-            icon: <HelpCircle size={20} />,
-        },
-        {
-            title: "Prebuilds",
-            link: [`${base}/prebuilds`],
-            icon: <AlertTriangle size={20} />,
-        },
-        {
-            title: "Environment variables",
-            link: [`${base}/variables`],
-        },
-        {
-            title: "Workspace defaults",
-            link: [`${base}/workspaces`],
-        },
-    ];
-}
+export default ConfigurationDetailPage;

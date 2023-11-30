@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:se-update-leeway-gha.20594
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:at-user-getauthenticated-dashboard-gha.20954
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
@@ -65,8 +65,11 @@ tasks:
       leeway exec --package components/ide/jetbrains/backend-plugin:plugin-latest --package components/ide/jetbrains/gateway-plugin:publish-latest --parallel -- ./gradlew buildPlugin
   - name: TypeScript
     init: yarn --network-timeout 100000 && yarn build
+  - name: Install pre-commit hooks
+    init: |
+      pre-commit install --install-hooks
+      exit 0
   - name: Go
-    before: pre-commit install --install-hooks
     init: |
       ./components/gitpod-protocol/go/scripts/generate-config.sh
       leeway exec --filter-type go -v -- go mod verify

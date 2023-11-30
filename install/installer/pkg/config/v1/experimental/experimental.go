@@ -127,9 +127,10 @@ type WorkspaceConfig struct {
 }
 
 type WorkspaceClass struct {
-	Name      string             `json:"name" validate:"required"`
-	Resources WorkspaceResources `json:"resources" validate:"required"`
-	Templates WorkspaceTemplates `json:"templates,omitempty"`
+	Name        string             `json:"name" validate:"required"`
+	Description string             `json:"description"`
+	Resources   WorkspaceResources `json:"resources" validate:"required"`
+	Templates   WorkspaceTemplates `json:"templates,omitempty"`
 }
 
 type WorkspaceResources struct {

@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspacesRequest, ListWorkspacesResponse, StartWorkspaceRequest, StartWorkspaceResponse, WatchWorkspaceStatusRequest, WatchWorkspaceStatusResponse } from "./workspace_pb.js";
+import { CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, GetWorkspaceDefaultImageRequest, GetWorkspaceDefaultImageResponse, GetWorkspaceEditorCredentialsRequest, GetWorkspaceEditorCredentialsResponse, GetWorkspaceOwnerTokenRequest, GetWorkspaceOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspacesRequest, ListWorkspacesResponse, ParseContextURLRequest, ParseContextURLResponse, SendHeartBeatRequest, SendHeartBeatResponse, StartWorkspaceRequest, StartWorkspaceResponse, UpdateWorkspaceRequest, UpdateWorkspaceResponse, WatchWorkspaceStatusRequest, WatchWorkspaceStatusResponse } from "./workspace_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -77,6 +77,75 @@ export const WorkspaceService = {
       name: "StartWorkspace",
       I: StartWorkspaceRequest,
       O: StartWorkspaceResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * UpdateWorkspace updates the workspace.
+     *
+     * @generated from rpc gitpod.v1.WorkspaceService.UpdateWorkspace
+     */
+    updateWorkspace: {
+      name: "UpdateWorkspace",
+      I: UpdateWorkspaceRequest,
+      O: UpdateWorkspaceResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ParseContextURL parses a context URL and returns the workspace metadata and spec.
+     * Not implemented yet.
+     *
+     * @generated from rpc gitpod.v1.WorkspaceService.ParseContextURL
+     */
+    parseContextURL: {
+      name: "ParseContextURL",
+      I: ParseContextURLRequest,
+      O: ParseContextURLResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetWorkspaceDefaultImage returns the default workspace image of specified
+     * workspace.
+     *
+     * @generated from rpc gitpod.v1.WorkspaceService.GetWorkspaceDefaultImage
+     */
+    getWorkspaceDefaultImage: {
+      name: "GetWorkspaceDefaultImage",
+      I: GetWorkspaceDefaultImageRequest,
+      O: GetWorkspaceDefaultImageResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * SendHeartBeat sends a heartbeat to activate the workspace
+     *
+     * @generated from rpc gitpod.v1.WorkspaceService.SendHeartBeat
+     */
+    sendHeartBeat: {
+      name: "SendHeartBeat",
+      I: SendHeartBeatRequest,
+      O: SendHeartBeatResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetWorkspaceOwnerToken returns an owner token of workspace.
+     *
+     * @generated from rpc gitpod.v1.WorkspaceService.GetWorkspaceOwnerToken
+     */
+    getWorkspaceOwnerToken: {
+      name: "GetWorkspaceOwnerToken",
+      I: GetWorkspaceOwnerTokenRequest,
+      O: GetWorkspaceOwnerTokenResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetWorkspaceEditorCredentials returns an credentials that is used in editor
+     * to encrypt and decrypt secrets
+     *
+     * @generated from rpc gitpod.v1.WorkspaceService.GetWorkspaceEditorCredentials
+     */
+    getWorkspaceEditorCredentials: {
+      name: "GetWorkspaceEditorCredentials",
+      I: GetWorkspaceEditorCredentialsRequest,
+      O: GetWorkspaceEditorCredentialsResponse,
       kind: MethodKind.Unary,
     },
   }

@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/common"
 	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/mux"
 )
@@ -31,7 +32,7 @@ func TestWorkspaceRouter(t *testing.T) {
 		Headers      map[string]string
 		WSHostSuffix string
 		Router       WorkspaceRouter
-		Infos        []WorkspaceInfo
+		Infos        []common.WorkspaceInfo
 		Expected     Expectation
 	}{
 		{
@@ -109,9 +110,9 @@ func TestWorkspaceRouter(t *testing.T) {
 					return
 				}
 
-				act.WorkspaceID = vars[workspaceIDIdentifier]
-				act.WorkspacePort = vars[workspacePortIdentifier]
-				act.DebugWorkspace = vars[debugWorkspaceIdentifier]
+				act.WorkspaceID = vars[common.WorkspaceIDIdentifier]
+				act.WorkspacePort = vars[common.WorkspacePortIdentifier]
+				act.DebugWorkspace = vars[common.DebugWorkspaceIdentifier]
 				act.URL = req.URL.String()
 				act.AdditionalHitCount++
 			}
@@ -192,7 +193,7 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 			Expected: matchResult{
 				MatchesWorkspace: true,
 				WorkspaceVars: map[string]string{
-					workspaceIDIdentifier: "amaranth-smelt-9ba20cc1",
+					common.WorkspaceIDIdentifier: "amaranth-smelt-9ba20cc1",
 				},
 			},
 		},
@@ -202,8 +203,8 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 			Expected: matchResult{
 				MatchesPort: true,
 				PortVars: map[string]string{
-					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
-					workspacePortIdentifier: "8080",
+					common.WorkspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
+					common.WorkspacePortIdentifier: "8080",
 				},
 			},
 		},

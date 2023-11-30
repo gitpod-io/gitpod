@@ -4,16 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import {
-    UserDB,
-    WorkspaceDB,
-    DBWithTracing,
-    TracedWorkspaceDB,
-    EmailDomainFilterDB,
-    TeamDB,
-    DBGitpodToken,
-} from "@gitpod/gitpod-db/lib";
-import { BlockedRepositoryDB } from "@gitpod/gitpod-db/lib/blocked-repository-db";
+import { UserDB, WorkspaceDB, DBWithTracing, TracedWorkspaceDB, TeamDB, DBGitpodToken } from "@gitpod/gitpod-db/lib";
 import {
     AuthProviderEntry,
     AuthProviderInfo,
@@ -121,6 +112,7 @@ import {
 } from "@gitpod/gitpod-protocol/lib/protocol";
 import { ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
 import { VerificationService } from "../auth/verification-service";
+import { InstallationService } from "../auth/installation-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { formatPhoneNumber } from "../user/phone-numbers";
 import { IDEService } from "../ide-service";
@@ -139,7 +131,7 @@ import {
 } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 import { ClientError } from "nice-grpc-common";
 import { BillingModes } from "../billing/billing-mode";
-import { Authorizer, SYSTEM_USER, isFgaChecksEnabled } from "../authorization/authorizer";
+import { Authorizer, SYSTEM_USER, SYSTEM_USER_ID, isFgaChecksEnabled } from "../authorization/authorizer";
 import { OrganizationService } from "../orgs/organization-service";
 import { RedisSubscriber } from "../messaging/redis-subscriber";
 import { UsageService } from "../orgs/usage-service";
@@ -148,10 +140,10 @@ import { SSHKeyService } from "../user/sshkey-service";
 import { StartWorkspaceOptions, WorkspaceService } from "./workspace-service";
 import { GitpodTokenService } from "../user/gitpod-token-service";
 import { EnvVarService } from "../user/env-var-service";
-import { SubjectId } from "../auth/subject-id";
-import { runWithSubjectId } from "../util/request-context";
 import { ScmService } from "../scm/scm-service";
 import { ContextService } from "./context-service";
+import { runWithRequestContext, runWithSubjectId } from "../util/request-context";
+import { SubjectId } from "../auth/subject-id";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -179,7 +171,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         private readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider,
 
         @inject(UserDB) private readonly userDB: UserDB,
-        @inject(BlockedRepositoryDB) private readonly blockedRepostoryDB: BlockedRepositoryDB,
         @inject(UserAuthentication) private readonly userAuthentication: UserAuthentication,
         @inject(UserService) private readonly userService: UserService,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
@@ -201,6 +192,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         @inject(VerificationService) private readonly verificationService: VerificationService,
 
+        @inject(InstallationService) private readonly installationService: InstallationService,
+
         @inject(Authorizer) private readonly auth: Authorizer,
 
         @inject(ScmService) private readonly scmService: ScmService,
@@ -209,7 +202,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(StripeService) private readonly stripeService: StripeService,
         @inject(UsageService) private readonly usageService: UsageService,
         @inject(BillingServiceDefinition.name) private readonly billingService: BillingServiceClient,
-        @inject(EmailDomainFilterDB) private emailDomainFilterdb: EmailDomainFilterDB,
 
         @inject(RedisSubscriber) private readonly subscriber: RedisSubscriber,
 
@@ -284,17 +276,29 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     private async getAccessibleProjects() {
-        if (!this.userID) {
+        const userId = this.userID;
+        if (!userId) {
             return [];
         }
 
         // update all project this user has access to
-        const allProjects: Project[] = [];
-        const teams = await this.organizationService.listOrganizationsByMember(this.userID, this.userID);
-        for (const team of teams) {
-            allProjects.push(...(await this.projectsService.getProjects(this.userID, team.id)));
-        }
-        return allProjects;
+        // gpl: This call to runWithRequestContext is not nice, but it's only there to please the old impl for a limited time, so it's fine.
+        return runWithRequestContext(
+            {
+                requestKind: "gitpod-server-impl-listener",
+                requestMethod: "getAccessibleProjects",
+                signal: new AbortController().signal,
+                subjectId: SubjectId.fromUserId(userId),
+            },
+            async () => {
+                const allProjects: Project[] = [];
+                const teams = await this.organizationService.listOrganizationsByMember(userId, userId);
+                for (const team of teams) {
+                    allProjects.push(...(await this.projectsService.getProjects(userId, team.id)));
+                }
+                return allProjects;
+            },
+        );
     }
 
     private listenForWorkspaceInstanceUpdates(): void {
@@ -313,9 +317,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     private forwardInstanceUpdateToClient(ctx: TraceContext, instance: WorkspaceInstance) {
         // gpl: We decided against tracing updates here, because it create far too much noise (cmp. history)
-        if (this.userID) {
-            this.workspaceService
-                .getWorkspace(this.userID, instance.workspaceId)
+        const userId = this.userID;
+        if (userId) {
+            runWithSubjectId(SubjectId.fromUserId(userId), () =>
+                this.workspaceService.getWorkspace(userId, instance.workspaceId),
+            )
                 .then((ws) => {
                     this.client?.onInstanceUpdate(this.censorInstance(instance));
                 })
@@ -376,8 +382,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, "User is not authenticated. Please login.");
         }
 
-        const user = await runWithSubjectId(SubjectId.fromUserId(SYSTEM_USER), async () =>
-            this.userService.findUserById(SYSTEM_USER, userId),
+        const user = await runWithSubjectId(SYSTEM_USER, async () =>
+            this.userService.findUserById(SYSTEM_USER_ID, userId),
         );
         if (user.markedDeleted === true) {
             throw new ApplicationError(ErrorCodes.USER_DELETED, "User has been deleted.");
@@ -460,19 +466,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const channel = phoneVerificationByCall ? "call" : "sms";
 
-        const { verification, verificationId } = await this.verificationService.sendVerificationToken(
+        const verificationId = await this.verificationService.sendVerificationToken(
+            user.id,
             formatPhoneNumber(rawPhoneNumber),
             channel,
         );
-        this.analytics.track({
-            event: "phone_verification_sent",
-            userId: user.id,
-            properties: {
-                verification_id: verificationId,
-                channel: verification.channel,
-                requested_channel: channel,
-            },
-        });
 
         return {
             verificationId,
@@ -488,34 +486,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const phoneNumber = formatPhoneNumber(rawPhoneNumber);
         const user = await this.checkUser("verifyPhoneNumberVerificationToken");
 
-        const { verified, channel } = await this.verificationService.verifyVerificationToken(
-            phoneNumber,
-            token,
-            verificationId,
-        );
-        if (!verified) {
-            this.analytics.track({
-                event: "phone_verification_failed",
-                userId: user.id,
-                properties: {
-                    channel,
-                    verification_id: verificationId,
-                },
-            });
-            return false;
-        }
-        this.verificationService.markVerified(user);
-        user.verificationPhoneNumber = phoneNumber;
-        await this.userDB.updateUserPartial(user);
-        this.analytics.track({
-            event: "phone_verification_completed",
-            userId: user.id,
-            properties: {
-                channel,
-                verification_id: verificationId,
-            },
-        });
-        return true;
+        return await this.verificationService.verifyVerificationToken(user, phoneNumber, token, verificationId);
     }
 
     public async getClientRegion(ctx: TraceContext): Promise<string | undefined> {
@@ -1544,7 +1515,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                         AttributionId.render({ kind: "team", teamId: org.id }),
                     )) !== undefined
                 ) {
-                    await this.verificationService.verifyUser(user);
+                    await this.userService.markUserAsVerified(user, undefined);
                 }
             } catch (e) {
                 log.warn("Failed to verify new org member", e);
@@ -1874,17 +1845,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { req: censor(req, "searchTerm") }); // searchTerm may contain PII
 
         const admin = await this.guardAdminAccess("adminGetBlockedRepositories", { req }, Permission.ADMIN_USERS);
-        await this.auth.checkPermissionOnInstallation(admin.id, "configure");
 
         try {
-            const res = await this.blockedRepostoryDB.findAllBlockedRepositories(
-                req.offset,
-                req.limit,
-                req.orderBy,
-                req.orderDir === "asc" ? "ASC" : "DESC",
-                req.searchTerm,
-            );
-            return res;
+            return await this.installationService.adminGetBlockedRepositories(admin.id, req);
         } catch (e) {
             throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, String(e));
         }
@@ -1902,18 +1865,19 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             { urlRegexp, blockUser },
             Permission.ADMIN_USERS,
         );
-        await this.auth.checkPermissionOnInstallation(admin.id, "configure");
 
-        return await this.blockedRepostoryDB.createBlockedRepository(urlRegexp, blockUser);
+        return await this.installationService.adminCreateBlockedRepository(admin.id, {
+            urlRegexp,
+            blockUser,
+        });
     }
 
     async adminDeleteBlockedRepository(ctx: TraceContext, id: number): Promise<void> {
         traceAPIParams(ctx, { id });
 
         const admin = await this.guardAdminAccess("adminDeleteBlockedRepository", { id }, Permission.ADMIN_USERS);
-        await this.auth.checkPermissionOnInstallation(admin.id, "configure");
 
-        await this.blockedRepostoryDB.deleteBlockedRepository(id);
+        await this.installationService.adminDeleteBlockedRepository(admin.id, id);
     }
 
     async adminBlockUser(ctx: TraceContext, req: AdminBlockUserRequest): Promise<User> {
@@ -1951,9 +1915,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const admin = await this.guardAdminAccess("adminVerifyUser", { id: userId }, Permission.ADMIN_USERS);
         await this.auth.checkPermissionOnUser(admin.id, "admin_control", userId);
         const user = await this.userService.findUserById(admin.id, userId);
-
-        this.verificationService.markVerified(user);
-        await this.userDB.updateUserPartial(user);
+        await this.userService.markUserAsVerified(user, undefined);
         return user;
     }
 
@@ -2973,8 +2935,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async adminGetBlockedEmailDomains(ctx: TraceContextWithSpan): Promise<EmailDomainFilterEntry[]> {
         const user = await this.checkAndBlockUser("adminGetBlockedEmailDomains");
         await this.guardAdminAccess("adminGetBlockedEmailDomains", { id: user.id }, Permission.ADMIN_USERS);
-        await this.auth.checkPermissionOnInstallation(user.id, "configure");
-        return await this.emailDomainFilterdb.getFilterEntries();
+        return await this.installationService.adminGetBlockedEmailDomains(user.id);
     }
 
     async adminSaveBlockedEmailDomain(
@@ -2983,7 +2944,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<void> {
         const user = await this.checkAndBlockUser("adminSaveBlockedEmailDomain");
         await this.guardAdminAccess("adminSaveBlockedEmailDomain", { id: user.id }, Permission.ADMIN_USERS);
-        await this.auth.checkPermissionOnInstallation(user.id, "configure");
-        await this.emailDomainFilterdb.storeFilterEntry(domainFilterentry);
+        await this.installationService.adminCreateBlockedEmailDomain(user.id, domainFilterentry);
     }
 }

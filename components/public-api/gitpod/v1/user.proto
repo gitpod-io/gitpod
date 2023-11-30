@@ -1,0 +1,259 @@
+syntax = "proto3";
+
+package gitpod.v1;
+
+import "gitpod/v1/editor.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
+
+service UserService {
+  // GetAuthenticatedUser allows to retrieve the current user.
+  rpc GetAuthenticatedUser(GetAuthenticatedUserRequest) returns (GetAuthenticatedUserResponse) {}
+
+  // UpdateUser updates the properties of a user.
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {}
+
+  // SetWorkspaceAutoStartOptions updates the auto start options for the Gitpod Dashboard.
+  // +internal - only used by the Gitpod Dashboard.
+  rpc SetWorkspaceAutoStartOptions(SetWorkspaceAutoStartOptionsRequest) returns (SetWorkspaceAutoStartOptionsResponse) {}
+}
+
+message GetAuthenticatedUserRequest {}
+message GetAuthenticatedUserResponse {
+  User user = 1;
+}
+
+message SetWorkspaceAutoStartOptionsRequest {
+  string user_id = 1;
+  repeated WorkspaceAutostartOption workspace_autostart_options = 2;
+  message WorkspaceAutostartOption {
+    string clone_url = 1;
+    string organization_id = 2;
+    optional string workspace_class = 3;
+    optional EditorReference editor_settings = 4;
+    optional string region = 5;
+  }
+}
+message SetWorkspaceAutoStartOptionsResponse {}
+
+message UpdateUserRequest {
+  string user_id = 1;
+  optional string name = 2;
+  optional string accepted_privacy_policy_date = 3;
+  optional ProfileDetails profile = 4;
+  message ProfileDetails {
+    optional string last_updated_details_nudge = 1;
+    optional string accepted_privacy_policy_date = 2;
+    optional string company_name = 3;
+    optional string email_address = 4;
+    optional string job_role = 5;
+    optional string job_role_other = 6;
+    repeated string exploration_reasons = 7;
+    repeated string signup_goals = 8;
+    optional string signup_goals_other = 10;
+    optional string onboarded_timestamp = 11;
+    optional string company_size = 12;
+  }
+  optional string email_address = 5;
+  optional EditorReference editor_settings = 6;
+  optional EmailNotificationSettings email_notification_settings = 7;
+  message EmailNotificationSettings {
+    optional bool allows_changelog_mail = 1;
+    optional bool allows_devx_mail = 2;
+    optional bool allows_onboarding_mail = 3;
+  }
+  optional WorkspaceTimeoutSettings workspace_timeout_settings = 8;
+  message WorkspaceTimeoutSettings {
+    optional google.protobuf.Duration inactivity = 1;
+    optional bool disabled_disconnected = 2;
+  }
+}
+message UpdateUserResponse {
+  User user = 1;
+}
+
+message User {
+  // id is a UUID of the user
+  string id = 1;
+
+  // organization_id is the id of the organization this account is owned by.
+  //
+  // +optional if not set, this account is owned by the installation.
+  string organization_id = 2;
+
+  // name is the full name of the user
+  string name = 3;
+
+  // avatar_url is a link to the user avatar
+  string avatar_url = 4;
+
+  // created_at is the creation time
+  google.protobuf.Timestamp created_at = 5;
+
+  repeated Identity identities = 6;
+
+  // blocked indicates whether the account is blocked, e.g. due to vialoation of ToS.
+  bool blocked = 7;
+
+  // last_verification_time is the last time this account was verified.
+  //
+  // +optional if not set, this account is not verified.
+  google.protobuf.Timestamp last_verification_time = 8;
+
+  // verification_phone_number is the phone number used for the last verification.
+  string verification_phone_number = 9;
+
+  // user global workspace timeout settings
+  //
+  // +optional
+  WorkspaceTimeoutSettings workspace_timeout_settings = 10;
+  message WorkspaceTimeoutSettings {
+    // inacitivity is the maximum time of inactivity before the workspace is stopped or paused
+    google.protobuf.Duration inactivity = 1;
+    // control whether to enable the closed timeout of a workspace, i.e. close web ide, disconnect ssh connection
+    //
+    // +optional
+    bool disabled_disconnected = 2;
+  }
+
+  // +optional
+  EmailNotificationSettings email_notification_settings = 11;
+  message EmailNotificationSettings {
+    // +optional
+    bool allows_changelog_mail = 1;
+    // +optional
+    bool allows_devx_mail = 2;
+    // +optional
+    bool allows_onboarding_mail = 3;
+  }
+
+  // +optional
+  EditorReference editor_settings = 12;
+
+  // Git clone URL pointing to the user's dotfile repo
+  //
+  // // +optional
+  string dotfile_repo = 13;
+
+  // preferred workspace class
+  //
+  // +optional
+  string workspace_class = 14;
+
+  // additional user profile data
+  //
+  // +optional
+  ProfileDetails profile = 15;
+  message ProfileDetails {
+    // when was the last time the user updated their profile information or has been nudged to do so.
+    //
+    // +optional
+    string last_updated_details_nudge = 1;
+    // when was the last time the user has accepted our privacy policy
+    //
+    // +optional
+    string accepted_privacy_policy_date = 2;
+    // the user's company name
+    //
+    // +optional
+    string company_name = 3;
+    // the user's email
+    //
+    // +optional
+    string email_address = 4;
+    // type of role user has in their job
+    //
+    // +optional
+    string job_role = 5;
+    // freeform entry for job role user works in (when jobRole is "other")
+    //
+    // +optional
+    string job_role_other = 6;
+    // Reasons user is exploring Gitpod when they signed up
+    //
+    // +optional
+    repeated string exploration_reasons = 7;
+    // what user hopes to accomplish when they signed up
+    //
+    // +optional
+    repeated string signup_goals = 8;
+    // freeform entry for signup goals (when signupGoals is "other")
+    //
+    // +optional
+    string signup_goals_other = 10;
+    // Set after a user completes the onboarding flow
+    //
+    // +optional
+    string onboarded_timestamp = 11;
+    // Onboarding question about a user's company size
+    //
+    // +optional
+    string company_size = 12;
+  }
+
+  // remembered workspace auto start options
+  //
+  // +optional
+  repeated WorkspaceAutostartOption workspace_autostart_options = 16;
+  message WorkspaceAutostartOption {
+    string clone_url = 1;
+    string organization_id = 2;
+    string workspace_class = 3;
+    // +optional
+    EditorReference editor_settings = 4;
+    // +optional
+    string region = 5;
+  }
+
+  // usage_attribution_id specifies the organization or account to which all of the
+  // user's workspace usage is attributed to, e.g. for billing purposes
+  string usage_attribution_id = 17;
+
+  // per-user settings to control workspace behavior
+  repeated UserFeatureFlag workspace_feature_flags = 18;
+  enum UserFeatureFlag {
+    USER_FEATURE_FLAG_UNSPECIFIED = 0;
+    USER_FEATURE_FLAG_FULL_WORKSPACE_BACKUP = 1;
+    USER_FEATURE_FLAG_WORKSPACE_CLASS_LIMITING = 2;
+    USER_FEATURE_FLAG_WORKSPACE_CONNECTION_LIMITING = 3;
+    USER_FEATURE_FLAG_WORKSPACE_PSI = 4;
+  }
+
+  // specifies the permissions and/or roles the user has
+  repeated RoleOrPermission roles_or_permissions = 19;
+  enum RoleOrPermission {
+    ROLE_OR_PERMISSION_UNSPECIFIED = 0;
+    ROLE_OR_PERMISSION_DEVOPS = 1;
+    ROLE_OR_PERMISSION_VIEWER = 2;
+    ROLE_OR_PERMISSION_ADMIN = 3;
+    ROLE_OR_PERMISSION_DEVELOPER = 4;
+    ROLE_OR_PERMISSION_REGISTRY_ACCESS = 5;
+    ROLE_OR_PERMISSION_ADMIN_PERMISSIONS = 6;
+    ROLE_OR_PERMISSION_ADMIN_USERS = 7;
+    ROLE_OR_PERMISSION_ADMIN_WORKSPACE_CONTENT = 8;
+    ROLE_OR_PERMISSION_ADMIN_WORKSPACES = 9;
+    ROLE_OR_PERMISSION_ADMIN_PROJECTS = 10;
+    ROLE_OR_PERMISSION_NEW_WORKSPACE_CLUSTER = 11;
+  }
+}
+
+message Identity {
+  // The id of the auth provider this identity was created with.
+  string auth_provider_id = 1;
+
+  // The external account id this identity was created for.
+  string auth_id = 2;
+
+  // The external account name this identity was created for.
+  string auth_name = 3;
+
+  // The primary email of the external account.
+  string primary_email = 4;
+
+  // The time of last signin.
+  //
+  // +optional
+  google.protobuf.Timestamp last_signin_time = 6;
+}

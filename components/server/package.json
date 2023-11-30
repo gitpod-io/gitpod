@@ -55,6 +55,7 @@
     "@gitpod/ide-service-api": "0.1.5",
     "@gitpod/image-builder": "0.1.5",
     "@gitpod/public-api": "0.1.5",
+    "@gitpod/public-api-common": "0.1.5",
     "@gitpod/supervisor-api-grpcweb": "0.1.5",
     "@gitpod/usage-api": "0.1.5",
     "@gitpod/ws-manager": "0.1.5",

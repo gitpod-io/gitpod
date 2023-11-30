@@ -8,11 +8,12 @@ import { FC, useCallback, useState } from "react";
 import Modal, { ModalBody, ModalFooter, ModalFooterAlert, ModalHeader } from "../../components/Modal";
 import { Button } from "../../components/Button";
 import { CreateProjectArgs, useCreateProject } from "../../data/projects/create-project-mutation";
-import { Project, SuggestedRepository } from "@gitpod/gitpod-protocol";
+import { Project } from "@gitpod/gitpod-protocol";
 import RepositoryFinder from "../../components/RepositoryFinder";
 import { InputField } from "../../components/forms/InputField";
 import { AuthorizeGit, useNeedsGitAuthorization } from "../../components/AuthorizeGit";
 import { useTemporaryState } from "../../hooks/use-temporary-value";
+import { SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 
 type Props = {
     onCreated: (project: Project) => void;
@@ -61,7 +62,7 @@ export const CreateProjectModal: FC<Props> = ({ onClose, onCreated }) => {
                             <InputField label="Repository" className="mb-8 w-full">
                                 <RepositoryFinder
                                     selectedContextURL={selectedRepo?.url}
-                                    selectedProjectID={selectedRepo?.projectId}
+                                    selectedConfigurationId={selectedRepo?.configurationId}
                                     onChange={setSelectedRepo}
                                     excludeProjects
                                 />

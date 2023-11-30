@@ -37,7 +37,7 @@ const (
 	headlessTaskFailedPrefix = "headless task failed: "
 )
 
-func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace, pods corev1.PodList, cfg *config.Configuration) error {
+func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace, pods *corev1.PodList, cfg *config.Configuration) error {
 	log := log.FromContext(ctx)
 
 	switch len(pods.Items) {

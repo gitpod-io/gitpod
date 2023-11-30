@@ -17,12 +17,25 @@ import {
     WatchWorkspaceStatusResponse,
     ListWorkspacesRequest,
     ListWorkspacesResponse,
+    GetWorkspaceDefaultImageRequest,
+    GetWorkspaceDefaultImageResponse,
+    GetWorkspaceEditorCredentialsRequest,
+    GetWorkspaceEditorCredentialsResponse,
+    GetWorkspaceOwnerTokenRequest,
+    GetWorkspaceOwnerTokenResponse,
+    SendHeartBeatRequest,
+    SendHeartBeatResponse,
+    GetWorkspaceDefaultImageResponse_Source,
+    ParseContextURLRequest,
+    ParseContextURLResponse,
+    UpdateWorkspaceRequest,
+    UpdateWorkspaceResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { inject, injectable } from "inversify";
 import { WorkspaceService } from "../workspace/workspace-service";
-import { PublicAPIConverter } from "@gitpod/gitpod-protocol/lib/public-api-converter";
+import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
 import { ctxClientRegion, ctxSignal, ctxUserId } from "../util/request-context";
-import { parsePagination } from "@gitpod/gitpod-protocol/lib/public-api-pagination";
+import { parsePagination } from "@gitpod/public-api-common/lib/public-api-pagination";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import { validate as uuidValidate } from "uuid";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -105,28 +118,28 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         if (req.source?.case !== "contextUrl") {
             throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
         }
-        if (!req.organizationId || !uuidValidate(req.organizationId)) {
+        if (!req.metadata || !req.metadata.organizationId || !uuidValidate(req.metadata.organizationId)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
-        if (!req.editor) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "editor is required");
-        }
-        if (!req.source.value) {
+        if (!req.source.value || !req.source.value.url) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "source is required");
+        }
+        if (!req.source.value.editor?.name) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "editor is required");
         }
         const contextUrl = req.source.value;
         const user = await this.userService.findUserById(ctxUserId(), ctxUserId());
-        const { context, project } = await this.contextService.parseContext(user, contextUrl, {
-            projectId: req.configurationId,
-            organizationId: req.organizationId,
+        const { context, project } = await this.contextService.parseContext(user, contextUrl.url, {
+            projectId: req.metadata.configurationId,
+            organizationId: req.metadata.organizationId,
             forceDefaultConfig: req.forceDefaultConfig,
         });
 
-        const normalizedContextUrl = this.contextParser.normalizeContextURL(contextUrl);
+        const normalizedContextUrl = this.contextParser.normalizeContextURL(contextUrl.url);
         const workspace = await this.workspaceService.createWorkspace(
             {},
             user,
-            req.organizationId,
+            req.metadata.organizationId,
             project,
             context,
             normalizedContextUrl,
@@ -134,10 +147,10 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
 
         await this.workspaceService.startWorkspace({}, user, workspace.id, {
             forceDefaultImage: req.forceDefaultConfig,
-            workspaceClass: req.workspaceClass,
+            workspaceClass: contextUrl.workspaceClass,
             ideSettings: {
-                defaultIde: req.editor.name,
-                useLatestVersion: req.editor.version === "latest",
+                defaultIde: req.source.value.editor.name,
+                useLatestVersion: req.source.value.editor.version === "latest",
             },
             clientRegionCode: ctxClientRegion(),
         });
@@ -173,5 +186,77 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         const response = new StartWorkspaceResponse();
         response.workspace = this.apiConverter.toWorkspace(info);
         return response;
+    }
+
+    async getWorkspaceDefaultImage(
+        req: GetWorkspaceDefaultImageRequest,
+        _: HandlerContext,
+    ): Promise<GetWorkspaceDefaultImageResponse> {
+        if (!req.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        const result = await this.workspaceService.getWorkspaceDefaultImage(ctxUserId(), req.workspaceId);
+        const response = new GetWorkspaceDefaultImageResponse({
+            defaultWorkspaceImage: result.image,
+        });
+        switch (result.source) {
+            case "organization":
+                response.source = GetWorkspaceDefaultImageResponse_Source.ORGANIZATION;
+                break;
+            case "installation":
+                response.source = GetWorkspaceDefaultImageResponse_Source.INSTALLATION;
+                break;
+        }
+        return response;
+    }
+
+    async sendHeartBeat(req: SendHeartBeatRequest, _: HandlerContext): Promise<SendHeartBeatResponse> {
+        if (!req.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        const info = await this.workspaceService.getWorkspace(ctxUserId(), req.workspaceId);
+        if (!info.latestInstance?.id || info.latestInstance.status.phase !== "running") {
+            throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "workspace is not running");
+        }
+        await this.workspaceService.sendHeartBeat(ctxUserId(), {
+            instanceId: info.latestInstance.id,
+            wasClosed: req.disconnected === true,
+        });
+
+        return new SendHeartBeatResponse();
+    }
+
+    async getWorkspaceOwnerToken(
+        req: GetWorkspaceOwnerTokenRequest,
+        _: HandlerContext,
+    ): Promise<GetWorkspaceOwnerTokenResponse> {
+        if (!req.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        const ownerToken = await this.workspaceService.getOwnerToken(ctxUserId(), req.workspaceId);
+        const response = new GetWorkspaceOwnerTokenResponse();
+        response.ownerToken = ownerToken;
+        return response;
+    }
+
+    async getWorkspaceEditorCredentials(
+        req: GetWorkspaceEditorCredentialsRequest,
+        _: HandlerContext,
+    ): Promise<GetWorkspaceEditorCredentialsResponse> {
+        if (!req.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        const credentials = await this.workspaceService.getIDECredentials(ctxUserId(), req.workspaceId);
+        const response = new GetWorkspaceEditorCredentialsResponse();
+        response.editorCredentials = credentials;
+        return response;
+    }
+
+    async updateWorkspace(req: UpdateWorkspaceRequest): Promise<UpdateWorkspaceResponse> {
+        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+    }
+
+    async parseContextURL(req: ParseContextURLRequest): Promise<ParseContextURLResponse> {
+        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
     }
 }

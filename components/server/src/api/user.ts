@@ -25,10 +25,11 @@ import {
 } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_pb";
 import { UserAuthentication } from "../user/user-authentication";
 import { WorkspaceService } from "../workspace/workspace-service";
-import { SYSTEM_USER } from "../authorization/authorizer";
 import { validate } from "uuid";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
+import { SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
+import { runWithRequestContext } from "../util/request-context";
 
 @injectable()
 export class APIUserService implements ServiceImpl<typeof UserServiceInterface> {
@@ -59,6 +60,7 @@ export class APIUserService implements ServiceImpl<typeof UserServiceInterface> 
         throw new ConnectError("unimplemented", Code.Unimplemented);
     }
 
+    // INTERNAL ONLY
     public async blockUser(req: BlockUserRequest): Promise<BlockUserResponse> {
         const { userId, reason } = req;
 
@@ -74,27 +76,37 @@ export class APIUserService implements ServiceImpl<typeof UserServiceInterface> 
 
         // TODO: Once connect-node supports middlewares, lift the tracing into the middleware.
         const trace = {};
-        // TODO for now we use SYSTEM_USER, since it is only called by internal componenets like usage
+        // TODO(gpl) for now we use SYSTEM_USER, since it is only called by internal componenets like usage
         // and not exposed publically, but there should be better way to get an authenticated user
-        await this.userService.blockUser(SYSTEM_USER, userId, true);
-        log.info(`Blocked user ${userId}.`, {
-            userId,
-            reason,
-        });
+        await runWithRequestContext(
+            {
+                requestKind: "user-service",
+                requestMethod: "blockUser",
+                signal: new AbortController().signal,
+                subjectId: SYSTEM_USER,
+            },
+            async () => {
+                await this.userService.blockUser(SYSTEM_USER_ID, userId, true);
+                log.info(`Blocked user ${userId}.`, {
+                    userId,
+                    reason,
+                });
 
-        const stoppedWorkspaces = await this.workspaceService.stopRunningWorkspacesForUser(
-            trace,
-            SYSTEM_USER,
-            userId,
-            reason,
-            StopWorkspacePolicy.IMMEDIATELY,
+                const stoppedWorkspaces = await this.workspaceService.stopRunningWorkspacesForUser(
+                    trace,
+                    SYSTEM_USER_ID,
+                    userId,
+                    reason,
+                    StopWorkspacePolicy.IMMEDIATELY,
+                );
+
+                log.info(`Stopped ${stoppedWorkspaces.length} workspaces in response to BlockUser.`, {
+                    userId,
+                    reason,
+                    workspaceIds: stoppedWorkspaces.map((w) => w.id),
+                });
+            },
         );
-
-        log.info(`Stopped ${stoppedWorkspaces.length} workspaces in response to BlockUser.`, {
-            userId,
-            reason,
-            workspaceIds: stoppedWorkspaces.map((w) => w.id),
-        });
 
         return new BlockUserResponse();
     }

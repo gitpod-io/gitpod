@@ -4,23 +4,23 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { SuggestedRepository } from "@gitpod/gitpod-protocol";
+import { SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import { deduplicateAndFilterRepositories } from "./unified-repositories-search-query";
 
 function repo(name: string, project?: string): SuggestedRepository {
-    return {
+    return new SuggestedRepository({
         url: `http://github.com/efu3he4rf/${name}`,
-        repositoryName: name,
-        projectName: project,
-        projectId: project,
-    };
+        repoName: name,
+        configurationName: project,
+        configurationId: project,
+    });
 }
 
 test("it should deduplicate non-project entries", () => {
     const suggestedRepos: SuggestedRepository[] = [repo("foo"), repo("foo2"), repo("foo", "project-foo")];
     const deduplicated = deduplicateAndFilterRepositories("foo", false, suggestedRepos);
     expect(deduplicated.length).toEqual(2);
-    expect(deduplicated[1].projectName).toEqual("project-foo");
+    expect(deduplicated[1].configurationName).toEqual("project-foo");
 });
 
 test("it should not deduplicate project entries", () => {
@@ -41,8 +41,8 @@ test("it should exclude project entries", () => {
     ];
     const deduplicated = deduplicateAndFilterRepositories("foo", true, suggestedRepos);
     expect(deduplicated.length).toEqual(2);
-    expect(deduplicated[0].repositoryName).toEqual("foo");
-    expect(deduplicated[1].repositoryName).toEqual("foo2");
+    expect(deduplicated[0].repoName).toEqual("foo");
+    expect(deduplicated[1].repoName).toEqual("foo2");
 });
 
 test("it should match entries in url as well as poject name", () => {
@@ -72,10 +72,10 @@ test("it keeps the order", () => {
         repo("bar", "FOOtest"),
     ];
     const deduplicated = deduplicateAndFilterRepositories("foot", false, suggestedRepos);
-    expect(deduplicated[0].repositoryName).toEqual("somefOOtest");
-    expect(deduplicated[1].repositoryName).toEqual("Footest");
-    expect(deduplicated[2].projectName).toEqual("someFootest");
-    expect(deduplicated[3].projectName).toEqual("FOOtest");
+    expect(deduplicated[0].repoName).toEqual("somefOOtest");
+    expect(deduplicated[1].repoName).toEqual("Footest");
+    expect(deduplicated[2].configurationName).toEqual("someFootest");
+    expect(deduplicated[3].configurationName).toEqual("FOOtest");
 });
 
 test("it should return all repositories without duplicates when excludeProjects is true", () => {
@@ -88,6 +88,6 @@ test("it should return all repositories without duplicates when excludeProjects 
     ];
     const deduplicated = deduplicateAndFilterRepositories("foo", true, suggestedRepos);
     expect(deduplicated.length).toEqual(2);
-    expect(deduplicated[0].repositoryName).toEqual("foo");
-    expect(deduplicated[1].repositoryName).toEqual("bar");
+    expect(deduplicated[0].repoName).toEqual("foo");
+    expect(deduplicated[1].repoName).toEqual("bar");
 });

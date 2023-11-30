@@ -6,7 +6,6 @@
 
 import { inject, injectable } from "inversify";
 import * as grpc from "@grpc/grpc-js";
-import { EventIterator } from "event-iterator";
 import { RedisPublisher, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
     GetWorkspaceTimeoutResult,
@@ -757,7 +756,7 @@ export class WorkspaceService {
         return urls;
     }
 
-    public watchWorkspaceStatus(userId: string, opts: { signal: AbortSignal }): EventIterator<WorkspaceInstance> {
+    public watchWorkspaceStatus(userId: string, opts: { signal: AbortSignal }): AsyncIterable<WorkspaceInstance> {
         return generateAsyncGenerator<WorkspaceInstance>((sink) => {
             try {
                 const dispose = this.subscriber.listenForWorkspaceInstanceUpdates(userId, (_ctx, instance) => {
@@ -970,6 +969,24 @@ export class WorkspaceService {
             }
             throw e;
         }
+    }
+
+    public async getWorkspaceDefaultImage(
+        userId: string,
+        workspaceId: string,
+    ): Promise<{ source: "organization" | "installation"; image: string }> {
+        const workspace = await this.doGetWorkspace(userId, workspaceId);
+        const settings = await this.orgService.getSettings(userId, workspace.organizationId);
+        if (settings.defaultWorkspaceImage) {
+            return {
+                source: "organization",
+                image: settings.defaultWorkspaceImage,
+            };
+        }
+        return {
+            source: "installation",
+            image: this.config.workspaceDefaults.workspaceImage,
+        };
     }
 }
 

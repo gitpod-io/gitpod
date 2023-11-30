@@ -109,8 +109,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	log.V(2).Info("reconciling workspace", "workspace", req.NamespacedName, "phase", workspace.Status.Phase)
 
-	var workspacePods corev1.PodList
-	err := r.List(ctx, &workspacePods, client.InNamespace(req.Namespace), client.MatchingFields{wsOwnerKey: req.Name})
+	workspacePods, err := r.listWorkspacePods(ctx, &workspace)
 	if err != nil {
 		log.Error(err, "unable to list workspace pods")
 		return ctrl.Result{}, fmt.Errorf("failed to list workspace pods: %w", err)
@@ -147,7 +146,17 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	return result, nil
 }
 
-func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *workspacev1.Workspace, workspacePods corev1.PodList) (ctrl.Result, error) {
+func (r *WorkspaceReconciler) listWorkspacePods(ctx context.Context, ws *workspacev1.Workspace) (*corev1.PodList, error) {
+	var workspacePods corev1.PodList
+	err := r.List(ctx, &workspacePods, client.InNamespace(ws.Namespace), client.MatchingFields{wsOwnerKey: ws.Name})
+	if err != nil {
+		return nil, err
+	}
+
+	return &workspacePods, nil
+}
+
+func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *workspacev1.Workspace, workspacePods *corev1.PodList) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
 	if workspace.Status.Phase != workspacev1.WorkspacePhaseStopped && !r.metrics.containsWorkspace(workspace) {
@@ -319,6 +328,13 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 	if !lastState.recordedFailure && workspace.IsConditionTrue(workspacev1.WorkspaceConditionFailed) {
 		r.metrics.countWorkspaceFailure(&log, workspace)
 		lastState.recordedFailure = true
+	}
+
+	if lastState.pendingStartTime.IsZero() && workspace.Status.Phase == workspacev1.WorkspacePhasePending {
+		lastState.pendingStartTime = time.Now()
+	} else if !lastState.pendingStartTime.IsZero() && workspace.Status.Phase != workspacev1.WorkspacePhasePending {
+		r.metrics.recordWorkspacePendingTime(&log, workspace, lastState.pendingStartTime)
+		lastState.pendingStartTime = time.Time{}
 	}
 
 	if lastState.creatingStartTime.IsZero() && workspace.Status.Phase == workspacev1.WorkspacePhaseCreating {

@@ -10,7 +10,7 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { IPrefixContextParser, IContextParser } from "./context-parser";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { ConfigProvider } from "./config-provider";
-import { InvalidGitpodYMLError } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { InvalidGitpodYMLError } from "@gitpod/public-api-common/lib/public-api-errors";
 
 @injectable()
 export class ContextParser {

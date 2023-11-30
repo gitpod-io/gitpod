@@ -126,14 +126,14 @@ import { TokenProvider } from "../user/token-provider";
 import { UserAuthentication } from "../user/user-authentication";
 import { ImageSourceProvider } from "./image-source-provider";
 import { WorkspaceClassesConfig } from "./workspace-classes";
-import { SYSTEM_USER } from "../authorization/authorizer";
+import { SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
 import { EnvVarService, ResolvedEnvVars } from "../user/env-var-service";
 import { RedlockAbortSignal } from "redlock";
 import { ConfigProvider } from "./config-provider";
 import { isGrpcError } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { ctxIsAborted, runWithRequestContext, runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
-import { runWithSubjectId } from "../util/request-context";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
@@ -349,39 +349,49 @@ export class WorkspaceStarter {
         const ctx = TraceContext.childContext("reconcileWorkspaceStart", _ctx);
 
         const doReconcileWorkspaceStart = async (abortSignal: RedlockAbortSignal) => {
-            try {
-                // Fetch a fresh instance to check it's phase
-                const instance = await this.workspaceDb.trace({}).findInstanceById(instanceId);
-                if (!instance) {
-                    ctx.span.finish();
-                    throw new Error("cannot find workspace for instance");
-                }
-                if (!WorkspaceStarter.STARTING_PHASES.includes(instance.status.phase)) {
-                    log.debug(
-                        { instanceId, workspaceId: instance.workspaceId, userId: user.id },
-                        "can't start workspace instance in this phase",
-                        { phase: instance.status.phase },
-                    );
-                    return;
-                }
+            await runWithRequestContext(
+                {
+                    requestKind: "workspace-start",
+                    requestMethod: "reconcileWorkspaceStart",
+                    signal: abortSignal,
+                    subjectId: SubjectId.fromUserId(user.id),
+                },
+                async () => {
+                    try {
+                        // Fetch a fresh instance to check it's phase
+                        const instance = await this.workspaceDb.trace({}).findInstanceById(instanceId);
+                        if (!instance) {
+                            ctx.span.finish();
+                            throw new Error("cannot find workspace for instance");
+                        }
+                        if (!WorkspaceStarter.STARTING_PHASES.includes(instance.status.phase)) {
+                            log.debug(
+                                { instanceId, workspaceId: instance.workspaceId, userId: user.id },
+                                "can't start workspace instance in this phase",
+                                { phase: instance.status.phase },
+                            );
+                            return;
+                        }
 
-                const envVars = await this.envVarService.resolveEnvVariables(
-                    user.id,
-                    workspace.projectId,
-                    workspace.type,
-                    workspace.context,
-                );
+                        const envVars = await this.envVarService.resolveEnvVariables(
+                            user.id,
+                            workspace.projectId,
+                            workspace.type,
+                            workspace.context,
+                        );
 
-                await this.actuallyStartWorkspace(ctx, instance, workspace, user, envVars, abortSignal);
-            } catch (err) {
-                this.logAndTraceStartWorkspaceError(
-                    ctx,
-                    { userId: user.id, workspaceId: workspace.id, instanceId },
-                    err,
-                );
-            } finally {
-                ctx.span.finish();
-            }
+                        await this.actuallyStartWorkspace(ctx, instance, workspace, user, envVars);
+                    } catch (err) {
+                        this.logAndTraceStartWorkspaceError(
+                            ctx,
+                            { userId: user.id, workspaceId: workspace.id, instanceId },
+                            err,
+                        );
+                    } finally {
+                        ctx.span.finish();
+                    }
+                },
+            );
         };
 
         // We try to acquire a mutex here, which we intend to hold until the workspace start request is sent to ws-manager.
@@ -490,8 +500,8 @@ export class WorkspaceStarter {
 
         if (blockedRepository.blockUser) {
             try {
-                await runWithSubjectId(SubjectId.fromUserId(SYSTEM_USER), async () =>
-                    this.userService.blockUser(SYSTEM_USER, user.id, true),
+                await runWithSubjectId(SYSTEM_USER, async () =>
+                    this.userService.blockUser(SYSTEM_USER_ID, user.id, true),
                 );
                 log.info({ userId: user.id }, "Blocked user.", { contextURL });
             } catch (error) {
@@ -508,7 +518,6 @@ export class WorkspaceStarter {
         workspace: Workspace,
         user: User,
         envVars: ResolvedEnvVars,
-        abortSignal: RedlockAbortSignal,
     ): Promise<void> {
         const span = TraceContext.startSpan("actuallyStartWorkspace", ctx);
         const region = instance.configuration.regionPreference;
@@ -535,7 +544,6 @@ export class WorkspaceStarter {
                 additionalAuth,
                 forceRebuild,
                 forceRebuild,
-                abortSignal,
                 region,
             );
 
@@ -574,18 +582,10 @@ export class WorkspaceStarter {
                 }
 
                 for (; retries < MAX_INSTANCE_START_RETRIES; retries++) {
-                    if (abortSignal.aborted) {
+                    if (ctxIsAborted()) {
                         return;
                     }
-                    resp = await this.tryStartOnCluster(
-                        { span },
-                        startRequest,
-                        user,
-                        workspace,
-                        instance,
-                        abortSignal,
-                        region,
-                    );
+                    resp = await this.tryStartOnCluster({ span }, startRequest, user, workspace, instance, region);
                     if (resp) {
                         break;
                     }
@@ -602,13 +602,13 @@ export class WorkspaceStarter {
                         "We're in the middle of an update. We'll be back to normal soon. Please try again in a few minutes.",
                     );
                 }
-                await this.failInstanceStart({ span }, err, workspace, instance, abortSignal);
+                await this.failInstanceStart({ span }, err, workspace, instance);
                 throw new StartInstanceError(reason, err);
             }
 
             if (!resp) {
                 const err = new Error("cannot start a workspace because no workspace clusters are available");
-                await this.failInstanceStart({ span }, err, workspace, instance, abortSignal);
+                await this.failInstanceStart({ span }, err, workspace, instance);
                 throw new StartInstanceError("clusterSelectionFailed", err);
             }
             increaseSuccessfulInstanceStartCounter(retries);
@@ -641,13 +641,13 @@ export class WorkspaceStarter {
                 log.warn(logCtx, "cannot start workspace instance due to temporary error", err);
             } else if (!(err instanceof StartInstanceError)) {
                 // fallback in case we did not already handle this error
-                await this.failInstanceStart({ span }, err, workspace, instance, abortSignal);
+                await this.failInstanceStart({ span }, err, workspace, instance);
                 err = new StartInstanceError("other", err); // don't throw because there's nobody catching it. We just want to log/trace it.
             }
 
             this.logAndTraceStartWorkspaceError({ span }, logCtx, err);
         } finally {
-            if (abortSignal.aborted) {
+            if (ctxIsAborted()) {
                 ctx.span?.setTag("aborted", true);
             }
             span.finish();
@@ -686,7 +686,6 @@ export class WorkspaceStarter {
         user: User,
         workspace: Workspace,
         instance: WorkspaceInstance,
-        abortSignal: RedlockAbortSignal,
         region?: WorkspaceRegion,
     ): Promise<StartWorkspaceResponse.AsObject | undefined> {
         const constrainOnWorkspaceClassSupport = await isWorkspaceClassDiscoveryEnabled(user);
@@ -700,7 +699,7 @@ export class WorkspaceStarter {
             constrainOnWorkspaceClassSupport,
         );
         for await (const cluster of clusters) {
-            if (abortSignal.aborted) {
+            if (ctxIsAborted()) {
                 return;
             }
             try {
@@ -789,14 +788,8 @@ export class WorkspaceStarter {
      * failInstanceStart properly fails a workspace instance if something goes wrong before the instance ever reaches
      * workspace manager. In this case we need to make sure we also fulfil the tasks of the bridge (e.g. for prebulds).
      */
-    private async failInstanceStart(
-        ctx: TraceContext,
-        err: any,
-        workspace: Workspace,
-        instance: WorkspaceInstance,
-        abortSignal: RedlockAbortSignal,
-    ) {
-        if (abortSignal.aborted) {
+    private async failInstanceStart(ctx: TraceContext, err: any, workspace: Workspace, instance: WorkspaceInstance) {
+        if (ctxIsAborted()) {
             return;
         }
 
@@ -1141,7 +1134,6 @@ export class WorkspaceStarter {
         additionalAuth: Map<string, string>,
         ignoreBaseImageresolvedAndRebuildBase: boolean = false,
         forceRebuild: boolean = false,
-        abortSignal: RedlockAbortSignal,
         region?: WorkspaceRegion,
     ): Promise<WorkspaceInstance> {
         const span = TraceContext.startSpan("buildWorkspaceImage", ctx);
@@ -1248,7 +1240,6 @@ export class WorkspaceStarter {
                         additionalAuth,
                         true,
                         forceRebuild,
-                        abortSignal,
                         region,
                     );
                 } else {
@@ -1285,7 +1276,7 @@ export class WorkspaceStarter {
             }
 
             // This instance's image build "failed" as well, so mark it as such.
-            await this.failInstanceStart({ span }, err, workspace, instance, abortSignal);
+            await this.failInstanceStart({ span }, err, workspace, instance);
 
             const looksLikeUserError = (msg: string): boolean => {
                 return (

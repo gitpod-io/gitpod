@@ -32,7 +32,7 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { Config } from "../config";
 import { EntitlementService } from "../billing/entitlement-service";
 import { TeamDB } from "@gitpod/gitpod-db/lib";
-import { InvalidGitpodYMLError } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { InvalidGitpodYMLError } from "@gitpod/public-api-common/lib/public-api-errors";
 
 const POD_PATH_WORKSPACE_BASE = "/workspace";
 

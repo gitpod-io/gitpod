@@ -42,6 +42,21 @@ type WorkspaceServiceClient interface {
 	// StartWorkspace starts an existing workspace.
 	// If the specified workspace is not in stopped phase, this will return the workspace as is.
 	StartWorkspace(ctx context.Context, in *StartWorkspaceRequest, opts ...grpc.CallOption) (*StartWorkspaceResponse, error)
+	// UpdateWorkspace updates the workspace.
+	UpdateWorkspace(ctx context.Context, in *UpdateWorkspaceRequest, opts ...grpc.CallOption) (*UpdateWorkspaceResponse, error)
+	// ParseContextURL parses a context URL and returns the workspace metadata and spec.
+	// Not implemented yet.
+	ParseContextURL(ctx context.Context, in *ParseContextURLRequest, opts ...grpc.CallOption) (*ParseContextURLResponse, error)
+	// GetWorkspaceDefaultImage returns the default workspace image of specified
+	// workspace.
+	GetWorkspaceDefaultImage(ctx context.Context, in *GetWorkspaceDefaultImageRequest, opts ...grpc.CallOption) (*GetWorkspaceDefaultImageResponse, error)
+	// SendHeartBeat sends a heartbeat to activate the workspace
+	SendHeartBeat(ctx context.Context, in *SendHeartBeatRequest, opts ...grpc.CallOption) (*SendHeartBeatResponse, error)
+	// GetWorkspaceOwnerToken returns an owner token of workspace.
+	GetWorkspaceOwnerToken(ctx context.Context, in *GetWorkspaceOwnerTokenRequest, opts ...grpc.CallOption) (*GetWorkspaceOwnerTokenResponse, error)
+	// GetWorkspaceEditorCredentials returns an credentials that is used in editor
+	// to encrypt and decrypt secrets
+	GetWorkspaceEditorCredentials(ctx context.Context, in *GetWorkspaceEditorCredentialsRequest, opts ...grpc.CallOption) (*GetWorkspaceEditorCredentialsResponse, error)
 }
 
 type workspaceServiceClient struct {
@@ -120,6 +135,60 @@ func (c *workspaceServiceClient) StartWorkspace(ctx context.Context, in *StartWo
 	return out, nil
 }
 
+func (c *workspaceServiceClient) UpdateWorkspace(ctx context.Context, in *UpdateWorkspaceRequest, opts ...grpc.CallOption) (*UpdateWorkspaceResponse, error) {
+	out := new(UpdateWorkspaceResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspaceService/UpdateWorkspace", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workspaceServiceClient) ParseContextURL(ctx context.Context, in *ParseContextURLRequest, opts ...grpc.CallOption) (*ParseContextURLResponse, error) {
+	out := new(ParseContextURLResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspaceService/ParseContextURL", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workspaceServiceClient) GetWorkspaceDefaultImage(ctx context.Context, in *GetWorkspaceDefaultImageRequest, opts ...grpc.CallOption) (*GetWorkspaceDefaultImageResponse, error) {
+	out := new(GetWorkspaceDefaultImageResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspaceService/GetWorkspaceDefaultImage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workspaceServiceClient) SendHeartBeat(ctx context.Context, in *SendHeartBeatRequest, opts ...grpc.CallOption) (*SendHeartBeatResponse, error) {
+	out := new(SendHeartBeatResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspaceService/SendHeartBeat", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workspaceServiceClient) GetWorkspaceOwnerToken(ctx context.Context, in *GetWorkspaceOwnerTokenRequest, opts ...grpc.CallOption) (*GetWorkspaceOwnerTokenResponse, error) {
+	out := new(GetWorkspaceOwnerTokenResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspaceService/GetWorkspaceOwnerToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workspaceServiceClient) GetWorkspaceEditorCredentials(ctx context.Context, in *GetWorkspaceEditorCredentialsRequest, opts ...grpc.CallOption) (*GetWorkspaceEditorCredentialsResponse, error) {
+	out := new(GetWorkspaceEditorCredentialsResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspaceService/GetWorkspaceEditorCredentials", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkspaceServiceServer is the server API for WorkspaceService service.
 // All implementations must embed UnimplementedWorkspaceServiceServer
 // for forward compatibility
@@ -140,6 +209,21 @@ type WorkspaceServiceServer interface {
 	// StartWorkspace starts an existing workspace.
 	// If the specified workspace is not in stopped phase, this will return the workspace as is.
 	StartWorkspace(context.Context, *StartWorkspaceRequest) (*StartWorkspaceResponse, error)
+	// UpdateWorkspace updates the workspace.
+	UpdateWorkspace(context.Context, *UpdateWorkspaceRequest) (*UpdateWorkspaceResponse, error)
+	// ParseContextURL parses a context URL and returns the workspace metadata and spec.
+	// Not implemented yet.
+	ParseContextURL(context.Context, *ParseContextURLRequest) (*ParseContextURLResponse, error)
+	// GetWorkspaceDefaultImage returns the default workspace image of specified
+	// workspace.
+	GetWorkspaceDefaultImage(context.Context, *GetWorkspaceDefaultImageRequest) (*GetWorkspaceDefaultImageResponse, error)
+	// SendHeartBeat sends a heartbeat to activate the workspace
+	SendHeartBeat(context.Context, *SendHeartBeatRequest) (*SendHeartBeatResponse, error)
+	// GetWorkspaceOwnerToken returns an owner token of workspace.
+	GetWorkspaceOwnerToken(context.Context, *GetWorkspaceOwnerTokenRequest) (*GetWorkspaceOwnerTokenResponse, error)
+	// GetWorkspaceEditorCredentials returns an credentials that is used in editor
+	// to encrypt and decrypt secrets
+	GetWorkspaceEditorCredentials(context.Context, *GetWorkspaceEditorCredentialsRequest) (*GetWorkspaceEditorCredentialsResponse, error)
 	mustEmbedUnimplementedWorkspaceServiceServer()
 }
 
@@ -161,6 +245,24 @@ func (UnimplementedWorkspaceServiceServer) CreateAndStartWorkspace(context.Conte
 }
 func (UnimplementedWorkspaceServiceServer) StartWorkspace(context.Context, *StartWorkspaceRequest) (*StartWorkspaceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StartWorkspace not implemented")
+}
+func (UnimplementedWorkspaceServiceServer) UpdateWorkspace(context.Context, *UpdateWorkspaceRequest) (*UpdateWorkspaceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateWorkspace not implemented")
+}
+func (UnimplementedWorkspaceServiceServer) ParseContextURL(context.Context, *ParseContextURLRequest) (*ParseContextURLResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ParseContextURL not implemented")
+}
+func (UnimplementedWorkspaceServiceServer) GetWorkspaceDefaultImage(context.Context, *GetWorkspaceDefaultImageRequest) (*GetWorkspaceDefaultImageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetWorkspaceDefaultImage not implemented")
+}
+func (UnimplementedWorkspaceServiceServer) SendHeartBeat(context.Context, *SendHeartBeatRequest) (*SendHeartBeatResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendHeartBeat not implemented")
+}
+func (UnimplementedWorkspaceServiceServer) GetWorkspaceOwnerToken(context.Context, *GetWorkspaceOwnerTokenRequest) (*GetWorkspaceOwnerTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetWorkspaceOwnerToken not implemented")
+}
+func (UnimplementedWorkspaceServiceServer) GetWorkspaceEditorCredentials(context.Context, *GetWorkspaceEditorCredentialsRequest) (*GetWorkspaceEditorCredentialsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetWorkspaceEditorCredentials not implemented")
 }
 func (UnimplementedWorkspaceServiceServer) mustEmbedUnimplementedWorkspaceServiceServer() {}
 
@@ -268,6 +370,114 @@ func _WorkspaceService_StartWorkspace_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkspaceService_UpdateWorkspace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateWorkspaceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspaceServiceServer).UpdateWorkspace(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.WorkspaceService/UpdateWorkspace",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspaceServiceServer).UpdateWorkspace(ctx, req.(*UpdateWorkspaceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkspaceService_ParseContextURL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ParseContextURLRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspaceServiceServer).ParseContextURL(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.WorkspaceService/ParseContextURL",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspaceServiceServer).ParseContextURL(ctx, req.(*ParseContextURLRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkspaceService_GetWorkspaceDefaultImage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetWorkspaceDefaultImageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspaceServiceServer).GetWorkspaceDefaultImage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.WorkspaceService/GetWorkspaceDefaultImage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspaceServiceServer).GetWorkspaceDefaultImage(ctx, req.(*GetWorkspaceDefaultImageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkspaceService_SendHeartBeat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendHeartBeatRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspaceServiceServer).SendHeartBeat(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.WorkspaceService/SendHeartBeat",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspaceServiceServer).SendHeartBeat(ctx, req.(*SendHeartBeatRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkspaceService_GetWorkspaceOwnerToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetWorkspaceOwnerTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspaceServiceServer).GetWorkspaceOwnerToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.WorkspaceService/GetWorkspaceOwnerToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspaceServiceServer).GetWorkspaceOwnerToken(ctx, req.(*GetWorkspaceOwnerTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkspaceService_GetWorkspaceEditorCredentials_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetWorkspaceEditorCredentialsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspaceServiceServer).GetWorkspaceEditorCredentials(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.WorkspaceService/GetWorkspaceEditorCredentials",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspaceServiceServer).GetWorkspaceEditorCredentials(ctx, req.(*GetWorkspaceEditorCredentialsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorkspaceService_ServiceDesc is the grpc.ServiceDesc for WorkspaceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -290,6 +500,30 @@ var WorkspaceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "StartWorkspace",
 			Handler:    _WorkspaceService_StartWorkspace_Handler,
+		},
+		{
+			MethodName: "UpdateWorkspace",
+			Handler:    _WorkspaceService_UpdateWorkspace_Handler,
+		},
+		{
+			MethodName: "ParseContextURL",
+			Handler:    _WorkspaceService_ParseContextURL_Handler,
+		},
+		{
+			MethodName: "GetWorkspaceDefaultImage",
+			Handler:    _WorkspaceService_GetWorkspaceDefaultImage_Handler,
+		},
+		{
+			MethodName: "SendHeartBeat",
+			Handler:    _WorkspaceService_SendHeartBeat_Handler,
+		},
+		{
+			MethodName: "GetWorkspaceOwnerToken",
+			Handler:    _WorkspaceService_GetWorkspaceOwnerToken_Handler,
+		},
+		{
+			MethodName: "GetWorkspaceEditorCredentials",
+			Handler:    _WorkspaceService_GetWorkspaceEditorCredentials_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

@@ -14,7 +14,7 @@ import { Container } from "inversify";
 import "mocha";
 import { OrganizationService } from "../orgs/organization-service";
 import { expectError } from "../test/expect-utils";
-import { createTestContainer } from "../test/service-testing-container-module";
+import { createTestContainer, withTestCtx } from "../test/service-testing-container-module";
 import { OldProjectSettings, ProjectsService } from "./projects-service";
 import { daysBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 
@@ -232,7 +232,7 @@ describe("ProjectsService", async () => {
                 prebuildBranchPattern: "feature-*",
             },
         });
-        const project = await ps.getProject(owner.id, oldProject.id);
+        const project = await withTestCtx(owner, () => ps.getProject(owner.id, oldProject.id));
         expect(project.settings).to.deep.equal(<ProjectSettings>{
             prebuilds: {
                 ...Project.PREBUILD_SETTINGS_DEFAULTS,
@@ -257,7 +257,7 @@ describe("ProjectsService", async () => {
                 prebuildBranchPattern: "feature-*",
             },
         });
-        const project = await ps.getProject(owner.id, oldProject.id);
+        const project = await withTestCtx(owner, () => ps.getProject(owner.id, oldProject.id));
         expect(project.settings).to.deep.equal(<ProjectSettings>{
             prebuilds: {
                 ...Project.PREBUILD_SETTINGS_DEFAULTS,
@@ -283,7 +283,7 @@ describe("ProjectsService", async () => {
             },
         });
         await createWorkspaceForProject(oldProject.id, 1);
-        const project = await ps.getProject(owner.id, oldProject.id);
+        const project = await withTestCtx(owner, () => ps.getProject(owner.id, oldProject.id));
         expect(project.settings).to.deep.equal(<ProjectSettings>{
             prebuilds: {
                 enable: true,

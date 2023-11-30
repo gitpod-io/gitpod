@@ -58,3 +58,63 @@ func (s *ProxyWorkspaceServiceHandler) StartWorkspace(ctx context.Context, req *
 
 	return connect_go.NewResponse(resp), nil
 }
+
+func (s *ProxyWorkspaceServiceHandler) UpdateWorkspace(ctx context.Context, req *connect_go.Request[v1.UpdateWorkspaceRequest]) (*connect_go.Response[v1.UpdateWorkspaceResponse], error) {
+	resp, err := s.Client.UpdateWorkspace(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
+func (s *ProxyWorkspaceServiceHandler) ParseContextURL(ctx context.Context, req *connect_go.Request[v1.ParseContextURLRequest]) (*connect_go.Response[v1.ParseContextURLResponse], error) {
+	resp, err := s.Client.ParseContextURL(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
+func (s *ProxyWorkspaceServiceHandler) GetWorkspaceDefaultImage(ctx context.Context, req *connect_go.Request[v1.GetWorkspaceDefaultImageRequest]) (*connect_go.Response[v1.GetWorkspaceDefaultImageResponse], error) {
+	resp, err := s.Client.GetWorkspaceDefaultImage(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
+func (s *ProxyWorkspaceServiceHandler) SendHeartBeat(ctx context.Context, req *connect_go.Request[v1.SendHeartBeatRequest]) (*connect_go.Response[v1.SendHeartBeatResponse], error) {
+	resp, err := s.Client.SendHeartBeat(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
+func (s *ProxyWorkspaceServiceHandler) GetWorkspaceOwnerToken(ctx context.Context, req *connect_go.Request[v1.GetWorkspaceOwnerTokenRequest]) (*connect_go.Response[v1.GetWorkspaceOwnerTokenResponse], error) {
+	resp, err := s.Client.GetWorkspaceOwnerToken(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
+func (s *ProxyWorkspaceServiceHandler) GetWorkspaceEditorCredentials(ctx context.Context, req *connect_go.Request[v1.GetWorkspaceEditorCredentialsRequest]) (*connect_go.Response[v1.GetWorkspaceEditorCredentialsResponse], error) {
+	resp, err := s.Client.GetWorkspaceEditorCredentials(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}

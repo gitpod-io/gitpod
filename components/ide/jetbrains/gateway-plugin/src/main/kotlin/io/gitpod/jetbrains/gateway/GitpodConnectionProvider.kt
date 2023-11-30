@@ -373,6 +373,8 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
             if (keyPair.hostKey != null) {
                 hostKeys = listOf(SSHHostKey(keyPair.hostKey.type, keyPair.hostKey.value))
             }
+            val gatewayHostKeys = resolveHostKeys(ideUrl, connectParams)
+            hostKeys = hostKeys + gatewayHostKeys.orEmpty()
 
             var userName = keyPair.userName
             if (userName.isNullOrBlank()) {

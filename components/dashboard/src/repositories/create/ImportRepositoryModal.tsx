@@ -61,7 +61,7 @@ export const ImportRepositoryModal: FC<Props> = ({ onClose, onCreated }) => {
                             <InputField className="mb-8 w-full">
                                 <RepositoryFinder
                                     selectedContextURL={selectedRepo?.url}
-                                    selectedProjectID={selectedRepo?.projectId}
+                                    selectedConfigurationId={selectedRepo?.projectId}
                                     onChange={setSelectedRepo}
                                     excludeProjects
                                 />

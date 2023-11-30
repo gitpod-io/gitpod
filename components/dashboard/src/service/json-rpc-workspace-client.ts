@@ -18,13 +18,27 @@ import {
     WatchWorkspaceStatusResponse,
     ListWorkspacesRequest,
     ListWorkspacesResponse,
+    GetWorkspaceDefaultImageRequest,
+    GetWorkspaceDefaultImageResponse,
+    GetWorkspaceEditorCredentialsRequest,
+    GetWorkspaceEditorCredentialsResponse,
+    GetWorkspaceOwnerTokenRequest,
+    GetWorkspaceOwnerTokenResponse,
+    SendHeartBeatRequest,
+    SendHeartBeatResponse,
+    WorkspacePhase_Phase,
+    GetWorkspaceDefaultImageResponse_Source,
+    ParseContextURLRequest,
+    ParseContextURLResponse,
+    UpdateWorkspaceRequest,
+    UpdateWorkspaceResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { converter } from "./public-api";
 import { getGitpodService } from "./service";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import { generateAsyncGenerator } from "@gitpod/gitpod-protocol/lib/generate-async-generator";
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
-import { parsePagination } from "@gitpod/gitpod-protocol/lib/public-api-pagination";
+import { parsePagination } from "@gitpod/public-api-common/lib/public-api-pagination";
 import { validate as uuidValidate } from "uuid";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
@@ -121,25 +135,25 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
         if (request.source?.case !== "contextUrl") {
             throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
         }
-        if (!request.organizationId || !uuidValidate(request.organizationId)) {
+        if (!request.metadata || !request.metadata.organizationId || !uuidValidate(request.metadata.organizationId)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
-        if (!request.editor) {
+        if (!request.source.value.editor?.name) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "editor is required");
         }
-        if (!request.source.value) {
+        if (!request.source.value.url) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "source is required");
         }
         const response = await getGitpodService().server.createWorkspace({
-            organizationId: request.organizationId,
+            organizationId: request.metadata.organizationId,
             ignoreRunningWorkspaceOnSameCommit: true,
-            contextUrl: request.source.value,
+            contextUrl: request.source.value.url,
             forceDefaultConfig: request.forceDefaultConfig,
-            workspaceClass: request.workspaceClass,
-            projectId: request.configurationId,
+            workspaceClass: request.source.value.workspaceClass,
+            projectId: request.metadata.configurationId,
             ideSettings: {
-                defaultIde: request.editor.name,
-                useLatestVersion: request.editor.version === "latest",
+                defaultIde: request.source.value.editor.name,
+                useLatestVersion: request.source.value.editor.version === "latest",
             },
         });
         const workspace = await this.getWorkspace({ workspaceId: response.createdWorkspaceId });
@@ -159,5 +173,89 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
         const result = new StartWorkspaceResponse();
         result.workspace = workspace.workspace;
         return result;
+    }
+
+    async getWorkspaceDefaultImage(
+        request: PartialMessage<GetWorkspaceDefaultImageRequest>,
+        _options?: CallOptions | undefined,
+    ): Promise<GetWorkspaceDefaultImageResponse> {
+        if (!request.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        const response = await getGitpodService().server.getDefaultWorkspaceImage({
+            workspaceId: request.workspaceId,
+        });
+        const result = new GetWorkspaceDefaultImageResponse();
+        result.defaultWorkspaceImage = response.image;
+        switch (response.source) {
+            case "installation":
+                result.source = GetWorkspaceDefaultImageResponse_Source.INSTALLATION;
+                break;
+            case "organization":
+                result.source = GetWorkspaceDefaultImageResponse_Source.ORGANIZATION;
+                break;
+        }
+        return result;
+    }
+
+    async sendHeartBeat(
+        request: PartialMessage<SendHeartBeatRequest>,
+        _options?: CallOptions | undefined,
+    ): Promise<SendHeartBeatResponse> {
+        if (!request.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        const workspace = await this.getWorkspace({ workspaceId: request.workspaceId });
+        if (
+            !workspace.workspace?.status?.phase ||
+            workspace.workspace.status.phase.name !== WorkspacePhase_Phase.RUNNING
+        ) {
+            throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "workspace is not running");
+        }
+        await getGitpodService().server.sendHeartBeat({
+            instanceId: workspace.workspace.status.instanceId,
+            wasClosed: request.disconnected === true,
+        });
+        return new SendHeartBeatResponse();
+    }
+
+    async getWorkspaceOwnerToken(
+        request: PartialMessage<GetWorkspaceOwnerTokenRequest>,
+        _options?: CallOptions | undefined,
+    ): Promise<GetWorkspaceOwnerTokenResponse> {
+        if (!request.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        const ownerToken = await getGitpodService().server.getOwnerToken(request.workspaceId);
+        const result = new GetWorkspaceOwnerTokenResponse();
+        result.ownerToken = ownerToken;
+        return result;
+    }
+
+    async getWorkspaceEditorCredentials(
+        request: PartialMessage<GetWorkspaceEditorCredentialsRequest>,
+        _options?: CallOptions | undefined,
+    ): Promise<GetWorkspaceEditorCredentialsResponse> {
+        if (!request.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        const credentials = await getGitpodService().server.getIDECredentials(request.workspaceId);
+        const result = new GetWorkspaceEditorCredentialsResponse();
+        result.editorCredentials = credentials;
+        return result;
+    }
+
+    async updateWorkspace(
+        request: PartialMessage<UpdateWorkspaceRequest>,
+        _options?: CallOptions | undefined,
+    ): Promise<UpdateWorkspaceResponse> {
+        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+    }
+
+    async parseContextURL(
+        request: PartialMessage<ParseContextURLRequest>,
+        _options?: CallOptions | undefined,
+    ): Promise<ParseContextURLResponse> {
+        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
     }
 }

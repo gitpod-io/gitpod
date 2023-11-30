@@ -8,16 +8,16 @@ import { FC, useCallback, useMemo, useState } from "react";
 import { Combobox, ComboboxElement, ComboboxSelectedItem } from "./podkit/combobox/Combobox";
 import RepositorySVG from "../icons/Repository.svg";
 import { ReactComponent as RepositoryIcon } from "../icons/RepositoryWithColor.svg";
-import { SuggestedRepository } from "@gitpod/gitpod-protocol";
 import { MiddleDot } from "./typography/MiddleDot";
 import { useUnifiedRepositorySearch } from "../data/git-providers/unified-repositories-search-query";
 import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
 import { ReactComponent as Exclamation2 } from "../images/exclamation2.svg";
 import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import { SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 
 interface RepositoryFinderProps {
     selectedContextURL?: string;
-    selectedProjectID?: string;
+    selectedConfigurationId?: string;
     disabled?: boolean;
     expanded?: boolean;
     excludeProjects?: boolean;
@@ -26,7 +26,7 @@ interface RepositoryFinderProps {
 
 export default function RepositoryFinder({
     selectedContextURL,
-    selectedProjectID,
+    selectedConfigurationId: selectedProjectID,
     disabled,
     expanded,
     excludeProjects = false,
@@ -46,8 +46,8 @@ export default function RepositoryFinder({
         (selectedID: string) => {
             // selectedId is either projectId or repo url
             const matchingSuggestion = repos?.find((repo) => {
-                if (repo.projectId) {
-                    return repo.projectId === selectedID;
+                if (repo.configurationId) {
+                    return repo.configurationId === selectedID;
                 }
 
                 return repo.url === selectedID;
@@ -57,9 +57,11 @@ export default function RepositoryFinder({
                 return;
             }
 
-            onChange?.({
-                url: selectedID,
-            });
+            onChange?.(
+                new SuggestedRepository({
+                    url: selectedID,
+                }),
+            );
         },
         [onChange, repos],
     );
@@ -68,7 +70,7 @@ export default function RepositoryFinder({
     const selectedSuggestion = useMemo(() => {
         let match = repos?.find((repo) => {
             if (selectedProjectID) {
-                return repo.projectId === selectedProjectID;
+                return repo.configurationId === selectedProjectID;
             }
 
             return repo.url === selectedContextURL;
@@ -76,18 +78,15 @@ export default function RepositoryFinder({
 
         // If no match, it's a context url that was typed/pasted in, so treat it like a suggestion w/ just a url
         if (!match && selectedContextURL) {
-            match = {
+            match = new SuggestedRepository({
                 url: selectedContextURL,
-            };
+            });
         }
 
         // This means we found a matching project, but the context url is different
         // user may be using a pr or branch url, so we want to make sure and use that w/ the matching project
-        if (match && match.projectId && selectedContextURL && match.url !== selectedContextURL) {
-            match = {
-                ...match,
-                url: selectedContextURL,
-            };
+        if (match && match.configurationId && selectedContextURL && match.url !== selectedContextURL) {
+            match.url = selectedContextURL;
         }
 
         return match;
@@ -99,7 +98,7 @@ export default function RepositoryFinder({
         (searchString: string) => {
             const result = repos.map((repo) => {
                 return {
-                    id: repo.projectId || repo.url,
+                    id: repo.configurationId || repo.url,
                     element: <SuggestedRepositoryOption repo={repo} />,
                     isSelectable: true,
                 } as ComboboxElement;
@@ -169,15 +168,15 @@ export default function RepositoryFinder({
                 title={
                     <div className="truncate">
                         {displayContextUrl(
-                            selectedSuggestion?.projectName ||
-                                selectedSuggestion?.repositoryName ||
+                            selectedSuggestion?.configurationName ||
+                                selectedSuggestion?.repoName ||
                                 selectedSuggestion?.url,
                         ) || "Select a repository"}
                     </div>
                 }
                 subtitle={
                     // Only show the url if we have a project or repo name, otherwise it's redundant w/ the title
-                    selectedSuggestion?.projectName || selectedSuggestion?.repositoryName
+                    selectedSuggestion?.configurationName || selectedSuggestion?.repoName
                         ? displayContextUrl(selectedSuggestion?.url)
                         : undefined
                 }
@@ -191,13 +190,13 @@ type SuggestedRepositoryOptionProps = {
     repo: SuggestedRepository;
 };
 const SuggestedRepositoryOption: FC<SuggestedRepositoryOptionProps> = ({ repo }) => {
-    const name = repo.projectName || repo.repositoryName;
+    const name = repo.configurationName || repo.repoName;
     const repoPath = stripOffProtocol(repo.url);
 
     return (
         <div
             className="flex flex-row items-center overflow-hidden"
-            aria-label={`${repo.projectId ? "Project" : "Repo"}: ${repo.url}`}
+            aria-label={`${repo.configurationId ? "Project" : "Repo"}: ${repo.url}`}
         >
             <span className={"pr-2"}>
                 <RepositoryIcon className={`w-5 h-5 text-gray-400`} />
