@@ -26,6 +26,8 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/error_pb";
 import { startFixtureTest } from "./fixtures.spec";
 import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import { BranchMatchingStrategy } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
+import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 
 describe("PublicAPIConverter", () => {
     const converter = new PublicAPIConverter();
@@ -44,8 +46,9 @@ describe("PublicAPIConverter", () => {
         });
 
         it("toOrgMemberRole", async () => {
-            await startFixtureTest("../fixtures/toOrgMemberRole_*.json", async (input) =>
-                converter.toOrgMemberRole(input),
+            await startFixtureTest(
+                "../fixtures/toOrgMemberRole_*.json",
+                async (input) => OrganizationRole[converter.toOrgMemberRole(input)],
             );
         });
 
@@ -80,8 +83,9 @@ describe("PublicAPIConverter", () => {
         });
 
         it("toBranchMatchingStrategy", async () => {
-            await startFixtureTest("../fixtures/toBranchMatchingStrategy_*.json", async (input) =>
-                converter.toBranchMatchingStrategy(input),
+            await startFixtureTest(
+                "../fixtures/toBranchMatchingStrategy_*.json",
+                async (input) => BranchMatchingStrategy[converter.toBranchMatchingStrategy(input)],
             );
         });
 
@@ -104,8 +108,9 @@ describe("PublicAPIConverter", () => {
         });
 
         it("toAuthProviderType", async () => {
-            await startFixtureTest("../fixtures/toAuthProviderType_*.json", async (input) =>
-                converter.toAuthProviderType(input),
+            await startFixtureTest(
+                "../fixtures/toAuthProviderType_*.json",
+                async (input) => AuthProviderType[converter.toAuthProviderType(input)],
             );
         });
 
