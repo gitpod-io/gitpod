@@ -32,7 +32,7 @@ const featureFlags = {
 type FeatureFlags = typeof featureFlags;
 
 export const useFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): FeatureFlags[K] | boolean => {
-    const { data: user } = useAuthenticatedUser();
+    const { user } = useAuthenticatedUser();
     const org = useCurrentOrg().data;
     const project = useCurrentProject().project;
 

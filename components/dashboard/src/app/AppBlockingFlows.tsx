@@ -19,7 +19,7 @@ const DedicatedSetup = lazy(() => import(/* webpackPrefetch: true */ "../dedicat
 // Since this runs before the app is rendered, we should avoid adding any lengthy async calls that would delay the app from loading.
 export const AppBlockingFlows: FC = ({ children }) => {
     const history = useHistory();
-    const { data: user } = useAuthenticatedUser();
+    const { user } = useAuthenticatedUser();
     const org = useCurrentOrg();
     const showDedicatedSetup = useShowDedicatedSetup();
     const showUserOnboarding = useShowUserOnboarding();

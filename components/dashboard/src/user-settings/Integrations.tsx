@@ -55,7 +55,7 @@ export default function Integrations() {
 }
 
 function GitProviders() {
-    const { data: user, refetch: reloadUser } = useAuthenticatedUser();
+    const { user, reloadUser } = useAuthenticatedUser();
 
     const authProviders = useAuthProviderDescriptions();
     const [allScopes, setAllScopes] = useState<Map<string, string[]>>(new Map());
@@ -373,7 +373,7 @@ function GitProviders() {
 }
 
 function GitIntegrations() {
-    const { data: user } = useAuthenticatedUser();
+    const { user } = useAuthenticatedUser();
     const userGitAuthProviders = useFeatureFlag("userGitAuthProviders");
 
     const deleteUserAuthProvider = useDeleteUserAuthProviderMutation();

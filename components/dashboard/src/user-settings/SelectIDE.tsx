@@ -17,7 +17,7 @@ interface SelectIDEProps {
 }
 
 export default function SelectIDE(props: SelectIDEProps) {
-    const { data: user, refetch: reloadUser } = useAuthenticatedUser();
+    const { user, reloadUser } = useAuthenticatedUser();
     const updateUser = useUpdateCurrentUserMutation();
 
     const [defaultIde, setDefaultIde] = useState<string>(user?.editorSettings?.name || "code");

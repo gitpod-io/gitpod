@@ -13,7 +13,7 @@ import {
 import { useAuthenticatedUser } from "../current-user/authenticated-user-query";
 
 export const useAuthProviderDescriptions = () => {
-    const { data: user } = useAuthenticatedUser();
+    const { user } = useAuthenticatedUser();
     const query = useQuery<AuthProviderDescription[]>({
         queryKey: getAuthProviderDescriptionsQueryKey(),
         queryFn: async () => {

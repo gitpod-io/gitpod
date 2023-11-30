@@ -10,7 +10,7 @@ import { useAuthenticatedUser } from "../data/current-user/authenticated-user-qu
 import { isOnboardingUser, isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
 
 export const useShowUserOnboarding = () => {
-    const { data: user } = useAuthenticatedUser();
+    const { user } = useAuthenticatedUser();
     const search = useQueryParams();
 
     if (!user || isOrganizationOwned(user)) {

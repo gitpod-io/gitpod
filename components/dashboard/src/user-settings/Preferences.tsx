@@ -27,7 +27,7 @@ export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "pr
 
 export default function Preferences() {
     const { toast } = useToast();
-    const { data: user, refetch: reloadUser } = useAuthenticatedUser();
+    const { user, reloadUser } = useAuthenticatedUser();
     const updateUser = useUpdateCurrentUserMutation();
     const billingMode = useOrgBillingMode();
     const updateDotfileRepo = useUpdateCurrentUserDotfileRepoMutation();

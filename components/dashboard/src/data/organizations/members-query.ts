@@ -41,7 +41,7 @@ export function useListOrganizationMembers() {
 }
 
 export function useIsOwner(): boolean {
-    const { data: user } = useAuthenticatedUser();
+    const { user } = useAuthenticatedUser();
     const members = useListOrganizationMembers();
     const isOwner = useMemo(() => {
         return members?.data?.some((m) => m.userId === user?.id && m.role === OrganizationRole.OWNER);

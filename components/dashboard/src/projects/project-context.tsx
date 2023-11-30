@@ -30,7 +30,7 @@ export const ProjectContextProvider: React.FC = ({ children }) => {
 export function useCurrentProject(): { project: Project | undefined; loading: boolean } {
     const { project, setProject } = useContext(ProjectContext);
     const [loading, setLoading] = useState(true);
-    const { data: user } = useAuthenticatedUser();
+    const { user } = useAuthenticatedUser();
     const org = useCurrentOrg();
     const orgs = useOrganizations();
     const projectIdFromRoute = useRouteMatch<{ projectId?: string }>("/projects/:projectId")?.params?.projectId;

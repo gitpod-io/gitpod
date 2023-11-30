@@ -26,7 +26,7 @@ import { Button } from "@podkit/buttons/Button";
 import { useAuthenticatedUser } from "../data/current-user/authenticated-user-query";
 
 export default function MembersPage() {
-    const { data: user } = useAuthenticatedUser();
+    const { user } = useAuthenticatedUser();
     const org = useCurrentOrg();
     const membersQuery = useListOrganizationMembers();
     const members: OrganizationMember[] = useMemo(() => membersQuery.data || [], [membersQuery.data]);

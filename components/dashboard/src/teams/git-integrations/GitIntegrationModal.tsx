@@ -30,7 +30,7 @@ type Props = {
 };
 
 export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
-    const { refetch: reloadUser } = useAuthenticatedUser();
+    const { reloadUser } = useAuthenticatedUser();
     const { toast } = useToast();
     const team = useCurrentOrg().data;
     const [type, setType] = useState<AuthProviderType>(props.provider?.type ?? AuthProviderType.GITLAB);

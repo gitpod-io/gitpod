@@ -29,7 +29,7 @@ interface Entry {
 }
 
 export default function Menu() {
-    const { data: user } = useAuthenticatedUser();
+    const { user } = useAuthenticatedUser();
     const location = useLocation();
     const { setCurrency } = useContext(PaymentContext);
     const [isFeedbackFormVisible, setFeedbackFormVisible] = useState<boolean>(false);

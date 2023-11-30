@@ -30,7 +30,7 @@ import { Button } from "@podkit/buttons/Button";
 import { useAuthenticatedUser } from "../data/current-user/authenticated-user-query";
 
 export default function TeamSettingsPage() {
-    const { data: user } = useAuthenticatedUser();
+    const { user } = useAuthenticatedUser();
     const org = useCurrentOrg().data;
     const isOwner = useIsOwner();
     const invalidateOrgs = useOrganizationsInvalidator();

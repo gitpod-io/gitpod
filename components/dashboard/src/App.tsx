@@ -9,19 +9,19 @@ import { AppLoading } from "./app/AppLoading";
 import { AppRoutes } from "./app/AppRoutes";
 import { useCurrentOrg } from "./data/organizations/orgs-query";
 import { useAnalyticsTracking } from "./hooks/use-analytics-tracking";
-import { useUserLoader } from "./hooks/use-user-loader";
 import { Login } from "./Login";
 import { AppBlockingFlows } from "./app/AppBlockingFlows";
 import { Route, Switch, useHistory, useLocation } from "react-router";
 import { ErrorPages } from "./error-pages/ErrorPages";
 import { LinkedInCallback } from "react-linkedin-login-oauth2";
 import { useQueryParams } from "./hooks/use-query-params";
+import { useAuthenticatedUser } from "./data/current-user/authenticated-user-query";
 
 export const StartWorkspaceModalKeyBinding = `${/(Mac|iPhone|iPod|iPad)/i.test(navigator.platform) ? "⌘" : "Ctrl﹢"}O`;
 
 // Top level Dashboard App component
 const App: FC = () => {
-    const { user, loading } = useUserLoader();
+    const { user, loading } = useAuthenticatedUser();
     const currentOrgQuery = useCurrentOrg();
     const history = useHistory();
     const location = useLocation();

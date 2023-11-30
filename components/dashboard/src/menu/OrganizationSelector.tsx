@@ -16,7 +16,7 @@ import { useAuthenticatedUser } from "../data/current-user/authenticated-user-qu
 import { isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
 
 export default function OrganizationSelector() {
-    const { data: user } = useAuthenticatedUser();
+    const { user } = useAuthenticatedUser();
     const orgs = useOrganizations();
     const currentOrg = useCurrentOrg();
     const members = useListOrganizationMembers().data || [];

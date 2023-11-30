@@ -73,7 +73,7 @@ type DedicatedSetupStepsProps = {
     onComplete: () => void;
 };
 const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, ssoConfig, onComplete }) => {
-    const { refetch: reloadUser } = useAuthenticatedUser();
+    const { reloadUser } = useAuthenticatedUser();
     const params = useQueryParams();
 
     // If we have an org w/ a name, we can skip the first step and go to sso setup

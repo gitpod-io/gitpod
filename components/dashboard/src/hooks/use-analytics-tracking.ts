@@ -13,7 +13,7 @@ import { useAuthenticatedUser } from "../data/current-user/authenticated-user-qu
 
 export const useAnalyticsTracking = () => {
     const history = useHistory();
-    const { data: user } = useAuthenticatedUser();
+    const { user } = useAuthenticatedUser();
     const { isDark } = useTheme();
 
     const { orbital, isLoaded: isOrbitalLoaded, discoveryIds } = useOrbital("4aErj3uvRbye");

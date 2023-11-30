@@ -17,7 +17,7 @@ import { AuthProviderDescription } from "@gitpod/public-api/lib/gitpod/v1/authpr
 import { useAuthenticatedUser } from "../data/current-user/authenticated-user-query";
 
 export function useNeedsGitAuthorization() {
-    const { data: user } = useAuthenticatedUser();
+    const { user } = useAuthenticatedUser();
     const { data: authProviders } = useAuthProviderDescriptions();
     if (!user || !authProviders) {
         return false;
@@ -26,7 +26,7 @@ export function useNeedsGitAuthorization() {
 }
 
 export const AuthorizeGit: FC<{ className?: string }> = ({ className }) => {
-    const { refetch: reloadUser } = useAuthenticatedUser();
+    const { reloadUser } = useAuthenticatedUser();
     const owner = useIsOwner();
     const { data: authProviders } = useAuthProviderDescriptions();
     const updateUser = useCallback(async () => {

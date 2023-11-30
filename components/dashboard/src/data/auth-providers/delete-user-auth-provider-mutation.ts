@@ -15,7 +15,7 @@ type DeleteAuthProviderArgs = {
 };
 export const useDeleteUserAuthProviderMutation = () => {
     const queryClient = useQueryClient();
-    const { data: user } = useAuthenticatedUser();
+    const { user } = useAuthenticatedUser();
 
     return useMutation({
         mutationFn: async ({ providerId }: DeleteAuthProviderArgs) => {

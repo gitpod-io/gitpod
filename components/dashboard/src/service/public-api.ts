@@ -42,7 +42,6 @@ import { VerificationService } from "@gitpod/public-api/lib/gitpod/v1/verificati
 import { JsonRpcInstallationClient } from "./json-rpc-installation-client";
 import { InstallationService } from "@gitpod/public-api/lib/gitpod/v1/installation_connect";
 import { JsonRpcUserClient } from "./json-rpc-user-client";
-import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
@@ -164,9 +163,9 @@ export function projectToProtocol(project: Project): ProtocolProject {
     };
 }
 
-let user: User | undefined;
-export function updateUser(newUser: User | undefined) {
-    user = newUser;
+let userId: string | undefined;
+export function updateUserIdForExperiments(newUserId: string | undefined) {
+    userId = newUserId;
 }
 
 function createServiceClient<T extends ServiceType>(
@@ -191,7 +190,7 @@ function createServiceClient<T extends ServiceType>(
                 const resolvedFlags = await Promise.all(
                     featureFlags.map((ff) =>
                         experimentsClient.getValueAsync(ff, false, {
-                            user: { id: user?.id || "" },
+                            user: { id: userId || "" },
                             gitpodHost: window.location.host,
                         }),
                     ),

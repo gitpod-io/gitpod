@@ -13,7 +13,7 @@ import { useAuthenticatedUser } from "../data/current-user/authenticated-user-qu
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 
 export default function Notifications() {
-    const { data: user, refetch: reloadUser } = useAuthenticatedUser();
+    const { user, reloadUser } = useAuthenticatedUser();
     const [isOnboardingMail, setOnboardingMail] = useState(!!user?.emailNotificationSettings?.allowsOnboardingMail);
     const [isChangelogMail, setChangelogMail] = useState(!!user?.emailNotificationSettings?.allowsChangelogMail);
     const [isDevXMail, setDevXMail] = useState(!!user?.emailNotificationSettings?.allowsDevxMail);

@@ -7,12 +7,12 @@
 import dayjs from "dayjs";
 import { useCallback, useEffect, useState } from "react";
 import Alert, { AlertType } from "./components/Alert";
-import { useUserLoader } from "./hooks/use-user-loader";
 import { isGitpodIo } from "./utils";
 import { trackEvent } from "./Analytics";
 import { useUpdateCurrentUserMutation } from "./data/current-user/update-mutation";
 import { User as UserProtocol } from "@gitpod/gitpod-protocol";
 import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
+import { useAuthenticatedUser } from "./data/current-user/authenticated-user-query";
 
 const KEY_APP_DISMISSED_NOTIFICATIONS = "gitpod-app-notifications-dismissed";
 const PRIVACY_POLICY_LAST_UPDATED = "2023-10-17";
@@ -61,7 +61,7 @@ const UPDATED_PRIVACY_POLICY = (updateUser: (user: Partial<UserProtocol>) => Pro
 
 export function AppNotifications() {
     const [topNotification, setTopNotification] = useState<Notification | undefined>(undefined);
-    const { user, loading } = useUserLoader();
+    const { user, loading } = useAuthenticatedUser();
     const updateUser = useUpdateCurrentUserMutation();
 
     useEffect(() => {

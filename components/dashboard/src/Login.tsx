@@ -36,7 +36,7 @@ type LoginProps = {
     onLoggedIn?: () => void;
 };
 export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
-    const { refetch: reloadUser } = useAuthenticatedUser();
+    const { reloadUser } = useAuthenticatedUser();
 
     const urlHash = useMemo(() => getURLHash(), []);
 

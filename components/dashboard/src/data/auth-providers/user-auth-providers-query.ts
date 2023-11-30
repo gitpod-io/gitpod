@@ -11,7 +11,7 @@ import { useAuthenticatedUser } from "../current-user/authenticated-user-query";
 
 export type OrgAuthProvidersQueryResult = AuthProvider[];
 export const useOrgAuthProvidersQuery = () => {
-    const { data: user } = useAuthenticatedUser();
+    const { user } = useAuthenticatedUser();
 
     return useQuery<OrgAuthProvidersQueryResult>({
         queryKey: getUserAuthProvidersQueryKey(user?.id ?? ""),

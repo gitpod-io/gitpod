@@ -33,7 +33,7 @@ export const useUpdateCurrentUserMutation = () => {
 };
 
 export const useUpdateCurrentUserDotfileRepoMutation = () => {
-    const { data: user } = useAuthenticatedUser();
+    const { user } = useAuthenticatedUser();
     const updateUser = useUpdateCurrentUserMutation();
 
     return useMutation({

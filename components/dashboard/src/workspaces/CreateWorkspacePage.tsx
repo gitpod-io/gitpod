@@ -48,7 +48,7 @@ import { converter } from "../service/public-api";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 
 export function CreateWorkspacePage() {
-    const { data: user, refetch: reloadUser } = useAuthenticatedUser();
+    const { user, reloadUser } = useAuthenticatedUser();
     const updateUser = useUpdateCurrentUserMutation();
     const currentOrg = useCurrentOrg().data;
     const projects = useListAllProjectsQuery();
@@ -667,7 +667,7 @@ export function LimitReachedParallelWorkspacesModal() {
 }
 
 export function LimitReachedModal(p: { children: React.ReactNode }) {
-    const { data: user } = useAuthenticatedUser();
+    const { user } = useAuthenticatedUser();
     return (
         // TODO: Use title and buttons props
         <Modal visible={true} closeable={false} onClose={() => {}}>

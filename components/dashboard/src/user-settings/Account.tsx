@@ -23,7 +23,7 @@ import { User as UserProtocol } from "@gitpod/gitpod-protocol";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 
 export default function Account() {
-    const { data: user, refetch: reloadUser } = useAuthenticatedUser();
+    const { user, reloadUser } = useAuthenticatedUser();
     const [modal, setModal] = useState(false);
     const [typedEmail, setTypedEmail] = useState("");
     const original = getProfile(user!);

@@ -34,7 +34,7 @@ type Props = {
 const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
     const history = useHistory();
     const location = useLocation();
-    const { refetch: reloadUser } = useAuthenticatedUser();
+    const { reloadUser } = useAuthenticatedUser();
     const updateUser = useUpdateCurrentUserMutation();
     const { dropConfetti } = useConfetti();
 

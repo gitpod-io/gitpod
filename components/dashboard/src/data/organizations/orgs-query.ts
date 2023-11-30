@@ -14,7 +14,7 @@ import { useAuthenticatedUser } from "../current-user/authenticated-user-query";
 import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 
 export function useOrganizationsInvalidator() {
-    const { data: user } = useAuthenticatedUser();
+    const { user } = useAuthenticatedUser();
     const queryClient = useQueryClient();
     return useCallback(() => {
         console.log("Invalidating orgs... " + JSON.stringify(getQueryKey(user)));
@@ -23,7 +23,7 @@ export function useOrganizationsInvalidator() {
 }
 
 export function useOrganizations() {
-    const { data: user } = useAuthenticatedUser();
+    const { user } = useAuthenticatedUser();
     const query = useQuery<Organization[], Error>(
         getQueryKey(user),
         async () => {
