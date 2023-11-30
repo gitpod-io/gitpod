@@ -26,8 +26,8 @@ export const AddVariableModal = ({ configuration, onClose }: Props) => {
     );
     const createVariable = useCreateConfigurationVariable();
 
-    const addVariable = useCallback(async () => {
-        await createVariable.mutateAsync(
+    const addVariable = useCallback(() => {
+        createVariable.mutateAsync(
             {
                 configurationId: configuration.id,
                 name,
@@ -48,6 +48,7 @@ export const AddVariableModal = ({ configuration, onClose }: Props) => {
                     <h4>Name</h4>
                     <input
                         autoFocus
+                        autoComplete={"off"}
                         className="w-full"
                         type="text"
                         name="name"
@@ -59,6 +60,7 @@ export const AddVariableModal = ({ configuration, onClose }: Props) => {
                 <div className="mt-4">
                     <h4>Value</h4>
                     <input
+                        autoComplete={"off"}
                         className="w-full"
                         type="text"
                         name="value"
