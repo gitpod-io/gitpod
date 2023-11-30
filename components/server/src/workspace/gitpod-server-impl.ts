@@ -1355,13 +1355,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         name: string,
         value: string,
         censored: boolean,
+        id?: string,
     ): Promise<void> {
         traceAPIParams(ctx, { projectId, name }); // value may contain secrets
         const user = await this.checkAndBlockUser("setProjectEnvironmentVariable");
         await this.guardProjectOperation(user, projectId, "update");
         const envVars = await this.envVarService.listProjectEnvVars(user.id, projectId);
         if (envVars.find((v) => v.name === name)) {
-            await this.envVarService.updateProjectEnvVar(user.id, projectId, { name, value, censored });
+            await this.envVarService.updateProjectEnvVar(user.id, projectId, { name, value, censored, id });
         } else {
             await this.envVarService.addProjectEnvVar(user.id, projectId, { name, value, censored });
         }

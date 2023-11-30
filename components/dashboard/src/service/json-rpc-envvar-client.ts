@@ -164,6 +164,7 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
                 req.name ?? projectEnvVarfound.name,
                 req.value ?? "",
                 (req.admission === EnvironmentVariableAdmission.PREBUILD ? true : false) ?? projectEnvVarfound.censored,
+                req.environmentVariableId,
             );
 
             const updatedProjectEnvVars = await getGitpodService().server.getProjectEnvironmentVariables(
