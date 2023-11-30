@@ -44,7 +44,7 @@ export const ConfigurationVariableList = ({ configuration }: Props) => {
                 </div>
             </div>
             {data.length === 0 ? (
-                <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full p-6 flex flex-col items-center justify-center space-y-3">
+                <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full p-6 flex flex-col justify-center space-y-3">
                     <span className="font-bold text-base">No environment variables are set</span>
                     {/* todo: change to podkit color abstractions */}
                     <span className="text-sm text-gray-500 dark:text-gray-400">
