@@ -60,13 +60,15 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
 
     const toggleShared = useCallback(() => {
         const newLevel =
-            workspace.spec?.admission === AdmissionLevel.EVERYONE ? AdmissionLevel.OWNER_ONLY : AdmissionLevel.EVERYONE;
+            workspace.status?.admission === AdmissionLevel.EVERYONE
+                ? AdmissionLevel.OWNER_ONLY
+                : AdmissionLevel.EVERYONE;
 
         toggleWorkspaceShared.mutate({
             workspaceId: workspace.id,
             level: newLevel,
         });
-    }, [toggleWorkspaceShared, workspace.id, workspace.spec?.admission]);
+    }, [toggleWorkspaceShared, workspace.id, workspace.status?.admission]);
 
     const togglePinned = useCallback(() => {
         toggleWorkspacePinned.mutate({
@@ -127,12 +129,12 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
     menuEntries.push(
         {
             title: "Share",
-            active: workspace.spec?.admission === AdmissionLevel.EVERYONE,
+            active: workspace.status?.admission === AdmissionLevel.EVERYONE,
             onClick: toggleShared,
         },
         {
             title: "Pin",
-            active: !!workspace.metadata?.pinned,
+            active: !!workspace.pinned,
             separator: true,
             onClick: togglePinned,
         },

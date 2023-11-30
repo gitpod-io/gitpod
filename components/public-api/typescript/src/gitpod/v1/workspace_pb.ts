@@ -10,10 +10,9 @@
 // @ts-nocheck
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { Duration, Message, proto3, protoInt64, Timestamp } from "@bufbuild/protobuf";
+import { Message, proto3, protoInt64, Timestamp } from "@bufbuild/protobuf";
 import { PaginationRequest, PaginationResponse } from "./pagination_pb.js";
 import { EditorReference } from "./editor_pb.js";
-import { EnvironmentVariable } from "./envvar_pb.js";
 
 /**
  * Admission level describes who can access a workspace instance and its ports.
@@ -285,18 +284,18 @@ export class ListWorkspacesRequest extends Message<ListWorkspacesRequest> {
  */
 export class ListWorkspacesResponse extends Message<ListWorkspacesResponse> {
   /**
-   * pagination contains the pagination options for listing workspaces
-   *
-   * @generated from field: gitpod.v1.PaginationResponse pagination = 1;
-   */
-  pagination?: PaginationResponse;
-
-  /**
    * workspaces are the workspaces that matched the query
    *
-   * @generated from field: repeated gitpod.v1.Workspace workspaces = 2;
+   * @generated from field: repeated gitpod.v1.Workspace workspaces = 1;
    */
   workspaces: Workspace[] = [];
+
+  /**
+   * pagination contains the pagination options for listing workspaces
+   *
+   * @generated from field: gitpod.v1.PaginationResponse pagination = 2;
+   */
+  pagination?: PaginationResponse;
 
   constructor(data?: PartialMessage<ListWorkspacesResponse>) {
     super();
@@ -306,8 +305,8 @@ export class ListWorkspacesResponse extends Message<ListWorkspacesResponse> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.ListWorkspacesResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "pagination", kind: "message", T: PaginationResponse },
-    { no: 2, name: "workspaces", kind: "message", T: Workspace, repeated: true },
+    { no: 1, name: "workspaces", kind: "message", T: Workspace, repeated: true },
+    { no: 2, name: "pagination", kind: "message", T: PaginationResponse },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListWorkspacesResponse {
@@ -328,48 +327,95 @@ export class ListWorkspacesResponse extends Message<ListWorkspacesResponse> {
 }
 
 /**
- * Required fields:
- * - metadata.organization_id
- * - metadata.configuration_id
- *
  * @generated from message gitpod.v1.CreateAndStartWorkspaceRequest
  */
 export class CreateAndStartWorkspaceRequest extends Message<CreateAndStartWorkspaceRequest> {
   /**
-   * metadata is data associated with this workspace that's required for other parts of Gitpod to function
+   * organization_id is the ID of the organization to create the workspace
    *
-   * @generated from field: gitpod.v1.WorkspaceMetadata metadata = 1;
+   * +required
+   *
+   * @generated from field: string organization_id = 1;
    */
-  metadata?: WorkspaceMetadata;
+  organizationId = "";
 
   /**
+   * configuration_id is the ID of the configuration to use
+   *
+   * @generated from field: string configuration_id = 2;
+   */
+  configurationId = "";
+
+  /**
+   * source describes the source refer of workspace.
+   *
+   * +required
+   *
    * @generated from oneof gitpod.v1.CreateAndStartWorkspaceRequest.source
    */
   source: {
     /**
-     * context_url is the URL from which the workspace is created
+     * git describes the source refer of workspace
+     * Obtain available git using the ContextService.ParseContext operation if
+     * not sure about it.
      *
-     * @generated from field: gitpod.v1.CreateAndStartWorkspaceRequest.ContextURL context_url = 2;
+     * @generated from field: gitpod.v1.CreateAndStartWorkspaceRequest.Git git = 3;
      */
-    value: CreateAndStartWorkspaceRequest_ContextURL;
-    case: "contextUrl";
+    value: CreateAndStartWorkspaceRequest_Git;
+    case: "git";
   } | {
     /**
-     * spec is the configuration of the workspace that's required for the to start the workspace
+     * context_url is for backward compatiblity with the current dashboard, use
+     * ContextService.ParseContext get get a Git source instead
      *
-     * @generated from field: gitpod.v1.WorkspaceSpec spec = 3;
+     * @generated from field: string context_url = 4 [deprecated = true];
+     * @deprecated
      */
-    value: WorkspaceSpec;
-    case: "spec";
+    value: string;
+    case: "contextUrl";
   } | { case: undefined; value?: undefined } = { case: undefined };
+
+  /**
+   * additional_env_variables provide additional environment variables to the
+   * workspace.
+   * It will take precedence over environment variables provided by
+   * the user and the configuration
+   *
+   * @generated from field: repeated gitpod.v1.WorkspaceEnvironmentVariable additional_env_variables = 5;
+   */
+  additionalEnvVariables: WorkspaceEnvironmentVariable[] = [];
+
+  /**
+   * @generated from field: string region = 6;
+   */
+  region = "";
+
+  /**
+   * @generated from field: string workspace_class = 7;
+   */
+  workspaceClass = "";
+
+  /**
+   * @generated from field: gitpod.v1.EditorReference editor = 8;
+   */
+  editor?: EditorReference;
+
+  /**
+   * @generated from field: string name = 9;
+   */
+  name = "";
+
+  /**
+   * @generated from field: bool pinned = 10;
+   */
+  pinned = false;
 
   /**
    * force_default_config indicates that the workspace should be created with
    * the default configuration instead of the configuration provided in
    * `.gitpod.yml` file
    *
-   * @generated from field: bool force_default_config = 4 [deprecated = true];
-   * @deprecated
+   * @generated from field: bool force_default_config = 11;
    */
   forceDefaultConfig = false;
 
@@ -381,10 +427,17 @@ export class CreateAndStartWorkspaceRequest extends Message<CreateAndStartWorksp
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.CreateAndStartWorkspaceRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "metadata", kind: "message", T: WorkspaceMetadata },
-    { no: 2, name: "context_url", kind: "message", T: CreateAndStartWorkspaceRequest_ContextURL, oneof: "source" },
-    { no: 3, name: "spec", kind: "message", T: WorkspaceSpec, oneof: "source" },
-    { no: 4, name: "force_default_config", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 1, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "configuration_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "git", kind: "message", T: CreateAndStartWorkspaceRequest_Git, oneof: "source" },
+    { no: 4, name: "context_url", kind: "scalar", T: 9 /* ScalarType.STRING */, oneof: "source" },
+    { no: 5, name: "additional_env_variables", kind: "message", T: WorkspaceEnvironmentVariable, repeated: true },
+    { no: 6, name: "region", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 8, name: "editor", kind: "message", T: EditorReference },
+    { no: 9, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 10, name: "pinned", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 11, name: "force_default_config", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateAndStartWorkspaceRequest {
@@ -405,57 +458,59 @@ export class CreateAndStartWorkspaceRequest extends Message<CreateAndStartWorksp
 }
 
 /**
- * @generated from message gitpod.v1.CreateAndStartWorkspaceRequest.ContextURL
+ * @generated from message gitpod.v1.CreateAndStartWorkspaceRequest.Git
  */
-export class CreateAndStartWorkspaceRequest_ContextURL extends Message<CreateAndStartWorkspaceRequest_ContextURL> {
+export class CreateAndStartWorkspaceRequest_Git extends Message<CreateAndStartWorkspaceRequest_Git> {
   /**
-   * url is the URL from which the workspace is created
+   * clone_url is the URL of the repository to clone
    *
-   * @generated from field: string url = 1;
+   * @generated from field: string clone_url = 1;
    */
-  url = "";
+  cloneUrl = "";
 
   /**
-   * workspace_class is the class of the workspace we ought to start
+   * ref is an alternatively symbolic. e.g. refs/tags/v1.0,
+   * empty string means the default branch of the repository
    *
-   * @generated from field: string workspace_class = 2;
+   * @generated from field: string ref = 2;
    */
-  workspaceClass = "";
+  ref = "";
 
   /**
-   * editor specifies the editor that will be used with this workspace.
+   * create_local_branch is the branch you want to create based on provided
+   * clone_url and ref when workspace started
    *
-   * @generated from field: gitpod.v1.EditorReference editor = 3;
+   * @generated from field: string create_local_branch = 3;
    */
-  editor?: EditorReference;
+  createLocalBranch = "";
 
-  constructor(data?: PartialMessage<CreateAndStartWorkspaceRequest_ContextURL>) {
+  constructor(data?: PartialMessage<CreateAndStartWorkspaceRequest_Git>) {
     super();
     proto3.util.initPartial(data, this);
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.CreateAndStartWorkspaceRequest.ContextURL";
+  static readonly typeName = "gitpod.v1.CreateAndStartWorkspaceRequest.Git";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "editor", kind: "message", T: EditorReference },
+    { no: 1, name: "clone_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "ref", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "create_local_branch", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateAndStartWorkspaceRequest_ContextURL {
-    return new CreateAndStartWorkspaceRequest_ContextURL().fromBinary(bytes, options);
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateAndStartWorkspaceRequest_Git {
+    return new CreateAndStartWorkspaceRequest_Git().fromBinary(bytes, options);
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateAndStartWorkspaceRequest_ContextURL {
-    return new CreateAndStartWorkspaceRequest_ContextURL().fromJson(jsonValue, options);
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateAndStartWorkspaceRequest_Git {
+    return new CreateAndStartWorkspaceRequest_Git().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateAndStartWorkspaceRequest_ContextURL {
-    return new CreateAndStartWorkspaceRequest_ContextURL().fromJsonString(jsonString, options);
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateAndStartWorkspaceRequest_Git {
+    return new CreateAndStartWorkspaceRequest_Git().fromJsonString(jsonString, options);
   }
 
-  static equals(a: CreateAndStartWorkspaceRequest_ContextURL | PlainMessage<CreateAndStartWorkspaceRequest_ContextURL> | undefined, b: CreateAndStartWorkspaceRequest_ContextURL | PlainMessage<CreateAndStartWorkspaceRequest_ContextURL> | undefined): boolean {
-    return proto3.util.equals(CreateAndStartWorkspaceRequest_ContextURL, a, b);
+  static equals(a: CreateAndStartWorkspaceRequest_Git | PlainMessage<CreateAndStartWorkspaceRequest_Git> | undefined, b: CreateAndStartWorkspaceRequest_Git | PlainMessage<CreateAndStartWorkspaceRequest_Git> | undefined): boolean {
+    return proto3.util.equals(CreateAndStartWorkspaceRequest_Git, a, b);
   }
 }
 
@@ -510,8 +565,7 @@ export class StartWorkspaceRequest extends Message<StartWorkspaceRequest> {
   workspaceId = "";
 
   /**
-   * @generated from field: bool force_default_config = 2 [deprecated = true];
-   * @deprecated
+   * @generated from field: bool force_default_config = 2;
    */
   forceDefaultConfig = false;
 
@@ -925,32 +979,97 @@ export class GetWorkspaceEditorCredentialsResponse extends Message<GetWorkspaceE
  */
 export class Workspace extends Message<Workspace> {
   /**
-   * ID is a unique identifier of this workspace. No other workspace with the same name must be managed by this workspace manager
-   *
    * @generated from field: string id = 1;
    */
   id = "";
 
   /**
-   * Metadata is data associated with this workspace that's required for other parts of Gitpod to function
+   * prebuild indicates it is a prebuild
+   * TODO(ak) model prebuilds as a separate resource
    *
-   * @generated from field: gitpod.v1.WorkspaceMetadata metadata = 2;
+   * @generated from field: bool prebuild = 2;
    */
-  metadata?: WorkspaceMetadata;
+  prebuild = false;
 
   /**
-   * Spec is the configuration of the workspace that's required for the ws-manager to start the workspace
-   *
-   * @generated from field: gitpod.v1.WorkspaceSpec spec = 3;
+   * @generated from field: string organization_id = 3;
    */
-  spec?: WorkspaceSpec;
+  organizationId = "";
 
   /**
-   * Status is the current status of the workspace
-   *
-   * @generated from field: gitpod.v1.WorkspaceStatus status = 4;
+   * @generated from field: string name = 4;
+   */
+  name = "";
+
+  /**
+   * @generated from field: bool pinned = 5;
+   */
+  pinned = false;
+
+  /**
+   * @generated from field: gitpod.v1.WorkspaceStatus status = 6;
    */
   status?: WorkspaceStatus;
+
+  /**
+   * additional_environment_variables provide additional environment variables
+   * which take precedence over environment variables provided by the project
+   * and user.
+   *
+   * +optional
+   *
+   * @generated from field: repeated gitpod.v1.WorkspaceEnvironmentVariable additional_environment_variables = 7;
+   */
+  additionalEnvironmentVariables: WorkspaceEnvironmentVariable[] = [];
+
+  /**
+   * region specifies the region in which the workspace will be created.
+   * Obtain available regions using the ListRegions operation.
+   *
+   * +optional defaults to the user's default region
+   *
+   * @generated from field: string region = 8;
+   */
+  region = "";
+
+  /**
+   * workspace_class specifies the workspace class with which to create the
+   * workspace. Obtain available workspace classes using the ListWorkspaceClass
+   * operation.
+   *
+   * +optional defaults to the class configured on the project or the cluster's
+   * default class.
+   *
+   * @generated from field: string workspace_class = 9;
+   */
+  workspaceClass = "";
+
+  /**
+   * editor specifies the editor that will be used with this workspace.
+   * Obtain available editors using the EditorService.ListEditors operation.
+   *
+   * +optional defaults to the default editor of the user
+   *
+   * @generated from field: gitpod.v1.EditorReference editor = 10;
+   */
+  editor?: EditorReference;
+
+  /**
+   * context_url is the normalized URL from which the workspace was created
+   * TODO(ak) replace with resolveContextURL API
+   *
+   * @generated from field: string context_url = 11;
+   */
+  contextUrl = "";
+
+  /**
+   * Prebuild ID is the unique identifier of the prebuild
+   * from which this workspace was created
+   * +optional if empty then this workspace was not created from a prebuild
+   *
+   * @generated from field: string prebuild_id = 12;
+   */
+  prebuildId = "";
 
   constructor(data?: PartialMessage<Workspace>) {
     super();
@@ -961,9 +1080,17 @@ export class Workspace extends Message<Workspace> {
   static readonly typeName = "gitpod.v1.Workspace";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "metadata", kind: "message", T: WorkspaceMetadata },
-    { no: 3, name: "spec", kind: "message", T: WorkspaceSpec },
-    { no: 4, name: "status", kind: "message", T: WorkspaceStatus },
+    { no: 2, name: "prebuild", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 3, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "pinned", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 6, name: "status", kind: "message", T: WorkspaceStatus },
+    { no: 7, name: "additional_environment_variables", kind: "message", T: WorkspaceEnvironmentVariable, repeated: true },
+    { no: 8, name: "region", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 9, name: "workspace_class", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 10, name: "editor", kind: "message", T: EditorReference },
+    { no: 11, name: "context_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 12, name: "prebuild_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Workspace {
@@ -984,435 +1111,70 @@ export class Workspace extends Message<Workspace> {
 }
 
 /**
- * WorkspaceMetadata is data associated with a workspace that's required for other parts of the system to function
- *
- * @generated from message gitpod.v1.WorkspaceMetadata
- */
-export class WorkspaceMetadata extends Message<WorkspaceMetadata> {
-  /**
-   * owner_id is the ID of the Gitpod user to whom we'll bill this workspace and who we consider responsible for its content
-   *
-   * @generated from field: string owner_id = 1;
-   */
-  ownerId = "";
-
-  /**
-   * organization_id is the ID of the organization that contains the workspace
-   *
-   * @generated from field: string organization_id = 2;
-   */
-  organizationId = "";
-
-  /**
-   * configuration_id is the ID of the configuration used by this workspace
-   *
-   * @generated from field: string configuration_id = 3;
-   */
-  configurationId = "";
-
-  /**
-   * annotations are key/value pairs that gets attached to the workspace.
-   * +internal - not yet implemented
-   *
-   * @generated from field: map<string, string> annotations = 4;
-   */
-  annotations: { [key: string]: string } = {};
-
-  /**
-   * name is the name of the workspace as specified by the user
-   *
-   * @generated from field: string name = 5;
-   */
-  name = "";
-
-  /**
-   * pinned indicates whether the workspace is pinned
-   *
-   * @generated from field: bool pinned = 6;
-   */
-  pinned = false;
-
-  /**
-   * original_context_url is the normalized URL from which the workspace was created
-   *
-   * @generated from field: string original_context_url = 7;
-   */
-  originalContextUrl = "";
-
-  constructor(data?: PartialMessage<WorkspaceMetadata>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.WorkspaceMetadata";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "owner_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "configuration_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 4, name: "annotations", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
-    { no: 5, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 6, name: "pinned", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 7, name: "original_context_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceMetadata {
-    return new WorkspaceMetadata().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceMetadata {
-    return new WorkspaceMetadata().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceMetadata {
-    return new WorkspaceMetadata().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: WorkspaceMetadata | PlainMessage<WorkspaceMetadata> | undefined, b: WorkspaceMetadata | PlainMessage<WorkspaceMetadata> | undefined): boolean {
-    return proto3.util.equals(WorkspaceMetadata, a, b);
-  }
-}
-
-/**
- * WorkspaceSpec specifies the configuration of a workspace for a workspace start
- *
- * @generated from message gitpod.v1.WorkspaceSpec
- */
-export class WorkspaceSpec extends Message<WorkspaceSpec> {
-  /**
-   * initializer configures how the workspace is to be initialized
-   *
-   * @generated from field: gitpod.v1.WorkspaceInitializer initializer = 1;
-   */
-  initializer?: WorkspaceInitializer;
-
-  /**
-   * Type denots the kind of workspace we ought to start
-   *
-   * @generated from field: gitpod.v1.WorkspaceSpec.WorkspaceType type = 2;
-   */
-  type = WorkspaceSpec_WorkspaceType.UNSPECIFIED;
-
-  /**
-   * ports is the set of ports which ought to be exposed to the internet
-   *
-   * @generated from field: repeated gitpod.v1.WorkspacePort ports = 3;
-   */
-  ports: WorkspacePort[] = [];
-
-  /**
-   * envvars are user-defined environment variables which ought to be available in the workspace (shim'ed environment)
-   *
-   * @generated from field: repeated gitpod.v1.EnvironmentVariable environment_variables = 4;
-   */
-  environmentVariables: EnvironmentVariable[] = [];
-
-  /**
-   * Git configures the Git user in the workspace
-   *
-   * @generated from field: gitpod.v1.WorkspaceSpec.GitSpec git = 5;
-   */
-  git?: WorkspaceSpec_GitSpec;
-
-  /**
-   * Timeout configures the workspace timeout
-   *
-   * @generated from field: gitpod.v1.WorkspaceSpec.Timeout timeout = 6;
-   */
-  timeout?: WorkspaceSpec_Timeout;
-
-  /**
-   * admission controlls who can access the workspace and its ports.
-   *
-   * @generated from field: gitpod.v1.AdmissionLevel admission = 7;
-   */
-  admission = AdmissionLevel.UNSPECIFIED;
-
-  /**
-   * Class denotes the class of the workspace we ought to start
-   *
-   * @generated from field: string class = 8;
-   */
-  class = "";
-
-  /**
-   * ssh_public_keys is user's uploaded ssh public keys
-   *
-   * @generated from field: repeated string ssh_public_keys = 9;
-   */
-  sshPublicKeys: string[] = [];
-
-  /**
-   * subassembly_references is a list of workspace IDs that this workspace depends on.
-   * For example:
-   *   index.docker.io/gitpod-io/subassmeblies/code:latest
-   *
-   * @generated from field: repeated string subassembly_references = 10;
-   */
-  subassemblyReferences: string[] = [];
-
-  /**
-   * last_user_activity is the time when the user last interacted with the workspace
-   *
-   * @generated from field: google.protobuf.Timestamp last_user_activity = 11;
-   */
-  lastUserActivity?: Timestamp;
-
-  /**
-   * log_url is the URL where we stream the workspace's logs to.
-   * Can be changed when the workspace is PENDING or STOPPED.
-   *
-   * @generated from field: string log_url = 12;
-   */
-  logUrl = "";
-
-  /**
-   * @generated from field: gitpod.v1.EditorReference editor = 13;
-   */
-  editor?: EditorReference;
-
-  constructor(data?: PartialMessage<WorkspaceSpec>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.WorkspaceSpec";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "initializer", kind: "message", T: WorkspaceInitializer },
-    { no: 2, name: "type", kind: "enum", T: proto3.getEnumType(WorkspaceSpec_WorkspaceType) },
-    { no: 3, name: "ports", kind: "message", T: WorkspacePort, repeated: true },
-    { no: 4, name: "environment_variables", kind: "message", T: EnvironmentVariable, repeated: true },
-    { no: 5, name: "git", kind: "message", T: WorkspaceSpec_GitSpec },
-    { no: 6, name: "timeout", kind: "message", T: WorkspaceSpec_Timeout },
-    { no: 7, name: "admission", kind: "enum", T: proto3.getEnumType(AdmissionLevel) },
-    { no: 8, name: "class", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 9, name: "ssh_public_keys", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 10, name: "subassembly_references", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 11, name: "last_user_activity", kind: "message", T: Timestamp },
-    { no: 12, name: "log_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 13, name: "editor", kind: "message", T: EditorReference },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceSpec {
-    return new WorkspaceSpec().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceSpec {
-    return new WorkspaceSpec().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceSpec {
-    return new WorkspaceSpec().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: WorkspaceSpec | PlainMessage<WorkspaceSpec> | undefined, b: WorkspaceSpec | PlainMessage<WorkspaceSpec> | undefined): boolean {
-    return proto3.util.equals(WorkspaceSpec, a, b);
-  }
-}
-
-/**
- * WorkspaceType specifies the purpose/use of a workspace. Different workspace types are handled differently by all parts of the system.
- *
- * @generated from enum gitpod.v1.WorkspaceSpec.WorkspaceType
- */
-export enum WorkspaceSpec_WorkspaceType {
-  /**
-   * @generated from enum value: WORKSPACE_TYPE_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * Regular workspaces are your off-the-mill workspaces intended for users. They are directly user-facing and hence are most important.
-   *
-   * @generated from enum value: WORKSPACE_TYPE_REGULAR = 1;
-   */
-  REGULAR = 1,
-
-  /**
-   * Prebuild workspaces are workspaces used to pre-build the content of other workspaces. They run headless and have no direct user-interaction.
-   *
-   * @generated from enum value: WORKSPACE_TYPE_PREBUILD = 2;
-   */
-  PREBUILD = 2,
-}
-// Retrieve enum metadata with: proto3.getEnumType(WorkspaceSpec_WorkspaceType)
-proto3.util.setEnumType(WorkspaceSpec_WorkspaceType, "gitpod.v1.WorkspaceSpec.WorkspaceType", [
-  { no: 0, name: "WORKSPACE_TYPE_UNSPECIFIED" },
-  { no: 1, name: "WORKSPACE_TYPE_REGULAR" },
-  { no: 2, name: "WORKSPACE_TYPE_PREBUILD" },
-]);
-
-/**
- * Timeout configures the workspace timeout
- *
- * @generated from message gitpod.v1.WorkspaceSpec.Timeout
- */
-export class WorkspaceSpec_Timeout extends Message<WorkspaceSpec_Timeout> {
-  /**
-   * inacitivity is the maximum time of inactivity before the workspace is stopped or paused
-   *
-   * @generated from field: google.protobuf.Duration inactivity = 1;
-   */
-  inactivity?: Duration;
-
-  /**
-   * inacitivity is the maximum time of disconnection before the workspace is stopped or paused
-   * set to zero to disable.
-   *
-   * @generated from field: google.protobuf.Duration disconnected = 2;
-   */
-  disconnected?: Duration;
-
-  /**
-   * maximum lifetime of the workspace
-   *
-   * @generated from field: google.protobuf.Duration maximum_lifetime = 3;
-   */
-  maximumLifetime?: Duration;
-
-  constructor(data?: PartialMessage<WorkspaceSpec_Timeout>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.WorkspaceSpec.Timeout";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "inactivity", kind: "message", T: Duration },
-    { no: 2, name: "disconnected", kind: "message", T: Duration },
-    { no: 3, name: "maximum_lifetime", kind: "message", T: Duration },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceSpec_Timeout {
-    return new WorkspaceSpec_Timeout().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceSpec_Timeout {
-    return new WorkspaceSpec_Timeout().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceSpec_Timeout {
-    return new WorkspaceSpec_Timeout().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: WorkspaceSpec_Timeout | PlainMessage<WorkspaceSpec_Timeout> | undefined, b: WorkspaceSpec_Timeout | PlainMessage<WorkspaceSpec_Timeout> | undefined): boolean {
-    return proto3.util.equals(WorkspaceSpec_Timeout, a, b);
-  }
-}
-
-/**
- * GitSpec configures the Git available within the workspace
- *
- * @generated from message gitpod.v1.WorkspaceSpec.GitSpec
- */
-export class WorkspaceSpec_GitSpec extends Message<WorkspaceSpec_GitSpec> {
-  /**
-   * The Git username
-   *
-   * @generated from field: string username = 1;
-   */
-  username = "";
-
-  /**
-   * The Git email address
-   *
-   * @generated from field: string email = 2;
-   */
-  email = "";
-
-  constructor(data?: PartialMessage<WorkspaceSpec_GitSpec>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.WorkspaceSpec.GitSpec";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "username", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "email", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceSpec_GitSpec {
-    return new WorkspaceSpec_GitSpec().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceSpec_GitSpec {
-    return new WorkspaceSpec_GitSpec().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceSpec_GitSpec {
-    return new WorkspaceSpec_GitSpec().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: WorkspaceSpec_GitSpec | PlainMessage<WorkspaceSpec_GitSpec> | undefined, b: WorkspaceSpec_GitSpec | PlainMessage<WorkspaceSpec_GitSpec> | undefined): boolean {
-    return proto3.util.equals(WorkspaceSpec_GitSpec, a, b);
-  }
-}
-
-/**
- * WorkspaceStatus describes a workspace status
- *
  * @generated from message gitpod.v1.WorkspaceStatus
  */
 export class WorkspaceStatus extends Message<WorkspaceStatus> {
   /**
-   * version of the status update. Workspace instances themselves are unversioned,
-   * but their statuus has different versions.
-   * The value of this field has no semantic meaning (e.g. don't interpret it as
-   * as a timestemp), but it can be used to impose a partial order.
-   * If a.status_version < b.status_version then a was the status before b.
+   * Phase is a simple, high-level summary of where the workspace is in its
+   * lifecycle. The phase is not intended to be a comprehensive rollup of
+   * observations of the workspace state, nor is it intended to be a
+   * comprehensive state machine.
    *
-   * @generated from field: uint64 status_version = 1;
-   */
-  statusVersion = protoInt64.zero;
-
-  /**
-   * the phase of a workspace is a simple, high-level summary of where the workspace is in its lifecycle
-   *
-   * @generated from field: gitpod.v1.WorkspacePhase phase = 2;
+   * @generated from field: gitpod.v1.WorkspacePhase phase = 1;
    */
   phase?: WorkspacePhase;
 
   /**
-   * workspace_url contains the URL at which the workspace can be accessed.
-   * This field is only set if the workspace is running.
+   * message is an optional human-readable message detailing the current phase
+   *
+   * @generated from field: string message = 2;
+   */
+  message = "";
+
+  /**
+   * workspace_url is the URL of the workspace. Only present when the phase is
+   * running.
    *
    * @generated from field: string workspace_url = 3;
    */
   workspaceUrl = "";
 
   /**
-   * conditions detail the current state of the workspace
-   *
-   * @generated from field: gitpod.v1.WorkspaceStatus.WorkspaceConditions conditions = 4;
-   */
-  conditions?: WorkspaceStatus_WorkspaceConditions;
-
-  /**
-   * prebuild_result contains the result of a prebuild. Only if the workspace is
-   *
-   * @generated from field: gitpod.v1.WorkspaceStatus.PrebuildResult prebuild_result = 5;
-   */
-  prebuildResult?: WorkspaceStatus_PrebuildResult;
-
-  /**
    * git_status details the Git working copy status of the workspace.
-   * Note: this is a best-effort field and more often than not will not be present. Its absence does not
-   * indicate the absence of a working copy.
+   * Note: this is a best-effort field and more often than not will not be
+   * present. Its absence does not indicate the absence of a working copy.
    *
-   * @generated from field: gitpod.v1.WorkspaceGitStatus git_status = 6;
+   * @generated from field: gitpod.v1.WorkspaceGitStatus git_status = 4;
    */
   gitStatus?: WorkspaceGitStatus;
 
   /**
-   * instance_id is the ID of the workspace instance - do not use, interpret or rely on this field
-   * unless you know what you're doing.
+   * ports lists the network ports currently available/known of this workspace
    *
-   * @generated from field: string instance_id = 7 [deprecated = true];
-   * @deprecated
+   * @generated from field: repeated gitpod.v1.WorkspacePort ports = 5;
+   */
+  ports: WorkspacePort[] = [];
+
+  /**
+   * Admission describes who can access a workspace instance and its ports.
+   *
+   * @generated from field: gitpod.v1.AdmissionLevel admission = 6;
+   */
+  admission = AdmissionLevel.UNSPECIFIED;
+
+  /**
+   * Instance ID is the unique identifier of the workspace instance
+   *
+   * @generated from field: string instance_id = 7;
    */
   instanceId = "";
+
+  /**
+   * Conditions contains observations of the workspace's current phase.
+   *
+   * @generated from field: gitpod.v1.WorkspaceConditions conditions = 8;
+   */
+  conditions?: WorkspaceConditions;
 
   constructor(data?: PartialMessage<WorkspaceStatus>) {
     super();
@@ -1422,13 +1184,14 @@ export class WorkspaceStatus extends Message<WorkspaceStatus> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.WorkspaceStatus";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "status_version", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
-    { no: 2, name: "phase", kind: "message", T: WorkspacePhase },
+    { no: 1, name: "phase", kind: "message", T: WorkspacePhase },
+    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "workspace_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 4, name: "conditions", kind: "message", T: WorkspaceStatus_WorkspaceConditions },
-    { no: 5, name: "prebuild_result", kind: "message", T: WorkspaceStatus_PrebuildResult },
-    { no: 6, name: "git_status", kind: "message", T: WorkspaceGitStatus },
+    { no: 4, name: "git_status", kind: "message", T: WorkspaceGitStatus },
+    { no: 5, name: "ports", kind: "message", T: WorkspacePort, repeated: true },
+    { no: 6, name: "admission", kind: "enum", T: proto3.getEnumType(AdmissionLevel) },
     { no: 7, name: "instance_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 8, name: "conditions", kind: "message", T: WorkspaceConditions },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceStatus {
@@ -1449,147 +1212,51 @@ export class WorkspaceStatus extends Message<WorkspaceStatus> {
 }
 
 /**
- * WorkspaceCondition gives more detailed information as to the state of the workspace. Which condition actually
- * has a value depends on the phase the workspace is in.
- *
- * @generated from message gitpod.v1.WorkspaceStatus.WorkspaceConditions
+ * @generated from message gitpod.v1.WorkspaceConditions
  */
-export class WorkspaceStatus_WorkspaceConditions extends Message<WorkspaceStatus_WorkspaceConditions> {
+export class WorkspaceConditions extends Message<WorkspaceConditions> {
   /**
-   * failed contains the reason the workspace failed to operate. If this field is empty, the workspace has not failed.
+   * failed contains technical details for the failure of the workspace.
+   * +optional If this field is empty, the workspace has not failed.
    *
    * @generated from field: string failed = 1;
    */
   failed = "";
 
   /**
-   * failed_reason contains the reason the workspace failed to operate.
-   * This field is only set if the workspace has failed.
+   * timeout contains the reason the workspace has timed out.
+   * +optional If this field is empty, the workspace has not timed out.
    *
-   * @generated from field: gitpod.v1.WorkspaceStatus.WorkspaceConditions.FailedReason failed_reason = 2;
-   */
-  failedReason = WorkspaceStatus_WorkspaceConditions_FailedReason.UNSPECIFIED;
-
-  /**
-   * timeout contains the reason the workspace has timed out. If this field is empty, the workspace has not timed out.
-   *
-   * @generated from field: string timeout = 3;
+   * @generated from field: string timeout = 2;
    */
   timeout = "";
 
-  constructor(data?: PartialMessage<WorkspaceStatus_WorkspaceConditions>) {
+  constructor(data?: PartialMessage<WorkspaceConditions>) {
     super();
     proto3.util.initPartial(data, this);
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.WorkspaceStatus.WorkspaceConditions";
+  static readonly typeName = "gitpod.v1.WorkspaceConditions";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "failed", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "failed_reason", kind: "enum", T: proto3.getEnumType(WorkspaceStatus_WorkspaceConditions_FailedReason) },
-    { no: 3, name: "timeout", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "timeout", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceStatus_WorkspaceConditions {
-    return new WorkspaceStatus_WorkspaceConditions().fromBinary(bytes, options);
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceConditions {
+    return new WorkspaceConditions().fromBinary(bytes, options);
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceStatus_WorkspaceConditions {
-    return new WorkspaceStatus_WorkspaceConditions().fromJson(jsonValue, options);
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceConditions {
+    return new WorkspaceConditions().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceStatus_WorkspaceConditions {
-    return new WorkspaceStatus_WorkspaceConditions().fromJsonString(jsonString, options);
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceConditions {
+    return new WorkspaceConditions().fromJsonString(jsonString, options);
   }
 
-  static equals(a: WorkspaceStatus_WorkspaceConditions | PlainMessage<WorkspaceStatus_WorkspaceConditions> | undefined, b: WorkspaceStatus_WorkspaceConditions | PlainMessage<WorkspaceStatus_WorkspaceConditions> | undefined): boolean {
-    return proto3.util.equals(WorkspaceStatus_WorkspaceConditions, a, b);
-  }
-}
-
-/**
- * @generated from enum gitpod.v1.WorkspaceStatus.WorkspaceConditions.FailedReason
- */
-export enum WorkspaceStatus_WorkspaceConditions_FailedReason {
-  /**
-   * @generated from enum value: FAILED_REASON_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: FAILED_REASON_CONTENT_INITIALIZATION_FAILED = 1;
-   */
-  CONTENT_INITIALIZATION_FAILED = 1,
-
-  /**
-   * @generated from enum value: FAILED_REASON_BACKUP_FAILED = 2;
-   */
-  BACKUP_FAILED = 2,
-
-  /**
-   * @generated from enum value: FAILED_REASON_IMAGE_PULL_FAILURE = 3;
-   */
-  IMAGE_PULL_FAILURE = 3,
-
-  /**
-   * @generated from enum value: FAILED_REASON_UNEXPECTED_TERMINATION = 4;
-   */
-  UNEXPECTED_TERMINATION = 4,
-}
-// Retrieve enum metadata with: proto3.getEnumType(WorkspaceStatus_WorkspaceConditions_FailedReason)
-proto3.util.setEnumType(WorkspaceStatus_WorkspaceConditions_FailedReason, "gitpod.v1.WorkspaceStatus.WorkspaceConditions.FailedReason", [
-  { no: 0, name: "FAILED_REASON_UNSPECIFIED" },
-  { no: 1, name: "FAILED_REASON_CONTENT_INITIALIZATION_FAILED" },
-  { no: 2, name: "FAILED_REASON_BACKUP_FAILED" },
-  { no: 3, name: "FAILED_REASON_IMAGE_PULL_FAILURE" },
-  { no: 4, name: "FAILED_REASON_UNEXPECTED_TERMINATION" },
-]);
-
-/**
- * @generated from message gitpod.v1.WorkspaceStatus.PrebuildResult
- */
-export class WorkspaceStatus_PrebuildResult extends Message<WorkspaceStatus_PrebuildResult> {
-  /**
-   * Snapshot points to the content of the prebuild. This string is opaque to the cluster manager,
-   * and must be returned unaltered.
-   *
-   * @generated from field: string snapshot = 1;
-   */
-  snapshot = "";
-
-  /**
-   * The prebuild's error message
-   *
-   * @generated from field: string error_message = 2;
-   */
-  errorMessage = "";
-
-  constructor(data?: PartialMessage<WorkspaceStatus_PrebuildResult>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.WorkspaceStatus.PrebuildResult";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "snapshot", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "error_message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceStatus_PrebuildResult {
-    return new WorkspaceStatus_PrebuildResult().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceStatus_PrebuildResult {
-    return new WorkspaceStatus_PrebuildResult().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceStatus_PrebuildResult {
-    return new WorkspaceStatus_PrebuildResult().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: WorkspaceStatus_PrebuildResult | PlainMessage<WorkspaceStatus_PrebuildResult> | undefined, b: WorkspaceStatus_PrebuildResult | PlainMessage<WorkspaceStatus_PrebuildResult> | undefined): boolean {
-    return proto3.util.equals(WorkspaceStatus_PrebuildResult, a, b);
+  static equals(a: WorkspaceConditions | PlainMessage<WorkspaceConditions> | undefined, b: WorkspaceConditions | PlainMessage<WorkspaceConditions> | undefined): boolean {
+    return proto3.util.equals(WorkspaceConditions, a, b);
   }
 }
 
@@ -1607,9 +1274,9 @@ export class WorkspacePort extends Message<WorkspacePort> {
   /**
    * policy of this port
    *
-   * @generated from field: gitpod.v1.AdmissionLevel admission = 2;
+   * @generated from field: gitpod.v1.WorkspacePort.Policy policy = 2;
    */
-  admission = AdmissionLevel.UNSPECIFIED;
+  policy = WorkspacePort_Policy.UNSPECIFIED;
 
   /**
    * url that can be used to access the port
@@ -1634,7 +1301,7 @@ export class WorkspacePort extends Message<WorkspacePort> {
   static readonly typeName = "gitpod.v1.WorkspacePort";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "port", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
-    { no: 2, name: "admission", kind: "enum", T: proto3.getEnumType(AdmissionLevel) },
+    { no: 2, name: "policy", kind: "enum", T: proto3.getEnumType(WorkspacePort_Policy) },
     { no: 3, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "protocol", kind: "enum", T: proto3.getEnumType(WorkspacePort_Protocol) },
   ]);
@@ -1655,6 +1322,41 @@ export class WorkspacePort extends Message<WorkspacePort> {
     return proto3.util.equals(WorkspacePort, a, b);
   }
 }
+
+/**
+ * Policy defines the accssbility policy of a workspace port is guarded by an
+ * authentication in the proxy
+ *
+ * @generated from enum gitpod.v1.WorkspacePort.Policy
+ */
+export enum WorkspacePort_Policy {
+  /**
+   * @generated from enum value: POLICY_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Private means the port is accessible by the workspace owner only using
+   * the workspace port URL
+   *
+   * @generated from enum value: POLICY_PRIVATE = 1;
+   */
+  PRIVATE = 1,
+
+  /**
+   * Public means the port is accessible by everybody using the workspace port
+   * URL
+   *
+   * @generated from enum value: POLICY_PUBLIC = 2;
+   */
+  PUBLIC = 2,
+}
+// Retrieve enum metadata with: proto3.getEnumType(WorkspacePort_Policy)
+proto3.util.setEnumType(WorkspacePort_Policy, "gitpod.v1.WorkspacePort.Policy", [
+  { no: 0, name: "POLICY_UNSPECIFIED" },
+  { no: 1, name: "POLICY_PRIVATE" },
+  { no: 2, name: "POLICY_PUBLIC" },
+]);
 
 /**
  * Protocol defines the backend protocol of port
@@ -1914,27 +1616,19 @@ export enum WorkspacePhase_Phase {
   INTERRUPTED = 7,
 
   /**
-   * Paused means the workspace is currently unavailable, akin to stopped,
-   * but faster to wake up.
-   *
-   * @generated from enum value: PHASE_PAUSED = 8;
-   */
-  PAUSED = 8,
-
-  /**
    * Stopping means that the workspace is currently shutting down. It could go
    * to stopped every moment.
    *
-   * @generated from enum value: PHASE_STOPPING = 9;
+   * @generated from enum value: PHASE_STOPPING = 8;
    */
-  STOPPING = 9,
+  STOPPING = 8,
 
   /**
    * Stopped means the workspace ended regularly because it was shut down.
    *
-   * @generated from enum value: PHASE_STOPPED = 10;
+   * @generated from enum value: PHASE_STOPPED = 9;
    */
-  STOPPED = 10,
+  STOPPED = 9,
 }
 // Retrieve enum metadata with: proto3.getEnumType(WorkspacePhase_Phase)
 proto3.util.setEnumType(WorkspacePhase_Phase, "gitpod.v1.WorkspacePhase.Phase", [
@@ -1946,967 +1640,49 @@ proto3.util.setEnumType(WorkspacePhase_Phase, "gitpod.v1.WorkspacePhase.Phase", 
   { no: 5, name: "PHASE_INITIALIZING" },
   { no: 6, name: "PHASE_RUNNING" },
   { no: 7, name: "PHASE_INTERRUPTED" },
-  { no: 8, name: "PHASE_PAUSED" },
-  { no: 9, name: "PHASE_STOPPING" },
-  { no: 10, name: "PHASE_STOPPED" },
+  { no: 8, name: "PHASE_STOPPING" },
+  { no: 9, name: "PHASE_STOPPED" },
 ]);
 
 /**
- * WorkspaceInitializer specifies how a workspace is to be initialized
- *
- * @generated from message gitpod.v1.WorkspaceInitializer
+ * @generated from message gitpod.v1.WorkspaceEnvironmentVariable
  */
-export class WorkspaceInitializer extends Message<WorkspaceInitializer> {
+export class WorkspaceEnvironmentVariable extends Message<WorkspaceEnvironmentVariable> {
   /**
-   * @generated from field: repeated gitpod.v1.WorkspaceInitializer.Spec specs = 1;
+   * @generated from field: string name = 1;
    */
-  specs: WorkspaceInitializer_Spec[] = [];
+  name = "";
 
-  constructor(data?: PartialMessage<WorkspaceInitializer>) {
+  /**
+   * @generated from field: string value = 2;
+   */
+  value = "";
+
+  constructor(data?: PartialMessage<WorkspaceEnvironmentVariable>) {
     super();
     proto3.util.initPartial(data, this);
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.WorkspaceInitializer";
+  static readonly typeName = "gitpod.v1.WorkspaceEnvironmentVariable";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "specs", kind: "message", T: WorkspaceInitializer_Spec, repeated: true },
+    { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "value", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceInitializer {
-    return new WorkspaceInitializer().fromBinary(bytes, options);
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceEnvironmentVariable {
+    return new WorkspaceEnvironmentVariable().fromBinary(bytes, options);
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceInitializer {
-    return new WorkspaceInitializer().fromJson(jsonValue, options);
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceEnvironmentVariable {
+    return new WorkspaceEnvironmentVariable().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceInitializer {
-    return new WorkspaceInitializer().fromJsonString(jsonString, options);
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceEnvironmentVariable {
+    return new WorkspaceEnvironmentVariable().fromJsonString(jsonString, options);
   }
 
-  static equals(a: WorkspaceInitializer | PlainMessage<WorkspaceInitializer> | undefined, b: WorkspaceInitializer | PlainMessage<WorkspaceInitializer> | undefined): boolean {
-    return proto3.util.equals(WorkspaceInitializer, a, b);
-  }
-}
-
-/**
- * @generated from message gitpod.v1.WorkspaceInitializer.Spec
- */
-export class WorkspaceInitializer_Spec extends Message<WorkspaceInitializer_Spec> {
-  /**
-   * @generated from oneof gitpod.v1.WorkspaceInitializer.Spec.spec
-   */
-  spec: {
-    /**
-     * @generated from field: gitpod.v1.GitInitializer git = 1;
-     */
-    value: GitInitializer;
-    case: "git";
-  } | {
-    /**
-     * @generated from field: gitpod.v1.SnapshotInitializer snapshot = 2;
-     */
-    value: SnapshotInitializer;
-    case: "snapshot";
-  } | {
-    /**
-     * @generated from field: gitpod.v1.PrebuildInitializer prebuild = 3;
-     */
-    value: PrebuildInitializer;
-    case: "prebuild";
-  } | {
-    /**
-     * @generated from field: gitpod.v1.FileDownloadInitializer download = 4;
-     */
-    value: FileDownloadInitializer;
-    case: "download";
-  } | { case: undefined; value?: undefined } = { case: undefined };
-
-  constructor(data?: PartialMessage<WorkspaceInitializer_Spec>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.WorkspaceInitializer.Spec";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "git", kind: "message", T: GitInitializer, oneof: "spec" },
-    { no: 2, name: "snapshot", kind: "message", T: SnapshotInitializer, oneof: "spec" },
-    { no: 3, name: "prebuild", kind: "message", T: PrebuildInitializer, oneof: "spec" },
-    { no: 4, name: "download", kind: "message", T: FileDownloadInitializer, oneof: "spec" },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceInitializer_Spec {
-    return new WorkspaceInitializer_Spec().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceInitializer_Spec {
-    return new WorkspaceInitializer_Spec().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceInitializer_Spec {
-    return new WorkspaceInitializer_Spec().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: WorkspaceInitializer_Spec | PlainMessage<WorkspaceInitializer_Spec> | undefined, b: WorkspaceInitializer_Spec | PlainMessage<WorkspaceInitializer_Spec> | undefined): boolean {
-    return proto3.util.equals(WorkspaceInitializer_Spec, a, b);
-  }
-}
-
-/**
- * @generated from message gitpod.v1.GitInitializer
- */
-export class GitInitializer extends Message<GitInitializer> {
-  /**
-   * remote_uri is the Git remote origin
-   *
-   * @generated from field: string remote_uri = 1;
-   */
-  remoteUri = "";
-
-  /**
-   * upstream_Remote_uri is the fork upstream of a repository
-   *
-   * @generated from field: string upstream_remote_uri = 2;
-   */
-  upstreamRemoteUri = "";
-
-  /**
-   * the target mode determines what gets checked out
-   *
-   * @generated from field: gitpod.v1.GitInitializer.CloneTargetMode target_mode = 3;
-   */
-  targetMode = GitInitializer_CloneTargetMode.UNSPECIFIED;
-
-  /**
-   * the value for the clone target mode - use depends on the target mode
-   *
-   * @generated from field: string clone_taget = 4;
-   */
-  cloneTaget = "";
-
-  /**
-   * a path relative to the workspace root in which the code will be checked out to
-   *
-   * @generated from field: string checkout_location = 5;
-   */
-  checkoutLocation = "";
-
-  /**
-   * config specifies the Git configuration for this workspace
-   *
-   * @generated from field: gitpod.v1.GitInitializer.GitConfig config = 6;
-   */
-  config?: GitInitializer_GitConfig;
-
-  constructor(data?: PartialMessage<GitInitializer>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.GitInitializer";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "remote_uri", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "upstream_remote_uri", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "target_mode", kind: "enum", T: proto3.getEnumType(GitInitializer_CloneTargetMode) },
-    { no: 4, name: "clone_taget", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 5, name: "checkout_location", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 6, name: "config", kind: "message", T: GitInitializer_GitConfig },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GitInitializer {
-    return new GitInitializer().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GitInitializer {
-    return new GitInitializer().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GitInitializer {
-    return new GitInitializer().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: GitInitializer | PlainMessage<GitInitializer> | undefined, b: GitInitializer | PlainMessage<GitInitializer> | undefined): boolean {
-    return proto3.util.equals(GitInitializer, a, b);
-  }
-}
-
-/**
- * CloneTargetMode is the target state in which we want to leave a GitWorkspace
- *
- * @generated from enum gitpod.v1.GitInitializer.CloneTargetMode
- */
-export enum GitInitializer_CloneTargetMode {
-  /**
-   * @generated from enum value: CLONE_TARGET_MODE_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * REMOTE_HEAD has the local WS point at the remote branch head
-   *
-   * @generated from enum value: CLONE_TARGET_MODE_REMOTE_HEAD = 1;
-   */
-  REMOTE_HEAD = 1,
-
-  /**
-   * REMOTE_COMMIT has the local WS point at a specific commit
-   *
-   * @generated from enum value: CLONE_TARGET_MODE_REMOTE_COMMIT = 2;
-   */
-  REMOTE_COMMIT = 2,
-
-  /**
-   * REMOTE_BRANCH has the local WS point at a remote branch
-   *
-   * @generated from enum value: CLONE_TARGET_MODE_REMOTE_BRANCH = 3;
-   */
-  REMOTE_BRANCH = 3,
-
-  /**
-   * LOCAL_BRANCH creates a local branch in the workspace
-   *
-   * @generated from enum value: CLONE_TARGET_MODE_LOCAL_BRANCH = 4;
-   */
-  LOCAL_BRANCH = 4,
-}
-// Retrieve enum metadata with: proto3.getEnumType(GitInitializer_CloneTargetMode)
-proto3.util.setEnumType(GitInitializer_CloneTargetMode, "gitpod.v1.GitInitializer.CloneTargetMode", [
-  { no: 0, name: "CLONE_TARGET_MODE_UNSPECIFIED" },
-  { no: 1, name: "CLONE_TARGET_MODE_REMOTE_HEAD" },
-  { no: 2, name: "CLONE_TARGET_MODE_REMOTE_COMMIT" },
-  { no: 3, name: "CLONE_TARGET_MODE_REMOTE_BRANCH" },
-  { no: 4, name: "CLONE_TARGET_MODE_LOCAL_BRANCH" },
-]);
-
-/**
- * AuthMethod is the means of authentication used during clone
- *
- * @generated from enum gitpod.v1.GitInitializer.AuthMethod
- */
-export enum GitInitializer_AuthMethod {
-  /**
-   * NO_AUTH disables authentication during clone
-   *
-   * @generated from enum value: AUTH_METHOD_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * BASIC_AUTH uses HTTP basic auth during clone (fails if repo is not cloned through http)
-   *
-   * @generated from enum value: AUTH_METHOD_BASIC_AUTH = 1;
-   */
-  BASIC_AUTH = 1,
-
-  /**
-   * BASIC_AUTH_OTS uses HTTP basic auth during the clone with the secrets coming from the OTS URL.
-   * Fails if either the OTS download or the clone fail.
-   *
-   * @generated from enum value: AUTH_METHOD_BASIC_AUTH_OTS = 2;
-   */
-  BASIC_AUTH_OTS = 2,
-}
-// Retrieve enum metadata with: proto3.getEnumType(GitInitializer_AuthMethod)
-proto3.util.setEnumType(GitInitializer_AuthMethod, "gitpod.v1.GitInitializer.AuthMethod", [
-  { no: 0, name: "AUTH_METHOD_UNSPECIFIED" },
-  { no: 1, name: "AUTH_METHOD_BASIC_AUTH" },
-  { no: 2, name: "AUTH_METHOD_BASIC_AUTH_OTS" },
-]);
-
-/**
- * @generated from message gitpod.v1.GitInitializer.GitConfig
- */
-export class GitInitializer_GitConfig extends Message<GitInitializer_GitConfig> {
-  /**
-   * custom config values to be set on clone provided through `.gitpod.yml`
-   *
-   * @generated from field: map<string, string> custom_config = 1;
-   */
-  customConfig: { [key: string]: string } = {};
-
-  /**
-   * authentication method
-   *
-   * @generated from field: gitpod.v1.GitInitializer.AuthMethod authentication = 2;
-   */
-  authentication = GitInitializer_AuthMethod.UNSPECIFIED;
-
-  /**
-   * auth_user is the username used to authenticate the clone
-   *
-   * @generated from field: string auth_user = 3;
-   */
-  authUser = "";
-
-  /**
-   * auth_password is the password used to authenticate the clone (can also be an API token)
-   *
-   * @generated from field: string auth_password = 4;
-   */
-  authPassword = "";
-
-  /**
-   * auth_ots is a URL where one can download the authentication secret (<username>:<password>)
-   * using a GET request.
-   *
-   * @generated from field: string auth_ots = 5;
-   */
-  authOts = "";
-
-  constructor(data?: PartialMessage<GitInitializer_GitConfig>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.GitInitializer.GitConfig";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "custom_config", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
-    { no: 2, name: "authentication", kind: "enum", T: proto3.getEnumType(GitInitializer_AuthMethod) },
-    { no: 3, name: "auth_user", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 4, name: "auth_password", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 5, name: "auth_ots", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GitInitializer_GitConfig {
-    return new GitInitializer_GitConfig().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GitInitializer_GitConfig {
-    return new GitInitializer_GitConfig().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GitInitializer_GitConfig {
-    return new GitInitializer_GitConfig().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: GitInitializer_GitConfig | PlainMessage<GitInitializer_GitConfig> | undefined, b: GitInitializer_GitConfig | PlainMessage<GitInitializer_GitConfig> | undefined): boolean {
-    return proto3.util.equals(GitInitializer_GitConfig, a, b);
-  }
-}
-
-/**
- * @generated from message gitpod.v1.SnapshotInitializer
- */
-export class SnapshotInitializer extends Message<SnapshotInitializer> {
-  /**
-   * reference of the snapshot to restore
-   *
-   * @generated from field: string snapshot_id = 1;
-   */
-  snapshotId = "";
-
-  constructor(data?: PartialMessage<SnapshotInitializer>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.SnapshotInitializer";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "snapshot_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SnapshotInitializer {
-    return new SnapshotInitializer().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SnapshotInitializer {
-    return new SnapshotInitializer().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SnapshotInitializer {
-    return new SnapshotInitializer().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: SnapshotInitializer | PlainMessage<SnapshotInitializer> | undefined, b: SnapshotInitializer | PlainMessage<SnapshotInitializer> | undefined): boolean {
-    return proto3.util.equals(SnapshotInitializer, a, b);
-  }
-}
-
-/**
- * @generated from message gitpod.v1.PrebuildInitializer
- */
-export class PrebuildInitializer extends Message<PrebuildInitializer> {
-  /**
-   * reference of the prebuild to restore
-   *
-   * @generated from field: string prebuild_id = 1;
-   */
-  prebuildId = "";
-
-  constructor(data?: PartialMessage<PrebuildInitializer>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.PrebuildInitializer";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "prebuild_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PrebuildInitializer {
-    return new PrebuildInitializer().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PrebuildInitializer {
-    return new PrebuildInitializer().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PrebuildInitializer {
-    return new PrebuildInitializer().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: PrebuildInitializer | PlainMessage<PrebuildInitializer> | undefined, b: PrebuildInitializer | PlainMessage<PrebuildInitializer> | undefined): boolean {
-    return proto3.util.equals(PrebuildInitializer, a, b);
-  }
-}
-
-/**
- * FileDownloadInitializer downloads files and uses them as workspace content.
- *
- * @generated from message gitpod.v1.FileDownloadInitializer
- */
-export class FileDownloadInitializer extends Message<FileDownloadInitializer> {
-  /**
-   * @generated from field: repeated gitpod.v1.FileDownloadInitializer.FileInfo files = 1;
-   */
-  files: FileDownloadInitializer_FileInfo[] = [];
-
-  /**
-   * @generated from field: string target_location = 2;
-   */
-  targetLocation = "";
-
-  constructor(data?: PartialMessage<FileDownloadInitializer>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.FileDownloadInitializer";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "files", kind: "message", T: FileDownloadInitializer_FileInfo, repeated: true },
-    { no: 2, name: "target_location", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FileDownloadInitializer {
-    return new FileDownloadInitializer().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FileDownloadInitializer {
-    return new FileDownloadInitializer().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FileDownloadInitializer {
-    return new FileDownloadInitializer().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: FileDownloadInitializer | PlainMessage<FileDownloadInitializer> | undefined, b: FileDownloadInitializer | PlainMessage<FileDownloadInitializer> | undefined): boolean {
-    return proto3.util.equals(FileDownloadInitializer, a, b);
-  }
-}
-
-/**
- * @generated from message gitpod.v1.FileDownloadInitializer.FileInfo
- */
-export class FileDownloadInitializer_FileInfo extends Message<FileDownloadInitializer_FileInfo> {
-  /**
-   * @generated from field: string url = 1;
-   */
-  url = "";
-
-  /**
-   * file_path is relative to the target_location, e.g. if target_location is in `/workspace/myrepo`
-   * a file_path of `foobar/file` would produce a file in `/workspace/myrepo/foobar/file`.
-   * file_path must include the filename. The FileDownloadInitializer will create any parent directories
-   * necessary to place the file.
-   *
-   * @generated from field: string file_path = 2;
-   */
-  filePath = "";
-
-  /**
-   * digest is a hash of the file content in the OCI digest format (see https://github.com/opencontainers/image-spec/blob/master/descriptor.md#digests).
-   * This information is used to compute subsequent
-   * content versions, and to validate the file content was downloaded correctly.
-   *
-   * @generated from field: string digest = 3;
-   */
-  digest = "";
-
-  constructor(data?: PartialMessage<FileDownloadInitializer_FileInfo>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.FileDownloadInitializer.FileInfo";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "file_path", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "digest", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FileDownloadInitializer_FileInfo {
-    return new FileDownloadInitializer_FileInfo().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FileDownloadInitializer_FileInfo {
-    return new FileDownloadInitializer_FileInfo().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FileDownloadInitializer_FileInfo {
-    return new FileDownloadInitializer_FileInfo().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: FileDownloadInitializer_FileInfo | PlainMessage<FileDownloadInitializer_FileInfo> | undefined, b: FileDownloadInitializer_FileInfo | PlainMessage<FileDownloadInitializer_FileInfo> | undefined): boolean {
-    return proto3.util.equals(FileDownloadInitializer_FileInfo, a, b);
-  }
-}
-
-/**
- * GitStatus describes the current Git working copy status, akin to a combination of "git status" and "git branch"
- *
- * @generated from message gitpod.v1.GitStatus
- */
-export class GitStatus extends Message<GitStatus> {
-  /**
-   * branch is branch we're currently on
-   *
-   * @generated from field: string branch = 1;
-   */
-  branch = "";
-
-  /**
-   * latest_commit is the most recent commit on the current branch
-   *
-   * @generated from field: string latest_commit = 2;
-   */
-  latestCommit = "";
-
-  /**
-   * uncommited_files is the number of uncommitted files, possibly truncated
-   *
-   * @generated from field: repeated string uncommited_files = 3;
-   */
-  uncommitedFiles: string[] = [];
-
-  /**
-   * the total number of uncommited files
-   *
-   * @generated from field: int64 total_uncommited_files = 6;
-   */
-  totalUncommitedFiles = protoInt64.zero;
-
-  /**
-   * untracked_files is the number of untracked files in the workspace, possibly truncated
-   *
-   * @generated from field: repeated string untracked_files = 4;
-   */
-  untrackedFiles: string[] = [];
-
-  /**
-   * the total number of untracked files
-   *
-   * @generated from field: int64 total_untracked_files = 7;
-   */
-  totalUntrackedFiles = protoInt64.zero;
-
-  /**
-   * unpushed_commits is the number of unpushed changes in the workspace, possibly truncated
-   *
-   * @generated from field: repeated string unpushed_commits = 5;
-   */
-  unpushedCommits: string[] = [];
-
-  /**
-   * the total number of unpushed changes
-   *
-   * @generated from field: int64 total_unpushed_commits = 8;
-   */
-  totalUnpushedCommits = protoInt64.zero;
-
-  constructor(data?: PartialMessage<GitStatus>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.GitStatus";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "branch", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "latest_commit", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "uncommited_files", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 6, name: "total_uncommited_files", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
-    { no: 4, name: "untracked_files", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 7, name: "total_untracked_files", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
-    { no: 5, name: "unpushed_commits", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 8, name: "total_unpushed_commits", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GitStatus {
-    return new GitStatus().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GitStatus {
-    return new GitStatus().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GitStatus {
-    return new GitStatus().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: GitStatus | PlainMessage<GitStatus> | undefined, b: GitStatus | PlainMessage<GitStatus> | undefined): boolean {
-    return proto3.util.equals(GitStatus, a, b);
-  }
-}
-
-/**
- * @generated from message gitpod.v1.UpdateWorkspaceRequest
- */
-export class UpdateWorkspaceRequest extends Message<UpdateWorkspaceRequest> {
-  /**
-   * workspace_id specifies the workspace to update
-   *
-   * +required
-   *
-   * @generated from field: string workspace_id = 1;
-   */
-  workspaceId = "";
-
-  /**
-   * metadata is data associated with this workspace that's required for other parts of Gitpod to function
-   *
-   * @generated from field: optional gitpod.v1.UpdateWorkspaceRequest.UpdateWorkspaceMetadata metadata = 2;
-   */
-  metadata?: UpdateWorkspaceRequest_UpdateWorkspaceMetadata;
-
-  /**
-   * spec is the configuration of the workspace that's required for the ws-manager to start the workspace
-   *
-   * @generated from field: optional gitpod.v1.UpdateWorkspaceRequest.UpdateWorkspaceSpec spec = 3;
-   */
-  spec?: UpdateWorkspaceRequest_UpdateWorkspaceSpec;
-
-  /**
-   * git_status updates the git status of the workspace - this is only here during the migration
-   *
-   * @generated from field: optional gitpod.v1.WorkspaceGitStatus git_status = 4 [deprecated = true];
-   * @deprecated
-   */
-  gitStatus?: WorkspaceGitStatus;
-
-  constructor(data?: PartialMessage<UpdateWorkspaceRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.UpdateWorkspaceRequest";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "metadata", kind: "message", T: UpdateWorkspaceRequest_UpdateWorkspaceMetadata, opt: true },
-    { no: 3, name: "spec", kind: "message", T: UpdateWorkspaceRequest_UpdateWorkspaceSpec, opt: true },
-    { no: 4, name: "git_status", kind: "message", T: WorkspaceGitStatus, opt: true },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateWorkspaceRequest {
-    return new UpdateWorkspaceRequest().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateWorkspaceRequest {
-    return new UpdateWorkspaceRequest().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateWorkspaceRequest {
-    return new UpdateWorkspaceRequest().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: UpdateWorkspaceRequest | PlainMessage<UpdateWorkspaceRequest> | undefined, b: UpdateWorkspaceRequest | PlainMessage<UpdateWorkspaceRequest> | undefined): boolean {
-    return proto3.util.equals(UpdateWorkspaceRequest, a, b);
-  }
-}
-
-/**
- * @generated from message gitpod.v1.UpdateWorkspaceRequest.UpdateWorkspaceMetadata
- */
-export class UpdateWorkspaceRequest_UpdateWorkspaceMetadata extends Message<UpdateWorkspaceRequest_UpdateWorkspaceMetadata> {
-  /**
-   * name is the name of the workspace as specified by the user
-   *
-   * @generated from field: optional string name = 1;
-   */
-  name?: string;
-
-  /**
-   * pinned indicates whether the workspace is pinned
-   *
-   * @generated from field: optional bool pinned = 2;
-   */
-  pinned?: boolean;
-
-  constructor(data?: PartialMessage<UpdateWorkspaceRequest_UpdateWorkspaceMetadata>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.UpdateWorkspaceRequest.UpdateWorkspaceMetadata";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 2, name: "pinned", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateWorkspaceRequest_UpdateWorkspaceMetadata {
-    return new UpdateWorkspaceRequest_UpdateWorkspaceMetadata().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateWorkspaceRequest_UpdateWorkspaceMetadata {
-    return new UpdateWorkspaceRequest_UpdateWorkspaceMetadata().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateWorkspaceRequest_UpdateWorkspaceMetadata {
-    return new UpdateWorkspaceRequest_UpdateWorkspaceMetadata().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: UpdateWorkspaceRequest_UpdateWorkspaceMetadata | PlainMessage<UpdateWorkspaceRequest_UpdateWorkspaceMetadata> | undefined, b: UpdateWorkspaceRequest_UpdateWorkspaceMetadata | PlainMessage<UpdateWorkspaceRequest_UpdateWorkspaceMetadata> | undefined): boolean {
-    return proto3.util.equals(UpdateWorkspaceRequest_UpdateWorkspaceMetadata, a, b);
-  }
-}
-
-/**
- * @generated from message gitpod.v1.UpdateWorkspaceRequest.UpdateTimeout
- */
-export class UpdateWorkspaceRequest_UpdateTimeout extends Message<UpdateWorkspaceRequest_UpdateTimeout> {
-  /**
-   * inacitivity is the maximum time of inactivity before the workspace is stopped or paused
-   *
-   * @generated from field: optional google.protobuf.Duration inactivity = 1;
-   */
-  inactivity?: Duration;
-
-  /**
-   * inacitivity is the maximum time of disconnection before the workspace is stopped or paused
-   *
-   * @generated from field: optional google.protobuf.Duration disconnected = 2;
-   */
-  disconnected?: Duration;
-
-  constructor(data?: PartialMessage<UpdateWorkspaceRequest_UpdateTimeout>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.UpdateWorkspaceRequest.UpdateTimeout";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "inactivity", kind: "message", T: Duration, opt: true },
-    { no: 2, name: "disconnected", kind: "message", T: Duration, opt: true },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateWorkspaceRequest_UpdateTimeout {
-    return new UpdateWorkspaceRequest_UpdateTimeout().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateWorkspaceRequest_UpdateTimeout {
-    return new UpdateWorkspaceRequest_UpdateTimeout().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateWorkspaceRequest_UpdateTimeout {
-    return new UpdateWorkspaceRequest_UpdateTimeout().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: UpdateWorkspaceRequest_UpdateTimeout | PlainMessage<UpdateWorkspaceRequest_UpdateTimeout> | undefined, b: UpdateWorkspaceRequest_UpdateTimeout | PlainMessage<UpdateWorkspaceRequest_UpdateTimeout> | undefined): boolean {
-    return proto3.util.equals(UpdateWorkspaceRequest_UpdateTimeout, a, b);
-  }
-}
-
-/**
- * Note(cw): Ports cannot be updated here in favour of UpdateWorkspacePorts call which exists so that
- * we can update individual ports.
- *
- * @generated from message gitpod.v1.UpdateWorkspaceRequest.UpdateWorkspaceSpec
- */
-export class UpdateWorkspaceRequest_UpdateWorkspaceSpec extends Message<UpdateWorkspaceRequest_UpdateWorkspaceSpec> {
-  /**
-   * timeout configures the workspace timeout
-   *
-   * @generated from field: optional gitpod.v1.UpdateWorkspaceRequest.UpdateTimeout timeout = 1;
-   */
-  timeout?: UpdateWorkspaceRequest_UpdateTimeout;
-
-  /**
-   * admission controlls who can access the workspace and its ports.
-   *
-   * @generated from field: optional gitpod.v1.AdmissionLevel admission = 2;
-   */
-  admission?: AdmissionLevel;
-
-  /**
-   * Note(cw): repeated fields have implicit presence. There's a difference between passing an empty list or nothing.
-   *
-   * @generated from field: repeated string ssh_public_keys = 3;
-   */
-  sshPublicKeys: string[] = [];
-
-  constructor(data?: PartialMessage<UpdateWorkspaceRequest_UpdateWorkspaceSpec>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.UpdateWorkspaceRequest.UpdateWorkspaceSpec";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "timeout", kind: "message", T: UpdateWorkspaceRequest_UpdateTimeout, opt: true },
-    { no: 2, name: "admission", kind: "enum", T: proto3.getEnumType(AdmissionLevel), opt: true },
-    { no: 3, name: "ssh_public_keys", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateWorkspaceRequest_UpdateWorkspaceSpec {
-    return new UpdateWorkspaceRequest_UpdateWorkspaceSpec().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateWorkspaceRequest_UpdateWorkspaceSpec {
-    return new UpdateWorkspaceRequest_UpdateWorkspaceSpec().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateWorkspaceRequest_UpdateWorkspaceSpec {
-    return new UpdateWorkspaceRequest_UpdateWorkspaceSpec().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: UpdateWorkspaceRequest_UpdateWorkspaceSpec | PlainMessage<UpdateWorkspaceRequest_UpdateWorkspaceSpec> | undefined, b: UpdateWorkspaceRequest_UpdateWorkspaceSpec | PlainMessage<UpdateWorkspaceRequest_UpdateWorkspaceSpec> | undefined): boolean {
-    return proto3.util.equals(UpdateWorkspaceRequest_UpdateWorkspaceSpec, a, b);
-  }
-}
-
-/**
- * @generated from message gitpod.v1.UpdateWorkspaceResponse
- */
-export class UpdateWorkspaceResponse extends Message<UpdateWorkspaceResponse> {
-  /**
-   * @generated from field: gitpod.v1.Workspace workspace = 1;
-   */
-  workspace?: Workspace;
-
-  constructor(data?: PartialMessage<UpdateWorkspaceResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.UpdateWorkspaceResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "workspace", kind: "message", T: Workspace },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateWorkspaceResponse {
-    return new UpdateWorkspaceResponse().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateWorkspaceResponse {
-    return new UpdateWorkspaceResponse().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateWorkspaceResponse {
-    return new UpdateWorkspaceResponse().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: UpdateWorkspaceResponse | PlainMessage<UpdateWorkspaceResponse> | undefined, b: UpdateWorkspaceResponse | PlainMessage<UpdateWorkspaceResponse> | undefined): boolean {
-    return proto3.util.equals(UpdateWorkspaceResponse, a, b);
-  }
-}
-
-/**
- * @generated from message gitpod.v1.ParseContextURLRequest
- */
-export class ParseContextURLRequest extends Message<ParseContextURLRequest> {
-  /**
-   * context_url is the URL to parse
-   *
-   * @generated from field: string context_url = 1;
-   */
-  contextUrl = "";
-
-  /**
-   * configuration_id is the ID of the configuration to use
-   *
-   * @generated from field: string configuration_id = 2;
-   */
-  configurationId = "";
-
-  constructor(data?: PartialMessage<ParseContextURLRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.ParseContextURLRequest";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "context_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "configuration_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ParseContextURLRequest {
-    return new ParseContextURLRequest().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ParseContextURLRequest {
-    return new ParseContextURLRequest().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ParseContextURLRequest {
-    return new ParseContextURLRequest().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: ParseContextURLRequest | PlainMessage<ParseContextURLRequest> | undefined, b: ParseContextURLRequest | PlainMessage<ParseContextURLRequest> | undefined): boolean {
-    return proto3.util.equals(ParseContextURLRequest, a, b);
-  }
-}
-
-/**
- * @generated from message gitpod.v1.ParseContextURLResponse
- */
-export class ParseContextURLResponse extends Message<ParseContextURLResponse> {
-  /**
-   * @generated from field: gitpod.v1.WorkspaceMetadata metadata = 1;
-   */
-  metadata?: WorkspaceMetadata;
-
-  /**
-   * @generated from field: gitpod.v1.WorkspaceSpec spec = 2;
-   */
-  spec?: WorkspaceSpec;
-
-  constructor(data?: PartialMessage<ParseContextURLResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.ParseContextURLResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "metadata", kind: "message", T: WorkspaceMetadata },
-    { no: 2, name: "spec", kind: "message", T: WorkspaceSpec },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ParseContextURLResponse {
-    return new ParseContextURLResponse().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ParseContextURLResponse {
-    return new ParseContextURLResponse().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ParseContextURLResponse {
-    return new ParseContextURLResponse().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: ParseContextURLResponse | PlainMessage<ParseContextURLResponse> | undefined, b: ParseContextURLResponse | PlainMessage<ParseContextURLResponse> | undefined): boolean {
-    return proto3.util.equals(ParseContextURLResponse, a, b);
+  static equals(a: WorkspaceEnvironmentVariable | PlainMessage<WorkspaceEnvironmentVariable> | undefined, b: WorkspaceEnvironmentVariable | PlainMessage<WorkspaceEnvironmentVariable> | undefined): boolean {
+    return proto3.util.equals(WorkspaceEnvironmentVariable, a, b);
   }
 }
