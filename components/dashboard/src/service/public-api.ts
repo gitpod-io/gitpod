@@ -48,7 +48,7 @@ const transport = createConnectTransport({
 
 export const converter = new PublicAPIConverter();
 
-export const helloService = createPromiseClient(HelloService, transport);
+export const helloService = createServiceClient(HelloService);
 export const personalAccessTokensService = createPromiseClient(TokensService, transport);
 /**
  * @deprecated use configurationClient instead
@@ -193,19 +193,35 @@ function createServiceClient<T extends ServiceType>(
                 }
                 return jsonRpcOptions.client;
             }
-            /**
-             * The original application error is retained using gRPC metadata to ensure that existing error handling remains intact.
-             */
-            function handleError(e: any): unknown {
-                if (e instanceof ConnectError) {
-                    throw converter.fromError(e);
-                }
-                throw e;
-            }
             return (...args: any[]) => {
+                const requestContext = {
+                    requestMethod: `${type.typeName}/${prop as string}`,
+                };
+                const callOptions: CallOptions = { ...args[1] };
+                const originalOnHeader = callOptions.onHeader;
+                callOptions.onHeader = (headers) => {
+                    if (originalOnHeader) {
+                        originalOnHeader(headers);
+                    }
+                    const requestId = headers.get("x-request-id") || undefined;
+                    if (requestId) {
+                        Object.assign(requestContext, { requestId });
+                    }
+                };
+                args = [args[0], callOptions];
+
+                function handleError(e: any): unknown {
+                    if (e instanceof ConnectError) {
+                        e = converter.fromError(e);
+                    }
+
+                    Object.assign(e, { requestContext });
+                    throw e;
+                }
+
                 const method = type.methods[prop as string];
                 if (!method) {
-                    throw new ConnectError("unimplemented", Code.Unimplemented);
+                    handleError(new ConnectError("unimplemented", Code.Unimplemented));
                 }
 
                 // TODO(ak) default timeouts

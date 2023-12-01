@@ -367,6 +367,16 @@ describe("PublicAPIConverter", () => {
             expect(appError.message).to.equal("too many running workspaces");
         });
 
+        it("BAD_REQUEST", () => {
+            const connectError = converter.toError(new ApplicationError(ErrorCodes.BAD_REQUEST, "bad request"));
+            expect(connectError.code).to.equal(Code.InvalidArgument);
+            expect(connectError.rawMessage).to.equal("bad request");
+
+            const appError = converter.fromError(connectError);
+            expect(appError.code).to.equal(ErrorCodes.BAD_REQUEST);
+            expect(appError.message).to.equal("bad request");
+        });
+
         it("NOT_FOUND", () => {
             const connectError = converter.toError(new ApplicationError(ErrorCodes.NOT_FOUND, "not found"));
             expect(connectError.code).to.equal(Code.NotFound);
@@ -481,14 +491,15 @@ describe("PublicAPIConverter", () => {
         });
 
         it("Any other error is internal", () => {
-            const error = new Error("unknown");
-            const connectError = converter.toError(error);
+            const reason = new Error("unknown");
+            const connectError = converter.toError(reason);
             expect(connectError.code).to.equal(Code.Internal);
-            expect(connectError.rawMessage).to.equal("unknown");
+            expect(connectError.rawMessage).to.equal("Oops! Something went wrong.");
+            expect(connectError.cause).to.equal(reason);
 
             const appError = converter.fromError(connectError);
             expect(appError.code).to.equal(ErrorCodes.INTERNAL_SERVER_ERROR);
-            expect(appError.message).to.equal("unknown");
+            expect(appError.message).to.equal("Oops! Something went wrong.");
         });
     });
 });

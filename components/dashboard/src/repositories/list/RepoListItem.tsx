@@ -10,7 +10,6 @@ import { TextMuted } from "@podkit/typography/TextMuted";
 import { Text } from "@podkit/typography/Text";
 import { LinkButton } from "@podkit/buttons/LinkButton";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
-import { cn } from "@podkit/lib/cn";
 import { AlertTriangleIcon, CheckCircle2Icon } from "lucide-react";
 import { TableCell, TableRow } from "@podkit/tables/Table";
 
@@ -31,12 +30,12 @@ export const RepositoryListItem: FC<Props> = ({ configuration }) => {
                 <div className="flex flex-col gap-1">
                     <Text className="font-semibold">{configuration.name}</Text>
                     {/* We show the url on a 2nd line for smaller screens since we hide the column */}
-                    <TextMuted className="inline md:hidden text-sm">{url}</TextMuted>
+                    <TextMuted className="inline md:hidden text-sm break-all">{url}</TextMuted>
                 </div>
             </TableCell>
 
             <TableCell hideOnSmallScreen>
-                <TextMuted className="text-sm">{url}</TextMuted>
+                <TextMuted className="text-sm break-all">{url}</TextMuted>
             </TableCell>
 
             <TableCell hideOnSmallScreen>{created}</TableCell>
@@ -46,12 +45,10 @@ export const RepositoryListItem: FC<Props> = ({ configuration }) => {
                     {prebuildsEnabled ? (
                         <CheckCircle2Icon size={20} className="text-green-500" />
                     ) : (
-                        <AlertTriangleIcon size={20} className="text-red-500" />
+                        <AlertTriangleIcon size={20} className="text-kumquat-base" />
                     )}
 
-                    <TextMuted className={cn(!prebuildsEnabled && "text-red-500 dark:text-red-500")}>
-                        {prebuildsEnabled ? "Enabled" : "Disabled"}
-                    </TextMuted>
+                    <TextMuted>{prebuildsEnabled ? "Enabled" : "Disabled"}</TextMuted>
                 </div>
             </TableCell>
 

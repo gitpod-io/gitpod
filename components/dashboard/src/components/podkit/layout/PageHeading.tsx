@@ -8,18 +8,16 @@ import { Heading1, Subheading } from "@podkit/typography/Headings";
 import { FC, ReactNode } from "react";
 
 type PageHeadingProps = {
-    title: string;
-    subtitle?: string;
-    action?: ReactNode;
+    title: ReactNode;
+    subtitle?: ReactNode;
 };
-export const PageHeading: FC<PageHeadingProps> = ({ title, subtitle, action }) => {
+export const PageHeading: FC<PageHeadingProps> = ({ title, subtitle }) => {
     return (
         <div className="flex flex-row flex-wrap justify-between py-8 gap-2">
             <div>
                 <Heading1>{title}</Heading1>
                 {subtitle && <Subheading>{subtitle}</Subheading>}
             </div>
-            {action && action}
         </div>
     );
 };
