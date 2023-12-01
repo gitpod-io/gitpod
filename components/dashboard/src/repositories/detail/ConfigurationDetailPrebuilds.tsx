@@ -46,7 +46,7 @@ export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
                         <TextMuted>
                             Enabling requires permissions to configure repository webhooks.{" "}
                             <a
-                                href="/docs/configure/projects/prebuilds"
+                                href="https://www.gitpod.io/docs/configure/projects/prebuilds"
                                 className="gp-link"
                                 target="_blank"
                                 rel="noopener noreferrer"
