@@ -1,0 +1,10 @@
+{
+    "result": {
+        "id": "ap123",
+        "type": "AUTH_PROVIDER_TYPE_GITHUB",
+        "host": "localhost",
+        "icon": "unused icon",
+        "description": "unused description"
+    },
+    "err": ""
+}

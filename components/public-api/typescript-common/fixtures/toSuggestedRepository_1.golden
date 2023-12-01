@@ -1,0 +1,9 @@
+{
+    "result": {
+        "url": "https://github.com/gitpod-io/gitpod",
+        "repoName": "gitpod",
+        "configurationId": "123",
+        "configurationName": "Gitpod"
+    },
+    "err": ""
+}

@@ -47,11 +47,6 @@ type WorkspaceServiceClient interface {
 	// StartWorkspace starts an existing workspace.
 	// If the specified workspace is not in stopped phase, this will return the workspace as is.
 	StartWorkspace(context.Context, *connect_go.Request[v1.StartWorkspaceRequest]) (*connect_go.Response[v1.StartWorkspaceResponse], error)
-	// UpdateWorkspace updates the workspace.
-	UpdateWorkspace(context.Context, *connect_go.Request[v1.UpdateWorkspaceRequest]) (*connect_go.Response[v1.UpdateWorkspaceResponse], error)
-	// ParseContextURL parses a context URL and returns the workspace metadata and spec.
-	// Not implemented yet.
-	ParseContextURL(context.Context, *connect_go.Request[v1.ParseContextURLRequest]) (*connect_go.Response[v1.ParseContextURLResponse], error)
 	// GetWorkspaceDefaultImage returns the default workspace image of specified
 	// workspace.
 	GetWorkspaceDefaultImage(context.Context, *connect_go.Request[v1.GetWorkspaceDefaultImageRequest]) (*connect_go.Response[v1.GetWorkspaceDefaultImageResponse], error)
@@ -99,16 +94,6 @@ func NewWorkspaceServiceClient(httpClient connect_go.HTTPClient, baseURL string,
 			baseURL+"/gitpod.v1.WorkspaceService/StartWorkspace",
 			opts...,
 		),
-		updateWorkspace: connect_go.NewClient[v1.UpdateWorkspaceRequest, v1.UpdateWorkspaceResponse](
-			httpClient,
-			baseURL+"/gitpod.v1.WorkspaceService/UpdateWorkspace",
-			opts...,
-		),
-		parseContextURL: connect_go.NewClient[v1.ParseContextURLRequest, v1.ParseContextURLResponse](
-			httpClient,
-			baseURL+"/gitpod.v1.WorkspaceService/ParseContextURL",
-			opts...,
-		),
 		getWorkspaceDefaultImage: connect_go.NewClient[v1.GetWorkspaceDefaultImageRequest, v1.GetWorkspaceDefaultImageResponse](
 			httpClient,
 			baseURL+"/gitpod.v1.WorkspaceService/GetWorkspaceDefaultImage",
@@ -139,8 +124,6 @@ type workspaceServiceClient struct {
 	listWorkspaces                *connect_go.Client[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse]
 	createAndStartWorkspace       *connect_go.Client[v1.CreateAndStartWorkspaceRequest, v1.CreateAndStartWorkspaceResponse]
 	startWorkspace                *connect_go.Client[v1.StartWorkspaceRequest, v1.StartWorkspaceResponse]
-	updateWorkspace               *connect_go.Client[v1.UpdateWorkspaceRequest, v1.UpdateWorkspaceResponse]
-	parseContextURL               *connect_go.Client[v1.ParseContextURLRequest, v1.ParseContextURLResponse]
 	getWorkspaceDefaultImage      *connect_go.Client[v1.GetWorkspaceDefaultImageRequest, v1.GetWorkspaceDefaultImageResponse]
 	sendHeartBeat                 *connect_go.Client[v1.SendHeartBeatRequest, v1.SendHeartBeatResponse]
 	getWorkspaceOwnerToken        *connect_go.Client[v1.GetWorkspaceOwnerTokenRequest, v1.GetWorkspaceOwnerTokenResponse]
@@ -170,16 +153,6 @@ func (c *workspaceServiceClient) CreateAndStartWorkspace(ctx context.Context, re
 // StartWorkspace calls gitpod.v1.WorkspaceService.StartWorkspace.
 func (c *workspaceServiceClient) StartWorkspace(ctx context.Context, req *connect_go.Request[v1.StartWorkspaceRequest]) (*connect_go.Response[v1.StartWorkspaceResponse], error) {
 	return c.startWorkspace.CallUnary(ctx, req)
-}
-
-// UpdateWorkspace calls gitpod.v1.WorkspaceService.UpdateWorkspace.
-func (c *workspaceServiceClient) UpdateWorkspace(ctx context.Context, req *connect_go.Request[v1.UpdateWorkspaceRequest]) (*connect_go.Response[v1.UpdateWorkspaceResponse], error) {
-	return c.updateWorkspace.CallUnary(ctx, req)
-}
-
-// ParseContextURL calls gitpod.v1.WorkspaceService.ParseContextURL.
-func (c *workspaceServiceClient) ParseContextURL(ctx context.Context, req *connect_go.Request[v1.ParseContextURLRequest]) (*connect_go.Response[v1.ParseContextURLResponse], error) {
-	return c.parseContextURL.CallUnary(ctx, req)
 }
 
 // GetWorkspaceDefaultImage calls gitpod.v1.WorkspaceService.GetWorkspaceDefaultImage.
@@ -220,11 +193,6 @@ type WorkspaceServiceHandler interface {
 	// StartWorkspace starts an existing workspace.
 	// If the specified workspace is not in stopped phase, this will return the workspace as is.
 	StartWorkspace(context.Context, *connect_go.Request[v1.StartWorkspaceRequest]) (*connect_go.Response[v1.StartWorkspaceResponse], error)
-	// UpdateWorkspace updates the workspace.
-	UpdateWorkspace(context.Context, *connect_go.Request[v1.UpdateWorkspaceRequest]) (*connect_go.Response[v1.UpdateWorkspaceResponse], error)
-	// ParseContextURL parses a context URL and returns the workspace metadata and spec.
-	// Not implemented yet.
-	ParseContextURL(context.Context, *connect_go.Request[v1.ParseContextURLRequest]) (*connect_go.Response[v1.ParseContextURLResponse], error)
 	// GetWorkspaceDefaultImage returns the default workspace image of specified
 	// workspace.
 	GetWorkspaceDefaultImage(context.Context, *connect_go.Request[v1.GetWorkspaceDefaultImageRequest]) (*connect_go.Response[v1.GetWorkspaceDefaultImageResponse], error)
@@ -267,16 +235,6 @@ func NewWorkspaceServiceHandler(svc WorkspaceServiceHandler, opts ...connect_go.
 	mux.Handle("/gitpod.v1.WorkspaceService/StartWorkspace", connect_go.NewUnaryHandler(
 		"/gitpod.v1.WorkspaceService/StartWorkspace",
 		svc.StartWorkspace,
-		opts...,
-	))
-	mux.Handle("/gitpod.v1.WorkspaceService/UpdateWorkspace", connect_go.NewUnaryHandler(
-		"/gitpod.v1.WorkspaceService/UpdateWorkspace",
-		svc.UpdateWorkspace,
-		opts...,
-	))
-	mux.Handle("/gitpod.v1.WorkspaceService/ParseContextURL", connect_go.NewUnaryHandler(
-		"/gitpod.v1.WorkspaceService/ParseContextURL",
-		svc.ParseContextURL,
 		opts...,
 	))
 	mux.Handle("/gitpod.v1.WorkspaceService/GetWorkspaceDefaultImage", connect_go.NewUnaryHandler(
@@ -323,14 +281,6 @@ func (UnimplementedWorkspaceServiceHandler) CreateAndStartWorkspace(context.Cont
 
 func (UnimplementedWorkspaceServiceHandler) StartWorkspace(context.Context, *connect_go.Request[v1.StartWorkspaceRequest]) (*connect_go.Response[v1.StartWorkspaceResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.StartWorkspace is not implemented"))
-}
-
-func (UnimplementedWorkspaceServiceHandler) UpdateWorkspace(context.Context, *connect_go.Request[v1.UpdateWorkspaceRequest]) (*connect_go.Response[v1.UpdateWorkspaceResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.UpdateWorkspace is not implemented"))
-}
-
-func (UnimplementedWorkspaceServiceHandler) ParseContextURL(context.Context, *connect_go.Request[v1.ParseContextURLRequest]) (*connect_go.Response[v1.ParseContextURLResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.ParseContextURL is not implemented"))
 }
 
 func (UnimplementedWorkspaceServiceHandler) GetWorkspaceDefaultImage(context.Context, *connect_go.Request[v1.GetWorkspaceDefaultImageRequest]) (*connect_go.Response[v1.GetWorkspaceDefaultImageResponse], error) {

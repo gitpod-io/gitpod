@@ -861,9 +861,9 @@ export class ResolveWorkspaceEnvironmentVariablesRequest extends Message<Resolve
  */
 export class ResolveWorkspaceEnvironmentVariablesResponse extends Message<ResolveWorkspaceEnvironmentVariablesResponse> {
   /**
-   * @generated from field: repeated gitpod.v1.EnvironmentVariable environment_variables = 1;
+   * @generated from field: repeated gitpod.v1.ResolveWorkspaceEnvironmentVariablesResponse.EnvironmentVariable environment_variables = 1;
    */
-  environmentVariables: EnvironmentVariable[] = [];
+  environmentVariables: ResolveWorkspaceEnvironmentVariablesResponse_EnvironmentVariable[] = [];
 
   constructor(data?: PartialMessage<ResolveWorkspaceEnvironmentVariablesResponse>) {
     super();
@@ -873,7 +873,7 @@ export class ResolveWorkspaceEnvironmentVariablesResponse extends Message<Resolv
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.ResolveWorkspaceEnvironmentVariablesResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "environment_variables", kind: "message", T: EnvironmentVariable, repeated: true },
+    { no: 1, name: "environment_variables", kind: "message", T: ResolveWorkspaceEnvironmentVariablesResponse_EnvironmentVariable, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ResolveWorkspaceEnvironmentVariablesResponse {
@@ -894,9 +894,9 @@ export class ResolveWorkspaceEnvironmentVariablesResponse extends Message<Resolv
 }
 
 /**
- * @generated from message gitpod.v1.EnvironmentVariable
+ * @generated from message gitpod.v1.ResolveWorkspaceEnvironmentVariablesResponse.EnvironmentVariable
  */
-export class EnvironmentVariable extends Message<EnvironmentVariable> {
+export class ResolveWorkspaceEnvironmentVariablesResponse_EnvironmentVariable extends Message<ResolveWorkspaceEnvironmentVariablesResponse_EnvironmentVariable> {
   /**
    * @generated from field: string name = 1;
    */
@@ -907,31 +907,31 @@ export class EnvironmentVariable extends Message<EnvironmentVariable> {
    */
   value = "";
 
-  constructor(data?: PartialMessage<EnvironmentVariable>) {
+  constructor(data?: PartialMessage<ResolveWorkspaceEnvironmentVariablesResponse_EnvironmentVariable>) {
     super();
     proto3.util.initPartial(data, this);
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.v1.EnvironmentVariable";
+  static readonly typeName = "gitpod.v1.ResolveWorkspaceEnvironmentVariablesResponse.EnvironmentVariable";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "value", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): EnvironmentVariable {
-    return new EnvironmentVariable().fromBinary(bytes, options);
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ResolveWorkspaceEnvironmentVariablesResponse_EnvironmentVariable {
+    return new ResolveWorkspaceEnvironmentVariablesResponse_EnvironmentVariable().fromBinary(bytes, options);
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): EnvironmentVariable {
-    return new EnvironmentVariable().fromJson(jsonValue, options);
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ResolveWorkspaceEnvironmentVariablesResponse_EnvironmentVariable {
+    return new ResolveWorkspaceEnvironmentVariablesResponse_EnvironmentVariable().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): EnvironmentVariable {
-    return new EnvironmentVariable().fromJsonString(jsonString, options);
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ResolveWorkspaceEnvironmentVariablesResponse_EnvironmentVariable {
+    return new ResolveWorkspaceEnvironmentVariablesResponse_EnvironmentVariable().fromJsonString(jsonString, options);
   }
 
-  static equals(a: EnvironmentVariable | PlainMessage<EnvironmentVariable> | undefined, b: EnvironmentVariable | PlainMessage<EnvironmentVariable> | undefined): boolean {
-    return proto3.util.equals(EnvironmentVariable, a, b);
+  static equals(a: ResolveWorkspaceEnvironmentVariablesResponse_EnvironmentVariable | PlainMessage<ResolveWorkspaceEnvironmentVariablesResponse_EnvironmentVariable> | undefined, b: ResolveWorkspaceEnvironmentVariablesResponse_EnvironmentVariable | PlainMessage<ResolveWorkspaceEnvironmentVariablesResponse_EnvironmentVariable> | undefined): boolean {
+    return proto3.util.equals(ResolveWorkspaceEnvironmentVariablesResponse_EnvironmentVariable, a, b);
   }
 }

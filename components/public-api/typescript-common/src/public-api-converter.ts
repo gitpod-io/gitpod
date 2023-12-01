@@ -39,32 +39,22 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import {
     AdmissionLevel,
-    GitInitializer,
-    GitInitializer_GitConfig,
-    PrebuildInitializer,
-    SnapshotInitializer,
     Workspace,
+    WorkspaceConditions,
+    WorkspaceEnvironmentVariable,
     WorkspaceGitStatus,
-    WorkspaceInitializer,
-    WorkspaceInitializer_Spec,
-    WorkspaceMetadata,
     WorkspacePhase,
     WorkspacePhase_Phase,
     WorkspacePort,
+    WorkspacePort_Policy,
     WorkspacePort_Protocol,
-    WorkspaceSpec,
-    WorkspaceSpec_GitSpec,
-    WorkspaceSpec_WorkspaceType,
     WorkspaceStatus,
-    WorkspaceStatus_PrebuildResult,
-    WorkspaceStatus_WorkspaceConditions,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { EditorReference } from "@gitpod/public-api/lib/gitpod/v1/editor_pb";
 import { BlockedEmailDomain, BlockedRepository } from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
 import { SSHPublicKey } from "@gitpod/public-api/lib/gitpod/v1/ssh_pb";
 import {
     ConfigurationEnvironmentVariable,
-    EnvironmentVariable,
     EnvironmentVariableAdmission,
     UserEnvironmentVariable,
 } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
@@ -95,7 +85,6 @@ import {
     Token,
     SuggestedRepository as SuggestedRepositoryProtocol,
     UserSSHPublicKeyValue,
-    SnapshotContext,
     EmailDomainFilterEntry,
 } from "@gitpod/gitpod-protocol/lib/protocol";
 import {
@@ -132,122 +121,45 @@ export class PublicAPIConverter {
     toWorkspace(arg: WorkspaceInfo | WorkspaceInstance, current?: Workspace): Workspace {
         const workspace = current ?? new Workspace();
 
-        workspace.spec = this.toWorkspaceSpec(arg, workspace.spec);
-        workspace.status = this.toWorkspaceStatus(arg, workspace.status);
-        workspace.metadata = this.toWorkspaceMetadata(arg, workspace.metadata);
         if ("workspace" in arg) {
             workspace.id = arg.workspace.id;
+            workspace.prebuild = arg.workspace.type === "prebuild";
+            workspace.organizationId = arg.workspace.organizationId;
+            workspace.name = arg.workspace.description;
+            workspace.pinned = arg.workspace.pinned ?? false;
+
+            const contextUrl = ContextURL.normalize(arg.workspace);
+            if (contextUrl) {
+                workspace.contextUrl = contextUrl;
+            }
+            if (WithPrebuild.is(arg.workspace.context)) {
+                workspace.prebuildId = arg.workspace.context.prebuildWorkspaceId;
+            }
+
+            const status = new WorkspaceStatus();
+            const phase = new WorkspacePhase();
+            phase.lastTransitionTime = Timestamp.fromDate(new Date(arg.workspace.creationTime));
+            status.phase = phase;
+            status.admission = this.toAdmission(arg.workspace.shareable);
+            status.gitStatus = this.toGitStatus(arg.workspace);
+            workspace.status = status;
+            workspace.additionalEnvironmentVariables = this.toWorkspaceEnvironmentVariables(arg.workspace.context);
+
             if (arg.latestInstance) {
                 return this.toWorkspace(arg.latestInstance, workspace);
             }
             return workspace;
         }
-        return workspace;
-    }
 
-    toWorkspaceSpec(arg: WorkspaceInfo | WorkspaceInstance, current?: WorkspaceSpec): WorkspaceSpec {
-        const spec = new WorkspaceSpec(current);
-        if ("workspace" in arg) {
-            spec.admission = this.toAdmission(arg.workspace.shareable);
-            spec.initializer = new WorkspaceInitializer(spec.initializer);
-            spec.type =
-                arg.workspace.type === "prebuild"
-                    ? WorkspaceSpec_WorkspaceType.PREBUILD
-                    : WorkspaceSpec_WorkspaceType.REGULAR;
-            spec.environmentVariables = this.toEnvironmentVariables(arg.workspace.context);
-
-            if (WithPrebuild.is(arg.workspace.context)) {
-                const initializerSpec = new WorkspaceInitializer_Spec({
-                    spec: {
-                        case: "prebuild",
-                        value: new PrebuildInitializer({
-                            prebuildId: arg.workspace.context.prebuildWorkspaceId,
-                        }),
-                    },
-                });
-                spec.initializer.specs.push(initializerSpec);
-            } else if (CommitContext.is(arg.workspace.context)) {
-                const initializerSpec = new WorkspaceInitializer_Spec({
-                    spec: {
-                        case: "git",
-                        value: new GitInitializer({
-                            remoteUri: arg.workspace.context.normalizedContextURL,
-                            upstreamRemoteUri: arg.workspace.context.upstreamRemoteURI,
-                            // TODO:
-                            // targetMode
-                            // cloneTaget
-                            checkoutLocation: arg.workspace.context.checkoutLocation,
-                            // TODO: config
-                            config: new GitInitializer_GitConfig(),
-                        }),
-                    },
-                });
-                spec.initializer.specs.push(initializerSpec);
-            } else if (SnapshotContext.is(arg.workspace.context)) {
-                const initializerSpec = new WorkspaceInitializer_Spec({
-                    spec: {
-                        case: "snapshot",
-                        value: new SnapshotInitializer({
-                            snapshotId: arg.workspace.context.snapshotId,
-                        }),
-                    },
-                });
-                spec.initializer.specs.push(initializerSpec);
-            }
-            // TODO: else if FileDownloadInitializer
-
-            spec.git = new WorkspaceSpec_GitSpec({
-                // TODO:
-                // username: "",
-                // email: "",
-            });
-
-            if (arg.latestInstance) {
-                return this.toWorkspaceSpec(arg.latestInstance, spec);
-            }
-            return spec;
-        }
-        spec.editor = this.toEditor(arg.configuration.ideConfig);
-        spec.ports = this.toPorts(arg.status.exposedPorts);
-        if (arg.status.timeout) {
-            // TODO: timeout
-        }
-        if (arg.workspaceClass) {
-            spec.class = arg.workspaceClass;
-        }
-        // TODO: ssh_public_keys
-        // TODO: subassembly_references
-        // TODO: log_url
-        return spec;
-    }
-
-    toWorkspaceStatus(arg: WorkspaceInfo | WorkspaceInstance, current?: WorkspaceStatus): WorkspaceStatus {
-        const status = new WorkspaceStatus(current);
-        status.phase = new WorkspacePhase(status.phase);
-
-        if ("workspace" in arg) {
-            if (arg.workspace.type === "prebuild") {
-                status.prebuildResult = new WorkspaceStatus_PrebuildResult({
-                    // TODO:
-                    // snapshot: "",
-                    // errorMessage: "",
-                });
-            }
-            // TODO: timeout
-            status.phase.lastTransitionTime = Timestamp.fromDate(new Date(arg.workspace.creationTime));
-            status.gitStatus = this.toGitStatus(arg.workspace);
-            return status;
-        }
-
-        status.workspaceUrl = arg.ideUrl;
-        status.conditions = this.toWorkspaceConditions(arg.status.conditions);
+        const status = workspace.status ?? new WorkspaceStatus();
+        workspace.status = status;
+        const phase = status.phase ?? new WorkspacePhase();
+        phase.name = this.toPhase(arg);
+        status.phase = phase;
 
         let lastTransitionTime = new Date(arg.creationTime).getTime();
-        if (status.phase.lastTransitionTime) {
-            lastTransitionTime = Math.max(
-                lastTransitionTime,
-                new Date(status.phase.lastTransitionTime.toDate()).getTime(),
-            );
+        if (phase.lastTransitionTime) {
+            lastTransitionTime = Math.max(lastTransitionTime, new Date(phase.lastTransitionTime.toDate()).getTime());
         }
         if (arg.deployedTime) {
             lastTransitionTime = Math.max(lastTransitionTime, new Date(arg.deployedTime).getTime());
@@ -261,48 +173,30 @@ export class PublicAPIConverter {
         if (arg.stoppedTime) {
             lastTransitionTime = Math.max(lastTransitionTime, new Date(arg.stoppedTime).getTime());
         }
-        status.phase.lastTransitionTime = Timestamp.fromDate(new Date(lastTransitionTime));
+        phase.lastTransitionTime = Timestamp.fromDate(new Date(lastTransitionTime));
 
-        // TODO: could be improved? But by original status source producer
-        status.statusVersion = status.phase.lastTransitionTime.seconds;
-
-        status.phase.name = this.toPhase(arg);
         status.instanceId = arg.id;
         if (arg.status.message) {
-            status.conditions = new WorkspaceStatus_WorkspaceConditions({
-                failed: arg.status.message,
-            });
-            arg.status.conditions.failed;
+            status.message = arg.status.message;
         }
+        status.workspaceUrl = arg.ideUrl;
+        status.ports = this.toPorts(arg.status.exposedPorts);
+        status.conditions = this.toWorkspaceConditions(arg.status.conditions);
         status.gitStatus = this.toGitStatus(arg, status.gitStatus);
-
-        return status;
-    }
-
-    toWorkspaceMetadata(arg: WorkspaceInfo | WorkspaceInstance, current?: WorkspaceMetadata): WorkspaceMetadata {
-        const metadata = new WorkspaceMetadata(current);
-        if ("workspace" in arg) {
-            metadata.ownerId = arg.workspace.ownerId;
-            metadata.configurationId = arg.workspace.projectId ?? "";
-            // TODO: annotation
-            metadata.organizationId = arg.workspace.organizationId;
-            metadata.name = arg.workspace.description;
-            metadata.pinned = arg.workspace.pinned ?? false;
-            const contextUrl = ContextURL.normalize(arg.workspace);
-            if (contextUrl) {
-                metadata.originalContextUrl = contextUrl;
-            }
+        workspace.region = arg.region;
+        if (arg.workspaceClass) {
+            workspace.workspaceClass = arg.workspaceClass;
         }
-        return metadata;
+        workspace.editor = this.toEditor(arg.configuration.ideConfig);
+
+        return workspace;
     }
 
-    toWorkspaceConditions(conditions: WorkspaceInstanceConditions): WorkspaceStatus_WorkspaceConditions {
-        const result = new WorkspaceStatus_WorkspaceConditions({
+    toWorkspaceConditions(conditions: WorkspaceInstanceConditions): WorkspaceConditions {
+        return new WorkspaceConditions({
             failed: conditions.failed,
             timeout: conditions.timeout,
         });
-        // TODO: failedReason
-        return result;
     }
 
     toEditor(ideConfig: ConfigurationIdeConfig | undefined): EditorReference | undefined {
@@ -556,15 +450,15 @@ export class PublicAPIConverter {
         return new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, reason.rawMessage);
     }
 
-    toEnvironmentVariables(context: WorkspaceContext): EnvironmentVariable[] {
+    toWorkspaceEnvironmentVariables(context: WorkspaceContext): WorkspaceEnvironmentVariable[] {
         if (WithEnvvarsContext.is(context)) {
             return context.envvars.map((envvar) => this.toWorkspaceEnvironmentVariable(envvar));
         }
         return [];
     }
 
-    toWorkspaceEnvironmentVariable(envVar: EnvVarWithValue): EnvironmentVariable {
-        const result = new EnvironmentVariable();
+    toWorkspaceEnvironmentVariable(envVar: EnvVarWithValue): WorkspaceEnvironmentVariable {
+        const result = new WorkspaceEnvironmentVariable();
         result.name = envVar.name;
         result.value = envVar.value;
         return result;
@@ -610,7 +504,7 @@ export class PublicAPIConverter {
         if (port.url) {
             result.url = port.url;
         }
-        result.admission = this.toAdmission(port.visibility === "public");
+        result.policy = this.toPortPolicy(port.visibility);
         result.protocol = this.toPortProtocol(port.protocol);
         return result;
     }
@@ -621,6 +515,15 @@ export class PublicAPIConverter {
                 return WorkspacePort_Protocol.HTTPS;
             default:
                 return WorkspacePort_Protocol.HTTP;
+        }
+    }
+
+    toPortPolicy(visibility: string | undefined): WorkspacePort_Policy {
+        switch (visibility) {
+            case "public":
+                return WorkspacePort_Policy.PUBLIC;
+            default:
+                return WorkspacePort_Policy.PRIVATE;
         }
     }
 
@@ -680,9 +583,6 @@ export class PublicAPIConverter {
                     return WorkspacePhase_Phase.RUNNING;
                 case "interrupted":
                     return WorkspacePhase_Phase.INTERRUPTED;
-                // TODO:
-                // case "pause":
-                //     return WorkspacePhase_Phase.PAUSED;
                 case "stopping":
                     return WorkspacePhase_Phase.STOPPING;
                 case "stopped":

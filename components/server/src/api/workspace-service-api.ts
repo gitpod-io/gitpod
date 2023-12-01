@@ -26,10 +26,6 @@ import {
     SendHeartBeatRequest,
     SendHeartBeatResponse,
     GetWorkspaceDefaultImageResponse_Source,
-    ParseContextURLRequest,
-    ParseContextURLResponse,
-    UpdateWorkspaceRequest,
-    UpdateWorkspaceResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { inject, injectable } from "inversify";
 import { WorkspaceService } from "../workspace/workspace-service";
@@ -118,28 +114,28 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         if (req.source?.case !== "contextUrl") {
             throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
         }
-        if (!req.metadata || !req.metadata.organizationId || !uuidValidate(req.metadata.organizationId)) {
+        if (!req.organizationId || !uuidValidate(req.organizationId)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
-        if (!req.source.value || !req.source.value.url) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "source is required");
-        }
-        if (!req.source.value.editor?.name) {
+        if (!req.editor) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "editor is required");
+        }
+        if (!req.source.value) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "source is required");
         }
         const contextUrl = req.source.value;
         const user = await this.userService.findUserById(ctxUserId(), ctxUserId());
-        const { context, project } = await this.contextService.parseContext(user, contextUrl.url, {
-            projectId: req.metadata.configurationId,
-            organizationId: req.metadata.organizationId,
+        const { context, project } = await this.contextService.parseContext(user, contextUrl, {
+            projectId: req.configurationId,
+            organizationId: req.organizationId,
             forceDefaultConfig: req.forceDefaultConfig,
         });
 
-        const normalizedContextUrl = this.contextParser.normalizeContextURL(contextUrl.url);
+        const normalizedContextUrl = this.contextParser.normalizeContextURL(contextUrl);
         const workspace = await this.workspaceService.createWorkspace(
             {},
             user,
-            req.metadata.organizationId,
+            req.organizationId,
             project,
             context,
             normalizedContextUrl,
@@ -147,10 +143,10 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
 
         await this.workspaceService.startWorkspace({}, user, workspace.id, {
             forceDefaultImage: req.forceDefaultConfig,
-            workspaceClass: contextUrl.workspaceClass,
+            workspaceClass: req.workspaceClass,
             ideSettings: {
-                defaultIde: req.source.value.editor.name,
-                useLatestVersion: req.source.value.editor.version === "latest",
+                defaultIde: req.editor.name,
+                useLatestVersion: req.editor.version === "latest",
             },
             clientRegionCode: ctxClientRegion(),
         });
@@ -250,13 +246,5 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         const response = new GetWorkspaceEditorCredentialsResponse();
         response.editorCredentials = credentials;
         return response;
-    }
-
-    async updateWorkspace(req: UpdateWorkspaceRequest): Promise<UpdateWorkspaceResponse> {
-        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
-    }
-
-    async parseContextURL(req: ParseContextURLRequest): Promise<ParseContextURLResponse> {
-        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
     }
 }

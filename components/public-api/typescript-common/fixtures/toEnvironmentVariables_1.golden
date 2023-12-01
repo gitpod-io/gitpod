@@ -1,0 +1,9 @@
+{
+    "result": [
+        {
+            "name": "FOO",
+            "value": "bar"
+        }
+    ],
+    "err": ""
+}

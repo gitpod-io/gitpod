@@ -27,6 +27,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/constants"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
@@ -554,6 +555,8 @@ func createWorkspaceEnvironment(sctx *startWorkspaceContext) ([]corev1.EnvVar, e
 	result = append(result, corev1.EnvVar{Name: "THEIA_WEBVIEW_EXTERNAL_ENDPOINT", Value: "webview-{{hostname}}"})
 	result = append(result, corev1.EnvVar{Name: "THEIA_MINI_BROWSER_HOST_PATTERN", Value: "browser-{{hostname}}"})
 
+	result = append(result, corev1.EnvVar{Name: "GITPOD_SSH_CA_PUBLIC_KEY", Value: sctx.Workspace.Spec.SSHGatewayCAPublicKey})
+
 	// We don't require that Git be configured for workspaces
 	if sctx.Workspace.Spec.Git != nil {
 		result = append(result, corev1.EnvVar{Name: "GITPOD_GIT_USER_NAME", Value: sctx.Workspace.Spec.Git.Username})
@@ -690,14 +693,15 @@ func newStartWorkspaceContext(ctx context.Context, cfg *config.Configuration, ws
 
 	return &startWorkspaceContext{
 		Labels: map[string]string{
-			"app":                  "gitpod",
-			"component":            "workspace",
-			wsk8s.MetaIDLabel:      ws.Spec.Ownership.WorkspaceID,
-			wsk8s.WorkspaceIDLabel: ws.Name,
-			wsk8s.OwnerLabel:       ws.Spec.Ownership.Owner,
-			wsk8s.TypeLabel:        strings.ToLower(string(ws.Spec.Type)),
-			instanceIDLabel:        ws.Name,
-			headlessLabel:          strconv.FormatBool(ws.IsHeadless()),
+			"app":                         "gitpod",
+			"component":                   "workspace",
+			wsk8s.MetaIDLabel:             ws.Spec.Ownership.WorkspaceID,
+			wsk8s.WorkspaceIDLabel:        ws.Name,
+			wsk8s.OwnerLabel:              ws.Spec.Ownership.Owner,
+			wsk8s.TypeLabel:               strings.ToLower(string(ws.Spec.Type)),
+			wsk8s.WorkspaceManagedByLabel: constants.ManagedBy,
+			instanceIDLabel:               ws.Name,
+			headlessLabel:                 strconv.FormatBool(ws.IsHeadless()),
 		},
 		Config:         cfg,
 		Workspace:      ws,

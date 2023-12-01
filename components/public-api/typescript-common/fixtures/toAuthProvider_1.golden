@@ -1,0 +1,19 @@
+{
+    "result": {
+        "id": "ap123",
+        "organizationId": "orgId123",
+        "type": "AUTH_PROVIDER_TYPE_GITHUB",
+        "host": "localhost",
+        "icon": "",
+        "description": "",
+        "settingsUrl": "",
+        "verified": false,
+        "enableLogin": false,
+        "scopes": [],
+        "oauth2Config": {
+            "clientId": "clientId123",
+            "clientSecret": "should not appear in result"
+        }
+    },
+    "err": ""
+}

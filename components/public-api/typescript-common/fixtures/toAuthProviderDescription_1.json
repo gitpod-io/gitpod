@@ -1,0 +1,11 @@
+{
+  "authProviderId": "ap123",
+  "authProviderType": "GitHub",
+  "host": "localhost",
+  "verified": true,
+  "icon": "unused icon",
+  "description": "unused description",
+  "settingsUrl": "unused",
+  "ownerId": "unused",
+  "organizationId": "unused"
+}

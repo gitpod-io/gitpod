@@ -8,7 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
 import { getListWorkspacesQueryKey, ListWorkspacesQueryResult } from "./list-workspaces-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
-import { Workspace, WorkspaceMetadata } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 type ToggleWorkspacePinnedArgs = {
     workspaceId: string;
@@ -33,10 +33,7 @@ export const useToggleWorkspacedPinnedMutation = () => {
                         return info;
                     }
                     const workspace = new Workspace(info);
-                    if (!workspace.metadata) {
-                        workspace.metadata = new WorkspaceMetadata();
-                    }
-                    workspace.metadata.pinned = !workspace.metadata.pinned;
+                    workspace.pinned = !workspace.pinned;
                     return workspace;
                 });
             });
