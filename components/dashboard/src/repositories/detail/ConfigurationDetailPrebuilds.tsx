@@ -22,19 +22,7 @@ export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
         <>
             <ConfigurationSettingsField>
                 <Heading3>Prebuilds</Heading3>
-                <Subheading className="max-w-lg">
-                    Prebuilds reduce wait time for new workspaces. Enabling requires permissions to configure repository
-                    webhooks.{" "}
-                    <a
-                        href="/docs/configure/projects/prebuilds"
-                        className="gp-link"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        Learn more
-                    </a>
-                    .
-                </Subheading>
+                <Subheading className="max-w-lg">Prebuilds reduce wait time for new workspaces.</Subheading>
 
                 <div className="flex gap-4 mt-6">
                     {/* TODO: wrap this in a SwitchInputField that handles the switch, label and description and htmlFor/id automatically */}
