@@ -42,7 +42,9 @@ export const ConfigurationVariableItem = ({ variable, configurationId }: Props) 
             <TableRow key={variable.id}>
                 <TableCell className="truncate">{variable.name}</TableCell>
                 <TableCell>
-                    {variable.admission === EnvironmentVariableAdmission.PREBUILD ? "Hidden" : "Shown"}
+                    {variable.admission === EnvironmentVariableAdmission.PREBUILD
+                        ? "Prebuilds only"
+                        : "Prebuilds & workspaces"}
                 </TableCell>
                 <TableCell className="flex justify-end">
                     <DropdownActions>
