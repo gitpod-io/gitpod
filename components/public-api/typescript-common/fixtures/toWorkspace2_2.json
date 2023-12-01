@@ -101,7 +101,7 @@
       "nodeIp": "100.64.35.212",
       "message": "",
       "podName": "ws-4b1ef455-e04c-43d3-bf5d-0d67f168c9f3",
-      "timeout": "1h0m0s",
+      "timeout": "1h2m2s",
       "version": 113206859,
       "nodeName": "ip-100-64-35-212.eu-central-1.compute.internal",
       "conditions": {

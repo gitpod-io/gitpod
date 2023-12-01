@@ -45,6 +45,9 @@
                 "username": "",
                 "email": ""
             },
+            "timeout": {
+                "disconnected": "3600s"
+            },
             "admission": "ADMISSION_LEVEL_OWNER_ONLY",
             "class": "g1-standard----class",
             "sshPublicKeys": [],

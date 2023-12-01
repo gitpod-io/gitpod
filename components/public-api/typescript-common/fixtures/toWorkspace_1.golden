@@ -21,6 +21,9 @@
             },
             "type": "WORKSPACE_TYPE_REGULAR",
             "git": {},
+            "timeout": {
+                "disconnected": "1800s"
+            },
             "admission": "ADMISSION_LEVEL_OWNER_ONLY",
             "class": "g1-standard",
             "editor": {
