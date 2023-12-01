@@ -78,24 +78,6 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
         });
     }, [toggleWorkspacePinned, workspace.id]);
 
-    // Function to create a workspace share entry based on the workspace sharing status
-    const createWorkspaceShareMenuEntry = (isSharingDisabled: boolean | undefined) => {
-        if (!isSharingDisabled) {
-            return {
-                title: "Share",
-                active: workspace.status?.admission === AdmissionLevel.EVERYONE,
-                onClick: toggleShared,
-            };
-        } else {
-            return {
-                title: "Workspace sharing is disabled for this organization. Contact your org. owner to enable it.",
-                active: false,
-                customContent: "Share",
-                customFontStyle: "text-gray-400 dark:text-gray-500 opacity-50 cursor-not-allowed",
-            };
-        }
-    };
-
     // Can we use `/start#${workspace.id}` instead?
     const startUrl = useMemo(
         () =>
@@ -147,7 +129,20 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
     });
 
     // Push the Workspace share menu entry based on the current organization settings for workspace sharing
-    menuEntries.push(createWorkspaceShareMenuEntry(settings?.workspaceSharingDisabled));
+    if (settings && !settings.workspaceSharingDisabled) {
+        menuEntries.push({
+            title: "Share",
+            active: workspace.status?.admission === AdmissionLevel.EVERYONE,
+            onClick: toggleShared,
+        });
+    } else {
+        menuEntries.push({
+            title: "Workspace sharing is disabled for this organization. Contact your org. owner to enable it.",
+            active: false,
+            customContent: "Share",
+            customFontStyle: "text-gray-400 dark:text-gray-500 opacity-50 cursor-not-allowed",
+        });
+    }
 
     menuEntries.push(
         {
