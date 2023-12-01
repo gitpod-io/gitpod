@@ -36,6 +36,6 @@ protoc_buf_generate
 update_license
 
 # Run end-of-file-fixer
-git ls-files -- 'typescript/*.ts' | xargs pre-commit run end-of-file-fixer --files
+git ls-files -- 'typescript/*.ts' | xargs pre-commit run end-of-file-fixer --files || true
 
 yarn --cwd typescript build

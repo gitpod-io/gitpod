@@ -28,6 +28,7 @@ import { startFixtureTest } from "./fixtures.spec";
 import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { BranchMatchingStrategy } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
+import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 describe("PublicAPIConverter", () => {
     const converter = new PublicAPIConverter();
@@ -67,7 +68,14 @@ describe("PublicAPIConverter", () => {
         });
 
         it("toWorkspace", async () => {
-            await startFixtureTest("../fixtures/toWorkspace_*.json", async (input) => converter.toWorkspace(input));
+            await startFixtureTest("../fixtures/toWorkspace_*.json", async (input) => {
+                const result = converter.toWorkspace(
+                    input.arg1,
+                    input.arg2 ? Workspace.fromJson(input.arg2) : undefined,
+                );
+                // Use toJsonString since JSON.stringify cann't decode BigInt
+                return JSON.parse(result.toJsonString());
+            });
         });
 
         it("toConfiguration", async () => {
@@ -114,9 +122,9 @@ describe("PublicAPIConverter", () => {
             );
         });
 
-        it("toWorkspaceEnvironmentVariables", async () => {
+        it("toEnvironmentVariables", async () => {
             await startFixtureTest("../fixtures/toEnvironmentVariables_*.json", async (input) =>
-                converter.toWorkspaceEnvironmentVariables(input),
+                converter.toEnvironmentVariables(input),
             );
         });
 

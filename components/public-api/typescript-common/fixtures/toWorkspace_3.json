@@ -1,14 +1,50 @@
 {
-  "id": "226695b4-f10a-471a-a219-9b657645bf78",
-  "workspaceId": "akosyakov-parceldemo-4crqn25qlwi",
-  "region": "dev",
-  "creationTime": "2023-10-16T20:18:24.923Z",
-  "startedTime": "2023-10-16T20:18:53.451Z",
-  "stoppingTime": "2023-10-16T20:36:14.802Z",
-  "stoppedTime": "2023-10-16T20:36:16.205Z",
-  "ideUrl": "https://akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
-  "status": {
-    "repo": {
+  "arg1": {
+    "id": "226695b4-f10a-471a-a219-9b657645bf78",
+    "workspaceId": "akosyakov-parceldemo-4crqn25qlwi",
+    "region": "dev",
+    "creationTime": "2023-10-16T20:18:24.923Z",
+    "startedTime": "2023-10-16T20:18:53.451Z",
+    "stoppingTime": "2023-10-16T20:36:14.802Z",
+    "stoppedTime": "2023-10-16T20:36:16.205Z",
+    "ideUrl": "https://akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
+    "status": {
+      "repo": {
+        "branch": "ak/test",
+        "latestCommit": "2203d16573ee3838e6a2a19d5cf678fb706f4885",
+        "uncommitedFiles": [
+          "index.js"
+        ],
+        "unpushedCommits": [
+          "2203d16: tests"
+        ],
+        "totalUntrackedFiles": 0,
+        "totalUncommitedFiles": 1,
+        "totalUnpushedCommits": 1
+      },
+      "phase": "stopped",
+      "message": "",
+      "timeout": "30m0s",
+      "version": 226943,
+      "conditions": {
+        "failed": "",
+        "timeout": "",
+        "deployed": true,
+        "pullingImages": false,
+        "stoppedByRequest": true,
+        "firstUserActivity": "2023-10-16T20:18:53.000Z",
+        "headlessTaskFailed": ""
+      },
+      "exposedPorts": [
+        {
+          "url": "https://1234-akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
+          "port": 1234,
+          "protocol": "http",
+          "visibility": "public"
+        }
+      ]
+    },
+    "gitStatus": {
       "branch": "ak/test",
       "latestCommit": "2203d16573ee3838e6a2a19d5cf678fb706f4885",
       "uncommitedFiles": [
@@ -17,78 +53,105 @@
       "unpushedCommits": [
         "2203d16: tests"
       ],
-      "totalUntrackedFiles": 0,
       "totalUncommitedFiles": 1,
       "totalUnpushedCommits": 1
     },
-    "phase": "stopped",
-    "message": "",
-    "timeout": "30m0s",
-    "version": 226943,
-    "conditions": {
-      "failed": "",
-      "timeout": "",
-      "deployed": true,
-      "pullingImages": false,
-      "stoppedByRequest": true,
-      "firstUserActivity": "2023-10-16T20:18:53.000Z",
-      "headlessTaskFailed": ""
-    },
-    "exposedPorts": [
-      {
-        "url": "https://1234-akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
-        "port": 1234,
-        "protocol": "http",
-        "visibility": "public"
-      }
-    ]
-  },
-  "gitStatus": {
-    "branch": "ak/test",
-    "latestCommit": "2203d16573ee3838e6a2a19d5cf678fb706f4885",
-    "uncommitedFiles": [
-      "index.js"
-    ],
-    "unpushedCommits": [
-      "2203d16: tests"
-    ],
-    "totalUncommitedFiles": 1,
-    "totalUnpushedCommits": 1
-  },
-  "phasePersisted": "stopped",
-  "deleted": false,
-  "configuration": {
-    "ideImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-e77f3a07ea76bbb404d3f6bf4af36269afc45df1",
-    "ideImageLayers": [
-      "eu.gcr.io/gitpod-core-dev/build/ide/gitpod-code-web:commit-49bb715b599dce2356dd02a6ede7ae8cf10d8d12",
-      "eu.gcr.io/gitpod-core-dev/build/ide/code-codehelper:commit-18a48e2ccb779a268355d2b58a167c73de023547"
-    ],
-    "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:commit-cda78d5706672b9a41e15d84a128cdb24357ad87",
-    "ideConfig": {
-      "useLatest": false,
-      "ide": "code"
-    },
-    "ideSetup": {
-      "envvars": [
-        {
-          "name": "GITPOD_CONFIGCAT_ENABLED",
-          "value": "true"
-        },
-        {
-          "name": "GITPOD_IDE_ALIAS",
-          "value": "code"
-        }
+    "phasePersisted": "stopped",
+    "deleted": false,
+    "configuration": {
+      "ideImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-e77f3a07ea76bbb404d3f6bf4af36269afc45df1",
+      "ideImageLayers": [
+        "eu.gcr.io/gitpod-core-dev/build/ide/gitpod-code-web:commit-49bb715b599dce2356dd02a6ede7ae8cf10d8d12",
+        "eu.gcr.io/gitpod-core-dev/build/ide/code-codehelper:commit-18a48e2ccb779a268355d2b58a167c73de023547"
       ],
-      "tasks": []
+      "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:commit-cda78d5706672b9a41e15d84a128cdb24357ad87",
+      "ideConfig": {
+        "useLatest": false,
+        "ide": "code"
+      },
+      "ideSetup": {
+        "envvars": [
+          {
+            "name": "GITPOD_CONFIGCAT_ENABLED",
+            "value": "true"
+          },
+          {
+            "name": "GITPOD_IDE_ALIAS",
+            "value": "code"
+          }
+        ],
+        "tasks": []
+      },
+      "regionPreference": "",
+      "fromBackup": false,
+      "featureFlags": [
+        "workspace_connection_limiting",
+        "workspace_class_limiting"
+      ]
     },
-    "regionPreference": "",
-    "fromBackup": false,
-    "featureFlags": [
-      "workspace_connection_limiting",
-      "workspace_class_limiting"
-    ]
+    "imageBuildInfo": null,
+    "workspaceClass": "g1-standard",
+    "usageAttributionId": "team:ec76db37-9a48-4e2d-a78e-0ec7d2b4d2c0"
   },
-  "imageBuildInfo": null,
-  "workspaceClass": "g1-standard",
-  "usageAttributionId": "team:ec76db37-9a48-4e2d-a78e-0ec7d2b4d2c0"
+  "arg2": {
+    "id": "akosyakov-parceldemo-4crqn25qlwi",
+    "metadata": {
+        "ownerId": "827df1c8-d42d-4a69-bc38-64089af1f711",
+        "organizationId": "ec76db37-9a48-4e2d-a78e-0ec7d2b4d2c0",
+        "name": "akosyakov/parcel-demo - master",
+        "originalContextUrl": "https://github.com/akosyakov/parcel-demo"
+    },
+    "spec": {
+        "initializer": {
+            "specs": [
+                {
+                    "git": {
+                        "remoteUri": "https://github.com/akosyakov/parcel-demo",
+                        "checkoutLocation": "parcel-demo",
+                        "config": {}
+                    }
+                }
+            ]
+        },
+        "type": "WORKSPACE_TYPE_REGULAR",
+        "ports": [
+            {
+                "port": "1234",
+                "admission": "ADMISSION_LEVEL_EVERYONE",
+                "url": "https://1234-akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
+                "protocol": "PROTOCOL_HTTP"
+            }
+        ],
+        "git": {},
+        "admission": "ADMISSION_LEVEL_OWNER_ONLY",
+        "class": "g1-standard",
+        "editor": {
+            "name": "code",
+            "version": "stable"
+        }
+    },
+    "status": {
+        "statusVersion": "1697487533",
+        "phase": {
+            "name": "PHASE_RUNNING",
+            "lastTransitionTime": "2023-10-16T20:18:53.451Z"
+        },
+        "workspaceUrl": "https://akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
+        "conditions": {},
+        "gitStatus": {
+            "cloneUrl": "https://github.com/akosyakov/parcel-demo.git",
+            "branch": "ak/test",
+            "latestCommit": "2203d16573ee3838e6a2a19d5cf678fb706f4885",
+            "uncommitedFiles": [
+                "index.js"
+            ],
+            "totalUncommitedFiles": 1,
+            "unpushedCommits": [
+                "2203d16: tests"
+            ],
+            "totalUnpushedCommits": 1
+        },
+        "instanceId": "226695b4-f10a-471a-a219-9b657645bf78"
+    }
+}
 }
