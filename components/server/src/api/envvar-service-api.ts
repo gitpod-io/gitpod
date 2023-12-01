@@ -159,11 +159,7 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
             id: req.environmentVariableId,
             name: req.name,
             value: req.value,
-            censored: req.admission
-                ? req.admission === EnvironmentVariableAdmission.PREBUILD
-                    ? true
-                    : false
-                : undefined,
+            censored: req.admission ? req.admission === EnvironmentVariableAdmission.PREBUILD : undefined,
         });
 
         const response = new UpdateConfigurationEnvironmentVariableResponse();
