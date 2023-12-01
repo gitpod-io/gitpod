@@ -360,6 +360,9 @@ export class PublicAPIConverter {
                     reason,
                 );
             }
+            if (reason.code === ErrorCodes.BAD_REQUEST) {
+                return new ConnectError(reason.message, Code.InvalidArgument, undefined, undefined, reason);
+            }
             if (reason.code === ErrorCodes.NOT_FOUND) {
                 return new ConnectError(reason.message, Code.NotFound, undefined, undefined, reason);
             }
@@ -386,10 +389,13 @@ export class PublicAPIConverter {
             }
             return new ConnectError(reason.message, Code.Unknown, undefined, undefined, reason);
         }
-        return ConnectError.from(reason, Code.Internal);
+        return new ConnectError(`Oops! Something went wrong.`, Code.Internal, undefined, undefined, reason);
     }
 
     fromError(reason: ConnectError): ApplicationError {
+        if (reason.code === Code.InvalidArgument) {
+            return new ApplicationError(ErrorCodes.BAD_REQUEST, reason.rawMessage);
+        }
         if (reason.code === Code.NotFound) {
             return new ApplicationError(ErrorCodes.NOT_FOUND, reason.rawMessage);
         }

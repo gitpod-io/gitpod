@@ -103,7 +103,6 @@ function testPublicAPI(service: any): void {
                     try {
                         return await target[propKey](...args);
                     } finally {
-                        const grpcType = "unary";
                         // emulates frequent unary calls to public API
                         const isTest = await getExperimentsClient().getValueAsync(
                             "public_api_dummy_reliability_test",
@@ -114,13 +113,7 @@ function testPublicAPI(service: any): void {
                             },
                         );
                         if (isTest) {
-                            helloService.sayHello({}).catch((e) => {
-                                console.error(e, {
-                                    userId: user?.id,
-                                    workspaceId: args[0],
-                                    grpcType,
-                                });
-                            });
+                            helloService.sayHello({}).catch((e) => console.error(e));
                         }
                     }
                 }
@@ -129,7 +122,6 @@ function testPublicAPI(service: any): void {
         },
     });
     (async () => {
-        const grpcType = "server-stream";
         const MAX_BACKOFF = 60000;
         const BASE_BACKOFF = 3000;
         let backoff = BASE_BACKOFF;
@@ -162,10 +154,7 @@ function testPublicAPI(service: any): void {
                         backoff = BASE_BACKOFF;
                     } else {
                         backoff = Math.min(2 * backoff, MAX_BACKOFF);
-                        console.error(e, {
-                            userId: user?.id,
-                            grpcType,
-                        });
+                        console.error(e);
                     }
                 }
             } else {
