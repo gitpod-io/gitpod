@@ -6,15 +6,12 @@
 
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import React, { useCallback, useState } from "react";
-import { useWorkspaceClasses } from "../../../data/workspaces/workspace-classes-query";
-import { Label } from "@podkit/forms/Label";
-import { RadioGroup, RadioGroupItem } from "@podkit/forms/RadioListField";
 import { Heading3, Subheading } from "@podkit/typography/Headings";
 import { ConfigurationSettingsField } from "../ConfigurationSettingsField";
 import { useToast } from "../../../components/toasts/Toasts";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
-import { LoadingState } from "@podkit/loading/LoadingState";
 import { useConfigurationMutation } from "../../../data/configurations/configuration-queries";
+import { WorkspaceClassOptions } from "../shared/WorkspaceClassOptions";
 
 interface Props {
     configuration: Configuration;
@@ -27,8 +24,6 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
     const classChanged = selectedValue !== configuration.workspaceSettings?.workspaceClass;
 
     const updateConfiguration = useConfigurationMutation();
-    const { data: classes, isError, isLoading } = useWorkspaceClasses();
-
     const { toast } = useToast();
 
     const setWorkspaceClass = useCallback(
@@ -56,31 +51,14 @@ export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
         [configuration.id, selectedValue, toast, updateConfiguration],
     );
 
-    if (isError || !classes) {
-        return <div>Something went wrong</div>;
-    }
-
-    if (isLoading) {
-        return <LoadingState />;
-    }
-
     return (
         <ConfigurationSettingsField>
             <form onSubmit={setWorkspaceClass}>
                 <Heading3>Workspace Size Options</Heading3>
                 <Subheading>Choose the size of your workspace based on the resources you need.</Subheading>
 
-                <RadioGroup value={selectedValue} onValueChange={setSelectedValue} className="mt-4">
-                    {classes.map((wsClass) => (
-                        <Label className="flex items-start space-x-2 my-2">
-                            <RadioGroupItem value={wsClass.id} />
-                            <div className="flex flex-col space-y-2">
-                                <span className="font-bold">{wsClass.displayName}</span>
-                                <span>{wsClass.description}</span>
-                            </div>
-                        </Label>
-                    ))}
-                </RadioGroup>
+                <WorkspaceClassOptions value={selectedValue} onChange={setSelectedValue} />
+
                 <LoadingButton
                     className="mt-8"
                     type="submit"
