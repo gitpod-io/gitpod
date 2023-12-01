@@ -318,29 +318,30 @@ func (s *Server) HandleConn(c net.Conn) {
 		OwnerUserId: wsInfo.OwnerUserId,
 	}
 
-	if wsInfo.SSHKey != nil {
-		key, err = ssh.ParsePrivateKey([]byte(wsInfo.SSHKey.Private))
-		if err != nil {
+	if !wsInfo.IsManagedByMk2 {
+		if s.caKey == nil || !wsInfo.IsEnabledSSHCA {
+			err = xerrors.Errorf("workspace not managed by mk2, but didn't have SSH CA enabled")
+			s.TrackSSHConnection(wsInfo, "connect", ErrCreateSSHKey)
+			ReportSSHAttemptMetrics(ErrCreateSSHKey)
+			log.WithField("instanceId", wsInfo.InstanceID).WithError(err).Error("failed to generate ssh cert")
 			cancel()
 			return
 		}
-
-		session.WorkspacePrivateKey = key
-
 		// obtain the SSH username from workspacekit.
 		workspacekitPort := "22998"
 		userName, err = workspaceSSHUsername(ctx, wsInfo.IPAddress, workspacekitPort)
 		if err != nil {
 			log.WithField("instanceId", wsInfo.InstanceID).WithError(err).Warn("failed to retrieve the SSH username. Using the default.")
 		}
-	} else if s.caKey != nil && wsInfo.IsEnabledSSHCA {
+	}
+
+	if s.caKey != nil && wsInfo.IsEnabledSSHCA {
 		key, err = s.GenerateSSHCert(ctx, userName)
 		if err != nil {
-			log.WithField("workspaceId", workspaceId).WithError(err).Error("failed to generate ssh cert")
+			log.WithField("instanceId", wsInfo.InstanceID).WithError(err).Error("failed to generate ssh cert")
 			cancel()
 			return
 		}
-
 		session.WorkspacePrivateKey = key
 	} else {
 		key, userName, err = s.GetWorkspaceSSHKey(ctx, wsInfo.IPAddress, supervisorPort)

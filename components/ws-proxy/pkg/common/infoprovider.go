@@ -68,4 +68,5 @@ type WorkspaceInfo struct {
 	SSHKey *workspacev1.SSHKey
 
 	IsEnabledSSHCA bool
+	IsManagedByMk2 bool
 }
