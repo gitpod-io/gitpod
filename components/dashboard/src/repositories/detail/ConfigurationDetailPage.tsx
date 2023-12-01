@@ -16,7 +16,7 @@ import { useConfiguration } from "../../data/configurations/configuration-querie
 import { ConfigurationDetailGeneral } from "./ConfigurationDetailGeneral";
 import { ConfigurationDetailWorkspaces } from "./ConfigurationDetailWorkspaces";
 import { ConfigurationDetailPrebuilds } from "./ConfigurationDetailPrebuilds";
-import { ConfigurationDetailVariables } from "./ConfigurationDetailVariables";
+import { ConfigurationVariableList } from "./variables/ConfigurationVariableList";
 
 type PageRouteParams = {
     id: string;
@@ -94,7 +94,7 @@ const ConfigurationDetailPage: FC = () => {
                                     <ConfigurationDetailPrebuilds configuration={data} />
                                 </Route>
                                 <Route exact path={`${path}/variables`}>
-                                    <ConfigurationDetailVariables configuration={data} />
+                                    <ConfigurationVariableList configuration={data} />
                                 </Route>
                             </Switch>
                         </div>
