@@ -18,6 +18,7 @@ import {
     useUpdateConfigurationVariable,
 } from "../../../data/configurations/configuration-queries";
 import { useToast } from "../../../components/toasts/Toasts";
+import { TextInputField } from "../../../components/forms/TextInputField";
 
 type Props = {
     configurationId: string;
@@ -92,30 +93,28 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
             <ModalBody>
                 <div className="mt-8">
                     <h4>Name</h4>
-                    <input
+                    <TextInputField
                         autoFocus={!isEditing}
                         disabled={isEditing}
                         autoComplete={"off"}
                         className="w-full"
                         type="text"
-                        name="name"
                         value={name}
                         placeholder="Variable name"
-                        onChange={(e) => setName(e.target.value)}
+                        onChange={(name) => setName(name)}
                     />
                 </div>
                 <div className="mt-4">
                     <h4>Value</h4>
-                    <input
+                    <TextInputField
                         autoFocus={isEditing}
                         required={true}
                         autoComplete={"off"}
                         className="w-full"
                         type="text"
-                        name="value"
                         value={value}
                         placeholder="Variable value"
-                        onChange={(e) => setValue(e.target.value)}
+                        onChange={(value) => setValue(value)}
                     />
                 </div>
                 <CheckboxInputField

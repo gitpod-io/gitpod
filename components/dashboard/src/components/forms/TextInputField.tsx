@@ -11,26 +11,20 @@ import { cn } from "@podkit/lib/cn";
 
 type TextInputFieldTypes = "text" | "password" | "email" | "url";
 
-type Props = {
-    type?: TextInputFieldTypes;
+type Props = TextInputProps & {
     label?: ReactNode;
-    value: string;
-    id?: string;
     hint?: ReactNode;
     error?: ReactNode;
-    placeholder?: string;
-    disabled?: boolean;
-    required?: boolean;
     topMargin?: boolean;
     containerClassName?: string;
-    onChange: (newValue: string) => void;
-    onBlur?: () => void;
 };
 
 export const TextInputField: FunctionComponent<Props> = memo(
     ({
         type = "text",
         label,
+        autoFocus,
+        autoComplete,
         value,
         id,
         placeholder,
@@ -59,6 +53,8 @@ export const TextInputField: FunctionComponent<Props> = memo(
                     id={elementId}
                     value={value}
                     type={type}
+                    autoFocus={autoFocus}
+                    autoComplete={autoComplete}
                     placeholder={placeholder}
                     disabled={disabled}
                     required={required}
@@ -73,6 +69,8 @@ export const TextInputField: FunctionComponent<Props> = memo(
 
 type TextInputProps = {
     type?: TextInputFieldTypes;
+    autoFocus?: boolean;
+    autoComplete?: string;
     value: string;
     className?: string;
     id?: string;
@@ -84,7 +82,18 @@ type TextInputProps = {
 };
 
 export const TextInput: FunctionComponent<TextInputProps> = memo(
-    ({ type = "text", value, className, id, placeholder, disabled = false, required = false, onChange, onBlur }) => {
+    ({
+        type = "text",
+        value,
+        className,
+        id,
+        placeholder,
+        disabled = false,
+        required = false,
+        autoFocus = false,
+        onChange,
+        onBlur,
+    }) => {
         const handleChange = useCallback(
             (e) => {
                 onChange && onChange(e.target.value);
@@ -100,6 +109,7 @@ export const TextInput: FunctionComponent<TextInputProps> = memo(
                 className={cn("w-full max-w-lg dark:text-[#A8A29E]", className)}
                 value={value}
                 type={type}
+                autoFocus={autoFocus}
                 placeholder={placeholder}
                 disabled={disabled}
                 required={required}
