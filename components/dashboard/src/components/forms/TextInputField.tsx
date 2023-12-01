@@ -20,23 +20,7 @@ type Props = TextInputProps & {
 };
 
 export const TextInputField: FunctionComponent<Props> = memo(
-    ({
-        type = "text",
-        label,
-        autoFocus,
-        autoComplete,
-        value,
-        id,
-        placeholder,
-        hint,
-        error,
-        disabled = false,
-        required = false,
-        topMargin,
-        containerClassName,
-        onChange,
-        onBlur,
-    }) => {
+    ({ label, id, hint, error, topMargin, containerClassName, ...props }) => {
         const maybeId = useId();
         const elementId = id || maybeId;
 
@@ -49,73 +33,34 @@ export const TextInputField: FunctionComponent<Props> = memo(
                 topMargin={topMargin}
                 className={containerClassName}
             >
-                <TextInput
-                    id={elementId}
-                    value={value}
-                    type={type}
-                    autoFocus={autoFocus}
-                    autoComplete={autoComplete}
-                    placeholder={placeholder}
-                    disabled={disabled}
-                    required={required}
-                    className={error ? "error" : ""}
-                    onChange={onChange}
-                    onBlur={onBlur}
-                />
+                <TextInput id={elementId} className={error ? "error" : ""} {...props} />
             </InputField>
         );
     },
 );
 
-type TextInputProps = {
+interface TextInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "type"> {
     type?: TextInputFieldTypes;
-    autoFocus?: boolean;
-    autoComplete?: string;
-    value: string;
-    className?: string;
-    id?: string;
-    placeholder?: string;
-    disabled?: boolean;
-    required?: boolean;
     onChange?: (newValue: string) => void;
     onBlur?: () => void;
-};
+}
 
-export const TextInput: FunctionComponent<TextInputProps> = memo(
-    ({
-        type = "text",
-        value,
-        className,
-        id,
-        placeholder,
-        disabled = false,
-        required = false,
-        autoFocus = false,
-        onChange,
-        onBlur,
-    }) => {
-        const handleChange = useCallback(
-            (e) => {
-                onChange && onChange(e.target.value);
-            },
-            [onChange],
-        );
+export const TextInput: FunctionComponent<TextInputProps> = memo(({ className, onChange, onBlur, ...props }) => {
+    const handleChange = useCallback(
+        (e) => {
+            onChange && onChange(e.target.value);
+        },
+        [onChange],
+    );
 
-        const handleBlur = useCallback(() => onBlur && onBlur(), [onBlur]);
+    const handleBlur = useCallback(() => onBlur && onBlur(), [onBlur]);
 
-        return (
-            <input
-                id={id}
-                className={cn("w-full max-w-lg dark:text-[#A8A29E]", className)}
-                value={value}
-                type={type}
-                autoFocus={autoFocus}
-                placeholder={placeholder}
-                disabled={disabled}
-                required={required}
-                onChange={handleChange}
-                onBlur={handleBlur}
-            />
-        );
-    },
-);
+    return (
+        <input
+            className={cn("w-full max-w-lg dark:text-[#A8A29E]", className)}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            {...props}
+        />
+    );
+});

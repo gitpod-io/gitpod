@@ -92,26 +92,25 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
             <ModalHeader>{isEditing ? "Edit" : "Add a"} variable</ModalHeader>
             <ModalBody>
                 <div className="mt-8">
-                    <h4>Name</h4>
                     <TextInputField
                         autoFocus={!isEditing}
+                        required={!isEditing}
+                        label="Name"
                         disabled={isEditing}
                         autoComplete={"off"}
                         className="w-full"
-                        type="text"
                         value={name}
                         placeholder="Variable name"
                         onChange={(name) => setName(name)}
                     />
                 </div>
                 <div className="mt-4">
-                    <h4>Value</h4>
                     <TextInputField
                         autoFocus={isEditing}
                         required={true}
+                        label="Value"
                         autoComplete={"off"}
                         className="w-full"
-                        type="text"
                         value={value}
                         placeholder="Variable value"
                         onChange={(value) => setValue(value)}
