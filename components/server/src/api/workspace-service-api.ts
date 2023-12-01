@@ -124,9 +124,6 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         if (!req.source.value || !req.source.value.url) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "source is required");
         }
-        if (!req.source.value.editor?.name) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "editor is required");
-        }
         const contextUrl = req.source.value;
         const user = await this.userService.findUserById(ctxUserId(), ctxUserId());
         const { context, project } = await this.contextService.parseContext(user, contextUrl.url, {
@@ -149,8 +146,10 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
             forceDefaultImage: req.forceDefaultConfig,
             workspaceClass: contextUrl.workspaceClass,
             ideSettings: {
-                defaultIde: req.source.value.editor.name,
-                useLatestVersion: req.source.value.editor.version === "latest",
+                defaultIde: req.source.value.editor?.name,
+                useLatestVersion: req.source.value.editor?.version
+                    ? req.source.value.editor?.version === "latest"
+                    : undefined,
             },
             clientRegionCode: ctxClientRegion(),
         });

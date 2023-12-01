@@ -138,9 +138,6 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
         if (!request.metadata || !request.metadata.organizationId || !uuidValidate(request.metadata.organizationId)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
-        if (!request.source.value.editor?.name) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "editor is required");
-        }
         if (!request.source.value.url) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "source is required");
         }
@@ -152,8 +149,10 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
             workspaceClass: request.source.value.workspaceClass,
             projectId: request.metadata.configurationId,
             ideSettings: {
-                defaultIde: request.source.value.editor.name,
-                useLatestVersion: request.source.value.editor.version === "latest",
+                defaultIde: request.source.value.editor?.name,
+                useLatestVersion: request.source.value.editor?.version
+                    ? request.source.value.editor?.version === "latest"
+                    : undefined,
             },
         });
         const workspace = await this.getWorkspace({ workspaceId: response.createdWorkspaceId });
