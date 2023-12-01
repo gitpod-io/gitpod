@@ -33,7 +33,7 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
     const [name, setName] = useState<string>(variable?.name ?? "");
     // We do not want to show the previous value of the variable
     const [value, setValue] = useState<string>("");
-    const [prebuildOnly, setPrebuildOnly] = useState<EnvironmentVariableAdmission>(
+    const [admission, setAdmission] = useState<EnvironmentVariableAdmission>(
         variable?.admission || EnvironmentVariableAdmission.EVERYWHERE,
     );
     const createVariable = useCreateConfigurationVariable();
@@ -46,9 +46,7 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
                 configurationId,
                 name,
                 value,
-                admission: prebuildOnly
-                    ? EnvironmentVariableAdmission.PREBUILD
-                    : EnvironmentVariableAdmission.EVERYWHERE,
+                admission,
             },
             {
                 onSuccess: () => {
@@ -60,7 +58,7 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
                 },
             },
         );
-    }, [createVariable, configurationId, name, value, prebuildOnly, onClose, toast]);
+    }, [createVariable, configurationId, name, value, admission, onClose, toast]);
 
     const editVariable = useCallback(() => {
         if (!variable) {
@@ -72,9 +70,7 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
                 configurationId,
                 name: variable.name,
                 value,
-                admission: prebuildOnly
-                    ? EnvironmentVariableAdmission.PREBUILD
-                    : EnvironmentVariableAdmission.EVERYWHERE,
+                admission: admission,
             },
             {
                 onSuccess: () => {
@@ -86,7 +82,7 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
                 },
             },
         );
-    }, [variable, updateVariable, configurationId, value, prebuildOnly, onClose, toast]);
+    }, [variable, updateVariable, configurationId, value, admission, onClose, toast]);
 
     const submit = useCallback(() => {
         if (isEditing) {
@@ -131,9 +127,9 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
                 <CheckboxInputField
                     label="Only use this variable in Prebuilds"
                     hint="This will hide the variable in the workspace, however, it may still appear in system logs."
-                    checked={prebuildOnly === EnvironmentVariableAdmission.PREBUILD}
+                    checked={admission === EnvironmentVariableAdmission.PREBUILD}
                     onChange={(checked) =>
-                        setPrebuildOnly(
+                        setAdmission(
                             checked ? EnvironmentVariableAdmission.PREBUILD : EnvironmentVariableAdmission.EVERYWHERE,
                         )
                     }
