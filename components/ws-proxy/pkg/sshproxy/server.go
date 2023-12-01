@@ -301,6 +301,7 @@ func (s *Server) HandleConn(c net.Conn) {
 		log.WithField("workspaceId", workspaceId).WithError(err).Error("failed to get workspace info")
 		return
 	}
+	log := log.WithField("instanceId", wsInfo.InstanceID).WithField("isMk2", wsInfo.IsManagedByMk2)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	supervisorPort := "22999"
 	if debugWorkspace {
@@ -323,7 +324,7 @@ func (s *Server) HandleConn(c net.Conn) {
 			err = xerrors.Errorf("workspace not managed by mk2, but didn't have SSH CA enabled")
 			s.TrackSSHConnection(wsInfo, "connect", ErrCreateSSHKey)
 			ReportSSHAttemptMetrics(ErrCreateSSHKey)
-			log.WithField("instanceId", wsInfo.InstanceID).WithError(err).Error("failed to generate ssh cert")
+			log.WithError(err).Error("failed to generate ssh cert")
 			cancel()
 			return
 		}
@@ -331,14 +332,16 @@ func (s *Server) HandleConn(c net.Conn) {
 		workspacekitPort := "22998"
 		userName, err = workspaceSSHUsername(ctx, wsInfo.IPAddress, workspacekitPort)
 		if err != nil {
-			log.WithField("instanceId", wsInfo.InstanceID).WithError(err).Warn("failed to retrieve the SSH username. Using the default.")
+			log.WithError(err).Warn("failed to retrieve the SSH username. Using the default.")
 		}
 	}
 
 	if s.caKey != nil && wsInfo.IsEnabledSSHCA {
 		key, err = s.GenerateSSHCert(ctx, userName)
 		if err != nil {
-			log.WithField("instanceId", wsInfo.InstanceID).WithError(err).Error("failed to generate ssh cert")
+			s.TrackSSHConnection(wsInfo, "connect", ErrCreateSSHKey)
+			ReportSSHAttemptMetrics(ErrCreateSSHKey)
+			log.WithError(err).Error("failed to generate ssh cert")
 			cancel()
 			return
 		}
@@ -349,7 +352,7 @@ func (s *Server) HandleConn(c net.Conn) {
 			cancel()
 			s.TrackSSHConnection(wsInfo, "connect", ErrCreateSSHKey)
 			ReportSSHAttemptMetrics(ErrCreateSSHKey)
-			log.WithField("instanceId", wsInfo.InstanceID).WithError(err).Error("failed to create private pair in workspace")
+			log.WithError(err).Error("failed to create private pair in workspace")
 			return
 		}
 
@@ -367,7 +370,7 @@ func (s *Server) HandleConn(c net.Conn) {
 	if err != nil {
 		s.TrackSSHConnection(wsInfo, "connect", ErrConnFailed)
 		ReportSSHAttemptMetrics(ErrConnFailed)
-		log.WithField("instanceId", wsInfo.InstanceID).WithField("workspaceIP", wsInfo.IPAddress).WithError(err).Error("dail failed")
+		log.WithField("workspaceIP", wsInfo.IPAddress).WithError(err).Error("dail failed")
 		return
 	}
 	defer conn.Close()
@@ -385,7 +388,7 @@ func (s *Server) HandleConn(c net.Conn) {
 	if err != nil {
 		s.TrackSSHConnection(wsInfo, "connect", ErrConnFailed)
 		ReportSSHAttemptMetrics(ErrConnFailed)
-		log.WithField("instanceId", wsInfo.InstanceID).WithField("workspaceIP", wsInfo.IPAddress).WithError(err).Error("connect failed")
+		log.WithField("workspaceIP", wsInfo.IPAddress).WithError(err).Error("connect failed")
 		return
 	}
 	s.Heartbeater.SendHeartbeat(wsInfo.InstanceID, false, true)
