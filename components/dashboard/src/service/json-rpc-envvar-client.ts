@@ -163,7 +163,8 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
                 req.configurationId,
                 req.name ?? projectEnvVarfound.name,
                 req.value ?? "",
-                (req.admission === EnvironmentVariableAdmission.PREBUILD ? true : false) ?? projectEnvVarfound.censored,
+                req.admission === EnvironmentVariableAdmission.PREBUILD ?? projectEnvVarfound.censored,
+                req.environmentVariableId,
             );
 
             const updatedProjectEnvVars = await getGitpodService().server.getProjectEnvironmentVariables(
@@ -194,7 +195,7 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
             req.configurationId,
             req.name,
             req.value,
-            req.admission === EnvironmentVariableAdmission.PREBUILD ? true : false,
+            req.admission === EnvironmentVariableAdmission.PREBUILD,
         );
 
         const updatedProjectEnvVars = await getGitpodService().server.getProjectEnvironmentVariables(

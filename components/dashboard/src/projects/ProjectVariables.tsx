@@ -129,9 +129,9 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
             return;
         }
 
-        await setProjectEnvVar.mutate(
+        setProjectEnvVar.mutate(
             {
-                projectId: props.project.id,
+                configurationId: props.project.id,
                 name,
                 value,
                 admission,

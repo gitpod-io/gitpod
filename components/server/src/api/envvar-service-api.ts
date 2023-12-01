@@ -157,11 +157,9 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
 
         const updatedProjectEnvVar = await this.envVarService.updateProjectEnvVar(ctxUserId(), req.configurationId, {
             id: req.environmentVariableId,
-            censored: req.admission
-                ? req.admission === EnvironmentVariableAdmission.PREBUILD
-                    ? true
-                    : false
-                : undefined,
+            name: req.name,
+            value: req.value,
+            censored: req.admission ? req.admission === EnvironmentVariableAdmission.PREBUILD : undefined,
         });
 
         const response = new UpdateConfigurationEnvironmentVariableResponse();
