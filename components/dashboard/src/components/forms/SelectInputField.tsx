@@ -90,7 +90,7 @@ export const SelectInput: FunctionComponent<SelectInputProps> = memo(
         return (
             <select
                 id={id}
-                className={classNames("w-full max-w-lg", className)}
+                className={classNames("w-full max-w-lg text-sm", className)}
                 value={value}
                 disabled={disabled}
                 required={required}

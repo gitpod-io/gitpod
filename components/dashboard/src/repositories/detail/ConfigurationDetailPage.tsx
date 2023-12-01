@@ -26,6 +26,7 @@ const ConfigurationDetailPage: FC = () => {
     let { path, url } = useRouteMatch();
 
     const { data, error, isLoading, refetch } = useConfiguration(id);
+    const prebuildsEnabled = !!data?.prebuildSettings?.enabled;
 
     const settingsMenu = useMemo(() => {
         const menu: SubmenuItemProps[] = [
@@ -36,7 +37,7 @@ const ConfigurationDetailPage: FC = () => {
             {
                 title: "Prebuilds",
                 link: [`${url}/prebuilds`],
-                icon: <AlertTriangle size={20} />,
+                icon: !prebuildsEnabled ? <AlertTriangle size={20} /> : undefined,
             },
             {
                 title: "Environment variables",
@@ -48,7 +49,7 @@ const ConfigurationDetailPage: FC = () => {
             },
         ];
         return menu;
-    }, [url]);
+    }, [prebuildsEnabled, url]);
 
     return (
         <div className="w-full">
