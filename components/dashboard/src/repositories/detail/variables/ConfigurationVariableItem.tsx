@@ -13,7 +13,7 @@ import { TableRow, TableCell } from "@podkit/tables/Table";
 import { useState } from "react";
 import { ConfigurationDeleteVariableModal } from "./ConfigurationRemoveVariableModal";
 import { DropdownMenuItem } from "@podkit/dropdown/DropDown";
-import { ModifyVariableModal } from "./ConfigurationAddVariableModal";
+import { ModifyVariableModal } from "./ConfigurationModifyVariableModal";
 
 type Props = {
     configurationId: string;
