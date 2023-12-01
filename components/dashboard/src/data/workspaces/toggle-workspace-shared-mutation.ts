@@ -8,7 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
 import { getListWorkspacesQueryKey, ListWorkspacesQueryResult } from "./list-workspaces-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
-import { AdmissionLevel, Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { AdmissionLevel, Workspace, WorkspaceSpec } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 type ToggleWorkspaceSharedArgs = {
     workspaceId: string;
@@ -44,9 +44,10 @@ export const useToggleWorkspaceSharedMutation = () => {
                     }
 
                     const workspace = new Workspace(info);
-                    if (workspace.status) {
-                        workspace.status.admission = level;
+                    if (!workspace.spec) {
+                        workspace.spec = new WorkspaceSpec();
                     }
+                    workspace.spec.admission = level;
                     return workspace;
                 });
             });

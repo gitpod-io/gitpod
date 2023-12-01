@@ -33,7 +33,7 @@ export const DeleteWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
             areYouSureText="Are you sure you want to delete this workspace?"
             children={{
                 name: workspace.id,
-                description: workspace.name,
+                description: workspace.metadata?.name,
             }}
             buttonText="Delete Workspace"
             warningText={deleteWorkspace.isError ? "There was a problem deleting your workspace." : undefined}

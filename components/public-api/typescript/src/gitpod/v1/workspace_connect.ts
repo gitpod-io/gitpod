@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, GetWorkspaceDefaultImageRequest, GetWorkspaceDefaultImageResponse, GetWorkspaceEditorCredentialsRequest, GetWorkspaceEditorCredentialsResponse, GetWorkspaceOwnerTokenRequest, GetWorkspaceOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspacesRequest, ListWorkspacesResponse, SendHeartBeatRequest, SendHeartBeatResponse, StartWorkspaceRequest, StartWorkspaceResponse, WatchWorkspaceStatusRequest, WatchWorkspaceStatusResponse } from "./workspace_pb.js";
+import { CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, GetWorkspaceDefaultImageRequest, GetWorkspaceDefaultImageResponse, GetWorkspaceEditorCredentialsRequest, GetWorkspaceEditorCredentialsResponse, GetWorkspaceOwnerTokenRequest, GetWorkspaceOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspacesRequest, ListWorkspacesResponse, ParseContextURLRequest, ParseContextURLResponse, SendHeartBeatRequest, SendHeartBeatResponse, StartWorkspaceRequest, StartWorkspaceResponse, UpdateWorkspaceRequest, UpdateWorkspaceResponse, WatchWorkspaceStatusRequest, WatchWorkspaceStatusResponse } from "./workspace_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -77,6 +77,29 @@ export const WorkspaceService = {
       name: "StartWorkspace",
       I: StartWorkspaceRequest,
       O: StartWorkspaceResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * UpdateWorkspace updates the workspace.
+     *
+     * @generated from rpc gitpod.v1.WorkspaceService.UpdateWorkspace
+     */
+    updateWorkspace: {
+      name: "UpdateWorkspace",
+      I: UpdateWorkspaceRequest,
+      O: UpdateWorkspaceResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ParseContextURL parses a context URL and returns the workspace metadata and spec.
+     * Not implemented yet.
+     *
+     * @generated from rpc gitpod.v1.WorkspaceService.ParseContextURL
+     */
+    parseContextURL: {
+      name: "ParseContextURL",
+      I: ParseContextURLRequest,
+      O: ParseContextURLResponse,
       kind: MethodKind.Unary,
     },
     /**
