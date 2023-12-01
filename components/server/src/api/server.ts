@@ -147,8 +147,8 @@ export class API {
      * - authentication
      * - server-side observability
      * - logging context
-     * TODO(ak):
      * - rate limitting
+     * TODO(ak):
      * - tracing
      * - cancellation
      */
@@ -167,6 +167,7 @@ export class API {
                         signal: connectContext.signal,
                         headers: connectContext.requestHeader,
                     };
+                    connectContext.responseHeader.set("x-request-id", requestContext.requestId!);
 
                     const withRequestContext = <T>(fn: () => T): T => runWithRequestContext(requestContext, fn);
 
@@ -192,6 +193,9 @@ export class API {
                         grpc_type = "bidi_stream";
                     }
 
+                    const isException = (err: ConnectError) =>
+                        err.code === Code.Internal || err.code === Code.Unknown || err.code === Code.DataLoss;
+
                     grpcServerStarted.labels(grpc_service, grpc_method, grpc_type).inc();
                     const stopTimer = grpcServerHandling.startTimer({ grpc_service, grpc_method, grpc_type });
                     const done = (err?: ConnectError) => {
@@ -201,15 +205,9 @@ export class API {
                         log.debug("public api: done", { grpc_code });
                     };
                     const handleError = (reason: unknown) => {
-                        let err = self.apiConverter.toError(reason);
-                        if (reason != err && err.code === Code.Internal) {
-                            log.error("public api: unexpected internal error", reason);
-                            err = new ConnectError(
-                                `Oops! Something went wrong.`,
-                                Code.Internal,
-                                // pass metadata to preserve the application error
-                                err.metadata,
-                            );
+                        const err = self.apiConverter.toError(reason);
+                        if (isException(err)) {
+                            log.error("public api exception reason:", reason);
                         }
                         done(err);
                         throw err;
