@@ -4,8 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Timestamp, toPlainMessage, PartialMessage } from "@bufbuild/protobuf";
-import { Duration } from "@bufbuild/protobuf";
+import { Timestamp, toPlainMessage, PartialMessage, Duration } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@connectrpc/connect";
 import {
     FailedPreconditionDetails,

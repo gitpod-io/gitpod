@@ -5,7 +5,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { toPlainMessage } from "@bufbuild/protobuf";
+import { toPlainMessage, Duration } from "@bufbuild/protobuf";
 import { expect } from "chai";
 import { PublicAPIConverter } from "./public-api-converter";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
