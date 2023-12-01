@@ -41,7 +41,7 @@ export const ConfigurationDeleteVariableModal: FunctionComponent<Props> = ({ var
             children={{
                 name: variable.name,
             }}
-            buttonText="Delete Variable"
+            buttonText="Delete variable"
             warningText={deleteVariable.isError ? "There was a problem deleting this variable." : undefined}
             onClose={onClose}
             onConfirm={handleConfirmation}
