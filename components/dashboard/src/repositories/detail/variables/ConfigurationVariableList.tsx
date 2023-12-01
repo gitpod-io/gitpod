@@ -56,8 +56,8 @@ export const ConfigurationVariableList = ({ configuration }: Props) => {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Name</TableHead>
-                            <TableHead>Visibility</TableHead>
-                            <TableHead></TableHead>
+                            <TableHead className="w-48">Visibility</TableHead>
+                            <TableHead className="w-16"></TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
