@@ -156,7 +156,6 @@ func (r *CRDWorkspaceInfoProvider) Reconcile(ctx context.Context, req ctrl.Reque
 		StartedAt:       ws.CreationTimestamp.Time,
 		OwnerUserId:     ws.Spec.Ownership.Owner,
 		SSHPublicKeys:   ws.Spec.SshPublicKeys,
-		SSHKey:          ws.Spec.SSHKey,
 		IsRunning:       ws.Status.Phase == workspacev1.WorkspacePhaseRunning,
 		IsEnabledSSHCA:  ws.Spec.SSHGatewayCAPublicKey != "",
 		IsManagedByMk2:  managedByMk2,
