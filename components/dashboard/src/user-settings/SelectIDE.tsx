@@ -39,9 +39,15 @@ export default function SelectIDE(props: SelectIDEProps) {
 
             // update stored autostart options to match useLatestVersion value set here
             const workspaceAutostartOptions = additionalData?.workspaceAutostartOptions?.map((option) => {
-                // TODO: don't mutate existing user directly
                 if (option.ideSettings) {
-                    option.ideSettings.useLatestVersion = useLatestVersion;
+                    const newOption = {
+                        ...option,
+                        ideSettings: {
+                            ...option.ideSettings,
+                            useLatestVersion,
+                        },
+                    };
+                    return newOption;
                 }
 
                 return option;
