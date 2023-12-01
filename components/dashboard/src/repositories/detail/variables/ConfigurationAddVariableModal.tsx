@@ -70,7 +70,7 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
                 configurationId,
                 name: variable.name,
                 value,
-                admission: admission,
+                admission,
             },
             {
                 onSuccess: () => {
