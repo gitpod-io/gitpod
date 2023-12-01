@@ -4,7 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Timestamp, toPlainMessage } from "@bufbuild/protobuf";
+import { Timestamp, toPlainMessage, PartialMessage } from "@bufbuild/protobuf";
+import { Duration } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@connectrpc/connect";
 import {
     FailedPreconditionDetails,
@@ -43,6 +44,7 @@ import {
     GitInitializer_GitConfig,
     PrebuildInitializer,
     SnapshotInitializer,
+    UpdateWorkspaceRequest_UpdateTimeout,
     Workspace,
     WorkspaceGitStatus,
     WorkspaceInitializer,
@@ -210,7 +212,11 @@ export class PublicAPIConverter {
         spec.editor = this.toEditor(arg.configuration.ideConfig);
         spec.ports = this.toPorts(arg.status.exposedPorts);
         if (arg.status.timeout) {
-            // TODO: timeout
+            spec.timeout = new UpdateWorkspaceRequest_UpdateTimeout({
+                disconnected: this.toDuration(arg.status.timeout),
+                // TODO: inactivity
+                // TODO: maximum_lifetime
+            });
         }
         if (arg.workspaceClass) {
             spec.class = arg.workspaceClass;
@@ -1025,5 +1031,56 @@ export class PublicAPIConverter {
         result.creationTime = Timestamp.fromDate(new Date(sshKey.creationTime));
         result.lastUsedTime = Timestamp.fromDate(new Date(sshKey.lastUsedTime || sshKey.creationTime));
         return result;
+    }
+
+    /**
+     * Converts a duration to a string like "1h2m3s4ms"
+     *
+     * `Duration.nanos` is ignored
+     * @returns a string like "1h2m3s", valid time units are `s`, `m`, `h`
+     */
+    toDurationString(duration: PartialMessage<Duration>): string {
+        const seconds = duration.seconds || 0;
+        if (seconds === 0) {
+            return "0";
+        }
+        const totalMilliseconds = Number(seconds) * 1000;
+
+        const hours = Math.floor(totalMilliseconds / 3600000);
+        const remainingMillisecondsAfterHours = totalMilliseconds % 3600000;
+        const minutes = Math.floor(remainingMillisecondsAfterHours / 60000);
+        const remainingMillisecondsAfterMinutes = remainingMillisecondsAfterHours % 60000;
+        const secondsResult = Math.floor(remainingMillisecondsAfterMinutes / 1000);
+
+        return `${hours > 0 ? hours + "h" : ""}${minutes > 0 ? minutes + "m" : ""}${
+            secondsResult > 0 ? secondsResult + "s" : ""
+        }`;
+    }
+
+    /**
+     * Converts a duration string like "1h2m3s" to a Duration
+     *
+     * @param durationString "1h2m3s" valid time units are `s`, `m`, `h`
+     */
+    toDuration(durationString: string): Duration {
+        const units = new Map([
+            ["h", 3600],
+            ["m", 60],
+            ["s", 1],
+        ]);
+        const regex = /(\d+(?:\.\d+)?)([hmsµµs]+)/g;
+        let totalSeconds = 0;
+        let match: RegExpExecArray | null;
+
+        while ((match = regex.exec(durationString)) !== null) {
+            const value = parseFloat(match[1]);
+            const unit = match[2];
+            totalSeconds += value * (units.get(unit) || 0);
+        }
+
+        return new Duration({
+            seconds: BigInt(Math.floor(totalSeconds)),
+            nanos: (totalSeconds - Math.floor(totalSeconds)) * 1e9,
+        });
     }
 }

@@ -177,6 +177,64 @@ describe("PublicAPIConverter", () => {
         });
     });
 
+    describe("toDuration", () => {
+        it("should convert with 0", () => {
+            expect(converter.toDuration("").seconds).to.equal(BigInt(0));
+            expect(converter.toDuration("  ").seconds).to.equal(BigInt(0));
+            expect(converter.toDuration("0").seconds).to.equal(BigInt(0));
+            expect(converter.toDuration("0ms").seconds).to.equal(BigInt(0));
+            expect(converter.toDuration("0s").seconds).to.equal(BigInt(0));
+            expect(converter.toDuration("0m").seconds).to.equal(BigInt(0));
+            expect(converter.toDuration("0h").seconds).to.equal(BigInt(0));
+        });
+        it("should convert with hours", () => {
+            expect(converter.toDuration("1h").seconds).to.equal(BigInt(3600));
+            expect(converter.toDuration("24h").seconds).to.equal(BigInt(3600 * 24));
+            expect(converter.toDuration("25h").seconds).to.equal(BigInt(3600 * 25));
+        });
+        it("should convert with minutes", () => {
+            expect(converter.toDuration("1m").seconds).to.equal(BigInt(60));
+            expect(converter.toDuration("120m").seconds).to.equal(BigInt(120 * 60));
+        });
+        it("should convert with seconds", () => {
+            expect(converter.toDuration("1s").seconds).to.equal(BigInt(1));
+            expect(converter.toDuration("120s").seconds).to.equal(BigInt(120));
+        });
+        it("should convert with mixed", () => {
+            expect(converter.toDuration("1h20m").seconds).to.equal(BigInt(3600 + 20 * 60));
+            expect(converter.toDuration("1h0m0s").seconds).to.equal(BigInt(3600));
+            expect(converter.toDuration("20m1h").seconds).to.equal(BigInt(3600 + 20 * 60));
+            expect(converter.toDuration("20m25h1s").seconds).to.equal(BigInt(25 * 3600 + 20 * 60 + 1));
+        });
+    });
+
+    describe("toDurationString", () => {
+        it("should convert with 0", () => {
+            expect(converter.toDurationString(new Duration())).to.equal("0");
+            expect(converter.toDurationString(new Duration({ seconds: BigInt(0) }))).to.equal("0");
+            expect(converter.toDurationString(new Duration({ nanos: 0 }))).to.equal("0");
+        });
+        it("should convert with hours", () => {
+            expect(converter.toDurationString(new Duration({ seconds: BigInt(3600) }))).to.equal("1h");
+            expect(converter.toDurationString(new Duration({ seconds: BigInt(3600 * 24) }))).to.equal("24h");
+            expect(converter.toDurationString(new Duration({ seconds: BigInt(3600 * 25) }))).to.equal("25h");
+        });
+        it("should convert with minutes", () => {
+            expect(converter.toDurationString(new Duration({ seconds: BigInt(60) }))).to.equal("1m");
+            expect(converter.toDurationString(new Duration({ seconds: BigInt(2 * 60 * 60) }))).to.equal("2h");
+        });
+        it("should convert with seconds", () => {
+            expect(converter.toDurationString(new Duration({ seconds: BigInt(1) }))).to.equal("1s");
+            expect(converter.toDurationString(new Duration({ seconds: BigInt(120) }))).to.equal("2m");
+        });
+        it("should convert with mixed", () => {
+            expect(converter.toDurationString(new Duration({ seconds: BigInt(3600 + 20 * 60) }))).to.equal("1h20m");
+            expect(converter.toDurationString(new Duration({ seconds: BigInt(25 * 3600 + 20 * 60 + 1) }))).to.equal(
+                "25h20m1s",
+            );
+        });
+    });
+
     describe("errors", () => {
         it("USER_BLOCKED", () => {
             const connectError = converter.toError(new ApplicationError(ErrorCodes.USER_BLOCKED, "user blocked"));
