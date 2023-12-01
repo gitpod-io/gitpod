@@ -191,6 +191,7 @@ export const useListConfigurationVariables = (configurationId: string) => {
             const { environmentVariables } = await envVarClient.listConfigurationEnvironmentVariables({
                 configurationId,
             });
+
             return environmentVariables;
         },
         cacheTime: 1000 * 60 * 60 * 24, // one day
@@ -209,7 +210,6 @@ export const useDeleteConfigurationVariable = () => {
             void (await envVarClient.deleteConfigurationEnvironmentVariable({
                 environmentVariableId: variableId,
             }));
-            return;
         },
         onSuccess: (_, { configurationId, variableId }) => {
             queryClient.invalidateQueries({ queryKey: getListConfigurationsVariablesQueryKey(configurationId) });
@@ -262,7 +262,6 @@ export const useUpdateConfigurationVariable = () => {
                 value,
                 admission,
             });
-
             if (!environmentVariable) {
                 throw new Error("Failed to update environment variable");
             }
