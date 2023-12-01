@@ -18,6 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	wsapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
@@ -137,6 +138,11 @@ func (r *CRDWorkspaceInfoProvider) Reconcile(ctx context.Context, req ctrl.Reque
 	if ws.Spec.Admission.Level == workspacev1.AdmissionLevelEveryone {
 		admission = wsapi.AdmissionLevel_ADMIT_EVERYONE
 	}
+	managedByMk2 := true
+	if managedBy, ok := ws.Labels[wsk8s.WorkspaceManagedByLabel]; ok && managedBy != "ws-manager-mk2" {
+		managedByMk2 = false
+	}
+
 	wsinfo := &common.WorkspaceInfo{
 		WorkspaceID:     ws.Spec.Ownership.WorkspaceID,
 		InstanceID:      ws.Name,
@@ -150,9 +156,9 @@ func (r *CRDWorkspaceInfoProvider) Reconcile(ctx context.Context, req ctrl.Reque
 		StartedAt:       ws.CreationTimestamp.Time,
 		OwnerUserId:     ws.Spec.Ownership.Owner,
 		SSHPublicKeys:   ws.Spec.SshPublicKeys,
-		SSHKey:          ws.Spec.SSHKey,
 		IsRunning:       ws.Status.Phase == workspacev1.WorkspacePhaseRunning,
 		IsEnabledSSHCA:  ws.Spec.SSHGatewayCAPublicKey != "",
+		IsManagedByMk2:  managedByMk2,
 	}
 
 	r.store.Update(req.Name, wsinfo)
