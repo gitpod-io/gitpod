@@ -17,6 +17,7 @@ import { useToast } from "../components/toasts/Toasts";
 import { RenameWorkspaceModal } from "./RenameWorkspaceModal";
 import { AdmissionLevel, Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { workspaceClient } from "../service/public-api";
+import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
 
 type WorkspaceEntryOverflowMenuProps = {
     info: Workspace;
@@ -32,6 +33,7 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
     const [isSSHModalVisible, setSSHModalVisible] = useState(false);
     const [ownerToken, setOwnerToken] = useState("");
     const { toast } = useToast();
+    const { data: settings } = useOrgSettingsQuery();
 
     const stopWorkspace = useStopWorkspaceMutation();
     const toggleWorkspaceShared = useToggleWorkspaceSharedMutation();
@@ -126,12 +128,23 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
         download: `${workspace.id}.tar`,
     });
 
-    menuEntries.push(
-        {
+    // Push the Workspace share menu entry based on the current organization settings for workspace sharing
+    if (settings && !settings.workspaceSharingDisabled) {
+        menuEntries.push({
             title: "Share",
             active: workspace.status?.admission === AdmissionLevel.EVERYONE,
             onClick: toggleShared,
-        },
+        });
+    } else {
+        menuEntries.push({
+            title: "Workspace sharing is disabled for this organization. Contact your org. owner to enable it.",
+            active: false,
+            customContent: "Share",
+            customFontStyle: "text-gray-400 dark:text-gray-500 opacity-50 cursor-not-allowed",
+        });
+    }
+
+    menuEntries.push(
         {
             title: "Pin",
             active: !!workspace.pinned,
