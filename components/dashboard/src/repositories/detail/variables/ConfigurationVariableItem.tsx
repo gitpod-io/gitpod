@@ -40,7 +40,7 @@ export const ConfigurationVariableItem = ({ variable, configurationId }: Props) 
                 />
             )}
             <TableRow key={variable.id}>
-                <TableCell className="truncate">{variable.name}</TableCell>
+                <TableCell className="break-all">{variable.name}</TableCell>
                 <TableCell>
                     {variable.admission === EnvironmentVariableAdmission.PREBUILD
                         ? "Prebuilds only"
