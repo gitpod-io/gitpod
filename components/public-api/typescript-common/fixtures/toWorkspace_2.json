@@ -91,7 +91,7 @@
         "specs": [
           {
             "git": {
-              "remoteUri": "https://github.com/akosyakov/parcel-demo",
+              "remoteUri": "https://github.com/akosyakov/parcel-demo.git",
               "checkoutLocation": "parcel-demo",
               "config": {}
             }

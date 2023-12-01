@@ -171,7 +171,7 @@ export class PublicAPIConverter {
                     spec: {
                         case: "git",
                         value: new GitInitializer({
-                            remoteUri: arg.workspace.context.normalizedContextURL,
+                            remoteUri: arg.workspace.context.repository.cloneUrl,
                             upstreamRemoteUri: arg.workspace.context.upstreamRemoteURI,
                             // TODO:
                             // targetMode
