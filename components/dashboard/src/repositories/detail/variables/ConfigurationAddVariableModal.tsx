@@ -84,7 +84,7 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
         );
     }, [variable, updateVariable, configurationId, value, admission, onClose, toast]);
 
-    const submit = useCallback(() => {
+    const handleSubmission = useCallback(() => {
         if (isEditing) {
             editVariable();
         } else {
@@ -93,7 +93,7 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
     }, [isEditing, editVariable, addVariable]);
 
     return (
-        <Modal visible onClose={onClose} onSubmit={submit}>
+        <Modal visible onClose={onClose} onSubmit={handleSubmission}>
             <ModalHeader>{isEditing ? "Edit" : "Add a"} variable</ModalHeader>
             <ModalBody>
                 <div className="mt-8">
