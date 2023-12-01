@@ -370,7 +370,7 @@ func (s *Server) HandleConn(c net.Conn) {
 	if err != nil {
 		s.TrackSSHConnection(wsInfo, "connect", ErrConnFailed)
 		ReportSSHAttemptMetrics(ErrConnFailed)
-		log.WithField("workspaceIP", wsInfo.IPAddress).WithError(err).Error("dail failed")
+		log.WithField("workspaceIP", wsInfo.IPAddress).WithError(err).Error("dial failed")
 		return
 	}
 	defer conn.Close()
