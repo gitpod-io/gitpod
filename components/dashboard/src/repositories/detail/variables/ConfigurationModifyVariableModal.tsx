@@ -53,9 +53,6 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
                     toast("Variable added");
                     onClose();
                 },
-                onError: (error) => {
-                    toast(`Could not add variable: ${error.message}`);
-                },
             },
         );
     }, [createVariable, configurationId, name, value, admission, onClose, toast]);
@@ -76,9 +73,6 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
                 onSuccess: () => {
                     toast("Variable updated");
                     onClose();
-                },
-                onError: (error) => {
-                    toast(`Could not edit variable: ${error.message}`);
                 },
             },
         );
@@ -137,9 +131,12 @@ export const ModifyVariableModal = ({ configurationId, variable, onClose }: Prop
             </ModalBody>
             <ModalFooter
                 alert={
-                    createVariable.isError ? (
+                    createVariable.isError || updateVariable.isError ? (
                         <ModalFooterAlert type="danger">
-                            {String(createVariable.error).replace(/Error: Request \w+ failed with message: /, "")}
+                            {String(createVariable.error || updateVariable.error).replace(
+                                /Error: Request \w+ failed with message: /,
+                                "",
+                            )}
                         </ModalFooterAlert>
                     ) : null
                 }
