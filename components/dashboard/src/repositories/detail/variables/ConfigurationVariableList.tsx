@@ -9,7 +9,7 @@ import { ConfigurationSettingsField } from "../ConfigurationSettingsField";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { Button } from "@podkit/buttons/Button";
 import { ModifyVariableModal } from "./ConfigurationAddVariableModal";
-import { Heading2, Subheading } from "@podkit/typography/Headings";
+import { Heading3, Subheading } from "@podkit/typography/Headings";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@podkit/tables/Table";
 import { useListConfigurationVariables } from "../../../data/configurations/configuration-queries";
 import { LoadingState } from "@podkit/loading/LoadingState";
@@ -38,7 +38,7 @@ export const ConfigurationVariableList = ({ configuration }: Props) => {
             )}
             <div className="mb-2 flex">
                 <div className="flex-grow">
-                    <Heading2>Environment Variables</Heading2>
+                    <Heading3>Environment Variables</Heading3>
                     <Subheading>Manage repository-specific environment variables.</Subheading>
                 </div>
             </div>
