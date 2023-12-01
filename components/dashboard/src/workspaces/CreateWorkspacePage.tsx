@@ -37,7 +37,10 @@ import { SelectAccountModal } from "../user-settings/SelectAccountModal";
 import { settingsPathIntegrations } from "../user-settings/settings.routes";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
-import { WorkspaceMetadata, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import {
+    CreateAndStartWorkspaceRequest_ContextURL,
+    WorkspacePhase_Phase,
+} from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { Button } from "@podkit/buttons/Button";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { CreateAndStartWorkspaceRequest } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
@@ -208,28 +211,26 @@ export function CreateWorkspacePage() {
                 const timeout = new Promise((resolve) => setTimeout(resolve, 5000));
 
                 if (!opts.metadata) {
-                    opts.metadata = new WorkspaceMetadata();
+                    opts.metadata = {};
                 }
                 opts.metadata.organizationId = organizationId;
                 opts.metadata.configurationId = selectedProjectID;
 
-                const result = await createWorkspaceMutation.createWorkspace({
-                    source: {
-                        case: "contextUrl",
-                        value: {
-                            url: contextURL,
-                            workspaceClass: selectedWsClass,
-                            editor:
-                                opts.source?.case === "contextUrl" && opts.source.value.editor
-                                    ? opts.source.value.editor
-                                    : {
-                                          name: selectedIde,
-                                          version: useLatestIde ? "latest" : undefined,
-                                      },
-                        },
-                    },
-                    ...opts,
-                });
+                const contextUrlSource: PartialMessage<CreateAndStartWorkspaceRequest_ContextURL> =
+                    opts.source?.case === "contextUrl" ? opts.source?.value ?? {} : {};
+                contextUrlSource.url = contextURL;
+                contextUrlSource.workspaceClass = selectedWsClass;
+                if (!contextUrlSource.editor || !contextUrlSource.editor.name) {
+                    contextUrlSource.editor = {
+                        name: selectedIde,
+                        version: useLatestIde ? "latest" : undefined,
+                    };
+                }
+                opts.source = {
+                    case: "contextUrl",
+                    value: contextUrlSource,
+                };
+                const result = await createWorkspaceMutation.createWorkspace(opts);
                 await storeAutoStartOptions();
                 await timeout;
                 if (result.workspace?.status?.workspaceUrl) {
