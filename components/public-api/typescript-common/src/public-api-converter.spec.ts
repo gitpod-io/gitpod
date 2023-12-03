@@ -455,6 +455,18 @@ describe("PublicAPIConverter", () => {
             expect(appError.message).to.equal("cancelled");
         });
 
+        it("DEADLINE_EXCEEDED", () => {
+            const connectError = converter.toError(
+                new ApplicationError(ErrorCodes.DEADLINE_EXCEEDED, "deadline exceeded"),
+            );
+            expect(connectError.code).to.equal(Code.DeadlineExceeded);
+            expect(connectError.rawMessage).to.equal("deadline exceeded");
+
+            const appError = converter.fromError(connectError);
+            expect(appError.code).to.equal(ErrorCodes.DEADLINE_EXCEEDED);
+            expect(appError.message).to.equal("deadline exceeded");
+        });
+
         it("INTERNAL_SERVER_ERROR", () => {
             const connectError = converter.toError(
                 new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "internal server error"),

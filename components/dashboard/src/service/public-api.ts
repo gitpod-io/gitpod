@@ -277,16 +277,31 @@ export function stream<Response>(
             try {
                 for await (const response of factory({
                     signal: abort.signal,
+                    // GCP timeout is 10 minutes, we timeout 3 mins earlier
+                    // to avoid unknown network errors and reconnect gracefully
+                    timeoutMs: 7 * 60 * 1000,
                 })) {
                     backoff = BASE_BACKOFF;
                     cb(response);
                 }
             } catch (e) {
-                if (ApplicationError.hasErrorCode(e) && e.code === ErrorCodes.CANCELLED) {
+                if (abort.signal.aborted) {
+                    // client aborted, don't reconnect, early exit
                     return;
                 }
-                backoff = Math.min(2 * backoff, MAX_BACKOFF);
-                console.error("failed to watch prebuild:", e);
+                if (
+                    ApplicationError.hasErrorCode(e) &&
+                    (e.code === ErrorCodes.DEADLINE_EXCEEDED ||
+                        // library aborted: https://github.com/connectrpc/connect-es/issues/954
+                        // (clean up when fixed, on server abort we should rather backoff with jitter)
+                        e.code === ErrorCodes.CANCELLED)
+                ) {
+                    // timeout is expected, reconnect with base backoff
+                    backoff = BASE_BACKOFF;
+                } else {
+                    backoff = Math.min(2 * backoff, MAX_BACKOFF);
+                    console.error(e);
+                }
             }
             const jitter = Math.random() * 0.3 * backoff;
             const delay = backoff + jitter;
