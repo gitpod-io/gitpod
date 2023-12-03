@@ -104,6 +104,7 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 	args = append(args,
 		"-ieD", "-f/dev/null",
 		"-oProtocol 2",
+		"-oAllowUsers gitpod",
 		"-oPasswordAuthentication no",
 		"-oChallengeResponseAuthentication no",
 		"-oPermitRootLogin yes",
@@ -158,6 +159,7 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 
 	log.WithField("args", args).Debug("sshd flags")
 	cmd := exec.CommandContext(ctx, openssh, args...)
+	cmd = runAsGitpodUser(cmd)
 	cmd.Env = s.envvars
 	cmd.ExtraFiles = []*os.File{socketFD}
 	cmd.Stderr = os.Stderr
