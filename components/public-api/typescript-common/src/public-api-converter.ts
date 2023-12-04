@@ -495,6 +495,9 @@ export class PublicAPIConverter {
             if (reason.code === ErrorCodes.CANCELLED) {
                 return new ConnectError(reason.message, Code.Canceled, undefined, undefined, reason);
             }
+            if (reason.code === ErrorCodes.DEADLINE_EXCEEDED) {
+                return new ConnectError(reason.message, Code.DeadlineExceeded, undefined, undefined, reason);
+            }
             if (reason.code === ErrorCodes.INTERNAL_SERVER_ERROR) {
                 return new ConnectError(reason.message, Code.Internal, undefined, undefined, reason);
             }
@@ -560,6 +563,9 @@ export class PublicAPIConverter {
         }
         if (reason.code === Code.Canceled) {
             return new ApplicationError(ErrorCodes.CANCELLED, reason.rawMessage);
+        }
+        if (reason.code === Code.DeadlineExceeded) {
+            return new ApplicationError(ErrorCodes.DEADLINE_EXCEEDED, reason.rawMessage);
         }
         if (reason.code === Code.Internal) {
             return new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, reason.rawMessage);

@@ -13,16 +13,17 @@ import {
     GitpodServiceImpl,
     User,
     WorkspaceInfo,
+    Disposable,
 } from "@gitpod/gitpod-protocol";
 import { WebSocketConnectionProvider } from "@gitpod/gitpod-protocol/lib/messaging/browser/connection";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/frontend-dashboard-service";
 import { RemoteTrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
-import { helloService, workspaceClient } from "./public-api";
+import { helloService, stream, workspaceClient } from "./public-api";
 import { getExperimentsClient } from "../experiments/client";
-import { ConnectError, Code } from "@connectrpc/connect";
 import { instrumentWebSocket } from "./metrics";
+import { LotsOfRepliesResponse } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_pb";
 
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
@@ -122,11 +123,19 @@ function testPublicAPI(service: any): void {
         },
     });
     (async () => {
-        const MAX_BACKOFF = 60000;
-        const BASE_BACKOFF = 3000;
-        let backoff = BASE_BACKOFF;
+        let previousCount = 0;
+        const watchLotsOfReplies = () =>
+            stream<LotsOfRepliesResponse>(
+                (options) => {
+                    return helloService.lotsOfReplies({ previousCount }, options);
+                },
+                (response) => {
+                    previousCount = response.count;
+                },
+            );
 
         // emulates server side streaming with public API
+        let watching: Disposable | undefined;
         while (true) {
             const isTest =
                 !!user &&
@@ -135,34 +144,14 @@ function testPublicAPI(service: any): void {
                     gitpodHost: window.location.host,
                 }));
             if (isTest) {
-                try {
-                    let previousCount = 0;
-                    for await (const reply of helloService.lotsOfReplies(
-                        { previousCount },
-                        {
-                            // GCP timeout is 10 minutes, we timeout 3 mins earlier
-                            // to avoid unknown network errors
-                            timeoutMs: 7 * 60 * 1000,
-                        },
-                    )) {
-                        previousCount = reply.count;
-                        backoff = BASE_BACKOFF;
-                    }
-                } catch (e) {
-                    if (e instanceof ConnectError && e.code === Code.DeadlineExceeded) {
-                        // timeout is expected, continue as usual
-                        backoff = BASE_BACKOFF;
-                    } else {
-                        backoff = Math.min(2 * backoff, MAX_BACKOFF);
-                        console.error(e);
-                    }
+                if (!watching) {
+                    watching = watchLotsOfReplies();
                 }
-            } else {
-                backoff = BASE_BACKOFF;
+            } else if (watching) {
+                watching.dispose();
+                watching = undefined;
             }
-            const jitter = Math.random() * 0.3 * backoff;
-            const delay = backoff + jitter;
-            await new Promise((resolve) => setTimeout(resolve, delay));
+            await new Promise((resolve) => setTimeout(resolve, 3000));
         }
     })();
 }

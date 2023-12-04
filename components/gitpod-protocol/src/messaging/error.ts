@@ -113,6 +113,9 @@ export const ErrorCodes = {
     // 498 The operation was cancelled, typically by the caller.
     CANCELLED: 498 as const,
 
+    // 4981 The deadline expired before the operation could complete.
+    DEADLINE_EXCEEDED: 4981 as const,
+
     // 500 Internal Server Error
     INTERNAL_SERVER_ERROR: 500 as const,
 
