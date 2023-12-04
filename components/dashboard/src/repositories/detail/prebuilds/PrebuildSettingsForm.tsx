@@ -16,6 +16,9 @@ import { TextInputField } from "../../../components/forms/TextInputField";
 import { WorkspaceClassOptions } from "../shared/WorkspaceClassOptions";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { InputFieldHint } from "../../../components/forms/InputFieldHint";
+import { DEFAULT_WS_CLASS } from "../../../data/workspaces/workspace-classes-query";
+
+const DEFAULT_PREBUILD_COMMIT_INTERVAL = 20;
 
 type Props = {
     configuration: Configuration;
@@ -25,7 +28,9 @@ export const PrebuildSettingsForm: FC<Props> = ({ configuration }) => {
     const { toast } = useToast();
     const updateConfiguration = useConfigurationMutation();
 
-    const [interval, setInterval] = useState<string>(`${configuration.prebuildSettings?.prebuildInterval ?? 20}`);
+    const [interval, setInterval] = useState<string>(
+        `${configuration.prebuildSettings?.prebuildInterval ?? DEFAULT_PREBUILD_COMMIT_INTERVAL}`,
+    );
     const [branchStrategy, setBranchStrategy] = useState<BranchMatchingStrategy>(
         configuration.prebuildSettings?.branchStrategy ?? BranchMatchingStrategy.DEFAULT_BRANCH,
     );
@@ -33,7 +38,7 @@ export const PrebuildSettingsForm: FC<Props> = ({ configuration }) => {
         configuration.prebuildSettings?.branchMatchingPattern || "**",
     );
     const [workspaceClass, setWorkspaceClass] = useState<string>(
-        configuration.prebuildSettings?.workspaceClass || "g1-standard",
+        configuration.prebuildSettings?.workspaceClass || DEFAULT_WS_CLASS,
     );
 
     const handleSubmit = useCallback(

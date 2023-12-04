@@ -12,6 +12,7 @@ import { useToast } from "../../../components/toasts/Toasts";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { useConfigurationMutation } from "../../../data/configurations/configuration-queries";
 import { WorkspaceClassOptions } from "../shared/WorkspaceClassOptions";
+import { DEFAULT_WS_CLASS } from "../../../data/workspaces/workspace-classes-query";
 
 interface Props {
     configuration: Configuration;
@@ -19,7 +20,7 @@ interface Props {
 
 export const ConfigurationWorkspaceSizeOptions = ({ configuration }: Props) => {
     const [selectedValue, setSelectedValue] = useState(
-        configuration.workspaceSettings?.workspaceClass || "g1-standard",
+        configuration.workspaceSettings?.workspaceClass || DEFAULT_WS_CLASS,
     );
     const classChanged = selectedValue !== configuration.workspaceSettings?.workspaceClass;
 
