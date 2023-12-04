@@ -56,7 +56,6 @@ import kotlin.coroutines.coroutineContext
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.writeText
 
-
 @Suppress("UnstableApiUsage", "OPT_IN_USAGE")
 class GitpodConnectionProvider : GatewayConnectionProvider {
     private val activeConnections = ConcurrentHashMap<String, LifetimeDefinition>()
@@ -263,7 +262,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                         }
 
                         if (thinClientJob == null && update.status.phase == "running") {
-                            thinClientJob = launch {
+                            thinClientJob = launch thinClientJob@{
                                 try {
                                     val ideUrl = URL(resolvedIdeUrl)
                                     val ownerToken = client.server.getOwnerToken(update.workspaceId).await()
@@ -283,18 +282,18 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                     }
                                     if (credentials == null) {
                                         setErrorMessage("${connectParams.gitpodHost} installation does not allow SSH access")
-                                        return@launch
+                                        return@thinClientJob
                                     }
 
-                                    val joinLink = resolveJoinLink(ideUrl, ownerToken, connectParams)
-                                    if (joinLink.isNullOrEmpty()) {
+                                    var joinLinkResp = resolveJoinLink(ideUrl, ownerToken, connectParams)
+                                    if (joinLinkResp == null || joinLinkResp.joinLink.isNullOrEmpty()) {
                                         setErrorMessage("failed to fetch JetBrains Gateway Join Link.")
-                                        return@launch
+                                        return@thinClientJob
                                     }
                                     val clientHandle = connectionHandleFactory.connect(
                                         connectionLifetime,
                                         SshHostTunnelConnector(credentials),
-                                        URI(joinLink)
+                                        URI(joinLinkResp.joinLink)
                                     )
                                     clientHandle.clientClosed.advise(connectionLifetime) {
                                         application.invokeLater {
@@ -307,6 +306,25 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                                 statusMessage.text = ""
                                             }
                                         }
+                                    }
+                                    val backendStatusJob = launch backendStatusJob@{
+                                        while (isActive) {
+                                            try {
+                                                delay(5000)
+                                                val updatedJoinLinkResp = resolveJoinLink(ideUrl, ownerToken, connectParams)
+                                                if (updatedJoinLinkResp != null && joinLinkResp != null && updatedJoinLinkResp.appPid != joinLinkResp!!.appPid) {
+                                                    clientHandle.updateJoinLink(URI(updatedJoinLinkResp.joinLink), false)
+                                                    joinLinkResp = updatedJoinLinkResp
+                                                }
+                                            } catch(t: Throwable) {
+                                                if (t is CancellationException) {
+                                                    return@backendStatusJob
+                                                }
+                                            }
+                                        }
+                                    }
+                                    connectionLifetime.onTerminationOrNow {
+                                        backendStatusJob.cancel()
                                     }
                                     thinClient = clientHandle
                                 } catch (t: Throwable) {
@@ -441,12 +459,16 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         ideUrl: URL,
         ownerToken: String,
         connectParams: ConnectParams
-    ): String? {
-        var resolveJoinLinkUrl = "https://24000-${ideUrl.host}/joinLink"
+    ): JoinLinkResp? {
+        var resolveJoinLinkUrl = "https://24000-${ideUrl.host}/joinLink2"
         if (!connectParams.backendPort.isNullOrBlank()) {
             resolveJoinLinkUrl += "?backendPort=${connectParams.backendPort}"
         }
-        return fetchWS(resolveJoinLinkUrl, connectParams, ownerToken)
+        val rawResp = fetchWS(resolveJoinLinkUrl, connectParams, ownerToken)
+        return with(jacksonMapper) {
+            propertyNamingStrategy = PropertyNamingStrategies.LowerCamelCaseStrategy()
+            readValue(rawResp, object : TypeReference<JoinLinkResp>() {})
+        }
     }
 
     private fun resolveCredentials(
@@ -645,4 +667,6 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
     private data class SSHPublicKey(val type: String, val value: String)
 
     private data class CreateSSHKeyPairResponse(val privateKey: String, val hostKey: SSHPublicKey?, val userName: String?)
+
+    private data class JoinLinkResp(val appPid: Int, val joinLink: String)
 }
