@@ -26,7 +26,7 @@ import {
     DeleteConfigurationEnvironmentVariableResponse,
     ResolveWorkspaceEnvironmentVariablesResponse,
     ResolveWorkspaceEnvironmentVariablesRequest,
-    ResolveWorkspaceEnvironmentVariablesResponse_EnvironmentVariable,
+    EnvironmentVariable,
 } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
 import { inject, injectable } from "inversify";
 import { EnvVarService } from "../user/env-var-service";
@@ -213,8 +213,7 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
         );
 
         response.environmentVariables = envVars.workspace.map(
-            (i) =>
-                new ResolveWorkspaceEnvironmentVariablesResponse_EnvironmentVariable({ name: i.name, value: i.value }),
+            (i) => new EnvironmentVariable({ name: i.name, value: i.value }),
         );
 
         return response;

@@ -1,115 +1,118 @@
 {
-  "workspace": {
-    "id": "akosyakov-parceldemo-4crqn25qlwi",
-    "creationTime": "2023-10-16T20:18:24.859Z",
-    "organizationId": "ec76db37-9a48-4e2d-a78e-0ec7d2b4d2c0",
-    "ownerId": "827df1c8-d42d-4a69-bc38-64089af1f711",
-    "contextURL": "https://github.com/akosyakov/parcel-demo",
-    "description": "akosyakov/parcel-demo - master",
-    "context": {
-      "isFile": false,
-      "path": "",
-      "title": "akosyakov/parcel-demo - master",
-      "ref": "master",
-      "refType": "branch",
-      "revision": "60dbf818194082ef1a368bacd49cfd25a34c9256",
-      "repository": {
-        "cloneUrl": "https://github.com/akosyakov/parcel-demo.git",
-        "host": "github.com",
-        "defaultBranch": "master",
-        "name": "parcel-demo",
-        "owner": "akosyakov",
-        "private": false
-      },
-      "normalizedContextURL": "https://github.com/akosyakov/parcel-demo",
-      "checkoutLocation": "parcel-demo"
-    },
-    "cloneUrl": "https://github.com/akosyakov/parcel-demo.git",
-    "config": {
-      "tasks": [
-        {
-          "init": "yarn",
-          "command": "yarn serve"
+  "arg1": {
+    "workspace": {
+      "id": "akosyakov-parceldemo-4crqn25qlwi",
+      "creationTime": "2023-10-16T20:18:24.859Z",
+      "organizationId": "ec76db37-9a48-4e2d-a78e-0ec7d2b4d2c0",
+      "ownerId": "827df1c8-d42d-4a69-bc38-64089af1f711",
+      "contextURL": "https://github.com/akosyakov/parcel-demo",
+      "description": "akosyakov/parcel-demo - master",
+      "context": {
+        "isFile": false,
+        "path": "",
+        "title": "akosyakov/parcel-demo - master",
+        "ref": "master",
+        "refType": "branch",
+        "revision": "60dbf818194082ef1a368bacd49cfd25a34c9256",
+        "repository": {
+          "cloneUrl": "https://github.com/akosyakov/parcel-demo.git",
+          "host": "github.com",
+          "defaultBranch": "master",
+          "name": "parcel-demo",
+          "owner": "akosyakov",
+          "private": false
         },
-        {
-          "command": "gp open index.js\ngp preview $(gp url 1234)\n",
-          "openMode": "split-right"
-        }
-      ],
-      "_origin": "repo",
-      "image": "docker.io/gitpod/workspace-full:latest",
-      "vscode": {
-        "extensions": []
-      }
-    },
-    "imageSource": {
-      "baseImageResolved": "docker.io/gitpod/workspace-full:latest"
-    },
-    "imageNameResolved": "eu.gcr.io/gitpod-core-dev/build/workspace-images:d6d9404137cc976d4da4d450474cb515bc0512281a3649c1cab9309ba7caee65",
-    "baseImageNameResolved": "docker.io/gitpod/workspace-full@sha256:10d6ab95512fe70bf6274976b19f94327570559e3d29f4b1cb01735b6fe534bb",
-    "shareable": false,
-    "type": "regular",
-    "softDeleted": null,
-    "deleted": false,
-    "pinned": false
-  },
-  "latestInstance": {
-    "id": "226695b4-f10a-471a-a219-9b657645bf78",
-    "workspaceId": "akosyakov-parceldemo-4crqn25qlwi",
-    "region": "dev",
-    "creationTime": "2023-10-16T20:18:24.923Z",
-    "ideUrl": "https://akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
-    "status": {
-      "phase": "creating",
-      "message": "",
-      "timeout": "30m0s",
-      "version": 220880,
-      "conditions": {
-        "failed": "",
-        "timeout": "",
-        "deployed": true,
-        "pullingImages": false,
-        "stoppedByRequest": false,
-        "headlessTaskFailed": ""
+        "normalizedContextURL": "https://github.com/akosyakov/parcel-demo",
+        "checkoutLocation": "parcel-demo"
       },
-      "exposedPorts": []
-    },
-    "gitStatus": null,
-    "phasePersisted": "creating",
-    "deleted": false,
-    "configuration": {
-      "ideImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-e77f3a07ea76bbb404d3f6bf4af36269afc45df1",
-      "ideImageLayers": [
-        "eu.gcr.io/gitpod-core-dev/build/ide/gitpod-code-web:commit-49bb715b599dce2356dd02a6ede7ae8cf10d8d12",
-        "eu.gcr.io/gitpod-core-dev/build/ide/code-codehelper:commit-18a48e2ccb779a268355d2b58a167c73de023547"
-      ],
-      "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:commit-cda78d5706672b9a41e15d84a128cdb24357ad87",
-      "ideConfig": {
-        "useLatest": false,
-        "ide": "code"
-      },
-      "ideSetup": {
-        "envvars": [
+      "cloneUrl": "https://github.com/akosyakov/parcel-demo.git",
+      "config": {
+        "tasks": [
           {
-            "name": "GITPOD_CONFIGCAT_ENABLED",
-            "value": "true"
+            "init": "yarn",
+            "command": "yarn serve"
           },
           {
-            "name": "GITPOD_IDE_ALIAS",
-            "value": "code"
+            "command": "gp open index.js\ngp preview $(gp url 1234)\n",
+            "openMode": "split-right"
           }
         ],
-        "tasks": []
+        "_origin": "repo",
+        "image": "docker.io/gitpod/workspace-full:latest",
+        "vscode": {
+          "extensions": []
+        }
       },
-      "regionPreference": "",
-      "fromBackup": false,
-      "featureFlags": [
-        "workspace_connection_limiting",
-        "workspace_class_limiting"
-      ]
+      "imageSource": {
+        "baseImageResolved": "docker.io/gitpod/workspace-full:latest"
+      },
+      "imageNameResolved": "eu.gcr.io/gitpod-core-dev/build/workspace-images:d6d9404137cc976d4da4d450474cb515bc0512281a3649c1cab9309ba7caee65",
+      "baseImageNameResolved": "docker.io/gitpod/workspace-full@sha256:10d6ab95512fe70bf6274976b19f94327570559e3d29f4b1cb01735b6fe534bb",
+      "shareable": false,
+      "type": "regular",
+      "softDeleted": null,
+      "deleted": false,
+      "pinned": false
     },
-    "imageBuildInfo": null,
-    "workspaceClass": "g1-standard",
-    "usageAttributionId": "team:ec76db37-9a48-4e2d-a78e-0ec7d2b4d2c0"
-  }
+    "latestInstance": {
+      "id": "226695b4-f10a-471a-a219-9b657645bf78",
+      "workspaceId": "akosyakov-parceldemo-4crqn25qlwi",
+      "region": "dev",
+      "creationTime": "2023-10-16T20:18:24.923Z",
+      "ideUrl": "https://akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
+      "status": {
+        "phase": "creating",
+        "message": "",
+        "timeout": "30m0s",
+        "version": 220880,
+        "conditions": {
+          "failed": "",
+          "timeout": "",
+          "deployed": true,
+          "pullingImages": false,
+          "stoppedByRequest": false,
+          "headlessTaskFailed": ""
+        },
+        "exposedPorts": []
+      },
+      "gitStatus": null,
+      "phasePersisted": "creating",
+      "deleted": false,
+      "configuration": {
+        "ideImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-e77f3a07ea76bbb404d3f6bf4af36269afc45df1",
+        "ideImageLayers": [
+          "eu.gcr.io/gitpod-core-dev/build/ide/gitpod-code-web:commit-49bb715b599dce2356dd02a6ede7ae8cf10d8d12",
+          "eu.gcr.io/gitpod-core-dev/build/ide/code-codehelper:commit-18a48e2ccb779a268355d2b58a167c73de023547"
+        ],
+        "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:commit-cda78d5706672b9a41e15d84a128cdb24357ad87",
+        "ideConfig": {
+          "useLatest": false,
+          "ide": "code"
+        },
+        "ideSetup": {
+          "envvars": [
+            {
+              "name": "GITPOD_CONFIGCAT_ENABLED",
+              "value": "true"
+            },
+            {
+              "name": "GITPOD_IDE_ALIAS",
+              "value": "code"
+            }
+          ],
+          "tasks": []
+        },
+        "regionPreference": "",
+        "fromBackup": false,
+        "featureFlags": [
+          "workspace_connection_limiting",
+          "workspace_class_limiting"
+        ]
+      },
+      "imageBuildInfo": null,
+      "workspaceClass": "g1-standard",
+      "usageAttributionId": "team:ec76db37-9a48-4e2d-a78e-0ec7d2b4d2c0"
+    }
+  },
+  "arg2": null
 }

@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Timestamp, toPlainMessage } from "@bufbuild/protobuf";
+import { Timestamp, toPlainMessage, PartialMessage, Duration } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@connectrpc/connect";
 import {
     FailedPreconditionDetails,
@@ -39,22 +39,33 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import {
     AdmissionLevel,
+    GitInitializer,
+    GitInitializer_GitConfig,
+    PrebuildInitializer,
+    SnapshotInitializer,
+    UpdateWorkspaceRequest_UpdateTimeout,
     Workspace,
-    WorkspaceConditions,
-    WorkspaceEnvironmentVariable,
     WorkspaceGitStatus,
+    WorkspaceInitializer,
+    WorkspaceInitializer_Spec,
+    WorkspaceMetadata,
     WorkspacePhase,
     WorkspacePhase_Phase,
     WorkspacePort,
-    WorkspacePort_Policy,
     WorkspacePort_Protocol,
+    WorkspaceSpec,
+    WorkspaceSpec_GitSpec,
+    WorkspaceSpec_WorkspaceType,
     WorkspaceStatus,
+    WorkspaceStatus_PrebuildResult,
+    WorkspaceStatus_WorkspaceConditions,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { EditorReference } from "@gitpod/public-api/lib/gitpod/v1/editor_pb";
 import { BlockedEmailDomain, BlockedRepository } from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
 import { SSHPublicKey } from "@gitpod/public-api/lib/gitpod/v1/ssh_pb";
 import {
     ConfigurationEnvironmentVariable,
+    EnvironmentVariable,
     EnvironmentVariableAdmission,
     UserEnvironmentVariable,
 } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
@@ -85,6 +96,7 @@ import {
     Token,
     SuggestedRepository as SuggestedRepositoryProtocol,
     UserSSHPublicKeyValue,
+    SnapshotContext,
     EmailDomainFilterEntry,
 } from "@gitpod/gitpod-protocol/lib/protocol";
 import {
@@ -121,45 +133,126 @@ export class PublicAPIConverter {
     toWorkspace(arg: WorkspaceInfo | WorkspaceInstance, current?: Workspace): Workspace {
         const workspace = current ?? new Workspace();
 
+        workspace.spec = this.toWorkspaceSpec(arg, workspace.spec);
+        workspace.status = this.toWorkspaceStatus(arg, workspace.status);
+        workspace.metadata = this.toWorkspaceMetadata(arg, workspace.metadata);
         if ("workspace" in arg) {
             workspace.id = arg.workspace.id;
-            workspace.prebuild = arg.workspace.type === "prebuild";
-            workspace.organizationId = arg.workspace.organizationId;
-            workspace.name = arg.workspace.description;
-            workspace.pinned = arg.workspace.pinned ?? false;
-
-            const contextUrl = ContextURL.normalize(arg.workspace);
-            if (contextUrl) {
-                workspace.contextUrl = contextUrl;
-            }
-            if (WithPrebuild.is(arg.workspace.context)) {
-                workspace.prebuildId = arg.workspace.context.prebuildWorkspaceId;
-            }
-
-            const status = new WorkspaceStatus();
-            const phase = new WorkspacePhase();
-            phase.lastTransitionTime = Timestamp.fromDate(new Date(arg.workspace.creationTime));
-            status.phase = phase;
-            status.admission = this.toAdmission(arg.workspace.shareable);
-            status.gitStatus = this.toGitStatus(arg.workspace);
-            workspace.status = status;
-            workspace.additionalEnvironmentVariables = this.toWorkspaceEnvironmentVariables(arg.workspace.context);
-
             if (arg.latestInstance) {
                 return this.toWorkspace(arg.latestInstance, workspace);
             }
             return workspace;
         }
+        return workspace;
+    }
 
-        const status = workspace.status ?? new WorkspaceStatus();
-        workspace.status = status;
-        const phase = status.phase ?? new WorkspacePhase();
-        phase.name = this.toPhase(arg);
-        status.phase = phase;
+    toWorkspaceSpec(arg: WorkspaceInfo | WorkspaceInstance, current?: WorkspaceSpec): WorkspaceSpec {
+        const spec = new WorkspaceSpec(current);
+        if ("workspace" in arg) {
+            spec.admission = this.toAdmission(arg.workspace.shareable);
+            spec.initializer = new WorkspaceInitializer(spec.initializer);
+            spec.type =
+                arg.workspace.type === "prebuild"
+                    ? WorkspaceSpec_WorkspaceType.PREBUILD
+                    : WorkspaceSpec_WorkspaceType.REGULAR;
+            spec.environmentVariables = this.toEnvironmentVariables(arg.workspace.context);
+
+            if (WithPrebuild.is(arg.workspace.context)) {
+                const initializerSpec = new WorkspaceInitializer_Spec({
+                    spec: {
+                        case: "prebuild",
+                        value: new PrebuildInitializer({
+                            prebuildId: arg.workspace.context.prebuildWorkspaceId,
+                        }),
+                    },
+                });
+                spec.initializer.specs.push(initializerSpec);
+            } else if (CommitContext.is(arg.workspace.context)) {
+                const initializerSpec = new WorkspaceInitializer_Spec({
+                    spec: {
+                        case: "git",
+                        value: new GitInitializer({
+                            remoteUri: arg.workspace.context.repository.cloneUrl,
+                            upstreamRemoteUri: arg.workspace.context.upstreamRemoteURI,
+                            // TODO:
+                            // targetMode
+                            // cloneTaget
+                            checkoutLocation: arg.workspace.context.checkoutLocation,
+                            // TODO: config
+                            config: new GitInitializer_GitConfig(),
+                        }),
+                    },
+                });
+                spec.initializer.specs.push(initializerSpec);
+            } else if (SnapshotContext.is(arg.workspace.context)) {
+                const initializerSpec = new WorkspaceInitializer_Spec({
+                    spec: {
+                        case: "snapshot",
+                        value: new SnapshotInitializer({
+                            snapshotId: arg.workspace.context.snapshotId,
+                        }),
+                    },
+                });
+                spec.initializer.specs.push(initializerSpec);
+            }
+            // TODO: else if FileDownloadInitializer
+
+            spec.git = new WorkspaceSpec_GitSpec({
+                // TODO:
+                // username: "",
+                // email: "",
+            });
+
+            if (arg.latestInstance) {
+                return this.toWorkspaceSpec(arg.latestInstance, spec);
+            }
+            return spec;
+        }
+        spec.editor = this.toEditor(arg.configuration.ideConfig);
+        spec.ports = this.toPorts(arg.status.exposedPorts);
+        if (arg.status.timeout) {
+            spec.timeout = new UpdateWorkspaceRequest_UpdateTimeout({
+                disconnected: this.toDuration(arg.status.timeout),
+                // TODO: inactivity
+                // TODO: maximum_lifetime
+            });
+        }
+        if (arg.workspaceClass) {
+            spec.class = arg.workspaceClass;
+        }
+        // TODO: ssh_public_keys
+        // TODO: subassembly_references
+        // TODO: log_url
+        return spec;
+    }
+
+    toWorkspaceStatus(arg: WorkspaceInfo | WorkspaceInstance, current?: WorkspaceStatus): WorkspaceStatus {
+        const status = new WorkspaceStatus(current);
+        status.phase = new WorkspacePhase(status.phase);
+
+        if ("workspace" in arg) {
+            if (arg.workspace.type === "prebuild") {
+                status.prebuildResult = new WorkspaceStatus_PrebuildResult({
+                    // TODO:
+                    // snapshot: "",
+                    // errorMessage: "",
+                });
+            }
+            // TODO: timeout
+            status.phase.lastTransitionTime = Timestamp.fromDate(new Date(arg.workspace.creationTime));
+            status.gitStatus = this.toGitStatus(arg.workspace);
+            return status;
+        }
+
+        status.workspaceUrl = arg.ideUrl;
+        status.conditions = this.toWorkspaceConditions(arg.status.conditions);
 
         let lastTransitionTime = new Date(arg.creationTime).getTime();
-        if (phase.lastTransitionTime) {
-            lastTransitionTime = Math.max(lastTransitionTime, new Date(phase.lastTransitionTime.toDate()).getTime());
+        if (status.phase.lastTransitionTime) {
+            lastTransitionTime = Math.max(
+                lastTransitionTime,
+                new Date(status.phase.lastTransitionTime.toDate()).getTime(),
+            );
         }
         if (arg.deployedTime) {
             lastTransitionTime = Math.max(lastTransitionTime, new Date(arg.deployedTime).getTime());
@@ -173,30 +266,48 @@ export class PublicAPIConverter {
         if (arg.stoppedTime) {
             lastTransitionTime = Math.max(lastTransitionTime, new Date(arg.stoppedTime).getTime());
         }
-        phase.lastTransitionTime = Timestamp.fromDate(new Date(lastTransitionTime));
+        status.phase.lastTransitionTime = Timestamp.fromDate(new Date(lastTransitionTime));
 
+        // TODO: could be improved? But by original status source producer
+        status.statusVersion = status.phase.lastTransitionTime.seconds;
+
+        status.phase.name = this.toPhase(arg);
         status.instanceId = arg.id;
         if (arg.status.message) {
-            status.message = arg.status.message;
+            status.conditions = new WorkspaceStatus_WorkspaceConditions({
+                failed: arg.status.message,
+            });
+            arg.status.conditions.failed;
         }
-        status.workspaceUrl = arg.ideUrl;
-        status.ports = this.toPorts(arg.status.exposedPorts);
-        status.conditions = this.toWorkspaceConditions(arg.status.conditions);
         status.gitStatus = this.toGitStatus(arg, status.gitStatus);
-        workspace.region = arg.region;
-        if (arg.workspaceClass) {
-            workspace.workspaceClass = arg.workspaceClass;
-        }
-        workspace.editor = this.toEditor(arg.configuration.ideConfig);
 
-        return workspace;
+        return status;
     }
 
-    toWorkspaceConditions(conditions: WorkspaceInstanceConditions): WorkspaceConditions {
-        return new WorkspaceConditions({
+    toWorkspaceMetadata(arg: WorkspaceInfo | WorkspaceInstance, current?: WorkspaceMetadata): WorkspaceMetadata {
+        const metadata = new WorkspaceMetadata(current);
+        if ("workspace" in arg) {
+            metadata.ownerId = arg.workspace.ownerId;
+            metadata.configurationId = arg.workspace.projectId ?? "";
+            // TODO: annotation
+            metadata.organizationId = arg.workspace.organizationId;
+            metadata.name = arg.workspace.description;
+            metadata.pinned = arg.workspace.pinned ?? false;
+            const contextUrl = ContextURL.normalize(arg.workspace);
+            if (contextUrl) {
+                metadata.originalContextUrl = contextUrl;
+            }
+        }
+        return metadata;
+    }
+
+    toWorkspaceConditions(conditions: WorkspaceInstanceConditions): WorkspaceStatus_WorkspaceConditions {
+        const result = new WorkspaceStatus_WorkspaceConditions({
             failed: conditions.failed,
             timeout: conditions.timeout,
         });
+        // TODO: failedReason
+        return result;
     }
 
     toEditor(ideConfig: ConfigurationIdeConfig | undefined): EditorReference | undefined {
@@ -456,15 +567,15 @@ export class PublicAPIConverter {
         return new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, reason.rawMessage);
     }
 
-    toWorkspaceEnvironmentVariables(context: WorkspaceContext): WorkspaceEnvironmentVariable[] {
+    toEnvironmentVariables(context: WorkspaceContext): EnvironmentVariable[] {
         if (WithEnvvarsContext.is(context)) {
             return context.envvars.map((envvar) => this.toWorkspaceEnvironmentVariable(envvar));
         }
         return [];
     }
 
-    toWorkspaceEnvironmentVariable(envVar: EnvVarWithValue): WorkspaceEnvironmentVariable {
-        const result = new WorkspaceEnvironmentVariable();
+    toWorkspaceEnvironmentVariable(envVar: EnvVarWithValue): EnvironmentVariable {
+        const result = new EnvironmentVariable();
         result.name = envVar.name;
         result.value = envVar.value;
         return result;
@@ -510,7 +621,7 @@ export class PublicAPIConverter {
         if (port.url) {
             result.url = port.url;
         }
-        result.policy = this.toPortPolicy(port.visibility);
+        result.admission = this.toAdmission(port.visibility === "public");
         result.protocol = this.toPortProtocol(port.protocol);
         return result;
     }
@@ -521,15 +632,6 @@ export class PublicAPIConverter {
                 return WorkspacePort_Protocol.HTTPS;
             default:
                 return WorkspacePort_Protocol.HTTP;
-        }
-    }
-
-    toPortPolicy(visibility: string | undefined): WorkspacePort_Policy {
-        switch (visibility) {
-            case "public":
-                return WorkspacePort_Policy.PUBLIC;
-            default:
-                return WorkspacePort_Policy.PRIVATE;
         }
     }
 
@@ -589,6 +691,9 @@ export class PublicAPIConverter {
                     return WorkspacePhase_Phase.RUNNING;
                 case "interrupted":
                     return WorkspacePhase_Phase.INTERRUPTED;
+                // TODO:
+                // case "pause":
+                //     return WorkspacePhase_Phase.PAUSED;
                 case "stopping":
                     return WorkspacePhase_Phase.STOPPING;
                 case "stopped":
@@ -931,5 +1036,56 @@ export class PublicAPIConverter {
         result.creationTime = Timestamp.fromDate(new Date(sshKey.creationTime));
         result.lastUsedTime = Timestamp.fromDate(new Date(sshKey.lastUsedTime || sshKey.creationTime));
         return result;
+    }
+
+    /**
+     * Converts a duration to a string like "1h2m3s4ms"
+     *
+     * `Duration.nanos` is ignored
+     * @returns a string like "1h2m3s", valid time units are `s`, `m`, `h`
+     */
+    toDurationString(duration: PartialMessage<Duration>): string {
+        const seconds = duration.seconds || 0;
+        if (seconds === 0) {
+            return "0";
+        }
+        const totalMilliseconds = Number(seconds) * 1000;
+
+        const hours = Math.floor(totalMilliseconds / 3600000);
+        const remainingMillisecondsAfterHours = totalMilliseconds % 3600000;
+        const minutes = Math.floor(remainingMillisecondsAfterHours / 60000);
+        const remainingMillisecondsAfterMinutes = remainingMillisecondsAfterHours % 60000;
+        const secondsResult = Math.floor(remainingMillisecondsAfterMinutes / 1000);
+
+        return `${hours > 0 ? hours + "h" : ""}${minutes > 0 ? minutes + "m" : ""}${
+            secondsResult > 0 ? secondsResult + "s" : ""
+        }`;
+    }
+
+    /**
+     * Converts a duration string like "1h2m3s" to a Duration
+     *
+     * @param durationString "1h2m3s" valid time units are `s`, `m`, `h`
+     */
+    toDuration(durationString: string): Duration {
+        const units = new Map([
+            ["h", 3600],
+            ["m", 60],
+            ["s", 1],
+        ]);
+        const regex = /(\d+(?:\.\d+)?)([hmsµµs]+)/g;
+        let totalSeconds = 0;
+        let match: RegExpExecArray | null;
+
+        while ((match = regex.exec(durationString)) !== null) {
+            const value = parseFloat(match[1]);
+            const unit = match[2];
+            totalSeconds += value * (units.get(unit) || 0);
+        }
+
+        return new Duration({
+            seconds: BigInt(Math.floor(totalSeconds)),
+            nanos: (totalSeconds - Math.floor(totalSeconds)) * 1e9,
+        });
     }
 }

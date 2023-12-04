@@ -1,0 +1,81 @@
+{
+    "result": {
+        "id": "gitpodio-empty-bs8378oes6b",
+        "metadata": {
+            "ownerId": "b49148ed-6e1f-4eae-927f-1e62a3c9dab9",
+            "organizationId": "ce36c2f8-5d43-4b1d-92f2-08cb6f0e0869",
+            "configurationId": "",
+            "annotations": {},
+            "name": "gitpod-io/empty ",
+            "pinned": false,
+            "originalContextUrl": "https://github.com/gitpod-io/empty"
+        },
+        "spec": {
+            "initializer": {
+                "specs": [
+                    {
+                        "git": {
+                            "remoteUri": "https://github.com/gitpod-io/empty.git",
+                            "upstreamRemoteUri": "",
+                            "targetMode": "CLONE_TARGET_MODE_UNSPECIFIED",
+                            "cloneTaget": "",
+                            "checkoutLocation": "empty",
+                            "config": {
+                                "customConfig": {},
+                                "authentication": "AUTH_METHOD_UNSPECIFIED",
+                                "authUser": "",
+                                "authPassword": "",
+                                "authOts": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "type": "WORKSPACE_TYPE_REGULAR",
+            "ports": [],
+            "environmentVariables": [],
+            "git": {
+                "username": "",
+                "email": ""
+            },
+            "timeout": {
+                "disconnected": "3600s"
+            },
+            "admission": "ADMISSION_LEVEL_OWNER_ONLY",
+            "class": "g1-standard",
+            "sshPublicKeys": [],
+            "subassemblyReferences": [],
+            "logUrl": "",
+            "editor": {
+                "name": "code",
+                "version": "stable"
+            }
+        },
+        "status": {
+            "statusVersion": "1701284172",
+            "phase": {
+                "name": "PHASE_STOPPED",
+                "lastTransitionTime": "2023-11-29T18:56:12.986Z"
+            },
+            "workspaceUrl": "https://gitpodio-empty-bs8378oes6b.ws.gitpod.io",
+            "conditions": {
+                "failed": "",
+                "failedReason": "FAILED_REASON_UNSPECIFIED",
+                "timeout": ""
+            },
+            "gitStatus": {
+                "cloneUrl": "https://github.com/gitpod-io/empty.git",
+                "branch": "main",
+                "latestCommit": "",
+                "uncommitedFiles": [],
+                "totalUncommitedFiles": 0,
+                "untrackedFiles": [],
+                "totalUntrackedFiles": 0,
+                "unpushedCommits": [],
+                "totalUnpushedCommits": 0
+            },
+            "instanceId": "2192e1a4-dbb0-4db3-90e1-5b54176bbce6"
+        }
+    },
+    "err": ""
+}

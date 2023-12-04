@@ -1,0 +1,178 @@
+{
+  "workspace": {
+    "id": "gitpodio-workspaceimage-qjvlhi8es6o",
+    "creationTime": "2023-12-01T04:59:09.016Z",
+    "organizationId": "ce36c2f8-5d43-4b1d-92f2-08cb6f0e0869",
+    "ownerId": "b49148ed-6e1f-4eae-927f-1e62a3c9dab9",
+    "contextURL": "https://github.com/gitpod-io/workspace-images",
+    "projectId": "af8f3b00-5a0c-4be1-89bf-52bc72b75205",
+    "description": "gitpod-io/workspace-images - main",
+    "context": {
+      "isFile": false,
+      "path": "",
+      "title": "gitpod-io/workspace-images - main",
+      "ref": "main",
+      "refType": "branch",
+      "revision": "fa52963fa39227bcfbf005d396eb753bf3981e40",
+      "repository": {
+        "cloneUrl": "https://github.com/gitpod-io/workspace-images.git",
+        "host": "github.com",
+        "defaultBranch": "main",
+        "name": "workspace-images",
+        "owner": "gitpod-io",
+        "private": false
+      },
+      "normalizedContextURL": "https://github.com/gitpod-io/workspace-images",
+      "checkoutLocation": "workspace-images"
+    },
+    "cloneUrl": "https://github.com/gitpod-io/workspace-images.git",
+    "config": {
+      "image": {
+        "file": ".gitpod.Dockerfile",
+        "externalSource": {
+          "repository": {
+            "cloneUrl": "https://github.com/gitpod-io/workspace-images.git",
+            "host": "github.com",
+            "defaultBranch": "main",
+            "name": "workspace-images",
+            "owner": "gitpod-io",
+            "private": false
+          },
+          "revision": "d7120fb6038d1d888676141e90e8f91c34fa702a"
+        }
+      },
+      "ports": [
+        {
+          "port": 5000,
+          "visibility": "public",
+          "onOpen": "ignore"
+        },
+        {
+          "port": 5001,
+          "visibility": "private",
+          "onOpen": "ignore"
+        }
+      ],
+      "tasks": [
+        {
+          "name": "install pre-commit git hooks",
+          "init": "pre-commit install"
+        }
+      ],
+      "vscode": {
+        "extensions": [
+          "ms-azuretools.vscode-docker",
+          "timonwong.shellcheck"
+        ]
+      },
+      "github": {
+        "prebuilds": {
+          "master": true,
+          "branches": true,
+          "pullRequests": true,
+          "pullRequestsFromForks": true
+        }
+      },
+      "_origin": "repo",
+      "ideCredentials": "ideCredentials"
+    },
+    "imageSource": {
+      "dockerFilePath": ".gitpod.Dockerfile",
+      "dockerFileSource": {
+        "repository": {
+          "cloneUrl": "https://github.com/gitpod-io/workspace-images.git",
+          "host": "github.com",
+          "defaultBranch": "main",
+          "name": "workspace-images",
+          "owner": "gitpod-io",
+          "private": false
+        },
+        "revision": "d7120fb6038d1d888676141e90e8f91c34fa702a"
+      },
+      "dockerFileHash": "d7120fb6038d1d888676141e90e8f91c34fa702a"
+    },
+    "imageNameResolved": "877922613839.dkr.ecr.eu-central-1.amazonaws.com/image-build/workspace-images:7ce05944fe76199b43aa67aa398266389d2ab348acb01ce6ccca6585be1c7aac",
+    "baseImageNameResolved": "877922613839.dkr.ecr.eu-central-1.amazonaws.com/image-build/base-images@sha256:51b36205d2503e50f16415934d75edd9094291428b676de08e2745bbcadb51e1",
+    "shareable": false,
+    "type": "regular",
+    "softDeleted": null,
+    "deleted": false,
+    "pinned": false
+  },
+  "latestInstance": {
+    "id": "e6f37fdb-dea1-4640-9e8b-8cdb04791a13",
+    "workspaceId": "gitpodio-workspaceimage-qjvlhi8es6o",
+    "region": "workspace",
+    "creationTime": "2023-12-01T04:59:09.080Z",
+    "startedTime": "2023-12-01T05:02:04.539Z",
+    "ideUrl": "https://gitpodio-workspaceimage-qjvlhi8es6o.ws.gitpod.io",
+    "workspaceImage": "877922613839.dkr.ecr.eu-central-1.amazonaws.com/image-build/workspace-images:7ce05944fe76199b43aa67aa398266389d2ab348acb01ce6ccca6585be1c7aac",
+    "status": {
+      "phase": "running",
+      "nodeIp": "100.64.102.149",
+      "message": "",
+      "podName": "ws-e6f37fdb-dea1-4640-9e8b-8cdb04791a13",
+      "timeout": "1h0m0s",
+      "version": 113211822,
+      "nodeName": "ip-100-64-102-149.eu-central-1.compute.internal",
+      "conditions": {
+        "failed": "",
+        "timeout": "",
+        "deployed": true,
+        "pullingImages": false,
+        "stoppedByRequest": false,
+        "firstUserActivity": "2023-12-01T05:02:06.000Z",
+        "headlessTaskFailed": ""
+      },
+      "ownerToken": "ownerToken111",
+      "exposedPorts": [
+        {
+          "url": "https://5000-gitpodio-workspaceimage-qjvlhi8es6o.ws.gitpod.io",
+          "port": 5000,
+          "protocol": "http",
+          "visibility": "private"
+        }
+      ]
+    },
+    "gitStatus": {
+      "branch": "main",
+      "latestCommit": "fa52963fa39227bcfbf005d396eb753bf3981e40"
+    },
+    "phasePersisted": "running",
+    "deleted": false,
+    "configuration": {
+      "ideImage": "869456089606.dkr.ecr.eu-central-1.amazonaws.com/application/ide/code:commit-3bb09152fc5248f5b99b33b4d8a7f101aa082441",
+      "ideImageLayers": [
+        "869456089606.dkr.ecr.eu-central-1.amazonaws.com/application/ide/gitpod-code-web:commit-49bb715b599dce2356dd02a6ede7ae8cf10d8d12",
+        "869456089606.dkr.ecr.eu-central-1.amazonaws.com/application/ide/code-codehelper:commit-a96456ae29513e367719ff1c720adb2c59a0bd49"
+      ],
+      "supervisorImage": "869456089606.dkr.ecr.eu-central-1.amazonaws.com/application/supervisor:commit-be35ce16a80342b0e57d85d486544e9608044d9a",
+      "ideConfig": {
+        "useLatest": true,
+        "ide": "code"
+      },
+      "ideSetup": {
+        "envvars": [
+          {
+            "name": "GITPOD_CONFIGCAT_ENABLED",
+            "value": "true"
+          },
+          {
+            "name": "GITPOD_IDE_ALIAS",
+            "value": "code"
+          }
+        ],
+        "tasks": []
+      },
+      "regionPreference": "",
+      "fromBackup": false,
+      "featureFlags": [
+        "workspace_psi",
+        "workspace_class_limiting"
+      ]
+    },
+    "imageBuildInfo": null,
+    "workspaceClass": "g1-standard----class",
+    "usageAttributionId": "team:ce36c2f8-5d43-4b1d-92f2-08cb6f0e0869"
+  }
+}
