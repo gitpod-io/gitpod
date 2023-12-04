@@ -7,6 +7,10 @@ const { when } = require("@craco/craco");
 const path = require("path");
 const webpack = require("webpack");
 
+function withEndingSlash(str) {
+    return str.endsWith("/") ? str : str + "/";
+}
+
 module.exports = {
     style: {
         postcss: {
@@ -49,6 +53,16 @@ module.exports = {
                     Buffer: ["buffer", "Buffer"],
                 }),
             ],
+            // If ASSET_PATH is set, we imply that we also want a statically named main.js, so we can reference it from the outside
+            output: !!process.env.ASSET_PATH
+                ? {
+                      ...(webpack?.configure?.output || {}),
+                      filename: (pathData) => {
+                          return pathData.chunk.name === "main" ? "static/js/main.js" : undefined;
+                      },
+                      publicPath: withEndingSlash(process.env.ASSET_PATH),
+                  }
+                : undefined,
         },
     },
     devServer: {

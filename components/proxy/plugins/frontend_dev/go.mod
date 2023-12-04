@@ -1,4 +1,4 @@
-module github.com/gitpod-io/gitpod/proxy/plugins/workspacedownload
+module github.com/gitpod-io/gitpod/proxy/plugins/frontend_dev
 
 go 1.21
 
