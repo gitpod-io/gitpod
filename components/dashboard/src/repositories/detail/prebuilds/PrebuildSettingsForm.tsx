@@ -15,6 +15,7 @@ import { SelectInputField } from "../../../components/forms/SelectInputField";
 import { TextInputField } from "../../../components/forms/TextInputField";
 import { WorkspaceClassOptions } from "../shared/WorkspaceClassOptions";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
+import { InputFieldHint } from "../../../components/forms/InputFieldHint";
 
 type Props = {
     configuration: Configuration;
@@ -119,7 +120,11 @@ export const PrebuildSettingsForm: FC<Props> = ({ configuration }) => {
                     />
                 )}
 
+                <Heading3 className="mt-8">Machine type</Heading3>
+                <Subheading>Choose the workspace machine type for your prebuilds.</Subheading>
+
                 <WorkspaceClassOptions value={workspaceClass} onChange={setWorkspaceClass} />
+                <InputFieldHint>Use a smaller machine type for cost optimization.</InputFieldHint>
 
                 <LoadingButton className="mt-8" type="submit" loading={updateConfiguration.isLoading}>
                     Save
