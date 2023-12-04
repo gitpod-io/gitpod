@@ -62,7 +62,11 @@ export const ConfigurationVariableList = ({ configuration }: Props) => {
                     </TableHeader>
                     <TableBody>
                         {data.map((variable) => (
-                            <ConfigurationVariableItem configurationId={configuration.id} variable={variable} />
+                            <ConfigurationVariableItem
+                                key={variable.id}
+                                configurationId={configuration.id}
+                                variable={variable}
+                            />
                         ))}
                     </TableBody>
                 </Table>

@@ -7,6 +7,7 @@
 // tailwind.config.js
 const colors = require("tailwindcss/colors");
 
+// TODO: Can replace these w/ rgb(var(...)) references so colors are only defined in our main CSS file
 const podkitColors = {
     black: "#161616",
     white: "#FFFFFF",
