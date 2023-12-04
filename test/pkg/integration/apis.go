@@ -481,13 +481,14 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 		}
 
 		userId = userUuid.String()
-		_, err = db.Exec(`INSERT IGNORE INTO d_b_user (id, creationDate, avatarUrl, name, fullName, featureFlags) VALUES (?, ?, ?, ?, ?, ?)`,
+		_, err = db.Exec(`INSERT IGNORE INTO d_b_user (id, creationDate, avatarUrl, name, fullName, featureFlags, lastVerificationTime) VALUES (?, ?, ?, ?, ?, ?, ?)`,
 			userId,
 			time.Now().Format(time.RFC3339),
 			"",
 			username,
 			username,
 			"{\"permanentWSFeatureFlags\":[]}",
+			time.Now().Format(time.RFC3339),
 		)
 		if err != nil {
 			return "", err
