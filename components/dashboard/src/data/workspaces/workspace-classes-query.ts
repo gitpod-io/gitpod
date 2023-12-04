@@ -8,6 +8,8 @@ import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-c
 import { useQuery } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
 
+export const DEFAULT_WS_CLASS = "g1-standard";
+
 export const useWorkspaceClasses = () => {
     return useQuery<SupportedWorkspaceClass[]>({
         queryKey: ["workspace-classes"],

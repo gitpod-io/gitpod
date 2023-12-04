@@ -11,7 +11,7 @@ import { InputField } from "./InputField";
 
 type Props = {
     label?: ReactNode;
-    value: string;
+    value: React.SelectHTMLAttributes<HTMLSelectElement>["value"];
     id?: string;
     hint?: ReactNode;
     error?: ReactNode;
@@ -67,7 +67,7 @@ export const SelectInputField: FunctionComponent<Props> = memo(
 );
 
 type SelectInputProps = {
-    value: string;
+    value: React.SelectHTMLAttributes<HTMLSelectElement>["value"];
     className?: string;
     id?: string;
     disabled?: boolean;

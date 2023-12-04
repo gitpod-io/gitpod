@@ -17,12 +17,16 @@ import { ConfigurationDetailGeneral } from "./ConfigurationDetailGeneral";
 import { ConfigurationDetailWorkspaces } from "./ConfigurationDetailWorkspaces";
 import { ConfigurationDetailPrebuilds } from "./ConfigurationDetailPrebuilds";
 import { ConfigurationVariableList } from "./variables/ConfigurationVariableList";
+import { useWorkspaceClasses } from "../../data/workspaces/workspace-classes-query";
 
 type PageRouteParams = {
     id: string;
 };
 
 const ConfigurationDetailPage: FC = () => {
+    // preload some data we may show
+    useWorkspaceClasses();
+
     const { id } = useParams<PageRouteParams>();
     let { path, url } = useRouteMatch();
 
