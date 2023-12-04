@@ -961,6 +961,7 @@ export class PublicAPIConverter {
         return new OrganizationSettings({
             workspaceSharingDisabled: !!settings.workspaceSharingDisabled,
             defaultWorkspaceImage: settings.defaultWorkspaceImage || undefined,
+            allowedWorkspaceClasses: settings.allowedWorkspaceClasses || [],
         });
     }
 

@@ -245,6 +245,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         if (typeof req.defaultWorkspaceImage === "string") {
             update.defaultWorkspaceImage = req.defaultWorkspaceImage;
         }
+        update.allowedWorkspaceClasses = req.allowedWorkspaceClasses;
 
         if (Object.keys(update).length === 0) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "nothing to update");

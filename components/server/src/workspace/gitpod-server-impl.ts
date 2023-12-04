@@ -897,6 +897,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 project,
                 context,
                 normalizedContextUrl,
+                options.workspaceClass,
             );
             try {
                 await this.guardAccess({ kind: "workspace", subject: workspace }, "create");

@@ -245,21 +245,28 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.procLimit 1000
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.ioLimits.writeBandwidthPerSecond "250Mi"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.ioLimits.readBandwidthPerSecond "300Mi"
 
-# create two workspace classes (g1-standard and g1-small) in server-config configmap
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[+].id "g1-standard"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[0].category "GENERAL PURPOSE"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[0].displayName "Standard"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[0].description "Standard workspace class (10GB disk)"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[0].powerups "1"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[0].isDefault "true"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[0].credits.perMinute "0.3333333333"
-
+# create three workspace classes (g1-standard, g1-small and g1-large) in server-config configmap
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[+].id "g1-small"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[0].category "GENERAL PURPOSE"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[0].displayName "Small"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[0].description "Small workspace class (5GB disk)"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[0].powerups "2"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[0].credits.perMinute "0.1666666667"
+
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[+].id "g1-standard"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].category "GENERAL PURPOSE"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].displayName "Small"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].description "Small workspace class (5GB disk)"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].powerups "2"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].credits.perMinute "0.1666666667"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].displayName "Standard"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].description "Standard workspace class (10GB disk)"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].powerups "1"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].isDefault "true"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].credits.perMinute "0.3333333333"
+
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[+].id "g1-large"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[2].category "GENERAL PURPOSE"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[2].displayName "Large"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[2].description "Large workspace class (15GB disk)"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[2].powerups "1"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[2].credits.perMinute "0.6666666666"
 
 # create two workspace classes (g1-standard and g1-small) in ws-manager configmap
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-standard"].name "g1-standard"

@@ -181,6 +181,11 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
    */
   defaultWorkspaceImage = "";
 
+  /**
+   * @generated from field: repeated string allowed_workspace_classes = 3;
+   */
+  allowedWorkspaceClasses: string[] = [];
+
   constructor(data?: PartialMessage<OrganizationSettings>) {
     super();
     proto3.util.initPartial(data, this);
@@ -191,6 +196,7 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "workspace_sharing_disabled", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 2, name: "default_workspace_image", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "allowed_workspace_classes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OrganizationSettings {
@@ -319,6 +325,13 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
    */
   defaultWorkspaceImage?: string;
 
+  /**
+   * pass empty array to allow all kind of workspace classes
+   *
+   * @generated from field: repeated string allowed_workspace_classes = 5;
+   */
+  allowedWorkspaceClasses: string[] = [];
+
   constructor(data?: PartialMessage<UpdateOrganizationSettingsRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -330,6 +343,7 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
     { no: 1, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "workspace_sharing_disabled", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
     { no: 4, name: "default_workspace_image", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 5, name: "allowed_workspace_classes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateOrganizationSettingsRequest {

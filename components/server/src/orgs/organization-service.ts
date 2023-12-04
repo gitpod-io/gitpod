@@ -402,6 +402,7 @@ export class OrganizationService {
         if (typeof settings.defaultWorkspaceImage === "string") {
             result.defaultWorkspaceImage = settings.defaultWorkspaceImage;
         }
+        result.allowedWorkspaceClasses = settings.allowedWorkspaceClasses;
         return result;
     }
 }

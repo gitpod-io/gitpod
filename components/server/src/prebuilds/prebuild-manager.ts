@@ -310,6 +310,7 @@ export class PrebuildManager {
                 project,
                 prebuildContext,
                 context.normalizedContextURL!,
+                undefined,
             );
 
             const prebuild = await this.workspaceDB.trace({ span }).findPrebuildByWorkspaceID(workspace.id)!;

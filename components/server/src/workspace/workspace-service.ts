@@ -53,6 +53,7 @@ import {
     StartWorkspaceOptions as StarterStartWorkspaceOptions,
     isWorkspaceClassDiscoveryEnabled,
     isClusterMaintenanceError,
+    getWorkspaceClassForInstance,
 } from "./workspace-starter";
 import { LogContext, log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
@@ -100,6 +101,36 @@ export class WorkspaceService {
         @inject(RedisSubscriber) private readonly subscriber: RedisSubscriber,
     ) {}
 
+    /**
+     * workspaceClassChecking checks if user can create workspace with specified class
+     */
+    private async workspaceClassChecking(
+        ctx: TraceContext,
+        userId: string,
+        organizationId: string,
+        previousInstance: Pick<WorkspaceInstance, "workspaceClass"> | undefined,
+        project: Project | undefined,
+        workspaceClassOverride: string | undefined,
+    ) {
+        const workspaceClass = await getWorkspaceClassForInstance(
+            ctx,
+            { type: "regular" },
+            previousInstance,
+            project,
+            workspaceClassOverride,
+            this.config.workspaceClasses,
+        );
+        const settings = await this.orgService.getSettings(userId, organizationId);
+        if (settings.allowedWorkspaceClasses && settings.allowedWorkspaceClasses.length > 0) {
+            if (!settings.allowedWorkspaceClasses.includes(workspaceClass)) {
+                throw new ApplicationError(
+                    ErrorCodes.PRECONDITION_FAILED,
+                    "selected workspace class is not allowed in current organization.",
+                );
+            }
+        }
+    }
+
     async createWorkspace(
         ctx: TraceContext,
         user: User,
@@ -107,10 +138,13 @@ export class WorkspaceService {
         project: Project | undefined,
         context: WorkspaceContext,
         normalizedContextURL: string,
+        workspaceClass: string | undefined,
     ): Promise<Workspace> {
         await this.mayStartWorkspace(ctx, user, organizationId, this.db.findRegularRunningInstances(user.id));
 
         await this.auth.checkPermissionOnOrganization(user.id, "create_workspace", organizationId);
+
+        await this.workspaceClassChecking(ctx, user.id, organizationId, undefined, project, workspaceClass);
 
         // We don't want to be doing this in a transaction, because it calls out to external systems.
         // TODO(gpl) Would be great to sepearate workspace creation from external calls

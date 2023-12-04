@@ -196,6 +196,9 @@ export interface OrganizationSettings {
     workspaceSharingDisabled?: boolean;
     // null or empty string to reset to default
     defaultWorkspaceImage?: string | null;
+
+    // empty array to allow all kind of workspace classes
+    allowedWorkspaceClasses?: string[] | null;
 }
 
 export type TeamMemberRole = OrgMemberRole;

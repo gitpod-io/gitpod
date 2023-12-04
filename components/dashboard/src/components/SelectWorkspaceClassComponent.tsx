@@ -9,6 +9,7 @@ import WorkspaceClassIcon from "../icons/WorkspaceClass.svg";
 import { Combobox, ComboboxElement, ComboboxSelectedItem } from "./podkit/combobox/Combobox";
 import { useWorkspaceClasses } from "../data/workspaces/workspace-classes-query";
 import { WorkspaceClass } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
 
 interface SelectWorkspaceClassProps {
     selectedWorkspaceClass?: string;
@@ -25,15 +26,19 @@ export default function SelectWorkspaceClassComponent({
     setError,
     onSelectionChange,
 }: SelectWorkspaceClassProps) {
+    const { data: orgSettings } = useOrgSettingsQuery();
     const { data: workspaceClasses, isLoading: workspaceClassesLoading } = useWorkspaceClasses();
 
     const getElements = useCallback((): ComboboxElement[] => {
         return (workspaceClasses || [])?.map((c) => ({
             id: c.id,
             element: <WorkspaceClassDropDownElement wsClass={c} />,
-            isSelectable: true,
+            isSelectable:
+                !orgSettings?.allowedWorkspaceClasses ||
+                orgSettings.allowedWorkspaceClasses.length === 0 ||
+                orgSettings.allowedWorkspaceClasses.includes(c.id),
         }));
-    }, [workspaceClasses]);
+    }, [workspaceClasses, orgSettings?.allowedWorkspaceClasses]);
 
     useEffect(() => {
         if (!workspaceClasses) {
