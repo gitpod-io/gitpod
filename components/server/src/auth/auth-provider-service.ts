@@ -415,8 +415,9 @@ export class AuthProviderService {
 
     async isHostReachable(host: string): Promise<boolean> {
         try {
-            const resp = await fetch(`https://${host}`, { timeout: 2000 });
-            return resp.ok;
+            // Don't attempt to follow redirects, and manually check response status code
+            const resp = await fetch(`https://${host}`, { timeout: 2000, redirect: "manual" });
+            return resp.status <= 399;
         } catch (error) {
             console.log(`Host is not reachable: ${host}`);
         }
