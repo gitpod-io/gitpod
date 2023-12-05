@@ -35,7 +35,7 @@ export default function Preferences() {
     const [dotfileRepo, setDotfileRepo] = useState<string>(user?.dotfileRepo || "");
 
     const [workspaceTimeout, setWorkspaceTimeout] = useState<string>(
-        converter.fromDuration(user?.workspaceTimeoutSettings?.inactivity),
+        converter.toDurationString(user?.workspaceTimeoutSettings?.inactivity),
     );
     const [timeoutUpdating, setTimeoutUpdating] = useState(false);
     const [creationError, setCreationError] = useState<Error>();
@@ -186,7 +186,9 @@ export default function Preferences() {
                                         loading={timeoutUpdating}
                                         disabled={
                                             workspaceTimeout ===
-                                                converter.fromDuration(user?.workspaceTimeoutSettings?.inactivity) ?? ""
+                                                converter.toDurationString(
+                                                    user?.workspaceTimeoutSettings?.inactivity,
+                                                ) ?? ""
                                         }
                                     >
                                         Save

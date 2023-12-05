@@ -18,11 +18,16 @@ export const useUpdateCurrentUserMutation = () => {
     return useMutation({
         mutationFn: async (partialUser: UpdateCurrentUserArgs) => {
             const current = await getGitpodService().server.getLoggedInUser();
+            const currentAdditionalData = { ...current.additionalData };
+            // workspaceAutostartOptions needs to be overriden
+            if (partialUser.additionalData?.workspaceAutostartOptions) {
+                currentAdditionalData.workspaceAutostartOptions = [];
+            }
             const update: UpdateCurrentUserArgs = {
                 id: current.id,
                 fullName: partialUser.fullName || current.fullName,
                 additionalData: deepmerge<AdditionalUserData>(
-                    current.additionalData || {},
+                    currentAdditionalData || {},
                     partialUser.additionalData || {},
                 ),
             };

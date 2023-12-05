@@ -1068,8 +1068,8 @@ export class PublicAPIConverter {
      * `Duration.nanos` is ignored
      * @returns a string like "1h2m3s", valid time units are `s`, `m`, `h`
      */
-    toDurationString(duration: PartialMessage<Duration>): string {
-        const seconds = duration.seconds || 0;
+    toDurationString(duration?: PartialMessage<Duration>): string {
+        const seconds = duration?.seconds || 0;
         if (seconds === 0) {
             return "0";
         }
@@ -1166,13 +1166,6 @@ export class PublicAPIConverter {
             description: cls.description,
             isDefault: cls.isDefault,
         });
-    }
-
-    fromDuration(d?: Duration) {
-        if (!d) {
-            return "";
-        }
-        return String(d.seconds);
     }
 
     toTimestamp(from?: string | undefined): Timestamp | undefined {
