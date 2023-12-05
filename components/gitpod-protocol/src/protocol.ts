@@ -157,24 +157,6 @@ export namespace User {
         user.additionalData.ideSettings = newIDESettings;
     }
 
-    // TODO: make it more explicit that these field names are relied for our tracking purposes
-    // and decouple frontend from relying on them - instead use user.additionalData.profile object directly in FE
-    export function getProfile(user: User): Profile {
-        return {
-            name: User.getName(user!) || "",
-            email: User.getPrimaryEmail(user!) || "",
-            company: user?.additionalData?.profile?.companyName,
-            avatarURL: user?.avatarUrl,
-            jobRole: user?.additionalData?.profile?.jobRole,
-            jobRoleOther: user?.additionalData?.profile?.jobRoleOther,
-            explorationReasons: user?.additionalData?.profile?.explorationReasons,
-            signupGoals: user?.additionalData?.profile?.signupGoals,
-            signupGoalsOther: user?.additionalData?.profile?.signupGoalsOther,
-            companySize: user?.additionalData?.profile?.companySize,
-            onboardedTimestamp: user?.additionalData?.profile?.onboardedTimestamp,
-        };
-    }
-
     // TODO: refactor where this is referenced so it's more clearly tied to just analytics-tracking
     // Let other places rely on the ProfileDetails type since that's what we store
     // This is the profile data we send to our Segment analytics tracking pipeline

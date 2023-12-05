@@ -6,6 +6,7 @@
 
 import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { User as UserProtocol } from "@gitpod/gitpod-protocol/lib/protocol";
+import { Timestamp } from "@bufbuild/protobuf";
 
 /**
  * Returns a primary email address of a user.
@@ -17,37 +18,44 @@ import { User as UserProtocol } from "@gitpod/gitpod-protocol/lib/protocol";
  * @param user
  * @returns A primaryEmail, or undefined.
  */
-export function getPrimaryEmail(user: User): string | undefined {
+export function getPrimaryEmail(user: User | UserProtocol): string | undefined {
     // If the accounts is owned by an organization, use the email of the most recently
     // used SSO identity.
     if (isOrganizationOwned(user)) {
-        const compareTime = (a?: string, b?: string) => (a || "").localeCompare(b || "");
+        const timestampToString = (a?: string | Timestamp) =>
+            a instanceof Timestamp ? a?.toDate()?.toISOString() : a || "";
+        const compareTime = (a?: string | Timestamp, b?: string | Timestamp) => {
+            return timestampToString(a).localeCompare(timestampToString(b));
+        };
         const recentlyUsedSSOIdentity = user.identities
-            .sort((a, b) =>
-                compareTime(a.lastSigninTime?.toDate()?.toISOString(), b.lastSigninTime?.toDate()?.toISOString()),
-            )
+            .sort((a, b) => compareTime(a.lastSigninTime, b.lastSigninTime))
             // optimistically pick the most recent one
             .reverse()[0];
         return recentlyUsedSSOIdentity?.primaryEmail;
     }
 
     // In case of a personal account, check for the email stored by the user.
-    if (!isOrganizationOwned(user) && user.profile?.emailAddress) {
-        return user.profile?.emailAddress;
+    if (!isOrganizationOwned(user)) {
+        const emailAddress = UserProtocol.is(user)
+            ? user.additionalData?.profile?.emailAddress
+            : user.profile?.emailAddress;
+        if (emailAddress) {
+            return emailAddress;
+        }
     }
 
     // Otherwise pick any
     // FIXME(at) this is still not correct, as it doesn't distinguish between
     // sign-in providers and additional Git hosters.
-    const identities = user.identities.filter((i) => !!i.primaryEmail);
-    if (identities.length <= 0) {
+    const primaryEmails: string[] = user.identities.map((i) => i.primaryEmail || "").filter((e) => !!e);
+    if (primaryEmails.length <= 0) {
         return undefined;
     }
 
-    return identities[0].primaryEmail || undefined;
+    return primaryEmails[0] || undefined;
 }
 
-export function getName(user: User): string | undefined {
+export function getName(user: User | UserProtocol): string | undefined {
     const name = /* user.fullName ||*/ user.name;
     if (name) {
         return name;
@@ -61,23 +69,24 @@ export function getName(user: User): string | undefined {
     return undefined;
 }
 
-export function isOrganizationOwned(user: User) {
+export function isOrganizationOwned(user: User | UserProtocol) {
     return !!user.organizationId;
 }
 
 // FIXME(at) get rid of this Nth indirection to read attributes of User entity
-export function getProfile(user: User): UserProtocol.Profile {
+export function getProfile(user: User | UserProtocol): UserProtocol.Profile {
+    const profile = UserProtocol.is(user) ? user.additionalData?.profile : user.profile;
     return {
-        name: getName(user!) || "",
-        email: getPrimaryEmail(user!) || "",
-        company: user?.profile?.companyName,
+        name: getName(user) || "",
+        email: getPrimaryEmail(user) || "",
+        company: profile?.companyName,
         avatarURL: user?.avatarUrl,
-        jobRole: user?.profile?.jobRole,
-        jobRoleOther: user?.profile?.jobRoleOther,
-        explorationReasons: user?.profile?.explorationReasons,
-        signupGoals: user?.profile?.signupGoals,
-        signupGoalsOther: user?.profile?.signupGoalsOther,
-        companySize: user?.profile?.companySize,
-        onboardedTimestamp: user?.profile?.onboardedTimestamp,
+        jobRole: profile?.jobRole,
+        jobRoleOther: profile?.jobRoleOther,
+        explorationReasons: profile?.explorationReasons,
+        signupGoals: profile?.signupGoals,
+        signupGoalsOther: profile?.signupGoalsOther,
+        companySize: profile?.companySize,
+        onboardedTimestamp: profile?.onboardedTimestamp,
     };
 }

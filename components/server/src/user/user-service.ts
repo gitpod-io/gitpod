@@ -24,6 +24,7 @@ import { CreateUserParams } from "./user-authentication";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
 import { RelationshipUpdater } from "../authorization/relationship-updater";
+import { getProfile } from "@gitpod/public-api-common/src/user-utils";
 
 @injectable()
 export class UserService {
@@ -105,7 +106,7 @@ export class UserService {
         await this.authorizer.checkPermissionOnUser(userId, "write_info", user.id);
 
         //hang on to user profile before it's overwritten for analytics below
-        const oldProfile = User.getProfile(user);
+        const oldProfile = getProfile(user);
 
         const allowedFields: (keyof User)[] = ["fullName", "additionalData"];
         for (const p of allowedFields) {
@@ -117,8 +118,8 @@ export class UserService {
         await this.userDb.updateUserPartial(user);
 
         //track event and user profile if profile of partialUser changed
-        const newProfile = User.getProfile(user);
-        if (User.Profile.hasChanges(oldProfile, newProfile)) {
+        const newProfile = getProfile(user);
+        if (this.hasChanges(oldProfile, newProfile)) {
             this.analytics.track({
                 userId: user.id,
                 event: "profile_changed",
@@ -130,6 +131,21 @@ export class UserService {
             });
         }
         return user;
+    }
+
+    private hasChanges(before: User.Profile, after: User.Profile) {
+        return (
+            before.name !== after.name ||
+            before.email !== after.email ||
+            before.company !== after.company ||
+            before.avatarURL !== after.avatarURL ||
+            before.jobRole !== after.jobRole ||
+            before.jobRoleOther !== after.jobRoleOther ||
+            // not checking explorationReasons or signupGoals atm as it's an array - need to check deep equality
+            before.signupGoalsOther !== after.signupGoalsOther ||
+            before.onboardedTimestamp !== after.onboardedTimestamp ||
+            before.companySize !== after.companySize
+        );
     }
 
     async updateWorkspaceTimeoutSetting(
