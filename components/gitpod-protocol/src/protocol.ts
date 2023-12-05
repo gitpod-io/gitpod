@@ -123,25 +123,6 @@ export namespace User {
         return undefined;
     }
 
-    export function hasPreferredIde(user: User) {
-        return (
-            typeof user?.additionalData?.ideSettings?.defaultIde !== "undefined" ||
-            typeof user?.additionalData?.ideSettings?.useLatestVersion !== "undefined"
-        );
-    }
-
-    export function isOnboardingUser(user: User) {
-        if (isOrganizationOwned(user)) {
-            return false;
-        }
-        // If a user has already been onboarded
-        // Also, used to rule out "admin-user"
-        if (!!user.additionalData?.profile?.onboardedTimestamp) {
-            return false;
-        }
-        return !hasPreferredIde(user);
-    }
-
     export function isOrganizationOwned(user: User) {
         return !!user.organizationId;
     }

@@ -7,7 +7,8 @@
 import { useCurrentUser } from "../user-context";
 import { useQueryParams } from "../hooks/use-query-params";
 import { FORCE_ONBOARDING_PARAM, FORCE_ONBOARDING_PARAM_VALUE } from "./UserOnboarding";
-import { isOnboardingUser, isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
+import { isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
+import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 
 export const useShowUserOnboarding = () => {
     const user = useCurrentUser();
@@ -25,3 +26,19 @@ export const useShowUserOnboarding = () => {
 
     return showUserOnboarding;
 };
+
+export function hasPreferredIde(user: User) {
+    return !!user?.editorSettings?.name || !!user?.editorSettings?.version;
+}
+
+export function isOnboardingUser(user: User) {
+    if (isOrganizationOwned(user)) {
+        return false;
+    }
+    // If a user has already been onboarded
+    // Also, used to rule out "admin-user"
+    if (!!user.profile?.onboardedTimestamp) {
+        return false;
+    }
+    return !hasPreferredIde(user);
+}

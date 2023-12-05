@@ -61,22 +61,6 @@ export function getName(user: User): string | undefined {
     return undefined;
 }
 
-export function hasPreferredIde(user: User) {
-    return !!user?.editorSettings?.name || !!user?.editorSettings?.version;
-}
-
-export function isOnboardingUser(user: User) {
-    if (isOrganizationOwned(user)) {
-        return false;
-    }
-    // If a user has already been onboarded
-    // Also, used to rule out "admin-user"
-    if (!!user.profile?.onboardedTimestamp) {
-        return false;
-    }
-    return !hasPreferredIde(user);
-}
-
 export function isOrganizationOwned(user: User) {
     return !!user.organizationId;
 }
