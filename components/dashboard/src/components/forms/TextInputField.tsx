@@ -58,7 +58,14 @@ export const TextInput: FunctionComponent<TextInputProps> = memo(({ className, o
     return (
         <input
             // 7px top/bottom padding ensures height matches buttons (36px)
-            className={cn("py-[7px] w-full max-w-lg rounded-lg dark:text-[#A8A29E]", "text-sm", className)}
+            className={cn(
+                "py-[7px] w-full max-w-lg rounded-lg",
+                "text-pk-content-primary",
+                "bg-pk-surface-primary",
+                "border-pk-border-base",
+                "text-sm",
+                className,
+            )}
             onChange={handleChange}
             onBlur={handleBlur}
             {...props}

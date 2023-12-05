@@ -7,6 +7,7 @@
 // tailwind.config.js
 const colors = require("tailwindcss/colors");
 
+// TODO: Can replace these w/ rgb(var(...)) references so colors are only defined in our main CSS file
 const podkitColors = {
     black: "#161616",
     white: "#FFFFFF",
@@ -52,30 +53,22 @@ module.exports = {
                 // Podkit colors - eventually we'll only use these colors
                 // Once migrated, we can remove the colors above and shift this up under theme directly instead of extend
                 "pk-content": {
-                    primary: podkitColors.gray["900"],
-                    "primary-dark": podkitColors.gray["200"],
-                    secondary: podkitColors.gray["600"],
-                    "secondary-dark": podkitColors.gray["450"],
-                    tertiary: podkitColors.gray["400"],
-                    "tertiary-dark": podkitColors.gray["500"],
-                    disabled: podkitColors.gray["450"],
-                    "disabled-dark": podkitColors.gray["600"],
-                    "invert-primary": podkitColors.gray["200"],
-                    "invert-primary-dark": podkitColors.gray["900"],
-                    "invert-secondary": podkitColors.gray["300"],
-                    "invert-secondary-dark": podkitColors.gray["600"],
+                    primary: "rgb(var(--content-primary) / <alpha-value>)",
+                    secondary: "rgb(var(--content-secondary) / <alpha-value>)",
+                    tertiary: "rgb(var(--content-tertiary) / <alpha-value>)",
+                    disabled: "rgb(var(--content-disabled) / <alpha-value>)",
+                    "invert-primary": "rgb(var(--content-invert-primary) / <alpha-value>)",
+                    "invert-secondary": "rgb(var(--content-invert-secondary) / <alpha-value>)",
                 },
                 "pk-surface": {
-                    primary: podkitColors.white,
-                    "primary-dark": podkitColors.gray["850"],
-                    secondary: podkitColors.gray["50"],
-                    "secondary-dark": podkitColors.gray["800"],
-                    tertiary: podkitColors.gray["100"],
-                    "tertiary-dark": podkitColors.gray["750"],
-                    labels: podkitColors.gray["200"],
-                    "labels-dark": podkitColors.gray["700"],
-                    invert: podkitColors.gray["850"],
-                    "invert-dark": podkitColors.gray["50"],
+                    primary: "rgb(var(--surface-primary) / <alpha-value>)",
+                    secondary: "rgb(var(--surface-secondary) / <alpha-value>)",
+                    tertiary: "rgb(var(--surface-tertiary) / <alpha-value>)",
+                    labels: "rgb(var(--surface-labels) / <alpha-value>)",
+                    invert: "rgb(var(--surface-invert) / <alpha-value>)",
+                },
+                "pk-border": {
+                    base: "rgb(var(--border-base) / <alpha-value>)",
                 },
             },
             container: {

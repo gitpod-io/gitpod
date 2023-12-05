@@ -26,7 +26,7 @@ export const Switch = React.forwardRef<
                 // checked state colors
                 "data-[state=checked]:bg-kumquat-dark",
                 // unchecked state colors
-                "data-[state=unchecked]:bg-pk-surface-labels data-[state=unchecked]:dark:bg-pk-surface-labels-dark",
+                "data-[state=unchecked]:bg-pk-surface-labels",
                 className,
             )}
             {...props}
@@ -35,7 +35,7 @@ export const Switch = React.forwardRef<
             <SwitchPrimitives.Thumb
                 className={cn(
                     "pointer-events-none block h-[16px] w-[16px] rounded-full",
-                    "bg-pk-surface-primary dark:bg-pk-surface-primary-dark drop-shadow ring-0",
+                    "bg-pk-surface-primary drop-shadow ring-0",
                     // Positioning
                     "transition-transform data-[state=checked]:translate-x-[17px] data-[state=unchecked]:translate-x-[3px]",
                 )}

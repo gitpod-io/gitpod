@@ -9,6 +9,69 @@
 @tailwind utilities;
 
 @layer base {
+    /* Setup colors for different themes */
+    /* Using rgb color channels here to work well w/ tailwind classes */
+    /* https: //tailwindcss.com/docs/customizing-colors#using-css-variables */
+    :root {
+        /* Setup RGB color channel variables */
+        --black: 22 22 22; /* #161616 */
+        --white: 255 255 255; /* #FFFFFF */
+        --gray-900: 18 16 12; /* #12100C */
+        --gray-850: 21 19 16; /* #151310 */
+        --gray-800: 35 33 30; /* #23211E */
+        --gray-750: 44 43 40; /* #2C2B28 */
+        --gray-700: 81 79 77; /* #514F4D */
+        --gray-600: 86 84 81; /* #565451 */
+        --gray-500: 102 101 100; /* #666564 */
+        --gray-450: 153 151 149; /* #999795 */
+        --gray-400: 116 115 114; /* #747372 */
+        --gray-300: 218 218 218; /* #DADADA */
+        --gray-200: 236 231 229; /* #ECE7E5 */
+        --gray-100: 245 244 244; /* #F5F4F4 */
+        --gray-50: 249 249 249; /* #F9F9F9 */
+
+
+        /* Content */
+        --content-primary: var(--gray-900);
+        --content-secondary: var(--gray-600);
+        --content-tertiary: var(--gray-400);
+        --content-disabled: var(--gray-450);
+        --content-invert-primary: var(--gray-200);
+        --content-invert-secondary: var(--gray-300);
+
+        /* Surfaces */
+        --surface-primary: var(--white);
+        --surface-secondary: var(--gray-50);
+        --surface-tertiary: var(--gray-100);
+        --surface-labels: var(--gray-200);
+        --surface-invert: var(--gray-850);
+
+        /* Borders */
+        --border-base: var(--gray-200);
+    }
+
+    /* Dark mode color adjustments */
+    :root[class~="dark"] {
+        /* Content */
+        --content-primary: var(--gray-200);
+        --content-secondary: var(--gray-450);
+        --content-tertiary: var(--gray-500);
+        --content-disabled: var(--gray-600);
+        --content-invert-primary: var(--gray-900);
+        --content-invert-secondary: var(--gray-600);
+
+        /* Surfaces */
+        --surface-primary: var(--gray-850);
+        --surface-secondary: var(--gray-800);
+        --surface-tertiary: var(--gray-750);
+        --surface-labels: var(--gray-700);
+        --surface-invert: var(--gray-50);
+
+        /* Borders */
+        --border-base: var(--gray-700);
+    }
+
+
     html,
     body {
         @apply h-full;
