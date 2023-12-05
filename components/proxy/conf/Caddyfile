@@ -376,7 +376,9 @@ https://{$GITPOD_DOMAIN} {
 				header_up -Upgrade
 			}
 			# Then handle it with our plugin!
-			gitpod.frontend_dev
+			gitpod.frontend_dev {
+				upstream http://dashboard.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3001
+			}
 		}
 
 		reverse_proxy dashboard.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3001 {
