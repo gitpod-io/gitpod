@@ -297,6 +297,39 @@ class UserDBSpec {
         expect(result.some((t) => t.tokenHash === token.tokenHash)).to.be.true;
         expect(result.some((t) => t.tokenHash === token2.tokenHash)).to.be.true;
     }
+
+    @test(timeout(10000))
+    public async findUserIdsNotYetMigratedToFgaVersion() {
+        let user1 = await this.db.newUser();
+        user1.name = "ABC";
+        user1.fgaRelationshipsVersion = 0;
+        user1 = await this.db.storeUser(user1);
+
+        let user2 = await this.db.newUser();
+        user2.name = "ABC2";
+        user2.fgaRelationshipsVersion = 1;
+        user2 = await this.db.storeUser(user2);
+
+        let user3 = await this.db.newUser();
+        user3.name = "ABC3";
+        user3.fgaRelationshipsVersion = 0;
+        user3 = await this.db.storeUser(user3);
+
+        const result = await this.db.findUserIdsNotYetMigratedToFgaVersion(1, 10);
+        expect(result).to.not.be.undefined;
+        expect(result.length).to.eq(2);
+        expect(result.some((id) => id === user1.id)).to.be.true;
+        expect(result.some((id) => id === user2.id)).to.be.false;
+        expect(result.some((id) => id === user3.id)).to.be.true;
+
+        const result2 = await this.db.findUserIdsNotYetMigratedToFgaVersion(1, 1);
+        expect(result2).to.not.be.undefined;
+        expect(result2.length).to.eq(1);
+
+        const result3 = await this.db.findUserIdsNotYetMigratedToFgaVersion(2, 10);
+        expect(result3).to.not.be.undefined;
+        expect(result3.length).to.eq(3);
+    }
 }
 
 namespace TestData {

@@ -38,6 +38,7 @@ import {
     MaybeUser,
     PartialUserUpdate,
     UserDB,
+    isBuiltinUser,
 } from "../user-db";
 import { DBGitpodToken } from "./entity/db-gitpod-token";
 import { DBIdentity } from "./entity/db-identity";
@@ -662,16 +663,13 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
 
     async findUserIdsNotYetMigratedToFgaVersion(fgaRelationshipsVersion: number, limit: number): Promise<string[]> {
         const userRepo = await this.getUserRepo();
-        const ids = (await userRepo
+        const users = await userRepo
             .createQueryBuilder("user")
-            .select(["id"])
-            .where({
-                fgaRelationshipsVersion: Not(Equal(fgaRelationshipsVersion)),
-                markedDeleted: Equal(false),
-            })
+            .where("fgaRelationshipsVersion != :fgaRelationshipsVersion", { fgaRelationshipsVersion })
+            .andWhere("markedDeleted != true")
             .orderBy("_lastModified", "DESC")
             .limit(limit)
-            .getMany()) as Pick<DBUser, "id">[];
-        return ids.map(({ id }) => id);
+            .getMany();
+        return users.map((user) => user.id).filter((id) => !isBuiltinUser(id));
     }
 }

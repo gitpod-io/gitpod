@@ -162,7 +162,7 @@ export class IamSessionApp {
                 primaryEmail: recent.primaryEmail,
                 lastSigninTime: new Date().toISOString(),
             });
-            await this.userService.updateUser(user.id, {
+            await this.userService.updateUser(SYSTEM_USER_ID, {
                 id: user.id,
                 fullName: payload.claims.name,
             });
