@@ -95,7 +95,7 @@
   },
   "scripts": {
     "start": "BROWSER=none HMR_HOST=`gp url 3001` craco start",
-    "start-local": "BROWSER=none HMR_HOST=`gp url 3000` ASSET_PATH=`gp url 3000` craco start",
+    "start-local": "gp ports visibility 3000:public; BROWSER=none HMR_HOST=`gp url 3000` ASSET_PATH=`gp url 3000` craco start",
     "build": "craco build --verbose",
     "lint": "eslint --max-warnings=0 --ext=.jsx,.js,.tsx,.ts ./src",
     "test": "yarn test:unit",
