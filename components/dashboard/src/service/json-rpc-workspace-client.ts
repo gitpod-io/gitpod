@@ -258,6 +258,9 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
         if (!request.workspaceId) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
         }
+        if (request.spec?.timeout?.inactivity || request.spec?.sshPublicKeys) {
+            throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+        }
 
         // check if user can access workspace first
         await this.getWorkspace({ workspaceId: request.workspaceId });

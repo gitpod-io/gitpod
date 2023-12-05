@@ -262,6 +262,9 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         if (!req.workspaceId) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
         }
+        if (req.spec?.timeout?.inactivity || req.spec?.sshPublicKeys) {
+            throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+        }
         const userId = ctxUserId();
 
         // check if user can access workspace first, so that it throws NotFound if workspace is not found
