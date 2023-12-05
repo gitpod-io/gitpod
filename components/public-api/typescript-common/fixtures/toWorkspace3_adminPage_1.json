@@ -1,0 +1,149 @@
+{
+  "organizationId": "organizationId",
+  "ownerId": "ownerId",
+  "contextURL": "https://github.com/gitpod-io/contextURL",
+  "description": "description",
+  "context": {
+    "isFile": false,
+    "path": "",
+    "title": "contextTitle",
+    "ref": "master",
+    "refType": "branch",
+    "revision": "revision",
+    "repository": {
+      "cloneUrl": "https://github.com/gitpod-io/contextURL.git",
+      "host": "github.com",
+      "name": "contextURL",
+      "owner": "gitpod-io",
+      "private": true
+    },
+    "normalizedContextURL": "https://github.com/gitpod-io/contextURL",
+    "checkoutLocation": "contextUrl"
+  },
+  "cloneUrl": "https://github.com/gitpod-io/contextURL.git",
+  "config": {
+    "image": "mach4/gitpod-wordpress:delta",
+    "ports": [
+      {
+        "port": 8080,
+        "onOpen": "notify"
+      },
+      {
+        "port": 3306,
+        "onOpen": "ignore"
+      }
+    ],
+    "vscode": {
+      "extensions": [
+        "felixfbecker.php-debug",
+        "felixfbecker.php-intellisense",
+        "aaron-bond.better-comments"
+      ]
+    },
+    "_origin": "repo",
+    "_featureFlags": [],
+    "ideCredentials": "ideCredentials"
+  },
+  "imageSource": {
+    "baseImageResolved": "mach4/gitpod-wordpress:delta"
+  },
+  "imageNameResolved": "eu.gcr.io/gitpod-dev/workspace-images:e4ac1036c2a8779f05f6707d3d716d7759f0d9d199d4810b9fd2abffdae92355",
+  "baseImageNameResolved": "docker.io/mach4/gitpod-wordpress@sha256:995aff430a51e6183874bc76c46bfc662c711a8cd21be1f0797e6296fc05231d",
+  "shareable": true,
+  "type": "regular",
+  "softDeleted": null,
+  "deleted": false,
+  "pinned": true,
+  "workspaceId": "balabala-wd-id",
+  "region": "us106",
+  "startedTime": "2023-12-03T04:20:04.988Z",
+  "stoppingTime": "2023-12-03T06:52:09.819Z",
+  "stoppedTime": "2023-12-03T06:54:49.619Z",
+  "ideUrl": "https://balabala-ws-id.ws-us106.gitpod.io",
+  "workspaceImage": "eu.gcr.io/gitpod-dev/workspace-images:e4ac1036c2a8779f05f6707d3d716d7759f0d9d199d4810b9fd2abffdae92355",
+  "status": {
+    "phase": "stopped",
+    "nodeIp": "10.10.0.158",
+    "message": "",
+    "podName": "ws-d839da0f-8f67-456c-81fc-3b590b547aba",
+    "timeout": "30m0s",
+    "version": 43227381,
+    "nodeName": "workspace-ws-us106-pool-8rc7",
+    "conditions": {
+      "failed": "",
+      "timeout": "",
+      "deployed": true,
+      "pullingImages": false,
+      "stoppedByRequest": true,
+      "firstUserActivity": "2023-12-03T04:20:06.000Z",
+      "headlessTaskFailed": ""
+    },
+    "ownerToken": "ownerToken",
+    "exposedPorts": [
+      {
+        "url": "https://8080-balabala-ws-id.ws-us106.gitpod.io",
+        "port": 8080,
+        "protocol": "http",
+        "visibility": "private"
+      },
+      {
+        "url": "https://3306-balabala-ws-id.ws-us106.gitpod.io",
+        "port": 3306,
+        "protocol": "http",
+        "visibility": "private"
+      }
+    ]
+  },
+  "gitStatus": {
+    "branch": "master",
+    "latestCommit": "1eb84119dedc91c54b28c538332d5deec76f4415",
+    "untrackedFiles": [
+      ".vscode/settings.json"
+    ],
+    "uncommitedFiles": [
+      ".htaccess"
+    ],
+    "totalUntrackedFiles": 79,
+    "totalUncommitedFiles": 2
+  },
+  "phasePersisted": "stopped",
+  "configuration": {
+    "ideImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-3bb09152fc5248f5b99b33b4d8a7f101aa082441",
+    "ideImageLayers": [
+      "eu.gcr.io/gitpod-core-dev/build/ide/gitpod-code-web:commit-49bb715b599dce2356dd02a6ede7ae8cf10d8d12",
+      "eu.gcr.io/gitpod-core-dev/build/ide/code-codehelper:commit-a96456ae29513e367719ff1c720adb2c59a0bd49"
+    ],
+    "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:commit-be35ce16a80342b0e57d85d486544e9608044d9a",
+    "ideConfig": {
+      "useLatest": false,
+      "ide": "code"
+    },
+    "ideSetup": {
+      "envvars": [
+        {
+          "name": "GITPOD_CONFIGCAT_ENABLED",
+          "value": "true"
+        },
+        {
+          "name": "GITPOD_IDE_ALIAS",
+          "value": "code"
+        }
+      ],
+      "tasks": []
+    },
+    "regionPreference": "north-america",
+    "fromBackup": true,
+    "featureFlags": [
+      "registry_facade",
+      "workspace_connection_limiting",
+      "workspace_class_limiting"
+    ]
+  },
+  "imageBuildInfo": null,
+  "workspaceClass": "g1-standard",
+  "usageAttributionId": "team:usageAttributionId",
+  "instanceId": "instanceId",
+  "workspaceCreationTime": "2022-08-21T15:26:33.843Z",
+  "instanceCreationTime": "2023-12-03T04:18:51.343Z",
+  "phase": "stopped"
+}

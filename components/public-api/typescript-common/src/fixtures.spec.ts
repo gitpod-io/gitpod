@@ -34,8 +34,13 @@ const isUpdating = process.argv.includes("-update");
 export async function startFixtureTest(path: string, testResult: (input: any) => Promise<any>) {
     const files = glob.sync(join(__dirname, path));
     if (files.length === 0) {
-        assert.fail("no input files found with glob " + path);
+        assert.fail(
+            "no input files found with glob " +
+                path +
+                `. Try \`node scripts/new-fixtures.js ${path.split("/").pop()?.replace("_*.json", "")} 1\``,
+        );
     }
+
     for (const file of files) {
         const input = JSON.parse(readFileSync(file).toString());
         let result: any | undefined;

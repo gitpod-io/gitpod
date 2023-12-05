@@ -208,7 +208,7 @@ export class PublicAPIConverter {
             }
             return spec;
         }
-        spec.editor = this.toEditor(arg.configuration.ideConfig);
+        spec.editor = this.toEditor(arg.configuration?.ideConfig);
         spec.ports = this.toPorts(arg.status.exposedPorts);
         if (arg.status.timeout) {
             spec.timeout = new UpdateWorkspaceRequest_UpdateTimeout({
