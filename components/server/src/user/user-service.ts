@@ -24,7 +24,7 @@ import { CreateUserParams } from "./user-authentication";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
 import { RelationshipUpdater } from "../authorization/relationship-updater";
-import { getProfile } from "@gitpod/public-api-common/src/user-utils";
+import { getProfile } from "@gitpod/public-api-common/lib/user-utils";
 
 @injectable()
 export class UserService {

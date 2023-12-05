@@ -4,6 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import "reflect-metadata";
+
 import { Timestamp, toPlainMessage, PartialMessage, Duration } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@connectrpc/connect";
 import {
@@ -137,6 +139,7 @@ import { BlockedRepository as ProtocolBlockedRepository } from "@gitpod/gitpod-p
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 import { RoleOrPermission } from "@gitpod/gitpod-protocol/lib/permission";
 import { parseGoDurationToMs } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 
 export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
 
@@ -1239,7 +1242,7 @@ export class PublicAPIConverter {
         if (!e) {
             return undefined;
         }
-        return <IDESettings>{
+        return {
             defaultIde: e.name,
             useLatestVersion: e.version === "latest",
         };
@@ -1256,11 +1259,12 @@ export class PublicAPIConverter {
     }
 
     fromWorkspaceAutostartOption(o: User_WorkspaceAutostartOption): WorkspaceAutostartOption {
-        return <WorkspaceAutostartOption>{
+        const region = isWorkspaceRegion(o.region) ? o.region : "";
+        return {
             cloneURL: o.cloneUrl,
-            editorSettings: this.fromEditorReference(o.editorSettings),
+            ideSettings: this.fromEditorReference(o.editorSettings),
             organizationId: o.organizationId,
-            region: o.region,
+            region,
             workspaceClass: o.workspaceClass,
         };
     }
