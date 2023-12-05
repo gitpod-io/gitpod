@@ -29,6 +29,7 @@ import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_
 import { BranchMatchingStrategy } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { WorkspaceAndInstance } from "@gitpod/gitpod-protocol";
 
 describe("PublicAPIConverter", () => {
     const converter = new PublicAPIConverter();
@@ -80,6 +81,15 @@ describe("PublicAPIConverter", () => {
 
         it("toWorkspace2", async () => {
             await startFixtureTest("../fixtures/toWorkspace2_*.json", async (input) => converter.toWorkspace(input));
+        });
+
+        it("toWorkspace3_adminPage", async () => {
+            await startFixtureTest("../fixtures/toWorkspace3_adminPage_*.json", async (input) => {
+                return converter.toWorkspace({
+                    workspace: WorkspaceAndInstance.toWorkspace(input),
+                    latestInstance: WorkspaceAndInstance.toInstance(input),
+                });
+            });
         });
 
         it("toConfiguration", async () => {
