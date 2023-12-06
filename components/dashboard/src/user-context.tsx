@@ -4,11 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/gitpod-protocol";
+import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { useQueryClient } from "@tanstack/react-query";
 import React, { createContext, useState, useContext, useMemo, useCallback } from "react";
 import { updateCommonErrorDetails } from "./service/metrics";
-import { updateUser } from "./service/public-api";
+import { updateUserForExperiments } from "./service/public-api";
+import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 
 const UserContext = createContext<{
     user?: User;
@@ -22,7 +23,7 @@ const UserContextProvider: React.FC = ({ children }) => {
 
     const updateServiceUser = (user?: User) => {
         updateCommonErrorDetails({ userId: user?.id });
-        updateUser(user);
+        updateUserForExperiments(!!user ? { id: user.id, email: getPrimaryEmail(user) } : undefined);
     };
     updateServiceUser(user);
 

@@ -11,7 +11,6 @@ import {
     GitpodServerPath,
     GitpodService,
     GitpodServiceImpl,
-    User,
     WorkspaceInfo,
     Disposable,
 } from "@gitpod/gitpod-protocol";
@@ -20,10 +19,11 @@ import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url"
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/frontend-dashboard-service";
 import { RemoteTrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
-import { helloService, stream, workspaceClient } from "./public-api";
+import { helloService, stream, userClient, workspaceClient } from "./public-api";
 import { getExperimentsClient } from "../experiments/client";
 import { instrumentWebSocket } from "./metrics";
 import { LotsOfRepliesResponse } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_pb";
+import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
@@ -75,10 +75,6 @@ function instrumentWebSocketConnection(connectionProvider: WebSocketConnectionPr
 export function getGitpodService(): GitpodService {
     const w = window as any;
     const _gp = w._gp || (w._gp = {});
-    if (window.location.search.includes("service=mock")) {
-        const service = _gp.gitpodService || (_gp.gitpodService = require("./service-mock").gitpodServiceMock);
-        return service;
-    }
     let service = _gp.gitpodService;
     if (!service) {
         service = _gp.gitpodService = createGitpodService();
@@ -213,7 +209,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
 
     private async processServerInfo() {
         const [user, listener, ideCredentials] = await Promise.all([
-            this.service.server.getLoggedInUser(),
+            userClient.getAuthenticatedUser({}).then((r) => r.user),
             this.service.listenToInstance(this.workspaceID),
             workspaceClient
                 .getWorkspaceEditorCredentials({ workspaceId: this.workspaceID })

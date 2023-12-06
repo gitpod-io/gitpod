@@ -11,6 +11,7 @@ import { RepositoryProvider } from "../repohost/repository-provider";
 import { BitbucketServerApi } from "./bitbucket-server-api";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 
 @injectable()
 export class BitbucketServerRepositoryProvider implements RepositoryProvider {
@@ -150,7 +151,10 @@ export class BitbucketServerRepositoryProvider implements RepositoryProvider {
             "repositoryFinderSearch",
             false,
             {
-                user,
+                user: {
+                    id: user.id,
+                    email: getPrimaryEmail(user),
+                },
             },
         );
 

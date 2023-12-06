@@ -20,6 +20,7 @@ import { ctxUserId } from "../util/request-context";
 import { UserService } from "../user/user-service";
 import { formatPhoneNumber } from "../user/phone-numbers";
 import { validate as uuidValidate } from "uuid";
+import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 
 @injectable()
 export class VerificationServiceAPI implements ServiceImpl<typeof VerificationServiceInterface> {
@@ -42,7 +43,10 @@ export class VerificationServiceAPI implements ServiceImpl<typeof VerificationSe
             "phoneVerificationByCall",
             false,
             {
-                user,
+                user: {
+                    id: user.id,
+                    email: getPrimaryEmail(user),
+                },
             },
         );
         const channel = phoneVerificationByCall ? "call" : "sms";

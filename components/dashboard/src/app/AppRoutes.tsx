@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, { useState } from "react";
+import React from "react";
 import { Redirect, Route, Switch, useLocation } from "react-router";
 import OAuthClientApproval from "../OauthClientApproval";
 import Menu from "../menu/Menu";
@@ -25,7 +25,6 @@ import {
     usagePathMain,
 } from "../user-settings/settings.routes";
 import { getURLHash, isGitpodIo } from "../utils";
-import { WhatsNew, shouldSeeWhatsNew } from "../whatsnew/WhatsNew";
 import { workspacesPathMain } from "../workspaces/workspaces.routes";
 import { AdminRoute } from "./AdminRoute";
 import { Blocked } from "./Blocked";
@@ -33,7 +32,6 @@ import { Blocked } from "./Blocked";
 // TODO: Can we bundle-split/lazy load these like other pages?
 import { BlockedRepositories } from "../admin/BlockedRepositories";
 import { Heading1, Subheading } from "../components/typography/headings";
-import { useCurrentUser } from "../user-context";
 import PersonalAccessTokenCreateView from "../user-settings/PersonalAccessTokensCreateView";
 import { CreateWorkspacePage } from "../workspaces/CreateWorkspacePage";
 import { WebsocketClients } from "./WebsocketClients";
@@ -84,8 +82,6 @@ const ConfigurationDetailPage = React.lazy(
 
 export const AppRoutes = () => {
     const hash = getURLHash();
-    const user = useCurrentUser();
-    const [isWhatsNewShown, setWhatsNewShown] = useState(user && shouldSeeWhatsNew(user));
     const location = useLocation();
     const repoConfigListAndDetail = useFeatureFlag("repoConfigListAndDetail");
 
@@ -97,10 +93,6 @@ export const AppRoutes = () => {
     // TODO: Add a Route for this instead of inspecting location manually
     if (location.pathname.startsWith("/oauth-approval")) {
         return <OAuthClientApproval />;
-    }
-
-    if (isWhatsNewShown) {
-        return <WhatsNew onClose={() => setWhatsNewShown(false)} />;
     }
 
     // TODO: Try and encapsulate this in a route for "/" (check for hash in route component, render or redirect accordingly)

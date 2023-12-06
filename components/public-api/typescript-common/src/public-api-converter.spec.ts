@@ -35,6 +35,10 @@ describe("PublicAPIConverter", () => {
     const converter = new PublicAPIConverter();
 
     describe("golden tests", () => {
+        it("toUser", async () => {
+            await startFixtureTest("../fixtures/toUser_*.json", async (input) => converter.toUser(input));
+        });
+
         it("toOrganization", async () => {
             await startFixtureTest("../fixtures/toOrganization_*.json", async (input) =>
                 converter.toOrganization(input),
@@ -219,10 +223,10 @@ describe("PublicAPIConverter", () => {
     });
 
     describe("toDurationString", () => {
-        it("should convert with 0", () => {
-            expect(converter.toDurationString(new Duration())).to.equal("0");
-            expect(converter.toDurationString(new Duration({ seconds: BigInt(0) }))).to.equal("0");
-            expect(converter.toDurationString(new Duration({ nanos: 0 }))).to.equal("0");
+        it("should convert with empty string", () => {
+            expect(converter.toDurationString(new Duration())).to.equal("");
+            expect(converter.toDurationString(new Duration({ seconds: BigInt(0) }))).to.equal("");
+            expect(converter.toDurationString(new Duration({ nanos: 0 }))).to.equal("");
         });
         it("should convert with hours", () => {
             expect(converter.toDurationString(new Duration({ seconds: BigInt(3600) }))).to.equal("1h");
