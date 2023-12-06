@@ -406,7 +406,7 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
         const snapshotIdList = await getGitpodService().server.getSnapshots(req.workspaceId);
         return new ListWorkspaceSnapshotsResponse({
             snapshots: snapshotIdList.map((id) =>
-                converter.toWorkspaceSnapshot({ id, originalWorkspaceId: req.workspaceId }),
+                converter.toWorkspaceSnapshot({ id, originalWorkspaceId: req.workspaceId! }),
             ),
         });
     }
