@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, GetWorkspaceDefaultImageRequest, GetWorkspaceDefaultImageResponse, GetWorkspaceEditorCredentialsRequest, GetWorkspaceEditorCredentialsResponse, GetWorkspaceOwnerTokenRequest, GetWorkspaceOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspacesRequest, ListWorkspacesResponse, ParseContextURLRequest, ParseContextURLResponse, SendHeartBeatRequest, SendHeartBeatResponse, StartWorkspaceRequest, StartWorkspaceResponse, UpdateWorkspaceRequest, UpdateWorkspaceResponse, WatchWorkspaceStatusRequest, WatchWorkspaceStatusResponse } from "./workspace_pb.js";
+import { CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetWorkspaceDefaultImageRequest, GetWorkspaceDefaultImageResponse, GetWorkspaceEditorCredentialsRequest, GetWorkspaceEditorCredentialsResponse, GetWorkspaceOwnerTokenRequest, GetWorkspaceOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspaceClassesRequest, ListWorkspaceClassesResponse, ListWorkspacesRequest, ListWorkspacesResponse, ParseContextURLRequest, ParseContextURLResponse, SendHeartBeatRequest, SendHeartBeatResponse, StartWorkspaceRequest, StartWorkspaceResponse, StopWorkspaceRequest, StopWorkspaceResponse, UpdateWorkspaceRequest, UpdateWorkspaceResponse, WatchWorkspaceStatusRequest, WatchWorkspaceStatusResponse } from "./workspace_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -88,6 +88,41 @@ export const WorkspaceService = {
       name: "UpdateWorkspace",
       I: UpdateWorkspaceRequest,
       O: UpdateWorkspaceResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * StopWorkspace stops a running workspace.
+     *
+     * @generated from rpc gitpod.v1.WorkspaceService.StopWorkspace
+     */
+    stopWorkspace: {
+      name: "StopWorkspace",
+      I: StopWorkspaceRequest,
+      O: StopWorkspaceResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * DeleteWorkspace deletes a workspace.
+     * When the workspace is running, it will be stopped as well.
+     * Deleted workspaces cannot be started again.
+     *
+     * @generated from rpc gitpod.v1.WorkspaceService.DeleteWorkspace
+     */
+    deleteWorkspace: {
+      name: "DeleteWorkspace",
+      I: DeleteWorkspaceRequest,
+      O: DeleteWorkspaceResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListWorkspaceClasses enumerates all available workspace classes.
+     *
+     * @generated from rpc gitpod.v1.WorkspaceService.ListWorkspaceClasses
+     */
+    listWorkspaceClasses: {
+      name: "ListWorkspaceClasses",
+      I: ListWorkspaceClassesRequest,
+      O: ListWorkspaceClassesResponse,
       kind: MethodKind.Unary,
     },
     /**

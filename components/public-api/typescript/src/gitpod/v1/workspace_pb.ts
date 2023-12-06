@@ -2822,6 +2822,230 @@ export class UpdateWorkspaceResponse extends Message<UpdateWorkspaceResponse> {
 }
 
 /**
+ * @generated from message gitpod.v1.StopWorkspaceRequest
+ */
+export class StopWorkspaceRequest extends Message<StopWorkspaceRequest> {
+  /**
+   * workspace_id specifies which workspace should be stopped.
+   *
+   * +required
+   *
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  constructor(data?: PartialMessage<StopWorkspaceRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.StopWorkspaceRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StopWorkspaceRequest {
+    return new StopWorkspaceRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): StopWorkspaceRequest {
+    return new StopWorkspaceRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): StopWorkspaceRequest {
+    return new StopWorkspaceRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: StopWorkspaceRequest | PlainMessage<StopWorkspaceRequest> | undefined, b: StopWorkspaceRequest | PlainMessage<StopWorkspaceRequest> | undefined): boolean {
+    return proto3.util.equals(StopWorkspaceRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.StopWorkspaceResponse
+ */
+export class StopWorkspaceResponse extends Message<StopWorkspaceResponse> {
+  constructor(data?: PartialMessage<StopWorkspaceResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.StopWorkspaceResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StopWorkspaceResponse {
+    return new StopWorkspaceResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): StopWorkspaceResponse {
+    return new StopWorkspaceResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): StopWorkspaceResponse {
+    return new StopWorkspaceResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: StopWorkspaceResponse | PlainMessage<StopWorkspaceResponse> | undefined, b: StopWorkspaceResponse | PlainMessage<StopWorkspaceResponse> | undefined): boolean {
+    return proto3.util.equals(StopWorkspaceResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.DeleteWorkspaceRequest
+ */
+export class DeleteWorkspaceRequest extends Message<DeleteWorkspaceRequest> {
+  /**
+   * workspace_id specifies the workspace that is going to delete.
+   *
+   * +required
+   *
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  constructor(data?: PartialMessage<DeleteWorkspaceRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.DeleteWorkspaceRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteWorkspaceRequest {
+    return new DeleteWorkspaceRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeleteWorkspaceRequest {
+    return new DeleteWorkspaceRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeleteWorkspaceRequest {
+    return new DeleteWorkspaceRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: DeleteWorkspaceRequest | PlainMessage<DeleteWorkspaceRequest> | undefined, b: DeleteWorkspaceRequest | PlainMessage<DeleteWorkspaceRequest> | undefined): boolean {
+    return proto3.util.equals(DeleteWorkspaceRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.DeleteWorkspaceResponse
+ */
+export class DeleteWorkspaceResponse extends Message<DeleteWorkspaceResponse> {
+  constructor(data?: PartialMessage<DeleteWorkspaceResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.DeleteWorkspaceResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteWorkspaceResponse {
+    return new DeleteWorkspaceResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeleteWorkspaceResponse {
+    return new DeleteWorkspaceResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeleteWorkspaceResponse {
+    return new DeleteWorkspaceResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: DeleteWorkspaceResponse | PlainMessage<DeleteWorkspaceResponse> | undefined, b: DeleteWorkspaceResponse | PlainMessage<DeleteWorkspaceResponse> | undefined): boolean {
+    return proto3.util.equals(DeleteWorkspaceResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.ListWorkspaceClassesRequest
+ */
+export class ListWorkspaceClassesRequest extends Message<ListWorkspaceClassesRequest> {
+  /**
+   * @generated from field: gitpod.v1.PaginationRequest pagination = 1;
+   */
+  pagination?: PaginationRequest;
+
+  constructor(data?: PartialMessage<ListWorkspaceClassesRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListWorkspaceClassesRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "pagination", kind: "message", T: PaginationRequest },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListWorkspaceClassesRequest {
+    return new ListWorkspaceClassesRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListWorkspaceClassesRequest {
+    return new ListWorkspaceClassesRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListWorkspaceClassesRequest {
+    return new ListWorkspaceClassesRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListWorkspaceClassesRequest | PlainMessage<ListWorkspaceClassesRequest> | undefined, b: ListWorkspaceClassesRequest | PlainMessage<ListWorkspaceClassesRequest> | undefined): boolean {
+    return proto3.util.equals(ListWorkspaceClassesRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.ListWorkspaceClassesResponse
+ */
+export class ListWorkspaceClassesResponse extends Message<ListWorkspaceClassesResponse> {
+  /**
+   * @generated from field: gitpod.v1.PaginationResponse pagination = 1;
+   */
+  pagination?: PaginationResponse;
+
+  /**
+   * @generated from field: repeated gitpod.v1.WorkspaceClass workspace_classes = 2;
+   */
+  workspaceClasses: WorkspaceClass[] = [];
+
+  constructor(data?: PartialMessage<ListWorkspaceClassesResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListWorkspaceClassesResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "pagination", kind: "message", T: PaginationResponse },
+    { no: 2, name: "workspace_classes", kind: "message", T: WorkspaceClass, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListWorkspaceClassesResponse {
+    return new ListWorkspaceClassesResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListWorkspaceClassesResponse {
+    return new ListWorkspaceClassesResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListWorkspaceClassesResponse {
+    return new ListWorkspaceClassesResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListWorkspaceClassesResponse | PlainMessage<ListWorkspaceClassesResponse> | undefined, b: ListWorkspaceClassesResponse | PlainMessage<ListWorkspaceClassesResponse> | undefined): boolean {
+    return proto3.util.equals(ListWorkspaceClassesResponse, a, b);
+  }
+}
+
+/**
  * @generated from message gitpod.v1.ParseContextURLRequest
  */
 export class ParseContextURLRequest extends Message<ParseContextURLRequest> {
@@ -2908,5 +3132,68 @@ export class ParseContextURLResponse extends Message<ParseContextURLResponse> {
 
   static equals(a: ParseContextURLResponse | PlainMessage<ParseContextURLResponse> | undefined, b: ParseContextURLResponse | PlainMessage<ParseContextURLResponse> | undefined): boolean {
     return proto3.util.equals(ParseContextURLResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.WorkspaceClass
+ */
+export class WorkspaceClass extends Message<WorkspaceClass> {
+  /**
+   * id is the unique identifier of the workspace class
+   *
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * display_name is the human readable name of the workspace class
+   *
+   * @generated from field: string display_name = 2;
+   */
+  displayName = "";
+
+  /**
+   * description is a human readable description of the workspace class
+   *
+   * @generated from field: string description = 3;
+   */
+  description = "";
+
+  /**
+   * is_default indicates if this workspace class is the default one
+   *
+   * @generated from field: bool is_default = 4;
+   */
+  isDefault = false;
+
+  constructor(data?: PartialMessage<WorkspaceClass>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.WorkspaceClass";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "display_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "is_default", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceClass {
+    return new WorkspaceClass().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceClass {
+    return new WorkspaceClass().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceClass {
+    return new WorkspaceClass().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WorkspaceClass | PlainMessage<WorkspaceClass> | undefined, b: WorkspaceClass | PlainMessage<WorkspaceClass> | undefined): boolean {
+    return proto3.util.equals(WorkspaceClass, a, b);
   }
 }

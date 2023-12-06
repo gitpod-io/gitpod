@@ -35,6 +35,17 @@ service WorkspaceService {
   // UpdateWorkspace updates the workspace.
   rpc UpdateWorkspace(UpdateWorkspaceRequest) returns (UpdateWorkspaceResponse) {}
 
+  // StopWorkspace stops a running workspace.
+  rpc StopWorkspace(StopWorkspaceRequest) returns (StopWorkspaceResponse) {}
+
+  // DeleteWorkspace deletes a workspace.
+  // When the workspace is running, it will be stopped as well.
+  // Deleted workspaces cannot be started again.
+  rpc DeleteWorkspace(DeleteWorkspaceRequest) returns (DeleteWorkspaceResponse) {}
+
+  // ListWorkspaceClasses enumerates all available workspace classes.
+  rpc ListWorkspaceClasses(ListWorkspaceClassesRequest) returns (ListWorkspaceClassesResponse) {}
+
   // ParseContextURL parses a context URL and returns the workspace metadata and spec.
   // Not implemented yet.
   rpc ParseContextURL(ParseContextURLRequest) returns (ParseContextURLResponse) {}
@@ -688,6 +699,34 @@ message UpdateWorkspaceResponse {
   Workspace workspace = 1;
 }
 
+message StopWorkspaceRequest {
+  // workspace_id specifies which workspace should be stopped.
+  //
+  // +required
+  string workspace_id = 1;
+}
+
+message StopWorkspaceResponse {}
+
+message DeleteWorkspaceRequest {
+  // workspace_id specifies the workspace that is going to delete.
+  //
+  // +required
+  string workspace_id = 1;
+}
+
+message DeleteWorkspaceResponse {}
+
+message ListWorkspaceClassesRequest {
+  PaginationRequest pagination = 1;
+}
+
+message ListWorkspaceClassesResponse {
+  PaginationResponse pagination = 1;
+
+  repeated WorkspaceClass workspace_classes = 2;
+}
+
 message ParseContextURLRequest {
   // context_url is the URL to parse
   string context_url = 1;
@@ -699,4 +738,18 @@ message ParseContextURLRequest {
 message ParseContextURLResponse {
   WorkspaceMetadata metadata = 1;
   WorkspaceSpec spec = 2;
+}
+
+message WorkspaceClass {
+  // id is the unique identifier of the workspace class
+  string id = 1;
+
+  // display_name is the human readable name of the workspace class
+  string display_name = 2;
+
+  // description is a human readable description of the workspace class
+  string description = 3;
+
+  // is_default indicates if this workspace class is the default one
+  bool is_default = 4;
 }

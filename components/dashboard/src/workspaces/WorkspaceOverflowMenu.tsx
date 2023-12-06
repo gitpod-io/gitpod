@@ -9,8 +9,6 @@ import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import { ContextMenuEntry } from "../components/ContextMenu";
 import { ItemFieldContextMenu } from "../components/ItemsList";
 import { useStopWorkspaceMutation } from "../data/workspaces/stop-workspace-mutation";
-import { useToggleWorkspacedPinnedMutation } from "../data/workspaces/toggle-workspace-pinned-mutation";
-import { useToggleWorkspaceSharedMutation } from "../data/workspaces/toggle-workspace-shared-mutation";
 import ConnectToSSHModal from "./ConnectToSSHModal";
 import { DeleteWorkspaceModal } from "./DeleteWorkspaceModal";
 import { useToast } from "../components/toasts/Toasts";
@@ -18,6 +16,7 @@ import { RenameWorkspaceModal } from "./RenameWorkspaceModal";
 import { AdmissionLevel, Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { workspaceClient } from "../service/public-api";
 import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
+import { useUpdateWorkspaceMutation } from "../data/workspaces/update-workspace-mutation";
 
 type WorkspaceEntryOverflowMenuProps = {
     info: Workspace;
@@ -36,8 +35,7 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
     const { data: settings } = useOrgSettingsQuery();
 
     const stopWorkspace = useStopWorkspaceMutation();
-    const toggleWorkspaceShared = useToggleWorkspaceSharedMutation();
-    const toggleWorkspacePinned = useToggleWorkspacedPinnedMutation();
+    const updateWorkspace = useUpdateWorkspaceMutation();
 
     const workspace = info;
     const state: WorkspacePhase_Phase = info?.status?.phase?.name || WorkspacePhase_Phase.STOPPED;
@@ -64,17 +62,22 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
         const newLevel =
             workspace.spec?.admission === AdmissionLevel.EVERYONE ? AdmissionLevel.OWNER_ONLY : AdmissionLevel.EVERYONE;
 
-        toggleWorkspaceShared.mutate({
+        updateWorkspace.mutate({
             workspaceId: workspace.id,
-            level: newLevel,
+            spec: {
+                admission: newLevel,
+            }
         });
-    }, [toggleWorkspaceShared, workspace.id, workspace.spec?.admission]);
+    }, [updateWorkspace, workspace.id, workspace.spec?.admission]);
 
     const togglePinned = useCallback(() => {
-        toggleWorkspacePinned.mutate({
+        updateWorkspace.mutate({
             workspaceId: workspace.id,
+            metadata: {
+                pinned: !workspace.metadata?.pinned
+            }
         });
-    }, [toggleWorkspacePinned, workspace.id]);
+    }, [updateWorkspace, workspace.id, workspace.metadata?.pinned]);
 
     // Can we use `/start#${workspace.id}` instead?
     const startUrl = useMemo(

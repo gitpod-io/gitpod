@@ -16,7 +16,6 @@ import { OIDCService } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_
 import { ProjectsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_connect";
 import { Project } from "@gitpod/public-api/lib/gitpod/experimental/v1/projects_pb";
 import { TokensService } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_connect";
-import { WorkspacesService as WorkspaceV1Service } from "@gitpod/public-api/lib/gitpod/experimental/v1/workspaces_connect";
 import { OrganizationService } from "@gitpod/public-api/lib/gitpod/v1/organization_connect";
 import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/v1/workspace_connect";
 import { ConfigurationService } from "@gitpod/public-api/lib/gitpod/v1/configuration_connect";
@@ -54,10 +53,7 @@ export const personalAccessTokensService = createPromiseClient(TokensService, tr
  * @deprecated use configurationClient instead
  */
 export const projectsService = createPromiseClient(ProjectsService, transport);
-/**
- * @deprecated use workspaceClient instead
- */
-export const workspacesService = createPromiseClient(WorkspaceV1Service, transport);
+
 export const oidcService = createPromiseClient(OIDCService, transport);
 
 export const workspaceClient = createServiceClient(WorkspaceService, {

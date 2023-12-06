@@ -30,6 +30,13 @@ import {
     ParseContextURLResponse,
     UpdateWorkspaceRequest,
     UpdateWorkspaceResponse,
+    StopWorkspaceRequest,
+    StopWorkspaceResponse,
+    DeleteWorkspaceRequest,
+    DeleteWorkspaceResponse,
+    ListWorkspaceClassesRequest,
+    ListWorkspaceClassesResponse,
+    AdmissionLevel,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { inject, injectable } from "inversify";
 import { WorkspaceService } from "../workspace/workspace-service";
@@ -252,10 +259,98 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
     }
 
     async updateWorkspace(req: UpdateWorkspaceRequest): Promise<UpdateWorkspaceResponse> {
-        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+        if (!req.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        if (req.spec?.timeout?.inactivity?.seconds || (req.spec?.sshPublicKeys && req.spec?.sshPublicKeys.length > 0)) {
+            throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+        }
+        const userId = ctxUserId();
+
+        // check if user can access workspace first, so that it throws NotFound if workspace is not found
+        await this.workspaceService.getWorkspace(userId, req.workspaceId);
+
+        const tasks: Array<Promise<any>> = [];
+
+        if (req.metadata) {
+            if (req.metadata.name) {
+                tasks.push(this.workspaceService.setDescription(userId, req.workspaceId, req.metadata.name));
+            }
+            if (req.metadata.pinned !== undefined) {
+                tasks.push(this.workspaceService.setPinned(userId, req.workspaceId, req.metadata.pinned));
+            }
+        }
+
+        if (req.spec) {
+            if ((req.spec.timeout?.disconnected?.seconds ?? 0) > 0) {
+                tasks.push(
+                    this.workspaceService.setWorkspaceTimeout(
+                        userId,
+                        req.workspaceId,
+                        this.apiConverter.toDurationString(req.spec.timeout!.disconnected!),
+                    ),
+                );
+            }
+            if (req.spec.admission !== undefined) {
+                if (req.spec.admission === AdmissionLevel.OWNER_ONLY) {
+                    tasks.push(this.workspaceService.controlAdmission(userId, req.workspaceId, "owner"));
+                } else if (req.spec.admission === AdmissionLevel.EVERYONE) {
+                    tasks.push(this.workspaceService.controlAdmission(userId, req.workspaceId, "everyone"));
+                }
+            }
+        }
+
+        if (req.gitStatus) {
+            tasks.push(
+                this.workspaceService.updateGitStatus(userId, req.workspaceId, {
+                    branch: req.gitStatus.branch!,
+                    latestCommit: req.gitStatus.latestCommit!,
+                    uncommitedFiles: req.gitStatus.uncommitedFiles!,
+                    totalUncommitedFiles: req.gitStatus.totalUncommitedFiles!,
+                    untrackedFiles: req.gitStatus.untrackedFiles!,
+                    totalUntrackedFiles: req.gitStatus.totalUntrackedFiles!,
+                    unpushedCommits: req.gitStatus.unpushedCommits!,
+                    totalUnpushedCommits: req.gitStatus.totalUnpushedCommits!,
+                }),
+            );
+        }
+
+        // Use all or allSettled
+        // TODO: update workspace-service to make sure it can be done in one request
+        await Promise.allSettled(tasks);
+        const info = await this.workspaceService.getWorkspace(ctxUserId(), req.workspaceId);
+        const response = new UpdateWorkspaceResponse();
+        response.workspace = this.apiConverter.toWorkspace(info);
+        return response;
     }
 
     async parseContextURL(req: ParseContextURLRequest): Promise<ParseContextURLResponse> {
         throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+    }
+
+    async stopWorkspace(req: StopWorkspaceRequest): Promise<StopWorkspaceResponse> {
+        if (!req.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        await this.workspaceService.stopWorkspace(ctxUserId(), req.workspaceId, "stopped via API");
+        const response = new StopWorkspaceResponse();
+        return response;
+    }
+
+    async deleteWorkspace(req: DeleteWorkspaceRequest): Promise<DeleteWorkspaceResponse> {
+        if (!req.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        await this.workspaceService.deleteWorkspace(ctxUserId(), req.workspaceId, "user");
+        const response = new DeleteWorkspaceResponse();
+        return response;
+    }
+
+    async listWorkspaceClasses(req: ListWorkspaceClassesRequest): Promise<ListWorkspaceClassesResponse> {
+        const clsList = await this.workspaceService.getSupportedWorkspaceClasses({ id: ctxUserId() });
+        const response = new ListWorkspaceClassesResponse();
+        response.pagination = new PaginationResponse();
+        response.workspaceClasses = clsList.map((i) => this.apiConverter.toWorkspaceClass(i));
+        return response;
     }
 }

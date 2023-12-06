@@ -45,6 +45,7 @@ import {
     SnapshotInitializer,
     UpdateWorkspaceRequest_UpdateTimeout,
     Workspace,
+    WorkspaceClass,
     WorkspaceGitStatus,
     WorkspaceInitializer,
     WorkspaceInitializer_Spec,
@@ -119,6 +120,7 @@ import {
 import { Author, Commit } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import type { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 import { BlockedRepository as ProtocolBlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
+import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 
 export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
 
@@ -1092,6 +1094,15 @@ export class PublicAPIConverter {
         return new Duration({
             seconds: BigInt(Math.floor(totalSeconds)),
             nanos: (totalSeconds - Math.floor(totalSeconds)) * 1e9,
+        });
+    }
+
+    toWorkspaceClass(cls: SupportedWorkspaceClass): WorkspaceClass {
+        return new WorkspaceClass({
+            id: cls.id,
+            displayName: cls.displayName,
+            description: cls.description,
+            isDefault: cls.isDefault,
         });
     }
 }

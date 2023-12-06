@@ -6,9 +6,9 @@
 
 import { FunctionComponent, useCallback, useState } from "react";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
-import { useUpdateWorkspaceDescriptionMutation } from "../data/workspaces/update-workspace-description-mutation";
 import { Button } from "../components/Button";
 import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { useUpdateWorkspaceMutation } from "../data/workspaces/update-workspace-mutation";
 
 type Props = {
     workspace: Workspace;
@@ -16,17 +16,17 @@ type Props = {
 };
 export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onClose }) => {
     const [errorMessage, setErrorMessage] = useState("");
-    const [description, setDescription] = useState(workspace.metadata?.name || "");
-    const updateDescription = useUpdateWorkspaceDescriptionMutation();
+    const [name, setName] = useState(workspace.metadata?.name || "");
+    const updateWorkspace = useUpdateWorkspaceMutation();
 
     const updateWorkspaceDescription = useCallback(async () => {
         try {
-            if (description.length === 0) {
+            if (name.length === 0) {
                 setErrorMessage("Description cannot not be empty.");
                 return;
             }
 
-            if (description.length > 250) {
+            if (name.length > 250) {
                 setErrorMessage("Description is too long for readability.");
                 return;
             }
@@ -34,14 +34,14 @@ export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
             setErrorMessage("");
 
             // Using mutateAsync here so we can close the modal after it completes successfully
-            await updateDescription.mutateAsync({ workspaceId: workspace.id, newDescription: description });
+            await updateWorkspace.mutateAsync({ workspaceId: workspace.id, metadata: { name } });
 
             // Close the modal
             onClose();
         } catch (error) {
             setErrorMessage("Something went wrong. Please try renaming again.");
         }
-    }, [description, onClose, updateDescription, workspace.id]);
+    }, [name, onClose, updateWorkspace, workspace.id]);
 
     return (
         <Modal visible onClose={onClose} onSubmit={updateWorkspaceDescription}>
@@ -54,9 +54,9 @@ export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
                     autoFocus
                     className="w-full truncate"
                     type="text"
-                    value={description}
-                    disabled={updateDescription.isLoading}
-                    onChange={(e) => setDescription(e.target.value)}
+                    value={name}
+                    disabled={updateWorkspace.isLoading}
+                    onChange={(e) => setName(e.target.value)}
                 />
                 <div className="mt-1">
                     <p className="text-gray-500">Change the description to make it easier to go back to a workspace.</p>
@@ -64,10 +64,10 @@ export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
                 </div>
             </ModalBody>
             <ModalFooter>
-                <Button type="secondary" disabled={updateDescription.isLoading} onClick={onClose}>
+                <Button type="secondary" disabled={updateWorkspace.isLoading} onClick={onClose}>
                     Cancel
                 </Button>
-                <Button htmlType="submit" loading={updateDescription.isLoading}>
+                <Button htmlType="submit" loading={updateWorkspace.isLoading}>
                     Update Description
                 </Button>
             </ModalFooter>

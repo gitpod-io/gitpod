@@ -4,11 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 import { FC, useCallback, useEffect, useMemo } from "react";
-import WorkspaceClass from "../icons/WorkspaceClass.svg";
+import WorkspaceClassIcon from "../icons/WorkspaceClass.svg";
 import { Combobox, ComboboxElement, ComboboxSelectedItem } from "./podkit/combobox/Combobox";
 import { useWorkspaceClasses } from "../data/workspaces/workspace-classes-query";
+import { WorkspaceClass } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 interface SelectWorkspaceClassProps {
     selectedWorkspaceClass?: string;
@@ -78,7 +78,7 @@ export default function SelectWorkspaceClassComponent({
 }
 
 type WorkspaceClassDropDownElementSelectedProps = {
-    wsClass?: SupportedWorkspaceClass;
+    wsClass?: WorkspaceClass;
     loading?: boolean;
 };
 
@@ -90,7 +90,7 @@ const WorkspaceClassDropDownElementSelected: FC<WorkspaceClassDropDownElementSel
 
     return (
         <ComboboxSelectedItem
-            icon={WorkspaceClass}
+            icon={WorkspaceClassIcon}
             loading={loading}
             htmlTitle={title}
             title={<div className="truncate">{title}</div>}
@@ -106,7 +106,7 @@ const WorkspaceClassDropDownElementSelected: FC<WorkspaceClassDropDownElementSel
     );
 };
 
-function WorkspaceClassDropDownElement(props: { wsClass: SupportedWorkspaceClass }): JSX.Element {
+function WorkspaceClassDropDownElement(props: { wsClass: WorkspaceClass }): JSX.Element {
     const c = props.wsClass;
     return (
         <div className="flex ml-1 mt-1 flex-grow">

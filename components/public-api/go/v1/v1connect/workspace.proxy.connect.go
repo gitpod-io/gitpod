@@ -69,6 +69,36 @@ func (s *ProxyWorkspaceServiceHandler) UpdateWorkspace(ctx context.Context, req 
 	return connect_go.NewResponse(resp), nil
 }
 
+func (s *ProxyWorkspaceServiceHandler) StopWorkspace(ctx context.Context, req *connect_go.Request[v1.StopWorkspaceRequest]) (*connect_go.Response[v1.StopWorkspaceResponse], error) {
+	resp, err := s.Client.StopWorkspace(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
+func (s *ProxyWorkspaceServiceHandler) DeleteWorkspace(ctx context.Context, req *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error) {
+	resp, err := s.Client.DeleteWorkspace(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
+func (s *ProxyWorkspaceServiceHandler) ListWorkspaceClasses(ctx context.Context, req *connect_go.Request[v1.ListWorkspaceClassesRequest]) (*connect_go.Response[v1.ListWorkspaceClassesResponse], error) {
+	resp, err := s.Client.ListWorkspaceClasses(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
 func (s *ProxyWorkspaceServiceHandler) ParseContextURL(ctx context.Context, req *connect_go.Request[v1.ParseContextURLRequest]) (*connect_go.Response[v1.ParseContextURLResponse], error) {
 	resp, err := s.Client.ParseContextURL(ctx, req.Msg)
 	if err != nil {

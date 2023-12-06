@@ -44,6 +44,14 @@ type WorkspaceServiceClient interface {
 	StartWorkspace(ctx context.Context, in *StartWorkspaceRequest, opts ...grpc.CallOption) (*StartWorkspaceResponse, error)
 	// UpdateWorkspace updates the workspace.
 	UpdateWorkspace(ctx context.Context, in *UpdateWorkspaceRequest, opts ...grpc.CallOption) (*UpdateWorkspaceResponse, error)
+	// StopWorkspace stops a running workspace.
+	StopWorkspace(ctx context.Context, in *StopWorkspaceRequest, opts ...grpc.CallOption) (*StopWorkspaceResponse, error)
+	// DeleteWorkspace deletes a workspace.
+	// When the workspace is running, it will be stopped as well.
+	// Deleted workspaces cannot be started again.
+	DeleteWorkspace(ctx context.Context, in *DeleteWorkspaceRequest, opts ...grpc.CallOption) (*DeleteWorkspaceResponse, error)
+	// ListWorkspaceClasses enumerates all available workspace classes.
+	ListWorkspaceClasses(ctx context.Context, in *ListWorkspaceClassesRequest, opts ...grpc.CallOption) (*ListWorkspaceClassesResponse, error)
 	// ParseContextURL parses a context URL and returns the workspace metadata and spec.
 	// Not implemented yet.
 	ParseContextURL(ctx context.Context, in *ParseContextURLRequest, opts ...grpc.CallOption) (*ParseContextURLResponse, error)
@@ -144,6 +152,33 @@ func (c *workspaceServiceClient) UpdateWorkspace(ctx context.Context, in *Update
 	return out, nil
 }
 
+func (c *workspaceServiceClient) StopWorkspace(ctx context.Context, in *StopWorkspaceRequest, opts ...grpc.CallOption) (*StopWorkspaceResponse, error) {
+	out := new(StopWorkspaceResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspaceService/StopWorkspace", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workspaceServiceClient) DeleteWorkspace(ctx context.Context, in *DeleteWorkspaceRequest, opts ...grpc.CallOption) (*DeleteWorkspaceResponse, error) {
+	out := new(DeleteWorkspaceResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspaceService/DeleteWorkspace", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workspaceServiceClient) ListWorkspaceClasses(ctx context.Context, in *ListWorkspaceClassesRequest, opts ...grpc.CallOption) (*ListWorkspaceClassesResponse, error) {
+	out := new(ListWorkspaceClassesResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspaceService/ListWorkspaceClasses", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *workspaceServiceClient) ParseContextURL(ctx context.Context, in *ParseContextURLRequest, opts ...grpc.CallOption) (*ParseContextURLResponse, error) {
 	out := new(ParseContextURLResponse)
 	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspaceService/ParseContextURL", in, out, opts...)
@@ -211,6 +246,14 @@ type WorkspaceServiceServer interface {
 	StartWorkspace(context.Context, *StartWorkspaceRequest) (*StartWorkspaceResponse, error)
 	// UpdateWorkspace updates the workspace.
 	UpdateWorkspace(context.Context, *UpdateWorkspaceRequest) (*UpdateWorkspaceResponse, error)
+	// StopWorkspace stops a running workspace.
+	StopWorkspace(context.Context, *StopWorkspaceRequest) (*StopWorkspaceResponse, error)
+	// DeleteWorkspace deletes a workspace.
+	// When the workspace is running, it will be stopped as well.
+	// Deleted workspaces cannot be started again.
+	DeleteWorkspace(context.Context, *DeleteWorkspaceRequest) (*DeleteWorkspaceResponse, error)
+	// ListWorkspaceClasses enumerates all available workspace classes.
+	ListWorkspaceClasses(context.Context, *ListWorkspaceClassesRequest) (*ListWorkspaceClassesResponse, error)
 	// ParseContextURL parses a context URL and returns the workspace metadata and spec.
 	// Not implemented yet.
 	ParseContextURL(context.Context, *ParseContextURLRequest) (*ParseContextURLResponse, error)
@@ -248,6 +291,15 @@ func (UnimplementedWorkspaceServiceServer) StartWorkspace(context.Context, *Star
 }
 func (UnimplementedWorkspaceServiceServer) UpdateWorkspace(context.Context, *UpdateWorkspaceRequest) (*UpdateWorkspaceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateWorkspace not implemented")
+}
+func (UnimplementedWorkspaceServiceServer) StopWorkspace(context.Context, *StopWorkspaceRequest) (*StopWorkspaceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StopWorkspace not implemented")
+}
+func (UnimplementedWorkspaceServiceServer) DeleteWorkspace(context.Context, *DeleteWorkspaceRequest) (*DeleteWorkspaceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteWorkspace not implemented")
+}
+func (UnimplementedWorkspaceServiceServer) ListWorkspaceClasses(context.Context, *ListWorkspaceClassesRequest) (*ListWorkspaceClassesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListWorkspaceClasses not implemented")
 }
 func (UnimplementedWorkspaceServiceServer) ParseContextURL(context.Context, *ParseContextURLRequest) (*ParseContextURLResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ParseContextURL not implemented")
@@ -388,6 +440,60 @@ func _WorkspaceService_UpdateWorkspace_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkspaceService_StopWorkspace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StopWorkspaceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspaceServiceServer).StopWorkspace(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.WorkspaceService/StopWorkspace",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspaceServiceServer).StopWorkspace(ctx, req.(*StopWorkspaceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkspaceService_DeleteWorkspace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteWorkspaceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspaceServiceServer).DeleteWorkspace(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.WorkspaceService/DeleteWorkspace",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspaceServiceServer).DeleteWorkspace(ctx, req.(*DeleteWorkspaceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkspaceService_ListWorkspaceClasses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListWorkspaceClassesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspaceServiceServer).ListWorkspaceClasses(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.WorkspaceService/ListWorkspaceClasses",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspaceServiceServer).ListWorkspaceClasses(ctx, req.(*ListWorkspaceClassesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _WorkspaceService_ParseContextURL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ParseContextURLRequest)
 	if err := dec(in); err != nil {
@@ -504,6 +610,18 @@ var WorkspaceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateWorkspace",
 			Handler:    _WorkspaceService_UpdateWorkspace_Handler,
+		},
+		{
+			MethodName: "StopWorkspace",
+			Handler:    _WorkspaceService_StopWorkspace_Handler,
+		},
+		{
+			MethodName: "DeleteWorkspace",
+			Handler:    _WorkspaceService_DeleteWorkspace_Handler,
+		},
+		{
+			MethodName: "ListWorkspaceClasses",
+			Handler:    _WorkspaceService_ListWorkspaceClasses_Handler,
 		},
 		{
 			MethodName: "ParseContextURL",

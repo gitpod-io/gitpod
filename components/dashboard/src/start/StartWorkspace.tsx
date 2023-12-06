@@ -19,7 +19,7 @@ import { getGitpodService, gitpodHostUrl, getIDEFrontendService, IDEFrontendServ
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
 import Alert from "../components/Alert";
-import { workspaceClient, workspacesService } from "../service/public-api";
+import { workspaceClient } from "../service/public-api";
 import { watchWorkspaceStatus } from "../data/workspaces/listen-to-workspace-ws-messages";
 import { Button } from "@podkit/buttons/Button";
 import {
@@ -580,9 +580,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                         {
                                             title: "Stop Workspace",
                                             onClick: () =>
-                                                workspacesService.stopWorkspace({
-                                                    workspaceId: this.props.workspaceId,
-                                                }),
+                                                workspaceClient.stopWorkspace({ workspaceId: this.props.workspaceId }),
                                         },
                                         {
                                             title: "Connect via SSH",
