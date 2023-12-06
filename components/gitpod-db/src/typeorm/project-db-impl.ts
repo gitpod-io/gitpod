@@ -78,6 +78,7 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
         orderDir,
         searchTerm,
         organizationId,
+        prebuildsEnabled,
     }: FindProjectsBySearchTermArgs): Promise<{ total: number; rows: Project[] }> {
         const projectRepo = await this.getRepo();
         const normalizedSearchTerm = searchTerm?.trim();
@@ -102,6 +103,13 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
                     );
                 }),
             );
+        }
+
+        if (prebuildsEnabled !== undefined) {
+            console.log("filtering projects for prebuildsEnabled", prebuildsEnabled);
+            queryBuilder.andWhere("project.settings->>'$.prebuilds.enable' = :enabled", {
+                enabled: `${prebuildsEnabled}`,
+            });
         }
 
         const [rows, total] = await queryBuilder.getManyAndCount();

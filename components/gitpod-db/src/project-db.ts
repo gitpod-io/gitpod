@@ -42,4 +42,5 @@ export type FindProjectsBySearchTermArgs = {
     orderDir: "ASC" | "DESC";
     searchTerm?: string;
     organizationId?: string;
+    prebuildsEnabled?: boolean;
 };
