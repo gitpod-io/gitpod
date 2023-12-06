@@ -28,6 +28,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Subject, SubjectId } from "../auth/subject-id";
 import { ctxTrySubjectId } from "../util/request-context";
 import { reportAuthorizerSubjectId } from "../prometheus-metrics";
+import { ApiTokenScope } from "../auth/api-token-v0";
 
 export function createInitializingAuthorizer(spiceDbAuthorizer: SpiceDBAuthorizer): Authorizer {
     const target = new Authorizer(spiceDbAuthorizer);
@@ -470,6 +471,32 @@ export class Authorizer {
         } else {
             await this.authorizer.writeRelationships(remove(rel.workspace(workspaceID).shared.anyUser));
         }
+    }
+
+    public async addApiToken(tokenId: string, scopes: ApiTokenScope[]): Promise<void> {
+        const relations = scopes
+            .map((s) => {
+                switch (s.permission) {
+                    case "user_read":
+                        return [
+                            set(rel.apitokenv0(tokenId).user_read.anyUser),
+                            set(rel.user(s.targetId).apitoken.apitokenv0(tokenId)),
+                        ];
+                    case "user_write":
+                        return [
+                            set(rel.apitokenv0(tokenId).user_write.anyUser),
+                            set(rel.user(s.targetId).apitoken.apitokenv0(tokenId)),
+                        ];
+                    case "workspace":
+                        return [set(rel.workspace(s.targetId).owner.apitokenv0(tokenId))];
+                }
+            })
+            .flat();
+        await this.authorizer.writeRelationships(...relations);
+    }
+
+    public async removeApiToken(tokenId: string): Promise<void> {
+        await this.removeAllRelationships(SYSTEM_USER_ID, "apitokenv0", tokenId);
     }
 
     public async find(relation: v1.Relationship): Promise<v1.Relationship | undefined> {

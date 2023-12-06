@@ -4,9 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { User } from "@gitpod/gitpod-protocol";
+
 export type SubjectKind = keyof typeof SubjectKindNames;
 const SubjectKindNames = {
     user: "user",
+    apitokenv0: "apitokenv0",
 };
 const SubjectKindByShortName: ReadonlyMap<string, SubjectKind> = new Map(
     Object.keys(SubjectKindNames).map((k) => {
@@ -75,7 +78,10 @@ export class SubjectId {
  */
 export type Subject = string | SubjectId | undefined;
 export namespace Subject {
-    export function toId(subject: Subject): SubjectId {
+    export function toId(subject: User | Subject): SubjectId {
+        if (User.is(subject)) {
+            return SubjectId.fromUserId(subject.id);
+        }
         if (SubjectId.is(subject)) {
             return subject;
         }

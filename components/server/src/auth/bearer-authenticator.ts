@@ -20,6 +20,8 @@ import {
 import { TokenResourceGuard, WithResourceAccessGuard } from "./resource-access";
 import { UserService } from "../user/user-service";
 import { SubjectId } from "./subject-id";
+import { AuthJWT } from "./jwt";
+import { ApiAccessToken } from "./api-token-v0";
 
 export function getBearerToken(authorizationHeader: string | undefined | null): string | undefined {
     if (!authorizationHeader || !(typeof authorizationHeader === "string")) {
@@ -50,6 +52,7 @@ export class BearerAuth {
         @inject(UserDB) private readonly userDB: UserDB,
         @inject(UserService) private readonly userService: UserService,
         @inject(PersonalAccessTokenDB) private readonly personalAccessTokenDB: PersonalAccessTokenDB,
+        @inject(AuthJWT) private readonly authJWT: AuthJWT,
     ) {}
 
     get restHandler(): express.RequestHandler {
@@ -89,7 +92,20 @@ export class BearerAuth {
             throw createBearerAuthError("missing Bearer token");
         }
 
-        const { user, scopes } = await this.userAndScopesFromToken(token);
+        const subject = await this.subjectFromToken(token);
+        if (SubjectId.is(subject)) {
+            // DON'T set req.user here: we are not allowed to _impersonate_ but have to use the subjectId instead.
+            // Contract:
+            //  - impersonation-based authorization (JWT cookies, old scope-based Bearer tokens) sets req.user
+            //  - FGA-based authorization (FGA-backed Bearer tokens) sets req.subjectId
+            //  - when evaulating which authorization to use, we check for req.subjectId first, then req.user
+            //    - !! this is important to avoid privilege escalation (restricted token -> impersonating user)
+            req.subjectId = subject;
+            return;
+        }
+
+        // legacy, resource/functions based access guards
+        const { user, scopes } = subject;
 
         const resourceGuard = new TokenResourceGuard(user.id, scopes);
         (req as WithResourceAccessGuard).resourceGuard = resourceGuard;
@@ -110,7 +126,13 @@ export class BearerAuth {
         if (!token) {
             return undefined;
         }
-        const { user, scopes } = await this.userAndScopesFromToken(token);
+
+        // FGA-backed tokens that map to a SubjectId?
+        const subject = await this.subjectFromToken(token);
+        if (SubjectId.is(subject)) {
+            return subject;
+        }
+        const { user, scopes } = subject;
 
         // gpl: Once we move PAT to FGA-backed scopes, this special case will go away, and covered by a different SubjectIdKind.
         const { isAllAccessFunctionGuard } = FunctionAccessGuard.extractFunctionScopes(scopes);
@@ -121,7 +143,8 @@ export class BearerAuth {
         return SubjectId.fromUserId(user.id);
     }
 
-    private async userAndScopesFromToken(token: string): Promise<{ user: User; scopes: string[] }> {
+    // TODO(gpl) { user, scopes } will go away once we move FGA-backed auth.
+    private async subjectFromToken(token: string): Promise<{ user: User; scopes: string[] } | SubjectId> {
         // We handle two types of Bearer tokens:
         //  1. Personal Access Tokens which are prefixed with `gitpod_pat_`
         //  2. Old(er) access tokens which do not have any specific prefix.
@@ -147,6 +170,17 @@ export class BearerAuth {
 
                 const userByID = await this.userService.findUserById(pat.userId, pat.userId);
                 return { user: userByID, scopes: pat.scopes };
+            } catch (e) {
+                log.error("Failed to authenticate using PAT", e);
+                // We must not leak error details to the user.
+                throw createBearerAuthError("Invalid personal access token");
+            }
+        }
+
+        if (ApiAccessToken.validatePrefix(token)) {
+            try {
+                const parsed = await ApiAccessToken.parse(token, this.authJWT);
+                return parsed.subjectId();
             } catch (e) {
                 log.error("Failed to authenticate using PAT", e);
                 // We must not leak error details to the user.

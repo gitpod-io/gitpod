@@ -6,7 +6,6 @@
 
 import { status } from "@grpc/grpc-js";
 import fetch from "node-fetch";
-import { User } from "@gitpod/gitpod-protocol/lib/protocol";
 import * as util from "util";
 import express from "express";
 import { inject, injectable } from "inversify";
@@ -28,8 +27,8 @@ import { Config } from "../config";
 import { CachingBlobServiceClientProvider } from "../util/content-service-sugar";
 import { Authorizer } from "../authorization/authorizer";
 import { FGAFunctionAccessGuard } from "../auth/resource-access";
-import { runWithSubjectId } from "../util/request-context";
-import { SubjectId } from "../auth/subject-id";
+import { runWithReqSubjectId } from "../auth/express";
+import { ctxSubjectId, ctxUserId } from "../util/request-context";
 
 // By default: 5 kind of resources * 20 revs * 1Mb = 100Mb max in the content service for user data.
 const defaultRevLimit = 20;
@@ -101,46 +100,48 @@ export class CodeSyncService {
             return next();
         });
         router.use(this.auth.restHandler); // expects Bearer token and authenticates req.user, throws otherwise
+        router.use(runWithReqSubjectId);
         router.use(async (req, res, next) => {
-            if (!User.is(req.user)) {
+            const userId = getUserId(req);
+            if (!userId) {
                 res.sendStatus(400);
                 return;
             }
 
-            const userId = req.user.id;
-            await runWithSubjectId(SubjectId.fromUserId(userId), async () => {
-                try {
-                    await UserRateLimiter.instance(this.config.rateLimiter).consume(userId, accessCodeSyncStorage);
-                } catch (e) {
-                    if (e instanceof Error) {
-                        throw e;
-                    }
-                    res.setHeader("Retry-After", String(Math.round(e.msBeforeNext / 1000)) || 1);
-                    res.status(429).send("Too Many Requests");
-                    return;
+            try {
+                await UserRateLimiter.instance(this.config.rateLimiter).consume(
+                    ctxSubjectId().toString(),
+                    accessCodeSyncStorage,
+                );
+            } catch (e) {
+                if (e instanceof Error) {
+                    throw e;
                 }
+                res.setHeader("Retry-After", String(Math.round(e.msBeforeNext / 1000)) || 1);
+                res.status(429).send("Too Many Requests");
+                return;
+            }
 
-                const functionGuard = (req.user as WithFunctionAccessGuard).functionGuard;
-                if (!!functionGuard) {
-                    // If we authorize with scopes, there is a FunctionGuard
-                    const guard = new FGAFunctionAccessGuard(userId, functionGuard);
-                    if (!(await guard.canAccess(accessCodeSyncStorage))) {
-                        res.sendStatus(403);
-                        return;
-                    }
-                }
-
-                if (!(await this.authorizer.hasPermissionOnUser(userId, "code_sync", userId))) {
+            const functionGuard = (req as WithFunctionAccessGuard).functionGuard;
+            if (!!functionGuard) {
+                // If we authorize with scopes, there is a FunctionGuard
+                const guard = new FGAFunctionAccessGuard(userId, functionGuard);
+                if (!(await guard.canAccess(accessCodeSyncStorage))) {
                     res.sendStatus(403);
                     return;
                 }
-            });
+            }
+
+            if (!(await this.authorizer.hasPermissionOnUser(ctxSubjectId(), "code_sync", userId))) {
+                res.sendStatus(403);
+                return;
+            }
 
             return next();
         });
 
         router.get("/v1/manifest", async (req, res) => {
-            const manifest = await this.db.getManifest(req.user!.id);
+            const manifest = await this.db.getManifest(getUserId(req));
             if (!manifest) {
                 res.sendStatus(204);
                 return;
@@ -167,7 +168,7 @@ export class CodeSyncService {
         router.delete("/v1/resource/:resource/:ref?", this.deleteResource.bind(this));
         router.delete("/v1/resource", async (req, res) => {
             // This endpoint is used to delete settings-sync data only
-            const userId = req.user!.id;
+            const userId = getUserId(req);
             await this.db.deleteSettingsSyncResources(userId, async () => {
                 const request = new DeleteRequest();
                 request.setOwnerId(userId);
@@ -185,13 +186,13 @@ export class CodeSyncService {
         });
 
         router.get("/v1/collection", async (req, res) => {
-            const collections = await this.db.getCollections(req.user!.id);
+            const collections = await this.db.getCollections(getUserId(req));
 
             res.json(collections);
             return;
         });
         router.post("/v1/collection", async (req, res) => {
-            const collection = await this.db.createCollection(req.user!.id);
+            const collection = await this.db.createCollection(getUserId(req));
 
             res.type("text/plain");
             res.send(collection);
@@ -199,7 +200,7 @@ export class CodeSyncService {
         });
         router.delete("/v1/collection/:collection?", async (req, res) => {
             const { collection } = req.params;
-            await this.deleteCollection(req.user!.id, collection);
+            await this.deleteCollection(getUserId(req), collection);
 
             res.sendStatus(200);
         });
@@ -216,14 +217,14 @@ export class CodeSyncService {
         }
 
         if (collection) {
-            const valid = await this.db.isCollection(req.user!.id, collection);
+            const valid = await this.db.isCollection(getUserId(req), collection);
             if (!valid) {
                 res.sendStatus(405);
                 return;
             }
         }
 
-        const revs = await this.db.getResources(req.user!.id, resourceKey, collection);
+        const revs = await this.db.getResources(getUserId(req), resourceKey, collection);
         if (!revs.length) {
             res.sendStatus(204);
             return;
@@ -249,14 +250,14 @@ export class CodeSyncService {
         }
 
         if (collection) {
-            const valid = await this.db.isCollection(req.user!.id, collection);
+            const valid = await this.db.isCollection(getUserId(req), collection);
             if (!valid) {
                 res.sendStatus(405);
                 return;
             }
         }
 
-        const resourceRev = (await this.db.getResource(req.user!.id, resourceKey, ref, collection))?.rev;
+        const resourceRev = (await this.db.getResource(getUserId(req), resourceKey, ref, collection))?.rev;
         if (!resourceRev) {
             res.setHeader("etag", "0");
             res.sendStatus(204);
@@ -270,7 +271,7 @@ export class CodeSyncService {
         let content: string;
         const contentType = req.headers["content-type"] || "*/*";
         const request = new DownloadUrlRequest();
-        request.setOwnerId(req.user!.id);
+        request.setOwnerId(getUserId(req));
         request.setName(toObjectName(resourceKey, resourceRev, collection));
         request.setContentType(contentType);
         try {
@@ -312,7 +313,7 @@ export class CodeSyncService {
         }
 
         if (collection) {
-            const valid = await this.db.isCollection(req.user!.id, collection);
+            const valid = await this.db.isCollection(getUserId(req), collection);
             if (!valid) {
                 res.sendStatus(405);
                 return;
@@ -328,7 +329,7 @@ export class CodeSyncService {
                   this.config.codeSync?.revLimit ||
                   defaultRevLimit;
         const isEditSessionsResource = resourceKey === "editSessions";
-        const userId = req.user!.id;
+        const userId = getUserId(req);
         const contentType = req.headers["content-type"] || "*/*";
         const newRev = await this.db.insert(
             userId,
@@ -395,14 +396,14 @@ export class CodeSyncService {
         }
 
         if (collection) {
-            const valid = await this.db.isCollection(req.user!.id, collection);
+            const valid = await this.db.isCollection(getUserId(req), collection);
             if (!valid) {
                 res.sendStatus(405);
                 return;
             }
         }
 
-        await this.doDeleteResource(req.user!.id, resourceKey, ref, collection);
+        await this.doDeleteResource(getUserId(req), resourceKey, ref, collection);
         res.sendStatus(200);
         return;
     }
@@ -465,4 +466,8 @@ export class CodeSyncService {
             throw e;
         }
     }
+}
+
+function getUserId(req: express.Request): string {
+    return ctxUserId(); // TODO(gpl) Is there a way to pass this as parameter, so we can use a token later on?
 }
