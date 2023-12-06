@@ -35,7 +35,6 @@ var workspaceCreateCmd = &cobra.Command{
 		}
 		gitpod, err := getGitpodClientV1(cmd.Context())
 		if err != nil {
-			fmt.Println("Failed to connect to Gitpod. Please try again later.")
 			return err
 		}
 		gitpodExperimental, err := getGitpodClient(cmd.Context())
