@@ -313,7 +313,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                                 delay(5000)
                                                 val updatedJoinLinkResp = resolveJoinLink(ideUrl, ownerToken, connectParams)
                                                 if (updatedJoinLinkResp != null && joinLinkResp != null && updatedJoinLinkResp.appPid != joinLinkResp!!.appPid) {
-                                                    clientHandle.updateJoinLink(URI(updatedJoinLinkResp.joinLink), false)
+                                                    clientHandle.updateJoinLink(URI(updatedJoinLinkResp.joinLink), true)
                                                     joinLinkResp = updatedJoinLinkResp
                                                 }
                                             } catch(t: Throwable) {
