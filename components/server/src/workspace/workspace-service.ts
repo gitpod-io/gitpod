@@ -16,6 +16,7 @@ import {
     PortVisibility,
     Project,
     SetWorkspaceTimeoutResult,
+    Snapshot,
     StartWorkspaceResult,
     User,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
@@ -45,11 +46,13 @@ import {
     MarkActiveRequest,
     AdmissionLevel,
     ControlAdmissionRequest,
+    TakeSnapshotRequest,
 } from "@gitpod/ws-manager/lib";
 import {
     WorkspaceStarter,
     StartWorkspaceOptions as StarterStartWorkspaceOptions,
     isWorkspaceClassDiscoveryEnabled,
+    isClusterMaintenanceError,
 } from "./workspace-starter";
 import { LogContext, log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
@@ -67,6 +70,7 @@ import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { OrganizationService } from "../orgs/organization-service";
 import { isGrpcError } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { RedisSubscriber } from "../messaging/redis-subscriber";
+import { SnapshotService } from "./snapshot-service";
 
 export interface StartWorkspaceOptions extends StarterStartWorkspaceOptions {
     /**
@@ -88,6 +92,7 @@ export class WorkspaceService {
         @inject(EntitlementService) private readonly entitlementService: EntitlementService,
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
         @inject(OrganizationService) private readonly orgService: OrganizationService,
+        @inject(SnapshotService) private readonly snapshotService: SnapshotService,
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
         @inject(HeadlessLogService) private readonly headlessLogService: HeadlessLogService,
         @inject(Authorizer) private readonly auth: Authorizer,
@@ -987,6 +992,67 @@ export class WorkspaceService {
             source: "installation",
             image: this.config.workspaceDefaults.workspaceImage,
         };
+    }
+
+    public async takeSnapshot(userId: string, options: GitpodServer.TakeSnapshotOptions): Promise<Snapshot> {
+        const { workspaceId, dontWait } = options;
+        await this.auth.checkPermissionOnWorkspace(userId, "create_snapshot", workspaceId);
+        const workspace = await this.doGetWorkspace(userId, workspaceId);
+        const instance = await this.db.findRunningInstance(workspaceId);
+        if (!instance) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} has no running instance`);
+        }
+        const client = await this.clientProvider.get(instance.region);
+        const request = new TakeSnapshotRequest();
+        request.setId(instance.id);
+        request.setReturnImmediately(true);
+
+        // this triggers the snapshots, but returns early! cmp. waitForSnapshot to wait for it's completion
+        let snapshotUrl;
+        try {
+            const resp = await client.takeSnapshot({}, request);
+            snapshotUrl = resp.getUrl();
+        } catch (err) {
+            if (isClusterMaintenanceError(err)) {
+                throw new ApplicationError(
+                    ErrorCodes.PRECONDITION_FAILED,
+                    "Cannot take a snapshot because the workspace cluster is under maintenance. Please try again in a few minutes",
+                );
+            }
+            throw err;
+        }
+        const snapshot = await this.snapshotService.createSnapshot(options, snapshotUrl);
+
+        // to be backwards compatible during rollout, we require new clients to explicitly pass "dontWait: true"
+        // TODO: remove wait option after migrate to gRPC
+        const waitOpts = { workspaceOwner: workspace.ownerId, snapshot };
+        if (!dontWait) {
+            await this.snapshotService.waitForSnapshot(waitOpts);
+        } else {
+            this.snapshotService
+                .waitForSnapshot(waitOpts)
+                .catch((err) => log.error({ userId, workspaceId }, "internalDoWaitForWorkspace", err));
+        }
+        return snapshot;
+    }
+
+    /**
+     * @throws ApplicationError with either NOT_FOUND or SNAPSHOT_ERROR in case the snapshot is not done yet.
+     */
+    public async waitForSnapshot(userId: string, snapshotId: string): Promise<void> {
+        const snapshot = await this.db.findSnapshotById(snapshotId);
+        if (!snapshot) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `No snapshot with id '${snapshotId}' found.`);
+        }
+        await this.auth.checkPermissionOnWorkspace(userId, "create_snapshot", snapshot.originalWorkspaceId);
+        const workspace = await this.doGetWorkspace(userId, snapshot.originalWorkspaceId);
+        await this.snapshotService.waitForSnapshot({ workspaceOwner: workspace.ownerId, snapshot });
+    }
+
+    async listSnapshots(userId: string, workspaceId: string): Promise<Snapshot[]> {
+        // guard if user has workspace get permission
+        await this.doGetWorkspace(userId, workspaceId);
+        return await this.db.findSnapshotsByWorkspaceId(workspaceId);
     }
 }
 

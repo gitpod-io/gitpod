@@ -39,6 +39,12 @@ import {
     StopWorkspaceRequest,
     StopWorkspaceResponse,
     AdmissionLevel,
+    CreateWorkspaceSnapshotRequest,
+    CreateWorkspaceSnapshotResponse,
+    ListWorkspaceSnapshotsRequest,
+    ListWorkspaceSnapshotsResponse,
+    WaitForWorkspaceSnapshotRequest,
+    WaitForWorkspaceSnapshotResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { converter } from "./public-api";
 import { getGitpodService } from "./service";
@@ -358,5 +364,50 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
         response.pagination = new PaginationResponse();
         response.workspaceClasses = list.map((i) => converter.toWorkspaceClass(i));
         return response;
+    }
+
+    async createWorkspaceSnapshot(
+        req: PartialMessage<CreateWorkspaceSnapshotRequest>,
+        _options?: CallOptions | undefined,
+    ): Promise<CreateWorkspaceSnapshotResponse> {
+        if (!req.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        const snapshotId = await getGitpodService().server.takeSnapshot({
+            workspaceId: req.workspaceId,
+            dontWait: true,
+        });
+        return new CreateWorkspaceSnapshotResponse({
+            snapshot: converter.toWorkspaceSnapshot({
+                id: snapshotId,
+                originalWorkspaceId: req.workspaceId,
+            }),
+        });
+    }
+
+    async waitForWorkspaceSnapshot(
+        req: PartialMessage<WaitForWorkspaceSnapshotRequest>,
+        _options?: CallOptions | undefined,
+    ): Promise<WaitForWorkspaceSnapshotResponse> {
+        if (!req.snapshotId || !uuidValidate(req.snapshotId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "snapshotId is required");
+        }
+        await getGitpodService().server.waitForSnapshot(req.snapshotId);
+        return new WaitForWorkspaceSnapshotResponse();
+    }
+
+    async listWorkspaceSnapshots(
+        req: PartialMessage<ListWorkspaceSnapshotsRequest>,
+        _options?: CallOptions | undefined,
+    ): Promise<ListWorkspaceSnapshotsResponse> {
+        if (!req.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        const snapshotIdList = await getGitpodService().server.getSnapshots(req.workspaceId);
+        return new ListWorkspaceSnapshotsResponse({
+            snapshots: snapshotIdList.map((id) =>
+                converter.toWorkspaceSnapshot({ id, originalWorkspaceId: req.workspaceId }),
+            ),
+        });
     }
 }

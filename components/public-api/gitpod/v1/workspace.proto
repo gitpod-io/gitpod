@@ -63,6 +63,16 @@ service WorkspaceService {
   // GetWorkspaceEditorCredentials returns an credentials that is used in editor
   // to encrypt and decrypt secrets
   rpc GetWorkspaceEditorCredentials(GetWorkspaceEditorCredentialsRequest) returns (GetWorkspaceEditorCredentialsResponse) {}
+
+  // CreateWorkspaceSnapshot creates a snapshot of the workspace that can be
+  // shared with others.
+  rpc CreateWorkspaceSnapshot(CreateWorkspaceSnapshotRequest) returns (CreateWorkspaceSnapshotResponse) {}
+
+  // WaitWorkspaceSnapshot waits for the snapshot to be available or failed.
+  rpc WaitForWorkspaceSnapshot(WaitForWorkspaceSnapshotRequest) returns (WaitForWorkspaceSnapshotResponse) {}
+
+  // ListWorkspaceSnapshots lists the snapshots.
+  rpc ListWorkspaceSnapshots(ListWorkspaceSnapshotsRequest) returns (ListWorkspaceSnapshotsResponse) {}
 }
 
 message GetWorkspaceRequest {
@@ -752,4 +762,49 @@ message WorkspaceClass {
 
   // is_default indicates if this workspace class is the default one
   bool is_default = 4;
+}
+
+message CreateWorkspaceSnapshotRequest {
+  // workspace_id specifies the workspace to create snapshot
+  //
+  // +required
+  string workspace_id = 1;
+}
+
+message CreateWorkspaceSnapshotResponse {
+  WorkspaceSnapshot snapshot = 1;
+}
+
+message WaitForWorkspaceSnapshotRequest {
+  // snapshot_id specifies the snapshot to wait for
+  //
+  // +required
+  string snapshot_id = 1;
+}
+
+message WaitForWorkspaceSnapshotResponse {}
+
+message ListWorkspaceSnapshotsRequest {
+  PaginationRequest pagination = 1;
+
+  // workspace_id
+  //
+  // +required
+  string workspace_id = 2;
+}
+
+message ListWorkspaceSnapshotsResponse {
+  PaginationResponse pagination = 1;
+
+  repeated WorkspaceSnapshot snapshots = 2;
+}
+
+message WorkspaceSnapshot {
+  // id is the unique identifier of the snapshot
+  string id = 1;
+
+  // workspace_id is the source workspace id of snapshot
+  string workspace_id = 2;
+
+  google.protobuf.Timestamp creation_time = 3;
 }

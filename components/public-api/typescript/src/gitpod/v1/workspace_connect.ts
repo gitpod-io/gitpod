@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetWorkspaceDefaultImageRequest, GetWorkspaceDefaultImageResponse, GetWorkspaceEditorCredentialsRequest, GetWorkspaceEditorCredentialsResponse, GetWorkspaceOwnerTokenRequest, GetWorkspaceOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspaceClassesRequest, ListWorkspaceClassesResponse, ListWorkspacesRequest, ListWorkspacesResponse, ParseContextURLRequest, ParseContextURLResponse, SendHeartBeatRequest, SendHeartBeatResponse, StartWorkspaceRequest, StartWorkspaceResponse, StopWorkspaceRequest, StopWorkspaceResponse, UpdateWorkspaceRequest, UpdateWorkspaceResponse, WatchWorkspaceStatusRequest, WatchWorkspaceStatusResponse } from "./workspace_pb.js";
+import { CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, CreateWorkspaceSnapshotRequest, CreateWorkspaceSnapshotResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetWorkspaceDefaultImageRequest, GetWorkspaceDefaultImageResponse, GetWorkspaceEditorCredentialsRequest, GetWorkspaceEditorCredentialsResponse, GetWorkspaceOwnerTokenRequest, GetWorkspaceOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspaceClassesRequest, ListWorkspaceClassesResponse, ListWorkspaceSnapshotsRequest, ListWorkspaceSnapshotsResponse, ListWorkspacesRequest, ListWorkspacesResponse, ParseContextURLRequest, ParseContextURLResponse, SendHeartBeatRequest, SendHeartBeatResponse, StartWorkspaceRequest, StartWorkspaceResponse, StopWorkspaceRequest, StopWorkspaceResponse, UpdateWorkspaceRequest, UpdateWorkspaceResponse, WaitForWorkspaceSnapshotRequest, WaitForWorkspaceSnapshotResponse, WatchWorkspaceStatusRequest, WatchWorkspaceStatusResponse } from "./workspace_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -181,6 +181,40 @@ export const WorkspaceService = {
       name: "GetWorkspaceEditorCredentials",
       I: GetWorkspaceEditorCredentialsRequest,
       O: GetWorkspaceEditorCredentialsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * CreateWorkspaceSnapshot creates a snapshot of the workspace that can be
+     * shared with others.
+     *
+     * @generated from rpc gitpod.v1.WorkspaceService.CreateWorkspaceSnapshot
+     */
+    createWorkspaceSnapshot: {
+      name: "CreateWorkspaceSnapshot",
+      I: CreateWorkspaceSnapshotRequest,
+      O: CreateWorkspaceSnapshotResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * WaitWorkspaceSnapshot waits for the snapshot to be available or failed.
+     *
+     * @generated from rpc gitpod.v1.WorkspaceService.WaitForWorkspaceSnapshot
+     */
+    waitForWorkspaceSnapshot: {
+      name: "WaitForWorkspaceSnapshot",
+      I: WaitForWorkspaceSnapshotRequest,
+      O: WaitForWorkspaceSnapshotResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListWorkspaceSnapshots lists the snapshots.
+     *
+     * @generated from rpc gitpod.v1.WorkspaceService.ListWorkspaceSnapshots
+     */
+    listWorkspaceSnapshots: {
+      name: "ListWorkspaceSnapshots",
+      I: ListWorkspaceSnapshotsRequest,
+      O: ListWorkspaceSnapshotsResponse,
       kind: MethodKind.Unary,
     },
   }

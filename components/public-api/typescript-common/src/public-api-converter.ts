@@ -65,6 +65,7 @@ import {
     WorkspacePhase_Phase,
     WorkspacePort,
     WorkspacePort_Protocol,
+    WorkspaceSnapshot,
     WorkspaceSpec,
     WorkspaceSpec_GitSpec,
     WorkspaceSpec_WorkspaceType,
@@ -115,6 +116,7 @@ import {
     NamedWorkspaceFeatureFlag,
     WorkspaceAutostartOption,
     IDESettings,
+    Snapshot,
 } from "@gitpod/gitpod-protocol/lib/protocol";
 import {
     OrgMemberInfo,
@@ -1267,5 +1269,15 @@ export class PublicAPIConverter {
             region,
             workspaceClass: o.workspaceClass,
         };
+    }
+
+    toWorkspaceSnapshot(
+        snapshot: Pick<Snapshot, "id" | "originalWorkspaceId"> & Partial<Pick<Snapshot, "creationTime">>,
+    ): WorkspaceSnapshot {
+        return new WorkspaceSnapshot({
+            id: snapshot.id,
+            workspaceId: snapshot.originalWorkspaceId,
+            creationTime: snapshot.creationTime ? this.toTimestamp(snapshot.creationTime) : undefined,
+        });
     }
 }

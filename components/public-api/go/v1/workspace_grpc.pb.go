@@ -65,6 +65,13 @@ type WorkspaceServiceClient interface {
 	// GetWorkspaceEditorCredentials returns an credentials that is used in editor
 	// to encrypt and decrypt secrets
 	GetWorkspaceEditorCredentials(ctx context.Context, in *GetWorkspaceEditorCredentialsRequest, opts ...grpc.CallOption) (*GetWorkspaceEditorCredentialsResponse, error)
+	// CreateWorkspaceSnapshot creates a snapshot of the workspace that can be
+	// shared with others.
+	CreateWorkspaceSnapshot(ctx context.Context, in *CreateWorkspaceSnapshotRequest, opts ...grpc.CallOption) (*CreateWorkspaceSnapshotResponse, error)
+	// WaitWorkspaceSnapshot waits for the snapshot to be available or failed.
+	WaitForWorkspaceSnapshot(ctx context.Context, in *WaitForWorkspaceSnapshotRequest, opts ...grpc.CallOption) (*WaitForWorkspaceSnapshotResponse, error)
+	// ListWorkspaceSnapshots lists the snapshots.
+	ListWorkspaceSnapshots(ctx context.Context, in *ListWorkspaceSnapshotsRequest, opts ...grpc.CallOption) (*ListWorkspaceSnapshotsResponse, error)
 }
 
 type workspaceServiceClient struct {
@@ -224,6 +231,33 @@ func (c *workspaceServiceClient) GetWorkspaceEditorCredentials(ctx context.Conte
 	return out, nil
 }
 
+func (c *workspaceServiceClient) CreateWorkspaceSnapshot(ctx context.Context, in *CreateWorkspaceSnapshotRequest, opts ...grpc.CallOption) (*CreateWorkspaceSnapshotResponse, error) {
+	out := new(CreateWorkspaceSnapshotResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspaceService/CreateWorkspaceSnapshot", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workspaceServiceClient) WaitForWorkspaceSnapshot(ctx context.Context, in *WaitForWorkspaceSnapshotRequest, opts ...grpc.CallOption) (*WaitForWorkspaceSnapshotResponse, error) {
+	out := new(WaitForWorkspaceSnapshotResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspaceService/WaitForWorkspaceSnapshot", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workspaceServiceClient) ListWorkspaceSnapshots(ctx context.Context, in *ListWorkspaceSnapshotsRequest, opts ...grpc.CallOption) (*ListWorkspaceSnapshotsResponse, error) {
+	out := new(ListWorkspaceSnapshotsResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspaceService/ListWorkspaceSnapshots", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkspaceServiceServer is the server API for WorkspaceService service.
 // All implementations must embed UnimplementedWorkspaceServiceServer
 // for forward compatibility
@@ -267,6 +301,13 @@ type WorkspaceServiceServer interface {
 	// GetWorkspaceEditorCredentials returns an credentials that is used in editor
 	// to encrypt and decrypt secrets
 	GetWorkspaceEditorCredentials(context.Context, *GetWorkspaceEditorCredentialsRequest) (*GetWorkspaceEditorCredentialsResponse, error)
+	// CreateWorkspaceSnapshot creates a snapshot of the workspace that can be
+	// shared with others.
+	CreateWorkspaceSnapshot(context.Context, *CreateWorkspaceSnapshotRequest) (*CreateWorkspaceSnapshotResponse, error)
+	// WaitWorkspaceSnapshot waits for the snapshot to be available or failed.
+	WaitForWorkspaceSnapshot(context.Context, *WaitForWorkspaceSnapshotRequest) (*WaitForWorkspaceSnapshotResponse, error)
+	// ListWorkspaceSnapshots lists the snapshots.
+	ListWorkspaceSnapshots(context.Context, *ListWorkspaceSnapshotsRequest) (*ListWorkspaceSnapshotsResponse, error)
 	mustEmbedUnimplementedWorkspaceServiceServer()
 }
 
@@ -315,6 +356,15 @@ func (UnimplementedWorkspaceServiceServer) GetWorkspaceOwnerToken(context.Contex
 }
 func (UnimplementedWorkspaceServiceServer) GetWorkspaceEditorCredentials(context.Context, *GetWorkspaceEditorCredentialsRequest) (*GetWorkspaceEditorCredentialsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetWorkspaceEditorCredentials not implemented")
+}
+func (UnimplementedWorkspaceServiceServer) CreateWorkspaceSnapshot(context.Context, *CreateWorkspaceSnapshotRequest) (*CreateWorkspaceSnapshotResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateWorkspaceSnapshot not implemented")
+}
+func (UnimplementedWorkspaceServiceServer) WaitForWorkspaceSnapshot(context.Context, *WaitForWorkspaceSnapshotRequest) (*WaitForWorkspaceSnapshotResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method WaitForWorkspaceSnapshot not implemented")
+}
+func (UnimplementedWorkspaceServiceServer) ListWorkspaceSnapshots(context.Context, *ListWorkspaceSnapshotsRequest) (*ListWorkspaceSnapshotsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListWorkspaceSnapshots not implemented")
 }
 func (UnimplementedWorkspaceServiceServer) mustEmbedUnimplementedWorkspaceServiceServer() {}
 
@@ -584,6 +634,60 @@ func _WorkspaceService_GetWorkspaceEditorCredentials_Handler(srv interface{}, ct
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkspaceService_CreateWorkspaceSnapshot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateWorkspaceSnapshotRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspaceServiceServer).CreateWorkspaceSnapshot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.WorkspaceService/CreateWorkspaceSnapshot",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspaceServiceServer).CreateWorkspaceSnapshot(ctx, req.(*CreateWorkspaceSnapshotRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkspaceService_WaitForWorkspaceSnapshot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WaitForWorkspaceSnapshotRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspaceServiceServer).WaitForWorkspaceSnapshot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.WorkspaceService/WaitForWorkspaceSnapshot",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspaceServiceServer).WaitForWorkspaceSnapshot(ctx, req.(*WaitForWorkspaceSnapshotRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkspaceService_ListWorkspaceSnapshots_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListWorkspaceSnapshotsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspaceServiceServer).ListWorkspaceSnapshots(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.WorkspaceService/ListWorkspaceSnapshots",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspaceServiceServer).ListWorkspaceSnapshots(ctx, req.(*ListWorkspaceSnapshotsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorkspaceService_ServiceDesc is the grpc.ServiceDesc for WorkspaceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -642,6 +746,18 @@ var WorkspaceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetWorkspaceEditorCredentials",
 			Handler:    _WorkspaceService_GetWorkspaceEditorCredentials_Handler,
+		},
+		{
+			MethodName: "CreateWorkspaceSnapshot",
+			Handler:    _WorkspaceService_CreateWorkspaceSnapshot_Handler,
+		},
+		{
+			MethodName: "WaitForWorkspaceSnapshot",
+			Handler:    _WorkspaceService_WaitForWorkspaceSnapshot_Handler,
+		},
+		{
+			MethodName: "ListWorkspaceSnapshots",
+			Handler:    _WorkspaceService_ListWorkspaceSnapshots_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

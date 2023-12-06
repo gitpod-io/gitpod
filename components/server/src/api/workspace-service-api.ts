@@ -37,6 +37,12 @@ import {
     ListWorkspaceClassesRequest,
     ListWorkspaceClassesResponse,
     AdmissionLevel,
+    CreateWorkspaceSnapshotRequest,
+    CreateWorkspaceSnapshotResponse,
+    ListWorkspaceSnapshotsRequest,
+    ListWorkspaceSnapshotsResponse,
+    WaitForWorkspaceSnapshotRequest,
+    WaitForWorkspaceSnapshotResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { inject, injectable } from "inversify";
 import { WorkspaceService } from "../workspace/workspace-service";
@@ -352,5 +358,37 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         response.pagination = new PaginationResponse();
         response.workspaceClasses = clsList.map((i) => this.apiConverter.toWorkspaceClass(i));
         return response;
+    }
+
+    async createWorkspaceSnapshot(req: CreateWorkspaceSnapshotRequest): Promise<CreateWorkspaceSnapshotResponse> {
+        if (!req.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        const snapshot = await this.workspaceService.takeSnapshot(ctxUserId(), {
+            workspaceId: req.workspaceId,
+            dontWait: true,
+        });
+        return new CreateWorkspaceSnapshotResponse({
+            snapshot: this.apiConverter.toWorkspaceSnapshot(snapshot),
+        });
+    }
+
+    async waitForWorkspaceSnapshot(req: WaitForWorkspaceSnapshotRequest): Promise<WaitForWorkspaceSnapshotResponse> {
+        if (!req.snapshotId || !uuidValidate(req.snapshotId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "snapshotId is required");
+        }
+        await this.workspaceService.waitForSnapshot(ctxUserId(), req.snapshotId);
+        return new WaitForWorkspaceSnapshotResponse();
+    }
+
+    async listWorkspaceSnapshots(req: ListWorkspaceSnapshotsRequest): Promise<ListWorkspaceSnapshotsResponse> {
+        if (!req.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        // TODO: pagination
+        const snapshotList = await this.workspaceService.listSnapshots(ctxUserId(), req.workspaceId);
+        return new ListWorkspaceSnapshotsResponse({
+            snapshots: snapshotList.map((e) => this.apiConverter.toWorkspaceSnapshot(e)),
+        });
     }
 }

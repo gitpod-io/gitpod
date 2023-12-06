@@ -148,3 +148,33 @@ func (s *ProxyWorkspaceServiceHandler) GetWorkspaceEditorCredentials(ctx context
 
 	return connect_go.NewResponse(resp), nil
 }
+
+func (s *ProxyWorkspaceServiceHandler) CreateWorkspaceSnapshot(ctx context.Context, req *connect_go.Request[v1.CreateWorkspaceSnapshotRequest]) (*connect_go.Response[v1.CreateWorkspaceSnapshotResponse], error) {
+	resp, err := s.Client.CreateWorkspaceSnapshot(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
+func (s *ProxyWorkspaceServiceHandler) WaitForWorkspaceSnapshot(ctx context.Context, req *connect_go.Request[v1.WaitForWorkspaceSnapshotRequest]) (*connect_go.Response[v1.WaitForWorkspaceSnapshotResponse], error) {
+	resp, err := s.Client.WaitForWorkspaceSnapshot(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
+func (s *ProxyWorkspaceServiceHandler) ListWorkspaceSnapshots(ctx context.Context, req *connect_go.Request[v1.ListWorkspaceSnapshotsRequest]) (*connect_go.Response[v1.ListWorkspaceSnapshotsResponse], error) {
+	resp, err := s.Client.ListWorkspaceSnapshots(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}

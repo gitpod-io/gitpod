@@ -3197,3 +3197,296 @@ export class WorkspaceClass extends Message<WorkspaceClass> {
     return proto3.util.equals(WorkspaceClass, a, b);
   }
 }
+
+/**
+ * @generated from message gitpod.v1.CreateWorkspaceSnapshotRequest
+ */
+export class CreateWorkspaceSnapshotRequest extends Message<CreateWorkspaceSnapshotRequest> {
+  /**
+   * workspace_id specifies the workspace to create snapshot
+   *
+   * +required
+   *
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  constructor(data?: PartialMessage<CreateWorkspaceSnapshotRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.CreateWorkspaceSnapshotRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateWorkspaceSnapshotRequest {
+    return new CreateWorkspaceSnapshotRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateWorkspaceSnapshotRequest {
+    return new CreateWorkspaceSnapshotRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateWorkspaceSnapshotRequest {
+    return new CreateWorkspaceSnapshotRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CreateWorkspaceSnapshotRequest | PlainMessage<CreateWorkspaceSnapshotRequest> | undefined, b: CreateWorkspaceSnapshotRequest | PlainMessage<CreateWorkspaceSnapshotRequest> | undefined): boolean {
+    return proto3.util.equals(CreateWorkspaceSnapshotRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.CreateWorkspaceSnapshotResponse
+ */
+export class CreateWorkspaceSnapshotResponse extends Message<CreateWorkspaceSnapshotResponse> {
+  /**
+   * @generated from field: gitpod.v1.WorkspaceSnapshot snapshot = 1;
+   */
+  snapshot?: WorkspaceSnapshot;
+
+  constructor(data?: PartialMessage<CreateWorkspaceSnapshotResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.CreateWorkspaceSnapshotResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "snapshot", kind: "message", T: WorkspaceSnapshot },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateWorkspaceSnapshotResponse {
+    return new CreateWorkspaceSnapshotResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateWorkspaceSnapshotResponse {
+    return new CreateWorkspaceSnapshotResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateWorkspaceSnapshotResponse {
+    return new CreateWorkspaceSnapshotResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CreateWorkspaceSnapshotResponse | PlainMessage<CreateWorkspaceSnapshotResponse> | undefined, b: CreateWorkspaceSnapshotResponse | PlainMessage<CreateWorkspaceSnapshotResponse> | undefined): boolean {
+    return proto3.util.equals(CreateWorkspaceSnapshotResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.WaitForWorkspaceSnapshotRequest
+ */
+export class WaitForWorkspaceSnapshotRequest extends Message<WaitForWorkspaceSnapshotRequest> {
+  /**
+   * snapshot_id specifies the snapshot to wait for
+   *
+   * +required
+   *
+   * @generated from field: string snapshot_id = 1;
+   */
+  snapshotId = "";
+
+  constructor(data?: PartialMessage<WaitForWorkspaceSnapshotRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.WaitForWorkspaceSnapshotRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "snapshot_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WaitForWorkspaceSnapshotRequest {
+    return new WaitForWorkspaceSnapshotRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WaitForWorkspaceSnapshotRequest {
+    return new WaitForWorkspaceSnapshotRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WaitForWorkspaceSnapshotRequest {
+    return new WaitForWorkspaceSnapshotRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WaitForWorkspaceSnapshotRequest | PlainMessage<WaitForWorkspaceSnapshotRequest> | undefined, b: WaitForWorkspaceSnapshotRequest | PlainMessage<WaitForWorkspaceSnapshotRequest> | undefined): boolean {
+    return proto3.util.equals(WaitForWorkspaceSnapshotRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.WaitForWorkspaceSnapshotResponse
+ */
+export class WaitForWorkspaceSnapshotResponse extends Message<WaitForWorkspaceSnapshotResponse> {
+  constructor(data?: PartialMessage<WaitForWorkspaceSnapshotResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.WaitForWorkspaceSnapshotResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WaitForWorkspaceSnapshotResponse {
+    return new WaitForWorkspaceSnapshotResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WaitForWorkspaceSnapshotResponse {
+    return new WaitForWorkspaceSnapshotResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WaitForWorkspaceSnapshotResponse {
+    return new WaitForWorkspaceSnapshotResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WaitForWorkspaceSnapshotResponse | PlainMessage<WaitForWorkspaceSnapshotResponse> | undefined, b: WaitForWorkspaceSnapshotResponse | PlainMessage<WaitForWorkspaceSnapshotResponse> | undefined): boolean {
+    return proto3.util.equals(WaitForWorkspaceSnapshotResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.ListWorkspaceSnapshotsRequest
+ */
+export class ListWorkspaceSnapshotsRequest extends Message<ListWorkspaceSnapshotsRequest> {
+  /**
+   * @generated from field: gitpod.v1.PaginationRequest pagination = 1;
+   */
+  pagination?: PaginationRequest;
+
+  /**
+   * workspace_id
+   *
+   * +required
+   *
+   * @generated from field: string workspace_id = 2;
+   */
+  workspaceId = "";
+
+  constructor(data?: PartialMessage<ListWorkspaceSnapshotsRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListWorkspaceSnapshotsRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "pagination", kind: "message", T: PaginationRequest },
+    { no: 2, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListWorkspaceSnapshotsRequest {
+    return new ListWorkspaceSnapshotsRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListWorkspaceSnapshotsRequest {
+    return new ListWorkspaceSnapshotsRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListWorkspaceSnapshotsRequest {
+    return new ListWorkspaceSnapshotsRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListWorkspaceSnapshotsRequest | PlainMessage<ListWorkspaceSnapshotsRequest> | undefined, b: ListWorkspaceSnapshotsRequest | PlainMessage<ListWorkspaceSnapshotsRequest> | undefined): boolean {
+    return proto3.util.equals(ListWorkspaceSnapshotsRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.ListWorkspaceSnapshotsResponse
+ */
+export class ListWorkspaceSnapshotsResponse extends Message<ListWorkspaceSnapshotsResponse> {
+  /**
+   * @generated from field: gitpod.v1.PaginationResponse pagination = 1;
+   */
+  pagination?: PaginationResponse;
+
+  /**
+   * @generated from field: repeated gitpod.v1.WorkspaceSnapshot snapshots = 2;
+   */
+  snapshots: WorkspaceSnapshot[] = [];
+
+  constructor(data?: PartialMessage<ListWorkspaceSnapshotsResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListWorkspaceSnapshotsResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "pagination", kind: "message", T: PaginationResponse },
+    { no: 2, name: "snapshots", kind: "message", T: WorkspaceSnapshot, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListWorkspaceSnapshotsResponse {
+    return new ListWorkspaceSnapshotsResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListWorkspaceSnapshotsResponse {
+    return new ListWorkspaceSnapshotsResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListWorkspaceSnapshotsResponse {
+    return new ListWorkspaceSnapshotsResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListWorkspaceSnapshotsResponse | PlainMessage<ListWorkspaceSnapshotsResponse> | undefined, b: ListWorkspaceSnapshotsResponse | PlainMessage<ListWorkspaceSnapshotsResponse> | undefined): boolean {
+    return proto3.util.equals(ListWorkspaceSnapshotsResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.WorkspaceSnapshot
+ */
+export class WorkspaceSnapshot extends Message<WorkspaceSnapshot> {
+  /**
+   * id is the unique identifier of the snapshot
+   *
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * workspace_id is the source workspace id of snapshot
+   *
+   * @generated from field: string workspace_id = 2;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: google.protobuf.Timestamp creation_time = 3;
+   */
+  creationTime?: Timestamp;
+
+  constructor(data?: PartialMessage<WorkspaceSnapshot>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.WorkspaceSnapshot";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "creation_time", kind: "message", T: Timestamp },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceSnapshot {
+    return new WorkspaceSnapshot().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceSnapshot {
+    return new WorkspaceSnapshot().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceSnapshot {
+    return new WorkspaceSnapshot().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WorkspaceSnapshot | PlainMessage<WorkspaceSnapshot> | undefined, b: WorkspaceSnapshot | PlainMessage<WorkspaceSnapshot> | undefined): boolean {
+    return proto3.util.equals(WorkspaceSnapshot, a, b);
+  }
+}
