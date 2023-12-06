@@ -26,7 +26,7 @@ type Gitpod struct {
 	User                 gitpod_experimental_v1connect.UserServiceClient
 }
 
-type StableGitpod struct {
+type GitpodV1 struct {
 	cfg *options
 
 	AuthProvider        gitpod_v1connect.AuthProviderServiceClient
@@ -73,7 +73,7 @@ func New(options ...Option) (*Gitpod, error) {
 	}, nil
 }
 
-func NewStable(options ...Option) (*StableGitpod, error) {
+func NewV1(options ...Option) (*GitpodV1, error) {
 	opts, err := evaluateOptions(defaultOptions(), options...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to evaluate client options: %w", err)
@@ -92,7 +92,7 @@ func NewStable(options ...Option) (*StableGitpod, error) {
 		),
 	}
 
-	return &StableGitpod{
+	return &GitpodV1{
 		cfg:                 opts,
 		AuthProvider:        gitpod_v1connect.NewAuthProviderServiceClient(client, url, serviceOpts...),
 		Configuration:       gitpod_v1connect.NewConfigurationServiceClient(client, url, serviceOpts...),

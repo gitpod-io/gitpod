@@ -144,7 +144,7 @@ func init() {
 
 var rootTestingOpts struct {
 	Client       *client.Gitpod
-	StableClient *client.StableGitpod
+	StableClient *client.GitpodV1
 	WriterOut    io.Writer
 }
 
@@ -212,7 +212,7 @@ func getGitpodClient(ctx context.Context) (*client.Gitpod, error) {
 	return res, nil
 }
 
-func getStableGitpodClient(ctx context.Context) (*client.StableGitpod, error) {
+func getGitpodClientV1(ctx context.Context) (*client.GitpodV1, error) {
 	if rootTestingOpts.StableClient != nil {
 		return rootTestingOpts.StableClient, nil
 	}
@@ -255,7 +255,7 @@ func getStableGitpodClient(ctx context.Context) (*client.StableGitpod, error) {
 	var apiHost = *gpctx.Host.URL
 	apiHost.Host = "api." + apiHost.Host
 	slog.Debug("establishing connection to Gitpod", "host", apiHost.String())
-	res, err := client.NewStable(
+	res, err := client.NewV1(
 		client.WithCredentials(token),
 		client.WithURL(apiHost.String()),
 		client.WithHTTPClient(&http.Client{

@@ -11,7 +11,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	experimental_v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
-	"github.com/gitpod-io/gitpod/components/public-api/go/v1"
+	v1 "github.com/gitpod-io/gitpod/components/public-api/go/v1"
 	"github.com/gitpod-io/local-app/pkg/config"
 	"github.com/gitpod-io/local-app/pkg/helper"
 	"github.com/gitpod-io/local-app/pkg/prettyprint"
@@ -32,7 +32,7 @@ var workspaceCreateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		gitpod, err := getStableGitpodClient(cmd.Context())
+		gitpod, err := getGitpodClientV1(cmd.Context())
 		if err != nil {
 			fmt.Println("Failed to connect to Gitpod. Please try again later.")
 			return err
