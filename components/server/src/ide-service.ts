@@ -12,6 +12,7 @@ import {
     IDEServiceDefinition,
     ResolveWorkspaceConfigResponse,
 } from "@gitpod/ide-service-api/lib/ide.pb";
+import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 import { inject, injectable } from "inversify";
 import { AuthorizationService } from "./user/authorization-service";
 
@@ -87,7 +88,7 @@ export class IDEService {
             workspaceConfig: JSON.stringify(workspace.config),
             user: {
                 id: user.id,
-                email: User.getPrimaryEmail(user),
+                email: getPrimaryEmail(user),
             },
         };
         for (let attempt = 0; attempt < 15; attempt++) {

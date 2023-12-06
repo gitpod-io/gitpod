@@ -144,6 +144,7 @@ import { ScmService } from "../scm/scm-service";
 import { ContextService } from "./context-service";
 import { runWithRequestContext, runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
+import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -460,7 +461,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             "phoneVerificationByCall",
             false,
             {
-                user,
+                user: {
+                    id: user.id,
+                    email: getPrimaryEmail(user),
+                },
             },
         );
 
@@ -2413,7 +2417,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     private async guardWithFeatureFlag(flagName: string, user: User, teamId: string) {
         // Guard method w/ a feature flag check
         const isEnabled = await getExperimentsClientForBackend().getValueAsync(flagName, false, {
-            user: user,
+            user: {
+                id: user.id,
+                email: getPrimaryEmail(user),
+            },
             teamId,
         });
         if (!isEnabled) {
@@ -2498,7 +2505,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     async getIDEOptions(ctx: TraceContext): Promise<IDEOptions> {
         const user = await this.checkUser("identifyUser");
-        const email = User.getPrimaryEmail(user);
+        const email = getPrimaryEmail(user);
         const ideConfig = await this.ideService.getIDEConfig({ user: { id: user.id, email } });
         return ideConfig.ideOptions;
     }
@@ -2620,7 +2627,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.auth.checkPermissionOnOrganization(user.id, "write_billing", attrId.teamId);
 
         //TODO billing email should be editable within the org
-        const billingEmail = User.getPrimaryEmail(user);
+        const billingEmail = getPrimaryEmail(user);
         const billingName = org.name;
 
         let customer: StripeCustomer | undefined;
@@ -2821,7 +2828,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Organization not found.");
         }
         const isMemberUsageEnabled = await getExperimentsClientForBackend().getValueAsync("member_usage", false, {
-            user: user,
+            user: {
+                id: user.id,
+                email: getPrimaryEmail(user),
+            },
             teamId: attributionId.teamId,
         });
         if (isMemberUsageEnabled && member.role !== "owner") {

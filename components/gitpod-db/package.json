@@ -36,6 +36,7 @@
   ],
   "dependencies": {
     "@gitpod/gitpod-protocol": "0.1.5",
+    "@gitpod/public-api-common": "0.1.5",
     "@jmondi/oauth2-server": "^2.6.1",
     "mysql": "^2.18.1",
     "reflect-metadata": "^0.1.13",

@@ -4,6 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 import { useQuery } from "@tanstack/react-query";
 import { getExperimentsClient } from "../experiments/client";
 import { useCurrentProject } from "../projects/project-context";
@@ -40,7 +41,10 @@ export const useFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): Fe
 
     const query = useQuery(queryKey, async () => {
         const flagValue = await getExperimentsClient().getValueAsync(featureFlag, featureFlags[featureFlag], {
-            user,
+            user: user && {
+                id: user.id,
+                email: getPrimaryEmail(user),
+            },
             projectId: project?.id,
             teamId: org?.id,
             teamName: org?.name,

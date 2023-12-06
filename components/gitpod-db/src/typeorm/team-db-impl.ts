@@ -10,7 +10,6 @@ import {
     TeamMemberInfo,
     TeamMemberRole,
     TeamMembershipInvite,
-    User,
 } from "@gitpod/gitpod-protocol";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { randomBytes } from "crypto";
@@ -26,6 +25,7 @@ import { DBOrgSettings } from "./entity/db-team-settings";
 import { DBUser } from "./entity/db-user";
 import { TransactionalDBImpl } from "./transactional-db-impl";
 import { TypeORM } from "./typeorm";
+import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 
 @injectable()
 export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
@@ -101,7 +101,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
             return {
                 userId: u.id,
                 fullName: u.fullName || u.name,
-                primaryEmail: User.getPrimaryEmail(u),
+                primaryEmail: getPrimaryEmail(u),
                 avatarUrl: u.avatarUrl,
                 role: m.role,
                 memberSince: m.creationTime,
