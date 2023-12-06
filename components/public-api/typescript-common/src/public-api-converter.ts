@@ -1074,7 +1074,7 @@ export class PublicAPIConverter {
     toDurationString(duration?: PartialMessage<Duration>): string {
         const seconds = duration?.seconds || 0;
         if (seconds === 0) {
-            return "0";
+            return "";
         }
         const totalMilliseconds = Number(seconds) * 1000;
 
