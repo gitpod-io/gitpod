@@ -9,6 +9,7 @@ packages:
     deps:
       - :dbtest
       - components/gitpod-protocol:lib
+      - components/public-api/typescript-common:lib
     config:
       packaging: library
       yarnLock: ${coreYarnLockBase}/yarn.lock
@@ -35,6 +36,7 @@ packages:
       - package.json
     deps:
       - components/gitpod-protocol:lib
+      - components/public-api/typescript-common:lib
     config:
       dontTest: true
       packaging: offline-mirror
@@ -50,6 +52,7 @@ packages:
     deps:
       - :dbtest-init
       - components/gitpod-protocol:lib
+      - components/public-api/typescript-common:lib
     config:
       packaging: library
       yarnLock: ${coreYarnLockBase}/yarn.lock
