@@ -334,12 +334,18 @@ export function createTestContainer() {
 }
 
 export function withTestCtx<T>(subject: Subject | User, p: () => Promise<T>): Promise<T> {
+    let subjectId: SubjectId | undefined = undefined;
+    if (SubjectId.is(subject)) {
+        subjectId = subject;
+    } else if (subject !== undefined) {
+        subjectId = SubjectId.fromUserId(User.is(subject) ? subject.id : subject);
+    }
     return runWithRequestContext(
         {
             requestKind: "testContext",
             requestMethod: "testMethod",
             signal: new AbortController().signal,
-            subjectId: SubjectId.is(subject) ? subject : SubjectId.fromUserId(User.is(subject) ? subject.id : subject),
+            subjectId,
         },
         p,
     );

@@ -376,7 +376,7 @@ export const authorizerSubjectId = new prometheusClient.Counter({
     help: "Counter for the number of authorizer permission checks",
     labelNames: ["match"],
 });
-type AuthorizerSubjectIdMatch = "ctx-user-id-missing" | "match" | "mismatch";
+type AuthorizerSubjectIdMatch = "ctx-user-id-missing" | "passed-subject-id-missing" | "match" | "mismatch";
 export function reportAuthorizerSubjectId(match: AuthorizerSubjectIdMatch) {
     authorizerSubjectId.labels(match).inc();
 }

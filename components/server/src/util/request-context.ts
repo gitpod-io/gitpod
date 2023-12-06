@@ -10,6 +10,7 @@ import { v4 } from "uuid";
 import { SubjectId } from "../auth/subject-id";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { takeFirst } from "../express-util";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 /**
  * RequestContext is the context that all our request-handling code runs in.
@@ -21,11 +22,12 @@ import { takeFirst } from "../express-util";
  *
  * It's meant to be nestable, so that we can run code in a child context with different properties.
  * The only example we have for now is "runWithSubjectId", which executes the child context with different authorization.
+ * @see runWithRequestContext
  * @see runWithSubjectId
  */
 export interface RequestContext {
     /**
-     * Unique, artificial ID for this request.
+     * Unique, artificial, backend-controlled ID for this request.
      */
     readonly requestId: string;
 
@@ -165,18 +167,39 @@ export type RequestContextSeed = Omit<RequestContext, "requestId" | "startTime" 
 };
 
 /**
- * The context all our request-handling code should run in.
+ * Creates a _root_ context request-handling code should run in. MANDATORY for any authorization to work.
+ * Uses AsyncLocalStorage under the hood, but offers a more convenient API.
  * @param context
  * @param fun
  * @returns
  */
 export function runWithRequestContext<T>(context: RequestContextSeed, fun: () => T): T {
+    // TODO(gpl): Turn this into an exception
+    const parent = ctxTryGet();
+    if (!!parent) {
+        try {
+            throw new Error("Nested context detected");
+        } catch (err) {
+            log.error("runWithRequestContext", err, {
+                parent: { requestKind: parent.requestKind, requestMethod: parent.requestMethod },
+            });
+        }
+    }
+
     const requestId = context.requestId || v4();
     const startTime = context.startTime || performance.now();
     const cache = {};
     return runWithContext({ ...context, requestId, startTime, cache }, fun);
 }
 
+/**
+ * Creates a _child_ context with the given subjectId. It takes all top-level values from the parent context, and only overrides subjectId.
+ * This is useful for running code with a (different) authorization than the parent context.
+ * @param subjectId
+ * @param fun
+ * @throws If there is no parent context available
+ * @returns The result of the given function
+ */
 export function runWithSubjectId<T>(subjectId: SubjectId | undefined, fun: () => T): T {
     const parent = ctxTryGet();
     if (!parent) {

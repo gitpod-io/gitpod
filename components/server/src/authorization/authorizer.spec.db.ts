@@ -11,9 +11,13 @@ import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
 import { createTestContainer } from "../test/service-testing-container-module";
-import { Authorizer } from "./authorizer";
+import { Authorizer, getSubjectFromCtx } from "./authorizer";
 import { rel } from "./definitions";
 import { v4 } from "uuid";
+import { Subject, SubjectId } from "../auth/subject-id";
+import { runWithRequestContext } from "../util/request-context";
+import { fail } from "assert";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 const expect = chai.expect;
 
@@ -140,4 +144,123 @@ describe("Authorizer", async () => {
         const rs = await authorizer.find(relation);
         expect(rs).to.be.undefined;
     }
+});
+
+describe("getSubjectFromCtx", async () => {
+    it("all tests", async () => {
+        interface Test {
+            name: string;
+            passedSubject: Subject;
+            contextSubjectId: SubjectId | undefined;
+            authWithRequestContext: boolean;
+            expected: SubjectId | number;
+        }
+        const tests: Test[] = [
+            // Feature flag is OFF
+            {
+                name: "both given and match, ff off",
+                passedSubject: "u1",
+                contextSubjectId: SubjectId.fromUserId("u1"),
+                authWithRequestContext: false,
+                expected: SubjectId.fromUserId("u1"),
+            },
+            {
+                name: "both given and mismatch, ff off",
+                passedSubject: "u1",
+                contextSubjectId: SubjectId.fromUserId("u2"),
+                authWithRequestContext: false,
+                expected: SubjectId.fromUserId("u1"),
+            },
+            {
+                name: "passed only, ff off",
+                passedSubject: "u1",
+                contextSubjectId: undefined,
+                authWithRequestContext: false,
+                expected: SubjectId.fromUserId("u1"),
+            },
+            {
+                name: "ctx only, ff off",
+                passedSubject: undefined,
+                contextSubjectId: SubjectId.fromUserId("u1"),
+                authWithRequestContext: false,
+                expected: ErrorCodes.PERMISSION_DENIED,
+            },
+            {
+                name: "none passed, ff off",
+                passedSubject: undefined,
+                contextSubjectId: undefined,
+                authWithRequestContext: false,
+                expected: ErrorCodes.PERMISSION_DENIED,
+            },
+            // Feature flag is ON
+            {
+                name: "both given and match, ff on",
+                passedSubject: "u1",
+                contextSubjectId: SubjectId.fromUserId("u1"),
+                authWithRequestContext: true,
+                expected: SubjectId.fromUserId("u1"),
+            },
+            {
+                name: "both given and mismatch, ff on",
+                passedSubject: "u1",
+                contextSubjectId: SubjectId.fromUserId("u2"),
+                authWithRequestContext: true,
+                expected: ErrorCodes.PERMISSION_DENIED,
+            },
+            {
+                name: "passed only, ff on",
+                passedSubject: "u1",
+                contextSubjectId: undefined,
+                authWithRequestContext: true,
+                expected: ErrorCodes.PERMISSION_DENIED,
+            },
+            {
+                name: "ctx only, ff on",
+                passedSubject: undefined,
+                contextSubjectId: SubjectId.fromUserId("u1"),
+                authWithRequestContext: true,
+                expected: SubjectId.fromUserId("u1"),
+            },
+            {
+                name: "none passed, ff on",
+                passedSubject: undefined,
+                contextSubjectId: undefined,
+                authWithRequestContext: true,
+                expected: ErrorCodes.PERMISSION_DENIED,
+            },
+        ];
+
+        for (const test of tests) {
+            Experiments.configureTestingClient({
+                authWithRequestContext: test.authWithRequestContext,
+            });
+
+            await runWithRequestContext(
+                {
+                    requestKind: "test",
+                    requestMethod: test.name,
+                    signal: new AbortController().signal,
+                    subjectId: test.contextSubjectId,
+                },
+                async () => {
+                    try {
+                        const actual = await getSubjectFromCtx(test.passedSubject);
+                        expect(actual, `${test.name}, expected ${test.expected}, got ${actual}`).to.deep.equal(
+                            test.expected,
+                        );
+                    } catch (err) {
+                        if (typeof test.expected === "number") {
+                            expect(
+                                err.code,
+                                `${test.name}, expected ${test.expected}, got ${err.code} (${err.message})`,
+                            ).to.equal(test.expected);
+                        } else {
+                            const msg = err?.message || JSON.stringify(err) || "unknown error";
+                            fail(`${test.name}, ${msg}`);
+                        }
+                    }
+                },
+            );
+        }
+    });
 });
