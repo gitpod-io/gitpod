@@ -36,9 +36,10 @@ export function getPrimaryEmail(user: User | UserProtocol): string | undefined {
 
     // In case of a personal account, check for the email stored by the user.
     if (!isOrganizationOwned(user)) {
-        const emailAddress = UserProtocol.is(user)
-            ? user.additionalData?.profile?.emailAddress
-            : user.profile?.emailAddress;
+        const emailAddress =
+            user instanceof User //
+                ? user.profile?.emailAddress
+                : user.additionalData?.profile?.emailAddress;
         if (emailAddress) {
             return emailAddress;
         }
@@ -56,7 +57,7 @@ export function getPrimaryEmail(user: User | UserProtocol): string | undefined {
 }
 
 export function getName(user: User | UserProtocol): string | undefined {
-    const name = /* user.fullName ||*/ user.name;
+    const name = user.name;
     if (name) {
         return name;
     }
