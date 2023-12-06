@@ -17,10 +17,19 @@ import isEmail from "validator/lib/isEmail";
 import { useToast } from "../components/toasts/Toasts";
 import { InputWithCopy } from "../components/InputWithCopy";
 import { InputField } from "../components/forms/InputField";
-import { getPrimaryEmail, getProfile, isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
+import { getPrimaryEmail, isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
 import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
-import { User as UserProtocol } from "@gitpod/gitpod-protocol";
+import { User as UserProtocol, ProfileDetails } from "@gitpod/gitpod-protocol";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
+
+type UserProfile = Pick<ProfileDetails, "emailAddress"> & Required<Pick<UserProtocol, "name" | "avatarUrl">>;
+function getProfile(user: User): UserProfile {
+    return {
+        name: user.name,
+        avatarUrl: user.avatarUrl,
+        emailAddress: getPrimaryEmail(user),
+    };
+}
 
 export default function Account() {
     const { user, setUser } = useContext(UserContext);
@@ -43,17 +52,17 @@ export default function Account() {
             return;
         }
         if (canUpdateEmail) {
-            if (profileState.email.trim() === "") {
+            if (!profileState.emailAddress?.trim()) {
                 setErrorMessage("Email must not be empty.");
                 return;
             }
             // check valid email
-            if (!isEmail(profileState.email.trim())) {
+            if (!isEmail(profileState.emailAddress?.trim() || "")) {
                 setErrorMessage("Please enter a valid email.");
                 return;
             }
         } else {
-            profileState.email = getPrimaryEmail(user) || "";
+            profileState.emailAddress = getPrimaryEmail(user) || "";
         }
 
         const updatedUser = await updateUser.mutateAsync({
@@ -78,7 +87,7 @@ export default function Account() {
                 title="Delete Account"
                 areYouSureText="You are about to permanently delete your account."
                 buttonText="Delete Account"
-                buttonDisabled={typedEmail !== original.email}
+                buttonDisabled={typedEmail !== (original.emailAddress || "")}
                 visible={modal}
                 onClose={close}
                 onConfirm={deleteAccount}
@@ -133,8 +142,8 @@ export default function Account() {
 }
 
 function ProfileInformation(props: {
-    profileState: UserProtocol.Profile;
-    setProfileState: (newState: UserProtocol.Profile) => void;
+    profileState: UserProfile;
+    setProfileState: (newState: UserProfile) => void;
     errorMessage: string;
     emailIsReadonly?: boolean;
     user?: User;
@@ -161,10 +170,10 @@ function ProfileInformation(props: {
                     />
                     <TextInputField
                         label="Email"
-                        value={props.profileState.email}
+                        value={props.profileState.emailAddress || ""}
                         disabled={props.emailIsReadonly}
                         onChange={(val) => {
-                            props.setProfileState({ ...props.profileState, email: val });
+                            props.setProfileState({ ...props.profileState, emailAddress: val });
                         }}
                     />
                     {props.user && (
@@ -178,7 +187,7 @@ function ProfileInformation(props: {
                         <Subheading>Avatar</Subheading>
                         <img
                             className="rounded-full w-24 h-24"
-                            src={props.profileState.avatarURL}
+                            src={props.profileState.avatarUrl}
                             alt={props.profileState.name}
                         />
                     </div>

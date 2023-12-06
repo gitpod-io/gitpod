@@ -104,39 +104,6 @@ export namespace User {
         }
         user.additionalData.ideSettings = newIDESettings;
     }
-
-    // TODO: refactor where this is referenced so it's more clearly tied to just analytics-tracking
-    // Let other places rely on the ProfileDetails type since that's what we store
-    // This is the profile data we send to our Segment analytics tracking pipeline
-    export interface Profile {
-        name: string;
-        email: string;
-        company?: string;
-        avatarURL?: string;
-        jobRole?: string;
-        jobRoleOther?: string;
-        explorationReasons?: string[];
-        signupGoals?: string[];
-        signupGoalsOther?: string;
-        onboardedTimestamp?: string;
-        companySize?: string;
-    }
-    export namespace Profile {
-        export function hasChanges(before: Profile, after: Profile) {
-            return (
-                before.name !== after.name ||
-                before.email !== after.email ||
-                before.company !== after.company ||
-                before.avatarURL !== after.avatarURL ||
-                before.jobRole !== after.jobRole ||
-                before.jobRoleOther !== after.jobRoleOther ||
-                // not checking explorationReasons or signupGoals atm as it's an array - need to check deep equality
-                before.signupGoalsOther !== after.signupGoalsOther ||
-                before.onboardedTimestamp !== after.onboardedTimestamp ||
-                before.companySize !== after.companySize
-            );
-        }
-    }
 }
 
 export interface WorkspaceTimeoutSetting {

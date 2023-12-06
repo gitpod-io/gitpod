@@ -72,21 +72,3 @@ export function getName(user: User | UserProtocol): string | undefined {
 export function isOrganizationOwned(user: User | UserProtocol) {
     return !!user.organizationId;
 }
-
-// FIXME(at) get rid of this Nth indirection to read attributes of User entity
-export function getProfile(user: User | UserProtocol): UserProtocol.Profile {
-    const profile = UserProtocol.is(user) ? user.additionalData?.profile : user.profile;
-    return {
-        name: getName(user) || "",
-        email: getPrimaryEmail(user) || "",
-        company: profile?.companyName,
-        avatarURL: user?.avatarUrl,
-        jobRole: profile?.jobRole,
-        jobRoleOther: profile?.jobRoleOther,
-        explorationReasons: profile?.explorationReasons,
-        signupGoals: profile?.signupGoals,
-        signupGoalsOther: profile?.signupGoalsOther,
-        companySize: profile?.companySize,
-        onboardedTimestamp: profile?.onboardedTimestamp,
-    };
-}

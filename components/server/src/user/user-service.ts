@@ -24,7 +24,7 @@ import { CreateUserParams } from "./user-authentication";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
 import { RelationshipUpdater } from "../authorization/relationship-updater";
-import { getProfile } from "@gitpod/public-api-common/lib/user-utils";
+import { getName, getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 
 @injectable()
 export class UserService {
@@ -106,7 +106,7 @@ export class UserService {
         await this.authorizer.checkPermissionOnUser(userId, "write_info", user.id);
 
         //hang on to user profile before it's overwritten for analytics below
-        const oldProfile = getProfile(user);
+        const oldProfile = Profile.getProfile(user);
 
         const allowedFields: (keyof User)[] = ["fullName", "additionalData"];
         for (const p of allowedFields) {
@@ -118,8 +118,8 @@ export class UserService {
         await this.userDb.updateUserPartial(user);
 
         //track event and user profile if profile of partialUser changed
-        const newProfile = getProfile(user);
-        if (this.hasChanges(oldProfile, newProfile)) {
+        const newProfile = Profile.getProfile(user);
+        if (Profile.hasChanges(oldProfile, newProfile)) {
             this.analytics.track({
                 userId: user.id,
                 event: "profile_changed",
@@ -131,21 +131,6 @@ export class UserService {
             });
         }
         return user;
-    }
-
-    private hasChanges(before: User.Profile, after: User.Profile) {
-        return (
-            before.name !== after.name ||
-            before.email !== after.email ||
-            before.company !== after.company ||
-            before.avatarURL !== after.avatarURL ||
-            before.jobRole !== after.jobRole ||
-            before.jobRoleOther !== after.jobRoleOther ||
-            // not checking explorationReasons or signupGoals atm as it's an array - need to check deep equality
-            before.signupGoalsOther !== after.signupGoalsOther ||
-            before.onboardedTimestamp !== after.onboardedTimestamp ||
-            before.companySize !== after.companySize
-        );
     }
 
     async updateWorkspaceTimeoutSetting(
@@ -326,5 +311,55 @@ export class UserService {
         }
         await this.userDb.updateUserPartial(user);
         log.info("User verified", { userId: user.id });
+    }
+}
+
+// TODO: refactor where this is referenced so it's more clearly tied to just analytics-tracking
+// Let other places rely on the ProfileDetails type since that's what we store
+// This is the profile data we send to our Segment analytics tracking pipeline
+interface Profile {
+    name: string;
+    email: string;
+    company?: string;
+    avatarURL?: string;
+    jobRole?: string;
+    jobRoleOther?: string;
+    explorationReasons?: string[];
+    signupGoals?: string[];
+    signupGoalsOther?: string;
+    onboardedTimestamp?: string;
+    companySize?: string;
+}
+namespace Profile {
+    export function hasChanges(before: Profile, after: Profile) {
+        return (
+            before.name !== after.name ||
+            before.email !== after.email ||
+            before.company !== after.company ||
+            before.avatarURL !== after.avatarURL ||
+            before.jobRole !== after.jobRole ||
+            before.jobRoleOther !== after.jobRoleOther ||
+            // not checking explorationReasons or signupGoals atm as it's an array - need to check deep equality
+            before.signupGoalsOther !== after.signupGoalsOther ||
+            before.onboardedTimestamp !== after.onboardedTimestamp ||
+            before.companySize !== after.companySize
+        );
+    }
+
+    export function getProfile(user: User): Profile {
+        const profile = user.additionalData?.profile;
+        return {
+            name: getName(user) || "",
+            email: getPrimaryEmail(user) || "",
+            company: profile?.companyName,
+            avatarURL: user?.avatarUrl,
+            jobRole: profile?.jobRole,
+            jobRoleOther: profile?.jobRoleOther,
+            explorationReasons: profile?.explorationReasons,
+            signupGoals: profile?.signupGoals,
+            signupGoalsOther: profile?.signupGoalsOther,
+            companySize: profile?.companySize,
+            onboardedTimestamp: profile?.onboardedTimestamp,
+        };
     }
 }
