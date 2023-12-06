@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -11,6 +11,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	gitpod_experimental_v1connect "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
+	gitpod_v1connect "github.com/gitpod-io/gitpod/components/public-api/go/v1/v1connect"
 )
 
 type Gitpod struct {
@@ -23,6 +24,22 @@ type Gitpod struct {
 	PersonalAccessTokens gitpod_experimental_v1connect.TokensServiceClient
 	IdentityProvider     gitpod_experimental_v1connect.IdentityProviderServiceClient
 	User                 gitpod_experimental_v1connect.UserServiceClient
+}
+
+type StableGitpod struct {
+	cfg *options
+
+	AuthProvider        gitpod_v1connect.AuthProviderServiceClient
+	Configuration       gitpod_v1connect.ConfigurationServiceClient
+	EnvironmentVariable gitpod_v1connect.EnvironmentVariableServiceClient
+	Installation        gitpod_v1connect.InstallationServiceClient
+	Organization        gitpod_v1connect.OrganizationServiceClient
+	Prebuild            gitpod_v1connect.PrebuildServiceClient
+	SCM                 gitpod_v1connect.SCMServiceClient
+	SSH                 gitpod_v1connect.SSHServiceClient
+	User                gitpod_v1connect.UserServiceClient
+	Verification        gitpod_v1connect.VerificationServiceClient
+	Workspace           gitpod_v1connect.WorkspaceServiceClient
 }
 
 func New(options ...Option) (*Gitpod, error) {
@@ -53,6 +70,41 @@ func New(options ...Option) (*Gitpod, error) {
 		Editors:              gitpod_experimental_v1connect.NewEditorServiceClient(client, url, serviceOpts...),
 		IdentityProvider:     gitpod_experimental_v1connect.NewIdentityProviderServiceClient(client, url, serviceOpts...),
 		User:                 gitpod_experimental_v1connect.NewUserServiceClient(client, url, serviceOpts...),
+	}, nil
+}
+
+func NewStable(options ...Option) (*StableGitpod, error) {
+	opts, err := evaluateOptions(defaultOptions(), options...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to evaluate client options: %w", err)
+	}
+
+	if opts.credentials == "" {
+		return nil, errors.New("no authentication credentials specified")
+	}
+
+	client := opts.client
+	url := opts.url
+
+	serviceOpts := []connect.ClientOption{
+		connect.WithInterceptors(
+			AuthorizationInterceptor(opts.credentials),
+		),
+	}
+
+	return &StableGitpod{
+		cfg:                 opts,
+		AuthProvider:        gitpod_v1connect.NewAuthProviderServiceClient(client, url, serviceOpts...),
+		Configuration:       gitpod_v1connect.NewConfigurationServiceClient(client, url, serviceOpts...),
+		EnvironmentVariable: gitpod_v1connect.NewEnvironmentVariableServiceClient(client, url, serviceOpts...),
+		Installation:        gitpod_v1connect.NewInstallationServiceClient(client, url, serviceOpts...),
+		Organization:        gitpod_v1connect.NewOrganizationServiceClient(client, url, serviceOpts...),
+		Prebuild:            gitpod_v1connect.NewPrebuildServiceClient(client, url, serviceOpts...),
+		SCM:                 gitpod_v1connect.NewSCMServiceClient(client, url, serviceOpts...),
+		SSH:                 gitpod_v1connect.NewSSHServiceClient(client, url, serviceOpts...),
+		User:                gitpod_v1connect.NewUserServiceClient(client, url, serviceOpts...),
+		Verification:        gitpod_v1connect.NewVerificationServiceClient(client, url, serviceOpts...),
+		Workspace:           gitpod_v1connect.NewWorkspaceServiceClient(client, url, serviceOpts...),
 	}, nil
 }
 

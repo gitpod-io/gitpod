@@ -10,7 +10,8 @@ import (
 	"strings"
 
 	"github.com/bufbuild/connect-go"
-	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
+	experimental_v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
+	"github.com/gitpod-io/gitpod/components/public-api/go/v1"
 	"github.com/gitpod-io/local-app/pkg/config"
 	"github.com/gitpod-io/local-app/pkg/helper"
 	"github.com/gitpod-io/local-app/pkg/prettyprint"
@@ -31,13 +32,18 @@ var workspaceCreateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		gitpod, err := getGitpodClient(cmd.Context())
+		gitpod, err := getStableGitpodClient(cmd.Context())
+		if err != nil {
+			fmt.Println("Failed to connect to Gitpod. Please try again later.")
+			return err
+		}
+		gitpodExperimental, err := getGitpodClient(cmd.Context())
 		if err != nil {
 			return err
 		}
 
 		if workspaceCreateOpts.WorkspaceClass != "" {
-			resp, err := gitpod.Workspaces.ListWorkspaceClasses(cmd.Context(), connect.NewRequest(&v1.ListWorkspaceClassesRequest{}))
+			resp, err := gitpod.Workspace.ListWorkspaceClasses(cmd.Context(), connect.NewRequest(&v1.ListWorkspaceClassesRequest{}))
 			if err != nil {
 				return prettyprint.MarkExceptional(prettyprint.AddResolution(fmt.Errorf("cannot list workspace classes: %w", err),
 					"don't pass an explicit workspace class, i.e. omit the --class flag",
@@ -47,7 +53,7 @@ var workspaceCreateCmd = &cobra.Command{
 				classes []string
 				found   bool
 			)
-			for _, cls := range resp.Msg.GetResult() {
+			for _, cls := range resp.Msg.GetWorkspaceClasses() {
 				classes = append(classes, cls.Id)
 				if cls.Id == workspaceCreateOpts.WorkspaceClass {
 					found = true
@@ -61,7 +67,7 @@ var workspaceCreateCmd = &cobra.Command{
 		}
 
 		if workspaceCreateOpts.Editor != "" {
-			resp, err := gitpod.Editors.ListEditorOptions(cmd.Context(), connect.NewRequest(&v1.ListEditorOptionsRequest{}))
+			resp, err := gitpodExperimental.Editors.ListEditorOptions(cmd.Context(), connect.NewRequest(&experimental_v1.ListEditorOptionsRequest{}))
 			if err != nil {
 				return prettyprint.MarkExceptional(prettyprint.AddResolution(fmt.Errorf("cannot list editor options: %w", err),
 					"don't pass an explicit editor, i.e. omit the --editor flag",
@@ -90,29 +96,27 @@ var workspaceCreateCmd = &cobra.Command{
 		)
 
 		slog.Debug("Attempting to create workspace...", "org", orgId, "repo", repoURL)
-		newWorkspace, err := gitpod.Workspaces.CreateAndStartWorkspace(ctx, connect.NewRequest(
+		newWorkspace, err := gitpod.Workspace.CreateAndStartWorkspace(ctx, connect.NewRequest(
 			&v1.CreateAndStartWorkspaceRequest{
-				Source:         &v1.CreateAndStartWorkspaceRequest_ContextUrl{ContextUrl: repoURL},
-				OrganizationId: orgId,
-				StartSpec: &v1.StartWorkspaceSpec{
-					IdeSettings: &v1.IDESettings{
-						DefaultIde:       workspaceCreateOpts.Editor,
-						UseLatestVersion: false,
+				Source: &v1.CreateAndStartWorkspaceRequest_ContextUrl{
+					ContextUrl: &v1.CreateAndStartWorkspaceRequest_ContextURL{
+						Url:            repoURL,
+						WorkspaceClass: workspaceCreateOpts.WorkspaceClass,
+						Editor: &v1.EditorReference{
+							Name: workspaceCreateOpts.Editor,
+						},
 					},
-					WorkspaceClass: workspaceCreateOpts.WorkspaceClass,
 				},
-				// Without this flag we might not create a new workspace because there's already one running on the same commit.
-				IgnoreRunningWorkspaceOnSameCommit: true,
-				// Note(cw): the CLI cannot handle running prebuilds yet, so we ignore them for now.
-				IgnoreRunningPrebuild:       true,
-				AllowUsingPreviousPrebuilds: true,
+				Metadata: &v1.WorkspaceMetadata{
+					OrganizationId: orgId,
+				},
 			},
 		))
 		if err != nil {
 			return err
 		}
 
-		workspaceID := newWorkspace.Msg.WorkspaceId
+		workspaceID := newWorkspace.Msg.Workspace.Id
 		if len(workspaceID) == 0 {
 			return prettyprint.MarkExceptional(prettyprint.AddResolution(fmt.Errorf("workspace was not created"),
 				"try to create the workspace again",
@@ -125,16 +129,16 @@ var workspaceCreateCmd = &cobra.Command{
 			return nil
 		}
 
-		_, err = helper.ObserveWorkspaceUntilStarted(ctx, gitpod, workspaceID)
+		_, err = helper.ObserveWorkspaceUntilStarted(ctx, gitpodExperimental, workspaceID)
 		if err != nil {
 			return err
 		}
 
 		if workspaceCreateOpts.StartOpts.OpenSSH {
-			return helper.SSHConnectToWorkspace(ctx, gitpod, workspaceID, false)
+			return helper.SSHConnectToWorkspace(ctx, gitpodExperimental, workspaceID, false)
 		}
 		if workspaceCreateOpts.StartOpts.OpenEditor {
-			return helper.OpenWorkspaceInPreferredEditor(ctx, gitpod, workspaceID)
+			return helper.OpenWorkspaceInPreferredEditor(ctx, gitpodExperimental, workspaceID)
 		}
 
 		return nil
@@ -154,7 +158,7 @@ func classCompletionFunc(cmd *cobra.Command, args []string, toComplete string) (
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
-	resp, err := gitpod.Workspaces.ListWorkspaceClasses(ctx, connect.NewRequest(&v1.ListWorkspaceClassesRequest{}))
+	resp, err := gitpod.Workspaces.ListWorkspaceClasses(ctx, connect.NewRequest(&experimental_v1.ListWorkspaceClassesRequest{}))
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
@@ -176,7 +180,7 @@ func editorCompletionFunc(cmd *cobra.Command, args []string, toComplete string) 
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
-	resp, err := gitpod.Editors.ListEditorOptions(ctx, connect.NewRequest(&v1.ListEditorOptionsRequest{}))
+	resp, err := gitpod.Editors.ListEditorOptions(ctx, connect.NewRequest(&experimental_v1.ListEditorOptionsRequest{}))
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}

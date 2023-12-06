@@ -143,8 +143,9 @@ func init() {
 }
 
 var rootTestingOpts struct {
-	Client    *client.Gitpod
-	WriterOut io.Writer
+	Client       *client.Gitpod
+	StableClient *client.StableGitpod
+	WriterOut    io.Writer
 }
 
 var clientCache *client.Gitpod
@@ -208,6 +209,62 @@ func getGitpodClient(ctx context.Context) (*client.Gitpod, error) {
 	}
 	clientCache = res
 
+	return res, nil
+}
+
+func getStableGitpodClient(ctx context.Context) (*client.StableGitpod, error) {
+	if rootTestingOpts.StableClient != nil {
+		return rootTestingOpts.StableClient, nil
+	}
+
+	cfg := config.FromContext(ctx)
+	gpctx, err := cfg.GetActiveContext()
+	if err != nil {
+		return nil, err
+	}
+
+	host := gpctx.Host
+	if host == nil {
+		return nil, prettyprint.AddResolution(fmt.Errorf("active context has no host configured"),
+			"set a host using `gitpod config set-context --current --host <host>`",
+			"login again using `gitpod login`",
+			"change to a different context using `gitpod config use-context <context>`",
+		)
+	}
+
+	token := gpctx.Token
+	if token == "" {
+		token = os.Getenv("GITPOD_TOKEN")
+	}
+	if token == "" {
+		var err error
+		token, err = auth.GetToken(host.String())
+		if err != nil {
+			return nil, err
+		}
+	}
+	if token == "" {
+		return nil, prettyprint.AddResolution(fmt.Errorf("no token found for active context"),
+			"provide a token by setting the GITPOD_TOKEN environment variable",
+			"login again using `gitpod login`",
+			"change to a different context using `gitpod config use-context <context>`",
+			"set a token explicitly using `gitpod config set-context --current --token <token>`",
+		)
+	}
+
+	var apiHost = *gpctx.Host.URL
+	apiHost.Host = "api." + apiHost.Host
+	slog.Debug("establishing connection to Gitpod", "host", apiHost.String())
+	res, err := client.NewStable(
+		client.WithCredentials(token),
+		client.WithURL(apiHost.String()),
+		client.WithHTTPClient(&http.Client{
+			Transport: &auth.AuthenticatedTransport{Token: token, T: http.DefaultTransport},
+		}),
+	)
+	if err != nil {
+		return nil, err
+	}
 	return res, nil
 }
 
