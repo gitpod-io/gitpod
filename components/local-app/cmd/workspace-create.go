@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -108,11 +109,21 @@ var workspaceCreateCmd = &cobra.Command{
 					},
 				},
 				Metadata: &v1.WorkspaceMetadata{
-					OrganizationId: orgId,
+					OrganizationId:  orgId,
+					ConfigurationId: workspaceCreateOpts.ConfigurationID,
 				},
 			},
 		))
 		if err != nil {
+			if ce := new(connect.Error); errors.As(err, &ce) && ce.Code() == connect.CodeInvalidArgument {
+				if ce.Message() == "Multiple projects found for clone URL." {
+					return prettyprint.AddResolution(fmt.Errorf("multiple repository configurations correspond to %s", repoURL),
+						"use --configuration to specify the ID of your preferred context",
+					)
+				}
+			} else {
+				slog.Debug("Something happened with code", "code", ce.Code())
+			}
 			return err
 		}
 
@@ -148,8 +159,9 @@ var workspaceCreateCmd = &cobra.Command{
 var workspaceCreateOpts struct {
 	StartOpts workspaceStartOptions
 
-	WorkspaceClass string
-	Editor         string
+	WorkspaceClass  string
+	Editor          string
+	ConfigurationID string
 }
 
 func classCompletionFunc(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -198,6 +210,7 @@ func init() {
 
 	workspaceCreateCmd.Flags().StringVar(&workspaceCreateOpts.WorkspaceClass, "class", "", "the workspace class")
 	workspaceCreateCmd.Flags().StringVar(&workspaceCreateOpts.Editor, "editor", "code", "the editor to use")
+	workspaceCreateCmd.Flags().StringVar(&workspaceCreateOpts.ConfigurationID, "configuration", "", "the ID of the configuration to use")
 
 	_ = workspaceCreateCmd.RegisterFlagCompletionFunc("class", classCompletionFunc)
 	_ = workspaceCreateCmd.RegisterFlagCompletionFunc("editor", editorCompletionFunc)
