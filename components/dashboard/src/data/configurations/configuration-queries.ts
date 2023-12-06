@@ -22,11 +22,18 @@ const BASE_KEY = "configurations";
 type ListConfigurationsArgs = {
     pageSize?: number;
     searchTerm?: string;
+    prebuildsEnabled?: boolean;
     sortBy: string;
     sortOrder: TableSortOrder;
 };
 
-export const useListConfigurations = ({ searchTerm = "", pageSize, sortBy, sortOrder }: ListConfigurationsArgs) => {
+export const useListConfigurations = ({
+    searchTerm = "",
+    prebuildsEnabled,
+    pageSize,
+    sortBy,
+    sortOrder,
+}: ListConfigurationsArgs) => {
     const { data: org } = useCurrentOrg();
 
     return useInfiniteQuery(
@@ -40,6 +47,7 @@ export const useListConfigurations = ({ searchTerm = "", pageSize, sortBy, sortO
             const { configurations, pagination } = await configurationClient.listConfigurations({
                 organizationId: org.id,
                 searchTerm,
+                prebuildsEnabled,
                 pagination: { pageSize, token: nextToken },
                 sort: [
                     {

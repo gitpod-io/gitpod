@@ -16,6 +16,7 @@ import { cn } from "@podkit/lib/cn";
 import { SortableTableHead, TableSortOrder } from "@podkit/tables/SortableTable";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { Button } from "@podkit/buttons/Button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@podkit/select/Select";
 
 type Props = {
     configurations: Configuration[];
@@ -59,6 +60,16 @@ export const RepositoryTable: FC<Props> = ({
                         placeholder="Search imported repositories"
                     />
                     {/* TODO: Add prebuild status filter dropdown */}
+                    <Select>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Theme" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="light">Light</SelectItem>
+                            <SelectItem value="dark">Dark</SelectItem>
+                            <SelectItem value="system">System</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 {/* TODO: Consider making all podkit buttons behave this way, full width on small screen */}

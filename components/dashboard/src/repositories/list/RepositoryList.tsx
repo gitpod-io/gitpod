@@ -25,6 +25,8 @@ const RepositoryListPage: FC = () => {
 
     const params = useQueryParams();
     const [searchTerm, setSearchTerm, searchTermDebounced] = useStateWithDebounce(params.get("search") || "");
+    // const prebuildsEnabledParam = params.get("prebuilds");
+    // const [prebuildsEnabled, setPrebuildsEnabled] = useState<"all" | "enabled" | "disabled">(params.get("prebuilds") || "all");
     const [sortBy, setSortBy] = useState(parseSortBy(params));
     const [sortOrder, setSortOrder] = useState<TableSortOrder>(parseSortOrder(params));
     const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
@@ -52,6 +54,7 @@ const RepositoryListPage: FC = () => {
             searchTerm: searchTermDebounced,
             sortBy: sortBy,
             sortOrder: sortOrder,
+            // prebuildsEnabled,
         });
 
     const handleRepoImported = useCallback(
