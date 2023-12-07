@@ -657,6 +657,9 @@ enum WorkspaceFeatureFlag {
 
     // WORKSPACE_PSI feature flag for enabling pressure stall information for workspaces
     WORKSPACE_PSI = 11;
+
+    // SSH_CA feature flag for enabling SSH CA for workspaces
+    SSH_CA = 12;
 }
 
 // GitSpec configures the Git available within the workspace
