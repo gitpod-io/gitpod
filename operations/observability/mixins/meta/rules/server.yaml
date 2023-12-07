@@ -57,6 +57,19 @@ spec:
         summary: The error rate of the JSON RPC API is high on {{ $labels.cluster }}. Investigation required.
         description: JSON RPC API error rate high
 
+    - alert: GitpodV1APIServerErrors
+      expr: sum(rate(grpc_server_handled_total{grpc_code=~"Internal|Unknown|DataLoss", grpc_service=~"gitpod.v1.*"}[5m])) by (cluster) / sum(rate(grpc_server_handled_total{grpc_service=~"gitpod.v1.*"}[5m])) by (cluster) > 0.01
+      for: 5m
+      labels:
+        severity: critical
+        team: webapp
+        dedicated: included
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodV1APIServerErrors.md
+        summary: gitpod.v1 API is returning higher number of errors on {{ $labels.cluster }}. Investigation required.
+        description: gitpod.v1 API is returning higher number of errors
+
+
     - alert: WebsocketConnectionRateHigh
       # Reasoning: the values are taken from past data
       expr: sum(rate(gitpod_server_api_connections_total[2m])) by (pod) > 5
