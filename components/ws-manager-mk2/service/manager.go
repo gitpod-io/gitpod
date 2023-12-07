@@ -213,13 +213,15 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 		}
 	}
 
+	var sshGatewayCAPublicKey string
 	for _, feature := range req.Spec.FeatureFlags {
 		switch feature {
 		case wsmanapi.WorkspaceFeatureFlag_WORKSPACE_CONNECTION_LIMITING:
 			annotations[wsk8s.WorkspaceNetConnLimitAnnotation] = util.BooleanTrueString
-
 		case wsmanapi.WorkspaceFeatureFlag_WORKSPACE_PSI:
 			annotations[wsk8s.WorkspacePressureStallInfoAnnotation] = util.BooleanTrueString
+		case wsmanapi.WorkspaceFeatureFlag_SSH_CA:
+			sshGatewayCAPublicKey = wsm.Config.SSHGatewayCAPublicKey
 		}
 	}
 
@@ -281,7 +283,7 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 			Ports:                 ports,
 			SshPublicKeys:         req.Spec.SshPublicKeys,
 			StorageQuota:          int(storage.Value()),
-			SSHGatewayCAPublicKey: wsm.Config.SSHGatewayCAPublicKey,
+			SSHGatewayCAPublicKey: sshGatewayCAPublicKey,
 		},
 	}
 	controllerutil.AddFinalizer(&ws, workspacev1.GitpodFinalizerName)

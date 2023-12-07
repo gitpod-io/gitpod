@@ -1304,6 +1304,7 @@ export enum WorkspaceFeatureFlag {
     NOOP = 0,
     WORKSPACE_CONNECTION_LIMITING = 10,
     WORKSPACE_PSI = 11,
+    SSH_CA = 12,
 }
 
 export enum WorkspaceType {

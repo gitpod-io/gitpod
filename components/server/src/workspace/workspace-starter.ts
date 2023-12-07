@@ -936,6 +936,10 @@ export class WorkspaceStarter {
                 featureFlags.push("workspace_psi");
             }
 
+            if (await this.shouldEnableSSHCA(user, workspace.organizationId)) {
+                featureFlags.push("ssh_ca");
+            }
+
             const workspaceClass = await getWorkspaceClassForInstance(
                 ctx,
                 workspace,
@@ -993,6 +997,13 @@ export class WorkspaceStarter {
 
     private async shouldEnableConnectionLimiting(userId: string, organizationId: string): Promise<boolean> {
         return this.entitlementService.limitNetworkConnections(userId, organizationId);
+    }
+
+    private async shouldEnableSSHCA(user: User, organizationId: string): Promise<boolean> {
+        return getExperimentsClientForBackend().getValueAsync("isSSHCertificateAuthoritiesEnabled", false, {
+            user: user,
+            teamId: organizationId,
+        });
     }
 
     private shouldEnablePSI(billingTier: BillingTier): boolean {
