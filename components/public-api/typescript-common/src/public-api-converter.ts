@@ -133,6 +133,7 @@ import {
     PortProtocol,
     WorkspaceInstance,
     WorkspaceInstanceConditions,
+    WorkspaceInstancePhase,
     WorkspaceInstancePort,
 } from "@gitpod/gitpod-protocol/lib/workspace-instance";
 import { Author, Commit } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
@@ -730,6 +731,35 @@ export class PublicAPIConverter {
             }
         }
         return WorkspacePhase_Phase.UNSPECIFIED;
+    }
+
+    fromPhase(arg: WorkspacePhase_Phase): WorkspaceInstancePhase {
+        switch (arg) {
+            case WorkspacePhase_Phase.UNSPECIFIED:
+                return "unknown";
+            case WorkspacePhase_Phase.PREPARING:
+                return "preparing";
+            case WorkspacePhase_Phase.IMAGEBUILD:
+                return "building";
+            case WorkspacePhase_Phase.PENDING:
+                return "pending";
+            case WorkspacePhase_Phase.CREATING:
+                return "creating";
+            case WorkspacePhase_Phase.INITIALIZING:
+                return "initializing";
+            case WorkspacePhase_Phase.RUNNING:
+                return "running";
+            case WorkspacePhase_Phase.INTERRUPTED:
+                return "interrupted";
+            // TODO:
+            // case WorkspacePhase_Phase.PAUSED:
+            //     return "unknown";
+            case WorkspacePhase_Phase.STOPPING:
+                return "stopping";
+            case WorkspacePhase_Phase.STOPPED:
+                return "stopped";
+        }
+        return "unknown";
     }
 
     toOrganization(org: ProtocolOrganization): Organization {

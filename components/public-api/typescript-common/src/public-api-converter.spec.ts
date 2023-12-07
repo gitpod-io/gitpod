@@ -28,7 +28,7 @@ import { startFixtureTest } from "./fixtures.spec";
 import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { BranchMatchingStrategy } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
-import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { WorkspaceAndInstance } from "@gitpod/gitpod-protocol";
 
 describe("PublicAPIConverter", () => {
@@ -112,6 +112,14 @@ describe("PublicAPIConverter", () => {
             await startFixtureTest("../fixtures/toPrebuildSettings_*.json", async (input) =>
                 converter.toPrebuildSettings(input),
             );
+        });
+
+        it("toAndFromPhase", async () => {
+            await startFixtureTest("../fixtures/toAndFromPhase_*.json", async (input) => {
+                const t1 = converter.toPhase({ status: { phase: input } } as any);
+                const t2 = converter.fromPhase(t1);
+                return WorkspacePhase_Phase[converter.toPhase({ status: { phase: t2 } } as any)];
+            });
         });
 
         it("toBranchMatchingStrategy", async () => {
