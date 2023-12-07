@@ -39,6 +39,8 @@ type InstallationServiceClient interface {
 	ListBlockedEmailDomains(ctx context.Context, in *ListBlockedEmailDomainsRequest, opts ...grpc.CallOption) (*ListBlockedEmailDomainsResponse, error)
 	// CreateBlockedEmailDomain creates a new blocked email domain.
 	CreateBlockedEmailDomain(ctx context.Context, in *CreateBlockedEmailDomainRequest, opts ...grpc.CallOption) (*CreateBlockedEmailDomainResponse, error)
+	// GetOnboardingState returns the onboarding state of the installation.
+	GetOnboardingState(ctx context.Context, in *GetOnboardingStateRequest, opts ...grpc.CallOption) (*GetOnboardingStateResponse, error)
 }
 
 type installationServiceClient struct {
@@ -103,6 +105,15 @@ func (c *installationServiceClient) CreateBlockedEmailDomain(ctx context.Context
 	return out, nil
 }
 
+func (c *installationServiceClient) GetOnboardingState(ctx context.Context, in *GetOnboardingStateRequest, opts ...grpc.CallOption) (*GetOnboardingStateResponse, error) {
+	out := new(GetOnboardingStateResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.InstallationService/GetOnboardingState", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InstallationServiceServer is the server API for InstallationService service.
 // All implementations must embed UnimplementedInstallationServiceServer
 // for forward compatibility
@@ -120,6 +131,8 @@ type InstallationServiceServer interface {
 	ListBlockedEmailDomains(context.Context, *ListBlockedEmailDomainsRequest) (*ListBlockedEmailDomainsResponse, error)
 	// CreateBlockedEmailDomain creates a new blocked email domain.
 	CreateBlockedEmailDomain(context.Context, *CreateBlockedEmailDomainRequest) (*CreateBlockedEmailDomainResponse, error)
+	// GetOnboardingState returns the onboarding state of the installation.
+	GetOnboardingState(context.Context, *GetOnboardingStateRequest) (*GetOnboardingStateResponse, error)
 	mustEmbedUnimplementedInstallationServiceServer()
 }
 
@@ -144,6 +157,9 @@ func (UnimplementedInstallationServiceServer) ListBlockedEmailDomains(context.Co
 }
 func (UnimplementedInstallationServiceServer) CreateBlockedEmailDomain(context.Context, *CreateBlockedEmailDomainRequest) (*CreateBlockedEmailDomainResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateBlockedEmailDomain not implemented")
+}
+func (UnimplementedInstallationServiceServer) GetOnboardingState(context.Context, *GetOnboardingStateRequest) (*GetOnboardingStateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOnboardingState not implemented")
 }
 func (UnimplementedInstallationServiceServer) mustEmbedUnimplementedInstallationServiceServer() {}
 
@@ -266,6 +282,24 @@ func _InstallationService_CreateBlockedEmailDomain_Handler(srv interface{}, ctx 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InstallationService_GetOnboardingState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOnboardingStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InstallationServiceServer).GetOnboardingState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.InstallationService/GetOnboardingState",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InstallationServiceServer).GetOnboardingState(ctx, req.(*GetOnboardingStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // InstallationService_ServiceDesc is the grpc.ServiceDesc for InstallationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -296,6 +330,10 @@ var InstallationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateBlockedEmailDomain",
 			Handler:    _InstallationService_CreateBlockedEmailDomain_Handler,
+		},
+		{
+			MethodName: "GetOnboardingState",
+			Handler:    _InstallationService_GetOnboardingState_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

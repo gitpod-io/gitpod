@@ -75,7 +75,11 @@ import {
     WorkspaceStatus_WorkspaceConditions,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { EditorReference } from "@gitpod/public-api/lib/gitpod/v1/editor_pb";
-import { BlockedEmailDomain, BlockedRepository } from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
+import {
+    BlockedEmailDomain,
+    BlockedRepository,
+    OnboardingState,
+} from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
 import { SSHPublicKey } from "@gitpod/public-api/lib/gitpod/v1/ssh_pb";
 import {
     ConfigurationEnvironmentVariable,
@@ -144,6 +148,7 @@ import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-c
 import { RoleOrPermission } from "@gitpod/gitpod-protocol/lib/permission";
 import { parseGoDurationToMs } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import { GitpodServer } from "@gitpod/gitpod-protocol";
 
 export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
 
@@ -1311,6 +1316,12 @@ export class PublicAPIConverter {
             id: snapshot.id,
             workspaceId: snapshot.originalWorkspaceId,
             creationTime: snapshot.creationTime ? this.toTimestamp(snapshot.creationTime) : undefined,
+        });
+    }
+
+    toOnboardingState(state: GitpodServer.OnboardingState): OnboardingState {
+        return new OnboardingState({
+            completed: state.isCompleted,
         });
     }
 }

@@ -263,6 +263,18 @@ describe("PublicAPIConverter", () => {
         });
     });
 
+    describe("toOnboardingState", () => {
+        it("should convert", () => {
+            const result = converter.toOnboardingState({
+                isCompleted: true,
+                hasAnyOrg: true,
+            });
+            expect(result).to.deep.equal({
+                completed: true,
+            });
+        });
+    });
+
     describe("errors", () => {
         it("USER_BLOCKED", () => {
             const connectError = converter.toError(new ApplicationError(ErrorCodes.USER_BLOCKED, "user blocked"));
