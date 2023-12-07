@@ -31,8 +31,8 @@ export namespace IDEFrontendDashboardService {
      * IServer is the server side which is using in dashboard loading screen
      */
     export interface IServer {
-        sendInfoUpdate(info: Info): void;
         relocate(url: string): void;
+        sendInfoUpdate(info: Info): void;
         openBrowserIDE(): void;
     }
 

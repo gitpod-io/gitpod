@@ -167,7 +167,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
     private ideCredentials!: string;
     private workspace!: Workspace;
 
-    private latestInfo?: IDEFrontendDashboardService.Status;
+    private latestInfo?: IDEFrontendDashboardService.Info;
 
     private readonly onDidChangeEmitter = new Emitter<IDEFrontendDashboardService.SetStateData>();
     readonly onSetState = this.onDidChangeEmitter.event;
