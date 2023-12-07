@@ -168,13 +168,3 @@ func (s *ProxyWorkspaceServiceHandler) WaitForWorkspaceSnapshot(ctx context.Cont
 
 	return connect_go.NewResponse(resp), nil
 }
-
-func (s *ProxyWorkspaceServiceHandler) ListWorkspaceSnapshots(ctx context.Context, req *connect_go.Request[v1.ListWorkspaceSnapshotsRequest]) (*connect_go.Response[v1.ListWorkspaceSnapshotsResponse], error) {
-	resp, err := s.Client.ListWorkspaceSnapshots(ctx, req.Msg)
-	if err != nil {
-		// TODO(milan): Convert to correct status code
-		return nil, err
-	}
-
-	return connect_go.NewResponse(resp), nil
-}

@@ -39,8 +39,6 @@ import {
     AdmissionLevel,
     CreateWorkspaceSnapshotRequest,
     CreateWorkspaceSnapshotResponse,
-    ListWorkspaceSnapshotsRequest,
-    ListWorkspaceSnapshotsResponse,
     WaitForWorkspaceSnapshotRequest,
     WaitForWorkspaceSnapshotResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
@@ -379,16 +377,5 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         }
         await this.workspaceService.waitForSnapshot(ctxUserId(), req.snapshotId);
         return new WaitForWorkspaceSnapshotResponse();
-    }
-
-    async listWorkspaceSnapshots(req: ListWorkspaceSnapshotsRequest): Promise<ListWorkspaceSnapshotsResponse> {
-        if (!req.workspaceId) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
-        }
-        // TODO: pagination
-        const snapshotList = await this.workspaceService.listSnapshots(ctxUserId(), req.workspaceId);
-        return new ListWorkspaceSnapshotsResponse({
-            snapshots: snapshotList.map((e) => this.apiConverter.toWorkspaceSnapshot(e)),
-        });
     }
 }

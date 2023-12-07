@@ -70,9 +70,6 @@ service WorkspaceService {
 
   // WaitWorkspaceSnapshot waits for the snapshot to be available or failed.
   rpc WaitForWorkspaceSnapshot(WaitForWorkspaceSnapshotRequest) returns (WaitForWorkspaceSnapshotResponse) {}
-
-  // ListWorkspaceSnapshots lists the snapshots.
-  rpc ListWorkspaceSnapshots(ListWorkspaceSnapshotsRequest) returns (ListWorkspaceSnapshotsResponse) {}
 }
 
 message GetWorkspaceRequest {
@@ -783,21 +780,6 @@ message WaitForWorkspaceSnapshotRequest {
 }
 
 message WaitForWorkspaceSnapshotResponse {}
-
-message ListWorkspaceSnapshotsRequest {
-  PaginationRequest pagination = 1;
-
-  // workspace_id
-  //
-  // +required
-  string workspace_id = 2;
-}
-
-message ListWorkspaceSnapshotsResponse {
-  PaginationResponse pagination = 1;
-
-  repeated WorkspaceSnapshot snapshots = 2;
-}
 
 message WorkspaceSnapshot {
   // id is the unique identifier of the snapshot

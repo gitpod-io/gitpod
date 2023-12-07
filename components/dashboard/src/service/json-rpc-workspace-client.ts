@@ -41,8 +41,6 @@ import {
     AdmissionLevel,
     CreateWorkspaceSnapshotRequest,
     CreateWorkspaceSnapshotResponse,
-    ListWorkspaceSnapshotsRequest,
-    ListWorkspaceSnapshotsResponse,
     WaitForWorkspaceSnapshotRequest,
     WaitForWorkspaceSnapshotResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
@@ -394,20 +392,5 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
         }
         await getGitpodService().server.waitForSnapshot(req.snapshotId);
         return new WaitForWorkspaceSnapshotResponse();
-    }
-
-    async listWorkspaceSnapshots(
-        req: PartialMessage<ListWorkspaceSnapshotsRequest>,
-        _options?: CallOptions | undefined,
-    ): Promise<ListWorkspaceSnapshotsResponse> {
-        if (!req.workspaceId) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
-        }
-        const snapshotIdList = await getGitpodService().server.getSnapshots(req.workspaceId);
-        return new ListWorkspaceSnapshotsResponse({
-            snapshots: snapshotIdList.map((id) =>
-                converter.toWorkspaceSnapshot({ id, originalWorkspaceId: req.workspaceId! }),
-            ),
-        });
     }
 }

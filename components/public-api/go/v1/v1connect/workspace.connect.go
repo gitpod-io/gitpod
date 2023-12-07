@@ -75,8 +75,6 @@ type WorkspaceServiceClient interface {
 	CreateWorkspaceSnapshot(context.Context, *connect_go.Request[v1.CreateWorkspaceSnapshotRequest]) (*connect_go.Response[v1.CreateWorkspaceSnapshotResponse], error)
 	// WaitWorkspaceSnapshot waits for the snapshot to be available or failed.
 	WaitForWorkspaceSnapshot(context.Context, *connect_go.Request[v1.WaitForWorkspaceSnapshotRequest]) (*connect_go.Response[v1.WaitForWorkspaceSnapshotResponse], error)
-	// ListWorkspaceSnapshots lists the snapshots.
-	ListWorkspaceSnapshots(context.Context, *connect_go.Request[v1.ListWorkspaceSnapshotsRequest]) (*connect_go.Response[v1.ListWorkspaceSnapshotsResponse], error)
 }
 
 // NewWorkspaceServiceClient constructs a client for the gitpod.v1.WorkspaceService service. By
@@ -169,11 +167,6 @@ func NewWorkspaceServiceClient(httpClient connect_go.HTTPClient, baseURL string,
 			baseURL+"/gitpod.v1.WorkspaceService/WaitForWorkspaceSnapshot",
 			opts...,
 		),
-		listWorkspaceSnapshots: connect_go.NewClient[v1.ListWorkspaceSnapshotsRequest, v1.ListWorkspaceSnapshotsResponse](
-			httpClient,
-			baseURL+"/gitpod.v1.WorkspaceService/ListWorkspaceSnapshots",
-			opts...,
-		),
 	}
 }
 
@@ -195,7 +188,6 @@ type workspaceServiceClient struct {
 	getWorkspaceEditorCredentials *connect_go.Client[v1.GetWorkspaceEditorCredentialsRequest, v1.GetWorkspaceEditorCredentialsResponse]
 	createWorkspaceSnapshot       *connect_go.Client[v1.CreateWorkspaceSnapshotRequest, v1.CreateWorkspaceSnapshotResponse]
 	waitForWorkspaceSnapshot      *connect_go.Client[v1.WaitForWorkspaceSnapshotRequest, v1.WaitForWorkspaceSnapshotResponse]
-	listWorkspaceSnapshots        *connect_go.Client[v1.ListWorkspaceSnapshotsRequest, v1.ListWorkspaceSnapshotsResponse]
 }
 
 // GetWorkspace calls gitpod.v1.WorkspaceService.GetWorkspace.
@@ -278,11 +270,6 @@ func (c *workspaceServiceClient) WaitForWorkspaceSnapshot(ctx context.Context, r
 	return c.waitForWorkspaceSnapshot.CallUnary(ctx, req)
 }
 
-// ListWorkspaceSnapshots calls gitpod.v1.WorkspaceService.ListWorkspaceSnapshots.
-func (c *workspaceServiceClient) ListWorkspaceSnapshots(ctx context.Context, req *connect_go.Request[v1.ListWorkspaceSnapshotsRequest]) (*connect_go.Response[v1.ListWorkspaceSnapshotsResponse], error) {
-	return c.listWorkspaceSnapshots.CallUnary(ctx, req)
-}
-
 // WorkspaceServiceHandler is an implementation of the gitpod.v1.WorkspaceService service.
 type WorkspaceServiceHandler interface {
 	// GetWorkspace returns a single workspace.
@@ -329,8 +316,6 @@ type WorkspaceServiceHandler interface {
 	CreateWorkspaceSnapshot(context.Context, *connect_go.Request[v1.CreateWorkspaceSnapshotRequest]) (*connect_go.Response[v1.CreateWorkspaceSnapshotResponse], error)
 	// WaitWorkspaceSnapshot waits for the snapshot to be available or failed.
 	WaitForWorkspaceSnapshot(context.Context, *connect_go.Request[v1.WaitForWorkspaceSnapshotRequest]) (*connect_go.Response[v1.WaitForWorkspaceSnapshotResponse], error)
-	// ListWorkspaceSnapshots lists the snapshots.
-	ListWorkspaceSnapshots(context.Context, *connect_go.Request[v1.ListWorkspaceSnapshotsRequest]) (*connect_go.Response[v1.ListWorkspaceSnapshotsResponse], error)
 }
 
 // NewWorkspaceServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -420,11 +405,6 @@ func NewWorkspaceServiceHandler(svc WorkspaceServiceHandler, opts ...connect_go.
 		svc.WaitForWorkspaceSnapshot,
 		opts...,
 	))
-	mux.Handle("/gitpod.v1.WorkspaceService/ListWorkspaceSnapshots", connect_go.NewUnaryHandler(
-		"/gitpod.v1.WorkspaceService/ListWorkspaceSnapshots",
-		svc.ListWorkspaceSnapshots,
-		opts...,
-	))
 	return "/gitpod.v1.WorkspaceService/", mux
 }
 
@@ -493,8 +473,4 @@ func (UnimplementedWorkspaceServiceHandler) CreateWorkspaceSnapshot(context.Cont
 
 func (UnimplementedWorkspaceServiceHandler) WaitForWorkspaceSnapshot(context.Context, *connect_go.Request[v1.WaitForWorkspaceSnapshotRequest]) (*connect_go.Response[v1.WaitForWorkspaceSnapshotResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.WaitForWorkspaceSnapshot is not implemented"))
-}
-
-func (UnimplementedWorkspaceServiceHandler) ListWorkspaceSnapshots(context.Context, *connect_go.Request[v1.ListWorkspaceSnapshotsRequest]) (*connect_go.Response[v1.ListWorkspaceSnapshotsResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.ListWorkspaceSnapshots is not implemented"))
 }
