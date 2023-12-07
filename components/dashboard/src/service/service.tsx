@@ -304,19 +304,6 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
         }
     }
 
-    // TODO(hw): to be removed after IDE deployed
-    sendStatusUpdate(status: IDEFrontendDashboardService.Status): void {
-        this.clientWindow.postMessage(
-            {
-                version: 1,
-                type: "ide-status-update",
-                status,
-            } as IDEFrontendDashboardService.StatusUpdateEventData,
-            "*",
-        );
-    }
-    // TODO(hw): end of todo
-
     sendInfoUpdate(info: IDEFrontendDashboardService.Info): void {
         this.clientWindow.postMessage(
             {
