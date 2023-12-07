@@ -114,8 +114,8 @@ export class ProjectsService {
         return filteredProjects;
     }
 
-    async findProjectsByCloneUrl(userId: string, cloneUrl: string): Promise<Project[]> {
-        const projects = await this.projectDB.findProjectsByCloneUrl(cloneUrl);
+    async findProjectsByCloneUrl(userId: string, cloneUrl: string, organizationId?: string): Promise<Project[]> {
+        const projects = await this.projectDB.findProjectsByCloneUrl(cloneUrl, organizationId);
         const result: Project[] = [];
         for (const project of projects) {
             if (await this.auth.hasPermissionOnProject(userId, "read_info", project.id)) {

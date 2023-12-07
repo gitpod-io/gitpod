@@ -120,7 +120,11 @@ export class ContextService {
         if (options?.projectId) {
             project = await this.projectsService.getProject(user.id, options.projectId);
         } else if (CommitContext.is(context)) {
-            const projects = await this.projectsService.findProjectsByCloneUrl(user.id, context.repository.cloneUrl);
+            const projects = await this.projectsService.findProjectsByCloneUrl(
+                user.id,
+                context.repository.cloneUrl,
+                options?.organizationId,
+            );
             if (projects.length > 1) {
                 throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Multiple projects found for clone URL.");
             }

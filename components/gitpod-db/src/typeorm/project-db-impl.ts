@@ -60,9 +60,9 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
         return repo.findOne({ id: projectId, markedDeleted: false });
     }
 
-    public async findProjectsByCloneUrl(cloneUrl: string): Promise<Project[]> {
+    public async findProjectsByCloneUrl(cloneUrl: string, organizationId?: string): Promise<Project[]> {
         const repo = await this.getRepo();
-        const conditions: FindConditions<DBProject> = { cloneUrl, markedDeleted: false };
+        const conditions: FindConditions<DBProject> = { cloneUrl, markedDeleted: false, teamId: organizationId };
         return repo.find(conditions);
     }
 
