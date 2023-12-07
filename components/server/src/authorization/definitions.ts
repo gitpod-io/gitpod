@@ -43,7 +43,8 @@ export type UserPermission =
     | "read_tokens"
     | "write_tokens"
     | "read_env_var"
-    | "write_env_var";
+    | "write_env_var"
+    | "code_sync";
 
 export type InstallationResourceType = "installation";
 

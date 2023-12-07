@@ -296,19 +296,27 @@ export class Server {
     }
 
     protected async registerRoutes(app: express.Application) {
+        // Authorization: Session only
         app.use(this.userController.apiRouter);
-        app.use(this.oneTimeSecretServer.apiRouter);
         app.use("/workspace-download", this.workspaceDownloadService.apiRouter);
-        app.use("/code-sync", this.codeSyncService.apiRouter);
+        app.use(this.oauthController.oauthRouter);
+
+        // Authorization: Session or Bearer token
         app.use(HEADLESS_LOGS_PATH_PREFIX, this.headlessLogController.headlessLogs);
         app.use(HEADLESS_LOG_DOWNLOAD_PATH_PREFIX, this.headlessLogController.headlessLogDownload);
-        app.use("/live", this.livenessController.apiRouter);
+
+        // Authorization: Bearer token only
+        app.use("/code-sync", this.codeSyncService.apiRouter);
+
+        // Authorization: none
+        app.use(this.oneTimeSecretServer.apiRouter);
         app.use(this.newsletterSubscriptionController.apiRouter);
+        app.use("/live", this.livenessController.apiRouter);
         app.use("/version", (req: express.Request, res: express.Response, next: express.NextFunction) => {
             res.send(this.config.version);
         });
-        app.use(this.oauthController.oauthRouter);
 
+        // Authorization: Custom
         if (this.config.githubApp?.enabled && this.githubApp.server) {
             log.info("Registered GitHub app at /apps/github");
             app.use("/apps/github/", this.githubApp.server?.expressApp);
