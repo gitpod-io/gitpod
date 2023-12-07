@@ -39,7 +39,12 @@ export class BitbucketServerTokenHelper {
         if (requiredScopes.length === 0) {
             requiredScopes = BitbucketServerOAuthScopes.Requirements.DEFAULT;
         }
-        throw UnauthorizedError.create(host, requiredScopes, "missing-identity");
+        throw UnauthorizedError.create({
+            host,
+            providerType: "GitHub",
+            scopes: BitbucketServerOAuthScopes.Requirements.DEFAULT,
+            providerIsConnected: false,
+        });
     }
     protected containsScopes(token: Token, wantedScopes: string[] | undefined): boolean {
         const set = new Set(wantedScopes);

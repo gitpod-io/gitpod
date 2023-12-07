@@ -6,12 +6,16 @@
 
 import { RepositoryService } from "../repohost/repo-service";
 import { inject, injectable } from "inversify";
-import { GitHubGraphQlEndpoint, GitHubRestApi } from "../github/api";
+import { GitHubApiError, GitHubGraphQlEndpoint, GitHubRestApi } from "../github/api";
 import { GitHubEnterpriseApp } from "./github-enterprise-app";
 import { GithubContextParser } from "../github/github-context-parser";
 import { ProviderRepository, User } from "@gitpod/gitpod-protocol";
 import { Config } from "../config";
 import { TokenService } from "../user/token-service";
+import { UnauthorizedError } from "../errors";
+import { RepoURL } from "../repohost";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { GitHubScope } from "../github/scopes";
 
 @injectable()
 export class GitHubService extends RepositoryService {
@@ -56,24 +60,49 @@ export class GitHubService extends RepositoryService {
     }
 
     async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<void> {
-        const { owner, repoName: repo } = await this.githubContextParser.parseURL(user, cloneUrl);
-        const webhooks = (await this.githubApi.run(user, (gh) => gh.repos.listWebhooks({ owner, repo }))).data;
-        for (const webhook of webhooks) {
-            if (webhook.config.url === this.getHookUrl()) {
-                await this.githubApi.run(user, (gh) => gh.repos.deleteWebhook({ owner, repo, hook_id: webhook.id }));
-            }
+        const parsedRepoUrl = RepoURL.parseRepoUrl(cloneUrl);
+        if (!parsedRepoUrl) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Clone URL not parseable.`);
         }
-        const tokenEntry = await this.tokenService.createGitpodToken(
-            user,
-            GitHubService.PREBUILD_TOKEN_SCOPE,
-            cloneUrl,
-        );
-        const config = {
-            url: this.getHookUrl(),
-            content_type: "json",
-            secret: user.id + "|" + tokenEntry.token.value,
-        };
-        await this.githubApi.run(user, (gh) => gh.repos.createWebhook({ owner, repo, config }));
+        try {
+            const { owner, repoName: repo } = await this.githubContextParser.parseURL(user, cloneUrl);
+            const webhooks = (await this.githubApi.run(user, (gh) => gh.repos.listWebhooks({ owner, repo }))).data;
+            for (const webhook of webhooks) {
+                if (webhook.config.url === this.getHookUrl()) {
+                    await this.githubApi.run(user, (gh) =>
+                        gh.repos.deleteWebhook({ owner, repo, hook_id: webhook.id }),
+                    );
+                }
+            }
+            const tokenEntry = await this.tokenService.createGitpodToken(
+                user,
+                GitHubService.PREBUILD_TOKEN_SCOPE,
+                cloneUrl,
+            );
+            const config = {
+                url: this.getHookUrl(),
+                content_type: "json",
+                secret: user.id + "|" + tokenEntry.token.value,
+            };
+            await this.githubApi.run(user, (gh) => gh.repos.createWebhook({ owner, repo, config }));
+        } catch (error) {
+            // Hint: here we catch all GH API errors to forward them as Unauthorized to FE,
+            // eventually that should be done depending on the error code.
+            // Also, if user is not connected at all, then the GH API wrapper is throwing
+            // the same error type, but with `providerIsConnected: false`.
+
+            if (GitHubApiError.is(error)) {
+                // TODO check for `error.code`
+                throw UnauthorizedError.create({
+                    host: parsedRepoUrl.host,
+                    providerType: "GitHub",
+                    repoName: parsedRepoUrl.repo,
+                    scopes: GitHubScope.Requirements.DEFAULT,
+                    providerIsConnected: true,
+                });
+            }
+            throw error;
+        }
     }
 
     protected getHookUrl() {

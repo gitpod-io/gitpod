@@ -9,7 +9,7 @@ import { useCallback, useContext, useState, Fragment, useMemo, useEffect } from 
 import { useHistory } from "react-router";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import { getGitpodService } from "../service/service";
+import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { ProjectContext, useCurrentProject } from "./project-context";
 import { getProjectSettingsMenu, getProjectTabs } from "./projects.routes";
 import { Heading2, Subheading } from "../components/typography/headings";
@@ -23,6 +23,9 @@ import { InputField } from "../components/forms/InputField";
 import { SelectInputField } from "../components/forms/SelectInputField";
 import debounce from "lodash.debounce";
 import { Button } from "@podkit/buttons/Button";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { PartialMessage } from "@bufbuild/protobuf";
+import { RepositoryUnauthorizedError } from "@gitpod/public-api/lib/gitpod/v1/error_pb";
 
 const MAX_PROJECT_NAME_LENGTH = 100;
 
@@ -100,7 +103,32 @@ export default function ProjectSettingsView() {
                 toast(`Project ${projectName} updated.`);
             } catch (error) {
                 setProject({ ...project, settings: oldSettings });
-                toast(error?.message || "Oh no, there was a problem with updating project settings.");
+
+                if (newSettings.prebuilds?.enable && error?.code === ErrorCodes.NOT_AUTHENTICATED) {
+                    const { host, /*providerIsConnected, providerType,*/ repoName, scopes } =
+                        error?.data as PartialMessage<RepositoryUnauthorizedError>;
+
+                    const authorizeURL = gitpodHostUrl
+                        .withApi({
+                            pathname: "/authorize",
+                            search: `returnTo=${encodeURIComponent(
+                                window.location.toString(),
+                            )}&host=${host}&scopes=${scopes}`,
+                        })
+                        .toString();
+                    toast(
+                        <>
+                            <span>There was a problem enabling prebuilds on "${repoName}"</span>
+                            <div>
+                                <a className="gp-link whitespace-nowrap text-sm font-semibold" href={authorizeURL}>
+                                    Grant access
+                                </a>
+                            </div>
+                        </>,
+                    );
+                } else {
+                    toast(error?.message || "Oh no, there was a problem with updating project settings.");
+                }
             }
         },
         [project, setProject, toast, projectName],
@@ -118,6 +146,8 @@ export default function ProjectSettingsView() {
                     enable: value,
                 },
             });
+
+            // TODO(at) handle 401
         },
         [project, updateProjectSettings],
     );

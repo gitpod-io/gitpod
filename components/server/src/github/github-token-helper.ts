@@ -39,7 +39,12 @@ export class GitHubTokenHelper {
         if (requiredScopes.length === 0) {
             requiredScopes = GitHubScope.Requirements.DEFAULT;
         }
-        throw UnauthorizedError.create(host, requiredScopes, "missing-identity");
+        throw UnauthorizedError.create({
+            host,
+            providerType: "GitHub",
+            scopes: GitHubScope.Requirements.DEFAULT,
+            providerIsConnected: false,
+        });
     }
     protected containsScopes(token: Token, wantedScopes: string[] | undefined): boolean {
         const wantedSet = new Set(wantedScopes);
