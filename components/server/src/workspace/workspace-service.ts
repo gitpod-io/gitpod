@@ -732,7 +732,7 @@ export class WorkspaceService {
     ): Promise<HeadlessLogUrls> {
         const workspace = await this.db.findByInstanceId(instanceId);
         if (!workspace) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Prebuild for instanceId ${instanceId} not found`);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace for instanceId ${instanceId} not found`);
         }
         if (workspace.type !== "prebuild" || !workspace.projectId) {
             throw new ApplicationError(ErrorCodes.CONFLICT, `Workspace is not a prebuild`);
@@ -754,6 +754,80 @@ export class WorkspaceService {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Headless logs for ${instanceId} not found`);
         }
         return urls;
+    }
+
+    // TODO(gpl) We probably want to change this method to take a workspaceId instead once we migrate the API
+    public async getHeadlessLogDownloadUrl(
+        userId: string,
+        instanceId: string,
+        taskId: string,
+        check: () => Promise<void> = async () => {},
+    ): Promise<string> {
+        const workspace = await this.db.findByInstanceId(instanceId);
+        if (!workspace) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace for instanceId ${instanceId} not found`);
+        }
+        if (workspace.type !== "prebuild" || !workspace.projectId) {
+            throw new ApplicationError(ErrorCodes.CONFLICT, `Workspace is not a prebuild, or missing projectId`);
+        }
+
+        await this.auth.checkPermissionOnProject(userId, "read_prebuild", workspace.projectId);
+        const wsiPromise = this.db.findInstanceById(instanceId);
+        await check();
+
+        const instance = await wsiPromise;
+        if (!instance) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace instance ${instanceId} not found`);
+        }
+
+        const downloadUrl = await this.headlessLogService.getHeadlessLogDownloadUrl(
+            userId,
+            instance,
+            workspace.ownerId,
+            taskId,
+        );
+        return downloadUrl;
+    }
+
+    // TODO(gpl) We probably want to change this method to take a workspaceId instead once we migrate the API
+    public async streamWorkspaceLogs(
+        userId: string,
+        instanceId: string,
+        terminalId: string,
+        sink: (chunk: string) => Promise<void>,
+        check: () => Promise<void> = async () => {},
+    ) {
+        const workspace = await this.db.findByInstanceId(instanceId);
+        if (!workspace) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace for instanceId ${instanceId} not found`);
+        }
+        if (!workspace.projectId) {
+            throw new ApplicationError(ErrorCodes.CONFLICT, `Workspace is missing projectId`);
+        }
+
+        // TODO Use doGetworkspace for this after we switched to workspaceId!
+        if (workspace?.type === "prebuild" && workspace.projectId) {
+            await this.auth.checkPermissionOnProject(userId, "read_prebuild", workspace.projectId);
+        } else {
+            await this.auth.checkPermissionOnWorkspace(userId, "access", workspace.id);
+        }
+
+        const wsiPromise = this.db.findInstanceById(instanceId);
+        await check();
+
+        const instance = await wsiPromise;
+        if (!instance) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace instance ${instanceId} not found`);
+        }
+
+        const logEndpoint = HeadlessLogEndpoint.fromWithOwnerToken(instance);
+        await this.headlessLogService.streamWorkspaceLogWhileRunning(
+            { userId, instanceId, workspaceId: workspace!.id },
+            logEndpoint,
+            instanceId,
+            terminalId,
+            sink,
+        );
     }
 
     public watchWorkspaceStatus(userId: string, opts: { signal: AbortSignal }): AsyncIterable<WorkspaceInstance> {
@@ -825,31 +899,26 @@ export class WorkspaceService {
                 headers: logInfo.headers,
             };
             let lineCount = 0;
-            await this.headlessLogService.streamImageBuildLog(
-                logCtx,
-                logEndpoint,
-                async (chunk) => {
-                    if (aborted.isResolved) {
-                        return;
-                    }
+            await this.headlessLogService.streamImageBuildLog(logCtx, logEndpoint, async (chunk) => {
+                if (aborted.isResolved) {
+                    return;
+                }
 
-                    try {
-                        chunk = chunk.replace("\n", WorkspaceImageBuild.LogLine.DELIMITER);
-                        lineCount += chunk.split(WorkspaceImageBuild.LogLine.DELIMITER_REGEX).length;
+                try {
+                    chunk = chunk.replace("\n", WorkspaceImageBuild.LogLine.DELIMITER);
+                    lineCount += chunk.split(WorkspaceImageBuild.LogLine.DELIMITER_REGEX).length;
 
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                        client.onWorkspaceImageBuildLogs(undefined as any, {
-                            text: chunk,
-                            isDiff: true,
-                            upToLine: lineCount,
-                        });
-                    } catch (err) {
-                        log.error("error while streaming imagebuild logs", err);
-                        aborted.resolve(true);
-                    }
-                },
-                aborted,
-            );
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+                    client.onWorkspaceImageBuildLogs(undefined as any, {
+                        text: chunk,
+                        isDiff: true,
+                        upToLine: lineCount,
+                    });
+                } catch (err) {
+                    log.error("error while streaming imagebuild logs", err);
+                    aborted.resolve(true);
+                }
+            });
         } catch (err) {
             // This error is most likely a temporary one (too early). We defer to the client whether they want to keep on trying or not.
             log.debug(logCtx, "cannot watch imagebuild logs for workspaceId", err);

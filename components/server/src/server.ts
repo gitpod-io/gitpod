@@ -48,7 +48,6 @@ import { JobRunner } from "./jobs/runner";
 import { RedisSubscriber } from "./messaging/redis-subscriber";
 import { HEADLESS_LOGS_PATH_PREFIX, HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from "./workspace/headless-log-service";
 import { runWithRequestContext } from "./util/request-context";
-import { SubjectId } from "./auth/subject-id";
 
 @injectable()
 export class Server {
@@ -143,13 +142,14 @@ export class Server {
 
         // Use RequestContext for authorization
         app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-            const userId = req.user ? req.user.id : undefined;
+            const abortController = new AbortController();
+            req.on("abort", () => abortController.abort());
             runWithRequestContext(
                 {
                     requestKind: "http",
                     requestMethod: req.path,
-                    signal: new AbortController().signal,
-                    subjectId: userId ? SubjectId.fromUserId(userId) : undefined, // TODO(gpl) Can we assume this? E.g., has this been verified? It should: It means we could decode the cookie, right?
+                    signal: abortController.signal,
+                    subjectId: undefined, // Don't use req.user, as that would elevate permissions once we rollout scope-based API tokens
                     headers: toHeaders(req.headers),
                 },
                 () => next(),
