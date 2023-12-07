@@ -21,6 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 type Props = {
     configurations: Configuration[];
     searchTerm: string;
+    prebuildsFilter: string;
     sortBy: string;
     sortOrder: "asc" | "desc";
     hasNextPage: boolean;
@@ -29,12 +30,14 @@ type Props = {
     isFetchingNextPage: boolean;
     onImport: () => void;
     onSearchTermChange: (val: string) => void;
+    onPrebuildsFilterChange: (val: string) => void;
     onLoadNextPage: () => void;
     onSort: (columnName: string, direction: TableSortOrder) => void;
 };
 
 export const RepositoryTable: FC<Props> = ({
     searchTerm,
+    prebuildsFilter,
     configurations,
     sortOrder,
     sortBy,
@@ -44,6 +47,7 @@ export const RepositoryTable: FC<Props> = ({
     isFetchingNextPage,
     onImport,
     onSearchTermChange,
+    onPrebuildsFilterChange,
     onLoadNextPage,
     onSort,
 }) => {
@@ -51,7 +55,7 @@ export const RepositoryTable: FC<Props> = ({
         <>
             {/* Search/Filter bar */}
             <div className="flex flex-col-reverse md:flex-row flex-wrap justify-between items-center gap-2">
-                <div className="flex flex-row flex-wrap items-center w-full md:w-auto">
+                <div className="flex flex-row flex-wrap gap-2 items-center w-full md:w-auto">
                     {/* TODO: Add search icon on left - need to revisit TextInputs for podkit - and remove global styles */}
                     <TextInput
                         className="w-full max-w-none md:w-80"
@@ -59,15 +63,14 @@ export const RepositoryTable: FC<Props> = ({
                         onChange={onSearchTermChange}
                         placeholder="Search imported repositories"
                     />
-                    {/* TODO: Add prebuild status filter dropdown */}
-                    <Select>
+                    <Select value={prebuildsFilter} onValueChange={onPrebuildsFilterChange}>
                         <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Theme" />
+                            <SelectValue placeholder="Prebuilds: All" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="light">Light</SelectItem>
-                            <SelectItem value="dark">Dark</SelectItem>
-                            <SelectItem value="system">System</SelectItem>
+                            <SelectItem value="all">Prebuilds: All</SelectItem>
+                            <SelectItem value="enabled">Prebuilds: Enabled</SelectItem>
+                            <SelectItem value="disabled">Prebuilds: Disabled</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>

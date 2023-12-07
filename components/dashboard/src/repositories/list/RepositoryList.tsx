@@ -25,8 +25,8 @@ const RepositoryListPage: FC = () => {
 
     const params = useQueryParams();
     const [searchTerm, setSearchTerm, searchTermDebounced] = useStateWithDebounce(params.get("search") || "");
-    // const prebuildsEnabledParam = params.get("prebuilds");
-    // const [prebuildsEnabled, setPrebuildsEnabled] = useState<"all" | "enabled" | "disabled">(params.get("prebuilds") || "all");
+    // TODO: Add this to query params
+    const [prebuildsFilter, setPrebuildsFilter] = useState("all");
     const [sortBy, setSortBy] = useState(parseSortBy(params));
     const [sortOrder, setSortOrder] = useState<TableSortOrder>(parseSortOrder(params));
     const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
@@ -54,7 +54,7 @@ const RepositoryListPage: FC = () => {
             searchTerm: searchTermDebounced,
             sortBy: sortBy,
             sortOrder: sortOrder,
-            // prebuildsEnabled,
+            prebuildsEnabled: { all: undefined, enabled: true, disabled: false }[prebuildsFilter] || undefined,
         });
 
     const handleRepoImported = useCallback(
@@ -97,6 +97,7 @@ const RepositoryListPage: FC = () => {
                 {showTable && (
                     <RepositoryTable
                         searchTerm={searchTerm}
+                        prebuildsFilter={prebuildsFilter}
                         configurations={configurations}
                         sortBy={sortBy}
                         sortOrder={sortOrder}
@@ -108,6 +109,7 @@ const RepositoryListPage: FC = () => {
                         onImport={() => setShowCreateProjectModal(true)}
                         onLoadNextPage={() => fetchNextPage()}
                         onSearchTermChange={setSearchTerm}
+                        onPrebuildsFilterChange={setPrebuildsFilter}
                         onSort={handleSort}
                     />
                 )}
