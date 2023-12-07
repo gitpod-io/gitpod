@@ -331,6 +331,21 @@ func (c *Client) Status(ctx context.Context) (res *Status, err error) {
 	}, nil
 }
 
+func (c *Client) Configure(ctx context.Context) (err error) {
+
+	// we should only do this after having a directory to work with
+	// https://github.blog/2019-11-03-highlights-from-git-2-24/
+	mErr := c.Git(ctx, "-C", c.Location, "config", "feature.manyFiles", "true")
+	// commit-graph after every git fetch command that downloads a pack-file from a remote
+	gErr := c.Git(ctx, "-C", c.Location, "config", "fetch.writeCommitGraph", "true")
+
+	if mErr != nil || gErr != nil {
+		return fmt.Errorf("manyFiles error: %v, writeCommitGraph error: %v", mErr, gErr)
+	}
+
+	return nil
+}
+
 // Clone runs git clone
 func (c *Client) Clone(ctx context.Context) (err error) {
 	err = os.MkdirAll(c.Location, 0775)

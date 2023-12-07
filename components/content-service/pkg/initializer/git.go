@@ -98,19 +98,8 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 			}
 		}
 
-		// we should only do this after having a directory to work with
-		// https://github.blog/2019-11-03-highlights-from-git-2-24/
-		err = ws.Git(ctx, "-C", ws.Location, "config", "feature.manyFiles", "true")
-		if err != nil {
-			log.WithError(err).Error("cannot configure feature.manyFiles")
-		}
-
-		// commit-graph after every git fetch command that downloads a pack-file from a remote
-		err = ws.Git(ctx, "-C", ws.Location, "config", "fetch.writeCommitGraph", "true")
-		if err != nil {
-			log.WithError(err).Error("cannot configure fetch.writeCommitGraph")
-		}
-
+		err = ws.Configure(ctx)
+		log.WithError(err).Error("cannot configure git")
 		log.WithField("stage", "init").WithField("location", ws.Location).Debug("Running git clone on workspace")
 		err = ws.Clone(ctx)
 		if err != nil {
