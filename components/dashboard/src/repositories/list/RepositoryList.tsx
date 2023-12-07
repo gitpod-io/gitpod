@@ -54,7 +54,7 @@ const RepositoryListPage: FC = () => {
             searchTerm: searchTermDebounced,
             sortBy: sortBy,
             sortOrder: sortOrder,
-            prebuildsEnabled: { all: undefined, enabled: true, disabled: false }[prebuildsFilter] || undefined,
+            prebuildsEnabled: { all: undefined, enabled: true, disabled: false }[prebuildsFilter],
         });
 
     const handleRepoImported = useCallback(
