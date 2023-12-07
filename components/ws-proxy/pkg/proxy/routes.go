@@ -7,7 +7,8 @@ package proxy
 import (
 	"bytes"
 	"context"
-	"crypto/ed25519"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	crand "crypto/rand"
 	"crypto/tls"
 	"encoding/base64"
@@ -202,12 +203,13 @@ func (ir *ideRoutes) HandleCreateKeyRoute(route *mux.Route, hostKeyList []ssh.Si
 			} `json:"hostKey"`
 		}{}
 
-		_, pvk, err := ed25519.GenerateKey(crand.Reader)
+		privateKey, err := ecdsa.GenerateKey(elliptic.P256(), crand.Reader)
 		if err != nil {
 			log.WithError(err).Error("failed to generate key")
 			return
 		}
-		block, err := ssh.MarshalPrivateKey(pvk, "")
+
+		block, err := ssh.MarshalPrivateKey(privateKey, "")
 		if err != nil {
 			log.WithError(err).Error("failed to marshal key")
 			return
