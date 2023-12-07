@@ -404,9 +404,9 @@ export class ListConfigurationsRequest extends Message<ListConfigurationsRequest
   sort: Sort[] = [];
 
   /**
-   * @generated from field: bool prebuilds_enabled = 5;
+   * @generated from field: optional bool prebuilds_enabled = 5;
    */
-  prebuildsEnabled = false;
+  prebuildsEnabled?: boolean;
 
   constructor(data?: PartialMessage<ListConfigurationsRequest>) {
     super();
@@ -420,7 +420,7 @@ export class ListConfigurationsRequest extends Message<ListConfigurationsRequest
     { no: 2, name: "search_term", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "pagination", kind: "message", T: PaginationRequest },
     { no: 4, name: "sort", kind: "message", T: Sort, repeated: true },
-    { no: 5, name: "prebuilds_enabled", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 5, name: "prebuilds_enabled", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListConfigurationsRequest {

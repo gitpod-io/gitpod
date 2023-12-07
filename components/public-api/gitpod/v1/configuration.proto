@@ -78,7 +78,7 @@ message ListConfigurationsRequest {
   PaginationRequest pagination = 3;
   // Configurations can be sorted by "name" OR "creationTime"
   repeated Sort sort = 4;
-  bool prebuilds_enabled = 5;
+  optional bool prebuilds_enabled = 5;
 }
 
 message ListConfigurationsResponse {
