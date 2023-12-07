@@ -4,11 +4,17 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { getGitpodService } from "./service/service";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import Cookies from "js-cookie";
 import { v4 } from "uuid";
 import { StartWorkspaceError } from "./start/StartPage";
+import { AnalyticsBrowser } from "@segment/analytics-next";
+import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
+
+const analytics = AnalyticsBrowser.load({
+    writeKey: "untrusted-dummy-key",
+    cdnURL: new GitpodHostUrl(window.location.href).with({ pathname: "/analytics" }).toString(),
+});
 
 export type Event =
     | "invite_url_requested"
@@ -80,9 +86,8 @@ export const trackEvent = (event: Event, properties: EventProperties) => {
 };
 
 const trackEventInternal = (event: InternalEvent, properties: InternalEventProperties) => {
-    getGitpodService().server.trackEvent({
+    analytics.track(event, {
         anonymousId: getAnonymousId(),
-        event,
         properties,
     });
 };
@@ -162,7 +167,7 @@ export const trackLocation = async (includePII: boolean) => {
         url: window.location.href,
     };
 
-    getGitpodService().server.trackLocation({
+    analytics.page({
         //if the user is authenticated, let server determine the id. else, pass anonymousId explicitly.
         includePII: includePII,
         anonymousId: getAnonymousId(),
@@ -171,7 +176,7 @@ export const trackLocation = async (includePII: boolean) => {
 };
 
 export const identifyUser = async (traits: Traits) => {
-    getGitpodService().server.identifyUser({
+    analytics.identify({
         anonymousId: getAnonymousId(),
         traits: traits,
     });
