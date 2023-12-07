@@ -54,6 +54,7 @@ const RepositoryListPage: FC = () => {
             searchTerm: searchTermDebounced,
             sortBy: sortBy,
             sortOrder: sortOrder,
+            // Map ui prebuildFilter state to the right api value
             prebuildsEnabled: { all: undefined, enabled: true, disabled: false }[prebuildsFilter],
         });
 
