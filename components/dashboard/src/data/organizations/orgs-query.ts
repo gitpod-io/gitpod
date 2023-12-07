@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useLocation } from "react-router";
@@ -15,19 +14,20 @@ import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 
 export function useOrganizationsInvalidator() {
     const user = useCurrentUser();
+
     const queryClient = useQueryClient();
     return useCallback(() => {
-        console.log("Invalidating orgs... " + JSON.stringify(getQueryKey(user)));
-        queryClient.invalidateQueries(getQueryKey(user));
-    }, [user, queryClient]);
+        console.log("Invalidating orgs... " + JSON.stringify(getQueryKey(user?.id)));
+        queryClient.invalidateQueries(getQueryKey(user?.id));
+    }, [user?.id, queryClient]);
 }
 
 export function useOrganizations() {
     const user = useCurrentUser();
     const query = useQuery<Organization[], Error>(
-        getQueryKey(user),
+        getQueryKey(user?.id),
         async () => {
-            console.log("Fetching orgs... " + JSON.stringify(getQueryKey(user)));
+            console.log("Fetching orgs... " + JSON.stringify(getQueryKey(user?.id)));
             if (!user) {
                 console.log("useOrganizations with empty user");
                 return [];
@@ -47,8 +47,8 @@ export function useOrganizations() {
     return query;
 }
 
-function getQueryKey(user?: User) {
-    return noPersistence(["organizations", user?.id]);
+function getQueryKey(userId?: string) {
+    return noPersistence(["organizations", userId]);
 }
 
 // Custom hook to return the current org if one is selected
