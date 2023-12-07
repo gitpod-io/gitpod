@@ -24,6 +24,7 @@ export default function OrganizationSelector() {
     const { data: billingMode } = useOrgBillingMode();
     const getOrgURL = useGetOrgURL();
     const repoConfigListAndDetail = useFeatureFlag("repoConfigListAndDetail");
+    const showRepoConfigMenuItem = useFeatureFlag("showRepoConfigMenuItem");
 
     // we should have an API to ask for permissions, until then we duplicate the logic here
     const canCreateOrgs = user && !isOrganizationOwned(user);
@@ -55,7 +56,8 @@ export default function OrganizationSelector() {
 
     // Show members if we have an org selected
     if (currentOrg.data) {
-        if (repoConfigListAndDetail) {
+        // Check both flags as one just controls if the menu item is present, the other if the page is accessible
+        if (repoConfigListAndDetail && showRepoConfigMenuItem) {
             linkEntries.push({
                 title: "Repositories",
                 customContent: <LinkEntry>Repositories</LinkEntry>,
