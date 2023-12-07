@@ -511,8 +511,9 @@ type ListConfigurationsRequest struct {
 	SearchTerm     string             `protobuf:"bytes,2,opt,name=search_term,json=searchTerm,proto3" json:"search_term,omitempty"`
 	Pagination     *PaginationRequest `protobuf:"bytes,3,opt,name=pagination,proto3" json:"pagination,omitempty"`
 	// Configurations can be sorted by "name" OR "creationTime"
-	Sort             []*Sort `protobuf:"bytes,4,rep,name=sort,proto3" json:"sort,omitempty"`
-	PrebuildsEnabled *bool   `protobuf:"varint,5,opt,name=prebuilds_enabled,json=prebuildsEnabled,proto3,oneof" json:"prebuilds_enabled,omitempty"`
+	Sort []*Sort `protobuf:"bytes,4,rep,name=sort,proto3" json:"sort,omitempty"`
+	// Will filter for configurations that have prebuilds enabled/disabled, or both if not set.
+	PrebuildsEnabled *bool `protobuf:"varint,5,opt,name=prebuilds_enabled,json=prebuildsEnabled,proto3,oneof" json:"prebuilds_enabled,omitempty"`
 }
 
 func (x *ListConfigurationsRequest) Reset() {

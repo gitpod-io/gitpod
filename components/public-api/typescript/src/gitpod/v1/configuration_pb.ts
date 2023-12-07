@@ -404,6 +404,8 @@ export class ListConfigurationsRequest extends Message<ListConfigurationsRequest
   sort: Sort[] = [];
 
   /**
+   * Will filter for configurations that have prebuilds enabled/disabled, or both if not set.
+   *
    * @generated from field: optional bool prebuilds_enabled = 5;
    */
   prebuildsEnabled?: boolean;
