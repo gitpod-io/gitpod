@@ -35,6 +35,12 @@ describe("PublicAPIConverter", () => {
     const converter = new PublicAPIConverter();
 
     describe("golden tests", () => {
+        it("toWorkspaceSnapshot", async () => {
+            await startFixtureTest("../fixtures/toWorkspaceSnapshot_*.json", async (input) =>
+                converter.toWorkspaceSnapshot(input),
+            );
+        });
+
         it("toUser", async () => {
             await startFixtureTest("../fixtures/toUser_*.json", async (input) => converter.toUser(input));
         });

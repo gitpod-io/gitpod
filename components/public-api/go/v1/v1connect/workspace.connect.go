@@ -70,6 +70,11 @@ type WorkspaceServiceClient interface {
 	// GetWorkspaceEditorCredentials returns an credentials that is used in editor
 	// to encrypt and decrypt secrets
 	GetWorkspaceEditorCredentials(context.Context, *connect_go.Request[v1.GetWorkspaceEditorCredentialsRequest]) (*connect_go.Response[v1.GetWorkspaceEditorCredentialsResponse], error)
+	// CreateWorkspaceSnapshot creates a snapshot of the workspace that can be
+	// shared with others.
+	CreateWorkspaceSnapshot(context.Context, *connect_go.Request[v1.CreateWorkspaceSnapshotRequest]) (*connect_go.Response[v1.CreateWorkspaceSnapshotResponse], error)
+	// WaitWorkspaceSnapshot waits for the snapshot to be available or failed.
+	WaitForWorkspaceSnapshot(context.Context, *connect_go.Request[v1.WaitForWorkspaceSnapshotRequest]) (*connect_go.Response[v1.WaitForWorkspaceSnapshotResponse], error)
 }
 
 // NewWorkspaceServiceClient constructs a client for the gitpod.v1.WorkspaceService service. By
@@ -152,6 +157,16 @@ func NewWorkspaceServiceClient(httpClient connect_go.HTTPClient, baseURL string,
 			baseURL+"/gitpod.v1.WorkspaceService/GetWorkspaceEditorCredentials",
 			opts...,
 		),
+		createWorkspaceSnapshot: connect_go.NewClient[v1.CreateWorkspaceSnapshotRequest, v1.CreateWorkspaceSnapshotResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.WorkspaceService/CreateWorkspaceSnapshot",
+			opts...,
+		),
+		waitForWorkspaceSnapshot: connect_go.NewClient[v1.WaitForWorkspaceSnapshotRequest, v1.WaitForWorkspaceSnapshotResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.WorkspaceService/WaitForWorkspaceSnapshot",
+			opts...,
+		),
 	}
 }
 
@@ -171,6 +186,8 @@ type workspaceServiceClient struct {
 	sendHeartBeat                 *connect_go.Client[v1.SendHeartBeatRequest, v1.SendHeartBeatResponse]
 	getWorkspaceOwnerToken        *connect_go.Client[v1.GetWorkspaceOwnerTokenRequest, v1.GetWorkspaceOwnerTokenResponse]
 	getWorkspaceEditorCredentials *connect_go.Client[v1.GetWorkspaceEditorCredentialsRequest, v1.GetWorkspaceEditorCredentialsResponse]
+	createWorkspaceSnapshot       *connect_go.Client[v1.CreateWorkspaceSnapshotRequest, v1.CreateWorkspaceSnapshotResponse]
+	waitForWorkspaceSnapshot      *connect_go.Client[v1.WaitForWorkspaceSnapshotRequest, v1.WaitForWorkspaceSnapshotResponse]
 }
 
 // GetWorkspace calls gitpod.v1.WorkspaceService.GetWorkspace.
@@ -243,6 +260,16 @@ func (c *workspaceServiceClient) GetWorkspaceEditorCredentials(ctx context.Conte
 	return c.getWorkspaceEditorCredentials.CallUnary(ctx, req)
 }
 
+// CreateWorkspaceSnapshot calls gitpod.v1.WorkspaceService.CreateWorkspaceSnapshot.
+func (c *workspaceServiceClient) CreateWorkspaceSnapshot(ctx context.Context, req *connect_go.Request[v1.CreateWorkspaceSnapshotRequest]) (*connect_go.Response[v1.CreateWorkspaceSnapshotResponse], error) {
+	return c.createWorkspaceSnapshot.CallUnary(ctx, req)
+}
+
+// WaitForWorkspaceSnapshot calls gitpod.v1.WorkspaceService.WaitForWorkspaceSnapshot.
+func (c *workspaceServiceClient) WaitForWorkspaceSnapshot(ctx context.Context, req *connect_go.Request[v1.WaitForWorkspaceSnapshotRequest]) (*connect_go.Response[v1.WaitForWorkspaceSnapshotResponse], error) {
+	return c.waitForWorkspaceSnapshot.CallUnary(ctx, req)
+}
+
 // WorkspaceServiceHandler is an implementation of the gitpod.v1.WorkspaceService service.
 type WorkspaceServiceHandler interface {
 	// GetWorkspace returns a single workspace.
@@ -284,6 +311,11 @@ type WorkspaceServiceHandler interface {
 	// GetWorkspaceEditorCredentials returns an credentials that is used in editor
 	// to encrypt and decrypt secrets
 	GetWorkspaceEditorCredentials(context.Context, *connect_go.Request[v1.GetWorkspaceEditorCredentialsRequest]) (*connect_go.Response[v1.GetWorkspaceEditorCredentialsResponse], error)
+	// CreateWorkspaceSnapshot creates a snapshot of the workspace that can be
+	// shared with others.
+	CreateWorkspaceSnapshot(context.Context, *connect_go.Request[v1.CreateWorkspaceSnapshotRequest]) (*connect_go.Response[v1.CreateWorkspaceSnapshotResponse], error)
+	// WaitWorkspaceSnapshot waits for the snapshot to be available or failed.
+	WaitForWorkspaceSnapshot(context.Context, *connect_go.Request[v1.WaitForWorkspaceSnapshotRequest]) (*connect_go.Response[v1.WaitForWorkspaceSnapshotResponse], error)
 }
 
 // NewWorkspaceServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -363,6 +395,16 @@ func NewWorkspaceServiceHandler(svc WorkspaceServiceHandler, opts ...connect_go.
 		svc.GetWorkspaceEditorCredentials,
 		opts...,
 	))
+	mux.Handle("/gitpod.v1.WorkspaceService/CreateWorkspaceSnapshot", connect_go.NewUnaryHandler(
+		"/gitpod.v1.WorkspaceService/CreateWorkspaceSnapshot",
+		svc.CreateWorkspaceSnapshot,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.WorkspaceService/WaitForWorkspaceSnapshot", connect_go.NewUnaryHandler(
+		"/gitpod.v1.WorkspaceService/WaitForWorkspaceSnapshot",
+		svc.WaitForWorkspaceSnapshot,
+		opts...,
+	))
 	return "/gitpod.v1.WorkspaceService/", mux
 }
 
@@ -423,4 +465,12 @@ func (UnimplementedWorkspaceServiceHandler) GetWorkspaceOwnerToken(context.Conte
 
 func (UnimplementedWorkspaceServiceHandler) GetWorkspaceEditorCredentials(context.Context, *connect_go.Request[v1.GetWorkspaceEditorCredentialsRequest]) (*connect_go.Response[v1.GetWorkspaceEditorCredentialsResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.GetWorkspaceEditorCredentials is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) CreateWorkspaceSnapshot(context.Context, *connect_go.Request[v1.CreateWorkspaceSnapshotRequest]) (*connect_go.Response[v1.CreateWorkspaceSnapshotResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.CreateWorkspaceSnapshot is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) WaitForWorkspaceSnapshot(context.Context, *connect_go.Request[v1.WaitForWorkspaceSnapshotRequest]) (*connect_go.Response[v1.WaitForWorkspaceSnapshotResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.WaitForWorkspaceSnapshot is not implemented"))
 }

@@ -79,8 +79,7 @@ import {
     RemoteTrackMessage,
 } from "@gitpod/gitpod-protocol/lib/analytics";
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
-import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
-import { StopWorkspacePolicy, TakeSnapshotRequest } from "@gitpod/ws-manager/lib/core_pb";
+import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib/core_pb";
 import { inject, injectable } from "inversify";
 import { v4 as uuidv4, validate as uuidValidate } from "uuid";
 import { Disposable, CancellationToken } from "vscode-jsonrpc";
@@ -121,7 +120,6 @@ import { CostCenterJSON } from "@gitpod/gitpod-protocol/lib/usage";
 import { createCookielessId, maskIp } from "../analytics";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { LinkedInService } from "../linkedin-service";
-import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { StripeService } from "../billing/stripe-service";
 import {
@@ -167,9 +165,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         @inject(PrebuildManager) private readonly prebuildManager: PrebuildManager,
         @inject(WorkspaceService) private readonly workspaceService: WorkspaceService,
-        @inject(SnapshotService) private readonly snapshotService: SnapshotService,
-        @inject(WorkspaceManagerClientProvider)
-        private readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider,
 
         @inject(UserDB) private readonly userDB: UserDB,
         @inject(UserAuthentication) private readonly userAuthentication: UserAuthentication,
@@ -1179,54 +1174,21 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     async takeSnapshot(ctx: TraceContext, options: GitpodServer.TakeSnapshotOptions): Promise<string> {
         traceAPIParams(ctx, { options });
-        const { workspaceId, dontWait } = options;
+        const { workspaceId } = options;
         traceWI(ctx, { workspaceId });
 
         const user = await this.checkAndBlockUser("takeSnapshot");
 
+        // TODO: Remove after FGA rollout
         const workspace = await this.guardSnaphotAccess(ctx, user.id, workspaceId);
-        await this.auth.checkPermissionOnWorkspace(user.id, "create_snapshot", workspaceId);
-
         const instance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
         if (!instance) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} has no running instance`);
         }
         await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "get");
+        // end of todo
 
-        const client = await this.workspaceManagerClientProvider.get(instance.region);
-        const request = new TakeSnapshotRequest();
-        request.setId(instance.id);
-        request.setReturnImmediately(true);
-
-        // this triggers the snapshots, but returns early! cmp. waitForSnapshot to wait for it's completion
-        let snapshotUrl;
-        try {
-            const resp = await client.takeSnapshot(ctx, request);
-            snapshotUrl = resp.getUrl();
-        } catch (err) {
-            if (isClusterMaintenanceError(err)) {
-                throw new ApplicationError(
-                    ErrorCodes.PRECONDITION_FAILED,
-                    "Cannot take a snapshot because the workspace cluster is under maintenance. Please try again in a few minutes",
-                );
-            }
-            throw err;
-        }
-
-        const snapshot = await this.snapshotService.createSnapshot(options, snapshotUrl);
-
-        // to be backwards compatible during rollout, we require new clients to explicitly pass "dontWait: true"
-        const waitOpts = { workspaceOwner: workspace.ownerId, snapshot };
-        if (!dontWait) {
-            // this mimicks the old behavior: wait until the snapshot is through
-            await this.internalDoWaitForWorkspace(waitOpts);
-        } else {
-            // start driving the snapshot immediately
-            this.internalDoWaitForWorkspace(waitOpts).catch((err) =>
-                log.error({ userId: user.id, workspaceId: workspaceId }, "internalDoWaitForWorkspace", err),
-            );
-        }
-
+        const snapshot = await this.workspaceService.takeSnapshot(user.id, options);
         return snapshot.id;
     }
 
@@ -1239,12 +1201,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("waitForSnapshot");
 
+        // TODO: Remove after FGA rollout
         const snapshot = await this.workspaceDb.trace(ctx).findSnapshotById(snapshotId);
         if (!snapshot) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `No snapshot with id '${snapshotId}' found.`);
         }
-        const snapshotWorkspace = await this.guardSnaphotAccess(ctx, user.id, snapshot.originalWorkspaceId);
-        await this.internalDoWaitForWorkspace({ workspaceOwner: snapshotWorkspace.ownerId, snapshot });
+        await this.guardSnaphotAccess(ctx, user.id, snapshot.originalWorkspaceId);
+        // end of todo
+
+        await this.workspaceService.waitForSnapshot(user.id, snapshotId);
     }
 
     async getSnapshots(ctx: TraceContext, workspaceId: string): Promise<string[]> {
@@ -1253,25 +1218,22 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("getSnapshots");
 
+        // TODO: Remove after FGA rollout
         // we use the workspacService which checks if the requesting user has access to the workspace. If that is the case they have access to snapshots as well.
         // below is the old permission check which would also check if the user has access to the snapshot itself. This is not the case anymore.
         const { workspace } = await this.workspaceService.getWorkspace(user.id, workspaceId);
         if (workspace.ownerId !== user.id) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} does not exist.`);
         }
-        const snapshots = await this.workspaceDb.trace(ctx).findSnapshotsByWorkspaceId(workspaceId);
+        // end of todo
+
+        const snapshots = await this.workspaceService.listSnapshots(user.id, workspaceId);
+
+        // TODO: Remove after FGA rollout
         await Promise.all(snapshots.map((s) => this.guardAccess({ kind: "snapshot", subject: s, workspace }, "get")));
+        // end of todo
 
         return snapshots.map((s) => s.id);
-    }
-
-    private async internalDoWaitForWorkspace(opts: WaitForSnapshotOptions) {
-        try {
-            await this.snapshotService.waitForSnapshot(opts);
-        } catch (err) {
-            // wrap in SNAPSHOT_ERROR to signal this call should not be retried.
-            throw new ApplicationError(ErrorCodes.SNAPSHOT_ERROR, String(err));
-        }
     }
 
     async getWorkspaceEnvVars(ctx: TraceContext, workspaceId: string): Promise<EnvVarWithValue[]> {
