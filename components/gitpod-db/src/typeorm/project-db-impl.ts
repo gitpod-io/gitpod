@@ -107,7 +107,7 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
 
         if (prebuildsEnabled !== undefined) {
             queryBuilder.andWhere("project.settings->>'$.prebuilds.enable' = :enabled", {
-                enabled: prebuildsEnabled,
+                enabled: prebuildsEnabled ? "true" : "false",
             });
         }
 
