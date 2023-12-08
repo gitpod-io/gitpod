@@ -98,8 +98,6 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 			}
 		}
 
-		err = ws.Configure(ctx)
-		log.WithError(err).Error("cannot configure git")
 		log.WithField("stage", "init").WithField("location", ws.Location).Debug("Running git clone on workspace")
 		err = ws.Clone(ctx)
 		if err != nil {

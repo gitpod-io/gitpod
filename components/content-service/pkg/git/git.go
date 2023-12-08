@@ -331,7 +331,7 @@ func (c *Client) Status(ctx context.Context) (res *Status, err error) {
 	}, nil
 }
 
-func (c *Client) Configure(ctx context.Context) (err error) {
+func (c *Client) configure(ctx context.Context) (err error) {
 
 	// we should only do this after having a directory to work with
 	// https://github.blog/2019-11-03-highlights-from-git-2-24/
@@ -352,6 +352,11 @@ func (c *Client) Clone(ctx context.Context) (err error) {
 	if err != nil {
 		log.WithError(err).Error("cannot create clone location")
 	}
+
+	// explicitly avoid returning configure errors
+	// this way if it fails, it doesn't fail workspace start
+	cErr := c.configure(ctx)
+	log.WithError(cErr).Error("cannot configure git")
 
 	args := []string{"--depth=1", "--shallow-submodules", c.RemoteURI}
 
