@@ -274,7 +274,7 @@ describe("ContextService", async () => {
         expect((ctx.context as CommitContext).revision).to.equal(gitpodEmptyContext.revision);
     });
 
-    it("should parser prebuild context", async () => {
+    it("should parse prebuild context", async () => {
         const svc = container.get(ContextService);
         const ctx = await svc.parseContext(
             owner,
@@ -289,7 +289,7 @@ describe("ContextService", async () => {
         expect(PrebuiltWorkspaceContext.is(ctx.context)).to.equal(true);
     });
 
-    it("should parser snapshot context", async () => {
+    it("should parse snapshot context", async () => {
         const svc = container.get(ContextService);
         const ctx = await svc.parseContext(owner, `snapshot/${snapshot.id}`, {
             projectId: project.id,

@@ -26,6 +26,7 @@ describe("ProjectsService", async () => {
     let member: User;
     let stranger: User;
     let org: Organization;
+    let anotherOrg: Organization;
 
     beforeEach(async () => {
         container = createTestContainer();
@@ -40,11 +41,15 @@ describe("ProjectsService", async () => {
         // create the org
         const orgService = container.get(OrganizationService);
         org = await orgService.createOrganization(owner.id, "my-org");
+        anotherOrg = await orgService.createOrganization(owner.id, "another-org");
 
         // create and add a member
         member = await userDB.newUser();
         const invite = await orgService.getOrCreateInvite(owner.id, org.id);
         await orgService.joinOrganization(member.id, invite.id);
+
+        const anotherInvite = await orgService.getOrCreateInvite(owner.id, anotherOrg.id);
+        await orgService.joinOrganization(member.id, anotherInvite.id);
 
         // create a stranger
         stranger = await userDB.newUser();
@@ -294,6 +299,30 @@ describe("ProjectsService", async () => {
             },
             workspaceClasses: {},
         });
+    });
+
+    it("should find projects by clone url", async () => {
+        const ps = container.get(ProjectsService);
+        const cloneUrl = "https://github.com/gitpod-io/gitpod.git";
+
+        await createTestProject(ps, org, owner, { name: "my-project", cloneUrl });
+        await createTestProject(ps, org, owner, { name: "my-project-2", cloneUrl });
+
+        // Create data which should not be found
+        await createTestProject(ps, org, owner, {
+            name: "my-project-3",
+            cloneUrl: "https://github.com/gitpod-io/different-repo",
+        });
+        await createTestProject(ps, anotherOrg, owner, {
+            name: "my-project-4",
+            cloneUrl,
+        });
+
+        const foundProjects = await ps.findProjectsByCloneUrl(owner.id, cloneUrl, org.id);
+        expect(foundProjects.length).to.equal(2);
+
+        const foundProjectsForAnyOrg = await ps.findProjectsByCloneUrl(owner.id, cloneUrl);
+        expect(foundProjectsForAnyOrg.length).to.equal(3);
     });
 
     async function createTestProject(
