@@ -14,6 +14,8 @@ import {
     CreateBlockedRepositoryResponse,
     DeleteBlockedRepositoryRequest,
     DeleteBlockedRepositoryResponse,
+    GetInstallationWorkspaceDefaultImageRequest,
+    GetInstallationWorkspaceDefaultImageResponse,
     ListBlockedEmailDomainsRequest,
     ListBlockedEmailDomainsResponse,
     ListBlockedRepositoriesRequest,
@@ -32,6 +34,14 @@ export class InstallationServiceAPI implements ServiceImpl<typeof InstallationSe
     @inject(InstallationService) private readonly installationService: InstallationService;
 
     @inject(PublicAPIConverter) private readonly apiConverter: PublicAPIConverter;
+
+    async getInstallationWorkspaceDefaultImage(
+        req: GetInstallationWorkspaceDefaultImageRequest,
+        _: HandlerContext,
+    ): Promise<GetInstallationWorkspaceDefaultImageResponse> {
+        const img = await this.installationService.getWorkspaceDefaultImage();
+        return new GetInstallationWorkspaceDefaultImageResponse({ defaultWorkspaceImage: img });
+    }
 
     async listBlockedRepositories(
         req: ListBlockedRepositoriesRequest,

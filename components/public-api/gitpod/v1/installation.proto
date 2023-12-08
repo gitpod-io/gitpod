@@ -9,6 +9,10 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
 
 service InstallationService {
+  // GetInstallationWorkspaceDefaultImage returns the default image for current
+  // Gitpod Installation.
+  rpc GetInstallationWorkspaceDefaultImage(GetInstallationWorkspaceDefaultImageRequest) returns (GetInstallationWorkspaceDefaultImageResponse) {}
+
   // ListBlockedRepositories lists blocked repositories.
   rpc ListBlockedRepositories(ListBlockedRepositoriesRequest) returns (ListBlockedRepositoriesResponse) {}
 
@@ -23,6 +27,12 @@ service InstallationService {
 
   // CreateBlockedEmailDomain creates a new blocked email domain.
   rpc CreateBlockedEmailDomain(CreateBlockedEmailDomainRequest) returns (CreateBlockedEmailDomainResponse) {}
+}
+
+message GetInstallationWorkspaceDefaultImageRequest {}
+
+message GetInstallationWorkspaceDefaultImageResponse {
+  string default_workspace_image = 1;
 }
 
 message ListBlockedRepositoriesRequest {

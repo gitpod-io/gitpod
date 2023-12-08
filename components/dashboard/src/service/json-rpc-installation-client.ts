@@ -18,6 +18,8 @@ import {
     ListBlockedEmailDomainsResponse,
     CreateBlockedEmailDomainRequest,
     CreateBlockedEmailDomainResponse,
+    GetInstallationWorkspaceDefaultImageRequest,
+    GetInstallationWorkspaceDefaultImageResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { getGitpodService } from "./service";
@@ -25,6 +27,17 @@ import { converter } from "./public-api";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 
 export class JsonRpcInstallationClient implements PromiseClient<typeof InstallationService> {
+    async getInstallationWorkspaceDefaultImage(
+        _request: PartialMessage<GetInstallationWorkspaceDefaultImageRequest>,
+        _options?: CallOptions,
+    ): Promise<GetInstallationWorkspaceDefaultImageResponse> {
+        const result = await getGitpodService().server.getDefaultWorkspaceImage({});
+        if (result.source !== "installation") {
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "unexpected image source");
+        }
+        return new GetInstallationWorkspaceDefaultImageResponse({ defaultWorkspaceImage: result.image });
+    }
+
     async listBlockedRepositories(
         request: PartialMessage<ListBlockedRepositoriesRequest>,
         _options?: CallOptions | undefined,

@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateBlockedEmailDomainRequest, CreateBlockedEmailDomainResponse, CreateBlockedRepositoryRequest, CreateBlockedRepositoryResponse, DeleteBlockedRepositoryRequest, DeleteBlockedRepositoryResponse, ListBlockedEmailDomainsRequest, ListBlockedEmailDomainsResponse, ListBlockedRepositoriesRequest, ListBlockedRepositoriesResponse } from "./installation_pb.js";
+import { CreateBlockedEmailDomainRequest, CreateBlockedEmailDomainResponse, CreateBlockedRepositoryRequest, CreateBlockedRepositoryResponse, DeleteBlockedRepositoryRequest, DeleteBlockedRepositoryResponse, GetInstallationWorkspaceDefaultImageRequest, GetInstallationWorkspaceDefaultImageResponse, ListBlockedEmailDomainsRequest, ListBlockedEmailDomainsResponse, ListBlockedRepositoriesRequest, ListBlockedRepositoriesResponse } from "./installation_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -18,6 +18,18 @@ import { MethodKind } from "@bufbuild/protobuf";
 export const InstallationService = {
   typeName: "gitpod.v1.InstallationService",
   methods: {
+    /**
+     * GetInstallationWorkspaceDefaultImage returns the default image for current
+     * Gitpod Installation.
+     *
+     * @generated from rpc gitpod.v1.InstallationService.GetInstallationWorkspaceDefaultImage
+     */
+    getInstallationWorkspaceDefaultImage: {
+      name: "GetInstallationWorkspaceDefaultImage",
+      I: GetInstallationWorkspaceDefaultImageRequest,
+      O: GetInstallationWorkspaceDefaultImageResponse,
+      kind: MethodKind.Unary,
+    },
     /**
      * ListBlockedRepositories lists blocked repositories.
      *
