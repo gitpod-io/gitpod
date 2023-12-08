@@ -20,6 +20,8 @@ import {
     CreateBlockedEmailDomainResponse,
     GetInstallationWorkspaceDefaultImageRequest,
     GetInstallationWorkspaceDefaultImageResponse,
+    GetOnboardingStateRequest,
+    GetOnboardingStateResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { getGitpodService } from "./service";
@@ -110,5 +112,15 @@ export class JsonRpcInstallationClient implements PromiseClient<typeof Installat
         });
         // There's no way to get blockedEmailDomain, just ignore it since dashboard don't care about the response data
         return new CreateBlockedEmailDomainResponse({});
+    }
+
+    async getOnboardingState(
+        request: PartialMessage<GetOnboardingStateRequest>,
+        _options?: CallOptions | undefined,
+    ): Promise<GetOnboardingStateResponse> {
+        const info = await getGitpodService().server.getOnboardingState();
+        return new GetOnboardingStateResponse({
+            onboardingState: converter.toOnboardingState(info),
+        });
     }
 }

@@ -15,6 +15,111 @@ import { PaginationRequest, PaginationResponse } from "./pagination_pb.js";
 import { Sort } from "./sorting_pb.js";
 
 /**
+ * @generated from message gitpod.v1.GetOnboardingStateRequest
+ */
+export class GetOnboardingStateRequest extends Message<GetOnboardingStateRequest> {
+  constructor(data?: PartialMessage<GetOnboardingStateRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.GetOnboardingStateRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetOnboardingStateRequest {
+    return new GetOnboardingStateRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetOnboardingStateRequest {
+    return new GetOnboardingStateRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetOnboardingStateRequest {
+    return new GetOnboardingStateRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetOnboardingStateRequest | PlainMessage<GetOnboardingStateRequest> | undefined, b: GetOnboardingStateRequest | PlainMessage<GetOnboardingStateRequest> | undefined): boolean {
+    return proto3.util.equals(GetOnboardingStateRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.GetOnboardingStateResponse
+ */
+export class GetOnboardingStateResponse extends Message<GetOnboardingStateResponse> {
+  /**
+   * @generated from field: gitpod.v1.OnboardingState onboarding_state = 1;
+   */
+  onboardingState?: OnboardingState;
+
+  constructor(data?: PartialMessage<GetOnboardingStateResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.GetOnboardingStateResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "onboarding_state", kind: "message", T: OnboardingState },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetOnboardingStateResponse {
+    return new GetOnboardingStateResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetOnboardingStateResponse {
+    return new GetOnboardingStateResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetOnboardingStateResponse {
+    return new GetOnboardingStateResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetOnboardingStateResponse | PlainMessage<GetOnboardingStateResponse> | undefined, b: GetOnboardingStateResponse | PlainMessage<GetOnboardingStateResponse> | undefined): boolean {
+    return proto3.util.equals(GetOnboardingStateResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.OnboardingState
+ */
+export class OnboardingState extends Message<OnboardingState> {
+  /**
+   * @generated from field: bool completed = 1;
+   */
+  completed = false;
+
+  constructor(data?: PartialMessage<OnboardingState>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.OnboardingState";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "completed", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OnboardingState {
+    return new OnboardingState().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): OnboardingState {
+    return new OnboardingState().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): OnboardingState {
+    return new OnboardingState().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: OnboardingState | PlainMessage<OnboardingState> | undefined, b: OnboardingState | PlainMessage<OnboardingState> | undefined): boolean {
+    return proto3.util.equals(OnboardingState, a, b);
+  }
+}
+
+/**
  * @generated from message gitpod.v1.GetInstallationWorkspaceDefaultImageRequest
  */
 export class GetInstallationWorkspaceDefaultImageRequest extends Message<GetInstallationWorkspaceDefaultImageRequest> {

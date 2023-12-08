@@ -59,6 +59,8 @@ import { VerificationServiceAPI } from "./verification-service-api";
 import { VerificationService } from "@gitpod/public-api/lib/gitpod/v1/verification_connect";
 import { UserServiceAPI } from "./user-service-api";
 import { UserService as UserServiceInternal } from "../user/user-service";
+import { InstallationServiceAPI } from "./installation-service-api";
+import { InstallationService } from "@gitpod/public-api/lib/gitpod/v1/installation_connect";
 
 decorate(injectable(), PublicAPIConverter);
 
@@ -87,6 +89,7 @@ export class API {
     @inject(BearerAuth) private readonly bearerAuthenticator: BearerAuth;
     @inject(PrebuildServiceAPI) private readonly prebuildServiceApi: PrebuildServiceAPI;
     @inject(VerificationServiceAPI) private readonly verificationServiceApi: VerificationServiceAPI;
+    @inject(InstallationServiceAPI) private readonly installationServiceApi: InstallationServiceAPI;
 
     listenPrivate(): http.Server {
         const app = express();
@@ -137,6 +140,7 @@ export class API {
                         service(SSHService, this.sshServiceApi),
                         service(PrebuildService, this.prebuildServiceApi),
                         service(VerificationService, this.verificationServiceApi),
+                        service(InstallationService, this.installationServiceApi),
                     ]) {
                         router.service(type, new Proxy(impl, this.interceptService(type)));
                     }
@@ -392,6 +396,7 @@ export class API {
         bind(StatsServiceAPI).toSelf().inSingletonScope();
         bind(PrebuildServiceAPI).toSelf().inSingletonScope();
         bind(VerificationServiceAPI).toSelf().inSingletonScope();
+        bind(InstallationServiceAPI).toSelf().inSingletonScope();
         bind(API).toSelf().inSingletonScope();
     }
 }

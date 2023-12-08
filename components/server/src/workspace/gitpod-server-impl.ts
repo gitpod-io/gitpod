@@ -2354,26 +2354,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async getOnboardingState(ctx: TraceContext): Promise<GitpodServer.OnboardingState> {
-        // Find useful details about the state of the Gitpod installation.
-        const { rows } = await this.teamDB.findTeams(
-            0 /* offset */,
-            1 /* limit */,
-            "creationTime" /* order by */,
-            "ASC",
-            "" /* empty search term returns any */,
-        );
-        const hasAnyOrg = rows.length > 0;
-        let isCompleted = false;
-        for (const row of rows) {
-            isCompleted = await this.teamDB.hasActiveSSO(row.id);
-            if (isCompleted) {
-                break;
-            }
-        }
-        return {
-            isCompleted,
-            hasAnyOrg,
-        };
+        return this.installationService.getOnboardingState();
     }
 
     private async guardWithFeatureFlag(flagName: string, user: User, teamId: string) {

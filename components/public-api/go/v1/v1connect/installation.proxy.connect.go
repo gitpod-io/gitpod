@@ -78,3 +78,13 @@ func (s *ProxyInstallationServiceHandler) CreateBlockedEmailDomain(ctx context.C
 
 	return connect_go.NewResponse(resp), nil
 }
+
+func (s *ProxyInstallationServiceHandler) GetOnboardingState(ctx context.Context, req *connect_go.Request[v1.GetOnboardingStateRequest]) (*connect_go.Response[v1.GetOnboardingStateResponse], error) {
+	resp, err := s.Client.GetOnboardingState(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}

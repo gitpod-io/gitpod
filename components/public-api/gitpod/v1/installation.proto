@@ -27,6 +27,18 @@ service InstallationService {
 
   // CreateBlockedEmailDomain creates a new blocked email domain.
   rpc CreateBlockedEmailDomain(CreateBlockedEmailDomainRequest) returns (CreateBlockedEmailDomainResponse) {}
+
+  // GetOnboardingState returns the onboarding state of the installation.
+  rpc GetOnboardingState(GetOnboardingStateRequest) returns (GetOnboardingStateResponse) {}
+}
+
+message GetOnboardingStateRequest {}
+message GetOnboardingStateResponse {
+  OnboardingState onboarding_state = 1;
+}
+
+message OnboardingState {
+  bool completed = 1;
 }
 
 message GetInstallationWorkspaceDefaultImageRequest {}
