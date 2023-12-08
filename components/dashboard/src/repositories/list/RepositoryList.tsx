@@ -18,6 +18,8 @@ import { RepositoryTable } from "./RepositoryTable";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { TableSortOrder } from "@podkit/tables/SortableTable";
 
+const PREBUILD_FILTERS = { all: undefined, enabled: true, disabled: false };
+
 const RepositoryListPage: FC = () => {
     useDocumentTitle("Imported repositories");
 
@@ -25,8 +27,7 @@ const RepositoryListPage: FC = () => {
 
     const params = useQueryParams();
     const [searchTerm, setSearchTerm, searchTermDebounced] = useStateWithDebounce(params.get("search") || "");
-    // TODO: Add this to query params
-    const [prebuildsFilter, setPrebuildsFilter] = useState("all");
+    const [prebuildsFilter, setPrebuildsFilter] = useState(parsePrebuilds(params));
     const [sortBy, setSortBy] = useState(parseSortBy(params));
     const [sortOrder, setSortOrder] = useState<TableSortOrder>(parseSortOrder(params));
     const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
@@ -44,9 +45,13 @@ const RepositoryListPage: FC = () => {
         if (sortOrder) {
             params.set("sortOrder", sortOrder);
         }
+        // Since "all" is the default, we don't need to set it in the url
+        if (prebuildsFilter !== "all") {
+            params.set("prebuilds", prebuildsFilter);
+        }
         params.toString();
         history.replace({ search: `?${params.toString()}` });
-    }, [history, searchTermDebounced, sortBy, sortOrder]);
+    }, [history, prebuildsFilter, searchTermDebounced, sortBy, sortOrder]);
 
     // TODO: handle isError case
     const { data, isLoading, isFetching, isFetchingNextPage, isPreviousData, hasNextPage, fetchNextPage } =
@@ -144,4 +149,12 @@ const parseSortBy = (params: URLSearchParams) => {
         return sortBy;
     }
     return "name";
+};
+
+const parsePrebuilds = (params: URLSearchParams): keyof typeof PREBUILD_FILTERS => {
+    const prebuilds = params.get("prebuilds");
+    if (prebuilds === "enabled" || prebuilds === "disabled") {
+        return prebuilds;
+    }
+    return "all";
 };

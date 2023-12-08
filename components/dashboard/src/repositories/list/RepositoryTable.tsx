@@ -30,7 +30,7 @@ type Props = {
     isFetchingNextPage: boolean;
     onImport: () => void;
     onSearchTermChange: (val: string) => void;
-    onPrebuildsFilterChange: (val: string) => void;
+    onPrebuildsFilterChange: (val: "all" | "enabled" | "disabled") => void;
     onLoadNextPage: () => void;
     onSort: (columnName: string, direction: TableSortOrder) => void;
 };
