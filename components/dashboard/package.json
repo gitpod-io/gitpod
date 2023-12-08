@@ -72,7 +72,7 @@
     "@types/jest": "^26.0.22",
     "@types/js-cookie": "^2.2.7",
     "@types/lodash.debounce": "^4.0.7",
-    "@types/node": "^16.11.0",
+    "@types/node": "^18.18.8",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.3",
     "@types/react-portal": "^4.0.4",

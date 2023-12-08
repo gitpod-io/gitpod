@@ -35,7 +35,7 @@ export class AnalyticsController {
                     return;
                 }
                 const clientHeaderFields = toClientHeaderFields(req);
-                const event = JSON.parse(req.body as string) as RemoteTrackMessage;
+                const event = req.body as RemoteTrackMessage;
                 this.trackEvent(req.user?.id, event, clientHeaderFields);
                 res.sendStatus(200);
             } catch (e) {
@@ -49,7 +49,7 @@ export class AnalyticsController {
                     return;
                 }
                 const clientHeaderFields = toClientHeaderFields(req);
-                const event = JSON.parse(req.body as string) as RemotePageMessage;
+                const event = req.body as RemotePageMessage;
                 this.trackLocation(req.user?.id, event, clientHeaderFields);
                 res.sendStatus(200);
             } catch (e) {
@@ -67,11 +67,11 @@ export class AnalyticsController {
                     return;
                 }
                 const clientHeaderFields = toClientHeaderFields(req);
-                const event = JSON.parse(req.body as string) as RemotePageMessage;
+                const event = req.body as RemoteIdentifyMessage;
                 this.identifyUser(req.user.id, event, clientHeaderFields);
                 res.sendStatus(200);
             } catch (e) {
-                console.error("failed to track location", e);
+                console.error("failed to identify user", e);
                 res.sendStatus(500);
             }
         });

@@ -249,7 +249,7 @@ export type MetricsRequest = RequestInit & { url: string };
 export class MetricsReporter {
     private static readonly REPORT_INTERVAL = 10000;
 
-    private intervalHandler: NodeJS.Timer | undefined;
+    private intervalHandler: NodeJS.Timeout | undefined;
 
     private readonly metricsHost: string;
 

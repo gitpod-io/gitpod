@@ -279,6 +279,15 @@ https://{$GITPOD_DOMAIN} {
 		gitpod.analytics
 	}
 
+	@browser_analytics path /_analytics*
+	handle @browser_analytics {
+		import compression
+
+		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+			import upstream_connection
+		}
+	}
+
 	@backend_wss {
 		path /api/gitpod /api/v1
 	}
