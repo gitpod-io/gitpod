@@ -10,7 +10,7 @@ import { TransactionalDB } from "./typeorm/transactional-db-impl";
 export const ProjectDB = Symbol("ProjectDB");
 export interface ProjectDB extends TransactionalDB<ProjectDB> {
     findProjectById(projectId: string): Promise<Project | undefined>;
-    findProjectsByCloneUrl(cloneUrl: string): Promise<Project[]>;
+    findProjectsByCloneUrl(cloneUrl: string, organizationId?: string): Promise<Project[]>;
     findProjects(orgID: string): Promise<Project[]>;
     findProjectsBySearchTerm(args: FindProjectsBySearchTermArgs): Promise<{ total: number; rows: Project[] }>;
     storeProject(project: Project): Promise<Project>;
