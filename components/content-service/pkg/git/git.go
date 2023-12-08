@@ -331,32 +331,12 @@ func (c *Client) Status(ctx context.Context) (res *Status, err error) {
 	}, nil
 }
 
-func (c *Client) configure(ctx context.Context) (err error) {
-
-	// we should only do this after having a directory to work with
-	// https://github.blog/2019-11-03-highlights-from-git-2-24/
-	mErr := c.Git(ctx, "-C", c.Location, "config", "feature.manyFiles", "true")
-	// commit-graph after every git fetch command that downloads a pack-file from a remote
-	gErr := c.Git(ctx, "-C", c.Location, "config", "fetch.writeCommitGraph", "true")
-
-	if mErr != nil || gErr != nil {
-		return fmt.Errorf("manyFiles error: %v, writeCommitGraph error: %v", mErr, gErr)
-	}
-
-	return nil
-}
-
 // Clone runs git clone
 func (c *Client) Clone(ctx context.Context) (err error) {
 	err = os.MkdirAll(c.Location, 0775)
 	if err != nil {
 		log.WithError(err).Error("cannot create clone location")
 	}
-
-	// explicitly avoid returning configure errors
-	// this way if it fails, it doesn't fail workspace start
-	cErr := c.configure(ctx)
-	log.WithError(cErr).Error("cannot configure git")
 
 	args := []string{"--depth=1", "--shallow-submodules", c.RemoteURI}
 
