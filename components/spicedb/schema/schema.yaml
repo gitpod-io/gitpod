@@ -28,6 +28,8 @@ schema: |-
 
     permission read_env_var = self
     permission write_env_var = self
+
+    permission code_sync = self
   }
 
   // There's only one global installation

@@ -10,7 +10,6 @@ import { v4 } from "uuid";
 import { SubjectId } from "../auth/subject-id";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { takeFirst } from "../express-util";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 /**
  * RequestContext is the context that all our request-handling code runs in.
@@ -135,6 +134,14 @@ export function ctxIsAborted(): boolean {
 }
 
 /**
+ * @param callback Called when the request is aborted
+ * @throws If there is no context available
+ */
+export function ctxOnAbort(callback: () => void): void {
+    return ctxGet().signal.addEventListener("abort", callback);
+}
+
+/**
  * @returns The AbortSignal associated with the current request.
  */
 export function ctxSignal() {
@@ -167,25 +174,13 @@ export type RequestContextSeed = Omit<RequestContext, "requestId" | "startTime" 
 };
 
 /**
- * Creates a _root_ context request-handling code should run in. MANDATORY for any authorization to work.
+ * Creates a fresh context for request-handling code should run in, overwriting any prior context if present. MANDATORY for any authorization to work.
  * Uses AsyncLocalStorage under the hood, but offers a more convenient API.
  * @param context
  * @param fun
- * @returns
+ * @returns The result of the given function
  */
 export function runWithRequestContext<T>(context: RequestContextSeed, fun: () => T): T {
-    // TODO(gpl): Turn this into an exception
-    const parent = ctxTryGet();
-    if (!!parent) {
-        try {
-            throw new Error("Nested context detected");
-        } catch (err) {
-            log.error("runWithRequestContext", err, {
-                parent: { requestKind: parent.requestKind, requestMethod: parent.requestMethod },
-            });
-        }
-    }
-
     const requestId = context.requestId || v4();
     const startTime = context.startTime || performance.now();
     const cache = {};
