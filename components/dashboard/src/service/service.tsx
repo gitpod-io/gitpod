@@ -11,7 +11,6 @@ import {
     GitpodServerPath,
     GitpodService,
     GitpodServiceImpl,
-    WorkspaceInfo,
     Disposable,
 } from "@gitpod/gitpod-protocol";
 import { WebSocketConnectionProvider } from "@gitpod/gitpod-protocol/lib/messaging/browser/connection";
@@ -19,11 +18,13 @@ import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url"
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/frontend-dashboard-service";
 import { RemoteTrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
-import { helloService, stream, userClient, workspaceClient } from "./public-api";
+import { converter, helloService, stream, userClient, workspaceClient } from "./public-api";
 import { getExperimentsClient } from "../experiments/client";
 import { instrumentWebSocket } from "./metrics";
 import { LotsOfRepliesResponse } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_pb";
 import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
+import { watchWorkspaceStatus } from "../data/workspaces/listen-to-workspace-ws-messages";
+import { Workspace, WorkspaceSpec_WorkspaceType, WorkspaceStatus } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
@@ -164,8 +165,9 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
     private ownerId: string | undefined;
     private user: User | undefined;
     private ideCredentials!: string;
+    private workspace!: Workspace;
 
-    private latestInfo?: IDEFrontendDashboardService.Status;
+    private latestInfo?: IDEFrontendDashboardService.Info;
 
     private readonly onDidChangeEmitter = new Emitter<IDEFrontendDashboardService.SetStateData>();
     readonly onSetState = this.onDidChangeEmitter.event;
@@ -208,17 +210,18 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
     }
 
     private async processServerInfo() {
-        const [user, listener, ideCredentials] = await Promise.all([
+        const [user, workspaceResponse, ideCredentials] = await Promise.all([
             userClient.getAuthenticatedUser({}).then((r) => r.user),
-            this.service.listenToInstance(this.workspaceID),
+            workspaceClient.getWorkspace({ workspaceId: this.workspaceID }),
             workspaceClient
                 .getWorkspaceEditorCredentials({ workspaceId: this.workspaceID })
                 .then((resp) => resp.editorCredentials),
         ]);
+        this.workspace = workspaceResponse.workspace!;
         this.user = user;
         this.ideCredentials = ideCredentials;
-        const reconcile = () => {
-            const info = this.parseInfo(listener.info);
+        const reconcile = (status?: WorkspaceStatus) => {
+            const info = this.parseInfo(status ?? this.workspace.status!);
             this.latestInfo = info;
             const oldInstanceID = this.instanceID;
             this.instanceID = info.instanceId;
@@ -227,27 +230,27 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             if (info.instanceId && oldInstanceID !== info.instanceId) {
                 this.auth();
             }
-
-            // TODO(hw): to be removed after IDE deployed
-            this.sendStatusUpdate(this.latestInfo);
-            // TODO(hw): end of todo
             this.sendInfoUpdate(this.latestInfo);
         };
         reconcile();
-        listener.onDidChange(reconcile);
+        watchWorkspaceStatus(this.workspaceID, (response) => {
+            if (response.status) {
+                reconcile(response.status);
+            }
+        });
     }
 
-    private parseInfo(workspace: WorkspaceInfo): IDEFrontendDashboardService.Info {
+    private parseInfo(status: WorkspaceStatus): IDEFrontendDashboardService.Info {
         return {
             loggedUserId: this.user!.id,
             workspaceID: this.workspaceID,
-            instanceId: workspace.latestInstance?.id,
-            ideUrl: workspace.latestInstance?.ideUrl,
-            statusPhase: workspace.latestInstance?.status.phase,
-            workspaceDescription: workspace.workspace.description,
-            workspaceType: workspace.workspace.type,
+            instanceId: status.instanceId,
+            ideUrl: status.workspaceUrl,
+            statusPhase: status.phase?.name ? converter.fromPhase(status.phase?.name) : "unknown",
+            workspaceDescription: this.workspace.metadata?.name ?? "",
+            workspaceType: this.workspace.spec?.type === WorkspaceSpec_WorkspaceType.PREBUILD ? "prebuild" : "regular",
             credentialsToken: this.ideCredentials,
-            ownerId: workspace.workspace.ownerId,
+            ownerId: this.workspace.metadata?.ownerId ?? "",
         };
     }
 
@@ -271,6 +274,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             workspaceId: this.workspaceID,
             type: this.latestInfo?.workspaceType,
         };
+        // TODO:
         this.service.server.trackEvent(msg);
     }
 
@@ -299,19 +303,6 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             window.open(url, "_blank", "noopener");
         }
     }
-
-    // TODO(hw): to be removed after IDE deployed
-    sendStatusUpdate(status: IDEFrontendDashboardService.Status): void {
-        this.clientWindow.postMessage(
-            {
-                version: 1,
-                type: "ide-status-update",
-                status,
-            } as IDEFrontendDashboardService.StatusUpdateEventData,
-            "*",
-        );
-    }
-    // TODO(hw): end of todo
 
     sendInfoUpdate(info: IDEFrontendDashboardService.Info): void {
         this.clientWindow.postMessage(
