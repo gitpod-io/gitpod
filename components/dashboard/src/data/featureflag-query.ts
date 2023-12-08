@@ -28,6 +28,7 @@ const featureFlags = {
     repositoryFinderSearch: false,
     createProjectModal: false,
     repoConfigListAndDetail: false,
+    showRepoConfigMenuItem: false,
 };
 
 type FeatureFlags = typeof featureFlags;
