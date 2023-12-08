@@ -312,7 +312,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                             try {
                                                 delay(5000)
                                                 val updatedJoinLinkResp = resolveJoinLink(ideUrl, ownerToken, connectParams)
-                                                if (updatedJoinLinkResp != null && joinLinkResp != null && updatedJoinLinkResp.appPid != joinLinkResp!!.appPid) {
+                                                if (updatedJoinLinkResp != null && joinLinkResp != null && joinLinkResp!!.appPid > 0 && updatedJoinLinkResp.appPid > 0 &&  updatedJoinLinkResp.appPid != joinLinkResp!!.appPid) {
                                                     clientHandle.updateJoinLink(URI(updatedJoinLinkResp.joinLink), true)
                                                     clientHandle.notifyReconnect()
                                                     joinLinkResp = updatedJoinLinkResp
@@ -465,11 +465,24 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         if (!connectParams.backendPort.isNullOrBlank()) {
             resolveJoinLinkUrl += "?backendPort=${connectParams.backendPort}"
         }
-        val rawResp = fetchWS(resolveJoinLinkUrl, connectParams, ownerToken)
-        return with(jacksonMapper) {
-            propertyNamingStrategy = PropertyNamingStrategies.LowerCamelCaseStrategy()
-            readValue(rawResp, object : TypeReference<JoinLinkResp>() {})
+        var rawResp = fetchWS(resolveJoinLinkUrl, connectParams, ownerToken)
+        if (rawResp != null) {
+            return with(jacksonMapper) {
+                propertyNamingStrategy = PropertyNamingStrategies.LowerCamelCaseStrategy()
+                readValue(rawResp, object : TypeReference<JoinLinkResp>() {})
+            }
         }
+
+        // Fallback to old endpoint
+        resolveJoinLinkUrl = "https://24000-${ideUrl.host}/joinLink"
+        if (!connectParams.backendPort.isNullOrBlank()) {
+            resolveJoinLinkUrl += "?backendPort=${connectParams.backendPort}"
+        }
+        rawResp = fetchWS(resolveJoinLinkUrl, connectParams, ownerToken)
+        if (rawResp != null){
+            return JoinLinkResp(-1, rawResp)
+        }
+        return  null
     }
 
     private fun resolveCredentials(
