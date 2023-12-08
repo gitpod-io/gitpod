@@ -206,13 +206,9 @@ export const AppRoutes = () => {
                     <Route exact path={`/projects/:projectSlug/variables`} component={ProjectVariables} />
                     <Route exact path={`/projects/:projectSlug/:prebuildId`} component={Prebuild} />
 
-                    {repoConfigListAndDetail && (
-                        <>
-                            <Route exact path="/repositories" component={ConfigurationListPage} />
-                            {/* Handles all /repositories/:id/* routes in a nested router */}
-                            <Route path="/repositories/:id" component={ConfigurationDetailPage} />
-                        </>
-                    )}
+                    {repoConfigListAndDetail && <Route exact path="/repositories" component={ConfigurationListPage} />}
+                    {/* Handles all /repositories/:id/* routes in a nested router */}
+                    {repoConfigListAndDetail && <Route path="/repositories/:id" component={ConfigurationDetailPage} />}
                     {/* basic redirect for old team slugs */}
                     <Route path={["/t/"]} exact>
                         <Redirect to="/projects" />
@@ -251,7 +247,6 @@ export const AppRoutes = () => {
                             // delegate to our website to handle the request
                             if (isGitpodIo()) {
                                 window.location.host = "www.gitpod.io";
-                                return;
                             }
 
                             return (
@@ -261,7 +256,7 @@ export const AppRoutes = () => {
                                 </div>
                             );
                         }}
-                    ></Route>
+                    />
                 </Switch>
             </div>
             <WebsocketClients />

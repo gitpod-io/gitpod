@@ -403,6 +403,13 @@ export class ListConfigurationsRequest extends Message<ListConfigurationsRequest
    */
   sort: Sort[] = [];
 
+  /**
+   * Will filter for configurations that have prebuilds enabled/disabled, or both if not set.
+   *
+   * @generated from field: optional bool prebuilds_enabled = 5;
+   */
+  prebuildsEnabled?: boolean;
+
   constructor(data?: PartialMessage<ListConfigurationsRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -415,6 +422,7 @@ export class ListConfigurationsRequest extends Message<ListConfigurationsRequest
     { no: 2, name: "search_term", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "pagination", kind: "message", T: PaginationRequest },
     { no: 4, name: "sort", kind: "message", T: Sort, repeated: true },
+    { no: 5, name: "prebuilds_enabled", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListConfigurationsRequest {

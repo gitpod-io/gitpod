@@ -135,6 +135,7 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         const { rows } = await this.projectService.findProjects(ctxUserId(), {
             organizationId: req.organizationId,
             searchTerm: req.searchTerm,
+            prebuildsEnabled: req.prebuildsEnabled,
             orderBy: orderBy as keyof Project,
             orderDir,
             // We request 1 additional record to help determine if there are more results

@@ -221,6 +221,74 @@ class ProjectDBSpec {
         });
         expect(noResults.total).equals(0);
     }
+
+    @test()
+    public async findProjectBySearchTermPrebuildsEnabled() {
+        const user = await this.userDb.newUser();
+        user.identities.push({
+            authProviderId: "GitHub",
+            authId: "1234",
+            authName: "newUser",
+            primaryEmail: "newuser@git.com",
+        });
+        await this.userDb.storeUser(user);
+
+        const noPrebuilds = Project.create({
+            name: "no-prebuilds",
+            cloneUrl: "some-random-clone-url",
+            teamId: "team-1",
+            appInstallationId: "",
+            settings: {
+                prebuilds: {
+                    enable: false,
+                },
+            },
+        });
+
+        const withPrebuilds = Project.create({
+            name: "with-prebuilds",
+            cloneUrl: "some-random-clone-url-2",
+            teamId: "team-1",
+            appInstallationId: "",
+            settings: {
+                prebuilds: {
+                    enable: true,
+                },
+            },
+        });
+
+        const storedNoPrebuilds = await this.projectDb.storeProject(noPrebuilds);
+        const storedWithPrebuilds = await this.projectDb.storeProject(withPrebuilds);
+
+        const noPrebuildsResults = await this.projectDb.findProjectsBySearchTerm({
+            offset: 0,
+            limit: 10,
+            orderBy: "name",
+            orderDir: "ASC",
+            prebuildsEnabled: false,
+        });
+        expect(noPrebuildsResults.total).equals(1);
+        expect(noPrebuildsResults.rows[0].id).to.eq(storedNoPrebuilds.id);
+
+        const withPrebuildsResults = await this.projectDb.findProjectsBySearchTerm({
+            offset: 0,
+            limit: 10,
+            orderBy: "name",
+            orderDir: "ASC",
+            prebuildsEnabled: true,
+        });
+        expect(withPrebuildsResults.total).equals(1);
+        expect(withPrebuildsResults.rows[0].id).to.eq(storedWithPrebuilds.id);
+
+        const noPrebuildsFilterResults = await this.projectDb.findProjectsBySearchTerm({
+            offset: 0,
+            limit: 10,
+            orderBy: "name",
+            orderDir: "ASC",
+            prebuildsEnabled: undefined,
+        });
+        expect(noPrebuildsFilterResults.total).equals(2);
+    }
 }
 
 module.exports = new ProjectDBSpec();

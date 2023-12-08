@@ -22,15 +22,17 @@ const BASE_KEY = "configurations";
 type ListConfigurationsArgs = {
     pageSize?: number;
     searchTerm?: string;
+    prebuildsEnabled?: boolean;
     sortBy: string;
     sortOrder: TableSortOrder;
 };
 
-export const useListConfigurations = ({ searchTerm = "", pageSize, sortBy, sortOrder }: ListConfigurationsArgs) => {
+export const useListConfigurations = (options: ListConfigurationsArgs) => {
     const { data: org } = useCurrentOrg();
+    const { searchTerm = "", prebuildsEnabled, pageSize, sortBy, sortOrder } = options;
 
     return useInfiniteQuery(
-        getListConfigurationsQueryKey(org?.id || "", { searchTerm, pageSize, sortBy, sortOrder }),
+        getListConfigurationsQueryKey(org?.id || "", options),
         // QueryFn receives the past page's pageParam as it's argument
         async ({ pageParam: nextToken }) => {
             if (!org) {
@@ -40,6 +42,7 @@ export const useListConfigurations = ({ searchTerm = "", pageSize, sortBy, sortO
             const { configurations, pagination } = await configurationClient.listConfigurations({
                 organizationId: org.id,
                 searchTerm,
+                prebuildsEnabled,
                 pagination: { pageSize, token: nextToken },
                 sort: [
                     {

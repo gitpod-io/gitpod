@@ -18,6 +18,8 @@ import { RepositoryTable } from "./RepositoryTable";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { TableSortOrder } from "@podkit/tables/SortableTable";
 
+const PREBUILD_FILTERS = { all: undefined, enabled: true, disabled: false };
+
 const RepositoryListPage: FC = () => {
     useDocumentTitle("Imported repositories");
 
@@ -25,6 +27,7 @@ const RepositoryListPage: FC = () => {
 
     const params = useQueryParams();
     const [searchTerm, setSearchTerm, searchTermDebounced] = useStateWithDebounce(params.get("search") || "");
+    const [prebuildsFilter, setPrebuildsFilter] = useState(parsePrebuilds(params));
     const [sortBy, setSortBy] = useState(parseSortBy(params));
     const [sortOrder, setSortOrder] = useState<TableSortOrder>(parseSortOrder(params));
     const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
@@ -42,9 +45,13 @@ const RepositoryListPage: FC = () => {
         if (sortOrder) {
             params.set("sortOrder", sortOrder);
         }
+        // Since "all" is the default, we don't need to set it in the url
+        if (prebuildsFilter !== "all") {
+            params.set("prebuilds", prebuildsFilter);
+        }
         params.toString();
         history.replace({ search: `?${params.toString()}` });
-    }, [history, searchTermDebounced, sortBy, sortOrder]);
+    }, [history, prebuildsFilter, searchTermDebounced, sortBy, sortOrder]);
 
     // TODO: handle isError case
     const { data, isLoading, isFetching, isFetchingNextPage, isPreviousData, hasNextPage, fetchNextPage } =
@@ -52,6 +59,8 @@ const RepositoryListPage: FC = () => {
             searchTerm: searchTermDebounced,
             sortBy: sortBy,
             sortOrder: sortOrder,
+            // Map ui prebuildFilter state to the right api value
+            prebuildsEnabled: { all: undefined, enabled: true, disabled: false }[prebuildsFilter],
         });
 
     const handleRepoImported = useCallback(
@@ -76,7 +85,7 @@ const RepositoryListPage: FC = () => {
     const hasMoreThanOnePage = (data?.pages.length ?? 0) > 1;
 
     // This tracks any filters/search params applied
-    const hasFilters = !!searchTermDebounced;
+    const hasFilters = !!searchTermDebounced || prebuildsFilter !== "all";
 
     // Show the table once we're done loading and either have results, or have filters applied
     const showTable = !isLoading && (configurations.length > 0 || hasFilters);
@@ -94,6 +103,7 @@ const RepositoryListPage: FC = () => {
                 {showTable && (
                     <RepositoryTable
                         searchTerm={searchTerm}
+                        prebuildsFilter={prebuildsFilter}
                         configurations={configurations}
                         sortBy={sortBy}
                         sortOrder={sortOrder}
@@ -105,6 +115,7 @@ const RepositoryListPage: FC = () => {
                         onImport={() => setShowCreateProjectModal(true)}
                         onLoadNextPage={() => fetchNextPage()}
                         onSearchTermChange={setSearchTerm}
+                        onPrebuildsFilterChange={setPrebuildsFilter}
                         onSort={handleSort}
                     />
                 )}
@@ -138,4 +149,12 @@ const parseSortBy = (params: URLSearchParams) => {
         return sortBy;
     }
     return "name";
+};
+
+const parsePrebuilds = (params: URLSearchParams): keyof typeof PREBUILD_FILTERS => {
+    const prebuilds = params.get("prebuilds");
+    if (prebuilds === "enabled" || prebuilds === "disabled") {
+        return prebuilds;
+    }
+    return "all";
 };
