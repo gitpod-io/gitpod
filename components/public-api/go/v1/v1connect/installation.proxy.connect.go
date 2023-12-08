@@ -19,6 +19,16 @@ type ProxyInstallationServiceHandler struct {
 	UnimplementedInstallationServiceHandler
 }
 
+func (s *ProxyInstallationServiceHandler) GetInstallationWorkspaceDefaultImage(ctx context.Context, req *connect_go.Request[v1.GetInstallationWorkspaceDefaultImageRequest]) (*connect_go.Response[v1.GetInstallationWorkspaceDefaultImageResponse], error) {
+	resp, err := s.Client.GetInstallationWorkspaceDefaultImage(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
 func (s *ProxyInstallationServiceHandler) ListBlockedRepositories(ctx context.Context, req *connect_go.Request[v1.ListBlockedRepositoriesRequest]) (*connect_go.Response[v1.ListBlockedRepositoriesResponse], error) {
 	resp, err := s.Client.ListBlockedRepositories(ctx, req.Msg)
 	if err != nil {

@@ -31,6 +31,9 @@ const (
 
 // InstallationServiceClient is a client for the gitpod.v1.InstallationService service.
 type InstallationServiceClient interface {
+	// GetInstallationWorkspaceDefaultImage returns the default image for current
+	// Gitpod Installation.
+	GetInstallationWorkspaceDefaultImage(context.Context, *connect_go.Request[v1.GetInstallationWorkspaceDefaultImageRequest]) (*connect_go.Response[v1.GetInstallationWorkspaceDefaultImageResponse], error)
 	// ListBlockedRepositories lists blocked repositories.
 	ListBlockedRepositories(context.Context, *connect_go.Request[v1.ListBlockedRepositoriesRequest]) (*connect_go.Response[v1.ListBlockedRepositoriesResponse], error)
 	// CreateBlockedRepository creates a new blocked repository.
@@ -53,6 +56,11 @@ type InstallationServiceClient interface {
 func NewInstallationServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) InstallationServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &installationServiceClient{
+		getInstallationWorkspaceDefaultImage: connect_go.NewClient[v1.GetInstallationWorkspaceDefaultImageRequest, v1.GetInstallationWorkspaceDefaultImageResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.InstallationService/GetInstallationWorkspaceDefaultImage",
+			opts...,
+		),
 		listBlockedRepositories: connect_go.NewClient[v1.ListBlockedRepositoriesRequest, v1.ListBlockedRepositoriesResponse](
 			httpClient,
 			baseURL+"/gitpod.v1.InstallationService/ListBlockedRepositories",
@@ -83,11 +91,18 @@ func NewInstallationServiceClient(httpClient connect_go.HTTPClient, baseURL stri
 
 // installationServiceClient implements InstallationServiceClient.
 type installationServiceClient struct {
-	listBlockedRepositories  *connect_go.Client[v1.ListBlockedRepositoriesRequest, v1.ListBlockedRepositoriesResponse]
-	createBlockedRepository  *connect_go.Client[v1.CreateBlockedRepositoryRequest, v1.CreateBlockedRepositoryResponse]
-	deleteBlockedRepository  *connect_go.Client[v1.DeleteBlockedRepositoryRequest, v1.DeleteBlockedRepositoryResponse]
-	listBlockedEmailDomains  *connect_go.Client[v1.ListBlockedEmailDomainsRequest, v1.ListBlockedEmailDomainsResponse]
-	createBlockedEmailDomain *connect_go.Client[v1.CreateBlockedEmailDomainRequest, v1.CreateBlockedEmailDomainResponse]
+	getInstallationWorkspaceDefaultImage *connect_go.Client[v1.GetInstallationWorkspaceDefaultImageRequest, v1.GetInstallationWorkspaceDefaultImageResponse]
+	listBlockedRepositories              *connect_go.Client[v1.ListBlockedRepositoriesRequest, v1.ListBlockedRepositoriesResponse]
+	createBlockedRepository              *connect_go.Client[v1.CreateBlockedRepositoryRequest, v1.CreateBlockedRepositoryResponse]
+	deleteBlockedRepository              *connect_go.Client[v1.DeleteBlockedRepositoryRequest, v1.DeleteBlockedRepositoryResponse]
+	listBlockedEmailDomains              *connect_go.Client[v1.ListBlockedEmailDomainsRequest, v1.ListBlockedEmailDomainsResponse]
+	createBlockedEmailDomain             *connect_go.Client[v1.CreateBlockedEmailDomainRequest, v1.CreateBlockedEmailDomainResponse]
+}
+
+// GetInstallationWorkspaceDefaultImage calls
+// gitpod.v1.InstallationService.GetInstallationWorkspaceDefaultImage.
+func (c *installationServiceClient) GetInstallationWorkspaceDefaultImage(ctx context.Context, req *connect_go.Request[v1.GetInstallationWorkspaceDefaultImageRequest]) (*connect_go.Response[v1.GetInstallationWorkspaceDefaultImageResponse], error) {
+	return c.getInstallationWorkspaceDefaultImage.CallUnary(ctx, req)
 }
 
 // ListBlockedRepositories calls gitpod.v1.InstallationService.ListBlockedRepositories.
@@ -117,6 +132,9 @@ func (c *installationServiceClient) CreateBlockedEmailDomain(ctx context.Context
 
 // InstallationServiceHandler is an implementation of the gitpod.v1.InstallationService service.
 type InstallationServiceHandler interface {
+	// GetInstallationWorkspaceDefaultImage returns the default image for current
+	// Gitpod Installation.
+	GetInstallationWorkspaceDefaultImage(context.Context, *connect_go.Request[v1.GetInstallationWorkspaceDefaultImageRequest]) (*connect_go.Response[v1.GetInstallationWorkspaceDefaultImageResponse], error)
 	// ListBlockedRepositories lists blocked repositories.
 	ListBlockedRepositories(context.Context, *connect_go.Request[v1.ListBlockedRepositoriesRequest]) (*connect_go.Response[v1.ListBlockedRepositoriesResponse], error)
 	// CreateBlockedRepository creates a new blocked repository.
@@ -136,6 +154,11 @@ type InstallationServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewInstallationServiceHandler(svc InstallationServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
 	mux := http.NewServeMux()
+	mux.Handle("/gitpod.v1.InstallationService/GetInstallationWorkspaceDefaultImage", connect_go.NewUnaryHandler(
+		"/gitpod.v1.InstallationService/GetInstallationWorkspaceDefaultImage",
+		svc.GetInstallationWorkspaceDefaultImage,
+		opts...,
+	))
 	mux.Handle("/gitpod.v1.InstallationService/ListBlockedRepositories", connect_go.NewUnaryHandler(
 		"/gitpod.v1.InstallationService/ListBlockedRepositories",
 		svc.ListBlockedRepositories,
@@ -166,6 +189,10 @@ func NewInstallationServiceHandler(svc InstallationServiceHandler, opts ...conne
 
 // UnimplementedInstallationServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedInstallationServiceHandler struct{}
+
+func (UnimplementedInstallationServiceHandler) GetInstallationWorkspaceDefaultImage(context.Context, *connect_go.Request[v1.GetInstallationWorkspaceDefaultImageRequest]) (*connect_go.Response[v1.GetInstallationWorkspaceDefaultImageResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.InstallationService.GetInstallationWorkspaceDefaultImage is not implemented"))
+}
 
 func (UnimplementedInstallationServiceHandler) ListBlockedRepositories(context.Context, *connect_go.Request[v1.ListBlockedRepositoriesRequest]) (*connect_go.Response[v1.ListBlockedRepositoriesResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.InstallationService.ListBlockedRepositories is not implemented"))

@@ -10,9 +10,11 @@ import { EmailDomainFilterDB } from "@gitpod/gitpod-db/lib";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import { Authorizer } from "../authorization/authorizer";
 import { BlockedRepositoryDB } from "@gitpod/gitpod-db/lib/blocked-repository-db";
+import { Config } from "../config";
 
 @injectable()
 export class InstallationService {
+    @inject(Config) private readonly config: Config;
     @inject(Authorizer) private readonly auth: Authorizer;
     @inject(BlockedRepositoryDB) private readonly blockedRepositoryDB: BlockedRepositoryDB;
     @inject(EmailDomainFilterDB) private readonly emailDomainFilterDB: EmailDomainFilterDB;
@@ -56,5 +58,9 @@ export class InstallationService {
     ): Promise<EmailDomainFilterEntry> {
         await this.auth.checkPermissionOnInstallation(userId, "configure");
         return this.emailDomainFilterDB.storeFilterEntry(opts);
+    }
+
+    public async getWorkspaceDefaultImage(): Promise<string> {
+        return this.config.workspaceDefaults.workspaceImage;
     }
 }

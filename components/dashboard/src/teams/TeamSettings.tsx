@@ -19,7 +19,6 @@ import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
 import { useCurrentOrg, useOrganizationsInvalidator } from "../data/organizations/orgs-query";
 import { useUpdateOrgMutation } from "../data/organizations/update-org-mutation";
 import { useUpdateOrgSettingsMutation } from "../data/organizations/update-org-settings-mutation";
-import { useDefaultWorkspaceImageQuery } from "../data/workspaces/default-workspace-image-query";
 import { useOnBlurError } from "../hooks/use-onblur-error";
 import { ReactComponent as Stack } from "../icons/Stack.svg";
 import { organizationClient } from "../service/public-api";
@@ -28,6 +27,7 @@ import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
 import { ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Button } from "@podkit/buttons/Button";
+import { useInstallationDefaultWorkspaceImageQuery } from "../data/installation/default-workspace-image-query";
 
 export default function TeamSettingsPage() {
     const user = useCurrentUser();
@@ -176,7 +176,7 @@ export default function TeamSettingsPage() {
 function OrgSettingsForm(props: { org?: Organization; isOwner: boolean }) {
     const { org, isOwner } = props;
     const { data: settings, isLoading } = useOrgSettingsQuery();
-    const { data: imageInfo } = useDefaultWorkspaceImageQuery();
+    const { data: installationDefaultImage } = useInstallationDefaultWorkspaceImageQuery();
     const updateTeamSettings = useUpdateOrgSettingsMutation();
 
     const [showImageEditModal, setShowImageEditModal] = useState(false);
@@ -238,14 +238,14 @@ function OrgSettingsForm(props: { org?: Organization; isOwner: boolean }) {
             <WorkspaceImageButton
                 disabled={!isOwner}
                 settings={settings}
-                defaultWorkspaceImage={imageInfo?.image}
+                installationDefaultWorkspaceImage={installationDefaultImage}
                 onClick={() => setShowImageEditModal(true)}
             />
 
             {showImageEditModal && (
                 <OrgDefaultWorkspaceImageModal
                     settings={settings}
-                    globalDefaultImage={imageInfo?.image}
+                    installationDefaultWorkspaceImage={installationDefaultImage}
                     onClose={() => setShowImageEditModal(false)}
                 />
             )}
@@ -255,7 +255,7 @@ function OrgSettingsForm(props: { org?: Organization; isOwner: boolean }) {
 
 function WorkspaceImageButton(props: {
     settings?: OrganizationSettings;
-    defaultWorkspaceImage?: string;
+    installationDefaultWorkspaceImage?: string;
     onClick: () => void;
     disabled?: boolean;
 }) {
@@ -282,7 +282,7 @@ function WorkspaceImageButton(props: {
         };
     }
 
-    const image = props.settings?.defaultWorkspaceImage || props.defaultWorkspaceImage || "";
+    const image = props.settings?.defaultWorkspaceImage || props.installationDefaultWorkspaceImage || "";
 
     const descList = useMemo(() => {
         const arr: ReactNode[] = [<span>Default image</span>];
@@ -335,7 +335,7 @@ function WorkspaceImageButton(props: {
 }
 
 interface OrgDefaultWorkspaceImageModalProps {
-    globalDefaultImage: string | undefined;
+    installationDefaultWorkspaceImage: string | undefined;
     settings: OrganizationSettings | undefined;
     onClose: () => void;
 }
@@ -385,7 +385,7 @@ function OrgDefaultWorkspaceImageModal(props: OrgDefaultWorkspaceImageModalProps
                     <TextInputField
                         label="Default Image"
                         hint="Use any official or custom workspace image from Docker Hub or any private container registry that the Gitpod instance can access."
-                        placeholder={props.globalDefaultImage}
+                        placeholder={props.installationDefaultWorkspaceImage}
                         value={defaultWorkspaceImage}
                         onChange={setDefaultWorkspaceImage}
                     />
