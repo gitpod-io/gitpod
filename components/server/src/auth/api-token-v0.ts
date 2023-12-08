@@ -62,7 +62,7 @@ export namespace ApiTokenScope {
 export class ApiAccessToken {
     private static PREFIX = "gitpod_apitokenv0_";
 
-    public constructor(readonly id: string, readonly scopes: ApiTokenScope[]) {}
+    public constructor(readonly id: string, readonly scopes: ApiTokenScope[], readonly _userId?: string) {}
 
     public static create(scopes: ApiTokenScope[]): ApiAccessToken {
         return new ApiAccessToken(crypto.randomBytes(30).toString("hex"), scopes);
@@ -85,13 +85,25 @@ export class ApiAccessToken {
         if (!payload.sub) {
             throw new Error("Subject claim is missing in API token JWT");
         }
-        const subjectId = SubjectId.tryParse(payload.sub);
+        const subjectAndUserId = payload.sub;
+
+        // This is a way to carry the user ID in the subject claim. This is meant to be temporary for the rollout of API tokens, and when we make ctxUserId optional.
+        const subjectParts = subjectAndUserId.split(":");
+        const subjectId = SubjectId.tryParse(subjectParts[0]);
+
+        // TODO Remove after rollout
+        let _userId: string | undefined = undefined;
+        if (subjectId.kind !== "user") {
+            if (subjectParts.length >= 2) {
+                _userId = subjectParts[1];
+            }
+        }
 
         const scopes = payload.scopes;
         if (!scopes || !Array.isArray(scopes)) {
             throw new Error("Scopes claim is missing or malformed in API token JWT");
         }
-        return new ApiAccessToken(subjectId.value, scopes as ApiTokenScope[]);
+        return new ApiAccessToken(subjectId.value, scopes as ApiTokenScope[], _userId);
     }
 
     public async encode(authJWT: AuthJWT): Promise<string> {
@@ -105,6 +117,6 @@ export class ApiAccessToken {
     }
 
     public subjectId(): SubjectId {
-        return new SubjectId("apitokenv0", this.id);
+        return new SubjectId("apitokenv0", this.id, this._userId);
     }
 }

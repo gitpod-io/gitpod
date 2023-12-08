@@ -20,7 +20,7 @@ const SubjectKindByShortName: ReadonlyMap<string, SubjectKind> = new Map(
 export class SubjectId {
     private static readonly SEPARATOR = "_";
 
-    constructor(public readonly kind: SubjectKind, public readonly value: string) {}
+    constructor(public readonly kind: SubjectKind, public readonly value: string, private readonly _userId?: string) {}
 
     public static fromUserId(userId: string): SubjectId {
         return new SubjectId("user", userId);
@@ -64,7 +64,7 @@ export class SubjectId {
         if (this.kind === "user") {
             return this.value;
         }
-        return undefined;
+        return this._userId; //undefined; Temporary for the rollout of API tokens
     }
 
     public equals(other: SubjectId): boolean {
