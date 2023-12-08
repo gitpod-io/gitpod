@@ -80,7 +80,7 @@ const RepositoryListPage: FC = () => {
     const hasMoreThanOnePage = (data?.pages.length ?? 0) > 1;
 
     // This tracks any filters/search params applied
-    const hasFilters = !!searchTermDebounced;
+    const hasFilters = !!searchTermDebounced || prebuildsFilter !== "all";
 
     // Show the table once we're done loading and either have results, or have filters applied
     const showTable = !isLoading && (configurations.length > 0 || hasFilters);
