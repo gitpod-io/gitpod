@@ -16,7 +16,7 @@ import { StepPersonalize } from "./StepPersonalize";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 import Alert from "../components/Alert";
 import { useConfetti } from "../contexts/ConfettiContext";
-import { getGitpodService } from "../service/service";
+import { trackEvent } from "../Analytics";
 
 // This param is optionally present to force an onboarding flow
 // Can be used if other conditions aren't true, i.e. if user has already onboarded, but we want to force the flow again
@@ -73,12 +73,10 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
                     const onboardedUser = await updateUser.mutateAsync(updates);
 
                     // TODO: move this into a mutation side effect once we have a specific mutation for updating the IDE (see above TODO)
-                    getGitpodService().server.trackEvent({
-                        event: "ide_configuration_changed",
-                        properties: {
-                            ...(onboardedUser?.editorSettings ?? {}),
-                            location: "onboarding",
-                        },
+                    trackEvent("ide_configuration_changed", {
+                        name: onboardedUser.editorSettings?.name,
+                        version: onboardedUser.editorSettings?.version,
+                        location: "onboarding",
                     });
 
                     dropConfetti();

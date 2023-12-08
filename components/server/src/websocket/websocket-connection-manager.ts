@@ -5,7 +5,6 @@
  */
 
 import {
-    ClientHeaderFields,
     Disposable,
     GitpodClient as GitpodApiClient,
     GitpodServerPath,
@@ -36,7 +35,7 @@ import {
     RepositoryResourceGuard,
     FGAResourceAccessGuard,
 } from "../auth/resource-access";
-import { clientIp, takeFirst, toHeaders } from "../express-util";
+import { takeFirst, toClientHeaderFields, toHeaders } from "../express-util";
 import {
     increaseApiCallCounter,
     increaseApiConnectionClosedCounter,
@@ -241,12 +240,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
             resourceGuard = { canAccess: async () => false };
         }
 
-        const clientHeaderFields: ClientHeaderFields = {
-            ip: clientIp(expressReq),
-            userAgent: expressReq.headers["user-agent"],
-            dnt: takeFirst(expressReq.headers.dnt),
-            clientRegion: takeFirst(expressReq.headers["x-glb-client-region"]),
-        };
+        const clientHeaderFields = toClientHeaderFields(expressReq);
         // TODO(gpl): remove once we validated the current approach works
         log.debug("masked wss client IP", {
             maskedClientIp: maskIp(clientHeaderFields.ip),

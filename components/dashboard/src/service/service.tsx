@@ -25,6 +25,7 @@ import { LotsOfRepliesResponse } from "@gitpod/public-api/lib/gitpod/experimenta
 import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { watchWorkspaceStatus } from "../data/workspaces/listen-to-workspace-ws-messages";
 import { Workspace, WorkspaceSpec_WorkspaceType, WorkspaceStatus } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { sendTrackEvent } from "../Analytics";
 
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
@@ -274,8 +275,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             workspaceId: this.workspaceID,
             type: this.latestInfo?.workspaceType,
         };
-        // TODO:
-        this.service.server.trackEvent(msg);
+        sendTrackEvent(msg);
     }
 
     private activeHeartbeat(): void {

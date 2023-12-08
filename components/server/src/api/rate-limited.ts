@@ -13,7 +13,7 @@ export function RateLimited(options: IRateLimiterOptions) {
 }
 
 export namespace RateLimited {
-    const defaultOptions: IRateLimiterOptions = {
+    export const defaultOptions: IRateLimiterOptions = {
         points: 200,
         duration: 60,
     };

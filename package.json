@@ -13,6 +13,7 @@
     },
     "scripts": {
         "build": "leeway exec --filter-type yarn --cache-key yarn_build -- yarn build",
+        "rebuild": "leeway exec --filter-type yarn -- yarn build",
         "watch": "leeway exec --package components:all --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput",
         "clean": "leeway exec --filter-type yarn -- yarn clean && rm -rf node_modules"
     },

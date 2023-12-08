@@ -31,6 +31,7 @@ import {
     WorkspaceSpec_WorkspaceType,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { PartialMessage } from "@bufbuild/protobuf";
+import { trackEvent } from "../Analytics";
 
 const sessionId = v4();
 
@@ -172,28 +173,22 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         const oldPhase = prevState.workspace?.status?.phase?.name;
         const type = this.state.workspace?.spec?.type === WorkspaceSpec_WorkspaceType.PREBUILD ? "prebuild" : "regular";
         if (newPhase !== oldPhase) {
-            getGitpodService().server.trackEvent({
-                event: "status_rendered",
-                properties: {
-                    sessionId,
-                    instanceId: this.state.workspace?.status?.instanceId,
-                    workspaceId: this.props.workspaceId,
-                    type,
-                    phase: newPhase,
-                },
+            trackEvent("status_rendered", {
+                sessionId,
+                instanceId: this.state.workspace?.status?.instanceId,
+                workspaceId: this.props.workspaceId,
+                type,
+                phase: newPhase ? WorkspacePhase_Phase[newPhase] : undefined,
             });
         }
 
         if (!!this.state.error && this.state.error !== prevState.error) {
-            getGitpodService().server.trackEvent({
-                event: "error_rendered",
-                properties: {
-                    sessionId,
-                    instanceId: this.state.workspace?.status?.instanceId,
-                    workspaceId: this.props.workspaceId,
-                    type,
-                    error: this.state.error,
-                },
+            trackEvent("error_rendered", {
+                sessionId,
+                instanceId: this.state.workspace?.status?.instanceId,
+                workspaceId: this.props.workspaceId,
+                type,
+                error: this.state.error,
             });
         }
     }

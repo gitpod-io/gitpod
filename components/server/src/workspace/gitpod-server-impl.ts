@@ -43,7 +43,6 @@ import {
     FindPrebuildsParams,
     PrebuildWithStatus,
     StartPrebuildResult,
-    ClientHeaderFields,
     Permission,
     SSHPublicKeyValue,
     UserSSHPublicKeyValue,
@@ -72,18 +71,12 @@ import {
     TraceContext,
     TraceContextWithSpan,
 } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import {
-    IdentifyMessage,
-    RemoteIdentifyMessage,
-    RemotePageMessage,
-    RemoteTrackMessage,
-} from "@gitpod/gitpod-protocol/lib/analytics";
+import { RemoteIdentifyMessage, RemotePageMessage, RemoteTrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib/core_pb";
 import { inject, injectable } from "inversify";
 import { v4 as uuidv4, validate as uuidValidate } from "uuid";
 import { Disposable, CancellationToken } from "vscode-jsonrpc";
-import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { AuthProviderService } from "../auth/auth-provider-service";
 import { GuardedResource, ResourceAccessGuard, ResourceAccessOp } from "../auth/resource-access";
 import { Config } from "../config";
@@ -117,7 +110,6 @@ import { formatPhoneNumber } from "../user/phone-numbers";
 import { IDEService } from "../ide-service";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { CostCenterJSON } from "@gitpod/gitpod-protocol/lib/usage";
-import { createCookielessId, maskIp } from "../analytics";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { LinkedInService } from "../linkedin-service";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
@@ -143,6 +135,8 @@ import { ContextService } from "./context-service";
 import { runWithRequestContext, runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
 import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
+import { AnalyticsController } from "../analytics-controller";
+import { ClientHeaderFields } from "../express-util";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -169,7 +163,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(UserDB) private readonly userDB: UserDB,
         @inject(UserAuthentication) private readonly userAuthentication: UserAuthentication,
         @inject(UserService) private readonly userService: UserService,
-        @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(AuthorizationService) private readonly authorizationService: AuthorizationService,
         @inject(SSHKeyService) private readonly sshKeyservice: SSHKeyService,
         @inject(GitpodTokenService) private readonly gitpodTokenService: GitpodTokenService,
@@ -202,6 +195,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(RedisSubscriber) private readonly subscriber: RedisSubscriber,
 
         @inject(ContextService) private readonly contextService: ContextService,
+        @inject(AnalyticsController) private readonly analyticsController: AnalyticsController,
     ) {}
 
     /** Id the uniquely identifies this server instance */
@@ -2372,63 +2366,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     public async trackEvent(ctx: TraceContext, event: RemoteTrackMessage): Promise<void> {
-        // Beware: DO NOT just event... the message, but consume it individually as the message is coming from
-        //         the wire and we have no idea what's in it. Even passing the context and properties directly
-        //         is questionable. Considering we're handing down the msg and do not know how the analytics library
-        //         handles potentially broken or malicious input, we better err on the side of caution.
-
-        const userId = this.userID;
-        const { ip, userAgent } = this.clientHeaderFields;
-        const anonymousId = event.anonymousId || createCookielessId(ip, userAgent);
-        const msg = {
-            event: event.event,
-            messageId: event.messageId,
-            context: event.context,
-            properties: event.properties,
-        };
-
-        //only track if at least one identifier is known
-        if (userId) {
-            this.analytics.track({
-                userId: userId,
-                anonymousId: anonymousId,
-                ...msg,
-            });
-        } else if (anonymousId) {
-            this.analytics.track({
-                anonymousId: anonymousId as string | number,
-                ...msg,
-            });
-        }
+        this.analyticsController.trackEvent(this.userID, event, this.clientHeaderFields);
     }
 
     public async trackLocation(ctx: TraceContext, event: RemotePageMessage): Promise<void> {
-        const userId = this.userID;
-        const { ip, userAgent } = this.clientHeaderFields;
-        const anonymousId = event.anonymousId || createCookielessId(ip, userAgent);
-        const msg = {
-            messageId: event.messageId,
-            context: {},
-            properties: event.properties,
-        };
-
-        //only page if at least one identifier is known
-        if (userId) {
-            msg.context = {
-                ip: maskIp(ip),
-                userAgent: userAgent,
-            };
-            this.analytics.page({
-                userId: userId,
-                anonymousId: anonymousId,
-                ...msg,
-            });
-        } else if (anonymousId) {
-            this.analytics.page({
-                anonymousId: anonymousId as string | number,
-                ...msg,
-            });
-        }
+        this.analyticsController.trackLocation(this.userID, event, this.clientHeaderFields);
     }
 
     public async identifyUser(ctx: TraceContext, event: RemoteIdentifyMessage): Promise<void> {
@@ -2436,14 +2378,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         //Identify calls collect user informmation. If the user is unknown, we don't make a call (privacy preservation)
         const user = await this.checkUser("identifyUser");
-        const { ip, userAgent } = this.clientHeaderFields;
-        const identifyMessage: IdentifyMessage = {
-            userId: user.id,
-            anonymousId: event.anonymousId || createCookielessId(ip, userAgent),
-            traits: event.traits,
-            context: event.context,
-        };
-        this.analytics.identify(identifyMessage);
+        this.analyticsController.identifyUser(user.id, event, this.clientHeaderFields);
     }
 
     async getIDEOptions(ctx: TraceContext): Promise<IDEOptions> {

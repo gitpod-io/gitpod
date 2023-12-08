@@ -48,6 +48,7 @@ import { JobRunner } from "./jobs/runner";
 import { RedisSubscriber } from "./messaging/redis-subscriber";
 import { HEADLESS_LOGS_PATH_PREFIX, HEADLESS_LOG_DOWNLOAD_PATH_PREFIX } from "./workspace/headless-log-service";
 import { runWithRequestContext } from "./util/request-context";
+import { AnalyticsController } from "./analytics-controller";
 
 @injectable()
 export class Server {
@@ -94,6 +95,7 @@ export class Server {
         @inject(IamSessionApp) private readonly iamSessionAppCreator: IamSessionApp,
         @inject(API) private readonly api: API,
         @inject(RedisSubscriber) private readonly redisSubscriber: RedisSubscriber,
+        @inject(AnalyticsController) private readonly analyticsController: AnalyticsController,
     ) {}
 
     public async init(app: express.Application) {
@@ -300,6 +302,7 @@ export class Server {
         app.use(this.userController.apiRouter);
         app.use("/workspace-download", this.workspaceDownloadService.apiRouter);
         app.use(this.oauthController.oauthRouter);
+        app.use("/_analytics", this.analyticsController.router);
 
         // Authorization: Session or Bearer token
         app.use(HEADLESS_LOGS_PATH_PREFIX, this.headlessLogController.headlessLogs);

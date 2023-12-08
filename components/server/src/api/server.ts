@@ -22,10 +22,9 @@ import { EnvironmentVariableService } from "@gitpod/public-api/lib/gitpod/v1/env
 import express from "express";
 import * as http from "http";
 import { decorate, inject, injectable, interfaces } from "inversify";
-import { Redis } from "ioredis";
 import { AddressInfo } from "net";
 import { performance } from "perf_hooks";
-import { IRateLimiterOptions, RateLimiterMemory, RateLimiterRedis, RateLimiterRes } from "rate-limiter-flexible";
+import { RateLimiterRes } from "rate-limiter-flexible";
 import { v4 } from "uuid";
 import { isFgaChecksEnabled } from "../authorization/authorizer";
 import { Config } from "../config";
@@ -61,6 +60,7 @@ import { UserServiceAPI } from "./user-service-api";
 import { UserService as UserServiceInternal } from "../user/user-service";
 import { InstallationServiceAPI } from "./installation-service-api";
 import { InstallationService } from "@gitpod/public-api/lib/gitpod/v1/installation_connect";
+import { RateLimitter } from "../rate-limitter";
 
 decorate(injectable(), PublicAPIConverter);
 
@@ -83,13 +83,13 @@ export class API {
     @inject(HelloServiceAPI) private readonly helloServiceApi: HelloServiceAPI;
     @inject(SessionHandler) private readonly sessionHandler: SessionHandler;
     @inject(PublicAPIConverter) private readonly apiConverter: PublicAPIConverter;
-    @inject(Redis) private readonly redis: Redis;
     @inject(Config) private readonly config: Config;
     @inject(UserServiceInternal) private readonly userServiceInternal: UserServiceInternal;
     @inject(BearerAuth) private readonly bearerAuthenticator: BearerAuth;
     @inject(PrebuildServiceAPI) private readonly prebuildServiceApi: PrebuildServiceAPI;
     @inject(VerificationServiceAPI) private readonly verificationServiceApi: VerificationServiceAPI;
     @inject(InstallationServiceAPI) private readonly installationServiceApi: InstallationServiceAPI;
+    @inject(RateLimitter) private readonly rateLimitter: RateLimitter;
 
     listenPrivate(): http.Server {
         const app = express();
@@ -225,7 +225,7 @@ export class API {
                         const key = `${grpc_service}/${grpc_method}`;
                         const options = self.config.rateLimits?.[key] || RateLimited.getOptions(target, prop);
                         try {
-                            await self.getRateLimitter(options).consume(`${subjectId}_${key}`);
+                            await self.rateLimitter.consume(`${subjectId}_${key}`, options);
                         } catch (e) {
                             if (e instanceof RateLimiterRes) {
                                 throw new ConnectError("rate limit exceeded", Code.ResourceExhausted, {
@@ -358,27 +358,6 @@ export class API {
                 throw e;
             }
         }
-    }
-
-    private readonly rateLimiters = new Map<string, RateLimiterRedis>();
-    private getRateLimitter(options: IRateLimiterOptions): RateLimiterRedis {
-        const sortedKeys = Object.keys(options).sort();
-        const sortedObject: { [key: string]: any } = {};
-        for (const key of sortedKeys) {
-            sortedObject[key] = options[key as keyof IRateLimiterOptions];
-        }
-        const key = JSON.stringify(sortedObject);
-
-        let rateLimiter = this.rateLimiters.get(key);
-        if (!rateLimiter) {
-            rateLimiter = new RateLimiterRedis({
-                storeClient: this.redis,
-                ...options,
-                insuranceLimiter: new RateLimiterMemory(options),
-            });
-            this.rateLimiters.set(key, rateLimiter);
-        }
-        return rateLimiter;
     }
 
     static bindAPI(bind: interfaces.Bind): void {
