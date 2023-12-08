@@ -29,6 +29,7 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import {
     Identity,
+    SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption,
     User,
     User_EmailNotificationSettings,
     User_RoleOrPermission,
@@ -1290,8 +1291,10 @@ export class PublicAPIConverter {
         });
     }
 
-    fromWorkspaceAutostartOption(o: User_WorkspaceAutostartOption): WorkspaceAutostartOption {
-        const region = isWorkspaceRegion(o.region) ? o.region : "";
+    fromWorkspaceAutostartOption(
+        o: User_WorkspaceAutostartOption | SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption,
+    ): WorkspaceAutostartOption {
+        const region = !!o.region && isWorkspaceRegion(o.region) ? o.region : "";
         return {
             cloneURL: o.cloneUrl,
             ideSettings: this.fromEditorReference(o.editorSettings),

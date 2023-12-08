@@ -13,9 +13,9 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connect";
 import { StatsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/stats_connect";
 import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connect";
-import { UserService as UserServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_connect";
 import { OrganizationService } from "@gitpod/public-api/lib/gitpod/v1/organization_connect";
 import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/v1/workspace_connect";
+import { UserService } from "@gitpod/public-api/lib/gitpod/v1/user_connect";
 import { ConfigurationService } from "@gitpod/public-api/lib/gitpod/v1/configuration_connect";
 import { AuthProviderService } from "@gitpod/public-api/lib/gitpod/v1/authprovider_connect";
 import { EnvironmentVariableService } from "@gitpod/public-api/lib/gitpod/v1/envvar_connect";
@@ -31,7 +31,6 @@ import { isFgaChecksEnabled } from "../authorization/authorizer";
 import { Config } from "../config";
 import { grpcServerHandled, grpcServerHandling, grpcServerStarted } from "../prometheus-metrics";
 import { SessionHandler } from "../session-handler";
-import { UserService } from "../user/user-service";
 import {
     runWithSubjectId,
     runWithRequestContext,
@@ -43,7 +42,6 @@ import { OrganizationServiceAPI } from "./organization-service-api";
 import { RateLimited } from "./rate-limited";
 import { APIStatsService as StatsServiceAPI } from "./stats";
 import { APITeamsService as TeamsServiceAPI } from "./teams";
-import { APIUserService as UserServiceAPI } from "./user";
 import { WorkspaceServiceAPI } from "./workspace-service-api";
 import { ConfigurationServiceAPI } from "./configuration-service-api";
 import { AuthProviderServiceAPI } from "./auth-provider-service-api";
@@ -59,6 +57,8 @@ import { PrebuildServiceAPI } from "./prebuild-service-api";
 import { PrebuildService } from "@gitpod/public-api/lib/gitpod/v1/prebuild_connect";
 import { VerificationServiceAPI } from "./verification-service-api";
 import { VerificationService } from "@gitpod/public-api/lib/gitpod/v1/verification_connect";
+import { UserServiceAPI } from "./user-service-api";
+import { UserService as UserServiceInternal } from "../user/user-service";
 
 decorate(injectable(), PublicAPIConverter);
 
@@ -83,7 +83,7 @@ export class API {
     @inject(PublicAPIConverter) private readonly apiConverter: PublicAPIConverter;
     @inject(Redis) private readonly redis: Redis;
     @inject(Config) private readonly config: Config;
-    @inject(UserService) private readonly userService: UserService;
+    @inject(UserServiceInternal) private readonly userServiceInternal: UserServiceInternal;
     @inject(BearerAuth) private readonly bearerAuthenticator: BearerAuth;
     @inject(PrebuildServiceAPI) private readonly prebuildServiceApi: PrebuildServiceAPI;
     @inject(VerificationServiceAPI) private readonly verificationServiceApi: VerificationServiceAPI;
@@ -114,7 +114,6 @@ export class API {
         app.use(
             expressConnectMiddleware({
                 routes: (router: ConnectRouter) => {
-                    router.service(UserServiceDefinition, this.userServiceApi);
                     router.service(TeamsServiceDefinition, this.teamServiceApi);
                     router.service(StatsService, this.tatsServiceApi);
                 },
@@ -128,6 +127,7 @@ export class API {
                 routes: (router: ConnectRouter) => {
                     for (const [type, impl] of [
                         service(HelloService, this.helloServiceApi),
+                        service(UserService, this.userServiceApi),
                         service(WorkspaceService, this.workspaceServiceApi),
                         service(OrganizationService, this.organizationServiceApi),
                         service(ConfigurationService, this.configurationServiceApi),
@@ -143,7 +143,7 @@ export class API {
                 },
             }),
         );
-        // TODO(al) cover unhandled cases
+        // TODO(ak) cover unhandled cases
     }
 
     /**
@@ -346,7 +346,7 @@ export class API {
         if (subjectId.kind === "user") {
             const userId = subjectId.userId()!;
             try {
-                await this.userService.findUserById(userId, userId);
+                await this.userServiceInternal.findUserById(userId, userId);
             } catch (e) {
                 if (e instanceof ApplicationError && e.code === ErrorCodes.NOT_FOUND) {
                     throw new ConnectError("unauthorized", Code.PermissionDenied);
