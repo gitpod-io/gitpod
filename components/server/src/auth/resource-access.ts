@@ -24,6 +24,7 @@ import { RepoURL } from "../repohost";
 import { HostContextProvider } from "./host-context-provider";
 import { isFgaChecksEnabled } from "../authorization/authorizer";
 import { reportGuardAccessCheck } from "../prometheus-metrics";
+import { getRequiredScopes } from "./auth-provider-scopes";
 
 declare let resourceInstance: GuardedResource;
 export type GuardedResourceKind = typeof resourceInstance.kind;
@@ -567,11 +568,15 @@ export class RepositoryResourceGuard implements ResourceAccessGuard {
                 const { authProvider } = hostContext;
                 const identity = User.getIdentity(this.user, authProvider.authProviderId);
                 if (!identity) {
-                    throw UnauthorizedError.create(
-                        repoUrl!.host,
-                        authProvider.info.requirements?.default || [],
-                        "missing-identity",
-                    );
+                    const providerType = authProvider.info.authProviderType;
+                    const scopes = getRequiredScopes({ type: providerType })?.default;
+                    throw UnauthorizedError.create({
+                        host: repoUrl.host,
+                        repoName: repoUrl.repo,
+                        providerType,
+                        scopes,
+                        providerIsConnected: false,
+                    });
                 }
                 const { services } = hostContext;
                 if (!services) {

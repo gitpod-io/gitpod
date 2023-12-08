@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { PlainMessage } from "@bufbuild/protobuf";
+import { PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import {
     InvalidGitpodYMLError as InvalidGitpodYMLErrorData,
@@ -19,7 +19,7 @@ export class RepositoryNotFoundError extends ApplicationError {
     }
 }
 export class UnauthorizedRepositoryAccessError extends ApplicationError {
-    constructor(readonly info: PlainMessage<RepositoryUnauthorizedErrorData>) {
+    constructor(readonly info: PartialMessage<RepositoryUnauthorizedErrorData>) {
         // on gRPC we remap to PRECONDITION_FAILED, all error code for backwards compatibility with the dashboard
         super(ErrorCodes.NOT_AUTHENTICATED, "Repository unauthorized.", info);
     }

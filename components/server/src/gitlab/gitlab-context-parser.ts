@@ -24,6 +24,7 @@ import { GitLabTokenHelper } from "./gitlab-token-helper";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 const path = require("path");
 import { URL } from "url";
+import { RepoURL } from "../repohost";
 
 @injectable()
 export class GitlabContextParser extends AbstractContextParser implements IContextParser {
@@ -69,12 +70,13 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
         } catch (error) {
             if (error && error.code === 401) {
                 const token = await this.tokenHelper.getCurrentToken(user);
-                if (token) {
-                    const scopes = token.scopes;
-                    // most likely the token needs to be updated after revoking by user.
-                    throw UnauthorizedError.create(this.config.host, scopes, "http-unauthorized");
-                }
-                throw UnauthorizedError.create(this.config.host, GitLabScope.Requirements.REPO);
+                throw UnauthorizedError.create({
+                    host: this.config.host,
+                    providerType: "Gitlab",
+                    scopes: GitLabScope.Requirements.DEFAULT,
+                    repoName: RepoURL.parseRepoUrl(contextUrl)?.repo,
+                    providerIsConnected: !!token,
+                });
             }
             throw error;
         } finally {

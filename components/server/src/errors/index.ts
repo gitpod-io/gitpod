@@ -30,11 +30,14 @@ export namespace NotFoundError {
 }
 
 export namespace UnauthorizedError {
-    export function create(host: string, scopes: string[], messageHint?: string) {
-        return new UnauthorizedRepositoryAccessError({
-            host,
-            scopes,
-        });
+    export function create(props: {
+        host: string;
+        providerType: string;
+        repoName?: string;
+        scopes?: string[];
+        providerIsConnected?: boolean;
+    }) {
+        return new UnauthorizedRepositoryAccessError(props);
     }
     export function is(error: any): error is UnauthorizedRepositoryAccessError {
         return error instanceof UnauthorizedRepositoryAccessError;

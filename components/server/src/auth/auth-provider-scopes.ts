@@ -4,13 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AuthProviderEntry } from "@gitpod/gitpod-protocol";
 import { GitHubScope } from "../github/scopes";
 import { GitLabScope } from "../gitlab/scopes";
 import { BitbucketOAuthScopes } from "../bitbucket/bitbucket-oauth-scopes";
 import { BitbucketServerOAuthScopes } from "../bitbucket-server/bitbucket-server-oauth-scopes";
 
-export function getRequiredScopes(entry: AuthProviderEntry) {
+export function getRequiredScopes(entry: { type: string }) {
     switch (entry.type) {
         case "GitHub":
             return {
@@ -38,7 +37,7 @@ export function getRequiredScopes(entry: AuthProviderEntry) {
             };
     }
 }
-export function getScopesOfProvider(entry: AuthProviderEntry) {
+export function getScopesOfProvider(entry: { type: string }) {
     switch (entry.type) {
         case "GitHub":
             return GitHubScope.All;
