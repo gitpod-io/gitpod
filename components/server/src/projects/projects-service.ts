@@ -71,6 +71,7 @@ export class ProjectsService {
             orderDir?: "ASC" | "DESC";
             searchTerm?: string;
             organizationId?: string;
+            prebuildsEnabled?: boolean;
         },
     ): Promise<{ total: number; rows: Project[] }> {
         if (searchOptions.organizationId) {
@@ -86,6 +87,7 @@ export class ProjectsService {
             orderDir: searchOptions.orderDir || "ASC",
             searchTerm: searchOptions.searchTerm || "",
             organizationId: searchOptions.organizationId,
+            prebuildsEnabled: searchOptions.prebuildsEnabled,
         });
         // TODO: adjust this to not filter entities, but log errors if any are not accessible for current user
         const rows = await this.filterByReadAccess(userId, projects.rows);
