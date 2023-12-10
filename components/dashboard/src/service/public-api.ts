@@ -165,6 +165,20 @@ export function updateUserForExperiments(newUser?: { id: string; email?: string 
     user = newUser;
 }
 
+const experimentsClient = getExperimentsClient();
+export async function isServiceEnabled(featureFlagSuffix: string): Promise<boolean> {
+    const featureFlags = [`dashboard_public_api_${featureFlagSuffix}_enabled`, "centralizedPermissions"];
+    const resolvedFlags = await Promise.all(
+        featureFlags.map((ff) =>
+            experimentsClient.getValueAsync(ff, false, {
+                user,
+                gitpodHost: window.location.host,
+            }),
+        ),
+    );
+    return resolvedFlags.every((f) => f === true);
+}
+
 function createServiceClient<T extends ServiceType>(
     type: T,
     jsonRpcOptions?: {
@@ -174,25 +188,12 @@ function createServiceClient<T extends ServiceType>(
 ): PromiseClient<T> {
     return new Proxy(createPromiseClient(type, transport), {
         get(grpcClient, prop) {
-            const experimentsClient = getExperimentsClient();
             // TODO(ak) remove after migration
             async function resolveClient(): Promise<PromiseClient<T>> {
                 if (!jsonRpcOptions) {
                     return grpcClient;
                 }
-                const featureFlags = [
-                    `dashboard_public_api_${jsonRpcOptions.featureFlagSuffix}_enabled`,
-                    "centralizedPermissions",
-                ];
-                const resolvedFlags = await Promise.all(
-                    featureFlags.map((ff) =>
-                        experimentsClient.getValueAsync(ff, false, {
-                            user,
-                            gitpodHost: window.location.host,
-                        }),
-                    ),
-                );
-                if (resolvedFlags.every((f) => f === true)) {
+                if (await isServiceEnabled(jsonRpcOptions.featureFlagSuffix)) {
                     return grpcClient;
                 }
                 return jsonRpcOptions.client;
