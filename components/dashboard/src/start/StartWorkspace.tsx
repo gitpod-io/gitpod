@@ -4,12 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { DisposableCollection, RateLimiterError, WorkspaceImageBuild } from "@gitpod/gitpod-protocol";
+import { DisposableCollection, RateLimiterError } from "@gitpod/gitpod-protocol";
 import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import EventEmitter from "events";
 import * as queryString from "query-string";
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense } from "react";
 import { v4 } from "uuid";
 import Arrow from "../components/Arrow";
 import ContextMenu from "../components/ContextMenu";
@@ -31,10 +30,11 @@ import {
     WorkspaceSpec_WorkspaceType,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { PartialMessage } from "@bufbuild/protobuf";
+import { useWorkspaceLogs } from "../service/logs-watcher-service";
 
 const sessionId = v4();
 
-const WorkspaceLogs = React.lazy(() => import("../components/WorkspaceLogs"));
+const Logs = React.lazy(() => import("../components/Logs"));
 
 export interface StartWorkspaceProps {
     workspaceId: string;
@@ -752,54 +752,11 @@ interface ImageBuildViewProps {
 }
 
 function ImageBuildView(props: ImageBuildViewProps) {
-    const [logsEmitter] = useState(new EventEmitter());
-
-    useEffect(() => {
-        let registered = false;
-        const watchBuild = () => {
-            if (registered) {
-                return;
-            }
-            registered = true;
-
-            getGitpodService()
-                .server.watchWorkspaceImageBuildLogs(props.workspaceId)
-                .catch((err) => {
-                    registered = false;
-                    if (err?.code === ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE) {
-                        // wait, and then retry
-                        setTimeout(watchBuild, 5000);
-                    }
-                });
-        };
-        watchBuild();
-
-        const toDispose = getGitpodService().registerClient({
-            notifyDidOpenConnection: () => {
-                registered = false; // new connection, we're not registered anymore
-                watchBuild();
-            },
-            onWorkspaceImageBuildLogs: (
-                info: WorkspaceImageBuild.StateInfo,
-                content?: WorkspaceImageBuild.LogContent,
-            ) => {
-                if (!content) {
-                    return;
-                }
-                logsEmitter.emit("logs", content.text);
-            },
-        });
-
-        return function cleanup() {
-            toDispose.dispose();
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
+    const onLogs = useWorkspaceLogs(props.workspaceId);
     return (
         <StartPage title="Building Image" phase={props.phase} workspaceId={props.workspaceId}>
             <Suspense fallback={<div />}>
-                <WorkspaceLogs logsEmitter={logsEmitter} errorMessage={props.error?.message} />
+                <Logs onLogs={onLogs} errorMessage={props.error?.message} />
             </Suspense>
             {!!props.onStartWithDefaultImage && (
                 <>

@@ -4,12 +4,13 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import EventEmitter from "events";
 import { useContext, useEffect, useRef } from "react";
 import { Terminal, ITerminalOptions, ITheme } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 import { ThemeContext } from "../theme-context";
+import { DisposableCollection } from "@gitpod/gitpod-protocol/lib/util/disposable";
+import { Event } from "@gitpod/gitpod-protocol/lib/util/event";
 
 const darkTheme: ITheme = {
     background: "#292524", // Tailwind's warmGray 800 https://tailwindcss.com/docs/customizing-colors
@@ -20,13 +21,13 @@ const lightTheme: ITheme = {
     cursor: "#78716C", // Tailwind's warmGray 500 https://tailwindcss.com/docs/customizing-colors
 };
 
-export interface WorkspaceLogsProps {
-    logsEmitter: EventEmitter;
+export interface LogsProps {
+    onLogs: Event<string>;
     errorMessage?: string;
     classes?: string;
 }
 
-export default function WorkspaceLogs(props: WorkspaceLogsProps) {
+export default function Logs(props: LogsProps) {
     const xTermParentRef = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<Terminal>();
     const fitAddon = new FitAddon();
@@ -43,15 +44,19 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
             theme: darkTheme,
             scrollback: 9999999,
         };
+        const toDispose = new DisposableCollection();
         const terminal = new Terminal(options);
+        toDispose.push(terminal);
         terminalRef.current = terminal;
         terminal.loadAddon(fitAddon);
         terminal.open(xTermParentRef.current);
-        props.logsEmitter.on("logs", (logs) => {
-            if (terminal && logs) {
-                terminal.write(logs);
-            }
-        });
+        toDispose.push(
+            props.onLogs((logs) => {
+                if (terminal && logs) {
+                    terminal.write(logs);
+                }
+            }),
+        );
         fitAddon.fit();
         return function cleanUp() {
             terminal.dispose();
