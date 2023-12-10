@@ -57,7 +57,11 @@
                 "name": "PHASE_STOPPED",
                 "lastTransitionTime": "2023-11-29T18:56:12.986Z"
             },
-            "workspaceUrl": "https://gitpodio-empty-bs8378oes6b.ws.gitpod.io",
+            "urls": {
+                "workspace": "https://gitpodio-empty-bs8378oes6b.ws.gitpod.io",
+                "ssh": "gitpodio-empty-bs8378oes6b.ssh.ws.gitpod.io",
+                "logs": "https://gitpod.io/_workspace/logs/gitpodio-empty-bs8378oes6b"
+            },
             "conditions": {
                 "failed": "",
                 "failedReason": "FAILED_REASON_UNSPECIFIED",

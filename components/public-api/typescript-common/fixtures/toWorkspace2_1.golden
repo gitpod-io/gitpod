@@ -64,7 +64,11 @@
                 "name": "PHASE_RUNNING",
                 "lastTransitionTime": "2023-12-01T05:02:04.539Z"
             },
-            "workspaceUrl": "https://gitpodio-workspaceimage-qjvlhi8es6o.ws.gitpod.io",
+            "urls": {
+                "workspace": "https://gitpodio-workspaceimage-qjvlhi8es6o.ws.gitpod.io",
+                "ssh": "gitpodio-workspaceimage-qjvlhi8es6o.ssh.ws.gitpod.io",
+                "logs": "https://gitpod.io/_workspace/logs/gitpodio-workspaceimage-qjvlhi8es6o"
+            },
             "conditions": {
                 "failed": "",
                 "failedReason": "FAILED_REASON_UNSPECIFIED",

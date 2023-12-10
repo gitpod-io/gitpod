@@ -37,7 +37,11 @@
                 "name": "PHASE_CREATING",
                 "lastTransitionTime": "2023-10-16T20:18:24.923Z"
             },
-            "workspaceUrl": "https://akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
+            "urls": {
+                "workspace": "https://akosyakov-parceldemo-4crqn25qlwi.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
+                "ssh": "akosyakov-parceldemo-4crqn25qlwi.ssh.ws-dev.ak-public-26583c8c5c.preview.gitpod-dev.com",
+                "logs": "https://gitpod.io/_workspace/logs/akosyakov-parceldemo-4crqn25qlwi"
+            },
             "conditions": {},
             "gitStatus": {
                 "cloneUrl": "https://github.com/akosyakov/parcel-demo.git",

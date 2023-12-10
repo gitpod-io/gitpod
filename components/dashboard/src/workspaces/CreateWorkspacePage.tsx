@@ -241,8 +241,8 @@ export function CreateWorkspacePage() {
                 const result = await createWorkspaceMutation.createWorkspace(opts);
                 await storeAutoStartOptions();
                 await timeout;
-                if (result.workspace?.status?.workspaceUrl) {
-                    window.location.href = result.workspace.status.workspaceUrl;
+                if (result.workspace?.status?.urls?.workspace) {
+                    window.location.href = result.workspace.status.urls.workspace;
                 } else if (result.workspace!.id) {
                     history.push(`/start/#${result.workspace!.id}`);
                 }
@@ -458,7 +458,7 @@ export function CreateWorkspacePage() {
                             return (
                                 <a
                                     key={w.id}
-                                    href={w.status?.workspaceUrl || `/start/${w.id}}`}
+                                    href={w.status?.urls?.workspace || `/start/${w.id}}`}
                                     className="rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-800 flex"
                                 >
                                     <WorkspaceEntry info={w} shortVersion={true} />

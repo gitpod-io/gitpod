@@ -41,13 +41,14 @@ import { VerificationService } from "@gitpod/public-api/lib/gitpod/v1/verificati
 import { JsonRpcInstallationClient } from "./json-rpc-installation-client";
 import { InstallationService } from "@gitpod/public-api/lib/gitpod/v1/installation_connect";
 import { JsonRpcUserClient } from "./json-rpc-user-client";
+import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 
 const transport = createConnectTransport({
     baseUrl: `${window.location.protocol}//${window.location.host}/public-api`,
     interceptors: [getMetricsInterceptor()],
 });
 
-export const converter = new PublicAPIConverter();
+export const converter = new PublicAPIConverter(new GitpodHostUrl(window.location.href));
 
 export const helloService = createServiceClient(HelloService);
 export const personalAccessTokensService = createPromiseClient(TokensService, transport);

@@ -245,7 +245,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             loggedUserId: this.user!.id,
             workspaceID: this.workspaceID,
             instanceId: status.instanceId,
-            ideUrl: status.workspaceUrl,
+            ideUrl: status.urls?.workspace,
             statusPhase: status.phase?.name ? converter.fromPhase(status.phase?.name) : "unknown",
             workspaceDescription: this.workspace.metadata?.name ?? "",
             workspaceType: this.workspace.spec?.type === WorkspaceSpec_WorkspaceType.PREBUILD ? "prebuild" : "regular",

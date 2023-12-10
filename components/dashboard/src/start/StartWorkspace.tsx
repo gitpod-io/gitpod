@@ -216,10 +216,10 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             console.log("/start: started workspace instance: " + result.workspace?.status?.instanceId);
 
             // redirect to workspaceURL if we are not yet running in an iframe
-            if (!this.props.runsInIFrame && result.workspace?.status?.workspaceUrl) {
+            if (!this.props.runsInIFrame && result.workspace?.status?.urls?.workspace) {
                 // before redirect, make sure we actually have the auth cookie set!
                 await this.ensureWorkspaceAuth(result.workspace.status.instanceId, true);
-                this.redirectTo(result.workspace.status.workspaceUrl);
+                this.redirectTo(result.workspace.status.urls.workspace);
                 return;
             }
             // TODO: Remove this once we use `useStartWorkspaceMutation`
@@ -348,7 +348,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         // It happens this late if we were waiting for a docker build.
         if (
             !this.props.runsInIFrame &&
-            workspace.status.workspaceUrl &&
+            workspace.status.urls?.workspace &&
             (!this.props.dontAutostart || workspace.status.phase?.name === WorkspacePhase_Phase.RUNNING)
         ) {
             (async () => {
@@ -356,7 +356,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 // scenarios with distributed workspace bridges (control loops): We might receive the update, but the backend might not have the token, yet.
                 // So we have to ask again, and wait until we're actually successful (it returns immediately on the happy path)
                 await this.ensureWorkspaceAuth(workspace.status!.instanceId, true);
-                this.redirectTo(workspace.status!.workspaceUrl);
+                this.redirectTo(workspace.status!.urls!.workspace!);
             })().catch(console.error);
             return;
         }
@@ -626,7 +626,9 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                 <ConnectToSSHModal
                                     workspaceId={this.props.workspaceId}
                                     ownerToken={this.state.ownerToken}
-                                    ideUrl={this.state.workspace.status.workspaceUrl.replaceAll("https://", "")}
+                                    ideUrl={
+                                        this.state.workspace.status.urls?.workspace?.replaceAll("https://", "") || ""
+                                    }
                                     onClose={() => this.setState({ isSSHModalVisible: false, ownerToken: "" })}
                                 />
                             )}

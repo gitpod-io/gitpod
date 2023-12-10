@@ -70,7 +70,11 @@
                 "name": "PHASE_STOPPED",
                 "lastTransitionTime": "2023-12-03T06:54:49.619Z"
             },
-            "workspaceUrl": "https://balabala-ws-id.ws-us106.gitpod.io",
+            "urls": {
+                "workspace": "https://balabala-ws-id.ws-us106.gitpod.io",
+                "ssh": "balabala-wd-id.ssh.ws-us106.gitpod.io",
+                "logs": "https://gitpod.io/_workspace/logs/balabala-wd-id"
+            },
             "conditions": {
                 "failed": "",
                 "failedReason": "FAILED_REASON_UNSPECIFIED",

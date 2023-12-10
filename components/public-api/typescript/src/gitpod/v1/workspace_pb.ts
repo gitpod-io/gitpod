@@ -1378,9 +1378,9 @@ export class WorkspaceStatus extends Message<WorkspaceStatus> {
    * workspace_url contains the URL at which the workspace can be accessed.
    * This field is only set if the workspace is running.
    *
-   * @generated from field: string workspace_url = 3;
+   * @generated from field: gitpod.v1.WorkspaceStatus.URLs urls = 3;
    */
-  workspaceUrl = "";
+  urls?: WorkspaceStatus_URLs;
 
   /**
    * conditions detail the current state of the workspace
@@ -1424,7 +1424,7 @@ export class WorkspaceStatus extends Message<WorkspaceStatus> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "status_version", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
     { no: 2, name: "phase", kind: "message", T: WorkspacePhase },
-    { no: 3, name: "workspace_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "urls", kind: "message", T: WorkspaceStatus_URLs },
     { no: 4, name: "conditions", kind: "message", T: WorkspaceStatus_WorkspaceConditions },
     { no: 5, name: "prebuild_result", kind: "message", T: WorkspaceStatus_PrebuildResult },
     { no: 6, name: "git_status", kind: "message", T: WorkspaceGitStatus },
@@ -1590,6 +1590,65 @@ export class WorkspaceStatus_PrebuildResult extends Message<WorkspaceStatus_Preb
 
   static equals(a: WorkspaceStatus_PrebuildResult | PlainMessage<WorkspaceStatus_PrebuildResult> | undefined, b: WorkspaceStatus_PrebuildResult | PlainMessage<WorkspaceStatus_PrebuildResult> | undefined): boolean {
     return proto3.util.equals(WorkspaceStatus_PrebuildResult, a, b);
+  }
+}
+
+/**
+ * URLs describe different means to access the workspace. Access to any of these
+ * urls is subject to authentication.
+ *
+ * @generated from message gitpod.v1.WorkspaceStatus.URLs
+ */
+export class WorkspaceStatus_URLs extends Message<WorkspaceStatus_URLs> {
+  /**
+   * Workspace is the main workspace URL, e.g. for web-based backend provisioned IDEs such as VS Code Web
+   *
+   * @generated from field: string workspace = 1;
+   */
+  workspace = "";
+
+  /**
+   * SSH is an SSH URL for SSH access to the workspace, e.g.
+   * ssh://username:password@workspace-id.ws.gitpod.io
+   *
+   * @generated from field: string ssh = 2;
+   */
+  ssh = "";
+
+  /**
+   * Logs points to the log output of the workspace
+   *
+   * @generated from field: string logs = 3;
+   */
+  logs = "";
+
+  constructor(data?: PartialMessage<WorkspaceStatus_URLs>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.WorkspaceStatus.URLs";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "ssh", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "logs", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceStatus_URLs {
+    return new WorkspaceStatus_URLs().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceStatus_URLs {
+    return new WorkspaceStatus_URLs().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceStatus_URLs {
+    return new WorkspaceStatus_URLs().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WorkspaceStatus_URLs | PlainMessage<WorkspaceStatus_URLs> | undefined, b: WorkspaceStatus_URLs | PlainMessage<WorkspaceStatus_URLs> | undefined): boolean {
+    return proto3.util.equals(WorkspaceStatus_URLs, a, b);
   }
 }
 

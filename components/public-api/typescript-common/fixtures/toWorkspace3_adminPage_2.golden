@@ -81,7 +81,11 @@
                 "name": "PHASE_STOPPED",
                 "lastTransitionTime": "2019-12-12T19:20:11.821Z"
             },
-            "workspaceUrl": "https://longlong-650a-413a-b5ed-aaaaa.ws-us02.gitpod.io",
+            "urls": {
+                "workspace": "https://longlong-650a-413a-b5ed-aaaaa.ws-us02.gitpod.io",
+                "ssh": "longlong-650a-413a-b5ed-aaaaa.ssh.ws-us02.gitpod.io",
+                "logs": "https://gitpod.io/_workspace/logs/longlong-650a-413a-b5ed-aaaaa"
+            },
             "conditions": {
                 "failed": "",
                 "failedReason": "FAILED_REASON_UNSPECIFIED",

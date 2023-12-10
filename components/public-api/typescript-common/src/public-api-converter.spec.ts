@@ -30,9 +30,10 @@ import { BranchMatchingStrategy } from "@gitpod/public-api/lib/gitpod/v1/configu
 import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { WorkspaceAndInstance } from "@gitpod/gitpod-protocol";
+import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 
 describe("PublicAPIConverter", () => {
-    const converter = new PublicAPIConverter();
+    const converter = new PublicAPIConverter(new GitpodHostUrl("https://gitpod.io"));
 
     describe("golden tests", () => {
         it("toWorkspaceSnapshot", async () => {

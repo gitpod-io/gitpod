@@ -375,9 +375,21 @@ message WorkspaceStatus {
   // the phase of a workspace is a simple, high-level summary of where the workspace is in its lifecycle
   WorkspacePhase phase = 2;
 
+  // URLs describe different means to access the workspace. Access to any of these
+  // urls is subject to authentication.
+  message URLs {
+    // Workspace is the main workspace URL, e.g. for web-based backend provisioned IDEs such as VS Code Web
+    string workspace = 1;
+    // SSH is an SSH URL for SSH access to the workspace, e.g.
+    // ssh://username:password@workspace-id.ws.gitpod.io
+    string ssh = 2;
+    // Logs points to the log output of the workspace
+    string logs = 3;
+  }
+
   // workspace_url contains the URL at which the workspace can be accessed.
   // This field is only set if the workspace is running.
-  string workspace_url = 3;
+  URLs urls = 3;
 
   // conditions detail the current state of the workspace
   WorkspaceConditions conditions = 4;

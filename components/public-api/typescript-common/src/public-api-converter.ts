@@ -72,6 +72,7 @@ import {
     WorkspaceSpec_WorkspaceType,
     WorkspaceStatus,
     WorkspaceStatus_PrebuildResult,
+    WorkspaceStatus_URLs,
     WorkspaceStatus_WorkspaceConditions,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { EditorReference } from "@gitpod/public-api/lib/gitpod/v1/editor_pb";
@@ -149,6 +150,7 @@ import { RoleOrPermission } from "@gitpod/gitpod-protocol/lib/permission";
 import { parseGoDurationToMs } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { GitpodServer } from "@gitpod/gitpod-protocol";
+import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 
 export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
 
@@ -160,6 +162,8 @@ export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configurati
  * - methods converting from gRPC to JSON-RPC is called `from*`
  */
 export class PublicAPIConverter {
+    constructor(private readonly hostUrl: GitpodHostUrl) {}
+
     toWorkspace(arg: WorkspaceInfo | WorkspaceInstance, current?: Workspace): Workspace {
         const workspace = current ?? new Workspace();
 
@@ -274,7 +278,15 @@ export class PublicAPIConverter {
             return status;
         }
 
-        status.workspaceUrl = arg.ideUrl;
+        status.urls = new WorkspaceStatus_URLs();
+        status.urls.workspace = arg.ideUrl;
+        if (arg.ideUrl) {
+            const workspaceUrl = new URL(arg.ideUrl);
+            const workspaceHost = workspaceUrl.host.substring(workspaceUrl.host.indexOf(".") + 1);
+            status.urls.ssh = `${arg.workspaceId}.ssh.${workspaceHost}`;
+        }
+        status.urls.logs = this.hostUrl.with((url) => ({ pathname: `/_workspace/logs/${arg.workspaceId}` })).toString();
+
         status.conditions = this.toWorkspaceConditions(arg.status.conditions);
 
         let lastTransitionTime = new Date(arg.creationTime).getTime();

@@ -382,7 +382,12 @@ export class API {
     }
 
     static bindAPI(bind: interfaces.Bind): void {
-        bind(PublicAPIConverter).toSelf().inSingletonScope();
+        bind(PublicAPIConverter)
+            .toDynamicValue((ctx) => {
+                const config = ctx.container.get<Config>(Config);
+                return new PublicAPIConverter(config.hostUrl);
+            })
+            .inSingletonScope();
         bind(HelloServiceAPI).toSelf().inSingletonScope();
         bind(UserServiceAPI).toSelf().inSingletonScope();
         bind(TeamsServiceAPI).toSelf().inSingletonScope();

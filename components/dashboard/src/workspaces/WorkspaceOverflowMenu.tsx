@@ -66,7 +66,7 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
             workspaceId: workspace.id,
             spec: {
                 admission: newLevel,
-            }
+            },
         });
     }, [updateWorkspace, workspace.id, workspace.spec?.admission]);
 
@@ -74,8 +74,8 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
         updateWorkspace.mutate({
             workspaceId: workspace.id,
             metadata: {
-                pinned: !workspace.metadata?.pinned
-            }
+                pinned: !workspace.metadata?.pinned,
+            },
         });
     }, [updateWorkspace, workspace.id, workspace.metadata?.pinned]);
 
@@ -172,7 +172,7 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
                 <ConnectToSSHModal
                     workspaceId={workspace.id}
                     ownerToken={ownerToken}
-                    ideUrl={info.status.workspaceUrl.replaceAll("https://", "")}
+                    ideUrl={info.status.urls?.workspace?.replaceAll("https://", "") || ""}
                     onClose={() => {
                         setSSHModalVisible(false);
                         setOwnerToken("");
