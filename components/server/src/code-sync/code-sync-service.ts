@@ -28,6 +28,8 @@ import { Config } from "../config";
 import { CachingBlobServiceClientProvider } from "../util/content-service-sugar";
 import { Authorizer } from "../authorization/authorizer";
 import { FGAFunctionAccessGuard } from "../auth/resource-access";
+import { runWithSubjectId } from "../util/request-context";
+import { SubjectId } from "../auth/subject-id";
 
 // By default: 5 kind of resources * 20 revs * 1Mb = 100Mb max in the content service for user data.
 const defaultRevLimit = 20;
@@ -106,31 +108,33 @@ export class CodeSyncService {
             }
 
             const userId = req.user.id;
-            try {
-                await UserRateLimiter.instance(this.config.rateLimiter).consume(userId, accessCodeSyncStorage);
-            } catch (e) {
-                if (e instanceof Error) {
-                    throw e;
+            await runWithSubjectId(SubjectId.fromUserId(userId), async () => {
+                try {
+                    await UserRateLimiter.instance(this.config.rateLimiter).consume(userId, accessCodeSyncStorage);
+                } catch (e) {
+                    if (e instanceof Error) {
+                        throw e;
+                    }
+                    res.setHeader("Retry-After", String(Math.round(e.msBeforeNext / 1000)) || 1);
+                    res.status(429).send("Too Many Requests");
+                    return;
                 }
-                res.setHeader("Retry-After", String(Math.round(e.msBeforeNext / 1000)) || 1);
-                res.status(429).send("Too Many Requests");
-                return;
-            }
 
-            const functionGuard = (req.user as WithFunctionAccessGuard).functionGuard;
-            if (!!functionGuard) {
-                // If we authorize with scopes, there is a FunctionGuard
-                const guard = new FGAFunctionAccessGuard(userId, functionGuard);
-                if (!(await guard.canAccess(accessCodeSyncStorage))) {
+                const functionGuard = (req.user as WithFunctionAccessGuard).functionGuard;
+                if (!!functionGuard) {
+                    // If we authorize with scopes, there is a FunctionGuard
+                    const guard = new FGAFunctionAccessGuard(userId, functionGuard);
+                    if (!(await guard.canAccess(accessCodeSyncStorage))) {
+                        res.sendStatus(403);
+                        return;
+                    }
+                }
+
+                if (!(await this.authorizer.hasPermissionOnUser(userId, "code_sync", userId))) {
                     res.sendStatus(403);
                     return;
                 }
-            }
-
-            if (!(await this.authorizer.hasPermissionOnUser(userId, "code_sync", userId))) {
-                res.sendStatus(403);
-                return;
-            }
+            });
 
             return next();
         });
