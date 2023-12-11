@@ -21,7 +21,12 @@ export const Heading1: FC<HeadingProps> = ({ id, tracking, className, children, 
     return (
         <Comp
             id={id}
-            className={cn(getHeadingColor(), getTracking(tracking), "font-semibold text-3xl truncate", className)}
+            className={cn(
+                "text-pk-content-primary",
+                getTracking(tracking),
+                "font-semibold text-3xl truncate",
+                className,
+            )}
         >
             {children}
         </Comp>
@@ -32,7 +37,10 @@ export const Heading2: FC<HeadingProps> = ({ id, tracking, className, children, 
     const Comp = asChild ? Slot : "h2";
 
     return (
-        <Comp id={id} className={cn(getHeadingColor(), getTracking(tracking), "font-semibold text-2xl", className)}>
+        <Comp
+            id={id}
+            className={cn("text-pk-content-primary", getTracking(tracking), "font-semibold text-2xl", className)}
+        >
             {children}
         </Comp>
     );
@@ -42,7 +50,10 @@ export const Heading3: FC<HeadingProps> = ({ id, tracking, className, children, 
     const Comp = asChild ? Slot : "h3";
 
     return (
-        <Comp id={id} className={cn(getHeadingColor(), getTracking(tracking), "font-semibold text-lg", className)}>
+        <Comp
+            id={id}
+            className={cn("text-pk-content-primary", getTracking(tracking), "font-semibold text-lg", className)}
+        >
             {children}
         </Comp>
     );
@@ -53,22 +64,11 @@ export const Heading3: FC<HeadingProps> = ({ id, tracking, className, children, 
  */
 export const Subheading: FC<HeadingProps> = ({ id, tracking, className, children }) => {
     return (
-        <p
-            id={id}
-            className={cn(
-                "text-base text-pk-content-secondary dark:text-pk-content-secondary-dark",
-                getTracking(tracking),
-                className,
-            )}
-        >
+        <p id={id} className={cn("text-base text-pk-content-secondary", getTracking(tracking), className)}>
             {children}
         </p>
     );
 };
-
-function getHeadingColor() {
-    return "pk-content-primary dark:pk-content-primary-dark";
-}
 
 function getTracking(tracking: HeadingProps["tracking"]) {
     if (tracking === "wide") {
