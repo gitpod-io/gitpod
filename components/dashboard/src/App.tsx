@@ -16,6 +16,7 @@ import { Route, Switch, useHistory, useLocation } from "react-router";
 import { ErrorPages } from "./error-pages/ErrorPages";
 import { LinkedInCallback } from "react-linkedin-login-oauth2";
 import { useQueryParams } from "./hooks/use-query-params";
+import { useTheme } from "./theme-context";
 
 export const StartWorkspaceModalKeyBinding = `${/(Mac|iPhone|iPod|iPad)/i.test(navigator.platform) ? "⌘" : "Ctrl﹢"}O`;
 
@@ -26,19 +27,27 @@ const App: FC = () => {
     const history = useHistory();
     const location = useLocation();
     const search = useQueryParams();
+    const { isDark, setIsDark } = useTheme();
 
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
             if ((event.metaKey || event.ctrlKey) && event.key === "o") {
                 event.preventDefault();
                 history.push("/new");
+                return;
+            }
+            // Shortcut to toggle dark mode - primarily to make it easier to dev/test
+            if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key === "m") {
+                event.preventDefault();
+                setIsDark(!isDark);
+                return;
             }
         };
         window.addEventListener("keydown", onKeyDown);
         return () => {
             window.removeEventListener("keydown", onKeyDown);
         };
-    }, [history]);
+    }, [history, isDark, setIsDark]);
 
     // Setup analytics/tracking
     useAnalyticsTracking();
