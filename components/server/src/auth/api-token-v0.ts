@@ -59,25 +59,34 @@ export namespace ApiTokenScope {
     }
 }
 
-export class ApiAccessToken {
+export class ApiAccessTokenV0 {
     private static PREFIX = "gitpod_apitokenv0_";
 
-    public constructor(readonly id: string, readonly scopes: ApiTokenScope[], readonly _userId?: string) {}
+    public constructor(
+        readonly id: string,
+        readonly scopes: ApiTokenScope[],
+        /** This parameter is temporary, too ease the rollout of ApiTokens. Once we got rid of the websocket API (and all other impls that require a userId), we can get rid of it */
+        readonly _userId?: string,
+    ) {
+        if (!!_userId && _userId !== id) {
+            throw new Error("ApiTokenV0: Invalid userId");
+        }
+    }
 
-    public static create(scopes: ApiTokenScope[]): ApiAccessToken {
-        return new ApiAccessToken(crypto.randomBytes(30).toString("hex"), scopes);
+    public static create(scopes: ApiTokenScope[]): ApiAccessTokenV0 {
+        return new ApiAccessTokenV0(crypto.randomBytes(30).toString("hex"), scopes);
     }
 
     public static validatePrefix(token: string): boolean {
-        return token.startsWith(ApiAccessToken.PREFIX);
+        return token.startsWith(ApiAccessTokenV0.PREFIX);
     }
 
     // TODO(gpl) we'd want to extract the dependency to authJWT out
-    public static async parse(token: string, authJWT: AuthJWT): Promise<ApiAccessToken> {
-        if (!ApiAccessToken.validatePrefix(token)) {
+    public static async parse(token: string, authJWT: AuthJWT): Promise<ApiAccessTokenV0> {
+        if (!ApiAccessTokenV0.validatePrefix(token)) {
             throw new Error("Invalid API token prefix");
         }
-        const jwtToken = token.substring(ApiAccessToken.PREFIX.length);
+        const jwtToken = token.substring(ApiAccessTokenV0.PREFIX.length);
 
         const payload = await authJWT.verify(jwtToken);
         log.debug("API token verified", { payload });
@@ -93,27 +102,25 @@ export class ApiAccessToken {
 
         // TODO Remove after rollout
         let _userId: string | undefined = undefined;
-        if (subjectId.kind !== "user") {
-            if (subjectParts.length >= 2) {
-                _userId = subjectParts[1];
-            }
+        if (subjectParts.length >= 2) {
+            _userId = subjectParts[1];
         }
 
         const scopes = payload.scopes;
         if (!scopes || !Array.isArray(scopes)) {
             throw new Error("Scopes claim is missing or malformed in API token JWT");
         }
-        return new ApiAccessToken(subjectId.value, scopes as ApiTokenScope[], _userId);
+        return new ApiAccessTokenV0(subjectId.value, scopes as ApiTokenScope[], _userId);
     }
 
     public async encode(authJWT: AuthJWT): Promise<string> {
-        const subjectIdStr = this.subjectId.toString();
+        const subjectIdStr = this.subjectId().toString();
+        const sub = this._userId ? `${subjectIdStr}:${this._userId}` : subjectIdStr;
         const payload = {
-            sub: subjectIdStr,
             scopes: this.scopes,
         };
-        const jwt = await authJWT.sign(subjectIdStr, payload);
-        return `${ApiAccessToken.PREFIX}${jwt}`;
+        const jwt = await authJWT.sign(sub, payload);
+        return `${ApiAccessTokenV0.PREFIX}${jwt}`;
     }
 
     public subjectId(): SubjectId {

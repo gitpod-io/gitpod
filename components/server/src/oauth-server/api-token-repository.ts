@@ -16,7 +16,7 @@ import { inject, injectable } from "inversify";
 // import { Authorizer } from "../authorization/authorizer";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
-import { ApiAccessToken, ApiTokenScope } from "../auth/api-token-v0";
+import { ApiAccessTokenV0, ApiTokenScope } from "../auth/api-token-v0";
 import { AuthJWT } from "../auth/jwt";
 import { Authorizer } from "../authorization/authorizer";
 
@@ -38,7 +38,7 @@ export class ApiTokenRepository implements OAuthTokenRepository {
         log.info("issuing token", { userId: user?.id, scopes });
 
         const expiry = tokenExpiryInFuture.getEndDate();
-        const apiToken = ApiAccessToken.create(scopes.map((s) => ApiTokenScope.decode(s.name)));
+        const apiToken = ApiAccessTokenV0.create(scopes.map((s) => ApiTokenScope.decode(s.name)));
         const accessToken = await apiToken.encode(this.authJWT);
         return <OAuthToken>{
             accessToken,
@@ -53,7 +53,7 @@ export class ApiTokenRepository implements OAuthTokenRepository {
         const scopes = accessToken.scopes.map((s) => s.name);
 
         log.info("persisting token", { accessToken: new TrustedValue(accessToken), scopes });
-        const apiAccessToken = await ApiAccessToken.parse(accessToken.accessToken, this.authJWT);
+        const apiAccessToken = await ApiAccessTokenV0.parse(accessToken.accessToken, this.authJWT);
         await this.authorizer.addApiToken(apiAccessToken.id, apiAccessToken.scopes);
 
         // // Does the token already exist?

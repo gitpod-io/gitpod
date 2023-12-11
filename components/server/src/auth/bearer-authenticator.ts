@@ -21,7 +21,7 @@ import { TokenResourceGuard, WithResourceAccessGuard } from "./resource-access";
 import { UserService } from "../user/user-service";
 import { SubjectId } from "./subject-id";
 import { AuthJWT } from "./jwt";
-import { ApiAccessToken } from "./api-token-v0";
+import { ApiAccessTokenV0 } from "./api-token-v0";
 
 export function getBearerToken(authorizationHeader: string | undefined | null): string | undefined {
     if (!authorizationHeader || !(typeof authorizationHeader === "string")) {
@@ -177,9 +177,9 @@ export class BearerAuth {
             }
         }
 
-        if (ApiAccessToken.validatePrefix(token)) {
+        if (ApiAccessTokenV0.validatePrefix(token)) {
             try {
-                const parsed = await ApiAccessToken.parse(token, this.authJWT);
+                const parsed = await ApiAccessTokenV0.parse(token, this.authJWT);
                 return parsed.subjectId();
             } catch (e) {
                 log.error("Failed to authenticate using PAT", e);
