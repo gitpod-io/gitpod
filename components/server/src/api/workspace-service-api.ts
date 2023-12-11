@@ -41,6 +41,9 @@ import {
     CreateWorkspaceSnapshotResponse,
     WaitForWorkspaceSnapshotRequest,
     WaitForWorkspaceSnapshotResponse,
+    UpdateWorkspacePortRequest,
+    UpdateWorkspacePortResponse,
+    WorkspacePort_Protocol,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { inject, injectable } from "inversify";
 import { WorkspaceService } from "../workspace/workspace-service";
@@ -53,6 +56,7 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 import { ContextService } from "../workspace/context-service";
 import { UserService } from "../user/user-service";
 import { ContextParser } from "../workspace/context-parser-service";
+import { UnaryImpl } from "@connectrpc/connect/dist/cjs/implementation";
 
 @injectable()
 export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceInterface> {
@@ -377,5 +381,23 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         }
         await this.workspaceService.waitForSnapshot(ctxUserId(), req.snapshotId);
         return new WaitForWorkspaceSnapshotResponse();
+    }
+
+    async updateWorkspacePort(req: UpdateWorkspacePortRequest): Promise<UpdateWorkspacePortResponse> {
+        if (!req.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        if (!req.port) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "port is required");
+        }
+        if (!req.admission && !req.protocol) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "admission or protocol is required");
+        }
+        await this.workspaceService.openPort(ctxUserId(), req.workspaceId, {
+            port: Number(req.port),
+            visibility: req.admission ? (req.admission === AdmissionLevel.EVERYONE ? "public" : "private") : undefined,
+            protocol: req.protocol ? (req.protocol === WorkspacePort_Protocol.HTTPS ? "https" : "http") : undefined,
+        });
+        return new UpdateWorkspacePortResponse();
     }
 }

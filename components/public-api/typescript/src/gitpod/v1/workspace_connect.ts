@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, CreateWorkspaceSnapshotRequest, CreateWorkspaceSnapshotResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetWorkspaceDefaultImageRequest, GetWorkspaceDefaultImageResponse, GetWorkspaceEditorCredentialsRequest, GetWorkspaceEditorCredentialsResponse, GetWorkspaceOwnerTokenRequest, GetWorkspaceOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspaceClassesRequest, ListWorkspaceClassesResponse, ListWorkspacesRequest, ListWorkspacesResponse, ParseContextURLRequest, ParseContextURLResponse, SendHeartBeatRequest, SendHeartBeatResponse, StartWorkspaceRequest, StartWorkspaceResponse, StopWorkspaceRequest, StopWorkspaceResponse, UpdateWorkspaceRequest, UpdateWorkspaceResponse, WaitForWorkspaceSnapshotRequest, WaitForWorkspaceSnapshotResponse, WatchWorkspaceStatusRequest, WatchWorkspaceStatusResponse } from "./workspace_pb.js";
+import { CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, CreateWorkspaceSnapshotRequest, CreateWorkspaceSnapshotResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetWorkspaceDefaultImageRequest, GetWorkspaceDefaultImageResponse, GetWorkspaceEditorCredentialsRequest, GetWorkspaceEditorCredentialsResponse, GetWorkspaceOwnerTokenRequest, GetWorkspaceOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspaceClassesRequest, ListWorkspaceClassesResponse, ListWorkspacesRequest, ListWorkspacesResponse, ParseContextURLRequest, ParseContextURLResponse, SendHeartBeatRequest, SendHeartBeatResponse, StartWorkspaceRequest, StartWorkspaceResponse, StopWorkspaceRequest, StopWorkspaceResponse, UpdateWorkspacePortRequest, UpdateWorkspacePortResponse, UpdateWorkspaceRequest, UpdateWorkspaceResponse, WaitForWorkspaceSnapshotRequest, WaitForWorkspaceSnapshotResponse, WatchWorkspaceStatusRequest, WatchWorkspaceStatusResponse } from "./workspace_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -204,6 +204,17 @@ export const WorkspaceService = {
       name: "WaitForWorkspaceSnapshot",
       I: WaitForWorkspaceSnapshotRequest,
       O: WaitForWorkspaceSnapshotResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * UpdateWorkspacePort updates the port of workspace.
+     *
+     * @generated from rpc gitpod.v1.WorkspaceService.UpdateWorkspacePort
+     */
+    updateWorkspacePort: {
+      name: "UpdateWorkspacePort",
+      I: UpdateWorkspacePortRequest,
+      O: UpdateWorkspacePortResponse,
       kind: MethodKind.Unary,
     },
   }

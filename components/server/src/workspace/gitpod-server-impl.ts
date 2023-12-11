@@ -1093,7 +1093,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
         traceWI(ctx, { instanceId: runningInstance.id });
         await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace }, "update");
-
         return await this.workspaceService.openPort(user.id, workspaceId, port);
     }
 

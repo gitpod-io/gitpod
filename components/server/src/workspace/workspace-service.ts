@@ -364,15 +364,19 @@ export class WorkspaceService {
             log.debug({ userId, workspaceId }, "Cannot open port for workspace with no running instance", {
                 port,
             });
-            return;
+            throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "workspace is not running");
         }
 
         const req = new ControlPortRequest();
         req.setId(instance.id);
         const spec = new PortSpec();
         spec.setPort(port.port);
-        spec.setVisibility(this.portVisibilityToProto(port.visibility));
-        spec.setProtocol(this.portProtocolToProto(port.protocol));
+        if (port.visibility) {
+            spec.setVisibility(this.portVisibilityToProto(port.visibility));
+        }
+        if (port.protocol) {
+            spec.setProtocol(this.portProtocolToProto(port.protocol));
+        }
         req.setSpec(spec);
         req.setExpose(true);
 

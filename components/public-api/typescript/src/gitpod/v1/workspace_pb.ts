@@ -50,6 +50,104 @@ proto3.util.setEnumType(AdmissionLevel, "gitpod.v1.AdmissionLevel", [
 ]);
 
 /**
+ * @generated from message gitpod.v1.UpdateWorkspacePortRequest
+ */
+export class UpdateWorkspacePortRequest extends Message<UpdateWorkspacePortRequest> {
+  /**
+   * workspace_id specifies the workspace to update port
+   *
+   * +required
+   *
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * port number
+   *
+   * +required
+   *
+   * @generated from field: uint64 port = 2;
+   */
+  port = protoInt64.zero;
+
+  /**
+   * admission controls the policy of this port
+   *
+   * @generated from field: optional gitpod.v1.AdmissionLevel admission = 3;
+   */
+  admission?: AdmissionLevel;
+
+  /**
+   * backend protocol of this port
+   *
+   * @generated from field: optional gitpod.v1.WorkspacePort.Protocol protocol = 4;
+   */
+  protocol?: WorkspacePort_Protocol;
+
+  constructor(data?: PartialMessage<UpdateWorkspacePortRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.UpdateWorkspacePortRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "port", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+    { no: 3, name: "admission", kind: "enum", T: proto3.getEnumType(AdmissionLevel), opt: true },
+    { no: 4, name: "protocol", kind: "enum", T: proto3.getEnumType(WorkspacePort_Protocol), opt: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateWorkspacePortRequest {
+    return new UpdateWorkspacePortRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateWorkspacePortRequest {
+    return new UpdateWorkspacePortRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateWorkspacePortRequest {
+    return new UpdateWorkspacePortRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateWorkspacePortRequest | PlainMessage<UpdateWorkspacePortRequest> | undefined, b: UpdateWorkspacePortRequest | PlainMessage<UpdateWorkspacePortRequest> | undefined): boolean {
+    return proto3.util.equals(UpdateWorkspacePortRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.UpdateWorkspacePortResponse
+ */
+export class UpdateWorkspacePortResponse extends Message<UpdateWorkspacePortResponse> {
+  constructor(data?: PartialMessage<UpdateWorkspacePortResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.UpdateWorkspacePortResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateWorkspacePortResponse {
+    return new UpdateWorkspacePortResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateWorkspacePortResponse {
+    return new UpdateWorkspacePortResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateWorkspacePortResponse {
+    return new UpdateWorkspacePortResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateWorkspacePortResponse | PlainMessage<UpdateWorkspacePortResponse> | undefined, b: UpdateWorkspacePortResponse | PlainMessage<UpdateWorkspacePortResponse> | undefined): boolean {
+    return proto3.util.equals(UpdateWorkspacePortResponse, a, b);
+  }
+}
+
+/**
  * @generated from message gitpod.v1.GetWorkspaceRequest
  */
 export class GetWorkspaceRequest extends Message<GetWorkspaceRequest> {
