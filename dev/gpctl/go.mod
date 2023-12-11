@@ -27,8 +27,6 @@ require (
 	k8s.io/client-go v0.27.3
 )
 
-require github.com/bufbuild/connect-go v1.10.0
-
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
