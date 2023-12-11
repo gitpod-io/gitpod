@@ -522,6 +522,74 @@ export class UpdateUserResponse extends Message<UpdateUserResponse> {
 }
 
 /**
+ * @generated from message gitpod.v1.DeleteUserRequest
+ */
+export class DeleteUserRequest extends Message<DeleteUserRequest> {
+  /**
+   * @generated from field: string user_id = 1;
+   */
+  userId = "";
+
+  constructor(data?: PartialMessage<DeleteUserRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.DeleteUserRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteUserRequest {
+    return new DeleteUserRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeleteUserRequest {
+    return new DeleteUserRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeleteUserRequest {
+    return new DeleteUserRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: DeleteUserRequest | PlainMessage<DeleteUserRequest> | undefined, b: DeleteUserRequest | PlainMessage<DeleteUserRequest> | undefined): boolean {
+    return proto3.util.equals(DeleteUserRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.DeleteUserResponse
+ */
+export class DeleteUserResponse extends Message<DeleteUserResponse> {
+  constructor(data?: PartialMessage<DeleteUserResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.DeleteUserResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteUserResponse {
+    return new DeleteUserResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeleteUserResponse {
+    return new DeleteUserResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeleteUserResponse {
+    return new DeleteUserResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: DeleteUserResponse | PlainMessage<DeleteUserResponse> | undefined, b: DeleteUserResponse | PlainMessage<DeleteUserResponse> | undefined): boolean {
+    return proto3.util.equals(DeleteUserResponse, a, b);
+  }
+}
+
+/**
  * @generated from message gitpod.v1.User
  */
 export class User extends Message<User> {
