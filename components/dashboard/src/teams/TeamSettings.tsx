@@ -13,7 +13,7 @@ import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal"
 import { CheckboxInputField, CheckboxListField } from "../components/forms/CheckboxInputField";
 import { InputField } from "../components/forms/InputField";
 import { TextInputField } from "../components/forms/TextInputField";
-import { Heading2, Subheading } from "../components/typography/headings";
+import { Heading2, Heading3, Subheading } from "../components/typography/headings";
 import { useIsOwner } from "../data/organizations/members-query";
 import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
 import { useCurrentOrg, useOrganizationsInvalidator } from "../data/organizations/orgs-query";
@@ -118,10 +118,11 @@ export default function TeamSettingsPage() {
         <>
             <OrgSettingsPage>
                 <div className="space-y-4">
-                    <ConfigurationSettingsField>
+                    <div>
                         <Heading2>Organization Details</Heading2>
                         <Subheading>Details of your organization within Gitpod.</Subheading>
-
+                    </div>
+                    <ConfigurationSettingsField>
                         {updateOrg.isError && (
                             <Alert type="error" closable={true} className="mb-2 max-w-xl rounded-md">
                                 <span>Failed to update organization information: </span>
@@ -134,14 +135,21 @@ export default function TeamSettingsPage() {
                             </Alert>
                         )}
                         <TextInputField
-                            label="Name"
+                            label="Display Name"
                             hint="The name of your company or organization"
                             value={teamName}
                             error={teamNameError.message}
                             onChange={setTeamName}
                             disabled={!isOwner}
+                            topMargin={false}
                             onBlur={teamNameError.onBlur}
                         />
+
+                        {org && (
+                            <InputField label="Organization ID">
+                                <InputWithCopy value={org.id} tip="Copy Organization ID" />
+                            </InputField>
+                        )}
 
                         {isOwner && (
                             <Button
@@ -150,19 +158,13 @@ export default function TeamSettingsPage() {
                                 type="submit"
                                 disabled={org?.name === teamName || !orgFormIsValid}
                             >
-                                Update Organization
+                                Save
                             </Button>
-                        )}
-
-                        {org && (
-                            <InputField label="Organization ID">
-                                <InputWithCopy value={org.id} tip="Copy Organization ID" />
-                            </InputField>
                         )}
                     </ConfigurationSettingsField>
 
                     <ConfigurationSettingsField>
-                        <Heading2>Collaboration & Sharing</Heading2>
+                        <Heading3>Collaboration & Sharing</Heading3>
 
                         {updateTeamSettings.isError && (
                             <Alert type="error" closable={true} className="mb-2 max-w-xl rounded-md">
@@ -181,7 +183,7 @@ export default function TeamSettingsPage() {
                     </ConfigurationSettingsField>
 
                     <ConfigurationSettingsField>
-                        <Heading2>Workspace Images</Heading2>
+                        <Heading3>Workspace Images</Heading3>
                         <Subheading>Choose a default image for all workspaces in the organization.</Subheading>
 
                         <WorkspaceImageButton
@@ -201,7 +203,7 @@ export default function TeamSettingsPage() {
                     )}
 
                     <ConfigurationSettingsField>
-                        <Heading2>Available Workspace Classes</Heading2>
+                        <Heading3>Available Workspace Classes</Heading3>
                         <Subheading>Limit the available workspace classes in your organization.</Subheading>
 
                         {settings && <WorkspaceClassOptions disabled={!isOwner} settings={settings} />}
@@ -210,7 +212,7 @@ export default function TeamSettingsPage() {
                     <ConfigurationSettingsField>
                         {user?.organizationId !== org?.id && isOwner && (
                             <>
-                                <Heading2>Delete Organization</Heading2>
+                                <Heading3>Delete Organization</Heading3>
                                 <Subheading className="pb-4 max-w-2xl">
                                     Deleting this organization will also remove all associated data, including projects
                                     and workspaces. Deleted organizations cannot be restored!
@@ -454,13 +456,12 @@ const WorkspaceClassOptions = (props: WorkspaceClassOptionsProps) => {
             <CheckboxListField
                 className="mt-2"
                 error={
-                    <>
-                        {updateTeamSettings.isError && updateTeamSettings.error.message.length > 0 && (
-                            <Alert type="error" closable={true} className="rounded-md">
-                                {updateTeamSettings.error.message}
-                            </Alert>
-                        )}
-                    </>
+                    updateTeamSettings.isError &&
+                    updateTeamSettings.error.message.length > 0 && (
+                        <Alert type="error" closable={true} className="rounded-md">
+                            {updateTeamSettings.error.message}
+                        </Alert>
+                    )
                 }
             >
                 {classes.map((wsClass) => (
