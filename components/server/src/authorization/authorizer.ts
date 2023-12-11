@@ -539,7 +539,7 @@ export async function getSubjectFromCtx(passed: Subject): Promise<SubjectId> {
     }
     const match = matchSubjectIds(ctxUserId, passedUserId);
     reportAuthorizerSubjectId(match);
-    if (match === "mismatch") {
+    if (match === "mismatch" || match === "ctx-user-id-missing") {
         try {
             // Get hold of the stack trace
             throw new Error("Authorizer: SubjectId mismatch");
