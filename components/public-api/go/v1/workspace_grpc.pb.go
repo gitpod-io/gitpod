@@ -70,6 +70,8 @@ type WorkspaceServiceClient interface {
 	CreateWorkspaceSnapshot(ctx context.Context, in *CreateWorkspaceSnapshotRequest, opts ...grpc.CallOption) (*CreateWorkspaceSnapshotResponse, error)
 	// WaitWorkspaceSnapshot waits for the snapshot to be available or failed.
 	WaitForWorkspaceSnapshot(ctx context.Context, in *WaitForWorkspaceSnapshotRequest, opts ...grpc.CallOption) (*WaitForWorkspaceSnapshotResponse, error)
+	// UpdateWorkspacePort updates the port of workspace.
+	UpdateWorkspacePort(ctx context.Context, in *UpdateWorkspacePortRequest, opts ...grpc.CallOption) (*UpdateWorkspacePortResponse, error)
 }
 
 type workspaceServiceClient struct {
@@ -247,6 +249,15 @@ func (c *workspaceServiceClient) WaitForWorkspaceSnapshot(ctx context.Context, i
 	return out, nil
 }
 
+func (c *workspaceServiceClient) UpdateWorkspacePort(ctx context.Context, in *UpdateWorkspacePortRequest, opts ...grpc.CallOption) (*UpdateWorkspacePortResponse, error) {
+	out := new(UpdateWorkspacePortResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.WorkspaceService/UpdateWorkspacePort", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkspaceServiceServer is the server API for WorkspaceService service.
 // All implementations must embed UnimplementedWorkspaceServiceServer
 // for forward compatibility
@@ -295,6 +306,8 @@ type WorkspaceServiceServer interface {
 	CreateWorkspaceSnapshot(context.Context, *CreateWorkspaceSnapshotRequest) (*CreateWorkspaceSnapshotResponse, error)
 	// WaitWorkspaceSnapshot waits for the snapshot to be available or failed.
 	WaitForWorkspaceSnapshot(context.Context, *WaitForWorkspaceSnapshotRequest) (*WaitForWorkspaceSnapshotResponse, error)
+	// UpdateWorkspacePort updates the port of workspace.
+	UpdateWorkspacePort(context.Context, *UpdateWorkspacePortRequest) (*UpdateWorkspacePortResponse, error)
 	mustEmbedUnimplementedWorkspaceServiceServer()
 }
 
@@ -349,6 +362,9 @@ func (UnimplementedWorkspaceServiceServer) CreateWorkspaceSnapshot(context.Conte
 }
 func (UnimplementedWorkspaceServiceServer) WaitForWorkspaceSnapshot(context.Context, *WaitForWorkspaceSnapshotRequest) (*WaitForWorkspaceSnapshotResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WaitForWorkspaceSnapshot not implemented")
+}
+func (UnimplementedWorkspaceServiceServer) UpdateWorkspacePort(context.Context, *UpdateWorkspacePortRequest) (*UpdateWorkspacePortResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateWorkspacePort not implemented")
 }
 func (UnimplementedWorkspaceServiceServer) mustEmbedUnimplementedWorkspaceServiceServer() {}
 
@@ -654,6 +670,24 @@ func _WorkspaceService_WaitForWorkspaceSnapshot_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkspaceService_UpdateWorkspacePort_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateWorkspacePortRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspaceServiceServer).UpdateWorkspacePort(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.WorkspaceService/UpdateWorkspacePort",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspaceServiceServer).UpdateWorkspacePort(ctx, req.(*UpdateWorkspacePortRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorkspaceService_ServiceDesc is the grpc.ServiceDesc for WorkspaceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -720,6 +754,10 @@ var WorkspaceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "WaitForWorkspaceSnapshot",
 			Handler:    _WorkspaceService_WaitForWorkspaceSnapshot_Handler,
+		},
+		{
+			MethodName: "UpdateWorkspacePort",
+			Handler:    _WorkspaceService_UpdateWorkspacePort_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

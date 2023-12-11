@@ -70,7 +70,30 @@ service WorkspaceService {
 
   // WaitWorkspaceSnapshot waits for the snapshot to be available or failed.
   rpc WaitForWorkspaceSnapshot(WaitForWorkspaceSnapshotRequest) returns (WaitForWorkspaceSnapshotResponse) {}
+
+  // UpdateWorkspacePort updates the port of workspace.
+  rpc UpdateWorkspacePort(UpdateWorkspacePortRequest) returns (UpdateWorkspacePortResponse) {}
 }
+
+message UpdateWorkspacePortRequest {
+  // workspace_id specifies the workspace to update port
+  //
+  // +required
+  string workspace_id = 1;
+
+  // port number
+  //
+  // +required
+  uint64 port = 2;
+
+  // admission controls the policy of this port
+  optional AdmissionLevel admission = 3;
+
+  // backend protocol of this port
+  optional WorkspacePort.Protocol protocol = 4;
+}
+
+message UpdateWorkspacePortResponse {}
 
 message GetWorkspaceRequest {
   // workspace_id specifies the workspace to get

@@ -43,6 +43,9 @@ import {
     CreateWorkspaceSnapshotResponse,
     WaitForWorkspaceSnapshotRequest,
     WaitForWorkspaceSnapshotResponse,
+    UpdateWorkspacePortRequest,
+    UpdateWorkspacePortResponse,
+    WorkspacePort_Protocol,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { converter } from "./public-api";
 import { getGitpodService } from "./service";
@@ -392,5 +395,26 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
         }
         await getGitpodService().server.waitForSnapshot(req.snapshotId);
         return new WaitForWorkspaceSnapshotResponse();
+    }
+
+    async updateWorkspacePort(
+        req: PartialMessage<UpdateWorkspacePortRequest>,
+        _options?: CallOptions | undefined,
+    ): Promise<UpdateWorkspacePortResponse> {
+        if (!req.workspaceId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "workspaceId is required");
+        }
+        if (!req.port) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "port is required");
+        }
+        if (!req.admission && !req.protocol) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "admission or protocol is required");
+        }
+        getGitpodService().server.openPort(req.workspaceId, {
+            port: Number(req.port),
+            visibility: req.admission ? (req.admission === AdmissionLevel.EVERYONE ? "public" : "private") : undefined,
+            protocol: req.protocol ? (req.protocol === WorkspacePort_Protocol.HTTPS ? "https" : "http") : undefined,
+        });
+        return new UpdateWorkspacePortResponse();
     }
 }

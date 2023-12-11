@@ -168,3 +168,13 @@ func (s *ProxyWorkspaceServiceHandler) WaitForWorkspaceSnapshot(ctx context.Cont
 
 	return connect_go.NewResponse(resp), nil
 }
+
+func (s *ProxyWorkspaceServiceHandler) UpdateWorkspacePort(ctx context.Context, req *connect_go.Request[v1.UpdateWorkspacePortRequest]) (*connect_go.Response[v1.UpdateWorkspacePortResponse], error) {
+	resp, err := s.Client.UpdateWorkspacePort(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
