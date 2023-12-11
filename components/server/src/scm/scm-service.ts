@@ -71,6 +71,7 @@ export class ScmService {
                 log.info("Webhook for prebuilds installed.", logPayload);
             } catch (error) {
                 log.error("Failed to install webhook for prebuilds.", error, logPayload);
+                throw error;
             }
         }
     }
