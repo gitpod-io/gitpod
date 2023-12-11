@@ -24,6 +24,8 @@ import {
     JoinOrganizationResponse,
     ListOrganizationMembersRequest,
     ListOrganizationMembersResponse,
+    ListOrganizationWorkspaceClassesRequest,
+    ListOrganizationWorkspaceClassesResponse,
     ListOrganizationsRequest,
     ListOrganizationsResponse,
     ResetOrganizationInvitationRequest,
@@ -50,6 +52,19 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         const result = await getGitpodService().server.createTeam(request.name);
         return new CreateOrganizationResponse({
             organization: converter.toOrganization(result),
+        });
+    }
+
+    async listOrganizationWorkspaceClasses(
+        request: PartialMessage<ListOrganizationWorkspaceClassesRequest>,
+        options?: CallOptions | undefined,
+    ): Promise<ListOrganizationWorkspaceClassesResponse> {
+        if (!request.organizationId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "id is required");
+        }
+        const list = await getGitpodService().server.getOrgWorkspaceClasses(request.organizationId);
+        return new ListOrganizationWorkspaceClassesResponse({
+            workspaceClasses: list.map((e) => converter.toWorkspaceClass(e)),
         });
     }
 

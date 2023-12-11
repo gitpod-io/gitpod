@@ -1590,6 +1590,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return this.organizationService.updateSettings(user.id, orgId, settings);
     }
 
+    async getOrgWorkspaceClasses(ctx: TraceContextWithSpan, orgId: string): Promise<SupportedWorkspaceClass[]> {
+        const user = await this.checkAndBlockUser("getOrgWorkspaceClasses");
+        traceAPIParams(ctx, { orgId, userId: user.id });
+        await this.guardTeamOperation(orgId, "get");
+        return this.organizationService.listWorkspaceClasses(user.id, orgId);
+    }
+
     async getDefaultWorkspaceImage(
         ctx: TraceContextWithSpan,
         params: GetDefaultWorkspaceImageParams,

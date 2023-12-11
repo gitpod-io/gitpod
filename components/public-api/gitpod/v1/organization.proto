@@ -3,6 +3,7 @@ syntax = "proto3";
 package gitpod.v1;
 
 import "gitpod/v1/pagination.proto";
+import "gitpod/v1/workspace.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
@@ -76,6 +77,23 @@ service OrganizationService {
 
   // UpdateOrganizationSettings updates the settings of a Organization.
   rpc UpdateOrganizationSettings(UpdateOrganizationSettingsRequest) returns (UpdateOrganizationSettingsResponse) {}
+
+  // ListOrganizationWorkspaceClasses lists workspace classes of a
+  // Organization.
+  rpc ListOrganizationWorkspaceClasses(ListOrganizationWorkspaceClassesRequest) returns (ListOrganizationWorkspaceClassesResponse) {}
+}
+
+message ListOrganizationWorkspaceClassesRequest {
+  PaginationRequest pagination = 1;
+
+  // organization_id is the ID of the organization.
+  string organization_id = 2;
+}
+
+message ListOrganizationWorkspaceClassesResponse {
+  PaginationResponse pagination = 1;
+
+  repeated WorkspaceClass workspace_classes = 2;
 }
 
 message UpdateOrganizationRequest {

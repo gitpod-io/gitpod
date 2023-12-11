@@ -22,6 +22,8 @@ import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactiona
 import { DefaultWorkspaceImageValidator } from "./default-workspace-image-validator";
 import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 import { UserService } from "../user/user-service";
+import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
+import { InstallationService } from "../auth/installation-service";
 
 @injectable()
 export class OrganizationService {
@@ -32,6 +34,7 @@ export class OrganizationService {
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
         @inject(Authorizer) private readonly auth: Authorizer,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
+        @inject(InstallationService) private readonly installationService: InstallationService,
         @inject(DefaultWorkspaceImageValidator)
         private readonly validateDefaultWorkspaceImage: DefaultWorkspaceImageValidator,
     ) {}
@@ -404,5 +407,28 @@ export class OrganizationService {
         }
         result.allowedWorkspaceClasses = settings.allowedWorkspaceClasses;
         return result;
+    }
+
+    public async listWorkspaceClasses(userId: string, orgId: string): Promise<SupportedWorkspaceClass[]> {
+        const allClasses = await this.installationService.getInstallationWorkspaceClasses(userId);
+        const settings = await this.getSettings(userId, orgId);
+        if (settings && !!settings.allowedWorkspaceClasses && settings.allowedWorkspaceClasses.length > 0) {
+            const availableClasses = allClasses.filter((e) => settings.allowedWorkspaceClasses!.includes(e.id));
+            const defaultIndexInScope = availableClasses.findIndex((e) => e.isDefault);
+            if (defaultIndexInScope !== -1) {
+                return availableClasses;
+            }
+            const defaultIndexInAll = allClasses.findIndex((e) => e.isDefault);
+            const sortedClasses = [
+                ...allClasses.slice(0, defaultIndexInAll).reverse(),
+                ...allClasses.slice(defaultIndexInAll + 1, allClasses.length - 1),
+            ];
+            const nextDefault = sortedClasses.find((e) => settings.allowedWorkspaceClasses!.includes(e.id));
+            if (nextDefault) {
+                nextDefault.isDefault = true;
+                return availableClasses;
+            }
+        }
+        return allClasses;
     }
 }

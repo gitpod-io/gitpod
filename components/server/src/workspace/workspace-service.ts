@@ -51,7 +51,6 @@ import {
 import {
     WorkspaceStarter,
     StartWorkspaceOptions as StarterStartWorkspaceOptions,
-    isWorkspaceClassDiscoveryEnabled,
     isClusterMaintenanceError,
     getWorkspaceClassForInstance,
 } from "./workspace-starter";
@@ -72,6 +71,7 @@ import { OrganizationService } from "../orgs/organization-service";
 import { isGrpcError } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { RedisSubscriber } from "../messaging/redis-subscriber";
 import { SnapshotService } from "./snapshot-service";
+import { InstallationService } from "../auth/installation-service";
 
 export interface StartWorkspaceOptions extends StarterStartWorkspaceOptions {
     /**
@@ -94,6 +94,7 @@ export class WorkspaceService {
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
         @inject(OrganizationService) private readonly orgService: OrganizationService,
         @inject(SnapshotService) private readonly snapshotService: SnapshotService,
+        @inject(InstallationService) private readonly installationService: InstallationService,
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
         @inject(HeadlessLogService) private readonly headlessLogService: HeadlessLogService,
         @inject(Authorizer) private readonly auth: Authorizer,
@@ -667,33 +668,7 @@ export class WorkspaceService {
     }
 
     public async getSupportedWorkspaceClasses(user: { id: string }): Promise<SupportedWorkspaceClass[]> {
-        if (await isWorkspaceClassDiscoveryEnabled(user)) {
-            const allClasses = (await this.clientProvider.getAllWorkspaceClusters()).flatMap((cluster) => {
-                return (cluster.availableWorkspaceClasses || [])?.map((cls) => {
-                    return <SupportedWorkspaceClass>{
-                        description: cls.description,
-                        displayName: cls.displayName,
-                        id: cls.id,
-                        isDefault: cls.id === cluster.preferredWorkspaceClass,
-                    };
-                });
-            });
-            allClasses.sort((a, b) => a.displayName.localeCompare(b.displayName));
-            const uniqueClasses = allClasses.filter((v, i, a) => a.map((c) => c.id).indexOf(v.id) == i);
-
-            return uniqueClasses;
-        }
-
-        // No access check required, valid session/user is enough
-        const classes = this.config.workspaceClasses.map((c) => ({
-            id: c.id,
-            category: c.category,
-            displayName: c.displayName,
-            description: c.description,
-            powerups: c.powerups,
-            isDefault: c.isDefault,
-        }));
-        return classes;
+        return this.installationService.getInstallationWorkspaceClasses(user.id);
     }
 
     /**

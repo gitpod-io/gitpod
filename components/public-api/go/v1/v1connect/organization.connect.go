@@ -58,6 +58,9 @@ type OrganizationServiceClient interface {
 	GetOrganizationSettings(context.Context, *connect_go.Request[v1.GetOrganizationSettingsRequest]) (*connect_go.Response[v1.GetOrganizationSettingsResponse], error)
 	// UpdateOrganizationSettings updates the settings of a Organization.
 	UpdateOrganizationSettings(context.Context, *connect_go.Request[v1.UpdateOrganizationSettingsRequest]) (*connect_go.Response[v1.UpdateOrganizationSettingsResponse], error)
+	// ListOrganizationWorkspaceClasses lists workspace classes of a
+	// Organization.
+	ListOrganizationWorkspaceClasses(context.Context, *connect_go.Request[v1.ListOrganizationWorkspaceClassesRequest]) (*connect_go.Response[v1.ListOrganizationWorkspaceClassesResponse], error)
 }
 
 // NewOrganizationServiceClient constructs a client for the gitpod.v1.OrganizationService service.
@@ -135,24 +138,30 @@ func NewOrganizationServiceClient(httpClient connect_go.HTTPClient, baseURL stri
 			baseURL+"/gitpod.v1.OrganizationService/UpdateOrganizationSettings",
 			opts...,
 		),
+		listOrganizationWorkspaceClasses: connect_go.NewClient[v1.ListOrganizationWorkspaceClassesRequest, v1.ListOrganizationWorkspaceClassesResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.OrganizationService/ListOrganizationWorkspaceClasses",
+			opts...,
+		),
 	}
 }
 
 // organizationServiceClient implements OrganizationServiceClient.
 type organizationServiceClient struct {
-	createOrganization          *connect_go.Client[v1.CreateOrganizationRequest, v1.CreateOrganizationResponse]
-	getOrganization             *connect_go.Client[v1.GetOrganizationRequest, v1.GetOrganizationResponse]
-	updateOrganization          *connect_go.Client[v1.UpdateOrganizationRequest, v1.UpdateOrganizationResponse]
-	listOrganizations           *connect_go.Client[v1.ListOrganizationsRequest, v1.ListOrganizationsResponse]
-	deleteOrganization          *connect_go.Client[v1.DeleteOrganizationRequest, v1.DeleteOrganizationResponse]
-	getOrganizationInvitation   *connect_go.Client[v1.GetOrganizationInvitationRequest, v1.GetOrganizationInvitationResponse]
-	joinOrganization            *connect_go.Client[v1.JoinOrganizationRequest, v1.JoinOrganizationResponse]
-	resetOrganizationInvitation *connect_go.Client[v1.ResetOrganizationInvitationRequest, v1.ResetOrganizationInvitationResponse]
-	listOrganizationMembers     *connect_go.Client[v1.ListOrganizationMembersRequest, v1.ListOrganizationMembersResponse]
-	updateOrganizationMember    *connect_go.Client[v1.UpdateOrganizationMemberRequest, v1.UpdateOrganizationMemberResponse]
-	deleteOrganizationMember    *connect_go.Client[v1.DeleteOrganizationMemberRequest, v1.DeleteOrganizationMemberResponse]
-	getOrganizationSettings     *connect_go.Client[v1.GetOrganizationSettingsRequest, v1.GetOrganizationSettingsResponse]
-	updateOrganizationSettings  *connect_go.Client[v1.UpdateOrganizationSettingsRequest, v1.UpdateOrganizationSettingsResponse]
+	createOrganization               *connect_go.Client[v1.CreateOrganizationRequest, v1.CreateOrganizationResponse]
+	getOrganization                  *connect_go.Client[v1.GetOrganizationRequest, v1.GetOrganizationResponse]
+	updateOrganization               *connect_go.Client[v1.UpdateOrganizationRequest, v1.UpdateOrganizationResponse]
+	listOrganizations                *connect_go.Client[v1.ListOrganizationsRequest, v1.ListOrganizationsResponse]
+	deleteOrganization               *connect_go.Client[v1.DeleteOrganizationRequest, v1.DeleteOrganizationResponse]
+	getOrganizationInvitation        *connect_go.Client[v1.GetOrganizationInvitationRequest, v1.GetOrganizationInvitationResponse]
+	joinOrganization                 *connect_go.Client[v1.JoinOrganizationRequest, v1.JoinOrganizationResponse]
+	resetOrganizationInvitation      *connect_go.Client[v1.ResetOrganizationInvitationRequest, v1.ResetOrganizationInvitationResponse]
+	listOrganizationMembers          *connect_go.Client[v1.ListOrganizationMembersRequest, v1.ListOrganizationMembersResponse]
+	updateOrganizationMember         *connect_go.Client[v1.UpdateOrganizationMemberRequest, v1.UpdateOrganizationMemberResponse]
+	deleteOrganizationMember         *connect_go.Client[v1.DeleteOrganizationMemberRequest, v1.DeleteOrganizationMemberResponse]
+	getOrganizationSettings          *connect_go.Client[v1.GetOrganizationSettingsRequest, v1.GetOrganizationSettingsResponse]
+	updateOrganizationSettings       *connect_go.Client[v1.UpdateOrganizationSettingsRequest, v1.UpdateOrganizationSettingsResponse]
+	listOrganizationWorkspaceClasses *connect_go.Client[v1.ListOrganizationWorkspaceClassesRequest, v1.ListOrganizationWorkspaceClassesResponse]
 }
 
 // CreateOrganization calls gitpod.v1.OrganizationService.CreateOrganization.
@@ -220,6 +229,12 @@ func (c *organizationServiceClient) UpdateOrganizationSettings(ctx context.Conte
 	return c.updateOrganizationSettings.CallUnary(ctx, req)
 }
 
+// ListOrganizationWorkspaceClasses calls
+// gitpod.v1.OrganizationService.ListOrganizationWorkspaceClasses.
+func (c *organizationServiceClient) ListOrganizationWorkspaceClasses(ctx context.Context, req *connect_go.Request[v1.ListOrganizationWorkspaceClassesRequest]) (*connect_go.Response[v1.ListOrganizationWorkspaceClassesResponse], error) {
+	return c.listOrganizationWorkspaceClasses.CallUnary(ctx, req)
+}
+
 // OrganizationServiceHandler is an implementation of the gitpod.v1.OrganizationService service.
 type OrganizationServiceHandler interface {
 	// CreateOrganization creates a new Organization.
@@ -249,6 +264,9 @@ type OrganizationServiceHandler interface {
 	GetOrganizationSettings(context.Context, *connect_go.Request[v1.GetOrganizationSettingsRequest]) (*connect_go.Response[v1.GetOrganizationSettingsResponse], error)
 	// UpdateOrganizationSettings updates the settings of a Organization.
 	UpdateOrganizationSettings(context.Context, *connect_go.Request[v1.UpdateOrganizationSettingsRequest]) (*connect_go.Response[v1.UpdateOrganizationSettingsResponse], error)
+	// ListOrganizationWorkspaceClasses lists workspace classes of a
+	// Organization.
+	ListOrganizationWorkspaceClasses(context.Context, *connect_go.Request[v1.ListOrganizationWorkspaceClassesRequest]) (*connect_go.Response[v1.ListOrganizationWorkspaceClassesResponse], error)
 }
 
 // NewOrganizationServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -323,6 +341,11 @@ func NewOrganizationServiceHandler(svc OrganizationServiceHandler, opts ...conne
 		svc.UpdateOrganizationSettings,
 		opts...,
 	))
+	mux.Handle("/gitpod.v1.OrganizationService/ListOrganizationWorkspaceClasses", connect_go.NewUnaryHandler(
+		"/gitpod.v1.OrganizationService/ListOrganizationWorkspaceClasses",
+		svc.ListOrganizationWorkspaceClasses,
+		opts...,
+	))
 	return "/gitpod.v1.OrganizationService/", mux
 }
 
@@ -379,4 +402,8 @@ func (UnimplementedOrganizationServiceHandler) GetOrganizationSettings(context.C
 
 func (UnimplementedOrganizationServiceHandler) UpdateOrganizationSettings(context.Context, *connect_go.Request[v1.UpdateOrganizationSettingsRequest]) (*connect_go.Response[v1.UpdateOrganizationSettingsResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.OrganizationService.UpdateOrganizationSettings is not implemented"))
+}
+
+func (UnimplementedOrganizationServiceHandler) ListOrganizationWorkspaceClasses(context.Context, *connect_go.Request[v1.ListOrganizationWorkspaceClassesRequest]) (*connect_go.Response[v1.ListOrganizationWorkspaceClassesResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.OrganizationService.ListOrganizationWorkspaceClasses is not implemented"))
 }
