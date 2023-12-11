@@ -394,6 +394,13 @@ export class OrganizationService {
                 settings = { ...settings, defaultWorkspaceImage: null };
             }
         }
+        if (settings.allowedWorkspaceClasses && settings.allowedWorkspaceClasses.length > 0) {
+            const allClasses = await this.installationService.getInstallationWorkspaceClasses(userId);
+            const availableClasses = allClasses.filter((e) => settings.allowedWorkspaceClasses!.includes(e.id));
+            if (availableClasses.length === 0) {
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "at least one workspace class has to be selected.");
+            }
+        }
         return this.toSettings(await this.teamDB.setOrgSettings(orgId, settings));
     }
 
