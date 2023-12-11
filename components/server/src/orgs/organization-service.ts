@@ -376,7 +376,7 @@ export class OrganizationService {
     async getSettings(userId: string, orgId: string): Promise<OrganizationSettings> {
         await this.auth.checkPermissionOnOrganization(userId, "read_settings", orgId);
         const settings = await this.teamDB.findOrgSettings(orgId);
-        return this.toSettings(settings);
+        return this.toSettings(userId, settings);
     }
 
     async updateSettings(
@@ -397,14 +397,20 @@ export class OrganizationService {
         if (settings.allowedWorkspaceClasses && settings.allowedWorkspaceClasses.length > 0) {
             const allClasses = await this.installationService.getInstallationWorkspaceClasses(userId);
             const availableClasses = allClasses.filter((e) => settings.allowedWorkspaceClasses!.includes(e.id));
+            if (availableClasses.length !== settings.allowedWorkspaceClasses.length) {
+                throw new ApplicationError(
+                    ErrorCodes.BAD_REQUEST,
+                    "items in allowedWorkspaceClasses are not all allowed",
+                );
+            }
             if (availableClasses.length === 0) {
                 throw new ApplicationError(ErrorCodes.BAD_REQUEST, "at least one workspace class has to be selected.");
             }
         }
-        return this.toSettings(await this.teamDB.setOrgSettings(orgId, settings));
+        return this.toSettings(userId, await this.teamDB.setOrgSettings(orgId, settings));
     }
 
-    private toSettings(settings: OrganizationSettings = {}): OrganizationSettings {
+    private async toSettings(userId: string, settings: OrganizationSettings = {}): Promise<OrganizationSettings> {
         const result: OrganizationSettings = {};
         if (settings.workspaceSharingDisabled) {
             result.workspaceSharingDisabled = settings.workspaceSharingDisabled;
@@ -413,6 +419,12 @@ export class OrganizationService {
             result.defaultWorkspaceImage = settings.defaultWorkspaceImage;
         }
         result.allowedWorkspaceClasses = settings.allowedWorkspaceClasses;
+        if (result.allowedWorkspaceClasses && result.allowedWorkspaceClasses.length > 0) {
+            const allClasses = await this.installationService.getInstallationWorkspaceClasses(userId);
+            result.allowedWorkspaceClasses = result.allowedWorkspaceClasses.filter((e) =>
+                allClasses.findIndex((cls) => cls.id === e),
+            );
+        }
         return result;
     }
 
