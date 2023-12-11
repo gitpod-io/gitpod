@@ -72,7 +72,12 @@ export class UserServiceAPI implements ServiceImpl<typeof UserServiceInterface> 
         return new SetWorkspaceAutoStartOptionsResponse();
     }
 
-    async deleteUser(request: DeleteUserRequest, _: HandlerContext): Promise<DeleteUserResponse> {
-        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+    async deleteUser({ userId }: DeleteUserRequest, _: HandlerContext): Promise<DeleteUserResponse> {
+        if (!uuidValidate(userId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "userId is required");
+        }
+        const subjectId = ctxUserId();
+        await this.userService.deleteUser(subjectId, userId);
+        return new DeleteUserResponse();
     }
 }
