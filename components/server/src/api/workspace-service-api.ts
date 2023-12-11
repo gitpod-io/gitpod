@@ -332,7 +332,12 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
     }
 
     async parseContextURL(req: ParseContextURLRequest): Promise<ParseContextURLResponse> {
-        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+        if (!req.contextUrl) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "contextUrl is required");
+        }
+        const user = await this.userService.findUserById(ctxUserId(), ctxUserId());
+        const context = await this.contextService.parseContextUrl(user, req.contextUrl);
+        return this.apiConverter.toParseContextURLResponse({}, context);
     }
 
     async stopWorkspace(req: StopWorkspaceRequest): Promise<StopWorkspaceResponse> {
