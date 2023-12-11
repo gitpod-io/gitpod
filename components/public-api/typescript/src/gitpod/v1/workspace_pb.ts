@@ -2199,12 +2199,12 @@ export class GitInitializer extends Message<GitInitializer> {
   config?: GitInitializer_GitConfig;
 
   /**
-   * rivision is the git revision to checkout
+   * revision is the git revision to checkout
    *
-   * @generated from field: string rivision = 7 [deprecated = true];
+   * @generated from field: string revision = 7 [deprecated = true];
    * @deprecated
    */
-  rivision = "";
+  revision = "";
 
   constructor(data?: PartialMessage<GitInitializer>) {
     super();
@@ -2220,7 +2220,7 @@ export class GitInitializer extends Message<GitInitializer> {
     { no: 4, name: "clone_taget", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "checkout_location", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 6, name: "config", kind: "message", T: GitInitializer_GitConfig },
-    { no: 7, name: "rivision", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "revision", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GitInitializer {

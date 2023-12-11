@@ -4,23 +4,40 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceContext } from "@gitpod/gitpod-protocol";
 import { useQuery } from "@tanstack/react-query";
-import { getGitpodService } from "../../service/service";
-import { StartWorkspaceError } from "../../start/StartPage";
+import { GitInitializer, ParseContextURLResponse } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { workspaceClient } from "../../service/public-api";
 
 export function useWorkspaceContext(contextUrl?: string) {
-    const query = useQuery<WorkspaceContext | null, StartWorkspaceError>(
+    const query = useQuery<ParseContextURLResponse | null>(
         ["workspace-context", contextUrl],
         () => {
             if (!contextUrl) {
                 return null;
             }
-            return getGitpodService().server.resolveContext(contextUrl);
+            return workspaceClient.parseContextURL({ contextUrl });
         },
         {
             retry: false,
         },
     );
     return query;
+}
+
+export function getCommitInfo(response: ParseContextURLResponse | null) {
+    if (!response) {
+        return undefined;
+    }
+    const specs = response.spec?.initializer?.specs;
+    if (!specs || specs.length === 0) {
+        return undefined;
+    }
+    const gitInit: GitInitializer | undefined = specs.find((item) => item.spec.case === "git")?.spec.value as any;
+    if (!gitInit) {
+        return undefined;
+    }
+    return {
+        cloneUrl: gitInit.remoteUri,
+        revision: gitInit.revision,
+    };
 }

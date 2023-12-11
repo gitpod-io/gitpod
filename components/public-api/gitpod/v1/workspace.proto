@@ -626,8 +626,8 @@ message GitInitializer {
   // config specifies the Git configuration for this workspace
   GitConfig config = 6;
 
-  // rivision is the git revision to checkout
-  string rivision = 7 [deprecated = true];
+  // revision is the git revision to checkout
+  string revision = 7 [deprecated = true];
 }
 
 message SnapshotInitializer {

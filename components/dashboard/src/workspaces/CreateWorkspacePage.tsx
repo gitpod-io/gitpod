@@ -6,7 +6,7 @@
 
 import { CommitContext, SuggestedRepository, WithReferrerContext } from "@gitpod/gitpod-protocol";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { FC, FunctionComponent, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useHistory, useLocation } from "react-router";
@@ -25,7 +25,7 @@ import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { useListAllProjectsQuery } from "../data/projects/list-all-projects-query";
 import { useCreateWorkspaceMutation } from "../data/workspaces/create-workspace-mutation";
 import { useListWorkspacesQuery } from "../data/workspaces/list-workspaces-query";
-import { useWorkspaceContext } from "../data/workspaces/resolve-context-query";
+import { getCommitInfo, useWorkspaceContext } from "../data/workspaces/resolve-context-query";
 import { useDirtyState } from "../hooks/use-dirty-state";
 import { openAuthorizeWindow } from "../provider-utils";
 import { gitpodHostUrl } from "../service/service";
@@ -88,7 +88,7 @@ export function CreateWorkspacePage() {
         if (!workspaceContext.data || !user || !currentOrg) {
             return;
         }
-        const cloneURL = CommitContext.is(workspaceContext.data) && workspaceContext.data.repository.cloneUrl;
+        const cloneURL = getCommitInfo(workspaceContext.data)?.cloneUrl;
         if (!cloneURL) {
             return;
         }
@@ -126,15 +126,12 @@ export function CreateWorkspacePage() {
         if (!workspaceContext.data || !projects.data) {
             return undefined;
         }
-        if ("repository" in workspaceContext.data) {
-            const cloneUrl = (workspaceContext.data as CommitContext)?.repository?.cloneUrl;
-            if (!cloneUrl) {
-                return;
-            }
-
-            // TODO: Account for multiple projects w/ the same cloneUrl
-            return projects.data.projects.find((p) => p.cloneUrl === cloneUrl);
+        const cloneUrl = getCommitInfo(workspaceContext.data)?.cloneUrl;
+        if (!cloneUrl) {
+            return;
         }
+        // TODO: Account for multiple projects w/ the same cloneUrl
+        return projects.data.projects.find((p) => p.cloneUrl === cloneUrl);
     }, [projects.data, workspaceContext.data]);
 
     // Handle the case where the context url in the hash matches a project and we don't have that project selected yet
@@ -206,7 +203,10 @@ export function CreateWorkspacePage() {
             }
 
             // if user received an INVALID_GITPOD_YML yml for their contextURL they can choose to proceed using default configuration
-            if (workspaceContext.error?.code === ErrorCodes.INVALID_GITPOD_YML) {
+            if (
+                ApplicationError.hasErrorCode(workspaceContext.error) &&
+                workspaceContext.error.code === ErrorCodes.INVALID_GITPOD_YML
+            ) {
                 opts.forceDefaultConfig = true;
             }
 
@@ -256,7 +256,7 @@ export function CreateWorkspacePage() {
             }
         },
         [
-            workspaceContext.error?.code,
+            workspaceContext.error,
             contextURL,
             currentOrg?.id,
             selectedWsClass,
@@ -351,7 +351,10 @@ export function CreateWorkspacePage() {
         if (workspaceContext.error) {
             // For INVALID_GITPOD_YML we don't want to disable the button
             // The user see a warning that their file is invalid, but they can continue and it will be ignored
-            if (workspaceContext.error.code === ErrorCodes.INVALID_GITPOD_YML) {
+            if (
+                ApplicationError.hasErrorCode(workspaceContext.error) &&
+                workspaceContext.error.code === ErrorCodes.INVALID_GITPOD_YML
+            ) {
                 return false;
             }
             return true;
