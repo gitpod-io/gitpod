@@ -134,5 +134,14 @@ describe("OrganizationService", async () => {
             expect(list.map((e) => e.id)).to.eql(["xl", "2xl"]);
             expect(list[0].isDefault).to.equal(true);
         });
+
+        it("happy path", async () => {
+            setupAll([{ id: "s" }, { id: "m", isDefault: true }, { id: "xl" }]);
+            setupAllowed(["xl"]);
+            const list = await os.listWorkspaceClasses("", "");
+            expect(list.length).to.equal(1);
+            expect(list.map((e) => e.id)).to.eql(["xl"]);
+            expect(list[0].isDefault).to.equal(true);
+        });
     });
 });

@@ -428,13 +428,13 @@ export class OrganizationService {
             const defaultIndexInAll = allClasses.findIndex((e) => e.isDefault);
             const sortedClasses = [
                 ...allClasses.slice(0, defaultIndexInAll).reverse(),
-                ...allClasses.slice(defaultIndexInAll + 1, allClasses.length - 1),
+                ...allClasses.slice(defaultIndexInAll, allClasses.length),
             ];
             const nextDefault = sortedClasses.find((e) => settings.allowedWorkspaceClasses!.includes(e.id));
             if (nextDefault) {
                 nextDefault.isDefault = true;
-                return availableClasses;
             }
+            return availableClasses;
         }
         return allClasses;
     }
