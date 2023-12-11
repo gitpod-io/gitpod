@@ -7,9 +7,8 @@
 import { FC, useCallback, useEffect, useMemo } from "react";
 import WorkspaceClassIcon from "../icons/WorkspaceClass.svg";
 import { Combobox, ComboboxElement, ComboboxSelectedItem } from "./podkit/combobox/Combobox";
-import { useWorkspaceClasses } from "../data/workspaces/workspace-classes-query";
 import { WorkspaceClass } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
-import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
+import { useOrgWorkspaceClassesQuery } from "../data/organizations/org-workspace-image-query";
 
 interface SelectWorkspaceClassProps {
     selectedWorkspaceClass?: string;
@@ -26,19 +25,15 @@ export default function SelectWorkspaceClassComponent({
     setError,
     onSelectionChange,
 }: SelectWorkspaceClassProps) {
-    const { data: orgSettings } = useOrgSettingsQuery();
-    const { data: workspaceClasses, isLoading: workspaceClassesLoading } = useWorkspaceClasses();
+    const { data: workspaceClasses, isLoading: workspaceClassesLoading } = useOrgWorkspaceClassesQuery();
 
     const getElements = useCallback((): ComboboxElement[] => {
         return (workspaceClasses || [])?.map((c) => ({
             id: c.id,
             element: <WorkspaceClassDropDownElement wsClass={c} />,
-            isSelectable:
-                !orgSettings?.allowedWorkspaceClasses ||
-                orgSettings.allowedWorkspaceClasses.length === 0 ||
-                orgSettings.allowedWorkspaceClasses.includes(c.id),
+            isSelectable: true,
         }));
-    }, [workspaceClasses, orgSettings?.allowedWorkspaceClasses]);
+    }, [workspaceClasses]);
 
     useEffect(() => {
         if (!workspaceClasses) {

@@ -10,6 +10,7 @@ import { useCurrentOrg } from "./orgs-query";
 import { organizationClient } from "../../service/public-api";
 import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { useOrgWorkspaceClassesQueryInvalidator } from "./org-workspace-image-query";
 
 type UpdateOrganizationSettingsArgs = Partial<
     Pick<OrganizationSettings, "workspaceSharingDisabled" | "defaultWorkspaceImage" | "allowedWorkspaceClasses">
@@ -18,6 +19,7 @@ type UpdateOrganizationSettingsArgs = Partial<
 export const useUpdateOrgSettingsMutation = () => {
     const org = useCurrentOrg().data;
     const invalidator = useOrgSettingsQueryInvalidator();
+    const invalidator2 = useOrgWorkspaceClassesQueryInvalidator();
     const teamId = org?.id || "";
 
     return useMutation<OrganizationSettings, Error, UpdateOrganizationSettingsArgs>({
@@ -30,7 +32,10 @@ export const useUpdateOrgSettingsMutation = () => {
             });
             return settings.settings!;
         },
-        onSuccess: invalidator,
+        onSuccess: () => {
+            invalidator();
+            invalidator2();
+        },
         onError: (err) => {
             if (!ErrorCode.isUserError((err as any)?.["code"])) {
                 console.error(err);

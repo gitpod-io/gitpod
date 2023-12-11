@@ -314,7 +314,7 @@ export const ComboboxItem: FC<ComboboxItemProps> = ({ element, isActive, onSelec
         selectionClasses = `bg-pk-content-tertiary/10 cursor-pointer focus:outline-none focus:ring-0`;
     }
     if (!element.isSelectable) {
-        selectionClasses = `cursor-not-allowed select-none opacity-50`;
+        selectionClasses = ``;
     }
     return (
         <li

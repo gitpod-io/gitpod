@@ -58,7 +58,7 @@ import { IDEServer } from "./ide-protocol";
 import { ListUsageRequest, ListUsageResponse, CostCenterJSON } from "./usage";
 import { SupportedWorkspaceClass } from "./workspace-class";
 import { BillingMode } from "./billing-mode";
-import { WorkspaceClass, WorkspaceRegion } from "./workspace-cluster";
+import { WorkspaceRegion } from "./workspace-cluster";
 
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
