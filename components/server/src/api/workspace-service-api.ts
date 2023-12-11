@@ -56,7 +56,6 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 import { ContextService } from "../workspace/context-service";
 import { UserService } from "../user/user-service";
 import { ContextParser } from "../workspace/context-parser-service";
-import { UnaryImpl } from "@connectrpc/connect/dist/cjs/implementation";
 
 @injectable()
 export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceInterface> {
