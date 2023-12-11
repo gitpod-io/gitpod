@@ -401,39 +401,44 @@ export class UserController {
                     return;
                 }
                 const sessionId = req.body.sessionId;
-                const resourceGuard = new FGAResourceAccessGuard(user.id, new OwnerResourceGuard(user.id));
-                const server = this.createGitpodServer(user, resourceGuard);
-                try {
-                    await server.sendHeartBeat({}, { wasClosed: true, instanceId: instanceID });
-                    /** no await */ server
-                        .trackEvent(
-                            {},
-                            {
-                                event: "ide_close_signal",
-                                properties: {
-                                    sessionId,
-                                    instanceId: instanceID,
-                                    clientKind: "supervisor-frontend",
+
+                await runWithSubjectId(SubjectId.fromUserId(user.id), async () => {
+                    const resourceGuard = new FGAResourceAccessGuard(user.id, new OwnerResourceGuard(user.id));
+                    const server = this.createGitpodServer(user, resourceGuard);
+                    try {
+                        await server.sendHeartBeat({}, { wasClosed: true, instanceId: instanceID });
+                        /** no await */ server
+                            .trackEvent(
+                                {},
+                                {
+                                    event: "ide_close_signal",
+                                    properties: {
+                                        sessionId,
+                                        instanceId: instanceID,
+                                        clientKind: "supervisor-frontend",
+                                    },
                                 },
-                            },
-                        )
-                        .catch((err) => log.warn(logCtx, "workspacePageClose: failed to track ide close signal", err));
-                    res.sendStatus(200);
-                } catch (e) {
-                    if (ApplicationError.hasErrorCode(e)) {
-                        res.status(e.code).send(e.message);
-                        log.warn(
-                            logCtx,
-                            `workspacePageClose: server sendHeartBeat respond with code: ${e.code}, message: ${e.message}`,
-                        );
+                            )
+                            .catch((err) =>
+                                log.warn(logCtx, "workspacePageClose: failed to track ide close signal", err),
+                            );
+                        res.sendStatus(200);
+                    } catch (e) {
+                        if (ApplicationError.hasErrorCode(e)) {
+                            res.status(e.code).send(e.message);
+                            log.warn(
+                                logCtx,
+                                `workspacePageClose: server sendHeartBeat respond with code: ${e.code}, message: ${e.message}`,
+                            );
+                            return;
+                        }
+                        log.error(logCtx, "workspacePageClose failed", e);
+                        res.sendStatus(500);
                         return;
+                    } finally {
+                        server.dispose();
                     }
-                    log.error(logCtx, "workspacePageClose failed", e);
-                    res.sendStatus(500);
-                    return;
-                } finally {
-                    server.dispose();
-                }
+                });
             },
         );
         if (this.config.enableLocalApp) {
