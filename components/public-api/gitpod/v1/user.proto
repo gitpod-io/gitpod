@@ -72,6 +72,7 @@ message UpdateUserRequest {
     optional google.protobuf.Duration inactivity = 1;
     optional bool disabled_disconnected = 2;
   }
+  optional string dotfile_repo = 9;
 }
 message UpdateUserResponse {
   User user = 1;

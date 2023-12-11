@@ -260,6 +260,11 @@ export class UpdateUserRequest extends Message<UpdateUserRequest> {
    */
   workspaceTimeoutSettings?: UpdateUserRequest_WorkspaceTimeoutSettings;
 
+  /**
+   * @generated from field: optional string dotfile_repo = 9;
+   */
+  dotfileRepo?: string;
+
   constructor(data?: PartialMessage<UpdateUserRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -276,6 +281,7 @@ export class UpdateUserRequest extends Message<UpdateUserRequest> {
     { no: 6, name: "editor_settings", kind: "message", T: EditorReference, opt: true },
     { no: 7, name: "email_notification_settings", kind: "message", T: UpdateUserRequest_EmailNotificationSettings, opt: true },
     { no: 8, name: "workspace_timeout_settings", kind: "message", T: UpdateUserRequest_WorkspaceTimeoutSettings, opt: true },
+    { no: 9, name: "dotfile_repo", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateUserRequest {
