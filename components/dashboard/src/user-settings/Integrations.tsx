@@ -94,14 +94,18 @@ function GitProviders() {
     };
 
     const getSettingsUrl = (ap: AuthProviderDescription) => {
+        const url = new URL(`https://${ap.host}`);
         switch (ap.type) {
             case AuthProviderType.GITHUB:
-                return `${ap.host}/settings/developers`;
+                url.pathname = "settings/developers";
+                break;
             case AuthProviderType.GITLAB:
-                return `${ap.host}/-/profile/applications`;
+                url.pathname = "-/profile/applications";
+                break;
             default:
                 return undefined;
         }
+        return url;
     };
 
     const gitProviderMenu = (provider: AuthProviderDescription) => {
