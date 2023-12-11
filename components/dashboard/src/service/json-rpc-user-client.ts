@@ -197,7 +197,11 @@ export class JsonRpcUserClient implements PromiseClient<typeof UserService> {
         });
     }
 
-    async deleteUser(request: PartialMessage<DeleteUserRequest>): Promise<DeleteUserResponse> {
-        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+    async deleteUser({ userId }: PartialMessage<DeleteUserRequest>): Promise<DeleteUserResponse> {
+        if (!userId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "userId is required");
+        }
+        await getGitpodService().server.deleteAccount();
+        return new DeleteUserResponse({});
     }
 }

@@ -5,7 +5,7 @@
  */
 
 import { useCallback, useContext, useState } from "react";
-import { getGitpodService, gitpodHostUrl } from "../service/service";
+import { gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
@@ -21,6 +21,7 @@ import { getPrimaryEmail, isOrganizationOwned } from "@gitpod/public-api-common/
 import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { User as UserProtocol, ProfileDetails } from "@gitpod/gitpod-protocol";
 import { useUpdateAccountDetailsMutation } from "../data/current-user/update-mutation";
+import { useDeleteUserMutation } from "../data/current-user/delete-user-mutation";
 
 type UserProfile = Pick<ProfileDetails, "emailAddress"> & Required<Pick<UserProtocol, "name" | "avatarUrl">>;
 function getProfile(user: User): UserProfile {
@@ -41,6 +42,7 @@ export default function Account() {
     const canUpdateEmail = user && !isOrganizationOwned(user);
     const { toast } = useToast();
     const updateUser = useUpdateAccountDetailsMutation();
+    const deleteUser = useDeleteUserMutation();
 
     const saveProfileState = useCallback(async () => {
         if (!user || !profileState) {
@@ -76,9 +78,9 @@ export default function Account() {
     }, [updateUser, canUpdateEmail, profileState, setUser, toast, user]);
 
     const deleteAccount = useCallback(async () => {
-        await getGitpodService().server.deleteAccount();
+        await deleteUser.mutateAsync();
         document.location.href = gitpodHostUrl.asApiLogout().toString();
-    }, []);
+    }, [deleteUser]);
 
     const close = () => setModal(false);
     return (
