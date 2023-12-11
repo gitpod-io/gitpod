@@ -315,14 +315,18 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                                     delay(5000)
                                                     val updatedJoinLinkResp = resolveJoinLink(ideUrl, ownerToken, connectParams)
                                                     if (updatedJoinLinkResp != null && joinLinkResp != null && joinLinkResp!!.appPid > 0 && updatedJoinLinkResp.appPid > 0 && updatedJoinLinkResp.appPid != joinLinkResp!!.appPid) {
-                                                        clientHandle.updateJoinLink(URI(updatedJoinLinkResp.joinLink), true)
                                                         clientHandle.notifyReconnect()
+                                                        clientHandle.updateJoinLink(URI(updatedJoinLinkResp.joinLink), true)
                                                         joinLinkResp = updatedJoinLinkResp
                                                     }
                                                 } catch (t: Throwable) {
                                                     if (t is CancellationException) {
                                                         return@backendStatusJob
                                                     }
+                                                    thisLogger().error(
+                                                            "${connectParams.gitpodHost}: ${connectParams.resolvedWorkspaceId}: failed to reconnect:",
+                                                            t
+                                                    )
                                                 }
                                             }
                                         }
