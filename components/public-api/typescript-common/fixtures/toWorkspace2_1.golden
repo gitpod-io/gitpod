@@ -26,7 +26,8 @@
                                 "authUser": "",
                                 "authPassword": "",
                                 "authOts": ""
-                            }
+                            },
+                            "revision": "fa52963fa39227bcfbf005d396eb753bf3981e40"
                         }
                     }
                 ]
