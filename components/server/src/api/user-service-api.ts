@@ -125,7 +125,11 @@ export class UserServiceAPI implements ServiceImpl<typeof UserServiceInterface> 
                 lastUpdatedDetailsNudge,
                 onboardedTimestamp,
                 signupGoalsOther,
+                emailAddress,
             } = profile;
+            if (!!emailAddress) {
+                update.additionalData.profile.emailAddress = emailAddress;
+            }
             if (!!explorationReasons) {
                 update.additionalData.profile.explorationReasons = explorationReasons;
             }
