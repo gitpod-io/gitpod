@@ -116,7 +116,11 @@ export class JsonRpcUserClient implements PromiseClient<typeof UserService> {
                 lastUpdatedDetailsNudge,
                 onboardedTimestamp,
                 signupGoalsOther,
+                emailAddress,
             } = profile;
+            if (!!emailAddress) {
+                update.additionalData.profile.emailAddress = emailAddress;
+            }
             if (!!explorationReasons) {
                 update.additionalData.profile.explorationReasons = explorationReasons;
             }
