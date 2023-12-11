@@ -9,8 +9,7 @@ import { UserContext } from "../user-context";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import SelectIDEComponent from "../components/SelectIDEComponent";
 import PillLabel from "../components/PillLabel";
-import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
-import { converter } from "../service/public-api";
+import { useUpdateEditorSettingsMutation } from "../data/current-user/update-mutation";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 interface SelectIDEProps {
@@ -19,37 +18,19 @@ interface SelectIDEProps {
 
 export default function SelectIDE(props: SelectIDEProps) {
     const { user, setUser } = useContext(UserContext);
-    const updateUser = useUpdateCurrentUserMutation();
+    const updateEditorSettings = useUpdateEditorSettingsMutation();
 
     const [defaultIde, setDefaultIde] = useState<string>(user?.editorSettings?.name || "code");
     const [useLatestVersion, setUseLatestVersion] = useState<boolean>(user?.editorSettings?.version === "latest");
 
     const actualUpdateUserIDEInfo = useCallback(
         async (selectedIde: string, useLatestVersion: boolean) => {
-            // update stored autostart options to match useLatestVersion value set here
-            const workspaceAutostartOptions = user?.workspaceAutostartOptions?.map((o) => {
-                const option = converter.fromWorkspaceAutostartOption(o);
-
-                if (option.ideSettings) {
-                    option.ideSettings.useLatestVersion = useLatestVersion;
-                }
-
-                return option;
-            });
-
-            const updatedUser = await updateUser.mutateAsync({
-                additionalData: {
-                    workspaceAutostartOptions,
-                    ideSettings: {
-                        settingVersion: "2.0",
-                        defaultIde: selectedIde,
-                        useLatestVersion: useLatestVersion,
-                    },
-                },
-            });
-            setUser(updatedUser);
+            const updatedUser = await updateEditorSettings.mutateAsync({ selectedIde, useLatestVersion });
+            if (updatedUser) {
+                setUser(updatedUser);
+            }
         },
-        [setUser, updateUser, user?.workspaceAutostartOptions],
+        [setUser, updateEditorSettings],
     );
 
     const actuallySetDefaultIde = useCallback(

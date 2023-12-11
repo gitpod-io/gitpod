@@ -20,7 +20,7 @@ import { InputField } from "../components/forms/InputField";
 import { getPrimaryEmail, isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
 import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { User as UserProtocol, ProfileDetails } from "@gitpod/gitpod-protocol";
-import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
+import { useUpdateAccountDetailsMutation } from "../data/current-user/update-mutation";
 
 type UserProfile = Pick<ProfileDetails, "emailAddress"> & Required<Pick<UserProtocol, "name" | "avatarUrl">>;
 function getProfile(user: User): UserProfile {
@@ -40,7 +40,7 @@ export default function Account() {
     const [errorMessage, setErrorMessage] = useState("");
     const canUpdateEmail = user && !isOrganizationOwned(user);
     const { toast } = useToast();
-    const updateUser = useUpdateCurrentUserMutation();
+    const updateUser = useUpdateAccountDetailsMutation();
 
     const saveProfileState = useCallback(async () => {
         if (!user || !profileState) {
@@ -66,12 +66,12 @@ export default function Account() {
         }
 
         const updatedUser = await updateUser.mutateAsync({
-            fullName: profileState.name,
-            additionalData: {
-                profile: profileState,
-            },
+            name: profileState.name,
+            emailAddress: profileState.emailAddress,
         });
-        setUser(updatedUser);
+        if (updatedUser) {
+            setUser(updatedUser);
+        }
         toast("Your profile information has been updated.");
     }, [updateUser, canUpdateEmail, profileState, setUser, toast, user]);
 

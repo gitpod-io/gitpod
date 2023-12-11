@@ -8,7 +8,7 @@ import { FC, useCallback, useMemo, useState } from "react";
 import { CheckboxInputField, CheckboxListField } from "../components/forms/CheckboxInputField";
 import { SelectInputField } from "../components/forms/SelectInputField";
 import { TextInputField } from "../components/forms/TextInputField";
-import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
+import { useUpdateProfileMutation } from "../data/current-user/update-mutation";
 import { useOnBlurError } from "../hooks/use-onblur-error";
 import { EXPLORE_REASON_WORK, getExplorationReasons } from "./exploration-reasons";
 import { getJobRoleOptions, JOB_ROLE_OTHER } from "./job-roles";
@@ -24,7 +24,7 @@ type Props = {
     onComplete(user: User): void;
 };
 export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
-    const updateUser = useUpdateCurrentUserMutation();
+    const updateProfile = useUpdateProfileMutation();
     const jobRoleOptions = useMemo(getJobRoleOptions, []);
     const explorationReasonsOptions = useMemo(getExplorationReasons, []);
     const signupGoalsOptions = useMemo(getSignupGoalsOptions, []);
@@ -113,22 +113,18 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
         );
         const filteredGoals = signupGoals.filter((val) => signupGoalsOptions.find((o) => o.value === val));
 
-        const updates = {
-            additionalData: {
-                profile: {
-                    jobRole,
-                    jobRoleOther,
-                    explorationReasons: filteredReasons,
-                    signupGoals: filteredGoals,
-                    signupGoalsOther,
-                    companySize,
-                },
-            },
-        };
-
         try {
-            const updatedUser = await updateUser.mutateAsync(updates);
-            onComplete(updatedUser);
+            const updatedUser = await updateProfile.mutateAsync({
+                jobRole,
+                jobRoleOther,
+                explorationReasons: filteredReasons,
+                signupGoals: filteredGoals,
+                signupGoalsOther,
+                companySize,
+            });
+            if (updatedUser) {
+                onComplete(updatedUser);
+            }
         } catch (e) {
             console.error(e);
         }
@@ -144,7 +140,7 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
         signupGoals,
         signupGoalsOptions,
         signupGoalsOther,
-        updateUser,
+        updateProfile,
         user.name,
     ]);
 
@@ -160,9 +156,9 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
         <OnboardingStep
             title="Tell us more about you"
             subtitle="Let us know what brought you here."
-            error={updateUser.isError ? "There was a problem saving your answers" : ""}
+            error={updateProfile.isError ? "There was a problem saving your answers" : ""}
             isValid={isValid}
-            isSaving={updateUser.isLoading}
+            isSaving={updateProfile.isLoading}
             onSubmit={handleSubmit}
         >
             <SelectInputField

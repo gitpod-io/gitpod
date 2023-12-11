@@ -13,7 +13,7 @@ import { StepUserInfo } from "./StepUserInfo";
 import { UserContext } from "../user-context";
 import { StepOrgInfo } from "./StepOrgInfo";
 import { StepPersonalize } from "./StepPersonalize";
-import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
+import { useUpdateEditorSettingsMutation, useUpdateProfileMutation } from "../data/current-user/update-mutation";
 import Alert from "../components/Alert";
 import { useConfetti } from "../contexts/ConfettiContext";
 import { getGitpodService } from "../service/service";
@@ -35,7 +35,8 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
     const history = useHistory();
     const location = useLocation();
     const { setUser } = useContext(UserContext);
-    const updateUser = useUpdateCurrentUserMutation();
+    const updateProfile = useUpdateProfileMutation();
+    const updateEditorSettings = useUpdateEditorSettingsMutation();
     const { dropConfetti } = useConfetti();
 
     const [step, setStep] = useState(STEPS.ONE);
@@ -54,23 +55,14 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
     const onboardingComplete = useCallback(
         async (updatedUser: User) => {
             try {
-                const updates = {
-                    additionalData: {
-                        profile: {
-                            onboardedTimestamp: new Date().toISOString(),
-                        },
-                        ideSettings: {
-                            settingVersion: "2.0",
-                            defaultIde: ideOptions.ide,
-                            useLatestVersion: ideOptions.useLatest,
-                        },
-                    },
-                };
-
                 try {
-                    // TODO: extract the IDE updating into it's own step, and add a mutation for it once we don't rely on it to consider a user being "onboarded"
-                    // We can do this once we rely on the profile.onboardedTimestamp instead.
-                    const onboardedUser = await updateUser.mutateAsync(updates);
+                    await updateEditorSettings.mutateAsync({
+                        selectedIde: ideOptions.ide,
+                        useLatestVersion: ideOptions.useLatest,
+                    });
+                    const onboardedUser = await updateProfile.mutateAsync({
+                        onboardedTimestamp: new Date().toISOString(),
+                    });
 
                     // TODO: move this into a mutation side effect once we have a specific mutation for updating the IDE (see above TODO)
                     getGitpodService().server.trackEvent({
@@ -82,7 +74,9 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
                     });
 
                     dropConfetti();
-                    setUser(onboardedUser);
+                    if (onboardedUser) {
+                        setUser(onboardedUser);
+                    }
 
                     // Look for the `onboarding=force` query param, and remove if present
                     const queryParams = new URLSearchParams(location.search);
@@ -104,15 +98,16 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
             }
         },
         [
-            history,
+            updateEditorSettings,
             ideOptions.ide,
             ideOptions.useLatest,
-            location.hash,
-            location.pathname,
-            location.search,
-            setUser,
+            updateProfile,
             dropConfetti,
-            updateUser,
+            location.search,
+            location.pathname,
+            location.hash,
+            setUser,
+            history,
         ],
     );
 

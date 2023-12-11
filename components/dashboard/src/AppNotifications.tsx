@@ -9,10 +9,7 @@ import { useCallback, useEffect, useState } from "react";
 import Alert, { AlertType } from "./components/Alert";
 import { useUserLoader } from "./hooks/use-user-loader";
 import { isGitpodIo } from "./utils";
-import { trackEvent } from "./Analytics";
-import { useUpdateCurrentUserMutation } from "./data/current-user/update-mutation";
-import { User as UserProtocol } from "@gitpod/gitpod-protocol";
-import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
+import { useUpdateAcceptedPrivacyPolicyDateMutation } from "./data/current-user/update-mutation";
 
 const KEY_APP_DISMISSED_NOTIFICATIONS = "gitpod-app-notifications-dismissed";
 const PRIVACY_POLICY_LAST_UPDATED = "2023-10-17";
@@ -25,26 +22,16 @@ interface Notification {
     onClose?: () => void;
 }
 
-const UPDATED_PRIVACY_POLICY = (updateUser: (user: Partial<UserProtocol>) => Promise<User>) => {
+const UPDATED_PRIVACY_POLICY = (acceptPrivatePolicy: (date: string) => Promise<any>) => {
     return {
         id: "privacy-policy-update",
         type: "info",
         preventDismiss: true,
         onClose: async () => {
-            let dismissSuccess = false;
             try {
-                const updatedUser = await updateUser({
-                    additionalData: { profile: { acceptedPrivacyPolicyDate: dayjs().toISOString() } },
-                });
-                dismissSuccess = !!updatedUser;
+                await acceptPrivatePolicy(dayjs().toISOString());
             } catch (err) {
                 console.error("Failed to update user's privacy policy acceptance date", err);
-                dismissSuccess = false;
-            } finally {
-                trackEvent("privacy_policy_update_accepted", {
-                    path: window.location.pathname,
-                    success: dismissSuccess,
-                });
             }
         },
         message: (
@@ -62,7 +49,7 @@ const UPDATED_PRIVACY_POLICY = (updateUser: (user: Partial<UserProtocol>) => Pro
 export function AppNotifications() {
     const [topNotification, setTopNotification] = useState<Notification | undefined>(undefined);
     const { user, loading } = useUserLoader();
-    const updateUser = useUpdateCurrentUserMutation();
+    const acceptPrivatePolicy = useUpdateAcceptedPrivacyPolicyDateMutation();
 
     useEffect(() => {
         const notifications = [];
@@ -71,14 +58,14 @@ export function AppNotifications() {
                 !user?.profile?.acceptedPrivacyPolicyDate ||
                 new Date(PRIVACY_POLICY_LAST_UPDATED) > new Date(user.profile.acceptedPrivacyPolicyDate)
             ) {
-                notifications.push(UPDATED_PRIVACY_POLICY((u: Partial<UserProtocol>) => updateUser.mutateAsync(u)));
+                notifications.push(UPDATED_PRIVACY_POLICY((date: string) => acceptPrivatePolicy.mutateAsync(date)));
             }
         }
 
         const dismissedNotifications = getDismissedNotifications();
         const topNotification = notifications.find((n) => !dismissedNotifications.includes(n.id));
         setTopNotification(topNotification);
-    }, [loading, updateUser, setTopNotification, user]);
+    }, [loading, setTopNotification, user, acceptPrivatePolicy]);
 
     const dismissNotification = useCallback(() => {
         if (!topNotification) {

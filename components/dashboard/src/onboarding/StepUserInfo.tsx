@@ -7,7 +7,7 @@
 import { LinkedInProfile } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useState } from "react";
 import { TextInputField } from "../components/forms/TextInputField";
-import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
+import { useUpdateAccountDetailsMutation } from "../data/current-user/update-mutation";
 import { useOnBlurError } from "../hooks/use-onblur-error";
 import { OnboardingStep } from "./OnboardingStep";
 import { LinkedInBanner } from "./LinkedInBanner";
@@ -21,7 +21,7 @@ type Props = {
 };
 export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
     const linkedinConnectionForOnboarding = useFeatureFlag("linkedinConnectionForOnboarding");
-    const updateUser = useUpdateCurrentUserMutation();
+    const updateUser = useUpdateAccountDetailsMutation();
     // attempt to split provided name for default input values
     const { first, last } = getInitialNameParts(user);
 
@@ -31,21 +31,17 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
     const [emailAddress, setEmailAddress] = useState("");
 
     const handleSubmit = useCallback(async () => {
-        const updates = {
-            // we only split these out currently for form collection, but combine in the db
-            fullName: `${firstName} ${lastName}`,
-            additionalData: {
-                profile: {
-                    // If still no email provided, default to "primary" email
-                    emailAddress: emailAddress || getPrimaryEmail(user),
-                    lastUpdatedDetailsNudge: new Date().toISOString(),
-                },
-            },
-        };
-
         try {
-            const updatedUser = await updateUser.mutateAsync(updates);
-            onComplete(updatedUser);
+            const updatedUser = await updateUser.mutateAsync({
+                // we only split these out currently for form collection, but combine in the db
+                name: `${firstName} ${lastName}`,
+                // If still no email provided, default to "primary" email
+                emailAddress: emailAddress || getPrimaryEmail(user)!,
+                lastUpdatedDetailsNudge: new Date().toISOString(),
+            });
+            if (updatedUser) {
+                onComplete(updatedUser);
+            }
         } catch (e) {
             console.error(e);
         }

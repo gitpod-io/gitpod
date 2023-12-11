@@ -5,7 +5,6 @@
  */
 
 import { useCallback, useContext, useState } from "react";
-import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { ThemeSelector } from "../components/ThemeSelector";
@@ -17,20 +16,22 @@ import { InputField } from "../components/forms/InputField";
 import { TextInput } from "../components/forms/TextInputField";
 import { useToast } from "../components/toasts/Toasts";
 import {
+    useResetWorkspaceAutoStartOptionsMutation,
     useUpdateCurrentUserDotfileRepoMutation,
-    useUpdateCurrentUserMutation,
+    useUpdateWorkspaceTimeoutMutation,
 } from "../data/current-user/update-mutation";
 import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
-import { converter, userClient } from "../service/public-api";
+import { converter } from "../service/public-api";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 
 export default function Preferences() {
     const { toast } = useToast();
     const { user, setUser } = useContext(UserContext);
-    const updateUser = useUpdateCurrentUserMutation();
-    const billingMode = useOrgBillingMode();
+    const resetWorkspaceAutoStartOptions = useResetWorkspaceAutoStartOptionsMutation();
     const updateDotfileRepo = useUpdateCurrentUserDotfileRepoMutation();
+    const updateWorkspaceTimeout = useUpdateWorkspaceTimeoutMutation();
+    const billingMode = useOrgBillingMode();
 
     const [dotfileRepo, setDotfileRepo] = useState<string>(user?.dotfileRepo || "");
 
@@ -58,14 +59,10 @@ export default function Preferences() {
             e.preventDefault();
             setTimeoutUpdating(true);
 
-            // TODO: Convert this to a mutation
             try {
-                await getGitpodService().server.updateWorkspaceTimeoutSetting({ workspaceTimeout: workspaceTimeout });
-
-                // TODO: Once current user is in react-query, we can instead invalidate the query vs. refetching here
-                const { user } = await userClient.getAuthenticatedUser({});
-                if (user) {
-                    setUser(user);
+                const updatedUser = await updateWorkspaceTimeout.mutateAsync(workspaceTimeout);
+                if (updatedUser) {
+                    setUser(updatedUser);
                 }
 
                 let toastMessage = <>Default workspace timeout was updated.</>;
@@ -91,21 +88,19 @@ export default function Preferences() {
                 setTimeoutUpdating(false);
             }
         },
-        [toast, setUser, workspaceTimeout, billingMode],
+        [toast, setUser, workspaceTimeout, billingMode, updateWorkspaceTimeout],
     );
 
     const clearCreateWorkspaceOptions = useCallback(async () => {
         if (!user) {
             return;
         }
-        const updatedUser = await updateUser.mutateAsync({
-            additionalData: {
-                workspaceAutostartOptions: [],
-            },
-        });
-        setUser(updatedUser);
+        const updatedUser = await resetWorkspaceAutoStartOptions.mutateAsync();
+        if (updatedUser) {
+            setUser(updatedUser);
+        }
         toast("Workspace options have been cleared.");
-    }, [updateUser, setUser, toast, user]);
+    }, [resetWorkspaceAutoStartOptions, setUser, toast, user]);
 
     return (
         <div>

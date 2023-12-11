@@ -47,12 +47,10 @@ import { CreateAndStartWorkspaceRequest } from "@gitpod/public-api/lib/gitpod/v1
 import { PartialMessage } from "@bufbuild/protobuf";
 import { User_WorkspaceAutostartOption } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { EditorReference } from "@gitpod/public-api/lib/gitpod/v1/editor_pb";
-import { converter } from "../service/public-api";
-import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
+import { useStoreWorkspaceAutoStartOptionMutation } from "../data/current-user/update-mutation";
 
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
-    const updateUser = useUpdateCurrentUserMutation();
     const currentOrg = useCurrentOrg().data;
     const projects = useListAllProjectsQuery();
     const workspaces = useListWorkspacesQuery({ limit: 50 });
@@ -83,6 +81,7 @@ export function CreateWorkspacePage() {
     const [selectedProjectID, setSelectedProjectID] = useState<string | undefined>(undefined);
     const workspaceContext = useWorkspaceContext(contextURL);
     const needsGitAuthorization = useNeedsGitAuthorization();
+    const storeAutoStartOption = useStoreWorkspaceAutoStartOptionMutation();
 
     const storeAutoStartOptions = useCallback(async () => {
         if (!workspaceContext.data || !user || !currentOrg) {
@@ -92,15 +91,8 @@ export function CreateWorkspacePage() {
         if (!cloneURL) {
             return;
         }
-        let workspaceAutoStartOptions = (user.workspaceAutostartOptions || []).filter(
-            (e) => !(e.cloneUrl === cloneURL && e.organizationId === currentOrg.id),
-        );
 
-        // we only keep the last 40 options
-        workspaceAutoStartOptions = workspaceAutoStartOptions.slice(-40);
-
-        // remember options
-        workspaceAutoStartOptions.push(
+        const updatedUser = await storeAutoStartOption.mutateAsync(
             new User_WorkspaceAutostartOption({
                 cloneUrl: cloneURL,
                 organizationId: currentOrg.id,
@@ -111,15 +103,19 @@ export function CreateWorkspacePage() {
                 }),
             }),
         );
-        const updatedUser = await updateUser.mutateAsync({
-            additionalData: {
-                workspaceAutostartOptions: workspaceAutoStartOptions.map((o) =>
-                    converter.fromWorkspaceAutostartOption(o),
-                ),
-            },
-        });
-        setUser(updatedUser);
-    }, [updateUser, currentOrg, selectedIde, selectedWsClass, setUser, useLatestIde, user, workspaceContext.data]);
+        if (updatedUser) {
+            setUser(updatedUser);
+        }
+    }, [
+        setUser,
+        workspaceContext.data,
+        user,
+        currentOrg,
+        storeAutoStartOption,
+        selectedWsClass,
+        selectedIde,
+        useLatestIde,
+    ]);
 
     // see if we have a matching project based on context url and project's repo url
     const project = useMemo(() => {
