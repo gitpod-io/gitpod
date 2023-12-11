@@ -383,6 +383,7 @@ export class WorkspaceService {
         try {
             const client = await this.clientProvider.get(instance.region);
             await client.controlPort({}, req);
+            return undefined;
         } catch (e) {
             throw mapGrpcError(e);
         }
