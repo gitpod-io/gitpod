@@ -38,6 +38,8 @@ type UserServiceClient interface {
 	// SetWorkspaceAutoStartOptions updates the auto start options for the Gitpod Dashboard.
 	// +internal - only used by the Gitpod Dashboard.
 	SetWorkspaceAutoStartOptions(context.Context, *connect_go.Request[v1.SetWorkspaceAutoStartOptionsRequest]) (*connect_go.Response[v1.SetWorkspaceAutoStartOptionsResponse], error)
+	// DeleteUser deletes the specified user.
+	DeleteUser(context.Context, *connect_go.Request[v1.DeleteUserRequest]) (*connect_go.Response[v1.DeleteUserResponse], error)
 }
 
 // NewUserServiceClient constructs a client for the gitpod.v1.UserService service. By default, it
@@ -65,6 +67,11 @@ func NewUserServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts
 			baseURL+"/gitpod.v1.UserService/SetWorkspaceAutoStartOptions",
 			opts...,
 		),
+		deleteUser: connect_go.NewClient[v1.DeleteUserRequest, v1.DeleteUserResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.UserService/DeleteUser",
+			opts...,
+		),
 	}
 }
 
@@ -73,6 +80,7 @@ type userServiceClient struct {
 	getAuthenticatedUser         *connect_go.Client[v1.GetAuthenticatedUserRequest, v1.GetAuthenticatedUserResponse]
 	updateUser                   *connect_go.Client[v1.UpdateUserRequest, v1.UpdateUserResponse]
 	setWorkspaceAutoStartOptions *connect_go.Client[v1.SetWorkspaceAutoStartOptionsRequest, v1.SetWorkspaceAutoStartOptionsResponse]
+	deleteUser                   *connect_go.Client[v1.DeleteUserRequest, v1.DeleteUserResponse]
 }
 
 // GetAuthenticatedUser calls gitpod.v1.UserService.GetAuthenticatedUser.
@@ -90,6 +98,11 @@ func (c *userServiceClient) SetWorkspaceAutoStartOptions(ctx context.Context, re
 	return c.setWorkspaceAutoStartOptions.CallUnary(ctx, req)
 }
 
+// DeleteUser calls gitpod.v1.UserService.DeleteUser.
+func (c *userServiceClient) DeleteUser(ctx context.Context, req *connect_go.Request[v1.DeleteUserRequest]) (*connect_go.Response[v1.DeleteUserResponse], error) {
+	return c.deleteUser.CallUnary(ctx, req)
+}
+
 // UserServiceHandler is an implementation of the gitpod.v1.UserService service.
 type UserServiceHandler interface {
 	// GetAuthenticatedUser allows to retrieve the current user.
@@ -99,6 +112,8 @@ type UserServiceHandler interface {
 	// SetWorkspaceAutoStartOptions updates the auto start options for the Gitpod Dashboard.
 	// +internal - only used by the Gitpod Dashboard.
 	SetWorkspaceAutoStartOptions(context.Context, *connect_go.Request[v1.SetWorkspaceAutoStartOptionsRequest]) (*connect_go.Response[v1.SetWorkspaceAutoStartOptionsResponse], error)
+	// DeleteUser deletes the specified user.
+	DeleteUser(context.Context, *connect_go.Request[v1.DeleteUserRequest]) (*connect_go.Response[v1.DeleteUserResponse], error)
 }
 
 // NewUserServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -123,6 +138,11 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect_go.HandlerOpt
 		svc.SetWorkspaceAutoStartOptions,
 		opts...,
 	))
+	mux.Handle("/gitpod.v1.UserService/DeleteUser", connect_go.NewUnaryHandler(
+		"/gitpod.v1.UserService/DeleteUser",
+		svc.DeleteUser,
+		opts...,
+	))
 	return "/gitpod.v1.UserService/", mux
 }
 
@@ -139,4 +159,8 @@ func (UnimplementedUserServiceHandler) UpdateUser(context.Context, *connect_go.R
 
 func (UnimplementedUserServiceHandler) SetWorkspaceAutoStartOptions(context.Context, *connect_go.Request[v1.SetWorkspaceAutoStartOptionsRequest]) (*connect_go.Response[v1.SetWorkspaceAutoStartOptionsResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.UserService.SetWorkspaceAutoStartOptions is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) DeleteUser(context.Context, *connect_go.Request[v1.DeleteUserRequest]) (*connect_go.Response[v1.DeleteUserResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.UserService.DeleteUser is not implemented"))
 }

@@ -18,6 +18,9 @@ service UserService {
   // SetWorkspaceAutoStartOptions updates the auto start options for the Gitpod Dashboard.
   // +internal - only used by the Gitpod Dashboard.
   rpc SetWorkspaceAutoStartOptions(SetWorkspaceAutoStartOptionsRequest) returns (SetWorkspaceAutoStartOptionsResponse) {}
+
+  // DeleteUser deletes the specified user.
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {}
 }
 
 message GetAuthenticatedUserRequest {}
@@ -69,10 +72,16 @@ message UpdateUserRequest {
     optional google.protobuf.Duration inactivity = 1;
     optional bool disabled_disconnected = 2;
   }
+  optional string dotfile_repo = 9;
 }
 message UpdateUserResponse {
   User user = 1;
 }
+
+message DeleteUserRequest {
+  string user_id = 1;
+}
+message DeleteUserResponse {}
 
 message User {
   // id is a UUID of the user

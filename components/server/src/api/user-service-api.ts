@@ -15,6 +15,8 @@ import {
     GetAuthenticatedUserResponse,
     SetWorkspaceAutoStartOptionsRequest,
     SetWorkspaceAutoStartOptionsResponse,
+    DeleteUserRequest,
+    DeleteUserResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { UserService } from "../user/user-service";
 import { validate as uuidValidate } from "uuid";
@@ -68,5 +70,9 @@ export class UserServiceAPI implements ServiceImpl<typeof UserServiceInterface> 
         });
 
         return new SetWorkspaceAutoStartOptionsResponse();
+    }
+
+    async deleteUser(request: DeleteUserRequest, _: HandlerContext): Promise<DeleteUserResponse> {
+        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
     }
 }

@@ -9,6 +9,8 @@ import { UserService } from "@gitpod/public-api/lib/gitpod/v1/user_connect";
 import { PromiseClient } from "@connectrpc/connect";
 import { PartialMessage } from "@bufbuild/protobuf";
 import {
+    DeleteUserRequest,
+    DeleteUserResponse,
     GetAuthenticatedUserRequest,
     GetAuthenticatedUserResponse,
     SetWorkspaceAutoStartOptionsRequest,
@@ -37,6 +39,10 @@ export class JsonRpcUserClient implements PromiseClient<typeof UserService> {
     async setWorkspaceAutoStartOptions(
         request: PartialMessage<SetWorkspaceAutoStartOptionsRequest>,
     ): Promise<SetWorkspaceAutoStartOptionsResponse> {
+        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+    }
+
+    async deleteUser(request: PartialMessage<DeleteUserRequest>): Promise<DeleteUserResponse> {
         throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
     }
 }

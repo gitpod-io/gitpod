@@ -48,3 +48,13 @@ func (s *ProxyUserServiceHandler) SetWorkspaceAutoStartOptions(ctx context.Conte
 
 	return connect_go.NewResponse(resp), nil
 }
+
+func (s *ProxyUserServiceHandler) DeleteUser(ctx context.Context, req *connect_go.Request[v1.DeleteUserRequest]) (*connect_go.Response[v1.DeleteUserResponse], error) {
+	resp, err := s.Client.DeleteUser(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
