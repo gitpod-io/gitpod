@@ -43,10 +43,9 @@ export const ConfigurationVariableList = ({ configuration }: Props) => {
                 </div>
             </div>
             {data.length === 0 ? (
-                <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full p-6 flex flex-col justify-center space-y-3">
-                    <span className="font-bold text-base">No environment variables are set</span>
-                    {/* todo: change to podkit color abstractions */}
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="bg-pk-surface-secondary rounded-xl w-full p-6 flex flex-col justify-center space-y-3">
+                    <span className="font-semi-bold text-base">No environment variables are set</span>
+                    <span className="text-sm text-pk-content-secondary">
                         All configuration-specific environment variables will be visible in prebuilds and optionally in
                         workspaces for this repository.
                     </span>
@@ -71,7 +70,7 @@ export const ConfigurationVariableList = ({ configuration }: Props) => {
                     </TableBody>
                 </Table>
             )}
-            <Button className="my-4" onClick={() => setShowAddVariableModal(true)}>
+            <Button className="mt-4" onClick={() => setShowAddVariableModal(true)}>
                 Add Variable
             </Button>
         </ConfigurationSettingsField>

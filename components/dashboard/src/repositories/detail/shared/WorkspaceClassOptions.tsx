@@ -33,9 +33,9 @@ export const WorkspaceClassOptions: FC<Props> = ({ value, className, onChange })
             {classes.map((wsClass) => (
                 <Label className="flex items-start space-x-2" key={wsClass.id}>
                     <RadioGroupItem value={wsClass.id} />
-                    <div className="flex flex-col space-y-2">
+                    <div className="flex flex-col text-sm">
                         <span className="font-semibold">{wsClass.displayName}</span>
-                        <span>{wsClass.description}</span>
+                        <span className="text-pk-content-tertiary">{wsClass.description}</span>
                     </div>
                 </Label>
             ))}
