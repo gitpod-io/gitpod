@@ -23,6 +23,7 @@ import { Heading2, Subheading } from "../components/typography/headings";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { LinkButton } from "@podkit/buttons/LinkButton";
 import { Button } from "@podkit/buttons/Button";
+import { TextInputField } from "../components/forms/TextInputField";
 
 interface EditPATData {
     name: string;
@@ -193,25 +194,22 @@ function PersonalAccessTokenCreateView() {
                             )}
                         </div>
                         <div className="flex flex-col gap-4">
-                            <div>
-                                <h4>Token Name</h4>
-                                <input
-                                    className="max-w-md"
-                                    value={token.name}
-                                    onChange={(e) => update({ name: e.target.value })}
-                                    onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                            e.preventDefault();
-                                            handleConfirm();
-                                        }
-                                    }}
-                                    type="text"
-                                    placeholder="Token Name"
-                                />
-                                <p className="text-gray-500 dark:text-gray-400 mt-2">
-                                    The application name using the token or the purpose of the token.
-                                </p>
-                            </div>
+                            <TextInputField
+                                label="Token Name"
+                                placeholder="Token Name"
+                                hint="The application name using the token or the purpose of the token."
+                                value={token.name}
+                                type="text"
+                                className="max-w-md"
+                                onChange={(val) => update({ name: val })}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        handleConfirm();
+                                    }
+                                }}
+                            />
+
                             {!isEditing && (
                                 <DateSelector
                                     title="Expiration Date"

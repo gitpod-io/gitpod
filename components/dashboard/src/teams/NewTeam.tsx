@@ -12,6 +12,7 @@ import { useOrganizationsInvalidator } from "../data/organizations/orgs-query";
 import { useDocumentTitle } from "../hooks/use-document-title";
 import { organizationClient } from "../service/public-api";
 import { Button } from "@podkit/buttons/Button";
+import { TextInputField } from "../components/forms/TextInputField";
 
 export default function NewTeamPage() {
     const invalidateOrgs = useOrganizationsInvalidator();
@@ -57,13 +58,13 @@ export default function NewTeamPage() {
                 <div className="rounded-xl p-6 bg-gray-50 dark:bg-gray-800">
                     <Heading3>You're creating a new organization</Heading3>
                     <Subheading>After creating an organization, you can invite others to join.</Subheading>
-                    <br />
-                    <h4>Organization Name</h4>
-                    <input
+
+                    <TextInputField
+                        label="Organization Name"
+                        value={name}
                         autoFocus
                         className={`w-full${!!creationError ? " error" : ""}`}
-                        type="text"
-                        onChange={(event) => setName(event.target.value)}
+                        onChange={setName}
                     />
                     {!!creationError && (
                         <p className="text-gitpod-red">

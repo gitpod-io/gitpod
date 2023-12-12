@@ -14,6 +14,8 @@ import { Button } from "@podkit/buttons/Button";
 import { LinkButton } from "../components/LinkButton";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { verificationClient } from "../service/public-api";
+import { InputField } from "../components/forms/InputField";
+import { TextInputField } from "../components/forms/TextInputField";
 
 interface VerifyModalState {
     phoneNumber?: string;
@@ -93,8 +95,8 @@ export function VerifyModal() {
                 ) : (
                     <></>
                 )}
-                <div className="mt-4">
-                    <h4>Mobile Phone Number</h4>
+
+                <InputField label="Mobile Phone Number">
                     {/* HACK: Below we are adding a dummy dom element that is not visible, to reference the classes so they are not removed by purgeCSS. */}
                     <input type="tel" className="hidden intl-tel-input country-list" />
                     <PhoneInput
@@ -116,7 +118,7 @@ export function VerifyModal() {
                             });
                         }}
                     />
-                </div>
+                </InputField>
             </Modal>
         );
     } else if (!state.verified) {
@@ -202,23 +204,19 @@ export function VerifyModal() {
                 ) : (
                     <></>
                 )}
-                <div className="mt-4">
-                    <h4>Verification Code</h4>
-                    <input
-                        autoFocus={true}
-                        className="w-full"
-                        type="text"
-                        placeholder={
-                            phoneVerificationByCall ? "Enter code sent via phone call" : "Enter code sent via SMS"
-                        }
-                        onChange={(v) => {
-                            setState({
-                                ...state,
-                                token: v.currentTarget.value,
-                            });
-                        }}
-                    />
-                </div>
+                <TextInputField
+                    label="Verification Code"
+                    placeholder={phoneVerificationByCall ? "Enter code sent via phone call" : "Enter code sent via SMS"}
+                    type="text"
+                    value={state.token}
+                    autoFocus
+                    onChange={(val) => {
+                        setState({
+                            ...state,
+                            token: val,
+                        });
+                    }}
+                />
             </Modal>
         );
     } else {
