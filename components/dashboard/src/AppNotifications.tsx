@@ -49,7 +49,7 @@ const UPDATED_PRIVACY_POLICY = (acceptPrivatePolicy: (date: string) => Promise<a
 export function AppNotifications() {
     const [topNotification, setTopNotification] = useState<Notification | undefined>(undefined);
     const { user, loading } = useUserLoader();
-    const acceptPrivatePolicy = useUpdateAcceptedPrivacyPolicyDateMutation();
+    const acceptPrivacyPolicy = useUpdateAcceptedPrivacyPolicyDateMutation();
 
     useEffect(() => {
         const notifications = [];
@@ -58,14 +58,14 @@ export function AppNotifications() {
                 !user?.profile?.acceptedPrivacyPolicyDate ||
                 new Date(PRIVACY_POLICY_LAST_UPDATED) > new Date(user.profile.acceptedPrivacyPolicyDate)
             ) {
-                notifications.push(UPDATED_PRIVACY_POLICY((date: string) => acceptPrivatePolicy.mutateAsync(date)));
+                notifications.push(UPDATED_PRIVACY_POLICY((date: string) => acceptPrivacyPolicy.mutateAsync(date)));
             }
         }
 
         const dismissedNotifications = getDismissedNotifications();
         const topNotification = notifications.find((n) => !dismissedNotifications.includes(n.id));
         setTopNotification(topNotification);
-    }, [loading, setTopNotification, user, acceptPrivatePolicy]);
+    }, [loading, setTopNotification, user, acceptPrivacyPolicy]);
 
     const dismissNotification = useCallback(() => {
         if (!topNotification) {
