@@ -9,13 +9,14 @@ import { createContext, FC, memo, useCallback, useContext, useMemo, useReducer }
 import { Portal } from "react-portal";
 import { ToastEntry, toastReducer } from "./reducer";
 import { Toast } from "./Toast";
+import { Disposable } from "@gitpod/gitpod-protocol";
 
 type ToastFnProps = ToastEntry["message"] | (Pick<ToastEntry, "message"> & Partial<ToastEntry>);
 
 const ToastContext = createContext<{
-    toast: (toast: ToastFnProps, opts?: Partial<ToastEntry>) => void;
+    toast: (toast: ToastFnProps, opts?: Partial<ToastEntry>) => Disposable;
 }>({
-    toast: () => undefined,
+    toast: () => Disposable.NULL,
 });
 
 export const useToast = () => {
@@ -29,30 +30,35 @@ export const ToastContextProvider: FC = ({ children }) => {
         dispatch({ type: "remove", id });
     }, []);
 
-    const addToast = useCallback((message: ToastFnProps, opts = {}) => {
-        // detect if message arg looks like a toast object
-        // it can also be a ReactNode
-        let isToastObj = false;
-        if (message && typeof message === "object" && message.hasOwnProperty("message")) {
-            isToastObj = true;
-        }
+    const addToast = useCallback(
+        (message: ToastFnProps, opts = {}) => {
+            // detect if message arg looks like a toast object
+            // it can also be a ReactNode
+            let isToastObj = false;
+            if (message && typeof message === "object" && message.hasOwnProperty("message")) {
+                isToastObj = true;
+            }
 
-        let newToast: ToastEntry = {
-            ...(isToastObj
-                ? {
-                      id: `${Math.random()}`,
-                      // @ts-ignore
-                      ...message,
-                  }
-                : {
-                      id: `${Math.random()}`,
-                      message,
-                  }),
-            ...opts,
-        };
+            let newToast: ToastEntry = {
+                ...(isToastObj
+                    ? {
+                          id: `${Math.random()}`,
+                          // @ts-ignore
+                          ...message,
+                      }
+                    : {
+                          id: `${Math.random()}`,
+                          message,
+                      }),
+                ...opts,
+            };
 
-        dispatch({ type: "add", toast: newToast });
-    }, []);
+            dispatch({ type: "add", toast: newToast });
+
+            return Disposable.create(() => removeToast(newToast.id));
+        },
+        [removeToast],
+    );
 
     const ctxValue = useMemo(() => ({ toast: addToast }), [addToast]);
 

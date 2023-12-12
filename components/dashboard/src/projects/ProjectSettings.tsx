@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { PrebuildSettings, Project, ProjectSettings } from "@gitpod/gitpod-protocol";
+import { DisposableCollection, PrebuildSettings, Project, ProjectSettings } from "@gitpod/gitpod-protocol";
 import { useCallback, useContext, useState, Fragment, useMemo, useEffect } from "react";
 import { useHistory } from "react-router";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
@@ -94,11 +94,13 @@ export default function ProjectSettingsView() {
     );
 
     const authorizeWithProvider = useCallback(
-        async (host: string, scopes: string[]) => {
+        async (host: string, scopes: string[], onSuccess: () => void) => {
             await openAuthorizeWindow({
                 host,
                 scopes,
-                onSuccess: async () => {},
+                onSuccess: async () => {
+                    onSuccess();
+                },
                 onError: (payload) => {
                     let errorMessage: string;
                     if (typeof payload === "string") {
@@ -131,19 +133,28 @@ export default function ProjectSettingsView() {
                     const { host, /*providerIsConnected, providerType,*/ repoName, requiredScopes } =
                         error?.data as PartialMessage<RepositoryUnauthorizedError>;
 
-                    toast(
-                        <>
-                            <span>There was a problem enabling prebuilds on "{repoName}"</span>
-                            <div>
-                                <LinkButton inverted onClick={() => authorizeWithProvider(host!, requiredScopes!)}>
-                                    Grant access
-                                </LinkButton>
-                            </div>
-                        </>,
-                        {
-                            autoHide: false,
-                            id: `toast--host-authorized--${host}`,
-                        },
+                    const toasts = new DisposableCollection();
+                    toasts.push(
+                        toast(
+                            <>
+                                <p>There was a problem enabling prebuilds on "{repoName}"</p>
+                                <p>Grant these permissions {JSON.stringify(requiredScopes)} and try again! 🙏🏻</p>
+                                <div>
+                                    <LinkButton
+                                        inverted
+                                        onClick={() =>
+                                            authorizeWithProvider(host!, requiredScopes!, () => toasts.dispose())
+                                        }
+                                    >
+                                        Grant access 🔐
+                                    </LinkButton>
+                                </div>
+                            </>,
+                            {
+                                autoHide: false,
+                                id: `toast--host-authorized--${host}`,
+                            },
+                        ),
                     );
                 } else {
                     toast(error?.message || "Oh no, there was a problem with updating project settings.");
@@ -165,8 +176,6 @@ export default function ProjectSettingsView() {
                     enable: value,
                 },
             });
-
-            // TODO(at) handle 401
         },
         [project, updateProjectSettings],
     );
