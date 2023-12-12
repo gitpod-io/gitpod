@@ -10,7 +10,7 @@ import Alert from "../components/Alert";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { InputWithCopy } from "../components/InputWithCopy";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
-import { CheckboxInputField, CheckboxListField } from "../components/forms/CheckboxInputField";
+import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { InputField } from "../components/forms/InputField";
 import { TextInputField } from "../components/forms/TextInputField";
 import { Heading2, Heading3, Subheading } from "../components/typography/headings";
@@ -33,6 +33,7 @@ import { useWorkspaceClasses } from "../data/workspaces/workspace-classes-query"
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { ConfigurationSettingsField } from "../repositories/detail/ConfigurationSettingsField";
+import { SwitchInputField } from "@podkit/switch/Switch";
 
 export default function TeamSettingsPage() {
     const user = useCurrentUser();
@@ -453,25 +454,16 @@ const WorkspaceClassOptions = (props: WorkspaceClassOptionsProps) => {
 
     return (
         <div className="space-y-4">
-            <CheckboxListField
-                className="mt-2"
-                error={
-                    updateTeamSettings.isError &&
-                    updateTeamSettings.error.message.length > 0 && (
-                        <Alert type="error" closable={true} className="rounded-md">
-                            {updateTeamSettings.error.message}
-                        </Alert>
-                    )
-                }
-            >
+            <div>
                 {classes.map((wsClass) => (
-                    <CheckboxInputField
+                    <SwitchInputField
+                        className="mt-2"
                         key={wsClass.id}
                         id={wsClass.id}
                         label={wsClass.displayName}
-                        hint={wsClass.description}
+                        description={wsClass.description}
                         checked={(!isChanged && noClassesSelected) || selectedValue.includes(wsClass.id)}
-                        onChange={(checked) => {
+                        onCheckedChange={(checked) => {
                             const previousValue =
                                 !isChanged && noClassesSelected ? classes.map((e) => e.id) : selectedValue;
                             setIsChanged(true);
@@ -486,7 +478,7 @@ const WorkspaceClassOptions = (props: WorkspaceClassOptionsProps) => {
                         disabled={props.disabled || updateTeamSettings.isLoading}
                     />
                 ))}
-            </CheckboxListField>
+            </div>
 
             <div className="flex gap-2 items-center">
                 {!props.disabled && (
@@ -501,6 +493,9 @@ const WorkspaceClassOptions = (props: WorkspaceClassOptionsProps) => {
                     </LoadingButton>
                 )}
                 {validateError.length > 0 && <span className="text-red-600 dark:text-red-400">{validateError}</span>}
+                {updateTeamSettings.isError && updateTeamSettings.error.message.length > 0 && (
+                    <span className="text-red-600 dark:text-red-400">{updateTeamSettings.error.message}</span>
+                )}
             </div>
         </div>
     );
