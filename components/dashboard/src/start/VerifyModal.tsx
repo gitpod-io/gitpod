@@ -14,8 +14,8 @@ import { Button } from "@podkit/buttons/Button";
 import { LinkButton } from "../components/LinkButton";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { verificationClient } from "../service/public-api";
-import { TextInputField } from "../components/forms/TextInputField";
 import { InputField } from "../components/forms/InputField";
+import { TextInputField } from "../components/forms/TextInputField";
 
 interface VerifyModalState {
     phoneNumber?: string;

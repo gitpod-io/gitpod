@@ -15,6 +15,7 @@ import { Heading2, Subheading } from "../components/typography/headings";
 import { envVarClient } from "../service/public-api";
 import { UserEnvironmentVariable } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
 import { Button } from "@podkit/buttons/Button";
+import { TextInputField } from "../components/forms/TextInputField";
 
 interface EnvVarModalProps {
     envVar: UserEnvVarValue;
@@ -58,47 +59,29 @@ function AddEnvVarModal(p: EnvVarModalProps) {
                 {error ? (
                     <div className="bg-kumquat-light rounded-md p-3 text-gitpod-red text-sm mb-2">{error}</div>
                 ) : null}
-                <div>
-                    <h4>Name</h4>
-                    <input
-                        autoFocus
-                        className="w-full"
-                        type="text"
-                        value={ev.name}
-                        onChange={(v) => {
-                            update({ name: v.target.value });
-                        }}
-                    />
-                </div>
-                <div className="mt-4">
-                    <h4>Value</h4>
-                    <input
-                        className="w-full"
-                        type="text"
-                        value={ev.value}
-                        onChange={(v) => {
-                            update({ value: v.target.value });
-                        }}
-                    />
-                </div>
-                <div className="mt-4">
-                    <h4>Scope</h4>
-                    <input
-                        className="w-full"
-                        type="text"
-                        value={ev.repositoryPattern}
-                        placeholder="e.g. owner/repository"
-                        onChange={(v) => {
-                            update({ repositoryPattern: v.target.value });
-                        }}
-                    />
-                </div>
-                <div className="mt-1">
-                    <p className="text-gray-500">
-                        You can pass a variable for a specific project or use wildcard character (<code>*/*</code>) to
-                        make it available in more projects.
-                    </p>
-                </div>
+                <TextInputField
+                    label="Name"
+                    value={ev.name}
+                    type="text"
+                    autoFocus
+                    onChange={(val) => update({ name: val })}
+                />
+
+                <TextInputField label="Value" value={ev.value} type="text" onChange={(val) => update({ value: val })} />
+
+                <TextInputField
+                    label="Scope"
+                    hint={
+                        <>
+                            You can pass a variable for a specific project or use wildcard character (<code>*/*</code>)
+                            to make it available in more projects.
+                        </>
+                    }
+                    value={ev.repositoryPattern}
+                    type="text"
+                    placeholder="e.g. owner/repository"
+                    onChange={(val) => update({ repositoryPattern: val })}
+                />
             </ModalBody>
             <ModalFooter>
                 <Button variant="secondary" onClick={p.onClose}>

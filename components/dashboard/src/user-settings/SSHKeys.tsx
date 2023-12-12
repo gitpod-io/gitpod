@@ -17,6 +17,8 @@ import { EmptyMessage } from "../components/EmptyMessage";
 import { Button } from "@podkit/buttons/Button";
 import { sshClient } from "../service/public-api";
 import { SSHPublicKey } from "@gitpod/public-api/lib/gitpod/v1/ssh_pb";
+import { InputField } from "../components/forms/InputField";
+import { TextInputField } from "../components/forms/TextInputField";
 
 interface AddModalProps {
     value: SSHPublicKeyValue;
@@ -82,8 +84,7 @@ export function AddSSHKeyModal(props: AddModalProps) {
                         Learn how to create an SSH Key
                     </a>
                 </Alert>
-                <div className="mt-2">
-                    <h4>Key</h4>
+                <InputField label="Key">
                     <textarea
                         autoFocus
                         style={{ height: "160px" }}
@@ -96,19 +97,15 @@ export function AddSSHKeyModal(props: AddModalProps) {
                         'sk-ssh-ed25519@openssh.com'"
                         onChange={(v) => update({ key: v.target.value })}
                     />
-                </div>
-                <div className="mt-4">
-                    <h4>Title</h4>
-                    <input
-                        className="w-full"
-                        type="text"
-                        placeholder="e.g. laptop"
-                        value={value.name}
-                        onChange={(v) => {
-                            update({ name: v.target.value });
-                        }}
-                    />
-                </div>
+                </InputField>
+
+                <TextInputField
+                    label="Title"
+                    placeholder="e.g. laptop"
+                    type="text"
+                    value={value.name}
+                    onChange={(val) => update({ name: val })}
+                />
             </ModalBody>
             <ModalFooter>
                 <Button variant="secondary" onClick={props.onClose}>

@@ -18,6 +18,7 @@ import { Button } from "@podkit/buttons/Button";
 import { installationClient } from "../service/public-api";
 import { Sort, SortOrder } from "@gitpod/public-api/lib/gitpod/v1/sorting_pb";
 import { BlockedRepository, ListBlockedRepositoriesResponse } from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
+import { TextInputField } from "../components/forms/TextInputField";
 
 export function BlockedRepositories() {
     return (
@@ -292,22 +293,19 @@ function Details(props: {
             {props.error ? (
                 <div className="bg-kumquat-light rounded-md p-3 text-gitpod-red text-sm mb-2">{props.error}</div>
             ) : null}
-            <div>
-                <h4>Repository URL RegEx</h4>
-                <input
-                    autoFocus
-                    className="w-full"
-                    type="text"
-                    value={props.br.urlRegexp}
-                    placeholder={'e.g. "https://github.com/malicious-user/*"'}
-                    disabled={!props.update}
-                    onChange={(v) => {
-                        if (!!props.update) {
-                            props.update({ urlRegexp: v.target.value });
-                        }
-                    }}
-                />
-            </div>
+            <TextInputField
+                label="Repository URL RegEx"
+                autoFocus
+                type="text"
+                value={props.br.urlRegexp}
+                placeholder={'e.g. "https://github.com/malicious-user/*"'}
+                disabled={!props.update}
+                onChange={(val) => {
+                    if (!!props.update) {
+                        props.update({ urlRegexp: val });
+                    }
+                }}
+            />
 
             <CheckboxInputField
                 label="Block Users"

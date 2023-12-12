@@ -23,6 +23,7 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
 import { Button } from "@podkit/buttons/Button";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
+import { TextInputField } from "../components/forms/TextInputField";
 
 export default function ProjectVariablesPage() {
     const { project, loading } = useCurrentProject();
@@ -151,27 +152,11 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
                     repository can access secret values if they are printed in the terminal, logged, or persisted to the
                     file system.
                 </Alert>
-                <div className="mt-8">
-                    <h4>Name</h4>
-                    <input
-                        autoFocus
-                        className="w-full"
-                        type="text"
-                        name="name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                    />
-                </div>
-                <div className="mt-4">
-                    <h4>Value</h4>
-                    <input
-                        className="w-full"
-                        type="text"
-                        name="value"
-                        value={value}
-                        onChange={(e) => setValue(e.target.value)}
-                    />
-                </div>
+
+                <TextInputField label="Name" value={name} type="text" name="name" autoFocus onChange={setName} />
+
+                <TextInputField label="Value" value={value} type="text" name="value" onChange={setValue} />
+
                 <CheckboxInputField
                     label="Hide Variable in Workspaces"
                     hint="Unset this environment variable so that it's not accessible from the terminal in workspaces."
