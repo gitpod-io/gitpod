@@ -126,7 +126,7 @@ export default function Alert(props: AlertProps) {
                 <span className={`ml-4`}>
                     {/* Use an IconButton component once we make it */}
                     <Button
-                        type="transparent"
+                        variant="ghost"
                         className="hover:bg-transparent"
                         onClick={handleClose}
                         autoFocus={autoFocusClose}
