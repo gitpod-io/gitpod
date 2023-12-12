@@ -8,7 +8,7 @@ export class Deferred<T> {
     resolve: (value?: T) => void;
     reject: (err?: any) => void;
     isResolved: boolean = false;
-    timer: NodeJS.Timer;
+    timer: NodeJS.Timeout;
 
     constructor(timeout?: number) {
         if (timeout) {

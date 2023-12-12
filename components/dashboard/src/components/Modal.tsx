@@ -12,8 +12,8 @@ import { Heading2 } from "./typography/headings";
 import Alert, { AlertProps } from "./Alert";
 import "./modal.css";
 import classNames from "classnames";
-import { useTrackEvent } from "../data/tracking/track-event-mutation";
 import { Button } from "@podkit/buttons/Button";
+import { trackEvent } from "../Analytics";
 
 type CloseModalManner = "esc" | "enter" | "x" | "click_outside";
 
@@ -48,23 +48,18 @@ export const Modal: FC<Props> = ({
     onClose,
     onSubmit,
 }) => {
-    const trackEvent = useTrackEvent();
-
     const closeModal = useCallback(
         (manner: CloseModalManner) => {
             onClose();
 
-            trackEvent.mutate({
-                event: "modal_dismiss",
-                properties: {
-                    manner,
-                    title: title,
-                    specify: specify,
-                    path: window.location.pathname,
-                },
+            trackEvent("modal_dismiss", {
+                manner,
+                title: title,
+                specify: specify,
+                path: window.location.pathname,
             });
         },
-        [onClose, specify, title, trackEvent],
+        [onClose, specify, title],
     );
 
     const handleClickOutside = useCallback(() => {
