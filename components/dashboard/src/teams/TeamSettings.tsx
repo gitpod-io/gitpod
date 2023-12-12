@@ -472,9 +472,9 @@ const WorkspaceClassOptions = (props: WorkspaceClassOptionsProps) => {
                             const previousValue =
                                 !isChanged && noClassesSelected ? classes.map((e) => e.id) : selectedValue;
                             setIsChanged(true);
-                            const newVal = checked
-                                ? [...previousValue, wsClass.id]
-                                : previousValue.filter((e) => e !== wsClass.id);
+                            const newVal = (
+                                checked ? [...previousValue, wsClass.id] : previousValue.filter((e) => e !== wsClass.id)
+                            ).filter((id) => classes.find((cls) => cls.id === id));
                             setValidateError(
                                 newVal.length === 0 ? "At least one workspace class has to be selected." : "",
                             );
