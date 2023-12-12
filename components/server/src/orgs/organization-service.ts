@@ -419,12 +419,6 @@ export class OrganizationService {
             result.defaultWorkspaceImage = settings.defaultWorkspaceImage;
         }
         result.allowedWorkspaceClasses = settings.allowedWorkspaceClasses;
-        if (result.allowedWorkspaceClasses && result.allowedWorkspaceClasses.length > 0) {
-            const allClasses = await this.installationService.getInstallationWorkspaceClasses(userId);
-            result.allowedWorkspaceClasses = result.allowedWorkspaceClasses.filter(
-                (e) => allClasses.findIndex((cls) => cls.id === e) !== -1,
-            );
-        }
         return result;
     }
 
