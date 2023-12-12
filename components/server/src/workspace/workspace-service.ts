@@ -127,7 +127,7 @@ export class WorkspaceService {
             if (!hasOptions) {
                 throw new ApplicationError(
                     ErrorCodes.PRECONDITION_FAILED,
-                    "Something unexpected has occurred, there's no allowed workspace class available in organization, please contact an admin",
+                    "No allowed workspace classes available. Please contact your admin.",
                 );
             }
             if (!settings.allowedWorkspaceClasses.includes(workspaceClass)) {

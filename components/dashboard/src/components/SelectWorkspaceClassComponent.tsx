@@ -41,7 +41,7 @@ export default function SelectWorkspaceClassComponent({
         }
         if (workspaceClasses.length === 0) {
             setError?.(
-                "Something unexpected has occurred, there's no allowed workspace class available in organization, please contact an admin.",
+                "No allowed workspace classes available. Please contact your admin.",
             );
             return;
         }
