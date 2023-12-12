@@ -118,7 +118,8 @@ message UpdateOrganizationSettingsRequest {
   // pass empty string to reset to the installation default workspace image
   optional string default_workspace_image = 4;
 
-  // pass empty array to allow all kind of workspace classes
+  // allowed_workspace_classes are the IDs of classes, which can be used by workspaces in an organization.
+  // Pass an empty array to allow all workspace classes
   repeated string allowed_workspace_classes = 5;
 }
 

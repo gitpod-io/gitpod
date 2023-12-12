@@ -415,7 +415,8 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
   defaultWorkspaceImage?: string;
 
   /**
-   * pass empty array to allow all kind of workspace classes
+   * allowed_workspace_classes are the IDs of classes, which can be used by workspaces in an organization.
+   * Pass an empty array to allow all workspace classes
    *
    * @generated from field: repeated string allowed_workspace_classes = 5;
    */

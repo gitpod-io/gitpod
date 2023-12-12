@@ -578,7 +578,8 @@ type UpdateOrganizationSettingsRequest struct {
 	WorkspaceSharingDisabled *bool  `protobuf:"varint,3,opt,name=workspace_sharing_disabled,json=workspaceSharingDisabled,proto3,oneof" json:"workspace_sharing_disabled,omitempty"`
 	// pass empty string to reset to the installation default workspace image
 	DefaultWorkspaceImage *string `protobuf:"bytes,4,opt,name=default_workspace_image,json=defaultWorkspaceImage,proto3,oneof" json:"default_workspace_image,omitempty"`
-	// pass empty array to allow all kind of workspace classes
+	// allowed_workspace_classes are the IDs of classes, which can be used by workspaces in an organization.
+	// Pass an empty array to allow all workspace classes
 	AllowedWorkspaceClasses []string `protobuf:"bytes,5,rep,name=allowed_workspace_classes,json=allowedWorkspaceClasses,proto3" json:"allowed_workspace_classes,omitempty"`
 }
 
