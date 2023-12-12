@@ -86,7 +86,7 @@ export const SSOLoginForm: FC<Props> = ({ singleOrgMode, onSuccess }) => {
                 )}
                 <Button
                     type="submit"
-                    className="w-full"
+                    size="full-width"
                     variant="secondary"
                     disabled={!singleOrgMode && (!orgSlug.trim() || !slugError.isValid)}
                 >

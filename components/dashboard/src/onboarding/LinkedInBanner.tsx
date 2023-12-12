@@ -76,6 +76,7 @@ export const LinkedInBanner: FC<Props> = ({ onSuccess }) => {
                     </p>
                 </div>
                 <Button
+                    size="full-width"
                     onClick={(event) => {
                         event.preventDefault();
                         linkedInLogin();

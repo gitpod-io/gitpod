@@ -23,7 +23,9 @@ export const GettingStartedStep: FC<Props> = ({ onComplete, progressCurrent, pro
             </Subheading>
 
             <div className="mt-6">
-                <Button onClick={onComplete}>Get Started</Button>
+                <Button size="full-width" onClick={onComplete}>
+                    Get Started
+                </Button>
             </div>
         </SetupLayout>
     );

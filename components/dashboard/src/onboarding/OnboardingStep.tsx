@@ -76,6 +76,7 @@ export const OnboardingStep: FC<Props> = ({
                         type="submit"
                         variant={submitButtonType || "default"}
                         disabled={!isValid || isSaving}
+                        size="full-width"
                         loading={isSaving}
                     >
                         {submitButtonText || "Continue"}
