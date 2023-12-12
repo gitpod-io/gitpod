@@ -21,8 +21,10 @@ import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { URL } from "url";
 
 export class GitHubApiError extends Error {
+    readonly code: number;
     constructor(public readonly response: OctokitResponse<any>) {
         super(`GitHub API Error. Status: ${response.status}`);
+        this.code = response.status;
         this.name = "GitHubApiError";
     }
 }

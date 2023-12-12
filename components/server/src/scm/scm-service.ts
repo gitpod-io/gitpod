@@ -59,10 +59,20 @@ export class ScmService {
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
 
-        const repositoryService = hostContext?.services?.repositoryService;
+        if (!hostContext) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `SCM provider not found.`);
+        }
+
+        const repositoryService = hostContext.services?.repositoryService;
         if (repositoryService) {
-            log.info({ organizationId: teamId, userId: installer.id }, "Update prebuild installation for project.");
-            await repositoryService.installAutomatedPrebuilds(installer, cloneUrl);
+            const logPayload = { organizationId: teamId, installer: installer.id, cloneUrl: project.cloneUrl };
+            try {
+                await repositoryService.installAutomatedPrebuilds(installer, cloneUrl);
+                log.info("Webhook for prebuilds installed.", logPayload);
+            } catch (error) {
+                log.error("Failed to install webhook for prebuilds.", error, logPayload);
+                throw error;
+            }
         }
     }
 

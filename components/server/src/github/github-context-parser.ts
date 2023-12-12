@@ -22,6 +22,7 @@ import { IContextParser, IssueContexts, AbstractContextParser } from "../workspa
 import { GitHubScope } from "./scopes";
 import { GitHubTokenHelper } from "./github-token-helper";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { RepoURL } from "../repohost";
 
 @injectable()
 export class GithubContextParser extends AbstractContextParser implements IContextParser {
@@ -88,18 +89,14 @@ export class GithubContextParser extends AbstractContextParser implements IConte
         } catch (error) {
             if (error && error.code === 401) {
                 const token = await this.tokenHelper.getCurrentToken(user);
-                if (token) {
-                    const scopes = token.scopes;
-                    // most likely the token needs to be updated after revoking by user.
-                    throw UnauthorizedError.create(this.config.host, scopes, "http-unauthorized");
-                }
-                // todo@alex: this is very unlikely. is coercing it into a valid case helpful?
-                // here, GH API responded with a 401 code, and we are missing a token. OTOH, a missing token would not lead to a request.
-                throw UnauthorizedError.create(
-                    this.config.host,
-                    GitHubScope.Requirements.PUBLIC_REPO,
-                    "missing-identity",
-                );
+
+                throw UnauthorizedError.create({
+                    host: this.config.host,
+                    providerType: "GitHub",
+                    requiredScopes: GitHubScope.Requirements.PUBLIC_REPO,
+                    repoName: RepoURL.parseRepoUrl(contextUrl)?.repo,
+                    providerIsConnected: !!token,
+                });
             }
             throw error;
         } finally {

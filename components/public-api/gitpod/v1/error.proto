@@ -52,7 +52,10 @@ message RepositoryNotFoundError {
 
 message RepositoryUnauthorizedError {
   string host = 1;
-  repeated string scopes = 2;
+  repeated string required_scopes = 2;
+  string provider_type = 3;
+  string repo_name = 4;
+  bool provider_is_connected = 5;
 }
 
 message ImageBuildLogsNotYetAvailableError {}

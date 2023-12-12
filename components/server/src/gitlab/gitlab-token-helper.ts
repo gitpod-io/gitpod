@@ -39,7 +39,12 @@ export class GitLabTokenHelper {
         if (requiredScopes.length === 0) {
             requiredScopes = GitLabScope.Requirements.DEFAULT;
         }
-        throw UnauthorizedError.create(host, requiredScopes, "missing-identity");
+        throw UnauthorizedError.create({
+            host,
+            providerType: "GitLab",
+            requiredScopes: GitLabScope.Requirements.DEFAULT,
+            providerIsConnected: false,
+        });
     }
     protected containsScopes(token: Token, wantedScopes: string[] | undefined): boolean {
         const set = new Set(wantedScopes);
