@@ -569,12 +569,12 @@ export class RepositoryResourceGuard implements ResourceAccessGuard {
                 const identity = User.getIdentity(this.user, authProvider.authProviderId);
                 if (!identity) {
                     const providerType = authProvider.info.authProviderType;
-                    const scopes = getRequiredScopes({ type: providerType })?.default;
+                    const requiredScopes = getRequiredScopes({ type: providerType })?.default;
                     throw UnauthorizedError.create({
                         host: repoUrl.host,
                         repoName: repoUrl.repo,
                         providerType,
-                        scopes,
+                        requiredScopes,
                         providerIsConnected: false,
                     });
                 }

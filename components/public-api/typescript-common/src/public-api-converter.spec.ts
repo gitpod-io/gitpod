@@ -350,7 +350,7 @@ describe("PublicAPIConverter", () => {
             const connectError = converter.toError(
                 new UnauthorizedRepositoryAccessError({
                     host: "github.com",
-                    scopes: ["repo"],
+                    requiredScopes: ["repo"],
                     providerIsConnected: false,
                     providerType: "GitHub",
                     repoName: "rocket",
@@ -366,7 +366,7 @@ describe("PublicAPIConverter", () => {
 
             const data = toPlainMessage(details?.reason?.value as RepositoryUnauthorizedErrorData);
             expect(data.host).to.equal("github.com");
-            expect(data.scopes).to.deep.equal(["repo"]);
+            expect(data.requiredScopes).to.deep.equal(["repo"]);
 
             const appError = converter.fromError(connectError);
             expect(appError).to.be.instanceOf(UnauthorizedRepositoryAccessError);
@@ -375,7 +375,7 @@ describe("PublicAPIConverter", () => {
 
             const info = (appError as UnauthorizedRepositoryAccessError).info;
             expect(info.host).to.equal("github.com");
-            expect(info.scopes).to.deep.equal(["repo"]);
+            expect(info.requiredScopes).to.deep.equal(["repo"]);
             expect(info.providerIsConnected).to.equal(false);
             expect(info.providerType).to.equal("GitHub");
             expect(info.repoName).to.equal("rocket");

@@ -42,7 +42,7 @@ export class GitLabTokenHelper {
         throw UnauthorizedError.create({
             host,
             providerType: "GitLab",
-            scopes: GitLabScope.Requirements.DEFAULT,
+            requiredScopes: GitLabScope.Requirements.DEFAULT,
             providerIsConnected: false,
         });
     }

@@ -97,7 +97,7 @@ export class GitHubService extends RepositoryService {
                     host: parsedRepoUrl.host,
                     providerType: "GitHub",
                     repoName: parsedRepoUrl.repo,
-                    scopes: GitHubScope.Requirements.DEFAULT,
+                    requiredScopes: GitHubScope.Requirements.PRIVATE_REPO,
                     providerIsConnected: true,
                 });
             }

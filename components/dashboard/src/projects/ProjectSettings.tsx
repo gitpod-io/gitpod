@@ -9,7 +9,7 @@ import { useCallback, useContext, useState, Fragment, useMemo, useEffect } from 
 import { useHistory } from "react-router";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import { getGitpodService, gitpodHostUrl } from "../service/service";
+import { getGitpodService } from "../service/service";
 import { ProjectContext, useCurrentProject } from "./project-context";
 import { getProjectSettingsMenu, getProjectTabs } from "./projects.routes";
 import { Heading2, Subheading } from "../components/typography/headings";
@@ -26,6 +26,8 @@ import { Button } from "@podkit/buttons/Button";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { PartialMessage } from "@bufbuild/protobuf";
 import { RepositoryUnauthorizedError } from "@gitpod/public-api/lib/gitpod/v1/error_pb";
+import { openAuthorizeWindow } from "../provider-utils";
+import { LinkButton } from "../components/LinkButton";
 
 const MAX_PROJECT_NAME_LENGTH = 100;
 
@@ -91,6 +93,27 @@ export default function ProjectSettingsView() {
         [project, badProjectName, projectName, setProject, refreshProjects, toast],
     );
 
+    const authorizeWithProvider = useCallback(
+        async (host: string, scopes: string[]) => {
+            await openAuthorizeWindow({
+                host,
+                scopes,
+                onSuccess: async () => {},
+                onError: (payload) => {
+                    let errorMessage: string;
+                    if (typeof payload === "string") {
+                        errorMessage = payload;
+                    } else {
+                        errorMessage = payload.description ? payload.description : `Error: ${payload.error}`;
+                    }
+
+                    toast(errorMessage || `Oh no, there was a problem with ${host}.`);
+                },
+            });
+        },
+        [toast],
+    );
+
     const updateProjectSettings = useCallback(
         async (settings: ProjectSettings) => {
             if (!project) return;
@@ -105,33 +128,29 @@ export default function ProjectSettingsView() {
                 setProject({ ...project, settings: oldSettings });
 
                 if (newSettings.prebuilds?.enable && error?.code === ErrorCodes.NOT_AUTHENTICATED) {
-                    const { host, /*providerIsConnected, providerType,*/ repoName, scopes } =
+                    const { host, /*providerIsConnected, providerType,*/ repoName, requiredScopes } =
                         error?.data as PartialMessage<RepositoryUnauthorizedError>;
 
-                    const authorizeURL = gitpodHostUrl
-                        .withApi({
-                            pathname: "/authorize",
-                            search: `returnTo=${encodeURIComponent(
-                                window.location.toString(),
-                            )}&host=${host}&scopes=${scopes}`,
-                        })
-                        .toString();
                     toast(
                         <>
-                            <span>There was a problem enabling prebuilds on "${repoName}"</span>
+                            <span>There was a problem enabling prebuilds on "{repoName}"</span>
                             <div>
-                                <a className="gp-link whitespace-nowrap text-sm font-semibold" href={authorizeURL}>
+                                <LinkButton inverted onClick={() => authorizeWithProvider(host!, requiredScopes!)}>
                                     Grant access
-                                </a>
+                                </LinkButton>
                             </div>
                         </>,
+                        {
+                            autoHide: false,
+                            id: `toast--host-authorized--${host}`,
+                        },
                     );
                 } else {
                     toast(error?.message || "Oh no, there was a problem with updating project settings.");
                 }
             }
         },
-        [project, setProject, toast, projectName],
+        [project, setProject, toast, projectName, authorizeWithProvider],
     );
 
     const setPrebuildsEnabled = useCallback(

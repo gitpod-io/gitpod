@@ -34,7 +34,7 @@ export namespace UnauthorizedError {
         host: string;
         providerType: string;
         repoName?: string;
-        scopes?: string[];
+        requiredScopes?: string[];
         providerIsConnected?: boolean;
     }) {
         return new UnauthorizedRepositoryAccessError(props);

@@ -42,7 +42,7 @@ export class BitbucketTokenHelper {
         throw UnauthorizedError.create({
             host,
             providerType: "GitHub",
-            scopes: BitbucketOAuthScopes.Requirements.DEFAULT,
+            requiredScopes: BitbucketOAuthScopes.Requirements.DEFAULT,
             providerIsConnected: false,
         });
     }

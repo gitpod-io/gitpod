@@ -93,7 +93,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                 throw UnauthorizedError.create({
                     host: this.config.host,
                     providerType: "GitHub",
-                    scopes: GitHubScope.Requirements.DEFAULT,
+                    requiredScopes: GitHubScope.Requirements.PUBLIC_REPO,
                     repoName: RepoURL.parseRepoUrl(contextUrl)?.repo,
                     providerIsConnected: !!token,
                 });

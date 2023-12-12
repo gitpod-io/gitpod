@@ -73,7 +73,7 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
                 throw UnauthorizedError.create({
                     host: this.config.host,
                     providerType: "Gitlab",
-                    scopes: GitLabScope.Requirements.DEFAULT,
+                    requiredScopes: GitLabScope.Requirements.DEFAULT,
                     repoName: RepoURL.parseRepoUrl(contextUrl)?.repo,
                     providerIsConnected: !!token,
                 });

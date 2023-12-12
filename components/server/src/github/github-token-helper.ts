@@ -42,7 +42,7 @@ export class GitHubTokenHelper {
         throw UnauthorizedError.create({
             host,
             providerType: "GitHub",
-            scopes: GitHubScope.Requirements.DEFAULT,
+            requiredScopes: GitHubScope.Requirements.DEFAULT,
             providerIsConnected: false,
         });
     }

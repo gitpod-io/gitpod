@@ -88,7 +88,7 @@ export class GitlabService extends RepositoryService {
                     host: parsedRepoUrl.host,
                     providerType: "GitLab",
                     repoName: parsedRepoUrl.repo,
-                    scopes: GitLabScope.Requirements.DEFAULT,
+                    requiredScopes: GitLabScope.Requirements.REPO,
                     providerIsConnected: true,
                 });
             }

@@ -420,9 +420,9 @@ export class RepositoryUnauthorizedError extends Message<RepositoryUnauthorizedE
   host = "";
 
   /**
-   * @generated from field: repeated string scopes = 2;
+   * @generated from field: repeated string required_scopes = 2;
    */
-  scopes: string[] = [];
+  requiredScopes: string[] = [];
 
   /**
    * @generated from field: string provider_type = 3;
@@ -448,7 +448,7 @@ export class RepositoryUnauthorizedError extends Message<RepositoryUnauthorizedE
   static readonly typeName = "gitpod.v1.RepositoryUnauthorizedError";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "host", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "scopes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 2, name: "required_scopes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 3, name: "provider_type", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "repo_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "provider_is_connected", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
