@@ -30,7 +30,6 @@
         --gray-100: 245 244 244; /* #F5F4F4 */
         --gray-50: 249 249 249; /* #F9F9F9 */
 
-
         /* Content */
         --content-primary: var(--gray-900);
         --content-secondary: var(--gray-600);
@@ -71,7 +70,6 @@
         --border-base: var(--gray-700);
     }
 
-
     html,
     body {
         @apply h-full;
@@ -82,10 +80,6 @@
     body[style] {
         /* https://github.com/gitpod-io/gitpod/pull/18979#discussion_r1380773740 */
         margin: 0 auto !important;
-    }
-    /* TODO: Convert existing h4 to use our InputField w/ labels instead of h4, then drop these h4 styles */
-    h4 {
-        @apply pb-2 text-sm font-semibold text-gray-600 dark:text-gray-400;
     }
     p {
         @apply text-sm text-gray-400 dark:text-gray-600;
