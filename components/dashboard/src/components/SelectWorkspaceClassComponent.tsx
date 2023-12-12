@@ -39,6 +39,11 @@ export default function SelectWorkspaceClassComponent({
         if (!workspaceClasses) {
             return;
         }
+        if (workspaceClasses.length === 0) {
+            setError?.(
+                "Something unexpected has occurred, there's no allowed workspace class available in organization, please contact an admin.",
+            );
+        }
         // if the selected workspace class is not supported, we set an error and ask the user to pick one
         if (selectedWorkspaceClass && !workspaceClasses?.find((c) => c.id === selectedWorkspaceClass)) {
             setError?.(`The workspace class '${selectedWorkspaceClass}' is not supported.`);
