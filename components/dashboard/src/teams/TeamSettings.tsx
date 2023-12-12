@@ -34,6 +34,7 @@ import { LoadingState } from "@podkit/loading/LoadingState";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { ConfigurationSettingsField } from "../repositories/detail/ConfigurationSettingsField";
 import { SwitchInputField } from "@podkit/switch/Switch";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 export default function TeamSettingsPage() {
     const user = useCurrentUser();
@@ -45,6 +46,8 @@ export default function TeamSettingsPage() {
     const [teamName, setTeamName] = useState(org?.name || "");
     const [updated, setUpdated] = useState(false);
     const updateOrg = useUpdateOrgMutation();
+
+    const enableOrgWorkspaceClassRestrictions = useFeatureFlag("org_workspace_class_restrictions");
 
     const close = () => setModal(false);
 
@@ -203,12 +206,14 @@ export default function TeamSettingsPage() {
                         />
                     )}
 
-                    <ConfigurationSettingsField>
-                        <Heading3>Available Workspace Classes</Heading3>
-                        <Subheading>Limit the available workspace classes in your organization.</Subheading>
+                    {enableOrgWorkspaceClassRestrictions && (
+                        <ConfigurationSettingsField>
+                            <Heading3>Available Workspace Classes</Heading3>
+                            <Subheading>Limit the available workspace classes in your organization.</Subheading>
 
-                        {settings && <WorkspaceClassOptions disabled={!isOwner} settings={settings} />}
-                    </ConfigurationSettingsField>
+                            {settings && <WorkspaceClassOptions disabled={!isOwner} settings={settings} />}
+                        </ConfigurationSettingsField>
+                    )}
 
                     <ConfigurationSettingsField>
                         {user?.organizationId !== org?.id && isOwner && (
