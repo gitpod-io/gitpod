@@ -18,15 +18,10 @@ import { parseWorkspaceIdFromHostname } from "@gitpod/gitpod-protocol/lib/util/p
 import { SessionHandler } from "../session-handler";
 import { URL } from "url";
 import { getRequestingClientInfo } from "../express-util";
-import { GitpodToken, GitpodTokenType, User } from "@gitpod/gitpod-protocol";
+import { User } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { reportJWTCookieIssued } from "../prometheus-metrics";
-import {
-    FGAResourceAccessGuard,
-    OwnerResourceGuard,
-    ResourceAccessGuard,
-    ScopedResourceGuard,
-} from "../auth/resource-access";
+import { FGAResourceAccessGuard, OwnerResourceGuard, ResourceAccessGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from "../one-time-secret-server";
 import { ClientMetadata } from "../websocket/websocket-connection-manager";
 import * as fs from "fs/promises";
@@ -37,6 +32,8 @@ import { UserService } from "./user-service";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
+import { ApiAccessTokenV0, ApiTokenScope } from "../auth/api-token-v0";
+import { AuthJWT } from "../auth/jwt";
 
 export const ServerFactory = Symbol("ServerFactory");
 export type ServerFactory = () => GitpodServerImpl;
@@ -56,6 +53,7 @@ export class UserController {
     @inject(OneTimeSecretDB) protected readonly otsDb: OneTimeSecretDB;
     @inject(WorkspaceService) protected readonly workspaceService: WorkspaceService;
     @inject(ServerFactory) private readonly serverFactory: ServerFactory;
+    @inject(AuthJWT) private readonly authJWT: AuthJWT;
 
     get apiRouter(): express.Router {
         const router = express.Router();
@@ -464,32 +462,39 @@ export class UserController {
                         return;
                     }
 
-                    const token = crypto.randomBytes(30).toString("hex");
-                    const tokenHash = crypto.createHash("sha256").update(token, "utf8").digest("hex");
-                    const dbToken: GitpodToken = {
-                        tokenHash,
-                        name: `local-app`,
-                        type: GitpodTokenType.MACHINE_AUTH_TOKEN,
-                        userId: req.user.id,
-                        scopes: [
-                            "function:getWorkspaces",
-                            "function:listenForWorkspaceInstanceUpdates",
-                            "resource:" +
-                                ScopedResourceGuard.marshalResourceScope({
-                                    kind: "workspace",
-                                    subjectID: "*",
-                                    operations: ["get"],
-                                }),
-                            "resource:" +
-                                ScopedResourceGuard.marshalResourceScope({
-                                    kind: "workspaceInstance",
-                                    subjectID: "*",
-                                    operations: ["get"],
-                                }),
-                        ],
-                        created: new Date().toISOString(),
-                    };
-                    await this.userDb.storeGitpodToken(dbToken);
+                    // const token = crypto.randomBytes(30).toString("hex");
+                    // const tokenHash = crypto.createHash("sha256").update(token, "utf8").digest("hex");
+                    // const dbToken: GitpodToken = {
+                    //     tokenHash,
+                    //     name: `local-app`,
+                    //     type: GitpodTokenType.MACHINE_AUTH_TOKEN,
+                    //     userId: req.user.id,
+                    //     scopes: [
+                    //         "function:getWorkspaces",
+                    //         "function:listenForWorkspaceInstanceUpdates",
+                    //         "resource:" +
+                    //             ScopedResourceGuard.marshalResourceScope({
+                    //                 kind: "workspace",
+                    //                 subjectID: "*",
+                    //                 operations: ["get"],
+                    //             }),
+                    //         "resource:" +
+                    //             ScopedResourceGuard.marshalResourceScope({
+                    //                 kind: "workspaceInstance",
+                    //                 subjectID: "*",
+                    //                 operations: ["get"],
+                    //             }),
+                    //     ],
+                    //     created: new Date().toISOString(),
+                    // };
+                    // await this.userDb.storeGitpodToken(dbToken);
+                    const userId = req.user.id;
+                    const scopes: ApiTokenScope[] = [
+                        // TODO(gpl) SCOPES: workspace.readInfo enough?
+                        ApiTokenScope.workspaceOwner(userId),
+                    ];
+                    const tokenObj = ApiAccessTokenV0.create(scopes, userId);
+                    const token = await tokenObj.encode(this.authJWT);
 
                     const otsExpirationTime = new Date();
                     otsExpirationTime.setMinutes(otsExpirationTime.getMinutes() + 2);

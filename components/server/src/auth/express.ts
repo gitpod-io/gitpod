@@ -21,11 +21,19 @@ export function getAuthorizingSubjectId(req: express.Request): SubjectId | undef
     return req.user?.id ? SubjectId.fromUserId(req.user.id) : undefined;
 }
 
-export async function runWithReqSubjectId(req: express.Request, res: express.Response, next: express.NextFunction) {
-    const subjectId = getAuthorizingSubjectId(req);
-    if (!subjectId) {
+export function runWithReqSubjectId() {
+    return runWithReqSubjectIdOr((req, res, next) => {
         res.sendStatus(401);
-        return;
-    }
-    return await runWithSubjectId(subjectId, async () => next());
+    });
+}
+
+export function runWithReqSubjectIdOr(handler: express.RequestHandler) {
+    return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+        const subjectId = getAuthorizingSubjectId(req);
+        if (!subjectId) {
+            handler(req, res, next);
+            return;
+        }
+        return runWithSubjectId(subjectId, next);
+    };
 }

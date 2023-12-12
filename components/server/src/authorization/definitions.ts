@@ -62,7 +62,7 @@ export type UserPermission =
 
 export type Apitokenv0ResourceType = "apitokenv0";
 
-export type Apitokenv0Relation = "user_write" | "user_read";
+export type Apitokenv0Relation = "user_code_sync" | "user_write_env_var" | "user_read";
 
 export type InstallationResourceType = "installation";
 
@@ -220,10 +220,30 @@ export const rel = {
             },
         };
         return {
-            get user_write() {
+            get user_code_sync() {
                 const result2 = {
                     ...result,
-                    relation: "user_write",
+                    relation: "user_code_sync",
+                };
+                return {
+                    get anyUser() {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "user",
+                                    objectId: "*",
+                                },
+                            },
+                        } as v1.Relationship;
+                    },
+                };
+            },
+
+            get user_write_env_var() {
+                const result2 = {
+                    ...result,
+                    relation: "user_write_env_var",
                 };
                 return {
                     get anyUser() {
@@ -352,6 +372,17 @@ export const rel = {
                             subject: {
                                 object: {
                                     objectType: "user",
+                                    objectId: objectId,
+                                },
+                            },
+                        } as v1.Relationship;
+                    },
+                    apitokenv0(objectId: string) {
+                        return {
+                            ...result2,
+                            subject: {
+                                object: {
+                                    objectType: "apitokenv0",
                                     objectId: objectId,
                                 },
                             },

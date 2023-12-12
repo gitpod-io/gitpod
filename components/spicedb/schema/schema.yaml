@@ -14,7 +14,7 @@ schema: |-
 
     // permissions
     permission read_info = self + organization->member + organization->owner + installation->admin + apitoken->user_read
-    permission write_info = self + apitoken->user_write
+    permission write_info = self
     permission delete = self + organization->owner + installation->admin
 
     permission make_admin = installation->admin + organization->installation_admin
@@ -23,20 +23,20 @@ schema: |-
     permission admin_control = installation->admin + organization->installation_admin
 
     permission read_ssh = self + apitoken->user_read
-    permission write_ssh = self + apitoken->user_write
+    permission write_ssh = self
 
     permission read_tokens = self + apitoken->user_read
-    permission write_tokens = self + apitoken->user_write
+    permission write_tokens = self
 
     permission read_env_var = self + apitoken->user_read
-    permission write_env_var = self + apitoken->user_write
+    permission write_env_var = self + apitoken->user_write_env_var
 
-    permission code_sync = self
+    permission code_sync = self + apitoken->user_code_sync
   }
 
   definition apitokenv0 {
-    // TODO(gpl) This style limits the apitokens to be restricted to a single user only, but the alternatives look too complicated
-    relation user_write: user:*
+    relation user_code_sync: user:*
+    relation user_write_env_var: user:*
     relation user_read: user:*
   }
 
@@ -58,7 +58,7 @@ schema: |-
     relation installation: installation
 
     // Every user in an organization is automatically a member
-    relation member: user
+    relation member: user | apitokenv0
     // Some users in an organization may additionally have the `owner` role
     relation owner: user
     // users who can snapshot workspaces

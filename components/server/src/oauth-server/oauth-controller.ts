@@ -8,36 +8,44 @@ import { AuthCodeRepositoryDB } from "@gitpod/gitpod-db/lib/typeorm/auth-code-re
 import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
 import { User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { OAuthRequest, OAuthResponse } from "@jmondi/oauth2-server";
+import {
+    AuthorizationServer,
+    OAuthClient,
+    OAuthClientRepository,
+    OAuthRequest,
+    OAuthResponse,
+} from "@jmondi/oauth2-server";
 import { handleExpressResponse, handleExpressError } from "@jmondi/oauth2-server/dist/adapters/express";
 import express from "express";
 import { inject, injectable } from "inversify";
 import { URL } from "url";
 import { Config } from "../config";
-import { clientRepository, createAuthorizationServer } from "./oauth-authorization-server";
-import { inMemoryDatabase } from "./db";
+import { createAuthorizationServer } from "./oauth-authorization-server";
+import { inMemoryApiTokenDatabase, inMemoryDatabase } from "./db";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { ApiTokenRepository } from "./api-token-repository";
+import { runWithReqSubjectIdOr } from "../auth/express";
+import { ctxSubjectId, ctxUserId } from "../util/request-context";
+import { inMemoryClientRepository, inMemoryScopeRepository } from "./repository";
 
 @injectable()
 export class OAuthController {
-    @inject(Config) protected readonly config: Config;
-    @inject(UserDB) protected readonly userDb: UserDB;
-    @inject(AuthCodeRepositoryDB) protected readonly authCodeRepositoryDb: AuthCodeRepositoryDB;
+    constructor(
+        @inject(Config) private readonly config: Config,
+        @inject(UserDB) private readonly userDb: UserDB,
+        @inject(AuthCodeRepositoryDB) private readonly authCodeRepositoryDb: AuthCodeRepositoryDB,
+        @inject(ApiTokenRepository) private readonly apiTokenRepository: ApiTokenRepository,
+    ) {}
 
-    private getValidUser(req: express.Request, res: express.Response): User | null {
-        if (!req.isAuthenticated() || !User.is(req.user)) {
-            const returnToPath = encodeURIComponent(`api${req.originalUrl}`);
-            const redirectTo = `${this.config.hostUrl}login?returnToPath=${returnToPath}`;
-            res.redirect(redirectTo);
-            return null;
-        }
+    private getValidUser(req: express.Request, res: express.Response): User | undefined {
         const user = req.user as User;
         if (!user) {
             res.sendStatus(500);
-            return null;
+            return undefined;
         }
         if (user.blocked) {
             res.sendStatus(403);
-            return null;
+            return undefined;
         }
         return user;
     }
@@ -45,6 +53,7 @@ export class OAuthController {
     private async hasApproval(
         user: User,
         clientID: string,
+        clientRepository: OAuthClientRepository,
         req: express.Request,
         res: express.Response,
     ): Promise<boolean> {
@@ -121,13 +130,66 @@ export class OAuthController {
             log.warn("OAuth server disabled!");
             return router;
         }
+        router.use(
+            runWithReqSubjectIdOr((req, res, next) => {
+                const returnToPath = encodeURIComponent(`api${req.originalUrl}`);
+                const redirectTo = `${this.config.hostUrl}login?returnToPath=${returnToPath}`;
+                res.redirect(redirectTo);
+            }),
+            (req, res, next) => {
+                if (ctxSubjectId()?.kind !== "user") {
+                    res.sendStatus(401);
+                    return;
+                }
+            },
+        );
 
-        const authorizationServer = createAuthorizationServer(
+        const legacyScopeRepository = inMemoryScopeRepository(inMemoryDatabase);
+        const legacyClientRepository = inMemoryClientRepository(inMemoryDatabase);
+        const legacyAuthorizationServer = createAuthorizationServer(
             this.authCodeRepositoryDb,
+            legacyClientRepository,
             this.userDb,
+            legacyScopeRepository,
             this.userDb,
             this.config.oauthServer.jwtSecret,
         );
+        const apiTokenScopeRepository = inMemoryScopeRepository(inMemoryApiTokenDatabase);
+        const apiTokenClientRepository = inMemoryClientRepository(inMemoryApiTokenDatabase);
+        const apiTokenAuthorizationServer = createAuthorizationServer(
+            this.authCodeRepositoryDb,
+            apiTokenClientRepository,
+            this.userDb,
+            apiTokenScopeRepository,
+            this.apiTokenRepository,
+            this.config.oauthServer.jwtSecret,
+        );
+        async function getAuthorizationServer(userId: string): Promise<{
+            authorizationServer: AuthorizationServer;
+            clientRepository: OAuthClientRepository;
+            clients: { [key: string]: OAuthClient };
+        }> {
+            const apitokenv0Enabled = await getExperimentsClientForBackend().getValueAsync("apitokenv0_oauth", false, {
+                user: {
+                    id: userId,
+                },
+            });
+
+            if (apitokenv0Enabled) {
+                return {
+                    authorizationServer: apiTokenAuthorizationServer,
+                    clientRepository: apiTokenClientRepository,
+                    clients: inMemoryApiTokenDatabase.clients,
+                };
+            } else {
+                return {
+                    authorizationServer: legacyAuthorizationServer,
+                    clientRepository: legacyClientRepository,
+                    clients: inMemoryDatabase.clients,
+                };
+            }
+        }
+
         router.get("/oauth/authorize", async (req: express.Request, res: express.Response) => {
             const clientID = req.query.client_id;
             if (!clientID) {
@@ -141,8 +203,10 @@ export class OAuthController {
                 return;
             }
 
+            const { authorizationServer, clientRepository } = await getAuthorizationServer(ctxUserId());
+
             // Check for approval of this client
-            if (!(await this.hasApproval(user, clientID.toString(), req, res))) {
+            if (!(await this.hasApproval(user, clientID.toString(), clientRepository, req, res))) {
                 res.sendStatus(400);
                 return;
             }
@@ -175,6 +239,7 @@ export class OAuthController {
         router.post("/oauth/token", async (req: express.Request, res: express.Response) => {
             const response = new OAuthResponse(res);
             try {
+                const { authorizationServer } = await getAuthorizationServer(ctxUserId());
                 const oauthResponse = await authorizationServer.respondToAccessTokenRequest(req, response);
                 return handleExpressResponse(res, oauthResponse);
             } catch (e) {
@@ -193,8 +258,9 @@ export class OAuthController {
                 return res.sendStatus(400);
             }
 
-            const client = inMemoryDatabase.clients[clientId];
-            const scopes = client.scopes.map((s) => s.name);
+            const { clients } = await getAuthorizationServer(ctxUserId());
+            const clientScopes = clients[clientId].scopes;
+            const scopes = clientScopes.map((s) => s.name);
             return res.send(scopes);
         });
 

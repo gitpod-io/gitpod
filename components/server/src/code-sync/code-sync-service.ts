@@ -100,7 +100,7 @@ export class CodeSyncService {
             return next();
         });
         router.use(this.auth.restHandler); // expects Bearer token and authenticates req.user, throws otherwise
-        router.use(runWithReqSubjectId);
+        router.use(runWithReqSubjectId());
         router.use(async (req, res, next) => {
             const userId = getUserId(req);
             if (!userId) {

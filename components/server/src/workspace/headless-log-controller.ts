@@ -57,7 +57,7 @@ export class HeadlessLogController {
         const router = express.Router();
 
         router.use(this.auth.restHandlerOptionally);
-        router.use(runWithReqSubjectId);
+        router.use(runWithReqSubjectId());
         router.get("/:instanceId/:terminalId", [
             authenticateAndAuthorize,
             asyncHandler(async (req: express.Request, res: express.Response) => {
@@ -143,7 +143,7 @@ export class HeadlessLogController {
         const router = express.Router();
 
         router.use(this.auth.restHandlerOptionally);
-        router.use(runWithReqSubjectId);
+        router.use(runWithReqSubjectId());
         router.get("/:instanceId/:taskId", [
             authenticateAndAuthorize,
             asyncHandler(async (req: express.Request, res: express.Response) => {

@@ -12,47 +12,51 @@ import {
     OAuthScope,
     OAuthScopeRepository,
 } from "@jmondi/oauth2-server";
-import { inMemoryDatabase } from "./db";
+import { InMemory } from "./db";
 
 /**
  * Currently (2021-05-15) we only support 1 client and a fixed set of scopes so using in-memory here is acceptable.
  * This will change in time, in which case we can move to using the DB.
  */
-export const inMemoryClientRepository: OAuthClientRepository = {
-    async getByIdentifier(clientId: string): Promise<OAuthClient> {
-        return inMemoryDatabase.clients[clientId];
-    },
+export const inMemoryClientRepository = (db: InMemory): OAuthClientRepository => {
+    return {
+        async getByIdentifier(clientId: string): Promise<OAuthClient> {
+            return db.clients[clientId];
+        },
 
-    async isClientValid(grantType: GrantIdentifier, client: OAuthClient, clientSecret?: string): Promise<boolean> {
-        if (client.secret !== clientSecret) {
-            log.warn(`isClientValid: bad secret`);
-            return false;
-        }
+        async isClientValid(grantType: GrantIdentifier, client: OAuthClient, clientSecret?: string): Promise<boolean> {
+            if (client.secret !== clientSecret) {
+                log.warn(`isClientValid: bad secret`);
+                return false;
+            }
 
-        if (!client.allowedGrants.includes(grantType)) {
-            log.warn(`isClientValid: bad grant`);
-            return false;
-        }
+            if (!client.allowedGrants.includes(grantType)) {
+                log.warn(`isClientValid: bad grant`);
+                return false;
+            }
 
-        return true;
-    },
+            return true;
+        },
+    };
 };
 
-export const inMemoryScopeRepository: OAuthScopeRepository = {
-    async getAllByIdentifiers(scopeNames: string[]): Promise<OAuthScope[]> {
-        return Object.values(inMemoryDatabase.scopes).filter((scope) => scopeNames.includes(scope.name));
-    },
-    async finalize(
-        scopes: OAuthScope[],
-        identifier: GrantIdentifier,
-        client: OAuthClient,
-        user_id?: string,
-    ): Promise<OAuthScope[]> {
-        const clientScopes = client.scopes.map((s) => s.name);
-        if (scopes.every((s) => clientScopes.includes(s.name))) {
-            return scopes;
-        }
+export const inMemoryScopeRepository = (db: InMemory): OAuthScopeRepository => {
+    return {
+        async getAllByIdentifiers(scopeNames: string[]): Promise<OAuthScope[]> {
+            return Object.values(db.scopes).filter((scope) => scopeNames.includes(scope.name));
+        },
+        async finalize(
+            scopes: OAuthScope[],
+            identifier: GrantIdentifier,
+            client: OAuthClient,
+            user_id?: string,
+        ): Promise<OAuthScope[]> {
+            const clientScopes = client.scopes.map((s) => s.name);
+            if (scopes.every((s) => clientScopes.includes(s.name))) {
+                return scopes;
+            }
 
-        throw new Error("Requested scopes not allowed");
-    },
+            throw new Error("Requested scopes not allowed");
+        },
+    };
 };

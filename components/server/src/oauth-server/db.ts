@@ -5,21 +5,23 @@
  */
 
 import { OAuthClient, OAuthScope, OAuthToken } from "@jmondi/oauth2-server";
+import { ApiTokenScopePermission } from "../auth/api-token-v0";
 
 /**
  * Currently (2021-05-15) we only support 1 client and a fixed set of scopes so hard-coding here is acceptable.
  * This will change in time, in which case we can move to using the DB.
  */
 export interface InMemory {
-    clients: { [id: string]: OAuthClient };
+    clients: { [id: string]: ApiTokenOAuthClient };
     tokens: { [id: string]: OAuthToken };
     scopes: { [id: string]: OAuthScope };
 }
+type ApiTokenOAuthClient = OAuthClient & { tokenScopes: (OAuthScope & { name: ApiTokenScopePermission })[] };
 
 // Clients
 
 const localAppClientID = "gplctl-1.0";
-const localClient: OAuthClient = {
+const localClient: ApiTokenOAuthClient = {
     id: localAppClientID,
     secret: `${localAppClientID}-secret`,
     name: "Gitpod local control client",
@@ -34,10 +36,18 @@ const localClient: OAuthClient = {
         { name: "function:listenForWorkspaceInstanceUpdates" },
         { name: "resource:default" },
     ],
+    tokenScopes: [
+        {
+            name: "user_read",
+        },
+        {
+            name: "organization_member",
+        },
+    ],
 };
 
 const localCliClientID = "gitpod-cli";
-const localCli: OAuthClient = {
+const localCli: ApiTokenOAuthClient = {
     id: localCliClientID,
     secret: `${localCliClientID}-secret`,
     name: "Gitpod CLI",
@@ -67,9 +77,26 @@ const localCli: OAuthClient = {
         { name: "function:getIDEOptions" },
         { name: "resource:default" },
     ],
+    tokenScopes: [
+        {
+            name: "user_read",
+        },
+        {
+            name: "user_code_sync",
+        },
+        {
+            name: "user_write_env_var",
+        },
+        {
+            name: "workspace_owner",
+        },
+        {
+            name: "organization_member",
+        },
+    ],
 };
 
-const jetBrainsGateway: OAuthClient = {
+const jetBrainsGateway: ApiTokenOAuthClient = {
     id: "jetbrains-gateway-gitpod-plugin",
     name: "JetBrains Gateway Gitpod Plugin",
     // Set of valid redirect URIs
@@ -89,9 +116,17 @@ const jetBrainsGateway: OAuthClient = {
         { name: "function:listenForWorkspaceInstanceUpdates" },
         { name: "resource:default" },
     ],
+    tokenScopes: [
+        {
+            name: "user_read",
+        },
+        {
+            name: "organization_member",
+        },
+    ],
 };
 
-function createVSCodeClient(protocol: string, displayName: string): OAuthClient {
+function createVSCodeClient(protocol: string, displayName: string): ApiTokenOAuthClient {
     return {
         id: `${protocol}-gitpod`,
         name: `${displayName}: Gitpod extension`,
@@ -111,10 +146,27 @@ function createVSCodeClient(protocol: string, displayName: string): OAuthClient 
             { name: "function:deleteWorkspace" },
             { name: "resource:default" },
         ],
+        tokenScopes: [
+            {
+                name: "user_read",
+            },
+            {
+                name: "user_code_sync",
+            },
+            {
+                name: "user_write_env_var",
+            },
+            {
+                name: "workspace_owner",
+            },
+            {
+                name: "organization_member",
+            },
+        ],
     };
 }
 
-const desktopClient: OAuthClient = {
+const desktopClient: ApiTokenOAuthClient = {
     id: "gitpod-desktop",
     name: "Gitpod Desktop",
     redirectUris: ["gitpod://complete-auth"],
@@ -138,6 +190,23 @@ const desktopClient: OAuthClient = {
         { name: "function:getSupportedWorkspaceClasses" },
         { name: "function:getIDEOptions" },
         { name: "resource:default" },
+    ],
+    tokenScopes: [
+        {
+            name: "user_read",
+        },
+        {
+            name: "user_code_sync",
+        },
+        {
+            name: "user_write_env_var",
+        },
+        {
+            name: "workspace_owner",
+        },
+        {
+            name: "organization_member",
+        },
     ],
 };
 
@@ -165,5 +234,27 @@ for (const clientId in inMemoryDatabase.clients) {
     const client = inMemoryDatabase.clients[clientId];
     for (const scope of client.scopes) {
         inMemoryDatabase.scopes[scope.name] = scope;
+    }
+}
+
+export const inMemoryApiTokenDatabase: InMemory = {
+    clients: {
+        [localClient.id]: localClient,
+        [localCli.id]: localCli,
+        [jetBrainsGateway.id]: jetBrainsGateway,
+        [vscode.id]: vscode,
+        [vscodeInsiders.id]: vscodeInsiders,
+        [vscodium.id]: vscodium,
+        [cursor.id]: cursor,
+        [desktopClient.id]: desktopClient,
+    },
+    tokens: {},
+    scopes: {},
+};
+for (const clientId in inMemoryApiTokenDatabase.clients) {
+    const client = inMemoryApiTokenDatabase.clients[clientId];
+    client.scopes = client.tokenScopes; // replace with tokenScopes
+    for (const scope of client.scopes) {
+        inMemoryApiTokenDatabase.scopes[scope.name] = scope;
     }
 }

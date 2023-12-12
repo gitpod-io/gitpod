@@ -16,8 +16,10 @@ export type ApiTokenScope = {
 export type ApiTokenScopePermission = keyof typeof ApiTokenScopePermissions;
 const ApiTokenScopePermissions = {
     user_read: true,
-    user_write: true,
-    workspace: true,
+    user_code_sync: true,
+    user_write_env_var: true,
+    workspace_owner: true,
+    organization_member: true,
 };
 export namespace ApiTokenScope {
     const PERMISSION_SEPARATOR = ":";
@@ -28,16 +30,28 @@ export namespace ApiTokenScope {
             targetId: userId,
         };
     }
-    export function userWrite(userId: string): ApiTokenScope {
+    export function userCodeSync(userId: string): ApiTokenScope {
         return {
-            permission: "user_write",
+            permission: "user_code_sync",
+            targetId: userId,
+        };
+    }
+    export function userWriteEnvVar(userId: string): ApiTokenScope {
+        return {
+            permission: "user_write_env_var",
             targetId: userId,
         };
     }
     export function workspaceOwner(workspaceId: string): ApiTokenScope {
         return {
-            permission: "workspace",
+            permission: "workspace_owner",
             targetId: workspaceId,
+        };
+    }
+    export function organizationMember(organizationId: string): ApiTokenScope {
+        return {
+            permission: "organization_member",
+            targetId: organizationId,
         };
     }
     export function decode(encoded: string): ApiTokenScope {
@@ -73,8 +87,8 @@ export class ApiAccessTokenV0 {
         }
     }
 
-    public static create(scopes: ApiTokenScope[]): ApiAccessTokenV0 {
-        return new ApiAccessTokenV0(crypto.randomBytes(30).toString("hex"), scopes);
+    public static create(scopes: ApiTokenScope[], _userId?: string): ApiAccessTokenV0 {
+        return new ApiAccessTokenV0(crypto.randomBytes(30).toString("hex"), scopes, _userId);
     }
 
     public static validatePrefix(token: string): boolean {

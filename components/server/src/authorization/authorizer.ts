@@ -482,13 +482,20 @@ export class Authorizer {
                             set(rel.apitokenv0(tokenId).user_read.anyUser),
                             set(rel.user(s.targetId).apitoken.apitokenv0(tokenId)),
                         ];
-                    case "user_write":
+                    case "user_code_sync":
                         return [
-                            set(rel.apitokenv0(tokenId).user_write.anyUser),
+                            set(rel.apitokenv0(tokenId).user_code_sync.anyUser),
                             set(rel.user(s.targetId).apitoken.apitokenv0(tokenId)),
                         ];
-                    case "workspace":
+                    case "user_write_env_var":
+                        return [
+                            set(rel.apitokenv0(tokenId).user_write_env_var.anyUser),
+                            set(rel.user(s.targetId).apitoken.apitokenv0(tokenId)),
+                        ];
+                    case "workspace_owner":
                         return [set(rel.workspace(s.targetId).owner.apitokenv0(tokenId))];
+                    case "organization_member":
+                        return [set(rel.organization(s.targetId).member.apitokenv0(tokenId))];
                 }
             })
             .flat();
