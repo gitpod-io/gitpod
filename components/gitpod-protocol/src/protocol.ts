@@ -71,77 +71,6 @@ export namespace User {
         return user.identities.find((id) => id.authProviderId === authProviderId);
     }
 
-    /**
-     * Returns a primary email address of a user.
-     *
-     * For accounts owned by an organization, it returns the email of the most recently used SSO identity.
-     *
-     * For personal accounts, first it looks for a email stored by the user, and falls back to any of the Git provider identities.
-     *
-     * @param user
-     * @returns A primaryEmail, or undefined.
-     */
-    export function getPrimaryEmail(user: User): string | undefined {
-        // If the accounts is owned by an organization, use the email of the most recently
-        // used SSO identity.
-        if (User.isOrganizationOwned(user)) {
-            const compareTime = (a?: string, b?: string) => (a || "").localeCompare(b || "");
-            const recentlyUsedSSOIdentity = user.identities
-                .sort((a, b) => compareTime(a.lastSigninTime, b.lastSigninTime))
-                // optimistically pick the most recent one
-                .reverse()[0];
-            return recentlyUsedSSOIdentity?.primaryEmail;
-        }
-
-        // In case of a personal account, check for the email stored by the user.
-        if (!isOrganizationOwned(user) && user.additionalData?.profile?.emailAddress) {
-            return user.additionalData?.profile?.emailAddress;
-        }
-
-        // Otherwise pick any
-        // FIXME(at) this is still not correct, as it doesn't distinguish between
-        // sign-in providers and additional Git hosters.
-        const identities = user.identities.filter((i) => !!i.primaryEmail);
-        if (identities.length <= 0) {
-            return undefined;
-        }
-
-        return identities[0].primaryEmail || undefined;
-    }
-
-    export function getName(user: User): string | undefined {
-        const name = user.fullName || user.name;
-        if (name) {
-            return name;
-        }
-
-        for (const id of user.identities) {
-            if (id.authName !== "") {
-                return id.authName;
-            }
-        }
-        return undefined;
-    }
-
-    export function hasPreferredIde(user: User) {
-        return (
-            typeof user?.additionalData?.ideSettings?.defaultIde !== "undefined" ||
-            typeof user?.additionalData?.ideSettings?.useLatestVersion !== "undefined"
-        );
-    }
-
-    export function isOnboardingUser(user: User) {
-        if (isOrganizationOwned(user)) {
-            return false;
-        }
-        // If a user has already been onboarded
-        // Also, used to rule out "admin-user"
-        if (!!user.additionalData?.profile?.onboardedTimestamp) {
-            return false;
-        }
-        return !hasPreferredIde(user);
-    }
-
     export function isOrganizationOwned(user: User) {
         return !!user.organizationId;
     }
@@ -174,74 +103,6 @@ export namespace User {
             newIDESettings.useLatestVersion = useLatest;
         }
         user.additionalData.ideSettings = newIDESettings;
-    }
-
-    // TODO: make it more explicit that these field names are relied for our tracking purposes
-    // and decouple frontend from relying on them - instead use user.additionalData.profile object directly in FE
-    export function getProfile(user: User): Profile {
-        return {
-            name: User.getName(user!) || "",
-            email: User.getPrimaryEmail(user!) || "",
-            company: user?.additionalData?.profile?.companyName,
-            avatarURL: user?.avatarUrl,
-            jobRole: user?.additionalData?.profile?.jobRole,
-            jobRoleOther: user?.additionalData?.profile?.jobRoleOther,
-            explorationReasons: user?.additionalData?.profile?.explorationReasons,
-            signupGoals: user?.additionalData?.profile?.signupGoals,
-            signupGoalsOther: user?.additionalData?.profile?.signupGoalsOther,
-            companySize: user?.additionalData?.profile?.companySize,
-            onboardedTimestamp: user?.additionalData?.profile?.onboardedTimestamp,
-        };
-    }
-
-    export function setProfile(user: User, profile: Profile): User {
-        user.fullName = profile.name;
-        user.avatarUrl = profile.avatarURL;
-
-        if (!user.additionalData) {
-            user.additionalData = {};
-        }
-        if (!user.additionalData.profile) {
-            user.additionalData.profile = {};
-        }
-        user.additionalData.profile.emailAddress = profile.email;
-        user.additionalData.profile.companyName = profile.company;
-        user.additionalData.profile.lastUpdatedDetailsNudge = new Date().toISOString();
-
-        return user;
-    }
-
-    // TODO: refactor where this is referenced so it's more clearly tied to just analytics-tracking
-    // Let other places rely on the ProfileDetails type since that's what we store
-    // This is the profile data we send to our Segment analytics tracking pipeline
-    export interface Profile {
-        name: string;
-        email: string;
-        company?: string;
-        avatarURL?: string;
-        jobRole?: string;
-        jobRoleOther?: string;
-        explorationReasons?: string[];
-        signupGoals?: string[];
-        signupGoalsOther?: string;
-        onboardedTimestamp?: string;
-        companySize?: string;
-    }
-    export namespace Profile {
-        export function hasChanges(before: Profile, after: Profile) {
-            return (
-                before.name !== after.name ||
-                before.email !== after.email ||
-                before.company !== after.company ||
-                before.avatarURL !== after.avatarURL ||
-                before.jobRole !== after.jobRole ||
-                before.jobRoleOther !== after.jobRoleOther ||
-                // not checking explorationReasons or signupGoals atm as it's an array - need to check deep equality
-                before.signupGoalsOther !== after.signupGoalsOther ||
-                before.onboardedTimestamp !== after.onboardedTimestamp ||
-                before.companySize !== after.companySize
-            );
-        }
     }
 }
 
@@ -278,7 +139,7 @@ export interface AdditionalUserData extends Partial<WorkspaceTimeoutSetting> {
     workspaceAutostartOptions?: WorkspaceAutostartOption[];
 }
 
-interface WorkspaceAutostartOption {
+export interface WorkspaceAutostartOption {
     cloneURL: string;
     organizationId: string;
     workspaceClass?: string;
@@ -388,6 +249,7 @@ export const WorkspaceFeatureFlags = {
     workspace_class_limiting: undefined,
     workspace_connection_limiting: undefined,
     workspace_psi: undefined,
+    ssh_ca: undefined,
 };
 export type NamedWorkspaceFeatureFlag = keyof typeof WorkspaceFeatureFlags;
 export namespace NamedWorkspaceFeatureFlag {
@@ -1450,12 +1312,6 @@ export interface CommitInfo {
     authorDate?: string;
 }
 
-export namespace Repository {
-    export function fullRepoName(repo: Repository): string {
-        return `${repo.host}/${repo.owner}/${repo.name}`;
-    }
-}
-
 export interface WorkspaceInstancePortsChangedEvent {
     type: "PortsChanged";
     instanceID: string;
@@ -1498,17 +1354,6 @@ export namespace WorkspaceCreationResult {
                 "runningPrebuildWorkspaceID" in data)
         );
     }
-}
-
-export interface UserMessage {
-    readonly id: string;
-    readonly title?: string;
-    /**
-     * date from where on this message should be shown
-     */
-    readonly from?: string;
-    readonly content?: string;
-    readonly url?: string;
 }
 
 export interface AuthProviderInfo {

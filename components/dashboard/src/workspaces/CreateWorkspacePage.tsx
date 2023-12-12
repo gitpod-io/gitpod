@@ -4,16 +4,16 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AdditionalUserData, CommitContext, SuggestedRepository, WithReferrerContext } from "@gitpod/gitpod-protocol";
+import { SuggestedRepository } from "@gitpod/gitpod-protocol";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { FC, FunctionComponent, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useHistory, useLocation } from "react-router";
 import Alert from "../components/Alert";
 import { AuthorizeGit, useNeedsGitAuthorization } from "../components/AuthorizeGit";
 import { LinkButton } from "../components/LinkButton";
-import Modal from "../components/Modal";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import RepositoryFinder from "../components/RepositoryFinder";
 import SelectIDEComponent from "../components/SelectIDEComponent";
 import SelectWorkspaceClassComponent from "../components/SelectWorkspaceClassComponent";
@@ -28,7 +28,7 @@ import { useListWorkspacesQuery } from "../data/workspaces/list-workspaces-query
 import { useWorkspaceContext } from "../data/workspaces/resolve-context-query";
 import { useDirtyState } from "../hooks/use-dirty-state";
 import { openAuthorizeWindow } from "../provider-utils";
-import { getGitpodService, gitpodHostUrl } from "../service/service";
+import { gitpodHostUrl } from "../service/service";
 import { StartWorkspaceError } from "../start/StartPage";
 import { VerifyModal } from "../start/VerifyModal";
 import { StartWorkspaceOptions } from "../start/start-workspace-options";
@@ -45,9 +45,14 @@ import { Button } from "@podkit/buttons/Button";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { CreateAndStartWorkspaceRequest } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { PartialMessage } from "@bufbuild/protobuf";
+import { User_WorkspaceAutostartOption } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
+import { EditorReference } from "@gitpod/public-api/lib/gitpod/v1/editor_pb";
+import { converter } from "../service/public-api";
+import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
+    const updateUser = useUpdateCurrentUserMutation();
     const currentOrg = useCurrentOrg().data;
     const projects = useListAllProjectsQuery();
     const workspaces = useListWorkspacesQuery({ limit: 50 });
@@ -60,12 +65,10 @@ export function CreateWorkspacePage() {
     const defaultLatestIde =
         props.ideSettings?.useLatestVersion !== undefined
             ? props.ideSettings.useLatestVersion
-            : !!user?.additionalData?.ideSettings?.useLatestVersion;
+            : user?.editorSettings?.version === "latest";
     const [useLatestIde, setUseLatestIde] = useState(defaultLatestIde);
     const defaultIde =
-        props.ideSettings?.defaultIde !== undefined
-            ? props.ideSettings.defaultIde
-            : user?.additionalData?.ideSettings?.defaultIde;
+        props.ideSettings?.defaultIde !== undefined ? props.ideSettings.defaultIde : user?.editorSettings?.name;
     const [selectedIde, setSelectedIde, selectedIdeIsDirty] = useDirtyState(defaultIde);
     const defaultWorkspaceClass = props.workspaceClass;
     const [selectedWsClass, setSelectedWsClass, selectedWsClassIsDirty] = useDirtyState(defaultWorkspaceClass);
@@ -85,48 +88,50 @@ export function CreateWorkspacePage() {
         if (!workspaceContext.data || !user || !currentOrg) {
             return;
         }
-        const cloneURL = CommitContext.is(workspaceContext.data) && workspaceContext.data.repository.cloneUrl;
+        const cloneURL = workspaceContext.data.cloneUrl;
         if (!cloneURL) {
             return;
         }
-        let workspaceAutoStartOptions = (user.additionalData?.workspaceAutostartOptions || []).filter(
-            (e) => !(e.cloneURL === cloneURL && e.organizationId === currentOrg.id),
+        let workspaceAutoStartOptions = (user.workspaceAutostartOptions || []).filter(
+            (e) => !(e.cloneUrl === cloneURL && e.organizationId === currentOrg.id),
         );
 
         // we only keep the last 40 options
         workspaceAutoStartOptions = workspaceAutoStartOptions.slice(-40);
 
         // remember options
-        workspaceAutoStartOptions.push({
-            cloneURL,
-            organizationId: currentOrg.id,
-            ideSettings: {
-                defaultIde: selectedIde,
-                useLatestVersion: useLatestIde,
+        workspaceAutoStartOptions.push(
+            new User_WorkspaceAutostartOption({
+                cloneUrl: cloneURL,
+                organizationId: currentOrg.id,
+                workspaceClass: selectedWsClass,
+                editorSettings: new EditorReference({
+                    name: selectedIde,
+                    version: useLatestIde ? "latest" : "stable",
+                }),
+            }),
+        );
+        const updatedUser = await updateUser.mutateAsync({
+            additionalData: {
+                workspaceAutostartOptions: workspaceAutoStartOptions.map((o) =>
+                    converter.fromWorkspaceAutostartOption(o),
+                ),
             },
-            workspaceClass: selectedWsClass,
         });
-        AdditionalUserData.set(user, {
-            workspaceAutostartOptions: workspaceAutoStartOptions,
-        });
-        setUser(user);
-        await getGitpodService().server.updateLoggedInUser(user);
-    }, [currentOrg, selectedIde, selectedWsClass, setUser, useLatestIde, user, workspaceContext.data]);
+        setUser(updatedUser);
+    }, [updateUser, currentOrg, selectedIde, selectedWsClass, setUser, useLatestIde, user, workspaceContext.data]);
 
     // see if we have a matching project based on context url and project's repo url
     const project = useMemo(() => {
         if (!workspaceContext.data || !projects.data) {
             return undefined;
         }
-        if ("repository" in workspaceContext.data) {
-            const cloneUrl = (workspaceContext.data as CommitContext)?.repository?.cloneUrl;
-            if (!cloneUrl) {
-                return;
-            }
-
-            // TODO: Account for multiple projects w/ the same cloneUrl
-            return projects.data.projects.find((p) => p.cloneUrl === cloneUrl);
+        const cloneUrl = workspaceContext.data.cloneUrl;
+        if (!cloneUrl) {
+            return;
         }
+        // TODO: Account for multiple projects w/ the same cloneUrl
+        return projects.data.projects.find((p) => p.cloneUrl === cloneUrl);
     }, [projects.data, workspaceContext.data]);
 
     // Handle the case where the context url in the hash matches a project and we don't have that project selected yet
@@ -161,14 +166,14 @@ export function CreateWorkspacePage() {
     const [errorIde, setErrorIde] = useState<string | undefined>(undefined);
 
     const existingWorkspaces = useMemo(() => {
-        if (!workspaces.data) {
+        if (!workspaces.data || !workspaceContext.data) {
             return [];
         }
         return workspaces.data.filter(
             (ws) =>
                 ws.status?.phase?.name === WorkspacePhase_Phase.RUNNING &&
-                CommitContext.is(workspaceContext.data) &&
-                ws.status.gitStatus?.cloneUrl === workspaceContext.data?.repository.cloneUrl &&
+                workspaceContext.data &&
+                ws.status.gitStatus?.cloneUrl === workspaceContext.data.cloneUrl &&
                 ws.status?.gitStatus?.latestCommit === workspaceContext.data.revision,
         );
     }, [workspaces.data, workspaceContext.data]);
@@ -198,7 +203,11 @@ export function CreateWorkspacePage() {
             }
 
             // if user received an INVALID_GITPOD_YML yml for their contextURL they can choose to proceed using default configuration
-            if (workspaceContext.error?.code === ErrorCodes.INVALID_GITPOD_YML) {
+            if (
+                workspaceContext.error &&
+                ApplicationError.hasErrorCode(workspaceContext.error) &&
+                workspaceContext.error.code === ErrorCodes.INVALID_GITPOD_YML
+            ) {
                 opts.forceDefaultConfig = true;
             }
 
@@ -248,7 +257,7 @@ export function CreateWorkspacePage() {
             }
         },
         [
-            workspaceContext.error?.code,
+            workspaceContext.error,
             contextURL,
             currentOrg?.id,
             selectedWsClass,
@@ -275,17 +284,17 @@ export function CreateWorkspacePage() {
         if (!workspaceContext.data || !user || !currentOrg) {
             return;
         }
-        const cloneURL = CommitContext.is(workspaceContext.data) && workspaceContext.data.repository.cloneUrl;
+        const cloneURL = workspaceContext.data.cloneUrl;
         if (!cloneURL) {
             return undefined;
         }
-        const rememberedOptions = (user?.additionalData?.workspaceAutostartOptions || []).find(
-            (e) => e.cloneURL === cloneURL && e.organizationId === currentOrg?.id,
+        const rememberedOptions = (user?.workspaceAutostartOptions || []).find(
+            (e) => e.cloneUrl === cloneURL && e.organizationId === currentOrg?.id,
         );
         if (rememberedOptions) {
             if (!selectedIdeIsDirty) {
-                setSelectedIde(rememberedOptions.ideSettings?.defaultIde, false);
-                setUseLatestIde(!!rememberedOptions.ideSettings?.useLatestVersion);
+                setSelectedIde(rememberedOptions.editorSettings?.name, false);
+                setUseLatestIde(rememberedOptions.editorSettings?.version === "latest");
             }
 
             if (!selectedWsClassIsDirty) {
@@ -312,9 +321,9 @@ export function CreateWorkspacePage() {
 
     // if the context URL has a referrer prefix, we set the referrerIde as the selected IDE and autostart the workspace.
     useEffect(() => {
-        if (workspaceContext.data && WithReferrerContext.is(workspaceContext.data)) {
-            if (workspaceContext.data.referrerIde && !selectedIdeIsDirty) {
-                setSelectedIde(workspaceContext.data.referrerIde, false);
+        if (workspaceContext.data && workspaceContext.data.refererIDE) {
+            if (!selectedIdeIsDirty) {
+                setSelectedIde(workspaceContext.data.refererIDE, false);
             }
             setAutostart(true);
         }
@@ -343,7 +352,11 @@ export function CreateWorkspacePage() {
         if (workspaceContext.error) {
             // For INVALID_GITPOD_YML we don't want to disable the button
             // The user see a warning that their file is invalid, but they can continue and it will be ignored
-            if (workspaceContext.error.code === ErrorCodes.INVALID_GITPOD_YML) {
+            if (
+                workspaceContext.error &&
+                ApplicationError.hasErrorCode(workspaceContext.error) &&
+                workspaceContext.error.code === ErrorCodes.INVALID_GITPOD_YML
+            ) {
                 return false;
             }
             return true;
@@ -664,21 +677,21 @@ export function LimitReachedModal(p: { children: React.ReactNode }) {
     return (
         // TODO: Use title and buttons props
         <Modal visible={true} closeable={false} onClose={() => {}}>
-            <h3 className="flex">
-                <span className="flex-grow">Limit Reached</span>
-                <img className="rounded-full w-8 h-8" src={user?.avatarUrl || ""} alt={user?.name || "Anonymous"} />
-            </h3>
-            <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
-                {p.children}
-            </div>
-            <div className="flex justify-end mt-6">
+            <ModalHeader>
+                <div className="flex">
+                    <span className="flex-grow">Limit Reached</span>
+                    <img className="rounded-full w-8 h-8" src={user?.avatarUrl || ""} alt={user?.name || "Anonymous"} />
+                </div>
+            </ModalHeader>
+            <ModalBody>{p.children}</ModalBody>
+            <ModalFooter>
                 <a href={gitpodHostUrl.asDashboard().toString()}>
                     <Button variant="secondary">Go to Dashboard</Button>
                 </a>
                 <a href={gitpodHostUrl.with({ pathname: "plans" }).toString()} className="ml-2">
                     <Button>Upgrade</Button>
                 </a>
-            </div>
+            </ModalFooter>
         </Modal>
     );
 }

@@ -28,11 +28,12 @@ import * as VerificationClasses from "@gitpod/public-api/lib/gitpod/v1/verificat
 import * as InstallationClasses from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
 import * as SCMClasses from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import * as SSHClasses from "@gitpod/public-api/lib/gitpod/v1/ssh_pb";
+import * as UserClasses from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 
 // This is used to version the cache
 // If data we cache changes in a non-backwards compatible way, increment this version
 // That will bust any previous cache versions a client may have stored
-const CACHE_VERSION = "14";
+const CACHE_VERSION = "20";
 
 export function noPersistence(queryKey: QueryKey): QueryKey {
     return [...queryKey, "no-persistence"];
@@ -158,6 +159,7 @@ function initializeMessages() {
         ...Object.values(InstallationClasses),
         ...Object.values(SCMClasses),
         ...Object.values(SSHClasses),
+        ...Object.values(UserClasses),
     ];
     for (const c of constr) {
         if ((c as any).prototype instanceof Message) {

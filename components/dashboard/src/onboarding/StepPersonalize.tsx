@@ -4,20 +4,20 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useState } from "react";
 import SelectIDEComponent from "../components/SelectIDEComponent";
 import { ThemeSelector } from "../components/ThemeSelector";
 import { Heading2, Subheading } from "../components/typography/headings";
 import { OnboardingStep } from "./OnboardingStep";
+import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 
 type Props = {
     user: User;
     onComplete(ide: string, useLatest: boolean): void;
 };
 export const StepPersonalize: FC<Props> = ({ user, onComplete }) => {
-    const [ide, setIDE] = useState(user?.additionalData?.ideSettings?.defaultIde || "code");
-    const [useLatest, setUseLatest] = useState(user?.additionalData?.ideSettings?.useLatestVersion ?? false);
+    const [ide, setIDE] = useState(user?.editorSettings?.name || "code");
+    const [useLatest, setUseLatest] = useState(user?.editorSettings?.version === "latest");
 
     // This step doesn't save the ide selection yet (happens at the end), just passes them along
     const handleSubmitted = useCallback(() => {

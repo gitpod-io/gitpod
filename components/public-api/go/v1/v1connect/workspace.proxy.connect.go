@@ -69,6 +69,36 @@ func (s *ProxyWorkspaceServiceHandler) UpdateWorkspace(ctx context.Context, req 
 	return connect_go.NewResponse(resp), nil
 }
 
+func (s *ProxyWorkspaceServiceHandler) StopWorkspace(ctx context.Context, req *connect_go.Request[v1.StopWorkspaceRequest]) (*connect_go.Response[v1.StopWorkspaceResponse], error) {
+	resp, err := s.Client.StopWorkspace(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
+func (s *ProxyWorkspaceServiceHandler) DeleteWorkspace(ctx context.Context, req *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error) {
+	resp, err := s.Client.DeleteWorkspace(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
+func (s *ProxyWorkspaceServiceHandler) ListWorkspaceClasses(ctx context.Context, req *connect_go.Request[v1.ListWorkspaceClassesRequest]) (*connect_go.Response[v1.ListWorkspaceClassesResponse], error) {
+	resp, err := s.Client.ListWorkspaceClasses(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
 func (s *ProxyWorkspaceServiceHandler) ParseContextURL(ctx context.Context, req *connect_go.Request[v1.ParseContextURLRequest]) (*connect_go.Response[v1.ParseContextURLResponse], error) {
 	resp, err := s.Client.ParseContextURL(ctx, req.Msg)
 	if err != nil {
@@ -111,6 +141,36 @@ func (s *ProxyWorkspaceServiceHandler) GetWorkspaceOwnerToken(ctx context.Contex
 
 func (s *ProxyWorkspaceServiceHandler) GetWorkspaceEditorCredentials(ctx context.Context, req *connect_go.Request[v1.GetWorkspaceEditorCredentialsRequest]) (*connect_go.Response[v1.GetWorkspaceEditorCredentialsResponse], error) {
 	resp, err := s.Client.GetWorkspaceEditorCredentials(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
+func (s *ProxyWorkspaceServiceHandler) CreateWorkspaceSnapshot(ctx context.Context, req *connect_go.Request[v1.CreateWorkspaceSnapshotRequest]) (*connect_go.Response[v1.CreateWorkspaceSnapshotResponse], error) {
+	resp, err := s.Client.CreateWorkspaceSnapshot(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
+func (s *ProxyWorkspaceServiceHandler) WaitForWorkspaceSnapshot(ctx context.Context, req *connect_go.Request[v1.WaitForWorkspaceSnapshotRequest]) (*connect_go.Response[v1.WaitForWorkspaceSnapshotResponse], error) {
+	resp, err := s.Client.WaitForWorkspaceSnapshot(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
+func (s *ProxyWorkspaceServiceHandler) UpdateWorkspacePort(ctx context.Context, req *connect_go.Request[v1.UpdateWorkspacePortRequest]) (*connect_go.Response[v1.UpdateWorkspacePortResponse], error) {
+	resp, err := s.Client.UpdateWorkspacePort(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err

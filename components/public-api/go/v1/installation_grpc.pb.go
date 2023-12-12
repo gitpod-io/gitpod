@@ -26,6 +26,9 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type InstallationServiceClient interface {
+	// GetInstallationWorkspaceDefaultImage returns the default image for current
+	// Gitpod Installation.
+	GetInstallationWorkspaceDefaultImage(ctx context.Context, in *GetInstallationWorkspaceDefaultImageRequest, opts ...grpc.CallOption) (*GetInstallationWorkspaceDefaultImageResponse, error)
 	// ListBlockedRepositories lists blocked repositories.
 	ListBlockedRepositories(ctx context.Context, in *ListBlockedRepositoriesRequest, opts ...grpc.CallOption) (*ListBlockedRepositoriesResponse, error)
 	// CreateBlockedRepository creates a new blocked repository.
@@ -36,6 +39,8 @@ type InstallationServiceClient interface {
 	ListBlockedEmailDomains(ctx context.Context, in *ListBlockedEmailDomainsRequest, opts ...grpc.CallOption) (*ListBlockedEmailDomainsResponse, error)
 	// CreateBlockedEmailDomain creates a new blocked email domain.
 	CreateBlockedEmailDomain(ctx context.Context, in *CreateBlockedEmailDomainRequest, opts ...grpc.CallOption) (*CreateBlockedEmailDomainResponse, error)
+	// GetOnboardingState returns the onboarding state of the installation.
+	GetOnboardingState(ctx context.Context, in *GetOnboardingStateRequest, opts ...grpc.CallOption) (*GetOnboardingStateResponse, error)
 }
 
 type installationServiceClient struct {
@@ -44,6 +49,15 @@ type installationServiceClient struct {
 
 func NewInstallationServiceClient(cc grpc.ClientConnInterface) InstallationServiceClient {
 	return &installationServiceClient{cc}
+}
+
+func (c *installationServiceClient) GetInstallationWorkspaceDefaultImage(ctx context.Context, in *GetInstallationWorkspaceDefaultImageRequest, opts ...grpc.CallOption) (*GetInstallationWorkspaceDefaultImageResponse, error) {
+	out := new(GetInstallationWorkspaceDefaultImageResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.InstallationService/GetInstallationWorkspaceDefaultImage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *installationServiceClient) ListBlockedRepositories(ctx context.Context, in *ListBlockedRepositoriesRequest, opts ...grpc.CallOption) (*ListBlockedRepositoriesResponse, error) {
@@ -91,10 +105,22 @@ func (c *installationServiceClient) CreateBlockedEmailDomain(ctx context.Context
 	return out, nil
 }
 
+func (c *installationServiceClient) GetOnboardingState(ctx context.Context, in *GetOnboardingStateRequest, opts ...grpc.CallOption) (*GetOnboardingStateResponse, error) {
+	out := new(GetOnboardingStateResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.InstallationService/GetOnboardingState", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InstallationServiceServer is the server API for InstallationService service.
 // All implementations must embed UnimplementedInstallationServiceServer
 // for forward compatibility
 type InstallationServiceServer interface {
+	// GetInstallationWorkspaceDefaultImage returns the default image for current
+	// Gitpod Installation.
+	GetInstallationWorkspaceDefaultImage(context.Context, *GetInstallationWorkspaceDefaultImageRequest) (*GetInstallationWorkspaceDefaultImageResponse, error)
 	// ListBlockedRepositories lists blocked repositories.
 	ListBlockedRepositories(context.Context, *ListBlockedRepositoriesRequest) (*ListBlockedRepositoriesResponse, error)
 	// CreateBlockedRepository creates a new blocked repository.
@@ -105,6 +131,8 @@ type InstallationServiceServer interface {
 	ListBlockedEmailDomains(context.Context, *ListBlockedEmailDomainsRequest) (*ListBlockedEmailDomainsResponse, error)
 	// CreateBlockedEmailDomain creates a new blocked email domain.
 	CreateBlockedEmailDomain(context.Context, *CreateBlockedEmailDomainRequest) (*CreateBlockedEmailDomainResponse, error)
+	// GetOnboardingState returns the onboarding state of the installation.
+	GetOnboardingState(context.Context, *GetOnboardingStateRequest) (*GetOnboardingStateResponse, error)
 	mustEmbedUnimplementedInstallationServiceServer()
 }
 
@@ -112,6 +140,9 @@ type InstallationServiceServer interface {
 type UnimplementedInstallationServiceServer struct {
 }
 
+func (UnimplementedInstallationServiceServer) GetInstallationWorkspaceDefaultImage(context.Context, *GetInstallationWorkspaceDefaultImageRequest) (*GetInstallationWorkspaceDefaultImageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetInstallationWorkspaceDefaultImage not implemented")
+}
 func (UnimplementedInstallationServiceServer) ListBlockedRepositories(context.Context, *ListBlockedRepositoriesRequest) (*ListBlockedRepositoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListBlockedRepositories not implemented")
 }
@@ -127,6 +158,9 @@ func (UnimplementedInstallationServiceServer) ListBlockedEmailDomains(context.Co
 func (UnimplementedInstallationServiceServer) CreateBlockedEmailDomain(context.Context, *CreateBlockedEmailDomainRequest) (*CreateBlockedEmailDomainResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateBlockedEmailDomain not implemented")
 }
+func (UnimplementedInstallationServiceServer) GetOnboardingState(context.Context, *GetOnboardingStateRequest) (*GetOnboardingStateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOnboardingState not implemented")
+}
 func (UnimplementedInstallationServiceServer) mustEmbedUnimplementedInstallationServiceServer() {}
 
 // UnsafeInstallationServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -138,6 +172,24 @@ type UnsafeInstallationServiceServer interface {
 
 func RegisterInstallationServiceServer(s grpc.ServiceRegistrar, srv InstallationServiceServer) {
 	s.RegisterService(&InstallationService_ServiceDesc, srv)
+}
+
+func _InstallationService_GetInstallationWorkspaceDefaultImage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetInstallationWorkspaceDefaultImageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InstallationServiceServer).GetInstallationWorkspaceDefaultImage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.InstallationService/GetInstallationWorkspaceDefaultImage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InstallationServiceServer).GetInstallationWorkspaceDefaultImage(ctx, req.(*GetInstallationWorkspaceDefaultImageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _InstallationService_ListBlockedRepositories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -230,6 +282,24 @@ func _InstallationService_CreateBlockedEmailDomain_Handler(srv interface{}, ctx 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InstallationService_GetOnboardingState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOnboardingStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InstallationServiceServer).GetOnboardingState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.InstallationService/GetOnboardingState",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InstallationServiceServer).GetOnboardingState(ctx, req.(*GetOnboardingStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // InstallationService_ServiceDesc is the grpc.ServiceDesc for InstallationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -237,6 +307,10 @@ var InstallationService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "gitpod.v1.InstallationService",
 	HandlerType: (*InstallationServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetInstallationWorkspaceDefaultImage",
+			Handler:    _InstallationService_GetInstallationWorkspaceDefaultImage_Handler,
+		},
 		{
 			MethodName: "ListBlockedRepositories",
 			Handler:    _InstallationService_ListBlockedRepositories_Handler,
@@ -256,6 +330,10 @@ var InstallationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateBlockedEmailDomain",
 			Handler:    _InstallationService_CreateBlockedEmailDomain_Handler,
+		},
+		{
+			MethodName: "GetOnboardingState",
+			Handler:    _InstallationService_GetOnboardingState_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

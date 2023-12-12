@@ -143,3 +143,19 @@ export function toHeaders(headers: IncomingHttpHeaders): Headers {
     }
     return result;
 }
+
+export interface ClientHeaderFields {
+    ip?: string;
+    userAgent?: string;
+    dnt?: string;
+    clientRegion?: string;
+}
+
+export function toClientHeaderFields(expressReq: express.Request): ClientHeaderFields {
+    return {
+        ip: clientIp(expressReq),
+        userAgent: expressReq.headers["user-agent"],
+        dnt: takeFirst(expressReq.headers.dnt),
+        clientRegion: takeFirst(expressReq.headers["x-glb-client-region"]),
+    };
+}

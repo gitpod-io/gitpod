@@ -19,7 +19,7 @@ import { getGitpodService, gitpodHostUrl, getIDEFrontendService, IDEFrontendServ
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
 import Alert from "../components/Alert";
-import { workspaceClient, workspacesService } from "../service/public-api";
+import { workspaceClient } from "../service/public-api";
 import { watchWorkspaceStatus } from "../data/workspaces/listen-to-workspace-ws-messages";
 import { Button } from "@podkit/buttons/Button";
 import {
@@ -31,6 +31,7 @@ import {
     WorkspaceSpec_WorkspaceType,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { PartialMessage } from "@bufbuild/protobuf";
+import { trackEvent } from "../Analytics";
 
 const sessionId = v4();
 
@@ -172,28 +173,22 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         const oldPhase = prevState.workspace?.status?.phase?.name;
         const type = this.state.workspace?.spec?.type === WorkspaceSpec_WorkspaceType.PREBUILD ? "prebuild" : "regular";
         if (newPhase !== oldPhase) {
-            getGitpodService().server.trackEvent({
-                event: "status_rendered",
-                properties: {
-                    sessionId,
-                    instanceId: this.state.workspace?.status?.instanceId,
-                    workspaceId: this.props.workspaceId,
-                    type,
-                    phase: newPhase,
-                },
+            trackEvent("status_rendered", {
+                sessionId,
+                instanceId: this.state.workspace?.status?.instanceId,
+                workspaceId: this.props.workspaceId,
+                type,
+                phase: newPhase ? WorkspacePhase_Phase[newPhase] : undefined,
             });
         }
 
         if (!!this.state.error && this.state.error !== prevState.error) {
-            getGitpodService().server.trackEvent({
-                event: "error_rendered",
-                properties: {
-                    sessionId,
-                    instanceId: this.state.workspace?.status?.instanceId,
-                    workspaceId: this.props.workspaceId,
-                    type,
-                    error: this.state.error,
-                },
+            trackEvent("error_rendered", {
+                sessionId,
+                instanceId: this.state.workspace?.status?.instanceId,
+                workspaceId: this.props.workspaceId,
+                type,
+                error: this.state.error,
             });
         }
     }
@@ -580,9 +575,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                         {
                                             title: "Stop Workspace",
                                             onClick: () =>
-                                                workspacesService.stopWorkspace({
-                                                    workspaceId: this.props.workspaceId,
-                                                }),
+                                                workspaceClient.stopWorkspace({ workspaceId: this.props.workspaceId }),
                                         },
                                         {
                                             title: "Connect via SSH",

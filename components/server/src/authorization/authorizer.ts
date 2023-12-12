@@ -520,18 +520,26 @@ export class Authorizer {
     }
 }
 
-async function getSubjectFromCtx(passed: Subject): Promise<SubjectId> {
+export async function getSubjectFromCtx(passed: Subject): Promise<SubjectId> {
     const ctxSubjectId = ctxTrySubjectId();
     const ctxUserId = ctxSubjectId?.userId();
 
-    const passedSubjectId = Subject.toId(passed);
-    const passedUserId = passedSubjectId.userId();
+    const passedSubjectId = !!passed ? Subject.toId(passed) : undefined;
+    const passedUserId = passedSubjectId?.userId();
 
     // Check: Do the subjectIds match?
-    const matchingSubjectId = ctxUserId === passedUserId;
-    const match = !ctxUserId ? "ctx-user-id-missing" : matchingSubjectId ? "match" : "mismatch";
+    function matchSubjectIds(ctxUserId: string | undefined, passedSubjectId: string | undefined) {
+        if (!ctxUserId) {
+            return "ctx-user-id-missing";
+        }
+        if (!passedSubjectId) {
+            return "passed-subject-id-missing";
+        }
+        return ctxUserId === passedUserId ? "match" : "mismatch";
+    }
+    const match = matchSubjectIds(ctxUserId, passedUserId);
     reportAuthorizerSubjectId(match);
-    if (match !== "match") {
+    if (match === "mismatch" || match === "ctx-user-id-missing") {
         try {
             // Get hold of the stack trace
             throw new Error("Authorizer: SubjectId mismatch");
@@ -553,6 +561,16 @@ async function getSubjectFromCtx(passed: Subject): Promise<SubjectId> {
             : undefined,
     });
     if (!authViaContext) {
+        if (!passedSubjectId) {
+            const err = new ApplicationError(ErrorCodes.PERMISSION_DENIED, `Cannot authorize request`);
+            log.error("Authorizer: Cannot authorize request: missing SubjectId", err, {
+                match,
+                ctxSubjectId,
+                ctxUserId,
+                passedUserId,
+            });
+            throw err;
+        }
         return passedSubjectId;
     }
 

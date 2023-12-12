@@ -347,13 +347,6 @@ export interface ProviderRepository {
     installationUpdatedAt?: string;
 }
 
-export interface ClientHeaderFields {
-    ip?: string;
-    userAgent?: string;
-    dnt?: string;
-    clientRegion?: string;
-}
-
 const WORKSPACE_MAXIMUM_TIMEOUT_HOURS = 24;
 
 export type WorkspaceTimeoutDuration = string;

@@ -241,6 +241,19 @@ func serve(launchCtx *LaunchContext) {
 		}
 		fmt.Fprint(w, jsonLink)
 	})
+	http.HandleFunc("/joinLink2", func(w http.ResponseWriter, r *http.Request) {
+		backendPort := r.URL.Query().Get("backendPort")
+		if backendPort == "" {
+			backendPort = defaultBackendPort
+		}
+		jsonResp, err := resolveJsonLink2(backendPort)
+		if err != nil {
+			log.WithError(err).Error("cannot resolve join link")
+			http.Error(w, err.Error(), http.StatusServiceUnavailable)
+			return
+		}
+		json.NewEncoder(w).Encode(jsonResp)
+	})
 	http.HandleFunc("/gatewayLink", func(w http.ResponseWriter, r *http.Request) {
 		backendPort := r.URL.Query().Get("backendPort")
 		if backendPort == "" {
@@ -297,7 +310,12 @@ type Projects struct {
 	JoinLink string `json:"joinLink"`
 }
 type Response struct {
+	AppPid   int        `json:"appPid"`
 	Projects []Projects `json:"projects"`
+}
+type JoinLinkResponse struct {
+	AppPid   int    `json:"appPid"`
+	JoinLink string `json:"joinLink"`
 }
 
 func resolveGatewayLink(backendPort string, wsInfo *supervisor.WorkspaceInfoResponse) (string, error) {
@@ -340,6 +358,34 @@ func resolveJsonLink(backendPort string) (string, error) {
 		return "", xerrors.Errorf("project is not found")
 	}
 	return jsonResp.Projects[0].JoinLink, nil
+}
+
+func resolveJsonLink2(backendPort string) (*JoinLinkResponse, error) {
+	var (
+		hostStatusUrl = "http://localhost:" + backendPort + "/codeWithMe/unattendedHostStatus?token=gitpod"
+		client        = http.Client{Timeout: 1 * time.Second}
+	)
+	resp, err := client.Get(hostStatusUrl)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, xerrors.Errorf("failed to resolve project status: %s (%d)", bodyBytes, resp.StatusCode)
+	}
+	jsonResp := &Response{}
+	err = json.Unmarshal(bodyBytes, &jsonResp)
+	if err != nil {
+		return nil, err
+	}
+	if len(jsonResp.Projects) != 1 {
+		return nil, xerrors.Errorf("project is not found")
+	}
+	return &JoinLinkResponse{AppPid: jsonResp.AppPid, JoinLink: jsonResp.Projects[0].JoinLink}, nil
 }
 
 func terminateIDE(backendPort string) error {

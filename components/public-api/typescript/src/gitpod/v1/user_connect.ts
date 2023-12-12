@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { GetAuthenticatedUserRequest, GetAuthenticatedUserResponse, SetWorkspaceAutoStartOptionsRequest, SetWorkspaceAutoStartOptionsResponse, UpdateUserRequest, UpdateUserResponse } from "./user_pb.js";
+import { DeleteUserRequest, DeleteUserResponse, GetAuthenticatedUserRequest, GetAuthenticatedUserResponse, SetWorkspaceAutoStartOptionsRequest, SetWorkspaceAutoStartOptionsResponse, UpdateUserRequest, UpdateUserResponse } from "./user_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -50,6 +50,17 @@ export const UserService = {
       name: "SetWorkspaceAutoStartOptions",
       I: SetWorkspaceAutoStartOptionsRequest,
       O: SetWorkspaceAutoStartOptionsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * DeleteUser deletes the specified user.
+     *
+     * @generated from rpc gitpod.v1.UserService.DeleteUser
+     */
+    deleteUser: {
+      name: "DeleteUser",
+      I: DeleteUserRequest,
+      O: DeleteUserResponse,
       kind: MethodKind.Unary,
     },
   }

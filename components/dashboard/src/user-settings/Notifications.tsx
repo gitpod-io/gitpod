@@ -5,76 +5,67 @@
  */
 
 import { useContext, useState } from "react";
-import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { identifyUser } from "../Analytics";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { Heading2 } from "../components/typography/headings";
+import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 
 export default function Notifications() {
     const { user, setUser } = useContext(UserContext);
-    const [isOnboardingMail, setOnboardingMail] = useState(
-        !!user?.additionalData?.emailNotificationSettings?.allowsOnboardingMail,
-    );
-    const [isChangelogMail, setChangelogMail] = useState(
-        !!user?.additionalData?.emailNotificationSettings?.allowsChangelogMail,
-    );
-    const [isDevXMail, setDevXMail] = useState(!!user?.additionalData?.emailNotificationSettings?.allowsDevXMail);
+    const [isOnboardingMail, setOnboardingMail] = useState(!!user?.emailNotificationSettings?.allowsOnboardingMail);
+    const [isChangelogMail, setChangelogMail] = useState(!!user?.emailNotificationSettings?.allowsChangelogMail);
+    const [isDevXMail, setDevXMail] = useState(!!user?.emailNotificationSettings?.allowsDevxMail);
+    const updateUser = useUpdateCurrentUserMutation();
 
     const toggleOnboardingMail = async () => {
-        if (user && user.additionalData && user.additionalData.emailNotificationSettings) {
+        if (user && user.emailNotificationSettings) {
             const newIsOnboardingMail = !isOnboardingMail;
-            user.additionalData.emailNotificationSettings.allowsOnboardingMail = newIsOnboardingMail;
-            await getGitpodService().server.updateLoggedInUser({
+            user.emailNotificationSettings.allowsOnboardingMail = newIsOnboardingMail;
+            const updatedUser = await updateUser.mutateAsync({
                 additionalData: {
-                    ...user.additionalData,
                     emailNotificationSettings: {
-                        ...user.additionalData.emailNotificationSettings,
                         allowsOnboardingMail: newIsOnboardingMail,
                     },
                 },
             });
             identifyUser({ unsubscribed_onboarding: !newIsOnboardingMail });
-            setUser(user);
+            setUser(updatedUser);
             setOnboardingMail(newIsOnboardingMail);
         }
     };
 
     const toggleChangelogMail = async () => {
-        if (user && user.additionalData && user.additionalData.emailNotificationSettings) {
+        if (user && user.emailNotificationSettings) {
             const newIsChangelogMail = !isChangelogMail;
-            user.additionalData.emailNotificationSettings.allowsChangelogMail = newIsChangelogMail;
-            await getGitpodService().server.updateLoggedInUser({
+            user.emailNotificationSettings.allowsChangelogMail = newIsChangelogMail;
+            const updatedUser = await updateUser.mutateAsync({
                 additionalData: {
-                    ...user.additionalData,
                     emailNotificationSettings: {
-                        ...user.additionalData.emailNotificationSettings,
                         allowsChangelogMail: newIsChangelogMail,
                     },
                 },
             });
             identifyUser({ unsubscribed_changelog: !newIsChangelogMail });
-            setUser(user);
+            setUser(updatedUser);
             setChangelogMail(newIsChangelogMail);
         }
     };
 
     const toggleDevXMail = async () => {
-        if (user && user.additionalData && user.additionalData.emailNotificationSettings) {
+        if (user && user.emailNotificationSettings) {
             const newIsDevXMail = !isDevXMail;
-            user.additionalData.emailNotificationSettings.allowsDevXMail = newIsDevXMail;
-            await getGitpodService().server.updateLoggedInUser({
+            user.emailNotificationSettings.allowsDevxMail = newIsDevXMail;
+            const updatedUser = await updateUser.mutateAsync({
                 additionalData: {
-                    ...user.additionalData,
                     emailNotificationSettings: {
-                        ...user.additionalData.emailNotificationSettings,
                         allowsDevXMail: newIsDevXMail,
                     },
                 },
             });
             identifyUser({ unsubscribed_devx: !newIsDevXMail });
-            setUser(user);
+            setUser(updatedUser);
             setDevXMail(newIsDevXMail);
         }
     };

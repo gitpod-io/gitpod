@@ -130,6 +130,8 @@ import { DefaultWorkspaceImageValidator } from "./orgs/default-workspace-image-v
 import { ContextAwareAnalyticsWriter } from "./analytics";
 import { ScmService } from "./scm/scm-service";
 import { ContextService } from "./workspace/context-service";
+import { RateLimitter } from "./rate-limitter";
+import { AnalyticsController } from "./analytics-controller";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -392,5 +394,8 @@ export const productionContainerModule = new ContainerModule(
                 },
             )
             .inSingletonScope();
+
+        bind(RateLimitter).toSelf().inSingletonScope();
+        bind(AnalyticsController).toSelf().inSingletonScope();
     },
 );

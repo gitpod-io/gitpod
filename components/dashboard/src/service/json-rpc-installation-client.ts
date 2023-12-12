@@ -18,6 +18,10 @@ import {
     ListBlockedEmailDomainsResponse,
     CreateBlockedEmailDomainRequest,
     CreateBlockedEmailDomainResponse,
+    GetInstallationWorkspaceDefaultImageRequest,
+    GetInstallationWorkspaceDefaultImageResponse,
+    GetOnboardingStateRequest,
+    GetOnboardingStateResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { getGitpodService } from "./service";
@@ -25,6 +29,17 @@ import { converter } from "./public-api";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 
 export class JsonRpcInstallationClient implements PromiseClient<typeof InstallationService> {
+    async getInstallationWorkspaceDefaultImage(
+        _request: PartialMessage<GetInstallationWorkspaceDefaultImageRequest>,
+        _options?: CallOptions,
+    ): Promise<GetInstallationWorkspaceDefaultImageResponse> {
+        const result = await getGitpodService().server.getDefaultWorkspaceImage({});
+        if (result.source !== "installation") {
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "unexpected image source");
+        }
+        return new GetInstallationWorkspaceDefaultImageResponse({ defaultWorkspaceImage: result.image });
+    }
+
     async listBlockedRepositories(
         request: PartialMessage<ListBlockedRepositoriesRequest>,
         _options?: CallOptions | undefined,
@@ -97,5 +112,15 @@ export class JsonRpcInstallationClient implements PromiseClient<typeof Installat
         });
         // There's no way to get blockedEmailDomain, just ignore it since dashboard don't care about the response data
         return new CreateBlockedEmailDomainResponse({});
+    }
+
+    async getOnboardingState(
+        request: PartialMessage<GetOnboardingStateRequest>,
+        _options?: CallOptions | undefined,
+    ): Promise<GetOnboardingStateResponse> {
+        const info = await getGitpodService().server.getOnboardingState();
+        return new GetOnboardingStateResponse({
+            onboardingState: converter.toOnboardingState(info),
+        });
     }
 }

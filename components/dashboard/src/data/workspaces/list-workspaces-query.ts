@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { workspaceClient } from "../../service/public-api";
 import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
@@ -57,3 +57,19 @@ export function getListWorkspacesQueryKey(orgId?: string) {
     }
     return ["workspaces", "list", orgId];
 }
+
+export const useUpdateWorkspaceInCache = () => {
+    const queryClient = useQueryClient();
+    const org = useCurrentOrg();
+    return (newWorkspace: Workspace) => {
+        const queryKey = getListWorkspacesQueryKey(org.data?.id);
+        queryClient.setQueryData<ListWorkspacesQueryResult>(queryKey, (oldWorkspacesData) => {
+            return oldWorkspacesData?.map((info) => {
+                if (info.id !== newWorkspace.id) {
+                    return info;
+                }
+                return newWorkspace;
+            });
+        });
+    };
+};

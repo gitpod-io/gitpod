@@ -49,6 +49,14 @@ type WorkspaceServiceClient interface {
 	StartWorkspace(context.Context, *connect_go.Request[v1.StartWorkspaceRequest]) (*connect_go.Response[v1.StartWorkspaceResponse], error)
 	// UpdateWorkspace updates the workspace.
 	UpdateWorkspace(context.Context, *connect_go.Request[v1.UpdateWorkspaceRequest]) (*connect_go.Response[v1.UpdateWorkspaceResponse], error)
+	// StopWorkspace stops a running workspace.
+	StopWorkspace(context.Context, *connect_go.Request[v1.StopWorkspaceRequest]) (*connect_go.Response[v1.StopWorkspaceResponse], error)
+	// DeleteWorkspace deletes a workspace.
+	// When the workspace is running, it will be stopped as well.
+	// Deleted workspaces cannot be started again.
+	DeleteWorkspace(context.Context, *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error)
+	// ListWorkspaceClasses enumerates all available workspace classes.
+	ListWorkspaceClasses(context.Context, *connect_go.Request[v1.ListWorkspaceClassesRequest]) (*connect_go.Response[v1.ListWorkspaceClassesResponse], error)
 	// ParseContextURL parses a context URL and returns the workspace metadata and spec.
 	// Not implemented yet.
 	ParseContextURL(context.Context, *connect_go.Request[v1.ParseContextURLRequest]) (*connect_go.Response[v1.ParseContextURLResponse], error)
@@ -62,6 +70,13 @@ type WorkspaceServiceClient interface {
 	// GetWorkspaceEditorCredentials returns an credentials that is used in editor
 	// to encrypt and decrypt secrets
 	GetWorkspaceEditorCredentials(context.Context, *connect_go.Request[v1.GetWorkspaceEditorCredentialsRequest]) (*connect_go.Response[v1.GetWorkspaceEditorCredentialsResponse], error)
+	// CreateWorkspaceSnapshot creates a snapshot of the workspace that can be
+	// shared with others.
+	CreateWorkspaceSnapshot(context.Context, *connect_go.Request[v1.CreateWorkspaceSnapshotRequest]) (*connect_go.Response[v1.CreateWorkspaceSnapshotResponse], error)
+	// WaitWorkspaceSnapshot waits for the snapshot to be available or failed.
+	WaitForWorkspaceSnapshot(context.Context, *connect_go.Request[v1.WaitForWorkspaceSnapshotRequest]) (*connect_go.Response[v1.WaitForWorkspaceSnapshotResponse], error)
+	// UpdateWorkspacePort updates the port of workspace.
+	UpdateWorkspacePort(context.Context, *connect_go.Request[v1.UpdateWorkspacePortRequest]) (*connect_go.Response[v1.UpdateWorkspacePortResponse], error)
 }
 
 // NewWorkspaceServiceClient constructs a client for the gitpod.v1.WorkspaceService service. By
@@ -104,6 +119,21 @@ func NewWorkspaceServiceClient(httpClient connect_go.HTTPClient, baseURL string,
 			baseURL+"/gitpod.v1.WorkspaceService/UpdateWorkspace",
 			opts...,
 		),
+		stopWorkspace: connect_go.NewClient[v1.StopWorkspaceRequest, v1.StopWorkspaceResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.WorkspaceService/StopWorkspace",
+			opts...,
+		),
+		deleteWorkspace: connect_go.NewClient[v1.DeleteWorkspaceRequest, v1.DeleteWorkspaceResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.WorkspaceService/DeleteWorkspace",
+			opts...,
+		),
+		listWorkspaceClasses: connect_go.NewClient[v1.ListWorkspaceClassesRequest, v1.ListWorkspaceClassesResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.WorkspaceService/ListWorkspaceClasses",
+			opts...,
+		),
 		parseContextURL: connect_go.NewClient[v1.ParseContextURLRequest, v1.ParseContextURLResponse](
 			httpClient,
 			baseURL+"/gitpod.v1.WorkspaceService/ParseContextURL",
@@ -129,6 +159,21 @@ func NewWorkspaceServiceClient(httpClient connect_go.HTTPClient, baseURL string,
 			baseURL+"/gitpod.v1.WorkspaceService/GetWorkspaceEditorCredentials",
 			opts...,
 		),
+		createWorkspaceSnapshot: connect_go.NewClient[v1.CreateWorkspaceSnapshotRequest, v1.CreateWorkspaceSnapshotResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.WorkspaceService/CreateWorkspaceSnapshot",
+			opts...,
+		),
+		waitForWorkspaceSnapshot: connect_go.NewClient[v1.WaitForWorkspaceSnapshotRequest, v1.WaitForWorkspaceSnapshotResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.WorkspaceService/WaitForWorkspaceSnapshot",
+			opts...,
+		),
+		updateWorkspacePort: connect_go.NewClient[v1.UpdateWorkspacePortRequest, v1.UpdateWorkspacePortResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.WorkspaceService/UpdateWorkspacePort",
+			opts...,
+		),
 	}
 }
 
@@ -140,11 +185,17 @@ type workspaceServiceClient struct {
 	createAndStartWorkspace       *connect_go.Client[v1.CreateAndStartWorkspaceRequest, v1.CreateAndStartWorkspaceResponse]
 	startWorkspace                *connect_go.Client[v1.StartWorkspaceRequest, v1.StartWorkspaceResponse]
 	updateWorkspace               *connect_go.Client[v1.UpdateWorkspaceRequest, v1.UpdateWorkspaceResponse]
+	stopWorkspace                 *connect_go.Client[v1.StopWorkspaceRequest, v1.StopWorkspaceResponse]
+	deleteWorkspace               *connect_go.Client[v1.DeleteWorkspaceRequest, v1.DeleteWorkspaceResponse]
+	listWorkspaceClasses          *connect_go.Client[v1.ListWorkspaceClassesRequest, v1.ListWorkspaceClassesResponse]
 	parseContextURL               *connect_go.Client[v1.ParseContextURLRequest, v1.ParseContextURLResponse]
 	getWorkspaceDefaultImage      *connect_go.Client[v1.GetWorkspaceDefaultImageRequest, v1.GetWorkspaceDefaultImageResponse]
 	sendHeartBeat                 *connect_go.Client[v1.SendHeartBeatRequest, v1.SendHeartBeatResponse]
 	getWorkspaceOwnerToken        *connect_go.Client[v1.GetWorkspaceOwnerTokenRequest, v1.GetWorkspaceOwnerTokenResponse]
 	getWorkspaceEditorCredentials *connect_go.Client[v1.GetWorkspaceEditorCredentialsRequest, v1.GetWorkspaceEditorCredentialsResponse]
+	createWorkspaceSnapshot       *connect_go.Client[v1.CreateWorkspaceSnapshotRequest, v1.CreateWorkspaceSnapshotResponse]
+	waitForWorkspaceSnapshot      *connect_go.Client[v1.WaitForWorkspaceSnapshotRequest, v1.WaitForWorkspaceSnapshotResponse]
+	updateWorkspacePort           *connect_go.Client[v1.UpdateWorkspacePortRequest, v1.UpdateWorkspacePortResponse]
 }
 
 // GetWorkspace calls gitpod.v1.WorkspaceService.GetWorkspace.
@@ -177,6 +228,21 @@ func (c *workspaceServiceClient) UpdateWorkspace(ctx context.Context, req *conne
 	return c.updateWorkspace.CallUnary(ctx, req)
 }
 
+// StopWorkspace calls gitpod.v1.WorkspaceService.StopWorkspace.
+func (c *workspaceServiceClient) StopWorkspace(ctx context.Context, req *connect_go.Request[v1.StopWorkspaceRequest]) (*connect_go.Response[v1.StopWorkspaceResponse], error) {
+	return c.stopWorkspace.CallUnary(ctx, req)
+}
+
+// DeleteWorkspace calls gitpod.v1.WorkspaceService.DeleteWorkspace.
+func (c *workspaceServiceClient) DeleteWorkspace(ctx context.Context, req *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error) {
+	return c.deleteWorkspace.CallUnary(ctx, req)
+}
+
+// ListWorkspaceClasses calls gitpod.v1.WorkspaceService.ListWorkspaceClasses.
+func (c *workspaceServiceClient) ListWorkspaceClasses(ctx context.Context, req *connect_go.Request[v1.ListWorkspaceClassesRequest]) (*connect_go.Response[v1.ListWorkspaceClassesResponse], error) {
+	return c.listWorkspaceClasses.CallUnary(ctx, req)
+}
+
 // ParseContextURL calls gitpod.v1.WorkspaceService.ParseContextURL.
 func (c *workspaceServiceClient) ParseContextURL(ctx context.Context, req *connect_go.Request[v1.ParseContextURLRequest]) (*connect_go.Response[v1.ParseContextURLResponse], error) {
 	return c.parseContextURL.CallUnary(ctx, req)
@@ -202,6 +268,21 @@ func (c *workspaceServiceClient) GetWorkspaceEditorCredentials(ctx context.Conte
 	return c.getWorkspaceEditorCredentials.CallUnary(ctx, req)
 }
 
+// CreateWorkspaceSnapshot calls gitpod.v1.WorkspaceService.CreateWorkspaceSnapshot.
+func (c *workspaceServiceClient) CreateWorkspaceSnapshot(ctx context.Context, req *connect_go.Request[v1.CreateWorkspaceSnapshotRequest]) (*connect_go.Response[v1.CreateWorkspaceSnapshotResponse], error) {
+	return c.createWorkspaceSnapshot.CallUnary(ctx, req)
+}
+
+// WaitForWorkspaceSnapshot calls gitpod.v1.WorkspaceService.WaitForWorkspaceSnapshot.
+func (c *workspaceServiceClient) WaitForWorkspaceSnapshot(ctx context.Context, req *connect_go.Request[v1.WaitForWorkspaceSnapshotRequest]) (*connect_go.Response[v1.WaitForWorkspaceSnapshotResponse], error) {
+	return c.waitForWorkspaceSnapshot.CallUnary(ctx, req)
+}
+
+// UpdateWorkspacePort calls gitpod.v1.WorkspaceService.UpdateWorkspacePort.
+func (c *workspaceServiceClient) UpdateWorkspacePort(ctx context.Context, req *connect_go.Request[v1.UpdateWorkspacePortRequest]) (*connect_go.Response[v1.UpdateWorkspacePortResponse], error) {
+	return c.updateWorkspacePort.CallUnary(ctx, req)
+}
+
 // WorkspaceServiceHandler is an implementation of the gitpod.v1.WorkspaceService service.
 type WorkspaceServiceHandler interface {
 	// GetWorkspace returns a single workspace.
@@ -222,6 +303,14 @@ type WorkspaceServiceHandler interface {
 	StartWorkspace(context.Context, *connect_go.Request[v1.StartWorkspaceRequest]) (*connect_go.Response[v1.StartWorkspaceResponse], error)
 	// UpdateWorkspace updates the workspace.
 	UpdateWorkspace(context.Context, *connect_go.Request[v1.UpdateWorkspaceRequest]) (*connect_go.Response[v1.UpdateWorkspaceResponse], error)
+	// StopWorkspace stops a running workspace.
+	StopWorkspace(context.Context, *connect_go.Request[v1.StopWorkspaceRequest]) (*connect_go.Response[v1.StopWorkspaceResponse], error)
+	// DeleteWorkspace deletes a workspace.
+	// When the workspace is running, it will be stopped as well.
+	// Deleted workspaces cannot be started again.
+	DeleteWorkspace(context.Context, *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error)
+	// ListWorkspaceClasses enumerates all available workspace classes.
+	ListWorkspaceClasses(context.Context, *connect_go.Request[v1.ListWorkspaceClassesRequest]) (*connect_go.Response[v1.ListWorkspaceClassesResponse], error)
 	// ParseContextURL parses a context URL and returns the workspace metadata and spec.
 	// Not implemented yet.
 	ParseContextURL(context.Context, *connect_go.Request[v1.ParseContextURLRequest]) (*connect_go.Response[v1.ParseContextURLResponse], error)
@@ -235,6 +324,13 @@ type WorkspaceServiceHandler interface {
 	// GetWorkspaceEditorCredentials returns an credentials that is used in editor
 	// to encrypt and decrypt secrets
 	GetWorkspaceEditorCredentials(context.Context, *connect_go.Request[v1.GetWorkspaceEditorCredentialsRequest]) (*connect_go.Response[v1.GetWorkspaceEditorCredentialsResponse], error)
+	// CreateWorkspaceSnapshot creates a snapshot of the workspace that can be
+	// shared with others.
+	CreateWorkspaceSnapshot(context.Context, *connect_go.Request[v1.CreateWorkspaceSnapshotRequest]) (*connect_go.Response[v1.CreateWorkspaceSnapshotResponse], error)
+	// WaitWorkspaceSnapshot waits for the snapshot to be available or failed.
+	WaitForWorkspaceSnapshot(context.Context, *connect_go.Request[v1.WaitForWorkspaceSnapshotRequest]) (*connect_go.Response[v1.WaitForWorkspaceSnapshotResponse], error)
+	// UpdateWorkspacePort updates the port of workspace.
+	UpdateWorkspacePort(context.Context, *connect_go.Request[v1.UpdateWorkspacePortRequest]) (*connect_go.Response[v1.UpdateWorkspacePortResponse], error)
 }
 
 // NewWorkspaceServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -274,6 +370,21 @@ func NewWorkspaceServiceHandler(svc WorkspaceServiceHandler, opts ...connect_go.
 		svc.UpdateWorkspace,
 		opts...,
 	))
+	mux.Handle("/gitpod.v1.WorkspaceService/StopWorkspace", connect_go.NewUnaryHandler(
+		"/gitpod.v1.WorkspaceService/StopWorkspace",
+		svc.StopWorkspace,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.WorkspaceService/DeleteWorkspace", connect_go.NewUnaryHandler(
+		"/gitpod.v1.WorkspaceService/DeleteWorkspace",
+		svc.DeleteWorkspace,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.WorkspaceService/ListWorkspaceClasses", connect_go.NewUnaryHandler(
+		"/gitpod.v1.WorkspaceService/ListWorkspaceClasses",
+		svc.ListWorkspaceClasses,
+		opts...,
+	))
 	mux.Handle("/gitpod.v1.WorkspaceService/ParseContextURL", connect_go.NewUnaryHandler(
 		"/gitpod.v1.WorkspaceService/ParseContextURL",
 		svc.ParseContextURL,
@@ -297,6 +408,21 @@ func NewWorkspaceServiceHandler(svc WorkspaceServiceHandler, opts ...connect_go.
 	mux.Handle("/gitpod.v1.WorkspaceService/GetWorkspaceEditorCredentials", connect_go.NewUnaryHandler(
 		"/gitpod.v1.WorkspaceService/GetWorkspaceEditorCredentials",
 		svc.GetWorkspaceEditorCredentials,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.WorkspaceService/CreateWorkspaceSnapshot", connect_go.NewUnaryHandler(
+		"/gitpod.v1.WorkspaceService/CreateWorkspaceSnapshot",
+		svc.CreateWorkspaceSnapshot,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.WorkspaceService/WaitForWorkspaceSnapshot", connect_go.NewUnaryHandler(
+		"/gitpod.v1.WorkspaceService/WaitForWorkspaceSnapshot",
+		svc.WaitForWorkspaceSnapshot,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.WorkspaceService/UpdateWorkspacePort", connect_go.NewUnaryHandler(
+		"/gitpod.v1.WorkspaceService/UpdateWorkspacePort",
+		svc.UpdateWorkspacePort,
 		opts...,
 	))
 	return "/gitpod.v1.WorkspaceService/", mux
@@ -329,6 +455,18 @@ func (UnimplementedWorkspaceServiceHandler) UpdateWorkspace(context.Context, *co
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.UpdateWorkspace is not implemented"))
 }
 
+func (UnimplementedWorkspaceServiceHandler) StopWorkspace(context.Context, *connect_go.Request[v1.StopWorkspaceRequest]) (*connect_go.Response[v1.StopWorkspaceResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.StopWorkspace is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) DeleteWorkspace(context.Context, *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.DeleteWorkspace is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) ListWorkspaceClasses(context.Context, *connect_go.Request[v1.ListWorkspaceClassesRequest]) (*connect_go.Response[v1.ListWorkspaceClassesResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.ListWorkspaceClasses is not implemented"))
+}
+
 func (UnimplementedWorkspaceServiceHandler) ParseContextURL(context.Context, *connect_go.Request[v1.ParseContextURLRequest]) (*connect_go.Response[v1.ParseContextURLResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.ParseContextURL is not implemented"))
 }
@@ -347,4 +485,16 @@ func (UnimplementedWorkspaceServiceHandler) GetWorkspaceOwnerToken(context.Conte
 
 func (UnimplementedWorkspaceServiceHandler) GetWorkspaceEditorCredentials(context.Context, *connect_go.Request[v1.GetWorkspaceEditorCredentialsRequest]) (*connect_go.Response[v1.GetWorkspaceEditorCredentialsResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.GetWorkspaceEditorCredentials is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) CreateWorkspaceSnapshot(context.Context, *connect_go.Request[v1.CreateWorkspaceSnapshotRequest]) (*connect_go.Response[v1.CreateWorkspaceSnapshotResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.CreateWorkspaceSnapshot is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) WaitForWorkspaceSnapshot(context.Context, *connect_go.Request[v1.WaitForWorkspaceSnapshotRequest]) (*connect_go.Response[v1.WaitForWorkspaceSnapshotResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.WaitForWorkspaceSnapshot is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) UpdateWorkspacePort(context.Context, *connect_go.Request[v1.UpdateWorkspacePortRequest]) (*connect_go.Response[v1.UpdateWorkspacePortResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.WorkspaceService.UpdateWorkspacePort is not implemented"))
 }

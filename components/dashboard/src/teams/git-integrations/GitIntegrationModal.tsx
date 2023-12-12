@@ -16,13 +16,13 @@ import { useInvalidateOrgAuthProvidersQuery } from "../../data/auth-providers/or
 import { useCurrentOrg } from "../../data/organizations/orgs-query";
 import { useOnBlurError } from "../../hooks/use-onblur-error";
 import { openAuthorizeWindow, toAuthProviderLabel } from "../../provider-utils";
-import { getGitpodService, gitpodHostUrl } from "../../service/service";
+import { gitpodHostUrl } from "../../service/service";
 import { UserContext } from "../../user-context";
 import { useToast } from "../../components/toasts/Toasts";
 import { AuthProvider, AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { useCreateOrgAuthProviderMutation } from "../../data/auth-providers/create-org-auth-provider-mutation";
 import { useUpdateOrgAuthProviderMutation } from "../../data/auth-providers/update-org-auth-provider-mutation";
-import { authProviderClient } from "../../service/public-api";
+import { authProviderClient, userClient } from "../../service/public-api";
 
 type Props = {
     provider?: AuthProvider;
@@ -151,7 +151,11 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
 
                     // Refresh the current user - they may have a new identity record now
                     // setup a promise and don't wait so we can close the modal right away
-                    getGitpodService().server.getLoggedInUser().then(setUser);
+                    userClient.getAuthenticatedUser({}).then(({ user }) => {
+                        if (user) {
+                            setUser(user);
+                        }
+                    });
                     toast(`${toAuthProviderLabel(newProvider.type)} integration has been activated.`);
 
                     props.onClose();

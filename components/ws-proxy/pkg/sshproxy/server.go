@@ -332,7 +332,8 @@ func (s *Server) HandleConn(c net.Conn) {
 		workspacekitPort := "22998"
 		userName, err = workspaceSSHUsername(ctx, wsInfo.IPAddress, workspacekitPort)
 		if err != nil {
-			log.WithError(err).Warn("failed to retrieve the SSH username. Using the default.")
+			userName = "root"
+			log.WithError(err).Warn("failed to retrieve the SSH username. Using root.")
 		}
 	}
 
@@ -545,9 +546,11 @@ func (s *Server) GenerateSSHCert(ctx context.Context, userName string) (ssh.Sign
 		CertType:        ssh.UserCert,
 		Permissions: ssh.Permissions{
 			Extensions: map[string]string{
-				"permit-pty":            "",
-				"permit-user-rc":        "",
-				"permit-X11-forwarding": "",
+				"permit-pty":              "",
+				"permit-user-rc":          "",
+				"permit-X11-forwarding":   "",
+				"permit-port-forwarding":  "",
+				"permit-agent-forwarding": "",
 			},
 		},
 		Nonce:        nonce,

@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/gitpod-protocol";
 import { getScopesForAuthProviderType } from "@gitpod/public-api-common/lib/auth-providers";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { useQuery } from "@tanstack/react-query";
@@ -21,7 +20,7 @@ import { Heading2, Subheading } from "../components/typography/headings";
 import copy from "../images/copy.svg";
 import exclamation from "../images/exclamation.svg";
 import { openAuthorizeWindow, toAuthProviderLabel } from "../provider-utils";
-import { getGitpodService, gitpodHostUrl } from "../service/service";
+import { gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import { AuthEntryItem } from "./AuthEntryItem";
 import { IntegrationEntryItem } from "./IntegrationItemEntry";
@@ -36,11 +35,12 @@ import {
     AuthProviderDescription,
     AuthProviderType,
 } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
-import { authProviderClient, scmClient } from "../service/public-api";
+import { authProviderClient, scmClient, userClient } from "../service/public-api";
 import { useCreateUserAuthProviderMutation } from "../data/auth-providers/create-user-auth-provider-mutation";
 import { useUpdateUserAuthProviderMutation } from "../data/auth-providers/update-user-auth-provider-mutation";
 import { useDeleteUserAuthProviderMutation } from "../data/auth-providers/delete-user-auth-provider-mutation";
 import { Button } from "@podkit/buttons/Button";
+import { isOrganizationOwned } from "@gitpod/public-api-common/lib/user-utils";
 
 export default function Integrations() {
     return (
@@ -94,14 +94,18 @@ function GitProviders() {
     };
 
     const getSettingsUrl = (ap: AuthProviderDescription) => {
+        const url = new URL(`https://${ap.host}`);
         switch (ap.type) {
             case AuthProviderType.GITHUB:
-                return `${ap.host}/settings/developers`;
+                url.pathname = "settings/developers";
+                break;
             case AuthProviderType.GITLAB:
-                return `${ap.host}/-/profile/applications`;
+                url.pathname = "-/profile/applications";
+                break;
             default:
                 return undefined;
         }
+        return url;
     };
 
     const gitProviderMenu = (provider: AuthProviderDescription) => {
@@ -124,7 +128,7 @@ function GitProviders() {
                 });
             }
             const canDisconnect =
-                (user && User.isOrganizationOwned(user)) ||
+                (user && isOrganizationOwned(user)) ||
                 authProviders.data?.some((p) => p.id !== provider.id && isConnected(p.id));
             if (canDisconnect) {
                 result.push({
@@ -190,8 +194,10 @@ function GitProviders() {
     };
 
     const updateUser = async () => {
-        const user = await getGitpodService().server.getLoggedInUser();
-        setUser(user);
+        const { user } = await userClient.getAuthenticatedUser({});
+        if (user) {
+            setUser(user);
+        }
     };
 
     const doAuthorize = async (host: string, scopes?: string[]) => {

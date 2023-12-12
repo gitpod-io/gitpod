@@ -5,14 +5,13 @@
  */
 
 import { RepositoryService } from "../repohost/repo-service";
-import { ProviderRepository, User } from "@gitpod/gitpod-protocol";
+import { User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { BitbucketServerApi } from "../bitbucket-server/bitbucket-server-api";
 import { BitbucketServerContextParser } from "../bitbucket-server/bitbucket-server-context-parser";
 import { Config } from "../config";
 import { TokenService } from "../user/token-service";
 import { BitbucketServerApp } from "./bitbucket-server-app";
-import { CancellationToken } from "vscode-jsonrpc";
 
 @injectable()
 export class BitbucketServerService extends RepositoryService {
@@ -25,25 +24,6 @@ export class BitbucketServerService extends RepositoryService {
         @inject(BitbucketServerContextParser) private readonly contextParser: BitbucketServerContextParser,
     ) {
         super();
-    }
-
-    async getRepositoriesForAutomatedPrebuilds(
-        user: User,
-        params: { searchString: string; limit?: number; maxPages?: number; cancellationToken?: CancellationToken },
-    ): Promise<ProviderRepository[]> {
-        const repos = await this.api.getRepos(user, { permission: "REPO_ADMIN", ...params });
-        return repos.map((r) => {
-            const cloneUrl = r.links.clone.find((u) => u.name === "http")?.href!;
-            // const webUrl = r.links?.self[0]?.href?.replace("/browse", "");
-            const accountAvatarUrl = this.api.getAvatarUrl(r.project.key);
-            return <ProviderRepository>{
-                name: r.name,
-                cloneUrl,
-                account: r.project.key,
-                accountAvatarUrl,
-                // updatedAt: TODO(at): this isn't provided directly
-            };
-        });
     }
 
     async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<void> {

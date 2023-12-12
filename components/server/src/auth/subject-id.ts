@@ -73,7 +73,7 @@ export class SubjectId {
 /**
  * Interface type meant for backwards compatibility
  */
-export type Subject = string | SubjectId;
+export type Subject = string | SubjectId | undefined;
 export namespace Subject {
     export function toId(subject: Subject): SubjectId {
         if (SubjectId.is(subject)) {

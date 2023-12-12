@@ -21,11 +21,12 @@ import { takeFirst } from "../express-util";
  *
  * It's meant to be nestable, so that we can run code in a child context with different properties.
  * The only example we have for now is "runWithSubjectId", which executes the child context with different authorization.
+ * @see runWithRequestContext
  * @see runWithSubjectId
  */
 export interface RequestContext {
     /**
-     * Unique, artificial ID for this request.
+     * Unique, artificial, backend-controlled ID for this request.
      */
     readonly requestId: string;
 
@@ -133,6 +134,14 @@ export function ctxIsAborted(): boolean {
 }
 
 /**
+ * @param callback Called when the request is aborted
+ * @throws If there is no context available
+ */
+export function ctxOnAbort(callback: () => void): void {
+    return ctxGet().signal.addEventListener("abort", callback);
+}
+
+/**
  * @returns The AbortSignal associated with the current request.
  */
 export function ctxSignal() {
@@ -165,10 +174,11 @@ export type RequestContextSeed = Omit<RequestContext, "requestId" | "startTime" 
 };
 
 /**
- * The context all our request-handling code should run in.
+ * Creates a fresh context for request-handling code should run in, overwriting any prior context if present. MANDATORY for any authorization to work.
+ * Uses AsyncLocalStorage under the hood, but offers a more convenient API.
  * @param context
  * @param fun
- * @returns
+ * @returns The result of the given function
  */
 export function runWithRequestContext<T>(context: RequestContextSeed, fun: () => T): T {
     const requestId = context.requestId || v4();
@@ -177,6 +187,14 @@ export function runWithRequestContext<T>(context: RequestContextSeed, fun: () =>
     return runWithContext({ ...context, requestId, startTime, cache }, fun);
 }
 
+/**
+ * Creates a _child_ context with the given subjectId. It takes all top-level values from the parent context, and only overrides subjectId.
+ * This is useful for running code with a (different) authorization than the parent context.
+ * @param subjectId
+ * @param fun
+ * @throws If there is no parent context available
+ * @returns The result of the given function
+ */
 export function runWithSubjectId<T>(subjectId: SubjectId | undefined, fun: () => T): T {
     const parent = ctxTryGet();
     if (!parent) {

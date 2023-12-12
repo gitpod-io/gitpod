@@ -20,6 +20,7 @@ import { Authorizer } from "../authorization/authorizer";
 import { ProjectsService } from "../projects/projects-service";
 import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
 import { DefaultWorkspaceImageValidator } from "./default-workspace-image-validator";
+import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 
 @injectable()
 export class OrganizationService {
@@ -197,7 +198,17 @@ export class OrganizationService {
 
     public async listMembers(userId: string, orgId: string): Promise<OrgMemberInfo[]> {
         await this.auth.checkPermissionOnOrganization(userId, "read_members", orgId);
-        return this.teamDB.findMembersByTeam(orgId);
+        const members = await this.teamDB.findMembersByTeam(orgId);
+
+        // TODO(at) remove this workaround once email addresses are persisted under `User.emails`.
+        // For now we're avoiding adding `getPrimaryEmail` as dependency to `gitpod-db` module.
+        for (const member of members) {
+            const user = await this.userDB.findUserById(member.userId);
+            if (user) {
+                member.primaryEmail = getPrimaryEmail(user);
+            }
+        }
+        return members;
     }
 
     public async getOrCreateInvite(userId: string, orgId: string): Promise<TeamMembershipInvite> {

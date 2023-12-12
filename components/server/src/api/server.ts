@@ -13,25 +13,23 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { HelloService } from "@gitpod/public-api/lib/gitpod/experimental/v1/dummy_connect";
 import { StatsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/stats_connect";
 import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connect";
-import { UserService as UserServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_connect";
 import { OrganizationService } from "@gitpod/public-api/lib/gitpod/v1/organization_connect";
 import { WorkspaceService } from "@gitpod/public-api/lib/gitpod/v1/workspace_connect";
+import { UserService } from "@gitpod/public-api/lib/gitpod/v1/user_connect";
 import { ConfigurationService } from "@gitpod/public-api/lib/gitpod/v1/configuration_connect";
 import { AuthProviderService } from "@gitpod/public-api/lib/gitpod/v1/authprovider_connect";
 import { EnvironmentVariableService } from "@gitpod/public-api/lib/gitpod/v1/envvar_connect";
 import express from "express";
 import * as http from "http";
 import { decorate, inject, injectable, interfaces } from "inversify";
-import { Redis } from "ioredis";
 import { AddressInfo } from "net";
 import { performance } from "perf_hooks";
-import { IRateLimiterOptions, RateLimiterMemory, RateLimiterRedis, RateLimiterRes } from "rate-limiter-flexible";
+import { RateLimiterRes } from "rate-limiter-flexible";
 import { v4 } from "uuid";
 import { isFgaChecksEnabled } from "../authorization/authorizer";
 import { Config } from "../config";
 import { grpcServerHandled, grpcServerHandling, grpcServerStarted } from "../prometheus-metrics";
 import { SessionHandler } from "../session-handler";
-import { UserService } from "../user/user-service";
 import {
     runWithSubjectId,
     runWithRequestContext,
@@ -43,7 +41,6 @@ import { OrganizationServiceAPI } from "./organization-service-api";
 import { RateLimited } from "./rate-limited";
 import { APIStatsService as StatsServiceAPI } from "./stats";
 import { APITeamsService as TeamsServiceAPI } from "./teams";
-import { APIUserService as UserServiceAPI } from "./user";
 import { WorkspaceServiceAPI } from "./workspace-service-api";
 import { ConfigurationServiceAPI } from "./configuration-service-api";
 import { AuthProviderServiceAPI } from "./auth-provider-service-api";
@@ -59,6 +56,11 @@ import { PrebuildServiceAPI } from "./prebuild-service-api";
 import { PrebuildService } from "@gitpod/public-api/lib/gitpod/v1/prebuild_connect";
 import { VerificationServiceAPI } from "./verification-service-api";
 import { VerificationService } from "@gitpod/public-api/lib/gitpod/v1/verification_connect";
+import { UserServiceAPI } from "./user-service-api";
+import { UserService as UserServiceInternal } from "../user/user-service";
+import { InstallationServiceAPI } from "./installation-service-api";
+import { InstallationService } from "@gitpod/public-api/lib/gitpod/v1/installation_connect";
+import { RateLimitter } from "../rate-limitter";
 
 decorate(injectable(), PublicAPIConverter);
 
@@ -81,12 +83,13 @@ export class API {
     @inject(HelloServiceAPI) private readonly helloServiceApi: HelloServiceAPI;
     @inject(SessionHandler) private readonly sessionHandler: SessionHandler;
     @inject(PublicAPIConverter) private readonly apiConverter: PublicAPIConverter;
-    @inject(Redis) private readonly redis: Redis;
     @inject(Config) private readonly config: Config;
-    @inject(UserService) private readonly userService: UserService;
+    @inject(UserServiceInternal) private readonly userServiceInternal: UserServiceInternal;
     @inject(BearerAuth) private readonly bearerAuthenticator: BearerAuth;
     @inject(PrebuildServiceAPI) private readonly prebuildServiceApi: PrebuildServiceAPI;
     @inject(VerificationServiceAPI) private readonly verificationServiceApi: VerificationServiceAPI;
+    @inject(InstallationServiceAPI) private readonly installationServiceApi: InstallationServiceAPI;
+    @inject(RateLimitter) private readonly rateLimitter: RateLimitter;
 
     listenPrivate(): http.Server {
         const app = express();
@@ -114,7 +117,6 @@ export class API {
         app.use(
             expressConnectMiddleware({
                 routes: (router: ConnectRouter) => {
-                    router.service(UserServiceDefinition, this.userServiceApi);
                     router.service(TeamsServiceDefinition, this.teamServiceApi);
                     router.service(StatsService, this.tatsServiceApi);
                 },
@@ -128,6 +130,7 @@ export class API {
                 routes: (router: ConnectRouter) => {
                     for (const [type, impl] of [
                         service(HelloService, this.helloServiceApi),
+                        service(UserService, this.userServiceApi),
                         service(WorkspaceService, this.workspaceServiceApi),
                         service(OrganizationService, this.organizationServiceApi),
                         service(ConfigurationService, this.configurationServiceApi),
@@ -137,13 +140,14 @@ export class API {
                         service(SSHService, this.sshServiceApi),
                         service(PrebuildService, this.prebuildServiceApi),
                         service(VerificationService, this.verificationServiceApi),
+                        service(InstallationService, this.installationServiceApi),
                     ]) {
                         router.service(type, new Proxy(impl, this.interceptService(type)));
                     }
                 },
             }),
         );
-        // TODO(al) cover unhandled cases
+        // TODO(ak) cover unhandled cases
     }
 
     /**
@@ -221,7 +225,7 @@ export class API {
                         const key = `${grpc_service}/${grpc_method}`;
                         const options = self.config.rateLimits?.[key] || RateLimited.getOptions(target, prop);
                         try {
-                            await self.getRateLimitter(options).consume(`${subjectId}_${key}`);
+                            await self.rateLimitter.consume(`${subjectId}_${key}`, options);
                         } catch (e) {
                             if (e instanceof RateLimiterRes) {
                                 throw new ConnectError("rate limit exceeded", Code.ResourceExhausted, {
@@ -346,7 +350,7 @@ export class API {
         if (subjectId.kind === "user") {
             const userId = subjectId.userId()!;
             try {
-                await this.userService.findUserById(userId, userId);
+                await this.userServiceInternal.findUserById(userId, userId);
             } catch (e) {
                 if (e instanceof ApplicationError && e.code === ErrorCodes.NOT_FOUND) {
                     throw new ConnectError("unauthorized", Code.PermissionDenied);
@@ -354,27 +358,6 @@ export class API {
                 throw e;
             }
         }
-    }
-
-    private readonly rateLimiters = new Map<string, RateLimiterRedis>();
-    private getRateLimitter(options: IRateLimiterOptions): RateLimiterRedis {
-        const sortedKeys = Object.keys(options).sort();
-        const sortedObject: { [key: string]: any } = {};
-        for (const key of sortedKeys) {
-            sortedObject[key] = options[key as keyof IRateLimiterOptions];
-        }
-        const key = JSON.stringify(sortedObject);
-
-        let rateLimiter = this.rateLimiters.get(key);
-        if (!rateLimiter) {
-            rateLimiter = new RateLimiterRedis({
-                storeClient: this.redis,
-                ...options,
-                insuranceLimiter: new RateLimiterMemory(options),
-            });
-            this.rateLimiters.set(key, rateLimiter);
-        }
-        return rateLimiter;
     }
 
     static bindAPI(bind: interfaces.Bind): void {
@@ -392,6 +375,7 @@ export class API {
         bind(StatsServiceAPI).toSelf().inSingletonScope();
         bind(PrebuildServiceAPI).toSelf().inSingletonScope();
         bind(VerificationServiceAPI).toSelf().inSingletonScope();
+        bind(InstallationServiceAPI).toSelf().inSingletonScope();
         bind(API).toSelf().inSingletonScope();
     }
 }

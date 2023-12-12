@@ -59,7 +59,6 @@ class TeamDBSpec {
         const members = await this.db.findMembersByTeam(team.id);
         expect(members.length).to.eq(1);
         expect(members[0].userId).to.eq(user.id);
-        expect(members[0].primaryEmail).to.eq("tom@example.com");
     }
 
     @test(timeout(15000))

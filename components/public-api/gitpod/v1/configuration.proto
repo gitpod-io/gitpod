@@ -78,6 +78,8 @@ message ListConfigurationsRequest {
   PaginationRequest pagination = 3;
   // Configurations can be sorted by "name" OR "creationTime"
   repeated Sort sort = 4;
+  // Will filter for configurations that have prebuilds enabled/disabled, or both if not set.
+  optional bool prebuilds_enabled = 5;
 }
 
 message ListConfigurationsResponse {

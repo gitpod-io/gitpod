@@ -12,7 +12,5 @@ interface Props {
 }
 
 export const ConfigurationSettingsField = ({ children, className }: Props) => {
-    return (
-        <div className={cn("border border-gray-300 dark:border-gray-700 rounded-xl p-6", className)}>{children}</div>
-    );
+    return <div className={cn("border border-pk-border-base rounded-xl p-6", className)}>{children}</div>;
 };

@@ -18,6 +18,7 @@ import Pagination from "../Pagination/Pagination";
 import { Button } from "@podkit/buttons/Button";
 import { installationClient } from "../service/public-api";
 import { ListBlockedEmailDomainsResponse } from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
+import { TextInputField } from "../components/forms/TextInputField";
 
 export function BlockedEmailDomains() {
     return (
@@ -253,22 +254,19 @@ function Details(props: {
             {props.error ? (
                 <div className="bg-kumquat-light rounded-md p-3 text-gitpod-red text-sm mb-2">{props.error}</div>
             ) : null}
-            <div>
-                <h4>Domain (may contain '%' as wild card)</h4>
-                <input
-                    autoFocus
-                    className="w-full"
-                    type="text"
-                    value={props.br.domain}
-                    placeholder={'e.g. "mailicous-domain.com"'}
-                    disabled={!props.update}
-                    onChange={(v) => {
-                        if (!!props.update) {
-                            props.update({ domain: v.target.value });
-                        }
-                    }}
-                />
-            </div>
+            <TextInputField
+                label="Domain (may contain '%' as wild card)"
+                autoFocus
+                type="text"
+                value={props.br.domain}
+                placeholder={'e.g. "mailicous-domain.com"'}
+                disabled={!props.update}
+                onChange={(val) => {
+                    if (!!props.update) {
+                        props.update({ domain: val });
+                    }
+                }}
+            />
 
             <CheckboxInputField
                 label="Block Users"

@@ -25,6 +25,7 @@ import { HostContextProvider } from "./host-context-provider";
 import { isFgaChecksEnabled } from "../authorization/authorizer";
 import { reportGuardAccessCheck } from "../prometheus-metrics";
 import { getRequiredScopes } from "./auth-provider-scopes";
+import { FunctionAccessGuard } from "./function-access";
 
 declare let resourceInstance: GuardedResource;
 export type GuardedResourceKind = typeof resourceInstance.kind;
@@ -172,6 +173,26 @@ export class FGAResourceAccessGuard implements ResourceAccessGuard {
 
         // FGA can't take over yet, so we delegate
         return await this.delegate.canAccess(resource, operation);
+    }
+}
+
+/**
+ * FGAFunctionAccessGuard can disable the delegate if FGA is enabled.
+ */
+export class FGAFunctionAccessGuard {
+    constructor(private readonly userId: string, private readonly delegate: FunctionAccessGuard) {}
+
+    async canAccess(name: string): Promise<boolean> {
+        const authorizerEnabled = await isFgaChecksEnabled(this.userId);
+        if (authorizerEnabled) {
+            // Authorizer takes over, so we should not check.
+            reportGuardAccessCheck("fga");
+            return true;
+        }
+        reportGuardAccessCheck("function-access");
+
+        // FGA can't take over yet, so we delegate
+        return this.delegate.canAccess(name);
     }
 }
 

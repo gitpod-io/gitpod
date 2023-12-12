@@ -28,13 +28,23 @@ import { startFixtureTest } from "./fixtures.spec";
 import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { BranchMatchingStrategy } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
-import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { WorkspaceAndInstance } from "@gitpod/gitpod-protocol";
 
 describe("PublicAPIConverter", () => {
     const converter = new PublicAPIConverter();
 
     describe("golden tests", () => {
+        it("toWorkspaceSnapshot", async () => {
+            await startFixtureTest("../fixtures/toWorkspaceSnapshot_*.json", async (input) =>
+                converter.toWorkspaceSnapshot(input),
+            );
+        });
+
+        it("toUser", async () => {
+            await startFixtureTest("../fixtures/toUser_*.json", async (input) => converter.toUser(input));
+        });
+
         it("toOrganization", async () => {
             await startFixtureTest("../fixtures/toOrganization_*.json", async (input) =>
                 converter.toOrganization(input),
@@ -102,6 +112,14 @@ describe("PublicAPIConverter", () => {
             await startFixtureTest("../fixtures/toPrebuildSettings_*.json", async (input) =>
                 converter.toPrebuildSettings(input),
             );
+        });
+
+        it("toAndFromPhase", async () => {
+            await startFixtureTest("../fixtures/toAndFromPhase_*.json", async (input) => {
+                const t1 = converter.toPhase({ status: { phase: input } } as any);
+                const t2 = converter.fromPhase(t1);
+                return WorkspacePhase_Phase[converter.toPhase({ status: { phase: t2 } } as any)];
+            });
         });
 
         it("toBranchMatchingStrategy", async () => {
@@ -219,10 +237,10 @@ describe("PublicAPIConverter", () => {
     });
 
     describe("toDurationString", () => {
-        it("should convert with 0", () => {
-            expect(converter.toDurationString(new Duration())).to.equal("0");
-            expect(converter.toDurationString(new Duration({ seconds: BigInt(0) }))).to.equal("0");
-            expect(converter.toDurationString(new Duration({ nanos: 0 }))).to.equal("0");
+        it("should convert with empty string", () => {
+            expect(converter.toDurationString(new Duration())).to.equal("");
+            expect(converter.toDurationString(new Duration({ seconds: BigInt(0) }))).to.equal("");
+            expect(converter.toDurationString(new Duration({ nanos: 0 }))).to.equal("");
         });
         it("should convert with hours", () => {
             expect(converter.toDurationString(new Duration({ seconds: BigInt(3600) }))).to.equal("1h");
@@ -242,6 +260,18 @@ describe("PublicAPIConverter", () => {
             expect(converter.toDurationString(new Duration({ seconds: BigInt(25 * 3600 + 20 * 60 + 1) }))).to.equal(
                 "25h20m1s",
             );
+        });
+    });
+
+    describe("toOnboardingState", () => {
+        it("should convert", () => {
+            const result = converter.toOnboardingState({
+                isCompleted: true,
+                hasAnyOrg: true,
+            });
+            expect(result).to.deep.equal({
+                completed: true,
+            });
         });
     });
 

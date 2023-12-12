@@ -1,0 +1,7 @@
+{
+    "result": {
+        "id": "foo",
+        "workspaceId": "boo"
+    },
+    "err": ""
+}

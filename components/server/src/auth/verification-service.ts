@@ -16,6 +16,7 @@ import { v4 as uuidv4, validate as uuidValidate } from "uuid";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { UserService } from "../user/user-service";
+import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 
 interface VerificationEndpoint {
     sendToken(phoneNumber: string, channel: "sms" | "call"): Promise<string>;
@@ -134,7 +135,10 @@ export class VerificationService {
             "isPhoneVerificationEnabled",
             false,
             {
-                user,
+                user: {
+                    id: user.id,
+                    email: getPrimaryEmail(user),
+                },
             },
         );
         return isPhoneVerificationEnabled;

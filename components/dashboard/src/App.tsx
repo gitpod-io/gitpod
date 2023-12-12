@@ -32,6 +32,7 @@ const App: FC = () => {
             if ((event.metaKey || event.ctrlKey) && event.key === "o") {
                 event.preventDefault();
                 history.push("/new");
+                return;
             }
         };
         window.addEventListener("keydown", onKeyDown);

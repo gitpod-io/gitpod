@@ -9,6 +9,7 @@ import { IAnalyticsWriter, IdentifyMessage, PageMessage, TrackMessage } from "@g
 import * as crypto from "crypto";
 import { clientIp } from "./express-util";
 import { ctxTrySubjectId } from "./util/request-context";
+import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 
 export async function trackLogin(user: User, request: Request, authHost: string, analytics: IAnalyticsWriter) {
     // make new complete identify call for each login
@@ -85,7 +86,7 @@ async function fullIdentify(user: User, request: Request, analytics: IAnalyticsW
         },
         traits: {
             ...resolveIdentities(user),
-            email: User.getPrimaryEmail(user) || "",
+            email: getPrimaryEmail(user) || "",
             full_name: user.fullName,
             created_at: user.creationDate,
             unsubscribed_onboarding: user.additionalData?.emailNotificationSettings?.allowsOnboardingMail === false,

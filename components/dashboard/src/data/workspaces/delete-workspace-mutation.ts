@@ -5,7 +5,7 @@
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { workspacesService } from "../../service/public-api";
+import { workspaceClient } from "../../service/public-api";
 import { getListWorkspacesQueryKey, ListWorkspacesQueryResult } from "./list-workspaces-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
 
@@ -19,7 +19,7 @@ export const useDeleteWorkspaceMutation = () => {
 
     return useMutation({
         mutationFn: async ({ workspaceId }: DeleteWorkspaceArgs) => {
-            return await workspacesService.deleteWorkspace({ workspaceId });
+            return await workspaceClient.deleteWorkspace({ workspaceId });
         },
         onSuccess: (_, { workspaceId }) => {
             const queryKey = getListWorkspacesQueryKey(org.data?.id);

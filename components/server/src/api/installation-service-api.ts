@@ -14,6 +14,10 @@ import {
     CreateBlockedRepositoryResponse,
     DeleteBlockedRepositoryRequest,
     DeleteBlockedRepositoryResponse,
+    GetInstallationWorkspaceDefaultImageRequest,
+    GetInstallationWorkspaceDefaultImageResponse,
+    GetOnboardingStateRequest,
+    GetOnboardingStateResponse,
     ListBlockedEmailDomainsRequest,
     ListBlockedEmailDomainsResponse,
     ListBlockedRepositoriesRequest,
@@ -26,12 +30,21 @@ import { PaginationToken, generatePaginationToken, parsePaginationToken } from "
 import { parseSorting } from "./sorting";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
+import { Unauthenticated } from "./unauthenticated";
 
 @injectable()
 export class InstallationServiceAPI implements ServiceImpl<typeof InstallationServiceInterface> {
     @inject(InstallationService) private readonly installationService: InstallationService;
 
     @inject(PublicAPIConverter) private readonly apiConverter: PublicAPIConverter;
+
+    async getInstallationWorkspaceDefaultImage(
+        req: GetInstallationWorkspaceDefaultImageRequest,
+        _: HandlerContext,
+    ): Promise<GetInstallationWorkspaceDefaultImageResponse> {
+        const img = await this.installationService.getWorkspaceDefaultImage();
+        return new GetInstallationWorkspaceDefaultImageResponse({ defaultWorkspaceImage: img });
+    }
 
     async listBlockedRepositories(
         req: ListBlockedRepositoriesRequest,
@@ -125,6 +138,14 @@ export class InstallationServiceAPI implements ServiceImpl<typeof InstallationSe
         });
         return new CreateBlockedEmailDomainResponse({
             blockedEmailDomain: this.apiConverter.toBlockedEmailDomain(data),
+        });
+    }
+
+    @Unauthenticated()
+    async getOnboardingState(req: GetOnboardingStateRequest): Promise<GetOnboardingStateResponse> {
+        const state = await this.installationService.getOnboardingState();
+        return new GetOnboardingStateResponse({
+            onboardingState: this.apiConverter.toOnboardingState(state),
         });
     }
 }

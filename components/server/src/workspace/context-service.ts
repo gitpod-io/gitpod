@@ -22,6 +22,7 @@ import { ProjectsService } from "../projects/projects-service";
 import { OpenPrebuildContext, WithDefaultConfig } from "@gitpod/gitpod-protocol/lib/protocol";
 import { IncrementalWorkspaceService } from "../prebuilds/incremental-workspace-service";
 import { Authorizer } from "../authorization/authorizer";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class ContextService {
@@ -82,6 +83,30 @@ export class ContextService {
         return result;
     }
 
+    /**
+     * parseContextUrl without snapshot and prebuild checking
+     * @deprecated
+     */
+    public async parseContextUrl(user: User, contextUrl: string): Promise<WorkspaceContext> {
+        let normalizedContextUrl = "";
+        try {
+            normalizedContextUrl = this.contextParser.normalizeContextURL(contextUrl);
+            return await this.contextParser.handle({}, user, normalizedContextUrl);
+        } catch (error) {
+            if (ApplicationError.hasErrorCode(error)) {
+                // specific errors will be handled in create-workspace.tsx
+                throw error;
+            }
+            // TODO(ak) not sure about it we shovel all errors in context parsing error
+            // we should rather do internal errors, and categorize at sources
+            log.debug(error);
+            throw new ApplicationError(
+                ErrorCodes.CONTEXT_PARSE_ERROR,
+                error ? String(error) : `Cannot create workspace for URL: ${normalizedContextUrl}`,
+            );
+        }
+    }
+
     public async parseContext(
         user: User,
         contextUrl: string,
@@ -120,7 +145,11 @@ export class ContextService {
         if (options?.projectId) {
             project = await this.projectsService.getProject(user.id, options.projectId);
         } else if (CommitContext.is(context)) {
-            const projects = await this.projectsService.findProjectsByCloneUrl(user.id, context.repository.cloneUrl);
+            const projects = await this.projectsService.findProjectsByCloneUrl(
+                user.id,
+                context.repository.cloneUrl,
+                options?.organizationId,
+            );
             if (projects.length > 1) {
                 throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Multiple projects found for clone URL.");
             }

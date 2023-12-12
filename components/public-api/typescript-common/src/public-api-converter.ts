@@ -4,6 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import "reflect-metadata";
+
 import { Timestamp, toPlainMessage, PartialMessage, Duration } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@connectrpc/connect";
 import {
@@ -26,6 +28,16 @@ import {
     OAuth2Config,
 } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import {
+    Identity,
+    SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption,
+    User,
+    User_EmailNotificationSettings,
+    User_RoleOrPermission,
+    User_UserFeatureFlag,
+    User_WorkspaceAutostartOption,
+    User_WorkspaceTimeoutSettings,
+} from "@gitpod/public-api/lib/gitpod/v1/user_pb";
+import {
     BranchMatchingStrategy,
     Configuration,
     PrebuildSettings,
@@ -39,12 +51,16 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import {
     AdmissionLevel,
+    CreateAndStartWorkspaceRequest,
     GitInitializer,
+    GitInitializer_CloneTargetMode,
     GitInitializer_GitConfig,
+    ParseContextURLResponse,
     PrebuildInitializer,
     SnapshotInitializer,
     UpdateWorkspaceRequest_UpdateTimeout,
     Workspace,
+    WorkspaceClass,
     WorkspaceGitStatus,
     WorkspaceInitializer,
     WorkspaceInitializer_Spec,
@@ -53,6 +69,7 @@ import {
     WorkspacePhase_Phase,
     WorkspacePort,
     WorkspacePort_Protocol,
+    WorkspaceSnapshot,
     WorkspaceSpec,
     WorkspaceSpec_GitSpec,
     WorkspaceSpec_WorkspaceType,
@@ -61,7 +78,11 @@ import {
     WorkspaceStatus_WorkspaceConditions,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { EditorReference } from "@gitpod/public-api/lib/gitpod/v1/editor_pb";
-import { BlockedEmailDomain, BlockedRepository } from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
+import {
+    BlockedEmailDomain,
+    BlockedRepository,
+    OnboardingState,
+} from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
 import { SSHPublicKey } from "@gitpod/public-api/lib/gitpod/v1/ssh_pb";
 import {
     ConfigurationEnvironmentVariable,
@@ -80,6 +101,8 @@ import {
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { InvalidGitpodYMLError, RepositoryNotFoundError, UnauthorizedRepositoryAccessError } from "./public-api-errors";
 import {
+    User as UserProtocol,
+    Identity as IdentityProtocol,
     AuthProviderEntry as AuthProviderProtocol,
     AuthProviderInfo,
     CommitContext,
@@ -98,6 +121,10 @@ import {
     UserSSHPublicKeyValue,
     SnapshotContext,
     EmailDomainFilterEntry,
+    NamedWorkspaceFeatureFlag,
+    WorkspaceAutostartOption,
+    IDESettings,
+    Snapshot,
 } from "@gitpod/gitpod-protocol/lib/protocol";
 import {
     OrgMemberInfo,
@@ -114,11 +141,17 @@ import {
     PortProtocol,
     WorkspaceInstance,
     WorkspaceInstanceConditions,
+    WorkspaceInstancePhase,
     WorkspaceInstancePort,
-} from "@gitpod/gitpod-protocol/lib//workspace-instance";
+} from "@gitpod/gitpod-protocol/lib/workspace-instance";
 import { Author, Commit } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import type { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 import { BlockedRepository as ProtocolBlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
+import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
+import { RoleOrPermission } from "@gitpod/gitpod-protocol/lib/permission";
+import { parseGoDurationToMs } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import { GitpodServer } from "@gitpod/gitpod-protocol";
 
 export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
 
@@ -156,46 +189,7 @@ export class PublicAPIConverter {
                     ? WorkspaceSpec_WorkspaceType.PREBUILD
                     : WorkspaceSpec_WorkspaceType.REGULAR;
             spec.environmentVariables = this.toEnvironmentVariables(arg.workspace.context);
-
-            if (WithPrebuild.is(arg.workspace.context)) {
-                const initializerSpec = new WorkspaceInitializer_Spec({
-                    spec: {
-                        case: "prebuild",
-                        value: new PrebuildInitializer({
-                            prebuildId: arg.workspace.context.prebuildWorkspaceId,
-                        }),
-                    },
-                });
-                spec.initializer.specs.push(initializerSpec);
-            } else if (CommitContext.is(arg.workspace.context)) {
-                const initializerSpec = new WorkspaceInitializer_Spec({
-                    spec: {
-                        case: "git",
-                        value: new GitInitializer({
-                            remoteUri: arg.workspace.context.repository.cloneUrl,
-                            upstreamRemoteUri: arg.workspace.context.upstreamRemoteURI,
-                            // TODO:
-                            // targetMode
-                            // cloneTaget
-                            checkoutLocation: arg.workspace.context.checkoutLocation,
-                            // TODO: config
-                            config: new GitInitializer_GitConfig(),
-                        }),
-                    },
-                });
-                spec.initializer.specs.push(initializerSpec);
-            } else if (SnapshotContext.is(arg.workspace.context)) {
-                const initializerSpec = new WorkspaceInitializer_Spec({
-                    spec: {
-                        case: "snapshot",
-                        value: new SnapshotInitializer({
-                            snapshotId: arg.workspace.context.snapshotId,
-                        }),
-                    },
-                });
-                spec.initializer.specs.push(initializerSpec);
-            }
-            // TODO: else if FileDownloadInitializer
+            spec.initializer = this.workspaceContextToWorkspaceInitializer(arg.workspace.context);
 
             spec.git = new WorkspaceSpec_GitSpec({
                 // TODO:
@@ -224,6 +218,115 @@ export class PublicAPIConverter {
         // TODO: subassembly_references
         // TODO: log_url
         return spec;
+    }
+
+    workspaceContextToWorkspaceInitializer(arg: WorkspaceContext, cloneUrl?: string): WorkspaceInitializer {
+        const result = new WorkspaceInitializer();
+        if (WithPrebuild.is(arg)) {
+            result.specs = [
+                new WorkspaceInitializer_Spec({
+                    spec: {
+                        case: "prebuild",
+                        value: new PrebuildInitializer({
+                            prebuildId: arg.prebuildWorkspaceId,
+                        }),
+                    },
+                }),
+            ];
+        } else if (CommitContext.is(arg)) {
+            result.specs = [
+                new WorkspaceInitializer_Spec({
+                    spec: {
+                        case: "git",
+                        value: new GitInitializer({
+                            remoteUri: arg.repository.cloneUrl,
+                            upstreamRemoteUri: arg.upstreamRemoteURI,
+                            // TODO: more modes support
+                            targetMode: GitInitializer_CloneTargetMode.REMOTE_COMMIT,
+                            cloneTarget: arg.revision,
+                            checkoutLocation: arg.checkoutLocation,
+                            // TODO: config
+                            config: new GitInitializer_GitConfig(),
+                        }),
+                    },
+                }),
+            ];
+        }
+        if (SnapshotContext.is(arg)) {
+            result.specs = [
+                new WorkspaceInitializer_Spec({
+                    spec: {
+                        case: "snapshot",
+                        value: new SnapshotInitializer({
+                            snapshotId: arg.snapshotId,
+                        }),
+                    },
+                }),
+            ];
+        }
+        return result;
+        // TODO: else if FileDownloadInitializer
+    }
+
+    fromCreateAndStartWorkspaceRequest(
+        req: CreateAndStartWorkspaceRequest,
+    ): { editor?: EditorReference; contextUrl: string; workspaceClass?: string } | undefined {
+        switch (req.source.case) {
+            case "contextUrl": {
+                if (!req.source.value.url) {
+                    return undefined;
+                }
+                return {
+                    contextUrl: req.source.value.url,
+                    editor: req.source.value.editor,
+                    workspaceClass: req.source.value.workspaceClass || undefined,
+                };
+            }
+            case "spec": {
+                if ((req.source.value.initializer?.specs.length ?? 0) <= 0) {
+                    return undefined;
+                }
+                const init = req.source.value.initializer;
+                const initSpec = init!.specs[0];
+                let contextUrl: string | undefined;
+                switch (initSpec.spec.case) {
+                    case "git": {
+                        if (!initSpec.spec.value.remoteUri) {
+                            return undefined;
+                        }
+                        contextUrl = initSpec.spec.value.remoteUri;
+                        break;
+                    }
+                    case "prebuild": {
+                        if (!initSpec.spec.value || (init?.specs.length ?? 0) < 2) {
+                            return undefined;
+                        }
+                        const gitSpec = init!.specs[1];
+                        if (gitSpec.spec.case !== "git" || !gitSpec.spec.value.remoteUri) {
+                            return undefined;
+                        }
+                        contextUrl = `open-prebuild/${initSpec.spec.value}/${gitSpec.spec.value.remoteUri}`;
+                        break;
+                    }
+                    case "snapshot": {
+                        if (!initSpec.spec.value.snapshotId) {
+                            return undefined;
+                        }
+                        contextUrl = `snapshot/${initSpec.spec.value.snapshotId}`;
+                        break;
+                    }
+                }
+                if (!contextUrl) {
+                    return undefined;
+                }
+                return {
+                    contextUrl,
+                    editor: req.source.value.editor,
+                    workspaceClass: req.source.value.class || undefined,
+                };
+            }
+        }
+        return undefined;
     }
 
     toWorkspaceStatus(arg: WorkspaceInfo | WorkspaceInstance, current?: WorkspaceStatus): WorkspaceStatus {
@@ -318,6 +421,16 @@ export class PublicAPIConverter {
         result.name = ideConfig.ide;
         result.version = ideConfig.useLatest ? "latest" : "stable";
         return result;
+    }
+
+    toParseContextURLResponse(
+        metadata: PartialMessage<WorkspaceMetadata>,
+        context: WorkspaceContext,
+    ): ParseContextURLResponse {
+        return new ParseContextURLResponse({
+            metadata,
+            spec: { initializer: this.workspaceContextToWorkspaceInitializer(context) },
+        });
     }
 
     toError(reason: unknown): ConnectError {
@@ -709,6 +822,35 @@ export class PublicAPIConverter {
         return WorkspacePhase_Phase.UNSPECIFIED;
     }
 
+    fromPhase(arg: WorkspacePhase_Phase): WorkspaceInstancePhase {
+        switch (arg) {
+            case WorkspacePhase_Phase.UNSPECIFIED:
+                return "unknown";
+            case WorkspacePhase_Phase.PREPARING:
+                return "preparing";
+            case WorkspacePhase_Phase.IMAGEBUILD:
+                return "building";
+            case WorkspacePhase_Phase.PENDING:
+                return "pending";
+            case WorkspacePhase_Phase.CREATING:
+                return "creating";
+            case WorkspacePhase_Phase.INITIALIZING:
+                return "initializing";
+            case WorkspacePhase_Phase.RUNNING:
+                return "running";
+            case WorkspacePhase_Phase.INTERRUPTED:
+                return "interrupted";
+            // TODO:
+            // case WorkspacePhase_Phase.PAUSED:
+            //     return "unknown";
+            case WorkspacePhase_Phase.STOPPING:
+                return "stopping";
+            case WorkspacePhase_Phase.STOPPED:
+                return "stopped";
+        }
+        return "unknown";
+    }
+
     toOrganization(org: ProtocolOrganization): Organization {
         const result = new Organization();
         result.id = org.id;
@@ -1050,10 +1192,10 @@ export class PublicAPIConverter {
      * `Duration.nanos` is ignored
      * @returns a string like "1h2m3s", valid time units are `s`, `m`, `h`
      */
-    toDurationString(duration: PartialMessage<Duration>): string {
-        const seconds = duration.seconds || 0;
+    toDurationString(duration?: PartialMessage<Duration>): string {
+        const seconds = duration?.seconds || 0;
         if (seconds === 0) {
-            return "0";
+            return "";
         }
         const totalMilliseconds = Number(seconds) * 1000;
 
@@ -1068,30 +1210,201 @@ export class PublicAPIConverter {
         }`;
     }
 
+    toUser(from: UserProtocol): User {
+        const {
+            id,
+            name,
+            fullName,
+            creationDate,
+            identities,
+            additionalData,
+            avatarUrl,
+            featureFlags,
+            organizationId,
+            rolesOrPermissions,
+            usageAttributionId,
+            blocked,
+            lastVerificationTime,
+            verificationPhoneNumber,
+        } = from;
+        const {
+            disabledClosedTimeout,
+            dotfileRepo,
+            emailNotificationSettings,
+            ideSettings,
+            profile,
+            workspaceAutostartOptions,
+            workspaceClasses,
+            workspaceTimeout,
+        } = additionalData || {};
+
+        return new User({
+            id,
+            name: fullName || name,
+            createdAt: this.toTimestamp(creationDate),
+            avatarUrl,
+            organizationId,
+            usageAttributionId,
+            blocked,
+            identities: identities?.map((i) => this.toIdentity(i)),
+            rolesOrPermissions: rolesOrPermissions?.map((rp) => this.toRoleOrPermission(rp)),
+            workspaceFeatureFlags: featureFlags?.permanentWSFeatureFlags?.map((ff) => this.toUserFeatureFlags(ff)),
+            workspaceTimeoutSettings: new User_WorkspaceTimeoutSettings({
+                inactivity: !!workspaceTimeout ? this.toDuration(workspaceTimeout) : undefined,
+                disabledDisconnected: disabledClosedTimeout,
+            }),
+            dotfileRepo,
+            emailNotificationSettings: new User_EmailNotificationSettings({
+                allowsChangelogMail: emailNotificationSettings?.allowsChangelogMail,
+                allowsDevxMail: emailNotificationSettings?.allowsDevXMail,
+                allowsOnboardingMail: emailNotificationSettings?.allowsOnboardingMail,
+            }),
+            editorSettings: this.toEditorReference(ideSettings),
+            lastVerificationTime: this.toTimestamp(lastVerificationTime),
+            verificationPhoneNumber,
+            workspaceClass: workspaceClasses?.regular,
+            workspaceAutostartOptions: workspaceAutostartOptions?.map((o) => this.toWorkspaceAutostartOption(o)),
+            profile,
+        });
+    }
+
     /**
      * Converts a duration string like "1h2m3s" to a Duration
      *
      * @param durationString "1h2m3s" valid time units are `s`, `m`, `h`
      */
-    toDuration(durationString: string): Duration {
-        const units = new Map([
-            ["h", 3600],
-            ["m", 60],
-            ["s", 1],
-        ]);
-        const regex = /(\d+(?:\.\d+)?)([hmsµµs]+)/g;
-        let totalSeconds = 0;
-        let match: RegExpExecArray | null;
-
-        while ((match = regex.exec(durationString)) !== null) {
-            const value = parseFloat(match[1]);
-            const unit = match[2];
-            totalSeconds += value * (units.get(unit) || 0);
-        }
-
+    toDuration(from: string): Duration {
+        const millis = parseGoDurationToMs(from);
+        const seconds = BigInt(Math.floor(millis / 1000));
+        const nanos = (millis % 1000) * 1000000;
         return new Duration({
-            seconds: BigInt(Math.floor(totalSeconds)),
-            nanos: (totalSeconds - Math.floor(totalSeconds)) * 1e9,
+            seconds,
+            nanos,
+        });
+    }
+
+    toWorkspaceClass(cls: SupportedWorkspaceClass): WorkspaceClass {
+        return new WorkspaceClass({
+            id: cls.id,
+            displayName: cls.displayName,
+            description: cls.description,
+            isDefault: cls.isDefault,
+        });
+    }
+
+    toTimestamp(from?: string | undefined): Timestamp | undefined {
+        return from ? Timestamp.fromDate(new Date(from)) : undefined;
+    }
+
+    toIdentity(from: IdentityProtocol): Identity {
+        const { authId, authName, authProviderId, lastSigninTime, primaryEmail } = from;
+        return new Identity({
+            authProviderId,
+            authId,
+            authName,
+            lastSigninTime: this.toTimestamp(lastSigninTime),
+            primaryEmail,
+        });
+    }
+
+    toRoleOrPermission(from: RoleOrPermission): User_RoleOrPermission {
+        switch (from) {
+            case "admin":
+                return User_RoleOrPermission.ADMIN;
+            case "devops":
+                return User_RoleOrPermission.DEVOPS;
+            case "viewer":
+                return User_RoleOrPermission.VIEWER;
+            case "developer":
+                return User_RoleOrPermission.DEVELOPER;
+            case "registry-access":
+                return User_RoleOrPermission.REGISTRY_ACCESS;
+            case "admin-permissions":
+                return User_RoleOrPermission.ADMIN_PERMISSIONS;
+            case "admin-users":
+                return User_RoleOrPermission.ADMIN_USERS;
+            case "admin-workspace-content":
+                return User_RoleOrPermission.ADMIN_WORKSPACE_CONTENT;
+            case "admin-workspaces":
+                return User_RoleOrPermission.ADMIN_WORKSPACES;
+            case "admin-projects":
+                return User_RoleOrPermission.ADMIN_PROJECTS;
+            case "new-workspace-cluster":
+                return User_RoleOrPermission.NEW_WORKSPACE_CLUSTER;
+        }
+        return User_RoleOrPermission.UNSPECIFIED;
+    }
+
+    toUserFeatureFlags(from: NamedWorkspaceFeatureFlag): User_UserFeatureFlag {
+        switch (from) {
+            case "full_workspace_backup":
+                return User_UserFeatureFlag.FULL_WORKSPACE_BACKUP;
+            case "workspace_class_limiting":
+                return User_UserFeatureFlag.WORKSPACE_CLASS_LIMITING;
+            case "workspace_connection_limiting":
+                return User_UserFeatureFlag.WORKSPACE_CONNECTION_LIMITING;
+            case "workspace_psi":
+                return User_UserFeatureFlag.WORKSPACE_PSI;
+        }
+        return User_UserFeatureFlag.UNSPECIFIED;
+    }
+
+    toEditorReference(from?: IDESettings): EditorReference | undefined {
+        if (!from) {
+            return undefined;
+        }
+        return new EditorReference({
+            name: from.defaultIde,
+            version: from.useLatestVersion ? "latest" : "stable",
+        });
+    }
+
+    fromEditorReference(e?: EditorReference): IDESettings | undefined {
+        if (!e) {
+            return undefined;
+        }
+        return {
+            defaultIde: e.name,
+            useLatestVersion: e.version === "latest",
+        };
+    }
+
+    toWorkspaceAutostartOption(from: WorkspaceAutostartOption): User_WorkspaceAutostartOption {
+        return new User_WorkspaceAutostartOption({
+            cloneUrl: from.cloneURL,
+            editorSettings: this.toEditorReference(from.ideSettings),
+            organizationId: from.organizationId,
+            region: from.region,
+            workspaceClass: from.workspaceClass,
+        });
+    }
+
+    fromWorkspaceAutostartOption(
+        o: User_WorkspaceAutostartOption | SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption,
+    ): WorkspaceAutostartOption {
+        const region = !!o.region && isWorkspaceRegion(o.region) ? o.region : "";
+        return {
+            cloneURL: o.cloneUrl,
+            ideSettings: this.fromEditorReference(o.editorSettings),
+            organizationId: o.organizationId,
+            region,
+            workspaceClass: o.workspaceClass,
+        };
+    }
+
+    toWorkspaceSnapshot(
+        snapshot: Pick<Snapshot, "id" | "originalWorkspaceId"> & Partial<Pick<Snapshot, "creationTime">>,
+    ): WorkspaceSnapshot {
+        return new WorkspaceSnapshot({
+            id: snapshot.id,
+            workspaceId: snapshot.originalWorkspaceId,
+            creationTime: snapshot.creationTime ? this.toTimestamp(snapshot.creationTime) : undefined,
+        });
+    }
+
+    toOnboardingState(state: GitpodServer.OnboardingState): OnboardingState {
+        return new OnboardingState({
+            completed: state.isCompleted,
         });
     }
 }

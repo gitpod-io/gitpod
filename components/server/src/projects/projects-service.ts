@@ -71,6 +71,7 @@ export class ProjectsService {
             orderDir?: "ASC" | "DESC";
             searchTerm?: string;
             organizationId?: string;
+            prebuildsEnabled?: boolean;
         },
     ): Promise<{ total: number; rows: Project[] }> {
         if (searchOptions.organizationId) {
@@ -86,6 +87,7 @@ export class ProjectsService {
             orderDir: searchOptions.orderDir || "ASC",
             searchTerm: searchOptions.searchTerm || "",
             organizationId: searchOptions.organizationId,
+            prebuildsEnabled: searchOptions.prebuildsEnabled,
         });
         // TODO: adjust this to not filter entities, but log errors if any are not accessible for current user
         const rows = await this.filterByReadAccess(userId, projects.rows);
@@ -114,8 +116,8 @@ export class ProjectsService {
         return filteredProjects;
     }
 
-    async findProjectsByCloneUrl(userId: string, cloneUrl: string): Promise<Project[]> {
-        const projects = await this.projectDB.findProjectsByCloneUrl(cloneUrl);
+    async findProjectsByCloneUrl(userId: string, cloneUrl: string, organizationId?: string): Promise<Project[]> {
+        const projects = await this.projectDB.findProjectsByCloneUrl(cloneUrl, organizationId);
         const result: Project[] = [];
         for (const project of projects) {
             if (await this.auth.hasPermissionOnProject(userId, "read_info", project.id)) {

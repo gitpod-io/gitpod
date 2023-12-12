@@ -10,7 +10,6 @@ import {
     TeamMemberInfo,
     TeamMemberRole,
     TeamMembershipInvite,
-    User,
 } from "@gitpod/gitpod-protocol";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { randomBytes } from "crypto";
@@ -101,7 +100,6 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
             return {
                 userId: u.id,
                 fullName: u.fullName || u.name,
-                primaryEmail: User.getPrimaryEmail(u),
                 avatarUrl: u.avatarUrl,
                 role: m.role,
                 memberSince: m.creationTime,

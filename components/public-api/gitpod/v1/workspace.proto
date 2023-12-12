@@ -35,6 +35,17 @@ service WorkspaceService {
   // UpdateWorkspace updates the workspace.
   rpc UpdateWorkspace(UpdateWorkspaceRequest) returns (UpdateWorkspaceResponse) {}
 
+  // StopWorkspace stops a running workspace.
+  rpc StopWorkspace(StopWorkspaceRequest) returns (StopWorkspaceResponse) {}
+
+  // DeleteWorkspace deletes a workspace.
+  // When the workspace is running, it will be stopped as well.
+  // Deleted workspaces cannot be started again.
+  rpc DeleteWorkspace(DeleteWorkspaceRequest) returns (DeleteWorkspaceResponse) {}
+
+  // ListWorkspaceClasses enumerates all available workspace classes.
+  rpc ListWorkspaceClasses(ListWorkspaceClassesRequest) returns (ListWorkspaceClassesResponse) {}
+
   // ParseContextURL parses a context URL and returns the workspace metadata and spec.
   // Not implemented yet.
   rpc ParseContextURL(ParseContextURLRequest) returns (ParseContextURLResponse) {}
@@ -52,7 +63,37 @@ service WorkspaceService {
   // GetWorkspaceEditorCredentials returns an credentials that is used in editor
   // to encrypt and decrypt secrets
   rpc GetWorkspaceEditorCredentials(GetWorkspaceEditorCredentialsRequest) returns (GetWorkspaceEditorCredentialsResponse) {}
+
+  // CreateWorkspaceSnapshot creates a snapshot of the workspace that can be
+  // shared with others.
+  rpc CreateWorkspaceSnapshot(CreateWorkspaceSnapshotRequest) returns (CreateWorkspaceSnapshotResponse) {}
+
+  // WaitWorkspaceSnapshot waits for the snapshot to be available or failed.
+  rpc WaitForWorkspaceSnapshot(WaitForWorkspaceSnapshotRequest) returns (WaitForWorkspaceSnapshotResponse) {}
+
+  // UpdateWorkspacePort updates the port of workspace.
+  rpc UpdateWorkspacePort(UpdateWorkspacePortRequest) returns (UpdateWorkspacePortResponse) {}
 }
+
+message UpdateWorkspacePortRequest {
+  // workspace_id specifies the workspace to update port
+  //
+  // +required
+  string workspace_id = 1;
+
+  // port number
+  //
+  // +required
+  uint64 port = 2;
+
+  // admission controls the policy of this port
+  optional AdmissionLevel admission = 3;
+
+  // backend protocol of this port
+  optional WorkspacePort.Protocol protocol = 4;
+}
+
+message UpdateWorkspacePortResponse {}
 
 message GetWorkspaceRequest {
   // workspace_id specifies the workspace to get
@@ -577,7 +618,7 @@ message GitInitializer {
   CloneTargetMode target_mode = 3;
 
   // the value for the clone target mode - use depends on the target mode
-  string clone_taget = 4;
+  string clone_target = 4;
 
   // a path relative to the workspace root in which the code will be checked out to
   string checkout_location = 5;
@@ -688,6 +729,34 @@ message UpdateWorkspaceResponse {
   Workspace workspace = 1;
 }
 
+message StopWorkspaceRequest {
+  // workspace_id specifies which workspace should be stopped.
+  //
+  // +required
+  string workspace_id = 1;
+}
+
+message StopWorkspaceResponse {}
+
+message DeleteWorkspaceRequest {
+  // workspace_id specifies the workspace that is going to delete.
+  //
+  // +required
+  string workspace_id = 1;
+}
+
+message DeleteWorkspaceResponse {}
+
+message ListWorkspaceClassesRequest {
+  PaginationRequest pagination = 1;
+}
+
+message ListWorkspaceClassesResponse {
+  PaginationResponse pagination = 1;
+
+  repeated WorkspaceClass workspace_classes = 2;
+}
+
 message ParseContextURLRequest {
   // context_url is the URL to parse
   string context_url = 1;
@@ -699,4 +768,48 @@ message ParseContextURLRequest {
 message ParseContextURLResponse {
   WorkspaceMetadata metadata = 1;
   WorkspaceSpec spec = 2;
+}
+
+message WorkspaceClass {
+  // id is the unique identifier of the workspace class
+  string id = 1;
+
+  // display_name is the human readable name of the workspace class
+  string display_name = 2;
+
+  // description is a human readable description of the workspace class
+  string description = 3;
+
+  // is_default indicates if this workspace class is the default one
+  bool is_default = 4;
+}
+
+message CreateWorkspaceSnapshotRequest {
+  // workspace_id specifies the workspace to create snapshot
+  //
+  // +required
+  string workspace_id = 1;
+}
+
+message CreateWorkspaceSnapshotResponse {
+  WorkspaceSnapshot snapshot = 1;
+}
+
+message WaitForWorkspaceSnapshotRequest {
+  // snapshot_id specifies the snapshot to wait for
+  //
+  // +required
+  string snapshot_id = 1;
+}
+
+message WaitForWorkspaceSnapshotResponse {}
+
+message WorkspaceSnapshot {
+  // id is the unique identifier of the snapshot
+  string id = 1;
+
+  // workspace_id is the source workspace id of snapshot
+  string workspace_id = 2;
+
+  google.protobuf.Timestamp creation_time = 3;
 }

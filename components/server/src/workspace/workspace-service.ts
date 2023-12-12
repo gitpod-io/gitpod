@@ -16,6 +16,7 @@ import {
     PortVisibility,
     Project,
     SetWorkspaceTimeoutResult,
+    Snapshot,
     StartWorkspaceResult,
     User,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
@@ -45,11 +46,13 @@ import {
     MarkActiveRequest,
     AdmissionLevel,
     ControlAdmissionRequest,
+    TakeSnapshotRequest,
 } from "@gitpod/ws-manager/lib";
 import {
     WorkspaceStarter,
     StartWorkspaceOptions as StarterStartWorkspaceOptions,
     isWorkspaceClassDiscoveryEnabled,
+    isClusterMaintenanceError,
 } from "./workspace-starter";
 import { LogContext, log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
@@ -67,6 +70,7 @@ import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { OrganizationService } from "../orgs/organization-service";
 import { isGrpcError } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { RedisSubscriber } from "../messaging/redis-subscriber";
+import { SnapshotService } from "./snapshot-service";
 
 export interface StartWorkspaceOptions extends StarterStartWorkspaceOptions {
     /**
@@ -88,6 +92,7 @@ export class WorkspaceService {
         @inject(EntitlementService) private readonly entitlementService: EntitlementService,
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
         @inject(OrganizationService) private readonly orgService: OrganizationService,
+        @inject(SnapshotService) private readonly snapshotService: SnapshotService,
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
         @inject(HeadlessLogService) private readonly headlessLogService: HeadlessLogService,
         @inject(Authorizer) private readonly auth: Authorizer,
@@ -359,21 +364,26 @@ export class WorkspaceService {
             log.debug({ userId, workspaceId }, "Cannot open port for workspace with no running instance", {
                 port,
             });
-            return;
+            throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "workspace is not running");
         }
 
         const req = new ControlPortRequest();
         req.setId(instance.id);
         const spec = new PortSpec();
         spec.setPort(port.port);
-        spec.setVisibility(this.portVisibilityToProto(port.visibility));
-        spec.setProtocol(this.portProtocolToProto(port.protocol));
+        if (port.visibility) {
+            spec.setVisibility(this.portVisibilityToProto(port.visibility));
+        }
+        if (port.protocol) {
+            spec.setProtocol(this.portProtocolToProto(port.protocol));
+        }
         req.setSpec(spec);
         req.setExpose(true);
 
         try {
             const client = await this.clientProvider.get(instance.region);
             await client.controlPort({}, req);
+            return undefined;
         } catch (e) {
             throw mapGrpcError(e);
         }
@@ -732,7 +742,7 @@ export class WorkspaceService {
     ): Promise<HeadlessLogUrls> {
         const workspace = await this.db.findByInstanceId(instanceId);
         if (!workspace) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Prebuild for instanceId ${instanceId} not found`);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace for instanceId ${instanceId} not found`);
         }
         if (workspace.type !== "prebuild" || !workspace.projectId) {
             throw new ApplicationError(ErrorCodes.CONFLICT, `Workspace is not a prebuild`);
@@ -754,6 +764,80 @@ export class WorkspaceService {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Headless logs for ${instanceId} not found`);
         }
         return urls;
+    }
+
+    // TODO(gpl) We probably want to change this method to take a workspaceId instead once we migrate the API
+    public async getHeadlessLogDownloadUrl(
+        userId: string,
+        instanceId: string,
+        taskId: string,
+        check: () => Promise<void> = async () => {},
+    ): Promise<string> {
+        const workspace = await this.db.findByInstanceId(instanceId);
+        if (!workspace) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace for instanceId ${instanceId} not found`);
+        }
+        if (workspace.type !== "prebuild" || !workspace.projectId) {
+            throw new ApplicationError(ErrorCodes.CONFLICT, `Workspace is not a prebuild, or missing projectId`);
+        }
+
+        await this.auth.checkPermissionOnProject(userId, "read_prebuild", workspace.projectId);
+        const wsiPromise = this.db.findInstanceById(instanceId);
+        await check();
+
+        const instance = await wsiPromise;
+        if (!instance) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace instance ${instanceId} not found`);
+        }
+
+        const downloadUrl = await this.headlessLogService.getHeadlessLogDownloadUrl(
+            userId,
+            instance,
+            workspace.ownerId,
+            taskId,
+        );
+        return downloadUrl;
+    }
+
+    // TODO(gpl) We probably want to change this method to take a workspaceId instead once we migrate the API
+    public async streamWorkspaceLogs(
+        userId: string,
+        instanceId: string,
+        terminalId: string,
+        sink: (chunk: string) => Promise<void>,
+        check: () => Promise<void> = async () => {},
+    ) {
+        const workspace = await this.db.findByInstanceId(instanceId);
+        if (!workspace) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace for instanceId ${instanceId} not found`);
+        }
+        if (!workspace.projectId) {
+            throw new ApplicationError(ErrorCodes.CONFLICT, `Workspace is missing projectId`);
+        }
+
+        // TODO Use doGetworkspace for this after we switched to workspaceId!
+        if (workspace?.type === "prebuild" && workspace.projectId) {
+            await this.auth.checkPermissionOnProject(userId, "read_prebuild", workspace.projectId);
+        } else {
+            await this.auth.checkPermissionOnWorkspace(userId, "access", workspace.id);
+        }
+
+        const wsiPromise = this.db.findInstanceById(instanceId);
+        await check();
+
+        const instance = await wsiPromise;
+        if (!instance) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace instance ${instanceId} not found`);
+        }
+
+        const logEndpoint = HeadlessLogEndpoint.fromWithOwnerToken(instance);
+        await this.headlessLogService.streamWorkspaceLogWhileRunning(
+            { userId, instanceId, workspaceId: workspace!.id },
+            logEndpoint,
+            instanceId,
+            terminalId,
+            sink,
+        );
     }
 
     public watchWorkspaceStatus(userId: string, opts: { signal: AbortSignal }): AsyncIterable<WorkspaceInstance> {
@@ -825,31 +909,26 @@ export class WorkspaceService {
                 headers: logInfo.headers,
             };
             let lineCount = 0;
-            await this.headlessLogService.streamImageBuildLog(
-                logCtx,
-                logEndpoint,
-                async (chunk) => {
-                    if (aborted.isResolved) {
-                        return;
-                    }
+            await this.headlessLogService.streamImageBuildLog(logCtx, logEndpoint, async (chunk) => {
+                if (aborted.isResolved) {
+                    return;
+                }
 
-                    try {
-                        chunk = chunk.replace("\n", WorkspaceImageBuild.LogLine.DELIMITER);
-                        lineCount += chunk.split(WorkspaceImageBuild.LogLine.DELIMITER_REGEX).length;
+                try {
+                    chunk = chunk.replace("\n", WorkspaceImageBuild.LogLine.DELIMITER);
+                    lineCount += chunk.split(WorkspaceImageBuild.LogLine.DELIMITER_REGEX).length;
 
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                        client.onWorkspaceImageBuildLogs(undefined as any, {
-                            text: chunk,
-                            isDiff: true,
-                            upToLine: lineCount,
-                        });
-                    } catch (err) {
-                        log.error("error while streaming imagebuild logs", err);
-                        aborted.resolve(true);
-                    }
-                },
-                aborted,
-            );
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+                    client.onWorkspaceImageBuildLogs(undefined as any, {
+                        text: chunk,
+                        isDiff: true,
+                        upToLine: lineCount,
+                    });
+                } catch (err) {
+                    log.error("error while streaming imagebuild logs", err);
+                    aborted.resolve(true);
+                }
+            });
         } catch (err) {
             // This error is most likely a temporary one (too early). We defer to the client whether they want to keep on trying or not.
             log.debug(logCtx, "cannot watch imagebuild logs for workspaceId", err);
@@ -987,6 +1066,67 @@ export class WorkspaceService {
             source: "installation",
             image: this.config.workspaceDefaults.workspaceImage,
         };
+    }
+
+    public async takeSnapshot(userId: string, options: GitpodServer.TakeSnapshotOptions): Promise<Snapshot> {
+        const { workspaceId, dontWait } = options;
+        await this.auth.checkPermissionOnWorkspace(userId, "create_snapshot", workspaceId);
+        const workspace = await this.doGetWorkspace(userId, workspaceId);
+        const instance = await this.db.findRunningInstance(workspaceId);
+        if (!instance) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} has no running instance`);
+        }
+        const client = await this.clientProvider.get(instance.region);
+        const request = new TakeSnapshotRequest();
+        request.setId(instance.id);
+        request.setReturnImmediately(true);
+
+        // this triggers the snapshots, but returns early! cmp. waitForSnapshot to wait for it's completion
+        let snapshotUrl;
+        try {
+            const resp = await client.takeSnapshot({}, request);
+            snapshotUrl = resp.getUrl();
+        } catch (err) {
+            if (isClusterMaintenanceError(err)) {
+                throw new ApplicationError(
+                    ErrorCodes.PRECONDITION_FAILED,
+                    "Cannot take a snapshot because the workspace cluster is under maintenance. Please try again in a few minutes",
+                );
+            }
+            throw err;
+        }
+        const snapshot = await this.snapshotService.createSnapshot(options, snapshotUrl);
+
+        // to be backwards compatible during rollout, we require new clients to explicitly pass "dontWait: true"
+        // TODO: remove wait option after migrate to gRPC
+        const waitOpts = { workspaceOwner: workspace.ownerId, snapshot };
+        if (!dontWait) {
+            await this.snapshotService.waitForSnapshot(waitOpts);
+        } else {
+            this.snapshotService
+                .waitForSnapshot(waitOpts)
+                .catch((err) => log.error({ userId, workspaceId }, "internalDoWaitForWorkspace", err));
+        }
+        return snapshot;
+    }
+
+    /**
+     * @throws ApplicationError with either NOT_FOUND or SNAPSHOT_ERROR in case the snapshot is not done yet.
+     */
+    public async waitForSnapshot(userId: string, snapshotId: string): Promise<void> {
+        const snapshot = await this.db.findSnapshotById(snapshotId);
+        if (!snapshot) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `No snapshot with id '${snapshotId}' found.`);
+        }
+        await this.auth.checkPermissionOnWorkspace(userId, "create_snapshot", snapshot.originalWorkspaceId);
+        const workspace = await this.doGetWorkspace(userId, snapshot.originalWorkspaceId);
+        await this.snapshotService.waitForSnapshot({ workspaceOwner: workspace.ownerId, snapshot });
+    }
+
+    async listSnapshots(userId: string, workspaceId: string): Promise<Snapshot[]> {
+        // guard if user has workspace get permission
+        await this.doGetWorkspace(userId, workspaceId);
+        return await this.db.findSnapshotsByWorkspaceId(workspaceId);
     }
 }
 

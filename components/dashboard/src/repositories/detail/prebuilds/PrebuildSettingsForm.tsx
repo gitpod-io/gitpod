@@ -11,12 +11,12 @@ import { Heading3, Subheading } from "@podkit/typography/Headings";
 import { InputField } from "../../../components/forms/InputField";
 import { PartialConfiguration, useConfigurationMutation } from "../../../data/configurations/configuration-queries";
 import { useToast } from "../../../components/toasts/Toasts";
-import { SelectInputField } from "../../../components/forms/SelectInputField";
 import { TextInputField } from "../../../components/forms/TextInputField";
 import { WorkspaceClassOptions } from "../shared/WorkspaceClassOptions";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { InputFieldHint } from "../../../components/forms/InputFieldHint";
 import { DEFAULT_WS_CLASS } from "../../../data/workspaces/workspace-classes-query";
+import { Select, SelectItem, SelectTrigger, SelectValue, SelectContent } from "@podkit/select/Select";
 
 const DEFAULT_PREBUILD_COMMIT_INTERVAL = 20;
 
@@ -95,6 +95,7 @@ export const PrebuildSettingsForm: FC<Props> = ({ configuration }) => {
                     id="prebuild-interval"
                 >
                     <input
+                        className="w-20"
                         type="number"
                         id="prebuild-interval"
                         min="0"
@@ -105,16 +106,20 @@ export const PrebuildSettingsForm: FC<Props> = ({ configuration }) => {
                     />
                 </InputField>
 
-                <SelectInputField
-                    label="Branch Filter"
-                    hint="Run prebuilds on the selected branches only."
-                    value={branchStrategy}
-                    onChange={handleBranchStrategyChange}
-                >
-                    <option value={BranchMatchingStrategy.ALL_BRANCHES}>All branches</option>
-                    <option value={BranchMatchingStrategy.DEFAULT_BRANCH}>Default branch</option>
-                    <option value={BranchMatchingStrategy.MATCHED_BRANCHES}>Match branches by pattern</option>
-                </SelectInputField>
+                <InputField label="Branch Filter" hint="Run prebuilds on the selected branches only.">
+                    <Select value={`${branchStrategy}`} onValueChange={handleBranchStrategyChange}>
+                        <SelectTrigger className="w-60">
+                            <SelectValue placeholder="Select a branch filter" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value={`${BranchMatchingStrategy.ALL_BRANCHES}`}>All branches</SelectItem>
+                            <SelectItem value={`${BranchMatchingStrategy.DEFAULT_BRANCH}`}>Default branch</SelectItem>
+                            <SelectItem value={`${BranchMatchingStrategy.MATCHED_BRANCHES}`}>
+                                Match branches by pattern
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                </InputField>
 
                 {branchStrategy === BranchMatchingStrategy.MATCHED_BRANCHES && (
                     <TextInputField
