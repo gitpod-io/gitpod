@@ -11,7 +11,7 @@ import { ReactComponent as InfoSvg } from "../images/info.svg";
 import { ReactComponent as XSvg } from "../images/x.svg";
 import { ReactComponent as Check } from "../images/check-circle.svg";
 import classNames from "classnames";
-import { Button } from "./Button";
+import { Button } from "@podkit/buttons/Button";
 
 export type AlertType =
     // Green

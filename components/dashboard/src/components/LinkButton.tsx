@@ -7,11 +7,11 @@
 import classNames from "classnames";
 import { FC, MouseEvent, useCallback } from "react";
 import { invertable } from "../theme-context";
-import { ButtonProps } from "./Button";
+import type { ButtonProps } from "@podkit/buttons/Button";
 
 type Props = {
     className?: string;
-    htmlType?: ButtonProps["htmlType"];
+    htmlType?: ButtonProps["type"];
     inverted?: boolean;
     onClick: () => void;
 };
