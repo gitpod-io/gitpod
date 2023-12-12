@@ -376,7 +376,7 @@ export class OrganizationService {
     async getSettings(userId: string, orgId: string): Promise<OrganizationSettings> {
         await this.auth.checkPermissionOnOrganization(userId, "read_settings", orgId);
         const settings = await this.teamDB.findOrgSettings(orgId);
-        return this.toSettings(userId, settings);
+        return this.toSettings(settings);
     }
 
     async updateSettings(
@@ -407,10 +407,10 @@ export class OrganizationService {
                 throw new ApplicationError(ErrorCodes.BAD_REQUEST, "at least one workspace class has to be selected.");
             }
         }
-        return this.toSettings(userId, await this.teamDB.setOrgSettings(orgId, settings));
+        return this.toSettings(await this.teamDB.setOrgSettings(orgId, settings));
     }
 
-    private async toSettings(userId: string, settings: OrganizationSettings = {}): Promise<OrganizationSettings> {
+    private async toSettings(settings: OrganizationSettings = {}): Promise<OrganizationSettings> {
         const result: OrganizationSettings = {};
         if (settings.workspaceSharingDisabled) {
             result.workspaceSharingDisabled = settings.workspaceSharingDisabled;
@@ -420,6 +420,18 @@ export class OrganizationService {
         }
         result.allowedWorkspaceClasses = settings.allowedWorkspaceClasses;
         return result;
+    }
+
+    public async hasAllowedWorkspaceClassesInInstallation(userId: string, orgId: string): Promise<boolean> {
+        const allClasses = await this.installationService.getInstallationWorkspaceClasses(userId);
+        const settings = await this.getSettings(userId, orgId);
+        if (settings.allowedWorkspaceClasses && settings.allowedWorkspaceClasses.length > 0) {
+            return (
+                settings.allowedWorkspaceClasses.filter((e) => allClasses.findIndex((cls) => cls.id === e) !== -1)
+                    .length > 0
+            );
+        }
+        return allClasses.length > 0;
     }
 
     public async listWorkspaceClasses(userId: string, orgId: string): Promise<SupportedWorkspaceClass[]> {
