@@ -117,15 +117,22 @@ export class JsonRpcUserClient implements PromiseClient<typeof UserService> {
                 onboardedTimestamp,
                 signupGoalsOther,
                 emailAddress,
+                resetMask,
             } = profile;
             if (!!emailAddress) {
                 update.additionalData.profile.emailAddress = emailAddress;
             }
-            if (!!explorationReasons) {
+            if (explorationReasons && explorationReasons.length > 0) {
                 update.additionalData.profile.explorationReasons = explorationReasons;
             }
-            if (!!signupGoals) {
+            if ((resetMask?.paths || "").includes("exploration_reasons")) {
+                update.additionalData.profile.explorationReasons = undefined;
+            }
+            if (signupGoals && signupGoals.length > 0) {
                 update.additionalData.profile.signupGoals = signupGoals;
+            }
+            if ((resetMask?.paths || "").includes("signup_goals")) {
+                update.additionalData.profile.explorationReasons = undefined;
             }
             if (!!acceptedPrivacyPolicyDate) {
                 update.additionalData.profile.acceptedPrivacyPolicyDate = acceptedPrivacyPolicyDate;

@@ -10,7 +10,7 @@
 // @ts-nocheck
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { Duration, Message, proto3, Timestamp } from "@bufbuild/protobuf";
+import { Duration, FieldMask, Message, proto3, Timestamp } from "@bufbuild/protobuf";
 import { EditorReference } from "./editor_pb.js";
 
 /**
@@ -360,6 +360,11 @@ export class UpdateUserRequest_ProfileDetails extends Message<UpdateUserRequest_
    */
   companySize?: string;
 
+  /**
+   * @generated from field: google.protobuf.FieldMask reset_mask = 13;
+   */
+  resetMask?: FieldMask;
+
   constructor(data?: PartialMessage<UpdateUserRequest_ProfileDetails>) {
     super();
     proto3.util.initPartial(data, this);
@@ -379,6 +384,7 @@ export class UpdateUserRequest_ProfileDetails extends Message<UpdateUserRequest_
     { no: 10, name: "signup_goals_other", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 11, name: "onboarded_timestamp", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 12, name: "company_size", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 13, name: "reset_mask", kind: "message", T: FieldMask },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateUserRequest_ProfileDetails {

@@ -4,6 +4,7 @@ package gitpod.v1;
 
 import "gitpod/v1/editor.proto";
 import "google/protobuf/duration.proto";
+import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/components/public-api/go/v1";
@@ -58,6 +59,7 @@ message UpdateUserRequest {
     optional string signup_goals_other = 10;
     optional string onboarded_timestamp = 11;
     optional string company_size = 12;
+    google.protobuf.FieldMask reset_mask = 13;
   }
   optional string email_address = 5;
   optional EditorReference editor_settings = 6;
