@@ -11,7 +11,7 @@ import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { ThemeSelector } from "../components/ThemeSelector";
 import { Link } from "react-router-dom";
 import { Heading2, Heading3, Subheading } from "../components/typography/headings";
-import { Button } from "../components/Button";
+import { Button } from "@podkit/buttons/Button";
 import SelectIDE from "./SelectIDE";
 import { InputField } from "../components/forms/InputField";
 import { TextInput } from "../components/forms/TextInputField";
@@ -22,6 +22,7 @@ import {
 } from "../data/current-user/update-mutation";
 import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
 import { converter, userClient } from "../service/public-api";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 
@@ -125,7 +126,7 @@ export default function Preferences() {
                 <SelectIDE location="preferences" />
                 <Heading3 className="mt-12">Workspace Options</Heading3>
                 <Subheading>Clear last used options for creating workspaces.</Subheading>
-                <Button className="mt-4" type="secondary" onClick={clearCreateWorkspaceOptions}>
+                <Button className="mt-4" variant="secondary" onClick={clearCreateWorkspaceOptions}>
                     Reset Options
                 </Button>
 
@@ -148,7 +149,7 @@ export default function Preferences() {
                                 />
                             </div>
                             <Button
-                                htmlType="submit"
+                                type="submit"
                                 loading={updateDotfileRepo.isLoading}
                                 disabled={updateDotfileRepo.isLoading || (dotfileRepo === user?.dotfileRepo ?? "")}
                             >
@@ -181,8 +182,8 @@ export default function Preferences() {
                                             onChange={setWorkspaceTimeout}
                                         />
                                     </div>
-                                    <Button
-                                        htmlType="submit"
+                                    <LoadingButton
+                                        type="submit"
                                         loading={timeoutUpdating}
                                         disabled={
                                             workspaceTimeout ===
@@ -192,7 +193,7 @@ export default function Preferences() {
                                         }
                                     >
                                         Save
-                                    </Button>
+                                    </LoadingButton>
                                 </div>
                                 {!!creationError && (
                                     <p className="text-gitpod-red w-full max-w-lg">

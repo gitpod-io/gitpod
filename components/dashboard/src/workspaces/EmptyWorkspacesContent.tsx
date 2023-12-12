@@ -4,10 +4,9 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Link } from "react-router-dom";
 import { Heading2 } from "../components/typography/headings";
 import { StartWorkspaceModalKeyBinding } from "../App";
-import { Button } from "../components/Button";
+import { LinkButton } from "@podkit/buttons/LinkButton";
 
 export const EmptyWorkspacesContent = () => {
     return (
@@ -30,12 +29,10 @@ export const EmptyWorkspacesContent = () => {
                         </a>
                     </div>
                     <span>
-                        <Link to={"/new"}>
-                            <Button>
-                                New Workspace{" "}
-                                <span className="opacity-60 hidden md:inline">{StartWorkspaceModalKeyBinding}</span>
-                            </Button>
-                        </Link>
+                        <LinkButton href={"/new"}>
+                            New Workspace{" "}
+                            <span className="opacity-60 hidden md:inline">{StartWorkspaceModalKeyBinding}</span>
+                        </LinkButton>
                     </span>
                 </div>
             </div>

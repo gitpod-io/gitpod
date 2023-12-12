@@ -6,10 +6,11 @@
 
 import { CreateClientConfigResponse, OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
 import { FC, useCallback, useReducer } from "react";
-import { Button } from "../../components/Button";
+import { Button } from "@podkit/buttons/Button";
 import Modal, { ModalBody, ModalFooter, ModalFooterAlert, ModalHeader } from "../../components/Modal";
 import { ssoConfigReducer, isValid, useSaveSSOConfig, SSOConfigForm } from "./SSOConfigForm";
 import Alert from "../../components/Alert";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
 
 type Props = {
     clientConfig?: OIDCClientConfig;
@@ -75,16 +76,16 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onSaved, onClos
                 <SSOConfigForm config={ssoConfig} onChange={dispatch} readOnly={clientConfig?.active === true} />
             </ModalBody>
             <ModalFooter alert={error ? <SaveErrorAlert error={error} /> : null}>
-                <Button type="secondary" onClick={onClose}>
+                <Button variant="secondary" onClick={onClose}>
                     Cancel
                 </Button>
-                <Button
-                    htmlType="submit"
+                <LoadingButton
+                    type="submit"
                     disabled={!configIsValid || clientConfig?.active === true}
                     loading={isLoading}
                 >
                     {isNew ? "Create" : "Save"}
-                </Button>
+                </LoadingButton>
             </ModalFooter>
         </Modal>
     );

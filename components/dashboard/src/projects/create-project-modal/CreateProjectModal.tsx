@@ -6,7 +6,8 @@
 
 import { FC, useCallback, useState } from "react";
 import Modal, { ModalBody, ModalFooter, ModalFooterAlert, ModalHeader } from "../../components/Modal";
-import { Button } from "../../components/Button";
+import { Button } from "@podkit/buttons/Button";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { CreateProjectArgs, useCreateProject } from "../../data/projects/create-project-mutation";
 import { Project } from "@gitpod/gitpod-protocol";
 import RepositoryFinder from "../../components/RepositoryFinder";
@@ -19,7 +20,6 @@ type Props = {
     onCreated: (project: Project) => void;
     onClose: () => void;
 };
-
 export const CreateProjectModal: FC<Props> = ({ onClose, onCreated }) => {
     const needsGitAuth = useNeedsGitAuthorization();
     const [selectedRepo, setSelectedRepo] = useState<SuggestedRepository>();
@@ -80,12 +80,12 @@ export const CreateProjectModal: FC<Props> = ({ onClose, onCreated }) => {
                     )
                 }
             >
-                <Button type="secondary" onClick={onClose}>
+                <Button variant="secondary" onClick={onClose}>
                     Cancel
                 </Button>
-                <Button htmlType="submit" loading={createProject.isLoading}>
+                <LoadingButton type="submit" loading={createProject.isLoading}>
                     Create
-                </Button>
+                </LoadingButton>
             </ModalFooter>
         </Modal>
     );

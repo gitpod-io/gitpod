@@ -5,7 +5,7 @@
  */
 
 import { FC } from "react";
-import { Button } from "../components/Button";
+import { Button } from "@podkit/buttons/Button";
 import { Heading1, Subheading } from "../components/typography/headings";
 import { SetupLayout } from "./SetupLayout";
 
@@ -23,9 +23,7 @@ export const GettingStartedStep: FC<Props> = ({ onComplete, progressCurrent, pro
             </Subheading>
 
             <div className="mt-6">
-                <Button size="block" onClick={onComplete}>
-                    Get Started
-                </Button>
+                <Button onClick={onComplete}>Get Started</Button>
             </div>
         </SetupLayout>
     );

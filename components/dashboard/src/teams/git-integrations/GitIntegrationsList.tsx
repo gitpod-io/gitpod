@@ -5,7 +5,7 @@
  */
 
 import { FunctionComponent, useCallback, useState } from "react";
-import { Button } from "../../components/Button";
+import { Button } from "@podkit/buttons/Button";
 import { EmptyMessage } from "../../components/EmptyMessage";
 import { Item, ItemField, ItemFieldIcon, ItemsList } from "../../components/ItemsList";
 import { Heading2, Subheading } from "../../components/typography/headings";

@@ -10,7 +10,7 @@ import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal"
 import PhoneInput from "react-intl-tel-input";
 import "react-intl-tel-input/dist/main.css";
 import "./phone-input.css";
-import { Button } from "../components/Button";
+import { Button } from "@podkit/buttons/Button";
 import { LinkButton } from "../components/LinkButton";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { verificationClient } from "../service/public-api";
@@ -69,7 +69,7 @@ export function VerifyModal() {
                 title="User Validation Required"
                 buttons={
                     <div>
-                        <Button htmlType="submit" disabled={!state.phoneNumberValid || state.sending}>
+                        <Button type="submit" disabled={!state.phoneNumberValid || state.sending}>
                             {phoneVerificationByCall ? "Send Code via Voice call" : "Send Code via SMS"}
                         </Button>
                     </div>
@@ -174,7 +174,7 @@ export function VerifyModal() {
                 title="User Validation Required"
                 buttons={
                     <div>
-                        <Button htmlType="submit" disabled={!isTokenFilled()}>
+                        <Button type="submit" disabled={!isTokenFilled()}>
                             Validate Account
                         </Button>
                     </div>
@@ -234,7 +234,7 @@ export function VerifyModal() {
                     </Alert>
                 </ModalBody>
                 <ModalFooter>
-                    <Button htmlType="submit">Continue</Button>
+                    <Button type="submit">Continue</Button>
                 </ModalFooter>
             </Modal>
         );
