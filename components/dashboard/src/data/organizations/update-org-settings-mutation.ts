@@ -18,8 +18,8 @@ type UpdateOrganizationSettingsArgs = Partial<
 
 export const useUpdateOrgSettingsMutation = () => {
     const org = useCurrentOrg().data;
-    const invalidator = useOrgSettingsQueryInvalidator();
-    const invalidator2 = useOrgWorkspaceClassesQueryInvalidator();
+    const invalidateOrgSettings = useOrgSettingsQueryInvalidator();
+    const invalidateWorkspaceClasses = useOrgWorkspaceClassesQueryInvalidator();
     const teamId = org?.id || "";
 
     return useMutation<OrganizationSettings, Error, UpdateOrganizationSettingsArgs>({
@@ -33,8 +33,8 @@ export const useUpdateOrgSettingsMutation = () => {
             return settings.settings!;
         },
         onSuccess: () => {
-            invalidator();
-            invalidator2();
+            invalidateOrgSettings();
+            invalidateWorkspaceClasses();
         },
         onError: (err) => {
             if (!ErrorCode.isUserError((err as any)?.["code"])) {
