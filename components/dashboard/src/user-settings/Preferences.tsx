@@ -148,13 +148,13 @@ export default function Preferences() {
                                     onChange={setDotfileRepo}
                                 />
                             </div>
-                            <Button
+                            <LoadingButton
                                 type="submit"
                                 loading={updateDotfileRepo.isLoading}
                                 disabled={updateDotfileRepo.isLoading || (dotfileRepo === user?.dotfileRepo ?? "")}
                             >
                                 Save
-                            </Button>
+                            </LoadingButton>
                         </div>
                     </InputField>
                 </form>
