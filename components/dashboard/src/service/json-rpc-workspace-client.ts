@@ -353,7 +353,11 @@ export class JsonRpcWorkspaceClient implements PromiseClient<typeof WorkspaceSer
         request: PartialMessage<ParseContextURLRequest>,
         _options?: CallOptions | undefined,
     ): Promise<ParseContextURLResponse> {
-        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+        if (!request.contextUrl) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "contextUrl is required");
+        }
+        const context = await getGitpodService().server.resolveContext(request.contextUrl);
+        return converter.toParseContextURLResponse({}, context);
     }
 
     async listWorkspaceClasses(

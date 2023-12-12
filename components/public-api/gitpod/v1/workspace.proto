@@ -618,7 +618,7 @@ message GitInitializer {
   CloneTargetMode target_mode = 3;
 
   // the value for the clone target mode - use depends on the target mode
-  string clone_taget = 4;
+  string clone_target = 4;
 
   // a path relative to the workspace root in which the code will be checked out to
   string checkout_location = 5;

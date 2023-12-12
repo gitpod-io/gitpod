@@ -4,9 +4,9 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { CommitContext, SuggestedRepository, WithReferrerContext } from "@gitpod/gitpod-protocol";
+import { SuggestedRepository } from "@gitpod/gitpod-protocol";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { FC, FunctionComponent, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useHistory, useLocation } from "react-router";
@@ -88,7 +88,7 @@ export function CreateWorkspacePage() {
         if (!workspaceContext.data || !user || !currentOrg) {
             return;
         }
-        const cloneURL = CommitContext.is(workspaceContext.data) && workspaceContext.data.repository.cloneUrl;
+        const cloneURL = workspaceContext.data.cloneUrl;
         if (!cloneURL) {
             return;
         }
@@ -126,15 +126,12 @@ export function CreateWorkspacePage() {
         if (!workspaceContext.data || !projects.data) {
             return undefined;
         }
-        if ("repository" in workspaceContext.data) {
-            const cloneUrl = (workspaceContext.data as CommitContext)?.repository?.cloneUrl;
-            if (!cloneUrl) {
-                return;
-            }
-
-            // TODO: Account for multiple projects w/ the same cloneUrl
-            return projects.data.projects.find((p) => p.cloneUrl === cloneUrl);
+        const cloneUrl = workspaceContext.data.cloneUrl;
+        if (!cloneUrl) {
+            return;
         }
+        // TODO: Account for multiple projects w/ the same cloneUrl
+        return projects.data.projects.find((p) => p.cloneUrl === cloneUrl);
     }, [projects.data, workspaceContext.data]);
 
     // Handle the case where the context url in the hash matches a project and we don't have that project selected yet
@@ -169,14 +166,14 @@ export function CreateWorkspacePage() {
     const [errorIde, setErrorIde] = useState<string | undefined>(undefined);
 
     const existingWorkspaces = useMemo(() => {
-        if (!workspaces.data) {
+        if (!workspaces.data || !workspaceContext.data) {
             return [];
         }
         return workspaces.data.filter(
             (ws) =>
                 ws.status?.phase?.name === WorkspacePhase_Phase.RUNNING &&
-                CommitContext.is(workspaceContext.data) &&
-                ws.status.gitStatus?.cloneUrl === workspaceContext.data?.repository.cloneUrl &&
+                workspaceContext.data &&
+                ws.status.gitStatus?.cloneUrl === workspaceContext.data.cloneUrl &&
                 ws.status?.gitStatus?.latestCommit === workspaceContext.data.revision,
         );
     }, [workspaces.data, workspaceContext.data]);
@@ -206,7 +203,11 @@ export function CreateWorkspacePage() {
             }
 
             // if user received an INVALID_GITPOD_YML yml for their contextURL they can choose to proceed using default configuration
-            if (workspaceContext.error?.code === ErrorCodes.INVALID_GITPOD_YML) {
+            if (
+                workspaceContext.error &&
+                ApplicationError.hasErrorCode(workspaceContext.error) &&
+                workspaceContext.error.code === ErrorCodes.INVALID_GITPOD_YML
+            ) {
                 opts.forceDefaultConfig = true;
             }
 
@@ -256,7 +257,7 @@ export function CreateWorkspacePage() {
             }
         },
         [
-            workspaceContext.error?.code,
+            workspaceContext.error,
             contextURL,
             currentOrg?.id,
             selectedWsClass,
@@ -283,7 +284,7 @@ export function CreateWorkspacePage() {
         if (!workspaceContext.data || !user || !currentOrg) {
             return;
         }
-        const cloneURL = CommitContext.is(workspaceContext.data) && workspaceContext.data.repository.cloneUrl;
+        const cloneURL = workspaceContext.data.cloneUrl;
         if (!cloneURL) {
             return undefined;
         }
@@ -320,9 +321,9 @@ export function CreateWorkspacePage() {
 
     // if the context URL has a referrer prefix, we set the referrerIde as the selected IDE and autostart the workspace.
     useEffect(() => {
-        if (workspaceContext.data && WithReferrerContext.is(workspaceContext.data)) {
-            if (workspaceContext.data.referrerIde && !selectedIdeIsDirty) {
-                setSelectedIde(workspaceContext.data.referrerIde, false);
+        if (workspaceContext.data && workspaceContext.data.refererIDE) {
+            if (!selectedIdeIsDirty) {
+                setSelectedIde(workspaceContext.data.refererIDE, false);
             }
             setAutostart(true);
         }
@@ -351,7 +352,11 @@ export function CreateWorkspacePage() {
         if (workspaceContext.error) {
             // For INVALID_GITPOD_YML we don't want to disable the button
             // The user see a warning that their file is invalid, but they can continue and it will be ignored
-            if (workspaceContext.error.code === ErrorCodes.INVALID_GITPOD_YML) {
+            if (
+                workspaceContext.error &&
+                ApplicationError.hasErrorCode(workspaceContext.error) &&
+                workspaceContext.error.code === ErrorCodes.INVALID_GITPOD_YML
+            ) {
                 return false;
             }
             return true;

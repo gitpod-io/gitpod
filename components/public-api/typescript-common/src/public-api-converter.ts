@@ -51,8 +51,11 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import {
     AdmissionLevel,
+    CreateAndStartWorkspaceRequest,
     GitInitializer,
+    GitInitializer_CloneTargetMode,
     GitInitializer_GitConfig,
+    ParseContextURLResponse,
     PrebuildInitializer,
     SnapshotInitializer,
     UpdateWorkspaceRequest_UpdateTimeout,
@@ -186,46 +189,7 @@ export class PublicAPIConverter {
                     ? WorkspaceSpec_WorkspaceType.PREBUILD
                     : WorkspaceSpec_WorkspaceType.REGULAR;
             spec.environmentVariables = this.toEnvironmentVariables(arg.workspace.context);
-
-            if (WithPrebuild.is(arg.workspace.context)) {
-                const initializerSpec = new WorkspaceInitializer_Spec({
-                    spec: {
-                        case: "prebuild",
-                        value: new PrebuildInitializer({
-                            prebuildId: arg.workspace.context.prebuildWorkspaceId,
-                        }),
-                    },
-                });
-                spec.initializer.specs.push(initializerSpec);
-            } else if (CommitContext.is(arg.workspace.context)) {
-                const initializerSpec = new WorkspaceInitializer_Spec({
-                    spec: {
-                        case: "git",
-                        value: new GitInitializer({
-                            remoteUri: arg.workspace.context.repository.cloneUrl,
-                            upstreamRemoteUri: arg.workspace.context.upstreamRemoteURI,
-                            // TODO:
-                            // targetMode
-                            // cloneTaget
-                            checkoutLocation: arg.workspace.context.checkoutLocation,
-                            // TODO: config
-                            config: new GitInitializer_GitConfig(),
-                        }),
-                    },
-                });
-                spec.initializer.specs.push(initializerSpec);
-            } else if (SnapshotContext.is(arg.workspace.context)) {
-                const initializerSpec = new WorkspaceInitializer_Spec({
-                    spec: {
-                        case: "snapshot",
-                        value: new SnapshotInitializer({
-                            snapshotId: arg.workspace.context.snapshotId,
-                        }),
-                    },
-                });
-                spec.initializer.specs.push(initializerSpec);
-            }
-            // TODO: else if FileDownloadInitializer
+            spec.initializer = this.workspaceContextToWorkspaceInitializer(arg.workspace.context);
 
             spec.git = new WorkspaceSpec_GitSpec({
                 // TODO:
@@ -254,6 +218,115 @@ export class PublicAPIConverter {
         // TODO: subassembly_references
         // TODO: log_url
         return spec;
+    }
+
+    workspaceContextToWorkspaceInitializer(arg: WorkspaceContext, cloneUrl?: string): WorkspaceInitializer {
+        const result = new WorkspaceInitializer();
+        if (WithPrebuild.is(arg)) {
+            result.specs = [
+                new WorkspaceInitializer_Spec({
+                    spec: {
+                        case: "prebuild",
+                        value: new PrebuildInitializer({
+                            prebuildId: arg.prebuildWorkspaceId,
+                        }),
+                    },
+                }),
+            ];
+        } else if (CommitContext.is(arg)) {
+            result.specs = [
+                new WorkspaceInitializer_Spec({
+                    spec: {
+                        case: "git",
+                        value: new GitInitializer({
+                            remoteUri: arg.repository.cloneUrl,
+                            upstreamRemoteUri: arg.upstreamRemoteURI,
+                            // TODO: more modes support
+                            targetMode: GitInitializer_CloneTargetMode.REMOTE_COMMIT,
+                            cloneTarget: arg.revision,
+                            checkoutLocation: arg.checkoutLocation,
+                            // TODO: config
+                            config: new GitInitializer_GitConfig(),
+                        }),
+                    },
+                }),
+            ];
+        }
+        if (SnapshotContext.is(arg)) {
+            result.specs = [
+                new WorkspaceInitializer_Spec({
+                    spec: {
+                        case: "snapshot",
+                        value: new SnapshotInitializer({
+                            snapshotId: arg.snapshotId,
+                        }),
+                    },
+                }),
+            ];
+        }
+        return result;
+        // TODO: else if FileDownloadInitializer
+    }
+
+    fromCreateAndStartWorkspaceRequest(
+        req: CreateAndStartWorkspaceRequest,
+    ): { editor?: EditorReference; contextUrl: string; workspaceClass?: string } | undefined {
+        switch (req.source.case) {
+            case "contextUrl": {
+                if (!req.source.value.url) {
+                    return undefined;
+                }
+                return {
+                    contextUrl: req.source.value.url,
+                    editor: req.source.value.editor,
+                    workspaceClass: req.source.value.workspaceClass || undefined,
+                };
+            }
+            case "spec": {
+                if ((req.source.value.initializer?.specs.length ?? 0) <= 0) {
+                    return undefined;
+                }
+                const init = req.source.value.initializer;
+                const initSpec = init!.specs[0];
+                let contextUrl: string | undefined;
+                switch (initSpec.spec.case) {
+                    case "git": {
+                        if (!initSpec.spec.value.remoteUri) {
+                            return undefined;
+                        }
+                        contextUrl = initSpec.spec.value.remoteUri;
+                        break;
+                    }
+                    case "prebuild": {
+                        if (!initSpec.spec.value || (init?.specs.length ?? 0) < 2) {
+                            return undefined;
+                        }
+                        const gitSpec = init!.specs[1];
+                        if (gitSpec.spec.case !== "git" || !gitSpec.spec.value.remoteUri) {
+                            return undefined;
+                        }
+                        contextUrl = `open-prebuild/${initSpec.spec.value}/${gitSpec.spec.value.remoteUri}`;
+                        break;
+                    }
+                    case "snapshot": {
+                        if (!initSpec.spec.value.snapshotId) {
+                            return undefined;
+                        }
+                        contextUrl = `snapshot/${initSpec.spec.value.snapshotId}`;
+                        break;
+                    }
+                }
+                if (!contextUrl) {
+                    return undefined;
+                }
+                return {
+                    contextUrl,
+                    editor: req.source.value.editor,
+                    workspaceClass: req.source.value.class || undefined,
+                };
+            }
+        }
+        return undefined;
     }
 
     toWorkspaceStatus(arg: WorkspaceInfo | WorkspaceInstance, current?: WorkspaceStatus): WorkspaceStatus {
@@ -348,6 +421,16 @@ export class PublicAPIConverter {
         result.name = ideConfig.ide;
         result.version = ideConfig.useLatest ? "latest" : "stable";
         return result;
+    }
+
+    toParseContextURLResponse(
+        metadata: PartialMessage<WorkspaceMetadata>,
+        context: WorkspaceContext,
+    ): ParseContextURLResponse {
+        return new ParseContextURLResponse({
+            metadata,
+            spec: { initializer: this.workspaceContextToWorkspaceInitializer(context) },
+        });
     }
 
     toError(reason: unknown): ConnectError {

@@ -935,13 +935,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     public async resolveContext(ctx: TraceContextWithSpan, contextUrl: string): Promise<WorkspaceContext> {
         const user = await this.checkAndBlockUser("resolveContext");
-        const normalizedCtxURL = this.contextParser.normalizeContextURL(contextUrl);
-        try {
-            return await this.contextParser.handle(ctx, user, normalizedCtxURL);
-        } catch (error) {
-            this.handleError(error, { userId: user.id }, normalizedCtxURL);
-            throw error;
-        }
+        return this.contextService.parseContextUrl(user, contextUrl);
     }
 
     private handleError(error: any, logContext: LogContext, normalizedContextUrl: string) {

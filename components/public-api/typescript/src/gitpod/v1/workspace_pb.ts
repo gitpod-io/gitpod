@@ -2180,9 +2180,9 @@ export class GitInitializer extends Message<GitInitializer> {
   /**
    * the value for the clone target mode - use depends on the target mode
    *
-   * @generated from field: string clone_taget = 4;
+   * @generated from field: string clone_target = 4;
    */
-  cloneTaget = "";
+  cloneTarget = "";
 
   /**
    * a path relative to the workspace root in which the code will be checked out to
@@ -2209,7 +2209,7 @@ export class GitInitializer extends Message<GitInitializer> {
     { no: 1, name: "remote_uri", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "upstream_remote_uri", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "target_mode", kind: "enum", T: proto3.getEnumType(GitInitializer_CloneTargetMode) },
-    { no: 4, name: "clone_taget", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "clone_target", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "checkout_location", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 6, name: "config", kind: "message", T: GitInitializer_GitConfig },
   ]);
