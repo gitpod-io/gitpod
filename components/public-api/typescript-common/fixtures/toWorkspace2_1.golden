@@ -17,8 +17,8 @@
                         "git": {
                             "remoteUri": "https://github.com/gitpod-io/workspace-images.git",
                             "upstreamRemoteUri": "",
-                            "targetMode": "CLONE_TARGET_MODE_UNSPECIFIED",
-                            "cloneTaget": "",
+                            "targetMode": "CLONE_TARGET_MODE_REMOTE_COMMIT",
+                            "cloneTarget": "fa52963fa39227bcfbf005d396eb753bf3981e40",
                             "checkoutLocation": "workspace-images",
                             "config": {
                                 "customConfig": {},
@@ -26,8 +26,7 @@
                                 "authUser": "",
                                 "authPassword": "",
                                 "authOts": ""
-                            },
-                            "revision": "fa52963fa39227bcfbf005d396eb753bf3981e40"
+                            }
                         }
                     }
                 ]

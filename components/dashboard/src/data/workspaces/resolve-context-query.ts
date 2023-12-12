@@ -5,17 +5,33 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { GitInitializer, ParseContextURLResponse } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import {
+    GitInitializer,
+    GitInitializer_CloneTargetMode,
+    ParseContextURLResponse,
+} from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { workspaceClient } from "../../service/public-api";
 
 export function useWorkspaceContext(contextUrl?: string) {
-    const query = useQuery<ParseContextURLResponse | null>(
+    const query = useQuery<{
+        data: ParseContextURLResponse;
+        refererIDE?: string;
+        cloneUrl?: string;
+        revision?: string;
+    } | null>(
         ["workspace-context", contextUrl],
-        () => {
+        async () => {
             if (!contextUrl) {
                 return null;
             }
-            return workspaceClient.parseContextURL({ contextUrl });
+            const data = await workspaceClient.parseContextURL({ contextUrl });
+            const commitInfo = getCommitInfo(data);
+            return {
+                data,
+                refererIDE: matchRefererIDE(contextUrl),
+                cloneUrl: commitInfo?.cloneUrl,
+                revision: commitInfo?.revision,
+            };
         },
         {
             retry: false,
@@ -24,7 +40,8 @@ export function useWorkspaceContext(contextUrl?: string) {
     return query;
 }
 
-export function getCommitInfo(response: ParseContextURLResponse | null) {
+// TODO: Compatible code, remove me
+function getCommitInfo(response: ParseContextURLResponse | null) {
     if (!response) {
         return undefined;
     }
@@ -36,8 +53,17 @@ export function getCommitInfo(response: ParseContextURLResponse | null) {
     if (!gitInit) {
         return undefined;
     }
-    return {
-        cloneUrl: gitInit.remoteUri,
-        revision: gitInit.revision,
-    };
+    const result: { cloneUrl: string; revision?: string } = { cloneUrl: gitInit.remoteUri };
+    if (gitInit.targetMode === GitInitializer_CloneTargetMode.REMOTE_BRANCH) {
+        result.revision = gitInit.cloneTarget;
+    }
+    return result;
+}
+
+// TODO: Compatible code, remove me
+function matchRefererIDE(url: string) {
+    const regex = /^\/?referrer:([^/:]*)(?::([^/]*))?\//;
+    const matches = regex.exec(url);
+    const referrerIde = matches?.[2];
+    return referrerIde;
 }

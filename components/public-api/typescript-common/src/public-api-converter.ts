@@ -53,6 +53,7 @@ import {
     AdmissionLevel,
     CreateAndStartWorkspaceRequest,
     GitInitializer,
+    GitInitializer_CloneTargetMode,
     GitInitializer_GitConfig,
     ParseContextURLResponse,
     PrebuildInitializer,
@@ -240,10 +241,9 @@ export class PublicAPIConverter {
                         value: new GitInitializer({
                             remoteUri: arg.repository.cloneUrl,
                             upstreamRemoteUri: arg.upstreamRemoteURI,
-                            revision: arg.revision,
-                            // TODO:
-                            // targetMode
-                            // cloneTaget
+                            // TODO: more modes support
+                            targetMode: GitInitializer_CloneTargetMode.REMOTE_COMMIT,
+                            cloneTarget: arg.revision,
                             checkoutLocation: arg.checkoutLocation,
                             // TODO: config
                             config: new GitInitializer_GitConfig(),

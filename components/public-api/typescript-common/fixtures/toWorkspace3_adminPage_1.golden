@@ -17,8 +17,8 @@
                         "git": {
                             "remoteUri": "https://github.com/gitpod-io/contextURL.git",
                             "upstreamRemoteUri": "",
-                            "targetMode": "CLONE_TARGET_MODE_UNSPECIFIED",
-                            "cloneTaget": "",
+                            "targetMode": "CLONE_TARGET_MODE_REMOTE_COMMIT",
+                            "cloneTarget": "revision",
                             "checkoutLocation": "contextUrl",
                             "config": {
                                 "customConfig": {},
@@ -26,8 +26,7 @@
                                 "authUser": "",
                                 "authPassword": "",
                                 "authOts": ""
-                            },
-                            "revision": "revision"
+                            }
                         }
                     }
                 ]

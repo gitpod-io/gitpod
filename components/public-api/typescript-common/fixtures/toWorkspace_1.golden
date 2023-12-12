@@ -13,9 +13,10 @@
                     {
                         "git": {
                             "remoteUri": "https://github.com/akosyakov/parcel-demo.git",
+                            "targetMode": "CLONE_TARGET_MODE_REMOTE_COMMIT",
+                            "cloneTarget": "60dbf818194082ef1a368bacd49cfd25a34c9256",
                             "checkoutLocation": "parcel-demo",
-                            "config": {},
-                            "revision": "60dbf818194082ef1a368bacd49cfd25a34c9256"
+                            "config": {}
                         }
                     }
                 ]
