@@ -123,14 +123,14 @@ export class WorkspaceService {
         );
         const settings = await this.orgService.getSettings(userId, organizationId);
         if (settings.allowedWorkspaceClasses && settings.allowedWorkspaceClasses.length > 0) {
-            const hasOptions = await this.orgService.hasAllowedWorkspaceClassesInInstallation(userId, organizationId);
-            if (!hasOptions) {
-                throw new ApplicationError(
-                    ErrorCodes.PRECONDITION_FAILED,
-                    "No allowed workspace classes available. Please contact your admin.",
-                );
-            }
             if (!settings.allowedWorkspaceClasses.includes(workspaceClass)) {
+                const hasOtherOptions = await this.orgService.hasAllowedWorkspaceClassesInInstallation(userId, organizationId);
+                if (!hasOtherOptions) {
+                    throw new ApplicationError(
+                        ErrorCodes.PRECONDITION_FAILED,
+                        "No allowed workspace classes available. Please contact your admin.",
+                    );
+                }
                 throw new ApplicationError(
                     ErrorCodes.PRECONDITION_FAILED,
                     "Selected workspace class is not allowed in current organization.",
