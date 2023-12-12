@@ -332,7 +332,8 @@ func (s *Server) HandleConn(c net.Conn) {
 		workspacekitPort := "22998"
 		userName, err = workspaceSSHUsername(ctx, wsInfo.IPAddress, workspacekitPort)
 		if err != nil {
-			log.WithError(err).Warn("failed to retrieve the SSH username. Using the default.")
+			userName = "root"
+			log.WithError(err).Warn("failed to retrieve the SSH username. Using root.")
 		}
 	}
 
