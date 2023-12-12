@@ -13,7 +13,7 @@ import { TextMuted } from "@podkit/typography/TextMuted";
 import { PrebuildSettingsForm } from "./prebuilds/PrebuildSettingsForm";
 import { useConfigurationMutation } from "../../data/configurations/configuration-queries";
 import { LoadingState } from "@podkit/loading/LoadingState";
-import Alert from "../../components/Alert";
+import { EnablePrebuildsError } from "./prebuilds/EnablePrebuildsError";
 
 type Props = {
     configuration: Configuration;
@@ -39,6 +39,8 @@ export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
                         // True up local state with server state
                         if (configuration) {
                             setEnabled(configuration.prebuildSettings?.enabled ?? false);
+                        } else {
+                            setEnabled(false);
                         }
                     },
                 },
@@ -46,6 +48,10 @@ export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
         },
         [configuration.id, configuration.prebuildSettings, updateConfiguration],
     );
+
+    const handleReconnection = useCallback(() => {
+        updateEnabled(true);
+    }, [updateEnabled]);
 
     return (
         <>
@@ -82,10 +88,9 @@ export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
             </ConfigurationSettingsField>
 
             {updateConfiguration.isError && (
-                <Alert type="error" closable={false}>
-                    {updateConfiguration.error?.message}
-                </Alert>
+                <EnablePrebuildsError error={updateConfiguration.error} onReconnect={handleReconnection} />
             )}
+
             {enabled && !updateConfiguration.isLoading && !updateConfiguration.isError && (
                 <PrebuildSettingsForm configuration={configuration} />
             )}
