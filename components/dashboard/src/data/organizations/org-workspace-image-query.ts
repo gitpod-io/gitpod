@@ -9,6 +9,7 @@ import { organizationClient } from "../../service/public-api";
 import { useCallback } from "react";
 import { useCurrentOrg } from "./orgs-query";
 import { WorkspaceClass } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { noPersistence } from "../setup";
 
 export function useOrgWorkspaceClassesQueryInvalidator() {
     const organizationId = useCurrentOrg().data?.id;
@@ -37,5 +38,5 @@ export function useOrgWorkspaceClassesQuery() {
 }
 
 function getQueryKey(organizationId?: string) {
-    return ["listOrganizationWorkspaceClasses", organizationId || "undefined"];
+    return noPersistence(["listOrganizationWorkspaceClasses", organizationId || "undefined"]);
 }
