@@ -51,7 +51,9 @@ const GenericErrorMessage: FC<GenericErrorMessageProps> = ({ message }) => {
     return (
         <ConfigurationSettingsField className="text-gitpod-red">
             <div className="flex flex-row gap-2 mb-4">
-                <AlertTriangleIcon />
+                <span className="w-6">
+                    <AlertTriangleIcon />
+                </span>
                 <span>
                     Unable to enable prebuilds. Please try again later. If the problem persists, please contact support.
                 </span>
@@ -94,7 +96,9 @@ const RepositoryUnauthroizedErrorMessage: FC<RepositoryUnauthroizedErrorMessageP
     return (
         <ConfigurationSettingsField className="text-gitpod-red">
             <div className="flex flex-row gap-2">
-                <AlertTriangleIcon />
+                <span className="w-6">
+                    <AlertTriangleIcon />
+                </span>
                 {definitelyNeedsReconnect ? (
                     <span>
                         It looks like your need to reconnect with your git provider (<strong>{error.host}</strong>).

@@ -380,6 +380,7 @@ describe("PublicAPIConverter", () => {
                     providerIsConnected: false,
                     providerType: "GitHub",
                     repoName: "rocket",
+                    isMissingScopes: true,
                 }),
             );
             expect(connectError.code).to.equal(Code.FailedPrecondition);
@@ -405,6 +406,7 @@ describe("PublicAPIConverter", () => {
             expect(info.providerIsConnected).to.equal(false);
             expect(info.providerType).to.equal("GitHub");
             expect(info.repoName).to.equal("rocket");
+            expect(info.isMissingScopes).to.equal(true);
         });
 
         it("PAYMENT_SPENDING_LIMIT_REACHED", () => {

@@ -46,6 +46,7 @@ export class GitlabService extends RepositoryService {
             if (error instanceof UnauthorizedRepositoryAccessError) {
                 error.info.host = parsedRepoUrl.host;
                 error.info.providerIsConnected = false;
+                error.info.isMissingScopes = true;
                 error.info.providerType = "GitLab";
             }
             throw error;
