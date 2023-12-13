@@ -41,7 +41,7 @@ export default function SelectWorkspaceClassComponent({
         }
         if (workspaceClasses.length === 0) {
             setError?.(
-                "No allowed workspace classes available. Please contact your admin.",
+                "No allowed workspace classes available. Please contact an admin to update organization settings.",
             );
             return;
         }

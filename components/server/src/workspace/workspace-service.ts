@@ -124,11 +124,14 @@ export class WorkspaceService {
         const settings = await this.orgService.getSettings(userId, organizationId);
         if (settings.allowedWorkspaceClasses && settings.allowedWorkspaceClasses.length > 0) {
             if (!settings.allowedWorkspaceClasses.includes(workspaceClass)) {
-                const hasOtherOptions = await this.orgService.hasAllowedWorkspaceClassesInInstallation(userId, organizationId);
+                const hasOtherOptions = await this.orgService.hasAllowedWorkspaceClassesInInstallation(
+                    userId,
+                    organizationId,
+                );
                 if (!hasOtherOptions) {
                     throw new ApplicationError(
                         ErrorCodes.PRECONDITION_FAILED,
-                        "No allowed workspace classes available. Please contact your admin.",
+                        "No allowed workspace classes available. Please contact an admin to update organization settings.",
                     );
                 }
                 throw new ApplicationError(
