@@ -14,8 +14,10 @@ type ToastFnProps = ToastEntry["message"] | (Pick<ToastEntry, "message"> & Parti
 
 const ToastContext = createContext<{
     toast: (toast: ToastFnProps, opts?: Partial<ToastEntry>) => void;
+    dismissToast: (id: string) => void;
 }>({
     toast: () => undefined,
+    dismissToast: () => undefined,
 });
 
 export const useToast = () => {
@@ -25,7 +27,7 @@ export const useToast = () => {
 export const ToastContextProvider: FC = ({ children }) => {
     const [toasts, dispatch] = useReducer(toastReducer, []);
 
-    const removeToast = useCallback((id) => {
+    const dismissToast = useCallback((id) => {
         dispatch({ type: "remove", id });
     }, []);
 
@@ -54,12 +56,12 @@ export const ToastContextProvider: FC = ({ children }) => {
         dispatch({ type: "add", toast: newToast });
     }, []);
 
-    const ctxValue = useMemo(() => ({ toast: addToast }), [addToast]);
+    const ctxValue = useMemo(() => ({ toast: addToast, dismissToast }), [addToast, dismissToast]);
 
     return (
         <ToastContext.Provider value={ctxValue}>
             {children}
-            <ToastsList toasts={toasts} onRemove={removeToast} />
+            <ToastsList toasts={toasts} onRemove={dismissToast} />
         </ToastContext.Provider>
     );
 };

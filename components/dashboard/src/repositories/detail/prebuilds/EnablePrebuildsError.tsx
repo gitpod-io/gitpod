@@ -94,7 +94,7 @@ const RepositoryUnauthroizedErrorMessage: FC<RepositoryUnauthroizedErrorMessageP
     const definitelyNeedsReconnect = !error.providerIsConnected || error.isMissingScopes;
 
     return (
-        <ConfigurationSettingsField className="text-gitpod-red">
+        <ConfigurationSettingsField className="text-pk-content-danger">
             <div className="flex flex-row gap-2">
                 <span className="w-6">
                     <AlertTriangleIcon />

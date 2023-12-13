@@ -16,6 +16,9 @@
         /* Setup RGB color channel variables */
         --black: 22 22 22; /* #161616 */
         --white: 255 255 255; /* #FFFFFF */
+        /* TODO: determine if these are the reds we want - need to have correct constrast */
+        --red-600: 220 38 38;
+        --red-400: 248 68 68;
         --gray-900: 18 16 12; /* #12100C */
         --gray-850: 21 19 16; /* #151310 */
         --gray-800: 35 33 30; /* #23211E */
@@ -37,6 +40,7 @@
         --content-disabled: var(--gray-450);
         --content-invert-primary: var(--gray-200);
         --content-invert-secondary: var(--gray-300);
+        --content-danger: var(--red-600);
 
         /* Surfaces */
         --surface-primary: var(--white);
@@ -58,6 +62,7 @@
         --content-disabled: var(--gray-600);
         --content-invert-primary: var(--gray-900);
         --content-invert-secondary: var(--gray-600);
+        --content-danger: var(--red-400);
 
         /* Surfaces */
         --surface-primary: var(--gray-850);
