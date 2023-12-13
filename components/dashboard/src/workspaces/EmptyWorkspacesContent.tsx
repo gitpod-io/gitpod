@@ -27,7 +27,7 @@ export const EmptyWorkspacesContent = () => {
                         </a>
                     </Subheading>
                     <span>
-                        <LinkButton href={"/new"}>
+                        <LinkButton href={"/new"} className="gap-1">
                             New Workspace{" "}
                             <span className="opacity-60 hidden md:inline">{StartWorkspaceModalKeyBinding}</span>
                         </LinkButton>
