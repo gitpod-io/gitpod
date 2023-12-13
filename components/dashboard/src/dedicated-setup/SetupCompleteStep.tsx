@@ -44,7 +44,7 @@ export const SetupCompleteStep: FC<Props> = ({ onComplete }) => {
             </div>
 
             <div className="mt-6 max-w-md">
-                <Button size="full-width" onClick={onComplete}>
+                <Button className="w-full" onClick={onComplete}>
                     Add a Git Integration
                 </Button>
             </div>

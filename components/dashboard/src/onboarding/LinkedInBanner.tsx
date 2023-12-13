@@ -76,8 +76,7 @@ export const LinkedInBanner: FC<Props> = ({ onSuccess }) => {
                     </p>
                 </div>
                 <Button
-                    size="full-width"
-                    className="gap-2"
+                    className="gap-2 w-full"
                     onClick={(event) => {
                         event.preventDefault();
                         linkedInLogin();

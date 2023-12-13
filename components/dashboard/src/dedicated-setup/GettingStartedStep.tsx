@@ -23,7 +23,7 @@ export const GettingStartedStep: FC<Props> = ({ onComplete, progressCurrent, pro
             </Subheading>
 
             <div className="mt-6">
-                <Button size="full-width" onClick={onComplete}>
+                <Button className="w-full" onClick={onComplete}>
                     Get Started
                 </Button>
             </div>

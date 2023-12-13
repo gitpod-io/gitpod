@@ -74,7 +74,7 @@ export const OrgNamingStep: FC<Props> = ({ onComplete, progressCurrent, progress
                 <div className="mt-6">
                     <LoadingButton
                         type="submit"
-                        size="full-width"
+                        className="w-full"
                         disabled={!nameError.isValid}
                         loading={createOrg.isLoading || updateOrg.isLoading}
                     >
