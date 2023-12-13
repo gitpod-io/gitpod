@@ -205,7 +205,13 @@ export function hydrate(value: any): any {
             console.error("unsupported message type", messageName);
             return value;
         }
-        return (constructor as any).fromJsonString(json);
+        // Ensure an error w/ a single message doesn't prevent the entire cache from loading, as it will never get pruned
+        try {
+            return (constructor as any).fromJsonString(json);
+        } catch (e) {
+            console.error("unable to hydrate message", messageName, e, json);
+            return undefined;
+        }
     }
     if (value instanceof Object) {
         for (const key in value) {
