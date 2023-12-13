@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { DeleteUserRequest, DeleteUserResponse, GetAuthenticatedUserRequest, GetAuthenticatedUserResponse, SetWorkspaceAutoStartOptionsRequest, SetWorkspaceAutoStartOptionsResponse, UpdateUserRequest, UpdateUserResponse } from "./user_pb.js";
+import { BlockUserRequest, BlockUserResponse, DeleteUserRequest, DeleteUserResponse, GetAuthenticatedUserRequest, GetAuthenticatedUserResponse, GetUserRequest, GetUserResponse, ListUsersRequest, ListUsersResponse, SetRolesOrPermissionsRequest, SetRolesOrPermissionsResponse, SetWorkspaceAutoStartOptionsRequest, SetWorkspaceAutoStartOptionsResponse, UpdateUserRequest, UpdateUserResponse, VerifyUserRequest, VerifyUserResponse } from "./user_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -61,6 +61,66 @@ export const UserService = {
       name: "DeleteUser",
       I: DeleteUserRequest,
       O: DeleteUserResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * VerifyUser markes the specified user as verified.
+     * +admin – only to be used by installation admins
+     *
+     * @generated from rpc gitpod.v1.UserService.VerifyUser
+     */
+    verifyUser: {
+      name: "VerifyUser",
+      I: VerifyUserRequest,
+      O: VerifyUserResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * BlockUser markes the specified user as blocked.
+     * +admin – only to be used by installation admins
+     *
+     * @generated from rpc gitpod.v1.UserService.BlockUser
+     */
+    blockUser: {
+      name: "BlockUser",
+      I: BlockUserRequest,
+      O: BlockUserResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListUsers markes the specified user as blocked.
+     * +admin – only to be used by installation admins
+     *
+     * @generated from rpc gitpod.v1.UserService.ListUsers
+     */
+    listUsers: {
+      name: "ListUsers",
+      I: ListUsersRequest,
+      O: ListUsersResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetUser allows to retrieve the specified user.
+     * +admin – only to be used by installation admins
+     *
+     * @generated from rpc gitpod.v1.UserService.GetUser
+     */
+    getUser: {
+      name: "GetUser",
+      I: GetUserRequest,
+      O: GetUserResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * SetRolesOrPermissions allows to set roles or permissions for the specified user.
+     * +admin – only to be used by installation admins
+     *
+     * @generated from rpc gitpod.v1.UserService.SetRolesOrPermissions
+     */
+    setRolesOrPermissions: {
+      name: "SetRolesOrPermissions",
+      I: SetRolesOrPermissionsRequest,
+      O: SetRolesOrPermissionsResponse,
       kind: MethodKind.Unary,
     },
   }

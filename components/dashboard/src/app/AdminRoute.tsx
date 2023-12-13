@@ -7,7 +7,7 @@
 import { useContext } from "react";
 import { Redirect, Route } from "react-router";
 import { UserContext } from "../user-context";
-import { User_RoleOrPermission } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
+import { RoleOrPermission } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 
 // A wrapper for <Route> that redirects to the workspaces screen if the user isn't a admin.
 // This wrapper only accepts the component property
@@ -16,7 +16,7 @@ export function AdminRoute({ component }: any) {
     return (
         <Route
             render={({ location }: any) =>
-                user?.rolesOrPermissions?.includes(User_RoleOrPermission.ADMIN) ? (
+                user?.rolesOrPermissions?.includes(RoleOrPermission.ADMIN) ? (
                     <Route component={component}></Route>
                 ) : (
                     <Redirect
