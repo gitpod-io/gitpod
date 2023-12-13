@@ -439,6 +439,11 @@ export class RepositoryUnauthorizedError extends Message<RepositoryUnauthorizedE
    */
   providerIsConnected = false;
 
+  /**
+   * @generated from field: bool is_missing_scopes = 6;
+   */
+  isMissingScopes = false;
+
   constructor(data?: PartialMessage<RepositoryUnauthorizedError>) {
     super();
     proto3.util.initPartial(data, this);
@@ -452,6 +457,7 @@ export class RepositoryUnauthorizedError extends Message<RepositoryUnauthorizedE
     { no: 3, name: "provider_type", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "repo_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "provider_is_connected", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 6, name: "is_missing_scopes", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RepositoryUnauthorizedError {

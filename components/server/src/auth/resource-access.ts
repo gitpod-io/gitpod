@@ -597,6 +597,7 @@ export class RepositoryResourceGuard implements ResourceAccessGuard {
                         providerType,
                         requiredScopes,
                         providerIsConnected: false,
+                        isMissingScopes: true,
                     });
                 }
                 const { services } = hostContext;

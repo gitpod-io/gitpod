@@ -44,6 +44,7 @@ export class GitLabTokenHelper {
             providerType: "GitLab",
             requiredScopes: GitLabScope.Requirements.DEFAULT,
             providerIsConnected: false,
+            isMissingScopes: true,
         });
     }
     protected containsScopes(token: Token, wantedScopes: string[] | undefined): boolean {

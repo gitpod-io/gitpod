@@ -23,6 +23,7 @@ import { GitHubScope } from "./scopes";
 import { GitHubTokenHelper } from "./github-token-helper";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { RepoURL } from "../repohost";
+import { containsScopes } from "../prebuilds/token-scopes-inclusion";
 
 @injectable()
 export class GithubContextParser extends AbstractContextParser implements IContextParser {
@@ -96,6 +97,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                     requiredScopes: GitHubScope.Requirements.PUBLIC_REPO,
                     repoName: RepoURL.parseRepoUrl(contextUrl)?.repo,
                     providerIsConnected: !!token,
+                    isMissingScopes: containsScopes(token?.scopes, GitHubScope.Requirements.PUBLIC_REPO),
                 });
             }
             throw error;

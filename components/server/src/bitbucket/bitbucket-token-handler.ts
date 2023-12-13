@@ -44,6 +44,7 @@ export class BitbucketTokenHelper {
             providerType: "GitHub",
             requiredScopes: BitbucketOAuthScopes.Requirements.DEFAULT,
             providerIsConnected: false,
+            isMissingScopes: true,
         });
     }
     protected containsScopes(token: Token, wantedScopes: string[] | undefined): boolean {

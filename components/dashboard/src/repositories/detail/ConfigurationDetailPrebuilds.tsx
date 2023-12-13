@@ -62,8 +62,12 @@ export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
                 <div className="flex gap-4 mt-6">
                     {/* TODO: wrap this in a SwitchInputField that handles the switch, label and description and htmlFor/id automatically */}
                     <div className="flex flex-col gap-2 items-center">
-                        <Switch checked={enabled} onCheckedChange={updateEnabled} id="prebuilds-enabled" />
-                        {updateConfiguration.isLoading && <LoadingState delay={false} />}
+                        <Switch
+                            checked={enabled}
+                            onCheckedChange={updateEnabled}
+                            id="prebuilds-enabled"
+                            disabled={updateConfiguration.isLoading}
+                        />
                     </div>
                     <div className="flex flex-col">
                         <label className="font-semibold" htmlFor="prebuilds-enabled">
@@ -86,6 +90,15 @@ export const ConfigurationDetailPrebuilds: FC<Props> = ({ configuration }) => {
                     </div>
                 </div>
             </ConfigurationSettingsField>
+
+            {updateConfiguration.isLoading && enabled && (
+                <ConfigurationSettingsField>
+                    <div className="flex flex-row gap-2 items-center text-pk-content-tertiary">
+                        <LoadingState delay={false} />
+                        <span>Enabling prebuilds...</span>
+                    </div>
+                </ConfigurationSettingsField>
+            )}
 
             {updateConfiguration.isError && (
                 <EnablePrebuildsError error={updateConfiguration.error} onReconnect={handleReconnection} />

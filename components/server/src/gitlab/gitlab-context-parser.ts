@@ -25,6 +25,7 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 const path = require("path");
 import { URL } from "url";
 import { RepoURL } from "../repohost";
+import { containsScopes } from "../prebuilds/token-scopes-inclusion";
 
 @injectable()
 export class GitlabContextParser extends AbstractContextParser implements IContextParser {
@@ -76,6 +77,7 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
                     requiredScopes: GitLabScope.Requirements.DEFAULT,
                     repoName: RepoURL.parseRepoUrl(contextUrl)?.repo,
                     providerIsConnected: !!token,
+                    isMissingScopes: containsScopes(token?.scopes, GitLabScope.Requirements.DEFAULT),
                 });
             }
             throw error;

@@ -9,6 +9,7 @@ import {
     RepositoryNotFoundError,
     UnauthorizedRepositoryAccessError,
 } from "@gitpod/public-api-common/lib/public-api-errors";
+import { RepositoryUnauthorizedError } from "@gitpod/public-api/lib/gitpod/v1/error_pb";
 
 export namespace NotFoundError {
     export async function create(token: Token | undefined, user: User, host: string, owner: string, repoName: string) {
@@ -30,13 +31,7 @@ export namespace NotFoundError {
 }
 
 export namespace UnauthorizedError {
-    export function create(props: {
-        host: string;
-        providerType: string;
-        repoName?: string;
-        requiredScopes?: string[];
-        providerIsConnected?: boolean;
-    }) {
+    export function create(props: Partial<RepositoryUnauthorizedError>) {
         return new UnauthorizedRepositoryAccessError(props);
     }
     export function is(error: any): error is UnauthorizedRepositoryAccessError {

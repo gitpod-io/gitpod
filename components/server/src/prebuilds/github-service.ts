@@ -16,6 +16,7 @@ import { RepoURL } from "../repohost";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UnauthorizedError } from "../errors";
 import { GitHubScope } from "../github/scopes";
+import { containsScopes } from "./token-scopes-inclusion";
 
 @injectable()
 export class GitHubService extends RepositoryService {
@@ -35,6 +36,7 @@ export class GitHubService extends RepositoryService {
         if (!parsedRepoUrl) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Clone URL not parseable.`);
         }
+        let tokenEntry;
         try {
             const { owner, repoName: repo } = await this.githubContextParser.parseURL(user, cloneUrl);
             const webhooks = (await this.githubApi.run(user, (gh) => gh.repos.listWebhooks({ owner, repo }))).data;
@@ -45,11 +47,7 @@ export class GitHubService extends RepositoryService {
                     );
                 }
             }
-            const tokenEntry = await this.tokenService.createGitpodToken(
-                user,
-                GitHubService.PREBUILD_TOKEN_SCOPE,
-                cloneUrl,
-            );
+            tokenEntry = await this.tokenService.createGitpodToken(user, GitHubService.PREBUILD_TOKEN_SCOPE, cloneUrl);
             const config = {
                 url: this.getHookUrl(),
                 content_type: "json",
@@ -70,6 +68,7 @@ export class GitHubService extends RepositoryService {
                     repoName: parsedRepoUrl.repo,
                     requiredScopes: GitHubScope.Requirements.PRIVATE_REPO,
                     providerIsConnected: true,
+                    isMissingScopes: containsScopes(tokenEntry?.token.scopes, GitHubScope.Requirements.PRIVATE_REPO),
                 });
             }
             throw error;

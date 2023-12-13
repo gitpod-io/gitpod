@@ -44,6 +44,7 @@ export class GitHubTokenHelper {
             providerType: "GitHub",
             requiredScopes: GitHubScope.Requirements.DEFAULT,
             providerIsConnected: false,
+            isMissingScopes: true,
         });
     }
     protected containsScopes(token: Token, wantedScopes: string[] | undefined): boolean {

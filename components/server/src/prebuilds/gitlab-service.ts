@@ -18,6 +18,7 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 import { UnauthorizedRepositoryAccessError } from "@gitpod/public-api-common/lib/public-api-errors";
 import { UnauthorizedError } from "../errors";
 import { GitLabScope } from "../gitlab/scopes";
+import { containsScopes } from "./token-scopes-inclusion";
 
 @injectable()
 export class GitlabService extends RepositoryService {
@@ -50,6 +51,7 @@ export class GitlabService extends RepositoryService {
             throw error;
         }
 
+        let tokenEntry;
         try {
             // throws GitLabApiError 404
             const { owner, repoName } = await this.gitlabContextParser.parseURL(user, cloneUrl);
@@ -68,11 +70,7 @@ export class GitlabService extends RepositoryService {
                     await api.ProjectHooks.remove(gitlabProjectId, hook.id);
                 }
             }
-            const tokenEntry = await this.tokenService.createGitpodToken(
-                user,
-                GitlabService.PREBUILD_TOKEN_SCOPE,
-                cloneUrl,
-            );
+            tokenEntry = await this.tokenService.createGitpodToken(user, GitlabService.PREBUILD_TOKEN_SCOPE, cloneUrl);
             // throws GitLabApiError 403
             await api.ProjectHooks.add(gitlabProjectId, this.getHookUrl(), <Partial<GitLab.ProjectHook>>{
                 ...existingProps,
@@ -90,6 +88,7 @@ export class GitlabService extends RepositoryService {
                     repoName: parsedRepoUrl.repo,
                     requiredScopes: GitLabScope.Requirements.REPO,
                     providerIsConnected: true,
+                    isMissingScopes: containsScopes(tokenEntry?.token?.scopes, GitLabScope.Requirements.REPO),
                 });
             }
             throw error;

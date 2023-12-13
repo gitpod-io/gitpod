@@ -12,6 +12,7 @@ import { openAuthorizeWindow } from "../../../provider-utils";
 import { useToast } from "../../../components/toasts/Toasts";
 import { Button } from "@podkit/buttons/Button";
 import { ConfigurationSettingsField } from "../ConfigurationSettingsField";
+import { AlertTriangleIcon } from "lucide-react";
 
 type Props = {
     error: Error;
@@ -49,7 +50,7 @@ type GenericErrorMessageProps = {
 };
 const GenericErrorMessage: FC<GenericErrorMessageProps> = ({ message }) => {
     return (
-        <ConfigurationSettingsField className="bg-pk-surface-secondary">
+        <ConfigurationSettingsField className="text-gitpod-red">
             <Heading3>Failed to enable Prebuilds</Heading3>
             <Subheading>{message}</Subheading>
         </ConfigurationSettingsField>
@@ -84,12 +85,25 @@ const RepositoryUnauthroizedErrorMessage: FC<RepositoryUnauthroizedErrorMessageP
         });
     }, [error.host, error.requiredScopes, onReconnect, toast]);
 
+    const needsReconnect = !error.providerIsConnected || error.isMissingScopes;
+
     return (
-        <ConfigurationSettingsField className="bg-pk-surface-secondary">
-            <Heading3>Failed to enable Prebuilds</Heading3>
-            <Subheading>
-                Looks like we need to authorize with <strong>{error.host}</strong> to enabled prebuilds.
-            </Subheading>
+        <ConfigurationSettingsField className="text-gitpod-red">
+            {needsReconnect ? (
+                <div className="flex flex-row gap-2">
+                    <AlertTriangleIcon />
+                    <span>
+                        It looks like your need to reconnect with your git provider. Please reconnect and try again.
+                    </span>
+                </div>
+            ) : (
+                <>
+                    <Heading3>Failed to enable Prebuilds</Heading3>
+                    <Subheading>
+                        Looks like we need to authorize with <strong>{error.host}</strong> to enabled prebuilds.
+                    </Subheading>
+                </>
+            )}
 
             <Button className="mt-4" onClick={authorizeWithProvider}>
                 {error.providerIsConnected ? "Reconnect" : "Connect"}
