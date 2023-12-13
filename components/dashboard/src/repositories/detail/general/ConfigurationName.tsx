@@ -12,6 +12,9 @@ import { useToast } from "../../../components/toasts/Toasts";
 import { useOnBlurError } from "../../../hooks/use-onblur-error";
 import { ConfigurationSettingsField } from "../ConfigurationSettingsField";
 import { useConfigurationMutation } from "../../../data/configurations/configuration-queries";
+import { InputWithCopy } from "../../../components/InputWithCopy";
+import { InputField } from "../../../components/forms/InputField";
+import { usePrettyRepoURL } from "../../../hooks/use-pretty-repo-url";
 
 const MAX_LENGTH = 100;
 
@@ -26,6 +29,8 @@ export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
 
     const nameChanged = configurationName !== configuration.name;
     const nameError = useOnBlurError("Sorry, this name is too long.", configurationName.length <= MAX_LENGTH);
+
+    const url = usePrettyRepoURL(configuration.cloneUrl);
 
     const updateName = useCallback(
         async (e: React.FormEvent) => {
@@ -58,14 +63,22 @@ export const ConfigurationNameForm: FC<Props> = ({ configuration }) => {
         <ConfigurationSettingsField>
             <form onSubmit={updateName}>
                 <TextInputField
-                    label="Configuration name"
-                    hint={`The name can be up to ${MAX_LENGTH} characters long.`}
-                    containerClassName="mt-0"
+                    label="Display name"
+                    hint={
+                        <a href={configuration.cloneUrl} target="_blank" rel="noopener noreferrer" className="gp-link">
+                            {url}
+                        </a>
+                    }
                     value={configurationName}
                     error={nameError.message}
                     onChange={setConfigurationName}
                     onBlur={nameError.onBlur}
                 />
+
+                <InputField label="Repository ID">
+                    <InputWithCopy value={configuration.id} tip="Click to copy configuration ID" className="" />
+                </InputField>
+
                 <div className="flex flex-row items-center justify-start gap-2 mt-4 w-full">
                     <LoadingButton type="submit" disabled={!nameChanged} loading={updateConfiguration.isLoading}>
                         Save
