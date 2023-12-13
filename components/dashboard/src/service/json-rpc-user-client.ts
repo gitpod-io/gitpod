@@ -9,14 +9,24 @@ import { UserService } from "@gitpod/public-api/lib/gitpod/v1/user_connect";
 import { PromiseClient } from "@connectrpc/connect";
 import { PartialMessage } from "@bufbuild/protobuf";
 import {
+    BlockUserRequest,
+    BlockUserResponse,
     DeleteUserRequest,
     DeleteUserResponse,
     GetAuthenticatedUserRequest,
     GetAuthenticatedUserResponse,
+    GetUserRequest,
+    GetUserResponse,
+    ListUsersRequest,
+    ListUsersResponse,
+    SetRolesOrPermissionsRequest,
+    SetRolesOrPermissionsResponse,
     SetWorkspaceAutoStartOptionsRequest,
     SetWorkspaceAutoStartOptionsResponse,
     UpdateUserRequest,
     UpdateUserResponse,
+    VerifyUserRequest,
+    VerifyUserResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { getGitpodService } from "./service";
 import { converter } from "./public-api";
@@ -43,6 +53,28 @@ export class JsonRpcUserClient implements PromiseClient<typeof UserService> {
     }
 
     async deleteUser(request: PartialMessage<DeleteUserRequest>): Promise<DeleteUserResponse> {
+        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+    }
+
+    async verifyUser(request: PartialMessage<VerifyUserRequest>): Promise<VerifyUserResponse> {
+        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+    }
+
+    async blockUser(request: PartialMessage<BlockUserRequest>): Promise<BlockUserResponse> {
+        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+    }
+
+    async listUsers(request: PartialMessage<ListUsersRequest>): Promise<ListUsersResponse> {
+        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+    }
+
+    async getUser(request: PartialMessage<GetUserRequest>): Promise<GetUserResponse> {
+        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+    }
+
+    async setRolesOrPermissions(
+        request: PartialMessage<SetRolesOrPermissionsRequest>,
+    ): Promise<SetRolesOrPermissionsResponse> {
         throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
     }
 }

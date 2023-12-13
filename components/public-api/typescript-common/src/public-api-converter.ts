@@ -31,8 +31,8 @@ import {
     Identity,
     SetWorkspaceAutoStartOptionsRequest_WorkspaceAutostartOption,
     User,
+    RoleOrPermission,
     User_EmailNotificationSettings,
-    User_RoleOrPermission,
     User_UserFeatureFlag,
     User_WorkspaceAutostartOption,
     User_WorkspaceTimeoutSettings,
@@ -148,7 +148,7 @@ import { Author, Commit } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import type { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 import { BlockedRepository as ProtocolBlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
-import { RoleOrPermission } from "@gitpod/gitpod-protocol/lib/permission";
+import { RoleOrPermission as ProtocolRoleOrPermission } from "@gitpod/gitpod-protocol/lib/permission";
 import { parseGoDurationToMs } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { GitpodServer } from "@gitpod/gitpod-protocol";
@@ -1307,32 +1307,32 @@ export class PublicAPIConverter {
         });
     }
 
-    toRoleOrPermission(from: RoleOrPermission): User_RoleOrPermission {
+    toRoleOrPermission(from: ProtocolRoleOrPermission): RoleOrPermission {
         switch (from) {
             case "admin":
-                return User_RoleOrPermission.ADMIN;
+                return RoleOrPermission.ADMIN;
             case "devops":
-                return User_RoleOrPermission.DEVOPS;
+                return RoleOrPermission.DEVOPS;
             case "viewer":
-                return User_RoleOrPermission.VIEWER;
+                return RoleOrPermission.VIEWER;
             case "developer":
-                return User_RoleOrPermission.DEVELOPER;
+                return RoleOrPermission.DEVELOPER;
             case "registry-access":
-                return User_RoleOrPermission.REGISTRY_ACCESS;
+                return RoleOrPermission.REGISTRY_ACCESS;
             case "admin-permissions":
-                return User_RoleOrPermission.ADMIN_PERMISSIONS;
+                return RoleOrPermission.ADMIN_PERMISSIONS;
             case "admin-users":
-                return User_RoleOrPermission.ADMIN_USERS;
+                return RoleOrPermission.ADMIN_USERS;
             case "admin-workspace-content":
-                return User_RoleOrPermission.ADMIN_WORKSPACE_CONTENT;
+                return RoleOrPermission.ADMIN_WORKSPACE_CONTENT;
             case "admin-workspaces":
-                return User_RoleOrPermission.ADMIN_WORKSPACES;
+                return RoleOrPermission.ADMIN_WORKSPACES;
             case "admin-projects":
-                return User_RoleOrPermission.ADMIN_PROJECTS;
+                return RoleOrPermission.ADMIN_PROJECTS;
             case "new-workspace-cluster":
-                return User_RoleOrPermission.NEW_WORKSPACE_CLUSTER;
+                return RoleOrPermission.NEW_WORKSPACE_CLUSTER;
         }
-        return User_RoleOrPermission.UNSPECIFIED;
+        return RoleOrPermission.UNSPECIFIED;
     }
 
     toUserFeatureFlags(from: NamedWorkspaceFeatureFlag): User_UserFeatureFlag {

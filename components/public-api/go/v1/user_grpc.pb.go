@@ -35,6 +35,21 @@ type UserServiceClient interface {
 	SetWorkspaceAutoStartOptions(ctx context.Context, in *SetWorkspaceAutoStartOptionsRequest, opts ...grpc.CallOption) (*SetWorkspaceAutoStartOptionsResponse, error)
 	// DeleteUser deletes the specified user.
 	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
+	// VerifyUser markes the specified user as verified.
+	// +admin – only to be used by installation admins
+	VerifyUser(ctx context.Context, in *VerifyUserRequest, opts ...grpc.CallOption) (*VerifyUserResponse, error)
+	// BlockUser markes the specified user as blocked.
+	// +admin – only to be used by installation admins
+	BlockUser(ctx context.Context, in *BlockUserRequest, opts ...grpc.CallOption) (*BlockUserResponse, error)
+	// ListUsers markes the specified user as blocked.
+	// +admin – only to be used by installation admins
+	ListUsers(ctx context.Context, in *ListUsersRequest, opts ...grpc.CallOption) (*ListUsersResponse, error)
+	// GetUser allows to retrieve the specified user.
+	// +admin – only to be used by installation admins
+	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
+	// SetRolesOrPermissions allows to set roles or permissions for the specified user.
+	// +admin – only to be used by installation admins
+	SetRolesOrPermissions(ctx context.Context, in *SetRolesOrPermissionsRequest, opts ...grpc.CallOption) (*SetRolesOrPermissionsResponse, error)
 }
 
 type userServiceClient struct {
@@ -81,6 +96,51 @@ func (c *userServiceClient) DeleteUser(ctx context.Context, in *DeleteUserReques
 	return out, nil
 }
 
+func (c *userServiceClient) VerifyUser(ctx context.Context, in *VerifyUserRequest, opts ...grpc.CallOption) (*VerifyUserResponse, error) {
+	out := new(VerifyUserResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.UserService/VerifyUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) BlockUser(ctx context.Context, in *BlockUserRequest, opts ...grpc.CallOption) (*BlockUserResponse, error) {
+	out := new(BlockUserResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.UserService/BlockUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) ListUsers(ctx context.Context, in *ListUsersRequest, opts ...grpc.CallOption) (*ListUsersResponse, error) {
+	out := new(ListUsersResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.UserService/ListUsers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error) {
+	out := new(GetUserResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.UserService/GetUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) SetRolesOrPermissions(ctx context.Context, in *SetRolesOrPermissionsRequest, opts ...grpc.CallOption) (*SetRolesOrPermissionsResponse, error) {
+	out := new(SetRolesOrPermissionsResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.UserService/SetRolesOrPermissions", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
@@ -94,6 +154,21 @@ type UserServiceServer interface {
 	SetWorkspaceAutoStartOptions(context.Context, *SetWorkspaceAutoStartOptionsRequest) (*SetWorkspaceAutoStartOptionsResponse, error)
 	// DeleteUser deletes the specified user.
 	DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
+	// VerifyUser markes the specified user as verified.
+	// +admin – only to be used by installation admins
+	VerifyUser(context.Context, *VerifyUserRequest) (*VerifyUserResponse, error)
+	// BlockUser markes the specified user as blocked.
+	// +admin – only to be used by installation admins
+	BlockUser(context.Context, *BlockUserRequest) (*BlockUserResponse, error)
+	// ListUsers markes the specified user as blocked.
+	// +admin – only to be used by installation admins
+	ListUsers(context.Context, *ListUsersRequest) (*ListUsersResponse, error)
+	// GetUser allows to retrieve the specified user.
+	// +admin – only to be used by installation admins
+	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
+	// SetRolesOrPermissions allows to set roles or permissions for the specified user.
+	// +admin – only to be used by installation admins
+	SetRolesOrPermissions(context.Context, *SetRolesOrPermissionsRequest) (*SetRolesOrPermissionsResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -112,6 +187,21 @@ func (UnimplementedUserServiceServer) SetWorkspaceAutoStartOptions(context.Conte
 }
 func (UnimplementedUserServiceServer) DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
+}
+func (UnimplementedUserServiceServer) VerifyUser(context.Context, *VerifyUserRequest) (*VerifyUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method VerifyUser not implemented")
+}
+func (UnimplementedUserServiceServer) BlockUser(context.Context, *BlockUserRequest) (*BlockUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BlockUser not implemented")
+}
+func (UnimplementedUserServiceServer) ListUsers(context.Context, *ListUsersRequest) (*ListUsersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListUsers not implemented")
+}
+func (UnimplementedUserServiceServer) GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
+}
+func (UnimplementedUserServiceServer) SetRolesOrPermissions(context.Context, *SetRolesOrPermissionsRequest) (*SetRolesOrPermissionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetRolesOrPermissions not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 
@@ -198,6 +288,96 @@ func _UserService_DeleteUser_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_VerifyUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifyUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).VerifyUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.UserService/VerifyUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).VerifyUser(ctx, req.(*VerifyUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_BlockUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BlockUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).BlockUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.UserService/BlockUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).BlockUser(ctx, req.(*BlockUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_ListUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUsersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).ListUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.UserService/ListUsers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).ListUsers(ctx, req.(*ListUsersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.UserService/GetUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetUser(ctx, req.(*GetUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_SetRolesOrPermissions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetRolesOrPermissionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).SetRolesOrPermissions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.UserService/SetRolesOrPermissions",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).SetRolesOrPermissions(ctx, req.(*SetRolesOrPermissionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -220,6 +400,26 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteUser",
 			Handler:    _UserService_DeleteUser_Handler,
+		},
+		{
+			MethodName: "VerifyUser",
+			Handler:    _UserService_VerifyUser_Handler,
+		},
+		{
+			MethodName: "BlockUser",
+			Handler:    _UserService_BlockUser_Handler,
+		},
+		{
+			MethodName: "ListUsers",
+			Handler:    _UserService_ListUsers_Handler,
+		},
+		{
+			MethodName: "GetUser",
+			Handler:    _UserService_GetUser_Handler,
+		},
+		{
+			MethodName: "SetRolesOrPermissions",
+			Handler:    _UserService_SetRolesOrPermissions_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

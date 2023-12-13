@@ -17,6 +17,16 @@ import {
     SetWorkspaceAutoStartOptionsResponse,
     DeleteUserRequest,
     DeleteUserResponse,
+    VerifyUserRequest,
+    VerifyUserResponse,
+    BlockUserRequest,
+    BlockUserResponse,
+    GetUserRequest,
+    GetUserResponse,
+    ListUsersRequest,
+    ListUsersResponse,
+    SetRolesOrPermissionsRequest,
+    SetRolesOrPermissionsResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { UserService } from "../user/user-service";
 import { validate as uuidValidate } from "uuid";
@@ -73,6 +83,29 @@ export class UserServiceAPI implements ServiceImpl<typeof UserServiceInterface> 
     }
 
     async deleteUser(request: DeleteUserRequest, _: HandlerContext): Promise<DeleteUserResponse> {
+        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+    }
+
+    async verifyUser(request: VerifyUserRequest, _: HandlerContext): Promise<VerifyUserResponse> {
+        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+    }
+
+    async blockUser(request: BlockUserRequest, _: HandlerContext): Promise<BlockUserResponse> {
+        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+    }
+
+    async listUsers(request: ListUsersRequest, _: HandlerContext): Promise<ListUsersResponse> {
+        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+    }
+
+    async getUser(request: GetUserRequest, _: HandlerContext): Promise<GetUserResponse> {
+        throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
+    }
+
+    async setRolesOrPermissions(
+        request: SetRolesOrPermissionsRequest,
+        _: HandlerContext,
+    ): Promise<SetRolesOrPermissionsResponse> {
         throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
     }
 }

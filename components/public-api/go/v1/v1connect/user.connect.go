@@ -40,6 +40,21 @@ type UserServiceClient interface {
 	SetWorkspaceAutoStartOptions(context.Context, *connect_go.Request[v1.SetWorkspaceAutoStartOptionsRequest]) (*connect_go.Response[v1.SetWorkspaceAutoStartOptionsResponse], error)
 	// DeleteUser deletes the specified user.
 	DeleteUser(context.Context, *connect_go.Request[v1.DeleteUserRequest]) (*connect_go.Response[v1.DeleteUserResponse], error)
+	// VerifyUser markes the specified user as verified.
+	// +admin – only to be used by installation admins
+	VerifyUser(context.Context, *connect_go.Request[v1.VerifyUserRequest]) (*connect_go.Response[v1.VerifyUserResponse], error)
+	// BlockUser markes the specified user as blocked.
+	// +admin – only to be used by installation admins
+	BlockUser(context.Context, *connect_go.Request[v1.BlockUserRequest]) (*connect_go.Response[v1.BlockUserResponse], error)
+	// ListUsers markes the specified user as blocked.
+	// +admin – only to be used by installation admins
+	ListUsers(context.Context, *connect_go.Request[v1.ListUsersRequest]) (*connect_go.Response[v1.ListUsersResponse], error)
+	// GetUser allows to retrieve the specified user.
+	// +admin – only to be used by installation admins
+	GetUser(context.Context, *connect_go.Request[v1.GetUserRequest]) (*connect_go.Response[v1.GetUserResponse], error)
+	// SetRolesOrPermissions allows to set roles or permissions for the specified user.
+	// +admin – only to be used by installation admins
+	SetRolesOrPermissions(context.Context, *connect_go.Request[v1.SetRolesOrPermissionsRequest]) (*connect_go.Response[v1.SetRolesOrPermissionsResponse], error)
 }
 
 // NewUserServiceClient constructs a client for the gitpod.v1.UserService service. By default, it
@@ -72,6 +87,31 @@ func NewUserServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts
 			baseURL+"/gitpod.v1.UserService/DeleteUser",
 			opts...,
 		),
+		verifyUser: connect_go.NewClient[v1.VerifyUserRequest, v1.VerifyUserResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.UserService/VerifyUser",
+			opts...,
+		),
+		blockUser: connect_go.NewClient[v1.BlockUserRequest, v1.BlockUserResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.UserService/BlockUser",
+			opts...,
+		),
+		listUsers: connect_go.NewClient[v1.ListUsersRequest, v1.ListUsersResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.UserService/ListUsers",
+			opts...,
+		),
+		getUser: connect_go.NewClient[v1.GetUserRequest, v1.GetUserResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.UserService/GetUser",
+			opts...,
+		),
+		setRolesOrPermissions: connect_go.NewClient[v1.SetRolesOrPermissionsRequest, v1.SetRolesOrPermissionsResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.UserService/SetRolesOrPermissions",
+			opts...,
+		),
 	}
 }
 
@@ -81,6 +121,11 @@ type userServiceClient struct {
 	updateUser                   *connect_go.Client[v1.UpdateUserRequest, v1.UpdateUserResponse]
 	setWorkspaceAutoStartOptions *connect_go.Client[v1.SetWorkspaceAutoStartOptionsRequest, v1.SetWorkspaceAutoStartOptionsResponse]
 	deleteUser                   *connect_go.Client[v1.DeleteUserRequest, v1.DeleteUserResponse]
+	verifyUser                   *connect_go.Client[v1.VerifyUserRequest, v1.VerifyUserResponse]
+	blockUser                    *connect_go.Client[v1.BlockUserRequest, v1.BlockUserResponse]
+	listUsers                    *connect_go.Client[v1.ListUsersRequest, v1.ListUsersResponse]
+	getUser                      *connect_go.Client[v1.GetUserRequest, v1.GetUserResponse]
+	setRolesOrPermissions        *connect_go.Client[v1.SetRolesOrPermissionsRequest, v1.SetRolesOrPermissionsResponse]
 }
 
 // GetAuthenticatedUser calls gitpod.v1.UserService.GetAuthenticatedUser.
@@ -103,6 +148,31 @@ func (c *userServiceClient) DeleteUser(ctx context.Context, req *connect_go.Requ
 	return c.deleteUser.CallUnary(ctx, req)
 }
 
+// VerifyUser calls gitpod.v1.UserService.VerifyUser.
+func (c *userServiceClient) VerifyUser(ctx context.Context, req *connect_go.Request[v1.VerifyUserRequest]) (*connect_go.Response[v1.VerifyUserResponse], error) {
+	return c.verifyUser.CallUnary(ctx, req)
+}
+
+// BlockUser calls gitpod.v1.UserService.BlockUser.
+func (c *userServiceClient) BlockUser(ctx context.Context, req *connect_go.Request[v1.BlockUserRequest]) (*connect_go.Response[v1.BlockUserResponse], error) {
+	return c.blockUser.CallUnary(ctx, req)
+}
+
+// ListUsers calls gitpod.v1.UserService.ListUsers.
+func (c *userServiceClient) ListUsers(ctx context.Context, req *connect_go.Request[v1.ListUsersRequest]) (*connect_go.Response[v1.ListUsersResponse], error) {
+	return c.listUsers.CallUnary(ctx, req)
+}
+
+// GetUser calls gitpod.v1.UserService.GetUser.
+func (c *userServiceClient) GetUser(ctx context.Context, req *connect_go.Request[v1.GetUserRequest]) (*connect_go.Response[v1.GetUserResponse], error) {
+	return c.getUser.CallUnary(ctx, req)
+}
+
+// SetRolesOrPermissions calls gitpod.v1.UserService.SetRolesOrPermissions.
+func (c *userServiceClient) SetRolesOrPermissions(ctx context.Context, req *connect_go.Request[v1.SetRolesOrPermissionsRequest]) (*connect_go.Response[v1.SetRolesOrPermissionsResponse], error) {
+	return c.setRolesOrPermissions.CallUnary(ctx, req)
+}
+
 // UserServiceHandler is an implementation of the gitpod.v1.UserService service.
 type UserServiceHandler interface {
 	// GetAuthenticatedUser allows to retrieve the current user.
@@ -114,6 +184,21 @@ type UserServiceHandler interface {
 	SetWorkspaceAutoStartOptions(context.Context, *connect_go.Request[v1.SetWorkspaceAutoStartOptionsRequest]) (*connect_go.Response[v1.SetWorkspaceAutoStartOptionsResponse], error)
 	// DeleteUser deletes the specified user.
 	DeleteUser(context.Context, *connect_go.Request[v1.DeleteUserRequest]) (*connect_go.Response[v1.DeleteUserResponse], error)
+	// VerifyUser markes the specified user as verified.
+	// +admin – only to be used by installation admins
+	VerifyUser(context.Context, *connect_go.Request[v1.VerifyUserRequest]) (*connect_go.Response[v1.VerifyUserResponse], error)
+	// BlockUser markes the specified user as blocked.
+	// +admin – only to be used by installation admins
+	BlockUser(context.Context, *connect_go.Request[v1.BlockUserRequest]) (*connect_go.Response[v1.BlockUserResponse], error)
+	// ListUsers markes the specified user as blocked.
+	// +admin – only to be used by installation admins
+	ListUsers(context.Context, *connect_go.Request[v1.ListUsersRequest]) (*connect_go.Response[v1.ListUsersResponse], error)
+	// GetUser allows to retrieve the specified user.
+	// +admin – only to be used by installation admins
+	GetUser(context.Context, *connect_go.Request[v1.GetUserRequest]) (*connect_go.Response[v1.GetUserResponse], error)
+	// SetRolesOrPermissions allows to set roles or permissions for the specified user.
+	// +admin – only to be used by installation admins
+	SetRolesOrPermissions(context.Context, *connect_go.Request[v1.SetRolesOrPermissionsRequest]) (*connect_go.Response[v1.SetRolesOrPermissionsResponse], error)
 }
 
 // NewUserServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -143,6 +228,31 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect_go.HandlerOpt
 		svc.DeleteUser,
 		opts...,
 	))
+	mux.Handle("/gitpod.v1.UserService/VerifyUser", connect_go.NewUnaryHandler(
+		"/gitpod.v1.UserService/VerifyUser",
+		svc.VerifyUser,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.UserService/BlockUser", connect_go.NewUnaryHandler(
+		"/gitpod.v1.UserService/BlockUser",
+		svc.BlockUser,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.UserService/ListUsers", connect_go.NewUnaryHandler(
+		"/gitpod.v1.UserService/ListUsers",
+		svc.ListUsers,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.UserService/GetUser", connect_go.NewUnaryHandler(
+		"/gitpod.v1.UserService/GetUser",
+		svc.GetUser,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.UserService/SetRolesOrPermissions", connect_go.NewUnaryHandler(
+		"/gitpod.v1.UserService/SetRolesOrPermissions",
+		svc.SetRolesOrPermissions,
+		opts...,
+	))
 	return "/gitpod.v1.UserService/", mux
 }
 
@@ -163,4 +273,24 @@ func (UnimplementedUserServiceHandler) SetWorkspaceAutoStartOptions(context.Cont
 
 func (UnimplementedUserServiceHandler) DeleteUser(context.Context, *connect_go.Request[v1.DeleteUserRequest]) (*connect_go.Response[v1.DeleteUserResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.UserService.DeleteUser is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) VerifyUser(context.Context, *connect_go.Request[v1.VerifyUserRequest]) (*connect_go.Response[v1.VerifyUserResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.UserService.VerifyUser is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) BlockUser(context.Context, *connect_go.Request[v1.BlockUserRequest]) (*connect_go.Response[v1.BlockUserResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.UserService.BlockUser is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) ListUsers(context.Context, *connect_go.Request[v1.ListUsersRequest]) (*connect_go.Response[v1.ListUsersResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.UserService.ListUsers is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) GetUser(context.Context, *connect_go.Request[v1.GetUserRequest]) (*connect_go.Response[v1.GetUserResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.UserService.GetUser is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) SetRolesOrPermissions(context.Context, *connect_go.Request[v1.SetRolesOrPermissionsRequest]) (*connect_go.Response[v1.SetRolesOrPermissionsResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.UserService.SetRolesOrPermissions is not implemented"))
 }

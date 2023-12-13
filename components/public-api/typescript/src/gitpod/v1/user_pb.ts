@@ -10,8 +10,90 @@
 // @ts-nocheck
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { Duration, Message, proto3, Timestamp } from "@bufbuild/protobuf";
+import { Duration, FieldMask, Message, proto3, Timestamp } from "@bufbuild/protobuf";
 import { EditorReference } from "./editor_pb.js";
+import { PaginationRequest, PaginationResponse } from "./pagination_pb.js";
+import { Sort } from "./sorting_pb.js";
+
+/**
+ * @generated from enum gitpod.v1.RoleOrPermission
+ */
+export enum RoleOrPermission {
+  /**
+   * @generated from enum value: ROLE_OR_PERMISSION_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: ROLE_OR_PERMISSION_DEVOPS = 1;
+   */
+  DEVOPS = 1,
+
+  /**
+   * @generated from enum value: ROLE_OR_PERMISSION_VIEWER = 2;
+   */
+  VIEWER = 2,
+
+  /**
+   * @generated from enum value: ROLE_OR_PERMISSION_ADMIN = 3;
+   */
+  ADMIN = 3,
+
+  /**
+   * @generated from enum value: ROLE_OR_PERMISSION_DEVELOPER = 4;
+   */
+  DEVELOPER = 4,
+
+  /**
+   * @generated from enum value: ROLE_OR_PERMISSION_REGISTRY_ACCESS = 5;
+   */
+  REGISTRY_ACCESS = 5,
+
+  /**
+   * @generated from enum value: ROLE_OR_PERMISSION_ADMIN_PERMISSIONS = 6;
+   */
+  ADMIN_PERMISSIONS = 6,
+
+  /**
+   * @generated from enum value: ROLE_OR_PERMISSION_ADMIN_USERS = 7;
+   */
+  ADMIN_USERS = 7,
+
+  /**
+   * @generated from enum value: ROLE_OR_PERMISSION_ADMIN_WORKSPACE_CONTENT = 8;
+   */
+  ADMIN_WORKSPACE_CONTENT = 8,
+
+  /**
+   * @generated from enum value: ROLE_OR_PERMISSION_ADMIN_WORKSPACES = 9;
+   */
+  ADMIN_WORKSPACES = 9,
+
+  /**
+   * @generated from enum value: ROLE_OR_PERMISSION_ADMIN_PROJECTS = 10;
+   */
+  ADMIN_PROJECTS = 10,
+
+  /**
+   * @generated from enum value: ROLE_OR_PERMISSION_NEW_WORKSPACE_CLUSTER = 11;
+   */
+  NEW_WORKSPACE_CLUSTER = 11,
+}
+// Retrieve enum metadata with: proto3.getEnumType(RoleOrPermission)
+proto3.util.setEnumType(RoleOrPermission, "gitpod.v1.RoleOrPermission", [
+  { no: 0, name: "ROLE_OR_PERMISSION_UNSPECIFIED" },
+  { no: 1, name: "ROLE_OR_PERMISSION_DEVOPS" },
+  { no: 2, name: "ROLE_OR_PERMISSION_VIEWER" },
+  { no: 3, name: "ROLE_OR_PERMISSION_ADMIN" },
+  { no: 4, name: "ROLE_OR_PERMISSION_DEVELOPER" },
+  { no: 5, name: "ROLE_OR_PERMISSION_REGISTRY_ACCESS" },
+  { no: 6, name: "ROLE_OR_PERMISSION_ADMIN_PERMISSIONS" },
+  { no: 7, name: "ROLE_OR_PERMISSION_ADMIN_USERS" },
+  { no: 8, name: "ROLE_OR_PERMISSION_ADMIN_WORKSPACE_CONTENT" },
+  { no: 9, name: "ROLE_OR_PERMISSION_ADMIN_WORKSPACES" },
+  { no: 10, name: "ROLE_OR_PERMISSION_ADMIN_PROJECTS" },
+  { no: 11, name: "ROLE_OR_PERMISSION_NEW_WORKSPACE_CLUSTER" },
+]);
 
 /**
  * @generated from message gitpod.v1.GetAuthenticatedUserRequest
@@ -596,6 +678,414 @@ export class DeleteUserResponse extends Message<DeleteUserResponse> {
 }
 
 /**
+ * @generated from message gitpod.v1.VerifyUserRequest
+ */
+export class VerifyUserRequest extends Message<VerifyUserRequest> {
+  /**
+   * @generated from field: string user_id = 1;
+   */
+  userId = "";
+
+  constructor(data?: PartialMessage<VerifyUserRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.VerifyUserRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): VerifyUserRequest {
+    return new VerifyUserRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): VerifyUserRequest {
+    return new VerifyUserRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): VerifyUserRequest {
+    return new VerifyUserRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: VerifyUserRequest | PlainMessage<VerifyUserRequest> | undefined, b: VerifyUserRequest | PlainMessage<VerifyUserRequest> | undefined): boolean {
+    return proto3.util.equals(VerifyUserRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.VerifyUserResponse
+ */
+export class VerifyUserResponse extends Message<VerifyUserResponse> {
+  /**
+   * @generated from field: gitpod.v1.User user = 1;
+   */
+  user?: User;
+
+  constructor(data?: PartialMessage<VerifyUserResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.VerifyUserResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "user", kind: "message", T: User },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): VerifyUserResponse {
+    return new VerifyUserResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): VerifyUserResponse {
+    return new VerifyUserResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): VerifyUserResponse {
+    return new VerifyUserResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: VerifyUserResponse | PlainMessage<VerifyUserResponse> | undefined, b: VerifyUserResponse | PlainMessage<VerifyUserResponse> | undefined): boolean {
+    return proto3.util.equals(VerifyUserResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.BlockUserRequest
+ */
+export class BlockUserRequest extends Message<BlockUserRequest> {
+  /**
+   * @generated from field: string user_id = 1;
+   */
+  userId = "";
+
+  /**
+   * @generated from field: bool blocked = 2;
+   */
+  blocked = false;
+
+  constructor(data?: PartialMessage<BlockUserRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.BlockUserRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "blocked", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): BlockUserRequest {
+    return new BlockUserRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): BlockUserRequest {
+    return new BlockUserRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): BlockUserRequest {
+    return new BlockUserRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: BlockUserRequest | PlainMessage<BlockUserRequest> | undefined, b: BlockUserRequest | PlainMessage<BlockUserRequest> | undefined): boolean {
+    return proto3.util.equals(BlockUserRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.BlockUserResponse
+ */
+export class BlockUserResponse extends Message<BlockUserResponse> {
+  /**
+   * @generated from field: gitpod.v1.User user = 1;
+   */
+  user?: User;
+
+  constructor(data?: PartialMessage<BlockUserResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.BlockUserResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "user", kind: "message", T: User },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): BlockUserResponse {
+    return new BlockUserResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): BlockUserResponse {
+    return new BlockUserResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): BlockUserResponse {
+    return new BlockUserResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: BlockUserResponse | PlainMessage<BlockUserResponse> | undefined, b: BlockUserResponse | PlainMessage<BlockUserResponse> | undefined): boolean {
+    return proto3.util.equals(BlockUserResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.ListUsersRequest
+ */
+export class ListUsersRequest extends Message<ListUsersRequest> {
+  /**
+   * @generated from field: string search_term = 1;
+   */
+  searchTerm = "";
+
+  /**
+   * @generated from field: gitpod.v1.PaginationRequest pagination = 2;
+   */
+  pagination?: PaginationRequest;
+
+  /**
+   * Users can be sorted by "creationDate"
+   *
+   * @generated from field: repeated gitpod.v1.Sort sort = 3;
+   */
+  sort: Sort[] = [];
+
+  constructor(data?: PartialMessage<ListUsersRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListUsersRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "search_term", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "pagination", kind: "message", T: PaginationRequest },
+    { no: 3, name: "sort", kind: "message", T: Sort, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListUsersRequest {
+    return new ListUsersRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListUsersRequest {
+    return new ListUsersRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListUsersRequest {
+    return new ListUsersRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListUsersRequest | PlainMessage<ListUsersRequest> | undefined, b: ListUsersRequest | PlainMessage<ListUsersRequest> | undefined): boolean {
+    return proto3.util.equals(ListUsersRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.ListUsersResponse
+ */
+export class ListUsersResponse extends Message<ListUsersResponse> {
+  /**
+   * @generated from field: repeated gitpod.v1.User users = 1;
+   */
+  users: User[] = [];
+
+  /**
+   * @generated from field: gitpod.v1.PaginationResponse pagination = 2;
+   */
+  pagination?: PaginationResponse;
+
+  constructor(data?: PartialMessage<ListUsersResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListUsersResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "users", kind: "message", T: User, repeated: true },
+    { no: 2, name: "pagination", kind: "message", T: PaginationResponse },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListUsersResponse {
+    return new ListUsersResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListUsersResponse {
+    return new ListUsersResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListUsersResponse {
+    return new ListUsersResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListUsersResponse | PlainMessage<ListUsersResponse> | undefined, b: ListUsersResponse | PlainMessage<ListUsersResponse> | undefined): boolean {
+    return proto3.util.equals(ListUsersResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.GetUserRequest
+ */
+export class GetUserRequest extends Message<GetUserRequest> {
+  /**
+   * @generated from field: string user_id = 1;
+   */
+  userId = "";
+
+  constructor(data?: PartialMessage<GetUserRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.GetUserRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetUserRequest {
+    return new GetUserRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetUserRequest {
+    return new GetUserRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetUserRequest {
+    return new GetUserRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetUserRequest | PlainMessage<GetUserRequest> | undefined, b: GetUserRequest | PlainMessage<GetUserRequest> | undefined): boolean {
+    return proto3.util.equals(GetUserRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.GetUserResponse
+ */
+export class GetUserResponse extends Message<GetUserResponse> {
+  /**
+   * @generated from field: gitpod.v1.User user = 1;
+   */
+  user?: User;
+
+  constructor(data?: PartialMessage<GetUserResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.GetUserResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "user", kind: "message", T: User },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetUserResponse {
+    return new GetUserResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetUserResponse {
+    return new GetUserResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetUserResponse {
+    return new GetUserResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetUserResponse | PlainMessage<GetUserResponse> | undefined, b: GetUserResponse | PlainMessage<GetUserResponse> | undefined): boolean {
+    return proto3.util.equals(GetUserResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.SetRolesOrPermissionsRequest
+ */
+export class SetRolesOrPermissionsRequest extends Message<SetRolesOrPermissionsRequest> {
+  /**
+   * @generated from field: string user_id = 1;
+   */
+  userId = "";
+
+  /**
+   * @generated from field: repeated gitpod.v1.RoleOrPermission roles_or_permissions = 2;
+   */
+  rolesOrPermissions: RoleOrPermission[] = [];
+
+  /**
+   * @generated from field: google.protobuf.FieldMask reset_mask = 3;
+   */
+  resetMask?: FieldMask;
+
+  constructor(data?: PartialMessage<SetRolesOrPermissionsRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.SetRolesOrPermissionsRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "roles_or_permissions", kind: "enum", T: proto3.getEnumType(RoleOrPermission), repeated: true },
+    { no: 3, name: "reset_mask", kind: "message", T: FieldMask },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SetRolesOrPermissionsRequest {
+    return new SetRolesOrPermissionsRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SetRolesOrPermissionsRequest {
+    return new SetRolesOrPermissionsRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SetRolesOrPermissionsRequest {
+    return new SetRolesOrPermissionsRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SetRolesOrPermissionsRequest | PlainMessage<SetRolesOrPermissionsRequest> | undefined, b: SetRolesOrPermissionsRequest | PlainMessage<SetRolesOrPermissionsRequest> | undefined): boolean {
+    return proto3.util.equals(SetRolesOrPermissionsRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.SetRolesOrPermissionsResponse
+ */
+export class SetRolesOrPermissionsResponse extends Message<SetRolesOrPermissionsResponse> {
+  /**
+   * @generated from field: gitpod.v1.User user = 1;
+   */
+  user?: User;
+
+  constructor(data?: PartialMessage<SetRolesOrPermissionsResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.SetRolesOrPermissionsResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "user", kind: "message", T: User },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SetRolesOrPermissionsResponse {
+    return new SetRolesOrPermissionsResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SetRolesOrPermissionsResponse {
+    return new SetRolesOrPermissionsResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SetRolesOrPermissionsResponse {
+    return new SetRolesOrPermissionsResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SetRolesOrPermissionsResponse | PlainMessage<SetRolesOrPermissionsResponse> | undefined, b: SetRolesOrPermissionsResponse | PlainMessage<SetRolesOrPermissionsResponse> | undefined): boolean {
+    return proto3.util.equals(SetRolesOrPermissionsResponse, a, b);
+  }
+}
+
+/**
  * @generated from message gitpod.v1.User
  */
 export class User extends Message<User> {
@@ -741,9 +1231,9 @@ export class User extends Message<User> {
   /**
    * specifies the permissions and/or roles the user has
    *
-   * @generated from field: repeated gitpod.v1.User.RoleOrPermission roles_or_permissions = 19;
+   * @generated from field: repeated gitpod.v1.RoleOrPermission roles_or_permissions = 19;
    */
-  rolesOrPermissions: User_RoleOrPermission[] = [];
+  rolesOrPermissions: RoleOrPermission[] = [];
 
   constructor(data?: PartialMessage<User>) {
     super();
@@ -771,7 +1261,7 @@ export class User extends Message<User> {
     { no: 16, name: "workspace_autostart_options", kind: "message", T: User_WorkspaceAutostartOption, repeated: true },
     { no: 17, name: "usage_attribution_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 18, name: "workspace_feature_flags", kind: "enum", T: proto3.getEnumType(User_UserFeatureFlag), repeated: true },
-    { no: 19, name: "roles_or_permissions", kind: "enum", T: proto3.getEnumType(User_RoleOrPermission), repeated: true },
+    { no: 19, name: "roles_or_permissions", kind: "enum", T: proto3.getEnumType(RoleOrPermission), repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): User {
@@ -827,86 +1317,6 @@ proto3.util.setEnumType(User_UserFeatureFlag, "gitpod.v1.User.UserFeatureFlag", 
   { no: 2, name: "USER_FEATURE_FLAG_WORKSPACE_CLASS_LIMITING" },
   { no: 3, name: "USER_FEATURE_FLAG_WORKSPACE_CONNECTION_LIMITING" },
   { no: 4, name: "USER_FEATURE_FLAG_WORKSPACE_PSI" },
-]);
-
-/**
- * @generated from enum gitpod.v1.User.RoleOrPermission
- */
-export enum User_RoleOrPermission {
-  /**
-   * @generated from enum value: ROLE_OR_PERMISSION_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: ROLE_OR_PERMISSION_DEVOPS = 1;
-   */
-  DEVOPS = 1,
-
-  /**
-   * @generated from enum value: ROLE_OR_PERMISSION_VIEWER = 2;
-   */
-  VIEWER = 2,
-
-  /**
-   * @generated from enum value: ROLE_OR_PERMISSION_ADMIN = 3;
-   */
-  ADMIN = 3,
-
-  /**
-   * @generated from enum value: ROLE_OR_PERMISSION_DEVELOPER = 4;
-   */
-  DEVELOPER = 4,
-
-  /**
-   * @generated from enum value: ROLE_OR_PERMISSION_REGISTRY_ACCESS = 5;
-   */
-  REGISTRY_ACCESS = 5,
-
-  /**
-   * @generated from enum value: ROLE_OR_PERMISSION_ADMIN_PERMISSIONS = 6;
-   */
-  ADMIN_PERMISSIONS = 6,
-
-  /**
-   * @generated from enum value: ROLE_OR_PERMISSION_ADMIN_USERS = 7;
-   */
-  ADMIN_USERS = 7,
-
-  /**
-   * @generated from enum value: ROLE_OR_PERMISSION_ADMIN_WORKSPACE_CONTENT = 8;
-   */
-  ADMIN_WORKSPACE_CONTENT = 8,
-
-  /**
-   * @generated from enum value: ROLE_OR_PERMISSION_ADMIN_WORKSPACES = 9;
-   */
-  ADMIN_WORKSPACES = 9,
-
-  /**
-   * @generated from enum value: ROLE_OR_PERMISSION_ADMIN_PROJECTS = 10;
-   */
-  ADMIN_PROJECTS = 10,
-
-  /**
-   * @generated from enum value: ROLE_OR_PERMISSION_NEW_WORKSPACE_CLUSTER = 11;
-   */
-  NEW_WORKSPACE_CLUSTER = 11,
-}
-// Retrieve enum metadata with: proto3.getEnumType(User_RoleOrPermission)
-proto3.util.setEnumType(User_RoleOrPermission, "gitpod.v1.User.RoleOrPermission", [
-  { no: 0, name: "ROLE_OR_PERMISSION_UNSPECIFIED" },
-  { no: 1, name: "ROLE_OR_PERMISSION_DEVOPS" },
-  { no: 2, name: "ROLE_OR_PERMISSION_VIEWER" },
-  { no: 3, name: "ROLE_OR_PERMISSION_ADMIN" },
-  { no: 4, name: "ROLE_OR_PERMISSION_DEVELOPER" },
-  { no: 5, name: "ROLE_OR_PERMISSION_REGISTRY_ACCESS" },
-  { no: 6, name: "ROLE_OR_PERMISSION_ADMIN_PERMISSIONS" },
-  { no: 7, name: "ROLE_OR_PERMISSION_ADMIN_USERS" },
-  { no: 8, name: "ROLE_OR_PERMISSION_ADMIN_WORKSPACE_CONTENT" },
-  { no: 9, name: "ROLE_OR_PERMISSION_ADMIN_WORKSPACES" },
-  { no: 10, name: "ROLE_OR_PERMISSION_ADMIN_PROJECTS" },
-  { no: 11, name: "ROLE_OR_PERMISSION_NEW_WORKSPACE_CLUSTER" },
 ]);
 
 /**
