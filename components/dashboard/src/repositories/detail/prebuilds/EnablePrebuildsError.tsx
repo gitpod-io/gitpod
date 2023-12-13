@@ -49,7 +49,7 @@ type GenericErrorMessageProps = {
 };
 const GenericErrorMessage: FC<GenericErrorMessageProps> = ({ message }) => {
     return (
-        <ConfigurationSettingsField className="text-gitpod-red">
+        <ConfigurationSettingsField className="text-pk-content-danger">
             <div className="flex flex-row gap-2 mb-4">
                 <span className="w-6">
                     <AlertTriangleIcon />
@@ -58,7 +58,7 @@ const GenericErrorMessage: FC<GenericErrorMessageProps> = ({ message }) => {
                     Unable to enable prebuilds. Please try again later. If the problem persists, please contact support.
                 </span>
             </div>
-            <pre>{message}</pre>
+            {message && <pre className="text-sm text-pk-content-secondary">{`> ${message}`}</pre>}
         </ConfigurationSettingsField>
     );
 };
