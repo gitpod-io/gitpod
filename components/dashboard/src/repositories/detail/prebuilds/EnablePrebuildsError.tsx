@@ -5,7 +5,6 @@
  */
 
 import { FC, useCallback } from "react";
-import { Heading3, Subheading } from "@podkit/typography/Headings";
 import type { RepositoryUnauthorizedError } from "@gitpod/public-api/lib/gitpod/v1/error_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { openAuthorizeWindow } from "../../../provider-utils";
@@ -51,8 +50,13 @@ type GenericErrorMessageProps = {
 const GenericErrorMessage: FC<GenericErrorMessageProps> = ({ message }) => {
     return (
         <ConfigurationSettingsField className="text-gitpod-red">
-            <Heading3>Failed to enable Prebuilds</Heading3>
-            <Subheading>{message}</Subheading>
+            <div className="flex flex-row gap-2 mb-4">
+                <AlertTriangleIcon />
+                <span>
+                    Unable to enable prebuilds. Please try again later. If the problem persists, please contact support.
+                </span>
+            </div>
+            <pre>{message}</pre>
         </ConfigurationSettingsField>
     );
 };
@@ -85,25 +89,25 @@ const RepositoryUnauthroizedErrorMessage: FC<RepositoryUnauthroizedErrorMessageP
         });
     }, [error.host, error.requiredScopes, onReconnect, toast]);
 
-    const needsReconnect = !error.providerIsConnected || error.isMissingScopes;
+    const definitelyNeedsReconnect = !error.providerIsConnected || error.isMissingScopes;
 
     return (
         <ConfigurationSettingsField className="text-gitpod-red">
-            {needsReconnect ? (
-                <div className="flex flex-row gap-2">
-                    <AlertTriangleIcon />
+            <div className="flex flex-row gap-2">
+                <AlertTriangleIcon />
+                {definitelyNeedsReconnect ? (
                     <span>
-                        It looks like your need to reconnect with your git provider. Please reconnect and try again.
+                        It looks like your need to reconnect with your git provider (<strong>{error.host}</strong>).
+                        Please reconnect and try again.
                     </span>
-                </div>
-            ) : (
-                <>
-                    <Heading3>Failed to enable Prebuilds</Heading3>
-                    <Subheading>
-                        Looks like we need to authorize with <strong>{error.host}</strong> to enabled prebuilds.
-                    </Subheading>
-                </>
-            )}
+                ) : (
+                    <span>
+                        Unable to enable prebuilds. This could be because you don’t have admin/write premissions for
+                        this repo or it could be an invalid token. Please try to reconnect. If the problem persists, you
+                        can contact support.
+                    </span>
+                )}
+            </div>
 
             <Button className="mt-4" onClick={authorizeWithProvider}>
                 {error.providerIsConnected ? "Reconnect" : "Connect"}
