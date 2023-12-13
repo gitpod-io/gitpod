@@ -6,9 +6,10 @@
 
 import { FunctionComponent, useCallback, useState } from "react";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
-import { Button } from "../components/Button";
+import { Button } from "@podkit/buttons/Button";
 import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { useUpdateWorkspaceMutation } from "../data/workspaces/update-workspace-mutation";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
 
 type Props = {
     workspace: Workspace;
@@ -64,12 +65,12 @@ export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
                 </div>
             </ModalBody>
             <ModalFooter>
-                <Button type="secondary" disabled={updateWorkspace.isLoading} onClick={onClose}>
+                <Button variant="secondary" disabled={updateWorkspace.isLoading} onClick={onClose}>
                     Cancel
                 </Button>
-                <Button htmlType="submit" loading={updateWorkspace.isLoading}>
+                <LoadingButton type="submit" loading={updateWorkspace.isLoading}>
                     Update Description
-                </Button>
+                </LoadingButton>
             </ModalFooter>
         </Modal>
     );

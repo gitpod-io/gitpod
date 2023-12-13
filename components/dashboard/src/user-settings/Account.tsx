@@ -9,7 +9,7 @@ import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
-import { Button } from "../components/Button";
+import { Button } from "@podkit/buttons/Button";
 import { Heading2, Subheading } from "../components/typography/headings";
 import Alert from "../components/Alert";
 import { TextInputField } from "../components/forms/TextInputField";
@@ -125,7 +125,7 @@ export default function Account() {
                         user={user}
                     >
                         <div className="flex flex-row mt-8">
-                            <Button htmlType="submit">Update Profile</Button>
+                            <Button type="submit">Update Profile</Button>
                         </div>
                     </ProfileInformation>
                 </form>
@@ -133,7 +133,7 @@ export default function Account() {
                 <Subheading className="mb-3">
                     This action will remove all the data associated with your account in Gitpod.
                 </Subheading>
-                <Button type="danger.secondary" onClick={() => setModal(true)}>
+                <Button variant="destructive" onClick={() => setModal(true)}>
                     Delete Account
                 </Button>
             </PageWithSettingsSubMenu>

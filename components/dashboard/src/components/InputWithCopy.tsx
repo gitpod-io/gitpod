@@ -9,7 +9,7 @@ import Tooltip from "../components/Tooltip";
 import { ReactComponent as CopyIcon } from "../images/copy.svg";
 import { ReactComponent as CheckIcon } from "../images/check-currentColor.svg";
 import { copyToClipboard } from "../utils";
-import { Button } from "./Button";
+import { Button } from "@podkit/buttons/Button";
 import { TextInput } from "./forms/TextInputField";
 import { useTemporaryState } from "../hooks/use-temporary-value";
 
@@ -34,14 +34,9 @@ export const InputWithCopy: FC<Props> = ({ value, tip = "Click to copy", classNa
             <TextInput value={value} disabled className="w-full pr-8 overscroll-none dark:text-[#A8A29E]" />
 
             <Tooltip content={tip} className="absolute top-1.5 right-1">
-                <Button
-                    type="transparent"
-                    spacing="compact"
-                    icon={
-                        copied ? <CheckIcon className="text-green-500 w-5 h-5" /> : <CopyIcon className="w-3.5 h-3.5" />
-                    }
-                    onClick={handleCopyToClipboard}
-                />
+                <Button variant="ghost" size={"icon"} onClick={handleCopyToClipboard}>
+                    {copied ? <CheckIcon className="text-green-500 w-5 h-5" /> : <CopyIcon className="w-3.5 h-3.5" />}
+                </Button>
             </Tooltip>
         </div>
     );

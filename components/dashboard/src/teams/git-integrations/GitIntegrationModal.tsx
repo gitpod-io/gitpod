@@ -5,7 +5,7 @@
  */
 
 import { FunctionComponent, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Button } from "../../components/Button";
+import { Button } from "@podkit/buttons/Button";
 import { InputField } from "../../components/forms/InputField";
 import { SelectInputField } from "../../components/forms/SelectInputField";
 import { TextInputField } from "../../components/forms/TextInputField";
@@ -23,12 +23,12 @@ import { AuthProvider, AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1
 import { useCreateOrgAuthProviderMutation } from "../../data/auth-providers/create-org-auth-provider-mutation";
 import { useUpdateOrgAuthProviderMutation } from "../../data/auth-providers/update-org-auth-provider-mutation";
 import { authProviderClient, userClient } from "../../service/public-api";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
 
 type Props = {
     provider?: AuthProvider;
     onClose: () => void;
 };
-
 export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
     const { setUser } = useContext(UserContext);
     const { toast } = useToast();
@@ -288,12 +288,12 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                     </>
                 }
             >
-                <Button type="secondary" onClick={props.onClose}>
+                <Button variant="secondary" onClick={props.onClose}>
                     Cancel
                 </Button>
-                <Button htmlType="submit" disabled={!isValid} loading={savingProvider}>
+                <LoadingButton type="submit" disabled={!isValid} loading={savingProvider}>
                     Activate
-                </Button>
+                </LoadingButton>
             </ModalFooter>
         </Modal>
     );

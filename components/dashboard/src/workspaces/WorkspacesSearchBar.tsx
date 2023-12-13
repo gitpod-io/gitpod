@@ -9,7 +9,7 @@ import { Link } from "react-router-dom";
 import { StartWorkspaceModalKeyBinding } from "../App";
 import DropDown from "../components/DropDown";
 import search from "../icons/search.svg";
-import { Button } from "../components/Button";
+import { Button } from "@podkit/buttons/Button";
 
 type WorkspacesSearchBarProps = {
     searchTerm: string;

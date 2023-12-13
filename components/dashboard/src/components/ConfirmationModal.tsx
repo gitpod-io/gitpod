@@ -7,7 +7,8 @@
 import Alert from "./Alert";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "./Modal";
 import { FC, ReactNode, useCallback, useState } from "react";
-import { Button, ButtonProps } from "./Button";
+import { Button, ButtonProps } from "@podkit/buttons/Button";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
 
 type Props = {
     title?: string;
@@ -15,7 +16,7 @@ type Props = {
     children?: Entity | ReactNode;
     buttonText?: string;
     buttonDisabled?: boolean;
-    buttonType?: ButtonProps["type"];
+    buttonType?: ButtonProps["variant"];
     visible?: boolean;
     warningHead?: string;
     warningText?: string;
@@ -29,7 +30,7 @@ export const ConfirmationModal: FC<Props> = ({
     children,
     buttonText = "Yes, I'm Sure",
     buttonDisabled,
-    buttonType = "danger",
+    buttonType = "destructive",
     visible,
     warningHead,
     warningText,
@@ -75,18 +76,18 @@ export const ConfirmationModal: FC<Props> = ({
                 )}
             </ModalBody>
             <ModalFooter alert={footerAlert}>
-                <Button type="secondary" onClick={onClose} autoFocus>
+                <Button variant="secondary" onClick={onClose} autoFocus>
                     Cancel
                 </Button>
-                <Button
-                    htmlType="submit"
-                    type={buttonType}
+                <LoadingButton
+                    type="submit"
+                    variant={buttonType}
                     className="ml-2"
                     disabled={buttonDisabled}
                     loading={isLoading}
                 >
                     {buttonText}
-                </Button>
+                </LoadingButton>
             </ModalFooter>
         </Modal>
     );
