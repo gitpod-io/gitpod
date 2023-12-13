@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM ubuntu:22.04 as code_builder
+FROM gitpod/openvscode-server-linux-build-agent:focal-x64 as code_builder
 
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 ENV ELECTRON_SKIP_BINARY_DOWNLOAD=1
@@ -11,6 +11,9 @@ ENV VSCODE_ARCH=x64
 ARG CODE_COMMIT
 ARG CODE_QUALITY
 ARG CODE_VERSION
+
+RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_18.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+RUN apt-get update && apt-get install -y nodejs
 
 RUN mkdir /gp-code \
     && cd /gp-code \
