@@ -215,21 +215,19 @@ export default function TeamSettingsPage() {
                         </ConfigurationSettingsField>
                     )}
 
-                    <ConfigurationSettingsField>
-                        {user?.organizationId !== org?.id && isOwner && (
-                            <>
-                                <Heading3>Delete Organization</Heading3>
-                                <Subheading className="pb-4 max-w-2xl">
-                                    Deleting this organization will also remove all associated data, including projects
-                                    and workspaces. Deleted organizations cannot be restored!
-                                </Subheading>
+                    {user?.organizationId !== org?.id && isOwner && (
+                        <ConfigurationSettingsField>
+                            <Heading3>Delete Organization</Heading3>
+                            <Subheading className="pb-4 max-w-2xl">
+                                Deleting this organization will also remove all associated data, including projects and
+                                workspaces. Deleted organizations cannot be restored!
+                            </Subheading>
 
-                                <Button variant="destructive" onClick={() => setModal(true)}>
-                                    Delete Organization
-                                </Button>
-                            </>
-                        )}
-                    </ConfigurationSettingsField>
+                            <Button variant="destructive" onClick={() => setModal(true)}>
+                                Delete Organization
+                            </Button>
+                        </ConfigurationSettingsField>
+                    )}
                 </div>
             </OrgSettingsPage>
 
