@@ -10,5 +10,5 @@ import { PropsWithClassName, cn } from "@podkit/lib/cn";
 type TextMutedProps = PropsWithChildren<PropsWithClassName>;
 
 export const TextMuted: FC<TextMutedProps> = ({ className, children }) => {
-    return <span className={cn("text-gray-500 dark:text-gray-400", className)}>{children}</span>;
+    return <span className={cn("text-pk-content-tertiary", className)}>{children}</span>;
 };
