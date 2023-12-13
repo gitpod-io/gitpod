@@ -240,7 +240,7 @@ func TestInMemoryTokenServiceGetToken(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Desc, func(t *testing.T) {
-			service := NewInMemoryTokenService()
+			service := NewInMemoryTokenService(nil, "")
 			if test.Cache != nil {
 				service.token = test.Cache
 			}
@@ -363,7 +363,7 @@ func TestInMemoryTokenServiceSetToken(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Desc, func(t *testing.T) {
-			service := NewInMemoryTokenService()
+			service := NewInMemoryTokenService(nil, "")
 			_, err := service.SetToken(context.Background(), test.Req)
 			res := Expectation{
 				TokenCount: len(service.token),

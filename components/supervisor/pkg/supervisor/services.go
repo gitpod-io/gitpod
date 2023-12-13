@@ -23,6 +23,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 
+	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/supervisor/api"
@@ -309,10 +310,18 @@ func (s RegistrableTokenService) RegisterREST(mux *runtime.ServeMux, grpcEndpoin
 }
 
 // NewInMemoryTokenService produces a new InMemoryTokenService.
-func NewInMemoryTokenService() *InMemoryTokenService {
+func NewInMemoryTokenService(exps experiments.Client, ownerID string) *InMemoryTokenService {
+	useApiTokenV0 := true
+	// if exps != nil && ownerID != "" {
+	// 	useApiTokenV0 = experiments.SupervisorUseApiTokenV0(context.Background(), exps, experiments.Attributes{
+	// 		UserID: ownerID,
+	// 	})
+	// }
+
 	return &InMemoryTokenService{
-		token:    make(map[string][]*Token),
-		provider: make(map[string][]tokenProvider),
+		token:         make(map[string][]*Token),
+		provider:      make(map[string][]tokenProvider),
+		useApiTokenV0: useApiTokenV0,
 	}
 }
 
@@ -327,7 +336,7 @@ type Token struct {
 }
 
 // Match checks whether token can be reused to access for the given args.
-func (tkn *Token) Match(host string, scopes []string) bool {
+func (tkn *Token) Match(kind string, host string, scopes []string) bool {
 	if tkn.Host != host {
 		return false
 	}
@@ -343,7 +352,8 @@ func (tkn *Token) Match(host string, scopes []string) bool {
 		return false
 	}
 
-	if !tkn.HasScopes(scopes) {
+	// For KindApiTokenV0 we don't check scopes: They just don't have the same meaning as for older token kinds.
+	if kind != serverapi.KindApiTokenV0 && !tkn.HasScopes(scopes) {
 		return false
 	}
 
@@ -374,11 +384,40 @@ type InMemoryTokenService struct {
 	provider map[string][]tokenProvider
 	mu       sync.RWMutex
 
+	useApiTokenV0 bool
+
 	api.UnimplementedTokenServiceServer
 }
 
 // GetToken returns a token for a host.
 func (s *InMemoryTokenService) GetToken(ctx context.Context, req *api.GetTokenRequest) (*api.GetTokenResponse, error) {
+	tkn, err := s.doGetToken(ctx, req)
+	if err != nil {
+		if s.useApiTokenV0 && req.Kind == serverapi.KindGitpod {
+			tkn, err = s.doGetToken(ctx, &api.GetTokenRequest{
+				Kind: serverapi.KindApiTokenV0,
+				Host: req.Host,
+				Scope: []string{
+					"user_read",
+					"user_code_sync",
+					"user_write_env_var",
+					"workspace_owner",
+					"organization_member",
+				},
+			})
+			if err != nil {
+				return nil, err
+			}
+			return tkn, nil
+		}
+
+		return nil, err
+	}
+	return tkn, nil
+}
+
+// doGetToken returns a token for a host.
+func (s *InMemoryTokenService) doGetToken(ctx context.Context, req *api.GetTokenRequest) (*api.GetTokenResponse, error) {
 	// filter empty scopes, when no scopes are requested, i.e. empty list [] we return an arbitrary/max scoped token, see Token.HasScopes
 	var scopes []string
 	for _, scope := range req.Scope {
@@ -428,7 +467,7 @@ func (s *InMemoryTokenService) getCachedTokenFor(kind string, host string, scope
 	defer s.mu.RUnlock()
 
 	for _, tkn := range s.token[kind] {
-		if tkn.Match(host, scopes) {
+		if tkn.Match(kind, host, scopes) {
 			return tkn
 		}
 	}

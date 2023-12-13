@@ -25,7 +25,7 @@ export class OneTimeSecretServer {
     }
 
     protected addHandler(router: express.Router) {
-        router.get("/ots/get/:id", async (req, res, next) => {
+        router.get("/get/:id", async (req, res, next) => {
             const spanCtx =
                 opentracing.globalTracer().extract(opentracing.FORMAT_HTTP_HEADERS, req.headers) || undefined;
             const span = opentracing.globalTracer().startSpan("getOneTimeSecret", { childOf: spanCtx });

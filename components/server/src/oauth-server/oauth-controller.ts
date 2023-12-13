@@ -190,7 +190,7 @@ export class OAuthController {
             }
         }
 
-        router.get("/oauth/authorize", async (req: express.Request, res: express.Response) => {
+        router.get("/authorize", async (req: express.Request, res: express.Response) => {
             const clientID = req.query.client_id;
             if (!clientID) {
                 res.sendStatus(400);
@@ -236,7 +236,7 @@ export class OAuthController {
             }
         });
 
-        router.post("/oauth/token", async (req: express.Request, res: express.Response) => {
+        router.post("/token", async (req: express.Request, res: express.Response) => {
             const response = new OAuthResponse(res);
             try {
                 const { authorizationServer } = await getAuthorizationServer(ctxUserId());
@@ -252,7 +252,7 @@ export class OAuthController {
             }
         });
 
-        router.get("/oauth/inspect", async (req: express.Request, res: express.Response) => {
+        router.get("/inspect", async (req: express.Request, res: express.Response) => {
             const clientId = req.query.client as string;
             if (typeof clientId !== "string" || !Object.keys(inMemoryDatabase.clients).includes(clientId)) {
                 return res.sendStatus(400);

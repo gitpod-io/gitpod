@@ -201,7 +201,18 @@ func Run(options ...RunOption) {
 	telemetry := analytics.NewFromEnvironment()
 	defer telemetry.Close()
 
-	tokenService := NewInMemoryTokenService()
+	endpoint, host, err := cfg.GitpodAPIEndpoint()
+	if err != nil {
+		log.WithError(err).Fatal("cannot find Gitpod API endpoint")
+	}
+
+	experimentsClientOpts := []experiments.ClientOpt{}
+	if cfg.ConfigcatEnabled {
+		experimentsClientOpts = append(experimentsClientOpts, experiments.WithGitpodProxy(host))
+	}
+	exps := experiments.NewClient(experimentsClientOpts...)
+
+	tokenService := NewInMemoryTokenService(exps, cfg.OwnerId)
 
 	if !opts.RunGP {
 		tkns, err := cfg.GetTokens(true)
@@ -245,17 +256,6 @@ func Run(options ...RunOption) {
 	if cfg.isDebugWorkspace() {
 		internalPorts = append(internalPorts, debugProxyPort)
 	}
-
-	endpoint, host, err := cfg.GitpodAPIEndpoint()
-	if err != nil {
-		log.WithError(err).Fatal("cannot find Gitpod API endpoint")
-	}
-
-	experimentsClientOpts := []experiments.ClientOpt{}
-	if cfg.ConfigcatEnabled {
-		experimentsClientOpts = append(experimentsClientOpts, experiments.WithGitpodProxy(host))
-	}
-	exps := experiments.NewClient(experimentsClientOpts...)
 
 	var (
 		ideReady                       = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}

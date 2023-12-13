@@ -301,7 +301,7 @@ export class Server {
         // Authorization: Session only
         app.use(this.userController.apiRouter);
         app.use("/workspace-download", this.workspaceDownloadService.apiRouter);
-        app.use(this.oauthController.oauthRouter);
+        app.use("/oauth", this.oauthController.oauthRouter);
         app.use("/_analytics", this.analyticsController.router);
 
         // Authorization: Session or Bearer token
@@ -312,7 +312,7 @@ export class Server {
         app.use("/code-sync", this.codeSyncService.apiRouter);
 
         // Authorization: none
-        app.use(this.oneTimeSecretServer.apiRouter);
+        app.use("/ots", this.oneTimeSecretServer.apiRouter);
         app.use(this.newsletterSubscriptionController.apiRouter);
         app.use("/live", this.livenessController.apiRouter);
         app.use("/version", (req: express.Request, res: express.Response, next: express.NextFunction) => {

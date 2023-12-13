@@ -11,6 +11,7 @@ const (
 	OIDCServiceEnabledFlag                         = "oidcServiceEnabled"
 	SupervisorPersistServerAPIChannelWhenStartFlag = "supervisor_persist_serverapi_channel_when_start"
 	SupervisorUsePublicAPIFlag                     = "supervisor_experimental_publicapi"
+	ApiTokenV0Flag                                 = "apitokenv0_oauth"
 	ServiceWaiterSkipComponentsFlag                = "service_waiter_skip_components"
 )
 
@@ -28,4 +29,8 @@ func SupervisorPersistServerAPIChannelWhenStart(ctx context.Context, client Clie
 
 func SupervisorUsePublicAPI(ctx context.Context, client Client, attributes Attributes) bool {
 	return client.GetBoolValue(ctx, SupervisorUsePublicAPIFlag, false, attributes)
+}
+
+func SupervisorUseApiTokenV0(ctx context.Context, client Client, attributes Attributes) bool {
+	return client.GetBoolValue(ctx, ApiTokenV0Flag, false, attributes)
 }

@@ -474,24 +474,19 @@ export class Authorizer {
     }
 
     public async addApiToken(tokenId: string, scopes: ApiTokenScope[]): Promise<void> {
+        const userTokenRelations = new Map<string, string>();
         const relations = scopes
             .map((s) => {
                 switch (s.permission) {
                     case "user_read":
-                        return [
-                            set(rel.apitokenv0(tokenId).user_read.anyUser),
-                            set(rel.user(s.targetId).apitoken.apitokenv0(tokenId)),
-                        ];
+                        userTokenRelations.set(s.targetId, tokenId);
+                        return [set(rel.apitokenv0(tokenId).user_read.anyUser)];
                     case "user_code_sync":
-                        return [
-                            set(rel.apitokenv0(tokenId).user_code_sync.anyUser),
-                            set(rel.user(s.targetId).apitoken.apitokenv0(tokenId)),
-                        ];
+                        userTokenRelations.set(s.targetId, tokenId);
+                        return [set(rel.apitokenv0(tokenId).user_code_sync.anyUser)];
                     case "user_write_env_var":
-                        return [
-                            set(rel.apitokenv0(tokenId).user_write_env_var.anyUser),
-                            set(rel.user(s.targetId).apitoken.apitokenv0(tokenId)),
-                        ];
+                        userTokenRelations.set(s.targetId, tokenId);
+                        return [set(rel.apitokenv0(tokenId).user_write_env_var.anyUser)];
                     case "workspace_owner":
                         return [set(rel.workspace(s.targetId).owner.apitokenv0(tokenId))];
                     case "organization_member":
@@ -499,6 +494,10 @@ export class Authorizer {
                 }
             })
             .flat();
+        // Necessary to de-duplicate here because SpiceDB requires a relation tuple to be unique per request
+        for (const [userId, tokenId] of userTokenRelations.entries()) {
+            relations.push(set(rel.user(userId).apitoken.apitokenv0(tokenId)));
+        }
         await this.authorizer.writeRelationships(...relations);
     }
 

@@ -81,11 +81,7 @@ export class ApiAccessTokenV0 {
         readonly scopes: ApiTokenScope[],
         /** This parameter is temporary, too ease the rollout of ApiTokens. Once we got rid of the websocket API (and all other impls that require a userId), we can get rid of it */
         readonly _userId?: string,
-    ) {
-        if (!!_userId && _userId !== id) {
-            throw new Error("ApiTokenV0: Invalid userId");
-        }
-    }
+    ) {}
 
     public static create(scopes: ApiTokenScope[], _userId?: string): ApiAccessTokenV0 {
         return new ApiAccessTokenV0(crypto.randomBytes(30).toString("hex"), scopes, _userId);

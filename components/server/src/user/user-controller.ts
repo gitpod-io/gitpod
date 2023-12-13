@@ -18,10 +18,15 @@ import { parseWorkspaceIdFromHostname } from "@gitpod/gitpod-protocol/lib/util/p
 import { SessionHandler } from "../session-handler";
 import { URL } from "url";
 import { getRequestingClientInfo } from "../express-util";
-import { User } from "@gitpod/gitpod-protocol";
+import { GitpodToken, GitpodTokenType, User } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { reportJWTCookieIssued } from "../prometheus-metrics";
-import { FGAResourceAccessGuard, OwnerResourceGuard, ResourceAccessGuard } from "../auth/resource-access";
+import {
+    FGAResourceAccessGuard,
+    OwnerResourceGuard,
+    ResourceAccessGuard,
+    ScopedResourceGuard,
+} from "../auth/resource-access";
 import { OneTimeSecretServer } from "../one-time-secret-server";
 import { ClientMetadata } from "../websocket/websocket-connection-manager";
 import * as fs from "fs/promises";
@@ -34,26 +39,31 @@ import { runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
 import { ApiAccessTokenV0, ApiTokenScope } from "../auth/api-token-v0";
 import { AuthJWT } from "../auth/jwt";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { Authorizer } from "../authorization/authorizer";
 
 export const ServerFactory = Symbol("ServerFactory");
 export type ServerFactory = () => GitpodServerImpl;
 
 @injectable()
 export class UserController {
-    @inject(WorkspaceDB) protected readonly workspaceDB: WorkspaceDB;
-    @inject(UserService) protected readonly userService: UserService;
-    @inject(UserDB) protected readonly userDb: UserDB;
-    @inject(TeamDB) protected readonly teamDb: TeamDB;
-    @inject(Authenticator) protected readonly authenticator: Authenticator;
-    @inject(Config) protected readonly config: Config;
-    @inject(AuthorizationService) protected readonly authService: AuthorizationService;
-    @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
-    @inject(SessionHandler) protected readonly sessionHandler: SessionHandler;
-    @inject(OneTimeSecretServer) protected readonly otsServer: OneTimeSecretServer;
-    @inject(OneTimeSecretDB) protected readonly otsDb: OneTimeSecretDB;
-    @inject(WorkspaceService) protected readonly workspaceService: WorkspaceService;
-    @inject(ServerFactory) private readonly serverFactory: ServerFactory;
-    @inject(AuthJWT) private readonly authJWT: AuthJWT;
+    constructor(
+        @inject(WorkspaceDB) private readonly workspaceDB: WorkspaceDB,
+        @inject(UserService) private readonly userService: UserService,
+        @inject(UserDB) private readonly userDb: UserDB,
+        @inject(TeamDB) private readonly teamDb: TeamDB,
+        @inject(Authenticator) private readonly authenticator: Authenticator,
+        @inject(Config) private readonly config: Config,
+        @inject(AuthorizationService) private readonly authService: AuthorizationService,
+        @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
+        @inject(SessionHandler) private readonly sessionHandler: SessionHandler,
+        @inject(OneTimeSecretServer) private readonly otsServer: OneTimeSecretServer,
+        @inject(OneTimeSecretDB) private readonly otsDb: OneTimeSecretDB,
+        @inject(WorkspaceService) private readonly workspaceService: WorkspaceService,
+        @inject(ServerFactory) private readonly serverFactory: ServerFactory,
+        @inject(AuthJWT) private readonly authJWT: AuthJWT,
+        @inject(Authorizer) private readonly authorizer: Authorizer,
+    ) {}
 
     get apiRouter(): express.Router {
         const router = express.Router();
@@ -462,39 +472,52 @@ export class UserController {
                         return;
                     }
 
-                    // const token = crypto.randomBytes(30).toString("hex");
-                    // const tokenHash = crypto.createHash("sha256").update(token, "utf8").digest("hex");
-                    // const dbToken: GitpodToken = {
-                    //     tokenHash,
-                    //     name: `local-app`,
-                    //     type: GitpodTokenType.MACHINE_AUTH_TOKEN,
-                    //     userId: req.user.id,
-                    //     scopes: [
-                    //         "function:getWorkspaces",
-                    //         "function:listenForWorkspaceInstanceUpdates",
-                    //         "resource:" +
-                    //             ScopedResourceGuard.marshalResourceScope({
-                    //                 kind: "workspace",
-                    //                 subjectID: "*",
-                    //                 operations: ["get"],
-                    //             }),
-                    //         "resource:" +
-                    //             ScopedResourceGuard.marshalResourceScope({
-                    //                 kind: "workspaceInstance",
-                    //                 subjectID: "*",
-                    //                 operations: ["get"],
-                    //             }),
-                    //     ],
-                    //     created: new Date().toISOString(),
-                    // };
-                    // await this.userDb.storeGitpodToken(dbToken);
-                    const userId = req.user.id;
-                    const scopes: ApiTokenScope[] = [
-                        // TODO(gpl) SCOPES: workspace.readInfo enough?
-                        ApiTokenScope.workspaceOwner(userId),
-                    ];
-                    const tokenObj = ApiAccessTokenV0.create(scopes, userId);
-                    const token = await tokenObj.encode(this.authJWT);
+                    const apitokenv0Enabled = await getExperimentsClientForBackend().getValueAsync(
+                        "apitokenv0_oauth",
+                        false,
+                        {
+                            user: { id: user.id },
+                        },
+                    );
+
+                    let token: string;
+                    if (!apitokenv0Enabled) {
+                        token = crypto.randomBytes(30).toString("hex");
+                        const tokenHash = crypto.createHash("sha256").update(token, "utf8").digest("hex");
+                        const dbToken: GitpodToken = {
+                            tokenHash,
+                            name: `local-app`,
+                            type: GitpodTokenType.MACHINE_AUTH_TOKEN,
+                            userId: req.user.id,
+                            scopes: [
+                                "function:getWorkspaces",
+                                "function:listenForWorkspaceInstanceUpdates",
+                                "resource:" +
+                                    ScopedResourceGuard.marshalResourceScope({
+                                        kind: "workspace",
+                                        subjectID: "*",
+                                        operations: ["get"],
+                                    }),
+                                "resource:" +
+                                    ScopedResourceGuard.marshalResourceScope({
+                                        kind: "workspaceInstance",
+                                        subjectID: "*",
+                                        operations: ["get"],
+                                    }),
+                            ],
+                            created: new Date().toISOString(),
+                        };
+                        await this.userDb.storeGitpodToken(dbToken);
+                    } else {
+                        const userId = req.user.id;
+                        const scopes: ApiTokenScope[] = [
+                            // TODO(gpl) SCOPES: workspace.readInfo?
+                            ApiTokenScope.userRead(userId),
+                        ];
+                        const apitoken = ApiAccessTokenV0.create(scopes, userId);
+                        await this.authorizer.addApiToken(apitoken.id, apitoken.scopes);
+                        token = await apitoken.encode(this.authJWT);
+                    }
 
                     const otsExpirationTime = new Date();
                     otsExpirationTime.setMinutes(otsExpirationTime.getMinutes() + 2);
