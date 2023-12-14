@@ -1262,7 +1262,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("setEnvVar");
         const userEnvVars = await this.envVarService.listUserEnvVars(user.id, user.id);
         const existingEnvVar = userEnvVars.find(
-            (v) => v.name == variable.name && v.repositoryPattern == variable.repositoryPattern,
+            (v) =>
+                v.name == variable.name &&
+                UserEnvVar.normalizeRepoPattern(v.repositoryPattern) ===
+                    UserEnvVar.normalizeRepoPattern(variable.repositoryPattern),
         );
         if (existingEnvVar) {
             await this.envVarService.updateUserEnvVar(
