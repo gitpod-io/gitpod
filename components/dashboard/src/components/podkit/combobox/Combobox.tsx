@@ -174,13 +174,13 @@ export const Combobox: FunctionComponent<ComboboxProps> = ({
             <RadixPopover.Trigger
                 disabled={disabled}
                 className={classNames(
-                    "w-full h-16 bg-gray-100 dark:bg-gray-800 flex flex-row items-center justify-start px-2 text-left",
+                    "w-full h-16 bg-pk-surface-secondary flex flex-row items-center justify-start px-2 text-left",
                     // when open, just have border radius on top
                     showDropDown ? "rounded-none rounded-t-lg" : "rounded-lg",
                     // Dropshadow when expanded
                     showDropDown && "filter drop-shadow-xl",
                     // hover when not disabled or expanded
-                    !showDropDown && !disabled && "hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer",
+                    !showDropDown && !disabled && "hover:bg-pk-surface-tertiary cursor-pointer",
                     // opacity when disabled
                     disabled && "opacity-70",
                 )}
@@ -189,8 +189,7 @@ export const Combobox: FunctionComponent<ComboboxProps> = ({
                 <div className="flex-grow" />
                 <div
                     className={classNames(
-                        // TODO: work on abstracting icon colors once we have a few places using lucide icons
-                        "mr-2 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400 transition-transform",
+                        "mr-2 text-pk-content-secondary transition-transform",
                         showDropDown && "rotate-180 transition-all",
                     )}
                 >
@@ -201,7 +200,7 @@ export const Combobox: FunctionComponent<ComboboxProps> = ({
                 <RadixPopover.Content
                     className={classNames(
                         "rounded-b-lg p-2 filter drop-shadow-xl z-50 outline-none",
-                        "bg-gray-100 dark:bg-gray-800 ",
+                        "bg-pk-surface-secondary",
                         "w-[--radix-popover-trigger-width]",
                     )}
                     onKeyDown={onKeyDown}
@@ -227,8 +226,8 @@ export const Combobox: FunctionComponent<ComboboxProps> = ({
                     <ul className="max-h-60 overflow-auto">
                         {showResultsLoadingIndicator && (
                             <div className="flex-col space-y-2 animate-pulse">
-                                <div className="bg-gray-300 dark:bg-gray-500 h-4 rounded" />
-                                <div className="bg-gray-300 dark:bg-gray-500 h-4 rounded" />
+                                <div className="bg-pk-content-tertiary/25 h-5 rounded" />
+                                <div className="bg-pk-content-tertiary/25 h-5 rounded" />
                             </div>
                         )}
                         {!showResultsLoadingIndicator && filteredOptions.length > 0 ? (
@@ -245,7 +244,7 @@ export const Combobox: FunctionComponent<ComboboxProps> = ({
                             })
                         ) : !showResultsLoadingIndicator ? (
                             <li key="no-elements" className={"rounded-md "}>
-                                <div className="h-12 pl-8 py-3 text-gray-800 dark:text-gray-200">No results</div>
+                                <div className="h-12 pl-8 py-3 text-pk-content-secondary">No results</div>
                             </li>
                         ) : null}
                     </ul>
@@ -288,13 +287,13 @@ export const ComboboxSelectedItem: FC<ComboboxSelectedItemProps> = ({
             <div className="flex-col ml-1 flex-grow truncate">
                 {loading ? (
                     <div className="flex-col space-y-2">
-                        <div className="bg-gray-300 dark:bg-gray-500 h-4 w-24 rounded" />
-                        <div className="bg-gray-300 dark:bg-gray-500 h-2 w-40 rounded" />
+                        <div className="bg-pk-content-tertiary/25 h-4 w-24 rounded" />
+                        <div className="bg-pk-content-tertiary/25 h-2 w-40 rounded" />
                     </div>
                 ) : (
                     <>
-                        <div className="text-gray-700 dark:text-gray-300 font-semibold">{title}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{subtitle}</div>
+                        <div className="text-pk-content-secondary font-semibold">{title}</div>
+                        <div className="text-xs text-pk-content-tertiary truncate">{subtitle}</div>
                     </>
                 )}
             </div>
@@ -310,9 +309,9 @@ type ComboboxItemProps = {
 };
 
 export const ComboboxItem: FC<ComboboxItemProps> = ({ element, isActive, onSelected, onFocused }) => {
-    let selectionClasses = `dark:bg-gray-800 cursor-pointer`;
+    let selectionClasses = `bg-pk-surface-tertiary/25 cursor-pointer`;
     if (isActive) {
-        selectionClasses = `bg-gray-200 dark:bg-gray-700 cursor-pointer focus:outline-none focus:ring-0`;
+        selectionClasses = `bg-pk-content-tertiary/10 cursor-pointer focus:outline-none focus:ring-0`;
     }
     if (!element.isSelectable) {
         selectionClasses = ``;

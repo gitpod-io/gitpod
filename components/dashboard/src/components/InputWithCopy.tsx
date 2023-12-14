@@ -31,10 +31,14 @@ export const InputWithCopy: FC<Props> = ({ value, tip = "Click to copy", classNa
     return (
         // max-w-lg is to mirror width of TextInput so Tooltip is positioned correctly
         <div className={`w-full relative max-w-lg ${className ?? ""}`}>
-            <TextInput value={value} disabled className="w-full pr-8 overscroll-none dark:text-[#A8A29E]" />
+            <TextInput
+                value={value}
+                disabled
+                className="w-full pr-8 overscroll-none bg-pk-surface-tertiary text-pk-content-primary"
+            />
 
-            <Tooltip content={tip} className="absolute top-1.5 right-1">
-                <Button variant="ghost" size={"icon"} onClick={handleCopyToClipboard}>
+            <Tooltip content={tip} className="absolute top-0 right-0">
+                <Button variant="ghost" size={"icon"} onClick={handleCopyToClipboard} className="ring-inset">
                     {copied ? <CheckIcon className="text-green-500 w-5 h-5" /> : <CopyIcon className="w-3.5 h-3.5" />}
                 </Button>
             </Tooltip>
