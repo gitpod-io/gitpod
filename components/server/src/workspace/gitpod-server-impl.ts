@@ -1261,10 +1261,18 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         // Note: this operation is per-user only, hence needs no resource guard
         const user = await this.checkAndBlockUser("setEnvVar");
         const userEnvVars = await this.envVarService.listUserEnvVars(user.id, user.id);
-        if (userEnvVars.find((v) => v.name == variable.name && v.repositoryPattern == variable.repositoryPattern)) {
-            await this.envVarService.updateUserEnvVar(user.id, user.id, variable, (envvar: UserEnvVar) => {
-                return this.guardAccess({ kind: "envVar", subject: envvar }, "update");
-            });
+        const existingEnvVar = userEnvVars.find(
+            (v) => v.name == variable.name && v.repositoryPattern == variable.repositoryPattern,
+        );
+        if (existingEnvVar) {
+            await this.envVarService.updateUserEnvVar(
+                user.id,
+                user.id,
+                { ...variable, id: existingEnvVar.id },
+                (envvar: UserEnvVar) => {
+                    return this.guardAccess({ kind: "envVar", subject: envvar }, "update");
+                },
+            );
         } else {
             await this.envVarService.addUserEnvVar(user.id, user.id, variable, (envvar: UserEnvVar) => {
                 return this.guardAccess({ kind: "envVar", subject: envvar }, "create");
