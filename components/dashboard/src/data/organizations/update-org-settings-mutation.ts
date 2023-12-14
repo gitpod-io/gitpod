@@ -10,7 +10,7 @@ import { useCurrentOrg } from "./orgs-query";
 import { organizationClient } from "../../service/public-api";
 import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { useOrgWorkspaceClassesQueryInvalidator } from "./org-workspace-image-query";
+import { useOrgWorkspaceClassesQueryInvalidator } from "./org-workspace-classes-query";
 
 type UpdateOrganizationSettingsArgs = Partial<
     Pick<OrganizationSettings, "workspaceSharingDisabled" | "defaultWorkspaceImage" | "allowedWorkspaceClasses">

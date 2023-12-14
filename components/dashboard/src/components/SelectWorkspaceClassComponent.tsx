@@ -8,7 +8,7 @@ import { FC, useCallback, useEffect, useMemo } from "react";
 import WorkspaceClassIcon from "../icons/WorkspaceClass.svg";
 import { Combobox, ComboboxElement, ComboboxSelectedItem } from "./podkit/combobox/Combobox";
 import { WorkspaceClass } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
-import { useOrgWorkspaceClassesQuery } from "../data/organizations/org-workspace-image-query";
+import { useOrgWorkspaceClassesQuery } from "../data/organizations/org-workspace-classes-query";
 
 interface SelectWorkspaceClassProps {
     selectedWorkspaceClass?: string;
